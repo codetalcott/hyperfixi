@@ -18,7 +18,7 @@ import { JSONRPC_VERSION } from './types.js';
  */
 class STDIOTransport {
   private handlers: { [method: string]: (message: any) => Promise<any> } = {};
-  
+
   constructor() {
     this.setupStdio();
   }
@@ -26,16 +26,16 @@ class STDIOTransport {
   private setupStdio() {
     // Set up stdin to read JSON-RPC messages
     process.stdin.setEncoding('utf8');
-    
+
     let buffer = '';
-    
+
     process.stdin.on('data', (chunk: string) => {
       buffer += chunk;
-      
+
       // Process complete JSON messages
       const lines = buffer.split('\n');
       buffer = lines.pop() || ''; // Keep the incomplete line in buffer
-      
+
       for (const line of lines) {
         if (line.trim()) {
           try {
@@ -69,7 +69,7 @@ class STDIOTransport {
       // Handle JSON-RPC requests
       if (method && this.handlers[method]) {
         const result = await this.handlers[method](message);
-        
+
         if (id !== undefined) {
           this.sendResponse(id, result);
         }
@@ -85,9 +85,9 @@ class STDIOTransport {
     const response = {
       jsonrpc: JSONRPC_VERSION,
       id,
-      result
+      result,
     };
-    
+
     this.send(response);
   }
 
@@ -98,10 +98,10 @@ class STDIOTransport {
       error: {
         code,
         message,
-        ...(data && { data })
-      }
+        ...(data && { data }),
+      },
     };
-    
+
     this.send(error);
   }
 
@@ -126,10 +126,10 @@ async function main() {
   try {
     // Create the AST Toolkit MCP server
     const { server, handleMessage } = createMCPServerWithHandlers();
-    
+
     // Create STDIO transport
     const transport = new STDIOTransport();
-    
+
     // Register message handlers
     transport.registerHandler('initialize', handleMessage);
     transport.registerHandler('tools/list', handleMessage);
@@ -145,7 +145,6 @@ async function main() {
     console.error('Protocol version: 2025-03-26');
     console.error('Server info: @hyperfixi/ast-toolkit v0.1.0');
     console.error('Listening for JSON-RPC messages on stdin...');
-    
   } catch (error) {
     console.error('Failed to start MCP server:', error);
     process.exit(1);
@@ -164,7 +163,7 @@ function parseArgs() {
   const options = {
     help: false,
     version: false,
-    debug: false
+    debug: false,
   };
 
   for (const arg of args) {
@@ -243,21 +242,21 @@ function showVersion() {
 
 if (require.main === module) {
   const options = parseArgs();
-  
+
   if (options.help) {
     showHelp();
     process.exit(0);
   }
-  
+
   if (options.version) {
     showVersion();
     process.exit(0);
   }
-  
+
   if (options.debug) {
     console.error('Debug mode enabled');
   }
-  
+
   // Start the server
   main().catch(error => {
     console.error('Server error:', error);

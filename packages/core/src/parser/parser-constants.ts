@@ -114,21 +114,21 @@ export const COMMANDS = new Set([
   'log',
   'make',
   'measure',
-  'morph',      // htmx-like: DOM morphing with state preservation
+  'morph', // htmx-like: DOM morphing with state preservation
   'pick',
-  'process',    // htmx-like: process partials
-  'push',       // htmx-like: push url to history
+  'process', // htmx-like: process partials
+  'push', // htmx-like: push url to history
   'put',
   'remove',
   'render',
   'repeat',
-  'replace',    // htmx-like: replace url in history
+  'replace', // htmx-like: replace url in history
   'return',
   'send',
   'set',
   'settle',
   'show',
-  'swap',       // htmx-like: DOM swapping with multiple strategies
+  'swap', // htmx-like: DOM swapping with multiple strategies
   'take',
   'tell',
   'throw',
@@ -146,7 +146,7 @@ export const COMMANDS = new Set([
 export const COMPOUND_COMMANDS = new Set([
   'put',
   'trigger',
-  'send',       // send <event> to <target> (alias for trigger)
+  'send', // send <event> to <target> (alias for trigger)
   'remove',
   'take',
   'toggle',
@@ -157,26 +157,19 @@ export const COMPOUND_COMMANDS = new Set([
   'halt',
   'measure',
   'js',
-  'tell',       // tell <target> <command> [<command> ...]
+  'tell', // tell <target> <command> [<command> ...]
   // htmx-like commands with complex argument patterns
-  'swap',       // swap [strategy] of <target> with <content> [using view transition]
-  'morph',      // morph [over] <target> with <content>
-  'push',       // push url <url> [with title <title>]
-  'replace',    // replace url <url> [with title <title>]
-  'process',    // process partials in <content> [using view transition]
+  'swap', // swap [strategy] of <target> with <content> [using view transition]
+  'morph', // morph [over] <target> with <content>
+  'push', // push url <url> [with title <title>]
+  'replace', // replace url <url> [with title <title>]
+  'process', // process partials in <content> [using view transition]
 ]);
 
 /**
  * Control flow commands that use block structures
  */
-export const CONTROL_FLOW_COMMANDS = new Set([
-  'if',
-  'unless',
-  'repeat',
-  'wait',
-  'for',
-  'while',
-]);
+export const CONTROL_FLOW_COMMANDS = new Set(['if', 'unless', 'repeat', 'wait', 'for', 'while']);
 
 /**
  * PUT command operations
@@ -201,8 +194,8 @@ export const PUT_OPERATION_KEYWORDS = [
   PUT_OPERATIONS.AT,
   PUT_OPERATIONS.AT_START_OF,
   PUT_OPERATIONS.AT_END_OF,
-  'at the start of',  // Include "the" variant
-  'at the end of',    // Include "the" variant
+  'at the start of', // Include "the" variant
+  'at the end of', // Include "the" variant
 ] as const;
 
 /**
@@ -325,15 +318,31 @@ export const CommandClassification = {
  */
 export const CSS_FUNCTIONS = new Set([
   // Color functions (CSS Color Level 4)
-  'hsl', 'hsla', 'rgb', 'rgba', 'hwb',
-  'lab', 'lch', 'oklch', 'oklab',
-  'color', 'color-mix',
+  'hsl',
+  'hsla',
+  'rgb',
+  'rgba',
+  'hwb',
+  'lab',
+  'lch',
+  'oklch',
+  'oklab',
+  'color',
+  'color-mix',
   // Math functions
-  'calc', 'min', 'max', 'clamp',
+  'calc',
+  'min',
+  'max',
+  'clamp',
   // Other CSS functions
-  'var', 'url', 'linear-gradient', 'radial-gradient',
-  'conic-gradient', 'repeating-linear-gradient',
-  'repeating-radial-gradient', 'repeating-conic-gradient',
+  'var',
+  'url',
+  'linear-gradient',
+  'radial-gradient',
+  'conic-gradient',
+  'repeating-linear-gradient',
+  'repeating-radial-gradient',
+  'repeating-conic-gradient',
 ]);
 
 // ============================================================================

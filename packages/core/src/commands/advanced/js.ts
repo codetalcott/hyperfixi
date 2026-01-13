@@ -12,7 +12,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export interface JsCommandInput {
   code: string;
@@ -36,7 +42,11 @@ export interface JsCommandOutput {
 @meta({
   description: 'Execute inline JavaScript code with access to hyperscript context',
   syntax: ['js <code> end', 'js(param1, param2) <code> end'],
-  examples: ['js console.log("Hello") end', 'js(x, y) return x + y end', 'js me.style.color = "red" end'],
+  examples: [
+    'js console.log("Hello") end',
+    'js(x, y) return x + y end',
+    'js me.style.color = "red" end',
+  ],
   sideEffects: ['code-execution', 'data-mutation'],
 })
 @command({ name: 'js', category: 'advanced' })
@@ -75,8 +85,8 @@ export class JsCommand implements DecoratedCommand {
     // Extract parameter names from arrayLiteral node
     if (paramsNode && paramsNode.type === 'arrayLiteral' && Array.isArray(paramsNode.elements)) {
       parameters = paramsNode.elements
-        .map((el) => (typeof el.value === 'string' ? el.value : String(el.value)))
-        .filter((p) => p && p.length > 0);
+        .map(el => (typeof el.value === 'string' ? el.value : String(el.value)))
+        .filter(p => p && p.length > 0);
     }
 
     const result: JsCommandInput = { code };
@@ -95,10 +105,7 @@ export class JsCommand implements DecoratedCommand {
    * @param context - Typed execution context
    * @returns Execution result with code result
    */
-  async execute(
-    input: JsCommandInput,
-    context: TypedExecutionContext
-  ): Promise<JsCommandOutput> {
+  async execute(input: JsCommandInput, context: TypedExecutionContext): Promise<JsCommandOutput> {
     const { code, parameters = [] } = input;
 
     // Skip execution if code is empty or only whitespace

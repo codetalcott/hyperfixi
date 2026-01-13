@@ -14,7 +14,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for BeepCommand
@@ -55,9 +61,7 @@ export class BeepCommand implements DecoratedCommand {
     context: ExecutionContext
   ): Promise<BeepCommandInput> {
     if (raw.args.length === 0) return { expressions: [] };
-    const expressions = await Promise.all(
-      raw.args.map((arg) => evaluator.evaluate(arg, context))
-    );
+    const expressions = await Promise.all(raw.args.map(arg => evaluator.evaluate(arg, context)));
     return { expressions };
   }
 
@@ -100,7 +104,11 @@ export class BeepCommand implements DecoratedCommand {
   }
 
   private debugExpression(expression: any): { value: any; type: string; representation: string } {
-    return { value: expression, type: this.getType(expression), representation: this.getRepresentation(expression) };
+    return {
+      value: expression,
+      type: this.getType(expression),
+      representation: this.getRepresentation(expression),
+    };
   }
 
   private getType(value: any): string {
@@ -120,7 +128,10 @@ export class BeepCommand implements DecoratedCommand {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
     if (Array.isArray(value)) {
-      return `Array(${value.length}) [${value.slice(0, 3).map(v => this.getRepresentation(v)).join(', ')}${value.length > 3 ? '...' : ''}]`;
+      return `Array(${value.length}) [${value
+        .slice(0, 3)
+        .map(v => this.getRepresentation(v))
+        .join(', ')}${value.length > 3 ? '...' : ''}]`;
     }
     if (isHTMLElement(value)) {
       const el = value as HTMLElement;
@@ -130,12 +141,15 @@ export class BeepCommand implements DecoratedCommand {
       return `<${tag}${id}${classes}/>`;
     }
     if (value instanceof Error) return `Error: ${value.message}`;
-    if (typeof value === 'string') return value.length > 50 ? `"${value.substring(0, 47)}..."` : `"${value}"`;
+    if (typeof value === 'string')
+      return value.length > 50 ? `"${value.substring(0, 47)}..."` : `"${value}"`;
     if (typeof value === 'object') {
       try {
         const keys = Object.keys(value);
         return `Object {${keys.slice(0, 3).join(', ')}${keys.length > 3 ? '...' : ''}}`;
-      } catch { return '[Object]'; }
+      } catch {
+        return '[Object]';
+      }
     }
     return String(value);
   }

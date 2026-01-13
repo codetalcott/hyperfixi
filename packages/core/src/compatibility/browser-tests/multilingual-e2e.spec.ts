@@ -15,12 +15,15 @@ test.describe('Multilingual Bundle E2E', () => {
     await page.goto(`${baseURL}/packages/core/test-multilingual-e2e.html`);
 
     // Wait for both bundles to load
-    await page.waitForFunction(() => {
-      return (
-        typeof (window as any).HyperFixiSemantic !== 'undefined' &&
-        typeof (window as any).hyperfixi !== 'undefined'
-      );
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        return (
+          typeof (window as any).HyperFixiSemantic !== 'undefined' &&
+          typeof (window as any).hyperfixi !== 'undefined'
+        );
+      },
+      { timeout: 10000 }
+    );
   });
 
   test('bundles load correctly', async ({ page }) => {

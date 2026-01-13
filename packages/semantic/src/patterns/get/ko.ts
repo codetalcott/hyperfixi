@@ -22,7 +22,11 @@ export function getGetPatternsKo(): LanguagePattern[] {
         tokens: [
           { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
           { type: 'literal', value: '를', alternatives: ['을'] },
-          { type: 'literal', value: '가져오기', alternatives: ['가져오다', '얻다', '얻기', '취득', '취득하다'] },
+          {
+            type: 'literal',
+            value: '가져오기',
+            alternatives: ['가져오다', '얻다', '얻기', '취득', '취득하다'],
+          },
         ],
       },
       extraction: {

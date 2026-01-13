@@ -11,19 +11,19 @@ import type { PrismTokenType } from './types';
  * These are used for styling in the theme CSS files.
  */
 export const TOKEN_CLASSES: Record<PrismTokenType, string> = {
-  command: 'hs-command',        // Bold, primary color
-  modifier: 'hs-modifier',      // Secondary color
-  event: 'hs-event',            // Event color (orange/yellow)
-  logical: 'hs-logical',        // Logic color (purple)
-  temporal: 'hs-temporal',      // Time color (cyan)
-  value: 'hs-value',            // Value color (green)
-  attribute: 'hs-attribute',    // Attribute color (blue)
-  expression: 'hs-expression',  // Expression color (magenta)
-  selector: 'hs-selector',      // CSS selector color (teal)
-  string: 'hs-string',          // String color (green)
-  number: 'hs-number',          // Number color (orange)
-  comment: 'hs-comment',        // Comment color (gray, italic)
-  operator: 'hs-operator',      // Operator color (red/pink)
+  command: 'hs-command', // Bold, primary color
+  modifier: 'hs-modifier', // Secondary color
+  event: 'hs-event', // Event color (orange/yellow)
+  logical: 'hs-logical', // Logic color (purple)
+  temporal: 'hs-temporal', // Time color (cyan)
+  value: 'hs-value', // Value color (green)
+  attribute: 'hs-attribute', // Attribute color (blue)
+  expression: 'hs-expression', // Expression color (magenta)
+  selector: 'hs-selector', // CSS selector color (teal)
+  string: 'hs-string', // String color (green)
+  number: 'hs-number', // Number color (orange)
+  comment: 'hs-comment', // Comment color (gray, italic)
+  operator: 'hs-operator', // Operator color (red/pink)
   punctuation: 'hs-punctuation', // Punctuation color (gray)
 };
 
@@ -82,15 +82,15 @@ export const UNIVERSAL_PATTERNS = {
  * These don't need word boundary matching since characters are unambiguous.
  */
 export const NON_LATIN_LANGUAGES = new Set([
-  'ja',  // Japanese (Hiragana, Katakana, Kanji)
-  'ko',  // Korean (Hangul)
-  'zh',  // Chinese (CJK)
-  'ar',  // Arabic
-  'hi',  // Hindi (Devanagari)
-  'bn',  // Bengali
-  'th',  // Thai
-  'ru',  // Russian (Cyrillic)
-  'uk',  // Ukrainian (Cyrillic)
+  'ja', // Japanese (Hiragana, Katakana, Kanji)
+  'ko', // Korean (Hangul)
+  'zh', // Chinese (CJK)
+  'ar', // Arabic
+  'hi', // Hindi (Devanagari)
+  'bn', // Bengali
+  'th', // Thai
+  'ru', // Russian (Cyrillic)
+  'uk', // Ukrainian (Cyrillic)
 ]);
 
 /**
@@ -98,8 +98,8 @@ export const NON_LATIN_LANGUAGES = new Set([
  * Used for proper text direction in code editors.
  */
 export const RTL_LANGUAGES = new Set([
-  'ar',  // Arabic
-  'he',  // Hebrew
+  'ar', // Arabic
+  'he', // Hebrew
 ]);
 
 /**

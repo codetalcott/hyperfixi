@@ -84,4 +84,20 @@ export { getRemovePatternsZh } from './zh';
 /**
  * Languages that have hand-crafted remove patterns.
  */
-export const removePatternLanguages = ['ar', 'bn', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const removePatternLanguages = [
+  'ar',
+  'bn',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

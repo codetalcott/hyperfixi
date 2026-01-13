@@ -119,8 +119,8 @@ function getSemanticModule(): typeof import('@hyperfixi/semantic') {
   }
   throw new Error(
     'HyperFixiSemantic not found. Load the semantic bundle before the multilingual bundle:\n' +
-    '<script src="hyperfixi-semantic.browser.global.js"></script>\n' +
-    '<script src="hyperfixi-multilingual.js"></script>'
+      '<script src="hyperfixi-semantic.browser.global.js"></script>\n' +
+      '<script src="hyperfixi-multilingual.js"></script>'
   );
 }
 
@@ -130,27 +130,58 @@ function getSemanticModule(): typeof import('@hyperfixi/semantic') {
 
 const SUPPORTED_COMMANDS = [
   // DOM (7)
-  'hide', 'show', 'add', 'remove', 'toggle', 'put', 'make',
+  'hide',
+  'show',
+  'add',
+  'remove',
+  'toggle',
+  'put',
+  'make',
   // Async (2)
-  'wait', 'fetch',
+  'wait',
+  'fetch',
   // Data (7)
-  'set', 'get', 'increment', 'decrement', 'bind', 'default', 'persist',
+  'set',
+  'get',
+  'increment',
+  'decrement',
+  'bind',
+  'default',
+  'persist',
   // Events (2)
-  'trigger', 'send',
+  'trigger',
+  'send',
   // Navigation (1)
   'go',
   // Control Flow (9)
-  'if', 'repeat', 'break', 'continue', 'halt', 'return', 'exit', 'unless', 'throw',
+  'if',
+  'repeat',
+  'break',
+  'continue',
+  'halt',
+  'return',
+  'exit',
+  'unless',
+  'throw',
   // Execution (2)
-  'call', 'pseudo-command',
+  'call',
+  'pseudo-command',
   // Content (1)
   'append',
   // Animation (4)
-  'transition', 'measure', 'settle', 'take',
+  'transition',
+  'measure',
+  'settle',
+  'take',
   // Advanced (2)
-  'js', 'async',
+  'js',
+  'async',
   // Utility (5)
-  'log', 'tell', 'copy', 'pick', 'beep',
+  'log',
+  'tell',
+  'copy',
+  'pick',
+  'beep',
   // Behaviors (1)
   'install',
   // Templates (1)
@@ -158,71 +189,86 @@ const SUPPORTED_COMMANDS = [
 ] as const;
 
 const SUPPORTED_LANGUAGES = [
-  'en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw',
+  'en',
+  'ja',
+  'ar',
+  'es',
+  'ko',
+  'zh',
+  'tr',
+  'pt',
+  'fr',
+  'de',
+  'id',
+  'qu',
+  'sw',
 ] as const;
 
 // Create runtime with ALL 43 commands
-const runtime = createMinimalRuntime([
-  // DOM (7)
-  createHideCommand(),
-  createShowCommand(),
-  createAddCommand(),
-  createRemoveCommand(),
-  createToggleCommand(),
-  createPutCommand(),
-  createMakeCommand(),
-  // Async (2)
-  createWaitCommand(),
-  createFetchCommand(),
-  // Data (7)
-  createSetCommand(),
-  createGetCommand(),
-  createIncrementCommand(),
-  createDecrementCommand(),
-  createBindCommand(),
-  createDefaultCommand(),
-  createPersistCommand(),
-  // Events (2)
-  createTriggerCommand(),
-  createSendCommand(),
-  // Navigation (1)
-  createGoCommand(),
-  // Control Flow (9)
-  createIfCommand(),
-  createRepeatCommand(),
-  createBreakCommand(),
-  createContinueCommand(),
-  createHaltCommand(),
-  createReturnCommand(),
-  createExitCommand(),
-  createUnlessCommand(),
-  createThrowCommand(),
-  // Execution (2)
-  createCallCommand(),
-  createPseudoCommand(),
-  // Content (1)
-  createAppendCommand(),
-  // Animation (4)
-  createTransitionCommand(),
-  createMeasureCommand(),
-  createSettleCommand(),
-  createTakeCommand(),
-  // Advanced (2)
-  createJsCommand(),
-  createAsyncCommand(),
-  // Utility (5)
-  createLogCommand(),
-  createTellCommand(),
-  createCopyCommand(),
-  createPickCommand(),
-  createBeepCommand(),
-  // Behaviors (1)
-  createInstallCommand(),
-  // Templates (1)
-  createRenderCommand(),
-], {
-  expressionPreload: 'all', // Load all expressions for full compatibility
-});
+const runtime = createMinimalRuntime(
+  [
+    // DOM (7)
+    createHideCommand(),
+    createShowCommand(),
+    createAddCommand(),
+    createRemoveCommand(),
+    createToggleCommand(),
+    createPutCommand(),
+    createMakeCommand(),
+    // Async (2)
+    createWaitCommand(),
+    createFetchCommand(),
+    // Data (7)
+    createSetCommand(),
+    createGetCommand(),
+    createIncrementCommand(),
+    createDecrementCommand(),
+    createBindCommand(),
+    createDefaultCommand(),
+    createPersistCommand(),
+    // Events (2)
+    createTriggerCommand(),
+    createSendCommand(),
+    // Navigation (1)
+    createGoCommand(),
+    // Control Flow (9)
+    createIfCommand(),
+    createRepeatCommand(),
+    createBreakCommand(),
+    createContinueCommand(),
+    createHaltCommand(),
+    createReturnCommand(),
+    createExitCommand(),
+    createUnlessCommand(),
+    createThrowCommand(),
+    // Execution (2)
+    createCallCommand(),
+    createPseudoCommand(),
+    // Content (1)
+    createAppendCommand(),
+    // Animation (4)
+    createTransitionCommand(),
+    createMeasureCommand(),
+    createSettleCommand(),
+    createTakeCommand(),
+    // Advanced (2)
+    createJsCommand(),
+    createAsyncCommand(),
+    // Utility (5)
+    createLogCommand(),
+    createTellCommand(),
+    createCopyCommand(),
+    createPickCommand(),
+    createBeepCommand(),
+    // Behaviors (1)
+    createInstallCommand(),
+    // Templates (1)
+    createRenderCommand(),
+  ],
+  {
+    expressionPreload: 'all', // Load all expressions for full compatibility
+  }
+);
 
 // =============================================================================
 // API

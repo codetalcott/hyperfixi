@@ -74,9 +74,7 @@ describe('Database Connection', () => {
 
       // Verify tables exist
       const tables = db
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-        )
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
         .all() as { name: string }[];
 
       const tableNames = tables.map(t => t.name);

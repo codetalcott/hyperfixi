@@ -338,9 +338,7 @@ describe('Expression Registry', () => {
     expect(enhancedStringExpressions['string-concat']).toBeInstanceOf(
       StringConcatenationExpression
     );
-    expect(enhancedStringExpressions['string-length']).toBeInstanceOf(
-      StringLengthExpression
-    );
+    expect(enhancedStringExpressions['string-length']).toBeInstanceOf(StringLengthExpression);
   });
 });
 

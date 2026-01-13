@@ -10,7 +10,7 @@ import {
   createFilterExpression,
   transformKeyboardEvent,
   isKeyboardShortcut,
-  getShortcutDescription
+  getShortcutDescription,
 } from './keyboard-shortcuts';
 
 describe('Keyboard Shortcuts Utility', () => {
@@ -23,7 +23,7 @@ describe('Keyboard Shortcuts Utility', () => {
         shift: false,
         alt: false,
         meta: false,
-        originalSyntax: 'key.enter'
+        originalSyntax: 'key.enter',
       });
     });
 
@@ -57,7 +57,7 @@ describe('Keyboard Shortcuts Utility', () => {
         shift: false,
         alt: false,
         meta: false,
-        originalSyntax: 'key.ctrl+s'
+        originalSyntax: 'key.ctrl+s',
       });
     });
 
@@ -135,7 +135,7 @@ describe('Keyboard Shortcuts Utility', () => {
       const ctrlShiftK = new KeyboardEvent('keydown', {
         key: 'k',
         ctrlKey: true,
-        shiftKey: true
+        shiftKey: true,
       });
       const ctrlK = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true });
       const shiftK = new KeyboardEvent('keydown', { key: 'k', shiftKey: true });
@@ -152,7 +152,7 @@ describe('Keyboard Shortcuts Utility', () => {
       const ctrlShiftS = new KeyboardEvent('keydown', {
         key: 's',
         ctrlKey: true,
-        shiftKey: true
+        shiftKey: true,
       });
 
       expect(filter(ctrlShiftS)).toBe(false);
@@ -284,14 +284,14 @@ describe('Keyboard Shortcuts Utility', () => {
   describe('Integration Scenarios', () => {
     it('should handle common shortcuts', () => {
       const shortcuts = [
-        'key.ctrl+c',    // Copy
-        'key.ctrl+v',    // Paste
-        'key.ctrl+s',    // Save
-        'key.ctrl+z',    // Undo
-        'key.ctrl+y',    // Redo
-        'key.esc',       // Cancel
-        'key.enter',     // Submit
-        'key.ctrl+enter' // Alternative submit
+        'key.ctrl+c', // Copy
+        'key.ctrl+v', // Paste
+        'key.ctrl+s', // Save
+        'key.ctrl+z', // Undo
+        'key.ctrl+y', // Redo
+        'key.esc', // Cancel
+        'key.enter', // Submit
+        'key.ctrl+enter', // Alternative submit
       ];
 
       shortcuts.forEach(syntax => {
@@ -303,10 +303,10 @@ describe('Keyboard Shortcuts Utility', () => {
 
     it('should handle accessibility shortcuts', () => {
       const shortcuts = [
-        'key.tab',        // Navigate
-        'key.shift+tab',  // Navigate backward
-        'key.space',      // Activate
-        'key.esc'         // Close
+        'key.tab', // Navigate
+        'key.shift+tab', // Navigate backward
+        'key.space', // Activate
+        'key.esc', // Close
       ];
 
       shortcuts.forEach(syntax => {
@@ -322,7 +322,7 @@ describe('Keyboard Shortcuts Utility', () => {
         'key.home',
         'key.end',
         'key.pageup',
-        'key.pagedown'
+        'key.pagedown',
       ];
 
       specialKeys.forEach(syntax => {

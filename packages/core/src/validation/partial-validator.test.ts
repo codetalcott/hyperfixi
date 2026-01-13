@@ -302,15 +302,17 @@ describe('validatePartialContent', () => {
       configurePartialValidation({
         customValidator: (html, target) => {
           if (html.includes('dangerous')) {
-            return [{
-              severity: 'warning',
-              category: 'script-style',
-              element: 'custom',
-              message: 'Custom validation detected dangerous content',
-              suggestion: 'Review the content',
-              targetSelector: target,
-              count: 1,
-            }];
+            return [
+              {
+                severity: 'warning',
+                category: 'script-style',
+                element: 'custom',
+                message: 'Custom validation detected dangerous content',
+                suggestion: 'Review the content',
+                targetSelector: target,
+                count: 1,
+              },
+            ];
           }
           return [];
         },
@@ -451,7 +453,8 @@ describe('real-world regression tests', () => {
     });
 
     it('should provide helpful suggestions for the bug scenario', () => {
-      const fullPageResponse = '<header><nav>Nav</nav></header><main><article>Content</article></main>';
+      const fullPageResponse =
+        '<header><nav>Nav</nav></header><main><article>Content</article></main>';
       const result = validatePartialContent(fullPageResponse, '#main');
 
       // Find the header issue

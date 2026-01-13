@@ -61,9 +61,7 @@ export type ArrayIndexInput = any; // Inferred from RuntimeValidator
  * Enhanced array literal expression for array creation
  * Provides comprehensive array literal creation with type safety
  */
-export class ArrayLiteralExpression
-  implements TypedExpressionImplementation<HyperScriptValue[]>
-{
+export class ArrayLiteralExpression implements TypedExpressionImplementation<HyperScriptValue[]> {
   public readonly name = 'ArrayLiteral';
   public readonly category = 'Special' as const;
   public readonly syntax = '[element1, element2, ...]';
@@ -85,8 +83,6 @@ export class ArrayLiteralExpression
     relatedExpressions: ['ArrayIndex'],
     performance: { averageTime: 0.1, complexity: 'O(n)' as const },
   };
-
-  
 
   /**
    * Validate array literal expression arguments
@@ -232,9 +228,7 @@ export class ArrayLiteralExpression
  * Enhanced array index expression for array element access
  * Provides comprehensive indexing including ranges and bounds checking
  */
-export class ArrayIndexExpression
-  implements TypedExpressionImplementation<HyperScriptValue>
-{
+export class ArrayIndexExpression implements TypedExpressionImplementation<HyperScriptValue> {
   public readonly name = 'ArrayIndex';
   public readonly category = 'Special' as const;
   public readonly syntax = 'array[index]';
@@ -255,8 +249,6 @@ export class ArrayIndexExpression
     relatedExpressions: ['ArrayLiteral'],
     performance: { averageTime: 0.05, complexity: 'O(1)' as const },
   };
-
-  
 
   /**
    * Validate array index expression arguments

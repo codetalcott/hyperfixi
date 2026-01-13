@@ -7,20 +7,20 @@
  * These map to CSS classes for styling.
  */
 export type PrismTokenType =
-  | 'command'       // toggle, add, remove (bold)
-  | 'modifier'      // to, from, into, with
-  | 'event'         // click, focus, submit
-  | 'logical'       // when, where, and, or, not
-  | 'temporal'      // seconds, milliseconds, ms
-  | 'value'         // true, false, null, it, me
-  | 'attribute'     // class, style, property
-  | 'expression'    // first, last, next, closest
-  | 'selector'      // #id, .class, [attr]
-  | 'string'        // "text", 'text'
-  | 'number'        // 123, 1.5s
-  | 'comment'       // -- comment
-  | 'operator'      // ==, !=, >, <
-  | 'punctuation';  // (, ), {, }
+  | 'command' // toggle, add, remove (bold)
+  | 'modifier' // to, from, into, with
+  | 'event' // click, focus, submit
+  | 'logical' // when, where, and, or, not
+  | 'temporal' // seconds, milliseconds, ms
+  | 'value' // true, false, null, it, me
+  | 'attribute' // class, style, property
+  | 'expression' // first, last, next, closest
+  | 'selector' // #id, .class, [attr]
+  | 'string' // "text", 'text'
+  | 'number' // 123, 1.5s
+  | 'comment' // -- comment
+  | 'operator' // ==, !=, >, <
+  | 'punctuation'; // (, ), {, }
 
 /**
  * Configuration options for the prism-hyperfixi plugin.

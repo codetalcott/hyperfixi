@@ -18,18 +18,18 @@ describe('HyperfixiService', () => {
       cache: {
         enabled: true,
         maxSize: 100,
-        ttl: 60000
+        ttl: 60000,
       },
       cors: {
         enabled: true,
-        origins: ['*']
+        origins: ['*'],
       },
       security: {
         helmet: true,
-        compression: true
-      }
+        compression: true,
+      },
     });
-    
+
     app = await service.start();
   });
 
@@ -39,27 +39,23 @@ describe('HyperfixiService', () => {
 
   describe('Health Check', () => {
     it('should respond to health check', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       expect(response.body).toMatchObject({
         status: 'healthy',
         version: expect.any(String),
-        uptime: expect.any(Number)
+        uptime: expect.any(Number),
       });
     });
 
     it('should include cache stats in health check', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       expect(response.body.cache).toMatchObject({
         size: expect.any(Number),
         hits: expect.any(Number),
         misses: expect.any(Number),
-        hitRatio: expect.any(Number)
+        hitRatio: expect.any(Number),
       });
     });
   });
@@ -68,52 +64,46 @@ describe('HyperfixiService', () => {
     it('should compile hyperscript via HTTP', async () => {
       const compileRequest: CompileRequest = {
         scripts: {
-          search: 'on keyup debounce 300ms send search'
-        }
+          search: 'on keyup debounce 300ms send search',
+        },
       };
 
-      const response = await request(app)
-        .post('/compile')
-        .send(compileRequest)
-        .expect(200);
+      const response = await request(app).post('/compile').send(compileRequest).expect(200);
 
       expect(response.body).toMatchObject({
         compiled: {
-          search: expect.any(String)
+          search: expect.any(String),
         },
         metadata: {
           search: {
             events: expect.arrayContaining(['keyup']),
             commands: expect.arrayContaining(['send']),
-            complexity: expect.any(Number)
-          }
+            complexity: expect.any(Number),
+          },
         },
         timings: {
           total: expect.any(Number),
           parse: expect.any(Number),
           compile: expect.any(Number),
-          cache: expect.any(Number)
+          cache: expect.any(Number),
         },
         warnings: expect.any(Array),
-        errors: expect.any(Array)
+        errors: expect.any(Array),
       });
     });
 
     it('should handle compilation with options', async () => {
       const compileRequest: CompileRequest = {
         scripts: {
-          modal: 'on click toggle .modal'
+          modal: 'on click toggle .modal',
         },
         options: {
           minify: true,
-          compatibility: 'legacy'
-        }
+          compatibility: 'legacy',
+        },
       };
 
-      const response = await request(app)
-        .post('/compile')
-        .send(compileRequest)
-        .expect(200);
+      const response = await request(app).post('/compile').send(compileRequest).expect(200);
 
       expect(response.body.compiled.modal).toBeDefined();
     });
@@ -121,17 +111,14 @@ describe('HyperfixiService', () => {
     it('should handle template variables', async () => {
       const compileRequest: CompileRequest = {
         scripts: {
-          userAction: 'on click fetch /api/users/{{userId}}'
+          userAction: 'on click fetch /api/users/{{userId}}',
         },
         context: {
-          templateVars: { userId: '123' }
-        }
+          templateVars: { userId: '123' },
+        },
       };
 
-      const response = await request(app)
-        .post('/compile')
-        .send(compileRequest)
-        .expect(200);
+      const response = await request(app).post('/compile').send(compileRequest).expect(200);
 
       expect(response.body.compiled.userAction).toContain('123');
     });
@@ -141,14 +128,11 @@ describe('HyperfixiService', () => {
         scripts: {
           search: 'on keyup send search',
           modal: 'on click toggle .modal',
-          form: 'on submit halt the event'
-        }
+          form: 'on submit halt the event',
+        },
       };
 
-      const response = await request(app)
-        .post('/compile')
-        .send(compileRequest)
-        .expect(200);
+      const response = await request(app).post('/compile').send(compileRequest).expect(200);
 
       expect(response.body.compiled).toHaveProperty('search');
       expect(response.body.compiled).toHaveProperty('modal');
@@ -161,14 +145,11 @@ describe('HyperfixiService', () => {
     it('should return errors for invalid syntax', async () => {
       const compileRequest: CompileRequest = {
         scripts: {
-          invalid: 'on click toggle .' // Invalid selector
-        }
+          invalid: 'on click toggle .', // Invalid selector
+        },
       };
 
-      const response = await request(app)
-        .post('/compile')
-        .send(compileRequest)
-        .expect(200); // Should not return 500, but include errors in response
+      const response = await request(app).post('/compile').send(compileRequest).expect(200); // Should not return 500, but include errors in response
 
       expect(response.body.errors).not.toHaveLength(0);
     });
@@ -186,13 +167,10 @@ describe('HyperfixiService', () => {
   describe('Validation Endpoint', () => {
     it('should validate hyperscript without compiling', async () => {
       const validateRequest: ValidateRequest = {
-        script: 'on click toggle .active'
+        script: 'on click toggle .active',
       };
 
-      const response = await request(app)
-        .post('/validate')
-        .send(validateRequest)
-        .expect(200);
+      const response = await request(app).post('/validate').send(validateRequest).expect(200);
 
       expect(response.body).toMatchObject({
         valid: true,
@@ -201,20 +179,17 @@ describe('HyperfixiService', () => {
         metadata: {
           events: expect.arrayContaining(['click']),
           commands: expect.arrayContaining(['toggle']),
-          selectors: expect.arrayContaining(['.active'])
-        }
+          selectors: expect.arrayContaining(['.active']),
+        },
       });
     });
 
     it('should detect invalid hyperscript', async () => {
       const validateRequest: ValidateRequest = {
-        script: 'on click toggle .' // Invalid selector
+        script: 'on click toggle .', // Invalid selector
       };
 
-      const response = await request(app)
-        .post('/validate')
-        .send(validateRequest)
-        .expect(200);
+      const response = await request(app).post('/validate').send(validateRequest).expect(200);
 
       expect(response.body).toMatchObject({
         valid: false,
@@ -223,9 +198,9 @@ describe('HyperfixiService', () => {
             type: expect.any(String),
             message: expect.stringContaining('selector'),
             line: expect.any(Number),
-            column: expect.any(Number)
-          })
-        ])
+            column: expect.any(Number),
+          }),
+        ]),
       });
     });
 
@@ -233,14 +208,11 @@ describe('HyperfixiService', () => {
       const validateRequest: ValidateRequest = {
         script: 'on click fetch /api/users/{{userId}}',
         context: {
-          templateVars: { userId: '123' }
-        }
+          templateVars: { userId: '123' },
+        },
       };
 
-      const response = await request(app)
-        .post('/validate')
-        .send(validateRequest)
-        .expect(200);
+      const response = await request(app).post('/validate').send(validateRequest).expect(200);
 
       expect(response.body.valid).toBe(true);
     });
@@ -253,20 +225,17 @@ describe('HyperfixiService', () => {
           {
             id: 'search',
             script: 'on keyup send search',
-            options: { minify: true }
+            options: { minify: true },
           },
           {
             id: 'modal',
             script: 'on click toggle .modal',
-            options: { compatibility: 'legacy' }
-          }
-        ]
+            options: { compatibility: 'legacy' },
+          },
+        ],
       };
 
-      const response = await request(app)
-        .post('/batch')
-        .send(batchRequest)
-        .expect(200);
+      const response = await request(app).post('/batch').send(batchRequest).expect(200);
 
       expect(response.body.compiled).toHaveProperty('search');
       expect(response.body.compiled).toHaveProperty('modal');
@@ -278,19 +247,16 @@ describe('HyperfixiService', () => {
         definitions: [
           {
             id: 'valid',
-            script: 'on click toggle .active'
+            script: 'on click toggle .active',
           },
           {
             id: 'invalid',
-            script: 'on click toggle .' // Invalid
-          }
-        ]
+            script: 'on click toggle .', // Invalid
+          },
+        ],
       };
 
-      const response = await request(app)
-        .post('/batch')
-        .send(batchRequest)
-        .expect(200);
+      const response = await request(app).post('/batch').send(batchRequest).expect(200);
 
       expect(response.body.compiled).toHaveProperty('valid');
       expect(response.body.errors.length).toBeGreaterThan(0);
@@ -301,29 +267,23 @@ describe('HyperfixiService', () => {
     it('should cache compilation results', async () => {
       const compileRequest: CompileRequest = {
         scripts: {
-          cached: 'on click toggle .active'
-        }
+          cached: 'on click toggle .active',
+        },
       };
 
       // First request
-      const response1 = await request(app)
-        .post('/compile')
-        .send(compileRequest)
-        .expect(200);
+      const response1 = await request(app).post('/compile').send(compileRequest).expect(200);
 
       const firstTiming = response1.body.timings.total;
 
       // Second request (should be cached)
-      const response2 = await request(app)
-        .post('/compile')
-        .send(compileRequest)
-        .expect(200);
+      const response2 = await request(app).post('/compile').send(compileRequest).expect(200);
 
       const secondTiming = response2.body.timings.total;
 
       // Results should be identical
       expect(response1.body.compiled).toEqual(response2.body.compiled);
-      
+
       // Second request should be faster (cached)
       expect(secondTiming).toBeLessThan(firstTiming);
     });
@@ -333,23 +293,17 @@ describe('HyperfixiService', () => {
 
       const request1: CompileRequest = {
         scripts: script,
-        options: { minify: false }
+        options: { minify: false },
       };
 
       const request2: CompileRequest = {
         scripts: script,
-        options: { minify: true }
+        options: { minify: true },
       };
 
-      const response1 = await request(app)
-        .post('/compile')
-        .send(request1)
-        .expect(200);
+      const response1 = await request(app).post('/compile').send(request1).expect(200);
 
-      const response2 = await request(app)
-        .post('/compile')
-        .send(request2)
-        .expect(200);
+      const response2 = await request(app).post('/compile').send(request2).expect(200);
 
       // Results should be different due to different options
       expect(response1.body.compiled.cached).not.toEqual(response2.body.compiled.cached);
@@ -383,8 +337,8 @@ describe('HyperfixiService', () => {
         .post('/compile')
         .send({
           scripts: {
-            test: 'valid script on click log "test"'
-          }
+            test: 'valid script on click log "test"',
+          },
         })
         .expect(200);
 
@@ -403,9 +357,7 @@ describe('HyperfixiService', () => {
     });
 
     it('should include security headers', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       // Helmet adds various security headers
       expect(response.headers['x-content-type-options']).toBe('nosniff');
@@ -414,8 +366,8 @@ describe('HyperfixiService', () => {
     it('should compress responses', async () => {
       const compileRequest: CompileRequest = {
         scripts: {
-          large: 'on click '.repeat(100) + 'log "large script"'
-        }
+          large: 'on click '.repeat(100) + 'log "large script"',
+        },
       };
 
       const response = await request(app)
@@ -431,18 +383,18 @@ describe('HyperfixiService', () => {
 
   describe('Performance', () => {
     it('should handle concurrent requests', async () => {
-      const requests = Array.from({ length: 10 }, (_, i) => 
+      const requests = Array.from({ length: 10 }, (_, i) =>
         request(app)
           .post('/compile')
           .send({
             scripts: {
-              [`script${i}`]: `on click log "script ${i}"`
-            }
+              [`script${i}`]: `on click log "script ${i}"`,
+            },
           })
       );
 
       const responses = await Promise.all(requests);
-      
+
       responses.forEach(response => {
         expect(response.status).toBe(200);
         expect(response.body.compiled).toBeDefined();
@@ -451,13 +403,13 @@ describe('HyperfixiService', () => {
 
     it('should complete requests within reasonable time', async () => {
       const start = Date.now();
-      
+
       await request(app)
         .post('/compile')
         .send({
           scripts: {
-            performance: 'on click wait 1ms then log "done"'
-          }
+            performance: 'on click wait 1ms then log "done"',
+          },
         })
         .expect(200);
 

@@ -106,7 +106,12 @@ export interface CompilationResult {
 
 export interface CompilationWarning {
   /** Warning type */
-  type: 'unused-variable' | 'missing-component' | 'invalid-hyperscript' | 'performance' | 'security';
+  type:
+    | 'unused-variable'
+    | 'missing-component'
+    | 'invalid-hyperscript'
+    | 'performance'
+    | 'security';
   /** Warning message */
   message: string;
   /** Source location */

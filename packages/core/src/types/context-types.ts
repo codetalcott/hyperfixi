@@ -78,9 +78,10 @@ export interface TypedContextImplementation<TInput, TOutput> {
 // Enhanced Context Base Class
 // ============================================================================
 
-export abstract class ContextBase<TInput, TOutput>
-  implements TypedContextImplementation<TInput, TOutput>
-{
+export abstract class ContextBase<TInput, TOutput> implements TypedContextImplementation<
+  TInput,
+  TOutput
+> {
   abstract readonly name: string;
   abstract readonly category: ContextCategory;
   abstract readonly description: string;

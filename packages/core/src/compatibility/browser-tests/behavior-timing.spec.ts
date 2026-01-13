@@ -77,7 +77,7 @@ test('check behaviors timing and installation', async ({ page }) => {
       installed: !!(testBtn as any).__hyperscript?._behaviors?.length,
       beforeClick,
       afterClick,
-      toggled: !beforeClick && afterClick
+      toggled: !beforeClick && afterClick,
     };
   });
   console.log('Manual install:', manualInstall);
@@ -96,7 +96,7 @@ test('check behaviors timing and installation', async ({ page }) => {
     afterFirstClick,
     afterSecondClick,
     toggledOn: !beforeClick && afterFirstClick,
-    toggledOff: afterFirstClick && !afterSecondClick
+    toggledOff: afterFirstClick && !afterSecondClick,
   });
 
   // Log console messages

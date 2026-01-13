@@ -416,9 +416,7 @@ describe.skip('Enhanced Pattern Matching Expressions', () => {
   describe('Expression Registry', () => {
     it('should export all enhanced pattern matching expressions', () => {
       expect(enhancedPatternMatchingExpressions.matches).toBeInstanceOf(MatchesExpression);
-      expect(enhancedPatternMatchingExpressions.contains).toBeInstanceOf(
-        ContainsExpression
-      );
+      expect(enhancedPatternMatchingExpressions.contains).toBeInstanceOf(ContainsExpression);
       expect(enhancedPatternMatchingExpressions.in).toBeInstanceOf(InExpression);
     });
 

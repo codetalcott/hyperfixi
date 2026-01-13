@@ -5,7 +5,7 @@
 /**
  * Analytics event types
  */
-export type AnalyticsEventType = 
+export type AnalyticsEventType =
   | 'hyperscript:compiled'
   | 'hyperscript:executed'
   | 'hyperscript:error'

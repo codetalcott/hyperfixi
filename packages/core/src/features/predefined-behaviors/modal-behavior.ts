@@ -51,7 +51,7 @@ const defaultOptions: Required<ModalBehaviorOptions> = {
   closeOnBackdropClick: true,
   closeOnEscape: true,
   backdropClass: '',
-  modal: true
+  modal: true,
 };
 
 /**
@@ -106,11 +106,13 @@ export const modalBehaviorDefinition: BehaviorDefinition = {
           }
 
           // Dispatch custom event
-          element.dispatchEvent(new CustomEvent('modal:open', {
-            detail: { element },
-            bubbles: true,
-            cancelable: false
-          }));
+          element.dispatchEvent(
+            new CustomEvent('modal:open', {
+              detail: { element },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
         }
       },
 
@@ -122,11 +124,13 @@ export const modalBehaviorDefinition: BehaviorDefinition = {
           nativeClose(returnValue);
 
           // Dispatch custom event
-          element.dispatchEvent(new CustomEvent('modal:close', {
-            detail: { element, returnValue },
-            bubbles: true,
-            cancelable: false
-          }));
+          element.dispatchEvent(
+            new CustomEvent('modal:close', {
+              detail: { element, returnValue },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
         }
       },
 
@@ -135,7 +139,7 @@ export const modalBehaviorDefinition: BehaviorDefinition = {
        */
       isModalOpen() {
         return element.open;
-      }
+      },
     };
 
     // Attach methods to element
@@ -168,11 +172,13 @@ export const modalBehaviorDefinition: BehaviorDefinition = {
       }
 
       // Dispatch custom cancel event
-      element.dispatchEvent(new CustomEvent('modal:cancel', {
-        detail: { element },
-        bubbles: true,
-        cancelable: false
-      }));
+      element.dispatchEvent(
+        new CustomEvent('modal:cancel', {
+          detail: { element },
+          bubbles: true,
+          cancelable: false,
+        })
+      );
     };
     element.addEventListener('cancel', cancelHandler);
     eventListeners.push({ type: 'cancel', handler: cancelHandler });
@@ -206,7 +212,7 @@ export const modalBehaviorDefinition: BehaviorDefinition = {
     if ((element as any)._modalCleanup) {
       (element as any)._modalCleanup();
     }
-  }
+  },
 };
 
 /**

@@ -4,7 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createTypedExpressionContext, createMockElement, type TestExpressionContext } from '../test-utilities';
+import {
+  createTypedExpressionContext,
+  createMockElement,
+  type TestExpressionContext,
+} from '../test-utilities';
 
 // Import all expression categories
 import { referencesExpressions } from './references/index';
@@ -276,7 +280,7 @@ describe('Expression Integration Tests', () => {
 
       // Step 2: Check each one for .hidden class
       let hiddenCount = 0;
-      for (const element of (contentElements as unknown[])) {
+      for (const element of contentElements as unknown[]) {
         const hasHidden = await logicalExpressions.matches.evaluate(context, element, '.hidden');
         if (hasHidden) hiddenCount++;
       }
@@ -402,7 +406,10 @@ describe('Expression Integration Tests', () => {
         context,
         '.missing'
       );
-      const noMissing = await logicalExpressions.not.evaluate(context, (missingElements as unknown[] | { length: number }).length > 0);
+      const noMissing = await logicalExpressions.not.evaluate(
+        context,
+        (missingElements as unknown[] | { length: number }).length > 0
+      );
 
       // Step 2: Check if .content elements exist
       const contentElements = await referencesExpressions.elementWithSelector.evaluate(

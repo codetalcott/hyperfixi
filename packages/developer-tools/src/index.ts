@@ -48,7 +48,13 @@ export type {
 } from './types';
 
 // Export analyzer
-export { analyzeProject, analyzeFile, generateReport, validateScript, getSuggestions } from './analyzer';
+export {
+  analyzeProject,
+  analyzeFile,
+  generateReport,
+  validateScript,
+  getSuggestions,
+} from './analyzer';
 
 // Export builder
 export { VisualBuilderServer, buildProject } from './builder';
@@ -67,7 +73,12 @@ export { BundleAnalyzer, analyzeBundle, analyzeBundleFiles } from './bundle-anal
 export type { TreemapNode, AnalyzerOptions } from './bundle-analyzer';
 
 export { HyperFixiMigrator, migrate, createMigrationRule } from './migrator';
-export type { MigrationConfig, MigrationRule, MigrationResult, FileTransformResult } from './migrator';
+export type {
+  MigrationConfig,
+  MigrationRule,
+  MigrationResult,
+  FileTransformResult,
+} from './migrator';
 
 export { HyperScriptProfiler, profile, compareProfiles } from './profiler';
 export type { ProfilerConfig } from './profiler';

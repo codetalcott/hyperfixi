@@ -33,12 +33,15 @@ export class UsageAnalyzer {
   /**
    * Analyze project usage patterns
    */
-  async analyzeProject(projectPath: string, options: {
-    include?: string[];
-    exclude?: string[];
-    followDependencies?: boolean;
-    cacheResults?: boolean;
-  } = {}): Promise<UsageAnalysis> {
+  async analyzeProject(
+    projectPath: string,
+    options: {
+      include?: string[];
+      exclude?: string[];
+      followDependencies?: boolean;
+      cacheResults?: boolean;
+    } = {}
+  ): Promise<UsageAnalysis> {
     const {
       include = ['**/*.{js,ts,jsx,tsx,html,htm}'],
       exclude = ['node_modules/**', 'dist/**', 'build/**'],
@@ -48,7 +51,7 @@ export class UsageAnalyzer {
 
     // Find all relevant files
     const files = await this.findFiles(projectPath, include, exclude);
-    
+
     // Analyze each file
     const fileUsages: FileUsage[] = [];
     for (const filePath of files) {
@@ -57,7 +60,7 @@ export class UsageAnalyzer {
     }
 
     // Analyze dependencies if requested
-    const dependencyUsages = followDependencies 
+    const dependencyUsages = followDependencies
       ? await this.analyzeDependencies(projectPath, fileUsages)
       : [];
 
@@ -97,7 +100,7 @@ export class UsageAnalyzer {
     exclude: string[]
   ): Promise<string[]> {
     const files: string[] = [];
-    
+
     for (const pattern of include) {
       const matches = await glob(pattern, {
         cwd: projectPath,
@@ -115,12 +118,12 @@ export class UsageAnalyzer {
    */
   private async analyzeFile(filePath: string, useCache: boolean): Promise<FileUsage> {
     const cacheKey = `file:${filePath}`;
-    
+
     // Check cache
     if (useCache && this.cache.has(cacheKey)) {
       const stats = await fs.stat(filePath);
       const cached = this.cache.get(cacheKey);
-      
+
       if (cached.lastModified >= stats.mtime.getTime()) {
         return cached.usage;
       }
@@ -170,7 +173,10 @@ export class UsageAnalyzer {
   /**
    * Analyze JavaScript/TypeScript file
    */
-  private async analyzeJavaScript(content: string, filePath: string): Promise<{
+  private async analyzeJavaScript(
+    content: string,
+    filePath: string
+  ): Promise<{
     imports: ImportUsage[];
     exports: ExportUsage[];
   }> {
@@ -187,7 +193,7 @@ export class UsageAnalyzer {
       walk(ast, {
         ImportDeclaration: (node: any) => {
           const source = node.source.value;
-          
+
           for (const specifier of node.specifiers) {
             const importUsage: ImportUsage = {
               source,
@@ -197,7 +203,7 @@ export class UsageAnalyzer {
               locations: this.findUsageLocations(content, specifier.local.name, filePath),
               treeshakable: this.isTreeshakable(source, specifier),
             };
-            
+
             imports.push(importUsage);
           }
         },
@@ -261,13 +267,13 @@ export class UsageAnalyzer {
    */
   private async analyzeHTML(content: string, filePath: string): Promise<HyperscriptUsage[]> {
     const usage: HyperscriptUsage[] = [];
-    
+
     // Simple regex-based parsing for HyperScript attributes
     const hyperscriptRegex = /_\s*=\s*["']([^"']+)["']/g;
     const dataScriptRegex = /data-script\s*=\s*["']([^"']+)["']/g;
-    
+
     let match;
-    
+
     // Find _ attributes
     while ((match = hyperscriptRegex.exec(content)) !== null) {
       const script = match[1];
@@ -313,8 +319,8 @@ export class UsageAnalyzer {
     fileUsages: FileUsage[]
   ): Promise<DependencyUsage[]> {
     const packageJsonPath = path.join(projectPath, 'package.json');
-    
-    if (!await fs.pathExists(packageJsonPath)) {
+
+    if (!(await fs.pathExists(packageJsonPath))) {
       return [];
     }
 
@@ -346,7 +352,7 @@ export class UsageAnalyzer {
     // Count usage across files
     const usedExports = new Set<string>();
     const unusedExports = new Set<string>();
-    
+
     for (const fileUsage of fileUsages) {
       for (const importUsage of fileUsage.imports) {
         if (importUsage.source === name || importUsage.source.startsWith(`${name}/`)) {
@@ -357,10 +363,10 @@ export class UsageAnalyzer {
 
     // Estimate dependency size
     const size = await this.estimateDependencySize(name, projectPath);
-    
+
     // Calculate treeshaking potential
     const treeshakingPotential = this.calculateTreeshakingPotential(name, usedExports);
-    
+
     // Find alternatives
     const alternatives = await this.findDependencyAlternatives(name, version);
 
@@ -387,7 +393,7 @@ export class UsageAnalyzer {
       if (componentRegex.test(fileUsage.path)) {
         const name = path.basename(fileUsage.path, path.extname(fileUsage.path));
         const usageCount = this.countComponentUsage(name, fileUsages);
-        
+
         components.push({
           name,
           path: fileUsage.path,
@@ -413,9 +419,8 @@ export class UsageAnalyzer {
     const patterns: UsagePattern[] = [];
 
     // Identify lazy-loadable modules
-    const lazyModules = fileUsages.filter(f => 
-      f.imports.some(imp => imp.type === 'dynamic') &&
-      !f.criticalPath
+    const lazyModules = fileUsages.filter(
+      f => f.imports.some(imp => imp.type === 'dynamic') && !f.criticalPath
     );
 
     if (lazyModules.length > 0) {
@@ -430,9 +435,10 @@ export class UsageAnalyzer {
     }
 
     // Identify vendor modules
-    const vendorDeps = dependencyUsages.filter(d => 
-      d.size > 50000 && // Large dependencies
-      d.usedExports.length > 0
+    const vendorDeps = dependencyUsages.filter(
+      d =>
+        d.size > 50000 && // Large dependencies
+        d.usedExports.length > 0
     );
 
     if (vendorDeps.length > 0) {
@@ -470,11 +476,12 @@ export class UsageAnalyzer {
     fileUsages: FileUsage[],
     dependencyUsages: DependencyUsage[]
   ): UsageMetrics {
-    const totalSize = fileUsages.reduce((sum, f) => sum + f.size, 0) +
-                    dependencyUsages.reduce((sum, d) => sum + d.size, 0);
+    const totalSize =
+      fileUsages.reduce((sum, f) => sum + f.size, 0) +
+      dependencyUsages.reduce((sum, d) => sum + d.size, 0);
 
     const treeshakingPotential = dependencyUsages.reduce(
-      (sum, d) => sum + (d.size * d.treeshakingPotential),
+      (sum, d) => sum + d.size * d.treeshakingPotential,
       0
     );
 
@@ -506,7 +513,8 @@ export class UsageAnalyzer {
     const recommendations: BundleRecommendation[] = [];
 
     // Recommend code splitting for large bundles
-    if (metrics.totalSize > 500000) { // 500KB
+    if (metrics.totalSize > 500000) {
+      // 500KB
       recommendations.push({
         type: 'split',
         description: 'Split large bundle into smaller chunks',
@@ -524,7 +532,10 @@ export class UsageAnalyzer {
         type: 'eliminate',
         description: 'Remove unused exports from dependencies',
         modules: treeshakableDeps.map(d => d.name),
-        expectedSavings: treeshakableDeps.reduce((sum, d) => sum + (d.size * d.treeshakingPotential), 0),
+        expectedSavings: treeshakableDeps.reduce(
+          (sum, d) => sum + d.size * d.treeshakingPotential,
+          0
+        ),
         priority: 'medium',
         effort: 'low',
       });
@@ -544,7 +555,9 @@ export class UsageAnalyzer {
     }
 
     // Recommend dependency alternatives
-    const replaceableDeps = dependencyUsages.filter(d => d.replaceable && d.alternatives.length > 0);
+    const replaceableDeps = dependencyUsages.filter(
+      d => d.replaceable && d.alternatives.length > 0
+    );
     for (const dep of replaceableDeps) {
       const bestAlternative = dep.alternatives[0]; // Assume sorted by best first
       if (!bestAlternative) continue;
@@ -563,8 +576,10 @@ export class UsageAnalyzer {
     return recommendations.sort((a, b) => {
       // Sort by priority and expected savings
       const priorityWeight = { high: 3, medium: 2, low: 1 };
-      return (priorityWeight[b.priority] - priorityWeight[a.priority]) ||
-             (b.expectedSavings - a.expectedSavings);
+      return (
+        priorityWeight[b.priority] - priorityWeight[a.priority] ||
+        b.expectedSavings - a.expectedSavings
+      );
     });
   }
 
@@ -579,19 +594,22 @@ export class UsageAnalyzer {
 
   private extractExportNames(declaration: any): string[] {
     const names: string[] = [];
-    
+
     if (declaration.type === 'VariableDeclaration') {
       for (const declarator of declaration.declarations) {
         if (declarator.id.type === 'Identifier') {
           names.push(declarator.id.name);
         }
       }
-    } else if (declaration.type === 'FunctionDeclaration' || declaration.type === 'ClassDeclaration') {
+    } else if (
+      declaration.type === 'FunctionDeclaration' ||
+      declaration.type === 'ClassDeclaration'
+    ) {
       if (declaration.id) {
         names.push(declaration.id.name);
       }
     }
-    
+
     return names;
   }
 
@@ -605,7 +623,7 @@ export class UsageAnalyzer {
     const locations: SourceLocation[] = [];
     const lines = content.split('\n');
     const regex = new RegExp(`\\b${name}\\b`, 'g');
-    
+
     for (let i = 0; i < lines.length; i++) {
       let match;
       while ((match = regex.exec(lines[i])) !== null) {
@@ -616,7 +634,7 @@ export class UsageAnalyzer {
         });
       }
     }
-    
+
     return locations;
   }
 
@@ -625,11 +643,11 @@ export class UsageAnalyzer {
     if (source.startsWith('.') || source.startsWith('/')) {
       return true; // Local modules are usually tree-shakable
     }
-    
+
     if (specifier.type === 'ImportNamespaceSpecifier') {
       return false; // import * as is not tree-shakable
     }
-    
+
     // Known tree-shakable libraries
     const treeShakableLibs = ['lodash-es', 'ramda', 'date-fns'];
     return treeShakableLibs.some(lib => source.startsWith(lib));
@@ -644,7 +662,7 @@ export class UsageAnalyzer {
 
   private extractHyperscriptFeatures(script: string): string[] {
     const features: string[] = [];
-    
+
     // Common HyperScript features
     const patterns = {
       events: /on\s+\w+/g,
@@ -652,30 +670,30 @@ export class UsageAnalyzer {
       selectors: /<[^>]+>|#[\w-]+|\.[\w-]+/g,
       references: /\b(me|my|you|your|it|its)\b/g,
     };
-    
+
     for (const [feature, pattern] of Object.entries(patterns)) {
       if (pattern.test(script)) {
         features.push(feature);
       }
     }
-    
+
     return features;
   }
 
   private calculateScriptComplexity(script: string): number {
     let complexity = 1;
-    
+
     // Add complexity for different constructs
     complexity += (script.match(/\b(if|then|else|unless|when)\b/g) || []).length * 2;
     complexity += (script.match(/\b(for|while|repeat|until)\b/g) || []).length * 3;
     complexity += (script.match(/\(/g) || []).length; // Function calls
-    
+
     return complexity;
   }
 
   private extractScriptDependencies(script: string): string[] {
     const dependencies: string[] = [];
-    
+
     // Look for references to external functions or libraries
     const functionCalls = script.match(/\b\w+\(/g);
     if (functionCalls) {
@@ -686,7 +704,7 @@ export class UsageAnalyzer {
         }
       }
     }
-    
+
     return [...new Set(dependencies)];
   }
 
@@ -695,13 +713,13 @@ export class UsageAnalyzer {
     // For now, return a simple heuristic based on file type and location
     const ext = path.extname(filePath);
     const isInRoot = path.dirname(filePath).split(path.sep).length <= 2;
-    
+
     let frequency = 0.5; // Base frequency
-    
+
     if (['.html', '.htm'].includes(ext)) frequency += 0.3;
     if (isInRoot) frequency += 0.2;
     if (filePath.includes('index')) frequency += 0.3;
-    
+
     return Math.min(1.0, frequency);
   }
 
@@ -709,22 +727,22 @@ export class UsageAnalyzer {
     // Determine if file is on critical path
     const fileName = path.basename(filePath, path.extname(filePath));
     const criticalNames = ['index', 'main', 'app', 'bootstrap', 'init'];
-    
+
     return criticalNames.some(name => fileName.toLowerCase().includes(name));
   }
 
   private async estimateDependencySize(name: string, projectPath: string): Promise<number> {
     try {
       const nodeModulesPath = path.join(projectPath, 'node_modules', name);
-      
+
       if (await fs.pathExists(nodeModulesPath)) {
         const packageJsonPath = path.join(nodeModulesPath, 'package.json');
         const packageJson = await fs.readJson(packageJsonPath);
-        
+
         // Try to estimate size from main file
         const mainFile = packageJson.main || 'index.js';
         const mainPath = path.join(nodeModulesPath, mainFile);
-        
+
         if (await fs.pathExists(mainPath)) {
           const stats = await fs.stat(mainPath);
           return stats.size;
@@ -733,7 +751,7 @@ export class UsageAnalyzer {
     } catch (error) {
       // Ignore errors, return default estimate
     }
-    
+
     // Default size estimates for common libraries
     const sizeEstimates: Record<string, number> = {
       react: 45000,
@@ -742,7 +760,7 @@ export class UsageAnalyzer {
       axios: 15000,
       express: 200000,
     };
-    
+
     return sizeEstimates[name] || 10000; // Default 10KB
   }
 
@@ -756,16 +774,19 @@ export class UsageAnalyzer {
       rxjs: 0.7,
       '@material-ui/core': 0.6,
     };
-    
+
     const baseTreeshaking = knownTreeshakable[name] || 0.3; // Default 30%
-    
+
     // Reduce potential if many exports are used
     const usageReduction = Math.min(0.5, usedExports.size * 0.1);
-    
+
     return Math.max(0, baseTreeshaking - usageReduction);
   }
 
-  private async findDependencyAlternatives(name: string, version: string): Promise<DependencyAlternative[]> {
+  private async findDependencyAlternatives(
+    name: string,
+    version: string
+  ): Promise<DependencyAlternative[]> {
     // This would typically query a database of dependency alternatives
     // For now, return some common alternatives
     const alternatives: Record<string, DependencyAlternative[]> = {
@@ -802,13 +823,13 @@ export class UsageAnalyzer {
         },
       ],
     };
-    
+
     return alternatives[name] || [];
   }
 
   private countComponentUsage(name: string, fileUsages: FileUsage[]): number {
     let count = 0;
-    
+
     for (const fileUsage of fileUsages) {
       for (const importUsage of fileUsage.imports) {
         if (importUsage.specifier.toLowerCase().includes(name.toLowerCase())) {
@@ -816,7 +837,7 @@ export class UsageAnalyzer {
         }
       }
     }
-    
+
     return count;
   }
 

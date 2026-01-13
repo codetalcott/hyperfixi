@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { 
-  ENHANCEMENT_LEVELS, 
-  getEnhancementsForLevel, 
-  getFallbackEnhancements, 
-  filterEnhancementsByConditions 
+import {
+  ENHANCEMENT_LEVELS,
+  getEnhancementsForLevel,
+  getFallbackEnhancements,
+  filterEnhancementsByConditions,
 } from './levels';
 import type { CapabilityLevel, Enhancement } from './types';
 
@@ -11,7 +11,7 @@ describe('Enhancement Levels', () => {
   describe('ENHANCEMENT_LEVELS', () => {
     it('should contain all capability levels', () => {
       const expectedLevels: CapabilityLevel[] = ['basic', 'enhanced', 'modern', 'cutting-edge'];
-      
+
       for (const level of expectedLevels) {
         expect(ENHANCEMENT_LEVELS).toHaveProperty(level);
         expect(Array.isArray(ENHANCEMENT_LEVELS[level])).toBe(true);
@@ -26,7 +26,7 @@ describe('Enhancement Levels', () => {
           expect(enhancement).toHaveProperty('level');
           expect(enhancement).toHaveProperty('requires');
           expect(enhancement).toHaveProperty('priority');
-          
+
           expect(typeof enhancement.id).toBe('string');
           expect(typeof enhancement.name).toBe('string');
           expect(enhancement.level).toBe(level);
@@ -40,7 +40,7 @@ describe('Enhancement Levels', () => {
       for (const [level, enhancements] of Object.entries(ENHANCEMENT_LEVELS)) {
         const ids = enhancements.map(e => e.id);
         const uniqueIds = new Set(ids);
-        
+
         expect(uniqueIds.size).toBe(ids.length);
       }
     });
@@ -48,7 +48,7 @@ describe('Enhancement Levels', () => {
     it('should have priorities that allow proper sorting', () => {
       for (const [level, enhancements] of Object.entries(ENHANCEMENT_LEVELS)) {
         const priorities = enhancements.map(e => e.priority);
-        
+
         for (const priority of priorities) {
           expect(priority).toBeGreaterThan(0);
           expect(Number.isInteger(priority)).toBe(true);
@@ -60,9 +60,9 @@ describe('Enhancement Levels', () => {
   describe('getEnhancementsForLevel', () => {
     it('should return enhancements for basic level', () => {
       const enhancements = getEnhancementsForLevel('basic');
-      
+
       expect(enhancements.length).toBeGreaterThan(0);
-      
+
       // Should only include basic level enhancements
       for (const enhancement of enhancements) {
         expect(enhancement.level).toBe('basic');
@@ -71,9 +71,9 @@ describe('Enhancement Levels', () => {
 
     it('should return enhancements up to enhanced level', () => {
       const enhancements = getEnhancementsForLevel('enhanced');
-      
+
       expect(enhancements.length).toBeGreaterThan(0);
-      
+
       // Should include basic and enhanced level enhancements
       const levels = new Set(enhancements.map(e => e.level));
       expect(levels.has('basic')).toBe(true);
@@ -84,9 +84,9 @@ describe('Enhancement Levels', () => {
 
     it('should return enhancements up to modern level', () => {
       const enhancements = getEnhancementsForLevel('modern');
-      
+
       expect(enhancements.length).toBeGreaterThan(0);
-      
+
       // Should include basic, enhanced, and modern level enhancements
       const levels = new Set(enhancements.map(e => e.level));
       expect(levels.has('basic')).toBe(true);
@@ -97,9 +97,9 @@ describe('Enhancement Levels', () => {
 
     it('should return all enhancements for cutting-edge level', () => {
       const enhancements = getEnhancementsForLevel('cutting-edge');
-      
+
       expect(enhancements.length).toBeGreaterThan(0);
-      
+
       // Should include all level enhancements
       const levels = new Set(enhancements.map(e => e.level));
       expect(levels.has('basic')).toBe(true);
@@ -110,11 +110,9 @@ describe('Enhancement Levels', () => {
 
     it('should sort enhancements by priority', () => {
       const enhancements = getEnhancementsForLevel('modern');
-      
+
       for (let i = 1; i < enhancements.length; i++) {
-        expect(enhancements[i].priority).toBeGreaterThanOrEqual(
-          enhancements[i - 1].priority
-        );
+        expect(enhancements[i].priority).toBeGreaterThanOrEqual(enhancements[i - 1].priority);
       }
     });
   });
@@ -123,11 +121,9 @@ describe('Enhancement Levels', () => {
     it('should return enhancements that dont require missing capabilities', () => {
       const missingCapabilities = ['webComponents', 'serviceWorker'];
       const fallbacks = getFallbackEnhancements('modern', missingCapabilities);
-      
+
       for (const fallback of fallbacks) {
-        const hasRequiredMissing = fallback.requires.some(req => 
-          missingCapabilities.includes(req)
-        );
+        const hasRequiredMissing = fallback.requires.some(req => missingCapabilities.includes(req));
         expect(hasRequiredMissing).toBe(false);
       }
     });
@@ -135,19 +131,19 @@ describe('Enhancement Levels', () => {
     it('should return empty array when all capabilities are missing', () => {
       const allBasicCapabilities = ['javascript'];
       const fallbacks = getFallbackEnhancements('basic', allBasicCapabilities);
-      
+
       expect(fallbacks).toHaveLength(0);
     });
 
     it('should return fallbacks for partial capability loss', () => {
       const missingCapabilities = ['webComponents']; // Keep javascript
       const fallbacks = getFallbackEnhancements('modern', missingCapabilities);
-      
+
       expect(fallbacks.length).toBeGreaterThan(0);
-      
+
       // Should include enhancements that only require javascript
-      const jsOnlyEnhancements = fallbacks.filter(e => 
-        e.requires.length === 1 && e.requires[0] === 'javascript'
+      const jsOnlyEnhancements = fallbacks.filter(
+        e => e.requires.length === 1 && e.requires[0] === 'javascript'
       );
       expect(jsOnlyEnhancements.length).toBeGreaterThan(0);
     });
@@ -179,16 +175,14 @@ describe('Enhancement Levels', () => {
         level: 'basic',
         requires: ['javascript'],
         priority: 1,
-        conditions: [
-          { feature: 'userAgent', operator: 'matches', value: 'Chrome' },
-        ],
+        conditions: [{ feature: 'userAgent', operator: 'matches', value: 'Chrome' }],
       },
     ];
 
     it('should include enhancements without conditions', () => {
       const capabilities = {};
       const filtered = filterEnhancementsByConditions(testEnhancements, capabilities);
-      
+
       const noConditions = filtered.find(e => e.id === 'no-conditions');
       expect(noConditions).toBeDefined();
     });
@@ -198,9 +192,9 @@ describe('Enhancement Levels', () => {
         testFeature: true,
         version: 3,
       };
-      
+
       const filtered = filterEnhancementsByConditions(testEnhancements, capabilities);
-      
+
       const withConditions = filtered.find(e => e.id === 'with-conditions');
       expect(withConditions).toBeDefined();
     });
@@ -210,9 +204,9 @@ describe('Enhancement Levels', () => {
         testFeature: true,
         version: 1, // Less than required 2
       };
-      
+
       const filtered = filterEnhancementsByConditions(testEnhancements, capabilities);
-      
+
       const withConditions = filtered.find(e => e.id === 'with-conditions');
       expect(withConditions).toBeUndefined();
     });
@@ -224,14 +218,12 @@ describe('Enhancement Levels', () => {
         level: 'basic',
         requires: ['javascript'],
         priority: 1,
-        conditions: [
-          { feature: 'exact', operator: 'equals', value: 'match' },
-        ],
+        conditions: [{ feature: 'exact', operator: 'equals', value: 'match' }],
       };
 
       const capabilities = { exact: 'match' };
       const filtered = filterEnhancementsByConditions([enhancementWithEquals], capabilities);
-      
+
       expect(filtered).toHaveLength(1);
       expect(filtered[0].id).toBe('equals-test');
     });
@@ -243,14 +235,12 @@ describe('Enhancement Levels', () => {
         level: 'basic',
         requires: ['javascript'],
         priority: 1,
-        conditions: [
-          { feature: 'count', operator: 'lessThan', value: 10 },
-        ],
+        conditions: [{ feature: 'count', operator: 'lessThan', value: 10 }],
       };
 
       const capabilities = { count: 5 };
       const filtered = filterEnhancementsByConditions([enhancementWithLessThan], capabilities);
-      
+
       expect(filtered).toHaveLength(1);
       expect(filtered[0].id).toBe('less-than-test');
     });
@@ -259,9 +249,9 @@ describe('Enhancement Levels', () => {
       const capabilities = {
         userAgent: 'Mozilla/5.0 (Chrome/91.0)',
       };
-      
+
       const filtered = filterEnhancementsByConditions(testEnhancements, capabilities);
-      
+
       const stringMatch = filtered.find(e => e.id === 'string-match');
       expect(stringMatch).toBeDefined();
     });
@@ -270,18 +260,18 @@ describe('Enhancement Levels', () => {
       const capabilities = {
         userAgent: 'Mozilla/5.0 (Firefox/91.0)',
       };
-      
+
       const filtered = filterEnhancementsByConditions(testEnhancements, capabilities);
-      
+
       const stringMatch = filtered.find(e => e.id === 'string-match');
       expect(stringMatch).toBeUndefined();
     });
 
     it('should handle missing capability values', () => {
       const capabilities = {}; // Empty capabilities
-      
+
       const filtered = filterEnhancementsByConditions(testEnhancements, capabilities);
-      
+
       // Should only include enhancements without conditions
       expect(filtered).toHaveLength(1);
       expect(filtered[0].id).toBe('no-conditions');
@@ -294,14 +284,12 @@ describe('Enhancement Levels', () => {
         level: 'basic',
         requires: ['javascript'],
         priority: 1,
-        conditions: [
-          { feature: 'test', operator: 'unknownOperator' as any, value: 'test' },
-        ],
+        conditions: [{ feature: 'test', operator: 'unknownOperator' as any, value: 'test' }],
       };
 
       const capabilities = { test: 'test' };
       const filtered = filterEnhancementsByConditions([enhancementWithUnknownOp], capabilities);
-      
+
       // Should default to true for unknown operators
       expect(filtered).toHaveLength(1);
     });
@@ -310,7 +298,7 @@ describe('Enhancement Levels', () => {
   describe('specific enhancement levels', () => {
     it('should have appropriate basic enhancements', () => {
       const basicEnhancements = ENHANCEMENT_LEVELS.basic;
-      
+
       // Basic level should have form, toggle, and navigation enhancements
       const enhancementIds = basicEnhancements.map(e => e.id);
       expect(enhancementIds).toContain('basic-forms');
@@ -320,7 +308,7 @@ describe('Enhancement Levels', () => {
 
     it('should have appropriate enhanced enhancements', () => {
       const enhancedEnhancements = ENHANCEMENT_LEVELS.enhanced;
-      
+
       // Enhanced level should have animations and better forms
       const enhancementIds = enhancedEnhancements.map(e => e.id);
       expect(enhancementIds).toContain('enhanced-animations');
@@ -329,7 +317,7 @@ describe('Enhancement Levels', () => {
 
     it('should have appropriate modern enhancements', () => {
       const modernEnhancements = ENHANCEMENT_LEVELS.modern;
-      
+
       // Modern level should have web components and lazy loading
       const enhancementIds = modernEnhancements.map(e => e.id);
       expect(enhancementIds).toContain('modern-components');
@@ -338,7 +326,7 @@ describe('Enhancement Levels', () => {
 
     it('should have appropriate cutting-edge enhancements', () => {
       const cuttingEdgeEnhancements = ENHANCEMENT_LEVELS['cutting-edge'];
-      
+
       // Cutting-edge should have performance optimizations and advanced interactions
       const enhancementIds = cuttingEdgeEnhancements.map(e => e.id);
       expect(enhancementIds).toContain('cutting-edge-performance');

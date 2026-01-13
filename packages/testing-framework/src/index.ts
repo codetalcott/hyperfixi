@@ -37,27 +37,27 @@ export type {
   TestFunction,
   TestContext,
   TestConfig,
-  
+
   // Result types
   TestResult,
   TestStatus,
   TestError,
   TestLog,
   CoverageData,
-  
+
   // Environment types
   TestEnvironment,
   BrowserType,
   BrowserTestOptions,
-  
+
   // Assertion types
   ExpectAPI,
   ExpectMatcher,
   AssertAPI,
-  
+
   // Reporter types
   TestReporter,
-  
+
   // Utility types
   PageObject,
   TestDataProvider,
@@ -66,11 +66,11 @@ export type {
   TestDiscoveryOptions,
   MockFunction,
   SpyFunction,
-  
+
   // E2E types
   E2EStep,
   E2EAction,
-  
+
   // Testing types
   VisualTestConfig,
   PerformanceMetrics,
@@ -120,7 +120,11 @@ const DEFAULT_CONFIG: TestConfig = {
  */
 export function describe(name: string, fn: () => void): void;
 export function describe(name: string, options: Partial<TestSuite>, fn: () => void): void;
-export function describe(name: string, optionsOrFn: Partial<TestSuite> | (() => void), fn?: () => void): void {
+export function describe(
+  name: string,
+  optionsOrFn: Partial<TestSuite> | (() => void),
+  fn?: () => void
+): void {
   const actualOptions = typeof optionsOrFn === 'function' ? {} : optionsOrFn;
   const actualFn = typeof optionsOrFn === 'function' ? optionsOrFn : fn!;
 
@@ -156,7 +160,11 @@ export function describe(name: string, optionsOrFn: Partial<TestSuite> | (() => 
  */
 export function it(name: string, fn: TestFunction): void;
 export function it(name: string, options: Partial<TestCase>, fn: TestFunction): void;
-export function it(name: string, optionsOrFn: Partial<TestCase> | TestFunction, fn?: TestFunction): void {
+export function it(
+  name: string,
+  optionsOrFn: Partial<TestCase> | TestFunction,
+  fn?: TestFunction
+): void {
   const actualOptions = typeof optionsOrFn === 'function' ? {} : optionsOrFn;
   const actualFn = typeof optionsOrFn === 'function' ? optionsOrFn : fn!;
 
@@ -258,14 +266,14 @@ export function afterEach(fn: () => Promise<void> | void): void {
 export async function runTests(config: Partial<TestConfig> = {}): Promise<TestResult[]> {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
   const runner = createTestRunnerInternal(finalConfig);
-  
+
   // Filter suites based on 'only' flag
   let suitesToRun = testSuites;
   const onlySuites = testSuites.filter(suite => suite.only);
   if (onlySuites.length > 0) {
     suitesToRun = onlySuites;
   }
-  
+
   return runner.run(suitesToRun, finalConfig);
 }
 
@@ -280,17 +288,21 @@ export function clearTests(): void {
 /**
  * Create a test fixture
  */
-export function fixture<T>(name: string, setup: () => T | Promise<T>, teardown?: (fixture: T) => void | Promise<void>) {
+export function fixture<T>(
+  name: string,
+  setup: () => T | Promise<T>,
+  teardown?: (fixture: T) => void | Promise<void>
+) {
   return {
     name,
     async create(): Promise<T> {
       const instance = await setup();
-      
+
       // Store teardown function for later cleanup
       if (teardown) {
         (instance as any).__teardown = () => teardown(instance);
       }
-      
+
       return instance;
     },
     async destroy(instance: T): Promise<void> {
@@ -304,21 +316,23 @@ export function fixture<T>(name: string, setup: () => T | Promise<T>, teardown?:
 /**
  * Create a mock function
  */
-export function createMock<T extends (...args: any[]) => any>(implementation?: T): import('./types').MockFunction {
+export function createMock<T extends (...args: any[]) => any>(
+  implementation?: T
+): import('./types').MockFunction {
   const calls: any[][] = [];
   const results: Array<{ type: 'return' | 'throw'; value: any }> = [];
   let mockImplementation: ((...args: any[]) => any) | undefined = implementation;
 
-  const mockFn = function(...args: any[]) {
+  const mockFn = function (...args: any[]) {
     calls.push(args);
-    
+
     try {
       if (mockImplementation) {
         const result = mockImplementation(...args);
         results.push({ type: 'return', value: result });
         return result;
       }
-      
+
       const result = undefined;
       results.push({ type: 'return', value: result });
       return result;
@@ -395,19 +409,22 @@ export function createMock<T extends (...args: any[]) => any>(implementation?: T
 /**
  * Create a spy function
  */
-export function createSpy<T extends (...args: any[]) => any>(target: any, method: string): import('./types').SpyFunction {
+export function createSpy<T extends (...args: any[]) => any>(
+  target: any,
+  method: string
+): import('./types').SpyFunction {
   const original = target[method];
   const spy = createMock(original) as import('./types').SpyFunction;
-  
+
   spy.original = original;
   target[method] = spy;
-  
+
   const originalRestore = spy.mockRestore;
   spy.mockRestore = () => {
     target[method] = original;
     return originalRestore();
   };
-  
+
   return spy;
 }
 
@@ -437,13 +454,13 @@ export async function waitFor(
 export function createPageObject(definition: import('./types').PageObject) {
   return {
     ...definition,
-    
+
     async goto(page: any) {
       if (definition.url) {
         await page.goto(definition.url);
       }
     },
-    
+
     element(name: string) {
       const selector = definition.selectors[name];
       if (!selector) {
@@ -451,7 +468,7 @@ export function createPageObject(definition: import('./types').PageObject) {
       }
       return selector;
     },
-    
+
     async action(page: any, name: string, ...args: any[]) {
       const action = definition.actions[name];
       if (!action) {
@@ -459,7 +476,7 @@ export function createPageObject(definition: import('./types').PageObject) {
       }
       return action.call(this, page, ...args);
     },
-    
+
     async assert(page: any, name: string, ...args: any[]) {
       const assertion = definition.assertions[name];
       if (!assertion) {
@@ -478,20 +495,20 @@ export function createHyperFixiTestContext(hyperfixi: any) {
     // Compile and test hyperscript
     async compileAndTest(script: string, element: Element, event?: string) {
       const compiled = await hyperfixi.compile(script);
-      
+
       if (element && compiled) {
         // Apply compiled script to element
         element.setAttribute('data-compiled-script', compiled);
-        
+
         // Trigger event if specified
         if (event) {
           element.dispatchEvent(new Event(event));
         }
       }
-      
+
       return compiled;
     },
-    
+
     // Test script compilation
     async testCompilation(script: string) {
       try {
@@ -501,11 +518,11 @@ export function createHyperFixiTestContext(hyperfixi: any) {
         return { success: false, error };
       }
     },
-    
+
     // Test script execution
     async testExecution(script: string, element: Element, eventType: string = 'click') {
       const compiled = await hyperfixi.compile(script);
-      
+
       if (compiled) {
         // Setup execution tracking
         let executed = false;
@@ -516,21 +533,21 @@ export function createHyperFixiTestContext(hyperfixi: any) {
           }
           originalConsoleLog(...args);
         };
-        
+
         try {
           // Apply script and trigger event
           element.setAttribute('data-hyperscript', script);
           element.dispatchEvent(new Event(eventType));
-          
+
           // Wait for execution
           await new Promise(resolve => setTimeout(resolve, 100));
-          
+
           return { executed, compiled };
         } finally {
           console.log = originalConsoleLog;
         }
       }
-      
+
       return { executed: false, compiled: null };
     },
   };
@@ -539,13 +556,15 @@ export function createHyperFixiTestContext(hyperfixi: any) {
 /**
  * Quick start function for basic testing setup
  */
-export async function quickStartTesting(options: {
-  environment?: TestEnvironment;
-  browser?: BrowserType;
-  headless?: boolean;
-  baseURL?: string;
-  testFiles?: string[];
-} = {}) {
+export async function quickStartTesting(
+  options: {
+    environment?: TestEnvironment;
+    browser?: BrowserType;
+    headless?: boolean;
+    baseURL?: string;
+    testFiles?: string[];
+  } = {}
+) {
   const config: Partial<TestConfig> = {
     environment: options.environment || 'jsdom',
     browser: options.browser || 'chromium',

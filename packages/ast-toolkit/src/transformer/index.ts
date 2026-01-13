@@ -9,7 +9,7 @@ import type {
   VisitorHandlers,
   TransformOptions,
   OptimizationPass,
-  VisitorContext
+  VisitorContext,
 } from '../types.js';
 
 /**
@@ -91,11 +91,11 @@ export function optimize(ast: ASTNode, options: TransformOptions = {}): ASTNode 
  */
 export function applyOptimizationPasses(ast: ASTNode, passes: OptimizationPass[]): ASTNode {
   let result = ast;
-  
+
   for (const pass of passes) {
     result = applyOptimizationPass(result, pass);
   }
-  
+
   return result;
 }
 
@@ -105,7 +105,7 @@ function applyOptimizationPass(ast: ASTNode, pass: OptimizationPass): ASTNode {
       if (!pass.shouldRun || pass.shouldRun(node)) {
         pass.transform(node, context);
       }
-    }
+    },
   });
 
   return normalizeVisitResult(visitor.visit(ast, createVisitorContext()), ast);
@@ -122,13 +122,13 @@ function createBatchOperationsPass(): OptimizationPass {
       if ((node as any).commands && Array.isArray((node as any).commands)) {
         const commands = (node as any).commands;
         const batched = batchSimilarCommands(commands);
-        
+
         if (batched.length !== commands.length) {
           context.replace({ ...node, commands: batched });
         }
       }
       return node;
-    }
+    },
   };
 }
 
@@ -139,13 +139,13 @@ function createRemoveRedundantOperationsPass(): OptimizationPass {
       if ((node as any).commands && Array.isArray((node as any).commands)) {
         const commands = (node as any).commands;
         const optimized = removeRedundantOperations(commands);
-        
+
         if (optimized.length !== commands.length) {
           context.replace({ ...node, commands: optimized });
         }
       }
       return node;
-    }
+    },
   };
 }
 
@@ -160,7 +160,7 @@ function createSimplifyConditionsPass(): OptimizationPass {
         }
       }
       return node;
-    }
+    },
   };
 }
 
@@ -181,7 +181,7 @@ export function normalize(ast: ASTNode): ASTNode {
         start: node.start,
         end: node.end,
         line: node.line,
-        column: node.column
+        column: node.column,
       };
 
       // Copy known properties based on node type
@@ -202,7 +202,7 @@ export function normalize(ast: ASTNode): ASTNode {
       // Add other node types as needed
 
       context.replace(normalized);
-    }
+    },
   });
 
   return normalizeVisitResult(visitor.visit(ast, createVisitorContext()), ast);
@@ -213,31 +213,33 @@ export function normalize(ast: ASTNode): ASTNode {
  */
 export function inlineVariables(ast: ASTNode): ASTNode {
   const variables = new Map<string, any>();
-  
+
   // First pass: collect simple variable assignments
   const collectVisitor = new ASTVisitor({
     enter(node) {
-      if ((node as any).name === 'set' && 
-          (node as any).variable && 
-          (node as any).value &&
-          isSimpleValue((node as any).value)) {
+      if (
+        (node as any).name === 'set' &&
+        (node as any).variable &&
+        (node as any).value &&
+        isSimpleValue((node as any).value)
+      ) {
         const varName = (node as any).variable.name;
         variables.set(varName, (node as any).value);
       }
-    }
+    },
   });
-  
+
   visit(ast, collectVisitor);
-  
+
   // Second pass: inline variables
   const inlineVisitor = new ASTVisitor({
     enter(node, context) {
       if (node.type === 'identifier' && variables.has((node as any).name)) {
         context.replace(variables.get((node as any).name));
       }
-    }
+    },
   });
-  
+
   return normalizeVisitResult(inlineVisitor.visit(ast, createVisitorContext()), ast);
 }
 
@@ -246,7 +248,7 @@ export function inlineVariables(ast: ASTNode): ASTNode {
  */
 export function extractCommonExpressions(ast: ASTNode): ASTNode {
   const expressionCounts = new Map<string, { count: number; node: ASTNode; nodes: ASTNode[] }>();
-  
+
   // Count expression occurrences
   const countVisitor = new ASTVisitor({
     enter(node) {
@@ -259,21 +261,21 @@ export function extractCommonExpressions(ast: ASTNode): ASTNode {
         entry.count++;
         entry.nodes.push(node);
       }
-    }
+    },
   });
-  
+
   visit(ast, countVisitor);
-  
+
   // Extract expressions that appear more than once
   let varCounter = 0;
   const extractions = new Map<string, string>();
   const newCommands: any[] = [];
-  
+
   for (const [expr, data] of expressionCounts) {
     if (data.count > 1) {
       const varName = `temp${++varCounter}`;
       extractions.set(expr, varName);
-      
+
       // Create set command for extracted expression
       newCommands.push({
         type: 'command',
@@ -283,11 +285,11 @@ export function extractCommonExpressions(ast: ASTNode): ASTNode {
         line: 1,
         column: 1,
         variable: { type: 'identifier', name: varName, start: 0, end: 0, line: 1, column: 1 },
-        value: data.node
+        value: data.node,
       });
     }
   }
-  
+
   // Replace extracted expressions with variables
   const replaceVisitor = new ASTVisitor({
     enter(node, context) {
@@ -300,23 +302,23 @@ export function extractCommonExpressions(ast: ASTNode): ASTNode {
             start: node.start ?? 0,
             end: node.end ?? 0,
             line: node.line ?? 1,
-            column: node.column ?? 1
+            column: node.column ?? 1,
           } as ASTNode);
         }
       }
-    }
+    },
   });
-  
+
   let result = normalizeVisitResult(replaceVisitor.visit(ast, createVisitorContext()), ast);
-  
+
   // Add extracted variable assignments to the beginning
   if (newCommands.length > 0 && (result as any).commands) {
     result = {
       ...result,
-      commands: [...newCommands, ...(result as any).commands]
+      commands: [...newCommands, ...(result as any).commands],
     } as any;
   }
-  
+
   return result;
 }
 
@@ -332,7 +334,7 @@ export function createOptimizationPass(config: {
   return {
     name: config.name,
     transform: config.transform,
-    shouldRun: config.shouldRun
+    shouldRun: config.shouldRun,
   };
 }
 
@@ -340,11 +342,10 @@ export function createOptimizationPass(config: {
 // Helper Functions
 // ============================================================================
 
-
 function batchSimilarCommands(commands: any[]): any[] {
   const groups = new Map<string, any[]>();
   const result: any[] = [];
-  
+
   for (const cmd of commands) {
     if (cmd.name === 'add' || cmd.name === 'remove') {
       const key = `${cmd.name}:${cmd.target?.name || 'default'}`;
@@ -365,7 +366,7 @@ function batchSimilarCommands(commands: any[]): any[] {
       result.push(cmd);
     }
   }
-  
+
   // Flush remaining groups
   for (const [, group] of groups) {
     if (group.length > 1) {
@@ -374,35 +375,37 @@ function batchSimilarCommands(commands: any[]): any[] {
       result.push(...group);
     }
   }
-  
+
   return result;
 }
 
 function createBatchedCommand(commands: any[]): any {
   return {
     ...commands[0],
-    args: commands.map(cmd => cmd.args[0]).filter(Boolean)
+    args: commands.map(cmd => cmd.args[0]).filter(Boolean),
   };
 }
 
 function removeRedundantOperations(commands: any[]): any[] {
   const result: any[] = [];
   const operationTracker = new Map<string, { operation: string; index: number }>();
-  
+
   for (let i = 0; i < commands.length; i++) {
     const cmd = commands[i];
-    
+
     if (cmd.name === 'add' || cmd.name === 'remove') {
       const target = cmd.target?.name || 'default';
       const selector = cmd.args?.[0]?.value;
       const key = `${target}:${selector}`;
-      
+
       const lastOp = operationTracker.get(key);
-      
+
       if (lastOp) {
         // Remove redundant operation (add then remove, or remove then add)
-        if ((lastOp.operation === 'add' && cmd.name === 'remove') ||
-            (lastOp.operation === 'remove' && cmd.name === 'add')) {
+        if (
+          (lastOp.operation === 'add' && cmd.name === 'remove') ||
+          (lastOp.operation === 'remove' && cmd.name === 'add')
+        ) {
           // Remove the previous operation
           result.splice(lastOp.index, 1);
           // Update indices for operations after the removed one
@@ -413,14 +416,14 @@ function removeRedundantOperations(commands: any[]): any[] {
           }
         }
       }
-      
+
       operationTracker.set(key, { operation: cmd.name, index: result.length });
       result.push(cmd);
     } else {
       result.push(cmd);
     }
   }
-  
+
   return result;
 }
 
@@ -429,7 +432,7 @@ function simplifyCondition(condition: ASTNode): ASTNode {
   if ((condition as any).operator === '&&') {
     const left = (condition as any).left;
     const right = (condition as any).right;
-    
+
     // true && x = x
     if (left.type === 'literal' && left.value === true) {
       return right;
@@ -447,7 +450,7 @@ function simplifyCondition(condition: ASTNode): ASTNode {
       return right;
     }
   }
-  
+
   return condition;
 }
 
@@ -456,9 +459,11 @@ function isSimpleValue(node: ASTNode): boolean {
 }
 
 function isComplexExpression(node: ASTNode): boolean {
-  return node.type === 'binaryExpression' && 
-         ((node as any).left?.type === 'binaryExpression' || 
-          (node as any).right?.type === 'binaryExpression');
+  return (
+    node.type === 'binaryExpression' &&
+    ((node as any).left?.type === 'binaryExpression' ||
+      (node as any).right?.type === 'binaryExpression')
+  );
 }
 
 function minify(ast: ASTNode): ASTNode {
@@ -466,19 +471,19 @@ function minify(ast: ASTNode): ASTNode {
   const visitor = new ASTVisitor({
     enter(node, context) {
       const minified: any = {
-        type: node.type
+        type: node.type,
       };
-      
+
       // Copy only essential properties
       for (const [key, value] of Object.entries(node)) {
         if (!['start', 'end', 'line', 'column'].includes(key)) {
           (minified as any)[key] = value;
         }
       }
-      
+
       context.replace(minified);
-    }
+    },
   });
-  
+
   return normalizeVisitResult(visitor.visit(ast, createVisitorContext()), ast);
 }

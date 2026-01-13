@@ -21,10 +21,14 @@ export function getSetPatternsIt(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'impostare', alternatives: ['imposta', 'set', 'definire'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'a', alternatives: ['su', 'come'] },
-            { type: 'role', role: 'goal' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'a', alternatives: ['su', 'come'] },
+              { type: 'role', role: 'goal' },
+            ],
+          },
         ],
       },
       extraction: {

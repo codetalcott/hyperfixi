@@ -9,7 +9,7 @@ export const sw: Dictionary = {
     tell: 'ambia',
     trigger: 'chochea',
     send: 'tuma',
-    
+
     // DOM manipulation
     take: 'chukua',
     put: 'weka',
@@ -20,7 +20,7 @@ export const sw: Dictionary = {
     toggle: 'badilisha',
     hide: 'ficha',
     show: 'onyesha',
-    
+
     // Control flow
     if: 'kama',
     unless: 'isipokuwa',
@@ -31,13 +31,13 @@ export const sw: Dictionary = {
     continue: 'endelea',
     break: 'vunja',
     halt: 'simama',
-    
+
     // Async
     wait: 'ngoja',
     fetch: 'leta',
     call: 'ita',
     return: 'rudi',
-    
+
     // Other commands
     make: 'fanya',
     log: 'andika',
@@ -82,7 +82,7 @@ export const sw: Dictionary = {
     // Behaviors
     install: 'sakinisha',
   },
-  
+
   modifiers: {
     to: 'kwa',
     from: 'kutoka',
@@ -101,7 +101,7 @@ export const sw: Dictionary = {
     through: 'kupitia',
     without: 'bila',
   },
-  
+
   events: {
     click: 'bonyeza',
     dblclick: 'bonyeza_mara_mbili',
@@ -112,29 +112,29 @@ export const sw: Dictionary = {
     mouseover: 'panya_juu',
     mouseout: 'panya_nje',
     mousemove: 'panya_sogea',
-    
+
     keydown: 'kitufe_shuka',
     keyup: 'kitufe_juu',
     keypress: 'kitufe_bonyeza',
-    
+
     focus: 'zingatia',
     blur: 'poteza_macho',
     change: 'badilisha',
     input: 'ingizo',
     submit: 'wasilisha',
     reset: 'weka_upya',
-    
+
     load: 'pakia',
     unload: 'shuka',
     resize: 'badilisha_ukubwa',
     scroll: 'sogeza',
-    
+
     touchstart: 'gusa_anza',
     touchend: 'gusa_mwisho',
     touchmove: 'gusa_sogea',
     touchcancel: 'gusa_ghairi',
   },
-  
+
   logical: {
     when: 'wakati',
     where: 'wapi',
@@ -152,7 +152,7 @@ export const sw: Dictionary = {
     otherwise: 'vinginevyo',
     end: 'mwisho',
   },
-  
+
   temporal: {
     seconds: 'sekunde',
     second: 'sekunde',
@@ -167,7 +167,7 @@ export const sw: Dictionary = {
     min: 'dk',
     h: 'sa',
   },
-  
+
   values: {
     true: 'kweli',
     false: 'uongo',
@@ -191,7 +191,7 @@ export const sw: Dictionary = {
     result: 'matokeo',
     value: 'thamani',
   },
-  
+
   attributes: {
     class: 'darasa',
     classes: 'madarasa',

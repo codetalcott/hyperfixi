@@ -8,7 +8,10 @@ import { test, expect, Page } from '@playwright/test';
 // Extend Window interface for test helper functions injected by the test
 declare global {
   interface Window {
-    testCommandExecution: (cmd: string, ctx: object) => Promise<{ success: boolean; result: any; error: string | null }>;
+    testCommandExecution: (
+      cmd: string,
+      ctx: object
+    ) => Promise<{ success: boolean; result: any; error: string | null }>;
     executeHyperScript: (script: string, context?: object) => Promise<any>;
   }
 }
@@ -20,8 +23,8 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
     page = await browser.newPage();
     // Try multiple paths to support different server setups
     const urls = [
-      'http://localhost:3000/packages/core/compatibility-test.html',           // Server from packages/core
-      'http://localhost:3000/packages/core/compatibility-test.html'  // Server from project root
+      'http://localhost:3000/packages/core/compatibility-test.html', // Server from packages/core
+      'http://localhost:3000/packages/core/compatibility-test.html', // Server from project root
     ];
     let loaded = false;
     for (const url of urls) {
@@ -363,7 +366,9 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
         console.log(
           `  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`
         );
-        console.log(`    commandSuccess: ${result.commandSuccess}, logCallsLength: ${result.logCallsLength}`);
+        console.log(
+          `    commandSuccess: ${result.commandSuccess}, logCallsLength: ${result.logCallsLength}`
+        );
         if (result.actualLog !== undefined) {
           console.log(`    Actual log: ${JSON.stringify(result.actualLog)}`);
         }

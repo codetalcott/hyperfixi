@@ -225,7 +225,9 @@ export class RuntimeExperimental extends RuntimeBase {
       registry.register(createTakeCommand());
       registry.register(createRenderCommand());
 
-      console.log('RuntimeExperimental: Registered 43 V2 commands (Phase 6 COMPLETE - All commands migrated)');
+      console.log(
+        'RuntimeExperimental: Registered 43 V2 commands (Phase 6 COMPLETE - All commands migrated)'
+      );
     }
 
     // Create expression evaluator (custom, lazy, or standard)
@@ -233,7 +235,9 @@ export class RuntimeExperimental extends RuntimeBase {
     if (options.expressionEvaluator) {
       expressionEvaluator = options.expressionEvaluator;
     } else if (options.lazyLoad) {
-      expressionEvaluator = new LazyExpressionEvaluator({ preload: options.expressionPreload || 'core' });
+      expressionEvaluator = new LazyExpressionEvaluator({
+        preload: options.expressionPreload || 'core',
+      });
     } else {
       expressionEvaluator = new ExpressionEvaluator();
     }
@@ -261,7 +265,9 @@ export class RuntimeExperimental extends RuntimeBase {
 /**
  * Factory function for creating RuntimeExperimental with default options
  */
-export function createRuntimeExperimental(options: RuntimeExperimentalOptions = {}): RuntimeExperimental {
+export function createRuntimeExperimental(
+  options: RuntimeExperimentalOptions = {}
+): RuntimeExperimental {
   return new RuntimeExperimental(options);
 }
 

@@ -21,10 +21,14 @@ export function getShowPatternsIt(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'mostrare', alternatives: ['mostra', 'visualizzare', 'show'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'con' },
-            { type: 'role', role: 'style' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'con' },
+              { type: 'role', role: 'style' },
+            ],
+          },
         ],
       },
       extraction: {

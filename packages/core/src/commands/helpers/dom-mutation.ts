@@ -16,7 +16,12 @@ import { isHTMLElement } from '../../utils/element-check';
  * Extended insert positions (standard DOM InsertPosition plus 'replace')
  * Note: We use a custom type name to avoid conflict with the DOM InsertPosition type
  */
-export type ContentInsertPosition = 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend' | 'replace';
+export type ContentInsertPosition =
+  | 'beforebegin'
+  | 'afterbegin'
+  | 'beforeend'
+  | 'afterend'
+  | 'replace';
 
 /**
  * Semantic position names mapped to InsertPosition
@@ -171,11 +176,7 @@ function insertElement(
  * @param content - String content to insert
  * @param position - Insert position
  */
-function insertText(
-  target: HTMLElement,
-  content: string,
-  position: ContentInsertPosition
-): void {
+function insertText(target: HTMLElement, content: string, position: ContentInsertPosition): void {
   // Cast to DOM InsertPosition - 'replace' is handled before this function is called
   const domPosition = position as globalThis.InsertPosition;
   if (looksLikeHTML(content)) {

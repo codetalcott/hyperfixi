@@ -26,7 +26,7 @@ export class HyperscriptTranslator {
       preserveOriginalAttribute: 'data-i18n-original',
       detectLocale: true, // Enable language detection by default
       ...config,
-      locale: config.locale || 'en',  // Ensure locale has a default
+      locale: config.locale || 'en', // Ensure locale has a default
     };
 
     this.dictionaries = new Map();
@@ -59,7 +59,7 @@ export class HyperscriptTranslator {
         translated: text,
         original: text,
         tokens: [],
-        locale: { from: fromLocale, to: toLocale }
+        locale: { from: fromLocale, to: toLocale },
       };
     }
 
@@ -73,10 +73,10 @@ export class HyperscriptTranslator {
 
     // Tokenize the input
     const tokens = tokenize(text, fromLocale);
-    
+
     // Translate tokens
     const translatedTokens = this.translateTokens(tokens, fromLocale, toLocale);
-    
+
     // Reconstruct the text
     const translated = this.reconstructText(translatedTokens);
 
@@ -92,7 +92,7 @@ export class HyperscriptTranslator {
       translated,
       tokens: translatedTokens,
       locale: { from: fromLocale, to: toLocale },
-      warnings: []
+      warnings: [],
     };
     if (options.preserveOriginal) {
       result.original = text;
@@ -104,7 +104,16 @@ export class HyperscriptTranslator {
     const fromDict = this.getDictionary(fromLocale);
     const toDict = this.getDictionary(toLocale);
     const reverseFromDict = this.getReverseDictionary(fromLocale);
-    const emptyDict: Dictionary = { commands: {}, modifiers: {}, events: {}, logical: {}, temporal: {}, values: {}, attributes: {}, expressions: {} };
+    const emptyDict: Dictionary = {
+      commands: {},
+      modifiers: {},
+      events: {},
+      logical: {},
+      temporal: {},
+      values: {},
+      attributes: {},
+      expressions: {},
+    };
 
     return tokens.map(token => {
       let translated = token.value;
@@ -116,20 +125,24 @@ export class HyperscriptTranslator {
           // Translate through English as intermediate
           const english = this.findTranslation(token.value, fromDict || emptyDict, reverseFromDict);
           if (english) {
-            translated = this.findTranslation(english, toDict || emptyDict, new Map()) || token.value;
+            translated =
+              this.findTranslation(english, toDict || emptyDict, new Map()) || token.value;
           }
         } else if (fromLocale === 'en') {
           // Direct translation from English
-          translated = this.findTranslation(token.value, toDict || emptyDict, new Map()) || token.value;
+          translated =
+            this.findTranslation(token.value, toDict || emptyDict, new Map()) || token.value;
         } else {
           // Translation to English
-          translated = this.findTranslation(token.value, fromDict || emptyDict, reverseFromDict) || token.value;
+          translated =
+            this.findTranslation(token.value, fromDict || emptyDict, reverseFromDict) ||
+            token.value;
         }
       }
 
       return {
         ...token,
-        translated
+        translated,
       };
     });
   }
@@ -148,7 +161,16 @@ export class HyperscriptTranslator {
     }
 
     // Check categories in priority order (events before commands to handle 'click' etc.)
-    const categoryOrder = ['events', 'commands', 'expressions', 'modifiers', 'logical', 'temporal', 'values', 'attributes'];
+    const categoryOrder = [
+      'events',
+      'commands',
+      'expressions',
+      'modifiers',
+      'logical',
+      'temporal',
+      'values',
+      'attributes',
+    ];
 
     for (const category of categoryOrder) {
       const translations = dict[category as keyof Dictionary];
@@ -164,7 +186,14 @@ export class HyperscriptTranslator {
 
   private isTranslatableToken(token: Token): boolean {
     const translatableTypes: TokenType[] = [
-      'command', 'modifier', 'event', 'logical', 'temporal', 'value', 'attribute', 'expression'
+      'command',
+      'modifier',
+      'event',
+      'logical',
+      'temporal',
+      'value',
+      'attribute',
+      'expression',
     ];
     return translatableTypes.includes(token.type);
   }
@@ -216,9 +245,11 @@ export class HyperscriptTranslator {
     if (!dict) {
       return {
         valid: false,
-        errors: [{ type: 'missing', key: locale, message: `Dictionary not found for locale: ${locale}` }],
+        errors: [
+          { type: 'missing', key: locale, message: `Dictionary not found for locale: ${locale}` },
+        ],
         warnings: [],
-        coverage: { total: 0, translated: 0, missing: [] }
+        coverage: { total: 0, translated: 0, missing: [] },
       };
     }
 

@@ -15,7 +15,13 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export interface MeasureCommandInput {
   target?: string | HTMLElement;
@@ -70,7 +76,8 @@ export class MeasureCommand implements DecoratedCommand {
             target = ev;
             if (raw.args.length > 1) {
               const s = raw.args[1] as any;
-              property = s.type === 'identifier' ? s.name : String(await evaluator.evaluate(s, context));
+              property =
+                s.type === 'identifier' ? s.name : String(await evaluator.evaluate(s, context));
             }
           }
         } else {
@@ -82,7 +89,8 @@ export class MeasureCommand implements DecoratedCommand {
           target = ev as string | HTMLElement;
           if (raw.args.length > 1) {
             const s = raw.args[1] as any;
-            property = s.type === 'identifier' ? s.name : String(await evaluator.evaluate(s, context));
+            property =
+              s.type === 'identifier' ? s.name : String(await evaluator.evaluate(s, context));
           }
         } else if (typeof ev === 'string') {
           property = ev;
@@ -99,7 +107,10 @@ export class MeasureCommand implements DecoratedCommand {
     return result;
   }
 
-  async execute(input: MeasureCommandInput, context: TypedExecutionContext): Promise<MeasureCommandOutput> {
+  async execute(
+    input: MeasureCommandInput,
+    context: TypedExecutionContext
+  ): Promise<MeasureCommandOutput> {
     const targetElement = resolveElement(input.target, context);
     const prop = input.property || 'width';
     const measurement = this.getMeasurement(targetElement, prop);
@@ -108,7 +119,15 @@ export class MeasureCommand implements DecoratedCommand {
 
     Object.assign(context, { it: measurement.value });
 
-    return { result: measurement.value, wasAsync: false, element: targetElement, property: prop, value: measurement.value, unit: measurement.unit, stored: !!input.variable };
+    return {
+      result: measurement.value,
+      wasAsync: false,
+      element: targetElement,
+      property: prop,
+      value: measurement.value,
+      unit: measurement.unit,
+      stored: !!input.variable,
+    };
   }
 
   private getMeasurement(el: HTMLElement, prop: string): { value: number; unit: string } {

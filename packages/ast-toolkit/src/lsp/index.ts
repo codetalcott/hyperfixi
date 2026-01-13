@@ -36,7 +36,7 @@ export enum DiagnosticSeverity {
   Error = 1,
   Warning = 2,
   Information = 3,
-  Hint = 4
+  Hint = 4,
 }
 
 export interface DocumentSymbol {
@@ -74,7 +74,7 @@ export enum SymbolKind {
   Struct = 23,
   Event = 24,
   Operator = 25,
-  TypeParameter = 26
+  TypeParameter = 26,
 }
 
 export interface CompletionItem {
@@ -111,7 +111,7 @@ export enum CompletionItemKind {
   Struct = 22,
   Event = 23,
   Operator = 24,
-  TypeParameter = 25
+  TypeParameter = 25,
 }
 
 export interface HoverInfo {
@@ -128,38 +128,38 @@ export interface HoverInfo {
  */
 export function astToLSPDiagnostics(ast: ASTNode): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  
+
   // Get complexity analysis
   const complexity = calculateComplexity(ast);
   const smells = detectCodeSmells(ast);
-  
+
   // Convert code smells to diagnostics
   for (const smell of smells) {
     if (smell.location.line !== undefined && smell.location.column !== undefined) {
       diagnostics.push({
         range: {
           start: { line: smell.location.line - 1, character: smell.location.column - 1 },
-          end: { line: smell.location.line - 1, character: smell.location.column + 10 }
+          end: { line: smell.location.line - 1, character: smell.location.column + 10 },
         },
         severity: mapSmellSeverityToLSP(smell.severity),
         code: smell.type,
         source: 'hyperscript-ast-toolkit',
-        message: smell.message
+        message: smell.message,
       });
     }
   }
-  
+
   // Add complexity warnings
   if (complexity.cyclomatic > 10 && ast.line !== undefined && ast.column !== undefined) {
     diagnostics.push({
       range: {
         start: { line: ast.line - 1, character: ast.column - 1 },
-        end: { line: ast.line - 1, character: ast.column + 10 }
+        end: { line: ast.line - 1, character: ast.column + 10 },
       },
       severity: DiagnosticSeverity.Warning,
       code: 'high-cyclomatic-complexity',
       source: 'hyperscript-ast-toolkit',
-      message: `High cyclomatic complexity: ${complexity.cyclomatic} (recommended: <= 10)`
+      message: `High cyclomatic complexity: ${complexity.cyclomatic} (recommended: <= 10)`,
     });
   }
 
@@ -167,15 +167,15 @@ export function astToLSPDiagnostics(ast: ASTNode): Diagnostic[] {
     diagnostics.push({
       range: {
         start: { line: ast.line - 1, character: ast.column - 1 },
-        end: { line: ast.line - 1, character: ast.column + 10 }
+        end: { line: ast.line - 1, character: ast.column + 10 },
       },
       severity: DiagnosticSeverity.Information,
       code: 'high-cognitive-complexity',
       source: 'hyperscript-ast-toolkit',
-      message: `High cognitive complexity: ${complexity.cognitive} (recommended: <= 15)`
+      message: `High cognitive complexity: ${complexity.cognitive} (recommended: <= 15)`,
     });
   }
-  
+
   return diagnostics;
 }
 
@@ -184,7 +184,7 @@ export function astToLSPDiagnostics(ast: ASTNode): Diagnostic[] {
  */
 export function astToLSPSymbols(ast: ASTNode): DocumentSymbol[] {
   const symbols: DocumentSymbol[] = [];
-  
+
   // Find event handlers
   const eventHandlers = findNodes(ast, node => node.type === 'eventHandler');
   for (const handler of eventHandlers) {
@@ -195,10 +195,10 @@ export function astToLSPSymbols(ast: ASTNode): DocumentSymbol[] {
       kind: SymbolKind.Event,
       range: nodeToRange(handler),
       selectionRange: nodeToRange(handler),
-      children: extractCommandSymbols(handlerData.commands || [])
+      children: extractCommandSymbols(handlerData.commands || []),
     });
   }
-  
+
   // Find behaviors
   const behaviors = findNodes(ast, node => node.type === 'behavior');
   for (const behavior of behaviors) {
@@ -208,10 +208,10 @@ export function astToLSPSymbols(ast: ASTNode): DocumentSymbol[] {
       detail: 'Behavior Definition',
       kind: SymbolKind.Class,
       range: nodeToRange(behavior),
-      selectionRange: nodeToRange(behavior)
+      selectionRange: nodeToRange(behavior),
     });
   }
-  
+
   // Find function definitions
   const functions = findNodes(ast, node => node.type === 'function' || node.type === 'def');
   for (const func of functions) {
@@ -221,10 +221,10 @@ export function astToLSPSymbols(ast: ASTNode): DocumentSymbol[] {
       detail: 'Function Definition',
       kind: SymbolKind.Function,
       range: nodeToRange(func),
-      selectionRange: nodeToRange(func)
+      selectionRange: nodeToRange(func),
     });
   }
-  
+
   return symbols;
 }
 
@@ -233,10 +233,10 @@ export function astToLSPSymbols(ast: ASTNode): DocumentSymbol[] {
  */
 export function astToLSPCompletions(ast: ASTNode, position: Position): CompletionItem[] {
   const completions: CompletionItem[] = [];
-  
+
   // Find the node at the current position
   const nodeAtPosition = findNodeAtPosition(ast, position);
-  
+
   if (!nodeAtPosition) {
     // Default completions for top-level context
     completions.push(
@@ -248,7 +248,7 @@ export function astToLSPCompletions(ast: ASTNode, position: Position): Completio
   } else {
     // Context-aware completions based on the current node
     completions.push(...getContextualCompletions(nodeAtPosition));
-    
+
     // Always include default completions as fallback
     if (completions.length === 0) {
       completions.push(
@@ -259,7 +259,7 @@ export function astToLSPCompletions(ast: ASTNode, position: Position): Completio
       );
     }
   }
-  
+
   return completions;
 }
 
@@ -268,15 +268,15 @@ export function astToLSPCompletions(ast: ASTNode, position: Position): Completio
  */
 export function astToLSPHover(ast: ASTNode, position: Position): HoverInfo | null {
   const nodeAtPosition = findNodeAtPosition(ast, position);
-  
+
   if (!nodeAtPosition) {
     return null;
   }
-  
+
   const analysis = analyzeMetrics(nodeAtPosition);
-  
+
   let contents = `**${nodeAtPosition.type}**\n\n`;
-  
+
   // Add node-specific information
   if (nodeAtPosition.type === 'command') {
     const cmdData = nodeAtPosition as any;
@@ -289,24 +289,25 @@ export function astToLSPHover(ast: ASTNode, position: Position): HoverInfo | nul
     }
     contents += '\n';
   }
-  
+
   // Add complexity metrics
   contents += `**Complexity Metrics:**\n`;
   contents += `- Cyclomatic: ${analysis.complexity.cyclomatic}\n`;
   contents += `- Cognitive: ${analysis.complexity.cognitive}\n`;
   contents += `- Maintainability Index: ${analysis.maintainabilityIndex.toFixed(1)}\n\n`;
-  
+
   // Add code smells if any
   if (analysis.smells.length > 0) {
     contents += `**Code Issues:**\n`;
-    for (const smell of analysis.smells.slice(0, 3)) { // Show first 3 smells
+    for (const smell of analysis.smells.slice(0, 3)) {
+      // Show first 3 smells
       contents += `- ${smell.message}\n`;
     }
   }
-  
+
   return {
     contents,
-    range: nodeToRange(nodeAtPosition)
+    range: nodeToRange(nodeAtPosition),
   };
 }
 
@@ -320,25 +321,25 @@ export function astToLSPHover(ast: ASTNode, position: Position): HoverInfo | nul
 export function createASTEnhancedLSPHandlers(referenceHandlers: any) {
   return {
     ...referenceHandlers,
-    
+
     async provideCompletions(params: any) {
       // Get completions from reference server
-      const referenceCompletions = await referenceHandlers.provideCompletions?.(params) || [];
-      
+      const referenceCompletions = (await referenceHandlers.provideCompletions?.(params)) || [];
+
       // Add AST-based completions if we have an AST for this document
       const ast = getDocumentAST(params.textDocument.uri);
       if (ast) {
         const astCompletions = astToLSPCompletions(ast, params.position);
         return [...referenceCompletions, ...astCompletions];
       }
-      
+
       return referenceCompletions;
     },
-    
+
     async provideHover(params: any) {
       // Get hover from reference server first
       const referenceHover = await referenceHandlers.provideHover?.(params);
-      
+
       // Enhance with AST information
       const ast = getDocumentAST(params.textDocument.uri);
       if (ast) {
@@ -348,44 +349,44 @@ export function createASTEnhancedLSPHandlers(referenceHandlers: any) {
             // Combine both hover contents
             return {
               contents: `${referenceHover.contents}\n\n---\n\n${astHover.contents}`,
-              range: astHover.range
+              range: astHover.range,
             };
           } else {
             return astHover;
           }
         }
       }
-      
+
       return referenceHover;
     },
-    
+
     async provideDiagnostics(params: any) {
       // Get diagnostics from reference server
-      const referenceDiagnostics = await referenceHandlers.provideDiagnostics?.(params) || [];
-      
+      const referenceDiagnostics = (await referenceHandlers.provideDiagnostics?.(params)) || [];
+
       // Add AST-based diagnostics
       const ast = getDocumentAST(params.textDocument.uri);
       if (ast) {
         const astDiagnostics = astToLSPDiagnostics(ast);
         return [...referenceDiagnostics, ...astDiagnostics];
       }
-      
+
       return referenceDiagnostics;
     },
-    
+
     async provideDocumentSymbols(params: any) {
       // Get symbols from reference server
-      const referenceSymbols = await referenceHandlers.provideDocumentSymbols?.(params) || [];
-      
+      const referenceSymbols = (await referenceHandlers.provideDocumentSymbols?.(params)) || [];
+
       // Add AST-based symbols
       const ast = getDocumentAST(params.textDocument.uri);
       if (ast) {
         const astSymbols = astToLSPSymbols(ast);
         return [...referenceSymbols, ...astSymbols];
       }
-      
+
       return referenceSymbols;
-    }
+    },
   };
 }
 
@@ -395,10 +396,14 @@ export function createASTEnhancedLSPHandlers(referenceHandlers: any) {
 
 function mapSmellSeverityToLSP(severity: string): DiagnosticSeverity {
   switch (severity) {
-    case 'high': return DiagnosticSeverity.Error;
-    case 'medium': return DiagnosticSeverity.Warning;
-    case 'low': return DiagnosticSeverity.Information;
-    default: return DiagnosticSeverity.Hint;
+    case 'high':
+      return DiagnosticSeverity.Error;
+    case 'medium':
+      return DiagnosticSeverity.Warning;
+    case 'low':
+      return DiagnosticSeverity.Information;
+    default:
+      return DiagnosticSeverity.Hint;
   }
 }
 
@@ -411,7 +416,7 @@ function nodeToRange(node: ASTNode): Range {
     const length = node.end - node.start;
     return {
       start: { line: startLine, character: startChar },
-      end: { line: startLine, character: startChar + length }
+      end: { line: startLine, character: startChar + length },
     };
   }
 
@@ -419,7 +424,7 @@ function nodeToRange(node: ASTNode): Range {
   if ((node as any).raw && typeof (node as any).raw === 'string') {
     return {
       start: { line: startLine, character: startChar },
-      end: { line: startLine, character: startChar + (node as any).raw.length }
+      end: { line: startLine, character: startChar + (node as any).raw.length },
     };
   }
 
@@ -427,7 +432,7 @@ function nodeToRange(node: ASTNode): Range {
   const estimatedLength = estimateNodeLength(node);
   return {
     start: { line: startLine, character: startChar },
-    end: { line: startLine, character: startChar + estimatedLength }
+    end: { line: startLine, character: startChar + estimatedLength },
   };
 }
 
@@ -457,12 +462,12 @@ function extractCommandSymbols(commands: any[]): DocumentSymbol[] {
     detail: 'Command',
     kind: SymbolKind.Method,
     range: nodeToRange(cmd),
-    selectionRange: nodeToRange(cmd)
+    selectionRange: nodeToRange(cmd),
   }));
 }
 
 function findNodeAtPosition(ast: ASTNode, position: Position): ASTNode | null {
-  const targetLine = position.line + 1;  // LSP is 0-based, AST is 1-based
+  const targetLine = position.line + 1; // LSP is 0-based, AST is 1-based
   const targetChar = position.character; // Both use 0-based column
 
   // Find nodes that contain the target position using actual boundaries
@@ -529,18 +534,24 @@ function getNodeSize(node: ASTNode): number {
 
 function getNodePriority(nodeType: string): number {
   switch (nodeType) {
-    case 'eventHandler': return 3;
-    case 'command': return 2;
-    case 'conditional': return 2;
-    case 'selector': return 1;
-    case 'identifier': return 1;
-    default: return 0;
+    case 'eventHandler':
+      return 3;
+    case 'command':
+      return 2;
+    case 'conditional':
+      return 2;
+    case 'selector':
+      return 1;
+    case 'identifier':
+      return 1;
+    default:
+      return 0;
   }
 }
 
 function getContextualCompletions(node: ASTNode): CompletionItem[] {
   const completions: CompletionItem[] = [];
-  
+
   switch (node.type) {
     case 'eventHandler':
       completions.push(
@@ -552,7 +563,7 @@ function getContextualCompletions(node: ASTNode): CompletionItem[] {
         { label: 'if', kind: CompletionItemKind.Keyword, detail: 'Conditional' }
       );
       break;
-      
+
     case 'conditional':
       completions.push(
         { label: 'then', kind: CompletionItemKind.Keyword, detail: 'Then clause' },
@@ -560,7 +571,7 @@ function getContextualCompletions(node: ASTNode): CompletionItem[] {
         { label: 'end', kind: CompletionItemKind.Keyword, detail: 'End conditional' }
       );
       break;
-      
+
     default:
       // Default command completions
       completions.push(
@@ -569,7 +580,7 @@ function getContextualCompletions(node: ASTNode): CompletionItem[] {
         { label: 'you', kind: CompletionItemKind.Variable, detail: 'Event target' }
       );
   }
-  
+
   return completions;
 }
 
@@ -631,13 +642,13 @@ export const DEFAULT_LSP_CONFIG: LSPIntegrationConfig = {
   enableSymbols: true,
   complexityThresholds: {
     cyclomatic: 10,
-    cognitive: 15
-  }
+    cognitive: 15,
+  },
 };
 
 export function createLSPIntegration(config: LSPIntegrationConfig = DEFAULT_LSP_CONFIG) {
   const storage = new DocumentASTStorage();
-  
+
   return {
     config,
     astToLSPDiagnostics: config.enableDiagnostics ? astToLSPDiagnostics : () => [],
@@ -648,6 +659,6 @@ export function createLSPIntegration(config: LSPIntegrationConfig = DEFAULT_LSP_
     setDocumentAST: (uri: string, ast: ASTNode) => storage.setDocumentAST(uri, ast),
     clearDocumentAST: (uri: string) => storage.clearDocumentAST(uri),
     getDocumentAST: (uri: string) => storage.getDocumentAST(uri),
-    clearAllDocuments: () => storage.clear()
+    clearAllDocuments: () => storage.clear(),
   };
 }

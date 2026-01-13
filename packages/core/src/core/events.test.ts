@@ -305,7 +305,10 @@ describe('Event System', () => {
         expect(event.detail.context.me).toBe(testElement);
       });
 
-      testElement.addEventListener('hyperscript:command', contextHandler as unknown as EventListener);
+      testElement.addEventListener(
+        'hyperscript:command',
+        contextHandler as unknown as EventListener
+      );
 
       const hsEvent = createHyperscriptEvent('command', {
         element: testElement,

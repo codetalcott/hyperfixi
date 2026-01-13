@@ -23,9 +23,11 @@ export function getTogglePatternsHi(): LanguagePattern[] {
           { type: 'role', role: 'destination' },
           { type: 'literal', value: 'पर' },
           { type: 'literal', value: 'टॉगल', alternatives: ['बदलें', 'बदल'] },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'करें', alternatives: ['करो'] },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: 'करें', alternatives: ['करो'] }],
+          },
         ],
       },
       extraction: {
@@ -44,9 +46,11 @@ export function getTogglePatternsHi(): LanguagePattern[] {
         tokens: [
           { type: 'role', role: 'patient' },
           { type: 'literal', value: 'टॉगल', alternatives: ['बदलें', 'बदल'] },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'करें', alternatives: ['करो'] },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: 'करें', alternatives: ['करो'] }],
+          },
         ],
       },
       extraction: {

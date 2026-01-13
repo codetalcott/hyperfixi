@@ -63,9 +63,14 @@ export interface Token {
 // =============================================================================
 
 const CONTEXT_VARS = new Set([
-  'me', 'my', 'myself',
-  'you', 'your', 'yourself',
-  'it', 'its',
+  'me',
+  'my',
+  'myself',
+  'you',
+  'your',
+  'yourself',
+  'it',
+  'its',
   'result',
   'event',
   'target',
@@ -79,7 +84,18 @@ const LOGICAL_OPERATORS = new Set(['and', 'or', 'not', 'no']);
 
 const BOOLEAN_LITERALS = new Set(['true', 'false', 'null', 'undefined']);
 
-const TIME_UNITS = new Set(['ms', 's', 'seconds', 'second', 'milliseconds', 'millisecond', 'minutes', 'minute', 'hours', 'hour']);
+const TIME_UNITS = new Set([
+  'ms',
+  's',
+  'seconds',
+  'second',
+  'milliseconds',
+  'millisecond',
+  'minutes',
+  'minute',
+  'hours',
+  'hour',
+]);
 
 // =============================================================================
 // Tokenizer

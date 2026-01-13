@@ -141,10 +141,14 @@ async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
       if (typeof callee === 'function') return callee.apply(callContext, args);
       return undefined;
     }
-${positionalExpressions ? `
+${
+  positionalExpressions
+    ? `
     case 'positional':
       return evaluatePositional(node, ctx);
-` : ''}
+`
+    : ''
+}
     default: return undefined;
   }
 }
@@ -187,7 +191,9 @@ async function evaluateBinary(node: ASTNode, ctx: Context): Promise<any> {
     default: return undefined;
   }
 }
-${positionalExpressions ? `
+${
+  positionalExpressions
+    ? `
 function evaluatePositional(node: ASTNode, ctx: Context): Element | null {
   const target = node.target;
   let elements: Element[] = [];
@@ -214,12 +220,16 @@ function evaluatePositional(node: ASTNode, ctx: Context): Element | null {
     default: return elements[0] || null;
   }
 }
-` : ''}
+`
+    : ''
+}
 // =============================================================================
 // COMMAND EXECUTOR
 // =============================================================================
 
-${needsStyleHelpers ? `
+${
+  needsStyleHelpers
+    ? `
 const isStyleProp = (prop: string) => prop?.startsWith('*');
 const getStyleName = (prop: string) => prop.substring(1);
 const setStyleProp = (el: Element, prop: string, value: any): boolean => {
@@ -227,16 +237,22 @@ const setStyleProp = (el: Element, prop: string, value: any): boolean => {
   (el as HTMLElement).style.setProperty(getStyleName(prop), String(value));
   return true;
 };
-` : ''}
+`
+    : ''
+}
 
-${needsElementArrayHelper ? `
+${
+  needsElementArrayHelper
+    ? `
 const toElementArray = (val: any): Element[] => {
   if (Array.isArray(val)) return val.filter(e => e instanceof Element);
   if (val instanceof Element) return [val];
   if (typeof val === 'string') return Array.from(document.querySelectorAll(val));
   return [];
 };
-` : ''}
+`
+    : ''
+}
 
 async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
   const getTarget = async (): Promise<Element[]> => {
@@ -267,7 +283,9 @@ ${commandCases}
       return null;
   }
 }
-${hasBlocks ? `
+${
+  hasBlocks
+    ? `
 // =============================================================================
 // BLOCK EXECUTOR
 // =============================================================================
@@ -281,7 +299,9 @@ ${blockCases}
       return null;
   }
 }
-` : ''}
+`
+    : ''
+}
 // =============================================================================
 // SEQUENCE EXECUTOR
 // =============================================================================
@@ -291,13 +311,19 @@ async function executeSequence(nodes: ASTNode[], ctx: Context): Promise<any> {
   for (const node of nodes) {
     if (node.type === 'command') {
       result = await executeCommand(node as CommandNode, ctx);
-    }${hasBlocks ? ` else if (['if', 'repeat', 'for', 'while', 'fetch'].includes(node.type)) {
+    }${
+      hasBlocks
+        ? ` else if (['if', 'repeat', 'for', 'while', 'fetch'].includes(node.type)) {
       result = await executeBlock(node as BlockNode, ctx);
-    }` : ''}
+    }`
+        : ''
+    }
   }
   return result;
 }
-${hasBlocks ? `
+${
+  hasBlocks
+    ? `
 async function executeSequenceWithBlocks(nodes: ASTNode[], ctx: Context): Promise<any> {
   try {
     return await executeSequence(nodes, ctx);
@@ -306,12 +332,14 @@ async function executeSequenceWithBlocks(nodes: ASTNode[], ctx: Context): Promis
     throw e;
   }
 }
-` : ''}
+`
+    : ''
+}
 async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any> {
   const ctx: Context = { me, event, locals: new Map() };
 
   if (ast.type === 'sequence') {
-    ${hasReturn || hasBlocks ? 'try { return await executeSequence(ast.commands, ctx); } catch (e: any) { if (e?.type === \'return\') return e.value; throw e; }' : 'return executeSequence(ast.commands, ctx);'}
+    ${hasReturn || hasBlocks ? "try { return await executeSequence(ast.commands, ctx); } catch (e: any) { if (e?.type === 'return') return e.value; throw e; }" : 'return executeSequence(ast.commands, ctx);'}
   }
 
   if (ast.type === 'event') {
@@ -319,7 +347,7 @@ async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any
     const eventName = eventNode.event;
 
     if (eventName === 'init') {
-      ${hasReturn || hasBlocks ? 'try { await executeSequence(eventNode.body, ctx); } catch (e: any) { if (e?.type !== \'return\') throw e; }' : 'await executeSequence(eventNode.body, ctx);'}
+      ${hasReturn || hasBlocks ? "try { await executeSequence(eventNode.body, ctx); } catch (e: any) { if (e?.type !== 'return') throw e; }" : 'await executeSequence(eventNode.body, ctx);'}
       return;
     }
 
@@ -336,7 +364,7 @@ async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any
         you: e.target instanceof Element ? e.target : undefined,
         locals: new Map(),
       };
-      ${hasReturn || hasBlocks ? 'try { await executeSequence(eventNode.body, handlerCtx); } catch (err: any) { if (err?.type !== \'return\') throw err; }' : 'await executeSequence(eventNode.body, handlerCtx);'}
+      ${hasReturn || hasBlocks ? "try { await executeSequence(eventNode.body, handlerCtx); } catch (err: any) { if (err?.type !== 'return') throw err; }" : 'await executeSequence(eventNode.body, handlerCtx);'}
     };
 
     if (mods.debounce) {
@@ -422,7 +450,9 @@ const api = {
 // =============================================================================
 // AUTO-INITIALIZE
 // =============================================================================
-${autoInit ? `
+${
+  autoInit
+    ? `
 if (typeof window !== 'undefined') {
   (window as any).${globalName} = api;
   (window as any)._hyperscript = api;
@@ -432,19 +462,29 @@ if (typeof window !== 'undefined') {
   } else {
     processElements();
   }
-${htmxIntegration ? `
+${
+  htmxIntegration
+    ? `
   // HTMX integration
   document.addEventListener('htmx:afterSettle', (e: Event) => {
     const target = (e as CustomEvent).detail?.target;
     if (target) processElements(target);
   });
-` : ''}
+`
+    : ''
 }
-` : ''}
-${esModule ? `
+}
+`
+    : ''
+}
+${
+  esModule
+    ? `
 export default api;
 export { api, processElements };
-` : ''}`;
+`
+    : ''
+}`;
 }
 
 /**

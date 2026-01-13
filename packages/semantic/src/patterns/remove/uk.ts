@@ -22,15 +22,23 @@ export function getRemovePatternsUk(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'видалити', alternatives: ['видали', 'прибрати', 'прибери'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'з', alternatives: ['від', 'із'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'з', alternatives: ['від', 'із'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        source: { marker: 'з', markerAlternatives: ['від', 'із'], default: { type: 'reference', value: 'me' } },
+        source: {
+          marker: 'з',
+          markerAlternatives: ['від', 'із'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

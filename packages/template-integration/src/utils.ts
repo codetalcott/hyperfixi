@@ -1,9 +1,4 @@
-import {
-  TemplateNode,
-  TemplateContext,
-  HyperscriptBlock,
-  CompilationWarning,
-} from './types';
+import { TemplateNode, TemplateContext, HyperscriptBlock, CompilationWarning } from './types';
 
 /**
  * Utility functions for template processing
@@ -26,7 +21,10 @@ export function extractTemplateVariables(
   const escapedStart = escapeRegex(delimiters.start);
   const escapedEnd = escapeRegex(delimiters.end);
   // Use a more flexible pattern that captures content between delimiters
-  const pattern = new RegExp(`${escapedStart}\\s*([^${escapeRegex(delimiters.end[0])}]+?)\\s*${escapedEnd}`, 'g');
+  const pattern = new RegExp(
+    `${escapedStart}\\s*([^${escapeRegex(delimiters.end[0])}]+?)\\s*${escapedEnd}`,
+    'g'
+  );
   const variables = new Set<string>();
 
   let match;
@@ -48,7 +46,7 @@ export function validateTemplate(template: string): CompilationWarning[] {
   // Check for unclosed template variables
   const openCount = (template.match(/\{\{/g) || []).length;
   const closeCount = (template.match(/\}\}/g) || []).length;
-  
+
   if (openCount !== closeCount) {
     warnings.push({
       type: 'invalid-hyperscript',
@@ -180,7 +178,7 @@ function nodeToHtml(node: TemplateNode): string {
       if (!node.tagName) return '';
 
       let html = `<${node.tagName}`;
-      
+
       if (node.attributes) {
         for (const [name, value] of Object.entries(node.attributes)) {
           html += ` ${name}`;
@@ -322,15 +320,15 @@ export class TemplatePerformanceMonitor {
 
   startTiming(operation: string): () => void {
     const startTime = performance.now();
-    
+
     return () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       if (!this.metrics.has(operation)) {
         this.metrics.set(operation, []);
       }
-      
+
       this.metrics.get(operation)!.push(duration);
     };
   }
@@ -367,7 +365,7 @@ export class TemplatePerformanceMonitor {
 
   getAllStats(): Record<string, ReturnType<typeof this.getStats>> {
     const stats: Record<string, ReturnType<typeof this.getStats>> = {};
-    
+
     for (const operation of this.metrics.keys()) {
       stats[operation] = this.getStats(operation);
     }
@@ -379,7 +377,10 @@ export class TemplatePerformanceMonitor {
 /**
  * Template debugging utilities
  */
-export function debugTemplate(template: string, context: TemplateContext = {}): {
+export function debugTemplate(
+  template: string,
+  context: TemplateContext = {}
+): {
   variables: string[];
   missingVariables: string[];
   unusedVariables: string[];
@@ -387,7 +388,7 @@ export function debugTemplate(template: string, context: TemplateContext = {}): 
 } {
   const templateVars = extractTemplateVariables(template);
   const contextVars = Object.keys(context.variables || {});
-  
+
   const missingVariables = templateVars.filter(v => !contextVars.includes(v));
   const unusedVariables = contextVars.filter(v => !templateVars.includes(v));
   const warnings = validateTemplate(template);
@@ -416,16 +417,25 @@ function escapeHtml(text: string): string {
 }
 
 function escapeAttribute(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function isSelfClosingTag(tagName: string): boolean {
   const selfClosingTags = [
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-    'link', 'meta', 'param', 'source', 'track', 'wbr'
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
   ];
   return selfClosingTags.includes(tagName.toLowerCase());
 }

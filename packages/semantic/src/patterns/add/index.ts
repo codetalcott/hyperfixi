@@ -84,4 +84,20 @@ export { getAddPatternsZh } from './zh';
 /**
  * Languages that have hand-crafted add patterns.
  */
-export const addPatternLanguages = ['ar', 'bn', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const addPatternLanguages = [
+  'ar',
+  'bn',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

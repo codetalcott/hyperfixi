@@ -89,52 +89,39 @@ describe('Pluralization', () => {
   describe('PluralAwareTranslator', () => {
     describe('translateTimeExpression', () => {
       it('should translate English time expressions', () => {
-        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'en'))
-          .toBe('1 second');
-        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'en'))
-          .toBe('2 seconds');
-        expect(PluralAwareTranslator.translateTimeExpression(1, 'minute', 'en'))
-          .toBe('1 minute');
-        expect(PluralAwareTranslator.translateTimeExpression(5, 'minute', 'en'))
-          .toBe('5 minutes');
+        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'en')).toBe('1 second');
+        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'en')).toBe('2 seconds');
+        expect(PluralAwareTranslator.translateTimeExpression(1, 'minute', 'en')).toBe('1 minute');
+        expect(PluralAwareTranslator.translateTimeExpression(5, 'minute', 'en')).toBe('5 minutes');
       });
 
       it('should translate Spanish time expressions', () => {
-        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'es'))
-          .toBe('1 segundo');
-        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'es'))
-          .toBe('2 segundos');
-        expect(PluralAwareTranslator.translateTimeExpression(1, 'hour', 'es'))
-          .toBe('1 hora');
-        expect(PluralAwareTranslator.translateTimeExpression(3, 'hour', 'es'))
-          .toBe('3 horas');
+        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'es')).toBe('1 segundo');
+        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'es')).toBe('2 segundos');
+        expect(PluralAwareTranslator.translateTimeExpression(1, 'hour', 'es')).toBe('1 hora');
+        expect(PluralAwareTranslator.translateTimeExpression(3, 'hour', 'es')).toBe('3 horas');
       });
 
       it('should translate Russian time expressions', () => {
-        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'ru'))
-          .toBe('1 секунда');
-        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'ru'))
-          .toBe('2 секунды');
-        expect(PluralAwareTranslator.translateTimeExpression(5, 'second', 'ru'))
-          .toBe('5 секунд');
+        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'ru')).toBe('1 секунда');
+        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'ru')).toBe('2 секунды');
+        expect(PluralAwareTranslator.translateTimeExpression(5, 'second', 'ru')).toBe('5 секунд');
       });
 
       it('should translate Arabic time expressions', () => {
-        expect(PluralAwareTranslator.translateTimeExpression(0, 'second', 'ar'))
-          .toBe('0 ثوانِ');
-        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'ar'))
-          .toBe('1 ثانية');
-        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'ar'))
-          .toBe('2 ثانيتان');
-        expect(PluralAwareTranslator.translateTimeExpression(3, 'second', 'ar'))
-          .toBe('3 ثوانِ');
+        expect(PluralAwareTranslator.translateTimeExpression(0, 'second', 'ar')).toBe('0 ثوانِ');
+        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'ar')).toBe('1 ثانية');
+        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'ar')).toBe('2 ثانيتان');
+        expect(PluralAwareTranslator.translateTimeExpression(3, 'second', 'ar')).toBe('3 ثوانِ');
       });
 
       it('should handle unsupported locales with fallback', () => {
-        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'unknown'))
-          .toBe('1 second');
-        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'unknown'))
-          .toBe('2 seconds');
+        expect(PluralAwareTranslator.translateTimeExpression(1, 'second', 'unknown')).toBe(
+          '1 second'
+        );
+        expect(PluralAwareTranslator.translateTimeExpression(2, 'second', 'unknown')).toBe(
+          '2 seconds'
+        );
       });
     });
 
@@ -142,28 +129,28 @@ describe('Pluralization', () => {
       it('should translate time expressions in hyperscript', () => {
         const input = 'wait 5 seconds then wait 1 minute';
         const result = PluralAwareTranslator.translateHyperscriptTime(input, 'es');
-        
+
         expect(result).toBe('wait 5 segundos then wait 1 minuto');
       });
 
       it('should handle milliseconds', () => {
         const input = 'wait 500 milliseconds';
         const result = PluralAwareTranslator.translateHyperscriptTime(input, 'en');
-        
+
         expect(result).toBe('wait 500 milliseconds');
       });
 
       it('should handle abbreviated forms', () => {
         const input = 'wait 100 ms';
         const result = PluralAwareTranslator.translateHyperscriptTime(input, 'en');
-        
+
         expect(result).toBe('wait 100 milliseconds');
       });
 
       it('should preserve non-time content', () => {
         const input = 'on click wait 2 seconds then show #result';
         const result = PluralAwareTranslator.translateHyperscriptTime(input, 'es');
-        
+
         expect(result).toBe('on click wait 2 segundos then show #result');
       });
     });

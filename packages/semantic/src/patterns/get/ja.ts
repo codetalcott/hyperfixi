@@ -22,7 +22,11 @@ export function getGetPatternsJa(): LanguagePattern[] {
         tokens: [
           { type: 'role', role: 'source', expectedTypes: ['selector', 'reference', 'expression'] },
           { type: 'literal', value: 'を' },
-          { type: 'literal', value: '取得', alternatives: ['取得する', 'ゲット', 'ゲットする', '得る', '取る'] },
+          {
+            type: 'literal',
+            value: '取得',
+            alternatives: ['取得する', 'ゲット', 'ゲットする', '得る', '取る'],
+          },
         ],
       },
       extraction: {

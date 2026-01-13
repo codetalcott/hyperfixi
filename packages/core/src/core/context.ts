@@ -87,7 +87,11 @@ export function ensureContext(userContext?: Partial<ExecutionContext> | any): Ex
 
   // If already has locals/globals Maps AND flags, use it directly (already valid)
   // Must check flags to ensure context is truly complete
-  if (userContext.locals instanceof Map && userContext.globals instanceof Map && userContext.flags) {
+  if (
+    userContext.locals instanceof Map &&
+    userContext.globals instanceof Map &&
+    userContext.flags
+  ) {
     return userContext as ExecutionContext;
   }
 

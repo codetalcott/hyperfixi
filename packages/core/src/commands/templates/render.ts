@@ -188,10 +188,7 @@ export class RenderCommand {
    * @param context - Execution context
    * @returns Template content string
    */
-  private extractTemplateContent(
-    template: unknown,
-    context: TypedExecutionContext
-  ): string {
+  private extractTemplateContent(template: unknown, context: TypedExecutionContext): string {
     // Handle HTMLTemplateElement
     if (template instanceof HTMLTemplateElement) {
       return template.innerHTML;
@@ -213,9 +210,7 @@ export class RenderCommand {
       }
 
       // Extract content from <template> tags if present
-      const templateMatch = templateStr.match(
-        /<template[^>]*>([\s\S]*?)<\/template>/i
-      );
+      const templateMatch = templateStr.match(/<template[^>]*>([\s\S]*?)<\/template>/i);
       if (templateMatch) {
         return templateMatch[1];
       }
@@ -244,10 +239,7 @@ export class RenderCommand {
   ): any {
     return {
       ...context,
-      locals: new Map([
-        ...Array.from(context.locals.entries()),
-        ...Object.entries(variables),
-      ]),
+      locals: new Map([...Array.from(context.locals.entries()), ...Object.entries(variables)]),
     };
   }
 
@@ -273,11 +265,7 @@ export class RenderCommand {
 
       if (line.startsWith('@repeat ')) {
         // Process @repeat directive
-        const { nextIndex, rendered } = await this.processRepeatDirective(
-          lines,
-          i,
-          context
-        );
+        const { nextIndex, rendered } = await this.processRepeatDirective(lines, i, context);
         result.push(rendered);
         i = nextIndex;
         directivesProcessed.push('@repeat');
@@ -331,10 +319,7 @@ export class RenderCommand {
     const collection = this.evaluateExpression(collectionExpr, context);
 
     // Find matching @end
-    const { endIndex, blockContent } = this.extractDirectiveBlock(
-      lines,
-      startIndex + 1
-    );
+    const { endIndex, blockContent } = this.extractDirectiveBlock(lines, startIndex + 1);
 
     // Execute repeat for each item
     const results: string[] = [];
@@ -347,11 +332,7 @@ export class RenderCommand {
         };
 
         // Process block content for this item
-        const rendered = await this.processTemplate(
-          blockContent.join('\n'),
-          iterationContext,
-          []
-        );
+        const rendered = await this.processTemplate(blockContent.join('\n'), iterationContext, []);
         results.push(rendered);
       }
     }
@@ -389,10 +370,7 @@ export class RenderCommand {
     const condition = Boolean(this.evaluateExpression(conditionExpr, context));
 
     // Find @else or @end
-    const { endIndex, blockContent, elseContent } = this.extractIfElseBlock(
-      lines,
-      startIndex + 1
-    );
+    const { endIndex, blockContent, elseContent } = this.extractIfElseBlock(lines, startIndex + 1);
 
     // Execute appropriate branch
     let rendered = '';
@@ -638,9 +616,7 @@ export class RenderCommand {
     container.innerHTML = html;
 
     // Return first child if only one element, otherwise return container
-    return container.children.length === 1
-      ? container.firstElementChild
-      : container;
+    return container.children.length === 1 ? container.firstElementChild : container;
   }
 }
 

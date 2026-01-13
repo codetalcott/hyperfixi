@@ -4,11 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import {
-  PossessiveExpression,
-  createPossessiveExpression,
-  evaluatePossessive,
-} from './index';
+import { PossessiveExpression, createPossessiveExpression, evaluatePossessive } from './index';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities';
 
 describe('Enhanced Possessive Expression', () => {

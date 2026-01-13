@@ -524,10 +524,9 @@ test.describe('Semantic Demo Page', () => {
     await page.goto('http://localhost:3000/examples/multilingual/semantic-demo.html');
 
     // Wait for bundle to load
-    await page.waitForFunction(
-      () => typeof (window as any).HyperFixiSemantic !== 'undefined',
-      { timeout: 5000 }
-    );
+    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+      timeout: 5000,
+    });
 
     // Verify the bundle is loaded
     const hasGlobal = await page.evaluate(
@@ -539,10 +538,9 @@ test.describe('Semantic Demo Page', () => {
   test('semantic-demo.html has parse function', async ({ page }) => {
     await page.goto('http://localhost:3000/examples/multilingual/semantic-demo.html');
 
-    await page.waitForFunction(
-      () => typeof (window as any).HyperFixiSemantic !== 'undefined',
-      { timeout: 5000 }
-    );
+    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+      timeout: 5000,
+    });
 
     const hasParse = await page.evaluate(
       () => typeof (window as any).HyperFixiSemantic.parse === 'function'
@@ -553,10 +551,9 @@ test.describe('Semantic Demo Page', () => {
   test('semantic-demo.html can parse input', async ({ page }) => {
     await page.goto('http://localhost:3000/examples/multilingual/semantic-demo.html');
 
-    await page.waitForFunction(
-      () => typeof (window as any).HyperFixiSemantic !== 'undefined',
-      { timeout: 5000 }
-    );
+    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+      timeout: 5000,
+    });
 
     // Use canParse for simple boolean check
     const canParse = await page.evaluate(() => {

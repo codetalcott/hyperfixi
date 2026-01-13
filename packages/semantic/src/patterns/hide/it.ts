@@ -21,10 +21,14 @@ export function getHidePatternsIt(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'nascondere', alternatives: ['nascondi', 'hide'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'con' },
-            { type: 'role', role: 'style' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'con' },
+              { type: 'role', role: 'style' },
+            ],
+          },
         ],
       },
       extraction: {

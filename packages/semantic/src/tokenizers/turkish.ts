@@ -40,7 +40,7 @@ const TURKISH_SPECIAL_CHARS = 'çÇğĞıİöÖşŞüÜ';
 function isTurkishLetter(char: string): boolean {
   const code = char.charCodeAt(0);
   // Basic Latin letters
-  if ((code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A)) {
+  if ((code >= 0x41 && code <= 0x5a) || (code >= 0x61 && code <= 0x7a)) {
     return true;
   }
   // Turkish special characters
@@ -55,22 +55,22 @@ function isTurkishLetter(char: string): boolean {
  * Turkish postpositions (come after the noun they modify).
  */
 const POSTPOSITIONS = new Set([
-  'ile',      // with
-  'için',     // for
-  'kadar',    // until, as far as
-  'gibi',     // like
-  'sonra',    // after
-  'önce',     // before
+  'ile', // with
+  'için', // for
+  'kadar', // until, as far as
+  'gibi', // like
+  'sonra', // after
+  'önce', // before
   'üzerinde', // on, above
-  'altında',  // under
-  'içinde',   // inside
-  'dışında',  // outside
+  'altında', // under
+  'içinde', // inside
+  'dışında', // outside
   'arasında', // between
-  'karşı',    // against, towards
-  'göre',     // according to
-  'rağmen',   // despite
-  'doğru',    // towards
-  'boyunca',  // along, throughout
+  'karşı', // against, towards
+  'göre', // according to
+  'rağmen', // despite
+  'doğru', // towards
+  'boyunca', // along, throughout
 ]);
 
 /**
@@ -78,12 +78,30 @@ const POSTPOSITIONS = new Set([
  * These are often used as particles in semantic parsing.
  */
 const CASE_SUFFIXES = new Set([
-  'de', 'da', 'te', 'ta',       // locative (at, in)
-  'den', 'dan', 'ten', 'tan',   // ablative (from)
-  'e', 'a', 'ye', 'ya',         // dative (to)
-  'i', 'ı', 'u', 'ü',           // accusative (object)
-  'in', 'ın', 'un', 'ün',       // genitive (of)
-  'le', 'la', 'yle', 'yla',     // instrumental (with)
+  'de',
+  'da',
+  'te',
+  'ta', // locative (at, in)
+  'den',
+  'dan',
+  'ten',
+  'tan', // ablative (from)
+  'e',
+  'a',
+  'ye',
+  'ya', // dative (to)
+  'i',
+  'ı',
+  'u',
+  'ü', // accusative (object)
+  'in',
+  'ın',
+  'un',
+  'ün', // genitive (of)
+  'le',
+  'la',
+  'yle',
+  'yla', // instrumental (with)
 ]);
 
 // =============================================================================
@@ -96,24 +114,24 @@ const CASE_SUFFIXES = new Set([
 const TURKISH_KEYWORDS: Map<string, string> = new Map([
   // Commands - Class/Attribute operations
   ['değiştir', 'toggle'],
-  ['değistir', 'toggle'],  // without diacritics
+  ['değistir', 'toggle'], // without diacritics
   ['ekle', 'add'],
   ['kaldır', 'remove'],
-  ['kaldir', 'remove'],    // without diacritics
+  ['kaldir', 'remove'], // without diacritics
   ['sil', 'remove'],
   // Commands - Content operations
   ['koy', 'put'],
   ['yerleştir', 'put'],
-  ['yerlestir', 'put'],    // without diacritics
+  ['yerlestir', 'put'], // without diacritics
   ['sonunaekle', 'append'],
   ['sona_ekle', 'append'],
   ['basaekle', 'prepend'],
   ['başa_ekle', 'prepend'],
   ['basa_ekle', 'prepend'], // without diacritics
-  ['al', 'get'],           // common colloquial form for "get" (test case)
-  ['yap', 'set'],           // common colloquial form for "set" (test case)
+  ['al', 'get'], // common colloquial form for "get" (test case)
+  ['yap', 'set'], // common colloquial form for "set" (test case)
   ['oluştur', 'make'],
-  ['olustur', 'make'],     // without diacritics
+  ['olustur', 'make'], // without diacritics
   ['kopyala', 'clone'],
   ['klonla', 'clone'],
   // Commands - Variable operations
@@ -122,14 +140,14 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
   ['getir', 'get'],
   ['elde_et', 'get'],
   ['artır', 'increment'],
-  ['artir', 'increment'],  // without diacritics
+  ['artir', 'increment'], // without diacritics
   ['azalt', 'decrement'],
   ['kaydet', 'log'],
   ['yazdır', 'log'],
-  ['yazdir', 'log'],       // without diacritics
+  ['yazdir', 'log'], // without diacritics
   // Commands - Visibility
   ['göster', 'show'],
-  ['goster', 'show'],      // without diacritics
+  ['goster', 'show'], // without diacritics
   ['gizle', 'hide'],
   ['sakla', 'hide'],
   ['geçiş', 'transition'],
@@ -137,14 +155,14 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
   ['animasyon', 'transition'],
   // Commands - Events
   ['üzerinde', 'on'],
-  ['uzerinde', 'on'],      // without diacritics
+  ['uzerinde', 'on'], // without diacritics
   ['olduğunda', 'on'],
-  ['oldugunda', 'on'],     // without diacritics
+  ['oldugunda', 'on'], // without diacritics
   ['tetikle', 'trigger'],
   ['ateşle', 'trigger'],
-  ['atesle', 'trigger'],   // without diacritics
+  ['atesle', 'trigger'], // without diacritics
   ['gönder', 'send'],
-  ['gonder', 'send'],      // without diacritics
+  ['gonder', 'send'], // without diacritics
   // Commands - DOM focus
   ['odakla', 'focus'],
   ['odaklan', 'focus'],
@@ -155,41 +173,41 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
   // Commands - Navigation
   ['git', 'go'],
   ['yönlendir', 'go'],
-  ['yonlendir', 'go'],     // without diacritics
+  ['yonlendir', 'go'], // without diacritics
   // Commands - Async
   ['bekle', 'wait'],
   ['getir', 'fetch'],
   ['çek', 'fetch'],
-  ['cek', 'fetch'],        // without diacritics
+  ['cek', 'fetch'], // without diacritics
   ['yerleş', 'settle'],
-  ['yerles', 'settle'],    // without diacritics
+  ['yerles', 'settle'], // without diacritics
   ['istikrar', 'settle'],
-  ['sabitlen', 'settle'],  // profile primary
+  ['sabitlen', 'settle'], // profile primary
   // Commands - Control flow
   ['eğer', 'if'],
-  ['eger', 'if'],          // without diacritics
+  ['eger', 'if'], // without diacritics
   ['yoksa', 'else'],
   ['değilse', 'else'],
-  ['degilse', 'else'],     // without diacritics
+  ['degilse', 'else'], // without diacritics
   ['tekrarla', 'repeat'],
   ['herbir', 'for'],
   ['her', 'for'],
   ['iken', 'while'],
-  ['durumunda', 'when'],     // conditional "when"
-  ['nerede', 'where'],       // element filter "where"
+  ['durumunda', 'when'], // conditional "when"
+  ['nerede', 'where'], // element filter "where"
   ['devam', 'continue'],
   ['devam_et', 'continue'],
   ['dur', 'halt'],
   ['durdur', 'halt'],
   ['fırlat', 'throw'],
-  ['firlat', 'throw'],     // without diacritics
+  ['firlat', 'throw'], // without diacritics
   ['at', 'throw'],
   ['çağır', 'call'],
-  ['cagir', 'call'],       // without diacritics
+  ['cagir', 'call'], // without diacritics
   ['dön', 'return'],
-  ['don', 'return'],       // without diacritics
+  ['don', 'return'], // without diacritics
   ['döndür', 'return'],
-  ['dondur', 'return'],    // without diacritics
+  ['dondur', 'return'], // without diacritics
   // Commands - Advanced
   ['js', 'js'],
   ['javascript', 'js'],
@@ -197,28 +215,28 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
   ['eşzamansız', 'async'],
   ['eszamansiz', 'async'], // without diacritics
   ['söyle', 'tell'],
-  ['soyle', 'tell'],       // without diacritics
+  ['soyle', 'tell'], // without diacritics
   ['varsayılan', 'default'],
   ['varsayilan', 'default'], // without diacritics
   ['başlat', 'init'],
-  ['baslat', 'init'],      // without diacritics
+  ['baslat', 'init'], // without diacritics
   ['başla', 'init'],
-  ['basla', 'init'],       // without diacritics
+  ['basla', 'init'], // without diacritics
   ['davranış', 'behavior'],
   ['davranis', 'behavior'], // without diacritics
   ['yükle', 'install'],
-  ['yukle', 'install'],    // without diacritics
+  ['yukle', 'install'], // without diacritics
   ['ölç', 'measure'],
-  ['olc', 'measure'],      // without diacritics
+  ['olc', 'measure'], // without diacritics
   ['kadar', 'until'],
   ['olay', 'event'],
   ['-den', 'from'],
   ['-dan', 'from'],
   // Modifiers
   ['içine', 'into'],
-  ['icine', 'into'],       // without diacritics
+  ['icine', 'into'], // without diacritics
   ['önce', 'before'],
-  ['once', 'before'],      // without diacritics
+  ['once', 'before'], // without diacritics
   ['sonra', 'after'],
   // Control flow helpers
   ['sonra', 'then'],
@@ -229,30 +247,30 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
 
   // Events (for event name recognition)
   ['tıklama', 'click'],
-  ['tiklama', 'click'],    // without diacritics
+  ['tiklama', 'click'], // without diacritics
   ['tık', 'click'],
-  ['tik', 'click'],        // without diacritics
+  ['tik', 'click'], // without diacritics
   ['giriş', 'input'],
-  ['giris', 'input'],      // without diacritics
+  ['giris', 'input'], // without diacritics
   ['değişim', 'change'],
-  ['degisim', 'change'],   // without diacritics
+  ['degisim', 'change'], // without diacritics
   ['gönder', 'submit'],
-  ['gonder', 'submit'],    // without diacritics
+  ['gonder', 'submit'], // without diacritics
   ['odak', 'focus'],
   ['bulanık', 'blur'],
-  ['bulanik', 'blur'],     // without diacritics
+  ['bulanik', 'blur'], // without diacritics
   ['fare üzerinde', 'mouseover'],
-  ['fare uzerinde', 'mouseover'],  // without diacritics
+  ['fare uzerinde', 'mouseover'], // without diacritics
   ['fare dışında', 'mouseout'],
-  ['fare disinda', 'mouseout'],    // without diacritics
+  ['fare disinda', 'mouseout'], // without diacritics
   ['yükle', 'load'],
-  ['yukle', 'load'],       // without diacritics
+  ['yukle', 'load'], // without diacritics
   ['kaydır', 'scroll'],
-  ['kaydir', 'scroll'],    // without diacritics
+  ['kaydir', 'scroll'], // without diacritics
   ['tuş_bas', 'keydown'],
-  ['tus_bas', 'keydown'],  // without diacritics
+  ['tus_bas', 'keydown'], // without diacritics
   ['tuş_bırak', 'keyup'],
-  ['tus_birak', 'keyup'],  // without diacritics
+  ['tus_birak', 'keyup'], // without diacritics
 
   // References
   ['ben', 'me'],
@@ -260,7 +278,7 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
   ['o', 'it'],
   ['onun', 'its'],
   ['sonuç', 'result'],
-  ['sonuc', 'result'],     // without diacritics
+  ['sonuc', 'result'], // without diacritics
   ['olay', 'event'],
   ['hedef', 'target'],
 
@@ -269,7 +287,7 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
   ['son', 'last'],
   ['sonraki', 'next'],
   ['önceki', 'previous'],
-  ['onceki', 'previous'],  // without diacritics
+  ['onceki', 'previous'], // without diacritics
 
   // Time units
   ['saniye', 's'],
@@ -279,20 +297,20 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
 
   // Boolean
   ['doğru', 'true'],
-  ['dogru', 'true'],       // without diacritics
+  ['dogru', 'true'], // without diacritics
   ['yanlış', 'false'],
-  ['yanlis', 'false'],     // without diacritics
+  ['yanlis', 'false'], // without diacritics
 
   // Logical
   ['ve', 'and'],
   ['veya', 'or'],
   ['değil', 'not'],
-  ['degil', 'not'],        // without diacritics
+  ['degil', 'not'], // without diacritics
 
   // Modifiers (postpositions)
   ['ile', 'with'],
   ['için', 'for'],
-  ['icin', 'for'],         // without diacritics
+  ['icin', 'for'], // without diacritics
 ]);
 
 // =============================================================================
@@ -415,21 +433,12 @@ export class TurkishTokenizer extends BaseTokenizer {
     const normalized = TURKISH_KEYWORDS.get(lowerWord);
 
     if (normalized) {
-      return createToken(
-        word,
-        'keyword',
-        createPosition(startPos, pos),
-        normalized
-      );
+      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
     }
 
     // Check if it's a postposition
     if (POSTPOSITIONS.has(lowerWord)) {
-      return createToken(
-        word,
-        'particle',
-        createPosition(startPos, pos)
-      );
+      return createToken(word, 'particle', createPosition(startPos, pos));
     }
 
     // Try morphological normalization for conjugated forms
@@ -446,21 +455,12 @@ export class TurkishTokenizer extends BaseTokenizer {
           stemConfidence: morphResult.confidence,
         };
 
-        return createToken(
-          word,
-          'keyword',
-          createPosition(startPos, pos),
-          tokenOptions
-        );
+        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
       }
     }
 
     // Not a keyword or recognized form, return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -519,13 +519,8 @@ export class TurkishTokenizer extends BaseTokenizer {
 
     if (!number) return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
-
 }
 
 /**

@@ -90,7 +90,8 @@ export const cssSelector: RuntimeValidator<string> = v.string().min(1) as Runtim
 export const cssClassName: RuntimeValidator<string> = v
   .string()
   .refine(
-    (value: unknown) => typeof value === 'string' && /^[a-zA-Z_-][a-zA-Z0-9_-]*$/.test(value.trim()),
+    (value: unknown) =>
+      typeof value === 'string' && /^[a-zA-Z_-][a-zA-Z0-9_-]*$/.test(value.trim()),
     'Invalid CSS class name format'
   ) as RuntimeValidator<string>;
 
@@ -101,7 +102,8 @@ export const cssClassName: RuntimeValidator<string> = v
 export const attributeName: RuntimeValidator<string> = v
   .string()
   .refine(
-    (value: unknown) => typeof value === 'string' && /^[a-zA-Z_][a-zA-Z0-9._-]*$/.test(value.trim()),
+    (value: unknown) =>
+      typeof value === 'string' && /^[a-zA-Z_][a-zA-Z0-9._-]*$/.test(value.trim()),
     'Invalid attribute name format'
   ) as RuntimeValidator<string>;
 

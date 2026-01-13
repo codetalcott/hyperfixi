@@ -12,7 +12,9 @@ describe('Stripe Webhook Handlers', () => {
   const mockDb = {
     isStripeEventProcessed: vi.fn().mockResolvedValue(false),
     markStripeEventProcessed: vi.fn().mockResolvedValue(undefined),
-    getOrCreateUserByStripeId: vi.fn().mockResolvedValue({ id: 'user-123', email: 'test@example.com' }),
+    getOrCreateUserByStripeId: vi
+      .fn()
+      .mockResolvedValue({ id: 'user-123', email: 'test@example.com' }),
     getApiKeysByUserId: vi.fn().mockResolvedValue([]),
     createApiKey: vi.fn().mockResolvedValue({ id: 'key-123' }),
     updateApiKeyTier: vi.fn().mockResolvedValue(undefined),
@@ -28,10 +30,7 @@ describe('Stripe Webhook Handlers', () => {
   const apiKeySalt = 'test-salt-12345';
 
   // Helper to create mock request
-  function createMockRequest(
-    body: any = {},
-    headers: Record<string, string> = {}
-  ): Request {
+  function createMockRequest(body: any = {}, headers: Record<string, string> = {}): Request {
     return {
       body,
       headers: {
@@ -57,11 +56,7 @@ describe('Stripe Webhook Handlers', () => {
   }
 
   // Helper to create Stripe event
-  function createStripeEvent(
-    type: string,
-    data: any,
-    id: string = 'evt_test123'
-  ): Stripe.Event {
+  function createStripeEvent(type: string, data: any, id: string = 'evt_test123'): Stripe.Event {
     return {
       id,
       type,
@@ -114,7 +109,12 @@ describe('Stripe Webhook Handlers', () => {
 
   describe('Signature Verification', () => {
     it('should return 400 if stripe-signature header is missing', async () => {
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({}, { 'stripe-signature': '' });
       delete (req.headers as any)['stripe-signature'];
       const res = createMockResponse();
@@ -132,7 +132,12 @@ describe('Stripe Webhook Handlers', () => {
         throw new Error('Invalid signature');
       });
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({ payload: 'test' });
       const res = createMockResponse();
 
@@ -147,7 +152,12 @@ describe('Stripe Webhook Handlers', () => {
       const event = createStripeEvent('test.event', {});
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest(Buffer.from('raw-body'));
       const res = createMockResponse();
 
@@ -168,7 +178,12 @@ describe('Stripe Webhook Handlers', () => {
       mockStripe.constructWebhookEvent.mockReturnValue(event);
       mockDb.isStripeEventProcessed.mockResolvedValue(true);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -180,17 +195,29 @@ describe('Stripe Webhook Handlers', () => {
     });
 
     it('should mark event as processed after handling', async () => {
-      const event = createStripeEvent('customer.subscription.created', createSubscription(), 'evt_unique');
+      const event = createStripeEvent(
+        'customer.subscription.created',
+        createSubscription(),
+        'evt_unique'
+      );
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
       const handler = (router.stack[0].route.stack[0] as any).handle;
       await handler(req, res);
 
-      expect(mockDb.markStripeEventProcessed).toHaveBeenCalledWith('evt_unique', 'customer.subscription.created');
+      expect(mockDb.markStripeEventProcessed).toHaveBeenCalledWith(
+        'evt_unique',
+        'customer.subscription.created'
+      );
     });
   });
 
@@ -200,7 +227,12 @@ describe('Stripe Webhook Handlers', () => {
       const event = createStripeEvent('customer.subscription.created', subscription);
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -231,7 +263,12 @@ describe('Stripe Webhook Handlers', () => {
       const event = createStripeEvent('customer.subscription.created', subscription);
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -255,7 +292,12 @@ describe('Stripe Webhook Handlers', () => {
       const event = createStripeEvent('customer.subscription.updated', subscription);
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -270,16 +312,19 @@ describe('Stripe Webhook Handlers', () => {
 
   describe('customer.subscription.deleted', () => {
     it('should downgrade all user API keys to free tier', async () => {
-      const existingKeys = [
-        { id: 'key-1', keyPrefix: 'hfx_key1', tier: 'pro' },
-      ];
+      const existingKeys = [{ id: 'key-1', keyPrefix: 'hfx_key1', tier: 'pro' }];
       mockDb.getApiKeysByUserId.mockResolvedValue(existingKeys);
 
       const subscription = createSubscription('cus_cancel');
       const event = createStripeEvent('customer.subscription.deleted', subscription);
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -292,16 +337,19 @@ describe('Stripe Webhook Handlers', () => {
 
   describe('invoice.paid', () => {
     it('should reset usage counters on payment', async () => {
-      const existingKeys = [
-        { id: 'key-1', keyPrefix: 'hfx_key1', currentUsage: 500 },
-      ];
+      const existingKeys = [{ id: 'key-1', keyPrefix: 'hfx_key1', currentUsage: 500 }];
       mockDb.getApiKeysByUserId.mockResolvedValue(existingKeys);
 
       const invoice = createInvoice('cus_paid', 2900);
       const event = createStripeEvent('invoice.paid', invoice);
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -318,7 +366,12 @@ describe('Stripe Webhook Handlers', () => {
       const event = createStripeEvent('invoice.payment_failed', invoice);
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -334,7 +387,12 @@ describe('Stripe Webhook Handlers', () => {
       const event = createStripeEvent('unknown.event.type', { foo: 'bar' });
       mockStripe.constructWebhookEvent.mockReturnValue(event);
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -352,7 +410,12 @@ describe('Stripe Webhook Handlers', () => {
       mockStripe.constructWebhookEvent.mockReturnValue(event);
       mockDb.getOrCreateUserByStripeId.mockRejectedValue(new Error('Database error'));
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 
@@ -364,11 +427,20 @@ describe('Stripe Webhook Handlers', () => {
     });
 
     it('should not mark event as processed on error', async () => {
-      const event = createStripeEvent('customer.subscription.created', createSubscription(), 'evt_error');
+      const event = createStripeEvent(
+        'customer.subscription.created',
+        createSubscription(),
+        'evt_error'
+      );
       mockStripe.constructWebhookEvent.mockReturnValue(event);
       mockDb.getOrCreateUserByStripeId.mockRejectedValue(new Error('Database error'));
 
-      const router = createWebhookRouter(mockDb as any, mockStripe as any, webhookSecret, apiKeySalt);
+      const router = createWebhookRouter(
+        mockDb as any,
+        mockStripe as any,
+        webhookSecret,
+        apiKeySalt
+      );
       const req = createMockRequest({});
       const res = createMockResponse();
 

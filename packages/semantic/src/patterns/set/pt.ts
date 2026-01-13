@@ -21,7 +21,11 @@ export function getSetPatternsPt(): LanguagePattern[] {
         format: 'definir {destination} para {patient}',
         tokens: [
           { type: 'literal', value: 'definir', alternatives: ['estabelecer', 'colocar', 'set'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'para', alternatives: ['como', 'a', 'em'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
@@ -41,7 +45,11 @@ export function getSetPatternsPt(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'definir', alternatives: ['estabelecer', 'colocar'] },
           { type: 'literal', value: 'em', alternatives: ['para', 'a'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
       },
@@ -58,7 +66,11 @@ export function getSetPatternsPt(): LanguagePattern[] {
       template: {
         format: '{destination} = {patient}',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

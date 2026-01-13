@@ -10,33 +10,33 @@ export type PluralRule = (n: number) => 'zero' | 'one' | 'two' | 'few' | 'many' 
  */
 export const pluralRules: Record<string, PluralRule> = {
   // English, German, Dutch, Swedish, etc.
-  en: (n) => n === 1 ? 'one' : 'other',
-  de: (n) => n === 1 ? 'one' : 'other',
-  nl: (n) => n === 1 ? 'one' : 'other',
-  sv: (n) => n === 1 ? 'one' : 'other',
-  
+  en: n => (n === 1 ? 'one' : 'other'),
+  de: n => (n === 1 ? 'one' : 'other'),
+  nl: n => (n === 1 ? 'one' : 'other'),
+  sv: n => (n === 1 ? 'one' : 'other'),
+
   // Spanish, Italian, Portuguese
-  es: (n) => n === 1 ? 'one' : 'other',
-  it: (n) => n === 1 ? 'one' : 'other',
-  pt: (n) => n === 1 ? 'one' : 'other',
-  
+  es: n => (n === 1 ? 'one' : 'other'),
+  it: n => (n === 1 ? 'one' : 'other'),
+  pt: n => (n === 1 ? 'one' : 'other'),
+
   // French
-  fr: (n) => n >= 0 && n < 2 ? 'one' : 'other',
-  
+  fr: n => (n >= 0 && n < 2 ? 'one' : 'other'),
+
   // Russian, Polish
-  ru: (n) => {
+  ru: n => {
     if (n % 10 === 1 && n % 100 !== 11) return 'one';
     if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'few';
     return 'many';
   },
-  pl: (n) => {
+  pl: n => {
     if (n === 1) return 'one';
     if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'few';
     return 'many';
   },
-  
+
   // Arabic
-  ar: (n) => {
+  ar: n => {
     if (n === 0) return 'zero';
     if (n === 1) return 'one';
     if (n === 2) return 'two';
@@ -44,33 +44,33 @@ export const pluralRules: Record<string, PluralRule> = {
     if (n % 100 >= 11 && n % 100 <= 99) return 'many';
     return 'other';
   },
-  
+
   // Chinese, Japanese, Korean (no pluralization)
   zh: () => 'other',
   ja: () => 'other',
   ko: () => 'other',
-  
+
   // Turkish
-  tr: (n) => n === 1 ? 'one' : 'other',
-  
+  tr: n => (n === 1 ? 'one' : 'other'),
+
   // Indonesian (no pluralization, but has different forms)
   id: () => 'other',
-  
+
   // Quechua (simple plural rule)
-  qu: (n) => n === 1 ? 'one' : 'other',
-  
+  qu: n => (n === 1 ? 'one' : 'other'),
+
   // Swahili
-  sw: (n) => n === 1 ? 'one' : 'other',
-  
+  sw: n => (n === 1 ? 'one' : 'other'),
+
   // Czech
-  cs: (n) => {
+  cs: n => {
     if (n === 1) return 'one';
     if (n >= 2 && n <= 4) return 'few';
     return 'other';
   },
-  
+
   // Lithuanian
-  lt: (n) => {
+  lt: n => {
     if (n % 10 === 1 && n % 100 !== 11) return 'one';
     if (n % 10 >= 2 && n % 10 <= 9 && (n % 100 < 11 || n % 100 > 19)) return 'few';
     return 'other';
@@ -95,7 +95,7 @@ export interface PluralForms {
 export function getPlural(locale: string, count: number, forms: PluralForms): string {
   const rule = pluralRules[locale] || pluralRules.en;
   const key = rule(count);
-  
+
   return forms[key] || forms.other;
 }
 
@@ -121,7 +121,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'days',
     },
   },
-  
+
   es: {
     second: {
       one: 'segundo',
@@ -140,7 +140,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'días',
     },
   },
-  
+
   fr: {
     second: {
       one: 'seconde',
@@ -159,7 +159,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'jours',
     },
   },
-  
+
   de: {
     second: {
       one: 'Sekunde',
@@ -178,7 +178,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'Tage',
     },
   },
-  
+
   ru: {
     second: {
       one: 'секунда',
@@ -205,7 +205,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'дней',
     },
   },
-  
+
   ar: {
     second: {
       zero: 'ثوانِ',
@@ -240,7 +240,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'يوم',
     },
   },
-  
+
   tr: {
     second: {
       one: 'saniye',
@@ -259,7 +259,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'gün',
     },
   },
-  
+
   id: {
     second: {
       other: 'detik',
@@ -274,7 +274,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'hari',
     },
   },
-  
+
   qu: {
     second: {
       one: 'sikundu',
@@ -293,7 +293,7 @@ export const pluralTimeExpressions: Record<string, Record<string, PluralForms>> 
       other: 'p_unchawkuna',
     },
   },
-  
+
   sw: {
     second: {
       one: 'sekunde',
@@ -321,11 +321,7 @@ export class PluralAwareTranslator {
   /**
    * Translate time expressions with proper pluralization
    */
-  static translateTimeExpression(
-    value: number,
-    unit: string,
-    locale: string
-  ): string {
+  static translateTimeExpression(value: number, unit: string, locale: string): string {
     const expressions = pluralTimeExpressions[locale];
     if (!expressions || !expressions[unit]) {
       return `${value} ${unit}${value === 1 ? '' : 's'}`;
@@ -364,27 +360,31 @@ export class PluralAwareTranslator {
    */
   static getOrdinal(n: number, locale: string): string {
     const ordinals: Record<string, (n: number) => string> = {
-      en: (n) => {
+      en: n => {
         if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
         switch (n % 10) {
-          case 1: return `${n}st`;
-          case 2: return `${n}nd`;
-          case 3: return `${n}rd`;
-          default: return `${n}th`;
+          case 1:
+            return `${n}st`;
+          case 2:
+            return `${n}nd`;
+          case 3:
+            return `${n}rd`;
+          default:
+            return `${n}th`;
         }
       },
-      es: (n) => `${n}º`,
-      fr: (n) => n === 1 ? `${n}er` : `${n}e`,
-      de: (n) => `${n}.`,
-      ru: (n) => `${n}-й`,
-      ar: (n) => `${n}`,
-      zh: (n) => `第${n}`,
-      ja: (n) => `${n}番目`,
-      ko: (n) => `${n}번째`,
-      tr: (n) => `${n}.`,
-      id: (n) => `ke-${n}`,
-      qu: (n) => `${n}-ñiqin`,
-      sw: (n) => `wa ${n}`,
+      es: n => `${n}º`,
+      fr: n => (n === 1 ? `${n}er` : `${n}e`),
+      de: n => `${n}.`,
+      ru: n => `${n}-й`,
+      ar: n => `${n}`,
+      zh: n => `第${n}`,
+      ja: n => `${n}番目`,
+      ko: n => `${n}번째`,
+      tr: n => `${n}.`,
+      id: n => `ke-${n}`,
+      qu: n => `${n}-ñiqin`,
+      sw: n => `wa ${n}`,
     };
 
     const ordinalFn = ordinals[locale] || ordinals.en;

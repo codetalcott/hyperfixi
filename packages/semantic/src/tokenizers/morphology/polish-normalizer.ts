@@ -220,14 +220,24 @@ export class PolishMorphologicalNormalizer {
     }
 
     // Pattern: -iłem/-iłam → -ić (robiłem → robić)
-    if (word.endsWith('iłem') || word.endsWith('iłam') || word.endsWith('ilem') || word.endsWith('ilam')) {
+    if (
+      word.endsWith('iłem') ||
+      word.endsWith('iłam') ||
+      word.endsWith('ilem') ||
+      word.endsWith('ilam')
+    ) {
       const stem = word.slice(0, -4) + 'ić';
       return { stem, suffix: word.slice(-4), confidence: 0.85, originalForm: word };
     }
 
     // Pattern: -ił/-iła → -ić (robił → robić)
-    if (word.endsWith('ił') || word.endsWith('iła') || word.endsWith('il') || word.endsWith('ila')) {
-      const suffixLen = (word.endsWith('iła') || word.endsWith('ila')) ? 3 : 2;
+    if (
+      word.endsWith('ił') ||
+      word.endsWith('iła') ||
+      word.endsWith('il') ||
+      word.endsWith('ila')
+    ) {
+      const suffixLen = word.endsWith('iła') || word.endsWith('ila') ? 3 : 2;
       const stem = word.slice(0, -suffixLen) + 'ić';
       return { stem, suffix: word.slice(-suffixLen), confidence: 0.8, originalForm: word };
     }

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { 
-  ProgressiveEnhancer, 
-  getEnhancer, 
-  initProgressiveEnhancement, 
-  enhance, 
-  enhanceElement 
+import {
+  ProgressiveEnhancer,
+  getEnhancer,
+  initProgressiveEnhancement,
+  enhance,
+  enhanceElement,
 } from './enhancer';
 import type { CapabilityReport, UserPreferences } from './types';
 
@@ -22,7 +22,11 @@ vi.mock('./levels', () => ({
 }));
 
 import { detectCapabilities, detectUserPreferences } from './detector';
-import { getEnhancementsForLevel, getFallbackEnhancements, filterEnhancementsByConditions } from './levels';
+import {
+  getEnhancementsForLevel,
+  getFallbackEnhancements,
+  filterEnhancementsByConditions,
+} from './levels';
 
 // Mock DOM globals
 const mockDocument = {
@@ -52,7 +56,7 @@ describe('Progressive Enhancer', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     mockCapabilityReport = {
       level: 'modern',
       score: 85,
@@ -107,13 +111,13 @@ describe('Progressive Enhancer', () => {
       },
     ]);
     vi.mocked(getFallbackEnhancements).mockReturnValue([]);
-    vi.mocked(filterEnhancementsByConditions).mockImplementation((enhancements) => enhancements);
-    
+    vi.mocked(filterEnhancementsByConditions).mockImplementation(enhancements => enhancements);
+
     vi.mocked(mockDocument.querySelectorAll).mockReturnValue([mockElement]);
     vi.mocked(mockDocument.createElement).mockReturnValue(document.createElement('style'));
     vi.mocked(mockDocument.getElementById).mockReturnValue(null);
-    
-    vi.mocked(mockWindow.requestIdleCallback).mockImplementation((callback) => {
+
+    vi.mocked(mockWindow.requestIdleCallback).mockImplementation(callback => {
       setTimeout(callback, 0);
       return 1;
     });
@@ -137,7 +141,7 @@ describe('Progressive Enhancer', () => {
           fallbackTimeout: 1000,
         },
       };
-      
+
       const enhancer = new ProgressiveEnhancer(config);
       expect(enhancer).toBeInstanceOf(ProgressiveEnhancer);
     });
@@ -145,7 +149,7 @@ describe('Progressive Enhancer', () => {
     it('should initialize capabilities and preferences', async () => {
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       expect(detectCapabilities).toHaveBeenCalled();
       expect(detectUserPreferences).toHaveBeenCalled();
       expect(enhancer.getCapabilities()).toBe(mockCapabilityReport);
@@ -154,10 +158,10 @@ describe('Progressive Enhancer', () => {
 
     it('should handle initialization errors gracefully', async () => {
       vi.mocked(detectCapabilities).mockRejectedValue(new Error('Detection failed'));
-      
+
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       const capabilities = enhancer.getCapabilities();
       expect(capabilities?.level).toBe('basic');
       expect(capabilities?.score).toBe(0);
@@ -166,9 +170,9 @@ describe('Progressive Enhancer', () => {
     it('should enhance a single element', async () => {
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       const result = await enhancer.enhanceElement(mockElement);
-      
+
       expect(result).toHaveProperty('level');
       expect(result).toHaveProperty('enhancements');
       expect(result).toHaveProperty('scripts');
@@ -180,9 +184,9 @@ describe('Progressive Enhancer', () => {
     it('should enhance multiple elements', async () => {
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       const results = await enhancer.enhanceElements('[data-enhance]');
-      
+
       expect(results).toHaveLength(1);
       expect(results[0]).toHaveProperty('level');
       expect(results[0].level).toBe('modern');
@@ -191,9 +195,9 @@ describe('Progressive Enhancer', () => {
     it('should enhance the entire document', async () => {
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       const result = await enhancer.enhanceDocument();
-      
+
       expect(result).toHaveProperty('level');
       expect(result.level).toBe('modern');
     });
@@ -201,14 +205,14 @@ describe('Progressive Enhancer', () => {
     it('should respect user preferences for basic level', async () => {
       mockUserPreferences.preferBasic = true;
       vi.mocked(detectUserPreferences).mockReturnValue(mockUserPreferences);
-      
+
       const enhancer = new ProgressiveEnhancer({
         strategy: { respectUserPreferences: true },
       });
       await enhancer.initialize();
-      
+
       const result = await enhancer.enhanceElement(mockElement);
-      
+
       expect(result.level).toBe('basic');
       expect(result.warnings).toContain('Using basic level due to user preferences');
     });
@@ -222,14 +226,14 @@ describe('Progressive Enhancer', () => {
         script: 'console.log("User: {{userId}}");',
         priority: 1,
       };
-      
+
       vi.mocked(getEnhancementsForLevel).mockReturnValue([enhancementWithTemplate]);
-      
+
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       const result = await enhancer.enhanceElement(mockElement, { userId: '123' });
-      
+
       expect(result.scripts[0]).toContain('User: 123');
     });
 
@@ -242,14 +246,14 @@ describe('Progressive Enhancer', () => {
         styles: '.enhanced { color: red; }',
         priority: 1,
       };
-      
+
       vi.mocked(getEnhancementsForLevel).mockReturnValue([enhancementWithStyles]);
-      
+
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       await enhancer.enhanceElement(mockElement);
-      
+
       expect(mockDocument.createElement).toHaveBeenCalledWith('style');
       expect(mockDocument.head.appendChild).toHaveBeenCalled();
     });
@@ -259,9 +263,9 @@ describe('Progressive Enhancer', () => {
         strategy: { lazyLoad: true },
       });
       await enhancer.initialize();
-      
+
       await enhancer.enhanceElement(mockElement);
-      
+
       expect(mockWindow.requestIdleCallback).toHaveBeenCalled();
     });
 
@@ -270,17 +274,17 @@ describe('Progressive Enhancer', () => {
         strategy: { lazyLoad: false },
       });
       await enhancer.initialize();
-      
+
       await enhancer.enhanceElement(mockElement);
-      
+
       expect(mockWindow.requestIdleCallback).not.toHaveBeenCalled();
     });
 
     it('should update strategy after creation', () => {
       const enhancer = new ProgressiveEnhancer();
-      
+
       enhancer.updateStrategy({ aggressive: true });
-      
+
       // Strategy is private, but we can test through behavior
       expect(enhancer).toBeInstanceOf(ProgressiveEnhancer);
     });
@@ -290,27 +294,27 @@ describe('Progressive Enhancer', () => {
     it('should get or create global enhancer', () => {
       const enhancer1 = getEnhancer();
       const enhancer2 = getEnhancer();
-      
+
       expect(enhancer1).toBe(enhancer2);
     });
 
     it('should initialize progressive enhancement', async () => {
       const result = await initProgressiveEnhancement();
-      
+
       expect(result).toHaveProperty('level');
       expect(detectCapabilities).toHaveBeenCalled();
     });
 
     it('should enhance elements with global function', async () => {
       const results = await enhance('[data-enhance]');
-      
+
       expect(results).toHaveLength(1);
       expect(results[0]).toHaveProperty('level');
     });
 
     it('should enhance single element with global function', async () => {
       const result = await enhanceElement(mockElement);
-      
+
       expect(result).toHaveProperty('level');
       expect(result.level).toBe('modern');
     });
@@ -326,15 +330,15 @@ describe('Progressive Enhancer', () => {
         script: 'throw new Error("Script error");',
         priority: 1,
       };
-      
+
       vi.mocked(getEnhancementsForLevel).mockReturnValue([enhancementWithError]);
-      
+
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       // Should not throw
       const result = await enhancer.enhanceElement(mockElement);
-      
+
       expect(result).toHaveProperty('level');
     });
 
@@ -347,22 +351,24 @@ describe('Progressive Enhancer', () => {
         script: 'console.log("Should not run");',
         priority: 1,
       };
-      
+
       vi.mocked(getEnhancementsForLevel).mockReturnValue([enhancementWithMissingReq]);
-      vi.mocked(getFallbackEnhancements).mockReturnValue([{
-        id: 'fallback',
-        name: 'Fallback',
-        level: 'basic',
-        requires: ['javascript'],
-        script: 'console.log("Fallback");',
-        priority: 1,
-      }]);
-      
+      vi.mocked(getFallbackEnhancements).mockReturnValue([
+        {
+          id: 'fallback',
+          name: 'Fallback',
+          level: 'basic',
+          requires: ['javascript'],
+          script: 'console.log("Fallback");',
+          priority: 1,
+        },
+      ]);
+
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       const result = await enhancer.enhanceElement(mockElement);
-      
+
       expect(result.fallbacks).toHaveLength(1);
       expect(result.fallbacks[0].id).toBe('fallback');
     });
@@ -372,9 +378,9 @@ describe('Progressive Enhancer', () => {
     it('should include performance timing in results', async () => {
       const enhancer = new ProgressiveEnhancer();
       await enhancer.initialize();
-      
+
       const result = await enhancer.enhanceElement(mockElement);
-      
+
       expect(result.performance).toHaveProperty('detectionTime');
       expect(result.performance).toHaveProperty('enhancementTime');
       expect(result.performance).toHaveProperty('totalTime');

@@ -22,10 +22,14 @@ export function getDecrementPatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'zmniejsz', alternatives: ['obniż', 'obniz'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'o' },
-            { type: 'role', role: 'quantity' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'o' },
+              { type: 'role', role: 'quantity' },
+            ],
+          },
         ],
       },
       extraction: {

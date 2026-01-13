@@ -72,19 +72,19 @@ export class TenantCustomizationEngine {
 
     // Apply scripts
     const scripts = await this.applyScripts(customization.scripts, evaluationContext);
-    
+
     // Apply styles
     const styles = await this.applyStyles(customization.styles, evaluationContext);
-    
+
     // Apply components
     const components = await this.applyComponents(customization.components, evaluationContext);
-    
+
     // Apply features
     const features = await this.applyFeatures(customization.features, evaluationContext);
-    
+
     // Process branding
     const branding = this.processBranding(customization.branding, evaluationContext);
-    
+
     // Create template variables
     const variables = this.createTemplateVariables(context, evaluationContext);
 
@@ -247,7 +247,7 @@ export class TenantCustomizationEngine {
     // Process color variables
     Object.keys(processedBranding.colors).forEach(key => {
       const color = processedBranding.colors[key as keyof typeof processedBranding.colors];
-      processedBranding.colors[key as keyof typeof processedBranding.colors] = 
+      processedBranding.colors[key as keyof typeof processedBranding.colors] =
         this.processTemplateVariables(color, context);
     });
 
@@ -267,33 +267,33 @@ export class TenantCustomizationEngine {
       tenantName: context.tenant.name,
       tenantPlan: context.tenant.plan,
       tenantDomain: context.tenant.domain,
-      
+
       // User variables
       userId: context.user?.id,
       userEmail: context.user?.email,
       userRole: context.user?.role,
-      
+
       // Request variables
       requestId: context.request.id,
       requestPath: context.request.path,
       requestMethod: context.request.method,
-      
+
       // Branding variables
       primaryColor: context.customization.branding.colors.primary,
       secondaryColor: context.customization.branding.colors.secondary,
       fontFamily: context.customization.branding.typography.fontFamily,
-      
+
       // Localization variables
       locale: context.customization.localization.defaultLocale,
       timezone: context.customization.localization.timezone,
       currency: context.customization.localization.currency,
-      
+
       // Computed variables
       timestamp: evaluationContext.timestamp.toISOString(),
       year: evaluationContext.timestamp.getFullYear(),
       month: evaluationContext.timestamp.getMonth() + 1,
       day: evaluationContext.timestamp.getDate(),
-      
+
       // Feature flags
       features: Array.from(context.features),
       permissions: Array.from(context.permissions),
@@ -364,12 +364,18 @@ export class TenantCustomizationEngine {
   private getUserValue(field: string, context: EvaluationContext): any {
     const user = context.user;
     switch (field) {
-      case 'id': return user?.id;
-      case 'email': return user?.email;
-      case 'role': return user?.role;
-      case 'permissions': return user?.permissions;
-      case 'authenticated': return !!user;
-      default: return user?.metadata?.[field];
+      case 'id':
+        return user?.id;
+      case 'email':
+        return user?.email;
+      case 'role':
+        return user?.role;
+      case 'permissions':
+        return user?.permissions;
+      case 'authenticated':
+        return !!user;
+      default:
+        return user?.metadata?.[field];
     }
   }
 
@@ -379,14 +385,22 @@ export class TenantCustomizationEngine {
   private getTimeValue(field: string, context: EvaluationContext): any {
     const timestamp = context.timestamp;
     switch (field) {
-      case 'hour': return timestamp.getHours();
-      case 'day': return timestamp.getDay();
-      case 'date': return timestamp.getDate();
-      case 'month': return timestamp.getMonth() + 1;
-      case 'year': return timestamp.getFullYear();
-      case 'timestamp': return timestamp.getTime();
-      case 'timezone': return context.timezone;
-      default: return null;
+      case 'hour':
+        return timestamp.getHours();
+      case 'day':
+        return timestamp.getDay();
+      case 'date':
+        return timestamp.getDate();
+      case 'month':
+        return timestamp.getMonth() + 1;
+      case 'year':
+        return timestamp.getFullYear();
+      case 'timestamp':
+        return timestamp.getTime();
+      case 'timezone':
+        return context.timezone;
+      default:
+        return null;
     }
   }
 
@@ -396,11 +410,16 @@ export class TenantCustomizationEngine {
   private getLocationValue(field: string, context: EvaluationContext): any {
     // Location detection would require additional services
     switch (field) {
-      case 'country': return context.request.headers['cf-ipcountry'] || 'unknown';
-      case 'region': return context.request.headers['cf-region'] || 'unknown';
-      case 'city': return context.request.headers['cf-city'] || 'unknown';
-      case 'ip': return context.request.ip;
-      default: return null;
+      case 'country':
+        return context.request.headers['cf-ipcountry'] || 'unknown';
+      case 'region':
+        return context.request.headers['cf-region'] || 'unknown';
+      case 'city':
+        return context.request.headers['cf-city'] || 'unknown';
+      case 'ip':
+        return context.request.ip;
+      default:
+        return null;
     }
   }
 
@@ -410,13 +429,20 @@ export class TenantCustomizationEngine {
   private getDeviceValue(field: string, context: EvaluationContext): any {
     const userAgent = context.userAgent;
     switch (field) {
-      case 'mobile': return /Mobile|Android|iPhone|iPad/.test(userAgent);
-      case 'tablet': return /iPad|Tablet/.test(userAgent);
-      case 'desktop': return !/Mobile|Android|iPhone|iPad/.test(userAgent);
-      case 'browser': return this.detectBrowser(userAgent);
-      case 'os': return this.detectOS(userAgent);
-      case 'userAgent': return userAgent;
-      default: return null;
+      case 'mobile':
+        return /Mobile|Android|iPhone|iPad/.test(userAgent);
+      case 'tablet':
+        return /iPad|Tablet/.test(userAgent);
+      case 'desktop':
+        return !/Mobile|Android|iPhone|iPad/.test(userAgent);
+      case 'browser':
+        return this.detectBrowser(userAgent);
+      case 'os':
+        return this.detectOS(userAgent);
+      case 'userAgent':
+        return userAgent;
+      default:
+        return null;
     }
   }
 
@@ -448,8 +474,11 @@ export class TenantCustomizationEngine {
       case 'equals':
         return value === compareValue;
       case 'contains':
-        return Array.isArray(value) ? value.includes(compareValue) : 
-               typeof value === 'string' ? value.includes(compareValue) : false;
+        return Array.isArray(value)
+          ? value.includes(compareValue)
+          : typeof value === 'string'
+            ? value.includes(compareValue)
+            : false;
       case 'matches':
         return typeof value === 'string' && new RegExp(compareValue).test(value);
       case 'greaterThan':
@@ -460,8 +489,7 @@ export class TenantCustomizationEngine {
         if (!compareValues || compareValues.length < 2) {
           return false;
         }
-        return typeof value === 'number' &&
-               value >= compareValues[0] && value <= compareValues[1];
+        return typeof value === 'number' && value >= compareValues[0] && value <= compareValues[1];
       default:
         return false;
     }

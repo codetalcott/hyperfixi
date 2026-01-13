@@ -12,10 +12,7 @@ import { Page, expect } from '@playwright/test';
  * Replaces: await page.waitForTimeout(2000) after page load
  */
 export async function waitForHyperfixi(page: Page, timeout = 5000): Promise<void> {
-  await page.waitForFunction(
-    () => (window as any).hyperfixi !== undefined,
-    { timeout }
-  );
+  await page.waitForFunction(() => (window as any).hyperfixi !== undefined, { timeout });
 }
 
 /**
@@ -23,10 +20,9 @@ export async function waitForHyperfixi(page: Page, timeout = 5000): Promise<void
  * Use when tests need to evaluate expressions
  */
 export async function waitForEvalHyperScript(page: Page, timeout = 5000): Promise<void> {
-  await page.waitForFunction(
-    () => typeof (window as any).evalHyperScript === 'function',
-    { timeout }
-  );
+  await page.waitForFunction(() => typeof (window as any).evalHyperScript === 'function', {
+    timeout,
+  });
 }
 
 /**
@@ -47,10 +43,7 @@ export async function waitForBehaviors(page: Page, timeout = 5000): Promise<void
  * Wait for semantic bundle to load
  */
 export async function waitForSemantic(page: Page, timeout = 5000): Promise<void> {
-  await page.waitForFunction(
-    () => (window as any).HyperFixiSemantic !== undefined,
-    { timeout }
-  );
+  await page.waitForFunction(() => (window as any).HyperFixiSemantic !== undefined, { timeout });
 }
 
 /**
@@ -139,22 +132,14 @@ export async function waitForInnerHTML(
 /**
  * Wait for element to be visible
  */
-export async function waitForVisible(
-  page: Page,
-  selector: string,
-  timeout = 5000
-): Promise<void> {
+export async function waitForVisible(page: Page, selector: string, timeout = 5000): Promise<void> {
   await expect(page.locator(selector)).toBeVisible({ timeout });
 }
 
 /**
  * Wait for element to be hidden
  */
-export async function waitForHidden(
-  page: Page,
-  selector: string,
-  timeout = 5000
-): Promise<void> {
+export async function waitForHidden(page: Page, selector: string, timeout = 5000): Promise<void> {
   await expect(page.locator(selector)).toBeHidden({ timeout });
 }
 
@@ -191,9 +176,7 @@ export function createErrorCollector(page: Page): ErrorCollector {
       // Filter out expected errors (network, favicon, etc.)
       return errors.filter(
         e =>
-          !e.includes('net::') &&
-          !e.includes('Failed to load resource') &&
-          !e.includes('favicon')
+          !e.includes('net::') && !e.includes('Failed to load resource') && !e.includes('favicon')
       );
     },
   };

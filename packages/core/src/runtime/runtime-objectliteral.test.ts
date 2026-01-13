@@ -128,7 +128,9 @@ describe('Runtime Object Literal Evaluation', () => {
 
   it('should evaluate object literals with nested expressions', async () => {
     const context = createTypedExecutionContext();
-    (context as { variables: Map<string, unknown> }).variables = new Map<string, unknown>([['baseSize', 10]]);
+    (context as { variables: Map<string, unknown> }).variables = new Map<string, unknown>([
+      ['baseSize', 10],
+    ]);
 
     const node = {
       type: 'objectLiteral',

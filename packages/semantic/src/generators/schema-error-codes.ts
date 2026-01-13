@@ -75,8 +75,7 @@ export const SchemaErrorMessages: Record<SchemaErrorCode, string> = {
     "Role '{role}' accepts multiple types (expected for {command} command).",
 
   // Role issues
-  [SchemaErrorCodes.NO_REQUIRED_ROLES]:
-    'Command has no required roles. Is this intentional?',
+  [SchemaErrorCodes.NO_REQUIRED_ROLES]: 'Command has no required roles. Is this intentional?',
   [SchemaErrorCodes.NO_REQUIRED_ROLES_EXPECTED]:
     'Command has no required roles (expected for {command}).',
 
@@ -110,7 +109,7 @@ export const SchemaErrorMessages: Record<SchemaErrorCode, string> = {
  */
 export const SchemaErrorSuggestions: Partial<Record<SchemaErrorCode, string>> = {
   [SchemaErrorCodes.AMBIGUOUS_TYPE_LITERAL_SELECTOR]:
-    "Consider being more specific about which type is expected, or use explicit type markers.",
+    'Consider being more specific about which type is expected, or use explicit type markers.',
   [SchemaErrorCodes.TOO_MANY_EXPECTED_TYPES]:
     'Consider narrowing the accepted types to improve type inference reliability.',
   [SchemaErrorCodes.TRANSITION_PATIENT_ACCEPTS_SELECTOR]:
@@ -119,8 +118,7 @@ export const SchemaErrorSuggestions: Partial<Record<SchemaErrorCode, string>> = 
     "Add a 'goal' role with expectedTypes ['literal', 'variable'].",
   [SchemaErrorCodes.EVENT_HANDLER_MISSING_EVENT]:
     "Add an 'event' role with expectedTypes ['literal'].",
-  [SchemaErrorCodes.EVENT_HANDLER_EVENT_NOT_REQUIRED]:
-    "Set required: true on the 'event' role.",
+  [SchemaErrorCodes.EVENT_HANDLER_EVENT_NOT_REQUIRED]: "Set required: true on the 'event' role.",
   [SchemaErrorCodes.CONDITIONAL_MISSING_CONDITION]:
     "Add a 'condition' role with expectedTypes ['expression'].",
   [SchemaErrorCodes.CONDITIONAL_CONDITION_NOT_REQUIRED]:

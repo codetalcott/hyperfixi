@@ -215,69 +215,72 @@ const expressionEvaluator = new ConfigurableExpressionEvaluator([
 ]);
 
 // Create runtime instance with classic commands (37 total)
-const runtimeExperimental = createMinimalRuntime([
-  // DOM (7)
-  createAddCommand(),
-  createRemoveCommand(),
-  createToggleCommand(),
-  createPutCommand(),
-  createHideCommand(),
-  createShowCommand(),
-  createMakeCommand(),
+const runtimeExperimental = createMinimalRuntime(
+  [
+    // DOM (7)
+    createAddCommand(),
+    createRemoveCommand(),
+    createToggleCommand(),
+    createPutCommand(),
+    createHideCommand(),
+    createShowCommand(),
+    createMakeCommand(),
 
-  // Control Flow (9)
-  createIfCommand(),
-  createUnlessCommand(),
-  createRepeatCommand(),
-  createBreakCommand(),
-  createContinueCommand(),
-  createHaltCommand(),
-  createReturnCommand(),
-  createExitCommand(),
-  createThrowCommand(),
+    // Control Flow (9)
+    createIfCommand(),
+    createUnlessCommand(),
+    createRepeatCommand(),
+    createBreakCommand(),
+    createContinueCommand(),
+    createHaltCommand(),
+    createReturnCommand(),
+    createExitCommand(),
+    createThrowCommand(),
 
-  // Data (5)
-  createSetCommand(),
-  createGetCommand(),
-  createIncrementCommand(),
-  createDecrementCommand(),
-  createDefaultCommand(),
+    // Data (5)
+    createSetCommand(),
+    createGetCommand(),
+    createIncrementCommand(),
+    createDecrementCommand(),
+    createDefaultCommand(),
 
-  // Async (2)
-  createWaitCommand(),
-  createFetchCommand(),
+    // Async (2)
+    createWaitCommand(),
+    createFetchCommand(),
 
-  // Events (2)
-  createTriggerCommand(),
-  createSendCommand(),
+    // Events (2)
+    createTriggerCommand(),
+    createSendCommand(),
 
-  // Animation (4)
-  createTransitionCommand(),
-  createMeasureCommand(),
-  createSettleCommand(),
-  createTakeCommand(),
+    // Animation (4)
+    createTransitionCommand(),
+    createMeasureCommand(),
+    createSettleCommand(),
+    createTakeCommand(),
 
-  // Utility (6)
-  createLogCommand(),
-  createTellCommand(),
-  createCallCommand(),
-  createCopyCommand(),
-  createPickCommand(),
-  createBeepCommand(),
+    // Utility (6)
+    createLogCommand(),
+    createTellCommand(),
+    createCallCommand(),
+    createCopyCommand(),
+    createPickCommand(),
+    createBeepCommand(),
 
-  // Advanced (2)
-  createJsCommand(),
-  createAsyncCommand(),
+    // Advanced (2)
+    createJsCommand(),
+    createAsyncCommand(),
 
-  // Navigation (1)
-  createGoCommand(),
+    // Navigation (1)
+    createGoCommand(),
 
-  // Special (4)
-  createInstallCommand(),
-  createAppendCommand(),
-  createRenderCommand(),
-  createPseudoCommand(),
-], { expressionEvaluator });
+    // Special (4)
+    createInstallCommand(),
+    createAppendCommand(),
+    createRenderCommand(),
+    createPseudoCommand(),
+  ],
+  { expressionEvaluator }
+);
 
 // ============================================================================
 // i18n-Aware Runtime Adapter
@@ -301,7 +304,7 @@ const runtimeAdapter = {
       throw new Error(parseResult.error?.message || 'Parse failed');
     }
     return await runtimeExperimental.execute(parseResult.node, ctx);
-  }
+  },
 };
 
 // Create minimal attribute processor with adapter
@@ -325,7 +328,9 @@ const i18nApi = {
    */
   setLocale(locale: string): void {
     if (!LocaleManager.has(locale)) {
-      console.warn(`Locale '${locale}' not registered. Available: ${LocaleManager.getAvailable().join(', ')}`);
+      console.warn(
+        `Locale '${locale}' not registered. Available: ${LocaleManager.getAvailable().join(', ')}`
+      );
       return;
     }
     currentLocale = locale;
@@ -483,7 +488,9 @@ const api = {
       return {
         success: false,
         ast: undefined,
-        errors: [{ message: error instanceof Error ? error.message : String(error), line: 1, column: 1 }],
+        errors: [
+          { message: error instanceof Error ? error.message : String(error), line: 1, column: 1 },
+        ],
         tokens: [],
         compilationTime: performance.now() - startTime,
       };
@@ -561,25 +568,57 @@ const api = {
   // Classic commands list (37)
   commands: [
     // DOM (7)
-    'add', 'remove', 'toggle', 'put', 'hide', 'show', 'make',
+    'add',
+    'remove',
+    'toggle',
+    'put',
+    'hide',
+    'show',
+    'make',
     // Control Flow (9)
-    'if', 'unless', 'repeat', 'break', 'continue', 'halt', 'return', 'exit', 'throw',
+    'if',
+    'unless',
+    'repeat',
+    'break',
+    'continue',
+    'halt',
+    'return',
+    'exit',
+    'throw',
     // Data (5)
-    'set', 'get', 'increment', 'decrement', 'default',
+    'set',
+    'get',
+    'increment',
+    'decrement',
+    'default',
     // Async (2)
-    'wait', 'fetch',
+    'wait',
+    'fetch',
     // Events (2)
-    'trigger', 'send',
+    'trigger',
+    'send',
     // Animation (4)
-    'transition', 'measure', 'settle', 'take',
+    'transition',
+    'measure',
+    'settle',
+    'take',
     // Utility (6)
-    'log', 'tell', 'call', 'copy', 'pick', 'beep',
+    'log',
+    'tell',
+    'call',
+    'copy',
+    'pick',
+    'beep',
     // Advanced (2)
-    'js', 'async',
+    'js',
+    'async',
     // Navigation (1)
     'go',
     // Special (4)
-    'install', 'append', 'render', 'pseudo-command'
+    'install',
+    'append',
+    'render',
+    'pseudo-command',
   ],
 
   // Supported locales (13 total)
@@ -600,7 +639,7 @@ const api = {
       i18nApi.detectAndSetLocale();
     }
     attributeProcessor.init();
-  }
+  },
 };
 
 // Expose global API

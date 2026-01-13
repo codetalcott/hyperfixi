@@ -157,7 +157,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        { args: [{ type: 'literal', value: ['.active', 'selected', '.highlighted'] }], modifiers: {} },
+        {
+          args: [{ type: 'literal', value: ['.active', 'selected', '.highlighted'] }],
+          modifiers: {},
+        },
         evaluator,
         context
       );
@@ -175,7 +178,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        { args: [{ type: 'literal', value: 'valid-class 123invalid -also-valid _underscore' }], modifiers: {} },
+        {
+          args: [{ type: 'literal', value: 'valid-class 123invalid -also-valid _underscore' }],
+          modifiers: {},
+        },
         evaluator,
         context
       );
@@ -218,7 +224,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'active' }, { type: 'literal', value: targetElement }],
+          args: [
+            { type: 'literal', value: 'active' },
+            { type: 'literal', value: targetElement },
+          ],
           modifiers: {},
         },
         evaluator,
@@ -248,7 +257,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'active' }, { type: 'literal', value: '#test-target' }],
+          args: [
+            { type: 'literal', value: 'active' },
+            { type: 'literal', value: '#test-target' },
+          ],
           modifiers: {},
         },
         evaluator,
@@ -284,7 +296,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'active' }, { type: 'literal', value: '.test-class' }],
+          args: [
+            { type: 'literal', value: 'active' },
+            { type: 'literal', value: '.test-class' },
+          ],
           modifiers: {},
         },
         evaluator,
@@ -316,7 +331,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [{ type: 'literal', value: 'active' }, { type: 'literal', value: ':::invalid:::' }],
+            args: [
+              { type: 'literal', value: 'active' },
+              { type: 'literal', value: ':::invalid:::' },
+            ],
             modifiers: {},
           },
           evaluator,
@@ -341,7 +359,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [{ type: 'literal', value: 'active' }, { type: 'literal', value: '.nonexistent-element' }],
+            args: [
+              { type: 'literal', value: 'active' },
+              { type: 'literal', value: '.nonexistent-element' },
+            ],
             modifiers: {},
           },
           evaluator,
@@ -357,10 +378,7 @@ describe('RemoveCommand (Standalone V2)', () => {
       const element = document.createElement('div');
       element.className = 'active selected';
 
-      await command.execute(
-        { type: 'classes', classes: ['active'], targets: [element] },
-        context
-      );
+      await command.execute({ type: 'classes', classes: ['active'], targets: [element] }, context);
 
       expect(element!.classList.contains('active')).toBe(false);
       expect(element!.classList.contains('selected')).toBe(true); // Preserved
@@ -453,10 +471,7 @@ describe('RemoveCommand (Standalone V2)', () => {
       const element = document.createElement('div');
 
       // Should not throw error
-      await command.execute(
-        { type: 'classes', classes: ['active'], targets: [element] },
-        context
-      );
+      await command.execute({ type: 'classes', classes: ['active'], targets: [element] }, context);
 
       expect(element!.className).toBe('');
     });
@@ -472,7 +487,11 @@ describe('RemoveCommand (Standalone V2)', () => {
     it('should validate correct input with multiple classes and targets', () => {
       const el1 = document.createElement('div');
       const el2 = document.createElement('div');
-      const input = { type: 'classes' as const, classes: ['active', 'selected'], targets: [el1, el2] };
+      const input = {
+        type: 'classes' as const,
+        classes: ['active', 'selected'],
+        targets: [el1, el2],
+      };
       expect(command.validate(input)).toBe(true);
     });
 
@@ -497,35 +516,53 @@ describe('RemoveCommand (Standalone V2)', () => {
 
     it('should reject input with non-array classes', () => {
       const element = document.createElement('div');
-      expect(command.validate({ type: 'classes' as const, classes: 'active', targets: [element] })).toBe(false);
+      expect(
+        command.validate({ type: 'classes' as const, classes: 'active', targets: [element] })
+      ).toBe(false);
     });
 
     it('should reject input with non-array targets', () => {
       const element = document.createElement('div');
-      expect(command.validate({ type: 'classes' as const, classes: ['active'], targets: element })).toBe(false);
+      expect(
+        command.validate({ type: 'classes' as const, classes: ['active'], targets: element })
+      ).toBe(false);
     });
 
     it('should reject input with empty classes array', () => {
       const element = document.createElement('div');
-      expect(command.validate({ type: 'classes' as const, classes: [], targets: [element] })).toBe(false);
+      expect(command.validate({ type: 'classes' as const, classes: [], targets: [element] })).toBe(
+        false
+      );
     });
 
     it('should reject input with empty targets array', () => {
-      expect(command.validate({ type: 'classes' as const, classes: ['active'], targets: [] })).toBe(false);
+      expect(command.validate({ type: 'classes' as const, classes: ['active'], targets: [] })).toBe(
+        false
+      );
     });
 
     it('should reject input with non-string class names', () => {
       const element = document.createElement('div');
-      expect(command.validate({ type: 'classes' as const, classes: [123], targets: [element] })).toBe(false);
+      expect(
+        command.validate({ type: 'classes' as const, classes: [123], targets: [element] })
+      ).toBe(false);
     });
 
     it('should reject input with empty string class names', () => {
       const element = document.createElement('div');
-      expect(command.validate({ type: 'classes' as const, classes: [''], targets: [element] })).toBe(false);
+      expect(
+        command.validate({ type: 'classes' as const, classes: [''], targets: [element] })
+      ).toBe(false);
     });
 
     it('should reject input with non-HTMLElement targets', () => {
-      expect(command.validate({ type: 'classes' as const, classes: ['active'], targets: [document.createTextNode('text')] })).toBe(false);
+      expect(
+        command.validate({
+          type: 'classes' as const,
+          classes: ['active'],
+          targets: [document.createTextNode('text')],
+        })
+      ).toBe(false);
     });
   });
 
@@ -600,7 +637,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       // Parse input
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: '.active' }, { type: 'literal', value: '#test-button' }],
+          args: [
+            { type: 'literal', value: '.active' },
+            { type: 'literal', value: '#test-button' },
+          ],
           modifiers: {},
         },
         evaluator,

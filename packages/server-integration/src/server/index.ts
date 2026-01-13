@@ -123,7 +123,7 @@ async function main() {
   process.on('SIGTERM', shutdown);
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });

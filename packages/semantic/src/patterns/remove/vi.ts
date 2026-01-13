@@ -21,15 +21,23 @@ export function getRemovePatternsVi(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'xóa', alternatives: ['gỡ bỏ', 'loại bỏ', 'bỏ'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'khỏi', alternatives: ['từ'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'khỏi', alternatives: ['từ'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        source: { marker: 'khỏi', markerAlternatives: ['từ'], default: { type: 'reference', value: 'me' } },
+        source: {
+          marker: 'khỏi',
+          markerAlternatives: ['từ'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

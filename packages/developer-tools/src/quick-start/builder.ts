@@ -9,13 +9,15 @@ import type { BuilderConfig, ComponentDefinition } from '../types';
 /**
  * Quick start builder with sensible defaults
  */
-export function quickStartBuilder(options: {
-  port?: number;
-  host?: string;
-  open?: boolean;
-  livereload?: boolean;
-  customComponents?: ComponentDefinition[];
-} = {}) {
+export function quickStartBuilder(
+  options: {
+    port?: number;
+    host?: string;
+    open?: boolean;
+    livereload?: boolean;
+    customComponents?: ComponentDefinition[];
+  } = {}
+) {
   const {
     port = 8000,
     host = 'localhost',
@@ -42,7 +44,7 @@ export function quickStartBuilder(options: {
         },
         {
           id: 'forms',
-          name: 'Forms', 
+          name: 'Forms',
           description: 'Form components',
           icon: '📝',
         },
@@ -111,7 +113,13 @@ export function quickStartBuilder(options: {
       style?: string;
       onClick?: string;
     }): ComponentDefinition {
-      const { id, name, text = 'Click me', style = '', onClick = 'log "Button clicked!"' } = options;
+      const {
+        id,
+        name,
+        text = 'Click me',
+        style = '',
+        onClick = 'log "Button clicked!"',
+      } = options;
 
       return {
         id,
@@ -174,13 +182,13 @@ export function quickStartBuilder(options: {
       placeholder?: string;
       required?: boolean;
     }): ComponentDefinition {
-      const { 
-        id, 
-        name, 
-        type = 'text', 
-        label = 'Field Label', 
-        placeholder = '', 
-        required = false 
+      const {
+        id,
+        name,
+        type = 'text',
+        label = 'Field Label',
+        placeholder = '',
+        required = false,
       } = options;
 
       return {

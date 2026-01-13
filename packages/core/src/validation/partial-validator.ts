@@ -39,7 +39,8 @@ const CRITICAL_LAYOUT_ELEMENTS: LayoutElementMap = {
   html: {
     category: 'document-root',
     message: 'The <html> element is the document root and cannot be part of a partial',
-    suggestion: 'Remove the <html> element. Return only the content that should replace the target.',
+    suggestion:
+      'Remove the <html> element. Return only the content that should replace the target.',
   },
   body: {
     category: 'document-root',
@@ -60,13 +61,17 @@ const CRITICAL_LAYOUT_ELEMENTS: LayoutElementMap = {
 const STRUCTURAL_SEMANTIC_ELEMENTS: LayoutElementMap = {
   header: {
     category: 'semantic-landmark',
-    message: 'The <header> element is a semantic landmark. Swapping may create duplicate landmarks.',
-    suggestion: 'Consider if <header> is appropriate in this partial, or if the page already has this landmark.',
+    message:
+      'The <header> element is a semantic landmark. Swapping may create duplicate landmarks.',
+    suggestion:
+      'Consider if <header> is appropriate in this partial, or if the page already has this landmark.',
   },
   footer: {
     category: 'semantic-landmark',
-    message: 'The <footer> element is a semantic landmark. Swapping may create duplicate landmarks.',
-    suggestion: 'Consider if <footer> is appropriate in this partial, or if the page already has this landmark.',
+    message:
+      'The <footer> element is a semantic landmark. Swapping may create duplicate landmarks.',
+    suggestion:
+      'Consider if <footer> is appropriate in this partial, or if the page already has this landmark.',
   },
   main: {
     category: 'semantic-landmark',
@@ -75,8 +80,10 @@ const STRUCTURAL_SEMANTIC_ELEMENTS: LayoutElementMap = {
   },
   nav: {
     category: 'semantic-landmark',
-    message: 'The <nav> element is a semantic landmark. Consider if navigation should be in a partial.',
-    suggestion: 'Consider if <nav> is appropriate in this partial, or if navigation should be static.',
+    message:
+      'The <nav> element is a semantic landmark. Consider if navigation should be in a partial.',
+    suggestion:
+      'Consider if <nav> is appropriate in this partial, or if navigation should be static.',
   },
   aside: {
     category: 'semantic-landmark',
@@ -165,9 +172,7 @@ let globalConfig: GlobalPartialValidationConfig = { ...DEFAULT_VALIDATION_CONFIG
  *   ignoredTargets: ['#modal-container'],
  * });
  */
-export function configurePartialValidation(
-  config: Partial<GlobalPartialValidationConfig>
-): void {
+export function configurePartialValidation(config: Partial<GlobalPartialValidationConfig>): void {
   globalConfig = { ...globalConfig, ...config };
 }
 
@@ -246,11 +251,7 @@ export function validatePartialContent(
   }
 
   // Check if target should be ignored
-  if (
-    config.ignoredTargets?.some((pattern) =>
-      matchesTargetPattern(targetSelector, pattern)
-    )
-  ) {
+  if (config.ignoredTargets?.some(pattern => matchesTargetPattern(targetSelector, pattern))) {
     return createEmptyResult();
   }
 
@@ -339,7 +340,8 @@ export function validatePartialContent(
           category: info.category,
           element: tagName,
           message: info.message,
-          suggestion: info.suggestion || `Move <${tagName}> to document <head> or remove from partial.`,
+          suggestion:
+            info.suggestion || `Move <${tagName}> to document <head> or remove from partial.`,
           targetSelector,
           count,
         });
@@ -480,9 +482,9 @@ function createEmptyResult(): PartialValidationResult {
  */
 function createResult(issues: PartialValidationIssue[]): PartialValidationResult {
   const bySeverity = {
-    critical: issues.filter((i) => i.severity === 'critical'),
-    structural: issues.filter((i) => i.severity === 'structural'),
-    warning: issues.filter((i) => i.severity === 'warning'),
+    critical: issues.filter(i => i.severity === 'critical'),
+    structural: issues.filter(i => i.severity === 'structural'),
+    warning: issues.filter(i => i.severity === 'warning'),
   };
 
   return {

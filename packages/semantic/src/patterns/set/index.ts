@@ -104,4 +104,25 @@ export { getSetPatternsZh } from './zh';
 /**
  * Languages that have hand-crafted set patterns.
  */
-export const setPatternLanguages = ['ar', 'bn', 'de', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const setPatternLanguages = [
+  'ar',
+  'bn',
+  'de',
+  'es',
+  'fr',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

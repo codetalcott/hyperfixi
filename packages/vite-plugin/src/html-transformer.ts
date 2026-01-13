@@ -31,9 +31,9 @@ export function transformHTML(
 
   // Regex patterns for _="..." attributes
   const patterns = [
-    /(\s)_\s*=\s*"([^"]+)"/g,           // _="..."
-    /(\s)_\s*=\s*'([^']+)'/g,           // _='...'
-    /(\s)_\s*=\s*`([^`]+)`/g,           // _=`...`
+    /(\s)_\s*=\s*"([^"]+)"/g, // _="..."
+    /(\s)_\s*=\s*'([^']+)'/g, // _='...'
+    /(\s)_\s*=\s*`([^`]+)`/g, // _=`...`
   ];
 
   let result = html;
@@ -86,11 +86,7 @@ export function buildHandlerMap(handlers: CompiledHandler[]): Map<string, string
 export function extractScripts(html: string): string[] {
   const scripts: string[] = [];
 
-  const patterns = [
-    /_\s*=\s*"([^"]+)"/g,
-    /_\s*=\s*'([^']+)'/g,
-    /_\s*=\s*`([^`]+)`/g,
-  ];
+  const patterns = [/_\s*=\s*"([^"]+)"/g, /_\s*=\s*'([^']+)'/g, /_\s*=\s*`([^`]+)`/g];
 
   for (const pattern of patterns) {
     let match;

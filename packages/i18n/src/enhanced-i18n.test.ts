@@ -10,12 +10,12 @@ import {
   createEnhancedI18n,
   enhancedI18nImplementation,
   type EnhancedI18nInput,
-  type EnhancedI18nOutput
+  type EnhancedI18nOutput,
 } from './enhanced-i18n.js';
 
 describe('Enhanced I18n Implementation', () => {
   let i18nContext: TypedI18nContextImplementation;
-  
+
   beforeEach(() => {
     i18nContext = createI18nContext();
   });
@@ -23,14 +23,14 @@ describe('Enhanced I18n Implementation', () => {
   describe('Context Initialization', () => {
     it('should initialize with minimal configuration', async () => {
       const input: EnhancedI18nInput = {
-        locale: 'en'
+        locale: 'en',
       };
 
       const result = await i18nContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
       expect(result.value).toBeDefined();
-      
+
       if (result.success && result.value) {
         expect(result.value.locale.current).toBe('en');
         expect(result.value.category).toBe('Universal');
@@ -47,28 +47,28 @@ describe('Enhanced I18n Implementation', () => {
         logical: { and: 'y', or: 'o', not: 'no' },
         temporal: { then: 'luego', wait: 'esperar', after: 'después' },
         values: { true: 'verdadero', false: 'falso', null: 'nulo' },
-        attributes: { class: 'clase', id: 'id', style: 'estilo' }
+        attributes: { class: 'clase', id: 'id', style: 'estilo' },
       };
 
       const input: EnhancedI18nInput = {
         locale: 'es',
         fallbackLocale: 'en',
         dictionaries: {
-          es: spanishDict
+          es: spanishDict,
         },
         options: {
           detectLocale: true,
           rtlLocales: ['ar', 'he'],
-          validate: true
+          validate: true,
         },
         environment: 'frontend',
-        debug: true
+        debug: true,
       };
 
       const result = await i18nContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.locale.current).toBe('es');
         expect(result.value.locale.fallback).toBe('en');
@@ -85,21 +85,21 @@ describe('Enhanced I18n Implementation', () => {
         logical: { and: 'و', or: 'أو', not: 'ليس' },
         temporal: { then: 'ثم', wait: 'انتظر', after: 'بعد' },
         values: { true: 'صحيح', false: 'خطأ', null: 'فارغ' },
-        attributes: { class: 'فئة', id: 'معرف', style: 'نمط' }
+        attributes: { class: 'فئة', id: 'معرف', style: 'نمط' },
       };
 
       const input: EnhancedI18nInput = {
         locale: 'ar',
         dictionaries: { ar: arabicDict },
         options: {
-          rtlLocales: ['ar', 'he', 'fa', 'ur']
-        }
+          rtlLocales: ['ar', 'he', 'fa', 'ur'],
+        },
       };
 
       const result = await i18nContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.locale.direction).toBe('rtl');
         expect(result.value.capabilities).toContain('rtl-support');
@@ -116,19 +116,19 @@ describe('Enhanced I18n Implementation', () => {
         logical: { and: 'et', or: 'ou', not: 'non' },
         temporal: { then: 'puis', wait: 'attendre', after: 'après' },
         values: { true: 'vrai', false: 'faux', null: 'nul' },
-        attributes: { class: 'classe', id: 'id', style: 'style' }
+        attributes: { class: 'classe', id: 'id', style: 'style' },
       };
 
       const result = await i18nContext.initialize({
         locale: 'fr',
-        dictionaries: { fr: frenchDict }
+        dictionaries: { fr: frenchDict },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const translate = result.value.translate;
-        
+
         expect(translate('click', 'commands')).toBe('cliquer');
         expect(translate('to', 'modifiers')).toBe('à');
         expect(translate('and', 'logical')).toBe('et');
@@ -144,19 +144,19 @@ describe('Enhanced I18n Implementation', () => {
         logical: { and: 'und', or: 'oder', not: 'nicht' },
         temporal: { then: 'dann', wait: 'warten', after: 'nach' },
         values: { true: 'wahr', false: 'falsch', null: 'null' },
-        attributes: { class: 'klasse', id: 'id', style: 'stil' }
+        attributes: { class: 'klasse', id: 'id', style: 'stil' },
       };
 
       const result = await i18nContext.initialize({
         locale: 'de',
-        dictionaries: { de: germanDict }
+        dictionaries: { de: germanDict },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const translateHyperscript = result.value.translateHyperscript;
-        
+
         const translated = translateHyperscript('on click add .highlight');
         expect(translated).toContain('klick'); // Event should be translated
         expect(translated).toContain('hinzufügen'); // Command should be translated
@@ -173,29 +173,29 @@ describe('Enhanced I18n Implementation', () => {
         logical: { and: 'かつ', or: 'または', not: 'ではない' },
         temporal: { then: 'そして', wait: '待つ', after: '後' },
         values: { true: '真', false: '偽', null: 'null' },
-        attributes: { class: 'クラス', id: 'ID', style: 'スタイル' }
+        attributes: { class: 'クラス', id: 'ID', style: 'スタイル' },
       };
 
       const result = await i18nContext.initialize({
         locale: 'ja',
-        dictionaries: { ja: japaneseDict }
+        dictionaries: { ja: japaneseDict },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const { dictionary } = result.value;
-        
+
         // Test dictionary access
         expect(dictionary.get('commands.click')).toBe('クリック');
         expect(dictionary.has('commands.click')).toBe(true);
         expect(dictionary.has('commands.nonexistent')).toBe(false);
-        
+
         // Test dictionary keys
         const keys = dictionary.keys();
         expect(keys).toContain('commands.click');
         expect(keys).toContain('modifiers.to');
-        
+
         // Test setting new values
         dictionary.set('commands.test', 'テスト');
         expect(dictionary.get('commands.test')).toBe('テスト');
@@ -206,14 +206,14 @@ describe('Enhanced I18n Implementation', () => {
   describe('Formatting Utilities', () => {
     it('should provide locale-aware number formatting', async () => {
       const result = await i18nContext.initialize({
-        locale: 'de-DE'
+        locale: 'de-DE',
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const { format } = result.value;
-        
+
         // Number formatting (format may vary by environment)
         const formatted = format.number(1234.56);
         expect(typeof formatted).toBe('string');
@@ -223,21 +223,21 @@ describe('Enhanced I18n Implementation', () => {
 
     it('should provide locale-aware date formatting', async () => {
       const result = await i18nContext.initialize({
-        locale: 'fr-FR'
+        locale: 'fr-FR',
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const { format } = result.value;
-        
+
         const testDate = new Date('2024-01-15');
-        const formatted = format.date(testDate, { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        const formatted = format.date(testDate, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         });
-        
+
         expect(typeof formatted).toBe('string');
         expect(formatted).toBeTruthy(); // Date formatting succeeds
       }
@@ -245,14 +245,14 @@ describe('Enhanced I18n Implementation', () => {
 
     it('should provide currency formatting', async () => {
       const result = await i18nContext.initialize({
-        locale: 'en-US'
+        locale: 'en-US',
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const { format } = result.value;
-        
+
         const formatted = format.currency(1234.56, 'USD');
         expect(typeof formatted).toBe('string');
         expect(formatted).toMatch(/1[,\s]?234/); // Contains the number part with possible separators
@@ -261,14 +261,14 @@ describe('Enhanced I18n Implementation', () => {
 
     it('should provide relative time formatting', async () => {
       const result = await i18nContext.initialize({
-        locale: 'en'
+        locale: 'en',
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const { format } = result.value;
-        
+
         const relative = format.relative(-1, 'day');
         expect(relative).toMatch(/yesterday|1 day ago/);
       }
@@ -278,13 +278,15 @@ describe('Enhanced I18n Implementation', () => {
   describe('Validation and Error Handling', () => {
     it('should validate locale format', () => {
       const validationResult = i18nContext.validate({
-        locale: 'invalid-locale'
+        locale: 'invalid-locale',
       });
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors).toHaveLength(1);
       expect(validationResult.errors[0].type).toBe('invalid-locale');
-      expect(validationResult.suggestions).toContain('Use standard locale codes like "en", "es", "fr", "de", "ja", "zh"');
+      expect(validationResult.suggestions).toContain(
+        'Use standard locale codes like "en", "es", "fr", "de", "ja", "zh"'
+      );
     });
 
     it('should validate dictionary completeness', () => {
@@ -296,8 +298,8 @@ describe('Enhanced I18n Implementation', () => {
       const validationResult = i18nContext.validate({
         locale: 'es',
         dictionaries: {
-          es: incompleteDict
-        }
+          es: incompleteDict,
+        },
       });
 
       expect(validationResult.isValid).toBe(false);
@@ -320,12 +322,12 @@ describe('Enhanced I18n Implementation', () => {
       // Initialize multiple times to build performance history
       for (let i = 0; i < 3; i++) {
         await i18nContext.initialize({
-          locale: 'en'
+          locale: 'en',
         });
       }
 
       const metrics = i18nContext.getPerformanceMetrics();
-      
+
       expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
       expect(typeof metrics.successRate).toBe('number');
       expect(typeof metrics.averageDuration).toBe('number');
@@ -344,7 +346,7 @@ describe('Enhanced I18n Implementation', () => {
     it('should create enhanced i18n through convenience function', async () => {
       const result = await createEnhancedI18n('zh-CN', {
         fallbackLocale: 'en',
-        environment: 'frontend'
+        environment: 'frontend',
       });
 
       expect(result).toBeDefined();
@@ -365,7 +367,7 @@ describe('Enhanced I18n Implementation', () => {
 
     it('should have comprehensive metadata', () => {
       const { metadata } = i18nContext;
-      
+
       expect(metadata.category).toBe('Universal');
       expect(metadata.complexity).toBe('moderate');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
@@ -378,7 +380,7 @@ describe('Enhanced I18n Implementation', () => {
 
     it('should have LLM-compatible documentation', () => {
       const { documentation } = i18nContext;
-      
+
       expect(documentation.summary).toBeDefined();
       expect(Array.isArray(documentation.parameters)).toBe(true);
       expect(documentation.returns).toBeDefined();
@@ -393,26 +395,26 @@ describe('Enhanced I18n Implementation', () => {
   describe('Integration with Indigenous Languages', () => {
     it('should support Quechua language', async () => {
       const quechuaDict = {
-        commands: { click: 'ñit\'iy', add: 'yapay', remove: 'qichuy' },
+        commands: { click: "ñit'iy", add: 'yapay', remove: 'qichuy' },
         modifiers: { to: 'man', from: 'manta', with: 'wan' },
-        events: { click: 'ñit\'iy', hover: 'puray', focus: 'qhaway' },
+        events: { click: "ñit'iy", hover: 'puray', focus: 'qhaway' },
         logical: { and: 'chaymanta', or: 'utaq', not: 'mana' },
         temporal: { then: 'chayqa', wait: 'suyay', after: 'qhipaman' },
         values: { true: 'cheqaq', false: 'mana cheqaq', null: 'mana ima' },
-        attributes: { class: 'kaq', id: 'riqsichiq', style: 'rikch\'ay' }
+        attributes: { class: 'kaq', id: 'riqsichiq', style: "rikch'ay" },
       };
 
       const result = await i18nContext.initialize({
         locale: 'qu',
         dictionaries: { qu: quechuaDict },
-        environment: 'universal'
+        environment: 'universal',
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const translate = result.value.translate;
-        expect(translate('click', 'commands')).toBe('ñit\'iy');
+        expect(translate('click', 'commands')).toBe("ñit'iy");
         expect(translate('add', 'commands')).toBe('yapay');
       }
     });
@@ -425,16 +427,16 @@ describe('Enhanced I18n Implementation', () => {
         logical: { and: 'na', or: 'au', not: 'si' },
         temporal: { then: 'kisha', wait: 'ngoja', after: 'baada' },
         values: { true: 'kweli', false: 'uongo', null: 'tupu' },
-        attributes: { class: 'darasa', id: 'kitambulisho', style: 'mtindo' }
+        attributes: { class: 'darasa', id: 'kitambulisho', style: 'mtindo' },
       };
 
       const result = await i18nContext.initialize({
         locale: 'sw',
-        dictionaries: { sw: swahiliDict }
+        dictionaries: { sw: swahiliDict },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const translate = result.value.translate;
         expect(translate('click', 'commands')).toBe('bonyeza');

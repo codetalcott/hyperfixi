@@ -17,7 +17,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import { evaluateCondition } from '../helpers/condition-helpers';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 import {
   executeLoop,
   createForLoopConfig,
@@ -51,7 +57,8 @@ export interface RepeatCommandOutput {
 }
 
 @meta({
-  description: 'Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops',
+  description:
+    'Iteration in hyperscript - for-in, counted, conditional, event-driven, and infinite loops',
   syntax: [
     'repeat for <var> in <collection> { <commands> }',
     'repeat <count> times { <commands> }',
@@ -100,8 +107,15 @@ export class RepeatCommand implements DecoratedCommand {
       const varArg = raw.args[1] as { value?: string; name?: string };
       const variable = varArg?.value || varArg?.name;
       const collection = raw.args[2] ? await evaluator.evaluate(raw.args[2], context) : undefined;
-      if (!variable || collection === undefined) throw new Error('for loops require variable and collection');
-      return { type: 'for', variable, collection: Array.isArray(collection) ? collection : [collection], indexVariable, commands };
+      if (!variable || collection === undefined)
+        throw new Error('for loops require variable and collection');
+      return {
+        type: 'for',
+        variable,
+        collection: Array.isArray(collection) ? collection : [collection],
+        indexVariable,
+        commands,
+      };
     }
 
     if (loopType === 'times' || raw.modifiers?.times) {
@@ -144,8 +158,21 @@ export class RepeatCommand implements DecoratedCommand {
     throw new Error('repeat command requires a loop type (for/times/while/until/forever)');
   }
 
-  async execute(input: RepeatCommandInput, context: TypedExecutionContext): Promise<RepeatCommandOutput> {
-    const { type, variable, collection, condition, count, indexVariable, commands, eventName, eventTarget } = input;
+  async execute(
+    input: RepeatCommandInput,
+    context: TypedExecutionContext
+  ): Promise<RepeatCommandOutput> {
+    const {
+      type,
+      variable,
+      collection,
+      condition,
+      count,
+      indexVariable,
+      commands,
+      eventName,
+      eventTarget,
+    } = input;
 
     // Create loop config based on type
     let config, iterCtx;
@@ -158,10 +185,20 @@ export class RepeatCommand implements DecoratedCommand {
         ({ config, iterCtx } = createTimesLoopConfig(count!, indexVariable));
         break;
       case 'while':
-        ({ config, iterCtx } = createWhileLoopConfig(condition, evaluateCondition, context, indexVariable));
+        ({ config, iterCtx } = createWhileLoopConfig(
+          condition,
+          evaluateCondition,
+          context,
+          indexVariable
+        ));
         break;
       case 'until':
-        ({ config, iterCtx } = createUntilLoopConfig(condition, evaluateCondition, context, indexVariable));
+        ({ config, iterCtx } = createUntilLoopConfig(
+          condition,
+          evaluateCondition,
+          context,
+          indexVariable
+        ));
         break;
       case 'until-event':
         ({ config, iterCtx } = createUntilEventLoopConfig(eventName!, eventTarget!, indexVariable));
@@ -175,7 +212,13 @@ export class RepeatCommand implements DecoratedCommand {
 
     // Execute loop using unified executor
     try {
-      const result = await executeLoop(config, commands, context, iterCtx, this.executeCommands.bind(this));
+      const result = await executeLoop(
+        config,
+        commands,
+        context,
+        iterCtx,
+        this.executeCommands.bind(this)
+      );
 
       // Update context.it to last result
       Object.assign(context, { it: result.lastResult });
@@ -191,7 +234,12 @@ export class RepeatCommand implements DecoratedCommand {
       // Handle top-level control flow errors
       if (error instanceof Error) {
         if (error.message.includes('BREAK') || error.message.includes('CONTINUE')) {
-          return { type, iterations: 0, completed: true, interrupted: error.message.includes('BREAK') };
+          return {
+            type,
+            iterations: 0,
+            completed: true,
+            interrupted: error.message.includes('BREAK'),
+          };
         }
       }
       throw error;
@@ -199,11 +247,20 @@ export class RepeatCommand implements DecoratedCommand {
   }
 
   /** Execute commands block or array */
-  private async executeCommands(commands: unknown, context: TypedExecutionContext): Promise<unknown> {
+  private async executeCommands(
+    commands: unknown,
+    context: TypedExecutionContext
+  ): Promise<unknown> {
     // Handle block nodes from parser
-    if (commands && typeof commands === 'object' && (commands as { type?: string }).type === 'block') {
+    if (
+      commands &&
+      typeof commands === 'object' &&
+      (commands as { type?: string }).type === 'block'
+    ) {
       const block = commands as { commands?: unknown[] };
-      const runtimeExecute = context.locals.get('_runtimeExecute') as ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>) | undefined;
+      const runtimeExecute = context.locals.get('_runtimeExecute') as
+        | ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>)
+        | undefined;
       if (!runtimeExecute) throw new Error('Runtime execute function not available');
       let lastResult: unknown;
       if (block.commands) {

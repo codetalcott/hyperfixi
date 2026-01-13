@@ -13,15 +13,15 @@ import type {
   ValidationError,
   EvaluationType,
   EvaluationResult,
-  LLMDocumentation
+  LLMDocumentation,
 } from '../../core/src/types/base-types.js';
-import type { 
-  AnalyticsEvent, 
-  AnalyticsConfig, 
-  AnalyticsEventType, 
+import type {
+  AnalyticsEvent,
+  AnalyticsConfig,
+  AnalyticsEventType,
   AnalyticsMetrics,
   AnalyticsSession,
-  AnalyticsCollector
+  AnalyticsCollector,
 } from './types.js';
 
 // ============================================================================
@@ -36,32 +36,40 @@ export const EnhancedAnalyticsInputSchema = z.object({
     apiEndpoint: z.string().optional(), // Remove URL validation to allow custom validation
     batchSize: z.number().default(50), // Remove min/max to allow custom validation
     batchTimeout: z.number().min(100).max(60000).default(5000),
-    sampling: z.object({
-      enabled: z.boolean().default(false),
-      rate: z.number().default(1), // Remove min/max to allow custom validation
-    }).default({}),
-    privacy: z.object({
-      anonymizeIPs: z.boolean().default(true),
-      respectDNT: z.boolean().default(true),
-      cookieConsent: z.boolean().default(false),
-    }).default({}),
-    events: z.object({
-      compilation: z.boolean().default(true),
-      execution: z.boolean().default(true),
-      interactions: z.boolean().default(true),
-      performance: z.boolean().default(true),
-      errors: z.boolean().default(true),
-      customEvents: z.boolean().default(true),
-    }).default({}),
+    sampling: z
+      .object({
+        enabled: z.boolean().default(false),
+        rate: z.number().default(1), // Remove min/max to allow custom validation
+      })
+      .default({}),
+    privacy: z
+      .object({
+        anonymizeIPs: z.boolean().default(true),
+        respectDNT: z.boolean().default(true),
+        cookieConsent: z.boolean().default(false),
+      })
+      .default({}),
+    events: z
+      .object({
+        compilation: z.boolean().default(true),
+        execution: z.boolean().default(true),
+        interactions: z.boolean().default(true),
+        performance: z.boolean().default(true),
+        errors: z.boolean().default(true),
+        customEvents: z.boolean().default(true),
+      })
+      .default({}),
   }),
   /** User and session context */
-  context: z.object({
-    userId: z.string().optional(),
-    tenantId: z.string().optional(),
-    sessionId: z.string().optional(),
-    userAgent: z.string().optional(),
-    url: z.string().optional(),
-  }).optional(),
+  context: z
+    .object({
+      userId: z.string().optional(),
+      tenantId: z.string().optional(),
+      sessionId: z.string().optional(),
+      userAgent: z.string().optional(),
+      url: z.string().optional(),
+    })
+    .optional(),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('universal'),
   debug: z.boolean().default(false),
@@ -131,7 +139,8 @@ export type EnhancedAnalyticsOutput = z.infer<typeof EnhancedAnalyticsOutputSche
 export class TypedAnalyticsContextImplementation {
   public readonly name = 'analyticsContext';
   public readonly category = 'Universal' as const;
-  public readonly description = 'Type-safe analytics tracking with enhanced validation and real-time metrics collection';
+  public readonly description =
+    'Type-safe analytics tracking with enhanced validation and real-time metrics collection';
   public readonly inputSchema = EnhancedAnalyticsInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -158,18 +167,18 @@ export class TypedAnalyticsContextImplementation {
       {
         input: '{ config: { enabled: true, trackingId: "GA_TRACKING_ID" } }',
         description: 'Initialize analytics with Google Analytics tracking',
-        expectedOutput: 'TypedAnalyticsContext with event tracking and session management'
+        expectedOutput: 'TypedAnalyticsContext with event tracking and session management',
       },
       {
         input: '{ config: { batchSize: 100, batchTimeout: 3000 }, environment: "frontend" }',
         description: 'Configure analytics for high-volume frontend tracking',
-        expectedOutput: 'Optimized analytics context with batched event collection'
+        expectedOutput: 'Optimized analytics context with batched event collection',
       },
       {
         input: '{ config: { privacy: { anonymizeIPs: true, respectDNT: true } } }',
         description: 'Privacy-compliant analytics configuration',
-        expectedOutput: 'GDPR-compliant analytics with IP anonymization'
-      }
+        expectedOutput: 'GDPR-compliant analytics with IP anonymization',
+      },
     ],
     relatedExpressions: [],
     relatedContexts: ['frontendContext', 'backendContext', 'performanceContext'],
@@ -177,66 +186,79 @@ export class TypedAnalyticsContextImplementation {
     environmentRequirements: {
       browser: true,
       server: true,
-      nodejs: true
+      nodejs: true,
     },
     performance: {
       averageTime: 12.3,
-      complexity: 'O(n)' // n = number of tracked events
-    }
+      complexity: 'O(n)', // n = number of tracked events
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe analytics context for comprehensive tracking of hyperscript usage, user interactions, and performance metrics with real-time analysis',
+    summary:
+      'Creates type-safe analytics context for comprehensive tracking of hyperscript usage, user interactions, and performance metrics with real-time analysis',
     parameters: [
       {
         name: 'analyticsConfig',
         type: 'EnhancedAnalyticsInput',
-        description: 'Analytics configuration including tracking settings, privacy options, and event types',
+        description:
+          'Analytics configuration including tracking settings, privacy options, and event types',
         optional: false,
         examples: [
           '{ config: { enabled: true, trackingId: "analytics-id" } }',
           '{ config: { batchSize: 50, events: { compilation: true, execution: true } } }',
-          '{ config: { privacy: { anonymizeIPs: true } }, context: { userId: "user123" } }'
-        ]
-      }
+          '{ config: { privacy: { anonymizeIPs: true } }, context: { userId: "user123" } }',
+        ],
+      },
     ],
     returns: {
       type: 'EnhancedAnalyticsContext',
-      description: 'Initialized analytics context with event tracking, session management, and metrics collection capabilities',
+      description:
+        'Initialized analytics context with event tracking, session management, and metrics collection capabilities',
       examples: [
         'context.track("user:action", { action: "click", element: "button" })',
         'context.trackHyperscriptEvent("compilation", { script: "on click..." })',
         'context.session.getMetrics() → { duration: 1234, events: 45 }',
-        'context.export.generateReport() → comprehensive analytics report'
-      ]
+        'context.export.generateReport() → comprehensive analytics report',
+      ],
     },
     examples: [
       {
         title: 'Basic analytics setup',
         code: 'const analytics = await createAnalyticsContext({ config: { enabled: true } })',
         explanation: 'Initialize basic analytics tracking for hyperscript applications',
-        output: 'Analytics context with event tracking and session management'
+        output: 'Analytics context with event tracking and session management',
       },
       {
         title: 'Advanced analytics with privacy',
         code: 'await analytics.initialize({ config: { privacy: { anonymizeIPs: true, respectDNT: true } } })',
         explanation: 'Configure privacy-compliant analytics with GDPR compliance',
-        output: 'Privacy-aware analytics with anonymization and consent management'
+        output: 'Privacy-aware analytics with anonymization and consent management',
       },
       {
         title: 'Performance analytics',
         code: 'analytics.trackPerformance("compilation", { time: 123, complexity: 5 })',
         explanation: 'Track hyperscript compilation and execution performance',
-        output: 'Performance metrics collection with timing and complexity analysis'
-      }
+        output: 'Performance metrics collection with timing and complexity analysis',
+      },
     ],
     seeAlso: ['frontendContext', 'performanceContext', 'sessionManagement', 'dataPrivacy'],
-    tags: ['analytics', 'tracking', 'metrics', 'performance', 'privacy', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'analytics',
+      'tracking',
+      'metrics',
+      'performance',
+      'privacy',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
-  async initialize(input: EnhancedAnalyticsInput): Promise<EvaluationResult<EnhancedAnalyticsOutput>> {
+  async initialize(
+    input: EnhancedAnalyticsInput
+  ): Promise<EvaluationResult<EnhancedAnalyticsOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -257,22 +279,28 @@ export class TypedAnalyticsContextImplementation {
       // Initialize analytics configuration
       const config = await this.initializeConfig(input);
       const session = await this.initializeSession(input);
-      
+
       // Create enhanced analytics context
       const context: EnhancedAnalyticsOutput = {
         contextId: `analytics-${Date.now()}`,
         timestamp: startTime,
         category: 'Universal',
-        capabilities: ['event-tracking', 'session-management', 'metrics-collection', 'performance-monitoring', 'data-export'],
+        capabilities: [
+          'event-tracking',
+          'session-management',
+          'metrics-collection',
+          'performance-monitoring',
+          'data-export',
+        ],
         state: 'ready',
-        
+
         // Enhanced tracking functions
         track: this.createTrackFunction(config),
         trackHyperscriptEvent: this.createHyperscriptTracker(config),
         trackUserAction: this.createUserActionTracker(config),
         trackPerformance: this.createPerformanceTracker(config),
         trackError: this.createErrorTracker(config),
-        
+
         // Session management
         session: {
           getId: () => session.id,
@@ -280,7 +308,7 @@ export class TypedAnalyticsContextImplementation {
           end: this.createSessionEnder(config),
           getMetrics: this.createSessionMetricsGetter(session),
         },
-        
+
         // Event management
         events: {
           queue: this.createEventQueuer(),
@@ -288,39 +316,42 @@ export class TypedAnalyticsContextImplementation {
           clear: this.createEventCleaner(),
           count: () => this.eventQueue.length,
         },
-        
+
         // Data collection
         collect: {
-          start: () => { this.isCollecting = true; },
-          stop: () => { this.isCollecting = false; },
+          start: () => {
+            this.isCollecting = true;
+          },
+          stop: () => {
+            this.isCollecting = false;
+          },
           isActive: () => this.isCollecting,
           getMetrics: this.createMetricsGetter(),
         },
-        
+
         // Filtering and enrichment
         filters: {
           add: this.createFilterAdder(),
           remove: this.createFilterRemover(),
           list: this.createFilterLister(),
         },
-        
+
         // Export and reporting
         export: {
           toJSON: this.createJSONExporter(),
           toCSV: this.createCSVExporter(),
           generateReport: this.createReportGenerator(config),
-        }
+        },
       };
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'object'
+        type: 'object',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
 
@@ -333,9 +364,9 @@ export class TypedAnalyticsContextImplementation {
             'Verify analytics configuration is valid',
             'Check tracking ID format and permissions',
             'Ensure required browser APIs are available',
-            'Validate privacy settings compliance'
-          ]
-        }
+            'Validate privacy settings compliance',
+          ],
+        },
       };
     }
   }
@@ -347,22 +378,33 @@ export class TypedAnalyticsContextImplementation {
         return {
           isValid: false,
           errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
-          suggestions: ['Provide a valid analytics configuration object']
+          suggestions: ['Provide a valid analytics configuration object'],
         };
       }
 
       // Check for completely empty config object
       const inputObj = input as any;
-      if (inputObj.config && typeof inputObj.config === 'object' && Object.keys(inputObj.config).length === 0) {
+      if (
+        inputObj.config &&
+        typeof inputObj.config === 'object' &&
+        Object.keys(inputObj.config).length === 0
+      ) {
         return {
           isValid: false,
-          errors: [{ type: 'empty-config', message: 'Configuration object cannot be empty', suggestions: [] }],
-          suggestions: ['Provide at least basic analytics configuration with enabled: true']
+          errors: [
+            {
+              type: 'empty-config',
+              message: 'Configuration object cannot be empty',
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Provide at least basic analytics configuration with enabled: true'],
         };
       }
 
       const parsed = this.inputSchema.parse(input);
-      const errors: Array<{ type: string; message: string; path?: string; suggestions: string[] }> = [];
+      const errors: Array<{ type: string; message: string; path?: string; suggestions: string[] }> =
+        [];
       const suggestions: string[] = [];
 
       // Enhanced validation logic
@@ -374,7 +416,7 @@ export class TypedAnalyticsContextImplementation {
           type: 'invalid-tracking-id',
           message: 'Tracking ID must be in format like "GA-123456789-1" or "GTM-ABC123"',
           path: 'config.trackingId',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Use valid Google Analytics or Google Tag Manager format');
       }
@@ -392,7 +434,7 @@ export class TypedAnalyticsContextImplementation {
             type: 'invalid-api-endpoint',
             message: 'API endpoint must be a valid URL',
             path: 'config.apiEndpoint',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Provide a valid HTTPS URL for the analytics API endpoint');
         }
@@ -404,7 +446,7 @@ export class TypedAnalyticsContextImplementation {
           type: 'batch-size-too-large',
           message: 'Batch size should not exceed 1000 events for optimal performance',
           path: 'config.batchSize',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Use smaller batch sizes (50-100) for better performance');
       }
@@ -415,7 +457,7 @@ export class TypedAnalyticsContextImplementation {
           type: 'invalid-sampling-rate',
           message: 'Sampling rate must be greater than 0 when sampling is enabled',
           path: 'config.sampling.rate',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set sampling rate between 0.1 and 1.0');
       }
@@ -426,7 +468,7 @@ export class TypedAnalyticsContextImplementation {
           type: 'invalid-user-id',
           message: 'User ID should be at least 3 characters long',
           path: 'context.userId',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Use meaningful user identifiers for better analytics');
       }
@@ -434,22 +476,23 @@ export class TypedAnalyticsContextImplementation {
       return {
         isValid: errors.length === 0,
         errors: errors as ValidationError[],
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'schema-validation',
-          message: error instanceof Error ? error.message : 'Invalid input format',
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'schema-validation',
+            message: error instanceof Error ? error.message : 'Invalid input format',
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure input matches EnhancedAnalyticsInput schema',
           'Check analytics configuration structure',
-          'Verify event tracking settings are valid'
-        ]
+          'Verify event tracking settings are valid',
+        ],
       };
     }
   }
@@ -463,13 +506,15 @@ export class TypedAnalyticsContextImplementation {
       ...input.config,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
   private async initializeSession(input: EnhancedAnalyticsInput): Promise<AnalyticsSession> {
-    const sessionId = input.context?.sessionId || `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+    const sessionId =
+      input.context?.sessionId ||
+      `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const session: AnalyticsSession = {
       id: sessionId,
       startTime: Date.now(),
@@ -484,42 +529,42 @@ export class TypedAnalyticsContextImplementation {
         browser: 'unknown',
         os: 'unknown',
         screenResolution: '1920x1080',
-        viewportSize: '1920x1080'
-      }
+        viewportSize: '1920x1080',
+      },
     };
-    
+
     if (input.context?.userId !== undefined) {
       session.userId = input.context.userId;
     }
     if (input.context?.tenantId !== undefined) {
       session.tenantId = input.context.tenantId;
     }
-    
+
     return session;
   }
 
   private createTrackFunction(config: any) {
     return (eventType: AnalyticsEventType, data: Record<string, any>) => {
       if (!config.enabled || !this.isCollecting) return;
-      
+
       const event: AnalyticsEvent = {
         id: `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: eventType,
         timestamp: Date.now(),
         sessionId: this.currentSession?.id || 'unknown',
         data,
-        metadata: this.currentSession?.metadata || {} as any
+        metadata: this.currentSession?.metadata || ({} as any),
       };
-      
+
       if (this.currentSession?.userId !== undefined) {
         event.userId = this.currentSession.userId;
       }
       if (this.currentSession?.tenantId !== undefined) {
         event.tenantId = this.currentSession.tenantId;
       }
-      
+
       this.eventQueue.push(event);
-      
+
       // Auto-flush if batch size reached
       if (this.eventQueue.length >= config.batchSize) {
         this.flushEvents(config);
@@ -532,10 +577,10 @@ export class TypedAnalyticsContextImplementation {
       if (!config.events?.compilation && eventType === 'compilation') return;
       if (!config.events?.execution && eventType === 'execution') return;
       if (!config.events?.errors && eventType === 'error') return;
-      
+
       this.createTrackFunction(config)(`hyperscript:${eventType}` as AnalyticsEventType, {
         ...data,
-        source: 'hyperscript'
+        source: 'hyperscript',
       });
     };
   }
@@ -543,11 +588,11 @@ export class TypedAnalyticsContextImplementation {
   private createUserActionTracker(config: any) {
     return (action: string, data: Record<string, any> = {}) => {
       if (!config.events?.interactions) return;
-      
+
       this.createTrackFunction(config)('user:action', {
         action,
         timestamp: Date.now(),
-        ...data
+        ...data,
       });
     };
   }
@@ -555,11 +600,11 @@ export class TypedAnalyticsContextImplementation {
   private createPerformanceTracker(config: any) {
     return (metric: string, data: Record<string, any>) => {
       if (!config.events?.performance) return;
-      
+
       this.createTrackFunction(config)('performance:timing', {
         metric,
         timestamp: Date.now(),
-        ...data
+        ...data,
       });
     };
   }
@@ -567,12 +612,12 @@ export class TypedAnalyticsContextImplementation {
   private createErrorTracker(config: any) {
     return (error: Error | string, context: Record<string, any> = {}) => {
       if (!config.events?.errors) return;
-      
+
       this.createTrackFunction(config)('hyperscript:error', {
         error: error instanceof Error ? error.message : error,
         stack: error instanceof Error ? error.stack : undefined,
         context,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     };
   }
@@ -583,7 +628,7 @@ export class TypedAnalyticsContextImplementation {
         this.currentSession.endTime = Date.now();
         this.currentSession.duration = this.currentSession.endTime - this.currentSession.startTime;
       }
-      
+
       // Start new session logic would go here
       return true;
     };
@@ -602,11 +647,11 @@ export class TypedAnalyticsContextImplementation {
   private createSessionMetricsGetter(session: AnalyticsSession) {
     return () => ({
       id: session.id,
-      duration: session.duration || (Date.now() - session.startTime),
+      duration: session.duration || Date.now() - session.startTime,
       eventCount: session.events.length,
       startTime: session.startTime,
       endTime: session.endTime,
-      isActive: !session.endTime
+      isActive: !session.endTime,
     });
   }
 
@@ -634,7 +679,7 @@ export class TypedAnalyticsContextImplementation {
       isCollecting: this.isCollecting,
       sessionActive: !!this.currentSession && !this.currentSession.endTime,
       totalEvents: this.eventQueue.length,
-      sessionDuration: this.currentSession ? Date.now() - this.currentSession.startTime : 0
+      sessionDuration: this.currentSession ? Date.now() - this.currentSession.startTime : 0,
     });
   }
 
@@ -661,12 +706,16 @@ export class TypedAnalyticsContextImplementation {
 
   private createJSONExporter() {
     return () => {
-      return JSON.stringify({
-        session: this.currentSession,
-        events: this.eventQueue,
-        metrics: this.metrics,
-        timestamp: Date.now()
-      }, null, 2);
+      return JSON.stringify(
+        {
+          session: this.currentSession,
+          events: this.eventQueue,
+          metrics: this.metrics,
+          timestamp: Date.now(),
+        },
+        null,
+        2
+      );
     };
   }
 
@@ -679,9 +728,9 @@ export class TypedAnalyticsContextImplementation {
         event.timestamp,
         event.sessionId,
         event.userId || '',
-        JSON.stringify(event.data)
+        JSON.stringify(event.data),
       ]);
-      
+
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     };
   }
@@ -693,34 +742,34 @@ export class TypedAnalyticsContextImplementation {
           totalEvents: this.eventQueue.length,
           sessionDuration: this.currentSession ? Date.now() - this.currentSession.startTime : 0,
           isActive: this.isCollecting,
-          configuration: config
+          configuration: config,
         },
         events: {
           byType: this.getEventsByType(),
-          recent: this.eventQueue.slice(-10)
+          recent: this.eventQueue.slice(-10),
         },
         performance: {
           averageEventSize: this.getAverageEventSize(),
-          queueProcessingTime: this.getQueueProcessingTime()
+          queueProcessingTime: this.getQueueProcessingTime(),
         },
         session: this.currentSession,
-        generatedAt: Date.now()
+        generatedAt: Date.now(),
       };
-      
+
       return report;
     };
   }
 
   private async flushEvents(config: any) {
     if (this.eventQueue.length === 0) return;
-    
+
     // Batch processing logic would go here
     const events = this.eventQueue.splice(0, config.batchSize);
-    
+
     if (config.debug) {
       console.log(`Flushing ${events.length} analytics events`);
     }
-    
+
     // In real implementation, would send to analytics service
     return events;
   }
@@ -746,26 +795,34 @@ export class TypedAnalyticsContextImplementation {
     return this.eventQueue.length * 0.5; // 0.5ms per event
   }
 
-  private trackPerformance(startTime: number, success: boolean, output?: EnhancedAnalyticsOutput): void {
+  private trackPerformance(
+    startTime: number,
+    success: boolean,
+    output?: EnhancedAnalyticsOutput
+  ): void {
     const duration = Date.now() - startTime;
     this.evaluationHistory.push({
       input: {} as EnhancedAnalyticsInput, // Would store actual input in real implementation
       ...(output !== undefined ? { output } : {}),
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10), // Last 10 evaluations
       currentQueueSize: this.eventQueue.length,
-      isActivelyCollecting: this.isCollecting
+      isActivelyCollecting: this.isCollecting,
     };
   }
 }
@@ -792,10 +849,17 @@ export async function createEnhancedAnalytics(
       batchTimeout: 5000,
       sampling: { enabled: false, rate: 1 },
       privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-      events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true },
-      ...config
+      events: {
+        compilation: true,
+        execution: true,
+        interactions: true,
+        performance: true,
+        errors: true,
+        customEvents: true,
+      },
+      ...config,
     },
-    ...(options ? options : {})
+    ...(options ? options : {}),
   });
 }
 

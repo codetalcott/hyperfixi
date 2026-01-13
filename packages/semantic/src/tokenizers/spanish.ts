@@ -49,24 +49,24 @@ function isSpanishIdentifierChar(char: string): boolean {
  * Spanish prepositions that mark grammatical roles.
  */
 const PREPOSITIONS = new Set([
-  'en',         // in, on
-  'a',          // to
-  'de',         // of, from
-  'desde',      // from
-  'hasta',      // until, to
-  'con',        // with
-  'sin',        // without
-  'por',        // by, for
-  'para',       // for
-  'sobre',      // on, about
-  'entre',      // between
-  'antes',      // before
-  'después',    // after
-  'despues',    // after (no accent)
-  'dentro',     // inside
-  'fuera',      // outside
-  'al',         // a + el (contraction)
-  'del',        // de + el (contraction)
+  'en', // in, on
+  'a', // to
+  'de', // of, from
+  'desde', // from
+  'hasta', // until, to
+  'con', // with
+  'sin', // without
+  'por', // by, for
+  'para', // for
+  'sobre', // on, about
+  'entre', // between
+  'antes', // before
+  'después', // after
+  'despues', // after (no accent)
+  'dentro', // inside
+  'fuera', // outside
+  'al', // a + el (contraction)
+  'del', // de + el (contraction)
 ]);
 
 // =============================================================================
@@ -173,7 +173,7 @@ const SPANISH_KEYWORDS: Map<string, string> = new Map([
   // Events (for event name recognition)
   ['clic', 'click'],
   ['click', 'click'],
-  ['hacer clic', 'click'],  // Multi-word: "to make click" → click
+  ['hacer clic', 'click'], // Multi-word: "to make click" → click
   ['entrada', 'input'],
   ['cambio', 'change'],
   ['envío', 'submit'],
@@ -269,7 +269,10 @@ export class SpanishTokenizer extends BaseTokenizer {
       }
 
       // Try number
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractSpanishNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);
@@ -350,7 +353,7 @@ export class SpanishTokenizer extends BaseTokenizer {
       'raton encima',
       'ratón fuera',
       'raton fuera',
-      'hacer clic',    // "to make click" → click event
+      'hacer clic', // "to make click" → click event
     ];
 
     for (const phrase of multiWordPhrases) {
@@ -358,7 +361,11 @@ export class SpanishTokenizer extends BaseTokenizer {
       if (candidate === phrase) {
         // Check word boundary
         const nextPos = pos + phrase.length;
-        if (nextPos >= input.length || isWhitespace(input[nextPos]) || !isSpanishLetter(input[nextPos])) {
+        if (
+          nextPos >= input.length ||
+          isWhitespace(input[nextPos]) ||
+          !isSpanishLetter(input[nextPos])
+        ) {
           const normalized = SPANISH_KEYWORDS.get(phrase);
           return createToken(
             input.slice(pos, pos + phrase.length),
@@ -396,21 +403,12 @@ export class SpanishTokenizer extends BaseTokenizer {
     const normalized = SPANISH_KEYWORDS.get(lower);
 
     if (normalized) {
-      return createToken(
-        word,
-        'keyword',
-        createPosition(startPos, pos),
-        normalized
-      );
+      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
     }
 
     // Check if it's a preposition
     if (PREPOSITIONS.has(lower)) {
-      return createToken(
-        word,
-        'particle',
-        createPosition(startPos, pos)
-      );
+      return createToken(word, 'particle', createPosition(startPos, pos));
     }
 
     // Try morphological normalization for conjugated/reflexive forms
@@ -427,21 +425,12 @@ export class SpanishTokenizer extends BaseTokenizer {
           stemConfidence: morphResult.confidence,
         };
 
-        return createToken(
-          word,
-          'keyword',
-          createPosition(startPos, pos),
-          tokenOptions
-        );
+        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
       }
     }
 
     // Not a keyword, return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -493,11 +482,7 @@ export class SpanishTokenizer extends BaseTokenizer {
 
     if (!number || number === '-' || number === '+') return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
 
   /**

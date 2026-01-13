@@ -184,11 +184,7 @@ describe('AddCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator('123 456 789'); // All start with digits
 
       await expect(
-        command.parseInput(
-          { args: [mockNode('123 456 789')], modifiers: {} },
-          evaluator,
-          context
-        )
+        command.parseInput({ args: [mockNode('123 456 789')], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('add command: no valid class names found');
     });
 
@@ -299,10 +295,7 @@ describe('AddCommand (Standalone V2)', () => {
       const context = createMockContext();
       const element = document.createElement('div');
 
-      await command.execute(
-        { type: 'classes', classes: ['active'], targets: [element] },
-        context
-      );
+      await command.execute({ type: 'classes', classes: ['active'], targets: [element] }, context);
 
       expect(element!.classList.contains('active')).toBe(true);
     });
@@ -432,12 +425,16 @@ describe('AddCommand (Standalone V2)', () => {
 
     it('should reject input with non-array classes', () => {
       const element = document.createElement('div');
-      expect(command.validate({ type: 'classes', classes: 'active', targets: [element] })).toBe(false);
+      expect(command.validate({ type: 'classes', classes: 'active', targets: [element] })).toBe(
+        false
+      );
     });
 
     it('should reject input with non-array targets', () => {
       const element = document.createElement('div');
-      expect(command.validate({ type: 'classes', classes: ['active'], targets: element })).toBe(false);
+      expect(command.validate({ type: 'classes', classes: ['active'], targets: element })).toBe(
+        false
+      );
     });
 
     it('should reject input with empty classes array', () => {
@@ -460,7 +457,13 @@ describe('AddCommand (Standalone V2)', () => {
     });
 
     it('should reject input with non-HTMLElement targets', () => {
-      expect(command.validate({ type: 'classes', classes: ['active'], targets: [document.createTextNode('text')] })).toBe(false);
+      expect(
+        command.validate({
+          type: 'classes',
+          classes: ['active'],
+          targets: [document.createTextNode('text')],
+        })
+      ).toBe(false);
     });
   });
 

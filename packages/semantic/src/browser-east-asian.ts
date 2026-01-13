@@ -58,10 +58,7 @@ function validateLanguage(language: string): void {
 // Tokenizers (from registry)
 // =============================================================================
 
-export {
-  getTokenizer,
-  isLanguageSupported,
-} from './registry';
+export { getTokenizer, isLanguageSupported } from './registry';
 
 import type { LanguageToken } from './types';
 import { tokenize as tokenizeInternal } from './tokenizers';

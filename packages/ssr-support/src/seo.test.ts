@@ -73,7 +73,10 @@ describe('SEOGenerator', () => {
           expect.objectContaining({ name: 'twitter:card', content: 'summary_large_image' }),
           expect.objectContaining({ name: 'twitter:title', content: 'Twitter Title' }),
           expect.objectContaining({ name: 'twitter:description', content: 'Twitter Description' }),
-          expect.objectContaining({ name: 'twitter:image', content: 'https://example.com/twitter.jpg' }),
+          expect.objectContaining({
+            name: 'twitter:image',
+            content: 'https://example.com/twitter.jpg',
+          }),
           expect.objectContaining({ name: 'twitter:site', content: '@testsite' }),
           expect.objectContaining({ name: 'twitter:creator', content: '@testcreator' }),
         ])
@@ -87,7 +90,10 @@ describe('SEOGenerator', () => {
       expect(tags).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: 'robots', content: 'index, follow' }),
-          expect.objectContaining({ name: 'viewport', content: 'width=device-width, initial-scale=1.0' }),
+          expect.objectContaining({
+            name: 'viewport',
+            content: 'width=device-width, initial-scale=1.0',
+          }),
         ])
       );
     });
@@ -435,7 +441,8 @@ describe('SEOGenerator', () => {
       // Title: 30-60 chars, Description: 120-160 chars for no warnings/suggestions
       const seoData = createMinimalSEOData({
         title: 'A well-optimized page title for SEO use', // 40 chars
-        description: 'This is a comprehensive meta description that provides users and search engines with a clear understanding of the page content here.', // 133 chars
+        description:
+          'This is a comprehensive meta description that provides users and search engines with a clear understanding of the page content here.', // 133 chars
         keywords: ['seo', 'optimization', 'search'],
         structuredData: [{ '@type': 'WebPage' }],
       });
@@ -459,13 +466,16 @@ describe('SEOGenerator', () => {
 
     it('should warn about title too long', () => {
       const seoData = createMinimalSEOData({
-        title: 'This is an extremely long page title that exceeds the recommended limit of sixty characters and will likely be truncated',
+        title:
+          'This is an extremely long page title that exceeds the recommended limit of sixty characters and will likely be truncated',
       });
 
       const result = seo.validateSEOData(seoData);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContain('Title is too long (over 60 characters), may be truncated in search results');
+      expect(result.warnings).toContain(
+        'Title is too long (over 60 characters), may be truncated in search results'
+      );
     });
 
     it('should suggest longer title', () => {
@@ -475,7 +485,9 @@ describe('SEOGenerator', () => {
 
       const result = seo.validateSEOData(seoData);
 
-      expect(result.suggestions).toContain('Title is quite short, consider making it more descriptive');
+      expect(result.suggestions).toContain(
+        'Title is quite short, consider making it more descriptive'
+      );
     });
 
     it('should warn about missing description', () => {
@@ -491,13 +503,16 @@ describe('SEOGenerator', () => {
 
     it('should warn about description too long', () => {
       const seoData = createMinimalSEOData({
-        description: 'This is an extremely long meta description that exceeds the recommended limit of one hundred and sixty characters and will likely be truncated in search engine results pages which is not ideal for user experience.',
+        description:
+          'This is an extremely long meta description that exceeds the recommended limit of one hundred and sixty characters and will likely be truncated in search engine results pages which is not ideal for user experience.',
       });
 
       const result = seo.validateSEOData(seoData);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContain('Description is too long (over 160 characters), may be truncated');
+      expect(result.warnings).toContain(
+        'Description is too long (over 160 characters), may be truncated'
+      );
     });
 
     it('should suggest longer description', () => {
@@ -556,7 +571,9 @@ describe('SEOGenerator', () => {
 
       const result = seo.validateSEOData(seoData);
 
-      expect(result.suggestions).toContain('Consider adding structured data for better search engine understanding');
+      expect(result.suggestions).toContain(
+        'Consider adding structured data for better search engine understanding'
+      );
     });
   });
 });

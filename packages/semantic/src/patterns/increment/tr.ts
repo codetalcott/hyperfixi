@@ -21,7 +21,11 @@ export function getIncrementPatternsTr(): LanguagePattern[] {
         format: '{patient} artır',
         tokens: [
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
-          { type: 'literal', value: 'artır', alternatives: ['artir', 'artırmak', 'artirmak', 'arttır', 'increment'] },
+          {
+            type: 'literal',
+            value: 'artır',
+            alternatives: ['artir', 'artırmak', 'artirmak', 'arttır', 'increment'],
+          },
         ],
       },
       extraction: {

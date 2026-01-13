@@ -54,7 +54,7 @@ export const ukrainianDictionary: Dictionary = {
     // Data Commands
     increment: 'збільшити',
     decrement: 'зменшити',
-    bind: 'прив\'язати',
+    bind: "прив'язати",
     default: 'за_замовчуванням',
     persist: 'зберегти',
 
@@ -236,7 +236,7 @@ export const ukrainianDictionary: Dictionary = {
     checked: 'позначено',
     selected: 'вибрано',
     readonly: 'лише_читання',
-    required: 'обов\'язково',
+    required: "обов'язково",
     text: 'текст',
     html: 'html',
   },

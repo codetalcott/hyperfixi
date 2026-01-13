@@ -14,18 +14,31 @@ import type { CustomLanguageKeywords } from './types';
  * All supported language codes.
  */
 export const SUPPORTED_LANGUAGES = [
-  'en', 'es', 'pt', 'fr', 'de', 'it', 'vi',  // Western (Latin script)
-  'pl', 'ru', 'uk',                          // Slavic (Latin/Cyrillic)
-  'ja', 'zh', 'ko',                          // East Asian
-  'ar',                                      // RTL (Arabic script)
-  'hi', 'bn',                                // South Asian (Indic scripts)
-  'th',                                      // Southeast Asian (Thai script)
-  'tr',                                      // Agglutinative Latin
-  'id', 'sw', 'qu',// Other
-  'tl',  // Tagalog (auto-added)
+  'en',
+  'es',
+  'pt',
+  'fr',
+  'de',
+  'it',
+  'vi', // Western (Latin script)
+  'pl',
+  'ru',
+  'uk', // Slavic (Latin/Cyrillic)
+  'ja',
+  'zh',
+  'ko', // East Asian
+  'ar', // RTL (Arabic script)
+  'hi',
+  'bn', // South Asian (Indic scripts)
+  'th', // Southeast Asian (Thai script)
+  'tr', // Agglutinative Latin
+  'id',
+  'sw',
+  'qu', // Other
+  'tl', // Tagalog (auto-added)
 ] as const;
 
-export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
+export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 /**
  * Regional bundle mappings.
@@ -35,7 +48,21 @@ export const REGIONS = {
   'east-asian': ['ja', 'zh', 'ko'] as SupportedLanguage[],
   slavic: ['pl', 'ru', 'uk'] as SupportedLanguage[],
   'south-asian': ['hi', 'bn'] as SupportedLanguage[],
-  priority: ['en', 'es', 'pt', 'fr', 'de', 'it', 'ja', 'zh', 'ko', 'ar', 'tr', 'ru', 'hi'] as SupportedLanguage[],
+  priority: [
+    'en',
+    'es',
+    'pt',
+    'fr',
+    'de',
+    'it',
+    'ja',
+    'zh',
+    'ko',
+    'ar',
+    'tr',
+    'ru',
+    'hi',
+  ] as SupportedLanguage[],
   all: SUPPORTED_LANGUAGES as unknown as SupportedLanguage[],
 };
 
@@ -84,7 +111,7 @@ export const JAPANESE_KEYWORDS = new Set([
   '待つ',
   '待機',
   'の間',
-  '間'
+  '間',
 ]);
 
 /**
@@ -111,7 +138,7 @@ export const KOREAN_KEYWORDS = new Set([
   '아니면',
   '반복',
   '대기',
-  '동안'
+  '동안',
 ]);
 
 /**
@@ -138,7 +165,7 @@ export const CHINESE_KEYWORDS = new Set([
   '否则',
   '重复',
   '等待',
-  '当'
+  '当',
 ]);
 
 /**
@@ -177,7 +204,7 @@ export const ARABIC_KEYWORDS = new Set([
   'خلاف ذلك',
   'كرر',
   'انتظر',
-  'بينما'
+  'بينما',
 ]);
 
 /**
@@ -213,7 +240,7 @@ export const SPANISH_KEYWORDS = new Set([
   'de lo contrario',
   'repetir',
   'esperar',
-  'mientras'
+  'mientras',
 ]);
 
 /**
@@ -246,7 +273,7 @@ export const PORTUGUESE_KEYWORDS = new Set([
   'repetir',
   'esperar',
   'aguardar',
-  'enquanto'
+  'enquanto',
 ]);
 
 /**
@@ -277,7 +304,7 @@ export const FRENCH_KEYWORDS = new Set([
   'sinon',
   'répéter',
   'attendre',
-  'pendant'
+  'pendant',
 ]);
 
 /**
@@ -309,7 +336,7 @@ export const GERMAN_KEYWORDS = new Set([
   'wiederholen',
   'warten',
   'solange',
-  'während'
+  'während',
 ]);
 
 /**
@@ -335,7 +362,7 @@ export const TURKISH_KEYWORDS = new Set([
   'yoksa',
   'tekrarla',
   'bekle',
-  'iken'
+  'iken',
 ]);
 
 /**
@@ -371,7 +398,7 @@ export const INDONESIAN_KEYWORDS = new Set([
   'selainnya',
   'ulangi',
   'tunggu',
-  'selama'
+  'selama',
 ]);
 
 /**
@@ -402,7 +429,7 @@ export const SWAHILI_KEYWORDS = new Set([
   'rudia',
   'subiri',
   'ngoja',
-  'wakati'
+  'wakati',
 ]);
 
 /**
@@ -435,7 +462,7 @@ export const QUECHUA_KEYWORDS = new Set([
   'kutipay',
   'muyu',
   'suyay',
-  'kaykamaqa'
+  'kaykamaqa',
 ]);
 
 /**
@@ -468,7 +495,7 @@ export const ITALIAN_KEYWORDS = new Set([
   'ripetere',
   'aspettare',
   'attendere',
-  'mentre'
+  'mentre',
 ]);
 
 /**
@@ -505,7 +532,7 @@ export const VIETNAMESE_KEYWORDS = new Set([
   'lặp lại',
   'chờ',
   'đợi',
-  'trong khi'
+  'trong khi',
 ]);
 
 /**
@@ -550,7 +577,7 @@ export const POLISH_KEYWORDS = new Set([
   'poczekaj',
   'dopóki',
   'dopoki',
-  'podczas'
+  'podczas',
 ]);
 
 /**
@@ -591,7 +618,7 @@ export const RUSSIAN_KEYWORDS = new Set([
   'ждать',
   'жди',
   'подожди',
-  'пока'
+  'пока',
 ]);
 
 /**
@@ -632,7 +659,7 @@ export const UKRAINIAN_KEYWORDS = new Set([
   'чекати',
   'чекай',
   'зачекай',
-  'поки'
+  'поки',
 ]);
 
 /**
@@ -669,7 +696,7 @@ export const HINDI_KEYWORDS = new Set([
   'दोहरा',
   'प्रतीक्षा',
   'रुकें',
-  'जब तक'
+  'जब तक',
 ]);
 
 /**
@@ -704,7 +731,7 @@ export const BENGALI_KEYWORDS = new Set([
   'বার বার',
   'অপেক্ষা',
   'থামুন',
-  'যতক্ষণ'
+  'যতক্ষণ',
 ]);
 
 /**
@@ -730,9 +757,8 @@ export const THAI_KEYWORDS = new Set([
   'ไม่เช่นนั้น',
   'ทำซ้ำ',
   'รอ',
-  'ในขณะที่'
+  'ในขณะที่',
 ]);
-
 
 /**
  * Tagalog keywords (Latin script).
@@ -767,7 +793,7 @@ export const TL_KEYWORDS = new Set([
   'paulit-ulit',
   'maghintay',
   'hintay',
-  'habang'
+  'habang',
 ]);
 
 /**
@@ -874,7 +900,8 @@ export function detectLanguages(script: string): Set<SupportedLanguage> {
  * Runtime keyword registry for custom/extended languages.
  * Use registerCustomKeywords() to add or extend language keywords.
  */
-const customKeywordRegistry: Map<string, { keywords: Set<string>; isNonLatin: boolean }> = new Map();
+const customKeywordRegistry: Map<string, { keywords: Set<string>; isNonLatin: boolean }> =
+  new Map();
 
 /**
  * Register custom keywords for a language.
@@ -949,27 +976,27 @@ export function getOptimalRegion(
   const langArray = [...languages];
 
   // Check if all languages fit in western bundle
-  if (langArray.every((l) => REGIONS.western.includes(l))) {
+  if (langArray.every(l => REGIONS.western.includes(l))) {
     return 'western';
   }
 
   // Check if all languages fit in east-asian bundle
-  if (langArray.every((l) => REGIONS['east-asian'].includes(l))) {
+  if (langArray.every(l => REGIONS['east-asian'].includes(l))) {
     return 'east-asian';
   }
 
   // Check if all languages fit in slavic bundle
-  if (langArray.every((l) => REGIONS.slavic.includes(l))) {
+  if (langArray.every(l => REGIONS.slavic.includes(l))) {
     return 'slavic';
   }
 
   // Check if all languages fit in south-asian bundle
-  if (langArray.every((l) => REGIONS['south-asian'].includes(l))) {
+  if (langArray.every(l => REGIONS['south-asian'].includes(l))) {
     return 'south-asian';
   }
 
   // Check if all languages fit in priority bundle
-  if (langArray.every((l) => REGIONS.priority.includes(l))) {
+  if (langArray.every(l => REGIONS.priority.includes(l))) {
     return 'priority';
   }
 

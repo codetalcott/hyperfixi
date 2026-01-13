@@ -60,7 +60,7 @@ export class AnalyticsTracker {
   constructor(config: Partial<AnalyticsConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.session = this.createSession();
-    
+
     if (this.shouldTrack()) {
       this.initialize();
     }
@@ -74,13 +74,13 @@ export class AnalyticsTracker {
 
     // Set up automatic event tracking
     this.setupAutoTracking();
-    
+
     // Set up batch processing
     this.setupBatchProcessing();
-    
+
     // Set up page visibility handling
     this.setupVisibilityHandling();
-    
+
     this.isInitialized = true;
   }
 
@@ -244,11 +244,11 @@ export class AnalyticsTracker {
         if (filter.action === 'exclude' && filter.condition(processedEvent)) {
           return; // Skip this event
         }
-        
+
         if (filter.action === 'include' && !filter.condition(processedEvent)) {
           return; // Skip this event
         }
-        
+
         if (filter.action === 'modify' && filter.condition(processedEvent) && filter.modifier) {
           processedEvent = filter.modifier(processedEvent);
         }
@@ -289,17 +289,29 @@ export class AnalyticsTracker {
 
     // Track element interactions
     if (this.config.events.interactions) {
-      document.addEventListener('click', (event) => {
-        this.handleElementInteraction(event, 'click');
-      }, { passive: true });
+      document.addEventListener(
+        'click',
+        event => {
+          this.handleElementInteraction(event, 'click');
+        },
+        { passive: true }
+      );
 
-      document.addEventListener('change', (event) => {
-        this.handleElementInteraction(event, 'change');
-      }, { passive: true });
+      document.addEventListener(
+        'change',
+        event => {
+          this.handleElementInteraction(event, 'change');
+        },
+        { passive: true }
+      );
 
-      document.addEventListener('submit', (event) => {
-        this.handleElementInteraction(event, 'submit');
-      }, { passive: true });
+      document.addEventListener(
+        'submit',
+        event => {
+          this.handleElementInteraction(event, 'submit');
+        },
+        { passive: true }
+      );
     }
 
     // Track performance metrics
@@ -310,7 +322,7 @@ export class AnalyticsTracker {
 
     // Track errors
     if (this.config.events.errors) {
-      window.addEventListener('error', (event) => {
+      window.addEventListener('error', event => {
         this.trackError(event.error || new Error(event.message), {
           filename: event.filename,
           lineno: event.lineno,
@@ -318,7 +330,7 @@ export class AnalyticsTracker {
         });
       });
 
-      window.addEventListener('unhandledrejection', (event) => {
+      window.addEventListener('unhandledrejection', event => {
         this.trackError(
           event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
           { type: 'unhandledRejection' }
@@ -391,8 +403,8 @@ export class AnalyticsTracker {
     if (!performance.getEntriesByType) return;
 
     const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
-    
-    resources.forEach((resource) => {
+
+    resources.forEach(resource => {
       this.trackPerformance({
         metric: 'resource_load_time',
         value: resource.responseEnd - resource.startTime,

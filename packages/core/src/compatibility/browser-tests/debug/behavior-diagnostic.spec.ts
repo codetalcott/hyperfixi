@@ -7,7 +7,9 @@ test('diagnostic: check behavior installation', async ({ page }) => {
 
   await page.goto('/examples/behaviors/demo.html');
   // Wait for hyperscript:ready event
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, { timeout: 10000 });
+  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+    timeout: 10000,
+  });
   await page.waitForTimeout(500);
 
   const result = await page.evaluate(async () => {
@@ -25,7 +27,9 @@ test('diagnostic: check behavior installation', async ({ page }) => {
 
     if (hf.behaviors) {
       results.push('behaviors.has is function: ' + (typeof hf.behaviors.has === 'function'));
-      results.push('behaviors.install is function: ' + (typeof hf.behaviors.install === 'function'));
+      results.push(
+        'behaviors.install is function: ' + (typeof hf.behaviors.install === 'function')
+      );
       results.push('Has Draggable: ' + hf.behaviors.has('Draggable'));
       results.push('Has Removable: ' + hf.behaviors.has('Removable'));
       results.push('Has Toggleable: ' + hf.behaviors.has('Toggleable'));
@@ -51,11 +55,15 @@ test('diagnostic: check behavior installation', async ({ page }) => {
         const toggleable = hf.behaviors.get('Toggleable');
         if (toggleable) {
           results.push('Toggleable has eventHandlers: ' + !!toggleable.eventHandlers);
-          results.push('Toggleable eventHandlers count: ' + (toggleable.eventHandlers?.length || 0));
+          results.push(
+            'Toggleable eventHandlers count: ' + (toggleable.eventHandlers?.length || 0)
+          );
           if (toggleable.eventHandlers && toggleable.eventHandlers.length > 0) {
             const handler = toggleable.eventHandlers[0];
             results.push('Toggleable first handler event: ' + handler.event);
-            results.push('Toggleable first handler commands count: ' + (handler.commands?.length || 0));
+            results.push(
+              'Toggleable first handler commands count: ' + (handler.commands?.length || 0)
+            );
           }
         }
       }
@@ -80,7 +88,9 @@ test('diagnostic: check behavior installation', async ({ page }) => {
           if (compiled.ast) {
             results.push('AST type: ' + compiled.ast.type);
             results.push('AST name: ' + compiled.ast.name);
-            results.push('AST args length: ' + (compiled.ast.args ? compiled.ast.args.length : 'N/A'));
+            results.push(
+              'AST args length: ' + (compiled.ast.args ? compiled.ast.args.length : 'N/A')
+            );
           }
         } catch (e) {
           results.push('Compile error: ' + e);
@@ -127,7 +137,10 @@ test('diagnostic: check behavior installation', async ({ page }) => {
       try {
         results.push('Attempting hyperfixi.processElement...');
         hyperfixi.processElement(draggableBox);
-        results.push('After hyperfixi.processElement - Has __hyperscript: ' + !!(draggableBox as any).__hyperscript);
+        results.push(
+          'After hyperfixi.processElement - Has __hyperscript: ' +
+            !!(draggableBox as any).__hyperscript
+        );
       } catch (e) {
         results.push('hyperfixi.processElement error: ' + e);
       }
@@ -150,14 +163,22 @@ test('diagnostic: check behavior installation', async ({ page }) => {
             results.push('hyperfixi.process AST name: ' + processResult.ast.name);
           }
         }
-        results.push('After hyperfixi.process - Has __hyperscript: ' + !!(draggableBox as any).__hyperscript);
+        results.push(
+          'After hyperfixi.process - Has __hyperscript: ' + !!(draggableBox as any).__hyperscript
+        );
       } catch (e) {
         results.push('hyperfixi.process error: ' + e);
       }
     }
 
     // Try to run execute directly with compile
-    if (hyperfixi && hyperfixi.compile && hyperfixi.execute && hyperfixi.createContext && draggableBox) {
+    if (
+      hyperfixi &&
+      hyperfixi.compile &&
+      hyperfixi.execute &&
+      hyperfixi.createContext &&
+      draggableBox
+    ) {
       try {
         results.push('Manual compile/execute test...');
         const code = 'install Draggable';
@@ -192,7 +213,13 @@ test('diagnostic: check behavior installation', async ({ page }) => {
 
     // Test Toggleable which is simpler
     const toggleItem = document.querySelector('.toggle-button') as HTMLElement;
-    if (hyperfixi && hyperfixi.compile && hyperfixi.execute && hyperfixi.createContext && toggleItem) {
+    if (
+      hyperfixi &&
+      hyperfixi.compile &&
+      hyperfixi.execute &&
+      hyperfixi.createContext &&
+      toggleItem
+    ) {
       try {
         results.push('--- Testing Toggleable on toggle-button ---');
         const code = 'install Toggleable';
@@ -210,7 +237,9 @@ test('diagnostic: check behavior installation', async ({ page }) => {
         results.push('After execute - Context has _behaviors: ' + ctx.locals.has('_behaviors'));
 
         // Check if element has click handler
-        results.push('Toggle has active class before click: ' + toggleItem.classList.contains('active'));
+        results.push(
+          'Toggle has active class before click: ' + toggleItem.classList.contains('active')
+        );
 
         // Count event listeners using getEventListeners if available (Chrome DevTools only)
         results.push('Toggle element tag: ' + toggleItem.tagName);
@@ -222,7 +251,9 @@ test('diagnostic: check behavior installation', async ({ page }) => {
         // Small delay to let event handler run
         await new Promise(r => setTimeout(r, 100));
 
-        results.push('Toggle has active class after click: ' + toggleItem.classList.contains('active'));
+        results.push(
+          'Toggle has active class after click: ' + toggleItem.classList.contains('active')
+        );
 
         // Try direct install via behaviors API
         results.push('--- Trying direct behaviors.install ---');
@@ -246,10 +277,14 @@ test('diagnostic: check behavior installation', async ({ page }) => {
           await behaviorAPI.install('Toggleable', testButton, {});
           results.push('Direct install on fresh button completed');
 
-          results.push('Fresh button has active before click: ' + testButton.classList.contains('active'));
+          results.push(
+            'Fresh button has active before click: ' + testButton.classList.contains('active')
+          );
           testButton.click();
           await new Promise(r => setTimeout(r, 100));
-          results.push('Fresh button has active after click: ' + testButton.classList.contains('active'));
+          results.push(
+            'Fresh button has active after click: ' + testButton.classList.contains('active')
+          );
         } catch (e: any) {
           results.push('Direct install error: ' + e.message);
           results.push('Direct install stack: ' + (e.stack || '').substring(0, 300));
@@ -264,7 +299,9 @@ test('diagnostic: check behavior installation', async ({ page }) => {
       try {
         results.push('Attempting hf.processElement...');
         hf.processElement(draggableBox);
-        results.push('After hf.processElement - Has __hyperscript: ' + !!(draggableBox as any).__hyperscript);
+        results.push(
+          'After hf.processElement - Has __hyperscript: ' + !!(draggableBox as any).__hyperscript
+        );
       } catch (e) {
         results.push('hf.processElement error: ' + e);
       }

@@ -11,11 +11,7 @@
  * - Morphological normalization for conjugations
  */
 
-import type {
-  SemanticNode,
-  SemanticAnalyzer,
-  ASTNode,
-} from '@hyperfixi/semantic';
+import type { SemanticNode, SemanticAnalyzer, ASTNode } from '@hyperfixi/semantic';
 
 // =============================================================================
 // Bridge Implementation
@@ -85,11 +81,7 @@ export class SemanticGrammarBridge {
     return this.analyzer !== null;
   }
 
-  async transform(
-    input: string,
-    sourceLang: string,
-    targetLang: string
-  ): Promise<BridgeResult> {
+  async transform(input: string, sourceLang: string, targetLang: string): Promise<BridgeResult> {
     if (!this.isInitialized()) {
       await this.initialize();
     }
@@ -198,10 +190,7 @@ export class SemanticGrammarBridge {
    * @param lang - The language of the input
    * @returns Detailed result including AST, confidence, and whether direct path was used
    */
-  async parseToASTWithDetails(
-    input: string,
-    lang: string
-  ): Promise<ParseToASTResult> {
+  async parseToASTWithDetails(input: string, lang: string): Promise<ParseToASTResult> {
     if (!this.isInitialized()) {
       await this.initialize();
     }
@@ -261,7 +250,21 @@ export class SemanticGrammarBridge {
     input: string,
     sourceLang: string
   ): Promise<Record<string, BridgeResult>> {
-    const languages = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw'];
+    const languages = [
+      'en',
+      'ja',
+      'ar',
+      'es',
+      'ko',
+      'zh',
+      'tr',
+      'pt',
+      'fr',
+      'de',
+      'id',
+      'qu',
+      'sw',
+    ];
     const results: Record<string, BridgeResult> = {};
 
     for (const lang of languages) {

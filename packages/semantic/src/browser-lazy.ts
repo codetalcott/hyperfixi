@@ -73,8 +73,7 @@ import { isLanguageRegistered } from './registry';
 export function tokenize(input: string, language: string): LanguageToken[] {
   if (!isLanguageRegistered(language)) {
     throw new Error(
-      `Language '${language}' is not loaded. ` +
-      `Call loadLanguage('${language}') first.`
+      `Language '${language}' is not loaded. ` + `Call loadLanguage('${language}') first.`
     );
   }
   const stream = tokenizeInternal(input, language);
@@ -95,8 +94,7 @@ import type { LanguagePattern, ActionType } from './types';
 export function getPatternsForLanguage(language: string): LanguagePattern[] {
   if (!isLanguageRegistered(language)) {
     throw new Error(
-      `Language '${language}' is not loaded. ` +
-      `Call loadLanguage('${language}') first.`
+      `Language '${language}' is not loaded. ` + `Call loadLanguage('${language}') first.`
     );
   }
   return getPatternsFromRegistry(language);

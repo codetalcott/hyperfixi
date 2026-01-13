@@ -117,7 +117,7 @@ describe('Utils', () => {
 
     it('should remove special characters', () => {
       expect(generateSlug('Hello, World!')).toBe('hello-world');
-      expect(generateSlug('What\'s New?')).toBe('whats-new');
+      expect(generateSlug("What's New?")).toBe('whats-new');
     });
 
     it('should handle multiple spaces', () => {
@@ -286,7 +286,8 @@ describe('Utils', () => {
     });
 
     it('should warn on missing language attribute', () => {
-      const html = '<html><head><title>Test</title><meta name="viewport"></head><body></body></html>';
+      const html =
+        '<html><head><title>Test</title><meta name="viewport"></head><body></body></html>';
       const result = validateHTMLStructure(html);
 
       expect(result.warnings).toContain('Missing language attribute on html tag');
@@ -409,8 +410,12 @@ describe('Utils', () => {
 
     it('should include request URL in key', () => {
       const template = '<div>Content</div>';
-      const key1 = generateCacheKey(template, { request: { url: '/a', method: 'GET', headers: {} } });
-      const key2 = generateCacheKey(template, { request: { url: '/b', method: 'GET', headers: {} } });
+      const key1 = generateCacheKey(template, {
+        request: { url: '/a', method: 'GET', headers: {} },
+      });
+      const key2 = generateCacheKey(template, {
+        request: { url: '/b', method: 'GET', headers: {} },
+      });
 
       expect(key1).not.toBe(key2);
     });
@@ -442,7 +447,9 @@ describe('Utils', () => {
 
     it('should not detect regular browsers', () => {
       expect(isBotRequest('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0')).toBe(false);
-      expect(isBotRequest('Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) Safari/604.1')).toBe(false);
+      expect(
+        isBotRequest('Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) Safari/604.1')
+      ).toBe(false);
     });
 
     it('should handle empty user agent', () => {

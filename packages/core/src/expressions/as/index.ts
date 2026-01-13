@@ -100,8 +100,6 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   public readonly inputSchema = AsExpressionInputSchema;
 
-  
-
   /**
    * Validate 'as' expression arguments
    */
@@ -430,13 +428,13 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
     if (sharedIsString(value)) return value as string;
     if (sharedIsElement(value)) return (value as Element).outerHTML;
     if (sharedIsArray(value)) {
-      return (value as unknown[]).map(item =>
-        sharedIsElement(item) ? (item as Element).outerHTML : String(item)
-      ).join('');
+      return (value as unknown[])
+        .map(item => (sharedIsElement(item) ? (item as Element).outerHTML : String(item)))
+        .join('');
     }
     if (value instanceof NodeList) {
       return Array.from(value)
-        .map(node => sharedIsElement(node) ? (node as Element).outerHTML : String(node))
+        .map(node => (sharedIsElement(node) ? (node as Element).outerHTML : String(node)))
         .join('');
     }
     return String(value);

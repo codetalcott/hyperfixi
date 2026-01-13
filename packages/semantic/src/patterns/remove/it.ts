@@ -19,17 +19,29 @@ export function getRemovePatternsIt(): LanguagePattern[] {
       template: {
         format: 'rimuovere {patient} da {target}',
         tokens: [
-          { type: 'literal', value: 'rimuovere', alternatives: ['rimuovi', 'eliminare', 'togliere', 'remove'] },
+          {
+            type: 'literal',
+            value: 'rimuovere',
+            alternatives: ['rimuovi', 'eliminare', 'togliere', 'remove'],
+          },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'da', alternatives: ['di'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'da', alternatives: ['di'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'da', markerAlternatives: ['di'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'da',
+          markerAlternatives: ['di'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {
@@ -40,7 +52,11 @@ export function getRemovePatternsIt(): LanguagePattern[] {
       template: {
         format: 'rimuovere {patient}',
         tokens: [
-          { type: 'literal', value: 'rimuovere', alternatives: ['rimuovi', 'eliminare', 'togliere', 'remove'] },
+          {
+            type: 'literal',
+            value: 'rimuovere',
+            alternatives: ['rimuovi', 'eliminare', 'togliere', 'remove'],
+          },
           { type: 'role', role: 'patient' },
         ],
       },

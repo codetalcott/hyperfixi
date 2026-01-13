@@ -20,13 +20,11 @@ import { test, expect } from '@playwright/test';
 const BASE_URL = 'http://127.0.0.1:3000';
 
 test.describe('Cookbook Pattern Tests @cookbook', () => {
-
   test.describe('Commands Category', () => {
-
     test('Pattern 2: add .highlight to me', async ({ page }) => {
       await page.goto(`${BASE_URL}/cookbook/generated-tests/test-commands.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -43,11 +41,10 @@ test.describe('Cookbook Pattern Tests @cookbook', () => {
   });
 
   test.describe('References Category', () => {
-
     test('Pattern 1: me - current element reference', async ({ page }) => {
       await page.goto(`${BASE_URL}/cookbook/generated-tests/test-references.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -58,14 +55,13 @@ test.describe('Cookbook Pattern Tests @cookbook', () => {
   });
 
   test.describe('Operators Category', () => {
-
     test('Pattern 1: arithmetic operators', async ({ page }) => {
       const pageErrors: string[] = [];
       page.on('pageerror', err => pageErrors.push(err.message));
 
       await page.goto(`${BASE_URL}/cookbook/generated-tests/test-operators.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -74,19 +70,18 @@ test.describe('Cookbook Pattern Tests @cookbook', () => {
       await page.waitForTimeout(200);
 
       // Verify no critical page errors
-      const criticalErrors = pageErrors.filter(e =>
-        !e.includes('Unknown command') && !e.includes('not defined')
+      const criticalErrors = pageErrors.filter(
+        e => !e.includes('Unknown command') && !e.includes('not defined')
       );
       expect(criticalErrors.length).toBe(0);
     });
   });
 
   test.describe('All Patterns Load Test', () => {
-
     test('test-all-patterns.html loads all 81 patterns', async ({ page }) => {
       await page.goto(`${BASE_URL}/cookbook/generated-tests/test-all-patterns.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 15000
+        timeout: 15000,
       });
       await page.waitForTimeout(500);
 
@@ -98,14 +93,16 @@ test.describe('Cookbook Pattern Tests @cookbook', () => {
     test('test-all-patterns.html loads HyperFixi bundle', async ({ page }) => {
       await page.goto(`${BASE_URL}/cookbook/generated-tests/test-all-patterns.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(500);
 
       // Check if HyperFixi or _hyperscript is loaded
       const hasHyperscript = await page.evaluate(() => {
-        return typeof (window as any)._hyperscript !== 'undefined' ||
-               typeof (window as any).hyperFixi !== 'undefined';
+        return (
+          typeof (window as any)._hyperscript !== 'undefined' ||
+          typeof (window as any).hyperFixi !== 'undefined'
+        );
       });
 
       expect(hasHyperscript).toBe(true);
@@ -129,7 +126,7 @@ test.describe('Cookbook Pattern Tests @cookbook', () => {
       test(`${testPage} loads and has patterns`, async ({ page }) => {
         await page.goto(`${BASE_URL}/cookbook/generated-tests/${testPage}`, {
           waitUntil: 'domcontentloaded',
-          timeout: 10000
+          timeout: 10000,
         });
         await page.waitForTimeout(300);
 

@@ -131,9 +131,7 @@ export class InstallCommand {
 
     // Validate PascalCase
     if (!/^[A-Z][a-zA-Z0-9_]*$/.test(behaviorName)) {
-      throw new Error(
-        `Behavior name must be PascalCase (start with uppercase): "${behaviorName}"`
-      );
+      throw new Error(`Behavior name must be PascalCase (start with uppercase): "${behaviorName}"`);
     }
 
     // Second arg (if present) is parameters object
@@ -200,12 +198,7 @@ export class InstallCommand {
       // Install behavior on each target element
       const instances = [];
       for (const element of targetElements) {
-        const instance = await this.installBehavior(
-          behaviorName,
-          element,
-          parameters,
-          context
-        );
+        const instance = await this.installBehavior(behaviorName, element, parameters, context);
         instances.push(instance);
       }
 
@@ -233,10 +226,7 @@ export class InstallCommand {
    * @param context - Execution context
    * @returns Array of HTMLElements
    */
-  private resolveTarget(
-    target: unknown,
-    context: TypedExecutionContext
-  ): HTMLElement[] {
+  private resolveTarget(target: unknown, context: TypedExecutionContext): HTMLElement[] {
     // If no target specified, use 'me' (current element)
     if (target === undefined || target === null) {
       const me = context.me || context.locals.get('me');
@@ -273,8 +263,8 @@ export class InstallCommand {
       // Query document for selector
       if (typeof document !== 'undefined') {
         const elements = document.querySelectorAll(target);
-        const htmlElements = Array.from(elements).filter(
-          (el): el is HTMLElement => isHTMLElement(el)
+        const htmlElements = Array.from(elements).filter((el): el is HTMLElement =>
+          isHTMLElement(el)
         );
         if (htmlElements.length === 0) {
           throw new Error(`No elements found matching selector: "${target}"`);
@@ -286,9 +276,7 @@ export class InstallCommand {
 
     // Handle NodeList
     if (target && typeof target === 'object' && 'length' in target) {
-      const elements = Array.from(target as any).filter(
-        (t): t is HTMLElement => isHTMLElement(t)
-      );
+      const elements = Array.from(target as any).filter((t): t is HTMLElement => isHTMLElement(t));
       if (elements.length === 0) {
         throw new Error('Target collection contains no valid HTMLElements');
       }
@@ -360,11 +348,7 @@ export class InstallCommand {
     if (typeof globalThis !== 'undefined') {
       const hyperscriptGlobal = (globalThis as any)._hyperscript;
       if (hyperscriptGlobal?.behaviors?.install) {
-        return await hyperscriptGlobal.behaviors.install(
-          behaviorName,
-          element,
-          parameters
-        );
+        return await hyperscriptGlobal.behaviors.install(behaviorName, element, parameters);
       }
     }
 

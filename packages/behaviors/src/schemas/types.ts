@@ -83,7 +83,10 @@ export interface BehaviorModule {
  * Minimal HyperFixi instance interface for behavior registration.
  */
 export interface HyperFixiInstance {
-  compile: (code: string, options?: { disableSemanticParsing?: boolean }) => {
+  compile: (
+    code: string,
+    options?: { disableSemanticParsing?: boolean }
+  ) => {
     success: boolean;
     ast?: unknown;
     errors?: unknown[];

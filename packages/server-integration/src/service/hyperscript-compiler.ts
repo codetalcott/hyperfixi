@@ -14,7 +14,7 @@ import type {
   CompilationResult,
   CompilationError,
   CompilationWarning,
-  ScriptMetadata
+  ScriptMetadata,
 } from '../types.js';
 import { ASTVisitor, visit, findNodes, calculateComplexity } from '@hyperfixi/ast-toolkit';
 import type { ASTNode } from '@hyperfixi/ast-toolkit';
@@ -70,12 +70,14 @@ export class HyperscriptCompiler {
         compiled: '',
         metadata: this.getEmptyMetadata(),
         warnings: [],
-        errors: [{
-          type: 'CompilationError',
-          message: 'Invalid script input: script must be a string',
-          line: 1,
-          column: 1
-        }]
+        errors: [
+          {
+            type: 'CompilationError',
+            message: 'Invalid script input: script must be a string',
+            line: 1,
+            column: 1,
+          },
+        ],
       };
     }
 
@@ -85,7 +87,7 @@ export class HyperscriptCompiler {
         compiled: validationOnly ? '' : '// Empty hyperscript compilation',
         metadata: this.getEmptyMetadata(),
         warnings: [],
-        errors: []
+        errors: [],
       };
     }
 
@@ -113,7 +115,7 @@ export class HyperscriptCompiler {
             type: error.name || 'ParseError',
             message: error.message,
             line: error.line || 1,
-            column: error.column || 1
+            column: error.column || 1,
           });
         }
       }
@@ -152,7 +154,7 @@ export class HyperscriptCompiler {
         compiled,
         metadata,
         warnings,
-        errors
+        errors,
       };
 
       // Add source map if requested
@@ -166,18 +168,19 @@ export class HyperscriptCompiler {
       }
 
       return result;
-
     } catch (error) {
       return {
         compiled: '',
         metadata: this.getEmptyMetadata(),
         warnings: [],
-        errors: [{
-          type: 'CompilationError',
-          message: error instanceof Error ? error.message : String(error),
-          line: 1,
-          column: 1
-        }]
+        errors: [
+          {
+            type: 'CompilationError',
+            message: error instanceof Error ? error.message : String(error),
+            line: 1,
+            column: 1,
+          },
+        ],
       };
     }
   }
@@ -198,14 +201,16 @@ export class HyperscriptCompiler {
       // If parsing throws, return a failure result
       return {
         success: false,
-        errors: [{
-          name: 'ParseError',
-          message: error instanceof Error ? error.message : String(error),
-          line: 1,
-          column: 1
-        }],
+        errors: [
+          {
+            name: 'ParseError',
+            message: error instanceof Error ? error.message : String(error),
+            line: 1,
+            column: 1,
+          },
+        ],
         tokens: [],
-        compilationTime: 0
+        compilationTime: 0,
       };
     }
   }
@@ -216,7 +221,7 @@ export class HyperscriptCompiler {
    */
   public async getAST(script: string): Promise<ASTNode | null> {
     const result = await this.parseWithCore(script);
-    return result?.success ? result.ast ?? null : null;
+    return result?.success ? (result.ast ?? null) : null;
   }
 
   /**
@@ -230,7 +235,7 @@ export class HyperscriptCompiler {
       selectors: [],
       events: [],
       commands: [],
-      templateVariables: []
+      templateVariables: [],
     };
 
     // Extract events using findNodes
@@ -245,8 +250,9 @@ export class HyperscriptCompiler {
     }
 
     // Also check for 'on' features
-    const onFeatures = findNodes(ast, n =>
-      n.type === 'feature' && 'keyword' in n && (n as { keyword?: string }).keyword === 'on'
+    const onFeatures = findNodes(
+      ast,
+      n => n.type === 'feature' && 'keyword' in n && (n as { keyword?: string }).keyword === 'on'
     );
     for (const feature of onFeatures) {
       const body = (feature as { body?: ASTNode[] }).body || [];
@@ -294,7 +300,10 @@ export class HyperscriptCompiler {
     }
 
     // Extract nodes with explicit selector property
-    const selectorNodes = findNodes(ast, n => 'selector' in n && typeof (n as any).selector === 'string');
+    const selectorNodes = findNodes(
+      ast,
+      n => 'selector' in n && typeof (n as any).selector === 'string'
+    );
     for (const node of selectorNodes) {
       const selector = (node as { selector: string }).selector;
       if (selector.match(/^[.#][a-zA-Z0-9_-]+$/) && !metadata.selectors.includes(selector)) {
@@ -312,7 +321,20 @@ export class HyperscriptCompiler {
       }
 
       // Extract commands using regex
-      const commands = ['toggle', 'add', 'remove', 'put', 'fetch', 'send', 'trigger', 'show', 'hide', 'log', 'wait', 'halt'];
+      const commands = [
+        'toggle',
+        'add',
+        'remove',
+        'put',
+        'fetch',
+        'send',
+        'trigger',
+        'show',
+        'hide',
+        'log',
+        'wait',
+        'halt',
+      ];
       for (const command of commands) {
         if (line.includes(command) && !metadata.commands.includes(command)) {
           metadata.commands.push(command);
@@ -425,7 +447,10 @@ export class HyperscriptCompiler {
     // If no commands generated, add a placeholder from the original script
     if (commands.length === 0) {
       // Parse commands from original script for this event
-      const lines = originalScript.split('\n').map(l => l.trim()).filter(l => l);
+      const lines = originalScript
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l);
       let inEvent = false;
 
       for (const line of lines) {
@@ -645,7 +670,7 @@ export class HyperscriptCompiler {
           type: 'SyntaxError',
           message: 'Incomplete CSS selector after toggle command',
           line: lineNumber,
-          column: line.indexOf('toggle .') + 8
+          column: line.indexOf('toggle .') + 8,
         });
       }
 
@@ -655,7 +680,7 @@ export class HyperscriptCompiler {
           type: 'SyntaxError',
           message: 'Unclosed template variable',
           line: lineNumber,
-          column: line.indexOf('{{') + 1
+          column: line.indexOf('{{') + 1,
         });
       }
 
@@ -665,7 +690,7 @@ export class HyperscriptCompiler {
           type: 'SyntaxError',
           message: 'Incomplete event declaration',
           line: lineNumber,
-          column: line.indexOf('on ') + 3
+          column: line.indexOf('on ') + 3,
         });
       }
 
@@ -675,7 +700,7 @@ export class HyperscriptCompiler {
           type: 'SyntaxError',
           message: 'Unrecognized hyperscript syntax',
           line: lineNumber,
-          column: 1
+          column: 1,
         });
       }
     }
@@ -693,7 +718,7 @@ export class HyperscriptCompiler {
       selectors: [],
       events: [],
       commands: [],
-      templateVariables: []
+      templateVariables: [],
     };
 
     const lines = script.split('\n').map(line => line.trim());
@@ -706,7 +731,20 @@ export class HyperscriptCompiler {
       }
 
       // Extract commands
-      const commands = ['toggle', 'add', 'remove', 'put', 'fetch', 'send', 'trigger', 'show', 'hide', 'log', 'wait', 'halt'];
+      const commands = [
+        'toggle',
+        'add',
+        'remove',
+        'put',
+        'fetch',
+        'send',
+        'trigger',
+        'show',
+        'hide',
+        'log',
+        'wait',
+        'halt',
+      ];
       for (const command of commands) {
         if (line.includes(command) && !metadata.commands.includes(command)) {
           metadata.commands.push(command);
@@ -736,14 +774,15 @@ export class HyperscriptCompiler {
     }
 
     // Calculate complexity
-    metadata.complexity = Math.max(1,
+    metadata.complexity = Math.max(
+      1,
       metadata.events.length +
-      metadata.commands.length +
-      (metadata.selectors.length > 0 ? 1 : 0) +
-      (script.includes('if') ? 1 : 0) +
-      (script.includes('else') ? 1 : 0) +
-      (script.includes('repeat') ? 1 : 0) +
-      (script.includes('wait') ? 1 : 0)
+        metadata.commands.length +
+        (metadata.selectors.length > 0 ? 1 : 0) +
+        (script.includes('if') ? 1 : 0) +
+        (script.includes('else') ? 1 : 0) +
+        (script.includes('repeat') ? 1 : 0) +
+        (script.includes('wait') ? 1 : 0)
     );
 
     return metadata;
@@ -764,7 +803,10 @@ export class HyperscriptCompiler {
    * Fallback: Generate JavaScript using regex (sync version)
    */
   private generateJavaScriptFallbackSync(script: string, options: CompilationOptions): string {
-    const lines = script.split('\n').map(line => line.trim()).filter(line => line);
+    const lines = script
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line);
     const jsLines: string[] = [];
 
     // Process multi-line event blocks
@@ -856,7 +898,7 @@ export class HyperscriptCompiler {
       sources: ['hyperscript'],
       names: [],
       mappings: 'AAAA',
-      sourcesContent: [original]
+      sourcesContent: [original],
     };
 
     return JSON.stringify(sourceMap);
@@ -872,7 +914,7 @@ export class HyperscriptCompiler {
       selectors: [],
       events: [],
       commands: [],
-      templateVariables: []
+      templateVariables: [],
     };
   }
 }

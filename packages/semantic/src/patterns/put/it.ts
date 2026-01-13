@@ -21,10 +21,14 @@ export function getPutPatternsIt(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'mettere', alternatives: ['metti', 'inserire', 'put'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'in', alternatives: ['dentro', 'nel'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'in', alternatives: ['dentro', 'nel'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {

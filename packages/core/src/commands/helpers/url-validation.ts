@@ -26,18 +26,12 @@
  * @returns Validated URL string
  * @throws Error if URL is invalid
  */
-export function validateUrl(
-  url: unknown,
-  commandName: string,
-  debugInfo?: string
-): string {
+export function validateUrl(url: unknown, commandName: string, debugInfo?: string): string {
   const debugSuffix = debugInfo ? ` Debug: ${debugInfo}` : '';
 
   // Check for null/undefined
   if (url === null || url === undefined) {
-    throw new Error(
-      `[HyperFixi] ${commandName}: URL is required.${debugSuffix}`
-    );
+    throw new Error(`[HyperFixi] ${commandName}: URL is required.${debugSuffix}`);
   }
 
   // Check for non-string types
@@ -49,9 +43,7 @@ export function validateUrl(
 
   // Check for empty string
   if (url.trim() === '') {
-    throw new Error(
-      `[HyperFixi] ${commandName}: URL cannot be empty.${debugSuffix}`
-    );
+    throw new Error(`[HyperFixi] ${commandName}: URL cannot be empty.${debugSuffix}`);
   }
 
   // Check for literal "undefined" string (common evaluation bug)
@@ -191,7 +183,5 @@ export function buildUrlWithParams(
     return basePath;
   }
 
-  return basePath.includes('?')
-    ? `${basePath}&${queryString}`
-    : `${basePath}?${queryString}`;
+  return basePath.includes('?') ? `${basePath}&${queryString}` : `${basePath}?${queryString}`;
 }

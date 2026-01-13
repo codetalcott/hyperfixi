@@ -18,49 +18,49 @@
  */
 const KEY_MAP: Record<string, string> = {
   // Special keys
-  'enter': 'Enter',
-  'esc': 'Escape',
-  'escape': 'Escape',
-  'space': ' ',
-  'tab': 'Tab',
-  'backspace': 'Backspace',
-  'delete': 'Delete',
-  'insert': 'Insert',
-  'home': 'Home',
-  'end': 'End',
-  'pageup': 'PageUp',
-  'pagedown': 'PageDown',
+  enter: 'Enter',
+  esc: 'Escape',
+  escape: 'Escape',
+  space: ' ',
+  tab: 'Tab',
+  backspace: 'Backspace',
+  delete: 'Delete',
+  insert: 'Insert',
+  home: 'Home',
+  end: 'End',
+  pageup: 'PageUp',
+  pagedown: 'PageDown',
 
   // Arrow keys
-  'up': 'ArrowUp',
-  'down': 'ArrowDown',
-  'left': 'ArrowLeft',
-  'right': 'ArrowRight',
-  'arrowup': 'ArrowUp',
-  'arrowdown': 'ArrowDown',
-  'arrowleft': 'ArrowLeft',
-  'arrowright': 'ArrowRight',
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+  arrowup: 'ArrowUp',
+  arrowdown: 'ArrowDown',
+  arrowleft: 'ArrowLeft',
+  arrowright: 'ArrowRight',
 
   // Function keys
-  'f1': 'F1',
-  'f2': 'F2',
-  'f3': 'F3',
-  'f4': 'F4',
-  'f5': 'F5',
-  'f6': 'F6',
-  'f7': 'F7',
-  'f8': 'F8',
-  'f9': 'F9',
-  'f10': 'F10',
-  'f11': 'F11',
-  'f12': 'F12',
+  f1: 'F1',
+  f2: 'F2',
+  f3: 'F3',
+  f4: 'F4',
+  f5: 'F5',
+  f6: 'F6',
+  f7: 'F7',
+  f8: 'F8',
+  f9: 'F9',
+  f10: 'F10',
+  f11: 'F11',
+  f12: 'F12',
 };
 
 /**
  * Modifier keys
  */
 const MODIFIERS = ['ctrl', 'shift', 'alt', 'meta'] as const;
-type Modifier = typeof MODIFIERS[number];
+type Modifier = (typeof MODIFIERS)[number];
 
 /**
  * Parsed keyboard shortcut
@@ -123,7 +123,7 @@ export function parseKeyboardShortcut(syntax: string): KeyboardShortcut | null {
     shift: modifiers.has('shift'),
     alt: modifiers.has('alt'),
     meta: modifiers.has('meta'),
-    originalSyntax: syntax
+    originalSyntax: syntax,
   };
 }
 
@@ -138,7 +138,9 @@ export function parseKeyboardShortcut(syntax: string): KeyboardShortcut | null {
  * const filter = createKeyboardFilter(shortcut);
  * // Use filter(event) to check if event matches shortcut
  */
-export function createKeyboardFilter(shortcut: KeyboardShortcut): (event: KeyboardEvent) => boolean {
+export function createKeyboardFilter(
+  shortcut: KeyboardShortcut
+): (event: KeyboardEvent) => boolean {
   return (event: KeyboardEvent) => {
     // Check key
     if (event.key !== shortcut.key) {
@@ -223,7 +225,7 @@ export function transformKeyboardEvent(eventType: string): { type: string; filte
   // Transform to keydown event with filter
   return {
     type: 'keydown',
-    filter: createFilterExpression(shortcut)
+    filter: createFilterExpression(shortcut),
   };
 }
 

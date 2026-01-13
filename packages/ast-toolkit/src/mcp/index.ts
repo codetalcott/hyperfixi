@@ -16,7 +16,7 @@ import type {
   ReadResourceResult,
   Tool,
   Resource,
-  TextContent
+  TextContent,
 } from './types.js';
 
 import {
@@ -30,7 +30,7 @@ import {
   generateQualityInsights,
   benchmarkASTOperations,
   analyzePerformance,
-  ASTVisitor
+  ASTVisitor,
 } from '../index.js';
 
 import type { ASTNode } from '../types.js';
@@ -41,11 +41,11 @@ import type { ASTNode } from '../types.js';
 
 class ASTToolkitMCPServer {
   private serverInfo = {
-    name: "@hyperfixi/ast-toolkit",
-    version: "0.1.0"
+    name: '@hyperfixi/ast-toolkit',
+    version: '0.1.0',
   };
 
-  private protocolVersion = "2025-03-26";
+  private protocolVersion = '2025-03-26';
 
   constructor() {
     // Initialize any required state
@@ -59,27 +59,27 @@ class ASTToolkitMCPServer {
       protocolVersion: this.protocolVersion,
       capabilities: {
         tools: {
-          listChanged: true
+          listChanged: true,
         },
         resources: {
           listChanged: true,
-          subscribe: false
-        }
+          subscribe: false,
+        },
       },
       serverInfo: this.serverInfo,
       instructions: [
-        "This is the HyperFixi AST Toolkit MCP server.",
-        "It provides comprehensive AST analysis capabilities for hyperscript code including:",
-        "- Code complexity analysis and metrics",
-        "- pattern detection and code smell identification", 
-        "- natural language code explanation",
-        "- performance benchmarking and optimization suggestions",
-        "- Semantic analysis and intent recognition",
-        "- Code generation templates and examples",
-        "",
-        "Use the available tools to analyze, understand, and optimize hyperscript ASTs.",
-        "The server can handle both individual AST nodes and complete codebases."
-      ].join('\n')
+        'This is the HyperFixi AST Toolkit MCP server.',
+        'It provides comprehensive AST analysis capabilities for hyperscript code including:',
+        '- Code complexity analysis and metrics',
+        '- pattern detection and code smell identification',
+        '- natural language code explanation',
+        '- performance benchmarking and optimization suggestions',
+        '- Semantic analysis and intent recognition',
+        '- Code generation templates and examples',
+        '',
+        'Use the available tools to analyze, understand, and optimize hyperscript ASTs.',
+        'The server can handle both individual AST nodes and complete codebases.',
+      ].join('\n'),
     };
   }
 
@@ -89,165 +89,167 @@ class ASTToolkitMCPServer {
   async listTools(request: ListToolsRequest): Promise<ListToolsResult> {
     const tools: Tool[] = [
       {
-        name: "analyze_complexity",
-        description: "Calculate cyclomatic complexity, cognitive complexity, and Halstead metrics for an AST",
+        name: 'analyze_complexity',
+        description:
+          'Calculate cyclomatic complexity, cognitive complexity, and Halstead metrics for an AST',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             ast: {
-              type: "object",
-              description: "The AST node to analyze"
-            }
+              type: 'object',
+              description: 'The AST node to analyze',
+            },
           },
-          required: ["ast"]
-        }
+          required: ['ast'],
+        },
       },
       {
-        name: "analyze_metrics", 
-        description: "Perform comprehensive code analysis including complexity, patterns, and quality metrics",
+        name: 'analyze_metrics',
+        description:
+          'Perform comprehensive code analysis including complexity, patterns, and quality metrics',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             ast: {
-              type: "object", 
-              description: "The AST node to analyze"
-            }
+              type: 'object',
+              description: 'The AST node to analyze',
+            },
           },
-          required: ["ast"]
-        }
+          required: ['ast'],
+        },
       },
       {
-        name: "explain_code",
-        description: "Generate natural language explanation of AST code structure and behavior",
+        name: 'explain_code',
+        description: 'Generate natural language explanation of AST code structure and behavior',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             ast: {
-              type: "object",
-              description: "The AST node to explain"
+              type: 'object',
+              description: 'The AST node to explain',
             },
             audience: {
-              type: "string",
-              enum: ["beginner", "intermediate", "expert"],
-              description: "Target audience level for explanation"
+              type: 'string',
+              enum: ['beginner', 'intermediate', 'expert'],
+              description: 'Target audience level for explanation',
             },
             detail: {
-              type: "string", 
-              enum: ["brief", "detailed", "comprehensive"],
-              description: "Level of detail in explanation"
-            }
+              type: 'string',
+              enum: ['brief', 'detailed', 'comprehensive'],
+              description: 'Level of detail in explanation',
+            },
           },
-          required: ["ast"]
-        }
+          required: ['ast'],
+        },
       },
       {
-        name: "find_nodes",
-        description: "Search for specific nodes in an AST using predicate functions",
+        name: 'find_nodes',
+        description: 'Search for specific nodes in an AST using predicate functions',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             ast: {
-              type: "object",
-              description: "The AST to search in"
+              type: 'object',
+              description: 'The AST to search in',
             },
             nodeType: {
-              type: "string",
-              description: "Type of node to find (e.g., 'command', 'eventHandler', 'conditional')"
-            }
+              type: 'string',
+              description: "Type of node to find (e.g., 'command', 'eventHandler', 'conditional')",
+            },
           },
-          required: ["ast", "nodeType"]
-        }
+          required: ['ast', 'nodeType'],
+        },
       },
       {
-        name: "generate_template",
-        description: "Generate code templates based on AST patterns and intent",
+        name: 'generate_template',
+        description: 'Generate code templates based on AST patterns and intent',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             intent: {
-              type: "string",
-              description: "Description of what code should do"
+              type: 'string',
+              description: 'Description of what code should do',
             },
             style: {
-              type: "string",
-              enum: ["minimal", "comprehensive", "example"],
-              description: "Template style preference"
-            }
+              type: 'string',
+              enum: ['minimal', 'comprehensive', 'example'],
+              description: 'Template style preference',
+            },
           },
-          required: ["intent"]
-        }
+          required: ['intent'],
+        },
       },
       {
-        name: "recognize_intent",
-        description: "Analyze code to understand its purpose and classify common patterns",
+        name: 'recognize_intent',
+        description: 'Analyze code to understand its purpose and classify common patterns',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             ast: {
-              type: "object",
-              description: "The AST node to analyze"
-            }
+              type: 'object',
+              description: 'The AST node to analyze',
+            },
           },
-          required: ["ast"]
-        }
+          required: ['ast'],
+        },
       },
       {
-        name: "quality_insights",
-        description: "Generate quality insights and improvement suggestions for AST code",
+        name: 'quality_insights',
+        description: 'Generate quality insights and improvement suggestions for AST code',
         inputSchema: {
-          type: "object", 
+          type: 'object',
           properties: {
             ast: {
-              type: "object",
-              description: "The AST node to analyze"
-            }
+              type: 'object',
+              description: 'The AST node to analyze',
+            },
           },
-          required: ["ast"]
-        }
+          required: ['ast'],
+        },
       },
       {
-        name: "benchmark_performance",
-        description: "Benchmark AST operations and analyze performance characteristics",
+        name: 'benchmark_performance',
+        description: 'Benchmark AST operations and analyze performance characteristics',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             ast: {
-              type: "object",
-              description: "The AST to benchmark"
+              type: 'object',
+              description: 'The AST to benchmark',
             },
             operations: {
-              type: "array",
+              type: 'array',
               items: {
-                type: "string"
+                type: 'string',
               },
-              description: "Specific operations to benchmark (optional)"
-            }
+              description: 'Specific operations to benchmark (optional)',
+            },
           },
-          required: ["ast"]
-        }
+          required: ['ast'],
+        },
       },
       {
-        name: "traverse_ast",
-        description: "Traverse an AST with custom visitor pattern and collect information",
+        name: 'traverse_ast',
+        description: 'Traverse an AST with custom visitor pattern and collect information',
         inputSchema: {
-          type: "object",
+          type: 'object',
           properties: {
             ast: {
-              type: "object",
-              description: "The AST to traverse"
+              type: 'object',
+              description: 'The AST to traverse',
             },
             collectNodes: {
-              type: "boolean",
-              description: "Whether to collect all visited nodes"
-            }
+              type: 'boolean',
+              description: 'Whether to collect all visited nodes',
+            },
           },
-          required: ["ast"]
-        }
-      }
+          required: ['ast'],
+        },
+      },
     ];
 
     return {
-      tools
+      tools,
     };
   }
 
@@ -259,49 +261,53 @@ class ASTToolkitMCPServer {
 
     try {
       switch (name) {
-        case "analyze_complexity":
+        case 'analyze_complexity':
           return await this.analyzeComplexity(args);
-        
-        case "analyze_metrics":
+
+        case 'analyze_metrics':
           return await this.analyzeMetrics(args);
-          
-        case "explain_code":
+
+        case 'explain_code':
           return await this.explainCode(args);
-          
-        case "find_nodes":
+
+        case 'find_nodes':
           return await this.findNodes(args);
-          
-        case "generate_template":
+
+        case 'generate_template':
           return await this.generateTemplate(args);
-          
-        case "recognize_intent":
+
+        case 'recognize_intent':
           return await this.recognizeIntent(args);
-          
-        case "quality_insights":
+
+        case 'quality_insights':
           return await this.qualityInsights(args);
-          
-        case "benchmark_performance":
+
+        case 'benchmark_performance':
           return await this.benchmarkPerformance(args);
-          
-        case "traverse_ast":
+
+        case 'traverse_ast':
           return await this.traverseAST(args);
-          
+
         default:
           return {
-            content: [{
-              type: "text",
-              text: `Unknown tool: ${name}`
-            }],
-            isError: true
+            content: [
+              {
+                type: 'text',
+                text: `Unknown tool: ${name}`,
+              },
+            ],
+            isError: true,
           };
       }
     } catch (error) {
       return {
-        content: [{
-          type: "text",
-          text: `Error executing tool ${name}: ${error instanceof Error ? error.message : String(error)}`
-        }],
-        isError: true
+        content: [
+          {
+            type: 'text',
+            text: `Error executing tool ${name}: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
       };
     }
   }
@@ -312,39 +318,39 @@ class ASTToolkitMCPServer {
   async listResources(request: ListResourcesRequest): Promise<ListResourcesResult> {
     const resources: Resource[] = [
       {
-        uri: "ast://examples/simple",
-        name: "Simple AST Example",
-        description: "A basic hyperscript AST structure for testing",
-        mimeType: "application/json"
+        uri: 'ast://examples/simple',
+        name: 'Simple AST Example',
+        description: 'A basic hyperscript AST structure for testing',
+        mimeType: 'application/json',
       },
       {
-        uri: "ast://examples/complex", 
-        name: "Complex AST Example",
-        description: "A complex hyperscript AST with multiple features",
-        mimeType: "application/json"
+        uri: 'ast://examples/complex',
+        name: 'Complex AST Example',
+        description: 'A complex hyperscript AST with multiple features',
+        mimeType: 'application/json',
       },
       {
-        uri: "ast://examples/massive",
-        name: "Large AST Example", 
-        description: "A large AST structure for performance testing",
-        mimeType: "application/json"
+        uri: 'ast://examples/massive',
+        name: 'Large AST Example',
+        description: 'A large AST structure for performance testing',
+        mimeType: 'application/json',
       },
       {
-        uri: "ast://documentation/api",
-        name: "AST Toolkit API Documentation",
-        description: "Complete API reference for the AST toolkit",
-        mimeType: "text/markdown"
+        uri: 'ast://documentation/api',
+        name: 'AST Toolkit API Documentation',
+        description: 'Complete API reference for the AST toolkit',
+        mimeType: 'text/markdown',
       },
       {
-        uri: "ast://documentation/examples",
-        name: "Usage Examples",
-        description: "Examples of how to use the AST toolkit",
-        mimeType: "text/markdown"
-      }
+        uri: 'ast://documentation/examples',
+        name: 'Usage Examples',
+        description: 'Examples of how to use the AST toolkit',
+        mimeType: 'text/markdown',
+      },
     ];
 
     return {
-      resources
+      resources,
     };
   }
 
@@ -356,51 +362,61 @@ class ASTToolkitMCPServer {
 
     // Generate or retrieve resource content based on URI
     switch (uri) {
-      case "ast://examples/simple":
+      case 'ast://examples/simple':
         return {
-          contents: [{
-            uri,
-            mimeType: "application/json",
-            text: JSON.stringify(this.getSimpleAST(), null, 2)
-          }]
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(this.getSimpleAST(), null, 2),
+            },
+          ],
         };
-        
-      case "ast://examples/complex":
+
+      case 'ast://examples/complex':
         return {
-          contents: [{
-            uri,
-            mimeType: "application/json", 
-            text: JSON.stringify(this.getComplexAST(), null, 2)
-          }]
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(this.getComplexAST(), null, 2),
+            },
+          ],
         };
-        
-      case "ast://examples/massive":
+
+      case 'ast://examples/massive':
         return {
-          contents: [{
-            uri,
-            mimeType: "application/json",
-            text: JSON.stringify(this.getMassiveAST(), null, 2)
-          }]
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(this.getMassiveAST(), null, 2),
+            },
+          ],
         };
-        
-      case "ast://documentation/api":
+
+      case 'ast://documentation/api':
         return {
-          contents: [{
-            uri,
-            mimeType: "text/markdown",
-            text: this.getAPIDocumentation()
-          }]
+          contents: [
+            {
+              uri,
+              mimeType: 'text/markdown',
+              text: this.getAPIDocumentation(),
+            },
+          ],
         };
-        
-      case "ast://documentation/examples":
+
+      case 'ast://documentation/examples':
         return {
-          contents: [{
-            uri,
-            mimeType: "text/markdown", 
-            text: this.getUsageExamples()
-          }]
+          contents: [
+            {
+              uri,
+              mimeType: 'text/markdown',
+              text: this.getUsageExamples(),
+            },
+          ],
         };
-        
+
       default:
         throw new Error(`Resource not found: ${uri}`);
     }
@@ -413,105 +429,135 @@ class ASTToolkitMCPServer {
   private async analyzeComplexity(args: any): Promise<CallToolResult> {
     const { ast } = args;
     const complexity = calculateComplexity(ast as ASTNode);
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          cyclomatic: complexity.cyclomatic,
-          cognitive: complexity.cognitive,
-          halstead: complexity.halstead,
-          summary: `Code complexity analysis complete. Cyclomatic: ${complexity.cyclomatic}, Cognitive: ${complexity.cognitive}`
-        }, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              cyclomatic: complexity.cyclomatic,
+              cognitive: complexity.cognitive,
+              halstead: complexity.halstead,
+              summary: `Code complexity analysis complete. Cyclomatic: ${complexity.cyclomatic}, Cognitive: ${complexity.cognitive}`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 
   private async analyzeMetrics(args: any): Promise<CallToolResult> {
     const { ast } = args;
     const metrics = analyzeMetrics(ast as ASTNode);
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          complexity: metrics.complexity,
-          patterns: metrics.patterns,
-          smells: metrics.smells,
-          summary: `Found ${metrics.patterns.length} patterns and ${metrics.smells.length} code smells`
-        }, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              complexity: metrics.complexity,
+              patterns: metrics.patterns,
+              smells: metrics.smells,
+              summary: `Found ${metrics.patterns.length} patterns and ${metrics.smells.length} code smells`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 
   private async explainCode(args: any): Promise<CallToolResult> {
-    const { ast, audience = "intermediate", detail = "detailed" } = args;
+    const { ast, audience = 'intermediate', detail = 'detailed' } = args;
     const explanation = explainCode(ast as ASTNode, { audience, detail });
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(explanation, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(explanation, null, 2),
+        },
+      ],
     };
   }
 
   private async findNodes(args: any): Promise<CallToolResult> {
     const { ast, nodeType } = args;
-    
+
     const predicate = (node: ASTNode) => node.type === nodeType;
     const foundNodes = findNodes(ast as ASTNode, predicate);
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          nodeType,
-          count: foundNodes.length,
-          nodes: foundNodes,
-          summary: `Found ${foundNodes.length} nodes of type '${nodeType}'`
-        }, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              nodeType,
+              count: foundNodes.length,
+              nodes: foundNodes,
+              summary: `Found ${foundNodes.length} nodes of type '${nodeType}'`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 
   private async generateTemplate(args: any): Promise<CallToolResult> {
-    const { intent, style = "comprehensive" } = args;
+    const { intent, style = 'comprehensive' } = args;
     const template = generateCodeTemplate(intent, { style });
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          intent,
-          template,
-          summary: `Generated ${template.pattern} template for: ${intent}`
-        }, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              intent,
+              template,
+              summary: `Generated ${template.pattern} template for: ${intent}`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 
   private async recognizeIntent(args: any): Promise<CallToolResult> {
     const { ast } = args;
     const intent = recognizeIntent(typeof ast === 'string' ? ast : JSON.stringify(ast));
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(intent, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(intent, null, 2),
+        },
+      ],
     };
   }
 
   private async qualityInsights(args: any): Promise<CallToolResult> {
     const { ast } = args;
     const insights = generateQualityInsights(ast as ASTNode);
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(insights, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(insights, null, 2),
+        },
+      ],
     };
   }
 
@@ -519,35 +565,43 @@ class ASTToolkitMCPServer {
     const { ast, operations } = args;
     const benchmarks = benchmarkASTOperations(ast as ASTNode);
     const analysis = analyzePerformance(benchmarks);
-    
+
     return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          benchmarks,
-          analysis,
-          summary: `Benchmarked ${benchmarks.length} operations with ${analysis.length} optimization suggestions`
-        }, null, 2)
-      }]
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              benchmarks,
+              analysis,
+              summary: `Benchmarked ${benchmarks.length} operations with ${analysis.length} optimization suggestions`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 
   private async traverseAST(args: any): Promise<CallToolResult> {
     const { ast, collectNodes = false } = args;
-    
+
     if (!ast) {
       return {
-        content: [{
-          type: "text",
-          text: "Error: AST is required for traversal"
-        }],
-        isError: true
+        content: [
+          {
+            type: 'text',
+            text: 'Error: AST is required for traversal',
+          },
+        ],
+        isError: true,
       };
     }
-    
+
     const visitedNodes: ASTNode[] = [];
     let nodeCount = 0;
-    
+
     try {
       const visitor = new ASTVisitor({
         enter: (node: ASTNode) => {
@@ -555,28 +609,36 @@ class ASTToolkitMCPServer {
           if (collectNodes) {
             visitedNodes.push(node);
           }
-        }
+        },
       });
 
       visit(ast as ASTNode, visitor);
-      
+
       return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            nodeCount,
-            visitedNodes: collectNodes ? visitedNodes : undefined,
-            summary: `Traversed ${nodeCount} nodes in the AST`
-          }, null, 2)
-        }]
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                nodeCount,
+                visitedNodes: collectNodes ? visitedNodes : undefined,
+                summary: `Traversed ${nodeCount} nodes in the AST`,
+              },
+              null,
+              2
+            ),
+          },
+        ],
       };
     } catch (error) {
       return {
-        content: [{
-          type: "text",
-          text: `Error during AST traversal: ${error instanceof Error ? error.message : String(error)}`
-        }],
-        isError: true
+        content: [
+          {
+            type: 'text',
+            text: `Error during AST traversal: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
       };
     }
   }
@@ -592,24 +654,30 @@ class ASTToolkitMCPServer {
       end: 50,
       line: 1,
       column: 1,
-      features: [{
-        type: 'eventHandler',
-        event: 'click',
-        selector: '#button',
-        start: 0,
-        end: 50,
-        line: 1,
-        column: 1,
-        commands: [{
-          type: 'command',
-          name: 'toggle',
-          start: 10,
-          end: 30,
+      features: [
+        {
+          type: 'eventHandler',
+          event: 'click',
+          selector: '#button',
+          start: 0,
+          end: 50,
           line: 1,
-          column: 11,
-          args: [{ type: 'selector', value: '.active', start: 17, end: 24, line: 1, column: 18 }]
-        }]
-      }]
+          column: 1,
+          commands: [
+            {
+              type: 'command',
+              name: 'toggle',
+              start: 10,
+              end: 30,
+              line: 1,
+              column: 11,
+              args: [
+                { type: 'selector', value: '.active', start: 17, end: 24, line: 1, column: 18 },
+              ],
+            },
+          ],
+        },
+      ],
     } as any;
   }
 
@@ -637,7 +705,9 @@ class ASTToolkitMCPServer {
               end: 40,
               line: 1,
               column: 21,
-              args: [{ type: 'selector', value: '.loading', start: 25, end: 33, line: 1, column: 26 }]
+              args: [
+                { type: 'selector', value: '.loading', start: 25, end: 33, line: 1, column: 26 },
+              ],
             },
             {
               type: 'conditional',
@@ -648,23 +718,26 @@ class ASTToolkitMCPServer {
               condition: {
                 type: 'binaryExpression',
                 operator: '===',
-                left: { type: 'memberExpression', property: { type: 'identifier', name: 'status' } },
-                right: { type: 'literal', value: 200 }
+                left: {
+                  type: 'memberExpression',
+                  property: { type: 'identifier', name: 'status' },
+                },
+                right: { type: 'literal', value: 200 },
               },
               then: {
                 type: 'command',
                 name: 'toggle',
-                args: [{ type: 'selector', value: '.modal-open' }]
+                args: [{ type: 'selector', value: '.modal-open' }],
               },
               else: {
                 type: 'command',
                 name: 'put',
-                args: [{ type: 'literal', value: 'Error loading content' }]
-              }
-            }
-          ]
-        }
-      ]
+                args: [{ type: 'literal', value: 'Error loading content' }],
+              },
+            },
+          ],
+        },
+      ],
     } as any;
   }
 
@@ -685,15 +758,17 @@ class ASTToolkitMCPServer {
         end: i * 20 + j * 3 + 3,
         line: i + 1,
         column: j * 3 + 1,
-        args: [{ 
-          type: 'selector', 
-          value: `.class-${i}-${j}`,
-          start: 0, 
-          end: 10, 
-          line: i + 1, 
-          column: 1 
-        }]
-      }))
+        args: [
+          {
+            type: 'selector',
+            value: `.class-${i}-${j}`,
+            start: 0,
+            end: 10,
+            line: i + 1,
+            column: 1,
+          },
+        ],
+      })),
     }));
 
     return {
@@ -702,7 +777,7 @@ class ASTToolkitMCPServer {
       end: 2000,
       line: 1,
       column: 1,
-      features
+      features,
     } as any;
   }
 
@@ -797,59 +872,58 @@ export function createASTToolkitMCPServer(): ASTToolkitMCPServer {
  */
 export function createMCPServerWithHandlers() {
   const server = createASTToolkitMCPServer();
-  
+
   return {
     server,
-    
+
     // Message handler for MCP protocol
     async handleMessage(message: any): Promise<any> {
       const { method, params, id } = message;
-      
+
       try {
         let result: any;
-        
+
         switch (method) {
           case 'initialize':
             result = await server.initialize({ method, params });
             break;
-            
+
           case 'tools/list':
             result = await server.listTools({ method, params });
             break;
-            
+
           case 'tools/call':
             result = await server.callTool({ method, params });
             break;
-            
+
           case 'resources/list':
             result = await server.listResources({ method, params });
             break;
-            
+
           case 'resources/read':
             result = await server.readResource({ method, params });
             break;
-            
+
           default:
             throw new Error(`Unknown method: ${method}`);
         }
-        
+
         return {
-          jsonrpc: "2.0",
+          jsonrpc: '2.0',
           id,
-          result
+          result,
         };
-        
       } catch (error) {
         return {
-          jsonrpc: "2.0",
+          jsonrpc: '2.0',
           id,
           error: {
             code: -32603,
-            message: error instanceof Error ? error.message : String(error)
-          }
+            message: error instanceof Error ? error.message : String(error),
+          },
         };
       }
-    }
+    },
   };
 }
 

@@ -9,7 +9,12 @@ import type { CoreExecutionContext } from './core-context';
 
 // Re-export core context types for convenience
 export type { CoreExecutionContext } from './core-context';
-export { createCoreContext, isCoreExecutionContext, assertHTMLElement, asHTMLElement } from './core-context';
+export {
+  createCoreContext,
+  isCoreExecutionContext,
+  assertHTMLElement,
+  asHTMLElement,
+} from './core-context';
 
 // ============================================================================
 // Core Validation Types (Single Source of Truth)

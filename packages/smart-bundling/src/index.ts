@@ -12,11 +12,7 @@ export { SmartBundler, quickBundle, productionBundle } from './bundler';
 export * from './types';
 
 // Export quick start functions
-export {
-  quickStartSmartBundling,
-  createOptimizedConfig,
-  analyzeProjectUsage,
-} from './quick-start';
+export { quickStartSmartBundling, createOptimizedConfig, analyzeProjectUsage } from './quick-start';
 
 // Version
 export const version = '0.1.0';

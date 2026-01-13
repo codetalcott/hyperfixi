@@ -14,7 +14,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { evaluateCondition } from '../helpers/condition-helpers';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /** Conditional mode type */
 export type ConditionalMode = 'if' | 'unless';
@@ -63,8 +69,16 @@ export interface IfCommandOutput extends ConditionalCommandOutput {}
  */
 @meta({
   description: 'Conditional execution based on boolean expressions',
-  syntax: ['if <condition> then <commands>', 'if <condition> then <commands> else <commands>', 'unless <condition> <commands>'],
-  examples: ['if x > 5 then add .active', 'if user.isAdmin then show #adminPanel else hide #adminPanel', 'unless user.isLoggedIn showLoginForm'],
+  syntax: [
+    'if <condition> then <commands>',
+    'if <condition> then <commands> else <commands>',
+    'unless <condition> <commands>',
+  ],
+  examples: [
+    'if x > 5 then add .active',
+    'if user.isAdmin then show #adminPanel else hide #adminPanel',
+    'unless user.isLoggedIn showLoginForm',
+  ],
   sideEffects: ['conditional-execution'],
   aliases: ['unless'],
 })
@@ -145,7 +159,10 @@ export class ConditionalCommand implements DecoratedCommand {
     return { mode, conditionResult: rawConditionResult, executedBranch, result };
   }
 
-  private async executeCommandsOrBlock(commandsOrBlock: any, context: TypedExecutionContext): Promise<any> {
+  private async executeCommandsOrBlock(
+    commandsOrBlock: any,
+    context: TypedExecutionContext
+  ): Promise<any> {
     if (commandsOrBlock?.type === 'block') {
       return this.executeBlock(commandsOrBlock, context);
     }

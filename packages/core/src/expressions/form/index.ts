@@ -20,9 +20,9 @@ import { isString, isNumber } from '../type-helpers';
 /**
  * Enhanced form values extraction with comprehensive validation
  */
-export class FormValuesExpression
-  implements TypedExpressionImplementation<Record<string, unknown>>
-{
+export class FormValuesExpression implements TypedExpressionImplementation<
+  Record<string, unknown>
+> {
   public readonly name = 'form-values';
   public readonly category = 'object' as const;
   public readonly precedence = 1;
@@ -35,8 +35,6 @@ export class FormValuesExpression
     complexity: 'O(n)' as const,
     dependencies: ['DOM'],
   };
-
-  
 
   async evaluate(
     _context: TypedExecutionContext,
@@ -181,8 +179,6 @@ export class FormValidationExpression implements TypedExpressionImplementation<b
     dependencies: ['DOM'],
   };
 
-  
-
   async evaluate(
     _context: TypedExecutionContext,
     formElement: HTMLElement,
@@ -326,8 +322,6 @@ export class FormSerializationExpression implements TypedExpressionImplementatio
     complexity: 'O(n)' as const,
     dependencies: ['DOM'],
   };
-
-  
 
   async evaluate(
     context: TypedExecutionContext,

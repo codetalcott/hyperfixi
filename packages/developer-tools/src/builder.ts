@@ -465,7 +465,7 @@ export class VisualBuilderServer {
 
     this.app.post('/api/components', (req, res) => {
       const component: ComponentDefinition = req.body;
-      
+
       // Validate component
       if (!component.id || !component.name || !component.template) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -508,14 +508,14 @@ export class VisualBuilderServer {
     // Preview route
     this.app.post('/api/preview', (req, res) => {
       const { template, hyperscript, styles, data } = req.body;
-      
+
       try {
         const preview = this.generatePreview(template, hyperscript, styles, data);
         res.json({ preview });
       } catch (error) {
-        res.status(400).json({ 
-          error: 'Preview generation failed', 
-          message: error instanceof Error ? error.message : String(error) 
+        res.status(400).json({
+          error: 'Preview generation failed',
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     });
@@ -523,14 +523,14 @@ export class VisualBuilderServer {
     // Export route
     this.app.post('/api/export', (req, res) => {
       const { components, format = 'html' } = req.body;
-      
+
       try {
         const exported = this.exportComponents(components, format);
         res.json({ code: exported });
       } catch (error) {
-        res.status(400).json({ 
-          error: 'Export failed', 
-          message: error instanceof Error ? error.message : String(error) 
+        res.status(400).json({
+          error: 'Export failed',
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     });
@@ -545,18 +545,20 @@ export class VisualBuilderServer {
    * Setup WebSocket connection
    */
   private setupWebSocket(): void {
-    this.wss.on('connection', (ws) => {
+    this.wss.on('connection', ws => {
       this.clients.add(ws);
-      
-      ws.on('message', (data) => {
+
+      ws.on('message', data => {
         try {
           const message = JSON.parse(data.toString());
           this.handleWebSocketMessage(ws, message);
         } catch (error) {
-          ws.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'Invalid message format' 
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              message: 'Invalid message format',
+            })
+          );
         }
       });
 
@@ -565,11 +567,13 @@ export class VisualBuilderServer {
       });
 
       // Send initial state
-      ws.send(JSON.stringify({
-        type: 'init',
-        config: this.config,
-        components: this.components,
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'init',
+          config: this.config,
+          components: this.components,
+        })
+      );
     });
   }
 
@@ -586,42 +590,52 @@ export class VisualBuilderServer {
             message.styles,
             message.data
           );
-          ws.send(JSON.stringify({
-            type: 'preview-result',
-            id: message.id,
-            preview,
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'preview-result',
+              id: message.id,
+              preview,
+            })
+          );
         } catch (error) {
-          ws.send(JSON.stringify({
-            type: 'preview-error',
-            id: message.id,
-            error: error instanceof Error ? error.message : String(error),
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'preview-error',
+              id: message.id,
+              error: error instanceof Error ? error.message : String(error),
+            })
+          );
         }
         break;
 
       case 'validate':
         try {
           const validation = this.validateComponent(message.component);
-          ws.send(JSON.stringify({
-            type: 'validation-result',
-            id: message.id,
-            validation,
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'validation-result',
+              id: message.id,
+              validation,
+            })
+          );
         } catch (error) {
-          ws.send(JSON.stringify({
-            type: 'validation-error',
-            id: message.id,
-            error: error instanceof Error ? error.message : String(error),
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'validation-error',
+              id: message.id,
+              error: error instanceof Error ? error.message : String(error),
+            })
+          );
         }
         break;
 
       default:
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: `Unknown message type: ${message.type}`,
-        }));
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            message: `Unknown message type: ${message.type}`,
+          })
+        );
     }
   }
 
@@ -636,7 +650,7 @@ export class VisualBuilderServer {
   ): string {
     // Simple template replacement (in production, use a proper template engine)
     let html = template;
-    
+
     for (const [key, value] of Object.entries(data)) {
       const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
       html = html.replace(regex, String(value));
@@ -682,14 +696,16 @@ export class VisualBuilderServer {
 
     // ID format
     if (component.id && !/^[a-z][a-z0-9-]*$/.test(component.id)) {
-      errors.push('Component ID must start with lowercase letter and contain only lowercase letters, numbers, and hyphens');
+      errors.push(
+        'Component ID must start with lowercase letter and contain only lowercase letters, numbers, and hyphens'
+      );
     }
 
     // Template validation
     if (component.template) {
       const openTags = (component.template.match(/<\w+/g) || []).length;
       const closeTags = (component.template.match(/<\/\w+>/g) || []).length;
-      
+
       if (openTags !== closeTags) {
         warnings.push('Template may have unmatched HTML tags');
       }
@@ -699,7 +715,7 @@ export class VisualBuilderServer {
     if (component.hyperscript) {
       const openParens = (component.hyperscript.match(/\(/g) || []).length;
       const closeParens = (component.hyperscript.match(/\)/g) || []).length;
-      
+
       if (openParens !== closeParens) {
         errors.push('HyperScript has unmatched parentheses');
       }
@@ -732,17 +748,19 @@ export class VisualBuilderServer {
    * Export to HTML
    */
   private exportToHTML(components: ComponentDefinition[]): string {
-    const html = components.map(component => {
-      let template = component.template;
-      
-      // Add hyperscript
-      if (component.hyperscript) {
-        template = template.replace(/<(\w+)([^>]*)>/, `<$1$2 _="${component.hyperscript}">`);
-      }
+    const html = components
+      .map(component => {
+        let template = component.template;
 
-      return `<!-- ${component.name} Component -->
+        // Add hyperscript
+        if (component.hyperscript) {
+          template = template.replace(/<(\w+)([^>]*)>/, `<$1$2 _="${component.hyperscript}">`);
+        }
+
+        return `<!-- ${component.name} Component -->
 ${template}`;
-    }).join('\n\n');
+      })
+      .join('\n\n');
 
     const styles = components
       .filter(c => c.styles)
@@ -1135,7 +1153,7 @@ export function createComponent(id, props = {}) {
    */
   private broadcastUpdate(type: string, data: any): void {
     const message = JSON.stringify({ type, data });
-    
+
     for (const client of this.clients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message);
@@ -1154,7 +1172,7 @@ export function createComponent(id, props = {}) {
       persistent: true,
     });
 
-    this.watcher.on('change', (path) => {
+    this.watcher.on('change', path => {
       this.broadcastUpdate('file-changed', { path });
     });
   }
@@ -1200,7 +1218,7 @@ export function createComponent(id, props = {}) {
       client.close();
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.server.close(() => {
         resolve();
       });
@@ -1246,7 +1264,10 @@ export function createComponent(id, props = {}) {
   /**
    * Update a component in the library
    */
-  updateComponent(id: string, updates: Partial<ComponentDefinition>): ComponentDefinition | undefined {
+  updateComponent(
+    id: string,
+    updates: Partial<ComponentDefinition>
+  ): ComponentDefinition | undefined {
     const index = this.components.findIndex(c => c.id === id);
     if (index === -1) {
       return undefined;
@@ -1354,19 +1375,30 @@ export async function buildProject(config: {
   // Discover entry points
   const htmlFiles = await glob('**/*.html', {
     cwd: projectPath,
-    ignore: ['node_modules/**', 'dist/**', config.output.replace(projectPath, '') + '/**']
+    ignore: ['node_modules/**', 'dist/**', config.output.replace(projectPath, '') + '/**'],
   });
   const jsEntries = await glob('**/*.{js,ts}', {
     cwd: projectPath,
-    ignore: ['node_modules/**', 'dist/**', config.output.replace(projectPath, '') + '/**', '**/*.test.{js,ts}', '**/*.spec.{js,ts}']
+    ignore: [
+      'node_modules/**',
+      'dist/**',
+      config.output.replace(projectPath, '') + '/**',
+      '**/*.test.{js,ts}',
+      '**/*.spec.{js,ts}',
+    ],
   });
 
   // Find main entry point
-  const mainEntry = jsEntries.find(f =>
-    f === 'index.ts' || f === 'index.js' ||
-    f === 'main.ts' || f === 'main.js' ||
-    f === 'src/index.ts' || f === 'src/index.js' ||
-    f === 'src/main.ts' || f === 'src/main.js'
+  const mainEntry = jsEntries.find(
+    f =>
+      f === 'index.ts' ||
+      f === 'index.js' ||
+      f === 'main.ts' ||
+      f === 'main.js' ||
+      f === 'src/index.ts' ||
+      f === 'src/index.js' ||
+      f === 'src/main.ts' ||
+      f === 'src/main.js'
   );
 
   // Bundle JavaScript/TypeScript files
@@ -1433,7 +1465,10 @@ export async function buildProject(config: {
       const bundleName = path.basename(mainEntry).replace(/\.(ts|js)$/, '.js');
       // Add bundle script if not already present
       if (!content.includes(bundleName)) {
-        content = content.replace('</body>', `  <script type="module" src="./${bundleName}"></script>\n</body>`);
+        content = content.replace(
+          '</body>',
+          `  <script type="module" src="./${bundleName}"></script>\n</body>`
+        );
       }
     }
 

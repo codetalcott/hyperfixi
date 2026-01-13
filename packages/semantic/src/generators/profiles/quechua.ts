@@ -20,16 +20,16 @@ export const quechuaProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'ñuqa',      // "I/me"
-    it: 'pay',       // "it/he/she" (same pronoun)
-    you: 'qam',      // "you"
+    me: 'ñuqa', // "I/me"
+    it: 'pay', // "it/he/she" (same pronoun)
+    you: 'qam', // "you"
     result: 'rurasqa',
     event: 'ruwakuq',
     target: 'ñawpaqman',
     body: 'ukhu',
   },
   possessive: {
-    marker: '-pa',   // Genitive suffix
+    marker: '-pa', // Genitive suffix
     markerPosition: 'after-object',
     // Quechua: ñuqapa value = "my value"
   },
@@ -50,7 +50,7 @@ export const quechuaProfile: LanguageProfile = {
     take: { primary: 'hapiy', normalized: 'take' },
     make: { primary: 'ruray', alternatives: ['kamay'], normalized: 'make' },
     clone: { primary: 'kikinchay', alternatives: ['qillqay'], normalized: 'clone' },
-    swap: { primary: 't\'inkuy', alternatives: ['rantikunakuy'], normalized: 'swap' },
+    swap: { primary: "t'inkuy", alternatives: ['rantikunakuy'], normalized: 'swap' },
     morph: { primary: 'tikray', alternatives: ['kutichiy'], normalized: 'morph' },
     set: { primary: 'churay', alternatives: ['kamaykuy'], normalized: 'set' },
     get: { primary: 'taripay', normalized: 'get' },

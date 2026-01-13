@@ -20,7 +20,11 @@ export function getHidePatternsDe(): LanguagePattern[] {
       template: {
         format: 'verstecke {patient}',
         tokens: [
-          { type: 'literal', value: 'verstecke', alternatives: ['verstecken', 'verberge', 'verbergen', 'hide'] },
+          {
+            type: 'literal',
+            value: 'verstecke',
+            alternatives: ['verstecken', 'verberge', 'verbergen', 'hide'],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference'] },
         ],
       },

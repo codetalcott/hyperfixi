@@ -14,7 +14,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for CopyCommand
@@ -82,31 +88,48 @@ export class CopyCommand implements DecoratedCommand {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(textToCopy);
-        this.dispatchCopyEvent(context, 'copy:success', { text: textToCopy, method: 'clipboard-api' });
+        this.dispatchCopyEvent(context, 'copy:success', {
+          text: textToCopy,
+          method: 'clipboard-api',
+        });
         return { success: true, text: textToCopy, format, method: 'clipboard-api' };
-      } catch { /* fallback */ }
+      } catch {
+        /* fallback */
+      }
     }
 
     // Fallback to execCommand
     try {
       if (this.copyUsingExecCommand(textToCopy)) {
-        this.dispatchCopyEvent(context, 'copy:success', { text: textToCopy, method: 'execCommand' });
+        this.dispatchCopyEvent(context, 'copy:success', {
+          text: textToCopy,
+          method: 'execCommand',
+        });
         return { success: true, text: textToCopy, format, method: 'execCommand' };
       }
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
 
-    this.dispatchCopyEvent(context, 'copy:error', { text: textToCopy, error: 'All copy methods failed' });
+    this.dispatchCopyEvent(context, 'copy:error', {
+      text: textToCopy,
+      error: 'All copy methods failed',
+    });
     return { success: false, text: textToCopy, format, method: 'fallback' };
   }
 
-  private extractText(source: string | HTMLElement, format: 'text' | 'html', context: TypedExecutionContext): string {
+  private extractText(
+    source: string | HTMLElement,
+    format: 'text' | 'html',
+    context: TypedExecutionContext
+  ): string {
     if (typeof source === 'string') return source;
     if (isHTMLElement(source)) {
-      return format === 'html' ? source.outerHTML : (source.textContent || '');
+      return format === 'html' ? source.outerHTML : source.textContent || '';
     }
     if (source === context.me && isHTMLElement(context.me)) {
       const el = context.me as HTMLElement;
-      return format === 'html' ? el.outerHTML : (el.textContent || '');
+      return format === 'html' ? el.outerHTML : el.textContent || '';
     }
     return String(source);
   }
@@ -132,7 +155,11 @@ export class CopyCommand implements DecoratedCommand {
     }
   }
 
-  private dispatchCopyEvent(context: TypedExecutionContext, eventName: string, detail: Record<string, any>): void {
+  private dispatchCopyEvent(
+    context: TypedExecutionContext,
+    eventName: string,
+    detail: Record<string, any>
+  ): void {
     if (isHTMLElement(context.me)) {
       const event = new CustomEvent(eventName, { detail, bubbles: true, cancelable: false });
       (context.me as HTMLElement).dispatchEvent(event);

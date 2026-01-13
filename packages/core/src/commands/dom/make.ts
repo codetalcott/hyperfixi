@@ -12,7 +12,13 @@ import type { ASTNode, TypedExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { setVariableValue } from '../helpers/variable-access';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /** Typed input after parsing */
 export interface MakeCommandInput {
@@ -51,15 +57,22 @@ function createDOMElement(expr: string): HTMLElement {
 }
 
 /** Create class instance using constructor lookup */
-function createClassInstance(className: string | HTMLElement, args: unknown[], context: TypedExecutionContext): unknown {
+function createClassInstance(
+  className: string | HTMLElement,
+  args: unknown[],
+  context: TypedExecutionContext
+): unknown {
   if (isHTMLElement(className)) return className;
 
   const name = String(className);
   let Constructor: (new (...args: unknown[]) => unknown) | undefined;
 
-  if (typeof window !== 'undefined') Constructor = (window as unknown as Record<string, unknown>)[name] as typeof Constructor;
-  if (!Constructor && typeof global !== 'undefined') Constructor = (global as Record<string, unknown>)[name] as typeof Constructor;
-  if (!Constructor && context.variables?.has(name)) Constructor = context.variables.get(name) as typeof Constructor;
+  if (typeof window !== 'undefined')
+    Constructor = (window as unknown as Record<string, unknown>)[name] as typeof Constructor;
+  if (!Constructor && typeof global !== 'undefined')
+    Constructor = (global as Record<string, unknown>)[name] as typeof Constructor;
+  if (!Constructor && context.variables?.has(name))
+    Constructor = context.variables.get(name) as typeof Constructor;
 
   if (!Constructor || typeof Constructor !== 'function') {
     throw new Error(`Constructor '${name}' not found or is not a function`);
@@ -93,7 +106,10 @@ async function resolveVariableName(
   context: TypedExecutionContext
 ): Promise<string | undefined> {
   if (!calledMod) return undefined;
-  if (calledMod.type === 'symbol' && typeof (calledMod as Record<string, unknown>).name === 'string') {
+  if (
+    calledMod.type === 'symbol' &&
+    typeof (calledMod as Record<string, unknown>).name === 'string'
+  ) {
     return (calledMod as Record<string, unknown>).name as string;
   }
   const value = await evaluator.evaluate(calledMod, context);
@@ -103,7 +119,10 @@ async function resolveVariableName(
 @meta({
   description: 'Create DOM elements or class instances',
   syntax: ['make a <tag#id.class1.class2/>', 'make a <ClassName> from <args> called <identifier>'],
-  examples: ['make an <a.navlink/> called linkElement', 'make a URL from "/path/", "https://origin.example.com"'],
+  examples: [
+    'make an <a.navlink/> called linkElement',
+    'make a URL from "/path/", "https://origin.example.com"',
+  ],
   sideEffects: ['dom-creation', 'data-mutation'],
 })
 @command({ name: 'make', category: 'dom' })
@@ -116,7 +135,8 @@ export class MakeCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: TypedExecutionContext
   ): Promise<MakeCommandInput> {
-    const expression = raw.args.length > 0 ? await evaluator.evaluate(raw.args[0], context) : undefined;
+    const expression =
+      raw.args.length > 0 ? await evaluator.evaluate(raw.args[0], context) : undefined;
     if (!expression) throw new Error('Make command requires class name or DOM element expression');
 
     const article = raw.modifiers.an !== undefined ? 'an' : 'a';
@@ -129,9 +149,10 @@ export class MakeCommand implements DecoratedCommand {
   async execute(input: MakeCommandInput, context: TypedExecutionContext): Promise<unknown> {
     const { expression, constructorArgs = [], variableName } = input;
 
-    const result = typeof expression === 'string' && expression.startsWith('<') && expression.endsWith('/>')
-      ? createDOMElement(expression)
-      : createClassInstance(expression, constructorArgs, context);
+    const result =
+      typeof expression === 'string' && expression.startsWith('<') && expression.endsWith('/>')
+        ? createDOMElement(expression)
+        : createClassInstance(expression, constructorArgs, context);
 
     Object.assign(context, { it: result });
     if (variableName) setVariableValue(variableName, result, context);

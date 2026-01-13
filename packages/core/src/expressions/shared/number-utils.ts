@@ -100,7 +100,9 @@ export function ensureFinite(num: number, operation: string): number {
     if (Number.isNaN(num)) {
       throw new Error(`${operation} resulted in non-finite value: NaN`);
     }
-    throw new Error(`${operation} resulted in non-finite value: ${num > 0 ? 'Infinity' : '-Infinity'}`);
+    throw new Error(
+      `${operation} resulted in non-finite value: ${num > 0 ? 'Infinity' : '-Infinity'}`
+    );
   }
   return num;
 }
@@ -132,14 +134,10 @@ export function isNumeric(value: unknown): boolean {
  * @returns Result of division
  * @throws Error if dividing by zero and allowInfinity is false
  */
-export function safeDivide(
-  left: number,
-  right: number,
-  allowInfinity: boolean = true
-): number {
+export function safeDivide(left: number, right: number, allowInfinity: boolean = true): number {
   if (right === 0) {
     if (allowInfinity) {
-      return left === 0 ? NaN : (left > 0 ? Infinity : -Infinity);
+      return left === 0 ? NaN : left > 0 ? Infinity : -Infinity;
     }
     throw new Error('Division by zero');
   }

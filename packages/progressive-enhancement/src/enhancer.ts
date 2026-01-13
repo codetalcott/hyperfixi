@@ -3,20 +3,20 @@
  * Core system for applying enhancements based on capabilities
  */
 
-import type { 
+import type {
   EnhancementContext,
   EnhancementResult,
   EnhancerConfig,
   Enhancement,
   CapabilityReport,
   EnhancementStrategy,
-  UserPreferences
+  UserPreferences,
 } from './types';
 import { detectCapabilities, detectUserPreferences } from './detector';
-import { 
-  getEnhancementsForLevel, 
-  getFallbackEnhancements, 
-  filterEnhancementsByConditions 
+import {
+  getEnhancementsForLevel,
+  getFallbackEnhancements,
+  filterEnhancementsByConditions,
 } from './levels';
 
 /**
@@ -49,17 +49,17 @@ export class ProgressiveEnhancer {
    */
   async initialize(): Promise<void> {
     const startTime = performance.now();
-    
+
     try {
       // Detect capabilities and user preferences in parallel
       const [capabilities, preferences] = await Promise.all([
         detectCapabilities(this.config.detector),
         Promise.resolve(detectUserPreferences()),
       ]);
-      
+
       this.capabilityReport = capabilities;
       this.userPreferences = preferences;
-      
+
       if (this.config.detector?.enablePerformanceMetrics) {
         console.log(`Progressive enhancement initialized in ${performance.now() - startTime}ms`);
         console.log('Capability level:', capabilities.level);
@@ -106,7 +106,10 @@ export class ProgressiveEnhancer {
   /**
    * Enhance a single element with appropriate enhancements
    */
-  async enhanceElement(element: Element, templateVars?: Record<string, any>): Promise<EnhancementResult> {
+  async enhanceElement(
+    element: Element,
+    templateVars?: Record<string, any>
+  ): Promise<EnhancementResult> {
     if (!this.capabilityReport || !this.userPreferences) {
       await this.initialize();
     }
@@ -126,7 +129,7 @@ export class ProgressiveEnhancer {
    * Enhance all elements matching a selector
    */
   async enhanceElements(
-    selector: string, 
+    selector: string,
     templateVars?: Record<string, any>
   ): Promise<EnhancementResult[]> {
     const elements = document.querySelectorAll(selector);
@@ -153,7 +156,7 @@ export class ProgressiveEnhancer {
   private async applyEnhancements(context: EnhancementContext): Promise<EnhancementResult> {
     const startTime = performance.now();
     const detectionTime = 0; // Already detected during initialization
-    
+
     const warnings: string[] = [];
     let level = context.capabilities.level;
 
@@ -167,7 +170,7 @@ export class ProgressiveEnhancer {
 
     // Get available enhancements for the capability level
     let availableEnhancements = getEnhancementsForLevel(level);
-    
+
     // Add custom enhancements if provided
     if (this.config.customEnhancements) {
       availableEnhancements.push(...this.config.customEnhancements);
@@ -175,19 +178,19 @@ export class ProgressiveEnhancer {
 
     // Filter enhancements based on capability conditions
     availableEnhancements = filterEnhancementsByConditions(
-      availableEnhancements, 
+      availableEnhancements,
       context.capabilities.capabilities
     );
 
     // Get fallbacks for missing capabilities
-    const missingCapabilities = this.getMissingCapabilities(availableEnhancements, context.capabilities);
+    const missingCapabilities = this.getMissingCapabilities(
+      availableEnhancements,
+      context.capabilities
+    );
     const fallbackEnhancements = getFallbackEnhancements(level, missingCapabilities);
 
     // Apply enhancements
-    const { scripts, styles } = await this.processEnhancements(
-      availableEnhancements, 
-      context
-    );
+    const { scripts, styles } = await this.processEnhancements(availableEnhancements, context);
 
     const enhancementTime = performance.now() - startTime;
 
@@ -210,7 +213,7 @@ export class ProgressiveEnhancer {
    * Process and apply enhancements
    */
   private async processEnhancements(
-    enhancements: Enhancement[], 
+    enhancements: Enhancement[],
     context: EnhancementContext
   ): Promise<{ scripts: string[]; styles: string[] }> {
     const scripts: string[] = [];
@@ -294,7 +297,7 @@ export class ProgressiveEnhancer {
           ${script}
         })();
       `;
-      
+
       // Use Function constructor for better CSP compatibility
       new Function(wrappedScript)();
     } catch (error) {
@@ -306,18 +309,21 @@ export class ProgressiveEnhancer {
    * Load script lazily with timeout
    */
   private async loadScriptLazily(script: string, enhancementId: string): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const timeout = setTimeout(() => {
         console.warn(`Script loading timeout for enhancement "${enhancementId}"`);
         resolve();
       }, this.strategy.fallbackTimeout);
 
       try {
-        requestIdleCallback(() => {
-          clearTimeout(timeout);
-          this.executeScript(script, enhancementId);
-          resolve();
-        }, { timeout: this.strategy.fallbackTimeout });
+        requestIdleCallback(
+          () => {
+            clearTimeout(timeout);
+            this.executeScript(script, enhancementId);
+            resolve();
+          },
+          { timeout: this.strategy.fallbackTimeout }
+        );
       } catch {
         // Fallback if requestIdleCallback is not available
         setTimeout(() => {
@@ -334,7 +340,7 @@ export class ProgressiveEnhancer {
    */
   private injectStyles(styles: string, enhancementId: string): void {
     const styleId = `progressive-enhancement-${enhancementId}`;
-    
+
     // Check if styles already exist
     if (document.getElementById(styleId)) {
       return;
@@ -346,7 +352,7 @@ export class ProgressiveEnhancer {
       /* Progressive Enhancement: ${enhancementId} */
       ${styles}
     `;
-    
+
     document.head.appendChild(styleElement);
   }
 
@@ -402,7 +408,7 @@ export async function initProgressiveEnhancement(
  * Enhance elements with progressive enhancement
  */
 export async function enhance(
-  selector: string, 
+  selector: string,
   templateVars?: Record<string, any>,
   config?: EnhancerConfig
 ): Promise<EnhancementResult[]> {

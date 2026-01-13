@@ -14,7 +14,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for PersistCommand
@@ -62,8 +68,16 @@ interface StoredValue {
  */
 @meta({
   description: 'Save and restore values from browser storage with TTL support',
-  syntax: ['persist <value> to <storage> as <key>', 'restore <key> from <storage>', 'remove <key> from <storage>'],
-  examples: ['persist myValue to local as "username"', 'persist formData to session as "draft"', 'restore "username" from local'],
+  syntax: [
+    'persist <value> to <storage> as <key>',
+    'restore <key> from <storage>',
+    'remove <key> from <storage>',
+  ],
+  examples: [
+    'persist myValue to local as "username"',
+    'persist formData to session as "draft"',
+    'restore "username" from local',
+  ],
   sideEffects: ['storage', 'data-mutation'],
 })
 @command({ name: 'persist', category: 'data' })
@@ -88,7 +102,9 @@ export class PersistCommand implements DecoratedCommand {
       operation = 'restore';
       // First arg is key for restore
       key = String(await evaluator.evaluate(raw.args[0], context));
-      storage = String(await evaluator.evaluate(raw.modifiers.from, context)) as 'local' | 'session';
+      storage = String(await evaluator.evaluate(raw.modifiers.from, context)) as
+        | 'local'
+        | 'session';
     } else {
       // Save operation
       operation = 'save';
@@ -97,7 +113,9 @@ export class PersistCommand implements DecoratedCommand {
 
       // Extract storage from 'to' modifier
       if (raw.modifiers?.to) {
-        storage = String(await evaluator.evaluate(raw.modifiers.to, context)) as 'local' | 'session';
+        storage = String(await evaluator.evaluate(raw.modifiers.to, context)) as
+          | 'local'
+          | 'session';
       }
 
       // Extract key from 'as' modifier

@@ -11,33 +11,33 @@ describe('validationTools', () => {
   });
 
   it('has get_code_fixes tool', () => {
-    const tool = validationTools.find((t) => t.name === 'get_code_fixes');
+    const tool = validationTools.find(t => t.name === 'get_code_fixes');
     expect(tool).toBeDefined();
     // get_code_fixes has no required fields (all params are optional)
     expect(tool?.inputSchema.required).toBeUndefined();
   });
 
   it('has validate_hyperscript tool', () => {
-    const tool = validationTools.find((t) => t.name === 'validate_hyperscript');
+    const tool = validationTools.find(t => t.name === 'validate_hyperscript');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
   });
 
   it('has validate_schema tool', () => {
-    const tool = validationTools.find((t) => t.name === 'validate_schema');
+    const tool = validationTools.find(t => t.name === 'validate_schema');
     expect(tool).toBeDefined();
     // validate_schema has no required fields (action is optional)
     expect(tool?.inputSchema.required).toBeUndefined();
   });
 
   it('has suggest_command tool', () => {
-    const tool = validationTools.find((t) => t.name === 'suggest_command');
+    const tool = validationTools.find(t => t.name === 'suggest_command');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('task');
   });
 
   it('has get_bundle_config tool', () => {
-    const tool = validationTools.find((t) => t.name === 'get_bundle_config');
+    const tool = validationTools.find(t => t.name === 'get_bundle_config');
     expect(tool).toBeDefined();
   });
 });

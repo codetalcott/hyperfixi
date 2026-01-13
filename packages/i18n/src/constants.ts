@@ -33,8 +33,18 @@ export const ENGLISH_MODIFIER_ROLES: Readonly<Record<string, SemanticRole>> = {
  * English modifier keywords (derived from ENGLISH_MODIFIER_ROLES)
  */
 export const ENGLISH_MODIFIERS: Set<string> = new Set([
-  'to', 'from', 'into', 'with', 'at', 'in', 'of', 'as', 'by',
-  'before', 'after', 'without',
+  'to',
+  'from',
+  'into',
+  'with',
+  'at',
+  'in',
+  'of',
+  'as',
+  'by',
+  'before',
+  'after',
+  'without',
 ]);
 
 // =============================================================================
@@ -45,13 +55,52 @@ export const ENGLISH_MODIFIERS: Set<string> = new Set([
  * English commands - the canonical set that the runtime understands.
  */
 export const ENGLISH_COMMANDS: Set<string> = new Set([
-  'add', 'append', 'async', 'beep', 'break', 'call', 'continue',
-  'decrement', 'default', 'exit', 'fetch', 'for', 'get', 'go',
-  'halt', 'hide', 'if', 'increment', 'install', 'js', 'log',
-  'make', 'measure', 'morph', 'pick', 'process', 'push', 'put',
-  'remove', 'render', 'repeat', 'replace', 'return', 'send', 'set',
-  'settle', 'show', 'swap', 'take', 'tell', 'throw', 'toggle',
-  'transition', 'trigger', 'unless', 'wait',
+  'add',
+  'append',
+  'async',
+  'beep',
+  'break',
+  'call',
+  'continue',
+  'decrement',
+  'default',
+  'exit',
+  'fetch',
+  'for',
+  'get',
+  'go',
+  'halt',
+  'hide',
+  'if',
+  'increment',
+  'install',
+  'js',
+  'log',
+  'make',
+  'measure',
+  'morph',
+  'pick',
+  'process',
+  'push',
+  'put',
+  'remove',
+  'render',
+  'repeat',
+  'replace',
+  'return',
+  'send',
+  'set',
+  'settle',
+  'show',
+  'swap',
+  'take',
+  'tell',
+  'throw',
+  'toggle',
+  'transition',
+  'trigger',
+  'unless',
+  'wait',
 ]);
 
 // =============================================================================
@@ -63,27 +112,62 @@ export const ENGLISH_COMMANDS: Set<string> = new Set([
  */
 export const ENGLISH_KEYWORDS: Set<string> = new Set([
   // Flow control
-  'then', 'else', 'end', 'and', 'or', 'not',
+  'then',
+  'else',
+  'end',
+  'and',
+  'or',
+  'not',
   // Conditionals
-  'if', 'unless',
+  'if',
+  'unless',
   // Loops
-  'for', 'while', 'until', 'forever', 'times', 'each', 'index',
+  'for',
+  'while',
+  'until',
+  'forever',
+  'times',
+  'each',
+  'index',
   // Prepositions
-  'in', 'to', 'from', 'into', 'with', 'without', 'of', 'at', 'by',
+  'in',
+  'to',
+  'from',
+  'into',
+  'with',
+  'without',
+  'of',
+  'at',
+  'by',
   // Conversion
   'as',
   // Comparison
-  'matches', 'contains', 'is', 'exists',
+  'matches',
+  'contains',
+  'is',
+  'exists',
   // Events
-  'on', 'when', 'every', 'event',
+  'on',
+  'when',
+  'every',
+  'event',
   // Definitions
-  'init', 'def', 'behavior',
+  'init',
+  'def',
+  'behavior',
   // Scope
-  'global', 'local',
+  'global',
+  'local',
   // Articles
-  'the', 'a', 'an', 'first', 'last',
+  'the',
+  'a',
+  'an',
+  'first',
+  'last',
   // Position
-  'start', 'before', 'after',
+  'start',
+  'before',
+  'after',
 ]);
 
 // =============================================================================
@@ -96,14 +180,46 @@ export const ENGLISH_KEYWORDS: Set<string> = new Set([
  */
 export const UNIVERSAL_ENGLISH_KEYWORDS: Set<string> = new Set([
   // DOM events (HTML spec)
-  'click', 'dblclick', 'mousedown', 'mouseup', 'mouseenter', 'mouseleave',
-  'mouseover', 'mouseout', 'mousemove', 'keydown', 'keyup', 'keypress',
-  'focus', 'blur', 'change', 'input', 'submit', 'reset', 'load', 'unload',
-  'resize', 'scroll', 'touchstart', 'touchend', 'touchmove', 'touchcancel',
-  'dragstart', 'dragend', 'dragenter', 'dragleave', 'dragover', 'drop',
-  'contextmenu', 'wheel', 'pointerdown', 'pointerup', 'pointermove',
+  'click',
+  'dblclick',
+  'mousedown',
+  'mouseup',
+  'mouseenter',
+  'mouseleave',
+  'mouseover',
+  'mouseout',
+  'mousemove',
+  'keydown',
+  'keyup',
+  'keypress',
+  'focus',
+  'blur',
+  'change',
+  'input',
+  'submit',
+  'reset',
+  'load',
+  'unload',
+  'resize',
+  'scroll',
+  'touchstart',
+  'touchend',
+  'touchmove',
+  'touchcancel',
+  'dragstart',
+  'dragend',
+  'dragenter',
+  'dragleave',
+  'dragover',
+  'drop',
+  'contextmenu',
+  'wheel',
+  'pointerdown',
+  'pointerup',
+  'pointermove',
   // Common abbreviations
-  'ms', 's',
+  'ms',
+  's',
 ]);
 
 // =============================================================================
@@ -114,7 +230,15 @@ export const UNIVERSAL_ENGLISH_KEYWORDS: Set<string> = new Set([
  * English logical operator keywords.
  */
 export const ENGLISH_LOGICAL_KEYWORDS: Set<string> = new Set([
-  'and', 'or', 'not', 'is', 'exists', 'matches', 'contains', 'then', 'else',
+  'and',
+  'or',
+  'not',
+  'is',
+  'exists',
+  'matches',
+  'contains',
+  'then',
+  'else',
 ]);
 
 // =============================================================================
@@ -125,7 +249,14 @@ export const ENGLISH_LOGICAL_KEYWORDS: Set<string> = new Set([
  * English value keywords.
  */
 export const ENGLISH_VALUE_KEYWORDS: Set<string> = new Set([
-  'true', 'false', 'null', 'undefined', 'it', 'me', 'my', 'result',
+  'true',
+  'false',
+  'null',
+  'undefined',
+  'it',
+  'me',
+  'my',
+  'result',
 ]);
 
 // =============================================================================
@@ -137,13 +268,25 @@ export const ENGLISH_VALUE_KEYWORDS: Set<string> = new Set([
  */
 export const ENGLISH_EXPRESSION_KEYWORDS: Set<string> = new Set([
   // Positional
-  'first', 'last', 'next', 'previous', 'prev', 'at', 'random',
+  'first',
+  'last',
+  'next',
+  'previous',
+  'prev',
+  'at',
+  'random',
   // DOM traversal
-  'closest', 'parent', 'children', 'within',
+  'closest',
+  'parent',
+  'children',
+  'within',
   // Emptiness/existence
-  'no', 'empty', 'some',
+  'no',
+  'empty',
+  'some',
   // String operations (multi-word)
-  'starts with', 'ends with',
+  'starts with',
+  'ends with',
 ]);
 
 // =============================================================================
@@ -156,37 +299,68 @@ export const ENGLISH_EXPRESSION_KEYWORDS: Set<string> = new Set([
  */
 export const CONDITIONAL_KEYWORDS: Set<string> = new Set([
   // English
-  'if', 'unless', 'when', 'where',
+  'if',
+  'unless',
+  'when',
+  'where',
   // Japanese
-  'もし', '時に', 'ときに', 'どこで',
+  'もし',
+  '時に',
+  'ときに',
+  'どこで',
   // Chinese
-  '如果', '当',
+  '如果',
+  '当',
   // Arabic
-  'إذا', 'عندما', 'حيث',
+  'إذا',
+  'عندما',
+  'حيث',
   // Spanish
-  'si', 'cuando', 'donde',
+  'si',
+  'cuando',
+  'donde',
   // German
-  'wenn', 'wann', 'wo',
+  'wenn',
+  'wann',
+  'wo',
   // French
-  'quand', 'lorsque', 'où',
+  'quand',
+  'lorsque',
+  'où',
   // Portuguese
-  'quando', 'onde',
+  'quando',
+  'onde',
   // Turkish
-  'eğer', 'zaman', 'nerede',
+  'eğer',
+  'zaman',
+  'nerede',
   // Indonesian
-  'ketika', 'saat', 'dimana',
+  'ketika',
+  'saat',
+  'dimana',
   // Korean
-  '때', '어디서',
+  '때',
+  '어디서',
   // Quechua
   'maypi',
   // Swahili
-  'wakati', 'wapi',
+  'wakati',
+  'wapi',
 ]);
 
 /**
  * "Then" keywords across languages (for conditional parsing).
  */
 export const THEN_KEYWORDS: Set<string> = new Set([
-  'then', 'それから', '那么', 'ثم', 'entonces', 'alors', 'dann', 'sonra',
-  'lalu', 'chayqa', 'kisha',
+  'then',
+  'それから',
+  '那么',
+  'ثم',
+  'entonces',
+  'alors',
+  'dann',
+  'sonra',
+  'lalu',
+  'chayqa',
+  'kisha',
 ]);

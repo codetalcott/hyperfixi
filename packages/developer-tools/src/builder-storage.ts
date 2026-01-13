@@ -138,7 +138,7 @@ export class BuilderStorage {
     for (const file of jsonFiles) {
       try {
         const projectPath = path.join(this.projectsDir, file);
-        const project = await fs.readJson(projectPath) as BuilderProject;
+        const project = (await fs.readJson(projectPath)) as BuilderProject;
 
         summaries.push({
           id: project.id,
@@ -181,10 +181,7 @@ export class BuilderStorage {
   /**
    * Export project to various formats
    */
-  async exportProject(
-    id: string,
-    format: 'html' | 'json' | 'zip'
-  ): Promise<Buffer> {
+  async exportProject(id: string, format: 'html' | 'json' | 'zip'): Promise<Buffer> {
     const project = await this.loadProject(id);
 
     switch (format) {
@@ -370,10 +367,7 @@ ${componentHtml}
 /**
  * Create a new builder project
  */
-export function createProject(
-  name: string,
-  options: Partial<BuilderProject> = {}
-): BuilderProject {
+export function createProject(name: string, options: Partial<BuilderProject> = {}): BuilderProject {
   return {
     id: '',
     name,

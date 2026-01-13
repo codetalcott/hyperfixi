@@ -197,7 +197,7 @@ describe('HyperscriptCompiler', () => {
       expect(result.sourceMap).toContain('version');
       expect(result.sourceMap).toContain('sources');
       expect(result.sourceMap).toContain('mappings');
-      
+
       const sourceMap = JSON.parse(result.sourceMap!);
       expect(sourceMap.version).toBe(3);
       expect(sourceMap.sources).toContain('hyperscript');
@@ -205,10 +205,10 @@ describe('HyperscriptCompiler', () => {
 
     it('should handle multiple options together', async () => {
       const script = 'on click fetch /api/data';
-      const options: CompilationOptions = { 
-        minify: true, 
+      const options: CompilationOptions = {
+        minify: true,
         compatibility: 'legacy',
-        sourceMap: true 
+        sourceMap: true,
       };
 
       const result = await compiler.compile(script, options);
@@ -270,7 +270,7 @@ describe('HyperscriptCompiler', () => {
         type: expect.any(String),
         message: expect.any(String),
         line: expect.any(Number),
-        column: expect.any(Number)
+        column: expect.any(Number),
       });
     });
 
@@ -286,7 +286,7 @@ describe('HyperscriptCompiler', () => {
         selectors: [],
         events: [],
         commands: [],
-        templateVariables: []
+        templateVariables: [],
       });
     });
   });
@@ -298,7 +298,7 @@ describe('HyperscriptCompiler', () => {
 
       // First compilation
       const result1 = await compiler.compile(script, options);
-      
+
       // Second compilation should use cache
       const result2 = await compiler.compile(script, options);
 

@@ -404,7 +404,7 @@ export function createAutoCleanupRegistry(options?: {
 
   const root = options?.root ?? document.body;
 
-  const observer = new MutationObserver((mutations) => {
+  const observer = new MutationObserver(mutations => {
     for (const mutation of mutations) {
       for (const node of mutation.removedNodes) {
         if (node instanceof Element) {
@@ -417,11 +417,7 @@ export function createAutoCleanupRegistry(options?: {
   observer.observe(root, { childList: true, subtree: true });
 
   // Register the observer itself for cleanup
-  registry.registerGlobal(
-    () => observer.disconnect(),
-    'observer',
-    'Auto-cleanup MutationObserver'
-  );
+  registry.registerGlobal(() => observer.disconnect(), 'observer', 'Auto-cleanup MutationObserver');
 
   return registry;
 }

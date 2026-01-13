@@ -94,11 +94,7 @@ describe('ShowCommand (Standalone V2)', () => {
       const context = createMockContext(element);
       const evaluator = createMockEvaluator();
 
-      const input = await command.parseInput(
-        { args: [], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       expect(input.targets).toEqual([element]);
       expect(input.defaultDisplay).toBe('block');
@@ -259,7 +255,10 @@ describe('ShowCommand (Standalone V2)', () => {
 
       const context = createMockContext(el1);
 
-      await command.execute({ targets: [el1, el2], defaultDisplay: 'block', mode: 'show' }, context);
+      await command.execute(
+        { targets: [el1, el2], defaultDisplay: 'block', mode: 'show' },
+        context
+      );
 
       expect(el1.style.display).toBe('flex');
       expect(el2.style.display).toBe('inline');
@@ -369,7 +368,9 @@ describe('ShowCommand (Standalone V2)', () => {
     });
 
     it('should reject input with non-HTMLElement targets', () => {
-      expect(command.validate({ targets: ['string', 'array'], defaultDisplay: 'block' })).toBe(false);
+      expect(command.validate({ targets: ['string', 'array'], defaultDisplay: 'block' })).toBe(
+        false
+      );
       expect(command.validate({ targets: [123, 456], defaultDisplay: 'block' })).toBe(false);
     });
 
@@ -377,7 +378,9 @@ describe('ShowCommand (Standalone V2)', () => {
       const element = createTestElement('<div>Test</div>');
       testElements.push(element);
 
-      expect(command.validate({ targets: [element, 'not-element'], defaultDisplay: 'block' })).toBe(false);
+      expect(command.validate({ targets: [element, 'not-element'], defaultDisplay: 'block' })).toBe(
+        false
+      );
     });
 
     it('should reject input without defaultDisplay', () => {
@@ -405,11 +408,7 @@ describe('ShowCommand (Standalone V2)', () => {
       const evaluator = createMockEvaluator();
 
       // Parse input
-      const input = await command.parseInput(
-        { args: [], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Validate
       expect(command.validate(input)).toBe(true);
@@ -425,7 +424,9 @@ describe('ShowCommand (Standalone V2)', () => {
 
     it('should handle complex selector', async () => {
       // Create multiple elements with different selectors
-      const parent = createTestElement('<div id="parent"><button class="btn" style="display:none">1</button><button class="btn" style="display:none">2</button></div>');
+      const parent = createTestElement(
+        '<div id="parent"><button class="btn" style="display:none">1</button><button class="btn" style="display:none">2</button></div>'
+      );
       const buttons = parent.querySelectorAll('.btn');
       buttons.forEach(btn => {
         (btn as HTMLElement).dataset.originalDisplay = 'inline-block';
@@ -469,11 +470,7 @@ describe('ShowCommand (Standalone V2)', () => {
       element.style.display = 'none';
 
       // Now show should restore original
-      const input = await command.parseInput(
-        { args: [], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       await command.execute(input, context);
 

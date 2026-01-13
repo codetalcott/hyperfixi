@@ -70,9 +70,7 @@ export function isCSSPropertySyntax(value: string): boolean {
  * @param expression - CSS property expression
  * @returns Toggleable property or null if not toggleable
  */
-export function parseToggleableCSSProperty(
-  expression: string
-): ToggleableCSSProperty | null {
+export function parseToggleableCSSProperty(expression: string): ToggleableCSSProperty | null {
   const parsed = parseCSSProperty(expression);
   if (!parsed) return null;
 
@@ -132,10 +130,7 @@ export function removeStyleProperty(element: HTMLElement, property: string): voi
  * @param element - Element to modify
  * @param property - CSS property to toggle
  */
-export function toggleCSSProperty(
-  element: HTMLElement,
-  property: ToggleableCSSProperty
-): void {
+export function toggleCSSProperty(element: HTMLElement, property: ToggleableCSSProperty): void {
   const currentStyle = window.getComputedStyle(element);
 
   switch (property) {

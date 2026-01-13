@@ -103,7 +103,7 @@ const runtimeAdapter = {
       throw new Error(parseResult.error?.message || 'Parse failed');
     }
     return await runtime.execute(parseResult.node, ctx);
-  }
+  },
 };
 
 // Create minimal attribute processor with adapter
@@ -118,12 +118,22 @@ const api = {
   attributeProcessor,
   version: '1.1.0-standard-v2-tree-shakeable',
   commands: [
-    'add', 'remove', 'toggle', 'show', 'hide', 'put', 'make',       // DOM (7)
-    'set', 'increment', 'decrement',                                 // Data (3)
-    'send', 'trigger',                                               // Events (2)
-    'wait', 'fetch',                                                 // Async (2)
-    'go',                                                            // Navigation (1)
-    'log'                                                            // Utility (1)
+    'add',
+    'remove',
+    'toggle',
+    'show',
+    'hide',
+    'put',
+    'make', // DOM (7)
+    'set',
+    'increment',
+    'decrement', // Data (3)
+    'send',
+    'trigger', // Events (2)
+    'wait',
+    'fetch', // Async (2)
+    'go', // Navigation (1)
+    'log', // Utility (1)
   ],
 
   /**
@@ -136,7 +146,7 @@ const api = {
    */
   init: () => {
     attributeProcessor.init();
-  }
+  },
 };
 
 // Expose global API

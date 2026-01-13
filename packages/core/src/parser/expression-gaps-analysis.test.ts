@@ -162,7 +162,10 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
 
       const contextWithMe = { ...context, me: mockElement };
 
-      const result = await parseAndEvaluateExpression('me.className', contextWithMe as unknown as ExecutionContext);
+      const result = await parseAndEvaluateExpression(
+        'me.className',
+        contextWithMe as unknown as ExecutionContext
+      );
       expect(result).toBe('test-class');
     });
 
@@ -177,7 +180,10 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
 
       const contextWithData = { ...context, me: mockData };
 
-      const result = await parseAndEvaluateExpression("my user's profile's name", contextWithData as unknown as ExecutionContext);
+      const result = await parseAndEvaluateExpression(
+        "my user's profile's name",
+        contextWithData as unknown as ExecutionContext
+      );
       expect(result).toBe('John');
     });
   });

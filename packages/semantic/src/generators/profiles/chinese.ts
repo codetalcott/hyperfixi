@@ -20,16 +20,16 @@ export const chineseProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: '我',        // "I/me"
-    it: '它',        // "it"
-    you: '你',       // "you"
+    me: '我', // "I/me"
+    it: '它', // "it"
+    you: '你', // "you"
     result: '结果',
     event: '事件',
     target: '目标',
     body: '主体',
   },
   possessive: {
-    marker: '的',    // Possessive particle (de)
+    marker: '的', // Possessive particle (de)
     markerPosition: 'between',
     // Chinese: 我的 value (wǒ de value) = "my value"
   },

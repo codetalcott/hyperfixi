@@ -19,17 +19,29 @@ export function getDecrementPatternsIt(): LanguagePattern[] {
       template: {
         format: 'decrementare {patient} di {quantity}',
         tokens: [
-          { type: 'literal', value: 'decrementare', alternatives: ['decrementa', 'diminuire', 'decrement'] },
+          {
+            type: 'literal',
+            value: 'decrementare',
+            alternatives: ['decrementa', 'diminuire', 'decrement'],
+          },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'di', alternatives: ['per'] },
-            { type: 'role', role: 'quantity' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'di', alternatives: ['per'] },
+              { type: 'role', role: 'quantity' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        quantity: { marker: 'di', markerAlternatives: ['per'], default: { type: 'literal', value: '1' } },
+        quantity: {
+          marker: 'di',
+          markerAlternatives: ['per'],
+          default: { type: 'literal', value: '1' },
+        },
       },
     },
     {
@@ -40,7 +52,11 @@ export function getDecrementPatternsIt(): LanguagePattern[] {
       template: {
         format: 'decrementare {patient}',
         tokens: [
-          { type: 'literal', value: 'decrementare', alternatives: ['decrementa', 'diminuire', 'decrement'] },
+          {
+            type: 'literal',
+            value: 'decrementare',
+            alternatives: ['decrementa', 'diminuire', 'decrement'],
+          },
           { type: 'role', role: 'patient' },
         ],
       },

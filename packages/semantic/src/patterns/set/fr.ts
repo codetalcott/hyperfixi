@@ -20,8 +20,16 @@ export function getSetPatternsFr(): LanguagePattern[] {
       template: {
         format: 'définir {destination} à {patient}',
         tokens: [
-          { type: 'literal', value: 'définir', alternatives: ['definir', 'mettre', 'fixer', 'set'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'literal',
+            value: 'définir',
+            alternatives: ['definir', 'mettre', 'fixer', 'set'],
+          },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'à', alternatives: ['a', 'sur', 'comme'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
@@ -41,7 +49,11 @@ export function getSetPatternsFr(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'définir', alternatives: ['definir', 'mettre', 'fixer'] },
           { type: 'literal', value: 'sur', alternatives: ['à', 'en'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
       },
@@ -58,7 +70,11 @@ export function getSetPatternsFr(): LanguagePattern[] {
       template: {
         format: '{destination} = {patient}',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

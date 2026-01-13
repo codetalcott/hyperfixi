@@ -66,7 +66,7 @@ export class AttributeProcessor {
    * Scan and process all elements with hyperscript attributes in the document
    */
   async scanAndProcessAll(): Promise<void> {
-    const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+    const dbg = ((window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || []);
 
     // Wait for external behaviors package to register (if loaded)
     // This ensures behaviors are available before elements try to install them
@@ -82,7 +82,10 @@ export class AttributeProcessor {
     dbg.push('Found ' + scriptTags.length + ' script tags');
     for (const script of scriptTags) {
       if (script instanceof HTMLScriptElement) {
-        dbg.push('Processing script tag: ' + (script.textContent?.substring(0, 50) || '').replace(/\n/g, ' '));
+        dbg.push(
+          'Processing script tag: ' +
+            (script.textContent?.substring(0, 50) || '').replace(/\n/g, ' ')
+        );
         await this.processHyperscriptTag(script);
         dbg.push('Script tag processed');
       }
@@ -96,7 +99,7 @@ export class AttributeProcessor {
 
     // Process elements asynchronously and wait for all to complete
     const processPromises: Promise<void>[] = [];
-    elements.forEach((element) => {
+    elements.forEach(element => {
       if (element instanceof HTMLElement) {
         const code = element.getAttribute(this.options.attributeName);
         dbg.push(`Processing element: ${element.tagName} with code: ${code?.substring(0, 40)}`);
@@ -142,22 +145,28 @@ export class AttributeProcessor {
     const targets = document.querySelectorAll(selector);
 
     if (targets.length === 0) {
-      console.warn(
-        `[HyperFixi] Script with for="${selector}" found no matching elements`
-      );
+      console.warn(`[HyperFixi] Script with for="${selector}" found no matching elements`);
       return;
     }
 
     try {
-      debug.parse(`SCRIPT: Compiling for="${selector}" code:`, hyperscriptCode.substring(0, 50) + '...');
+      debug.parse(
+        `SCRIPT: Compiling for="${selector}" code:`,
+        hyperscriptCode.substring(0, 50) + '...'
+      );
 
       // Compile once, execute for each target
       const compilationResult = hyperscript.compile(hyperscriptCode);
 
       if (!compilationResult.success) {
-        const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
-        dbg.push(`Script for="${selector}" COMPILE FAILED: ` + JSON.stringify(compilationResult.errors));
-        console.error(`[HyperFixi] Script for="${selector}" compilation failed:`, compilationResult.errors);
+        const dbg = ((window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || []);
+        dbg.push(
+          `Script for="${selector}" COMPILE FAILED: ` + JSON.stringify(compilationResult.errors)
+        );
+        console.error(
+          `[HyperFixi] Script for="${selector}" compilation failed:`,
+          compilationResult.errors
+        );
         return;
       }
 
@@ -198,13 +207,18 @@ export class AttributeProcessor {
       debug.parse('SCRIPT: Compilation result:', compilationResult.success ? 'SUCCESS' : 'FAILED');
 
       if (!compilationResult.success) {
-        const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+        const dbg = ((window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || []);
         dbg.push('Script COMPILE FAILED: ' + JSON.stringify(compilationResult.errors));
         return;
       }
 
-      const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
-      dbg.push('Script compiled, AST type: ' + compilationResult.ast?.type + ', name: ' + (compilationResult.ast as any)?.name);
+      const dbg = ((window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || []);
+      dbg.push(
+        'Script compiled, AST type: ' +
+          compilationResult.ast?.type +
+          ', name: ' +
+          (compilationResult.ast as any)?.name
+      );
 
       // Execute the compiled code (this will register behaviors)
       // Must await to ensure behaviors are registered before elements are processed
@@ -212,7 +226,7 @@ export class AttributeProcessor {
 
       dbg.push('Script executed successfully');
     } catch (error) {
-      const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+      const dbg = ((window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || []);
       dbg.push('Script execution ERROR: ' + (error as Error).message);
     }
   }

@@ -104,14 +104,14 @@ export async function loadRequiredFeatures(code: string | string[]): Promise<voi
   const needed = detectFeatures(code);
 
   // Filter out already loaded features
-  const toLoad = [...needed].filter((f) => !loadedFeatures.has(f));
+  const toLoad = [...needed].filter(f => !loadedFeatures.has(f));
 
   if (toLoad.length === 0) {
     return;
   }
 
   // Load all needed features in parallel
-  await Promise.all(toLoad.map((f) => loadFeatureModule(f)));
+  await Promise.all(toLoad.map(f => loadFeatureModule(f)));
 }
 
 /**
@@ -131,7 +131,7 @@ export function collectHyperscriptFromDocument(): string[] {
 
   // Collect from _="" attributes
   const elementsWithHyperscript = document.querySelectorAll('[_]');
-  elementsWithHyperscript.forEach((el) => {
+  elementsWithHyperscript.forEach(el => {
     const attr = el.getAttribute('_');
     if (attr) {
       code.push(attr);
@@ -140,7 +140,7 @@ export function collectHyperscriptFromDocument(): string[] {
 
   // Collect from script blocks
   const scriptBlocks = document.querySelectorAll('script[type="text/hyperscript"]');
-  scriptBlocks.forEach((script) => {
+  scriptBlocks.forEach(script => {
     if (script.textContent) {
       code.push(script.textContent);
     }
@@ -178,5 +178,5 @@ export function getLoadedFeatures(): string[] {
  * Preload specific features (useful for known requirements)
  */
 export async function preloadFeatures(features: string[]): Promise<void> {
-  await Promise.all(features.map((f) => loadFeatureModule(f)));
+  await Promise.all(features.map(f => loadFeatureModule(f)));
 }

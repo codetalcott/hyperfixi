@@ -361,9 +361,7 @@ export class BundleAnalyzer {
         groups.set(dir, []);
       }
 
-      const gzippedSize = this.options.includeGzipped
-        ? Math.round(module.size * 0.3)
-        : module.size;
+      const gzippedSize = this.options.includeGzipped ? Math.round(module.size * 0.3) : module.size;
 
       groups.get(dir)!.push({
         name: path.basename(module.path),

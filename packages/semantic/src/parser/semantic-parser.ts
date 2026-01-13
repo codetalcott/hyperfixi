@@ -15,7 +15,10 @@ import type {
   LanguagePattern,
 } from '../types';
 import { createCommandNode, createEventHandler, createCompoundNode } from '../types';
-import { tokenize as tokenizeInternal, getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
+import {
+  tokenize as tokenizeInternal,
+  getSupportedLanguages as getTokenizerLanguages,
+} from '../tokenizers';
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage } from '../registry';
 import { patternMatcher } from './pattern-matcher';
@@ -98,14 +101,10 @@ export class SemanticParserImpl implements ISemanticParser {
       roles[role] = value;
     }
 
-    return createCommandNode(
-      match.pattern.command,
-      roles,
-      {
-        sourceLanguage: language,
-        patternId: match.pattern.id,
-      }
-    );
+    return createCommandNode(match.pattern.command, roles, {
+      sourceLanguage: language,
+      patternId: match.pattern.id,
+    });
   }
 
   /**
@@ -143,14 +142,10 @@ export class SemanticParserImpl implements ISemanticParser {
         }
       }
 
-      const commandNode = createCommandNode(
-        actionName as ActionType,
-        roles,
-        {
-          sourceLanguage: language,
-          patternId: match.pattern.id,
-        }
-      );
+      const commandNode = createCommandNode(actionName as ActionType, roles, {
+        sourceLanguage: language,
+        patternId: match.pattern.id,
+      });
 
       // Check if pattern has continuation marker (then-chains)
       const continuesValue = match.captured.get('continues');
@@ -191,15 +186,10 @@ export class SemanticParserImpl implements ISemanticParser {
       body = this.parseBody(tokens, commandPatterns, language);
     }
 
-    return createEventHandler(
-      eventValue,
-      body,
-      undefined,
-      {
-        sourceLanguage: language,
-        patternId: match.pattern.id,
-      }
-    );
+    return createEventHandler(eventValue, body, undefined, {
+      sourceLanguage: language,
+      patternId: match.pattern.id,
+    });
   }
 
   /**
@@ -293,20 +283,20 @@ export class SemanticParserImpl implements ISemanticParser {
             }
           }
 
-          const commandNode = createCommandNode(
-            actionName as ActionType,
-            roles,
-            {
-              sourceLanguage: language,
-              patternId: grammarMatch.pattern.id,
-            }
-          );
+          const commandNode = createCommandNode(actionName as ActionType, roles, {
+            sourceLanguage: language,
+            patternId: grammarMatch.pattern.id,
+          });
           commands.push(commandNode);
           matched = true;
 
           // Check if this pattern also has continuation
           const continuesValue = grammarMatch.captured.get('continues');
-          if (continuesValue && continuesValue.type === 'literal' && continuesValue.value === 'then') {
+          if (
+            continuesValue &&
+            continuesValue.type === 'literal' &&
+            continuesValue.value === 'then'
+          ) {
             // Continue parsing for more commands
             continue;
           }
@@ -467,7 +457,7 @@ export function createSemanticAnalyzer() {
       } catch (error) {
         return { node: null, confidence: 0, success: false, error };
       }
-    }
+    },
   };
 }
 

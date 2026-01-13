@@ -7,8 +7,8 @@ export class SEOGenerator {
   /**
    * Generate meta tags from SEO data
    */
-  generateTags(seoData: SEOData): Array<{ name?: string; property?: string; content: string; }> {
-    const tags: Array<{ name?: string; property?: string; content: string; }> = [];
+  generateTags(seoData: SEOData): Array<{ name?: string; property?: string; content: string }> {
+    const tags: Array<{ name?: string; property?: string; content: string }> = [];
 
     // Basic meta tags
     if (seoData.title) {
@@ -86,9 +86,7 @@ export class SEOGenerator {
       return '';
     }
 
-    const scripts = structuredData.map(data => 
-      JSON.stringify(data, null, 2)
-    );
+    const scripts = structuredData.map(data => JSON.stringify(data, null, 2));
 
     return scripts
       .map(script => `<script type="application/ld+json">${script}</script>`)
@@ -98,7 +96,7 @@ export class SEOGenerator {
   /**
    * Generate canonical link tag
    */
-  generateCanonical(url: string): { rel: string; href: string; } {
+  generateCanonical(url: string): { rel: string; href: string } {
     return {
       rel: 'canonical',
       href: url,
@@ -109,8 +107,8 @@ export class SEOGenerator {
    * Generate alternate language links
    */
   generateAlternateLinks(
-    alternatives: Array<{ hreflang: string; href: string; }>
-  ): Array<{ rel: string; hreflang: string; href: string; }> {
+    alternatives: Array<{ hreflang: string; href: string }>
+  ): Array<{ rel: string; hreflang: string; href: string }> {
     return alternatives.map(alt => ({
       rel: 'alternate',
       hreflang: alt.hreflang,
@@ -122,7 +120,7 @@ export class SEOGenerator {
    * Generate breadcrumb structured data
    */
   generateBreadcrumbSchema(
-    breadcrumbs: Array<{ name: string; url?: string; }>
+    breadcrumbs: Array<{ name: string; url?: string }>
   ): Record<string, any> {
     const itemListElements = breadcrumbs.map((crumb, index) => ({
       '@type': 'ListItem',

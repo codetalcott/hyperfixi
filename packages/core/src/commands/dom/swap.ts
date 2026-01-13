@@ -30,7 +30,13 @@ import {
 } from '../../lib/swap-executor';
 import type { MorphOptions } from '../../lib/morph-adapter';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 // Re-export types from swap-executor for consumers
 export type { SwapStrategy } from '../../lib/swap-executor';
@@ -183,7 +189,9 @@ export class SwapCommand implements DecoratedCommand {
         targetNode = args[args.length - 2];
         contentNode = args[args.length - 1];
       } else {
-        throw new Error('[HyperFixi] swap: could not parse arguments. Expected "swap <target> with <content>"');
+        throw new Error(
+          '[HyperFixi] swap: could not parse arguments. Expected "swap <target> with <content>"'
+        );
       }
     }
 
@@ -196,7 +204,10 @@ export class SwapCommand implements DecoratedCommand {
 
       if (nodeType === 'selector' && typeof nodeValue === 'string') {
         targetArg = nodeValue;
-      } else if (nodeType === 'binaryExpression' && (targetNode as Record<string, unknown>).operator === 'of') {
+      } else if (
+        nodeType === 'binaryExpression' &&
+        (targetNode as Record<string, unknown>).operator === 'of'
+      ) {
         const left = (targetNode as Record<string, unknown>).left as Record<string, unknown>;
         const right = (targetNode as Record<string, unknown>).right as Record<string, unknown>;
 
@@ -378,7 +389,10 @@ export class MorphCommand implements DecoratedCommand {
     const { targets, content, strategy, morphOptions, useViewTransition } = input;
 
     if (useViewTransition) {
-      await executeSwapWithTransition(targets, content, strategy, { morphOptions, useViewTransition });
+      await executeSwapWithTransition(targets, content, strategy, {
+        morphOptions,
+        useViewTransition,
+      });
     } else {
       for (const target of targets) {
         executeSwap(target, content, strategy, morphOptions);

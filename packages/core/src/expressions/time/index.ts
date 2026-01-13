@@ -35,8 +35,6 @@ export class TimeParsingExpression implements TypedExpressionImplementation<numb
     dependencies: [],
   };
 
-  
-
   private readonly timeUnits = [
     { pattern: /([-\d.]+)\s*ms\b/i, multiplier: 1, name: 'milliseconds' },
     { pattern: /([-\d.]+)\s*s\b/i, multiplier: 1000, name: 'seconds' },
@@ -174,8 +172,6 @@ export class DurationFormattingExpression implements TypedExpressionImplementati
     dependencies: [],
   };
 
-  
-
   private readonly units = [
     { name: 'w', longName: 'week', value: 604800000 },
     { name: 'd', longName: 'day', value: 86400000 },
@@ -305,8 +301,6 @@ export class TimeArithmeticExpression implements TypedExpressionImplementation<n
     complexity: 'O(1)' as const,
     dependencies: ['time-parse'],
   };
-
-  
 
   async evaluate(
     context: TypedExecutionContext,

@@ -329,9 +329,22 @@ describe('Aggregator', () => {
       const scanned = new Map([
         [
           'a.html',
-          { commands: new Set(['toggle']), blocks: new Set<string>(), positional: false, detectedLanguages: new Set<string>() },
+          {
+            commands: new Set(['toggle']),
+            blocks: new Set<string>(),
+            positional: false,
+            detectedLanguages: new Set<string>(),
+          },
         ],
-        ['b.html', { commands: new Set(['show']), blocks: new Set(['if']), positional: true, detectedLanguages: new Set(['ja']) }],
+        [
+          'b.html',
+          {
+            commands: new Set(['show']),
+            blocks: new Set(['if']),
+            positional: true,
+            detectedLanguages: new Set(['ja']),
+          },
+        ],
       ]);
 
       aggregator.loadFromScan(scanned);
@@ -353,7 +366,17 @@ describe('Aggregator', () => {
       });
 
       aggregator.loadFromScan(
-        new Map([['new.html', { commands: new Set(['toggle']), blocks: new Set(), positional: false, detectedLanguages: new Set() }]])
+        new Map([
+          [
+            'new.html',
+            {
+              commands: new Set(['toggle']),
+              blocks: new Set(),
+              positional: false,
+              detectedLanguages: new Set(),
+            },
+          ],
+        ])
       );
 
       const usage = aggregator.getUsage();
@@ -431,9 +454,24 @@ describe('Aggregator', () => {
     });
 
     it('includes file count', () => {
-      aggregator.add('a.html', { commands: new Set(['toggle']), blocks: new Set(), positional: false, detectedLanguages: new Set() });
-      aggregator.add('b.html', { commands: new Set(['show']), blocks: new Set(), positional: false, detectedLanguages: new Set() });
-      aggregator.add('c.html', { commands: new Set(['hide']), blocks: new Set(), positional: false, detectedLanguages: new Set() });
+      aggregator.add('a.html', {
+        commands: new Set(['toggle']),
+        blocks: new Set(),
+        positional: false,
+        detectedLanguages: new Set(),
+      });
+      aggregator.add('b.html', {
+        commands: new Set(['show']),
+        blocks: new Set(),
+        positional: false,
+        detectedLanguages: new Set(),
+      });
+      aggregator.add('c.html', {
+        commands: new Set(['hide']),
+        blocks: new Set(),
+        positional: false,
+        detectedLanguages: new Set(),
+      });
 
       expect(aggregator.getSummary().fileCount).toBe(3);
     });

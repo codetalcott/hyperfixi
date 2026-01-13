@@ -33,16 +33,16 @@ import { emitPartialValidationWarnings } from '../validation/partial-warning-for
  * All supported swap strategies
  */
 export type SwapStrategy =
-  | 'morph'        // Inner morph (default) - intelligent diffing, preserves state
-  | 'morphOuter'   // Outer morph - replace element with morph
-  | 'innerHTML'    // Replace inner content
-  | 'outerHTML'    // Replace entire element
-  | 'beforeBegin'  // Insert before element
-  | 'afterBegin'   // Insert at start (prepend)
-  | 'beforeEnd'    // Insert at end (append)
-  | 'afterEnd'     // Insert after element
-  | 'delete'       // Remove element
-  | 'none';        // No DOM changes
+  | 'morph' // Inner morph (default) - intelligent diffing, preserves state
+  | 'morphOuter' // Outer morph - replace element with morph
+  | 'innerHTML' // Replace inner content
+  | 'outerHTML' // Replace entire element
+  | 'beforeBegin' // Insert before element
+  | 'afterBegin' // Insert at start (prepend)
+  | 'beforeEnd' // Insert at end (append)
+  | 'afterEnd' // Insert after element
+  | 'delete' // Remove element
+  | 'none'; // No DOM changes
 
 /**
  * Options for swap execution
@@ -67,23 +67,23 @@ export interface SwapExecutionOptions {
  */
 export const STRATEGY_KEYWORDS: Record<string, SwapStrategy> = {
   // Natural language (Option A from plan)
-  'into': 'innerHTML',
-  'over': 'outerHTML',
+  into: 'innerHTML',
+  over: 'outerHTML',
 
   // Explicit htmx-style strategies
-  'innerhtml': 'innerHTML',
-  'outerhtml': 'outerHTML',
-  'beforebegin': 'beforeBegin',
-  'afterbegin': 'afterBegin',
-  'beforeend': 'beforeEnd',
-  'afterend': 'afterEnd',
-  'delete': 'delete',
-  'none': 'none',
+  innerhtml: 'innerHTML',
+  outerhtml: 'outerHTML',
+  beforebegin: 'beforeBegin',
+  afterbegin: 'afterBegin',
+  beforeend: 'beforeEnd',
+  afterend: 'afterEnd',
+  delete: 'delete',
+  none: 'none',
 
   // Morph strategies
-  'morph': 'morph',
-  'innermorph': 'morph',
-  'outermorph': 'morphOuter',
+  morph: 'morph',
+  innermorph: 'morph',
+  outermorph: 'morphOuter',
 };
 
 /**
@@ -124,7 +124,7 @@ export function executeSwap(
   morphOptions?: MorphOptions
 ): void {
   const contentStr = content !== null && !isHTMLElement(content) ? content : '';
-  const contentEl = isHTMLElement(content) ? content as HTMLElement : null;
+  const contentEl = isHTMLElement(content) ? (content as HTMLElement) : null;
 
   switch (strategy) {
     case 'morph':
@@ -241,7 +241,12 @@ export async function executeSwapWithTransition(
   strategy: SwapStrategy,
   options: SwapExecutionOptions = {}
 ): Promise<void> {
-  const { morphOptions, useViewTransition = false, validateContent = false, targetSelector } = options;
+  const {
+    morphOptions,
+    useViewTransition = false,
+    validateContent = false,
+    targetSelector,
+  } = options;
 
   // Validate content if enabled and content is a string
   if (validateContent && typeof content === 'string') {

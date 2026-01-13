@@ -238,7 +238,7 @@ describe('HyperscriptTranslator', () => {
       const input = `on click
         set #value
         to true`;
-      
+
       const result = translator.translate(input, {
         from: 'en',
         to: 'fr',

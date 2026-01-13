@@ -23,22 +23,22 @@ export const germanProfile: LanguageProfile = {
     subjectDrop: false,
   },
   references: {
-    me: 'ich',       // "I"
-    it: 'es',        // "it"
-    you: 'du',       // "you"
+    me: 'ich', // "I"
+    it: 'es', // "it"
+    you: 'du', // "you"
     result: 'Ergebnis',
     event: 'Ereignis',
     target: 'Ziel',
     body: 'Körper',
   },
   possessive: {
-    marker: '',      // German uses possessive pronouns directly
+    marker: '', // German uses possessive pronouns directly
     markerPosition: 'before-property',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'mein',    // "my"
-      it: 'sein',    // "its"
-      you: 'dein',   // "your"
+      me: 'mein', // "my"
+      it: 'sein', // "its"
+      you: 'dein', // "your"
     },
   },
   roleMarkers: {

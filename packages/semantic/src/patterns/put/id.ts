@@ -24,8 +24,16 @@ export function getPutPatternsId(): LanguagePattern[] {
         // Two-word preposition: "ke dalam"
         format: 'taruh {patient} ke dalam {destination}',
         tokens: [
-          { type: 'literal', value: 'taruh', alternatives: ['letakkan', 'masukkan', 'tempatkan', 'put'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'reference', 'expression'] },
+          {
+            type: 'literal',
+            value: 'taruh',
+            alternatives: ['letakkan', 'masukkan', 'tempatkan', 'put'],
+          },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'ke' },
           { type: 'literal', value: 'dalam', alternatives: ['di'] },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
@@ -46,7 +54,11 @@ export function getPutPatternsId(): LanguagePattern[] {
         format: 'taruh {patient} ke {destination}',
         tokens: [
           { type: 'literal', value: 'taruh', alternatives: ['letakkan', 'masukkan', 'tempatkan'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'ke', alternatives: ['di', 'pada'] },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
         ],
@@ -66,7 +78,11 @@ export function getPutPatternsId(): LanguagePattern[] {
         format: 'taruh {patient} di {destination}',
         tokens: [
           { type: 'literal', value: 'taruh', alternatives: ['letakkan', 'masukkan'] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'di' },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
         ],

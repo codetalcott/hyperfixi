@@ -89,14 +89,18 @@ describe('PropertyTarget Detection', () => {
 
     it('should return false for non-propertyAccess nodes', () => {
       expect(isPropertyAccessNode({ type: 'identifier', name: 'foo' })).toBe(false);
-      expect(isPropertyAccessNode({ type: 'propertyOfExpression', property: { name: 'x' } })).toBe(false);
+      expect(isPropertyAccessNode({ type: 'propertyOfExpression', property: { name: 'x' } })).toBe(
+        false
+      );
       expect(isPropertyAccessNode(null)).toBe(false);
       expect(isPropertyAccessNode(undefined)).toBe(false);
       expect(isPropertyAccessNode('string')).toBe(false);
     });
 
     it('should return false if property is not a string', () => {
-      expect(isPropertyAccessNode({ type: 'propertyAccess', object: {}, property: 123 })).toBe(false);
+      expect(isPropertyAccessNode({ type: 'propertyAccess', object: {}, property: 123 })).toBe(
+        false
+      );
       expect(isPropertyAccessNode({ type: 'propertyAccess', object: {} })).toBe(false);
     });
   });

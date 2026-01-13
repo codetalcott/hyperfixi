@@ -49,7 +49,9 @@ export function listResources(): Resource[] {
 // Resource Reading
 // =============================================================================
 
-export function readResource(uri: string): { contents: Array<{ uri: string; mimeType: string; text: string }> } {
+export function readResource(uri: string): {
+  contents: Array<{ uri: string; mimeType: string; text: string }>;
+} {
   switch (uri) {
     case 'hyperscript://docs/commands':
       return { contents: [{ uri, mimeType: 'text/markdown', text: getCommandsReference() }] };
@@ -64,7 +66,11 @@ export function readResource(uri: string): { contents: Array<{ uri: string; mime
       return { contents: [{ uri, mimeType: 'text/markdown', text: getCommonPatterns() }] };
 
     case 'hyperscript://languages':
-      return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(getLanguages(), null, 2) }] };
+      return {
+        contents: [
+          { uri, mimeType: 'application/json', text: JSON.stringify(getLanguages(), null, 2) },
+        ],
+      };
 
     default:
       throw new Error(`Unknown resource: ${uri}`);
@@ -385,7 +391,10 @@ function getLanguages(): object {
       'browser-es-en': { size: '25 KB', languages: ['en', 'es'] },
       'browser-western': { size: '30 KB', languages: ['en', 'es', 'pt', 'fr', 'de'] },
       'browser-east-asian': { size: '24 KB', languages: ['ja', 'zh', 'ko'] },
-      'browser-priority': { size: '48 KB', languages: ['en', 'es', 'pt', 'fr', 'de', 'ja', 'zh', 'ko', 'ar', 'tr', 'id'] },
+      'browser-priority': {
+        size: '48 KB',
+        languages: ['en', 'es', 'pt', 'fr', 'de', 'ja', 'zh', 'ko', 'ar', 'tr', 'id'],
+      },
       'browser.global': { size: '61 KB', languages: 'all' },
     },
   };

@@ -116,9 +116,9 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(propertiesExpressions.my.evaluate(context, 123 as unknown as string)).rejects.toThrow(
-          'Property name must be a string'
-        );
+        await expect(
+          propertiesExpressions.my.evaluate(context, 123 as unknown as string)
+        ).rejects.toThrow('Property name must be a string');
       });
 
       it('should validate arguments', () => {
@@ -156,9 +156,9 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(propertiesExpressions.its.evaluate(context, 123 as unknown as string)).rejects.toThrow(
-          'Property name must be a string'
-        );
+        await expect(
+          propertiesExpressions.its.evaluate(context, 123 as unknown as string)
+        ).rejects.toThrow('Property name must be a string');
       });
 
       it('should validate arguments', () => {
@@ -184,9 +184,9 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(propertiesExpressions.your.evaluate(context, 123 as unknown as string)).rejects.toThrow(
-          'Property name must be a string'
-        );
+        await expect(
+          propertiesExpressions.your.evaluate(context, 123 as unknown as string)
+        ).rejects.toThrow('Property name must be a string');
       });
 
       it('should validate arguments', () => {
@@ -218,9 +218,9 @@ describe('Property Expressions', () => {
     });
 
     it('should throw error for non-string property', async () => {
-      await expect(propertiesExpressions.of.evaluate(context, 123 as unknown as string, {})).rejects.toThrow(
-        'Property name must be a string'
-      );
+      await expect(
+        propertiesExpressions.of.evaluate(context, 123 as unknown as string, {})
+      ).rejects.toThrow('Property name must be a string');
     });
 
     it('should validate arguments', () => {
@@ -262,9 +262,9 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string attribute name', async () => {
-        await expect(propertiesExpressions.attribute.evaluate(context, 123 as unknown as string)).rejects.toThrow(
-          'Attribute name must be a string'
-        );
+        await expect(
+          propertiesExpressions.attribute.evaluate(context, 123 as unknown as string)
+        ).rejects.toThrow('Attribute name must be a string');
       });
 
       it('should validate arguments', () => {
@@ -331,10 +331,18 @@ describe('Property Expressions', () => {
 
       it('should throw error for non-string parameters', async () => {
         await expect(
-          propertiesExpressions.attributeWithValue.evaluate(context, 123 as unknown as string, 'value')
+          propertiesExpressions.attributeWithValue.evaluate(
+            context,
+            123 as unknown as string,
+            'value'
+          )
         ).rejects.toThrow('Attribute name must be a string');
         await expect(
-          propertiesExpressions.attributeWithValue.evaluate(context, 'attr', 123 as unknown as string)
+          propertiesExpressions.attributeWithValue.evaluate(
+            context,
+            'attr',
+            123 as unknown as string
+          )
         ).rejects.toThrow('Expected value must be a string');
       });
 
@@ -382,8 +390,12 @@ describe('Property Expressions', () => {
       it('should get all elements with class', async () => {
         const result = await propertiesExpressions.classReference.evaluate(context, 'test-class');
         expect(result).toHaveLength(2);
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[0].textContent).toBe('Item 1');
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[1].textContent).toBe('Item 2');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[0].textContent
+        ).toBe('Item 1');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[1].textContent
+        ).toBe('Item 2');
       });
 
       it('should handle class with leading dot', async () => {

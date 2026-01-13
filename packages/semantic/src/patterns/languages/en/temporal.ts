@@ -54,7 +54,4 @@ export const temporalAfterEnglish: LanguagePattern = {
 /**
  * All English temporal patterns.
  */
-export const temporalPatternsEn: LanguagePattern[] = [
-  temporalInEnglish,
-  temporalAfterEnglish,
-];
+export const temporalPatternsEn: LanguagePattern[] = [temporalInEnglish, temporalAfterEnglish];

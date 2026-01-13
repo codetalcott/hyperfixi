@@ -22,10 +22,14 @@ export function getSetPatternsRu(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'установить', alternatives: ['установи', 'задать', 'задай'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'в', alternatives: ['на', 'как'] },
-            { type: 'role', role: 'goal' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'в', alternatives: ['на', 'как'] },
+              { type: 'role', role: 'goal' },
+            ],
+          },
         ],
       },
       extraction: {

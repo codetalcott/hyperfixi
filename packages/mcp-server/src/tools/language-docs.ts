@@ -59,8 +59,7 @@ export const languageDocsTools: Tool[] = [
             type: 'string',
             enum: ['command', 'expression', 'keyword', 'feature', 'special_symbol'],
           },
-          description:
-            'Filter by element types. If not specified, searches all types.',
+          description: 'Filter by element types. If not specified, searches all types.',
         },
         limit: {
           type: 'number',
@@ -103,11 +102,14 @@ const BEST_PRACTICES: BestPractice[] = [
   {
     id: 'prefer-toggle',
     name: 'Prefer toggle over add/remove pairs',
-    description: 'Use toggle when you want to switch a class on/off rather than separate add/remove',
+    description:
+      'Use toggle when you want to switch a class on/off rather than separate add/remove',
     check: (code: string) => {
       // Check for patterns like "if has .class remove else add"
-      if (/if.*has.*\.([\w-]+).*remove.*\1.*else.*add.*\1/i.test(code) ||
-          /if.*has.*\.([\w-]+).*add.*\1.*else.*remove.*\1/i.test(code)) {
+      if (
+        /if.*has.*\.([\w-]+).*remove.*\1.*else.*add.*\1/i.test(code) ||
+        /if.*has.*\.([\w-]+).*add.*\1.*else.*remove.*\1/i.test(code)
+      ) {
         const match = code.match(/\.([\w-]+)/);
         const className = match ? match[1] : 'active';
         return {
@@ -139,7 +141,8 @@ const BEST_PRACTICES: BestPractice[] = [
   {
     id: 'avoid-deep-nesting',
     name: 'Avoid deeply nested if statements',
-    description: 'Deeply nested conditionals are hard to read; consider early returns or separate behaviors',
+    description:
+      'Deeply nested conditionals are hard to read; consider early returns or separate behaviors',
     check: (code: string) => {
       // Count nested if levels
       const ifMatches = code.matchAll(/\bif\b/gi);
@@ -151,7 +154,8 @@ const BEST_PRACTICES: BestPractice[] = [
       if (ifCount >= 3 && endCount >= 3) {
         return {
           applies: true,
-          suggestion: 'Consider simplifying nested conditionals using guard clauses or breaking into separate behaviors',
+          suggestion:
+            'Consider simplifying nested conditionals using guard clauses or breaking into separate behaviors',
         };
       }
       return { applies: false };
@@ -180,7 +184,8 @@ const BEST_PRACTICES: BestPractice[] = [
       if (/document\.querySelector|document\.getElementById|document\.getElementsBy/i.test(code)) {
         return {
           applies: true,
-          suggestion: 'Use hyperscript CSS selectors like "#id" or ".class" instead of document methods',
+          suggestion:
+            'Use hyperscript CSS selectors like "#id" or ".class" instead of document methods',
           improved: 'set #myElement.textContent to "Hello"',
         };
       }
@@ -196,7 +201,8 @@ const BEST_PRACTICES: BestPractice[] = [
       if (/on\s+\w+.*set\s+#\w+\.\w+/i.test(code) && !/\bme\b/i.test(code)) {
         return {
           applies: true,
-          suggestion: 'Consider using "me" to reference the current element instead of an explicit selector',
+          suggestion:
+            'Consider using "me" to reference the current element instead of an explicit selector',
         };
       }
       return { applies: false };
@@ -211,7 +217,8 @@ const BEST_PRACTICES: BestPractice[] = [
       if (/\]\.(textContent|innerHTML|value|checked|disabled)/i.test(code)) {
         return {
           applies: true,
-          suggestion: 'Consider using possessive syntax like "the input\'s value" instead of ".value"',
+          suggestion:
+            'Consider using possessive syntax like "the input\'s value" instead of ".value"',
         };
       }
       return { applies: false };
@@ -225,7 +232,8 @@ const BEST_PRACTICES: BestPractice[] = [
       if (/js\s*{[^}]{50,}}/i.test(code)) {
         return {
           applies: true,
-          suggestion: 'Large JavaScript blocks in hyperscript reduce readability. Consider moving to a separate function.',
+          suggestion:
+            'Large JavaScript blocks in hyperscript reduce readability. Consider moving to a separate function.',
         };
       }
       return { applies: false };
@@ -465,8 +473,8 @@ function analyzeBestPractices(code: string): {
               suggestions.length === 0
                 ? 'good'
                 : suggestions.length <= 2
-                ? 'could improve'
-                : 'needs attention',
+                  ? 'could improve'
+                  : 'needs attention',
           },
           null,
           2
@@ -639,7 +647,9 @@ function handleWithBuiltinDocs(
     case 'search_language_elements': {
       const query = (args.query as string).toLowerCase();
       const matches = Object.entries(BUILTIN_COMMANDS)
-        .filter(([name, cmd]) => name.includes(query) || cmd.description?.toLowerCase().includes(query))
+        .filter(
+          ([name, cmd]) => name.includes(query) || cmd.description?.toLowerCase().includes(query)
+        )
         .map(([_, cmd]) => ({
           type: 'command',
           name: cmd.name,

@@ -12,7 +12,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for CallCommand
@@ -60,7 +66,10 @@ export class CallCommand implements DecoratedCommand {
     return Promise.resolve({ expression: raw.args[0], alias });
   }
 
-  async execute(input: CallCommandInput, context: TypedExecutionContext): Promise<CallCommandOutput> {
+  async execute(
+    input: CallCommandInput,
+    context: TypedExecutionContext
+  ): Promise<CallCommandOutput> {
     const { expression: expressionNode } = input;
 
     // NOW evaluate the expression during the execute phase
@@ -79,7 +88,10 @@ export class CallCommand implements DecoratedCommand {
     if (typeof expression === 'function') {
       expressionType = 'function';
       result = expression();
-      if (result instanceof Promise) { wasAsync = true; result = await result; }
+      if (result instanceof Promise) {
+        wasAsync = true;
+        result = await result;
+      }
     } else if (expression instanceof Promise) {
       expressionType = 'promise';
       wasAsync = true;

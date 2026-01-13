@@ -22,10 +22,14 @@ export function getPutPatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'umieść', alternatives: ['umiesc', 'wstaw', 'włóż', 'wloz'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'w', alternatives: ['do', 'na'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'w', alternatives: ['do', 'na'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {

@@ -212,9 +212,7 @@ export function hasExternalSources(): boolean {
  * Query patterns from all external sources for a language.
  * Returns patterns sorted by confidence.
  */
-export async function queryExternalPatterns(
-  language: string
-): Promise<ExternalPatternEntry[]> {
+export async function queryExternalPatterns(language: string): Promise<ExternalPatternEntry[]> {
   if (externalSources.size === 0) {
     return [];
   }
@@ -279,8 +277,8 @@ export function getTokenizer(code: string): LanguageTokenizer {
     const registered = Array.from(tokenizers.keys()).join(', ');
     throw new Error(
       `Language '${code}' is not registered. ` +
-      `Registered languages: ${registered || 'none'}. ` +
-      `Import the language module first: import '@hyperfixi/semantic/languages/${code}';`
+        `Registered languages: ${registered || 'none'}. ` +
+        `Import the language module first: import '@hyperfixi/semantic/languages/${code}';`
     );
   }
   return tokenizer;
@@ -296,8 +294,8 @@ export function getProfile(code: string): LanguageProfile {
     const registered = Array.from(profiles.keys()).join(', ');
     throw new Error(
       `Language profile '${code}' is not registered. ` +
-      `Registered languages: ${registered || 'none'}. ` +
-      `Import the language module first: import '@hyperfixi/semantic/languages/${code}';`
+        `Registered languages: ${registered || 'none'}. ` +
+        `Import the language module first: import '@hyperfixi/semantic/languages/${code}';`
     );
   }
   return profile;
@@ -380,7 +378,7 @@ export function getPatternsForLanguage(code: string): LanguagePattern[] {
   if (!patternGenerator) {
     throw new Error(
       `No patterns registered for language '${code}'. ` +
-      'Either import the language module or set a pattern generator.'
+        'Either import the language module or set a pattern generator.'
     );
   }
 

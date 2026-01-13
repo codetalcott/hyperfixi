@@ -92,7 +92,7 @@ behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
     trigger resizable:end
   end
 end
-`.trim()
+`.trim(),
     };
 
     const results: Record<string, { success: boolean; error?: string }> = {};
@@ -102,12 +102,14 @@ end
         const result = hf.compile(source, { disableSemanticParsing: true });
         results[name] = {
           success: result.success,
-          error: result.success ? undefined : result.errors?.[0]?.message || JSON.stringify(result.errors)
+          error: result.success
+            ? undefined
+            : result.errors?.[0]?.message || JSON.stringify(result.errors),
         };
       } catch (e: any) {
         results[name] = {
           success: false,
-          error: e.message || String(e)
+          error: e.message || String(e),
         };
       }
     }

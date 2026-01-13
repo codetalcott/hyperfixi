@@ -235,7 +235,9 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     case '-':
       return extractValue(specialExpressions.subtraction.evaluate(context as any, { left, right }));
     case '*':
-      return extractValue(specialExpressions.multiplication.evaluate(context as any, { left, right }));
+      return extractValue(
+        specialExpressions.multiplication.evaluate(context as any, { left, right })
+      );
     case '/':
       return extractValue(specialExpressions.division.evaluate(context as any, { left, right }));
     case '%':
@@ -343,17 +345,19 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
 
     // For closest/previous/next, identifier args should be treated as tag selectors
     if (['closest', 'previous', 'next'].includes(funcName)) {
-      const args = await Promise.all(node.arguments.map((arg: ASTNode) => {
-        // If arg is an identifier, use the name as a tag selector
-        if (arg.type === 'identifier' && (arg as any).name) {
-          return (arg as any).name;
-        }
-        // If arg is a selector, use the value
-        if (arg.type === 'selector' && (arg as any).value) {
-          return (arg as any).value;
-        }
-        return evaluateAST(arg, context);
-      }));
+      const args = await Promise.all(
+        node.arguments.map((arg: ASTNode) => {
+          // If arg is an identifier, use the name as a tag selector
+          if (arg.type === 'identifier' && (arg as any).name) {
+            return (arg as any).name;
+          }
+          // If arg is a selector, use the value
+          if (arg.type === 'selector' && (arg as any).value) {
+            return (arg as any).value;
+          }
+          return evaluateAST(arg, context);
+        })
+      );
 
       switch (funcName) {
         case 'closest':
@@ -365,7 +369,9 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
       }
     }
 
-    const args2 = await Promise.all(node.arguments.map((arg: ASTNode) => evaluateAST(arg, context)));
+    const args2 = await Promise.all(
+      node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
+    );
 
     switch (funcName) {
       case 'closest':
@@ -394,7 +400,9 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
 
   // Method calls
   if (typeof callee === 'function') {
-    const evaluatedArgs = await Promise.all(node.arguments.map((arg: ASTNode) => evaluateAST(arg, context)));
+    const evaluatedArgs = await Promise.all(
+      node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
+    );
     return callee(...evaluatedArgs);
   }
 

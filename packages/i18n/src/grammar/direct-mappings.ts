@@ -81,7 +81,15 @@ function buildMappingFromDictionaries(
   const categories: Record<string, Record<string, string>> = {};
 
   // Map each category
-  for (const category of ['commands', 'modifiers', 'events', 'logical', 'temporal', 'values', 'attributes'] as const) {
+  for (const category of [
+    'commands',
+    'modifiers',
+    'events',
+    'logical',
+    'temporal',
+    'values',
+    'attributes',
+  ] as const) {
     const sourceCategory = sourceDict[category] as Record<string, string> | undefined;
     const targetCategory = targetDict[category] as Record<string, string> | undefined;
 
@@ -155,123 +163,123 @@ export const esPtMapping: DirectMapping = {
   target: 'pt',
   words: {
     // Commands - many are cognates
-    'en': 'em',              // on (event)
-    'decir': 'dizer',        // tell
-    'disparar': 'disparar',  // trigger
-    'enviar': 'enviar',      // send
-    'tomar': 'pegar',        // take
-    'poner': 'colocar',      // put
-    'establecer': 'definir', // set
-    'obtener': 'obter',      // get
-    'agregar': 'adicionar',  // add
-    'quitar': 'remover',     // remove
-    'alternar': 'alternar',  // toggle
-    'ocultar': 'esconder',   // hide
-    'mostrar': 'mostrar',    // show
-    'si': 'se',              // if
-    'menos': 'a menos',      // unless
-    'repetir': 'repetir',    // repeat
-    'para': 'para',          // for
-    'mientras': 'enquanto',  // while
-    'hasta': 'até',          // until
-    'continuar': 'continuar', // continue
-    'romper': 'parar',       // break
-    'detener': 'parar',      // halt
-    'esperar': 'esperar',    // wait
-    'buscar': 'buscar',      // fetch
-    'llamar': 'chamar',      // call
-    'retornar': 'retornar',  // return
-    'hacer': 'fazer',        // make
-    'registrar': 'registrar', // log
-    'lanzar': 'lançar',      // throw
-    'atrapar': 'capturar',   // catch
-    'medir': 'medir',        // measure
-    'transición': 'transição', // transition
-    'incrementar': 'incrementar', // increment
-    'decrementar': 'decrementar', // decrement
-    'vincular': 'vincular',  // bind
-    'predeterminar': 'padrão', // default
-    'persistir': 'persistir', // persist
-    'ir': 'ir',              // go
-    'copiar': 'copiar',      // copy
-    'escoger': 'escolher',   // pick
-    'intercambiar': 'trocar', // swap
-    'transformar': 'transformar', // morph
-    'añadir': 'anexar',      // append
-    'salir': 'sair',         // exit
+    en: 'em', // on (event)
+    decir: 'dizer', // tell
+    disparar: 'disparar', // trigger
+    enviar: 'enviar', // send
+    tomar: 'pegar', // take
+    poner: 'colocar', // put
+    establecer: 'definir', // set
+    obtener: 'obter', // get
+    agregar: 'adicionar', // add
+    quitar: 'remover', // remove
+    alternar: 'alternar', // toggle
+    ocultar: 'esconder', // hide
+    mostrar: 'mostrar', // show
+    si: 'se', // if
+    menos: 'a menos', // unless
+    repetir: 'repetir', // repeat
+    para: 'para', // for
+    mientras: 'enquanto', // while
+    hasta: 'até', // until
+    continuar: 'continuar', // continue
+    romper: 'parar', // break
+    detener: 'parar', // halt
+    esperar: 'esperar', // wait
+    buscar: 'buscar', // fetch
+    llamar: 'chamar', // call
+    retornar: 'retornar', // return
+    hacer: 'fazer', // make
+    registrar: 'registrar', // log
+    lanzar: 'lançar', // throw
+    atrapar: 'capturar', // catch
+    medir: 'medir', // measure
+    transición: 'transição', // transition
+    incrementar: 'incrementar', // increment
+    decrementar: 'decrementar', // decrement
+    vincular: 'vincular', // bind
+    predeterminar: 'padrão', // default
+    persistir: 'persistir', // persist
+    ir: 'ir', // go
+    copiar: 'copiar', // copy
+    escoger: 'escolher', // pick
+    intercambiar: 'trocar', // swap
+    transformar: 'transformar', // morph
+    añadir: 'anexar', // append
+    salir: 'sair', // exit
 
     // Modifiers
-    'a': 'para',             // to
-    'de': 'de',              // from
-    'dentro': 'em',          // into
-    'con': 'com',            // with
-    'como': 'como',          // as
-    'por': 'por',            // by
+    a: 'para', // to
+    de: 'de', // from
+    dentro: 'em', // into
+    con: 'com', // with
+    como: 'como', // as
+    por: 'por', // by
 
     // Events
-    'clic': 'clique',        // click
-    'cambio': 'mudança',     // change
-    'entrada': 'entrada',    // input
-    'envío': 'envio',        // submit
-    'carga': 'carregar',     // load
-    'enfoque': 'foco',       // focus
-    'desenfoque': 'desfoque', // blur
+    clic: 'clique', // click
+    cambio: 'mudança', // change
+    entrada: 'entrada', // input
+    envío: 'envio', // submit
+    carga: 'carregar', // load
+    enfoque: 'foco', // focus
+    desenfoque: 'desfoque', // blur
 
     // Logical
-    'verdadero': 'verdadeiro', // true
-    'falso': 'falso',        // false
-    'y': 'e',                // and
-    'o': 'ou',               // or
-    'no': 'não',             // not
-    'es': 'é',               // is
+    verdadero: 'verdadeiro', // true
+    falso: 'falso', // false
+    y: 'e', // and
+    o: 'ou', // or
+    no: 'não', // not
+    es: 'é', // is
 
     // Temporal
-    'segundos': 'segundos',  // seconds
-    'milisegundos': 'milissegundos', // milliseconds
+    segundos: 'segundos', // seconds
+    milisegundos: 'milissegundos', // milliseconds
 
     // Values
-    'nulo': 'nulo',          // null
-    'indefinido': 'indefinido', // undefined
-    'vacío': 'vazio',        // empty
+    nulo: 'nulo', // null
+    indefinido: 'indefinido', // undefined
+    vacío: 'vazio', // empty
   },
   categories: {
     commands: {
-      'en': 'em',
-      'decir': 'dizer',
-      'tomar': 'pegar',
-      'poner': 'colocar',
-      'establecer': 'definir',
-      'obtener': 'obter',
-      'agregar': 'adicionar',
-      'quitar': 'remover',
-      'ocultar': 'esconder',
-      'si': 'se',
-      'mientras': 'enquanto',
-      'hasta': 'até',
-      'romper': 'parar',
-      'detener': 'parar',
-      'llamar': 'chamar',
-      'hacer': 'fazer',
-      'lanzar': 'lançar',
-      'atrapar': 'capturar',
-      'escoger': 'escolher',
-      'intercambiar': 'trocar',
-      'añadir': 'anexar',
-      'salir': 'sair',
+      en: 'em',
+      decir: 'dizer',
+      tomar: 'pegar',
+      poner: 'colocar',
+      establecer: 'definir',
+      obtener: 'obter',
+      agregar: 'adicionar',
+      quitar: 'remover',
+      ocultar: 'esconder',
+      si: 'se',
+      mientras: 'enquanto',
+      hasta: 'até',
+      romper: 'parar',
+      detener: 'parar',
+      llamar: 'chamar',
+      hacer: 'fazer',
+      lanzar: 'lançar',
+      atrapar: 'capturar',
+      escoger: 'escolher',
+      intercambiar: 'trocar',
+      añadir: 'anexar',
+      salir: 'sair',
     },
     events: {
-      'clic': 'clique',
-      'cambio': 'mudança',
-      'carga': 'carregar',
-      'enfoque': 'foco',
-      'desenfoque': 'desfoque',
+      clic: 'clique',
+      cambio: 'mudança',
+      carga: 'carregar',
+      enfoque: 'foco',
+      desenfoque: 'desfoque',
     },
     logical: {
-      'verdadero': 'verdadeiro',
-      'y': 'e',
-      'o': 'ou',
-      'no': 'não',
-      'es': 'é',
+      verdadero: 'verdadeiro',
+      y: 'e',
+      o: 'ou',
+      no: 'não',
+      es: 'é',
     },
   },
 };
@@ -338,7 +346,7 @@ export function translateWordDirect(
  * Get all supported direct translation pairs
  */
 export function getSupportedDirectPairs(): Array<{ source: string; target: string }> {
-  return Array.from(directMappings.keys()).map((key) => {
+  return Array.from(directMappings.keys()).map(key => {
     const [source, target] = key.split('->');
     return { source, target };
   });

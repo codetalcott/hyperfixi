@@ -62,7 +62,7 @@ export class MemorySSRCache implements SSRCache {
    */
   async set(key: string, result: SSRResult, ttl?: number): Promise<void> {
     const actualTTL = ttl ?? this.defaultTTL;
-    const expires = Date.now() + (actualTTL * 1000);
+    const expires = Date.now() + actualTTL * 1000;
     const tags = result.cache?.tags ?? [];
     const now = Date.now();
 
@@ -115,7 +115,7 @@ export class MemorySSRCache implements SSRCache {
    */
   async invalidate(tags: string[]): Promise<void> {
     const keysToDelete: string[] = [];
-    
+
     for (const [key, entry] of this.cache.entries()) {
       // Check if any of the entry's tags match the invalidation tags
       if (entry.tags.some(tag => tags.includes(tag))) {
@@ -144,8 +144,10 @@ export class MemorySSRCache implements SSRCache {
     size: number;
     keys: number;
   }> {
-    const totalSize = Array.from(this.cache.values())
-      .reduce((size, entry) => size + Buffer.byteLength(JSON.stringify(entry.result), 'utf8'), 0);
+    const totalSize = Array.from(this.cache.values()).reduce(
+      (size, entry) => size + Buffer.byteLength(JSON.stringify(entry.result), 'utf8'),
+      0
+    );
 
     return {
       hits: this.statsData.hits,
@@ -228,12 +230,12 @@ export class RedisSSRCache implements SSRCache {
     try {
       for (const tag of tags) {
         const keys = await this.redis.smembers(`${this.keyPrefix}tag:${tag}`);
-        
+
         if (keys.length > 0) {
           // Delete cache entries
           const fullKeys = keys.map((key: string) => this.keyPrefix + key);
           await this.redis.del(...fullKeys);
-          
+
           // Delete tag set
           await this.redis.del(`${this.keyPrefix}tag:${tag}`);
         }
@@ -250,7 +252,7 @@ export class RedisSSRCache implements SSRCache {
     try {
       const pattern = this.keyPrefix + '*';
       const keys = await this.redis.keys(pattern);
-      
+
       if (keys.length > 0) {
         await this.redis.del(...keys);
       }
@@ -271,14 +273,14 @@ export class RedisSSRCache implements SSRCache {
     try {
       const info = await this.redis.info('stats');
       const keyspaceInfo = await this.redis.info('keyspace');
-      
+
       // Parse Redis info for statistics
       const hits = this.parseInfoValue(info, 'keyspace_hits') || 0;
       const misses = this.parseInfoValue(info, 'keyspace_misses') || 0;
-      
+
       const pattern = this.keyPrefix + '*';
       const keys = await this.redis.keys(pattern);
-      
+
       // Estimate size (this would be more sophisticated in a real implementation)
       const size = keys.length * 1024; // Rough estimate
 
@@ -348,20 +350,14 @@ export class TieredSSRCache implements SSRCache {
    * Invalidate cache entries by tags
    */
   async invalidate(tags: string[]): Promise<void> {
-    await Promise.all([
-      this.l1Cache.invalidate(tags),
-      this.l2Cache.invalidate(tags),
-    ]);
+    await Promise.all([this.l1Cache.invalidate(tags), this.l2Cache.invalidate(tags)]);
   }
 
   /**
    * Clear all cache
    */
   async clear(): Promise<void> {
-    await Promise.all([
-      this.l1Cache.clear(),
-      this.l2Cache.clear(),
-    ]);
+    await Promise.all([this.l1Cache.clear(), this.l2Cache.clear()]);
   }
 
   /**
@@ -373,10 +369,7 @@ export class TieredSSRCache implements SSRCache {
     size: number;
     keys: number;
   }> {
-    const [l1Stats, l2Stats] = await Promise.all([
-      this.l1Cache.stats(),
-      this.l2Cache.stats(),
-    ]);
+    const [l1Stats, l2Stats] = await Promise.all([this.l1Cache.stats(), this.l2Cache.stats()]);
 
     return {
       hits: l1Stats.hits + l2Stats.hits,
@@ -398,19 +391,19 @@ export function createSSRCache(config: {
   switch (config.type) {
     case 'memory':
       return new MemorySSRCache();
-    
+
     case 'redis':
       if (!config.redis) {
         throw new Error('Redis client required for Redis cache');
       }
       return new RedisSSRCache(config.redis, config.keyPrefix);
-    
+
     case 'tiered':
       if (!config.redis) {
         throw new Error('Redis client required for tiered cache');
       }
       return new TieredSSRCache(config.redis, config.keyPrefix);
-    
+
     default:
       return new MemorySSRCache();
   }

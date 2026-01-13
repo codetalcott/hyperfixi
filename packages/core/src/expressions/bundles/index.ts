@@ -26,17 +26,8 @@ export { createCommonExpressionEvaluator } from './common-expressions';
 export { createFullExpressionEvaluator } from './full-expressions';
 
 // Re-export individual categories for custom bundles
-export {
-  referencesExpressions,
-  logicalExpressions,
-  specialExpressions,
-} from './core-expressions';
+export { referencesExpressions, logicalExpressions, specialExpressions } from './core-expressions';
 
-export {
-  conversionExpressions,
-  positionalExpressions,
-} from './common-expressions';
+export { conversionExpressions, positionalExpressions } from './common-expressions';
 
-export {
-  propertiesExpressions,
-} from './full-expressions';
+export { propertiesExpressions } from './full-expressions';

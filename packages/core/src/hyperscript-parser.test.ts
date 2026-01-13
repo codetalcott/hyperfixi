@@ -327,7 +327,9 @@ describe('HyperscriptParser', () => {
 
       expect(ast.type).toBe('program');
       expect((ast as { features?: unknown[] }).features).toHaveLength(1);
-      expect((((ast as { features?: unknown[] }).features as unknown[])[0] as any).body[0].name).toBe('log');
+      expect(
+        (((ast as { features?: unknown[] }).features as unknown[])[0] as any).body[0].name
+      ).toBe('log');
     });
   });
 });

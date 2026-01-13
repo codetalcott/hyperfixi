@@ -15,7 +15,13 @@ import type { ASTNode, ExecutionContext } from '../../types/base-types';
 /**
  * Types of selectors recognized by HyperFixi commands
  */
-export type SelectorType = 'class' | 'attribute' | 'css-property' | 'element' | 'identifier' | 'unknown';
+export type SelectorType =
+  | 'class'
+  | 'attribute'
+  | 'css-property'
+  | 'element'
+  | 'identifier'
+  | 'unknown';
 
 /**
  * Smart element types that have special toggle behavior
@@ -25,7 +31,12 @@ export type SmartElementTag = 'dialog' | 'details' | 'summary' | 'select';
 /**
  * Array of supported smart element tags
  */
-export const SMART_ELEMENT_TAGS: readonly SmartElementTag[] = ['dialog', 'details', 'summary', 'select'] as const;
+export const SMART_ELEMENT_TAGS: readonly SmartElementTag[] = [
+  'dialog',
+  'details',
+  'summary',
+  'select',
+] as const;
 
 /**
  * Detect selector type from a string value
@@ -240,7 +251,13 @@ export function isBareSmartElementNode(node: ASTNode): boolean {
  * Command input type classifications
  * Used by toggle, add, remove commands to determine what operation to perform
  */
-export type CommandInputType = 'classes' | 'attribute' | 'css-property' | 'element' | 'styles' | 'unknown';
+export type CommandInputType =
+  | 'classes'
+  | 'attribute'
+  | 'css-property'
+  | 'element'
+  | 'styles'
+  | 'unknown';
 
 /**
  * Result of parsing a command's first argument

@@ -73,10 +73,7 @@ export class TokenConsumer {
       stopWhen,
     } = options;
 
-    const terminators = [
-      ...COMMAND_TERMINATORS,
-      ...additionalTerminators,
-    ];
+    const terminators = [...COMMAND_TERMINATORS, ...additionalTerminators];
 
     const args: ASTNode[] = [];
 
@@ -87,9 +84,7 @@ export class TokenConsumer {
       }
 
       // Parse the next argument
-      const arg = allowExpressions
-        ? this.parser.parseExpression()
-        : this.parser.parsePrimary();
+      const arg = allowExpressions ? this.parser.parseExpression() : this.parser.parsePrimary();
 
       args.push(arg);
     }
@@ -177,9 +172,7 @@ export class TokenConsumer {
     }
 
     this.parser.advance(); // consume preposition
-    const target = parseExpression
-      ? this.parser.parseExpression()
-      : this.parser.parsePrimary();
+    const target = parseExpression ? this.parser.parseExpression() : this.parser.parsePrimary();
 
     return { preposition, target };
   }
@@ -191,9 +184,7 @@ export class TokenConsumer {
    * @param prepositions Map of preposition keywords to whether they should parse expressions
    * @returns Record of found prepositions to their targets
    */
-  parseOptionalModifiers(
-    prepositions: Record<string, boolean>
-  ): Record<string, ASTNode> {
+  parseOptionalModifiers(prepositions: Record<string, boolean>): Record<string, ASTNode> {
     const modifiers: Record<string, ASTNode> = {};
 
     while (!this.parser.isAtEnd()) {

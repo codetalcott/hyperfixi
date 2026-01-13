@@ -136,7 +136,7 @@ export function generateDocumentation(ast: ASTNode): DocumentationOutput {
     behaviors,
     functions,
     metrics,
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
   };
 }
 
@@ -148,7 +148,7 @@ export function generateMarkdown(ast: ASTNode, options: MarkdownOptions = {}): s
     includeSource = true,
     includeMetrics = true,
     includeToc = true,
-    headingLevel = 1
+    headingLevel = 1,
   } = options;
 
   const doc = generateDocumentation(ast);
@@ -162,7 +162,7 @@ export function generateMarkdown(ast: ASTNode, options: MarkdownOptions = {}): s
   lines.push('');
 
   // Table of Contents
-  if (includeToc && (doc.eventHandlers.length + doc.behaviors.length + doc.functions.length) > 2) {
+  if (includeToc && doc.eventHandlers.length + doc.behaviors.length + doc.functions.length > 2) {
     lines.push(`${h(2)} Table of Contents`);
     lines.push('');
     if (doc.eventHandlers.length > 0) {
@@ -230,9 +230,7 @@ export function generateMarkdown(ast: ASTNode, options: MarkdownOptions = {}): s
     lines.push('');
 
     for (const behavior of doc.behaviors) {
-      const params = behavior.parameters.length > 0
-        ? `(${behavior.parameters.join(', ')})`
-        : '';
+      const params = behavior.parameters.length > 0 ? `(${behavior.parameters.join(', ')})` : '';
       lines.push(`${h(3)} ${behavior.name}${params}`);
       lines.push('');
       lines.push(behavior.description);
@@ -273,9 +271,7 @@ export function generateMarkdown(ast: ASTNode, options: MarkdownOptions = {}): s
     lines.push('');
 
     for (const fn of doc.functions) {
-      const params = fn.parameters.length > 0
-        ? `(${fn.parameters.join(', ')})`
-        : '()';
+      const params = fn.parameters.length > 0 ? `(${fn.parameters.join(', ')})` : '()';
       lines.push(`${h(3)} ${fn.name}${params}`);
       lines.push('');
       lines.push(fn.description);
@@ -339,7 +335,9 @@ export function generateHTML(ast: ASTNode, options: { title?: string } = {}): st
     sections.push(`
       <section class="event-handlers">
         <h2>Event Handlers</h2>
-        ${doc.eventHandlers.map(h => `
+        ${doc.eventHandlers
+          .map(
+            h => `
           <article class="event-handler">
             <h3>on ${escapeHtml(h.event)}</h3>
             ${h.selector ? `<p class="selector">Source: <code>${escapeHtml(h.selector)}</code></p>` : ''}
@@ -349,7 +347,9 @@ export function generateHTML(ast: ASTNode, options: { title?: string } = {}): st
             </ul>
             <pre><code class="language-hyperscript">${escapeHtml(h.source)}</code></pre>
           </article>
-        `).join('')}
+        `
+          )
+          .join('')}
       </section>
     `);
   }
@@ -359,17 +359,25 @@ export function generateHTML(ast: ASTNode, options: { title?: string } = {}): st
     sections.push(`
       <section class="behaviors">
         <h2>Behaviors</h2>
-        ${doc.behaviors.map(b => `
+        ${doc.behaviors
+          .map(
+            b => `
           <article class="behavior">
             <h3>${escapeHtml(b.name)}${b.parameters.length ? `(${escapeHtml(b.parameters.join(', '))})` : ''}</h3>
             <p>${escapeHtml(b.description)}</p>
-            ${b.parameters.length ? `
+            ${
+              b.parameters.length
+                ? `
               <h4>Parameters</h4>
               <ul>${b.parameters.map(p => `<li><code>${escapeHtml(p)}</code></li>`).join('')}</ul>
-            ` : ''}
+            `
+                : ''
+            }
             <pre><code class="language-hyperscript">${escapeHtml(b.source)}</code></pre>
           </article>
-        `).join('')}
+        `
+          )
+          .join('')}
       </section>
     `);
   }
@@ -379,14 +387,18 @@ export function generateHTML(ast: ASTNode, options: { title?: string } = {}): st
     sections.push(`
       <section class="functions">
         <h2>Functions</h2>
-        ${doc.functions.map(f => `
+        ${doc.functions
+          .map(
+            f => `
           <article class="function">
             <h3>${escapeHtml(f.name)}(${escapeHtml(f.parameters.join(', '))})</h3>
             <p>${escapeHtml(f.description)}</p>
             ${f.returns ? `<p><strong>Returns:</strong> ${escapeHtml(f.returns)}</p>` : ''}
             <pre><code class="language-hyperscript">${escapeHtml(f.source)}</code></pre>
           </article>
-        `).join('')}
+        `
+          )
+          .join('')}
       </section>
     `);
   }
@@ -461,7 +473,7 @@ function documentEventHandlers(ast: ASTNode): EventHandlerDoc[] {
       selector: data.selector,
       description: generateEventHandlerDescription(data),
       commands,
-      source: generate(handler)
+      source: generate(handler),
     };
   });
 }
@@ -478,15 +490,13 @@ function documentBehaviors(ast: ASTNode): BehaviorDoc[] {
       parameters: data.parameters || [],
       description: generateBehaviorDescription(data),
       eventHandlers,
-      source: generate(behavior)
+      source: generate(behavior),
     };
   });
 }
 
 function documentFunctions(ast: ASTNode): FunctionDoc[] {
-  const functions = findNodes(ast, node =>
-    node.type === 'function' || node.type === 'def'
-  );
+  const functions = findNodes(ast, node => node.type === 'function' || node.type === 'def');
 
   return functions.map(fn => {
     const data = fn as any;
@@ -496,7 +506,7 @@ function documentFunctions(ast: ASTNode): FunctionDoc[] {
       parameters: data.parameters || data.params || [],
       returns: inferReturnType(data),
       description: generateFunctionDescription(data),
-      source: generate(fn)
+      source: generate(fn),
     };
   });
 }
@@ -507,7 +517,7 @@ function documentCommands(commands: ASTNode[]): CommandDoc[] {
     return {
       name: data.name || 'unknown',
       description: getCommandDescription(data.name, data),
-      target: data.target ? generate(data.target) : undefined
+      target: data.target ? generate(data.target) : undefined,
     };
   });
 }
@@ -558,21 +568,21 @@ function generateFunctionDescription(fn: any): string {
 
 function getCommandDescription(name: string, data: any): string {
   const descriptions: Record<string, string> = {
-    'add': 'Adds a class or attribute to an element',
-    'remove': 'Removes a class or attribute from an element',
-    'toggle': 'Toggles a class on an element',
-    'put': 'Puts content into an element',
-    'set': 'Sets a variable or property value',
-    'fetch': 'Makes an HTTP request',
-    'send': 'Sends a custom event',
-    'trigger': 'Triggers an event on an element',
-    'wait': 'Pauses execution for a duration',
-    'show': 'Shows an element',
-    'hide': 'Hides an element',
-    'log': 'Logs a message to the console',
-    'call': 'Calls a function',
-    'go': 'Navigates to a URL',
-    'take': 'Removes a class from other elements and adds it to this one'
+    add: 'Adds a class or attribute to an element',
+    remove: 'Removes a class or attribute from an element',
+    toggle: 'Toggles a class on an element',
+    put: 'Puts content into an element',
+    set: 'Sets a variable or property value',
+    fetch: 'Makes an HTTP request',
+    send: 'Sends a custom event',
+    trigger: 'Triggers an event on an element',
+    wait: 'Pauses execution for a duration',
+    show: 'Shows an element',
+    hide: 'Hides an element',
+    log: 'Logs a message to the console',
+    call: 'Calls a function',
+    go: 'Navigates to a URL',
+    take: 'Removes a class from other elements and adds it to this one',
   };
 
   return descriptions[name] || `Executes the '${name}' command`;
@@ -639,7 +649,7 @@ function calculateCodeMetrics(ast: ASTNode): CodeMetrics {
     functionCount: functions.length,
     commandCount: commands.length,
     complexity: complexityRating,
-    cyclomaticComplexity: cyclomatic
+    cyclomaticComplexity: cyclomatic,
   };
 }
 

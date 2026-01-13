@@ -37,10 +37,30 @@ const PATTERN = /^the\s+(.+?)\s+of\s+(.+)$/i;
 
 // Boolean properties for toggle behavior
 const BOOL_PROPS = new Set([
-  'disabled', 'checked', 'hidden', 'readOnly', 'readonly', 'required',
-  'multiple', 'selected', 'autofocus', 'autoplay', 'controls', 'loop',
-  'muted', 'open', 'reversed', 'async', 'defer', 'noValidate', 'novalidate',
-  'formNoValidate', 'formnovalidate', 'draggable', 'spellcheck', 'contentEditable',
+  'disabled',
+  'checked',
+  'hidden',
+  'readOnly',
+  'readonly',
+  'required',
+  'multiple',
+  'selected',
+  'autofocus',
+  'autoplay',
+  'controls',
+  'loop',
+  'muted',
+  'open',
+  'reversed',
+  'async',
+  'defer',
+  'noValidate',
+  'novalidate',
+  'formNoValidate',
+  'formnovalidate',
+  'draggable',
+  'spellcheck',
+  'contentEditable',
 ]);
 
 /** Check if node is a propertyOfExpression AST node (core parser: "the X of Y") */

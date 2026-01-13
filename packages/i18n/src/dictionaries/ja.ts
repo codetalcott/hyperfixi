@@ -9,7 +9,7 @@ export const ja: Dictionary = {
     tell: '伝える',
     trigger: '引き金',
     send: '送る',
-    
+
     // DOM manipulation
     take: '取る',
     put: '置く',
@@ -20,7 +20,7 @@ export const ja: Dictionary = {
     toggle: '切り替え',
     hide: '隠す',
     show: '表示',
-    
+
     // Control flow
     if: 'もし',
     unless: 'でなければ',
@@ -31,13 +31,13 @@ export const ja: Dictionary = {
     continue: '続ける',
     break: '中断',
     halt: '停止',
-    
+
     // Async
     wait: '待つ',
     fetch: '取得',
     call: '呼び出し',
     return: '戻る',
-    
+
     // Other commands
     make: '作る',
     log: '記録',
@@ -82,7 +82,7 @@ export const ja: Dictionary = {
     // Behaviors
     install: 'インストール',
   },
-  
+
   modifiers: {
     to: 'に',
     from: 'から',
@@ -101,7 +101,7 @@ export const ja: Dictionary = {
     through: '通して',
     without: 'なしで',
   },
-  
+
   events: {
     click: 'クリック',
     dblclick: 'ダブルクリック',
@@ -112,29 +112,29 @@ export const ja: Dictionary = {
     mouseover: 'マウス上',
     mouseout: 'マウス外',
     mousemove: 'マウス移動',
-    
+
     keydown: 'キー押下',
     keyup: 'キー解放',
     keypress: 'キー押す',
-    
+
     focus: 'フォーカス',
     blur: 'ぼかし',
     change: '変更',
     input: '入力',
     submit: '送信',
     reset: 'リセット',
-    
+
     load: '読み込み',
     unload: '読み込み解除',
     resize: 'サイズ変更',
     scroll: 'スクロール',
-    
+
     touchstart: 'タッチ開始',
     touchend: 'タッチ終了',
     touchmove: 'タッチ移動',
     touchcancel: 'タッチキャンセル',
   },
-  
+
   logical: {
     when: 'とき',
     where: 'どこ',
@@ -152,7 +152,7 @@ export const ja: Dictionary = {
     otherwise: 'そうでなければ',
     end: '終わり',
   },
-  
+
   temporal: {
     seconds: '秒',
     second: '秒',
@@ -167,7 +167,7 @@ export const ja: Dictionary = {
     min: '分',
     h: '時',
   },
-  
+
   values: {
     true: '真',
     false: '偽',
@@ -191,7 +191,7 @@ export const ja: Dictionary = {
     result: '結果',
     value: '値',
   },
-  
+
   attributes: {
     class: 'クラス',
     classes: 'クラス群',

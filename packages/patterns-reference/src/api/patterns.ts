@@ -156,7 +156,9 @@ export async function getPatternStats(connOptions?: ConnectionOptions): Promise<
   };
 
   // Total translations
-  const translationCount = db.prepare('SELECT COUNT(*) as count FROM pattern_translations').get() as {
+  const translationCount = db
+    .prepare('SELECT COUNT(*) as count FROM pattern_translations')
+    .get() as {
     count: number;
   };
 
@@ -238,9 +240,7 @@ function mapRowToPattern(row: CodeExampleRow): Pattern {
  * Extract primary command from hyperscript code.
  */
 function extractPrimaryCommand(code: string): string | null {
-  const match = code.match(
-    /^(on|toggle|put|set|add|remove|show|hide|wait|log|send|fetch|call)\b/i
-  );
+  const match = code.match(/^(on|toggle|put|set|add|remove|show|hide|wait|log|send|fetch|call)\b/i);
   return match ? match[1].toLowerCase() : null;
 }
 

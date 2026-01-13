@@ -188,7 +188,12 @@ function isEmpty(value: unknown): boolean {
   if (typeof value === 'string') return value.length === 0;
   if (Array.isArray(value)) return value.length === 0;
   // NodeList/HTMLCollection check
-  if (value && typeof value === 'object' && 'length' in value && typeof (value as any).length === 'number') {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'length' in value &&
+    typeof (value as any).length === 'number'
+  ) {
     return (value as any).length === 0;
   }
   if (typeof value === 'object' && value !== null) return Object.keys(value).length === 0;
@@ -587,11 +592,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       continue;
     }
     // Handle "the X of Y" pattern (the property of element)
-    else if (
-      left.type === 'identifier' &&
-      (left as any).name === 'the' &&
-      isIdentifier(token)
-    ) {
+    else if (left.type === 'identifier' && (left as any).name === 'the' && isIdentifier(token)) {
       // Lookahead to check if this is actually a "the X of Y" pattern
       // before consuming the property token
       const nextToken = peek(state);
@@ -826,10 +827,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
   }
 
   // Handle unary operators (not, no, !, -, +)
-  if (
-    isLogicalOperator(token) &&
-    (token.value === 'not' || token.value === 'no')
-  ) {
+  if (isLogicalOperator(token) && (token.value === 'not' || token.value === 'no')) {
     advance(state); // consume 'not' or 'no'
     const operand = parsePrimaryExpression(state);
     return {
@@ -902,7 +900,10 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
   }
 
   // Handle unary minus, plus, and negation operators
-  if (isBasicOperator(token) && (token.value === '-' || token.value === '+' || token.value === '!')) {
+  if (
+    isBasicOperator(token) &&
+    (token.value === '-' || token.value === '+' || token.value === '!')
+  ) {
     advance(state); // consume operator
     const operand = parsePrimaryExpression(state);
     return {
@@ -951,9 +952,10 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     // Use parseFloat for all numbers to handle scientific notation (1e10) correctly
     // parseInt stops at 'e', but parseFloat handles it properly
     const floatValue = parseFloat(token.value);
-    const value = Number.isInteger(floatValue) && !token.value.toLowerCase().includes('e')
-      ? parseInt(token.value, 10)
-      : floatValue;
+    const value =
+      Number.isInteger(floatValue) && !token.value.toLowerCase().includes('e')
+        ? parseInt(token.value, 10)
+        : floatValue;
     return createLiteralNode(value, 'number', token);
   }
 
@@ -1678,7 +1680,12 @@ async function evaluatePossessiveExpression(node: any, context: ExecutionContext
       const cssPropertyName = propertyName.slice(1); // Remove '*'
       // Get element (handle NodeList/arrays by taking first element)
       let element = object;
-      if (object && typeof object === 'object' && 'length' in object && typeof object[0] !== 'undefined') {
+      if (
+        object &&
+        typeof object === 'object' &&
+        'length' in object &&
+        typeof object[0] !== 'undefined'
+      ) {
         element = object[0];
       }
       // Use duck-typing for Element check (cross-realm compatible)
@@ -1700,7 +1707,12 @@ async function evaluatePossessiveExpression(node: any, context: ExecutionContext
 
     // Get element (handle NodeList/arrays by taking first element)
     let element = object;
-    if (object && typeof object === 'object' && 'length' in object && typeof object[0] !== 'undefined') {
+    if (
+      object &&
+      typeof object === 'object' &&
+      'length' in object &&
+      typeof object[0] !== 'undefined'
+    ) {
       element = object[0];
     }
 
@@ -1929,14 +1941,18 @@ async function evaluateQueryReference(node: any, _context: ExecutionContext): Pr
   // Escape colons in class names (e.g., .foo:bar -> .foo\:bar)
   // BUT preserve CSS pseudo-classes like :hover, :not(), :first-child, etc.
   // Use negative lookahead to avoid escaping known pseudo-class patterns
-  const pseudoClasses = 'hover|active|focus|visited|link|focus-within|focus-visible|' +
+  const pseudoClasses =
+    'hover|active|focus|visited|link|focus-within|focus-visible|' +
     'first-child|last-child|only-child|nth-child|nth-last-child|nth-of-type|nth-last-of-type|' +
     'first-of-type|last-of-type|only-of-type|empty|root|target|lang|dir|' +
     'not|has|is|where|matches|' +
     'before|after|first-letter|first-line|selection|placeholder|marker|backdrop|' +
     'enabled|disabled|checked|indeterminate|required|optional|valid|invalid|in-range|out-of-range|read-only|read-write|' +
     'default|defined|fullscreen|modal|picture-in-picture|autofill';
-  const pseudoRegex = new RegExp(`(\\.[a-zA-Z0-9_-]+):(?!(${pseudoClasses})(?![a-zA-Z0-9_-]))`, 'g');
+  const pseudoRegex = new RegExp(
+    `(\\.[a-zA-Z0-9_-]+):(?!(${pseudoClasses})(?![a-zA-Z0-9_-]))`,
+    'g'
+  );
   cleanSelector = cleanSelector.replace(pseudoRegex, '$1\\:');
 
   // Query references ALWAYS return NodeList (not arrays)
@@ -2024,25 +2040,27 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
     const funcName = node.callee.name;
 
     if (['closest', 'previous', 'next'].includes(funcName)) {
-      const args = await Promise.all(node.arguments.map(async (arg: ASTNode) => {
-        // If arg is an identifier, use the name as a tag selector
-        if (arg.type === 'identifier' && (arg as any).name) {
-          return (arg as any).name;
-        }
-        // If arg is a selector, use the value
-        if (arg.type === 'selector' && (arg as any).value) {
-          return (arg as any).value;
-        }
-        // If arg is a queryReference like <form/>, extract the selector
-        if (arg.type === 'queryReference' && (arg as any).selector) {
-          let selector = (arg as any).selector;
-          if (selector.startsWith('<') && selector.endsWith('/>')) {
-            selector = selector.slice(1, -2).trim();
+      const args = await Promise.all(
+        node.arguments.map(async (arg: ASTNode) => {
+          // If arg is an identifier, use the name as a tag selector
+          if (arg.type === 'identifier' && (arg as any).name) {
+            return (arg as any).name;
           }
-          return selector;
-        }
-        return evaluateASTNode(arg, context);
-      }));
+          // If arg is a selector, use the value
+          if (arg.type === 'selector' && (arg as any).value) {
+            return (arg as any).value;
+          }
+          // If arg is a queryReference like <form/>, extract the selector
+          if (arg.type === 'queryReference' && (arg as any).selector) {
+            let selector = (arg as any).selector;
+            if (selector.startsWith('<') && selector.endsWith('/>')) {
+              selector = selector.slice(1, -2).trim();
+            }
+            return selector;
+          }
+          return evaluateASTNode(arg, context);
+        })
+      );
 
       switch (funcName) {
         case 'closest':
@@ -2239,7 +2257,9 @@ async function evaluateArrayRangeAccess(node: any, context: ExecutionContext): P
     const startValue = await evaluateASTNode(startNode, context);
     startIndex = typeof startValue === 'number' ? startValue : parseInt(startValue, 10);
     if (isNaN(startIndex)) {
-      throw new ExpressionParseError(`Range start index must be a number, got: ${typeof startValue}`);
+      throw new ExpressionParseError(
+        `Range start index must be a number, got: ${typeof startValue}`
+      );
     }
   }
 

@@ -58,13 +58,13 @@ function createValidationResult(
     action,
     items,
     get notes() {
-      return items.filter((i) => i.severity === 'note').map((i) => i.message);
+      return items.filter(i => i.severity === 'note').map(i => i.message);
     },
     get warnings() {
-      return items.filter((i) => i.severity === 'warning').map((i) => i.message);
+      return items.filter(i => i.severity === 'warning').map(i => i.message);
     },
     get errors() {
-      return items.filter((i) => i.severity === 'error').map((i) => i.message);
+      return items.filter(i => i.severity === 'error').map(i => i.message);
     },
   };
 }
@@ -170,7 +170,7 @@ export function validateCommandSchema(schema: CommandSchema): SchemaValidationRe
   }
 
   // Check for schemas with no required roles
-  const requiredRoles = schema.roles.filter((r) => r.required);
+  const requiredRoles = schema.roles.filter(r => r.required);
   if (requiredRoles.length === 0) {
     if (NO_REQUIRED_ROLES_COMMANDS.has(schema.action)) {
       // Known pattern - add as note
@@ -191,8 +191,8 @@ export function validateCommandSchema(schema: CommandSchema): SchemaValidationRe
  * Validate the transition command schema.
  */
 function validateTransitionSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
-  const patientRole = schema.roles.find((r) => r.role === 'patient');
-  const goalRole = schema.roles.find((r) => r.role === 'goal');
+  const patientRole = schema.roles.find(r => r.role === 'patient');
+  const goalRole = schema.roles.find(r => r.role === 'goal');
 
   // Check that patient (property name) only accepts literals
   if (patientRole && patientRole.expectedTypes.includes('selector')) {
@@ -208,9 +208,7 @@ function validateTransitionSchema(schema: CommandSchema, items: SchemaValidation
 
   // Check that transition has a goal role for the target value
   if (patientRole && !goalRole) {
-    items.push(
-      createSchemaValidationItem(SchemaErrorCodes.TRANSITION_MISSING_GOAL, 'error', {})
-    );
+    items.push(createSchemaValidationItem(SchemaErrorCodes.TRANSITION_MISSING_GOAL, 'error', {}));
   }
 }
 
@@ -218,7 +216,7 @@ function validateTransitionSchema(schema: CommandSchema, items: SchemaValidation
  * Validate event handler schemas (on command).
  */
 function validateEventHandlerSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
-  const eventRole = schema.roles.find((r) => r.role === 'event');
+  const eventRole = schema.roles.find(r => r.role === 'event');
 
   if (!eventRole) {
     items.push(
@@ -228,11 +226,7 @@ function validateEventHandlerSchema(schema: CommandSchema, items: SchemaValidati
 
   if (eventRole && !eventRole.required) {
     items.push(
-      createSchemaValidationItem(
-        SchemaErrorCodes.EVENT_HANDLER_EVENT_NOT_REQUIRED,
-        'warning',
-        {}
-      )
+      createSchemaValidationItem(SchemaErrorCodes.EVENT_HANDLER_EVENT_NOT_REQUIRED, 'warning', {})
     );
   }
 }
@@ -241,7 +235,7 @@ function validateEventHandlerSchema(schema: CommandSchema, items: SchemaValidati
  * Validate conditional schemas (if/unless).
  */
 function validateConditionalSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
-  const conditionRole = schema.roles.find((r) => r.role === 'condition');
+  const conditionRole = schema.roles.find(r => r.role === 'condition');
 
   if (!conditionRole) {
     items.push(
@@ -251,11 +245,7 @@ function validateConditionalSchema(schema: CommandSchema, items: SchemaValidatio
 
   if (conditionRole && !conditionRole.required) {
     items.push(
-      createSchemaValidationItem(
-        SchemaErrorCodes.CONDITIONAL_CONDITION_NOT_REQUIRED,
-        'warning',
-        {}
-      )
+      createSchemaValidationItem(SchemaErrorCodes.CONDITIONAL_CONDITION_NOT_REQUIRED, 'warning', {})
     );
   }
 }
@@ -266,14 +256,14 @@ function validateConditionalSchema(schema: CommandSchema, items: SchemaValidatio
 function validateLoopSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
   // Different loop types have different requirements
   if (schema.action === 'for') {
-    const sourceRole = schema.roles.find((r) => r.role === 'source');
+    const sourceRole = schema.roles.find(r => r.role === 'source');
     if (!sourceRole) {
       items.push(
         createSchemaValidationItem(SchemaErrorCodes.FOR_LOOP_MISSING_SOURCE, 'warning', {})
       );
     }
   } else if (schema.action === 'while') {
-    const conditionRole = schema.roles.find((r) => r.role === 'condition');
+    const conditionRole = schema.roles.find(r => r.role === 'condition');
     if (!conditionRole) {
       items.push(
         createSchemaValidationItem(SchemaErrorCodes.WHILE_LOOP_MISSING_CONDITION, 'warning', {})
@@ -301,9 +291,9 @@ export function validateAllSchemas(
 
     // Include in results if there are warnings/errors (or notes if requested)
     const hasWarningsOrErrors = validation.items.some(
-      (i) => i.severity === 'warning' || i.severity === 'error'
+      i => i.severity === 'warning' || i.severity === 'error'
     );
-    const hasNotes = includeNotes && validation.items.some((i) => i.severity === 'note');
+    const hasNotes = includeNotes && validation.items.some(i => i.severity === 'note');
 
     if (hasWarningsOrErrors || hasNotes) {
       results.set(action, validation);
@@ -328,9 +318,9 @@ export function formatValidationResults(
   const { showNotes = false, showCodes = true } = options;
 
   for (const [action, result] of validations) {
-    const errors = result.items.filter((i) => i.severity === 'error');
-    const warnings = result.items.filter((i) => i.severity === 'warning');
-    const notes = result.items.filter((i) => i.severity === 'note');
+    const errors = result.items.filter(i => i.severity === 'error');
+    const warnings = result.items.filter(i => i.severity === 'warning');
+    const notes = result.items.filter(i => i.severity === 'note');
 
     if (errors.length > 0) {
       lines.push(`  ❌ ${action}:`);
@@ -369,9 +359,7 @@ export function formatValidationResults(
 /**
  * Get validation statistics.
  */
-export function getValidationStats(
-  validations: Map<string, SchemaValidationResult>
-): {
+export function getValidationStats(validations: Map<string, SchemaValidationResult>): {
   totalCommands: number;
   errors: number;
   warnings: number;

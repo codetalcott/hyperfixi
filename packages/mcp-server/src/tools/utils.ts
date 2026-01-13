@@ -99,11 +99,7 @@ export function validateTypes(
  * Get string parameter with default value.
  * Returns empty string if value is not a string.
  */
-export function getString(
-  args: Record<string, unknown>,
-  name: string,
-  defaultValue = ''
-): string {
+export function getString(args: Record<string, unknown>, name: string, defaultValue = ''): string {
   const value = args[name];
   return typeof value === 'string' ? value : defaultValue;
 }
@@ -125,11 +121,7 @@ export function getBoolean(
  * Get number parameter with default value.
  * Returns default if value is not a number.
  */
-export function getNumber(
-  args: Record<string, unknown>,
-  name: string,
-  defaultValue = 0
-): number {
+export function getNumber(args: Record<string, unknown>, name: string, defaultValue = 0): number {
   const value = args[name];
   return typeof value === 'number' ? value : defaultValue;
 }
@@ -154,9 +146,7 @@ export function getArray<T>(
 /**
  * Create a successful JSON response.
  */
-export function jsonResponse(
-  data: unknown
-): { content: Array<{ type: string; text: string }> } {
+export function jsonResponse(data: unknown): { content: Array<{ type: string; text: string }> } {
   return {
     content: [
       {
@@ -170,10 +160,7 @@ export function jsonResponse(
 /**
  * Create an error response.
  */
-export function errorResponse(
-  error: string,
-  details?: Record<string, unknown>
-): ValidationError {
+export function errorResponse(error: string, details?: Record<string, unknown>): ValidationError {
   return {
     isError: true,
     content: [

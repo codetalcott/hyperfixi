@@ -207,10 +207,10 @@ export class SemanticIntegrationAdapter {
    * doesn't fit the semantic role model well (keyword-heavy syntax).
    */
   private static readonly SKIP_SEMANTIC_COMMANDS = new Set([
-    'swap',   // swap innerHTML of #target with content - keyword-based
-    'morph',  // morph #target to content - similar to swap
-    'js',     // js ... end - body parsing required
-    'tell',   // tell <target> <commands> - body parsing required
+    'swap', // swap innerHTML of #target with content - keyword-based
+    'morph', // morph #target to content - similar to swap
+    'js', // js ... end - body parsing required
+    'tell', // tell <target> <commands> - body parsing required
   ]);
 
   /**
@@ -379,7 +379,11 @@ export class SemanticIntegrationAdapter {
         case 'destination':
           if (command.name === 'put') {
             modifiers['into'] = exprNode;
-          } else if (command.name === 'add' || command.name === 'append' || command.name === 'prepend') {
+          } else if (
+            command.name === 'add' ||
+            command.name === 'append' ||
+            command.name === 'prepend'
+          ) {
             modifiers['to'] = exprNode;
           } else {
             // toggle, set, send, etc use 'on'
@@ -475,9 +479,10 @@ export class SemanticIntegrationAdapter {
       // Loop variable name as identifier (e.g., "item" in "for item in items")
       args.push({
         type: 'identifier',
-        name: patient.type === 'expression'
-          ? (patient as unknown as { raw?: string }).raw || String(patient.value)
-          : String(patient.value),
+        name:
+          patient.type === 'expression'
+            ? (patient as unknown as { raw?: string }).raw || String(patient.value)
+            : String(patient.value),
         start: 0,
         end: 0,
         line: 1,
@@ -707,7 +712,11 @@ export class SemanticIntegrationAdapter {
         // Property paths become memberExpression nodes
         // e.g., "my value" -> { object: me, property: { type: 'identifier', name: 'value' } }
         // The evaluator expects node.object and node.property.name
-        const pathValue = value as unknown as { type: 'property-path'; object: SemanticValue; property: string };
+        const pathValue = value as unknown as {
+          type: 'property-path';
+          object: SemanticValue;
+          property: string;
+        };
         const objectNode = this.semanticValueToExpression(pathValue.object);
         return {
           type: 'memberExpression',

@@ -34,7 +34,7 @@ import {
  */
 function isDevanagari(char: string): boolean {
   const code = char.charCodeAt(0);
-  return (code >= 0x0900 && code <= 0x097F) || (code >= 0xA8E0 && code <= 0xA8FF);
+  return (code >= 0x0900 && code <= 0x097f) || (code >= 0xa8e0 && code <= 0xa8ff);
 }
 
 /**
@@ -240,7 +240,10 @@ export class HindiTokenizer extends BaseTokenizer {
       }
 
       // Try number
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);
@@ -280,8 +283,15 @@ export class HindiTokenizer extends BaseTokenizer {
             if (pos + 1 < input.length && isHindi(input[pos + 1])) {
               // Check if it forms a known compound
               const rest = input.slice(pos);
-              const compound = [' के लिए', ' के साथ', ' के बाद', ' से पहले', ' नहीं तो', ' जब तक', ' के बारे में']
-                .find(c => rest.startsWith(c));
+              const compound = [
+                ' के लिए',
+                ' के साथ',
+                ' के बाद',
+                ' से पहले',
+                ' नहीं तो',
+                ' जब तक',
+                ' के बारे में',
+              ].find(c => rest.startsWith(c));
               if (compound) {
                 word += compound;
                 pos += compound.length;
@@ -297,19 +307,13 @@ export class HindiTokenizer extends BaseTokenizer {
         // Check if it's a keyword
         const normalized = HINDI_KEYWORDS.get(word);
         if (normalized) {
-          tokens.push(
-            createToken(word, 'keyword', createPosition(startPos, pos), normalized)
-          );
+          tokens.push(createToken(word, 'keyword', createPosition(startPos, pos), normalized));
         } else if (SINGLE_POSTPOSITIONS.has(word)) {
           // It's a particle
-          tokens.push(
-            createToken(word, 'particle', createPosition(startPos, pos))
-          );
+          tokens.push(createToken(word, 'particle', createPosition(startPos, pos)));
         } else {
           // Unknown Hindi word - treat as identifier
-          tokens.push(
-            createToken(word, 'identifier', createPosition(startPos, pos))
-          );
+          tokens.push(createToken(word, 'identifier', createPosition(startPos, pos)));
         }
         continue;
       }
@@ -334,9 +338,7 @@ export class HindiTokenizer extends BaseTokenizer {
 
       // Operators and punctuation
       const startPos = pos;
-      tokens.push(
-        createToken(input[pos], 'operator', createPosition(startPos, pos + 1))
-      );
+      tokens.push(createToken(input[pos], 'operator', createPosition(startPos, pos + 1)));
       pos++;
     }
 

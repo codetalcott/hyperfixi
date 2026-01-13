@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { 
+import {
   HyperFixiTemplateEngine,
   compileTemplate,
   renderTemplate,
@@ -13,7 +13,7 @@ describe('Template Integration Tests', () => {
 
   beforeEach(async () => {
     engine = new HyperFixiTemplateEngine();
-    
+
     // Register common components for testing
     await setupTestComponents(engine);
   });
@@ -61,9 +61,9 @@ describe('Template Integration Tests', () => {
             mainImage: '/images/widget.jpg',
             hasVariants: true,
             variants: ['red', 'blue', 'green'],
-            maxQuantity: 10
-          }
-        }
+            maxQuantity: 10,
+          },
+        },
       };
 
       const result = await engine.compile(template);
@@ -118,14 +118,14 @@ describe('Template Integration Tests', () => {
           userId: 'user123',
           user: {
             name: 'John Doe',
-            avatar: '/avatars/john.jpg'
+            avatar: '/avatars/john.jpg',
           },
           stats: {
             orders: 156,
             revenue: 12450.75,
-            customers: 89
-          }
-        }
+            customers: 89,
+          },
+        },
       };
 
       const result = await engine.compile(template);
@@ -229,11 +229,11 @@ describe('Template Integration Tests', () => {
           notificationOptions: [
             { value: 'orders', label: 'Order Updates' },
             { value: 'promotions', label: 'Promotions' },
-            { value: 'newsletter', label: 'Weekly Newsletter' }
+            { value: 'newsletter', label: 'Weekly Newsletter' },
           ],
           currentStep: 0,
-          totalSteps: 3
-        }
+          totalSteps: 3,
+        },
       };
 
       const result = await engine.compile(template);
@@ -285,8 +285,9 @@ describe('Template Integration Tests', () => {
     });
 
     it('should handle multiple simultaneous compilations', async () => {
-      const templates = Array.from({ length: 50 }, (_, i) => 
-        `<div class="item-${i}">\{{message${i}}}</div>`
+      const templates = Array.from(
+        { length: 50 },
+        (_, i) => `<div class="item-${i}">\{{message${i}}}</div>`
       );
 
       const startTime = performance.now();
@@ -296,7 +297,7 @@ describe('Template Integration Tests', () => {
 
       expect(results).toHaveLength(50);
       expect(endTime - startTime).toBeLessThan(1000); // Should complete in under 1 second
-      
+
       // Check cache effectiveness
       const stats = engine.getStats();
       expect(stats.totalCompilations).toBe(50);
@@ -345,32 +346,32 @@ describe('Template Integration Tests', () => {
           menuItems: [
             { label: 'Home', href: '/' },
             { label: 'Products', href: '/products' },
-            { label: 'About', href: '/about' }
+            { label: 'About', href: '/about' },
           ],
           currentUser: {
             name: 'Alice Johnson',
             avatar: '/avatars/alice.jpg',
-            role: 'admin'
+            role: 'admin',
           },
           breadcrumbPath: [
             { label: 'Home', href: '/' },
             { label: 'Products', href: '/products' },
-            { label: 'Search Results' }
+            { label: 'Search Results' },
           ],
           availableFilters: [
             { name: 'category', options: ['electronics', 'books', 'clothing'] },
-            { name: 'price', type: 'range', min: 0, max: 1000 }
+            { name: 'price', type: 'range', min: 0, max: 1000 },
           ],
           searchResults: [],
           footerLinks: [
             { label: 'Privacy Policy', href: '/privacy' },
-            { label: 'Terms of Service', href: '/terms' }
+            { label: 'Terms of Service', href: '/terms' },
           ],
           socialAccounts: [
             { platform: 'twitter', url: 'https://twitter.com/example' },
-            { platform: 'facebook', url: 'https://facebook.com/example' }
-          ]
-        }
+            { platform: 'facebook', url: 'https://facebook.com/example' },
+          ],
+        },
       };
 
       const result = await engine.compile(template);
@@ -400,17 +401,17 @@ describe('Template Integration Tests', () => {
     it('should handle deeply nested component structures', async () => {
       const depth = 20;
       let template = '<div>';
-      
+
       for (let i = 0; i < depth; i++) {
         template += `<nested-component level="\${i}">`;
       }
-      
+
       template += 'Deep content';
-      
+
       for (let i = 0; i < depth; i++) {
         template += '</nested-component>';
       }
-      
+
       template += '</div>';
 
       const result = await engine.compile(template);
@@ -449,8 +450,8 @@ describe('Template Integration Tests', () => {
           themeColor: '#0066cc',
           heading: 'Welcome',
           preformattedText: 'Line 1\nLine 2\nLine 3',
-          showContent: true
-        }
+          showContent: true,
+        },
       };
 
       const result = await engine.compile(template);
@@ -466,16 +467,16 @@ describe('Template Integration Tests', () => {
   describe('caching and performance optimization', () => {
     it('should demonstrate effective caching', async () => {
       const template = '<div>{{message}}</div>';
-      
+
       // First compilation - cache miss
       const result1 = await engine.compile(template);
-      
+
       // Second compilation - cache hit
       const result2 = await engine.compile(template);
-      
+
       // Results should be identical (cached)
       expect(result1).toBe(result2);
-      
+
       const stats = engine.getStats();
       expect(stats.cacheHits).toBe(1);
       expect(stats.cacheMisses).toBe(1);
@@ -483,12 +484,12 @@ describe('Template Integration Tests', () => {
 
     it('should handle cache invalidation properly', async () => {
       const template = '<div>{{message}}</div>';
-      
+
       // Cache with different options
       const result1 = await engine.compile(template, { minify: false });
       const result2 = await engine.compile(template, { minify: true });
       const result3 = await engine.compile(template, { target: 'server' });
-      
+
       // All should be different due to different options
       expect(result1).not.toBe(result2);
       expect(result2).not.toBe(result3);
@@ -500,7 +501,7 @@ describe('Template Integration Tests', () => {
     it('should use compileTemplate convenience function', async () => {
       const template = '<div>{{message}}</div>';
       const result = await compileTemplate(template, { minify: true });
-      
+
       expect(result.html).toBeDefined();
       expect(result.variables).toContain('message');
     });
@@ -508,9 +509,9 @@ describe('Template Integration Tests', () => {
     it('should use renderTemplate convenience function', async () => {
       const template = '<div>Hello, {{name}}!</div>';
       const context: TemplateContext = {
-        variables: { name: 'World' }
+        variables: { name: 'World' },
       };
-      
+
       const rendered = await renderTemplate(template, context);
       expect(rendered).toBe('<div>Hello, World!</div>');
     });
@@ -519,12 +520,12 @@ describe('Template Integration Tests', () => {
       const customEngine = await createTemplateEngine({
         minify: true,
         target: 'server',
-        development: false
+        development: false,
       });
-      
+
       const template = '<div>{{message}}</div>';
       const result = await customEngine.compile(template);
-      
+
       expect(result).toBeDefined();
     });
   });
@@ -538,11 +539,13 @@ async function setupTestComponents(engine: HyperFixiTemplateEngine) {
     html: '<button class="btn {{class}}">{{text}}</button>',
     variables: {
       text: { type: 'string', required: true, description: 'Button text' },
-      class: { type: 'string', default: '', description: 'CSS classes' }
-    }
+      class: { type: 'string', default: '', description: 'CSS classes' },
+    },
   };
 
-  const modal = createComponent('modal', 'Modal Dialog', 
+  const modal = createComponent(
+    'modal',
+    'Modal Dialog',
     'on show add .visible then wait 300ms then add .animated'
   );
   modal.template = {
@@ -559,12 +562,14 @@ async function setupTestComponents(engine: HyperFixiTemplateEngine) {
       </div>
     `,
     variables: {
-      title: { type: 'string', required: true, description: 'Modal title' }
-    }
+      title: { type: 'string', required: true, description: 'Modal title' },
+    },
   };
 
   // E-commerce components
-  const addToCart = createComponent('add-to-cart', 'Add to Cart', 
+  const addToCart = createComponent(
+    'add-to-cart',
+    'Add to Cart',
     'on click fetch /api/cart/add with {productId: @productId, quantity: @quantity}'
   );
   addToCart.template = {
@@ -576,11 +581,13 @@ async function setupTestComponents(engine: HyperFixiTemplateEngine) {
     `,
     variables: {
       productId: { type: 'string', required: true, description: 'Product ID' },
-      variants: { type: 'array', description: 'Product variants' }
-    }
+      variants: { type: 'array', description: 'Product variants' },
+    },
   };
 
-  const quantitySelector = createComponent('quantity-selector', 'Quantity Selector',
+  const quantitySelector = createComponent(
+    'quantity-selector',
+    'Quantity Selector',
     'on change call updateQuantity with my.value'
   );
   quantitySelector.template = {
@@ -592,8 +599,8 @@ async function setupTestComponents(engine: HyperFixiTemplateEngine) {
     `,
     variables: {
       min: { type: 'number', default: 1, description: 'Minimum quantity' },
-      max: { type: 'number', default: 99, description: 'Maximum quantity' }
-    }
+      max: { type: 'number', default: 99, description: 'Maximum quantity' },
+    },
   };
 
   // Dashboard components
@@ -611,8 +618,8 @@ async function setupTestComponents(engine: HyperFixiTemplateEngine) {
     variables: {
       title: { type: 'string', required: true, description: 'Stat title' },
       value: { type: 'string', required: true, description: 'Stat value' },
-      icon: { type: 'string', description: 'Icon name' }
-    }
+      icon: { type: 'string', description: 'Icon name' },
+    },
   };
 
   // Register all components

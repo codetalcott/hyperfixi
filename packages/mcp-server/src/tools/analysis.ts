@@ -14,7 +14,8 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 export const analysisTools: Tool[] = [
   {
     name: 'analyze_complexity',
-    description: 'Calculate code complexity metrics (cyclomatic, cognitive, Halstead) for hyperscript',
+    description:
+      'Calculate code complexity metrics (cyclomatic, cognitive, Halstead) for hyperscript',
     inputSchema: {
       type: 'object',
       properties: {
@@ -28,7 +29,8 @@ export const analysisTools: Tool[] = [
   },
   {
     name: 'analyze_metrics',
-    description: 'Perform comprehensive code analysis including patterns, code smells, and quality metrics',
+    description:
+      'Perform comprehensive code analysis including patterns, code smells, and quality metrics',
     inputSchema: {
       type: 'object',
       properties: {
@@ -262,7 +264,7 @@ function simpleAnalysis(
   const result = {
     lines,
     commandCount: commands.length,
-    commands: [...new Set(commands.map((c) => c.toLowerCase()))],
+    commands: [...new Set(commands.map(c => c.toLowerCase()))],
     conditionalCount: conditionals.length,
     loopCount: loops.length,
     estimatedComplexity: 1 + conditionals.length + loops.length,
@@ -289,20 +291,32 @@ function simpleExplanation(
 
   // Command patterns - use matchAll to find all occurrences
   const commandPatterns: Array<{ pattern: RegExp; format: (m: RegExpMatchArray) => string }> = [
-    { pattern: /toggle\s+([.\w#@-]+)/gi, format: (m) => `It toggles ${m[1]}.` },
-    { pattern: /add\s+([.\w#@-]+)(?:\s+to\s+([^\s]+))?/gi, format: (m) => m[2] ? `It adds ${m[1]} to ${m[2]}.` : `It adds ${m[1]}.` },
-    { pattern: /remove\s+([.\w#@-]+)(?:\s+from\s+([^\s]+))?/gi, format: (m) => m[2] ? `It removes ${m[1]} from ${m[2]}.` : `It removes ${m[1]}.` },
-    { pattern: /set\s+([^\s]+)\s+to\s+([^\s]+)/gi, format: (m) => `It sets ${m[1]} to ${m[2]}.` },
-    { pattern: /put\s+([^\s]+)\s+into\s+([^\s]+)/gi, format: (m) => `It puts ${m[1]} into ${m[2]}.` },
-    { pattern: /fetch\s+([^\s]+)(?:\s+as\s+(\w+))?/gi, format: (m) => m[2] ? `It fetches from ${m[1]} as ${m[2]}.` : `It fetches from ${m[1]}.` },
-    { pattern: /wait\s+(\d+\s*(?:ms|s|seconds?|milliseconds?))/gi, format: (m) => `It waits ${m[1]}.` },
-    { pattern: /send\s+(\w+)/gi, format: (m) => `It sends a ${m[1]} event.` },
-    { pattern: /call\s+([^\s(]+)/gi, format: (m) => `It calls ${m[1]}.` },
-    { pattern: /show\s+([^\s]+)/gi, format: (m) => `It shows ${m[1]}.` },
-    { pattern: /hide\s+([^\s]+)/gi, format: (m) => `It hides ${m[1]}.` },
-    { pattern: /log\s+([^\s]+)/gi, format: (m) => `It logs ${m[1]}.` },
-    { pattern: /increment\s+([^\s]+)/gi, format: (m) => `It increments ${m[1]}.` },
-    { pattern: /decrement\s+([^\s]+)/gi, format: (m) => `It decrements ${m[1]}.` },
+    { pattern: /toggle\s+([.\w#@-]+)/gi, format: m => `It toggles ${m[1]}.` },
+    {
+      pattern: /add\s+([.\w#@-]+)(?:\s+to\s+([^\s]+))?/gi,
+      format: m => (m[2] ? `It adds ${m[1]} to ${m[2]}.` : `It adds ${m[1]}.`),
+    },
+    {
+      pattern: /remove\s+([.\w#@-]+)(?:\s+from\s+([^\s]+))?/gi,
+      format: m => (m[2] ? `It removes ${m[1]} from ${m[2]}.` : `It removes ${m[1]}.`),
+    },
+    { pattern: /set\s+([^\s]+)\s+to\s+([^\s]+)/gi, format: m => `It sets ${m[1]} to ${m[2]}.` },
+    { pattern: /put\s+([^\s]+)\s+into\s+([^\s]+)/gi, format: m => `It puts ${m[1]} into ${m[2]}.` },
+    {
+      pattern: /fetch\s+([^\s]+)(?:\s+as\s+(\w+))?/gi,
+      format: m => (m[2] ? `It fetches from ${m[1]} as ${m[2]}.` : `It fetches from ${m[1]}.`),
+    },
+    {
+      pattern: /wait\s+(\d+\s*(?:ms|s|seconds?|milliseconds?))/gi,
+      format: m => `It waits ${m[1]}.`,
+    },
+    { pattern: /send\s+(\w+)/gi, format: m => `It sends a ${m[1]} event.` },
+    { pattern: /call\s+([^\s(]+)/gi, format: m => `It calls ${m[1]}.` },
+    { pattern: /show\s+([^\s]+)/gi, format: m => `It shows ${m[1]}.` },
+    { pattern: /hide\s+([^\s]+)/gi, format: m => `It hides ${m[1]}.` },
+    { pattern: /log\s+([^\s]+)/gi, format: m => `It logs ${m[1]}.` },
+    { pattern: /increment\s+([^\s]+)/gi, format: m => `It increments ${m[1]}.` },
+    { pattern: /decrement\s+([^\s]+)/gi, format: m => `It decrements ${m[1]}.` },
   ];
 
   for (const { pattern, format } of commandPatterns) {
@@ -364,14 +378,16 @@ function simpleExplanation(
  * Phase 7: Simple pattern-based intent recognition as fallback.
  * Detects common hyperscript patterns without full AST analysis.
  */
-function simpleIntentRecognition(
-  code: string
-): { content: Array<{ type: string; text: string }> } {
+function simpleIntentRecognition(code: string): { content: Array<{ type: string; text: string }> } {
   const intents: string[] = [];
   const confidence: Record<string, number> = {};
 
   // Event handling
-  if (/on\s+(click|submit|change|input|keydown|keyup|keypress|load|scroll|mouseenter|mouseleave|focus|blur)/i.test(code)) {
+  if (
+    /on\s+(click|submit|change|input|keydown|keyup|keypress|load|scroll|mouseenter|mouseleave|focus|blur)/i.test(
+      code
+    )
+  ) {
     intents.push('event-handling');
     confidence['event-handling'] = 0.9;
   }

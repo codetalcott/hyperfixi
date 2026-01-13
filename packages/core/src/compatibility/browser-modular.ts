@@ -81,11 +81,11 @@ const hyperfixi = {
     // Collect hyperscript from element/document
     const code: string[] = [];
     if (element === document) {
-      document.querySelectorAll('[_]').forEach((el) => {
+      document.querySelectorAll('[_]').forEach(el => {
         const attr = el.getAttribute('_');
         if (attr) code.push(attr);
       });
-      document.querySelectorAll('script[type="text/hyperscript"]').forEach((script) => {
+      document.querySelectorAll('script[type="text/hyperscript"]').forEach(script => {
         if (script.textContent) code.push(script.textContent);
       });
     } else if (element instanceof HTMLElement) {

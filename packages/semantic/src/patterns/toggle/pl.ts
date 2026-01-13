@@ -22,15 +22,23 @@ export function getTogglePatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'przełącz', alternatives: ['przelacz', 'przełączaj'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'na', alternatives: ['w', 'dla'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'na', alternatives: ['w', 'dla'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'na', markerAlternatives: ['w', 'dla'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'na',
+          markerAlternatives: ['w', 'dla'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

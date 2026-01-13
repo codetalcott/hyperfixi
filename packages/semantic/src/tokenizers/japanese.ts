@@ -34,7 +34,7 @@ import { JapaneseMorphologicalNormalizer } from './morphology/japanese-normalize
  */
 function isHiragana(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0x3040 && code <= 0x309F;
+  return code >= 0x3040 && code <= 0x309f;
 }
 
 /**
@@ -42,7 +42,7 @@ function isHiragana(char: string): boolean {
  */
 function isKatakana(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0x30A0 && code <= 0x30FF;
+  return code >= 0x30a0 && code <= 0x30ff;
 }
 
 /**
@@ -50,8 +50,10 @@ function isKatakana(char: string): boolean {
  */
 function isKanji(char: string): boolean {
   const code = char.charCodeAt(0);
-  return (code >= 0x4E00 && code <= 0x9FFF) ||  // CJK Unified Ideographs
-         (code >= 0x3400 && code <= 0x4DBF);    // CJK Unified Ideographs Extension A
+  return (
+    (code >= 0x4e00 && code <= 0x9fff) || // CJK Unified Ideographs
+    (code >= 0x3400 && code <= 0x4dbf)
+  ); // CJK Unified Ideographs Extension A
 }
 
 /**
@@ -367,11 +369,7 @@ export class JapaneseTokenizer extends BaseTokenizer {
 
       // Try single-character particle
       if (SINGLE_CHAR_PARTICLES.has(input[pos])) {
-        tokens.push(createToken(
-          input[pos],
-          'particle',
-          createPosition(pos, pos + 1)
-        ));
+        tokens.push(createToken(input[pos], 'particle', createPosition(pos, pos + 1)));
         pos++;
         continue;
       }
@@ -419,11 +417,7 @@ export class JapaneseTokenizer extends BaseTokenizer {
   private tryMultiCharParticle(input: string, pos: number): LanguageToken | null {
     for (const particle of MULTI_CHAR_PARTICLES) {
       if (input.slice(pos, pos + particle.length) === particle) {
-        return createToken(
-          particle,
-          'particle',
-          createPosition(pos, pos + particle.length)
-        );
+        return createToken(particle, 'particle', createPosition(pos, pos + particle.length));
       }
     }
     return null;
@@ -475,12 +469,7 @@ export class JapaneseTokenizer extends BaseTokenizer {
 
     if (normalized) {
       // Exact match found in keyword map
-      return createToken(
-        word,
-        'keyword',
-        createPosition(startPos, pos),
-        normalized
-      );
+      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
     }
 
     // Try morphological normalization for conjugated forms
@@ -498,21 +487,12 @@ export class JapaneseTokenizer extends BaseTokenizer {
           stemConfidence: morphResult.confidence,
         };
 
-        return createToken(
-          word,
-          'keyword',
-          createPosition(startPos, pos),
-          tokenOptions
-        );
+        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
       }
     }
 
     // Not a keyword, return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -528,11 +508,7 @@ export class JapaneseTokenizer extends BaseTokenizer {
 
     if (!word) return null;
 
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -579,7 +555,11 @@ export class JapaneseTokenizer extends BaseTokenizer {
       } else if (remaining[0] === 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
         number += 's';
         pos += 1;
-      } else if (remaining[0] === 'm' && remaining[1] !== 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
+      } else if (
+        remaining[0] === 'm' &&
+        remaining[1] !== 's' &&
+        !isAsciiIdentifierChar(remaining[1] || '')
+      ) {
         number += 'm';
         pos += 1;
       } else if (remaining[0] === 'h' && !isAsciiIdentifierChar(remaining[1] || '')) {
@@ -590,11 +570,7 @@ export class JapaneseTokenizer extends BaseTokenizer {
 
     if (!number) return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
 }
 

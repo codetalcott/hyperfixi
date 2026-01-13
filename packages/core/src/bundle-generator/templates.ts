@@ -15,19 +15,21 @@ export type CodeFormat = 'ts' | 'js';
 function stripTypes(code: string, format: CodeFormat): string {
   if (format === 'ts') return code;
 
-  return code
-    // Remove " as Type" casts
-    .replace(/\s+as\s+\w+(?:\[\])?/g, '')
-    // Remove ": Type" in catch clauses like "catch (error: any)"
-    .replace(/\((\w+):\s*\w+\)/g, '($1)')
-    // Remove ": Type" in arrow function params like "(a: any) =>"
-    .replace(/\((\w+):\s*any\)/g, '($1)')
-    // Remove "<void>" generic from Promise<void>[]
-    .replace(/Promise<void>\[\]/g, 'Promise[]')
-    // Clean up Promise<void> standalone
-    .replace(/Promise<void>/g, 'Promise')
-    // Remove TransitionEvent type
-    .replace(/:\s*TransitionEvent/g, '');
+  return (
+    code
+      // Remove " as Type" casts
+      .replace(/\s+as\s+\w+(?:\[\])?/g, '')
+      // Remove ": Type" in catch clauses like "catch (error: any)"
+      .replace(/\((\w+):\s*\w+\)/g, '($1)')
+      // Remove ": Type" in arrow function params like "(a: any) =>"
+      .replace(/\((\w+):\s*any\)/g, '($1)')
+      // Remove "<void>" generic from Promise<void>[]
+      .replace(/Promise<void>\[\]/g, 'Promise[]')
+      // Clean up Promise<void> standalone
+      .replace(/Promise<void>/g, 'Promise')
+      // Remove TransitionEvent type
+      .replace(/:\s*TransitionEvent/g, '')
+  );
 }
 
 /**
@@ -333,18 +335,18 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return targets;
     }`,
 
-  'return': `
+  return: `
     case 'return': {
       const value = cmd.args[0] ? await evaluate(cmd.args[0], ctx) : ctx.it;
       throw { type: 'return', value };
     }`,
 
-  'break': `
+  break: `
     case 'break': {
       throw { type: 'break' };
     }`,
 
-  'continue': `
+  continue: `
     case 'continue': {
       throw { type: 'continue' };
     }`,

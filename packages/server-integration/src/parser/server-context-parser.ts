@@ -10,12 +10,12 @@ export class ServerContextParser {
    */
   parse(input: string, context?: ParseContext): ProcessedScript {
     const processed = this.preprocessTemplate(input, context?.templateVars);
-    
+
     return {
       original: input,
       processed,
       templateVars: context?.templateVars,
-      metadata: this.extractMetadata(processed, context?.templateVars)
+      metadata: this.extractMetadata(processed, context?.templateVars),
     };
   }
 
@@ -55,7 +55,7 @@ export class ServerContextParser {
       selectors,
       events,
       commands,
-      templateVariables
+      templateVariables,
     };
   }
 
@@ -64,10 +64,10 @@ export class ServerContextParser {
    */
   private extractEvents(script: string): string[] {
     const events = new Set<string>();
-    
+
     // Match event patterns: "on eventName" or "on eventName from selector"
     const eventMatches = script.match(/\bon\s+(\w+)(?:\s+from|\s|$)/g);
-    
+
     if (eventMatches) {
       eventMatches.forEach(match => {
         const eventMatch = match.match(/\bon\s+(\w+)/);
@@ -85,7 +85,7 @@ export class ServerContextParser {
    */
   private extractCommands(script: string): string[] {
     const commands = new Set<string>();
-    
+
     // Common hyperscript commands
     const commandPatterns = [
       /\b(add|remove|toggle)\s+/g,
@@ -93,7 +93,7 @@ export class ServerContextParser {
       /\b(show|hide|wait|log)\s+/g,
       /\b(set|increment|decrement)\s+/g,
       /\b(if|unless|repeat|for)\s+/g,
-      /\b(call|halt|return|throw)\s+/g
+      /\b(call|halt|return|throw)\s+/g,
     ];
 
     commandPatterns.forEach(pattern => {
@@ -114,13 +114,13 @@ export class ServerContextParser {
    */
   private extractSelectors(script: string): string[] {
     const selectors = new Set<string>();
-    
+
     // Match CSS selectors in various contexts
     const selectorPatterns = [
-      /#[\w-]+/g,                    // ID selectors
-      /\.[\w-]+/g,                   // Class selectors
+      /#[\w-]+/g, // ID selectors
+      /\.[\w-]+/g, // Class selectors
       /\b[a-zA-Z][\w-]*(?:\[.*?\])?/g, // Element selectors with attributes
-      /<[^>]+>/g                     // Template selectors
+      /<[^>]+>/g, // Template selectors
     ];
 
     selectorPatterns.forEach(pattern => {
@@ -143,12 +143,12 @@ export class ServerContextParser {
    */
   private extractDependencies(script: string): string[] {
     const dependencies = new Set<string>();
-    
+
     // Look for external references like behaviors, functions, or imports
     const dependencyPatterns = [
-      /\binstall\s+([\w-]+)/g,       // Behavior installations
-      /\bcall\s+([\w-]+)/g,          // Function calls
-      /\bsend\s+([\w-]+)/g           // Event sends
+      /\binstall\s+([\w-]+)/g, // Behavior installations
+      /\bcall\s+([\w-]+)/g, // Function calls
+      /\bsend\s+([\w-]+)/g, // Event sends
     ];
 
     dependencyPatterns.forEach(pattern => {
@@ -171,9 +171,9 @@ export class ServerContextParser {
    */
   private extractTemplateVariables(script: string): string[] {
     const variables = new Set<string>();
-    
+
     const variableMatches = script.match(/\{\{(\w+)\}\}/g);
-    
+
     if (variableMatches) {
       variableMatches.forEach(match => {
         const variable = match.slice(2, -2); // Remove {{ and }}
@@ -189,7 +189,7 @@ export class ServerContextParser {
    */
   private calculateComplexity(script: string): number {
     let complexity = 1; // Base complexity
-    
+
     // Add complexity for control structures
     const controlStructures = [
       /\bif\b/g,
@@ -198,7 +198,7 @@ export class ServerContextParser {
       /\bfor\b/g,
       /\bwhile\b/g,
       /\bthen\b/g,
-      /\belse\b/g
+      /\belse\b/g,
     ];
 
     controlStructures.forEach(pattern => {
@@ -221,24 +221,24 @@ export class ServerContextParser {
   private calculateNestingLevel(script: string): number {
     let maxLevel = 0;
     let currentLevel = 0;
-    
+
     const lines = script.split('\n');
-    
+
     for (const line of lines) {
       const trimmed = line.trim();
-      
+
       // Increase level for opening structures
       if (/\b(if|unless|repeat|for|while)\b/.test(trimmed)) {
         currentLevel++;
         maxLevel = Math.max(maxLevel, currentLevel);
       }
-      
+
       // Decrease level for closing structures
       if (/\bend\b/.test(trimmed)) {
         currentLevel = Math.max(0, currentLevel - 1);
       }
     }
-    
+
     return maxLevel;
   }
 
@@ -253,10 +253,39 @@ export class ServerContextParser {
 
     // Skip common keywords that aren't selectors
     const keywords = [
-      'on', 'from', 'to', 'in', 'into', 'with', 'then', 'else', 'end',
-      'if', 'unless', 'repeat', 'for', 'while', 'and', 'or', 'not',
-      'add', 'remove', 'toggle', 'put', 'fetch', 'send', 'show', 'hide',
-      'set', 'get', 'call', 'wait', 'log', 'halt', 'return', 'throw'
+      'on',
+      'from',
+      'to',
+      'in',
+      'into',
+      'with',
+      'then',
+      'else',
+      'end',
+      'if',
+      'unless',
+      'repeat',
+      'for',
+      'while',
+      'and',
+      'or',
+      'not',
+      'add',
+      'remove',
+      'toggle',
+      'put',
+      'fetch',
+      'send',
+      'show',
+      'hide',
+      'set',
+      'get',
+      'call',
+      'wait',
+      'log',
+      'halt',
+      'return',
+      'throw',
     ];
 
     if (keywords.includes(candidate.toLowerCase())) {

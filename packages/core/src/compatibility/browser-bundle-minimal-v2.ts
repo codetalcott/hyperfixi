@@ -68,7 +68,7 @@ const runtimeAdapter = {
       throw new Error(parseResult.error?.message || 'Parse failed');
     }
     return await runtime.execute(parseResult.node, ctx);
-  }
+  },
 };
 
 // Create minimal attribute processor with adapter
@@ -94,7 +94,7 @@ const api = {
    */
   init: () => {
     attributeProcessor.init();
-  }
+  },
 };
 
 // Expose global API

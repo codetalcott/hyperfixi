@@ -438,7 +438,7 @@ describe('htmx-translator', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
           onHandlers: {
-            'click': 'toggle .active on me',
+            click: 'toggle .active on me',
           },
         };
         const result = translateToHyperscript(config, button);
@@ -449,8 +449,8 @@ describe('htmx-translator', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
           onHandlers: {
-            'mouseenter': 'add .hover',
-            'mouseleave': 'remove .hover',
+            mouseenter: 'add .hover',
+            mouseleave: 'remove .hover',
           },
         };
         const result = translateToHyperscript(config, button);
@@ -491,7 +491,10 @@ describe('htmx-translator', () => {
 describe('HtmxAttributeProcessor', () => {
   describe('collectAttributes', () => {
     it('collects hx-get into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-get', '/api/users');
 
@@ -501,7 +504,10 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-post into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-post', '/api/users');
 
@@ -511,7 +517,10 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-target into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-get', '/api/users');
       el.setAttribute('hx-target', '#users-list');
@@ -521,7 +530,10 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-swap into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-get', '/api/users');
       el.setAttribute('hx-swap', 'outerHTML');
@@ -531,7 +543,10 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-trigger into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-get', '/api/users');
       el.setAttribute('hx-trigger', 'mouseenter');
@@ -541,7 +556,10 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-confirm into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-delete', '/api/user/1');
       el.setAttribute('hx-confirm', 'Delete this user?');
@@ -551,7 +569,10 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-boost into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('a');
       el.setAttribute('hx-boost', 'true');
 
@@ -560,20 +581,26 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-on:* handlers into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-on:click', 'toggle .active');
       el.setAttribute('hx-on:mouseenter', 'add .hover');
 
       const config = processor.collectAttributes(el);
       expect(config.onHandlers).toEqual({
-        'click': 'toggle .active',
-        'mouseenter': 'add .hover',
+        click: 'toggle .active',
+        mouseenter: 'add .hover',
       });
     });
 
     it('collects hx-push-url into config', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-get', '/page/2');
       el.setAttribute('hx-push-url', 'true');
@@ -583,7 +610,10 @@ describe('HtmxAttributeProcessor', () => {
     });
 
     it('collects hx-replace-url with custom value', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-get', '/api/data');
       el.setAttribute('hx-replace-url', '/custom-url');
@@ -603,7 +633,11 @@ describe('HtmxAttributeProcessor', () => {
       el.setAttribute('hx-get', '/api/data');
       document.body.appendChild(el);
 
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false, root: document.body });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+        root: document.body,
+      });
       const elements = processor.scanForHtmxElements();
       expect(elements).toHaveLength(1);
       expect(elements[0]).toBe(el);
@@ -614,7 +648,11 @@ describe('HtmxAttributeProcessor', () => {
       el.setAttribute('hx-post', '/api/data');
       document.body.appendChild(el);
 
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false, root: document.body });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+        root: document.body,
+      });
       const elements = processor.scanForHtmxElements();
       expect(elements).toHaveLength(1);
     });
@@ -627,7 +665,11 @@ describe('HtmxAttributeProcessor', () => {
       document.body.appendChild(el1);
       document.body.appendChild(el2);
 
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false, root: document.body });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+        root: document.body,
+      });
       const elements = processor.scanForHtmxElements();
       expect(elements).toHaveLength(2);
     });
@@ -635,7 +677,10 @@ describe('HtmxAttributeProcessor', () => {
 
   describe('manualProcess', () => {
     it('translates element attributes to hyperscript', () => {
-      const processor = new HtmxAttributeProcessor({ processExisting: false, watchMutations: false });
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
       const el = document.createElement('button');
       el.setAttribute('hx-get', '/api/users');
       el.setAttribute('hx-target', '#users-list');

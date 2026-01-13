@@ -62,10 +62,7 @@ export function batchApplyItems<T extends HTMLElement, U>(
  * @param classes - Class names to add
  * @returns The modified elements
  */
-export function batchAddClasses(
-  targets: HTMLElement[],
-  classes: string[]
-): HTMLElement[] {
+export function batchAddClasses(targets: HTMLElement[], classes: string[]): HTMLElement[] {
   return batchApplyItems(targets, classes, (element, className) => {
     if (!element.classList.contains(className)) {
       element.classList.add(className);
@@ -81,10 +78,7 @@ export function batchAddClasses(
  * @param classes - Class names to remove
  * @returns The modified elements
  */
-export function batchRemoveClasses(
-  targets: HTMLElement[],
-  classes: string[]
-): HTMLElement[] {
+export function batchRemoveClasses(targets: HTMLElement[], classes: string[]): HTMLElement[] {
   return batchApplyItems(targets, classes, (element, className) => {
     element.classList.remove(className);
   });
@@ -97,10 +91,7 @@ export function batchRemoveClasses(
  * @param classes - Class names to toggle
  * @returns The modified elements
  */
-export function batchToggleClasses(
-  targets: HTMLElement[],
-  classes: string[]
-): HTMLElement[] {
+export function batchToggleClasses(targets: HTMLElement[], classes: string[]): HTMLElement[] {
   return batchApplyItems(targets, classes, (element, className) => {
     element.classList.toggle(className);
   });
@@ -123,7 +114,7 @@ export function batchSetAttribute(
   name: string,
   value: string
 ): HTMLElement[] {
-  return batchApply(targets, (element) => {
+  return batchApply(targets, element => {
     element.setAttribute(name, value);
   });
 }
@@ -135,11 +126,8 @@ export function batchSetAttribute(
  * @param name - Attribute name to remove
  * @returns The modified elements
  */
-export function batchRemoveAttribute(
-  targets: HTMLElement[],
-  name: string
-): HTMLElement[] {
-  return batchApply(targets, (element) => {
+export function batchRemoveAttribute(targets: HTMLElement[], name: string): HTMLElement[] {
+  return batchApply(targets, element => {
     element.removeAttribute(name);
   });
 }
@@ -165,7 +153,7 @@ export function batchToggleAttribute(
   name: string,
   value?: string
 ): HTMLElement[] {
-  return batchApply(targets, (element) => {
+  return batchApply(targets, element => {
     toggleAttribute(element, name, value);
   });
 }
@@ -178,11 +166,7 @@ export function batchToggleAttribute(
  * @param name - Attribute name
  * @param value - Optional attribute value
  */
-export function toggleAttribute(
-  element: HTMLElement,
-  name: string,
-  value?: string
-): void {
+export function toggleAttribute(element: HTMLElement, name: string, value?: string): void {
   const hasAttribute = element.hasAttribute(name);
 
   if (value !== undefined) {
@@ -230,10 +214,7 @@ export function batchSetStyles(
  * @param properties - Style property names to remove
  * @returns The modified elements
  */
-export function batchRemoveStyles(
-  targets: HTMLElement[],
-  properties: string[]
-): HTMLElement[] {
+export function batchRemoveStyles(targets: HTMLElement[], properties: string[]): HTMLElement[] {
   return batchApplyItems(targets, properties, (element, property) => {
     element.style.removeProperty(property);
   });

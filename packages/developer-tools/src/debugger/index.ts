@@ -47,7 +47,16 @@ export interface DebugEvent {
  * Debug message from client
  */
 export interface DebugMessage {
-  type: 'continue' | 'pause' | 'stepOver' | 'stepInto' | 'stepOut' | 'setBreakpoint' | 'removeBreakpoint' | 'evaluate' | 'getVariables';
+  type:
+    | 'continue'
+    | 'pause'
+    | 'stepOver'
+    | 'stepInto'
+    | 'stepOut'
+    | 'setBreakpoint'
+    | 'removeBreakpoint'
+    | 'evaluate'
+    | 'getVariables';
   data?: any;
 }
 
@@ -139,7 +148,7 @@ export class HyperScriptDebugger {
       try {
         this.wss = new WebSocketServer({ port: this.config.port });
 
-        this.wss.on('connection', (ws) => {
+        this.wss.on('connection', ws => {
           this.clients.add(ws);
           this.log('info', 'Debug client connected');
 
@@ -150,7 +159,7 @@ export class HyperScriptDebugger {
             breakpoints: Array.from(this.breakpoints.entries()),
           });
 
-          ws.on('message', (data) => {
+          ws.on('message', data => {
             this.handleClientMessage(ws, data.toString());
           });
 
@@ -165,7 +174,7 @@ export class HyperScriptDebugger {
           resolve();
         });
 
-        this.wss.on('error', (error) => {
+        this.wss.on('error', error => {
           reject(error);
         });
       } catch (error) {

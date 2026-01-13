@@ -113,12 +113,18 @@ describe('Enhanced Expression Integration - Form Validation', () => {
       // Combine all conditions
       const basicValidResult = await logicalExpressions.and.evaluate(context, {
         left: notEmptyResult.success ? notEmptyResult.value : false,
-        right: (lengthValidResult as { success?: boolean; value?: unknown }).success ? (lengthValidResult as { success?: boolean; value?: unknown }).value : false,
+        right: (lengthValidResult as { success?: boolean; value?: unknown }).success
+          ? (lengthValidResult as { success?: boolean; value?: unknown }).value
+          : false,
       });
 
       const finalValidResult = await logicalExpressions.and.evaluate(context, {
-        left: (basicValidResult as { success?: boolean; value?: unknown }).success ? (basicValidResult as { success?: boolean; value?: unknown }).value : false,
-        right: (notDisabledResult as { success?: boolean; value?: unknown }).success ? (notDisabledResult as { success?: boolean; value?: unknown }).value : false,
+        left: (basicValidResult as { success?: boolean; value?: unknown }).success
+          ? (basicValidResult as { success?: boolean; value?: unknown }).value
+          : false,
+        right: (notDisabledResult as { success?: boolean; value?: unknown }).success
+          ? (notDisabledResult as { success?: boolean; value?: unknown }).value
+          : false,
       });
 
       expect((finalValidResult as { success?: boolean; value?: unknown }).success).toBe(true);
@@ -233,13 +239,17 @@ describe('Enhanced Expression Integration - User Permissions', () => {
     // Combine owner AND not suspended
     const ownerAndNotSuspendedResult = await logicalExpressions.and.evaluate(context, {
       left: isOwnerResult.success ? isOwnerResult.value : false,
-      right: (notSuspendedResult as { success?: boolean; value?: unknown }).success ? (notSuspendedResult as { success?: boolean; value?: unknown }).value : false,
+      right: (notSuspendedResult as { success?: boolean; value?: unknown }).success
+        ? (notSuspendedResult as { success?: boolean; value?: unknown }).value
+        : false,
     });
 
     // Final permission: admin OR (owner AND not suspended)
     const canEditResult = await logicalExpressions.or.evaluate(context, {
       left: isAdminResult.success ? isAdminResult.value : false,
-      right: (ownerAndNotSuspendedResult as { success?: boolean; value?: unknown }).success ? (ownerAndNotSuspendedResult as { success?: boolean; value?: unknown }).value : false,
+      right: (ownerAndNotSuspendedResult as { success?: boolean; value?: unknown }).success
+        ? (ownerAndNotSuspendedResult as { success?: boolean; value?: unknown }).value
+        : false,
     });
 
     expect((canEditResult as { success?: boolean; value?: unknown }).success).toBe(true);
@@ -431,11 +441,15 @@ describe('Enhanced Expression Integration - E-commerce', () => {
     // Combine all conditions
     const stockAndQuantityResult = await logicalExpressions.and.evaluate(context, {
       left: stockAvailableResult.success ? stockAvailableResult.value : false,
-      right: (quantityValidResult as { success?: boolean; value?: unknown }).success ? (quantityValidResult as { success?: boolean; value?: unknown }).value : false,
+      right: (quantityValidResult as { success?: boolean; value?: unknown }).success
+        ? (quantityValidResult as { success?: boolean; value?: unknown }).value
+        : false,
     });
 
     const canPurchaseResult = await logicalExpressions.and.evaluate(context, {
-      left: (stockAndQuantityResult as { success?: boolean; value?: unknown }).success ? (stockAndQuantityResult as { success?: boolean; value?: unknown }).value : false,
+      left: (stockAndQuantityResult as { success?: boolean; value?: unknown }).success
+        ? (stockAndQuantityResult as { success?: boolean; value?: unknown }).value
+        : false,
       right: regionMatchResult.success ? regionMatchResult.value : false,
     });
 
@@ -499,16 +513,24 @@ describe('Enhanced Expression Integration - UI State Management', () => {
     // Combine conditions: all fields filled AND not submitting AND no errors AND online
     const step1Result = await logicalExpressions.and.evaluate(context, {
       left: allFieldsFilledResult.success ? allFieldsFilledResult.value : false,
-      right: (notSubmittingResult as { success?: boolean; value?: unknown }).success ? (notSubmittingResult as { success?: boolean; value?: unknown }).value : false,
+      right: (notSubmittingResult as { success?: boolean; value?: unknown }).success
+        ? (notSubmittingResult as { success?: boolean; value?: unknown }).value
+        : false,
     });
 
     const step2Result = await logicalExpressions.and.evaluate(context, {
-      left: (step1Result as { success?: boolean; value?: unknown }).success ? (step1Result as { success?: boolean; value?: unknown }).value : false,
-      right: (noErrorsResult as { success?: boolean; value?: unknown }).success ? (noErrorsResult as { success?: boolean; value?: unknown }).value : false,
+      left: (step1Result as { success?: boolean; value?: unknown }).success
+        ? (step1Result as { success?: boolean; value?: unknown }).value
+        : false,
+      right: (noErrorsResult as { success?: boolean; value?: unknown }).success
+        ? (noErrorsResult as { success?: boolean; value?: unknown }).value
+        : false,
     });
 
     const shouldEnableResult = await logicalExpressions.and.evaluate(context, {
-      left: (step2Result as { success?: boolean; value?: unknown }).success ? (step2Result as { success?: boolean; value?: unknown }).value : false,
+      left: (step2Result as { success?: boolean; value?: unknown }).success
+        ? (step2Result as { success?: boolean; value?: unknown }).value
+        : false,
       right: isOnlineResult.success ? isOnlineResult.value : false,
     });
 

@@ -54,9 +54,7 @@ export function getEventHandlerPatternsHi(): LanguagePattern[] {
       priority: 80,
       template: {
         format: '{event}',
-        tokens: [
-          { type: 'role', role: 'event' },
-        ],
+        tokens: [{ type: 'role', role: 'event' }],
       },
       extraction: {
         event: { position: 0 },

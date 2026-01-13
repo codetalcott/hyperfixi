@@ -115,7 +115,12 @@ export { ToggleCommand, createToggleCommand } from './dom/toggle';
 export { PutCommand, createPutCommand } from './dom/put';
 export { MakeCommand, createMakeCommand } from './dom/make';
 export { swapCommand, morphCommand, createSwapCommand, createMorphCommand } from './dom/swap';
-export { processPartialsCommand, createProcessPartialsCommand, extractPartials, processPartials } from './dom/process-partials';
+export {
+  processPartialsCommand,
+  createProcessPartialsCommand,
+  extractPartials,
+  processPartials,
+} from './dom/process-partials';
 
 // Async Commands
 export { WaitCommand, createWaitCommand } from './async/wait';
@@ -124,23 +129,43 @@ export { FetchCommand, createFetchCommand } from './async/fetch';
 // Data Commands
 export { SetCommand, createSetCommand } from './data/set';
 export { GetCommand, createGetCommand } from './data/get';
-export { NumericModifyCommand, createNumericModifyCommand, IncrementCommand, createIncrementCommand } from './data/increment';
+export {
+  NumericModifyCommand,
+  createNumericModifyCommand,
+  IncrementCommand,
+  createIncrementCommand,
+} from './data/increment';
 export { DecrementCommand, createDecrementCommand } from './data/decrement';
 
 // Utility Commands
 export { LogCommand, createLogCommand } from './utility/log';
 
 // Event Commands
-export { EventDispatchCommand, createEventDispatchCommand, TriggerCommand, createTriggerCommand } from './events/trigger';
+export {
+  EventDispatchCommand,
+  createEventDispatchCommand,
+  TriggerCommand,
+  createTriggerCommand,
+} from './events/trigger';
 export { SendCommand, createSendCommand } from './events/send';
 
 // Navigation Commands
 export { GoCommand, createGoCommand } from './navigation/go';
-export { HistoryCommand, createHistoryCommand, PushUrlCommand, createPushUrlCommand } from './navigation/push-url';
+export {
+  HistoryCommand,
+  createHistoryCommand,
+  PushUrlCommand,
+  createPushUrlCommand,
+} from './navigation/push-url';
 export { ReplaceUrlCommand, createReplaceUrlCommand } from './navigation/replace-url';
 
 // Control Flow Commands
-export { ConditionalCommand, createConditionalCommand, IfCommand, createIfCommand } from './control-flow/if';
+export {
+  ConditionalCommand,
+  createConditionalCommand,
+  IfCommand,
+  createIfCommand,
+} from './control-flow/if';
 export { RepeatCommand, createRepeatCommand } from './control-flow/repeat';
 export { BreakCommand, createBreakCommand } from './control-flow/break';
 export { ContinueCommand, createContinueCommand } from './control-flow/continue';
@@ -199,7 +224,11 @@ export type { ToggleCommandInput } from './dom/toggle';
 export type { PutCommandInput } from './dom/put';
 export type { MakeCommandInput } from './dom/make';
 export type { SwapCommandInput, SwapStrategy } from './dom/swap';
-export type { ProcessPartialsCommandInput, ParsedPartial, ProcessPartialsResult } from './dom/process-partials';
+export type {
+  ProcessPartialsCommandInput,
+  ParsedPartial,
+  ProcessPartialsResult,
+} from './dom/process-partials';
 export type { WaitCommandInput } from './async/wait';
 export type { FetchCommandInput } from './async/fetch';
 export type { SetCommandInput } from './data/set';
@@ -212,7 +241,13 @@ export type { SendCommandInput } from './events/send';
 export type { GoCommandInput } from './navigation/go';
 export type { HistoryCommandInput, HistoryMode, PushUrlCommandInput } from './navigation/push-url';
 export type { ReplaceUrlCommandInput } from './navigation/replace-url';
-export type { ConditionalCommandInput, ConditionalCommandOutput, ConditionalMode, IfCommandInput, IfCommandOutput } from './control-flow/if';
+export type {
+  ConditionalCommandInput,
+  ConditionalCommandOutput,
+  ConditionalMode,
+  IfCommandInput,
+  IfCommandOutput,
+} from './control-flow/if';
 export type { RepeatCommandInput } from './control-flow/repeat';
 export type { BreakCommandInput } from './control-flow/break';
 export type { ContinueCommandInput } from './control-flow/continue';

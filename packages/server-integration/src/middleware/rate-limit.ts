@@ -91,7 +91,7 @@ export function createRateLimitMiddleware(db: DatabaseClient, config: RateLimitC
       res.setHeader('Retry-After', resetSeconds);
 
       // Log rate limit hit (async)
-      db.logRateLimitHit(keyId, tier, entry.count).catch((err) => {
+      db.logRateLimitHit(keyId, tier, entry.count).catch(err => {
         console.error('Failed to log rate limit hit:', err);
       });
 

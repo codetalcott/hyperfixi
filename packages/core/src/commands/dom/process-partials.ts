@@ -16,7 +16,13 @@ import { morphAdapter, type MorphOptions } from '../../lib/morph-adapter';
 import { withViewTransition, isViewTransitionsSupported } from '../../lib/view-transitions';
 import { isHTMLElement } from '../../utils/element-check';
 import type { SwapStrategy } from './swap';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 import {
   validatePartialContent,
   getPartialValidationConfig,
@@ -58,16 +64,16 @@ export interface ProcessPartialsResult {
 // ============================================================================
 
 const STRATEGY_MAP: Record<string, SwapStrategy> = {
-  'morph': 'morph',
-  'morphouter': 'morphOuter',
-  'innerhtml': 'innerHTML',
-  'outerhtml': 'outerHTML',
-  'beforebegin': 'beforeBegin',
-  'afterbegin': 'afterBegin',
-  'beforeend': 'beforeEnd',
-  'afterend': 'afterEnd',
-  'delete': 'delete',
-  'none': 'none',
+  morph: 'morph',
+  morphouter: 'morphOuter',
+  innerhtml: 'innerHTML',
+  outerhtml: 'outerHTML',
+  beforebegin: 'beforeBegin',
+  afterbegin: 'afterBegin',
+  beforeend: 'beforeEnd',
+  afterend: 'afterEnd',
+  delete: 'delete',
+  none: 'none',
 };
 
 // ============================================================================
@@ -149,10 +155,7 @@ function executePartialSwap(
   }
 }
 
-export function processPartials(
-  html: string,
-  morphOptions?: MorphOptions
-): ProcessPartialsResult {
+export function processPartials(html: string, morphOptions?: MorphOptions): ProcessPartialsResult {
   const partials = extractPartials(html);
   const config = getPartialValidationConfig();
   const result: ProcessPartialsResult = {
@@ -207,7 +210,11 @@ export function processPartials(
 @meta({
   description: 'Process <hx-partial> elements for multi-target swaps',
   syntax: ['process partials in <content>', 'process partials in <content> using view transition'],
-  examples: ['process partials in it', 'process partials in fetchedHtml', 'process partials in it using view transition'],
+  examples: [
+    'process partials in it',
+    'process partials in fetchedHtml',
+    'process partials in it using view transition',
+  ],
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'process', category: 'dom' })
@@ -243,7 +250,9 @@ export class ProcessPartialsCommand implements DecoratedCommand {
 
     const inIndex = argStrings.findIndex(s => s === 'in');
     if (inIndex === -1 || inIndex <= partialsIndex) {
-      throw new Error('process partials command expects "in" keyword: process partials in <content>');
+      throw new Error(
+        'process partials command expects "in" keyword: process partials in <content>'
+      );
     }
 
     const contentArg = evaluatedArgs[inIndex + 1];
@@ -295,9 +304,11 @@ export class ProcessPartialsCommand implements DecoratedCommand {
 
     (context as any).it = result!;
 
-    window.dispatchEvent(new CustomEvent('hyperfixi:partials', {
-      detail: result!,
-    }));
+    window.dispatchEvent(
+      new CustomEvent('hyperfixi:partials', {
+        detail: result!,
+      })
+    );
 
     if (result!.errors.length > 0) {
       console.warn('Some partials failed to process:', result!.errors);

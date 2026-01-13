@@ -3,49 +3,49 @@
  * Provides properly typed interfaces for test assertions on semantic nodes
  */
 
-import type { SemanticRole } from '../types'
+import type { SemanticRole } from '../types';
 
 /**
  * Semantic node result for testing
  */
 export interface SemanticNodeResult {
-  action: string
-  roles: Map<SemanticRole, SemanticValue>
-  confidence: number
-  errors?: ValidationError[]
-  tokens?: unknown[]
-  metadata?: Record<string, unknown>
+  action: string;
+  roles: Map<SemanticRole, SemanticValue>;
+  confidence: number;
+  errors?: ValidationError[];
+  tokens?: unknown[];
+  metadata?: Record<string, unknown>;
 }
 
 /**
  * Semantic value in role maps
  */
 export interface SemanticValue {
-  value: unknown
-  type?: string
-  raw?: string
-  [key: string]: unknown
+  value: unknown;
+  type?: string;
+  raw?: string;
+  [key: string]: unknown;
 }
 
 /**
  * Validation error from semantic parsing
  */
 export interface ValidationError {
-  message: string
-  code?: string
-  position?: number
-  [key: string]: unknown
+  message: string;
+  code?: string;
+  position?: number;
+  [key: string]: unknown;
 }
 
 /**
  * Type-safe role accessor for semantic nodes
  */
 export interface RoleAccessor<T extends string = SemanticRole> {
-  get(role: T): SemanticValue | undefined
-  has(role: T): boolean
-  keys(): T[]
-  values(): SemanticValue[]
-  entries(): Array<[T, SemanticValue]>
+  get(role: T): SemanticValue | undefined;
+  has(role: T): boolean;
+  keys(): T[];
+  values(): SemanticValue[];
+  entries(): Array<[T, SemanticValue]>;
 }
 
 /**
@@ -56,21 +56,21 @@ export function createRoleAccessor<T extends string = SemanticRole>(
 ): RoleAccessor<T> {
   return {
     get(role: T): SemanticValue | undefined {
-      return roles.get(role)
+      return roles.get(role);
     },
     has(role: T): boolean {
-      return roles.has(role)
+      return roles.has(role);
     },
     keys(): T[] {
-      return Array.from(roles.keys())
+      return Array.from(roles.keys());
     },
     values(): SemanticValue[] {
-      return Array.from(roles.values())
+      return Array.from(roles.values());
     },
     entries(): Array<[T, SemanticValue]> {
-      return Array.from(roles.entries())
+      return Array.from(roles.entries());
     },
-  }
+  };
 }
 
 /**
@@ -86,19 +86,15 @@ export function isSemanticNodeResult(value: unknown): value is SemanticNodeResul
     (value as SemanticNodeResult).roles instanceof Map &&
     'confidence' in value &&
     typeof (value as SemanticNodeResult).confidence === 'number'
-  )
+  );
 }
 
 /**
  * Assert that a value is a SemanticNodeResult
  */
-export function assertSemanticNodeResult(
-  value: unknown
-): asserts value is SemanticNodeResult {
+export function assertSemanticNodeResult(value: unknown): asserts value is SemanticNodeResult {
   if (!isSemanticNodeResult(value)) {
-    throw new Error(
-      `Expected SemanticNodeResult, got ${typeof value}`
-    )
+    throw new Error(`Expected SemanticNodeResult, got ${typeof value}`);
   }
 }
 
@@ -109,8 +105,8 @@ export function getRoleValue<T = unknown>(
   node: SemanticNodeResult,
   role: SemanticRole
 ): T | undefined {
-  const value = node.roles.get(role)
-  return value?.value as T | undefined
+  const value = node.roles.get(role);
+  return value?.value as T | undefined;
 }
 
 /**
@@ -121,6 +117,6 @@ export function assertNodeHasRole(
   role: SemanticRole
 ): asserts node is SemanticNodeResult & { roles: Map<SemanticRole, SemanticValue> } {
   if (!node.roles.has(role)) {
-    throw new Error(`Expected node to have role '${role}'`)
+    throw new Error(`Expected node to have role '${role}'`);
   }
 }

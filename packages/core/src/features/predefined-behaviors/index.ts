@@ -7,19 +7,19 @@
 export {
   modalBehaviorDefinition,
   createModalBehavior,
-  type ModalBehaviorOptions
+  type ModalBehaviorOptions,
 } from './modal-behavior';
 
 export {
   dropdownBehaviorDefinition,
   createDropdownBehavior,
-  type DropdownBehaviorOptions
+  type DropdownBehaviorOptions,
 } from './dropdown-behavior';
 
 export {
   toggleGroupBehaviorDefinition,
   createToggleGroupBehavior,
-  type ToggleGroupBehaviorOptions
+  type ToggleGroupBehaviorOptions,
 } from './toggle-group-behavior';
 
 export type { BehaviorDefinition, BehaviorRegistry } from './types';

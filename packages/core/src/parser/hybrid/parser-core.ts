@@ -235,7 +235,10 @@ export class HybridParser {
     this.expect('toggle');
     const what = this.parseExpression();
     let target: ASTNode | undefined;
-    if (this.match('on')) { this.advance(); target = this.parseExpression(); }
+    if (this.match('on')) {
+      this.advance();
+      target = this.parseExpression();
+    }
     return { type: 'command', name: 'toggle', args: [what], target };
   }
 
@@ -243,7 +246,10 @@ export class HybridParser {
     this.expect('add');
     const what = this.parseExpression();
     let target: ASTNode | undefined;
-    if (this.match('to')) { this.advance(); target = this.parseExpression(); }
+    if (this.match('to')) {
+      this.advance();
+      target = this.parseExpression();
+    }
     return { type: 'command', name: 'add', args: [what], target };
   }
 
@@ -252,7 +258,10 @@ export class HybridParser {
     if (this.matchType('selector')) {
       const what = this.parseExpression();
       let target: ASTNode | undefined;
-      if (this.match('from')) { this.advance(); target = this.parseExpression(); }
+      if (this.match('from')) {
+        this.advance();
+        target = this.parseExpression();
+      }
       return { type: 'command', name: 'removeClass', args: [what], target };
     }
     const target = this.parseExpression();
@@ -279,7 +288,10 @@ export class HybridParser {
     this.expect('append');
     const content = this.parseExpression();
     let target: ASTNode | undefined;
-    if (this.match('to')) { this.advance(); target = this.parseExpression(); }
+    if (this.match('to')) {
+      this.advance();
+      target = this.parseExpression();
+    }
     return { type: 'command', name: 'append', args: [content], target };
   }
 
@@ -319,7 +331,10 @@ export class HybridParser {
     this.advance();
     const event = this.advance().value;
     let target: ASTNode | undefined;
-    if (this.match('to')) { this.advance(); target = this.parseExpression(); }
+    if (this.match('to')) {
+      this.advance();
+      target = this.parseExpression();
+    }
     return { type: 'command', name: 'send', args: [{ type: 'literal', value: event }], target };
   }
 
@@ -329,8 +344,16 @@ export class HybridParser {
       this.advance();
       const event = this.advance().value;
       let target: ASTNode | undefined;
-      if (this.match('from')) { this.advance(); target = this.parseExpression(); }
-      return { type: 'command', name: 'waitFor', args: [{ type: 'literal', value: event }], target };
+      if (this.match('from')) {
+        this.advance();
+        target = this.parseExpression();
+      }
+      return {
+        type: 'command',
+        name: 'waitFor',
+        args: [{ type: 'literal', value: event }],
+        target,
+      };
     }
     return { type: 'command', name: 'wait', args: [this.parseExpression()] };
   }
@@ -377,7 +400,10 @@ export class HybridParser {
     this.expect('take');
     const what = this.parseExpression();
     let from: ASTNode | undefined;
-    if (this.match('from')) { this.advance(); from = this.parseExpression(); }
+    if (this.match('from')) {
+      this.advance();
+      from = this.parseExpression();
+    }
     return { type: 'command', name: 'take', args: [what], target: from };
   }
 
@@ -385,7 +411,10 @@ export class HybridParser {
     this.advance();
     const target = this.parseExpression();
     let amount: ASTNode = { type: 'literal', value: 1 };
-    if (this.match('by')) { this.advance(); amount = this.parseExpression(); }
+    if (this.match('by')) {
+      this.advance();
+      amount = this.parseExpression();
+    }
     return { type: 'command', name, args: [target, amount] };
   }
 
@@ -468,7 +497,9 @@ export class HybridParser {
   }
 
   // Expression parsing with operator precedence
-  private parseExpression(): ASTNode { return this.parseOr(); }
+  private parseExpression(): ASTNode {
+    return this.parseOr();
+  }
 
   private parseOr(): ASTNode {
     let left = this.parseAnd();
@@ -489,7 +520,23 @@ export class HybridParser {
   }
 
   private isCommandKeyword(token: Token): boolean {
-    const cmds = ['toggle', 'add', 'remove', 'set', 'put', 'log', 'send', 'wait', 'show', 'hide', 'increment', 'decrement', 'focus', 'blur', 'go'];
+    const cmds = [
+      'toggle',
+      'add',
+      'remove',
+      'set',
+      'put',
+      'log',
+      'send',
+      'wait',
+      'show',
+      'hide',
+      'increment',
+      'decrement',
+      'focus',
+      'blur',
+      'go',
+    ];
     return cmds.includes(normalizeCommand(token.value));
   }
 
@@ -613,14 +660,35 @@ export class HybridParser {
       return { type: 'literal', value: token.value.slice(1, -1) };
     }
 
-    if (this.match('true')) { this.advance(); return { type: 'literal', value: true }; }
-    if (this.match('false')) { this.advance(); return { type: 'literal', value: false }; }
-    if (this.match('null')) { this.advance(); return { type: 'literal', value: null }; }
-    if (this.match('undefined')) { this.advance(); return { type: 'literal', value: undefined }; }
+    if (this.match('true')) {
+      this.advance();
+      return { type: 'literal', value: true };
+    }
+    if (this.match('false')) {
+      this.advance();
+      return { type: 'literal', value: false };
+    }
+    if (this.match('null')) {
+      this.advance();
+      return { type: 'literal', value: null };
+    }
+    if (this.match('undefined')) {
+      this.advance();
+      return { type: 'literal', value: undefined };
+    }
 
-    if (token.type === 'localVar') { this.advance(); return { type: 'variable', name: token.value, scope: 'local' }; }
-    if (token.type === 'globalVar') { this.advance(); return { type: 'variable', name: token.value, scope: 'global' }; }
-    if (token.type === 'selector') { this.advance(); return { type: 'selector', value: token.value }; }
+    if (token.type === 'localVar') {
+      this.advance();
+      return { type: 'variable', name: token.value, scope: 'local' };
+    }
+    if (token.type === 'globalVar') {
+      this.advance();
+      return { type: 'variable', name: token.value, scope: 'global' };
+    }
+    if (token.type === 'selector') {
+      this.advance();
+      return { type: 'selector', value: token.value };
+    }
 
     // Handle implicit possessive: my value, its value
     if (this.match('my')) {
@@ -641,9 +709,18 @@ export class HybridParser {
       }
       return { type: 'identifier', value: 'it' };
     }
-    if (this.match('me')) { this.advance(); return { type: 'identifier', value: 'me' }; }
-    if (this.match('it')) { this.advance(); return { type: 'identifier', value: 'it' }; }
-    if (this.match('you')) { this.advance(); return { type: 'identifier', value: 'you' }; }
+    if (this.match('me')) {
+      this.advance();
+      return { type: 'identifier', value: 'me' };
+    }
+    if (this.match('it')) {
+      this.advance();
+      return { type: 'identifier', value: 'it' };
+    }
+    if (this.match('you')) {
+      this.advance();
+      return { type: 'identifier', value: 'you' };
+    }
 
     // Positional: the first <li/> or first li
     if (this.match('the', 'a', 'an')) {

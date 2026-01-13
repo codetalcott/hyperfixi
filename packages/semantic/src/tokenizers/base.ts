@@ -162,7 +162,9 @@ export function isWhitespace(char: string): boolean {
  * Includes JSX-style element selectors: <form />, <div>
  */
 export function isSelectorStart(char: string): boolean {
-  return char === '#' || char === '.' || char === '[' || char === '@' || char === '*' || char === '<';
+  return (
+    char === '#' || char === '.' || char === '[' || char === '@' || char === '*' || char === '<'
+  );
 }
 
 /**
@@ -547,9 +549,15 @@ export interface KeywordEntry {
  * Matches the structure of LanguageProfile but only includes fields needed for tokenization.
  */
 export interface TokenizerProfile {
-  readonly keywords?: Record<string, { primary: string; alternatives?: string[]; normalized?: string }>;
+  readonly keywords?: Record<
+    string,
+    { primary: string; alternatives?: string[]; normalized?: string }
+  >;
   readonly references?: Record<string, string>;
-  readonly roleMarkers?: Record<string, { primary: string; alternatives?: string[]; position?: string }>;
+  readonly roleMarkers?: Record<
+    string,
+    { primary: string; alternatives?: string[]; position?: string }
+  >;
 }
 
 /**
@@ -706,11 +714,7 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   protected trySelector(input: string, pos: number): LanguageToken | null {
     const selector = extractCssSelector(input, pos);
     if (selector) {
-      return createToken(
-        selector,
-        'selector',
-        createPosition(pos, pos + selector.length)
-      );
+      return createToken(selector, 'selector', createPosition(pos, pos + selector.length));
     }
     return null;
   }
@@ -721,11 +725,7 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   protected tryString(input: string, pos: number): LanguageToken | null {
     const literal = extractStringLiteral(input, pos);
     if (literal) {
-      return createToken(
-        literal,
-        'literal',
-        createPosition(pos, pos + literal.length)
-      );
+      return createToken(literal, 'literal', createPosition(pos, pos + literal.length));
     }
     return null;
   }
@@ -736,11 +736,7 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   protected tryNumber(input: string, pos: number): LanguageToken | null {
     const number = extractNumber(input, pos);
     if (number) {
-      return createToken(
-        number,
-        'literal',
-        createPosition(pos, pos + number.length)
-      );
+      return createToken(number, 'literal', createPosition(pos, pos + number.length));
     }
     return null;
   }
@@ -752,11 +748,7 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   protected tryUrl(input: string, pos: number): LanguageToken | null {
     const url = extractUrl(input, pos);
     if (url) {
-      return createToken(
-        url,
-        'url',
-        createPosition(pos, pos + url.length)
-      );
+      return createToken(url, 'url', createPosition(pos, pos + url.length));
     }
     return null;
   }
@@ -776,10 +768,6 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
     }
 
     const varRef = input.slice(pos, endPos);
-    return createToken(
-      varRef,
-      'identifier',
-      createPosition(pos, endPos)
-    );
+    return createToken(varRef, 'identifier', createPosition(pos, endPos));
   }
 }

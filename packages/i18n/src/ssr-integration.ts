@@ -26,10 +26,7 @@ export class SSRLocaleManager {
   private translator: HyperscriptTranslator;
   private options: Required<SSRLocaleOptions>;
 
-  constructor(
-    translator: HyperscriptTranslator,
-    options: SSRLocaleOptions = {}
-  ) {
+  constructor(translator: HyperscriptTranslator, options: SSRLocaleOptions = {}) {
     this.translator = translator;
     this.options = {
       detectFromHeaders: options.detectFromHeaders ?? true,
@@ -63,10 +60,10 @@ export class SSRLocaleManager {
     if (this.options.detectFromHeaders && request.headers?.['accept-language']) {
       const headerLocales = this.parseAcceptLanguage(request.headers['accept-language']);
       preferredLocales.push(...headerLocales);
-      
+
       // Use first supported locale from header if URL didn't provide one
       if (locale === this.options.fallbackLocale) {
-        const supportedHeaderLocale = headerLocales.find(loc => 
+        const supportedHeaderLocale = headerLocales.find(loc =>
           this.options.supportedLocales.includes(loc)
         );
         if (supportedHeaderLocale) {
@@ -168,7 +165,10 @@ export class SSRLocaleManager {
 /**
  * Express middleware for SSR i18n
  */
-export function createExpressI18nMiddleware(translator: HyperscriptTranslator, options?: SSRLocaleOptions) {
+export function createExpressI18nMiddleware(
+  translator: HyperscriptTranslator,
+  options?: SSRLocaleOptions
+) {
   const localeManager = new SSRLocaleManager(translator, options);
 
   return (req: any, _res: any, next: any) => {
@@ -196,7 +196,11 @@ export function createExpressI18nMiddleware(translator: HyperscriptTranslator, o
 /**
  * Next.js API for SSR i18n
  */
-export function withI18n(handler: any, translator: HyperscriptTranslator, options?: SSRLocaleOptions) {
+export function withI18n(
+  handler: any,
+  translator: HyperscriptTranslator,
+  options?: SSRLocaleOptions
+) {
   const localeManager = new SSRLocaleManager(translator, options);
 
   return async (req: any, res: any) => {

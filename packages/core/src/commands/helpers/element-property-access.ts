@@ -69,7 +69,8 @@ export function getElementProperty(element: HTMLElement, property: string): unkn
   // Handle style properties
   if (property.includes('-') || property in element.style) {
     return (
-      element.style.getPropertyValue(property) || (element.style as unknown as Record<string, unknown>)[property]
+      element.style.getPropertyValue(property) ||
+      (element.style as unknown as Record<string, unknown>)[property]
     );
   }
   // Generic property access

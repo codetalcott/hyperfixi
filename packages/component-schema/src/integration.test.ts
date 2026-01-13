@@ -250,7 +250,11 @@ describe('Integration: Consumer Package Usage Patterns', () => {
       };
 
       const complex: ComponentDefinition = {
-        ...createComponent('complex', 'Complex', 'on click fetch /api then put result into #target'),
+        ...createComponent(
+          'complex',
+          'Complex',
+          'on click fetch /api then put result into #target'
+        ),
         validation: { complexity: 7 },
       };
 

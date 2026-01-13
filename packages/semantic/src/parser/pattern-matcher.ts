@@ -25,10 +25,7 @@ export class PatternMatcher {
    * Try to match a single pattern against the token stream.
    * Returns the match result or null if no match.
    */
-  matchPattern(
-    tokens: TokenStream,
-    pattern: LanguagePattern
-  ): PatternMatchResult | null {
+  matchPattern(tokens: TokenStream, pattern: LanguagePattern): PatternMatchResult | null {
     const mark = tokens.mark();
     const captured = new Map<SemanticRole, SemanticValue>();
 
@@ -36,11 +33,7 @@ export class PatternMatcher {
     this.stemMatchCount = 0;
     this.totalKeywordMatches = 0;
 
-    const success = this.matchTokenSequence(
-      tokens,
-      pattern.template.tokens,
-      captured
-    );
+    const success = this.matchTokenSequence(tokens, pattern.template.tokens, captured);
 
     if (!success) {
       tokens.reset(mark);
@@ -61,10 +54,7 @@ export class PatternMatcher {
   /**
    * Try to match multiple patterns, return the best match.
    */
-  matchBest(
-    tokens: TokenStream,
-    patterns: LanguagePattern[]
-  ): PatternMatchResult | null {
+  matchBest(tokens: TokenStream, patterns: LanguagePattern[]): PatternMatchResult | null {
     const matches: PatternMatchResult[] = [];
 
     for (const pattern of patterns) {
@@ -189,52 +179,52 @@ export class PatternMatcher {
    * Maps possessive keyword to the reference it represents.
    */
   private static readonly POSSESSIVE_KEYWORDS: Record<string, string> = {
-    'my': 'me',
-    'your': 'you',
-    'its': 'it',
+    my: 'me',
+    your: 'you',
+    its: 'it',
     // Korean possessive pronouns
-    '내': 'me',      // nae (my)
-    '네': 'you',     // ne (your)
-    '그의': 'it',    // geu-ui (its/his)
+    내: 'me', // nae (my)
+    네: 'you', // ne (your)
+    그의: 'it', // geu-ui (its/his)
     // Japanese possessive particles
-    '私の': 'me',    // watashi no (my)
-    'あなたの': 'you', // anata no (your)
-    'その': 'it',    // sono (its)
+    私の: 'me', // watashi no (my)
+    あなたの: 'you', // anata no (your)
+    その: 'it', // sono (its)
     // Turkish possessive pronouns
-    'benim': 'me',   // my
-    'senin': 'you',  // your
-    'onun': 'it',    // its
+    benim: 'me', // my
+    senin: 'you', // your
+    onun: 'it', // its
     // Spanish
-    'mi': 'me',
-    'tu': 'you',
-    'su': 'it',
+    mi: 'me',
+    tu: 'you',
+    su: 'it',
     // French
-    'mon': 'me',
-    'ma': 'me',
-    'mes': 'me',
-    'ton': 'you',
-    'ta': 'you',
-    'tes': 'you',
-    'son': 'it',
-    'sa': 'it',
-    'ses': 'it',
+    mon: 'me',
+    ma: 'me',
+    mes: 'me',
+    ton: 'you',
+    ta: 'you',
+    tes: 'you',
+    son: 'it',
+    sa: 'it',
+    ses: 'it',
     // German
-    'mein': 'me',
-    'meine': 'me',
-    'meinen': 'me',
-    'dein': 'you',
-    'deine': 'you',
-    'deinen': 'you',
-    'sein': 'it',
-    'seine': 'it',
-    'seinen': 'it',
+    mein: 'me',
+    meine: 'me',
+    meinen: 'me',
+    dein: 'you',
+    deine: 'you',
+    deinen: 'you',
+    sein: 'it',
+    seine: 'it',
+    seinen: 'it',
     // Portuguese
-    'meu': 'me',
-    'minha': 'me',
-    'teu': 'you',
-    'tua': 'you',
-    'seu': 'it',
-    'sua': 'it',
+    meu: 'me',
+    minha: 'me',
+    teu: 'you',
+    tua: 'you',
+    seu: 'it',
+    sua: 'it',
   };
 
   /**
@@ -262,8 +252,10 @@ export class PatternMatcher {
     if (possessiveValue) {
       // Validate expected types if specified
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
-        if (!patternToken.expectedTypes.includes(possessiveValue.type) &&
-            !patternToken.expectedTypes.includes('expression')) {
+        if (
+          !patternToken.expectedTypes.includes(possessiveValue.type) &&
+          !patternToken.expectedTypes.includes('expression')
+        ) {
           return patternToken.optional || false;
         }
       }
@@ -275,8 +267,10 @@ export class PatternMatcher {
     const methodCallValue = this.tryMatchMethodCallExpression(tokens);
     if (methodCallValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
-        if (!patternToken.expectedTypes.includes(methodCallValue.type) &&
-            !patternToken.expectedTypes.includes('expression')) {
+        if (
+          !patternToken.expectedTypes.includes(methodCallValue.type) &&
+          !patternToken.expectedTypes.includes('expression')
+        ) {
           return patternToken.optional || false;
         }
       }
@@ -301,8 +295,10 @@ export class PatternMatcher {
     const propertyAccessValue = this.tryMatchPropertyAccessExpression(tokens);
     if (propertyAccessValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
-        if (!patternToken.expectedTypes.includes(propertyAccessValue.type) &&
-            !patternToken.expectedTypes.includes('expression')) {
+        if (
+          !patternToken.expectedTypes.includes(propertyAccessValue.type) &&
+          !patternToken.expectedTypes.includes('expression')
+        ) {
           return patternToken.optional || false;
         }
       }
@@ -367,16 +363,15 @@ export class PatternMatcher {
 
     // Property should be an identifier, keyword (not structural), or selector (for style props)
     // Examples: "my value", "my innerHTML", "my *background", "my *opacity"
-    if (propertyToken.kind === 'identifier' ||
-        (propertyToken.kind === 'keyword' && !this.isStructuralKeyword(propertyToken.value)) ||
-        (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*'))) {
+    if (
+      propertyToken.kind === 'identifier' ||
+      (propertyToken.kind === 'keyword' && !this.isStructuralKeyword(propertyToken.value)) ||
+      (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*'))
+    ) {
       tokens.advance();
 
       // Create property-path: my value -> { object: me, property: 'value' }
-      return createPropertyPath(
-        createReference(baseRef as any),
-        propertyToken.value
-      );
+      return createPropertyPath(createReference(baseRef as any), propertyToken.value);
     }
 
     // Not a valid property, revert
@@ -389,10 +384,7 @@ export class PatternMatcher {
    * property-path is compatible with selector, reference, and expression.
    * expression is compatible with any type.
    */
-  private isTypeCompatible(
-    actualType: string,
-    expectedTypes: string[]
-  ): boolean {
+  private isTypeCompatible(actualType: string, expectedTypes: string[]): boolean {
     // Direct match
     if (expectedTypes.includes(actualType)) return true;
 
@@ -414,13 +406,40 @@ export class PatternMatcher {
   private isStructuralKeyword(value: string): boolean {
     const structural = new Set([
       // Prepositions
-      'into', 'in', 'to', 'from', 'at', 'by', 'with', 'without',
-      'before', 'after', 'of', 'as', 'on',
+      'into',
+      'in',
+      'to',
+      'from',
+      'at',
+      'by',
+      'with',
+      'without',
+      'before',
+      'after',
+      'of',
+      'as',
+      'on',
       // Control flow
-      'then', 'end', 'else', 'if', 'repeat', 'while', 'for',
+      'then',
+      'end',
+      'else',
+      'if',
+      'repeat',
+      'while',
+      'for',
       // Commands (shouldn't be property names)
-      'toggle', 'add', 'remove', 'put', 'set', 'show', 'hide',
-      'increment', 'decrement', 'send', 'trigger', 'call',
+      'toggle',
+      'add',
+      'remove',
+      'put',
+      'set',
+      'show',
+      'hide',
+      'increment',
+      'decrement',
+      'send',
+      'trigger',
+      'call',
     ]);
     return structural.has(value.toLowerCase());
   }
@@ -604,7 +623,11 @@ export class PatternMatcher {
     tokens.advance(); // consume selector
 
     const possessiveToken = tokens.peek();
-    if (!possessiveToken || possessiveToken.kind !== 'punctuation' || possessiveToken.value !== "'s") {
+    if (
+      !possessiveToken ||
+      possessiveToken.kind !== 'punctuation' ||
+      possessiveToken.value !== "'s"
+    ) {
       tokens.reset(mark);
       return null;
     }
@@ -624,10 +647,7 @@ export class PatternMatcher {
     tokens.advance(); // consume property
 
     // Create property-path: #element's *opacity
-    return createPropertyPath(
-      createSelector(token.value),
-      propertyToken.value
-    );
+    return createPropertyPath(createSelector(token.value), propertyToken.value);
   }
 
   /**
@@ -676,10 +696,7 @@ export class PatternMatcher {
     // Extract property name without the leading dot
     const propertyName = propertyToken.value.slice(1);
 
-    return createPropertyPath(
-      createSelector(token.value),
-      propertyName
-    );
+    return createPropertyPath(createSelector(token.value), propertyName);
   }
 
   /**
@@ -692,11 +709,7 @@ export class PatternMatcher {
   ): boolean {
     const mark = tokens.mark();
 
-    const success = this.matchTokenSequence(
-      tokens,
-      patternToken.tokens,
-      captured
-    );
+    const success = this.matchTokenSequence(tokens, patternToken.tokens, captured);
 
     if (!success) {
       tokens.reset(mark);
@@ -722,19 +735,12 @@ export class PatternMatcher {
 
     // Morphologically normalized stem match (medium-high confidence)
     // Only accept if stem confidence is reasonable
-    if (
-      token.stem === value &&
-      token.stemConfidence !== undefined &&
-      token.stemConfidence >= 0.7
-    ) {
+    if (token.stem === value && token.stemConfidence !== undefined && token.stemConfidence >= 0.7) {
       return 'stem';
     }
 
     // Case-insensitive match for keywords (medium confidence)
-    if (
-      token.kind === 'keyword' &&
-      token.value.toLowerCase() === value.toLowerCase()
-    ) {
+    if (token.kind === 'keyword' && token.value.toLowerCase() === value.toLowerCase()) {
       return 'case-insensitive';
     }
 
@@ -805,7 +811,12 @@ export class PatternMatcher {
    */
   private parseLiteralValue(value: string): SemanticValue {
     // String literal
-    if (value.startsWith('"') || value.startsWith("'") || value.startsWith('`') || value.startsWith('「')) {
+    if (
+      value.startsWith('"') ||
+      value.startsWith("'") ||
+      value.startsWith('`') ||
+      value.startsWith('「')
+    ) {
       const inner = value.slice(1, -1);
       return createLiteral(inner, 'string');
     }

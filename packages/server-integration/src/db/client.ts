@@ -42,7 +42,7 @@ export class DatabaseClient {
     });
 
     // Handle pool errors
-    this.pool.on('error', (err) => {
+    this.pool.on('error', err => {
       console.error('Unexpected database pool error:', err);
     });
   }
@@ -148,10 +148,10 @@ export class DatabaseClient {
    * Increment API key usage counter
    */
   async incrementApiKeyUsage(keyId: string, count: number = 1): Promise<void> {
-    await this.pool.query(
-      `UPDATE api_keys SET current_usage = current_usage + $2 WHERE id = $1`,
-      [keyId, count]
-    );
+    await this.pool.query(`UPDATE api_keys SET current_usage = current_usage + $2 WHERE id = $1`, [
+      keyId,
+      count,
+    ]);
   }
 
   /**
@@ -194,10 +194,11 @@ export class DatabaseClient {
     tier: 'free' | 'pro' | 'team',
     monthlyLimit: number
   ): Promise<void> {
-    await this.pool.query(
-      `UPDATE api_keys SET tier = $2, monthly_limit = $3 WHERE id = $1`,
-      [keyId, tier, monthlyLimit]
-    );
+    await this.pool.query(`UPDATE api_keys SET tier = $2, monthly_limit = $3 WHERE id = $1`, [
+      keyId,
+      tier,
+      monthlyLimit,
+    ]);
   }
 
   // ============================================

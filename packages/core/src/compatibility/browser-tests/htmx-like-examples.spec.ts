@@ -35,14 +35,12 @@ import { waitForHyperfixi } from './test-utils';
 const BASE_URL = 'http://127.0.0.1:3000';
 
 test.describe('htmx-like Examples Live Tests @comprehensive', () => {
-
   test.describe('01: Swap & Morph (01-swap-morph.html)', () => {
-
     // Test swap command - now registered in parser
     test('basic swap updates content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -63,7 +61,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('morph preserves form input state', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -88,7 +86,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('innerHTML destroys form input state', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -113,7 +111,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('swap beforeEnd appends content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -142,7 +140,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('swap afterBegin prepends content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -163,7 +161,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('swap delete removes elements', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -186,12 +184,11 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
   });
 
   test.describe('02: View Transitions (02-view-transitions.html)', () => {
-
     // swap with view transition is implemented
     test('swap with transition updates content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/02-view-transitions.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -212,7 +209,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('swap without transition updates instantly', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/02-view-transitions.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -229,7 +226,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('page navigation buttons work', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/02-view-transitions.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -253,7 +250,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('browser support check displays correctly', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/02-view-transitions.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -264,7 +261,6 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
   });
 
   test.describe('03: History Navigation (03-history-navigation.html)', () => {
-
     // push url is implemented
     test('push url updates browser hash', async ({ page }) => {
       // Capture ALL console output for debugging
@@ -278,7 +274,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
 
       await page.goto(`${BASE_URL}/examples/htmx-like/03-history-navigation.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -336,7 +332,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('navigation updates content', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/03-history-navigation.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -356,7 +352,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('active class moves with navigation', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/03-history-navigation.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -383,7 +379,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('replace url changes URL without creating history', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/03-history-navigation.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -398,12 +394,11 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
   });
 
   test.describe('04: Multi-Target Swaps (04-multi-target-swaps.html)', () => {
-
     // swap is implemented
     test('explicit multi-swap updates all panels', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/04-multi-target-swaps.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -433,7 +428,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('process partials updates multiple targets', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/04-multi-target-swaps.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -457,7 +452,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('beforeEnd strategy appends to alerts', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/04-multi-target-swaps.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -476,7 +471,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('dashboard refresh updates stats', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/04-multi-target-swaps.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -496,12 +491,11 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
   });
 
   test.describe('05: Boosted Links (05-boosted-links.html)', () => {
-
     // swap and push url are implemented
     test('boosted nav links update content without reload', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/05-boosted-links.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -525,7 +519,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('boosted nav updates active class', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/05-boosted-links.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -550,7 +544,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('boosted form submission works', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/05-boosted-links.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -575,7 +569,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('empty search shows error message', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/05-boosted-links.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -592,7 +586,7 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
     test('search updates URL with query params', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/htmx-like/05-boosted-links.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await waitForHyperfixi(page);
 
@@ -609,7 +603,6 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
   });
 
   test.describe('Cross-Example Consistency', () => {
-
     test('all examples load without JavaScript errors', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => {
@@ -621,13 +614,13 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
         '02-view-transitions.html',
         '03-history-navigation.html',
         '04-multi-target-swaps.html',
-        '05-boosted-links.html'
+        '05-boosted-links.html',
       ];
 
       for (const example of examples) {
         await page.goto(`${BASE_URL}/examples/htmx-like/${example}`, {
           waitUntil: 'domcontentloaded',
-          timeout: 10000
+          timeout: 10000,
         });
         await waitForHyperfixi(page);
       }
@@ -642,20 +635,22 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
         '02-view-transitions.html',
         '03-history-navigation.html',
         '04-multi-target-swaps.html',
-        '05-boosted-links.html'
+        '05-boosted-links.html',
       ];
 
       for (const example of examples) {
         await page.goto(`${BASE_URL}/examples/htmx-like/${example}`, {
           waitUntil: 'domcontentloaded',
-          timeout: 10000
+          timeout: 10000,
         });
         await waitForHyperfixi(page);
 
         // Check that HyperFixi is loaded
         const hyperFixiLoaded = await page.evaluate(() => {
-          return typeof (window as any)._hyperscript !== 'undefined' ||
-                 typeof (window as any).hyperFixi !== 'undefined';
+          return (
+            typeof (window as any)._hyperscript !== 'undefined' ||
+            typeof (window as any).hyperFixi !== 'undefined'
+          );
         });
 
         expect(hyperFixiLoaded).toBe(true);

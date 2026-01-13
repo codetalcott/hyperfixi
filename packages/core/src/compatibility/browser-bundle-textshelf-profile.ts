@@ -50,23 +50,23 @@
 
 // Commands (using new factory exports)
 import {
-  toggle,      // Toggle disabled states
-  add,         // Add CSS classes
-  remove,      // Remove elements
-  show,        // Show elements
-  hide,        // Hide elements
-  set,         // Set properties
-  wait,        // Timing delays
-  go,          // Scroll navigation
-  transition,  // CSS transitions
-  call,        // Call alert() for errors
+  toggle, // Toggle disabled states
+  add, // Add CSS classes
+  remove, // Remove elements
+  show, // Show elements
+  hide, // Hide elements
+  set, // Set properties
+  wait, // Timing delays
+  go, // Scroll navigation
+  transition, // CSS transitions
+  call, // Call alert() for errors
 } from '../commands';
 
 // Expression categories (minimal set)
 import {
-  references,  // me, my, CSS selectors
-  logical,     // Comparisons
-  special,     // Literals
+  references, // me, my, CSS selectors
+  logical, // Comparisons
+  special, // Literals
 } from '../expressions';
 
 // Parser (hybrid handles "then" chaining)
@@ -98,11 +98,7 @@ const hyperfixi: HyperFixiRuntime = createRuntime({
     // Execution (1)
     call,
   ],
-  expressions: [
-    references,
-    logical,
-    special,
-  ],
+  expressions: [references, logical, special],
   parser: hybridParser,
 });
 

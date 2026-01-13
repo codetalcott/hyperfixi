@@ -111,10 +111,7 @@ export function parseCompoundCommand(
  *
  * Phase 9-3b: Extracted from Parser.parseRegularCommand
  */
-export function parseRegularCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-) {
+export function parseRegularCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
 
   // Parse command arguments (space-separated, not comma-separated)
@@ -264,10 +261,7 @@ export function parseMultiWordCommand(
  * @param identifierNode - The command identifier node
  * @returns CommandNode representing the js command
  */
-export function parseJsCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-): CommandNode {
+export function parseJsCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
   const parameters: string[] = [];
 
   // Check for optional parameters: js(param1, param2)
@@ -315,7 +309,7 @@ export function parseJsCommand(
 
   const paramsNode: ASTNode = {
     type: 'arrayLiteral',
-    elements: parameters.map((p) => ({
+    elements: parameters.map(p => ({
       type: 'literal',
       value: p,
       start: identifierNode.start,
@@ -349,10 +343,7 @@ export function parseJsCommand(
  * @param identifierNode - The command identifier node
  * @returns CommandNode representing the tell command
  */
-export function parseTellCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-): CommandNode {
+export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
   // Parse target expression (e.g., <p/> in me, <details /> in #article2)
   const target = ctx.parseExpression();
 

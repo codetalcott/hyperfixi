@@ -4,10 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createTypedExpressionContext,
-  type TestExpressionContext,
-} from '../../test-utilities';
+import { createTypedExpressionContext, type TestExpressionContext } from '../../test-utilities';
 import {
   AdditionExpression,
   SubtractionExpression,
@@ -502,9 +499,7 @@ describe('Enhanced Mathematical Expressions Integration', () => {
     it('should provide all mathematical expressions', () => {
       expect(mathematicalExpressions.addition).toBeInstanceOf(AdditionExpression);
       expect(mathematicalExpressions.subtraction).toBeInstanceOf(SubtractionExpression);
-      expect(mathematicalExpressions.multiplication).toBeInstanceOf(
-        MultiplicationExpression
-      );
+      expect(mathematicalExpressions.multiplication).toBeInstanceOf(MultiplicationExpression);
       expect(mathematicalExpressions.division).toBeInstanceOf(DivisionExpression);
       expect(mathematicalExpressions.modulo).toBeInstanceOf(ModuloExpression);
     });

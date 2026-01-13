@@ -41,37 +41,37 @@ function isPolishIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const PREPOSITIONS = new Set([
-  'do',         // to, into
-  'od',         // from
-  'z',          // from, with
-  'ze',         // from, with (before consonant clusters)
-  'w',          // in
-  'we',         // in (before consonant clusters)
-  'na',         // on, for
-  'po',         // after, for
-  'pod',        // under
-  'przed',      // before, in front of
-  'za',         // behind, for
-  'nad',        // above
-  'między',     // between
-  'miedzy',     // between (no diacritic)
-  'przez',      // through, by
-  'dla',        // for
-  'bez',        // without
-  'o',          // about
-  'przy',       // at, by
-  'u',          // at (someone's place)
-  'według',     // according to
-  'wedlug',     // according to (no diacritic)
-  'mimo',       // despite
-  'wśród',      // among
-  'wsrod',      // among (no diacritic)
-  'obok',       // beside
-  'poza',       // outside, beyond
-  'wokół',      // around
-  'wokol',      // around (no diacritic)
-  'przeciw',    // against
-  'ku',         // towards
+  'do', // to, into
+  'od', // from
+  'z', // from, with
+  'ze', // from, with (before consonant clusters)
+  'w', // in
+  'we', // in (before consonant clusters)
+  'na', // on, for
+  'po', // after, for
+  'pod', // under
+  'przed', // before, in front of
+  'za', // behind, for
+  'nad', // above
+  'między', // between
+  'miedzy', // between (no diacritic)
+  'przez', // through, by
+  'dla', // for
+  'bez', // without
+  'o', // about
+  'przy', // at, by
+  'u', // at (someone's place)
+  'według', // according to
+  'wedlug', // according to (no diacritic)
+  'mimo', // despite
+  'wśród', // among
+  'wsrod', // among (no diacritic)
+  'obok', // beside
+  'poza', // outside, beyond
+  'wokół', // around
+  'wokol', // around (no diacritic)
+  'przeciw', // against
+  'ku', // towards
 ]);
 
 // =============================================================================
@@ -81,50 +81,50 @@ const PREPOSITIONS = new Set([
 const POLISH_KEYWORDS: Map<string, string> = new Map([
   // Commands - Class/Attribute operations (imperative form)
   ['przełącz', 'toggle'],
-  ['przelacz', 'toggle'],      // without diacritic
+  ['przelacz', 'toggle'], // without diacritic
   ['dodaj', 'add'],
   ['usuń', 'remove'],
-  ['usun', 'remove'],          // without diacritic
-  ['wyczyść', 'remove'],       // clear/clean
-  ['wyczysc', 'remove'],       // without diacritic
+  ['usun', 'remove'], // without diacritic
+  ['wyczyść', 'remove'], // clear/clean
+  ['wyczysc', 'remove'], // without diacritic
 
   // Commands - Content operations
   ['umieść', 'put'],
-  ['umiesc', 'put'],           // without diacritic
+  ['umiesc', 'put'], // without diacritic
   ['wstaw', 'put'],
   ['połóż', 'put'],
-  ['poloz', 'put'],            // without diacritic
+  ['poloz', 'put'], // without diacritic
   ['dołącz', 'append'],
-  ['dolacz', 'append'],        // without diacritic
+  ['dolacz', 'append'], // without diacritic
   ['weź', 'take'],
-  ['wez', 'take'],             // without diacritic
+  ['wez', 'take'], // without diacritic
   ['pobierz', 'take'],
   ['utwórz', 'make'],
-  ['utworz', 'make'],          // without diacritic
+  ['utworz', 'make'], // without diacritic
   ['stwórz', 'make'],
-  ['stworz', 'make'],          // without diacritic
+  ['stworz', 'make'], // without diacritic
   ['sklonuj', 'clone'],
   ['kopiuj', 'clone'],
   ['zamień', 'swap'],
-  ['zamien', 'swap'],          // without diacritic
+  ['zamien', 'swap'], // without diacritic
   ['przekształć', 'morph'],
-  ['przeksztalc', 'morph'],    // without diacritic
+  ['przeksztalc', 'morph'], // without diacritic
 
   // Commands - Variable operations
   ['ustaw', 'set'],
   ['określ', 'set'],
-  ['okresl', 'set'],           // without diacritic
+  ['okresl', 'set'], // without diacritic
   ['zwiększ', 'increment'],
-  ['zwieksz', 'increment'],    // without diacritic
+  ['zwieksz', 'increment'], // without diacritic
   ['zmniejsz', 'decrement'],
   ['loguj', 'log'],
   ['wypisz', 'log'],
 
   // Commands - Visibility
   ['pokaż', 'show'],
-  ['pokaz', 'show'],           // without diacritic
+  ['pokaz', 'show'], // without diacritic
   ['wyświetl', 'show'],
-  ['wyswietl', 'show'],        // without diacritic
+  ['wyswietl', 'show'], // without diacritic
   ['ukryj', 'hide'],
   ['schowaj', 'hide'],
   ['animuj', 'transition'],
@@ -136,11 +136,11 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
   ['kiedy', 'on'],
   ['przy', 'on'],
   ['wywołaj', 'trigger'],
-  ['wywolaj', 'trigger'],      // without diacritic
+  ['wywolaj', 'trigger'], // without diacritic
   ['wyzwól', 'trigger'],
-  ['wyzwol', 'trigger'],       // without diacritic
+  ['wyzwol', 'trigger'], // without diacritic
   ['wyślij', 'send'],
-  ['wyslij', 'send'],          // without diacritic
+  ['wyslij', 'send'], // without diacritic
 
   // Commands - DOM focus
   ['skup', 'focus'],
@@ -150,31 +150,31 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
 
   // Commands - Navigation
   ['idź', 'go'],
-  ['idz', 'go'],               // without diacritic
+  ['idz', 'go'], // without diacritic
   ['przejdź', 'go'],
-  ['przejdz', 'go'],           // without diacritic
+  ['przejdz', 'go'], // without diacritic
   ['nawiguj', 'go'],
 
   // Commands - Async
   ['czekaj', 'wait'],
   ['poczekaj', 'wait'],
   ['załaduj', 'fetch'],
-  ['zaladuj', 'fetch'],        // without diacritic
+  ['zaladuj', 'fetch'], // without diacritic
   ['ustabilizuj', 'settle'],
 
   // Commands - Control flow
   ['jeśli', 'if'],
-  ['jesli', 'if'],             // without diacritic
+  ['jesli', 'if'], // without diacritic
   ['jeżeli', 'if'],
-  ['jezeli', 'if'],            // without diacritic
+  ['jezeli', 'if'], // without diacritic
   ['inaczej', 'else'],
-  ['wpp', 'else'],             // w przeciwnym przypadku
+  ['wpp', 'else'], // w przeciwnym przypadku
   ['powtórz', 'repeat'],
-  ['powtorz', 'repeat'],       // without diacritic
+  ['powtorz', 'repeat'], // without diacritic
   ['każdy', 'for'],
-  ['kazdy', 'for'],            // without diacritic
+  ['kazdy', 'for'], // without diacritic
   ['dopóki', 'while'],
-  ['dopoki', 'while'],         // without diacritic
+  ['dopoki', 'while'], // without diacritic
   ['podczas', 'while'],
   ['kontynuuj', 'continue'],
   ['dalej', 'continue'],
@@ -182,9 +182,9 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
   ['przerwij', 'halt'],
   ['stop', 'halt'],
   ['rzuć', 'throw'],
-  ['rzuc', 'throw'],           // without diacritic
+  ['rzuc', 'throw'], // without diacritic
   ['zwróć', 'return'],
-  ['zwroc', 'return'],         // without diacritic
+  ['zwroc', 'return'], // without diacritic
 
   // Commands - Advanced
   ['js', 'js'],
@@ -192,7 +192,7 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
   ['async', 'async'],
   ['powiedz', 'tell'],
   ['domyślnie', 'default'],
-  ['domyslnie', 'default'],    // without diacritic
+  ['domyslnie', 'default'], // without diacritic
   ['inicjuj', 'init'],
   ['zachowanie', 'behavior'],
   ['zainstaluj', 'install'],
@@ -202,7 +202,7 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
   ['wtedy', 'then'],
   ['potem', 'then'],
   ['następnie', 'then'],
-  ['nastepnie', 'then'],       // without diacritic
+  ['nastepnie', 'then'], // without diacritic
   ['i', 'and'],
   ['oraz', 'and'],
   ['koniec', 'end'],
@@ -210,7 +210,7 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
   // Modifiers
   ['przed', 'before'],
   ['aż', 'until'],
-  ['az', 'until'],             // without diacritic
+  ['az', 'until'], // without diacritic
   ['zdarzenie', 'event'],
 
   // Events (also as keywords)
@@ -315,7 +315,10 @@ export class PolishTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);
@@ -415,16 +418,20 @@ export class PolishTokenizer extends BaseTokenizer {
     const remaining = input.slice(unitPos).toLowerCase();
     if (remaining.startsWith('milisekund') || remaining.startsWith('milisekunda')) {
       number += 'ms';
-      pos = unitPos + (remaining.startsWith('milisekundy') ? 11 : remaining.startsWith('milisekunda') ? 11 : 10);
+      pos =
+        unitPos +
+        (remaining.startsWith('milisekundy') ? 11 : remaining.startsWith('milisekunda') ? 11 : 10);
     } else if (remaining.startsWith('sekund') || remaining.startsWith('sekunda')) {
       number += 's';
-      pos = unitPos + (remaining.startsWith('sekundy') ? 7 : remaining.startsWith('sekunda') ? 7 : 6);
+      pos =
+        unitPos + (remaining.startsWith('sekundy') ? 7 : remaining.startsWith('sekunda') ? 7 : 6);
     } else if (remaining.startsWith('minut') || remaining.startsWith('minuta')) {
       number += 'm';
       pos = unitPos + (remaining.startsWith('minuty') ? 6 : remaining.startsWith('minuta') ? 6 : 5);
     } else if (remaining.startsWith('godzin') || remaining.startsWith('godzina')) {
       number += 'h';
-      pos = unitPos + (remaining.startsWith('godziny') ? 7 : remaining.startsWith('godzina') ? 7 : 6);
+      pos =
+        unitPos + (remaining.startsWith('godziny') ? 7 : remaining.startsWith('godzina') ? 7 : 6);
     } else if (remaining.startsWith('ms')) {
       number += 'ms';
       pos = unitPos + 2;

@@ -21,7 +21,13 @@ import {
   resolveAnyPropertyTarget,
   resolvePropertyTargetFromString,
 } from '../helpers/property-target';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export type InsertPosition = 'replace' | 'beforeend' | 'afterend' | 'beforebegin' | 'afterbegin';
 
@@ -41,8 +47,16 @@ export interface PutCommandInput {
  */
 @meta({
   description: 'Insert content into elements or properties',
-  syntax: ['put <value> into <target>', 'put <value> before <target>', 'put <value> after <target>'],
-  examples: ['put "Hello World" into me', 'put <div>Content</div> before #target', 'put value into #elem\'s innerHTML'],
+  syntax: [
+    'put <value> into <target>',
+    'put <value> before <target>',
+    'put <value> after <target>',
+  ],
+  examples: [
+    'put "Hello World" into me',
+    'put <div>Content</div> before #target',
+    "put value into #elem's innerHTML",
+  ],
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'put', category: 'dom' })
@@ -60,17 +74,21 @@ export class PutCommand implements DecoratedCommand {
     const nodeType = (n: ASTNode): string => (n as any)?.type || 'unknown';
     const validPreps = ['into', 'before', 'after', 'at', 'at start of', 'at end of'];
 
-    let prepIdx = -1, prepKw: string | null = null;
+    let prepIdx = -1,
+      prepKw: string | null = null;
     for (let i = 0; i < raw.args.length; i++) {
       const arg = raw.args[i];
       const t = nodeType(arg);
       const v = (t === 'literal' ? (arg as any).value : (arg as any).name) as string;
       if ((t === 'literal' || t === 'identifier') && validPreps.includes(v)) {
-        prepIdx = i; prepKw = v; break;
+        prepIdx = i;
+        prepKw = v;
+        break;
       }
     }
 
-    let contentArg: ASTNode | null = null, targetArg: ASTNode | null = null;
+    let contentArg: ASTNode | null = null,
+      targetArg: ASTNode | null = null;
     if (prepIdx === -1) {
       // Check modifiers for semantic parsing format (e.g., { args: [content], modifiers: { into: target } })
       if (raw.modifiers.into || raw.modifiers.before || raw.modifiers.after) {
@@ -79,9 +97,12 @@ export class PutCommand implements DecoratedCommand {
         prepKw = prepKey;
         targetArg = raw.modifiers[prepKey] as ASTNode;
       } else if (raw.args.length >= 3) {
-        contentArg = raw.args[0]; prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || null; targetArg = raw.args[2];
+        contentArg = raw.args[0];
+        prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || null;
+        targetArg = raw.args[2];
       } else if (raw.args.length >= 2) {
-        contentArg = raw.args[0]; prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || 'into';
+        contentArg = raw.args[0];
+        prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || 'into';
       } else throw new Error('put requires content and position');
     } else {
       contentArg = raw.args.slice(0, prepIdx)[0] || null;
@@ -94,7 +115,9 @@ export class PutCommand implements DecoratedCommand {
     const value = await evaluator.evaluate(contentArg, context);
     const position = this.mapPosition(prepKw);
 
-    let targetSelector: string | null = null, memberPath: string | undefined, variableName: string | undefined;
+    let targetSelector: string | null = null,
+      memberPath: string | undefined,
+      variableName: string | undefined;
 
     if (targetArg) {
       const tt = nodeType(targetArg);
@@ -102,15 +125,24 @@ export class PutCommand implements DecoratedCommand {
       // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
       const propertyTarget = await resolveAnyPropertyTarget(targetArg, evaluator, context);
       if (propertyTarget) {
-        return { value, targets: [propertyTarget.element], position: 'replace', memberPath: propertyTarget.property };
+        return {
+          value,
+          targets: [propertyTarget.element],
+          position: 'replace',
+          memberPath: propertyTarget.property,
+        };
       }
 
       if (tt === 'memberExpression') {
-        const obj = (targetArg as any).object, prop = (targetArg as any).property;
+        const obj = (targetArg as any).object,
+          prop = (targetArg as any).property;
         if (obj?.type === 'selector') targetSelector = obj.value;
         else if (obj?.type === 'identifier') targetSelector = obj.name;
         if (targetSelector && prop?.name) memberPath = prop.name;
-        else { const ev = await evaluator.evaluate(targetArg, context); if (typeof ev === 'string') targetSelector = ev; }
+        else {
+          const ev = await evaluator.evaluate(targetArg, context);
+          if (typeof ev === 'string') targetSelector = ev;
+        }
       } else if (tt === 'identifier' && (targetArg as any).name === 'me') {
         targetSelector = null;
       } else if (tt === 'selector' || tt === 'cssSelector') {
@@ -121,7 +153,12 @@ export class PutCommand implements DecoratedCommand {
         if (typeof lv === 'string' && isPropertyTargetString(lv)) {
           const target = resolvePropertyTargetFromString(lv, context);
           if (target) {
-            return { value, targets: [target.element], position: 'replace', memberPath: target.property };
+            return {
+              value,
+              targets: [target.element],
+              position: 'replace',
+              memberPath: target.property,
+            };
           }
         }
         if (typeof lv === 'string' && this.looksLikeCss(lv)) targetSelector = lv;
@@ -167,21 +204,30 @@ export class PutCommand implements DecoratedCommand {
 
   private mapPosition(prep: string): InsertPosition {
     switch (prep) {
-      case 'into': return 'replace';
-      case 'before': return 'beforebegin';
-      case 'after': return 'afterend';
-      case 'at start of': return 'afterbegin';
-      case 'at end of': return 'beforeend';
-      default: throw new Error(`Invalid position: ${prep}`);
+      case 'into':
+        return 'replace';
+      case 'before':
+        return 'beforebegin';
+      case 'after':
+        return 'afterend';
+      case 'at start of':
+        return 'afterbegin';
+      case 'at end of':
+        return 'beforeend';
+      default:
+        throw new Error(`Invalid position: ${prep}`);
     }
   }
 
   private async resolveTargets(sel: string | null, ctx: ExecutionContext): Promise<HTMLElement[]> {
     if (!sel || sel === 'me') {
-      if (!ctx.me || !isHTMLElement(ctx.me)) throw new Error('put: no target and context.me is null');
+      if (!ctx.me || !isHTMLElement(ctx.me))
+        throw new Error('put: no target and context.me is null');
       return [ctx.me as HTMLElement];
     }
-    const els = Array.from(document.querySelectorAll(sel)).filter((e): e is HTMLElement => isHTMLElement(e));
+    const els = Array.from(document.querySelectorAll(sel)).filter((e): e is HTMLElement =>
+      isHTMLElement(e)
+    );
     if (!els.length) throw new Error(`No elements: "${sel}"`);
     return els;
   }
@@ -191,22 +237,37 @@ export class PutCommand implements DecoratedCommand {
     return v == null ? '' : String(v);
   }
 
-  private insertContent(target: HTMLElement, content: string | HTMLElement, pos: InsertPosition): void {
+  private insertContent(
+    target: HTMLElement,
+    content: string | HTMLElement,
+    pos: InsertPosition
+  ): void {
     if (pos === 'replace') {
-      if (isHTMLElement(content)) { target.innerHTML = ''; target.appendChild(content as HTMLElement); }
-      else {
+      if (isHTMLElement(content)) {
+        target.innerHTML = '';
+        target.appendChild(content as HTMLElement);
+      } else {
         const hasHTML = content.includes('<') && content.includes('>');
-        if (hasHTML) target.innerHTML = content; else target.textContent = content;
+        if (hasHTML) target.innerHTML = content;
+        else target.textContent = content;
       }
       return;
     }
     if (isHTMLElement(content)) {
       const el = content as HTMLElement;
       switch (pos) {
-        case 'beforebegin': target.parentElement?.insertBefore(el, target); break;
-        case 'afterbegin': target.insertBefore(el, target.firstChild); break;
-        case 'beforeend': target.appendChild(el); break;
-        case 'afterend': target.parentElement?.insertBefore(el, target.nextSibling); break;
+        case 'beforebegin':
+          target.parentElement?.insertBefore(el, target);
+          break;
+        case 'afterbegin':
+          target.insertBefore(el, target.firstChild);
+          break;
+        case 'beforeend':
+          target.appendChild(el);
+          break;
+        case 'afterend':
+          target.parentElement?.insertBefore(el, target.nextSibling);
+          break;
       }
     } else {
       const hasHTML = content.includes('<') && content.includes('>');
@@ -219,7 +280,41 @@ export class PutCommand implements DecoratedCommand {
     if (!s) return false;
     if (/^[#.\[]/.test(s)) return true;
     if (/[>+~\s]/.test(s) && s.length > 1) return true;
-    const tags = ['div', 'span', 'p', 'a', 'button', 'input', 'form', 'ul', 'li', 'ol', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'section', 'article', 'header', 'footer', 'nav', 'main', 'aside', 'dialog', 'label', 'select', 'option', 'textarea'];
+    const tags = [
+      'div',
+      'span',
+      'p',
+      'a',
+      'button',
+      'input',
+      'form',
+      'ul',
+      'li',
+      'ol',
+      'table',
+      'tr',
+      'td',
+      'th',
+      'img',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'section',
+      'article',
+      'header',
+      'footer',
+      'nav',
+      'main',
+      'aside',
+      'dialog',
+      'label',
+      'select',
+      'option',
+      'textarea',
+    ];
     return tags.includes(s.toLowerCase());
   }
 

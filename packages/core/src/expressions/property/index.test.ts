@@ -4,16 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createTypedExpressionContext,
-  type TestExpressionContext,
-} from '../../test-utilities';
-import {
-  MyExpression,
-  ItsExpression,
-  AttributeExpression,
-  propertyExpressions,
-} from './index';
+import { createTypedExpressionContext, type TestExpressionContext } from '../../test-utilities';
+import { MyExpression, ItsExpression, AttributeExpression, propertyExpressions } from './index';
 
 // Type alias for backward compatibility
 type TypedExpressionContext = TestExpressionContext;
@@ -41,7 +33,9 @@ function createMockElement(
     style: properties.style || { display: 'block', color: 'red' },
     ...properties,
     getAttribute: (name: string) => (attributes[name] !== undefined ? attributes[name] : null),
-    setAttribute: (name: string, value: string) => { attributes[name] = value; },
+    setAttribute: (name: string, value: string) => {
+      attributes[name] = value;
+    },
     hasAttribute: (name: string) => name in attributes,
   };
   return element as unknown as HTMLElement;

@@ -289,13 +289,8 @@ export class VariableInspector {
   /**
    * Inspect multiple values
    */
-  inspectMany(
-    values: Record<string, any>,
-    scope: VariableScope = 'local'
-  ): InspectedVariable[] {
-    return Object.entries(values).map(([name, value]) =>
-      this.inspect(name, value, scope)
-    );
+  inspectMany(values: Record<string, any>, scope: VariableScope = 'local'): InspectedVariable[] {
+    return Object.entries(values).map(([name, value]) => this.inspect(name, value, scope));
   }
 
   /**

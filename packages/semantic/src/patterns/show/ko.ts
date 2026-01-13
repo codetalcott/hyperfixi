@@ -22,7 +22,11 @@ export function getShowPatternsKo(): LanguagePattern[] {
         tokens: [
           { type: 'role', role: 'patient' },
           { type: 'literal', value: '를', alternatives: ['을'] },
-          { type: 'literal', value: '보여주다', alternatives: ['보여줘', '표시', '표시하다', '보이다'] },
+          {
+            type: 'literal',
+            value: '보여주다',
+            alternatives: ['보여줘', '표시', '표시하다', '보이다'],
+          },
         ],
       },
       extraction: {

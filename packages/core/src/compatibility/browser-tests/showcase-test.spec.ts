@@ -4,9 +4,10 @@ test.describe('Multilingual Showcase Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/examples/multilingual/showcase.html');
     // Wait for bundles to load
-    await page.waitForFunction(() =>
-      typeof (window as any).HyperFixiSemantic !== 'undefined' &&
-      typeof (window as any).hyperfixi !== 'undefined'
+    await page.waitForFunction(
+      () =>
+        typeof (window as any).HyperFixiSemantic !== 'undefined' &&
+        typeof (window as any).hyperfixi !== 'undefined'
     );
   });
 

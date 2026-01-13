@@ -74,7 +74,8 @@ export function resolveElement(
     }
 
     // Handle CSS selector - use element's ownerDocument for JSDOM compatibility
-    const doc = (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
+    const doc =
+      (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
     if (!doc) {
       throw new Error('DOM not available - cannot resolve element selector');
     }
@@ -141,7 +142,8 @@ export function resolveElements(
     }
 
     // Query DOM for selector - use element's ownerDocument for JSDOM compatibility
-    const doc = (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
+    const doc =
+      (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
     if (doc) {
       // Handle hyperscript queryReference syntax <tag/>
       let selector = trimmed;
@@ -359,7 +361,8 @@ export async function resolveTargetsFromArgs(
           selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
         }
         // Use element's ownerDocument for JSDOM compatibility
-        const doc = (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
+        const doc =
+          (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
         if (!doc) {
           throw new Error('DOM not available - cannot resolve element selector');
         }

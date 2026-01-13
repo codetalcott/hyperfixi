@@ -17,14 +17,16 @@ import type {
 /**
  * Quick start smart bundling with intelligent defaults
  */
-export function quickStartSmartBundling(options: {
-  projectPath?: string;
-  entry: string | string[];
-  output: string;
-  mode?: 'development' | 'production';
-  analyze?: boolean;
-  cache?: boolean;
-} = { entry: 'src/index.js', output: 'dist' }) {
+export function quickStartSmartBundling(
+  options: {
+    projectPath?: string;
+    entry: string | string[];
+    output: string;
+    mode?: 'development' | 'production';
+    analyze?: boolean;
+    cache?: boolean;
+  } = { entry: 'src/index.js', output: 'dist' }
+) {
   const {
     projectPath = process.cwd(),
     entry,
@@ -59,7 +61,7 @@ export function quickStartSmartBundling(options: {
      */
     async createConfig(customConfig: Partial<BundleConfig> = {}): Promise<BundleConfig> {
       const analysis = await this.analyzeUsage();
-      
+
       const baseConfig: BundleConfig = {
         entry,
         output: {
@@ -143,22 +145,21 @@ export function quickStartSmartBundling(options: {
      */
     async watch(callback: (result: BundleResult) => void): Promise<void> {
       const chokidar = await import('chokidar');
-      
+
       // Initial build
       let result = await this.dev();
       callback(result);
 
       // Watch for changes
-      const watcher = chokidar.watch([
-        '**/*.{js,ts,jsx,tsx,html,htm}',
-        '!node_modules/**',
-        `!${output}/**`,
-      ], {
-        ignoreInitial: true,
-        persistent: true,
-      });
+      const watcher = chokidar.watch(
+        ['**/*.{js,ts,jsx,tsx,html,htm}', '!node_modules/**', `!${output}/**`],
+        {
+          ignoreInitial: true,
+          persistent: true,
+        }
+      );
 
-      watcher.on('change', async (filePath) => {
+      watcher.on('change', async filePath => {
         console.log(`📁 Changed: ${filePath}`);
         try {
           result = await this.dev();
@@ -188,7 +189,7 @@ export function quickStartSmartBundling(options: {
       const usage = await this.analyzeUsage();
       const strategy = await this.createStrategy();
       const recommendations = usage.recommendations;
-      
+
       const report = this.generateAnalysisReport(usage, strategy, recommendations);
 
       return { usage, strategy, recommendations, report };
@@ -215,8 +216,12 @@ export function quickStartSmartBundling(options: {
       lines.push('');
       lines.push(`- **Total Files**: ${usage.metrics.totalFiles}`);
       lines.push(`- **Total Size**: ${(usage.metrics.totalSize / 1024).toFixed(2)} KB`);
-      lines.push(`- **Tree-shaking Potential**: ${(usage.metrics.treeshakingPotential * 100).toFixed(1)}%`);
-      lines.push(`- **Critical Path Size**: ${(usage.metrics.criticalPathSize / 1024).toFixed(2)} KB`);
+      lines.push(
+        `- **Tree-shaking Potential**: ${(usage.metrics.treeshakingPotential * 100).toFixed(1)}%`
+      );
+      lines.push(
+        `- **Critical Path Size**: ${(usage.metrics.criticalPathSize / 1024).toFixed(2)} KB`
+      );
       lines.push(`- **Unused Code**: ${(usage.metrics.unusedCode / 1024).toFixed(2)} KB`);
       lines.push('');
 
@@ -224,7 +229,7 @@ export function quickStartSmartBundling(options: {
       if (usage.dependencies.length > 0) {
         lines.push('## Dependencies Analysis');
         lines.push('');
-        
+
         const largeDeps = usage.dependencies
           .filter(dep => dep.size > 50000)
           .sort((a, b) => b.size - a.size)
@@ -268,7 +273,9 @@ export function quickStartSmartBundling(options: {
         lines.push('### Chunk Configuration');
         lines.push('');
         for (const chunk of strategy.chunks) {
-          lines.push(`- **${chunk.name}**: Priority ${chunk.priority}, Size ${(chunk.minSize / 1024).toFixed(1)}-${(chunk.maxSize / 1024).toFixed(1)} KB`);
+          lines.push(
+            `- **${chunk.name}**: Priority ${chunk.priority}, Size ${(chunk.minSize / 1024).toFixed(1)}-${(chunk.maxSize / 1024).toFixed(1)} KB`
+          );
         }
         lines.push('');
       }
@@ -277,23 +284,26 @@ export function quickStartSmartBundling(options: {
       if (recommendations.length > 0) {
         lines.push('## Optimization Recommendations');
         lines.push('');
-        
-        const sortedRecs = recommendations
-          .sort((a, b) => {
-            const priorityOrder = { high: 3, medium: 2, low: 1 };
-            return priorityOrder[b.priority] - priorityOrder[a.priority];
-          });
+
+        const sortedRecs = recommendations.sort((a, b) => {
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          return priorityOrder[b.priority] - priorityOrder[a.priority];
+        });
 
         for (const rec of sortedRecs) {
           const priority = rec.priority.toUpperCase();
           const savings = (rec.expectedSavings / 1024).toFixed(2);
-          
-          lines.push(`### ${priority} Priority: ${rec.type.charAt(0).toUpperCase() + rec.type.slice(1)}`);
+
+          lines.push(
+            `### ${priority} Priority: ${rec.type.charAt(0).toUpperCase() + rec.type.slice(1)}`
+          );
           lines.push('');
           lines.push(`**Description**: ${rec.description}`);
           lines.push(`**Expected Savings**: ${savings} KB`);
           lines.push(`**Effort**: ${rec.effort.charAt(0).toUpperCase() + rec.effort.slice(1)}`);
-          lines.push(`**Modules**: ${rec.modules.length > 5 ? rec.modules.slice(0, 5).join(', ') + '...' : rec.modules.join(', ')}`);
+          lines.push(
+            `**Modules**: ${rec.modules.length > 5 ? rec.modules.slice(0, 5).join(', ') + '...' : rec.modules.join(', ')}`
+          );
           lines.push('');
         }
       }
@@ -304,7 +314,9 @@ export function quickStartSmartBundling(options: {
         lines.push('## Summary');
         lines.push('');
         lines.push(`**Total Potential Savings**: ${(totalSavings / 1024).toFixed(2)} KB`);
-        lines.push(`**Optimization Potential**: ${((totalSavings / usage.metrics.totalSize) * 100).toFixed(1)}%`);
+        lines.push(
+          `**Optimization Potential**: ${((totalSavings / usage.metrics.totalSize) * 100).toFixed(1)}%`
+        );
         lines.push('');
       }
 
@@ -355,8 +367,8 @@ export async function analyzeProjectUsage(options: {
   include?: string[];
   exclude?: string[];
 }): Promise<UsageAnalysis> {
-  const smartBundling = quickStartSmartBundling({ 
-    entry: 'src/index.js', 
+  const smartBundling = quickStartSmartBundling({
+    entry: 'src/index.js',
     output: 'dist',
     ...options,
   });
@@ -376,7 +388,7 @@ export function calculateBundleSize(result: BundleResult): {
 } {
   const totalSize = result.chunks.reduce((sum, chunk) => sum + chunk.size, 0);
   const chunkCount = result.chunks.length;
-  
+
   const sortedChunks = result.chunks.sort((a, b) => b.size - a.size);
   const largestChunk = sortedChunks[0]?.name || 'none';
   const smallestChunk = sortedChunks[sortedChunks.length - 1]?.name || 'none';
@@ -401,12 +413,12 @@ export function estimatePerformance(result: BundleResult): {
   score: number;
   grade: string;
 } {
-  const sizeScore = Math.max(0, 100 - (result.analysis.totalSize / 10000)); // Deduct 1 point per 10KB
-  const chunkScore = Math.max(0, 100 - (result.chunks.length * 5)); // Deduct 5 points per chunk
+  const sizeScore = Math.max(0, 100 - result.analysis.totalSize / 10000); // Deduct 1 point per 10KB
+  const chunkScore = Math.max(0, 100 - result.chunks.length * 5); // Deduct 5 points per chunk
   const compressionScore = (result.analysis.gzippedSize / result.analysis.totalSize) * 100;
-  
+
   const score = (sizeScore + chunkScore + compressionScore) / 3;
-  
+
   let grade = 'F';
   if (score >= 90) grade = 'A';
   else if (score >= 80) grade = 'B';

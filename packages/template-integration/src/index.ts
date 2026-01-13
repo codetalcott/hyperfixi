@@ -1,13 +1,19 @@
 /**
  * HyperFixi Template Integration
- * 
+ *
  * Template compiler that processes embedded hyperscript with component integration
  */
 
 // Core exports
 export { TemplateParser } from './parser';
 export { TemplateCompiler } from './compiler';
-export { HyperFixiTemplateEngine, templateEngine, compileTemplate, renderTemplate, createTemplateEngine } from './engine';
+export {
+  HyperFixiTemplateEngine,
+  templateEngine,
+  compileTemplate,
+  renderTemplate,
+  createTemplateEngine,
+} from './engine';
 
 // Type exports
 export type {

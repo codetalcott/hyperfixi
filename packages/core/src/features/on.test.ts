@@ -17,7 +17,13 @@ import { OnFeature, createOnFeature } from './on';
 // (register, unregister, handleEvent, etc.)
 // Using 'any' type to silence TS2339 errors for methods that would exist in a different implementation
 interface LegacyOnFeature {
-  register: (element: HTMLElement, event: string, commands: any[], context: ExecutionContext, options?: any) => string;
+  register: (
+    element: HTMLElement,
+    event: string,
+    commands: any[],
+    context: ExecutionContext,
+    options?: any
+  ) => string;
   unregister: (listenerId: string) => boolean;
   handleEvent: (event: Event) => void;
 }
@@ -160,8 +166,12 @@ describe.skip('On Feature System', () => {
 
       expect(capturedContext).toBeDefined();
       expect((capturedContext as unknown as ExecutionContext).locals.get('event')).toBe(clickEvent);
-      expect((capturedContext as unknown as ExecutionContext).locals.get('target')).toBe(testElement);
-      expect((capturedContext as unknown as ExecutionContext).locals.get('currentTarget')).toBe(testElement);
+      expect((capturedContext as unknown as ExecutionContext).locals.get('target')).toBe(
+        testElement
+      );
+      expect((capturedContext as unknown as ExecutionContext).locals.get('currentTarget')).toBe(
+        testElement
+      );
 
       vi.unstubAllGlobals();
     });

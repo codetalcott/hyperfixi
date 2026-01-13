@@ -9,7 +9,7 @@ export const zh: Dictionary = {
     tell: '告诉',
     trigger: '触发',
     send: '发送',
-    
+
     // DOM manipulation
     take: '获取',
     put: '放置',
@@ -20,7 +20,7 @@ export const zh: Dictionary = {
     toggle: '切换',
     hide: '隐藏',
     show: '显示',
-    
+
     // Control flow
     if: '如果',
     unless: '除非',
@@ -31,13 +31,13 @@ export const zh: Dictionary = {
     continue: '继续',
     break: '中断',
     halt: '停止',
-    
+
     // Async
     wait: '等待',
     fetch: '获取',
     call: '调用',
     return: '返回',
-    
+
     // Other commands
     make: '制作',
     log: '日志',
@@ -82,7 +82,7 @@ export const zh: Dictionary = {
     // Behaviors
     install: '安装',
   },
-  
+
   modifiers: {
     to: '到',
     from: '从',
@@ -101,7 +101,7 @@ export const zh: Dictionary = {
     through: '通过',
     without: '没有',
   },
-  
+
   events: {
     click: '点击',
     dblclick: '双击',
@@ -112,29 +112,29 @@ export const zh: Dictionary = {
     mouseover: '鼠标悬停',
     mouseout: '鼠标移出',
     mousemove: '鼠标移动',
-    
+
     keydown: '按键按下',
     keyup: '按键抬起',
     keypress: '按键',
-    
+
     focus: '聚焦',
     blur: '失焦',
     change: '改变',
     input: '输入',
     submit: '提交',
     reset: '重置',
-    
+
     load: '加载',
     unload: '卸载',
     resize: '调整大小',
     scroll: '滚动',
-    
+
     touchstart: '触摸开始',
     touchend: '触摸结束',
     touchmove: '触摸移动',
     touchcancel: '触摸取消',
   },
-  
+
   logical: {
     when: '当',
     where: '哪里',
@@ -152,7 +152,7 @@ export const zh: Dictionary = {
     otherwise: '要不然',
     end: '结束',
   },
-  
+
   temporal: {
     seconds: '秒',
     second: '秒',
@@ -167,7 +167,7 @@ export const zh: Dictionary = {
     min: '分',
     h: '时',
   },
-  
+
   values: {
     true: '真',
     false: '假',
@@ -191,7 +191,7 @@ export const zh: Dictionary = {
     result: '结果',
     value: '值',
   },
-  
+
   attributes: {
     class: '类',
     classes: '类别',

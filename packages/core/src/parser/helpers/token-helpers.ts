@@ -85,7 +85,11 @@ export function peekMatches(tokens: Token[], current: number, expected: string):
  * @param expectedKind - Expected token kind
  * @returns True if next token matches kind
  */
-export function peekMatchesKind(tokens: Token[], current: number, expectedKind: TokenKind): boolean {
+export function peekMatchesKind(
+  tokens: Token[],
+  current: number,
+  expectedKind: TokenKind
+): boolean {
   if (current >= tokens.length) return false;
   return tokens[current].kind === expectedKind;
 }
@@ -167,7 +171,7 @@ export function getTokenAt(tokens: Token[], index: number): Token {
  */
 export function isKeyword(token: Token | undefined, keywords: string[]): boolean {
   if (!token) return false;
-  return keywords.some((kw) => token.value === kw || token.value.toLowerCase() === kw);
+  return keywords.some(kw => token.value === kw || token.value.toLowerCase() === kw);
 }
 
 /**

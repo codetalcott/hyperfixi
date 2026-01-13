@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  quickStartSmartBundling,
-  createOptimizedConfig,
-  analyzeProjectUsage,
-} from './quick-start';
+import { quickStartSmartBundling, createOptimizedConfig, analyzeProjectUsage } from './quick-start';
 
 // Mock the dependencies
 vi.mock('./analyzer', () => ({

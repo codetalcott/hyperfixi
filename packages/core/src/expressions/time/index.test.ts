@@ -502,12 +502,8 @@ describe('Enhanced Time Arithmetic Expression', () => {
 describe('Expression Registry', () => {
   test('exports all enhanced time expressions', () => {
     expect(enhancedTimeExpressions['time-parse']).toBeInstanceOf(TimeParsingExpression);
-    expect(enhancedTimeExpressions['duration-format']).toBeInstanceOf(
-      DurationFormattingExpression
-    );
-    expect(enhancedTimeExpressions['time-arithmetic']).toBeInstanceOf(
-      TimeArithmeticExpression
-    );
+    expect(enhancedTimeExpressions['duration-format']).toBeInstanceOf(DurationFormattingExpression);
+    expect(enhancedTimeExpressions['time-arithmetic']).toBeInstanceOf(TimeArithmeticExpression);
   });
 });
 

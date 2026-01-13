@@ -69,7 +69,10 @@ describe('HyperFixiSSREngine', () => {
           expect.objectContaining({ name: 'description', content: 'This is a test page' }),
           expect.objectContaining({ name: 'keywords', content: 'test, page' }),
           expect.objectContaining({ property: 'og:title', content: 'Test Page OG' }),
-          expect.objectContaining({ property: 'og:description', content: 'Test page for Open Graph' }),
+          expect.objectContaining({
+            property: 'og:description',
+            content: 'Test page for Open Graph',
+          }),
         ])
       );
     });
@@ -92,7 +95,10 @@ describe('HyperFixiSSREngine', () => {
         expect.arrayContaining([
           expect.objectContaining({ name: 'twitter:card', content: 'summary_large_image' }),
           expect.objectContaining({ name: 'twitter:title', content: 'Twitter Title' }),
-          expect.objectContaining({ name: 'twitter:image', content: 'https://example.com/image.jpg' }),
+          expect.objectContaining({
+            name: 'twitter:image',
+            content: 'https://example.com/image.jpg',
+          }),
         ])
       );
     });
@@ -151,11 +157,7 @@ describe('HyperFixiSSREngine', () => {
 
   describe('component integration', () => {
     it('should register and track components', async () => {
-      const component = createComponent(
-        'greeting',
-        'Greeting Component',
-        'on click log "hello"'
-      );
+      const component = createComponent('greeting', 'Greeting Component', 'on click log "hello"');
       component.template = {
         html: '<div class="greeting">Hello!</div>',
       };

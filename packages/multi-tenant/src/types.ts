@@ -276,22 +276,27 @@ export interface CustomizationProvider {
 /**
  * Tenant identification methods
  */
-export type TenantIdentifier = {
-  type: 'domain';
-  value: string;
-} | {
-  type: 'subdomain';
-  value: string;
-} | {
-  type: 'id';
-  value: string;
-} | {
-  type: 'header';
-  value: string;
-} | {
-  type: 'custom';
-  resolver: (request: any) => Promise<string | null>;
-};
+export type TenantIdentifier =
+  | {
+      type: 'domain';
+      value: string;
+    }
+  | {
+      type: 'subdomain';
+      value: string;
+    }
+  | {
+      type: 'id';
+      value: string;
+    }
+  | {
+      type: 'header';
+      value: string;
+    }
+  | {
+      type: 'custom';
+      resolver: (request: any) => Promise<string | null>;
+    };
 
 /**
  * Tenant metrics for monitoring

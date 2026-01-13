@@ -20,8 +20,16 @@ export function getSetPatternsEs(): LanguagePattern[] {
       template: {
         format: 'establecer {destination} a {patient}',
         tokens: [
-          { type: 'literal', value: 'establecer', alternatives: ['fijar', 'definir', 'poner', 'set'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'literal',
+            value: 'establecer',
+            alternatives: ['fijar', 'definir', 'poner', 'set'],
+          },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'a', alternatives: ['en', 'como'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
@@ -39,9 +47,17 @@ export function getSetPatternsEs(): LanguagePattern[] {
       template: {
         format: 'establecer en {destination} {patient}',
         tokens: [
-          { type: 'literal', value: 'establecer', alternatives: ['fijar', 'definir', 'poner', 'set'] },
+          {
+            type: 'literal',
+            value: 'establecer',
+            alternatives: ['fijar', 'definir', 'poner', 'set'],
+          },
           { type: 'literal', value: 'en', alternatives: ['a'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
       },
@@ -58,7 +74,11 @@ export function getSetPatternsEs(): LanguagePattern[] {
       template: {
         format: '{destination} = {patient}',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

@@ -22,22 +22,22 @@ export const frenchProfile: LanguageProfile = {
     subjectDrop: false,
   },
   references: {
-    me: 'moi',       // "I/me"
-    it: 'il',        // "it"
-    you: 'toi',      // "you"
+    me: 'moi', // "I/me"
+    it: 'il', // "it"
+    you: 'toi', // "you"
     result: 'résultat',
     event: 'événement',
     target: 'cible',
     body: 'corps',
   },
   possessive: {
-    marker: 'de',    // Uses "de" for general possession
+    marker: 'de', // Uses "de" for general possession
     markerPosition: 'before-property',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'ma',      // "my" (feminine; "mon" for masculine)
-      it: 'sa',      // "its" (feminine; "son" for masculine)
-      you: 'ta',     // "your" (feminine; "ton" for masculine)
+      me: 'ma', // "my" (feminine; "mon" for masculine)
+      it: 'sa', // "its" (feminine; "son" for masculine)
+      you: 'ta', // "your" (feminine; "ton" for masculine)
     },
   },
   roleMarkers: {
@@ -102,7 +102,7 @@ export const frenchProfile: LanguageProfile = {
     before: { primary: 'avant', normalized: 'before' },
     after: { primary: 'après', normalized: 'after' },
     // Event modifiers (for repeat until event)
-    until: { primary: 'jusqu\'à', alternatives: ['jusque'], normalized: 'until' },
+    until: { primary: "jusqu'à", alternatives: ['jusque'], normalized: 'until' },
     event: { primary: 'événement', normalized: 'event' },
     from: { primary: 'de', alternatives: ['depuis'], normalized: 'from' },
   },

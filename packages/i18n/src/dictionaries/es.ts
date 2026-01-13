@@ -9,7 +9,7 @@ export const es: Dictionary = {
     tell: 'decir',
     trigger: 'disparar',
     send: 'enviar',
-    
+
     // DOM manipulation
     take: 'tomar',
     put: 'poner',
@@ -20,7 +20,7 @@ export const es: Dictionary = {
     toggle: 'alternar',
     hide: 'ocultar',
     show: 'mostrar',
-    
+
     // Control flow
     if: 'si',
     unless: 'menos',
@@ -31,13 +31,13 @@ export const es: Dictionary = {
     continue: 'continuar',
     break: 'romper',
     halt: 'detener',
-    
+
     // Async
     wait: 'esperar',
     fetch: 'buscar',
     call: 'llamar',
     return: 'retornar',
-    
+
     // Other commands
     make: 'hacer',
     log: 'registrar',
@@ -82,7 +82,7 @@ export const es: Dictionary = {
     // Behaviors
     install: 'instalar',
   },
-  
+
   modifiers: {
     to: 'a',
     from: 'de',
@@ -101,7 +101,7 @@ export const es: Dictionary = {
     through: 'través',
     without: 'sin',
   },
-  
+
   events: {
     click: 'clic',
     dblclick: 'dobleclic',
@@ -112,29 +112,29 @@ export const es: Dictionary = {
     mouseover: 'ratónencima',
     mouseout: 'ratónfuera',
     mousemove: 'ratónmover',
-    
+
     keydown: 'teclaabajo',
     keyup: 'teclaarriba',
     keypress: 'teclapresar',
-    
+
     focus: 'enfocar',
     blur: 'desenfocar',
     change: 'cambiar',
     input: 'entrada',
     submit: 'enviar',
     reset: 'reiniciar',
-    
+
     load: 'cargar',
     unload: 'descargar',
     resize: 'redimensionar',
     scroll: 'desplazar',
-    
+
     touchstart: 'toqueempezar',
     touchend: 'toqueterminar',
     touchmove: 'toquemover',
     touchcancel: 'toquecancelar',
   },
-  
+
   logical: {
     when: 'cuando',
     where: 'donde',
@@ -152,7 +152,7 @@ export const es: Dictionary = {
     otherwise: 'delocontrario',
     end: 'fin',
   },
-  
+
   temporal: {
     seconds: 'segundos',
     second: 'segundo',
@@ -167,7 +167,7 @@ export const es: Dictionary = {
     min: 'min',
     h: 'h',
   },
-  
+
   values: {
     true: 'verdadero',
     false: 'falso',
@@ -191,7 +191,7 @@ export const es: Dictionary = {
     result: 'resultado',
     value: 'valor',
   },
-  
+
   attributes: {
     class: 'clase',
     classes: 'clases',

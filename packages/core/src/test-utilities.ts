@@ -247,9 +247,7 @@ export function createCoreTestContext(
  * Create a full ExecutionContext for testing
  * Includes result and legacy compatibility properties
  */
-export function createTestContext(
-  options: TestContextOptions = {}
-): ExecutionContext {
+export function createTestContext(options: TestContextOptions = {}): ExecutionContext {
   return {
     // Core properties
     me: options.me ?? null,
@@ -300,18 +298,7 @@ export function createTypedExpressionContext(
   data: Record<string, unknown> = {}
 ): TestExpressionContext {
   // Extract known properties
-  const {
-    me,
-    you,
-    it,
-    event,
-    locals,
-    globals,
-    variables,
-    result,
-    meta,
-    ...rest
-  } = data;
+  const { me, you, it, event, locals, globals, variables, result, meta, ...rest } = data;
 
   const context: TestExpressionContext = {
     // Core properties
@@ -324,7 +311,7 @@ export function createTypedExpressionContext(
     // ExecutionContext additions
     result: result ?? null,
     variables: variables instanceof Map ? variables : new Map(Object.entries(variables || {})),
-    meta: meta instanceof Map ? Object.fromEntries(meta) : ((meta as Record<string, unknown>) || {}),
+    meta: meta instanceof Map ? Object.fromEntries(meta) : (meta as Record<string, unknown>) || {},
     // Performance tracking (test-specific)
     performanceMetrics: {
       totalEvaluations: 0,

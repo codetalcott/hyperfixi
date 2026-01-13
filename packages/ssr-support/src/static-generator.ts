@@ -23,7 +23,10 @@ export class HyperFixiStaticGenerator implements StaticGenerator {
   /**
    * Generate static site from routes
    */
-  async generate(routes: string[], options: StaticGenerationOptions): Promise<StaticGenerationResult> {
+  async generate(
+    routes: string[],
+    options: StaticGenerationOptions
+  ): Promise<StaticGenerationResult> {
     const startTime = performance.now();
     const files: StaticGenerationResult['files'] = [];
 
@@ -48,11 +51,11 @@ export class HyperFixiStaticGenerator implements StaticGenerator {
         lastmod: new Date(),
         priority: route === '/' ? 1.0 : 0.8,
       }));
-      
+
       const sitemapContent = this.generateSitemap(sitemapRoutes);
       sitemapPath = join(options.outputDir, 'sitemap.xml');
       await fs.writeFile(sitemapPath, sitemapContent, 'utf8');
-      
+
       files.push({
         path: 'sitemap.xml',
         size: Buffer.byteLength(sitemapContent, 'utf8'),
@@ -67,7 +70,7 @@ export class HyperFixiStaticGenerator implements StaticGenerator {
       });
       robotsPath = join(options.outputDir, 'robots.txt');
       await fs.writeFile(robotsPath, robotsContent, 'utf8');
-      
+
       files.push({
         path: 'robots.txt',
         size: Buffer.byteLength(robotsContent, 'utf8'),
@@ -99,17 +102,19 @@ export class HyperFixiStaticGenerator implements StaticGenerator {
   /**
    * Generate sitemap.xml
    */
-  generateSitemap(routes: Array<{ path: string; lastmod?: Date; priority?: number; }>): string {
-    const urlEntries = routes.map(route => {
-      const lastmod = route.lastmod ? route.lastmod.toISOString().split('T')[0] : '';
-      const priority = route.priority ?? 0.5;
-      
-      return `  <url>
+  generateSitemap(routes: Array<{ path: string; lastmod?: Date; priority?: number }>): string {
+    const urlEntries = routes
+      .map(route => {
+        const lastmod = route.lastmod ? route.lastmod.toISOString().split('T')[0] : '';
+        const priority = route.priority ?? 0.5;
+
+        return `  <url>
     <loc>${route.path}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <priority>${priority}</priority>
   </url>`;
-    }).join('\n');
+      })
+      .join('\n');
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -186,7 +191,7 @@ ${urlEntries}
 
     // Load template for this route (in real implementation, would load from file system)
     const template = await this.loadTemplate(route);
-    
+
     // Render the route
     const result = await this.ssrEngine.render(template, context, ssrOptions);
 
@@ -198,13 +203,11 @@ ${urlEntries}
     await this.ensureDirectory(dirname(outputPath));
 
     // Apply optimization if enabled
-    const optimizedHTML = options.optimization?.minifyHTML 
-      ? this.minifyHTML(fullHTML)
-      : fullHTML;
+    const optimizedHTML = options.optimization?.minifyHTML ? this.minifyHTML(fullHTML) : fullHTML;
 
     // Write HTML file
     await fs.writeFile(outputPath, optimizedHTML, 'utf8');
-    
+
     const relativePath = this.getRelativePath(outputPath, options.outputDir);
     files.push({
       path: relativePath,
@@ -243,33 +246,37 @@ ${urlEntries}
    * Generate full HTML page with all assets
    */
   private generateFullHTML(result: any, options: StaticGenerationOptions): string {
-    const metaTags = result.metaTags.map((tag: any) => {
-      if (tag.name) {
-        return `<meta name="${tag.name}" content="${tag.content}" />`;
-      } else if (tag.property) {
-        return `<meta property="${tag.property}" content="${tag.content}" />`;
-      }
-      return '';
-    }).filter(Boolean).join('\n    ');
+    const metaTags = result.metaTags
+      .map((tag: any) => {
+        if (tag.name) {
+          return `<meta name="${tag.name}" content="${tag.content}" />`;
+        } else if (tag.property) {
+          return `<meta property="${tag.property}" content="${tag.content}" />`;
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n    ');
 
-    const linkTags = result.linkTags.map((link: any) => {
-      let attrs = `rel="${link.rel}" href="${link.href}"`;
-      if (link.as) attrs += ` as="${link.as}"`;
-      if (link.type) attrs += ` type="${link.type}"`;
-      return `<link ${attrs} />`;
-    }).join('\n    ');
+    const linkTags = result.linkTags
+      .map((link: any) => {
+        let attrs = `rel="${link.rel}" href="${link.href}"`;
+        if (link.as) attrs += ` as="${link.as}"`;
+        if (link.type) attrs += ` type="${link.type}"`;
+        return `<link ${attrs} />`;
+      })
+      .join('\n    ');
 
-    const criticalCSS = result.criticalCSS.length > 0 
-      ? `<style>\n${result.criticalCSS.join('\n')}\n</style>`
-      : '';
+    const criticalCSS =
+      result.criticalCSS.length > 0 ? `<style>\n${result.criticalCSS.join('\n')}\n</style>` : '';
 
-    const hydrationScript = result.hydrationScript 
+    const hydrationScript = result.hydrationScript
       ? `<script>\n${result.hydrationScript}\n</script>`
       : '';
 
     // Insert meta tags, styles, and scripts into the HTML
     let html = result.html;
-    
+
     // Insert into head
     const headInsert = [metaTags, linkTags, criticalCSS].filter(Boolean).join('\n    ');
     if (headInsert) {
@@ -296,7 +303,7 @@ ${urlEntries}
     // Generate external CSS files
     for (const css of result.externalCSS) {
       const cssContent = await this.loadAssetContent(css);
-      const optimizedCSS = options.optimization?.minifyCSS 
+      const optimizedCSS = options.optimization?.minifyCSS
         ? this.minifyCSS(cssContent)
         : cssContent;
 
@@ -313,9 +320,7 @@ ${urlEntries}
     // Generate JavaScript files
     for (const js of result.javascript) {
       const jsContent = await this.loadAssetContent(js);
-      const optimizedJS = options.optimization?.minifyJS 
-        ? this.minifyJS(jsContent)
-        : jsContent;
+      const optimizedJS = options.optimization?.minifyJS ? this.minifyJS(jsContent) : jsContent;
 
       const outputPath = join(options.outputDir, 'assets', js);
       await this.ensureDirectory(dirname(outputPath));
@@ -409,7 +414,7 @@ ${urlEntries}
     if (route === '/') {
       return join(outputDir, 'index.html');
     }
-    
+
     // Remove leading slash and add .html extension
     const cleanRoute = route.startsWith('/') ? route.slice(1) : route;
     return join(outputDir, `${cleanRoute}.html`);
@@ -425,7 +430,7 @@ ${urlEntries}
 
     for (const file of files) {
       totalOriginal += file.size;
-      
+
       if (file.compressed?.gzip) {
         totalCompressed += file.compressed.gzip;
       } else if (file.compressed?.brotli) {

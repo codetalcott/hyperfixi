@@ -23,7 +23,11 @@ export function getTogglePatternsJa(): LanguagePattern[] {
           { type: 'literal', value: 'の' },
           { type: 'role', role: 'patient' },
           { type: 'literal', value: 'を' },
-          { type: 'literal', value: '切り替え', alternatives: ['切り替える', 'トグル', 'トグルする'] },
+          {
+            type: 'literal',
+            value: '切り替え',
+            alternatives: ['切り替える', 'トグル', 'トグルする'],
+          },
         ],
       },
       extraction: {
@@ -41,7 +45,11 @@ export function getTogglePatternsJa(): LanguagePattern[] {
         tokens: [
           { type: 'role', role: 'patient' },
           { type: 'literal', value: 'を' },
-          { type: 'literal', value: '切り替え', alternatives: ['切り替える', 'トグル', 'トグルする'] },
+          {
+            type: 'literal',
+            value: '切り替え',
+            alternatives: ['切り替える', 'トグル', 'トグルする'],
+          },
         ],
       },
       extraction: {

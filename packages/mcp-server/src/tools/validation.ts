@@ -68,17 +68,20 @@ export const validationTools: Tool[] = [
   },
   {
     name: 'validate_schema',
-    description: 'Validate command schemas for design issues. Returns structured validation items with machine-readable codes, severity levels (error/warning/note), and suggested fixes. Useful for catching schema issues before they cause runtime problems.',
+    description:
+      'Validate command schemas for design issues. Returns structured validation items with machine-readable codes, severity levels (error/warning/note), and suggested fixes. Useful for catching schema issues before they cause runtime problems.',
     inputSchema: {
       type: 'object',
       properties: {
         action: {
           type: 'string',
-          description: 'Specific command action to validate (e.g., "toggle", "put"). If omitted, validates all schemas.',
+          description:
+            'Specific command action to validate (e.g., "toggle", "put"). If omitted, validates all schemas.',
         },
         includeNotes: {
           type: 'boolean',
-          description: 'Include informational notes (severity="note") in addition to warnings and errors. Default: false',
+          description:
+            'Include informational notes (severity="note") in addition to warnings and errors. Default: false',
           default: false,
         },
         showCodes: {
@@ -91,7 +94,8 @@ export const validationTools: Tool[] = [
   },
   {
     name: 'suggest_command',
-    description: 'Suggest the best hyperscript command for a task. Returns suggestions in specified language.',
+    description:
+      'Suggest the best hyperscript command for a task. Returns suggestions in specified language.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -101,7 +105,8 @@ export const validationTools: Tool[] = [
         },
         language: {
           type: 'string',
-          description: 'Language code for command suggestions (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
+          description:
+            'Language code for command suggestions (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
           default: 'en',
         },
       },
@@ -138,7 +143,8 @@ export const validationTools: Tool[] = [
   },
   {
     name: 'parse_multilingual',
-    description: 'Parse hyperscript in any supported language using semantic analysis. Returns parsed structure with confidence score and semantic roles.',
+    description:
+      'Parse hyperscript in any supported language using semantic analysis. Returns parsed structure with confidence score and semantic roles.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -156,7 +162,8 @@ export const validationTools: Tool[] = [
   },
   {
     name: 'translate_to_english',
-    description: 'Translate hyperscript from any supported language to English. Essential for LLMs to understand non-English code.',
+    description:
+      'Translate hyperscript from any supported language to English. Essential for LLMs to understand non-English code.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -179,7 +186,8 @@ export const validationTools: Tool[] = [
   },
   {
     name: 'explain_in_language',
-    description: 'Explain hyperscript code in detail. Returns command description, role breakdown, grammar rules, and translations.',
+    description:
+      'Explain hyperscript code in detail. Returns command description, role breakdown, grammar rules, and translations.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -206,7 +214,8 @@ export const validationTools: Tool[] = [
   },
   {
     name: 'get_code_fixes',
-    description: 'Get available auto-fixes for a specific error code or diagnostic. Returns LSP-compatible CodeFix suggestions that can be applied to fix common errors. Useful for LLMs to suggest corrections without running full diagnostics.',
+    description:
+      'Get available auto-fixes for a specific error code or diagnostic. Returns LSP-compatible CodeFix suggestions that can be applied to fix common errors. Useful for LLMs to suggest corrections without running full diagnostics.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -321,12 +330,37 @@ export async function handleValidationTool(
  */
 function getValidCommandsForLanguage(language: string): string[] {
   const englishCommands = [
-    'toggle', 'add', 'remove', 'show', 'hide',
-    'set', 'get', 'put', 'append', 'prepend',
-    'increment', 'decrement', 'log', 'send', 'trigger',
-    'wait', 'fetch', 'call', 'go', 'focus', 'blur',
-    'return', 'break', 'continue', 'exit', 'halt', 'throw',
-    'transition', 'settle', 'measure', 'take',
+    'toggle',
+    'add',
+    'remove',
+    'show',
+    'hide',
+    'set',
+    'get',
+    'put',
+    'append',
+    'prepend',
+    'increment',
+    'decrement',
+    'log',
+    'send',
+    'trigger',
+    'wait',
+    'fetch',
+    'call',
+    'go',
+    'focus',
+    'blur',
+    'return',
+    'break',
+    'continue',
+    'exit',
+    'halt',
+    'throw',
+    'transition',
+    'settle',
+    'measure',
+    'take',
   ];
 
   if (!semanticPackage || language === 'en') {
@@ -445,7 +479,15 @@ function validateHyperscript(
         const roles = result.command.roles;
 
         // Commands requiring patient (target class/attribute/value)
-        const patientRequired = ['toggle', 'add', 'remove', 'show', 'hide', 'increment', 'decrement'];
+        const patientRequired = [
+          'toggle',
+          'add',
+          'remove',
+          'show',
+          'hide',
+          'increment',
+          'decrement',
+        ];
         if (patientRequired.includes(cmd) && !roles.has('patient')) {
           warnings.push({
             message: `${cmd} command missing target`,
@@ -542,7 +584,9 @@ function validateHyperscript(
       if (profile?.keywords?.['end']?.primary) {
         endVariants.push(profile.keywords['end'].primary);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   const ifPattern = new RegExp(`\\b(${ifVariants.join('|')})\\b`, 'gi');
   const endPattern = new RegExp(`\\b(${endVariants.join('|')})\\b`, 'gi');
@@ -557,29 +601,64 @@ function validateHyperscript(
 
   // Check for valid event handlers (multilingual)
   // Only match at start of code, after newline, or after command separators (then, ;)
-  const eventPattern = new RegExp(`(?:^|\\n|;|\\bthen\\b)\\s*(${eventKeywords.join('|')})\\s+(\\w+)`, 'gim');
+  const eventPattern = new RegExp(
+    `(?:^|\\n|;|\\bthen\\b)\\s*(${eventKeywords.join('|')})\\s+(\\w+)`,
+    'gim'
+  );
   const eventMatches = code.matchAll(eventPattern);
   const validEvents = [
-    'click', 'dblclick', 'mouseenter', 'mouseleave', 'mouseover', 'mouseout',
-    'mousedown', 'mouseup', 'mousemove',
-    'keydown', 'keyup', 'keypress',
-    'focus', 'blur', 'focusin', 'focusout',
-    'input', 'change', 'submit', 'reset',
-    'load', 'unload', 'scroll', 'resize',
-    'touchstart', 'touchend', 'touchmove',
-    'dragstart', 'dragend', 'drag', 'drop',
-    'intersection', 'mutation',
+    'click',
+    'dblclick',
+    'mouseenter',
+    'mouseleave',
+    'mouseover',
+    'mouseout',
+    'mousedown',
+    'mouseup',
+    'mousemove',
+    'keydown',
+    'keyup',
+    'keypress',
+    'focus',
+    'blur',
+    'focusin',
+    'focusout',
+    'input',
+    'change',
+    'submit',
+    'reset',
+    'load',
+    'unload',
+    'scroll',
+    'resize',
+    'touchstart',
+    'touchend',
+    'touchmove',
+    'dragstart',
+    'dragend',
+    'drag',
+    'drop',
+    'intersection',
+    'mutation',
     'every', // timer
   ];
   // Target keywords that should not be confused with event types
-  const targetKeywords = ['me', 'you', 'it', 'my', 'its', 'the', 'this', 'that', 'body', 'window', 'document'];
+  const targetKeywords = [
+    'me',
+    'you',
+    'it',
+    'my',
+    'its',
+    'the',
+    'this',
+    'that',
+    'body',
+    'window',
+    'document',
+  ];
   for (const match of eventMatches) {
     const event = match[2].toLowerCase();
-    if (
-      !validEvents.includes(event) &&
-      !event.includes('.') &&
-      !targetKeywords.includes(event)
-    ) {
+    if (!validEvents.includes(event) && !event.includes('.') && !targetKeywords.includes(event)) {
       warnings.push({
         message: `Unknown event type: ${event}`,
         suggestion: `Did you mean one of: ${validEvents.slice(0, 5).join(', ')}...?`,
@@ -601,7 +680,9 @@ function validateHyperscript(
         if (profile?.keywords?.toggle?.primary) {
           toggleVariants.push(profile.keywords.toggle.primary);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     const hasToggle = toggleVariants.some(t => code.toLowerCase().includes(t.toLowerCase()));
     if (hasToggle && !code.includes('.') && !code.includes('@')) {
@@ -633,42 +714,77 @@ function validateHyperscript(
 // Command Suggestion
 // =============================================================================
 
-const COMMAND_SUGGESTIONS: Record<string, { command: string; example: string; description: string }> = {
-  'toggle': { command: 'toggle', example: 'toggle .active', description: 'Toggle a class, attribute, or visibility' },
-  'add': { command: 'add', example: 'add .highlight to me', description: 'Add a class, attribute, or style' },
-  'remove': { command: 'remove', example: 'remove .error from #form', description: 'Remove a class, attribute, or element' },
-  'show': { command: 'show', example: 'show #modal with *opacity', description: 'Show a hidden element' },
-  'hide': { command: 'hide', example: 'hide me with *opacity', description: 'Hide an element' },
-  'set': { command: 'set', example: 'set :count to 0', description: 'Set a variable or property' },
-  'put': { command: 'put', example: 'put "Hello" into #greeting', description: 'Set element content' },
-  'fetch': { command: 'fetch', example: 'fetch /api as json', description: 'Make HTTP request' },
-  'wait': { command: 'wait', example: 'wait 500ms', description: 'Pause execution' },
-  'send': { command: 'send', example: 'send refresh to #list', description: 'Dispatch custom event' },
-  'go': { command: 'go', example: 'go to /page', description: 'Navigate to URL' },
-  'increment': { command: 'increment', example: 'increment :count', description: 'Add 1 to a number' },
-  'decrement': { command: 'decrement', example: 'decrement :count', description: 'Subtract 1 from a number' },
-  'focus': { command: 'focus', example: 'focus #input', description: 'Focus an element' },
-  'call': { command: 'call', example: 'call myFunction()', description: 'Call a JavaScript function' },
-  'log': { command: 'log', example: 'log me', description: 'Log to console' },
+const COMMAND_SUGGESTIONS: Record<
+  string,
+  { command: string; example: string; description: string }
+> = {
+  toggle: {
+    command: 'toggle',
+    example: 'toggle .active',
+    description: 'Toggle a class, attribute, or visibility',
+  },
+  add: {
+    command: 'add',
+    example: 'add .highlight to me',
+    description: 'Add a class, attribute, or style',
+  },
+  remove: {
+    command: 'remove',
+    example: 'remove .error from #form',
+    description: 'Remove a class, attribute, or element',
+  },
+  show: {
+    command: 'show',
+    example: 'show #modal with *opacity',
+    description: 'Show a hidden element',
+  },
+  hide: { command: 'hide', example: 'hide me with *opacity', description: 'Hide an element' },
+  set: { command: 'set', example: 'set :count to 0', description: 'Set a variable or property' },
+  put: {
+    command: 'put',
+    example: 'put "Hello" into #greeting',
+    description: 'Set element content',
+  },
+  fetch: { command: 'fetch', example: 'fetch /api as json', description: 'Make HTTP request' },
+  wait: { command: 'wait', example: 'wait 500ms', description: 'Pause execution' },
+  send: { command: 'send', example: 'send refresh to #list', description: 'Dispatch custom event' },
+  go: { command: 'go', example: 'go to /page', description: 'Navigate to URL' },
+  increment: {
+    command: 'increment',
+    example: 'increment :count',
+    description: 'Add 1 to a number',
+  },
+  decrement: {
+    command: 'decrement',
+    example: 'decrement :count',
+    description: 'Subtract 1 from a number',
+  },
+  focus: { command: 'focus', example: 'focus #input', description: 'Focus an element' },
+  call: {
+    command: 'call',
+    example: 'call myFunction()',
+    description: 'Call a JavaScript function',
+  },
+  log: { command: 'log', example: 'log me', description: 'Log to console' },
 };
 
 const TASK_KEYWORDS: Record<string, string[]> = {
-  'toggle': ['toggle', 'switch', 'flip', 'alternate', 'on/off', 'open/close'],
-  'add': ['add', 'insert', 'include', 'attach', 'apply', 'highlight'],
-  'remove': ['remove', 'delete', 'clear', 'erase', 'detach'],
-  'show': ['show', 'display', 'reveal', 'appear', 'visible', 'open', 'popup', 'modal'],
-  'hide': ['hide', 'conceal', 'invisible', 'close', 'dismiss'],
-  'set': ['set', 'assign', 'store', 'save', 'update', 'change', 'variable'],
-  'put': ['put', 'content', 'text', 'html', 'innerHTML', 'display text'],
-  'fetch': ['fetch', 'api', 'ajax', 'request', 'http', 'load data', 'get data', 'post'],
-  'wait': ['wait', 'delay', 'pause', 'sleep', 'timeout', 'after'],
-  'send': ['send', 'emit', 'dispatch', 'event', 'trigger', 'notify'],
-  'go': ['go', 'navigate', 'redirect', 'link', 'url', 'page'],
-  'increment': ['increment', 'increase', 'count up', 'add 1', 'plus'],
-  'decrement': ['decrement', 'decrease', 'count down', 'subtract', 'minus'],
-  'focus': ['focus', 'select', 'cursor', 'active element'],
-  'call': ['call', 'execute', 'run', 'invoke', 'function'],
-  'log': ['log', 'debug', 'console', 'print', 'output'],
+  toggle: ['toggle', 'switch', 'flip', 'alternate', 'on/off', 'open/close'],
+  add: ['add', 'insert', 'include', 'attach', 'apply', 'highlight'],
+  remove: ['remove', 'delete', 'clear', 'erase', 'detach'],
+  show: ['show', 'display', 'reveal', 'appear', 'visible', 'open', 'popup', 'modal'],
+  hide: ['hide', 'conceal', 'invisible', 'close', 'dismiss'],
+  set: ['set', 'assign', 'store', 'save', 'update', 'change', 'variable'],
+  put: ['put', 'content', 'text', 'html', 'innerHTML', 'display text'],
+  fetch: ['fetch', 'api', 'ajax', 'request', 'http', 'load data', 'get data', 'post'],
+  wait: ['wait', 'delay', 'pause', 'sleep', 'timeout', 'after'],
+  send: ['send', 'emit', 'dispatch', 'event', 'trigger', 'notify'],
+  go: ['go', 'navigate', 'redirect', 'link', 'url', 'page'],
+  increment: ['increment', 'increase', 'count up', 'add 1', 'plus'],
+  decrement: ['decrement', 'decrease', 'count down', 'subtract', 'minus'],
+  focus: ['focus', 'select', 'cursor', 'active element'],
+  call: ['call', 'execute', 'run', 'invoke', 'function'],
+  log: ['log', 'debug', 'console', 'print', 'output'],
 };
 
 /**
@@ -702,9 +818,16 @@ function translateSuggestion(
   return suggestion;
 }
 
-function suggestCommand(task: string, language: string = 'en'): { content: Array<{ type: string; text: string }> } {
+function suggestCommand(
+  task: string,
+  language: string = 'en'
+): { content: Array<{ type: string; text: string }> } {
   const taskLower = task.toLowerCase();
-  const matches: Array<{ command: string; score: number; suggestion: typeof COMMAND_SUGGESTIONS[string] }> = [];
+  const matches: Array<{
+    command: string;
+    score: number;
+    suggestion: (typeof COMMAND_SUGGESTIONS)[string];
+  }> = [];
 
   for (const [command, keywords] of Object.entries(TASK_KEYWORDS)) {
     let score = 0;
@@ -751,7 +874,7 @@ function suggestCommand(task: string, language: string = 'en'): { content: Array
 
   // Translate the best match and alternatives to target language
   const bestMatch = translateSuggestion(matches[0].suggestion, language);
-  const alternatives = matches.slice(1, 4).map((m) => translateSuggestion(m.suggestion, language));
+  const alternatives = matches.slice(1, 4).map(m => translateSuggestion(m.suggestion, language));
 
   return {
     content: [
@@ -791,7 +914,7 @@ function getBundleConfig(
     bundleSize = '6.7 KB';
   }
 
-  if (languages.length > 1 || languages.some((l) => l !== 'en')) {
+  if (languages.length > 1 || languages.some(l => l !== 'en')) {
     bundle = 'hyperfixi-multilingual.js'; // 250 KB
     bundleSize = '250 KB';
   }
@@ -800,7 +923,7 @@ function getBundleConfig(
   const viteConfig = {
     plugins: [
       `hyperfixi({
-  extraCommands: ${JSON.stringify(commands.filter((c) => !['toggle', 'add', 'remove', 'show', 'hide', 'set', 'put'].includes(c)))},
+  extraCommands: ${JSON.stringify(commands.filter(c => !['toggle', 'add', 'remove', 'show', 'hide', 'set', 'put'].includes(c)))},
   extraBlocks: ${JSON.stringify(blocks)},
   positional: ${positional},
   languages: ${JSON.stringify(languages)},
@@ -812,9 +935,9 @@ function getBundleConfig(
   let regionalBundle = 'browser.global.js';
   if (languages.length === 1 && languages[0] === 'en') {
     regionalBundle = 'browser-en.global.js (20 KB)';
-  } else if (languages.every((l) => ['en', 'es', 'pt', 'fr', 'de'].includes(l))) {
+  } else if (languages.every(l => ['en', 'es', 'pt', 'fr', 'de'].includes(l))) {
     regionalBundle = 'browser-western.global.js (30 KB)';
-  } else if (languages.every((l) => ['ja', 'zh', 'ko'].includes(l))) {
+  } else if (languages.every(l => ['ja', 'zh', 'ko'].includes(l))) {
     regionalBundle = 'browser-east-asian.global.js (24 KB)';
   }
 
@@ -937,15 +1060,15 @@ function validateSchema(
       const response = {
         action,
         valid: result.errors.length === 0,
-        items: result.items.map((item: any) => ({
-          ...(showCodes && { code: item.code }),
-          severity: item.severity,
-          message: item.message,
-          ...(item.role && { role: item.role }),
-          ...(item.suggestion && { suggestion: item.suggestion }),
-        })).filter((item: any) =>
-          includeNotes || item.severity !== 'note'
-        ),
+        items: result.items
+          .map((item: any) => ({
+            ...(showCodes && { code: item.code }),
+            severity: item.severity,
+            message: item.message,
+            ...(item.role && { role: item.role }),
+            ...(item.suggestion && { suggestion: item.suggestion }),
+          }))
+          .filter((item: any) => includeNotes || item.severity !== 'note'),
         summary: {
           errors: result.errors.length,
           warnings: result.warnings.length,
@@ -970,21 +1093,22 @@ function validateSchema(
     };
 
     // Format the results
-    const formattedText = formatValidationResults?.(validations, { showNotes: includeNotes, showCodes }) || '';
+    const formattedText =
+      formatValidationResults?.(validations, { showNotes: includeNotes, showCodes }) || '';
 
     // Build structured response
     const validationResults: Record<string, any> = {};
     for (const [actionName, result] of validations) {
       validationResults[actionName] = {
-        items: result.items.map((item: any) => ({
-          ...(showCodes && { code: item.code }),
-          severity: item.severity,
-          message: item.message,
-          ...(item.role && { role: item.role }),
-          ...(item.suggestion && { suggestion: item.suggestion }),
-        })).filter((item: any) =>
-          includeNotes || item.severity !== 'note'
-        ),
+        items: result.items
+          .map((item: any) => ({
+            ...(showCodes && { code: item.code }),
+            severity: item.severity,
+            message: item.message,
+            ...(item.role && { role: item.role }),
+            ...(item.suggestion && { suggestion: item.suggestion }),
+          }))
+          .filter((item: any) => includeNotes || item.severity !== 'note'),
         hasErrors: result.errors.length > 0,
         hasWarnings: result.warnings.length > 0,
       };
@@ -999,9 +1123,11 @@ function validateSchema(
         warnings: stats.warnings,
         notes: stats.notes,
       },
-      ...(showCodes && stats.byCode && Object.keys(stats.byCode).length > 0 && {
-        byCode: stats.byCode,
-      }),
+      ...(showCodes &&
+        stats.byCode &&
+        Object.keys(stats.byCode).length > 0 && {
+          byCode: stats.byCode,
+        }),
       validations: validationResults,
       formatted: formattedText,
     };
@@ -1298,9 +1424,7 @@ function explainInLanguage(
       // Build role breakdown
       const rolesInfo: Record<string, unknown> = {};
       for (const [roleName, roleValue] of parseResult.command.roles) {
-        const roleSchema = commandSchema?.roles?.find(
-          (r: { role: string }) => r.role === roleName
-        );
+        const roleSchema = commandSchema?.roles?.find((r: { role: string }) => r.role === roleName);
         rolesInfo[roleName] = {
           value: roleValue,
           description: roleSchema?.description || `The ${roleName} role`,
@@ -1435,7 +1559,7 @@ function getCodeFixes(
               errorCode,
               hasFixes,
               fixCount: fixes.length,
-              fixes: fixes.map((fix) => ({
+              fixes: fixes.map(fix => ({
                 code: fix.code,
                 title: fix.title,
                 kind: fix.kind,
@@ -1471,7 +1595,7 @@ function getCodeFixes(
               diagnosticCode,
               hasFixes,
               fixCount: fixes.length,
-              fixes: fixes.map((fix) => ({
+              fixes: fixes.map(fix => ({
                 code: fix.code,
                 title: fix.title,
                 kind: fix.kind,

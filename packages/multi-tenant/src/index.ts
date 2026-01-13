@@ -38,7 +38,7 @@ export {
   EnhancedMultiTenantInputSchema,
   EnhancedMultiTenantOutputSchema,
   type EnhancedMultiTenantInput,
-  type EnhancedMultiTenantOutput
+  type EnhancedMultiTenantOutput,
 } from './enhanced-multi-tenant.js';
 
 // Middleware exports
@@ -63,12 +63,12 @@ export type {
   TenantUser,
   TenantRequest,
   TenantSession,
-  
+
   // Configuration types
   TenantManagerConfig,
   TenantIsolationConfig,
   TenantMiddlewareConfig,
-  
+
   // Customization types
   TenantScript,
   TenantStyle,
@@ -78,7 +78,7 @@ export type {
   TenantLocalization,
   TenantPermissions,
   TenantCondition,
-  
+
   // Infrastructure types
   TenantResolver,
   CustomizationProvider,
@@ -105,33 +105,29 @@ export function createMultiTenantSystem(options: {
     metricsCollector?: (metrics: import('./types').TenantMetrics) => void;
   };
 }) {
-  const tenantManager = createTenantManager(
-    options.tenantResolver,
-    options.customizationProvider,
-    {
-      isolation: {
-        enableDataIsolation: true,
-        enableStyleIsolation: true,
-        enableScriptIsolation: true,
-        enableEventIsolation: true,
-        enableStorageIsolation: true,
-        sandboxLevel: 'basic',
-        namespacePrefix: 'tenant',
-        allowCrossTenantAccess: false,
-        ...options.isolation,
-      },
-      caching: {
-        enabled: true,
-        ttl: 300000, // 5 minutes
-        maxSize: 1000,
-        ...options.caching,
-      },
-      monitoring: {
-        enabled: true,
-        ...options.monitoring,
-      },
-    }
-  );
+  const tenantManager = createTenantManager(options.tenantResolver, options.customizationProvider, {
+    isolation: {
+      enableDataIsolation: true,
+      enableStyleIsolation: true,
+      enableScriptIsolation: true,
+      enableEventIsolation: true,
+      enableStorageIsolation: true,
+      sandboxLevel: 'basic',
+      namespacePrefix: 'tenant',
+      allowCrossTenantAccess: false,
+      ...options.isolation,
+    },
+    caching: {
+      enabled: true,
+      ttl: 300000, // 5 minutes
+      maxSize: 1000,
+      ...options.caching,
+    },
+    monitoring: {
+      enabled: true,
+      ...options.monitoring,
+    },
+  });
 
   const isolation = createTenantIsolation({
     enableDataIsolation: true,
@@ -151,17 +147,17 @@ export function createMultiTenantSystem(options: {
     tenantManager,
     isolation,
     customizationEngine,
-    
+
     // Convenience methods
-    createExpressMiddleware: (config: Partial<import('./types').TenantMiddlewareConfig>) => 
+    createExpressMiddleware: (config: Partial<import('./types').TenantMiddlewareConfig>) =>
       createExpressMiddleware({
         tenantManager,
         enableIsolation: true,
         requireTenant: false,
         ...config,
       }),
-      
-    createElysiaPlugin: (config: Partial<import('./types').TenantMiddlewareConfig>) => 
+
+    createElysiaPlugin: (config: Partial<import('./types').TenantMiddlewareConfig>) =>
       createElysiaPlugin({
         tenantManager,
         enableIsolation: true,
@@ -191,7 +187,7 @@ export async function quickStartMultiTenant(options: {
     async resolveTenant(identifier) {
       return null; // Will use specific methods below
     },
-    
+
     async resolveTenantByDomain(domain) {
       const tenant = options.tenants.find(t => t.domain === domain);
       if (!tenant) return null;
@@ -217,11 +213,11 @@ export async function quickStartMultiTenant(options: {
         updatedAt: new Date(),
       };
     },
-    
+
     async resolveTenantBySubdomain(subdomain) {
       const tenant = options.tenants.find(t => t.id === subdomain);
       if (!tenant) return null;
-      
+
       return {
         id: tenant.id,
         name: tenant.name,
@@ -243,11 +239,11 @@ export async function quickStartMultiTenant(options: {
         updatedAt: new Date(),
       };
     },
-    
+
     async resolveTenantById(id) {
       const tenant = options.tenants.find(t => t.id === id);
       if (!tenant) return null;
-      
+
       return {
         id: tenant.id,
         name: tenant.name,
@@ -275,7 +271,7 @@ export async function quickStartMultiTenant(options: {
     async getCustomization(tenantId) {
       const customization = options.customizations?.[tenantId];
       if (!customization) return null;
-      
+
       return {
         tenantId,
         scripts: customization.scripts || {},
@@ -329,7 +325,7 @@ export async function quickStartMultiTenant(options: {
         updatedAt: new Date(),
       };
     },
-    
+
     async updateCustomization(tenantId, customization) {
       // Simple in-memory update (would be database in real implementation)
       if (!options.customizations) {
@@ -340,7 +336,7 @@ export async function quickStartMultiTenant(options: {
         ...customization,
       };
     },
-    
+
     async deleteCustomization(tenantId) {
       if (options.customizations) {
         delete options.customizations[tenantId];

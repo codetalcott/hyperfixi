@@ -11,30 +11,30 @@ describe('Profile Tools', () => {
     });
 
     it('has get_language_profile tool', () => {
-      const tool = profileTools.find((t) => t.name === 'get_language_profile');
+      const tool = profileTools.find(t => t.name === 'get_language_profile');
       expect(tool).toBeDefined();
       expect(tool?.inputSchema.required).toContain('language');
     });
 
     it('has list_supported_languages tool', () => {
-      const tool = profileTools.find((t) => t.name === 'list_supported_languages');
+      const tool = profileTools.find(t => t.name === 'list_supported_languages');
       expect(tool).toBeDefined();
     });
 
     it('has get_keyword_translations tool', () => {
-      const tool = profileTools.find((t) => t.name === 'get_keyword_translations');
+      const tool = profileTools.find(t => t.name === 'get_keyword_translations');
       expect(tool).toBeDefined();
       expect(tool?.inputSchema.required).toContain('keyword');
     });
 
     it('has get_role_markers tool', () => {
-      const tool = profileTools.find((t) => t.name === 'get_role_markers');
+      const tool = profileTools.find(t => t.name === 'get_role_markers');
       expect(tool).toBeDefined();
       expect(tool?.inputSchema.required).toContain('language');
     });
 
     it('has compare_language_profiles tool', () => {
-      const tool = profileTools.find((t) => t.name === 'compare_language_profiles');
+      const tool = profileTools.find(t => t.name === 'compare_language_profiles');
       expect(tool).toBeDefined();
       expect(tool?.inputSchema.required).toContain('baseLanguage');
       expect(tool?.inputSchema.required).toContain('targetLanguage');

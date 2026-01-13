@@ -21,7 +21,17 @@ export const englishProfile: LanguageProfile = {
   morphology: 'fusional',
   direction: 'ltr',
 
-  canonicalOrder: ['event', 'action', 'patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style'],
+  canonicalOrder: [
+    'event',
+    'action',
+    'patient',
+    'source',
+    'destination',
+    'quantity',
+    'duration',
+    'method',
+    'style',
+  ],
 
   markers: [
     { form: 'on', role: 'event', position: 'preposition', required: true },
@@ -117,9 +127,21 @@ export const koreanProfile: LanguageProfile = {
     { form: '를', role: 'patient', position: 'postposition', required: true, alternatives: ['을'] },
     { form: '에', role: 'destination', position: 'postposition', required: true },
     { form: '에서', role: 'source', position: 'postposition', required: true },
-    { form: '로', role: 'style', position: 'postposition', required: false, alternatives: ['으로'] },
+    {
+      form: '로',
+      role: 'style',
+      position: 'postposition',
+      required: false,
+      alternatives: ['으로'],
+    },
     { form: '와', role: 'style', position: 'postposition', required: false, alternatives: ['과'] },
-    { form: '로', role: 'method', position: 'postposition', required: false, alternatives: ['으로'] }, // "as" - same as instrument
+    {
+      form: '로',
+      role: 'method',
+      position: 'postposition',
+      required: false,
+      alternatives: ['으로'],
+    }, // "as" - same as instrument
   ],
 
   rules: [
@@ -147,7 +169,7 @@ export const chineseProfile: LanguageProfile = {
   code: 'zh',
   name: '中文',
 
-  wordOrder: 'SVO',  // But topic-prominent allows flexibility
+  wordOrder: 'SVO', // But topic-prominent allows flexibility
   adpositionType: 'preposition',
   morphology: 'isolating',
   direction: 'ltr',
@@ -158,8 +180,8 @@ export const chineseProfile: LanguageProfile = {
 
   markers: [
     { form: '当', role: 'event', position: 'preposition', required: true },
-    { form: '时', role: 'event', position: 'postposition', required: true },  // Circumfix with 当
-    { form: '把', role: 'patient', position: 'preposition', required: false },  // BA construction
+    { form: '时', role: 'event', position: 'postposition', required: true }, // Circumfix with 当
+    { form: '把', role: 'patient', position: 'preposition', required: false }, // BA construction
     { form: '到', role: 'destination', position: 'preposition', required: false },
     { form: '从', role: 'source', position: 'preposition', required: false },
     { form: '用', role: 'style', position: 'preposition', required: false },
@@ -222,7 +244,7 @@ export const arabicProfile: LanguageProfile = {
 
   wordOrder: 'VSO',
   adpositionType: 'preposition',
-  morphology: 'fusional',  // Root-pattern morphology
+  morphology: 'fusional', // Root-pattern morphology
   direction: 'rtl',
 
   // Arabic VSO: Verb first, then subject, then object
@@ -275,9 +297,27 @@ export const turkishProfile: LanguageProfile = {
 
   markers: [
     // Turkish case suffixes (simplified - real Turkish has vowel harmony)
-    { form: '-i', role: 'patient', position: 'postposition', required: true, alternatives: ['-ı', '-u', '-ü'] },
-    { form: '-e', role: 'destination', position: 'postposition', required: true, alternatives: ['-a'] },
-    { form: '-den', role: 'source', position: 'postposition', required: true, alternatives: ['-dan'] },
+    {
+      form: '-i',
+      role: 'patient',
+      position: 'postposition',
+      required: true,
+      alternatives: ['-ı', '-u', '-ü'],
+    },
+    {
+      form: '-e',
+      role: 'destination',
+      position: 'postposition',
+      required: true,
+      alternatives: ['-a'],
+    },
+    {
+      form: '-den',
+      role: 'source',
+      position: 'postposition',
+      required: true,
+      alternatives: ['-dan'],
+    },
     { form: '-de', role: 'event', position: 'postposition', required: true, alternatives: ['-da'] },
     { form: 'ile', role: 'style', position: 'postposition', required: false },
     { form: 'olarak', role: 'method', position: 'postposition', required: false },
@@ -441,7 +481,7 @@ export const quechuaProfile: LanguageProfile = {
 
   wordOrder: 'SOV',
   adpositionType: 'postposition',
-  morphology: 'agglutinative',  // Actually polysynthetic
+  morphology: 'agglutinative', // Actually polysynthetic
   direction: 'ltr',
 
   canonicalOrder: ['patient', 'source', 'destination', 'event', 'action'],

@@ -25,15 +25,15 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       // First set
       cache.set(script, options, result);
-      
+
       // Should retrieve the cached result
       const cached = cache.get(script, options);
       expect(cached).toEqual(result);
@@ -42,7 +42,7 @@ describe('CompilationCache', () => {
     it('should return null for cache miss', () => {
       const script = 'on click toggle .active';
       const options: CompilationOptions = { minify: false };
-      
+
       const cached = cache.get(script, options);
       expect(cached).toBeNull();
     });
@@ -51,7 +51,7 @@ describe('CompilationCache', () => {
       const script1 = 'on click toggle .active';
       const script2 = 'on hover show .tooltip';
       const options: CompilationOptions = { minify: false };
-      
+
       const result1: CompilationResult = {
         compiled: 'compiled script 1',
         metadata: {
@@ -60,10 +60,10 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       const result2: CompilationResult = {
@@ -74,15 +74,15 @@ describe('CompilationCache', () => {
           selectors: ['.tooltip'],
           events: ['hover'],
           commands: ['show'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       cache.set(script1, options, result1);
       cache.set(script2, options, result2);
-      
+
       expect(cache.get(script1, options)).toEqual(result1);
       expect(cache.get(script2, options)).toEqual(result2);
     });
@@ -93,7 +93,7 @@ describe('CompilationCache', () => {
       const script = 'on click toggle .active';
       const options1: CompilationOptions = { minify: false };
       const options2: CompilationOptions = { minify: true };
-      
+
       const result: CompilationResult = {
         compiled: 'compiled script',
         metadata: {
@@ -102,15 +102,15 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       // Cache with first options
       cache.set(script, options1, result);
-      
+
       // Should not find with different options
       const cached = cache.get(script, options2);
       expect(cached).toBeNull();
@@ -121,7 +121,7 @@ describe('CompilationCache', () => {
       const options1: CompilationOptions = { minify: false, compatibility: 'modern' };
       const options2: CompilationOptions = { minify: true, compatibility: 'modern' };
       const options3: CompilationOptions = { minify: false, compatibility: 'legacy' };
-      
+
       const result1: CompilationResult = {
         compiled: 'unminified modern',
         metadata: {
@@ -130,10 +130,10 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       const result2: CompilationResult = {
@@ -144,10 +144,10 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       const result3: CompilationResult = {
@@ -158,16 +158,16 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       cache.set(script, options1, result1);
       cache.set(script, options2, result2);
       cache.set(script, options3, result3);
-      
+
       expect(cache.get(script, options1)).toEqual(result1);
       expect(cache.get(script, options2)).toEqual(result2);
       expect(cache.get(script, options3)).toEqual(result3);
@@ -177,7 +177,7 @@ describe('CompilationCache', () => {
       const script = 'on click fetch /api/users/{{userId}}';
       const options1: CompilationOptions = { templateVars: { userId: '123' } };
       const options2: CompilationOptions = { templateVars: { userId: '456' } };
-      
+
       const result1: CompilationResult = {
         compiled: 'compiled with user 123',
         metadata: {
@@ -186,10 +186,10 @@ describe('CompilationCache', () => {
           selectors: [],
           events: ['click'],
           commands: ['fetch'],
-          templateVariables: ['userId']
+          templateVariables: ['userId'],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       const result2: CompilationResult = {
@@ -200,15 +200,15 @@ describe('CompilationCache', () => {
           selectors: [],
           events: ['click'],
           commands: ['fetch'],
-          templateVariables: ['userId']
+          templateVariables: ['userId'],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       cache.set(script, options1, result1);
       cache.set(script, options2, result2);
-      
+
       expect(cache.get(script, options1)).toEqual(result1);
       expect(cache.get(script, options2)).toEqual(result2);
     });
@@ -218,7 +218,7 @@ describe('CompilationCache', () => {
     it('should enforce maximum cache size', () => {
       const maxSize = 3;
       const limitedCache = new CompilationCache({ maxSize });
-      
+
       const options: CompilationOptions = { minify: false };
       const baseResult: CompilationResult = {
         compiled: 'compiled',
@@ -228,17 +228,17 @@ describe('CompilationCache', () => {
           selectors: [],
           events: [],
           commands: [],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       // Add entries up to limit
       for (let i = 0; i < maxSize + 2; i++) {
         limitedCache.set(`script${i}`, options, {
           ...baseResult,
-          compiled: `compiled${i}`
+          compiled: `compiled${i}`,
         });
       }
 
@@ -253,7 +253,7 @@ describe('CompilationCache', () => {
     it('should update LRU order on cache hit', () => {
       const maxSize = 2;
       const limitedCache = new CompilationCache({ maxSize });
-      
+
       const options: CompilationOptions = { minify: false };
       const baseResult: CompilationResult = {
         compiled: 'compiled',
@@ -263,22 +263,22 @@ describe('CompilationCache', () => {
           selectors: [],
           events: [],
           commands: [],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       // Add two entries
       limitedCache.set('script1', options, { ...baseResult, compiled: 'compiled1' });
       limitedCache.set('script2', options, { ...baseResult, compiled: 'compiled2' });
-      
+
       // Access first entry to make it recently used
       limitedCache.get('script1', options);
-      
+
       // Add third entry - should evict script2, not script1
       limitedCache.set('script3', options, { ...baseResult, compiled: 'compiled3' });
-      
+
       expect(limitedCache.get('script1', options)).not.toBeNull(); // Should still be cached
       expect(limitedCache.get('script2', options)).toBeNull(); // Should be evicted
       expect(limitedCache.get('script3', options)).not.toBeNull(); // Should be cached
@@ -289,7 +289,7 @@ describe('CompilationCache', () => {
     it('should expire entries after TTL', async () => {
       const ttl = 100; // 100ms
       const ttlCache = new CompilationCache({ ttl });
-      
+
       const script = 'on click toggle .active';
       const options: CompilationOptions = { minify: false };
       const result: CompilationResult = {
@@ -300,20 +300,20 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       ttlCache.set(script, options, result);
-      
+
       // Should be available immediately
       expect(ttlCache.get(script, options)).toEqual(result);
-      
+
       // Wait for expiration
       await new Promise(resolve => setTimeout(resolve, ttl + 10));
-      
+
       // Should be expired
       expect(ttlCache.get(script, options)).toBeNull();
     });
@@ -321,7 +321,7 @@ describe('CompilationCache', () => {
     it('should not expire entries within TTL', async () => {
       const ttl = 200; // 200ms
       const ttlCache = new CompilationCache({ ttl });
-      
+
       const script = 'on click toggle .active';
       const options: CompilationOptions = { minify: false };
       const result: CompilationResult = {
@@ -332,17 +332,17 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       ttlCache.set(script, options, result);
-      
+
       // Wait less than TTL
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       // Should still be available
       expect(ttlCache.get(script, options)).toEqual(result);
     });
@@ -360,19 +360,19 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       cache.set(script, options, result);
-      
+
       // Multiple hits
       cache.get(script, options);
       cache.get(script, options);
       cache.get(script, options);
-      
+
       const stats = cache.getStats();
       expect(stats.hits).toBe(3);
       expect(stats.misses).toBe(0);
@@ -381,11 +381,11 @@ describe('CompilationCache', () => {
     it('should track miss count', () => {
       const script = 'on click toggle .active';
       const options: CompilationOptions = { minify: false };
-      
+
       // Multiple misses
       cache.get(script, options);
       cache.get(script, options);
-      
+
       const stats = cache.getStats();
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(2);
@@ -402,22 +402,22 @@ describe('CompilationCache', () => {
           selectors: ['.active'],
           events: ['click'],
           commands: ['toggle'],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       // 2 misses
       cache.get(script, options);
       cache.get(script, options);
-      
+
       // 1 set + 3 hits
       cache.set(script, options, result);
       cache.get(script, options);
       cache.get(script, options);
       cache.get(script, options);
-      
+
       const stats = cache.getStats();
       expect(stats.hits).toBe(3);
       expect(stats.misses).toBe(2);
@@ -438,17 +438,17 @@ describe('CompilationCache', () => {
           selectors: [],
           events: [],
           commands: [],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       cache.set(script1, options, result);
       cache.set(script2, options, result);
-      
+
       cache.clear();
-      
+
       expect(cache.get(script1, options)).toBeNull();
       expect(cache.get(script2, options)).toBeNull();
       expect(cache.size()).toBe(0);
@@ -464,17 +464,17 @@ describe('CompilationCache', () => {
           selectors: [],
           events: [],
           commands: [],
-          templateVariables: []
+          templateVariables: [],
         },
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       expect(cache.size()).toBe(0);
-      
+
       cache.set('script1', options, result);
       expect(cache.size()).toBe(1);
-      
+
       cache.set('script2', options, result);
       expect(cache.size()).toBe(2);
     });

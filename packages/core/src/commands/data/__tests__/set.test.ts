@@ -182,7 +182,10 @@ describe('SetCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: 'count' }, { type: 'literal', value: 42 }],
+          args: [
+            { type: 'literal', value: 'count' },
+            { type: 'literal', value: 42 },
+          ],
           modifiers: {},
         },
         evaluator,
@@ -298,7 +301,12 @@ describe('SetCommand (Standalone V2)', () => {
       const context = createMockContext();
 
       const output = await command.execute(
-        { type: 'attribute', element: context.me as HTMLElement, name: 'data-theme', value: 'dark' },
+        {
+          type: 'attribute',
+          element: context.me as HTMLElement,
+          name: 'data-theme',
+          value: 'dark',
+        },
         context
       );
 
@@ -312,7 +320,12 @@ describe('SetCommand (Standalone V2)', () => {
       const context = createMockContext();
 
       await command.execute(
-        { type: 'attribute', element: context.me as HTMLElement, name: 'aria-label', value: 'Close button' },
+        {
+          type: 'attribute',
+          element: context.me as HTMLElement,
+          name: 'aria-label',
+          value: 'Close button',
+        },
         context
       );
 
@@ -334,7 +347,12 @@ describe('SetCommand (Standalone V2)', () => {
       const context = createMockContext();
 
       await command.execute(
-        { type: 'attribute', element: context.me as HTMLElement, name: 'data-value', value: 'test' },
+        {
+          type: 'attribute',
+          element: context.me as HTMLElement,
+          name: 'data-value',
+          value: 'test',
+        },
         context
       );
 

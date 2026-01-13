@@ -109,9 +109,7 @@ export const ENHANCEMENT_LEVELS: Record<CapabilityLevel, Enhancement[]> = {
         animateElements.forEach(el => observer.observe(el));
       `,
       priority: 1,
-      conditions: [
-        { feature: 'intersectionObserver', operator: 'exists' }
-      ],
+      conditions: [{ feature: 'intersectionObserver', operator: 'exists' }],
     },
     {
       id: 'enhanced-forms',
@@ -556,7 +554,7 @@ export const ENHANCEMENT_LEVELS: Record<CapabilityLevel, Enhancement[]> = {
  */
 export function getEnhancementsForLevel(level: CapabilityLevel): Enhancement[] {
   const enhancements: Enhancement[] = [];
-  
+
   // Include all enhancements up to and including the current level
   const levels: CapabilityLevel[] = ['basic', 'enhanced', 'modern', 'cutting-edge'];
   const levelIndex = levels.indexOf(level);
@@ -567,7 +565,7 @@ export function getEnhancementsForLevel(level: CapabilityLevel): Enhancement[] {
       enhancements.push(...ENHANCEMENT_LEVELS[currentLevel]);
     }
   }
-  
+
   return enhancements.sort((a, b) => a.priority - b.priority);
 }
 
@@ -579,18 +577,18 @@ export function getFallbackEnhancements(
   missingCapabilities: string[]
 ): Enhancement[] {
   const fallbacks: Enhancement[] = [];
-  
+
   // Find enhancements that don't require the missing capabilities
   for (const enhancement of getEnhancementsForLevel(targetLevel)) {
     const hasAllRequirements = enhancement.requires.every(
       req => !missingCapabilities.includes(req)
     );
-    
+
     if (hasAllRequirements) {
       fallbacks.push(enhancement);
     }
   }
-  
+
   return fallbacks;
 }
 
@@ -603,10 +601,10 @@ export function filterEnhancementsByConditions(
 ): Enhancement[] {
   return enhancements.filter(enhancement => {
     if (!enhancement.conditions) return true;
-    
+
     return enhancement.conditions.every(condition => {
       const value = capabilities[condition.feature];
-      
+
       switch (condition.operator) {
         case 'exists':
           return value !== undefined && value !== null;

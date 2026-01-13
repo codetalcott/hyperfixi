@@ -322,11 +322,7 @@ export class ErrorHandler {
       }
 
       // Detect unclosed strings
-      if (
-        isString(token) &&
-        !token.value.endsWith('"') &&
-        !token.value.endsWith("'")
-      ) {
+      if (isString(token) && !token.value.endsWith('"') && !token.value.endsWith("'")) {
         errors.push({
           name: 'ParseError',
           message: `Unclosed string literal: ${token.value}`,

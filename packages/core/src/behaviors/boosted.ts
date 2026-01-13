@@ -186,13 +186,17 @@ export function createBoosted(config: BoostedConfig): BoostedInstance {
     }
     if (typeof target === 'string') {
       const element = document.querySelector(target);
-      return isHTMLElement(element) ? element as HTMLElement : null;
+      return isHTMLElement(element) ? (element as HTMLElement) : null;
     }
     return isHTMLElement(target) ? target : null;
   };
 
   // Boost function for programmatic use
-  const boost = async (url: string, method: string = 'GET', body: FormData | null = null): Promise<void> => {
+  const boost = async (
+    url: string,
+    method: string = 'GET',
+    body: FormData | null = null
+  ): Promise<void> => {
     const targetElement = resolveTarget();
     if (!targetElement) {
       console.warn(`Boosted: target "${target}" not found`);
@@ -216,7 +220,7 @@ export function createBoosted(config: BoostedConfig): BoostedInstance {
       const requestInit: RequestInit = {
         method,
         headers: {
-          'Accept': 'text/html',
+          Accept: 'text/html',
           'HX-Request': 'true',
           'HX-Boosted': 'true',
         },
@@ -261,10 +265,11 @@ export function createBoosted(config: BoostedConfig): BoostedInstance {
       }
 
       // Dispatch event for monitoring
-      window.dispatchEvent(new CustomEvent('hyperfixi:boosted', {
-        detail: { url, method, strategy, target },
-      }));
-
+      window.dispatchEvent(
+        new CustomEvent('hyperfixi:boosted', {
+          detail: { url, method, strategy, target },
+        })
+      );
     } catch (error) {
       targetElement.classList.remove('hx-swapping');
       container.classList.remove('hx-boosting');

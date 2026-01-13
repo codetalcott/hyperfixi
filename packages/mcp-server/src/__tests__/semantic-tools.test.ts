@@ -23,7 +23,7 @@ function getTextContent(result: { content: Array<{ type: string; text?: string }
 
 describe('Phase 5 Tool Schemas', () => {
   it('parse_multilingual tool exists', () => {
-    const tool = validationTools.find((t) => t.name === 'parse_multilingual');
+    const tool = validationTools.find(t => t.name === 'parse_multilingual');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.properties).toHaveProperty('code');
     expect(tool?.inputSchema.properties).toHaveProperty('language');
@@ -32,7 +32,7 @@ describe('Phase 5 Tool Schemas', () => {
   });
 
   it('translate_to_english tool exists', () => {
-    const tool = validationTools.find((t) => t.name === 'translate_to_english');
+    const tool = validationTools.find(t => t.name === 'translate_to_english');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.properties).toHaveProperty('code');
     expect(tool?.inputSchema.properties).toHaveProperty('sourceLanguage');

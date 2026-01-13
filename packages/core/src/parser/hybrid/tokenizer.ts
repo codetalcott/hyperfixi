@@ -6,8 +6,17 @@
  */
 
 export type TokenType =
-  | 'identifier' | 'number' | 'string' | 'operator' | 'styleProperty'
-  | 'selector' | 'localVar' | 'globalVar' | 'symbol' | 'keyword' | 'eof';
+  | 'identifier'
+  | 'number'
+  | 'string'
+  | 'operator'
+  | 'styleProperty'
+  | 'selector'
+  | 'localVar'
+  | 'globalVar'
+  | 'symbol'
+  | 'keyword'
+  | 'eof';
 
 export interface Token {
   type: TokenType;
@@ -16,17 +25,83 @@ export interface Token {
 }
 
 export const KEYWORDS = new Set([
-  'on', 'from', 'to', 'into', 'before', 'after', 'in', 'of', 'at', 'with',
-  'if', 'else', 'unless', 'end', 'then', 'and', 'or', 'not',
-  'repeat', 'times', 'for', 'each', 'while', 'until',
-  'toggle', 'add', 'remove', 'put', 'set', 'get', 'call', 'return', 'append',
-  'log', 'send', 'trigger', 'wait', 'settle', 'fetch', 'as',
-  'show', 'hide', 'take', 'increment', 'decrement', 'focus', 'blur', 'go', 'transition', 'over',
-  'the', 'a', 'an', 'my', 'its', 'me', 'it', 'you',
-  'first', 'last', 'next', 'previous', 'closest', 'parent',
-  'true', 'false', 'null', 'undefined',
-  'is', 'matches', 'contains', 'includes', 'exists', 'has',
-  'init', 'every', 'by',
+  'on',
+  'from',
+  'to',
+  'into',
+  'before',
+  'after',
+  'in',
+  'of',
+  'at',
+  'with',
+  'if',
+  'else',
+  'unless',
+  'end',
+  'then',
+  'and',
+  'or',
+  'not',
+  'repeat',
+  'times',
+  'for',
+  'each',
+  'while',
+  'until',
+  'toggle',
+  'add',
+  'remove',
+  'put',
+  'set',
+  'get',
+  'call',
+  'return',
+  'append',
+  'log',
+  'send',
+  'trigger',
+  'wait',
+  'settle',
+  'fetch',
+  'as',
+  'show',
+  'hide',
+  'take',
+  'increment',
+  'decrement',
+  'focus',
+  'blur',
+  'go',
+  'transition',
+  'over',
+  'the',
+  'a',
+  'an',
+  'my',
+  'its',
+  'me',
+  'it',
+  'you',
+  'first',
+  'last',
+  'next',
+  'previous',
+  'closest',
+  'parent',
+  'true',
+  'false',
+  'null',
+  'undefined',
+  'is',
+  'matches',
+  'contains',
+  'includes',
+  'exists',
+  'has',
+  'init',
+  'every',
+  'by',
 ]);
 
 export function tokenize(code: string): Token[] {
@@ -34,7 +109,10 @@ export function tokenize(code: string): Token[] {
   let pos = 0;
 
   while (pos < code.length) {
-    if (/\s/.test(code[pos])) { pos++; continue; }
+    if (/\s/.test(code[pos])) {
+      pos++;
+      continue;
+    }
 
     // Comments
     if (code.slice(pos, pos + 2) === '--') {

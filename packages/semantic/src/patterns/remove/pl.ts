@@ -22,15 +22,23 @@ export function getRemovePatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'usuń', alternatives: ['usun', 'wyczyść', 'wyczysc'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'z', alternatives: ['od', 'ze'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'z', alternatives: ['od', 'ze'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        source: { marker: 'z', markerAlternatives: ['od', 'ze'], default: { type: 'reference', value: 'me' } },
+        source: {
+          marker: 'z',
+          markerAlternatives: ['od', 'ze'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

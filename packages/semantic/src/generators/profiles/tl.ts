@@ -20,19 +20,19 @@ export const tagalogProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'ako',           // "I/me"
-    it: 'ito',           // "it"
-    you: 'ikaw',         // "you"
-    result: 'resulta',   // "result"
+    me: 'ako', // "I/me"
+    it: 'ito', // "it"
+    you: 'ikaw', // "you"
+    result: 'resulta', // "result"
     event: 'pangyayari', // "event"
-    target: 'target',    // "target"
+    target: 'target', // "target"
     body: 'body',
   },
   roleMarkers: {
-    destination: { primary: 'sa', position: 'before' },      // "to/into"
-    source: { primary: 'mula_sa', position: 'before' },      // "from"
+    destination: { primary: 'sa', position: 'before' }, // "to/into"
+    source: { primary: 'mula_sa', position: 'before' }, // "from"
     patient: { primary: '', position: 'before' },
-    style: { primary: 'nang', position: 'before' },          // manner marker
+    style: { primary: 'nang', position: 'before' }, // manner marker
   },
   keywords: {
     // Class/Attribute operations

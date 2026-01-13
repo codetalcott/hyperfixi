@@ -286,9 +286,7 @@ export class HyperScriptProfiler {
       nestedConditions: this.countNestedConditions(code),
       eventCount: (code.match(/\bon\s+\w+/gi) || []).length,
       commandCount: (
-        code.match(
-          /\b(add|remove|toggle|set|put|get|call|send|trigger|wait|log)\b/gi
-        ) || []
+        code.match(/\b(add|remove|toggle|set|put|get|call|send|trigger|wait|log)\b/gi) || []
       ).length,
     };
   }
@@ -332,9 +330,7 @@ export class HyperScriptProfiler {
     }
 
     if (patterns.loopCount > 3) {
-      suggestions.push(
-        'Multiple loops detected. Consider combining operations where possible.'
-      );
+      suggestions.push('Multiple loops detected. Consider combining operations where possible.');
     }
 
     if (patterns.nestedConditions > 3) {
@@ -355,10 +351,7 @@ export class HyperScriptProfiler {
   /**
    * Generate performance recommendations based on timing
    */
-  private generatePerformanceRecommendations(
-    timing: TimingResult,
-    code: string
-  ): string[] {
+  private generatePerformanceRecommendations(timing: TimingResult, code: string): string[] {
     const recommendations: string[] = [];
 
     // Check for slow execution
@@ -371,9 +364,7 @@ export class HyperScriptProfiler {
     // Check for high variance
     const variance = timing.maxTime - timing.minTime;
     if (variance > timing.averageTime * 0.5) {
-      recommendations.push(
-        'High timing variance detected. Execution time may be unpredictable.'
-      );
+      recommendations.push('High timing variance detected. Execution time may be unpredictable.');
     }
 
     // Check code length
@@ -425,9 +416,7 @@ export class HyperScriptProfiler {
       ),
       '',
       `Hot Spots: ${result.hotSpots.length}`,
-      ...result.hotSpots.map(
-        hs => `  - ${hs.location}: ${hs.suggestion}`
-      ),
+      ...result.hotSpots.map(hs => `  - ${hs.location}: ${hs.suggestion}`),
       '',
       'Recommendations:',
       ...result.recommendations.map(r => `  - ${r}`),
@@ -450,10 +439,7 @@ export class HyperScriptProfiler {
 /**
  * Quick profile function
  */
-export async function profile(
-  code: string,
-  config?: ProfilerConfig
-): Promise<ProfileResult> {
+export async function profile(code: string, config?: ProfilerConfig): Promise<ProfileResult> {
   const profiler = new HyperScriptProfiler(config);
   return profiler.profile(code);
 }

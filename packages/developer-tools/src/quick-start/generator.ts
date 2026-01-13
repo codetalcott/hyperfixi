@@ -9,13 +9,15 @@ import type { ScaffoldOptions, ComponentDefinition, GeneratorConfig } from '../t
 /**
  * Quick start generator with sensible defaults
  */
-export function quickStartGenerator(options: {
-  typescript?: boolean;
-  testing?: boolean;
-  linting?: boolean;
-  git?: boolean;
-  install?: boolean;
-} = {}) {
+export function quickStartGenerator(
+  options: {
+    typescript?: boolean;
+    testing?: boolean;
+    linting?: boolean;
+    git?: boolean;
+    install?: boolean;
+  } = {}
+) {
   const {
     typescript = false,
     testing = true,
@@ -296,7 +298,9 @@ export function quickStartGenerator(options: {
         }
 
         if (name && !/^[a-z][a-z0-9-]*$/.test(name)) {
-          errors.push('Project name must start with lowercase letter and contain only lowercase letters, numbers, and hyphens');
+          errors.push(
+            'Project name must start with lowercase letter and contain only lowercase letters, numbers, and hyphens'
+          );
         }
 
         if (name && name.length > 50) {
@@ -318,13 +322,35 @@ export function quickStartGenerator(options: {
        * Generate random project name
        */
       generateProjectName(): string {
-        const adjectives = ['awesome', 'clever', 'dynamic', 'elegant', 'fantastic', 'great', 'innovative', 'modern', 'smart', 'vibrant'];
-        const nouns = ['app', 'project', 'site', 'tool', 'widget', 'component', 'interface', 'platform', 'system', 'solution'];
-        
+        const adjectives = [
+          'awesome',
+          'clever',
+          'dynamic',
+          'elegant',
+          'fantastic',
+          'great',
+          'innovative',
+          'modern',
+          'smart',
+          'vibrant',
+        ];
+        const nouns = [
+          'app',
+          'project',
+          'site',
+          'tool',
+          'widget',
+          'component',
+          'interface',
+          'platform',
+          'system',
+          'solution',
+        ];
+
         const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
         const noun = nouns[Math.floor(Math.random() * nouns.length)];
         const number = Math.floor(Math.random() * 1000);
-        
+
         return `${adjective}-${noun}-${number}`;
       },
 

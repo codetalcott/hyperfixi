@@ -10,12 +10,12 @@ import {
   createEnhancedAnalytics,
   enhancedAnalyticsImplementation,
   type EnhancedAnalyticsInput,
-  type EnhancedAnalyticsOutput
+  type EnhancedAnalyticsOutput,
 } from './enhanced-analytics.js';
 
 describe('Enhanced Analytics Implementation', () => {
   let analyticsContext: TypedAnalyticsContextImplementation;
-  
+
   beforeEach(() => {
     analyticsContext = createAnalyticsContext();
     vi.clearAllMocks();
@@ -30,15 +30,22 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       };
 
       const result = await analyticsContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
       expect(result.value).toBeDefined();
-      
+
       if (result.success && result.value) {
         expect(result.value.category).toBe('Universal');
         expect(result.value.capabilities).toContain('event-tracking');
@@ -57,23 +64,30 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 3000,
           sampling: { enabled: true, rate: 0.8 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: true },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
         },
         context: {
           userId: 'user123',
           tenantId: 'tenant456',
           sessionId: 'session789',
           userAgent: 'Mozilla/5.0...',
-          url: 'https://example.com/page'
+          url: 'https://example.com/page',
         },
         environment: 'frontend',
-        debug: true
+        debug: true,
       };
 
       const result = await analyticsContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('event-tracking');
         expect(result.value.capabilities).toContain('performance-monitoring');
@@ -90,15 +104,22 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 10000,
           sampling: { enabled: true, rate: 0.5 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: true },
-          events: { compilation: false, execution: true, interactions: true, performance: false, errors: true, customEvents: false }
+          events: {
+            compilation: false,
+            execution: true,
+            interactions: true,
+            performance: false,
+            errors: true,
+            customEvents: false,
+          },
         },
-        environment: 'frontend'
+        environment: 'frontend',
       };
 
       const result = await analyticsContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('event-tracking');
         expect(result.value.state).toBe('ready');
@@ -115,24 +136,31 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Start collection
         result.value.collect.start();
         expect(result.value.collect.isActive()).toBe(true);
-        
+
         // Track an event
         result.value.track('user:action', {
           action: 'click',
           element: 'button',
-          page: '/home'
+          page: '/home',
         });
-        
+
         // Check queue
         expect(result.value.events.count()).toBe(1);
       }
@@ -146,31 +174,38 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
-        
+
         // Track hyperscript compilation
         result.value.trackHyperscriptEvent('compilation', {
           script: 'on click add .active',
           compilationTime: 5.2,
           complexity: 3,
-          features: ['commands', 'events', 'css-classes']
+          features: ['commands', 'events', 'css-classes'],
         });
-        
+
         // Track hyperscript execution
         result.value.trackHyperscriptEvent('execution', {
           script: 'on click add .active',
           element: 'button#submit',
           executionTime: 1.8,
-          success: true
+          success: true,
         });
-        
+
         expect(result.value.events.count()).toBe(2);
       }
     });
@@ -183,28 +218,35 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
-        
+
         // Track various user actions
         result.value.trackUserAction('button-click', {
           buttonText: 'Submit Form',
           formId: 'contact-form',
-          section: 'hero'
+          section: 'hero',
         });
-        
+
         result.value.trackUserAction('form-submit', {
           formType: 'contact',
           fields: ['name', 'email', 'message'],
-          validationErrors: 0
+          validationErrors: 0,
         });
-        
+
         expect(result.value.events.count()).toBe(2);
       }
     });
@@ -217,31 +259,38 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
-        
+
         // Track performance metrics
         result.value.trackPerformance('page-load', {
           loadTime: 1234,
           domContentLoaded: 890,
           firstPaint: 456,
-          largestContentfulPaint: 1100
+          largestContentfulPaint: 1100,
         });
-        
+
         result.value.trackPerformance('hyperscript-compilation', {
           totalScripts: 15,
           totalTime: 45.6,
           averageTime: 3.04,
           cacheHits: 8,
-          cacheMisses: 7
+          cacheMisses: 7,
         });
-        
+
         expect(result.value.events.count()).toBe(2);
       }
     });
@@ -254,30 +303,37 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
-        
+
         // Track error with Error object
         const error = new Error('Hyperscript compilation failed');
         result.value.trackError(error, {
           script: 'on invalid syntax',
           element: 'div#error-demo',
-          phase: 'compilation'
+          phase: 'compilation',
         });
-        
+
         // Track error with string
         result.value.trackError('Network request failed', {
           url: 'https://api.example.com/data',
           method: 'POST',
-          statusCode: 500
+          statusCode: 500,
         });
-        
+
         expect(result.value.events.count()).toBe(2);
       }
     });
@@ -292,22 +348,29 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
         },
         context: {
           userId: 'test-user-123',
-          sessionId: 'test-session-456'
-        }
+          sessionId: 'test-session-456',
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Check session ID
         const sessionId = result.value.session.getId();
         expect(sessionId).toBeDefined();
         expect(typeof sessionId).toBe('string');
-        
+
         // Get session metrics
         const metrics = result.value.session.getMetrics();
         expect(metrics).toBeDefined();
@@ -325,17 +388,24 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Start new session
         const startResult = result.value.session.start();
         expect(startResult).toBe(true);
-        
+
         // End session
         const endResult = result.value.session.end();
         expect(endResult).toBe(true);
@@ -352,25 +422,32 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
-        
+
         // Initial queue should be empty
         expect(result.value.events.count()).toBe(0);
-        
+
         // Add events
         result.value.track('user:action', { action: 'click' });
         result.value.track('page:view', { url: '/page1' });
-        
+
         // Check queue count
         expect(result.value.events.count()).toBe(2);
-        
+
         // Clear queue
         result.value.events.clear();
         expect(result.value.events.count()).toBe(0);
@@ -385,24 +462,31 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
-        
+
         // Add events
         result.value.track('user:action', { action: 'click' });
         result.value.track('user:action', { action: 'scroll' });
-        
+
         expect(result.value.events.count()).toBe(2);
-        
+
         // Flush events
         await result.value.events.flush();
-        
+
         // Queue should be reduced (depending on implementation)
         expect(result.value.events.count()).toBeGreaterThanOrEqual(0);
       }
@@ -418,24 +502,31 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Initially not collecting
         expect(result.value.collect.isActive()).toBe(false);
-        
+
         // Start collection
         result.value.collect.start();
         expect(result.value.collect.isActive()).toBe(true);
-        
+
         // Stop collection
         result.value.collect.stop();
         expect(result.value.collect.isActive()).toBe(false);
-        
+
         // Get metrics
         const metrics = result.value.collect.getMetrics();
         expect(metrics).toBeDefined();
@@ -454,19 +545,26 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
         result.value.track('user:action', { action: 'test' });
-        
+
         const jsonExport = result.value.export.toJSON();
         expect(typeof jsonExport).toBe('string');
-        
+
         const parsed = JSON.parse(jsonExport);
         expect(parsed).toBeDefined();
         expect(parsed.events).toBeDefined();
@@ -483,16 +581,23 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
         result.value.track('user:action', { action: 'test' });
-        
+
         const csvExport = result.value.export.toCSV();
         expect(typeof csvExport).toBe('string');
         expect(csvExport).toContain('id,type,timestamp');
@@ -508,24 +613,31 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
         result.value.track('user:action', { action: 'click' });
         result.value.track('hyperscript:executed', { script: 'test' });
-        
+
         const report = result.value.export.generateReport();
         expect(report).toBeDefined();
         expect(report.summary).toBeDefined();
         expect(report.events).toBeDefined();
         expect(report.performance).toBeDefined();
         expect(report.generatedAt).toBeDefined();
-        
+
         expect(typeof report.summary.totalEvents).toBe('number');
         expect(report.summary.totalEvents).toBeGreaterThan(0);
       }
@@ -542,14 +654,23 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors).toHaveLength(1);
       expect(validationResult.errors[0].type).toBe('invalid-tracking-id');
-      expect(validationResult.suggestions).toContain('Use valid Google Analytics or Google Tag Manager format');
+      expect(validationResult.suggestions).toContain(
+        'Use valid Google Analytics or Google Tag Manager format'
+      );
     });
 
     it('should validate API endpoint URL', () => {
@@ -561,8 +682,15 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(validationResult.isValid).toBe(false);
@@ -577,8 +705,15 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(validationResult.isValid).toBe(false);
@@ -593,8 +728,15 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: true, rate: 0 }, // Invalid rate
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-        }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
+        },
       });
 
       expect(validationResult.isValid).toBe(false);
@@ -603,7 +745,7 @@ describe('Enhanced Analytics Implementation', () => {
 
     it('should handle initialization failures gracefully', async () => {
       const result = await analyticsContext.initialize({
-        config: {} as any // Invalid config
+        config: {} as any, // Invalid config
       });
 
       expect(result.success).toBe(false);
@@ -624,13 +766,20 @@ describe('Enhanced Analytics Implementation', () => {
             batchTimeout: 5000,
             sampling: { enabled: false, rate: 1 },
             privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-            events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
-          }
+            events: {
+              compilation: true,
+              execution: true,
+              interactions: true,
+              performance: true,
+              errors: true,
+              customEvents: true,
+            },
+          },
         });
       }
 
       const metrics = analyticsContext.getPerformanceMetrics();
-      
+
       expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
       expect(typeof metrics.successRate).toBe('number');
       expect(typeof metrics.averageDuration).toBe('number');
@@ -649,13 +798,16 @@ describe('Enhanced Analytics Implementation', () => {
     });
 
     it('should create enhanced analytics through convenience function', async () => {
-      const result = await createEnhancedAnalytics({
-        trackingId: 'GA-123456789-1',
-        batchSize: 100
-      }, {
-        environment: 'frontend',
-        context: { userId: 'test-user' }
-      });
+      const result = await createEnhancedAnalytics(
+        {
+          trackingId: 'GA-123456789-1',
+          batchSize: 100,
+        },
+        {
+          environment: 'frontend',
+          context: { userId: 'test-user' },
+        }
+      );
 
       expect(result).toBeDefined();
       expect(typeof result.success).toBe('boolean');
@@ -675,7 +827,7 @@ describe('Enhanced Analytics Implementation', () => {
 
     it('should have comprehensive metadata', () => {
       const { metadata } = analyticsContext;
-      
+
       expect(metadata.category).toBe('Universal');
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
@@ -688,7 +840,7 @@ describe('Enhanced Analytics Implementation', () => {
 
     it('should have LLM-compatible documentation', () => {
       const { documentation } = analyticsContext;
-      
+
       expect(documentation.summary).toBeDefined();
       expect(Array.isArray(documentation.parameters)).toBe(true);
       expect(documentation.returns).toBeDefined();
@@ -710,56 +862,63 @@ describe('Enhanced Analytics Implementation', () => {
           batchTimeout: 5000,
           sampling: { enabled: false, rate: 1 },
           privacy: { anonymizeIPs: true, respectDNT: true, cookieConsent: false },
-          events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true }
+          events: {
+            compilation: true,
+            execution: true,
+            interactions: true,
+            performance: true,
+            errors: true,
+            customEvents: true,
+          },
         },
         context: {
           userId: 'journey-user-123',
-          url: 'https://app.example.com/dashboard'
-        }
+          url: 'https://app.example.com/dashboard',
+        },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         result.value.collect.start();
-        
+
         // Page view
-        result.value.track('page:view', { 
+        result.value.track('page:view', {
           url: '/dashboard',
           title: 'User Dashboard',
-          referrer: '/login' 
+          referrer: '/login',
         });
-        
+
         // Hyperscript compilation
         result.value.trackHyperscriptEvent('compilation', {
           script: 'on click fetch /api/data then put result into #content',
           features: ['events', 'network', 'dom'],
-          compilationTime: 8.4
+          compilationTime: 8.4,
         });
-        
+
         // User interaction
         result.value.trackUserAction('button-click', {
           element: 'refresh-data-btn',
-          location: 'dashboard-header'
+          location: 'dashboard-header',
         });
-        
+
         // Hyperscript execution
         result.value.trackHyperscriptEvent('execution', {
           script: 'fetch /api/data',
           executionTime: 145.2,
           success: true,
-          networkTime: 134.8
+          networkTime: 134.8,
         });
-        
+
         // Performance metric
         result.value.trackPerformance('data-refresh', {
           totalTime: 153.6,
           apiTime: 134.8,
-          renderTime: 18.8
+          renderTime: 18.8,
         });
-        
+
         expect(result.value.events.count()).toBe(5);
-        
+
         // Generate comprehensive report
         const report = result.value.export.generateReport();
         expect(report.summary.totalEvents).toBe(5);

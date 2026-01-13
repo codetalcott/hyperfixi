@@ -49,7 +49,7 @@ const defaultOptions: Required<ToggleGroupBehaviorOptions> = {
   activeClass: 'active',
   allowNone: false,
   keyboardNavigation: true,
-  initialActive: 0
+  initialActive: 0,
 };
 
 /**
@@ -59,7 +59,14 @@ const defaultOptions: Required<ToggleGroupBehaviorOptions> = {
  */
 export const toggleGroupBehaviorDefinition: BehaviorDefinition = {
   name: 'toggle-group-behavior',
-  parameters: ['name', 'itemSelector', 'activeClass', 'allowNone', 'keyboardNavigation', 'initialActive'],
+  parameters: [
+    'name',
+    'itemSelector',
+    'activeClass',
+    'allowNone',
+    'keyboardNavigation',
+    'initialActive',
+  ],
 
   init(element: HTMLElement, options: ToggleGroupBehaviorOptions = {}) {
     // Merge options with defaults
@@ -119,33 +126,39 @@ export const toggleGroupBehaviorDefinition: BehaviorDefinition = {
         // Deactivate current active item
         if (currentActive && currentActive !== targetItem) {
           currentActive.classList.remove(config.activeClass);
-          currentActive.dispatchEvent(new CustomEvent('toggle:deactivate', {
-            detail: { element: currentActive, group: config.name },
-            bubbles: true,
-            cancelable: false
-          }));
+          currentActive.dispatchEvent(
+            new CustomEvent('toggle:deactivate', {
+              detail: { element: currentActive, group: config.name },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
         }
 
         // Activate new item
         if (!targetItem.classList.contains(config.activeClass)) {
           targetItem.classList.add(config.activeClass);
-          targetItem.dispatchEvent(new CustomEvent('toggle:activate', {
-            detail: { element: targetItem, group: config.name },
-            bubbles: true,
-            cancelable: false
-          }));
+          targetItem.dispatchEvent(
+            new CustomEvent('toggle:activate', {
+              detail: { element: targetItem, group: config.name },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
 
           // Dispatch group change event
-          element.dispatchEvent(new CustomEvent('togglegroup:change', {
-            detail: {
-              active: targetItem,
-              previous: currentActive,
-              group: config.name,
-              value: targetItem.getAttribute('data-toggle')
-            },
-            bubbles: true,
-            cancelable: false
-          }));
+          element.dispatchEvent(
+            new CustomEvent('togglegroup:change', {
+              detail: {
+                active: targetItem,
+                previous: currentActive,
+                group: config.name,
+                value: targetItem.getAttribute('data-toggle'),
+              },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
         }
       },
 
@@ -156,22 +169,26 @@ export const toggleGroupBehaviorDefinition: BehaviorDefinition = {
         const currentActive = getActive();
         if (currentActive) {
           currentActive.classList.remove(config.activeClass);
-          currentActive.dispatchEvent(new CustomEvent('toggle:deactivate', {
-            detail: { element: currentActive, group: config.name },
-            bubbles: true,
-            cancelable: false
-          }));
+          currentActive.dispatchEvent(
+            new CustomEvent('toggle:deactivate', {
+              detail: { element: currentActive, group: config.name },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
 
-          element.dispatchEvent(new CustomEvent('togglegroup:change', {
-            detail: {
-              active: null,
-              previous: currentActive,
-              group: config.name,
-              value: null
-            },
-            bubbles: true,
-            cancelable: false
-          }));
+          element.dispatchEvent(
+            new CustomEvent('togglegroup:change', {
+              detail: {
+                active: null,
+                previous: currentActive,
+                group: config.name,
+                value: null,
+              },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
         }
       },
 
@@ -210,7 +227,7 @@ export const toggleGroupBehaviorDefinition: BehaviorDefinition = {
         const currentIndex = active ? items.indexOf(active) : -1;
         const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
         this.activateItem(prevIndex);
-      }
+      },
     };
 
     // Attach methods to element
@@ -317,7 +334,7 @@ export const toggleGroupBehaviorDefinition: BehaviorDefinition = {
     if ((element as any)._toggleGroupCleanup) {
       (element as any)._toggleGroupCleanup();
     }
-  }
+  },
 };
 
 /**

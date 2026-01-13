@@ -27,7 +27,11 @@ export const setPossessiveEnglish: LanguagePattern = {
     tokens: [
       { type: 'literal', value: 'set' },
       // Role token with property-path support for possessive syntax
-      { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+      {
+        type: 'role',
+        role: 'destination',
+        expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+      },
       { type: 'literal', value: 'to' },
       { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
     ],
@@ -41,6 +45,4 @@ export const setPossessiveEnglish: LanguagePattern = {
 /**
  * All English set patterns.
  */
-export const setPatternsEn: LanguagePattern[] = [
-  setPossessiveEnglish,
-];
+export const setPatternsEn: LanguagePattern[] = [setPossessiveEnglish];

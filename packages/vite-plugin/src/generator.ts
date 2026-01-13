@@ -44,19 +44,21 @@ interface GeneratorOptions {
  * Strip TypeScript type annotations for JavaScript output.
  */
 function stripTypes(code: string): string {
-  return code
-    // Remove " as Type" casts
-    .replace(/\s+as\s+\w+(?:\[\])?/g, '')
-    // Remove ": Type" in catch clauses like "catch (error: any)"
-    .replace(/\((\w+):\s*\w+\)/g, '($1)')
-    // Remove ": Type" in arrow function params like "(a: any) =>"
-    .replace(/\((\w+):\s*any\)/g, '($1)')
-    // Remove "<void>" generic from Promise<void>[]
-    .replace(/Promise<void>\[\]/g, 'Promise[]')
-    // Clean up Promise<void> standalone
-    .replace(/Promise<void>/g, 'Promise')
-    // Remove TransitionEvent type
-    .replace(/:\s*TransitionEvent/g, '');
+  return (
+    code
+      // Remove " as Type" casts
+      .replace(/\s+as\s+\w+(?:\[\])?/g, '')
+      // Remove ": Type" in catch clauses like "catch (error: any)"
+      .replace(/\((\w+):\s*\w+\)/g, '($1)')
+      // Remove ": Type" in arrow function params like "(a: any) =>"
+      .replace(/\((\w+):\s*any\)/g, '($1)')
+      // Remove "<void>" generic from Promise<void>[]
+      .replace(/Promise<void>\[\]/g, 'Promise[]')
+      // Clean up Promise<void> standalone
+      .replace(/Promise<void>/g, 'Promise')
+      // Remove TransitionEvent type
+      .replace(/:\s*TransitionEvent/g, '')
+  );
 }
 
 // Get JavaScript-formatted implementations (type annotations stripped)
@@ -185,10 +187,14 @@ async function evaluate(node, ctx) {
       if (typeof callee === 'function') return callee.apply(callContext, args);
       return undefined;
     }
-${positionalExpressions ? `
+${
+  positionalExpressions
+    ? `
     case 'positional':
       return evaluatePositional(node, ctx);
-` : ''}
+`
+    : ''
+}
     default: return undefined;
   }
 }
@@ -231,7 +237,9 @@ async function evaluateBinary(node, ctx) {
     default: return undefined;
   }
 }
-${positionalExpressions ? `
+${
+  positionalExpressions
+    ? `
 function evaluatePositional(node, ctx) {
   const target = node.target;
   let elements = [];
@@ -258,8 +266,12 @@ function evaluatePositional(node, ctx) {
     default: return elements[0] || null;
   }
 }
-` : ''}
-${needsStyleHelpers ? `
+`
+    : ''
+}
+${
+  needsStyleHelpers
+    ? `
 const isStyleProp = (prop) => prop?.startsWith('*');
 const getStyleName = (prop) => prop.substring(1);
 const setStyleProp = (el, prop, value) => {
@@ -267,16 +279,22 @@ const setStyleProp = (el, prop, value) => {
   el.style.setProperty(getStyleName(prop), String(value));
   return true;
 };
-` : ''}
+`
+    : ''
+}
 
-${needsElementArrayHelper ? `
+${
+  needsElementArrayHelper
+    ? `
 const toElementArray = (val) => {
   if (Array.isArray(val)) return val.filter(e => e instanceof Element);
   if (val instanceof Element) return [val];
   if (typeof val === 'string') return Array.from(document.querySelectorAll(val));
   return [];
 };
-` : ''}
+`
+    : ''
+}
 
 async function executeCommand(cmd, ctx) {
   const getTarget = async () => {
@@ -309,7 +327,9 @@ ${commandCases}
       return null;
   }
 }
-${hasBlocks ? `
+${
+  hasBlocks
+    ? `
 async function executeBlock(block, ctx) {
   switch (block.type) {
 ${blockCases}
@@ -319,19 +339,27 @@ ${blockCases}
       return null;
   }
 }
-` : ''}
+`
+    : ''
+}
 async function executeSequence(nodes, ctx) {
   let result;
   for (const node of nodes) {
     if (node.type === 'command') {
       result = await executeCommand(node, ctx);
-    }${hasBlocks ? ` else if (['if', 'repeat', 'for', 'while', 'fetch'].includes(node.type)) {
+    }${
+      hasBlocks
+        ? ` else if (['if', 'repeat', 'for', 'while', 'fetch'].includes(node.type)) {
       result = await executeBlock(node, ctx);
-    }` : ''}
+    }`
+        : ''
+    }
   }
   return result;
 }
-${hasBlocks ? `
+${
+  hasBlocks
+    ? `
 async function executeSequenceWithBlocks(nodes, ctx) {
   try {
     return await executeSequence(nodes, ctx);
@@ -340,12 +368,14 @@ async function executeSequenceWithBlocks(nodes, ctx) {
     throw e;
   }
 }
-` : ''}
+`
+    : ''
+}
 async function executeAST(ast, me, event) {
   const ctx = { me, event, locals: new Map() };
 
   if (ast.type === 'sequence') {
-    ${hasReturn || hasBlocks ? 'try { return await executeSequence(ast.commands, ctx); } catch (e) { if (e?.type === \'return\') return e.value; throw e; }' : 'return executeSequence(ast.commands, ctx);'}
+    ${hasReturn || hasBlocks ? "try { return await executeSequence(ast.commands, ctx); } catch (e) { if (e?.type === 'return') return e.value; throw e; }" : 'return executeSequence(ast.commands, ctx);'}
   }
 
   if (ast.type === 'event') {
@@ -353,7 +383,7 @@ async function executeAST(ast, me, event) {
     const eventName = eventNode.event;
 
     if (eventName === 'init') {
-      ${hasReturn || hasBlocks ? 'try { await executeSequence(eventNode.body, ctx); } catch (e) { if (e?.type !== \'return\') throw e; }' : 'await executeSequence(eventNode.body, ctx);'}
+      ${hasReturn || hasBlocks ? "try { await executeSequence(eventNode.body, ctx); } catch (e) { if (e?.type !== 'return') throw e; }" : 'await executeSequence(eventNode.body, ctx);'}
       return;
     }
 
@@ -370,7 +400,7 @@ async function executeAST(ast, me, event) {
         you: e.target instanceof Element ? e.target : undefined,
         locals: new Map(),
       };
-      ${hasReturn || hasBlocks ? 'try { await executeSequence(eventNode.body, handlerCtx); } catch (err) { if (err?.type !== \'return\') throw err; }' : 'await executeSequence(eventNode.body, handlerCtx);'}
+      ${hasReturn || hasBlocks ? "try { await executeSequence(eventNode.body, handlerCtx); } catch (err) { if (err?.type !== 'return') throw err; }" : 'await executeSequence(eventNode.body, handlerCtx);'}
     };
 
     if (mods.debounce) {
@@ -449,7 +479,9 @@ const api = {
   ${blocks.length > 0 ? `blocks: ${JSON.stringify(blocks)},` : ''}
   parserName: 'hybrid',
 };
-${autoInit ? `
+${
+  autoInit
+    ? `
 if (typeof window !== 'undefined') {
   window.${globalName} = api;
   window._hyperscript = api;
@@ -459,18 +491,28 @@ if (typeof window !== 'undefined') {
   } else {
     processElements();
   }
-${htmxIntegration ? `
+${
+  htmxIntegration
+    ? `
   document.addEventListener('htmx:afterSettle', (e) => {
     const target = e.detail?.target;
     if (target) processElements(target);
   });
-` : ''}
+`
+    : ''
 }
-` : ''}
-${esModule ? `
+}
+`
+    : ''
+}
+${
+  esModule
+    ? `
 export default api;
 export { api, processElements };
-` : ''}`;
+`
+    : ''
+}`;
 }
 
 // =============================================================================
@@ -568,7 +610,11 @@ export class Generator {
       // Fallback: prepend to code
       bundleCode = semanticCode + '\n' + bundleCode;
     } else {
-      bundleCode = bundleCode.slice(0, parserImportEnd) + semanticCode + '\n\n' + bundleCode.slice(parserImportEnd);
+      bundleCode =
+        bundleCode.slice(0, parserImportEnd) +
+        semanticCode +
+        '\n\n' +
+        bundleCode.slice(parserImportEnd);
     }
 
     // Replace HybridParser usage with parseWithSemantic in processElement
@@ -661,7 +707,8 @@ export { api };
    * Generate a development fallback bundle
    */
   generateDevFallback(fallback: 'hybrid-complete' | 'full'): string {
-    const bundle = fallback === 'full' ? '@hyperfixi/core/browser' : '@hyperfixi/core/browser/hybrid-complete';
+    const bundle =
+      fallback === 'full' ? '@hyperfixi/core/browser' : '@hyperfixi/core/browser/hybrid-complete';
 
     return `/**
  * HyperFixi Dev Fallback Bundle

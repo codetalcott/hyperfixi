@@ -15,16 +15,11 @@ export {
   getAncestors,
   createTypeCollector,
   measureDepth,
-  countNodeTypes
+  countNodeTypes,
 } from './visitor/index.js';
 
 // Query engine functionality - BASIC FUNCTIONALITY
-export {
-  query,
-  queryAll,
-  parseSelector,
-  queryXPath
-} from './query/index.js';
+export { query, queryAll, parseSelector, queryXPath } from './query/index.js';
 
 // Pattern matching functionality - IN DEVELOPMENT
 export {
@@ -34,7 +29,7 @@ export {
   matchWildcard,
   createPatternMatcher,
   applyPatternTemplate,
-  createPatternTemplate
+  createPatternTemplate,
 } from './pattern-matching/index.js';
 
 // Analysis functionality - WORKING
@@ -45,7 +40,7 @@ export {
   analyzeDependencies,
   findDeadCode,
   suggestOptimizations,
-  analyzePatterns
+  analyzePatterns,
 } from './analyzer/index.js';
 
 // LSP Integration functionality - WORKING
@@ -61,7 +56,7 @@ export {
   DEFAULT_LSP_CONFIG,
   DiagnosticSeverity,
   CompletionItemKind,
-  SymbolKind
+  SymbolKind,
 } from './lsp/index.js';
 
 // Transformer functionality - WORKING
@@ -72,7 +67,7 @@ export {
   normalize,
   inlineVariables,
   extractCommonExpressions,
-  createOptimizationPass
+  createOptimizationPass,
 } from './transformer/index.js';
 
 // Code Generator functionality - WORKING
@@ -82,13 +77,10 @@ export {
   generateCommand,
   generateExpression,
   minify,
-  format
+  format,
 } from './generator/index.js';
 
-export type {
-  GeneratorOptions,
-  GeneratorResult
-} from './generator/index.js';
+export type { GeneratorOptions, GeneratorResult } from './generator/index.js';
 
 // AI-Friendly APIs functionality - WORKING
 export {
@@ -98,7 +90,7 @@ export {
   recognizeIntentAsync,
   generateQualityInsights,
   createAIAssistant,
-  isEnhancedIntentRecognitionAvailable
+  isEnhancedIntentRecognitionAvailable,
 } from './ai/index.js';
 
 export type {
@@ -108,7 +100,7 @@ export type {
   CodeTemplate,
   RecognizedIntent,
   QualityInsight,
-  AIAssistant
+  AIAssistant,
 } from './ai/index.js';
 
 // Semantic Analysis functionality - WORKING
@@ -117,7 +109,7 @@ export {
   calculateSimilarity,
   generateVariations,
   extractSemanticPatterns,
-  analyzeSemantics
+  analyzeSemantics,
 } from './semantic/index.js';
 
 export type {
@@ -127,7 +119,7 @@ export type {
   SemanticAnalysis,
   SemanticPattern,
   SemanticRelationship,
-  SemanticComplexity
+  SemanticComplexity,
 } from './semantic/index.js';
 
 // Performance Optimization functionality - WORKING
@@ -144,20 +136,20 @@ export {
   getCacheStats,
   clearAllCaches,
   formatBenchmarkResults,
-  formatOptimizationSuggestions
+  formatOptimizationSuggestions,
 } from './performance/index.js';
 
 export type {
   BenchmarkResult,
   PerformanceConfig,
-  OptimizationSuggestion
+  OptimizationSuggestion,
 } from './performance/index.js';
 
 // MCP Server functionality - WORKING
 export {
   createASTToolkitMCPServer,
   createMCPServerWithHandlers,
-  ASTToolkitMCPServer
+  ASTToolkitMCPServer,
 } from './mcp/index.js';
 
 export type {
@@ -175,7 +167,7 @@ export type {
   Resource,
   MCPRequest,
   MCPResult,
-  MCPMessage
+  MCPMessage,
 } from './mcp/types.js';
 
 // Documentation Generator functionality - WORKING
@@ -183,7 +175,7 @@ export {
   generateDocumentation,
   generateMarkdown,
   generateHTML,
-  generateJSON
+  generateJSON,
 } from './documentation/index.js';
 
 export type {
@@ -193,5 +185,5 @@ export type {
   FunctionDoc,
   CommandDoc,
   CodeMetrics,
-  MarkdownOptions
+  MarkdownOptions,
 } from './documentation/index.js';

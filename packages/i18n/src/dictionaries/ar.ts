@@ -9,7 +9,7 @@ export const ar: Dictionary = {
     tell: 'أخبر',
     trigger: 'تشغيل',
     send: 'أرسل',
-    
+
     // DOM manipulation
     take: 'خذ',
     put: 'ضع',
@@ -20,7 +20,7 @@ export const ar: Dictionary = {
     toggle: 'بدل',
     hide: 'اخف',
     show: 'اظهر',
-    
+
     // Control flow
     if: 'إذا',
     unless: 'إلا إذا',
@@ -31,13 +31,13 @@ export const ar: Dictionary = {
     continue: 'واصل',
     break: 'توقف',
     halt: 'أوقف',
-    
+
     // Async
     wait: 'انتظر',
     fetch: 'احضر',
     call: 'استدع',
     return: 'ارجع',
-    
+
     // Other commands
     make: 'اصنع',
     log: 'سجل',
@@ -82,7 +82,7 @@ export const ar: Dictionary = {
     // Behaviors
     install: 'ثبّت',
   },
-  
+
   modifiers: {
     to: 'إلى',
     from: 'من',
@@ -101,7 +101,7 @@ export const ar: Dictionary = {
     through: 'عبر',
     without: 'بدون',
   },
-  
+
   events: {
     click: 'نقر',
     dblclick: 'نقر مزدوج',
@@ -112,29 +112,29 @@ export const ar: Dictionary = {
     mouseover: 'فأرة فوق',
     mouseout: 'فأرة خارج',
     mousemove: 'فأرة تحرك',
-    
+
     keydown: 'مفتاح أسفل',
     keyup: 'مفتاح أعلى',
     keypress: 'مفتاح ضغط',
-    
+
     focus: 'تركيز',
     blur: 'ضبابية',
     change: 'تغيير',
     input: 'إدخال',
     submit: 'إرسال',
     reset: 'إعادة تعيين',
-    
+
     load: 'تحميل',
     unload: 'إلغاء تحميل',
     resize: 'تغيير حجم',
     scroll: 'تمرير',
-    
+
     touchstart: 'بداية لمس',
     touchend: 'نهاية لمس',
     touchmove: 'تحرك لمس',
     touchcancel: 'إلغاء لمس',
   },
-  
+
   logical: {
     when: 'عندما',
     where: 'أين',
@@ -152,7 +152,7 @@ export const ar: Dictionary = {
     otherwise: 'خلاف ذلك',
     end: 'النهاية',
   },
-  
+
   temporal: {
     seconds: 'ثوانِ',
     second: 'ثانية',
@@ -167,7 +167,7 @@ export const ar: Dictionary = {
     min: 'د',
     h: 'س',
   },
-  
+
   values: {
     true: 'صحيح',
     false: 'خطأ',
@@ -191,7 +191,7 @@ export const ar: Dictionary = {
     result: 'نتيجة',
     value: 'قيمة',
   },
-  
+
   attributes: {
     class: 'فئة',
     classes: 'فئات',

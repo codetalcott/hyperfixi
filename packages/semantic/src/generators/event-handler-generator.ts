@@ -14,7 +14,10 @@ import type { LanguageProfile } from './profiles/types';
 /**
  * Helper to create a literal token, only including alternatives if defined.
  */
-function literalToken(value: string, alternatives?: string[]): { type: 'literal'; value: string; alternatives?: string[] } {
+function literalToken(
+  value: string,
+  alternatives?: string[]
+): { type: 'literal'; value: string; alternatives?: string[] } {
   if (alternatives && alternatives.length > 0) {
     return { type: 'literal', value, alternatives };
   }
@@ -54,7 +57,9 @@ export function generateEventHandlerPatterns(profile: LanguageProfile): Language
   // Pattern 2: With source - "{keyword} {event} {sourceMarker} {source}"
   // e.g., "bei click von #button", "sur click de #button"
   const sourceMarkerValue = eh.sourceMarker.primary;
-  const sourceExtraction: { marker: string; markerAlternatives?: string[] } = { marker: sourceMarkerValue };
+  const sourceExtraction: { marker: string; markerAlternatives?: string[] } = {
+    marker: sourceMarkerValue,
+  };
   if (eh.sourceMarker.alternatives && eh.sourceMarker.alternatives.length > 0) {
     sourceExtraction.markerAlternatives = eh.sourceMarker.alternatives;
   }

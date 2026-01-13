@@ -19,11 +19,7 @@ import { getProfile, profiles } from './profiles';
 import { hasDirectMapping, getDirectMapping } from './direct-mappings';
 import { dictionaries } from '../dictionaries';
 import { findInDictionary, translateFromEnglish } from '../types';
-import {
-  ENGLISH_MODIFIER_ROLES,
-  CONDITIONAL_KEYWORDS,
-  THEN_KEYWORDS,
-} from '../constants';
+import { ENGLISH_MODIFIER_ROLES, CONDITIONAL_KEYWORDS, THEN_KEYWORDS } from '../constants';
 
 // =============================================================================
 // Compound Statement Handling
@@ -34,13 +30,52 @@ import {
  * Used to detect command boundaries in space-chained statements.
  */
 const COMMAND_KEYWORDS = new Set([
-  'add', 'append', 'async', 'beep', 'break', 'call', 'continue',
-  'decrement', 'default', 'exit', 'fetch', 'for', 'get', 'go',
-  'halt', 'hide', 'if', 'increment', 'install', 'js', 'log',
-  'make', 'measure', 'morph', 'pick', 'process', 'push', 'put',
-  'remove', 'render', 'repeat', 'replace', 'return', 'send', 'set',
-  'settle', 'show', 'swap', 'take', 'tell', 'throw', 'toggle',
-  'transition', 'trigger', 'unless', 'wait',
+  'add',
+  'append',
+  'async',
+  'beep',
+  'break',
+  'call',
+  'continue',
+  'decrement',
+  'default',
+  'exit',
+  'fetch',
+  'for',
+  'get',
+  'go',
+  'halt',
+  'hide',
+  'if',
+  'increment',
+  'install',
+  'js',
+  'log',
+  'make',
+  'measure',
+  'morph',
+  'pick',
+  'process',
+  'push',
+  'put',
+  'remove',
+  'render',
+  'repeat',
+  'replace',
+  'return',
+  'send',
+  'set',
+  'settle',
+  'show',
+  'swap',
+  'take',
+  'tell',
+  'throw',
+  'toggle',
+  'transition',
+  'trigger',
+  'unless',
+  'wait',
 ]);
 
 /**
@@ -77,7 +112,10 @@ function getCommandKeywordsForLocale(locale: string): Set<string> {
  */
 function splitCompoundStatement(input: string, sourceLocale: string): string[] {
   // First, split on newlines (preserving non-empty lines)
-  const lines = input.split(/\n/).map(line => line.trim()).filter(line => line.length > 0);
+  const lines = input
+    .split(/\n/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
 
   // If we have multiple lines, treat each as a separate part
   // (but still need to handle "then" within each line)
@@ -160,9 +198,7 @@ function splitCompoundStatementWithMetadata(
  */
 function normalizeIndentation(lineMetadata: LineMetadata[]): string[] {
   // Find non-blank lines with indentation
-  const indentedLines = lineMetadata.filter(
-    m => !m.isBlank && m.originalIndent.length > 0
-  );
+  const indentedLines = lineMetadata.filter(m => !m.isBlank && m.originalIndent.length > 0);
 
   if (indentedLines.length === 0) {
     // No indented lines, return empty strings
@@ -290,7 +326,19 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
       const prevLower = prevToken.toLowerCase();
 
       // Don't split if the previous token is a modifier like "to", "from", "by", etc.
-      const modifiers = new Set(['to', 'into', 'from', 'with', 'by', 'as', 'at', 'in', 'on', 'of', 'over']);
+      const modifiers = new Set([
+        'to',
+        'into',
+        'from',
+        'with',
+        'by',
+        'as',
+        'at',
+        'in',
+        'on',
+        'of',
+        'over',
+      ]);
 
       // For event handlers: don't split before the first command
       // E.g., "on click wait 1s" should stay together
@@ -363,9 +411,9 @@ function getTargetThenKeyword(targetLocale: string): string {
   if (!targetDict) return 'then';
 
   // Check modifiers first, then logical (dictionaries vary)
-  return targetDict.modifiers?.then ||
-         (targetDict.logical as Record<string, string>)?.then ||
-         'then';
+  return (
+    targetDict.modifiers?.then || (targetDict.logical as Record<string, string>)?.then || 'then'
+  );
 }
 
 // =============================================================================
@@ -452,10 +500,7 @@ function generateModifierMap(profile: LanguageProfile): Record<string, SemanticR
  * Parse a hyperscript statement into semantic roles
  * This is the core analysis step that identifies WHAT each part means
  */
-export function parseStatement(
-  input: string,
-  sourceLocale: string = 'en'
-): ParsedStatement | null {
+export function parseStatement(input: string, sourceLocale: string = 'en'): ParsedStatement | null {
   const profile = getProfile(sourceLocale);
   if (!profile) return null;
 
@@ -802,11 +847,7 @@ function parseConditional(tokens: string[], _profile: LanguageProfile): ParsedSt
 /**
  * Translate words using dictionary with type-safe access.
  */
-function translateWord(
-  word: string,
-  sourceLocale: string,
-  targetLocale: string
-): string {
+function translateWord(word: string, sourceLocale: string, targetLocale: string): string {
   // Don't translate CSS selectors
   if (/^[#.<@]/.test(word)) {
     return word;
@@ -840,7 +881,10 @@ function translateWord(
  * Possessive markers for each language.
  * Used to transform "X's Y" patterns to target language structure.
  */
-const POSSESSIVE_MARKERS: Record<string, { type: 'prefix' | 'suffix' | 'preposition'; marker: string }> = {
+const POSSESSIVE_MARKERS: Record<
+  string,
+  { type: 'prefix' | 'suffix' | 'preposition'; marker: string }
+> = {
   en: { type: 'suffix', marker: "'s" },
   es: { type: 'preposition', marker: 'de' },
   pt: { type: 'preposition', marker: 'de' },
@@ -864,11 +908,7 @@ const POSSESSIVE_MARKERS: Record<string, { type: 'prefix' | 'suffix' | 'preposit
  *   #button's textContent → textContent de #button (Spanish - prepositional)
  *   me's value → 私の値 (Japanese - の particle)
  */
-function translatePossessive(
-  token: string,
-  sourceLocale: string,
-  targetLocale: string
-): string {
+function translatePossessive(token: string, sourceLocale: string, targetLocale: string): string {
   // Check for 's possessive pattern
   const possessiveMatch = token.match(/^(.+)'s$/i);
   if (!possessiveMatch) {
@@ -1042,8 +1082,10 @@ export class GrammarTransformer {
 
     if (hasMultiLineStructure) {
       // Multi-line case - preserve structure (indentation, blank lines)
-      const { parts, lineMetadata, partToLineIndex } =
-        splitCompoundStatementWithMetadata(input, this.sourceProfile.code);
+      const { parts, lineMetadata, partToLineIndex } = splitCompoundStatementWithMetadata(
+        input,
+        this.sourceProfile.code
+      );
 
       const transformedParts = parts.map(part => this.transformSingle(part));
 
@@ -1210,7 +1252,7 @@ function translateDirect(input: string, sourceLocale: string, targetLocale: stri
   const tokens = input.split(/\s+/);
 
   // Translate each token using direct mapping
-  const translated = tokens.map((token) => {
+  const translated = tokens.map(token => {
     // Preserve CSS selectors and literals
     if (token.startsWith('#') || token.startsWith('.') || token.startsWith('@')) {
       return token;

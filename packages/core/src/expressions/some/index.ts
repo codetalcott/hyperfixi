@@ -53,8 +53,6 @@ export class SomeExpression implements TypedExpressionImplementation<boolean> {
 
   public readonly inputSchema = SomeExpressionInputSchema;
 
-  
-
   /**
    * Validate 'some' expression arguments
    */

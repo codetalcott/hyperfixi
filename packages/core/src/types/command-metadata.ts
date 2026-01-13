@@ -428,15 +428,11 @@ export function mergeCommandMetadata(
     ...base,
     ...overrides,
     // Merge arrays instead of replacing
-    examples: overrides.examples
-      ? [...base.examples, ...overrides.examples]
-      : base.examples,
+    examples: overrides.examples ? [...base.examples, ...overrides.examples] : base.examples,
     sideEffects: overrides.sideEffects
       ? [...(base.sideEffects ?? []), ...overrides.sideEffects]
       : base.sideEffects,
-    aliases: overrides.aliases
-      ? [...(base.aliases ?? []), ...overrides.aliases]
-      : base.aliases,
+    aliases: overrides.aliases ? [...(base.aliases ?? []), ...overrides.aliases] : base.aliases,
     relatedCommands: overrides.relatedCommands
       ? [...(base.relatedCommands ?? []), ...overrides.relatedCommands]
       : base.relatedCommands,
@@ -458,10 +454,7 @@ export function getSyntaxArray(metadata: CommandMetadata): readonly string[] {
 /**
  * Format metadata for documentation
  */
-export function formatMetadataForDocs(
-  commandName: string,
-  metadata: CommandMetadata
-): string {
+export function formatMetadataForDocs(commandName: string, metadata: CommandMetadata): string {
   const lines: string[] = [];
 
   lines.push(`## ${commandName}`);
@@ -557,16 +550,14 @@ export class CommandMetadataRegistry {
    * Get commands by category
    */
   getByCategory(category: CommandCategory): CommandRegistryEntry[] {
-    return Array.from(this.commands.values()).filter(
-      (entry) => entry.metadata.category === category
-    );
+    return Array.from(this.commands.values()).filter(entry => entry.metadata.category === category);
   }
 
   /**
    * Get all deprecated commands
    */
   getDeprecated(): CommandRegistryEntry[] {
-    return Array.from(this.commands.values()).filter((entry) => entry.metadata.deprecated);
+    return Array.from(this.commands.values()).filter(entry => entry.metadata.deprecated);
   }
 
   /**

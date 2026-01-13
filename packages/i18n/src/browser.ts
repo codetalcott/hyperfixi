@@ -30,7 +30,11 @@ export type { KeywordProvider, KeywordProviderOptions } from './parser/types';
 
 // Factory functions
 export { createKeywordProvider, createEnglishProvider } from './parser/create-provider';
-export { ENGLISH_COMMANDS, ENGLISH_KEYWORDS, UNIVERSAL_ENGLISH_KEYWORDS } from './parser/create-provider';
+export {
+  ENGLISH_COMMANDS,
+  ENGLISH_KEYWORDS,
+  UNIVERSAL_ENGLISH_KEYWORDS,
+} from './parser/create-provider';
 
 // Locale keyword providers
 export { esKeywords, esDictionary } from './parser/es';

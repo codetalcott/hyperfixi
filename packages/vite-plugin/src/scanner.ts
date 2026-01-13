@@ -58,11 +58,11 @@ export class Scanner {
 
     // Find all hyperscript in _="..." attributes (single, double, backtick quotes)
     const attrPatterns = [
-      /_\s*=\s*"([^"]+)"/g,           // _="..."
-      /_\s*=\s*'([^']+)'/g,           // _='...'
-      /_\s*=\s*`([^`]+)`/g,           // _=`...`
-      /_=\{`([^`]+)`\}/g,             // _={`...`} (JSX)
-      /_=\{['"]([^'"]+)['"]\}/g,      // _={"..."} or _={'...'} (JSX)
+      /_\s*=\s*"([^"]+)"/g, // _="..."
+      /_\s*=\s*'([^']+)'/g, // _='...'
+      /_\s*=\s*`([^`]+)`/g, // _=`...`
+      /_=\{`([^`]+)`\}/g, // _={`...`} (JSX)
+      /_=\{['"]([^'"]+)['"]\}/g, // _={"..."} or _={'...'} (JSX)
     ];
 
     for (const pattern of attrPatterns) {
@@ -79,7 +79,10 @@ export class Scanner {
       this.analyzeScript(match[1], usage);
     }
 
-    if (this.debug && (usage.commands.size > 0 || usage.blocks.size > 0 || usage.detectedLanguages.size > 0)) {
+    if (
+      this.debug &&
+      (usage.commands.size > 0 || usage.blocks.size > 0 || usage.detectedLanguages.size > 0)
+    ) {
       console.log(`[hyperfixi] Scanned ${id}:`, {
         commands: [...usage.commands],
         blocks: [...usage.blocks],
@@ -96,7 +99,8 @@ export class Scanner {
    */
   private analyzeScript(script: string, usage: FileUsage): void {
     // Detect commands
-    const commandPattern = /\b(toggle|add|remove|removeClass|show|hide|set|get|put|append|take|increment|decrement|log|send|trigger|wait|transition|go|call|focus|blur|return)\b/g;
+    const commandPattern =
+      /\b(toggle|add|remove|removeClass|show|hide|set|get|put|append|take|increment|decrement|log|send|trigger|wait|transition|go|call|focus|blur|return)\b/g;
     let match;
     while ((match = commandPattern.exec(script))) {
       usage.commands.add(match[1]);
@@ -145,7 +149,12 @@ export class Scanner {
           try {
             const code = fs.readFileSync(file, 'utf-8');
             const usage = this.scan(code, file);
-            if (usage.commands.size > 0 || usage.blocks.size > 0 || usage.positional || usage.detectedLanguages.size > 0) {
+            if (
+              usage.commands.size > 0 ||
+              usage.blocks.size > 0 ||
+              usage.positional ||
+              usage.detectedLanguages.size > 0
+            ) {
               results.set(file, usage);
             }
           } catch {

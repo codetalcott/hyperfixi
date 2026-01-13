@@ -94,7 +94,8 @@ export class MyExpression extends BaseExpressionImpl<PropertyAccessInput, HyperS
   public readonly name = 'my';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'my property';
-  public readonly description = 'Accesses properties of the current context element (me) with validation';
+  public readonly description =
+    'Accesses properties of the current context element (me) with validation';
   public readonly inputSchema = PropertyAccessInputSchema;
   public readonly outputType: EvaluationType = 'Any';
 
@@ -118,7 +119,14 @@ export class MyExpression extends BaseExpressionImpl<PropertyAccessInput, HyperS
       if (!context.me) {
         return {
           success: false,
-          error: { type: 'context-error', message: 'No current element (me) available in context for property access', suggestions: ['Ensure this expression is used within an element context', 'Check that the element reference is properly set'] },
+          error: {
+            type: 'context-error',
+            message: 'No current element (me) available in context for property access',
+            suggestions: [
+              'Ensure this expression is used within an element context',
+              'Check that the element reference is properly set',
+            ],
+          },
         };
       }
 
@@ -131,7 +139,14 @@ export class MyExpression extends BaseExpressionImpl<PropertyAccessInput, HyperS
       this.trackSimple(context, startTime, false);
       return {
         success: false,
-        error: { type: 'runtime-error', message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`, suggestions: ['Check that the property name is valid', 'Ensure the current element supports the requested property'] },
+        error: {
+          type: 'runtime-error',
+          message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: [
+            'Check that the property name is valid',
+            'Ensure the current element supports the requested property',
+          ],
+        },
       };
     }
   }
@@ -142,19 +157,24 @@ export class MyExpression extends BaseExpressionImpl<PropertyAccessInput, HyperS
       if (!parsed.success) {
         return this.validationFailure(
           'type-mismatch',
-          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid property access input',
+          parsed.error?.errors.map(err => err.message).join(', ') ||
+            'Invalid property access input',
           ['Provide a valid property name as a string', 'Ensure the property name is not empty']
         );
       }
 
       const { property } = parsed.data as { property: string };
       if (property.trim() === '') {
-        return this.validationFailure('validation-error', 'Property name cannot be empty', ['Provide a non-empty property name']);
+        return this.validationFailure('validation-error', 'Property name cannot be empty', [
+          'Provide a non-empty property name',
+        ]);
       }
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -197,7 +217,14 @@ export class ItsExpression extends BaseExpressionImpl<PossessiveAccessInput, Hyp
       this.trackSimple(context, startTime, false);
       return {
         success: false,
-        error: { type: 'runtime-error', message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`, suggestions: ['Check that the target object is not null or undefined', 'Ensure the property name is valid'] },
+        error: {
+          type: 'runtime-error',
+          message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: [
+            'Check that the target object is not null or undefined',
+            'Ensure the property name is valid',
+          ],
+        },
       };
     }
   }
@@ -208,19 +235,24 @@ export class ItsExpression extends BaseExpressionImpl<PossessiveAccessInput, Hyp
       if (!parsed.success) {
         return this.validationFailure(
           'type-mismatch',
-          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid possessive access input',
+          parsed.error?.errors.map(err => err.message).join(', ') ||
+            'Invalid possessive access input',
           ['Provide both target and property parameters', 'Ensure property name is a string']
         );
       }
 
       const { property } = parsed.data as { property: string };
       if (property.trim() === '') {
-        return this.validationFailure('validation-error', 'Property name cannot be empty', ['Provide a non-empty property name']);
+        return this.validationFailure('validation-error', 'Property name cannot be empty', [
+          'Provide a non-empty property name',
+        ]);
       }
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -258,7 +290,14 @@ export class AttributeExpression extends BaseExpressionImpl<AttributeAccessInput
       if (!this.isElement(input.element)) {
         return {
           success: false,
-          error: { type: 'type-mismatch', message: 'Target must be a DOM element for attribute access', suggestions: ['Ensure the target is a valid DOM element', 'Check that the element reference is correct'] },
+          error: {
+            type: 'type-mismatch',
+            message: 'Target must be a DOM element for attribute access',
+            suggestions: [
+              'Ensure the target is a valid DOM element',
+              'Check that the element reference is correct',
+            ],
+          },
         };
       }
 
@@ -269,7 +308,14 @@ export class AttributeExpression extends BaseExpressionImpl<AttributeAccessInput
       this.trackSimple(context, startTime, false);
       return {
         success: false,
-        error: { type: 'runtime-error', message: `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`, suggestions: ['Check that the element supports getAttribute', 'Ensure the attribute name is valid'] },
+        error: {
+          type: 'runtime-error',
+          message: `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: [
+            'Check that the element supports getAttribute',
+            'Ensure the attribute name is valid',
+          ],
+        },
       };
     }
   }
@@ -280,19 +326,24 @@ export class AttributeExpression extends BaseExpressionImpl<AttributeAccessInput
       if (!parsed.success) {
         return this.validationFailure(
           'type-mismatch',
-          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid attribute access input',
+          parsed.error?.errors.map(err => err.message).join(', ') ||
+            'Invalid attribute access input',
           ['Provide both element and attribute parameters', 'Ensure attribute name is a string']
         );
       }
 
       const { attribute } = parsed.data as { attribute: string };
       if (attribute.trim() === '') {
-        return this.validationFailure('validation-error', 'Attribute name cannot be empty', ['Provide a non-empty attribute name']);
+        return this.validationFailure('validation-error', 'Attribute name cannot be empty', [
+          'Provide a non-empty attribute name',
+        ]);
       }
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }

@@ -12,7 +12,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { resolveElements } from '../helpers/element-resolution';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for TellCommand
@@ -86,7 +92,7 @@ export class TellCommand implements DecoratedCommand {
       // This allows commands like `add .highlight` to operate on the target element
       const tellContext: TypedExecutionContext = {
         ...context,
-        me: targetElement,  // Replace me with target (per _hyperscript semantics)
+        me: targetElement, // Replace me with target (per _hyperscript semantics)
         you: targetElement, // Also set you for explicit reference
       };
 

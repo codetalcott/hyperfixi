@@ -146,9 +146,10 @@ export function getLLMRuntimeInfo() {
 // Simple Hide Command (Deno-Compatible)
 // ============================================================================
 
-export class HideCommand
-  implements TypedCommandImplementation<[HTMLElement | string | null], HTMLElement[]>
-{
+export class HideCommand implements TypedCommandImplementation<
+  [HTMLElement | string | null],
+  HTMLElement[]
+> {
   public readonly name = 'hide' as const;
   public readonly syntax = 'hide [<target-expression>]';
   public readonly description = 'Hides one or more elements by setting display: none';

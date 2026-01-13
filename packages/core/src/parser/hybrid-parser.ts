@@ -33,10 +33,7 @@ import type { ASTNode, CommandNode } from '../types/base-types';
 
 // Import modular parser components (tree-shakeable)
 import { HybridParser } from './hybrid/parser-core';
-import {
-  addCommandAliases as addAliases,
-  addEventAliases as addEvents,
-} from './hybrid/aliases';
+import { addCommandAliases as addAliases, addEventAliases as addEvents } from './hybrid/aliases';
 
 /**
  * Hybrid parser implementation.
@@ -47,11 +44,36 @@ import {
 class HybridParserImpl implements ParserInterface {
   readonly name = 'hybrid';
   readonly supportedCommands = [
-    'toggle', 'add', 'remove', 'put', 'append', 'set', 'get', 'call',
-    'log', 'send', 'trigger', 'wait', 'show', 'hide', 'transition', 'take',
-    'increment', 'decrement', 'focus', 'blur', 'go', 'return',
+    'toggle',
+    'add',
+    'remove',
+    'put',
+    'append',
+    'set',
+    'get',
+    'call',
+    'log',
+    'send',
+    'trigger',
+    'wait',
+    'show',
+    'hide',
+    'transition',
+    'take',
+    'increment',
+    'decrement',
+    'focus',
+    'blur',
+    'go',
+    'return',
     // Block commands
-    'if', 'else', 'unless', 'repeat', 'for', 'while', 'fetch',
+    'if',
+    'else',
+    'unless',
+    'repeat',
+    'for',
+    'while',
+    'fetch',
   ] as const;
 
   parse(code: string): CommandNode | ASTNode {
@@ -78,7 +100,7 @@ class HybridParserImpl implements ParserInterface {
     }
 
     // Check for supported commands
-    return this.supportedCommands.includes(firstWord as typeof this.supportedCommands[number]);
+    return this.supportedCommands.includes(firstWord as (typeof this.supportedCommands)[number]);
   }
 }
 

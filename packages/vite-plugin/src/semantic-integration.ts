@@ -14,94 +14,165 @@ import { REGIONS, type SupportedLanguage } from './language-keywords';
  */
 const MULTILINGUAL_COMMAND_ALIASES: Partial<Record<SupportedLanguage, Record<string, string>>> = {
   ja: {
-    'トグル': 'toggle', '切り替え': 'toggle',
-    '追加': 'add', '削除': 'remove',
-    '表示': 'show', '隠す': 'hide', '非表示': 'hide',
-    '設定': 'set', 'セット': 'set',
-    '増加': 'increment', '減少': 'decrement',
-    'ログ': 'log', '出力': 'log',
+    トグル: 'toggle',
+    切り替え: 'toggle',
+    追加: 'add',
+    削除: 'remove',
+    表示: 'show',
+    隠す: 'hide',
+    非表示: 'hide',
+    設定: 'set',
+    セット: 'set',
+    増加: 'increment',
+    減少: 'decrement',
+    ログ: 'log',
+    出力: 'log',
   },
   ko: {
-    '토글': 'toggle', '전환': 'toggle',
-    '추가': 'add', '제거': 'remove', '삭제': 'remove',
-    '표시': 'show', '숨기다': 'hide',
-    '설정': 'set', '증가': 'increment', '감소': 'decrement',
-    '로그': 'log',
+    토글: 'toggle',
+    전환: 'toggle',
+    추가: 'add',
+    제거: 'remove',
+    삭제: 'remove',
+    표시: 'show',
+    숨기다: 'hide',
+    설정: 'set',
+    증가: 'increment',
+    감소: 'decrement',
+    로그: 'log',
   },
   zh: {
-    '切换': 'toggle', '添加': 'add', '移除': 'remove', '删除': 'remove',
-    '显示': 'show', '隐藏': 'hide',
-    '设置': 'set', '设定': 'set',
-    '增加': 'increment', '减少': 'decrement',
-    '日志': 'log', '记录': 'log',
+    切换: 'toggle',
+    添加: 'add',
+    移除: 'remove',
+    删除: 'remove',
+    显示: 'show',
+    隐藏: 'hide',
+    设置: 'set',
+    设定: 'set',
+    增加: 'increment',
+    减少: 'decrement',
+    日志: 'log',
+    记录: 'log',
   },
   ar: {
-    'بدّل': 'toggle', 'بدل': 'toggle',
-    'أضف': 'add', 'اضف': 'add',
-    'أزل': 'remove', 'ازل': 'remove', 'احذف': 'remove',
-    'أظهر': 'show', 'اظهر': 'show',
-    'أخفِ': 'hide', 'اخف': 'hide',
-    'ضع': 'set', 'اضع': 'set',
-    'زِد': 'increment', 'أنقص': 'decrement',
+    بدّل: 'toggle',
+    بدل: 'toggle',
+    أضف: 'add',
+    اضف: 'add',
+    أزل: 'remove',
+    ازل: 'remove',
+    احذف: 'remove',
+    أظهر: 'show',
+    اظهر: 'show',
+    أخفِ: 'hide',
+    اخف: 'hide',
+    ضع: 'set',
+    اضع: 'set',
+    زِد: 'increment',
+    أنقص: 'decrement',
   },
   es: {
-    'alternar': 'toggle',
-    'añadir': 'add', 'agregar': 'add',
-    'quitar': 'remove', 'eliminar': 'remove',
-    'mostrar': 'show', 'ocultar': 'hide', 'esconder': 'hide',
-    'establecer': 'set', 'fijar': 'set',
-    'incrementar': 'increment', 'decrementar': 'decrement',
+    alternar: 'toggle',
+    añadir: 'add',
+    agregar: 'add',
+    quitar: 'remove',
+    eliminar: 'remove',
+    mostrar: 'show',
+    ocultar: 'hide',
+    esconder: 'hide',
+    establecer: 'set',
+    fijar: 'set',
+    incrementar: 'increment',
+    decrementar: 'decrement',
   },
   pt: {
-    'alternar': 'toggle',
-    'adicionar': 'add', 'remover': 'remove',
-    'mostrar': 'show', 'esconder': 'hide', 'ocultar': 'hide',
-    'definir': 'set',
-    'incrementar': 'increment', 'decrementar': 'decrement',
+    alternar: 'toggle',
+    adicionar: 'add',
+    remover: 'remove',
+    mostrar: 'show',
+    esconder: 'hide',
+    ocultar: 'hide',
+    definir: 'set',
+    incrementar: 'increment',
+    decrementar: 'decrement',
   },
   fr: {
-    'basculer': 'toggle',
-    'ajouter': 'add', 'supprimer': 'remove', 'retirer': 'remove',
-    'afficher': 'show', 'montrer': 'show',
-    'cacher': 'hide', 'masquer': 'hide',
-    'définir': 'set',
-    'incrémenter': 'increment', 'décrémenter': 'decrement',
+    basculer: 'toggle',
+    ajouter: 'add',
+    supprimer: 'remove',
+    retirer: 'remove',
+    afficher: 'show',
+    montrer: 'show',
+    cacher: 'hide',
+    masquer: 'hide',
+    définir: 'set',
+    incrémenter: 'increment',
+    décrémenter: 'decrement',
   },
   de: {
-    'umschalten': 'toggle',
-    'hinzufügen': 'add', 'entfernen': 'remove', 'löschen': 'remove',
-    'anzeigen': 'show', 'zeigen': 'show',
-    'verbergen': 'hide', 'verstecken': 'hide',
-    'setzen': 'set', 'festlegen': 'set',
-    'erhöhen': 'increment', 'verringern': 'decrement',
+    umschalten: 'toggle',
+    hinzufügen: 'add',
+    entfernen: 'remove',
+    löschen: 'remove',
+    anzeigen: 'show',
+    zeigen: 'show',
+    verbergen: 'hide',
+    verstecken: 'hide',
+    setzen: 'set',
+    festlegen: 'set',
+    erhöhen: 'increment',
+    verringern: 'decrement',
   },
   tr: {
-    'değiştir': 'toggle', 'değistir': 'toggle',
-    'ekle': 'add', 'kaldır': 'remove', 'kaldir': 'remove', 'sil': 'remove',
-    'göster': 'show', 'gizle': 'hide', 'sakla': 'hide',
-    'ayarla': 'set', 'belirle': 'set',
-    'arttır': 'increment', 'azalt': 'decrement',
+    değiştir: 'toggle',
+    değistir: 'toggle',
+    ekle: 'add',
+    kaldır: 'remove',
+    kaldir: 'remove',
+    sil: 'remove',
+    göster: 'show',
+    gizle: 'hide',
+    sakla: 'hide',
+    ayarla: 'set',
+    belirle: 'set',
+    arttır: 'increment',
+    azalt: 'decrement',
   },
   id: {
-    'alih': 'toggle', 'beralih': 'toggle',
-    'tambah': 'add', 'hapus': 'remove', 'buang': 'remove',
-    'tampilkan': 'show', 'sembunyikan': 'hide',
-    'atur': 'set', 'tetapkan': 'set',
-    'tambahkan': 'increment', 'kurangi': 'decrement',
+    alih: 'toggle',
+    beralih: 'toggle',
+    tambah: 'add',
+    hapus: 'remove',
+    buang: 'remove',
+    tampilkan: 'show',
+    sembunyikan: 'hide',
+    atur: 'set',
+    tetapkan: 'set',
+    tambahkan: 'increment',
+    kurangi: 'decrement',
   },
   sw: {
-    'badilisha': 'toggle',
-    'ongeza': 'add', 'ondoa': 'remove', 'futa': 'remove',
-    'onyesha': 'show', 'ficha': 'hide',
-    'weka': 'set', 'sanidi': 'set',
-    'ongezea': 'increment', 'punguza': 'decrement',
+    badilisha: 'toggle',
+    ongeza: 'add',
+    ondoa: 'remove',
+    futa: 'remove',
+    onyesha: 'show',
+    ficha: 'hide',
+    weka: 'set',
+    sanidi: 'set',
+    ongezea: 'increment',
+    punguza: 'decrement',
   },
   qu: {
-    'tikray': 'toggle',
-    'yapay': 'add', 'qichuy': 'remove', 'pichay': 'remove',
-    'rikuchiy': 'show', 'pakay': 'hide',
-    'churay': 'set',
-    'pisiyachiy': 'decrement',
+    tikray: 'toggle',
+    yapay: 'add',
+    qichuy: 'remove',
+    pichay: 'remove',
+    rikuchiy: 'show',
+    pakay: 'hide',
+    churay: 'set',
+    pisiyachiy: 'decrement',
   },
 };
 
@@ -152,7 +223,7 @@ function preprocessMultilingual(code) { return code; }
   // Build regex pattern to match multilingual keywords
   // Escape special regex characters in keys
   const escapedKeys = Object.keys(aliases)
-    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|');
 
   return `
@@ -323,7 +394,19 @@ function selectBundleType(
  * All languages that have single-language bundles available.
  */
 const SINGLE_LANGUAGE_BUNDLES: readonly SupportedLanguage[] = [
-  'en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw',
+  'en',
+  'es',
+  'ja',
+  'ar',
+  'ko',
+  'zh',
+  'tr',
+  'pt',
+  'fr',
+  'de',
+  'id',
+  'qu',
+  'sw',
 ] as const;
 
 /**
@@ -350,17 +433,17 @@ export function selectOptimalBundle(languages: Set<SupportedLanguage>): Semantic
   }
 
   // Check if all languages fit in western bundle
-  if (langArray.every((l) => REGIONS.western.includes(l))) {
+  if (langArray.every(l => REGIONS.western.includes(l))) {
     return 'western';
   }
 
   // Check if all languages fit in east-asian bundle
-  if (langArray.every((l) => REGIONS['east-asian'].includes(l))) {
+  if (langArray.every(l => REGIONS['east-asian'].includes(l))) {
     return 'east-asian';
   }
 
   // Check if all languages fit in priority bundle
-  if (langArray.every((l) => REGIONS.priority.includes(l))) {
+  if (langArray.every(l => REGIONS.priority.includes(l))) {
     return 'priority';
   }
 
@@ -399,7 +482,10 @@ export const SEMANTIC_BUNDLE_SIZES: Record<SemanticBundleType, { raw: string; gz
 /**
  * Get the estimated size for a semantic bundle type.
  */
-export function getSemanticBundleSize(bundleType: SemanticBundleType): { raw: string; gzip: string } {
+export function getSemanticBundleSize(bundleType: SemanticBundleType): {
+  raw: string;
+  gzip: string;
+} {
   return SEMANTIC_BUNDLE_SIZES[bundleType] ?? SEMANTIC_BUNDLE_SIZES.all;
 }
 

@@ -76,4 +76,18 @@ export { getIncrementPatternsZh } from './zh';
 /**
  * Languages that have hand-crafted increment patterns.
  */
-export const incrementPatternLanguages = ['bn', 'de', 'hi', 'it', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const incrementPatternLanguages = [
+  'bn',
+  'de',
+  'hi',
+  'it',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

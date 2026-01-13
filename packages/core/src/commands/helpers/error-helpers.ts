@@ -161,11 +161,16 @@ export function operationFailed(
     ? `${commandName}: Failed to ${operation} - ${reason}`
     : `${commandName}: Failed to ${operation}`;
 
-  return createError(ErrorCodes.OPERATION.OPERATION_FAILED, message, [], [
-    `Check if the target element supports this operation`,
-    `Verify element is not read-only or disabled`,
-    ...ErrorSuggestions.EXECUTION_FAILED,
-  ]);
+  return createError(
+    ErrorCodes.OPERATION.OPERATION_FAILED,
+    message,
+    [],
+    [
+      `Check if the target element supports this operation`,
+      `Verify element is not read-only or disabled`,
+      ...ErrorSuggestions.EXECUTION_FAILED,
+    ]
+  );
 }
 
 /**
@@ -201,21 +206,17 @@ export function executionError(
 ): ExecutionError {
   // Determine the appropriate error code based on command name
   const codeKey = commandName.toUpperCase() + '_FAILED';
-  const code = (ErrorCodes.EXECUTION as Record<string, string>)[codeKey] ||
+  const code =
+    (ErrorCodes.EXECUTION as Record<string, string>)[codeKey] ||
     ErrorCodes.OPERATION.OPERATION_FAILED;
 
   // Create a placeholder error if no cause provided
   const errorCause = cause ?? new Error(`${commandName}: ${message}`);
 
-  return wrapError(
-    code,
-    `${commandName}: ${message}`,
-    errorCause,
-    {
-      command: commandName,
-      suggestions: getSuggestions(code) as string[],
-    }
-  );
+  return wrapError(code, `${commandName}: ${message}`, errorCause, {
+    command: commandName,
+    suggestions: getSuggestions(code) as string[],
+  });
 }
 
 /**

@@ -766,9 +766,7 @@ describe('Enhanced Property Expressions', () => {
       expect(propertyExpressions.its).toBeInstanceOf(ItsExpression);
       expect(propertyExpressions.your).toBeInstanceOf(YourExpression);
       expect(propertyExpressions.attribute).toBeInstanceOf(AttributeExpression);
-      expect(propertyExpressions.attributeWithValue).toBeInstanceOf(
-        AttributeWithValueExpression
-      );
+      expect(propertyExpressions.attributeWithValue).toBeInstanceOf(AttributeWithValueExpression);
     });
 
     // Skip: documentation property not implemented

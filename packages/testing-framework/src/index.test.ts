@@ -167,7 +167,9 @@ describe('createMock', () => {
 
   it('should track thrown errors', () => {
     const error = new Error('test');
-    const mock = createMock(() => { throw error; });
+    const mock = createMock(() => {
+      throw error;
+    });
 
     expect(() => mock()).toThrow(error);
     expect(mock.results[0]).toEqual({ type: 'throw', value: error });
@@ -252,7 +254,7 @@ describe('createSpy', () => {
     const obj = {
       greet(name: string) {
         return `Hello, ${name}!`;
-      }
+      },
     };
 
     const spy = createSpy(obj, 'greet');
@@ -263,7 +265,9 @@ describe('createSpy', () => {
   });
 
   it('should store original function', () => {
-    const original = function greet() { return 'hello'; };
+    const original = function greet() {
+      return 'hello';
+    };
     const obj = { greet: original };
 
     const spy = createSpy(obj, 'greet');
@@ -271,7 +275,9 @@ describe('createSpy', () => {
   });
 
   it('should restore original on mockRestore', () => {
-    const original = function greet() { return 'hello'; };
+    const original = function greet() {
+      return 'hello';
+    };
     const obj = { greet: original };
 
     const spy = createSpy(obj, 'greet');
@@ -299,8 +305,9 @@ describe('waitFor', () => {
   it('should throw on timeout', async () => {
     const condition = () => false;
 
-    await expect(waitFor(condition, { timeout: 50, interval: 10 }))
-      .rejects.toThrow(/not met within/);
+    await expect(waitFor(condition, { timeout: 50, interval: 10 })).rejects.toThrow(
+      /not met within/
+    );
   });
 
   it('should handle async conditions', async () => {
@@ -350,7 +357,9 @@ describe('fixture', () => {
     const myFixture = fixture(
       'teardown-test',
       () => ({ id: 1 }),
-      () => { teardownCalled.value = true; }
+      () => {
+        teardownCalled.value = true;
+      }
     );
 
     const instance = await myFixture.create();
@@ -368,10 +377,10 @@ describe('createPageObject', () => {
       selectors: {
         username: '#username',
         password: '#password',
-        submitBtn: 'button[type="submit"]'
+        submitBtn: 'button[type="submit"]',
       },
       actions: {},
-      assertions: {}
+      assertions: {},
     });
 
     expect(loginPage.name).toBe('LoginPage');
@@ -384,7 +393,7 @@ describe('createPageObject', () => {
       name: 'Page',
       selectors: { known: '#known' },
       actions: {},
-      assertions: {}
+      assertions: {},
     });
 
     expect(() => page.element('unknown')).toThrow(/not found/);
@@ -394,7 +403,7 @@ describe('createPageObject', () => {
 describe('createHyperFixiTestContext', () => {
   it('should create context with compile and test methods', () => {
     const mockHyperFixi = {
-      compile: async (script: string) => `compiled: ${script}`
+      compile: async (script: string) => `compiled: ${script}`,
     };
 
     const context = createHyperFixiTestContext(mockHyperFixi);
@@ -406,7 +415,7 @@ describe('createHyperFixiTestContext', () => {
 
   it('should test compilation', async () => {
     const mockHyperFixi = {
-      compile: async (script: string) => `compiled: ${script}`
+      compile: async (script: string) => `compiled: ${script}`,
     };
 
     const context = createHyperFixiTestContext(mockHyperFixi);
@@ -418,7 +427,9 @@ describe('createHyperFixiTestContext', () => {
 
   it('should handle compilation errors', async () => {
     const mockHyperFixi = {
-      compile: async () => { throw new Error('Syntax error'); }
+      compile: async () => {
+        throw new Error('Syntax error');
+      },
     };
 
     const context = createHyperFixiTestContext(mockHyperFixi);

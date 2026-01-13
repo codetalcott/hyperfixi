@@ -75,10 +75,19 @@ describe('WaitCommand - Race Conditions', () => {
 
       expect(input.type).toBe('race');
       expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type).toBe('event');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].eventName).toBe('click');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type).toBe('time');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].milliseconds).toBe(1000);
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type
+      ).toBe('event');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].eventName
+      ).toBe('click');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type
+      ).toBe('time');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1]
+          .milliseconds
+      ).toBe(1000);
     });
 
     it('should parse "wait 2s or for click"', async () => {
@@ -98,10 +107,19 @@ describe('WaitCommand - Race Conditions', () => {
 
       expect(input.type).toBe('race');
       expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type).toBe('time');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].milliseconds).toBe(2000);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type).toBe('event');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].eventName).toBe('click');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type
+      ).toBe('time');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0]
+          .milliseconds
+      ).toBe(2000);
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type
+      ).toBe('event');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].eventName
+      ).toBe('click');
     });
 
     it('should parse "wait for click or keypress"', async () => {
@@ -122,10 +140,18 @@ describe('WaitCommand - Race Conditions', () => {
 
       expect(input.type).toBe('race');
       expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type).toBe('event');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].eventName).toBe('click');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type).toBe('event');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].eventName).toBe('keypress');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type
+      ).toBe('event');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].eventName
+      ).toBe('click');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type
+      ).toBe('event');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].eventName
+      ).toBe('keypress');
     });
 
     it('should parse "wait 500ms or 1s" (multiple time conditions)', async () => {
@@ -145,10 +171,20 @@ describe('WaitCommand - Race Conditions', () => {
 
       expect(input.type).toBe('race');
       expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type).toBe('time');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].milliseconds).toBe(500);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type).toBe('time');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].milliseconds).toBe(1000);
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type
+      ).toBe('time');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0]
+          .milliseconds
+      ).toBe(500);
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type
+      ).toBe('time');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1]
+          .milliseconds
+      ).toBe(1000);
     });
 
     it('should parse race condition with event destructuring', async () => {
@@ -169,11 +205,23 @@ describe('WaitCommand - Race Conditions', () => {
 
       expect(input.type).toBe('race');
       expect((input as unknown as { conditions: unknown[] }).conditions).toHaveLength(2);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type).toBe('event');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].eventName).toBe('mousemove');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].destructure).toEqual(['clientX', 'clientY']);
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type).toBe('time');
-      expect((input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].milliseconds).toBe(2000);
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].type
+      ).toBe('event');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0].eventName
+      ).toBe('mousemove');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[0]
+          .destructure
+      ).toEqual(['clientX', 'clientY']);
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1].type
+      ).toBe('time');
+      expect(
+        (input as unknown as { conditions: Array<Record<string, unknown>> }).conditions[1]
+          .milliseconds
+      ).toBe(2000);
     });
 
     it('should throw error if race condition has less than 2 conditions', async () => {
@@ -526,7 +574,11 @@ describe('WaitCommand - Event Destructuring', () => {
 
       expect(input.type).toBe('event');
       expect((input as { eventName: string }).eventName).toBe('click');
-      expect((input as { destructure: string[] }).destructure).toEqual(['clientX', 'clientY', 'button']);
+      expect((input as { destructure: string[] }).destructure).toEqual([
+        'clientX',
+        'clientY',
+        'button',
+      ]);
     });
 
     it('should handle destructuring without spaces', async () => {
@@ -893,8 +945,8 @@ describe('WaitCommand - Custom Event Sources', () => {
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
           if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value ==='load') return 'load';
-            if ((node as unknown as { value: unknown }).value ==='<iframe/>') return iframe;
+            if ((node as unknown as { value: unknown }).value === 'load') return 'load';
+            if ((node as unknown as { value: unknown }).value === '<iframe/>') return iframe;
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -928,8 +980,9 @@ describe('WaitCommand - Custom Event Sources', () => {
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
           if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value ==='click') return 'click';
-            if ((node as unknown as { value: unknown }).value ==='#other-element') return otherElement;
+            if ((node as unknown as { value: unknown }).value === 'click') return 'click';
+            if ((node as unknown as { value: unknown }).value === '#other-element')
+              return otherElement;
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -960,8 +1013,8 @@ describe('WaitCommand - Custom Event Sources', () => {
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
           if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value ==='message') return 'message';
-            if ((node as unknown as { value: unknown }).value ==='window') return window;
+            if ((node as unknown as { value: unknown }).value === 'message') return 'message';
+            if ((node as unknown as { value: unknown }).value === 'window') return window;
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -1010,8 +1063,9 @@ describe('WaitCommand - Custom Event Sources', () => {
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
           if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value ==='click') return 'click';
-            if ((node as unknown as { value: unknown }).value ==='invalid') return 'not an EventTarget';
+            if ((node as unknown as { value: unknown }).value === 'click') return 'click';
+            if ((node as unknown as { value: unknown }).value === 'invalid')
+              return 'not an EventTarget';
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -1040,10 +1094,11 @@ describe('WaitCommand - Custom Event Sources', () => {
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
           if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value ==='mousemove(clientX, clientY)') {
+            if ((node as unknown as { value: unknown }).value === 'mousemove(clientX, clientY)') {
               return 'mousemove(clientX, clientY)';
             }
-            if ((node as unknown as { value: unknown }).value ==='customElement') return customElement;
+            if ((node as unknown as { value: unknown }).value === 'customElement')
+              return customElement;
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -1200,8 +1255,8 @@ describe('WaitCommand - Custom Event Sources', () => {
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
           if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value ==='load') return 'load';
-            if ((node as unknown as { value: unknown }).value ==='<iframe/>') return iframe;
+            if ((node as unknown as { value: unknown }).value === 'load') return 'load';
+            if ((node as unknown as { value: unknown }).value === '<iframe/>') return iframe;
           }
           return (node as unknown as { value: unknown }).value;
         },
@@ -1249,10 +1304,11 @@ describe('WaitCommand - Custom Event Sources', () => {
       const evaluator = {
         evaluate: async (node: ASTNode, context: ExecutionContext) => {
           if (typeof node === 'object' && 'value' in node) {
-            if ((node as unknown as { value: unknown }).value ==='mousemove(clientX, clientY)') {
+            if ((node as unknown as { value: unknown }).value === 'mousemove(clientX, clientY)') {
               return 'mousemove(clientX, clientY)';
             }
-            if ((node as unknown as { value: unknown }).value ==='customElement') return customElement;
+            if ((node as unknown as { value: unknown }).value === 'customElement')
+              return customElement;
           }
           return (node as unknown as { value: unknown }).value;
         },

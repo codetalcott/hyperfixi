@@ -12,19 +12,19 @@ describe('patternTools', () => {
   });
 
   it('has get_examples tool', () => {
-    const tool = patternTools.find((t) => t.name === 'get_examples');
+    const tool = patternTools.find(t => t.name === 'get_examples');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('prompt');
   });
 
   it('has search_patterns tool', () => {
-    const tool = patternTools.find((t) => t.name === 'search_patterns');
+    const tool = patternTools.find(t => t.name === 'search_patterns');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('query');
   });
 
   it('has translate_hyperscript tool', () => {
-    const tool = patternTools.find((t) => t.name === 'translate_hyperscript');
+    const tool = patternTools.find(t => t.name === 'translate_hyperscript');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
     expect(tool?.inputSchema.required).toContain('fromLanguage');
@@ -32,7 +32,7 @@ describe('patternTools', () => {
   });
 
   it('has get_pattern_stats tool', () => {
-    const tool = patternTools.find((t) => t.name === 'get_pattern_stats');
+    const tool = patternTools.find(t => t.name === 'get_pattern_stats');
     expect(tool).toBeDefined();
   });
 });
@@ -46,7 +46,9 @@ describe('get_examples', () => {
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.examples).toBeDefined();
     expect(parsed.examples.length).toBeGreaterThan(0);
-    expect(parsed.examples.some((e: any) => e.code?.includes('toggle') || e.task?.includes('toggle'))).toBe(true);
+    expect(
+      parsed.examples.some((e: any) => e.code?.includes('toggle') || e.task?.includes('toggle'))
+    ).toBe(true);
   });
 
   it('returns examples for modal task', async () => {
@@ -280,7 +282,8 @@ describe('built-in examples coverage', () => {
 
     const parsed = JSON.parse(result.content[0].text);
     const hasVisibility = parsed.patterns.some(
-      (p: any) => p.category === 'visibility' || p.code?.includes('show') || p.code?.includes('hide')
+      (p: any) =>
+        p.category === 'visibility' || p.code?.includes('show') || p.code?.includes('hide')
     );
     expect(hasVisibility).toBe(true);
   });

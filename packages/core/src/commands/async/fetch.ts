@@ -14,7 +14,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export type FetchResponseType = 'text' | 'json' | 'html' | 'response' | 'blob' | 'arrayBuffer';
 
@@ -42,7 +48,11 @@ export interface FetchCommandOutput {
 @meta({
   description: 'Make HTTP requests with lifecycle event support',
   syntax: ['fetch <url>', 'fetch <url> as <type>', 'fetch <url> with <options>'],
-  examples: ['fetch "/api/data"', 'fetch "/api/users" as json', 'fetch "/api/save" with { method:"POST" }'],
+  examples: [
+    'fetch "/api/data"',
+    'fetch "/api/users" as json',
+    'fetch "/api/save" with { method:"POST" }',
+  ],
   sideEffects: ['network', 'event-dispatching'],
 })
 @command({ name: 'fetch', category: 'async' })
@@ -64,7 +74,10 @@ export class FetchCommand implements DecoratedCommand {
     return { url, responseType, options };
   }
 
-  async execute(input: FetchCommandInput, context: TypedExecutionContext): Promise<FetchCommandOutput> {
+  async execute(
+    input: FetchCommandInput,
+    context: TypedExecutionContext
+  ): Promise<FetchCommandOutput> {
     const startTime = Date.now();
     const { url, responseType, options } = input;
 
@@ -78,7 +91,11 @@ export class FetchCommand implements DecoratedCommand {
     const requestOptions: RequestInit = { ...options, signal: abortController.signal };
 
     if (context.me) {
-      const detail = { ...requestOptions, sender: context.me, headers: requestOptions.headers || {} };
+      const detail = {
+        ...requestOptions,
+        sender: context.me,
+        headers: requestOptions.headers || {},
+      };
       this.dispatchEvent(context.me, 'fetch:beforeRequest', detail);
       requestOptions.headers = detail.headers;
     }
@@ -101,7 +118,14 @@ export class FetchCommand implements DecoratedCommand {
 
       if (context.me) this.dispatchEvent(context.me, 'fetch:afterRequest', { result: data });
 
-      const result = { status: response.status, statusText: response.statusText, headers: response.headers, data, url: response.url, duration: Date.now() - startTime };
+      const result = {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        data,
+        url: response.url,
+        duration: Date.now() - startTime,
+      };
 
       // Set 'it' to the actual data (not the wrapper) for _hyperscript compatibility
       // This allows `fetch url as json` followed by `it.property` to work correctly
@@ -109,16 +133,27 @@ export class FetchCommand implements DecoratedCommand {
 
       return result;
     } catch (error) {
-      if (context.me) this.dispatchEvent(context.me, 'fetch:error', { reason: error instanceof Error ? error.message : String(error), error });
-      if (error instanceof Error && error.name === 'AbortError') throw new Error(`Fetch aborted for ${url}`);
-      throw new Error(`Fetch failed for ${url}: ${error instanceof Error ? error.message : String(error)}`);
+      if (context.me)
+        this.dispatchEvent(context.me, 'fetch:error', {
+          reason: error instanceof Error ? error.message : String(error),
+          error,
+        });
+      if (error instanceof Error && error.name === 'AbortError')
+        throw new Error(`Fetch aborted for ${url}`);
+      throw new Error(
+        `Fetch failed for ${url}: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       if (timeoutId) clearTimeout(timeoutId);
       if (context.me && abortListener) context.me.removeEventListener('fetch:abort', abortListener);
     }
   }
 
-  private async parseURL(arg: ASTNode, evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<string> {
+  private async parseURL(
+    arg: ASTNode,
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<string> {
     const v = await evaluator.evaluate(arg, context);
     if (typeof v !== 'string' || !v) throw new Error('fetch: URL must be a non-empty string');
     return v;
@@ -129,16 +164,22 @@ export class FetchCommand implements DecoratedCommand {
     const n = asNode as any;
     if (n.type === 'identifier') {
       const t = n.name.toLowerCase();
-      if (['text', 'json', 'html', 'response', 'blob', 'arraybuffer'].includes(t)) return t === 'arraybuffer' ? 'arrayBuffer' : t as FetchResponseType;
+      if (['text', 'json', 'html', 'response', 'blob', 'arraybuffer'].includes(t))
+        return t === 'arraybuffer' ? 'arrayBuffer' : (t as FetchResponseType);
       throw new Error(`fetch: invalid response type "${t}"`);
     }
     return 'text';
   }
 
-  private async parseRequestOptions(withNode: ASTNode | undefined, evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<RequestInit> {
+  private async parseRequestOptions(
+    withNode: ASTNode | undefined,
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<RequestInit> {
     if (!withNode) return {};
     const opts = await evaluator.evaluate(withNode, context);
-    if (typeof opts !== 'object' || opts === null) throw new Error('fetch: "with" options must be an object');
+    if (typeof opts !== 'object' || opts === null)
+      throw new Error('fetch: "with" options must be an object');
 
     const r: RequestInit = {};
     if ('method' in opts) r.method = String(opts.method).toUpperCase();
@@ -161,7 +202,13 @@ export class FetchCommand implements DecoratedCommand {
 
   private parseBody(body: any): string | FormData | Blob | ArrayBuffer | URLSearchParams | null {
     if (body === null || body === undefined) return null;
-    if (body instanceof FormData || body instanceof Blob || body instanceof ArrayBuffer || body instanceof URLSearchParams) return body;
+    if (
+      body instanceof FormData ||
+      body instanceof Blob ||
+      body instanceof ArrayBuffer ||
+      body instanceof URLSearchParams
+    )
+      return body;
     if (typeof body === 'string') return body;
     if (typeof body === 'object') return JSON.stringify(body);
     return String(body);
@@ -169,12 +216,18 @@ export class FetchCommand implements DecoratedCommand {
 
   private async handleResponse(response: Response, type: FetchResponseType): Promise<any> {
     switch (type) {
-      case 'response': return response;
-      case 'json': return response.json();
-      case 'html': return this.parseHTML(await response.text());
-      case 'blob': return response.blob();
-      case 'arrayBuffer': return response.arrayBuffer();
-      default: return response.text();
+      case 'response':
+        return response;
+      case 'json':
+        return response.json();
+      case 'html':
+        return this.parseHTML(await response.text());
+      case 'blob':
+        return response.blob();
+      case 'arrayBuffer':
+        return response.arrayBuffer();
+      default:
+        return response.text();
     }
   }
 
@@ -182,7 +235,8 @@ export class FetchCommand implements DecoratedCommand {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const fragment = document.createDocumentFragment();
     Array.from(doc.body.childNodes).forEach(n => fragment.appendChild(n.cloneNode(true)));
-    if (fragment.childNodes.length === 1 && isHTMLElement(fragment.firstChild)) return fragment.firstChild as HTMLElement;
+    if (fragment.childNodes.length === 1 && isHTMLElement(fragment.firstChild))
+      return fragment.firstChild as HTMLElement;
     return fragment;
   }
 

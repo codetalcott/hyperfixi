@@ -42,7 +42,8 @@ const MAX_LOOP_ITERATIONS = 1000;
 
 async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
   switch (node.type) {
-    case 'literal': return node.value;
+    case 'literal':
+      return node.value;
 
     case 'identifier':
       if (node.value === 'me' || node.value === 'my') return ctx.me;
@@ -67,7 +68,8 @@ async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
       const elements = document.querySelectorAll(node.value);
       return elements.length === 1 ? elements[0] : Array.from(elements);
 
-    case 'binary': return evaluateBinary(node, ctx);
+    case 'binary':
+      return evaluateBinary(node, ctx);
 
     case 'unary':
       const operand = await evaluate(node.operand, ctx);
@@ -112,7 +114,8 @@ async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
     case 'array':
       return Promise.all(node.elements.map((e: ASTNode) => evaluate(e, ctx)));
 
-    default: return undefined;
+    default:
+      return undefined;
   }
 }
 
@@ -131,19 +134,36 @@ async function evaluateBinary(node: ASTNode, ctx: Context): Promise<any> {
   const right = await evaluate(node.right, ctx);
 
   switch (node.operator) {
-    case '+': return left + right;
-    case '-': return left - right;
-    case '*': return left * right;
-    case '/': return left / right;
-    case '%': return left % right;
-    case '==': case 'is': return left == right;
-    case '!=': case 'is not': return left != right;
-    case '<': return left < right;
-    case '>': return left > right;
-    case '<=': return left <= right;
-    case '>=': return left >= right;
-    case 'and': case '&&': return left && right;
-    case 'or': case '||': return left || right;
+    case '+':
+      return left + right;
+    case '-':
+      return left - right;
+    case '*':
+      return left * right;
+    case '/':
+      return left / right;
+    case '%':
+      return left % right;
+    case '==':
+    case 'is':
+      return left == right;
+    case '!=':
+    case 'is not':
+      return left != right;
+    case '<':
+      return left < right;
+    case '>':
+      return left > right;
+    case '<=':
+      return left <= right;
+    case '>=':
+      return left >= right;
+    case 'and':
+    case '&&':
+      return left && right;
+    case 'or':
+    case '||':
+      return left || right;
     case 'has':
       if (left instanceof Element) {
         const selector = typeof right === 'string' ? right : right?.value;
@@ -152,7 +172,8 @@ async function evaluateBinary(node: ASTNode, ctx: Context): Promise<any> {
         }
       }
       return false;
-    case 'contains': case 'includes':
+    case 'contains':
+    case 'includes':
       if (typeof left === 'string') return left.includes(right);
       if (Array.isArray(left)) return left.includes(right);
       if (left instanceof Element) return left.contains(right);
@@ -161,7 +182,8 @@ async function evaluateBinary(node: ASTNode, ctx: Context): Promise<any> {
       if (left instanceof Element) return left.matches(right);
       if (typeof left === 'string') return new RegExp(right).test(left);
       return false;
-    default: return undefined;
+    default:
+      return undefined;
   }
 }
 
@@ -182,13 +204,20 @@ function evaluatePositional(node: ASTNode, ctx: Context): Element | null {
   }
 
   switch (node.position) {
-    case 'first': return elements[0] || null;
-    case 'last': return elements[elements.length - 1] || null;
-    case 'next': return ctx.me.nextElementSibling;
-    case 'previous': return ctx.me.previousElementSibling;
-    case 'closest': return target.value ? ctx.me.closest(target.value) : null;
-    case 'parent': return ctx.me.parentElement;
-    default: return elements[0] || null;
+    case 'first':
+      return elements[0] || null;
+    case 'last':
+      return elements[elements.length - 1] || null;
+    case 'next':
+      return ctx.me.nextElementSibling;
+    case 'previous':
+      return ctx.me.previousElementSibling;
+    case 'closest':
+      return target.value ? ctx.me.closest(target.value) : null;
+    case 'parent':
+      return ctx.me.parentElement;
+    default:
+      return elements[0] || null;
   }
 }
 
@@ -366,10 +395,14 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       const targets = await getTarget();
       const target = targets[0] || ctx.me;
       return new Promise(resolve => {
-        target.addEventListener(String(eventName), (e) => {
-          ctx.it = e;
-          resolve(e);
-        }, { once: true });
+        target.addEventListener(
+          String(eventName),
+          e => {
+            ctx.it = e;
+            resolve(e);
+          },
+          { once: true }
+        );
       });
     }
 
@@ -392,10 +425,14 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
       const property = String(await evaluate(cmd.args[0], ctx)).replace(/^\*/, '');
       const toValue = await evaluate(cmd.args[1], ctx);
       const durationVal = await evaluate(cmd.args[2], ctx);
-      const duration = typeof durationVal === 'number' ? durationVal :
-                       String(durationVal).endsWith('ms') ? parseInt(String(durationVal)) :
-                       String(durationVal).endsWith('s') ? parseFloat(String(durationVal)) * 1000 :
-                       parseInt(String(durationVal)) || 300;
+      const duration =
+        typeof durationVal === 'number'
+          ? durationVal
+          : String(durationVal).endsWith('ms')
+            ? parseInt(String(durationVal))
+            : String(durationVal).endsWith('s')
+              ? parseFloat(String(durationVal)) * 1000
+              : parseInt(String(durationVal)) || 300;
 
       const targets = await getTarget();
       const promises: Promise<void>[] = [];
@@ -408,22 +445,24 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
         htmlEl.style.transition = `${kebabProp} ${duration}ms ease`;
         htmlEl.style.setProperty(kebabProp, String(toValue));
 
-        promises.push(new Promise<void>(resolve => {
-          const cleanup = () => {
-            htmlEl.style.transition = oldTransition;
-            resolve();
-          };
+        promises.push(
+          new Promise<void>(resolve => {
+            const cleanup = () => {
+              htmlEl.style.transition = oldTransition;
+              resolve();
+            };
 
-          const onEnd = (e: TransitionEvent) => {
-            if (e.propertyName === kebabProp) {
-              htmlEl.removeEventListener('transitionend', onEnd);
-              cleanup();
-            }
-          };
+            const onEnd = (e: TransitionEvent) => {
+              if (e.propertyName === kebabProp) {
+                htmlEl.removeEventListener('transitionend', onEnd);
+                cleanup();
+              }
+            };
 
-          htmlEl.addEventListener('transitionend', onEnd);
-          setTimeout(cleanup, duration + 50);
-        }));
+            htmlEl.addEventListener('transitionend', onEnd);
+            setTimeout(cleanup, duration + 50);
+          })
+        );
       }
 
       await Promise.all(promises);
@@ -544,7 +583,11 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
     case 'for': {
       const { variable, iterable } = block.condition as any;
       const items = await evaluate(iterable, ctx);
-      const arr = Array.isArray(items) ? items : items instanceof NodeList ? Array.from(items) : [items];
+      const arr = Array.isArray(items)
+        ? items
+        : items instanceof NodeList
+          ? Array.from(items)
+          : [items];
       const varName = variable.startsWith(':') ? variable.slice(1) : variable;
       for (let i = 0; i < arr.length && i < MAX_LOOP_ITERATIONS; i++) {
         ctx.locals.set(varName, arr[i]);
@@ -557,7 +600,7 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
 
     case 'while': {
       let iterations = 0;
-      while (await evaluate(block.condition!, ctx) && iterations < MAX_LOOP_ITERATIONS) {
+      while ((await evaluate(block.condition!, ctx)) && iterations < MAX_LOOP_ITERATIONS) {
         ctx.locals.set('__loop_index__', iterations);
         await executeSeqPropagateReturn(block.body, ctx);
         iterations++;
@@ -595,7 +638,8 @@ async function executeBlock(block: BlockNode, ctx: Context): Promise<any> {
       return null;
     }
 
-    default: return null;
+    default:
+      return null;
   }
 }
 
@@ -621,8 +665,11 @@ async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any
 
     if (eventName.startsWith('interval:')) {
       const interval = eventName.split(':')[1];
-      const ms = interval.endsWith('ms') ? parseInt(interval) :
-                 interval.endsWith('s') ? parseFloat(interval) * 1000 : parseInt(interval);
+      const ms = interval.endsWith('ms')
+        ? parseInt(interval)
+        : interval.endsWith('s')
+          ? parseFloat(interval) * 1000
+          : parseInt(interval);
       setInterval(async () => {
         const intervalCtx: Context = { me, locals: new Map(), globals: globalVars };
         try {
@@ -652,9 +699,11 @@ async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any
       if (mods.stop) e.stopPropagation();
 
       const handlerCtx: Context = {
-        me, event: e,
+        me,
+        event: e,
         you: e.target instanceof Element ? e.target : undefined,
-        locals: new Map(), globals: globalVars,
+        locals: new Map(),
+        globals: globalVars,
       };
       try {
         await executeSequence(eventNode.body, handlerCtx);
@@ -744,9 +793,28 @@ const api = {
   evaluate,
 
   commands: [
-    'toggle', 'add', 'remove', 'put', 'append', 'set', 'get', 'call',
-    'log', 'send', 'trigger', 'wait', 'show', 'hide', 'transition', 'take',
-    'increment', 'decrement', 'focus', 'blur', 'go', 'return',
+    'toggle',
+    'add',
+    'remove',
+    'put',
+    'append',
+    'set',
+    'get',
+    'call',
+    'log',
+    'send',
+    'trigger',
+    'wait',
+    'show',
+    'hide',
+    'transition',
+    'take',
+    'increment',
+    'decrement',
+    'focus',
+    'blur',
+    'go',
+    'return',
   ],
 
   blocks: ['if', 'else', 'unless', 'repeat', 'for', 'while', 'fetch'],

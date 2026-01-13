@@ -167,7 +167,7 @@ export class PseudoCommand {
 
     // Second arg is method arguments (array)
     const methodArgs = Array.isArray(raw.args[1])
-      ? await Promise.all(raw.args[1].map((arg) => evaluator.evaluate(arg, context)))
+      ? await Promise.all(raw.args[1].map(arg => evaluator.evaluate(arg, context)))
       : [];
 
     // Third arg or modifier is target expression

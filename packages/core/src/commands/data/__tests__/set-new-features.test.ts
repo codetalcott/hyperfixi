@@ -86,7 +86,9 @@ describe('SetCommand - Object Literal Support', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value: { id: 'new-id', className: 'active', textContent: 'Text' } }],
+          args: [
+            { type: 'literal', value: { id: 'new-id', className: 'active', textContent: 'Text' } },
+          ],
           modifiers: { on: { type: 'expression', value: context.me } },
         },
         evaluator,

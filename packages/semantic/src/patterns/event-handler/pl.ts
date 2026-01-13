@@ -22,15 +22,23 @@ export function getEventHandlerPatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'gdy', alternatives: ['kiedy', 'przy', 'na'] },
           { type: 'role', role: 'event' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'na', alternatives: ['w', 'przy', 'z'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'na', alternatives: ['w', 'przy', 'z'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {
         event: { position: 1 },
-        source: { marker: 'na', markerAlternatives: ['w', 'przy', 'z'], default: { type: 'reference', value: 'me' } },
+        source: {
+          marker: 'na',
+          markerAlternatives: ['w', 'przy', 'z'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

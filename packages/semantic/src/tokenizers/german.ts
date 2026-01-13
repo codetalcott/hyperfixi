@@ -40,37 +40,37 @@ function isGermanIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const PREPOSITIONS = new Set([
-  'an',         // at, on
-  'auf',        // on
-  'aus',        // from, out of
-  'bei',        // at, near
-  'durch',      // through
-  'für',        // for
-  'fur',        // for (no umlaut)
-  'gegen',      // against
-  'in',         // in
-  'mit',        // with
-  'nach',       // after, to
-  'ohne',       // without
-  'seit',       // since
-  'über',       // over, about
-  'uber',       // over (no umlaut)
-  'um',         // around, at
-  'unter',      // under
-  'von',        // from, of
-  'vor',        // before, in front of
-  'zu',         // to
-  'zwischen',   // between
-  'bis',        // until
-  'gegenüber',  // opposite
-  'gegenuber',  // opposite (no umlaut)
-  'während',    // during
-  'wahrend',    // during (no umlaut)
-  'wegen',      // because of
-  'trotz',      // despite
-  'statt',      // instead of
-  'innerhalb',  // inside
-  'außerhalb',  // outside
+  'an', // at, on
+  'auf', // on
+  'aus', // from, out of
+  'bei', // at, near
+  'durch', // through
+  'für', // for
+  'fur', // for (no umlaut)
+  'gegen', // against
+  'in', // in
+  'mit', // with
+  'nach', // after, to
+  'ohne', // without
+  'seit', // since
+  'über', // over, about
+  'uber', // over (no umlaut)
+  'um', // around, at
+  'unter', // under
+  'von', // from, of
+  'vor', // before, in front of
+  'zu', // to
+  'zwischen', // between
+  'bis', // until
+  'gegenüber', // opposite
+  'gegenuber', // opposite (no umlaut)
+  'während', // during
+  'wahrend', // during (no umlaut)
+  'wegen', // because of
+  'trotz', // despite
+  'statt', // instead of
+  'innerhalb', // inside
+  'außerhalb', // outside
   'ausserhalb', // outside (no umlaut)
 ]);
 
@@ -110,11 +110,11 @@ const GERMAN_KEYWORDS: Map<string, string> = new Map([
   ['bekommen', 'get'],
   ['erhöhen', 'increment'],
   ['erhohen', 'increment'],
-  ['erhöhe', 'increment'],   // first person imperative (test case)
-  ['erhohe', 'increment'],   // without umlaut
+  ['erhöhe', 'increment'], // first person imperative (test case)
+  ['erhohe', 'increment'], // without umlaut
   ['verringern', 'decrement'],
   ['vermindern', 'decrement'],
-  ['verringere', 'decrement'],  // first person imperative (test case)
+  ['verringere', 'decrement'], // first person imperative (test case)
   ['protokollieren', 'log'],
   ['ausgeben', 'log'],
   // Commands - Visibility
@@ -281,7 +281,10 @@ export class GermanTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

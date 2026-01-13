@@ -72,11 +72,7 @@ export function fromExplicit(explicit: string, targetLanguage: string): string {
  * translate('#button の .active を 切り替え', 'ja', 'ar')
  * // → 'بدّل .active على #button'
  */
-export function translate(
-  input: string,
-  sourceLanguage: string,
-  targetLanguage: string
-): string {
+export function translate(input: string, sourceLanguage: string, targetLanguage: string): string {
   // Handle explicit syntax
   if (isExplicitSyntax(input)) {
     return fromExplicit(input, targetLanguage);
@@ -118,12 +114,14 @@ export function roundTrip(
   input: string,
   sourceLanguage: string,
   targetLanguage?: string
-): string | {
-  original: string;
-  semantic: SemanticNode;
-  rendered: string;
-  matches: boolean;
-} {
+):
+  | string
+  | {
+      original: string;
+      semantic: SemanticNode;
+      rendered: string;
+      matches: boolean;
+    } {
   const semantic = parseAny(input, sourceLanguage);
   const outputLanguage = targetLanguage ?? sourceLanguage;
   const rendered = isExplicitSyntax(input)
@@ -162,7 +160,21 @@ export function roundTrip(
 export function getAllTranslations(
   input: string,
   sourceLanguage: string,
-  targetLanguages: string[] = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw']
+  targetLanguages: string[] = [
+    'en',
+    'ja',
+    'ar',
+    'es',
+    'ko',
+    'zh',
+    'tr',
+    'pt',
+    'fr',
+    'de',
+    'id',
+    'qu',
+    'sw',
+  ]
 ): Record<string, string> {
   const result: Record<string, string> = {};
 
@@ -237,10 +249,7 @@ function semanticValuesEqual(a: any, b: any): boolean {
     case 'reference':
       return a.value === b.value;
     case 'property-path':
-      return (
-        semanticValuesEqual(a.object, b.object) &&
-        a.property === b.property
-      );
+      return semanticValuesEqual(a.object, b.object) && a.property === b.property;
     case 'expression':
       return a.raw === b.raw;
     default:

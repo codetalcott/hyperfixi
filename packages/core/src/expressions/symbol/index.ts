@@ -41,12 +41,11 @@ export type SymbolExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced symbol expression for variable resolution
  * Provides comprehensive context-aware variable lookup
  */
-export class SymbolExpression
-  implements TypedExpressionImplementation<HyperScriptValue, TypedExpressionContext>
-{
+export class SymbolExpression implements TypedExpressionImplementation<
+  HyperScriptValue,
+  TypedExpressionContext
+> {
   public readonly inputSchema = SymbolExpressionInputSchema;
-
-  
 
   // Required TypedExpressionImplementation properties
   public readonly name = 'symbol';

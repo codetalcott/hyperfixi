@@ -137,10 +137,7 @@ describe('RemoveCommand - Attribute Support', () => {
       element.setAttribute('data-test', 'value');
       element.setAttribute('data-keep', 'keep-this');
 
-      await command.execute(
-        { type: 'attribute', name: 'data-test', targets: [element] },
-        context
-      );
+      await command.execute({ type: 'attribute', name: 'data-test', targets: [element] }, context);
 
       expect(element!.hasAttribute('data-test')).toBe(false);
       expect(element!.getAttribute('data-keep')).toBe('keep-this'); // Preserved
@@ -152,10 +149,7 @@ describe('RemoveCommand - Attribute Support', () => {
       element.setAttribute('aria-label', 'Test Label');
       element.setAttribute('aria-hidden', 'true');
 
-      await command.execute(
-        { type: 'attribute', name: 'aria-label', targets: [element] },
-        context
-      );
+      await command.execute({ type: 'attribute', name: 'aria-label', targets: [element] }, context);
 
       expect(element!.hasAttribute('aria-label')).toBe(false);
       expect(element!.getAttribute('aria-hidden')).toBe('true'); // Preserved
@@ -166,10 +160,7 @@ describe('RemoveCommand - Attribute Support', () => {
       const element = document.createElement('button');
       element.setAttribute('disabled', '');
 
-      await command.execute(
-        { type: 'attribute', name: 'disabled', targets: [element] },
-        context
-      );
+      await command.execute({ type: 'attribute', name: 'disabled', targets: [element] }, context);
 
       expect(element!.hasAttribute('disabled')).toBe(false);
     });

@@ -21,15 +21,23 @@ export function getTogglePatternsEs(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'alternar', alternatives: ['cambiar', 'toggle'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'en', alternatives: ['sobre', 'de'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'en', alternatives: ['sobre', 'de'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'en', markerAlternatives: ['sobre', 'de'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'en',
+          markerAlternatives: ['sobre', 'de'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

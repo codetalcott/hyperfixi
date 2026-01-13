@@ -336,7 +336,11 @@ export function canStartExpression(token: Token): boolean {
     isLiteral(token) ||
     token.kind === TokenKind.SYMBOL ||
     (token.kind === TokenKind.OPERATOR &&
-      (token.value === '(' || token.value === '[' || token.value === '-' || token.value === '+' || token.value === '!'))
+      (token.value === '(' ||
+        token.value === '[' ||
+        token.value === '-' ||
+        token.value === '+' ||
+        token.value === '!'))
   );
 }
 
@@ -346,7 +350,9 @@ export function canStartExpression(token: Token): boolean {
  */
 export function isCommandTerminator(token: Token): boolean {
   const value = token.value.toLowerCase();
-  return value === 'then' || value === 'and' || value === 'else' || value === 'end' || value === 'on';
+  return (
+    value === 'then' || value === 'and' || value === 'else' || value === 'end' || value === 'on'
+  );
 }
 
 // ============================================================================

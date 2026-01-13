@@ -23,22 +23,22 @@ export const spanishProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'yo',        // "I/me"
-    it: 'ello',      // "it"
-    you: 'tú',       // "you"
+    me: 'yo', // "I/me"
+    it: 'ello', // "it"
+    you: 'tú', // "you"
     result: 'resultado',
     event: 'evento',
     target: 'objetivo',
     body: 'cuerpo',
   },
   possessive: {
-    marker: 'de',    // Spanish uses "de" for general possession
+    marker: 'de', // Spanish uses "de" for general possession
     markerPosition: 'before-property',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'mi',      // "my" (possessive adjective)
-      it: 'su',      // "its"
-      you: 'tu',     // "your"
+      me: 'mi', // "my" (possessive adjective)
+      it: 'su', // "its"
+      you: 'tu', // "your"
     },
   },
   roleMarkers: {
@@ -51,7 +51,11 @@ export const spanishProfile: LanguageProfile = {
     // Class/Attribute operations
     toggle: { primary: 'alternar', alternatives: ['cambiar', 'conmutar'], normalized: 'toggle' },
     add: { primary: 'agregar', alternatives: ['añadir'], normalized: 'add' },
-    remove: { primary: 'quitar', alternatives: ['eliminar', 'remover', 'sacar'], normalized: 'remove' },
+    remove: {
+      primary: 'quitar',
+      alternatives: ['eliminar', 'remover', 'sacar'],
+      normalized: 'remove',
+    },
     // Content operations
     put: { primary: 'poner', alternatives: ['colocar'], normalized: 'put' },
     append: { primary: 'añadir', normalized: 'append' },

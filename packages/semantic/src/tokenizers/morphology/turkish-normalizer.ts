@@ -49,7 +49,7 @@ import { noChange, normalized } from './types';
 function isTurkishLetter(char: string): boolean {
   const code = char.charCodeAt(0);
   // Basic Latin letters
-  if ((code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A)) {
+  if ((code >= 0x41 && code <= 0x5a) || (code >= 0x61 && code <= 0x7a)) {
     return true;
   }
   // Turkish special characters
@@ -291,10 +291,10 @@ const TURKISH_SUFFIX_RULES: readonly SuffixRule[] = [
   { pattern: 'ınız', confidence: 0.82, conjugationType: 'imperative', minStemLength: 2 },
   { pattern: 'ünüz', confidence: 0.82, conjugationType: 'imperative', minStemLength: 2 },
   { pattern: 'unuz', confidence: 0.82, conjugationType: 'imperative', minStemLength: 2 },
-  { pattern: 'in', confidence: 0.80, conjugationType: 'imperative', minStemLength: 2 },
-  { pattern: 'ın', confidence: 0.80, conjugationType: 'imperative', minStemLength: 2 },
-  { pattern: 'ün', confidence: 0.80, conjugationType: 'imperative', minStemLength: 2 },
-  { pattern: 'un', confidence: 0.80, conjugationType: 'imperative', minStemLength: 2 },
+  { pattern: 'in', confidence: 0.8, conjugationType: 'imperative', minStemLength: 2 },
+  { pattern: 'ın', confidence: 0.8, conjugationType: 'imperative', minStemLength: 2 },
+  { pattern: 'ün', confidence: 0.8, conjugationType: 'imperative', minStemLength: 2 },
+  { pattern: 'un', confidence: 0.8, conjugationType: 'imperative', minStemLength: 2 },
 
   // Passive voice
   { pattern: 'ildi', confidence: 0.82, conjugationType: 'passive', minStemLength: 2 },
@@ -317,18 +317,18 @@ const TURKISH_SUFFIX_RULES: readonly SuffixRule[] = [
   { pattern: 'durmak', confidence: 0.82, conjugationType: 'causative', minStemLength: 2 },
 
   // Negation + tense combinations (very common)
-  { pattern: 'miyorsunuz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'mıyorsunuz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'müyorsunuz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'muyorsunuz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'miyorsun', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'mıyorsun', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'müyorsun', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'muyorsun', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'miyoruz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'mıyoruz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'müyoruz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
-  { pattern: 'muyoruz', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'miyorsunuz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'mıyorsunuz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'müyorsunuz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'muyorsunuz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'miyorsun', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'mıyorsun', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'müyorsun', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'muyorsun', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'miyoruz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'mıyoruz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'müyoruz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: 'muyoruz', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
   { pattern: 'miyorum', confidence: 0.82, conjugationType: 'negative', minStemLength: 2 },
   { pattern: 'mıyorum', confidence: 0.82, conjugationType: 'negative', minStemLength: 2 },
   { pattern: 'müyorum', confidence: 0.82, conjugationType: 'negative', minStemLength: 2 },

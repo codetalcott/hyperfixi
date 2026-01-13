@@ -27,9 +27,7 @@ export function createTestExecutionContext(
 /**
  * Create a ExecutionContext for testing
  */
-export function createTestContext(
-  overrides?: Partial<ExecutionContext>
-): ExecutionContext {
+export function createTestContext(overrides?: Partial<ExecutionContext>): ExecutionContext {
   const context: ExecutionContext = {
     me: null,
     you: null,
@@ -49,9 +47,10 @@ export function createTestContext(
  * Create a mutable context wrapper for testing that allows property mutations
  * Includes all properties from ExecutionContext for maximum compatibility
  */
-export function createMutableTestContext(
-  baseContext?: Partial<ExecutionContext>
-): Record<string, unknown> & {
+export function createMutableTestContext(baseContext?: Partial<ExecutionContext>): Record<
+  string,
+  unknown
+> & {
   me: Element | null;
   you: Element | null;
   it: unknown;

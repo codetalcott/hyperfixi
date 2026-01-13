@@ -42,15 +42,17 @@ if (!global.matchMedia) {
 
 // Mock requestIdleCallback if not available
 if (!global.requestIdleCallback) {
-  global.requestIdleCallback = vi.fn((callback: IdleRequestCallback, options?: IdleRequestOptions) => {
-    const start = performance.now();
-    return setTimeout(() => {
-      callback({
-        didTimeout: false,
-        timeRemaining: () => Math.max(0, 50 - (performance.now() - start)),
-      });
-    }, 1);
-  });
+  global.requestIdleCallback = vi.fn(
+    (callback: IdleRequestCallback, options?: IdleRequestOptions) => {
+      const start = performance.now();
+      return setTimeout(() => {
+        callback({
+          didTimeout: false,
+          timeRemaining: () => Math.max(0, 50 - (performance.now() - start)),
+        });
+      }, 1);
+    }
+  );
 }
 
 // Mock cancelIdleCallback if not available
@@ -161,17 +163,17 @@ if (!global.navigator) {
 beforeEach(() => {
   // Clear all mocks before each test
   vi.clearAllMocks();
-  
+
   // Reset DOM
   document.body.innerHTML = '';
   document.head.innerHTML = '';
-  
+
   // Reset storage mocks
   localStorageMock.getItem.mockReturnValue(null);
   localStorageMock.setItem.mockImplementation(() => {});
   localStorageMock.removeItem.mockImplementation(() => {});
   localStorageMock.clear.mockImplementation(() => {});
-  
+
   sessionStorageMock.getItem.mockReturnValue(null);
   sessionStorageMock.setItem.mockImplementation(() => {});
   sessionStorageMock.removeItem.mockImplementation(() => {});

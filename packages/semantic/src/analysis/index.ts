@@ -82,12 +82,7 @@ const HIGH_FREQUENCY_TRIGGERS = new Set([
   'keypress',
 ]);
 
-const THROTTLE_RECOMMENDED_TRIGGERS = new Set([
-  'scroll',
-  'mousemove',
-  'touchmove',
-  'resize',
-]);
+const THROTTLE_RECOMMENDED_TRIGGERS = new Set(['scroll', 'mousemove', 'touchmove', 'resize']);
 
 // =============================================================================
 // Analysis Rules
@@ -271,9 +266,10 @@ export function analyzeMultiple(
 
       if (hasToggle && (hasShow || hasHide)) {
         // Check if conflicting actions target the same patient
-        const conflictingPatients = allPatients.filter((p, i) =>
-          (allActions[i] === 'toggle' || allActions[i] === 'show' || allActions[i] === 'hide') &&
-          allPatients.some((p2, i2) => i !== i2 && p === p2)
+        const conflictingPatients = allPatients.filter(
+          (p, i) =>
+            (allActions[i] === 'toggle' || allActions[i] === 'show' || allActions[i] === 'hide') &&
+            allPatients.some((p2, i2) => i !== i2 && p === p2)
         );
 
         if (conflictingPatients.length > 0) {
@@ -339,12 +335,14 @@ export function analyze(
   if (!node) {
     return {
       valid: false,
-      warnings: [{
-        code: 'UNREACHABLE_BEHAVIOR',
-        severity: 'error',
-        message: 'Could not parse input to semantic representation.',
-        location: { input },
-      }],
+      warnings: [
+        {
+          code: 'UNREACHABLE_BEHAVIOR',
+          severity: 'error',
+          message: 'Could not parse input to semantic representation.',
+          location: { input },
+        },
+      ],
       node: null,
     };
   }
@@ -462,10 +460,9 @@ export function devModeAnalyze(input: string, lang: string, node: SemanticNode |
   const result = analyze(input, lang, _devModeConfig);
 
   for (const warning of result.warnings) {
-    const icon = warning.severity === 'error' ? '❌' :
-                 warning.severity === 'warning' ? '⚠️' : 'ℹ️';
-    const method = warning.severity === 'error' ? 'error' :
-                   warning.severity === 'warning' ? 'warn' : 'info';
+    const icon = warning.severity === 'error' ? '❌' : warning.severity === 'warning' ? '⚠️' : 'ℹ️';
+    const method =
+      warning.severity === 'error' ? 'error' : warning.severity === 'warning' ? 'warn' : 'info';
 
     console[method](
       `${icon} [hyperfixi:${warning.code}] ${warning.message}`,
@@ -479,8 +476,4 @@ export function devModeAnalyze(input: string, lang: string, node: SemanticNode |
 // Convenience Exports
 // =============================================================================
 
-export {
-  checkAccessibility,
-  checkPerformance,
-  checkSchema,
-};
+export { checkAccessibility, checkPerformance, checkSchema };

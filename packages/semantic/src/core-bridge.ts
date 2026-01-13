@@ -6,7 +6,13 @@
  * fallback between semantic and traditional parsing.
  */
 
-import type { SemanticNode, SemanticValue, ActionType, PatternMatchResult, SemanticRole } from './types';
+import type {
+  SemanticNode,
+  SemanticValue,
+  ActionType,
+  PatternMatchResult,
+  SemanticRole,
+} from './types';
 import { PatternMatcher } from './parser/pattern-matcher';
 import { getTokenizer } from './tokenizers';
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
@@ -101,7 +107,21 @@ export class SemanticAnalyzerImpl implements SemanticAnalyzer {
   constructor(options: SemanticAnalyzerOptions = {}) {
     this.patternMatcher = new PatternMatcher();
     // All 13 supported languages
-    this.languages = new Set(['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh', 'pt', 'fr', 'de', 'id', 'qu', 'sw']);
+    this.languages = new Set([
+      'en',
+      'ja',
+      'ar',
+      'es',
+      'ko',
+      'tr',
+      'zh',
+      'pt',
+      'fr',
+      'de',
+      'id',
+      'qu',
+      'sw',
+    ]);
 
     // Initialize cache
     if (options.cache === false) {

@@ -31,7 +31,7 @@ import { noChange, normalized } from './types';
  */
 function isHangul(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0xAC00 && code <= 0xD7A3;
+  return code >= 0xac00 && code <= 0xd7a3;
 }
 
 /**
@@ -54,8 +54,18 @@ const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
   { pattern: '하시니까', confidence: 0.85, conjugationType: 'honorific-causal', minStemLength: 1 },
   { pattern: '하실때', confidence: 0.88, conjugationType: 'honorific-temporal', minStemLength: 1 },
   { pattern: '하실 때', confidence: 0.88, conjugationType: 'honorific-temporal', minStemLength: 1 },
-  { pattern: '하시면', confidence: 0.88, conjugationType: 'honorific-conditional', minStemLength: 1 },
-  { pattern: '으시면', confidence: 0.85, conjugationType: 'honorific-conditional', minStemLength: 2 },
+  {
+    pattern: '하시면',
+    confidence: 0.88,
+    conjugationType: 'honorific-conditional',
+    minStemLength: 1,
+  },
+  {
+    pattern: '으시면',
+    confidence: 0.85,
+    conjugationType: 'honorific-conditional',
+    minStemLength: 2,
+  },
   { pattern: '시면', confidence: 0.82, conjugationType: 'honorific-conditional', minStemLength: 2 },
 
   // Sequential/temporal forms - "after doing", "before doing", "as soon as"
@@ -66,7 +76,12 @@ const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
   { pattern: '고 나서', confidence: 0.82, conjugationType: 'sequential-after', minStemLength: 2 },
   { pattern: '고서', confidence: 0.82, conjugationType: 'sequential-after', minStemLength: 2 },
   { pattern: '하기전에', confidence: 0.85, conjugationType: 'sequential-before', minStemLength: 1 },
-  { pattern: '하기 전에', confidence: 0.85, conjugationType: 'sequential-before', minStemLength: 1 },
+  {
+    pattern: '하기 전에',
+    confidence: 0.85,
+    conjugationType: 'sequential-before',
+    minStemLength: 1,
+  },
   { pattern: '기전에', confidence: 0.82, conjugationType: 'sequential-before', minStemLength: 2 },
   { pattern: '기 전에', confidence: 0.82, conjugationType: 'sequential-before', minStemLength: 2 },
   { pattern: '하자마자', confidence: 0.88, conjugationType: 'immediate', minStemLength: 1 },
@@ -91,7 +106,7 @@ const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
   { pattern: '하면', confidence: 0.88, conjugationType: 'conditional-myeon', minStemLength: 1 },
   { pattern: '으면', confidence: 0.85, conjugationType: 'conditional-myeon', minStemLength: 2 },
   { pattern: '니까', confidence: 0.82, conjugationType: 'causal-nikka', minStemLength: 2 },
-  { pattern: '면', confidence: 0.80, conjugationType: 'conditional-myeon', minStemLength: 2 },
+  { pattern: '면', confidence: 0.8, conjugationType: 'conditional-myeon', minStemLength: 2 },
 
   // Formal polite forms (longest first)
   { pattern: '하였습니다', confidence: 0.85, conjugationType: 'past', minStemLength: 1 },
@@ -117,14 +132,14 @@ const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
 
   // Informal (반말) forms
   { pattern: '했어', confidence: 0.85, conjugationType: 'past', minStemLength: 1 },
-  { pattern: '해', confidence: 0.80, conjugationType: 'present', minStemLength: 1 },
+  { pattern: '해', confidence: 0.8, conjugationType: 'present', minStemLength: 1 },
   { pattern: '었어', confidence: 0.82, conjugationType: 'past', minStemLength: 2 },
   { pattern: '았어', confidence: 0.82, conjugationType: 'past', minStemLength: 2 },
 
   // Progressive forms
   { pattern: '하고있다', confidence: 0.82, conjugationType: 'progressive', minStemLength: 1 },
-  { pattern: '고있다', confidence: 0.80, conjugationType: 'progressive', minStemLength: 2 },
-  { pattern: '고있어', confidence: 0.80, conjugationType: 'progressive', minStemLength: 2 },
+  { pattern: '고있다', confidence: 0.8, conjugationType: 'progressive', minStemLength: 2 },
+  { pattern: '고있어', confidence: 0.8, conjugationType: 'progressive', minStemLength: 2 },
 
   // Dictionary/infinitive form (하다 verbs)
   { pattern: '하다', confidence: 0.88, conjugationType: 'dictionary', minStemLength: 1 },
@@ -132,7 +147,7 @@ const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
   // Negative forms
   { pattern: '하지않다', confidence: 0.82, conjugationType: 'negative', minStemLength: 1 },
   { pattern: '안하다', confidence: 0.82, conjugationType: 'negative', minStemLength: 1 },
-  { pattern: '지않다', confidence: 0.80, conjugationType: 'negative', minStemLength: 2 },
+  { pattern: '지않다', confidence: 0.8, conjugationType: 'negative', minStemLength: 2 },
 
   // Imperative forms
   { pattern: '해라', confidence: 0.82, conjugationType: 'imperative', minStemLength: 1 },
@@ -147,7 +162,11 @@ const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
  * Noun + 하다 forms a verb.
  * e.g., 토글 + 하다 = 토글하다 (to toggle)
  */
-const HADA_PATTERNS: readonly { pattern: string; confidence: number; conjugationType: ConjugationType }[] = [
+const HADA_PATTERNS: readonly {
+  pattern: string;
+  confidence: number;
+  conjugationType: ConjugationType;
+}[] = [
   // Honorific forms (-시- infix) - polite/formal Korean
   // 클릭하시면 → 클릭 (if you click - honorific)
   { pattern: '하시니까', confidence: 0.88, conjugationType: 'honorific-causal' },
@@ -189,14 +208,14 @@ const HADA_PATTERNS: readonly { pattern: string; confidence: number; conjugation
   { pattern: '해요', confidence: 0.85, conjugationType: 'polite' },
   // Informal
   { pattern: '했어', confidence: 0.85, conjugationType: 'past' },
-  { pattern: '해', confidence: 0.80, conjugationType: 'present' },
+  { pattern: '해', confidence: 0.8, conjugationType: 'present' },
   // Progressive
   { pattern: '하고있어요', confidence: 0.82, conjugationType: 'progressive' },
   { pattern: '하고있어', confidence: 0.82, conjugationType: 'progressive' },
   { pattern: '하고있다', confidence: 0.82, conjugationType: 'progressive' },
   // Connective forms (해서 = because/so, 하고 = and)
   { pattern: '해서', confidence: 0.82, conjugationType: 'connective' },
-  { pattern: '하고', confidence: 0.80, conjugationType: 'connective' },
+  { pattern: '하고', confidence: 0.8, conjugationType: 'connective' },
   // Negative
   { pattern: '하지않아요', confidence: 0.82, conjugationType: 'negative' },
   { pattern: '하지않다', confidence: 0.82, conjugationType: 'negative' },
@@ -245,7 +264,10 @@ export class KoreanMorphologicalNormalizer implements MorphologicalNormalizer {
         const minLength = rule.minStemLength ?? 2;
         if (stem.length < minLength) continue;
 
-        const metadata: { removedSuffixes: string[]; conjugationType?: typeof rule.conjugationType } = {
+        const metadata: {
+          removedSuffixes: string[];
+          conjugationType?: typeof rule.conjugationType;
+        } = {
           removedSuffixes: [rule.pattern],
         };
         if (rule.conjugationType) {

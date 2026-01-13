@@ -22,15 +22,23 @@ export function getAddPatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'dodaj', alternatives: ['dołącz', 'dolacz'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'do', alternatives: ['na', 'w'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'do', alternatives: ['na', 'w'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'do', markerAlternatives: ['na', 'w'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'do',
+          markerAlternatives: ['na', 'w'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

@@ -69,7 +69,10 @@ describe('Enhanced Lambda Expression', () => {
     });
 
     test.skip('creates property access lambda', async () => {
-      const result = await expression.evaluate(context, { parameters: ['item'], body: 'item.name' });
+      const result = await expression.evaluate(context, {
+        parameters: ['item'],
+        body: 'item.name',
+      });
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -107,7 +110,10 @@ describe('Enhanced Lambda Expression', () => {
 
   describe('Error Handling', () => {
     test('handles invalid parameters', async () => {
-      const result = await expression.evaluate(context, { parameters: 'not-array' as unknown as string[], body: 'x + y' });
+      const result = await expression.evaluate(context, {
+        parameters: 'not-array' as unknown as string[],
+        body: 'x + y',
+      });
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -116,7 +122,10 @@ describe('Enhanced Lambda Expression', () => {
     });
 
     test.skip('handles invalid body', async () => {
-      const result = await expression.evaluate(context, { parameters: ['x'], body: 123 as unknown as string });
+      const result = await expression.evaluate(context, {
+        parameters: ['x'],
+        body: 123 as unknown as string,
+      });
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -371,7 +380,12 @@ describe('Enhanced Error Expression', () => {
     });
 
     test('handles non-string inputs', async () => {
-      const result = await expression.evaluate(context, 123 as unknown as string, 456 as unknown as string, 789 as unknown as string);
+      const result = await expression.evaluate(
+        context,
+        123 as unknown as string,
+        456 as unknown as string,
+        789 as unknown as string
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {

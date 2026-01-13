@@ -106,10 +106,7 @@ export function findInDictionary(
  * Find a translation for an English word in any category.
  * Returns the localized word if found, undefined otherwise.
  */
-export function translateFromEnglish(
-  dict: Dictionary,
-  englishWord: string
-): string | undefined {
+export function translateFromEnglish(dict: Dictionary, englishWord: string): string | undefined {
   const normalized = englishWord.toLowerCase();
   for (const category of DICTIONARY_CATEGORIES) {
     const entries = dict[category];

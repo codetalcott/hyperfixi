@@ -21,15 +21,23 @@ export function getAddPatternsIt(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'aggiungere', alternatives: ['aggiungi', 'add'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'a', alternatives: ['su', 'in'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'a', alternatives: ['su', 'in'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'a', markerAlternatives: ['su', 'in'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'a',
+          markerAlternatives: ['su', 'in'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

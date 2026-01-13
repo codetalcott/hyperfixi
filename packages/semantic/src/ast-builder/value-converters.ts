@@ -85,8 +85,8 @@ export function convertSelector(value: SelectorValue, warnings?: string[]): Sele
   if (warnings && value.value.startsWith('*') && /^[a-zA-Z-]/.test(value.value.slice(1))) {
     warnings.push(
       `Converted '${value.value}' to a CSS selector, but it looks like a CSS property name. ` +
-      `CSS properties in commands like 'transition' should be literal strings, not selectors. ` +
-      `Consider using expectedTypes: ['literal'] instead of ['literal', 'selector'] in the command schema.`
+        `CSS properties in commands like 'transition' should be literal strings, not selectors. ` +
+        `Consider using expectedTypes: ['literal'] instead of ['literal', 'selector'] in the command schema.`
     );
   }
 
@@ -116,7 +116,10 @@ export function convertReference(value: ReferenceValue): ContextReferenceNode {
  * @param value - The property path value to convert
  * @param warnings - Optional array to collect warnings
  */
-export function convertPropertyPath(value: PropertyPathValue, warnings?: string[]): PropertyAccessNode {
+export function convertPropertyPath(
+  value: PropertyPathValue,
+  warnings?: string[]
+): PropertyAccessNode {
   return {
     type: 'propertyAccess',
     object: convertValue(value.object, warnings),

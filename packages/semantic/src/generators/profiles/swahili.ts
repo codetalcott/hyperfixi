@@ -20,22 +20,22 @@ export const swahiliProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'mimi',      // "I/me"
-    it: 'hiyo',      // "it"
-    you: 'wewe',     // "you"
+    me: 'mimi', // "I/me"
+    it: 'hiyo', // "it"
+    you: 'wewe', // "you"
     result: 'matokeo',
     event: 'tukio',
     target: 'lengo',
     body: 'mwili',
   },
   possessive: {
-    marker: '',      // Swahili uses possessive pronouns
+    marker: '', // Swahili uses possessive pronouns
     markerPosition: 'after-object',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'yangu',   // "my" (class-dependent: wangu/yangu/langu...)
-      it: 'yake',    // "its"
-      you: 'yako',   // "your"
+      me: 'yangu', // "my" (class-dependent: wangu/yangu/langu...)
+      it: 'yake', // "its"
+      you: 'yako', // "your"
     },
   },
   roleMarkers: {

@@ -14,7 +14,13 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { getVariableValue, setVariableValue } from '../helpers/variable-access';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export interface AppendCommandInput {
   content: unknown;
@@ -36,7 +42,12 @@ export interface AppendCommandOutput {
 @meta({
   description: 'Add content to the end of a string, array, or HTML element',
   syntax: ['append <content>', 'append <content> to <target>'],
-  examples: ['append "Hello"', 'append "World" to greeting', 'append item to myArray', 'append "<p>New</p>" to #content'],
+  examples: [
+    'append "Hello"',
+    'append "World" to greeting',
+    'append item to myArray',
+    'append "<p>New</p>" to #content',
+  ],
   sideEffects: ['data-mutation', 'dom-mutation'],
 })
 @command({ name: 'append', category: 'content' })
@@ -60,7 +71,10 @@ export class AppendCommand implements DecoratedCommand {
     return { content, target };
   }
 
-  async execute(input: AppendCommandInput, context: TypedExecutionContext): Promise<AppendCommandOutput> {
+  async execute(
+    input: AppendCommandInput,
+    context: TypedExecutionContext
+  ): Promise<AppendCommandOutput> {
     const { content, target } = input;
     const contentStr = content == null ? String(content) : String(content);
 
@@ -120,10 +134,14 @@ export class AppendCommand implements DecoratedCommand {
 
   private resolveContextRef(ref: string, ctx: TypedExecutionContext): any {
     switch (ref) {
-      case 'me': return ctx.me;
-      case 'it': return ctx.it;
-      case 'you': return ctx.you;
-      default: throw new Error(`Unknown context ref: ${ref}`);
+      case 'me':
+        return ctx.me;
+      case 'it':
+        return ctx.it;
+      case 'you':
+        return ctx.you;
+      default:
+        throw new Error(`Unknown context ref: ${ref}`);
     }
   }
 }

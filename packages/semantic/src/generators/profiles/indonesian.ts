@@ -20,22 +20,22 @@ export const indonesianProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'saya',      // "I/me"
-    it: 'itu',       // "it"
-    you: 'anda',     // "you"
+    me: 'saya', // "I/me"
+    it: 'itu', // "it"
+    you: 'anda', // "you"
     result: 'hasil',
     event: 'peristiwa',
     target: 'target',
     body: 'tubuh',
   },
   possessive: {
-    marker: '',      // Indonesian: "X saya" (X of mine), possessor follows noun
+    marker: '', // Indonesian: "X saya" (X of mine), possessor follows noun
     markerPosition: 'after-object',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'saya',    // Possessor follows: "value saya" = "my value"
-      it: 'nya',     // Suffix: "valueny" = "its value"
-      you: 'anda',   // "value anda" = "your value"
+      me: 'saya', // Possessor follows: "value saya" = "my value"
+      it: 'nya', // Suffix: "valueny" = "its value"
+      you: 'anda', // "value anda" = "your value"
     },
   },
   roleMarkers: {

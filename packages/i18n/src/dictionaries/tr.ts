@@ -9,7 +9,7 @@ export const tr: Dictionary = {
     tell: 'söyle',
     trigger: 'tetikle',
     send: 'gönder',
-    
+
     // DOM manipulation
     take: 'al',
     put: 'koy',
@@ -20,7 +20,7 @@ export const tr: Dictionary = {
     toggle: 'değiştir',
     hide: 'gizle',
     show: 'göster',
-    
+
     // Control flow
     if: 'eğer',
     unless: 'değilse',
@@ -31,13 +31,13 @@ export const tr: Dictionary = {
     continue: 'devam',
     break: 'dur',
     halt: 'durdur',
-    
+
     // Async
     wait: 'bekle',
     fetch: 'getir',
     call: 'çağır',
     return: 'dön',
-    
+
     // Other commands
     make: 'yap',
     log: 'kaydet',
@@ -82,7 +82,7 @@ export const tr: Dictionary = {
     // Behaviors
     install: 'kur',
   },
-  
+
   modifiers: {
     to: 'e',
     from: 'den',
@@ -101,7 +101,7 @@ export const tr: Dictionary = {
     through: 'boyunca',
     without: 'olmadan',
   },
-  
+
   events: {
     click: 'tıklama',
     dblclick: 'çift_tıklama',
@@ -112,29 +112,29 @@ export const tr: Dictionary = {
     mouseover: 'fare_üstü',
     mouseout: 'fare_dışı',
     mousemove: 'fare_hareket',
-    
+
     keydown: 'tuş_bas',
     keyup: 'tuş_bırak',
     keypress: 'tuş_basım',
-    
+
     focus: 'odak',
     blur: 'bulanık',
     change: 'değişim',
     input: 'giriş',
     submit: 'gönder',
     reset: 'sıfırla',
-    
+
     load: 'yükle',
     unload: 'yükle_kaldır',
     resize: 'boyut_değiştir',
     scroll: 'kaydır',
-    
+
     touchstart: 'dokunma_başla',
     touchend: 'dokunma_bitir',
     touchmove: 'dokunma_hareket',
     touchcancel: 'dokunma_iptal',
   },
-  
+
   logical: {
     when: 'iken', // REVIEW: native speaker - could also be 'durumunda' (in case of) or 'olduğunda' (when it happens)
     where: 'nerede', // REVIEW: native speaker - element filter context
@@ -152,7 +152,7 @@ export const tr: Dictionary = {
     otherwise: 'aksi_halde',
     end: 'son',
   },
-  
+
   temporal: {
     seconds: 'saniye',
     second: 'saniye',
@@ -167,7 +167,7 @@ export const tr: Dictionary = {
     min: 'dk',
     h: 'sa',
   },
-  
+
   values: {
     true: 'doğru',
     false: 'yanlış',
@@ -191,7 +191,7 @@ export const tr: Dictionary = {
     result: 'sonuç',
     value: 'değer',
   },
-  
+
   attributes: {
     class: 'sınıf',
     classes: 'sınıflar',

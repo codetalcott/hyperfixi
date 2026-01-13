@@ -22,15 +22,23 @@ export function getTogglePatternsRu(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'переключить', alternatives: ['переключи'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'на', alternatives: ['в', 'для'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'на', alternatives: ['в', 'для'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'на', markerAlternatives: ['в', 'для'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'на',
+          markerAlternatives: ['в', 'для'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

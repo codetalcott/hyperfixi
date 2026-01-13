@@ -9,7 +9,7 @@ export const ko: Dictionary = {
     tell: '말하다',
     trigger: '트리거',
     send: '보내다',
-    
+
     // DOM manipulation
     take: '가져오다',
     put: '넣다',
@@ -20,7 +20,7 @@ export const ko: Dictionary = {
     toggle: '토글',
     hide: '숨기다',
     show: '보이다',
-    
+
     // Control flow
     if: '만약',
     unless: '아니면',
@@ -31,13 +31,13 @@ export const ko: Dictionary = {
     continue: '계속',
     break: '중단',
     halt: '정지',
-    
+
     // Async
     wait: '대기',
     fetch: '가져오기',
     call: '호출',
     return: '반환',
-    
+
     // Other commands
     make: '만들다',
     log: '로그',
@@ -82,7 +82,7 @@ export const ko: Dictionary = {
     // Behaviors
     install: '설치',
   },
-  
+
   modifiers: {
     to: '에',
     from: '에서',
@@ -101,7 +101,7 @@ export const ko: Dictionary = {
     through: '통해',
     without: '없이',
   },
-  
+
   events: {
     click: '클릭',
     dblclick: '더블클릭',
@@ -112,29 +112,29 @@ export const ko: Dictionary = {
     mouseover: '마우스오버',
     mouseout: '마우스아웃',
     mousemove: '마우스무브',
-    
+
     keydown: '키다운',
     keyup: '키업',
     keypress: '키프레스',
-    
+
     focus: '포커스',
     blur: '블러',
     change: '변경',
     input: '입력',
     submit: '제출',
     reset: '리셋',
-    
+
     load: '로드',
     unload: '언로드',
     resize: '리사이즈',
     scroll: '스크롤',
-    
+
     touchstart: '터치시작',
     touchend: '터치종료',
     touchmove: '터치이동',
     touchcancel: '터치취소',
   },
-  
+
   logical: {
     when: '때',
     where: '어디',
@@ -152,7 +152,7 @@ export const ko: Dictionary = {
     otherwise: '그렇지않으면',
     end: '끝',
   },
-  
+
   temporal: {
     seconds: '초',
     second: '초',
@@ -167,7 +167,7 @@ export const ko: Dictionary = {
     min: '분',
     h: '시',
   },
-  
+
   values: {
     true: '참',
     false: '거짓',
@@ -191,7 +191,7 @@ export const ko: Dictionary = {
     result: '결과',
     value: '값',
   },
-  
+
   attributes: {
     class: '클래스',
     classes: '클래스들',

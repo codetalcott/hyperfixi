@@ -42,34 +42,34 @@ function isUkrainianIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const PREPOSITIONS = new Set([
-  'в',          // in
-  'у',          // in
-  'на',         // on
-  'з',          // with, from
-  'із',         // with (variant)
-  'зі',         // with (before consonant clusters)
-  'до',         // to
-  'від',        // from
-  'о',          // about
-  'об',         // about (before vowels)
-  'при',        // at, during
-  'для',        // for
-  'під',        // under
-  'над',        // above
-  'перед',      // in front of
-  'між',        // between
-  'через',      // through
-  'без',        // without
-  'по',         // along, by
-  'за',         // behind, for
-  'про',        // about
-  'після',      // after
-  'навколо',    // around
-  'проти',      // against
-  'замість',    // instead of
-  'крім',       // except
-  'серед',      // among
-  'к',          // to (less common)
+  'в', // in
+  'у', // in
+  'на', // on
+  'з', // with, from
+  'із', // with (variant)
+  'зі', // with (before consonant clusters)
+  'до', // to
+  'від', // from
+  'о', // about
+  'об', // about (before vowels)
+  'при', // at, during
+  'для', // for
+  'під', // under
+  'над', // above
+  'перед', // in front of
+  'між', // between
+  'через', // through
+  'без', // without
+  'по', // along, by
+  'за', // behind, for
+  'про', // about
+  'після', // after
+  'навколо', // around
+  'проти', // against
+  'замість', // instead of
+  'крім', // except
+  'серед', // among
+  'к', // to (less common)
 ]);
 
 // =============================================================================
@@ -79,117 +79,117 @@ const PREPOSITIONS = new Set([
 const UKRAINIAN_KEYWORDS: Map<string, string> = new Map([
   // Commands - Class/Attribute operations
   ['перемкнути', 'toggle'],
-  ['перемкни', 'toggle'],        // imperative
+  ['перемкни', 'toggle'], // imperative
   ['додати', 'add'],
-  ['додай', 'add'],              // imperative
+  ['додай', 'add'], // imperative
   ['видалити', 'remove'],
-  ['видали', 'remove'],          // imperative
+  ['видали', 'remove'], // imperative
   ['прибрати', 'remove'],
-  ['прибери', 'remove'],         // imperative
+  ['прибери', 'remove'], // imperative
 
   // Commands - Content operations
   ['покласти', 'put'],
-  ['поклади', 'put'],            // imperative
+  ['поклади', 'put'], // imperative
   ['помістити', 'put'],
-  ['помісти', 'put'],            // imperative
+  ['помісти', 'put'], // imperative
   ['вставити', 'put'],
-  ['встав', 'put'],              // imperative
+  ['встав', 'put'], // imperative
   ['додати_в_кінець', 'append'],
   ['взяти', 'take'],
-  ['візьми', 'take'],            // imperative
+  ['візьми', 'take'], // imperative
   ['створити', 'make'],
-  ['створи', 'make'],            // imperative
+  ['створи', 'make'], // imperative
   ['клонувати', 'clone'],
-  ['клонуй', 'clone'],           // imperative
+  ['клонуй', 'clone'], // imperative
   ['поміняти', 'swap'],
-  ['поміняй', 'swap'],           // imperative
+  ['поміняй', 'swap'], // imperative
   ['трансформувати', 'morph'],
-  ['трансформуй', 'morph'],      // imperative
+  ['трансформуй', 'morph'], // imperative
 
   // Commands - Variable operations
   ['встановити', 'set'],
-  ['встанови', 'set'],           // imperative
+  ['встанови', 'set'], // imperative
   ['задати', 'set'],
-  ['задай', 'set'],              // imperative
+  ['задай', 'set'], // imperative
   ['отримати', 'get'],
-  ['отримай', 'get'],            // imperative
+  ['отримай', 'get'], // imperative
   ['збільшити', 'increment'],
-  ['збільш', 'increment'],       // imperative
+  ['збільш', 'increment'], // imperative
   ['зменшити', 'decrement'],
-  ['зменш', 'decrement'],        // imperative
+  ['зменш', 'decrement'], // imperative
   ['записати', 'log'],
-  ['запиши', 'log'],             // imperative
+  ['запиши', 'log'], // imperative
 
   // Commands - Visibility
   ['показати', 'show'],
-  ['покажи', 'show'],            // imperative
+  ['покажи', 'show'], // imperative
   ['сховати', 'hide'],
-  ['сховай', 'hide'],            // imperative
+  ['сховай', 'hide'], // imperative
   ['приховати', 'hide'],
-  ['приховай', 'hide'],          // imperative
+  ['приховай', 'hide'], // imperative
   ['анімувати', 'transition'],
-  ['анімуй', 'transition'],      // imperative
+  ['анімуй', 'transition'], // imperative
 
   // Commands - Events
   ['коли', 'on'],
   ['при', 'on'],
   ['викликати', 'trigger'],
-  ['виклич', 'trigger'],         // imperative
+  ['виклич', 'trigger'], // imperative
   ['надіслати', 'send'],
-  ['надішли', 'send'],           // imperative
+  ['надішли', 'send'], // imperative
 
   // Commands - DOM focus
   ['сфокусувати', 'focus'],
-  ['сфокусуй', 'focus'],         // imperative
+  ['сфокусуй', 'focus'], // imperative
   ['фокус', 'focus'],
   ['розфокусувати', 'blur'],
-  ['розфокусуй', 'blur'],        // imperative
+  ['розфокусуй', 'blur'], // imperative
 
   // Commands - Navigation
   ['перейти', 'go'],
-  ['перейди', 'go'],             // imperative
+  ['перейди', 'go'], // imperative
   ['йти', 'go'],
-  ['йди', 'go'],                 // imperative
+  ['йди', 'go'], // imperative
 
   // Commands - Async
   ['чекати', 'wait'],
-  ['чекай', 'wait'],             // imperative
-  ['зачекай', 'wait'],           // imperative
+  ['чекай', 'wait'], // imperative
+  ['зачекай', 'wait'], // imperative
   ['завантажити', 'fetch'],
-  ['завантаж', 'fetch'],         // imperative
+  ['завантаж', 'fetch'], // imperative
   ['стабілізувати', 'settle'],
 
   // Commands - Control flow
   ['якщо', 'if'],
   ['інакше', 'else'],
   ['повторити', 'repeat'],
-  ['повтори', 'repeat'],         // imperative
+  ['повтори', 'repeat'], // imperative
   ['для', 'for'],
   ['кожний', 'for'],
   ['поки', 'while'],
   ['продовжити', 'continue'],
-  ['продовжуй', 'continue'],     // imperative
+  ['продовжуй', 'continue'], // imperative
   ['зупинити', 'halt'],
-  ['зупинись', 'halt'],          // imperative
+  ['зупинись', 'halt'], // imperative
   ['стоп', 'halt'],
   ['кинути', 'throw'],
-  ['кинь', 'throw'],             // imperative
+  ['кинь', 'throw'], // imperative
   ['повернути', 'return'],
-  ['поверни', 'return'],         // imperative
+  ['поверни', 'return'], // imperative
 
   // Commands - Advanced
   ['js', 'js'],
   ['асинхронно', 'async'],
   ['async', 'async'],
   ['сказати', 'tell'],
-  ['скажи', 'tell'],             // imperative
+  ['скажи', 'tell'], // imperative
   ['за_замовчуванням', 'default'],
   ['ініціалізувати', 'init'],
-  ['ініціалізуй', 'init'],       // imperative
+  ['ініціалізуй', 'init'], // imperative
   ['поведінка', 'behavior'],
   ['встановити_пакет', 'install'],
   ['виміряти', 'measure'],
-  ['виміряй', 'measure'],        // imperative
+  ['виміряй', 'measure'], // imperative
 
   // Control flow connectors
   ['потім', 'then'],
@@ -303,7 +303,10 @@ export class UkrainianTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

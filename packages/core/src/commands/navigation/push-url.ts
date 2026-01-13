@@ -14,7 +14,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 import { parseUrlArguments, type UrlCommandInput } from '../helpers/url-argument-parser';
 
 /**
@@ -72,7 +78,9 @@ export class HistoryCommand implements DecoratedCommand {
     context: ExecutionContext
   ): Promise<HistoryCommandInput> {
     // Detect mode from command name
-    const mode: HistoryMode = raw.commandName?.toLowerCase().includes('replace') ? 'replace' : 'push';
+    const mode: HistoryMode = raw.commandName?.toLowerCase().includes('replace')
+      ? 'replace'
+      : 'push';
     const baseInput = await parseUrlArguments(raw.args, evaluator, context, `${mode} url`);
     return { ...baseInput, mode };
   }
@@ -94,9 +102,11 @@ export class HistoryCommand implements DecoratedCommand {
     }
 
     const eventName = mode === 'push' ? 'hyperfixi:pushurl' : 'hyperfixi:replaceurl';
-    window.dispatchEvent(new CustomEvent(eventName, {
-      detail: { url, title, state },
-    }));
+    window.dispatchEvent(
+      new CustomEvent(eventName, {
+        detail: { url, title, state },
+      })
+    );
 
     return { url, title, mode };
   }

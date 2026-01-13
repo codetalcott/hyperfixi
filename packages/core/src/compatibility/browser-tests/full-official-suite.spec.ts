@@ -195,17 +195,19 @@ class OfficialTestSuiteRunner {
               console: console,
               // Chai-style assertion helper
               should: {
-                equal: function(this: { value?: any }, expected: any) {
+                equal: function (this: { value?: any }, expected: any) {
                   return {
                     actual: this.value,
                     equal: (actual: any) => {
                       if (actual !== expected) {
-                        throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+                        throw new Error(
+                          `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
+                        );
                       }
-                    }
+                    },
                   };
-                }
-              }
+                },
+              },
             };
 
             // Execute the test code with access to utilities
@@ -235,7 +237,7 @@ class OfficialTestSuiteRunner {
           } catch (error) {
             return {
               success: false,
-              error: (error as Error).message || String(error)
+              error: (error as Error).message || String(error),
             };
           }
         },
@@ -359,7 +361,9 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
           }
         } catch (error) {
           console.error(`  ❌ Failed to process ${testFile.filename}: ${(error as Error).message}`);
-          runner.results.errors.push(`${category}/${testFile.filename}: ${(error as Error).message}`);
+          runner.results.errors.push(
+            `${category}/${testFile.filename}: ${(error as Error).message}`
+          );
         }
       }
     }

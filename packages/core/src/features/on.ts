@@ -647,7 +647,10 @@ export class TypedOnFeatureImplementation {
         if (!listener.isActive || listener.isPaused) return;
 
         // Apply 'in <selector>' filter if provided (cookbook pattern)
-        if (listener.options.inSelector && !this.testInSelectorFilter(event, listener.options.inSelector)) {
+        if (
+          listener.options.inSelector &&
+          !this.testInSelectorFilter(event, listener.options.inSelector)
+        ) {
           return;
         }
 

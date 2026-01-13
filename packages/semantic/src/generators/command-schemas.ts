@@ -83,14 +83,14 @@ export interface CommandSchema {
  * Command categories for organization.
  */
 export type CommandCategory =
-  | 'dom-class'      // Class/attribute manipulation
-  | 'dom-content'    // Content manipulation
+  | 'dom-class' // Class/attribute manipulation
+  | 'dom-content' // Content manipulation
   | 'dom-visibility' // Show/hide
-  | 'variable'       // Variable operations
-  | 'event'          // Event handling
-  | 'async'          // Async operations
-  | 'navigation'     // URL/navigation
-  | 'control-flow';  // Control flow
+  | 'variable' // Variable operations
+  | 'event' // Event handling
+  | 'async' // Async operations
+  | 'navigation' // URL/navigation
+  | 'control-flow'; // Control flow
 
 // =============================================================================
 // Command Schema Definitions
@@ -266,7 +266,14 @@ export const putSchema: CommandSchema = {
     },
   ],
   // Runtime error documentation
-  errorCodes: ['MISSING_ARGUMENTS', 'MISSING_CONTENT', 'MISSING_POSITION', 'INVALID_POSITION', 'NO_TARGET', 'NO_ELEMENTS'],
+  errorCodes: [
+    'MISSING_ARGUMENTS',
+    'MISSING_CONTENT',
+    'MISSING_POSITION',
+    'INVALID_POSITION',
+    'NO_TARGET',
+    'NO_ELEMENTS',
+  ],
   preconditions: [
     {
       condition: 'Command has content and position arguments',
@@ -323,7 +330,7 @@ export const setSchema: CommandSchema = {
       // Override destination marker for English (remove 'on', use no marker)
       // Other languages keep their default destination markers
       markerOverride: {
-        en: '',  // No marker before destination in English: "set :x to 5"
+        en: '', // No marker before destination in English: "set :x to 5"
       },
     },
     {
@@ -336,12 +343,12 @@ export const setSchema: CommandSchema = {
       // Override patient marker for SVO languages with their native prepositions
       // SOV languages (Korean, Japanese, Turkish) use their default object markers
       markerOverride: {
-        en: 'to',    // "set :x to 5"
-        es: 'a',     // "establecer x a 10"
-        pt: 'para',  // "definir x para 10"
-        fr: 'à',     // "définir x à 10"
-        de: 'auf',   // "setze x auf 10"
-        id: 'ke',    // "atur x ke 10"
+        en: 'to', // "set :x to 5"
+        es: 'a', // "establecer x a 10"
+        pt: 'para', // "definir x para 10"
+        fr: 'à', // "définir x à 10"
+        de: 'auf', // "setze x auf 10"
+        id: 'ke', // "atur x ke 10"
       },
     },
   ],
@@ -366,7 +373,8 @@ export const setSchema: CommandSchema = {
   ],
   recoveryHints: {
     MISSING_TARGET: 'Add a target: set :variable to value OR set element.property to value',
-    INVALID_TARGET: 'Use local variable (:name), element property (el.prop), or "the X of Y" syntax',
+    INVALID_TARGET:
+      'Use local variable (:name), element property (el.prop), or "the X of Y" syntax',
     MISSING_VALUE: 'Add "to <value>" to specify what to set',
     INVALID_SYNTAX: 'Use syntax: set <target> to <value>',
   },
@@ -710,8 +718,17 @@ export const getCommandSchema: CommandSchema = {
       sovPosition: 2,
       // No marker before source for simple GET pattern: "get #element" not "get from #element"
       markerOverride: {
-        en: '', es: '', pt: '', fr: '', de: '',
-        ja: '', zh: '', ko: '', ar: '', tr: '', id: '',
+        en: '',
+        es: '',
+        pt: '',
+        fr: '',
+        de: '',
+        ja: '',
+        zh: '',
+        ko: '',
+        ar: '',
+        tr: '',
+        id: '',
       },
     },
     {
@@ -983,7 +1000,8 @@ export const repeatSchema: CommandSchema = {
       sovPosition: 3,
     },
   ],
-  notes: 'Can also use "repeat forever", "repeat until condition", or "repeat until event X from Y"',
+  notes:
+    'Can also use "repeat forever", "repeat until condition", or "repeat until event X from Y"',
 };
 
 /**
@@ -1084,7 +1102,7 @@ export const transitionSchema: CommandSchema = {
       role: 'patient',
       description: 'The property to transition (opacity, *background-color, etc.)',
       required: true,
-      expectedTypes: ['literal'],  // Only literal - CSS properties are strings, not selectors
+      expectedTypes: ['literal'], // Only literal - CSS properties are strings, not selectors
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1600,17 +1618,19 @@ export function getDefinedSchemas(): CommandSchema[] {
 // This is tree-shaken out in production builds
 if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
   // Dynamic import to avoid bundling in production
-  import('./schema-validator').then(({ validateAllSchemas, formatValidationResults }) => {
-    const validations = validateAllSchemas(commandSchemas);
+  import('./schema-validator')
+    .then(({ validateAllSchemas, formatValidationResults }) => {
+      const validations = validateAllSchemas(commandSchemas);
 
-    if (validations.size > 0) {
-      console.warn('[SCHEMA VALIDATION] Found issues in command schemas:');
-      console.warn(formatValidationResults(validations));
-      console.warn('\nThese warnings help identify potential schema design issues.');
-      console.warn('Fix them to improve type inference and avoid runtime bugs.');
-    }
-  }).catch((err) => {
-    // Silently ignore if schema validator is not available
-    console.debug('Schema validation skipped:', err);
-  });
+      if (validations.size > 0) {
+        console.warn('[SCHEMA VALIDATION] Found issues in command schemas:');
+        console.warn(formatValidationResults(validations));
+        console.warn('\nThese warnings help identify potential schema design issues.');
+        console.warn('Fix them to improve type inference and avoid runtime bugs.');
+      }
+    })
+    .catch(err => {
+      // Silently ignore if schema validator is not available
+      console.debug('Schema validation skipped:', err);
+    });
 }

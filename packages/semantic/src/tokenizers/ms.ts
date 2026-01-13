@@ -73,7 +73,10 @@ export class MalayTokenizer extends BaseTokenizer {
       }
 
       // Numbers
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.tryNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

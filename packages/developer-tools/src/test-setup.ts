@@ -75,7 +75,8 @@ expect.extend({
    * Check if result is a valid AnalysisResult
    */
   toBeValidAnalysisResult(received) {
-    const pass = received &&
+    const pass =
+      received &&
       typeof received === 'object' &&
       'file' in received &&
       'scripts' in received &&
@@ -91,12 +92,11 @@ expect.extend({
    * Check if chalk output contains expected content (strips ANSI codes)
    */
   toHaveBeenCalledWithChalk(received: ReturnType<typeof vi.fn>, expectedContent: string) {
-    const calls = received.mock.calls.map(call =>
-      String(call[0]).replace(/\x1b\[[0-9;]*m/g, '')
-    );
+    const calls = received.mock.calls.map(call => String(call[0]).replace(/\x1b\[[0-9;]*m/g, ''));
     const pass = calls.some(call => call.includes(expectedContent));
     return {
-      message: () => `expected chalk output to contain "${expectedContent}", got: ${JSON.stringify(calls)}`,
+      message: () =>
+        `expected chalk output to contain "${expectedContent}", got: ${JSON.stringify(calls)}`,
       pass,
     };
   },
@@ -105,7 +105,8 @@ expect.extend({
    * Check if a component definition is valid
    */
   toBeValidComponentDefinition(received) {
-    const pass = received &&
+    const pass =
+      received &&
       typeof received === 'object' &&
       'id' in received &&
       'name' in received &&
@@ -123,7 +124,8 @@ expect.extend({
     const paths = received.map(f => f.path);
     const pass = expectedFiles.every(f => paths.includes(f));
     return {
-      message: () => `expected files to contain ${expectedFiles.join(', ')}, got: ${paths.join(', ')}`,
+      message: () =>
+        `expected files to contain ${expectedFiles.join(', ')}, got: ${paths.join(', ')}`,
       pass,
     };
   },

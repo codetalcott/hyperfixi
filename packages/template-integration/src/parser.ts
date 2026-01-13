@@ -120,7 +120,7 @@ export class TemplateParser {
     }
 
     const node: TemplateNode = {
-      type: directive ? 'directive' : (hyperscriptCode ? 'hyperscript' : 'element'),
+      type: directive ? 'directive' : hyperscriptCode ? 'hyperscript' : 'element',
       tagName,
       attributes,
       children,
@@ -187,12 +187,14 @@ export class TemplateParser {
    */
   private parseAttributeName(): string {
     let name = '';
-    
-    while (!this.isAtEnd() && 
-           /[a-zA-Z0-9_:-]/.test(this.peek()) && 
-           this.peek() !== '=' && 
-           this.peek() !== '>' && 
-           this.peek() !== ' ') {
+
+    while (
+      !this.isAtEnd() &&
+      /[a-zA-Z0-9_:-]/.test(this.peek()) &&
+      this.peek() !== '=' &&
+      this.peek() !== '>' &&
+      this.peek() !== ' '
+    ) {
       name += this.advance();
     }
 
@@ -210,10 +212,7 @@ export class TemplateParser {
     } else {
       // Unquoted value
       let value = '';
-      while (!this.isAtEnd() && 
-             this.peek() !== ' ' && 
-             this.peek() !== '>' && 
-             !this.matches('/>')) {
+      while (!this.isAtEnd() && this.peek() !== ' ' && this.peek() !== '>' && !this.matches('/>')) {
         value += this.advance();
       }
       return value;
@@ -247,7 +246,6 @@ export class TemplateParser {
     return value;
   }
 
-
   /**
    * Parse text content (including template variables)
    */
@@ -271,10 +269,10 @@ export class TemplateParser {
    */
   private parseComment(): TemplateNode {
     const location = { line: this.currentLine, column: this.currentColumn };
-    
+
     // Skip '!--'
     this.position += 3;
-    
+
     let content = '';
     while (!this.isAtEnd() && !this.matches('-->')) {
       content += this.advance();
@@ -322,12 +320,14 @@ export class TemplateParser {
    */
   private parseTagName(): string {
     let name = '';
-    
-    while (!this.isAtEnd() && 
-           /[a-zA-Z0-9_:-]/.test(this.peek()) && 
-           this.peek() !== ' ' && 
-           this.peek() !== '>' && 
-           this.peek() !== '/') {
+
+    while (
+      !this.isAtEnd() &&
+      /[a-zA-Z0-9_:-]/.test(this.peek()) &&
+      this.peek() !== ' ' &&
+      this.peek() !== '>' &&
+      this.peek() !== '/'
+    ) {
       name += this.advance();
     }
 
@@ -337,9 +337,21 @@ export class TemplateParser {
   /**
    * Parse template directives from attributes
    */
-  private parseDirectiveFromAttributes(attributes: Record<string, string>): TemplateDirective | undefined {
-    const directiveNames = ['v-if', 'v-for', 'v-show', 'x-if', 'x-for', 'x-show', 'hf-if', 'hf-for', 'hf-component'];
-    
+  private parseDirectiveFromAttributes(
+    attributes: Record<string, string>
+  ): TemplateDirective | undefined {
+    const directiveNames = [
+      'v-if',
+      'v-for',
+      'v-show',
+      'x-if',
+      'x-for',
+      'x-show',
+      'hf-if',
+      'hf-for',
+      'hf-component',
+    ];
+
     for (const [attr, value] of Object.entries(attributes)) {
       if (directiveNames.includes(attr)) {
         const name = attr.split('-')[1] || attr; // Extract directive name
@@ -362,8 +374,8 @@ export class TemplateParser {
 
     const traverse = (node: TemplateNode) => {
       if (node.type === 'hyperscript' && node.hyperscript) {
-        const code = Array.isArray(node.hyperscript) 
-          ? node.hyperscript.join(' ') 
+        const code = Array.isArray(node.hyperscript)
+          ? node.hyperscript.join(' ')
           : node.hyperscript;
 
         blocks.push({
@@ -440,16 +452,16 @@ export class TemplateParser {
 
   private advance(): string {
     if (this.isAtEnd()) return '\0';
-    
+
     const char = this.template[this.position++];
-    
+
     if (char === '\n') {
       this.currentLine++;
       this.currentColumn = 1;
     } else {
       this.currentColumn++;
     }
-    
+
     return char;
   }
 
@@ -477,20 +489,28 @@ export class TemplateParser {
 
   private isSelfClosingTag(tagName: string): boolean {
     const selfClosingTags = [
-      'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-      'link', 'meta', 'param', 'source', 'track', 'wbr'
+      'area',
+      'base',
+      'br',
+      'col',
+      'embed',
+      'hr',
+      'img',
+      'input',
+      'link',
+      'meta',
+      'param',
+      'source',
+      'track',
+      'wbr',
     ];
     return selfClosingTags.includes(tagName.toLowerCase());
   }
 
   private error(message: string): TemplateError {
-    return new TemplateError(
-      message,
-      'parse',
-      {
-        line: this.currentLine,
-        column: this.currentColumn,
-      }
-    );
+    return new TemplateError(message, 'parse', {
+      line: this.currentLine,
+      column: this.currentColumn,
+    });
   }
 }

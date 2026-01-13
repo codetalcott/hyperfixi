@@ -164,8 +164,12 @@ describe('Reference Expressions', () => {
           '.shared-class'
         );
         expect(result).toHaveLength(2);
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[0].textContent).toBe('Item 1');
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[1].textContent).toBe('Item 2');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[0].textContent
+        ).toBe('Item 1');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[1].textContent
+        ).toBe('Item 2');
       });
 
       it('should return empty array for non-existent selector', async () => {
@@ -180,7 +184,9 @@ describe('Reference Expressions', () => {
         const result = await referenceExpressions.querySelectorAll.evaluate(context, 'div');
         expect((result as unknown[] | { length: number }).length).toBeGreaterThan(0);
         // Should find at least the container and nested divs
-        expect((result as unknown[]).some((el: unknown) => (el as { id: string }).id === 'container')).toBe(true);
+        expect(
+          (result as unknown[]).some((el: unknown) => (el as { id: string }).id === 'container')
+        ).toBe(true);
       });
 
       it('should validate selector argument', () => {
@@ -240,8 +246,12 @@ describe('Reference Expressions', () => {
           'shared-class'
         );
         expect(result).toHaveLength(2);
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[0].textContent).toBe('Item 1');
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[1].textContent).toBe('Item 2');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[0].textContent
+        ).toBe('Item 1');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[1].textContent
+        ).toBe('Item 2');
       });
 
       it('should return empty array for non-existent class', async () => {
@@ -258,8 +268,12 @@ describe('Reference Expressions', () => {
           'shared-class'
         );
         expect(result).toHaveLength(2);
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[0].textContent).toBe('Item 1');
-        expect((result as unknown[] & { [index: number]: { textContent: string } })[1].textContent).toBe('Item 2');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[0].textContent
+        ).toBe('Item 1');
+        expect(
+          (result as unknown[] & { [index: number]: { textContent: string } })[1].textContent
+        ).toBe('Item 2');
       });
 
       it('should validate className argument', () => {
@@ -313,9 +327,9 @@ describe('Reference Expressions', () => {
       });
 
       it('should throw error for non-string selector', async () => {
-        await expect(referenceExpressions.closest.evaluate(context, 123 as unknown as string)).rejects.toThrow(
-          'closest requires a string selector'
-        );
+        await expect(
+          referenceExpressions.closest.evaluate(context, 123 as unknown as string)
+        ).rejects.toThrow('closest requires a string selector');
       });
     });
 
@@ -437,9 +451,9 @@ describe('Reference Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(referenceExpressions.styleRef.evaluate(context, 123 as unknown as string)).rejects.toThrow(
-          'StyleRef requires a string property name'
-        );
+        await expect(
+          referenceExpressions.styleRef.evaluate(context, 123 as unknown as string)
+        ).rejects.toThrow('StyleRef requires a string property name');
       });
     });
 
@@ -557,7 +571,11 @@ describe('Reference Expressions', () => {
 
       it('should throw error for non-string arguments', async () => {
         await expect(
-          referenceExpressions.possessiveStyleRef.evaluate(context, 123 as unknown as string, 'color')
+          referenceExpressions.possessiveStyleRef.evaluate(
+            context,
+            123 as unknown as string,
+            'color'
+          )
         ).rejects.toThrow('Possessive styleRef requires possessor and property strings');
         await expect(
           referenceExpressions.possessiveStyleRef.evaluate(context, 'my', 123 as unknown as string)

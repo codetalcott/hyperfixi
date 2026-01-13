@@ -79,7 +79,7 @@ describe('@hyperfixi/behaviors', () => {
     it('getAllSchemas should return all schemas', () => {
       const schemas = getAllSchemas();
       expect(schemas.length).toBe(5);
-      expect(schemas.map((s) => s.name).sort()).toEqual([
+      expect(schemas.map(s => s.name).sort()).toEqual([
         'Draggable',
         'Removable',
         'Resizable',
@@ -105,8 +105,8 @@ describe('@hyperfixi/behaviors', () => {
 
     it('should document events', () => {
       expect(draggableMetadata.events).toBeDefined();
-      expect(draggableMetadata.events?.map((e) => e.name)).toContain('draggable:start');
-      expect(draggableMetadata.events?.map((e) => e.name)).toContain('draggable:end');
+      expect(draggableMetadata.events?.map(e => e.name)).toContain('draggable:start');
+      expect(draggableMetadata.events?.map(e => e.name)).toContain('draggable:end');
     });
   });
 

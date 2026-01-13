@@ -80,4 +80,19 @@ export { getGetPatternsVi } from './vi';
 /**
  * Languages that have hand-crafted get patterns.
  */
-export const getPatternLanguages = ['ar', 'bn', 'de', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tl', 'uk', 'vi'];
+export const getPatternLanguages = [
+  'ar',
+  'bn',
+  'de',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'uk',
+  'vi',
+];

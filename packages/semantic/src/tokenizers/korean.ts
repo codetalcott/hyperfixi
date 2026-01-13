@@ -35,7 +35,7 @@ import { KoreanMorphologicalNormalizer } from './morphology/korean-normalizer';
  */
 function isHangul(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0xAC00 && code <= 0xD7A3;
+  return code >= 0xac00 && code <= 0xd7a3;
 }
 
 /**
@@ -44,7 +44,7 @@ function isHangul(char: string): boolean {
  */
 function isJamo(char: string): boolean {
   const code = char.charCodeAt(0);
-  return (code >= 0x1100 && code <= 0x11FF) || (code >= 0x3130 && code <= 0x318F);
+  return (code >= 0x1100 && code <= 0x11ff) || (code >= 0x3130 && code <= 0x318f);
 }
 
 /**
@@ -92,7 +92,21 @@ const PARTICLES = new Set([
 /**
  * Single-character particles.
  */
-const SINGLE_CHAR_PARTICLES = new Set(['이', '가', '을', '를', '은', '는', '에', '로', '와', '과', '의', '도', '만']);
+const SINGLE_CHAR_PARTICLES = new Set([
+  '이',
+  '가',
+  '을',
+  '를',
+  '은',
+  '는',
+  '에',
+  '로',
+  '와',
+  '과',
+  '의',
+  '도',
+  '만',
+]);
 
 /**
  * Multi-character particles.
@@ -123,32 +137,32 @@ const KOREAN_KEYWORDS: Map<string, string> = new Map([
   // Commands - Variable operations
   ['설정', 'set'],
   ['얻다', 'get'],
-  ['가져오기', 'get'],   // nominalized form - common for "get" (test case)
-  ['패치', 'fetch'],     // Korean transliteration for fetch
+  ['가져오기', 'get'], // nominalized form - common for "get" (test case)
+  ['패치', 'fetch'], // Korean transliteration for fetch
   ['증가', 'increment'],
   ['감소', 'decrement'],
   ['로그', 'log'],
   // Commands - Visibility
   ['보이다', 'show'],
-  ['보이기', 'show'],    // nominalized form (test case)
+  ['보이기', 'show'], // nominalized form (test case)
   ['표시', 'show'],
   ['숨기다', 'hide'],
-  ['숨기기', 'hide'],    // nominalized form
+  ['숨기기', 'hide'], // nominalized form
   ['전환', 'transition'],
   // Commands - Events (standard markers)
   ['에', 'on'],
   ['시', 'on'],
   ['때', 'on'],
   // Conditional event markers (native idioms - parallel to Japanese したら)
-  ['하면', 'on'],      // conditional marker (if/when)
-  ['으면', 'on'],      // conditional marker (vowel harmony variant)
-  ['면', 'on'],        // bare conditional suffix
-  ['할때', 'on'],      // temporal marker (when it happens)
-  ['할 때', 'on'],     // temporal marker with space
-  ['을때', 'on'],      // temporal marker (vowel harmony variant)
-  ['을 때', 'on'],     // temporal marker with space
-  ['하니까', 'on'],    // causal marker (because/since)
-  ['니까', 'on'],      // bare causal suffix
+  ['하면', 'on'], // conditional marker (if/when)
+  ['으면', 'on'], // conditional marker (vowel harmony variant)
+  ['면', 'on'], // bare conditional suffix
+  ['할때', 'on'], // temporal marker (when it happens)
+  ['할 때', 'on'], // temporal marker with space
+  ['을때', 'on'], // temporal marker (vowel harmony variant)
+  ['을 때', 'on'], // temporal marker with space
+  ['하니까', 'on'], // causal marker (because/since)
+  ['니까', 'on'], // bare causal suffix
   ['트리거', 'trigger'],
   ['보내다', 'send'],
   // Commands - DOM focus
@@ -351,11 +365,7 @@ export class KoreanTokenizer extends BaseTokenizer {
 
       // Try single-character particle
       if (SINGLE_CHAR_PARTICLES.has(input[pos])) {
-        tokens.push(createToken(
-          input[pos],
-          'particle',
-          createPosition(pos, pos + 1)
-        ));
+        tokens.push(createToken(input[pos], 'particle', createPosition(pos, pos + 1)));
         pos++;
         continue;
       }
@@ -393,11 +403,7 @@ export class KoreanTokenizer extends BaseTokenizer {
   private tryMultiCharParticle(input: string, pos: number): LanguageToken | null {
     for (const particle of MULTI_CHAR_PARTICLES) {
       if (input.slice(pos, pos + particle.length) === particle) {
-        return createToken(
-          particle,
-          'particle',
-          createPosition(pos, pos + particle.length)
-        );
+        return createToken(particle, 'particle', createPosition(pos, pos + particle.length));
       }
     }
     return null;
@@ -510,12 +516,7 @@ export class KoreanTokenizer extends BaseTokenizer {
     const normalized = KOREAN_KEYWORDS.get(word);
 
     if (normalized) {
-      return createToken(
-        word,
-        'keyword',
-        createPosition(startPos, pos),
-        normalized
-      );
+      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
     }
 
     // Try morphological normalization for conjugated forms
@@ -532,21 +533,12 @@ export class KoreanTokenizer extends BaseTokenizer {
           stemConfidence: morphResult.confidence,
         };
 
-        return createToken(
-          word,
-          'keyword',
-          createPosition(startPos, pos),
-          tokenOptions
-        );
+        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
       }
     }
 
     // Not a keyword, return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -562,11 +554,7 @@ export class KoreanTokenizer extends BaseTokenizer {
 
     if (!word) return null;
 
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -613,7 +601,11 @@ export class KoreanTokenizer extends BaseTokenizer {
       } else if (remaining[0] === 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
         number += 's';
         pos += 1;
-      } else if (remaining[0] === 'm' && remaining[1] !== 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
+      } else if (
+        remaining[0] === 'm' &&
+        remaining[1] !== 's' &&
+        !isAsciiIdentifierChar(remaining[1] || '')
+      ) {
         number += 'm';
         pos += 1;
       } else if (remaining[0] === 'h' && !isAsciiIdentifierChar(remaining[1] || '')) {
@@ -624,11 +616,7 @@ export class KoreanTokenizer extends BaseTokenizer {
 
     if (!number) return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
 }
 

@@ -9,7 +9,7 @@ export const qu: Dictionary = {
     tell: 'niy',
     trigger: 'kichay',
     send: 'kachay',
-    
+
     // DOM manipulation
     take: 'hurquy',
     put: 'churay',
@@ -20,7 +20,7 @@ export const qu: Dictionary = {
     toggle: 'tikray',
     hide: 'pakay',
     show: 'rikuchiy',
-    
+
     // Control flow
     if: 'sichus',
     unless: 'mana_sichus',
@@ -31,13 +31,13 @@ export const qu: Dictionary = {
     continue: 'purichiy',
     break: 'p_akiy',
     halt: 'sayay',
-    
+
     // Async
     wait: 'suyay',
     fetch: 'apamuy',
     call: 'qayay',
     return: 'kutimuy',
-    
+
     // Other commands
     make: 'ruray',
     log: 'qillqay',
@@ -82,7 +82,7 @@ export const qu: Dictionary = {
     // Behaviors
     install: 'churay',
   },
-  
+
   modifiers: {
     to: 'man',
     from: 'manta',
@@ -101,7 +101,7 @@ export const qu: Dictionary = {
     through: 'pasaspa',
     without: 'mana',
   },
-  
+
   events: {
     click: 'ñitiy',
     dblclick: 'iskay_ñitiy',
@@ -112,29 +112,29 @@ export const qu: Dictionary = {
     mouseover: 'rat_hawapi',
     mouseout: 'rat_hawamanta',
     mousemove: 'rat_kuyuy',
-    
+
     keydown: 'yupana_ñitiy',
     keyup: 'yupana_huqariy',
     keypress: 'yupana_ñitana',
-    
+
     focus: 'qhaway',
     blur: 'paqariy',
     change: 'tikray',
     input: 'yaykuchiy',
     submit: 'kachay',
     reset: 'qallariy',
-    
+
     load: 'apakuy',
     unload: 'urmay',
     resize: 'hatun_kay',
     scroll: 'kunray',
-    
+
     touchstart: 'llamiy_qallay',
     touchend: 'llamiy_tukuy',
     touchmove: 'llamiy_kuyuy',
     touchcancel: 'llamiy_hark_ay',
   },
-  
+
   logical: {
     when: 'maykama',
     where: 'maypi',
@@ -152,7 +152,7 @@ export const qu: Dictionary = {
     otherwise: 'huk_kaqpi',
     end: 'tukuy',
   },
-  
+
   temporal: {
     seconds: 'sikundukuna',
     second: 'sikundu',
@@ -167,7 +167,7 @@ export const qu: Dictionary = {
     min: 'm',
     h: 'h',
   },
-  
+
   values: {
     true: 'cheqaq',
     false: 'llulla',
@@ -191,7 +191,7 @@ export const qu: Dictionary = {
     result: 'lluqsiy',
     value: 'chanin',
   },
-  
+
   attributes: {
     class: 'ayllu',
     classes: 'ayllukuna',

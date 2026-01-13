@@ -398,7 +398,7 @@ describe('ParserContext', () => {
           type: 'setCommand',
           target,
           value,
-          ...ctx.getPosition()
+          ...ctx.getPosition(),
         };
       };
 

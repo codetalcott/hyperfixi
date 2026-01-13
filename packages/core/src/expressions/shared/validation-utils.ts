@@ -87,7 +87,12 @@ export function validateBinaryInput(input: unknown): ValidationResult {
     if (!('left' in obj)) missing.push('left');
     if (!('right' in obj)) missing.push('right');
     return invalidResult(
-      [createError('missing-argument', `Missing ${missing.join(' and ')} operand${missing.length > 1 ? 's' : ''}`)],
+      [
+        createError(
+          'missing-argument',
+          `Missing ${missing.join(' and ')} operand${missing.length > 1 ? 's' : ''}`
+        ),
+      ],
       ['Provide { left: value, right: value }']
     );
   }

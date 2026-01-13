@@ -230,7 +230,10 @@ export class BaseExpressionEvaluator {
   /**
    * Evaluate conditional expressions (if-then-else / ternary)
    */
-  protected async evaluateConditionalExpression(node: any, context: ExecutionContext): Promise<any> {
+  protected async evaluateConditionalExpression(
+    node: any,
+    context: ExecutionContext
+  ): Promise<any> {
     const test = await this.evaluate(node.test, context);
 
     if (test) {
@@ -269,7 +272,8 @@ export class BaseExpressionEvaluator {
       const { match, varName, index } = matches[i];
       const value = await this.resolveTemplateVariable(varName, context);
       debug.expressions(`TEMPLATE: $${varName} resolved to`, value);
-      template = template.slice(0, index) + String(value ?? '') + template.slice(index + match.length);
+      template =
+        template.slice(0, index) + String(value ?? '') + template.slice(index + match.length);
     }
 
     // Second pass: Handle ${expression} patterns
@@ -594,7 +598,9 @@ export class BaseExpressionEvaluator {
       case 'event':
         return context.event;
       case 'body':
-        return (context.meta as { ownerDocument?: Document })?.ownerDocument?.body || document?.body;
+        return (
+          (context.meta as { ownerDocument?: Document })?.ownerDocument?.body || document?.body
+        );
       case 'detail':
         return (context.event as CustomEvent)?.detail;
       case 'target':
@@ -808,7 +814,10 @@ export class BaseExpressionEvaluator {
     }
 
     // Special handling for 'matches' operator
-    if (operator === 'matches' && (right.type === 'selector' || right.type === 'cssSelector' || right.type === 'classSelector')) {
+    if (
+      operator === 'matches' &&
+      (right.type === 'selector' || right.type === 'cssSelector' || right.type === 'classSelector')
+    ) {
       const leftValue = await this.evaluate(left, context);
       const selectorStr = right.value || right.selector;
 
@@ -930,9 +939,7 @@ export class BaseExpressionEvaluator {
       case 'is a':
       case 'is an':
         const checkTypeName =
-          right.type === 'identifier'
-            ? right.name.toLowerCase()
-            : String(rightValue).toLowerCase();
+          right.type === 'identifier' ? right.name.toLowerCase() : String(rightValue).toLowerCase();
         switch (checkTypeName) {
           case 'string':
             return typeof leftValue === 'string';
@@ -958,9 +965,7 @@ export class BaseExpressionEvaluator {
       case 'is not a':
       case 'is not an':
         const negCheckTypeName =
-          right.type === 'identifier'
-            ? right.name.toLowerCase()
-            : String(rightValue).toLowerCase();
+          right.type === 'identifier' ? right.name.toLowerCase() : String(rightValue).toLowerCase();
         switch (negCheckTypeName) {
           case 'string':
             return typeof leftValue !== 'string';
@@ -1187,11 +1192,21 @@ export class BaseExpressionEvaluator {
 
       const evaluatedArgs = await Promise.all(
         args.map((arg: any) => {
-          if (needsSelectorString && arg && arg.type === 'selector' && typeof arg.value === 'string') {
+          if (
+            needsSelectorString &&
+            arg &&
+            arg.type === 'selector' &&
+            typeof arg.value === 'string'
+          ) {
             return arg.value;
           }
           // Handle identifier args for closest/previous/next (e.g., "closest nav" where nav is an identifier)
-          if (needsSelectorString && arg && arg.type === 'identifier' && typeof arg.name === 'string') {
+          if (
+            needsSelectorString &&
+            arg &&
+            arg.type === 'identifier' &&
+            typeof arg.name === 'string'
+          ) {
             return arg.name;
           }
           if (needsCollection && arg && arg.type === 'selector' && typeof arg.value === 'string') {
@@ -1292,7 +1307,8 @@ export class BaseExpressionEvaluator {
       selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
     }
     // Use element's ownerDocument for JSDOM compatibility, fall back to global document
-    const doc = (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
+    const doc =
+      (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
     if (!doc) {
       return [];
     }
@@ -1419,15 +1435,11 @@ export class BaseExpressionEvaluator {
     } else if (node.selectorType === 'class') {
       const escapedSelector = selector.replace(/:/g, '\\:');
       const elements = document.querySelectorAll(escapedSelector);
-      return Array.from(elements).filter(
-        (el): el is HTMLElement => el instanceof HTMLElement
-      );
+      return Array.from(elements).filter((el): el is HTMLElement => el instanceof HTMLElement);
     }
 
     const elements = document.querySelectorAll(selector);
-    return Array.from(elements).filter(
-      (el): el is HTMLElement => el instanceof HTMLElement
-    );
+    return Array.from(elements).filter((el): el is HTMLElement => el instanceof HTMLElement);
   }
 
   /**
@@ -1465,7 +1477,9 @@ export class BaseExpressionEvaluator {
     const propertyNode = node.property;
 
     if (object === null || object === undefined) {
-      throw new Error(`Cannot access property "${propertyNode.name || propertyNode.value}" of ${object}`);
+      throw new Error(
+        `Cannot access property "${propertyNode.name || propertyNode.value}" of ${object}`
+      );
     }
 
     const propertyName = propertyNode.name || propertyNode.value;

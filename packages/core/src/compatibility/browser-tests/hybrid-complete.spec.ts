@@ -15,7 +15,8 @@ const bundleCode = fs.existsSync(bundlePath) ? fs.readFileSync(bundlePath, 'utf-
 
 test.describe('HyperFixi Hybrid Complete Bundle', () => {
   test.beforeEach(async ({ page }) => {
-    await page.setContent(`
+    await page.setContent(
+      `
       <!DOCTYPE html>
       <html>
       <head>
@@ -29,7 +30,9 @@ test.describe('HyperFixi Hybrid Complete Bundle', () => {
         <div id="test-container"></div>
       </body>
       </html>
-    `, { waitUntil: 'domcontentloaded' });
+    `,
+      { waitUntil: 'domcontentloaded' }
+    );
 
     await page.addScriptTag({ content: bundleCode });
     await page.waitForFunction(() => (window as any).hyperfixi !== undefined, { timeout: 5000 });
@@ -129,7 +132,8 @@ test.describe('HyperFixi Hybrid Complete Bundle', () => {
 
     test('wait delays execution', async ({ page }) => {
       await page.evaluate(() => {
-        document.body.innerHTML = '<button id="btn" _="on click add .active then wait 100ms then remove .active">Wait</button>';
+        document.body.innerHTML =
+          '<button id="btn" _="on click add .active then wait 100ms then remove .active">Wait</button>';
         (window as any).hyperfixi.init();
       });
 
@@ -421,7 +425,8 @@ test.describe('HyperFixi Hybrid Complete Bundle', () => {
   test.describe('i18n Aliases', () => {
     test('built-in command aliases work', async ({ page }) => {
       await page.evaluate(() => {
-        document.body.innerHTML = '<button id="btn" _="on click flip .active">Toggle via alias</button>';
+        document.body.innerHTML =
+          '<button id="btn" _="on click flip .active">Toggle via alias</button>';
         (window as any).hyperfixi.init();
       });
 
@@ -485,7 +490,8 @@ test.describe('HyperFixi Hybrid Complete Bundle', () => {
 
     test('handles chained commands with then', async ({ page }) => {
       await page.evaluate(() => {
-        document.body.innerHTML = '<button id="btn" _="on click add .a then add .b then add .c">Chain</button>';
+        document.body.innerHTML =
+          '<button id="btn" _="on click add .a then add .b then add .c">Chain</button>';
         (window as any).hyperfixi.init();
       });
 

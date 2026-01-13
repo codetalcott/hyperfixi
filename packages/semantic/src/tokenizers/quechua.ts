@@ -41,15 +41,15 @@ function isQuechuaIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const SUFFIXES = new Set([
-  '-ta',        // accusative (direct object)
-  '-man',       // allative (to, towards)
-  '-manta',     // ablative (from)
-  '-pi',        // locative (at, in)
-  '-wan',       // comitative/instrumental (with)
-  '-paq',       // benefactive (for)
-  '-kama',      // limitative (until, up to)
-  '-rayku',     // causative (because of)
-  '-hina',      // simulative (like, as)
+  '-ta', // accusative (direct object)
+  '-man', // allative (to, towards)
+  '-manta', // ablative (from)
+  '-pi', // locative (at, in)
+  '-wan', // comitative/instrumental (with)
+  '-paq', // benefactive (for)
+  '-kama', // limitative (until, up to)
+  '-rayku', // causative (because of)
+  '-hina', // simulative (like, as)
 ]);
 
 // =============================================================================
@@ -80,7 +80,7 @@ const QUECHUA_KEYWORDS: Map<string, string> = new Map([
   ["t'inkuy", 'swap'],
   ['tinkuy', 'swap'],
   // Note: tikray maps to toggle (lines 61-62), use different words for morph
-  ['tukuchiy', 'morph'],  // "to transform completely"
+  ['tukuchiy', 'morph'], // "to transform completely"
   // Commands - Variable operations
   ['churay', 'set'],
   ['kamaykuy', 'set'],
@@ -95,7 +95,7 @@ const QUECHUA_KEYWORDS: Map<string, string> = new Map([
   ['pakay', 'hide'],
   ['pakakuy', 'hide'],
   // Note: tikray maps to toggle (lines 61-62), use different words for transition
-  ['muyuy', 'transition'],  // "to move smoothly"
+  ['muyuy', 'transition'], // "to move smoothly"
   ['kuyuchiy', 'transition'],
   // Commands - Events
   ['chaypim', 'on'],
@@ -243,7 +243,10 @@ export class QuechuaTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

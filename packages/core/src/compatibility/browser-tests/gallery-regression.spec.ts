@@ -11,12 +11,11 @@ import { test, expect } from '@playwright/test';
 const BASE_URL = 'http://127.0.0.1:3000';
 
 test.describe('Gallery Example Regression Tests @comprehensive', () => {
-
   test.describe('Counter Example (05-counter.html)', () => {
     test('reset button should replace content, not append', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/basics/05-counter.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -41,7 +40,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     test('put command should replace, not append on multiple resets', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/basics/05-counter.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -62,7 +61,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     test('input mirror should replace content, not concatenate', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/basics/04-input-mirror.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -78,7 +77,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     test('input mirror should handle clearing and retyping', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/basics/04-input-mirror.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -98,7 +97,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     test('clicking tabs should remove active from ALL tabs, not just first', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/intermediate/04-tabs.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -134,7 +133,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     test('tab content should show only selected panel', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/intermediate/04-tabs.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -145,7 +144,9 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
         await page.click(`button[data-tab="${tab}"]`);
         await page.waitForTimeout(200);
 
-        const activeContent = await page.$$eval('.tab-content.active', panels => panels.map(p => p.id));
+        const activeContent = await page.$$eval('.tab-content.active', panels =>
+          panels.map(p => p.id)
+        );
         expect(activeContent.length).toBe(1);
         expect(activeContent[0]).toBe(tab);
       }
@@ -154,7 +155,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     test('CSS class selector should target all matching elements', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/intermediate/04-tabs.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -183,7 +184,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
 
       await page.goto(`${BASE_URL}/examples/advanced/01-color-cycling.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
       await page.waitForTimeout(300);
 
@@ -193,7 +194,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
 
       if (box) {
         // Move to element and simulate mouse press/hold/release
-        await page.mouse.move(box.x + box.width/2, box.y + box.height/2);
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
         await page.mouse.down();
         await page.waitForTimeout(1000); // Hold for a bit
         await page.mouse.up();

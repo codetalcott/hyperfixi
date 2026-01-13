@@ -10,15 +10,20 @@ import {
   createEnhancedMultiTenant,
   enhancedMultiTenantImplementation,
   type EnhancedMultiTenantInput,
-  type EnhancedMultiTenantOutput
+  type EnhancedMultiTenantOutput,
 } from './enhanced-multi-tenant.js';
-import type { TenantInfo, TenantCustomization, TenantResolver, CustomizationProvider } from './types.js';
+import type {
+  TenantInfo,
+  TenantCustomization,
+  TenantResolver,
+  CustomizationProvider,
+} from './types.js';
 
 describe('Enhanced Multi-Tenant Implementation', () => {
   let multiTenantContext: TypedMultiTenantContextImplementation;
   let mockTenantResolver: TenantResolver;
   let mockCustomizationProvider: CustomizationProvider;
-  
+
   beforeEach(() => {
     multiTenantContext = createMultiTenantContext();
     vi.clearAllMocks();
@@ -71,10 +76,10 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       };
 
       const result = await multiTenantContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
       expect(result.value).toBeDefined();
-      
+
       if (result.success && result.value) {
         expect(result.value.category).toBe('Universal');
         expect(result.value.capabilities).toContain('tenant-resolution');
@@ -125,9 +130,9 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       };
 
       const result = await multiTenantContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('tenant-resolution');
         expect(result.value.capabilities).toContain('feature-control');
@@ -160,9 +165,9 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       };
 
       const result = await multiTenantContext.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('isolation-enforcement');
         expect(result.value.state).toBe('ready');
@@ -207,7 +212,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const resolvedTenant = await result.value.tenant.resolve('example.com');
         expect(resolvedTenant).toEqual(mockTenant);
@@ -251,7 +256,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const resolvedTenant = await result.value.tenant.resolve('app');
         expect(resolvedTenant).toEqual(mockTenant);
@@ -274,7 +279,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const resolvedTenant = await result.value.tenant.resolve('non-existent-tenant');
         expect(resolvedTenant).toBeNull();
@@ -323,7 +328,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Switch to first tenant
         await result.value.tenant.switchTo('tenant-1');
@@ -408,7 +413,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const customization = await result.value.customization.get('tenant-1');
         expect(customization).toEqual(mockCustomization);
@@ -445,11 +450,14 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const applied = await result.value.customization.apply('tenant-1', customizationUpdate);
         expect(applied).toBe(true);
-        expect(mockCustomizationProvider.updateCustomization).toHaveBeenCalledWith('tenant-1', customizationUpdate);
+        expect(mockCustomizationProvider.updateCustomization).toHaveBeenCalledWith(
+          'tenant-1',
+          customizationUpdate
+        );
       }
     });
 
@@ -466,7 +474,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Valid customization
         const validCustomization = {
@@ -522,7 +530,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Initially not enabled
         expect(result.value.isolation.isEnabled()).toBe(false);
@@ -553,7 +561,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const namespace = result.value.isolation.getNamespace('tenant-123');
         expect(namespace).toBe('app-tenant-123');
@@ -573,7 +581,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Enable isolation
         result.value.isolation.enable();
@@ -613,7 +621,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Resolve tenant first
         await result.value.tenant.resolve('tenant-1');
@@ -660,7 +668,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Resolve tenant first
         await result.value.tenant.resolve('tenant-1');
@@ -693,7 +701,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Initially no permissions
         expect(result.value.permissions.check('read')).toBe(false);
@@ -740,7 +748,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Collect metrics
         const metrics = result.value.metrics.collect({
@@ -798,7 +806,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Resolve tenant first
         await result.value.tenant.resolve('tenant-1');
@@ -845,7 +853,9 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors).toHaveLength(1);
       expect(validationResult.errors[0].type).toBe('missing-tenant-resolver');
-      expect(validationResult.suggestions).toContain('Provide a valid tenant resolver function or object');
+      expect(validationResult.suggestions).toContain(
+        'Provide a valid tenant resolver function or object'
+      );
     });
 
     it('should validate custom identifier configuration', () => {
@@ -952,7 +962,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       }
 
       const metrics = multiTenantContext.getPerformanceMetrics();
-      
+
       expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
       expect(typeof metrics.successRate).toBe('number');
       expect(typeof metrics.averageDuration).toBe('number');
@@ -972,15 +982,18 @@ describe('Enhanced Multi-Tenant Implementation', () => {
     });
 
     it('should create enhanced multi-tenant through convenience function', async () => {
-      const result = await createEnhancedMultiTenant({
-        tenantResolver: mockTenantResolver,
-        isolation: {
-          sandboxLevel: 'strict',
+      const result = await createEnhancedMultiTenant(
+        {
+          tenantResolver: mockTenantResolver,
+          isolation: {
+            sandboxLevel: 'strict',
+          },
         },
-      }, {
-        environment: 'backend',
-        identifier: { type: 'domain', value: 'test.com' },
-      });
+        {
+          environment: 'backend',
+          identifier: { type: 'domain', value: 'test.com' },
+        }
+      );
 
       expect(result).toBeDefined();
       expect(typeof result.success).toBe('boolean');
@@ -1000,7 +1013,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
 
     it('should have comprehensive metadata', () => {
       const { metadata } = multiTenantContext;
-      
+
       expect(metadata.category).toBe('Universal');
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
@@ -1013,7 +1026,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
 
     it('should have LLM-compatible documentation', () => {
       const { documentation } = multiTenantContext;
-      
+
       expect(documentation.summary).toBeDefined();
       expect(Array.isArray(documentation.parameters)).toBe(true);
       expect(documentation.returns).toBeDefined();
@@ -1147,7 +1160,7 @@ describe('Enhanced Multi-Tenant Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Resolve tenant
         const tenant = await result.value.tenant.resolve('enterprise.example.com');

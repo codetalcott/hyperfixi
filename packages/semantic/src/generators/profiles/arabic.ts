@@ -20,23 +20,23 @@ export const arabicProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'أنا',       // "I/me" - first person
-    it: 'هو',        // "it" (masculine)
-    you: 'أنت',      // "you"
+    me: 'أنا', // "I/me" - first person
+    it: 'هو', // "it" (masculine)
+    you: 'أنت', // "you"
     result: 'النتيجة',
     event: 'الحدث',
     target: 'الهدف',
     body: 'الجسم',
   },
   possessive: {
-    marker: '',      // No explicit marker - uses possessive pronouns
+    marker: '', // No explicit marker - uses possessive pronouns
     markerPosition: 'after-object',
     usePossessiveAdjectives: true,
     specialForms: {
       // Arabic: "value لي" (value for-me) - possessive pronoun follows property
-      me: 'لي',      // "for me" / "mine"
-      it: 'له',      // "for it" / "its"
-      you: 'لك',     // "for you" / "yours"
+      me: 'لي', // "for me" / "mine"
+      it: 'له', // "for it" / "its"
+      you: 'لك', // "for you" / "yours"
     },
   },
   roleMarkers: {

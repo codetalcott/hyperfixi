@@ -52,7 +52,7 @@ const defaultOptions: Required<DropdownBehaviorOptions> = {
   closeOnClickInside: false,
   closeOnEscape: true,
   openClass: '',
-  animationDuration: 0
+  animationDuration: 0,
 };
 
 /**
@@ -63,7 +63,13 @@ const defaultOptions: Required<DropdownBehaviorOptions> = {
  */
 export const dropdownBehaviorDefinition: BehaviorDefinition = {
   name: 'dropdown-behavior',
-  parameters: ['closeOnClickOutside', 'closeOnClickInside', 'closeOnEscape', 'openClass', 'animationDuration'],
+  parameters: [
+    'closeOnClickOutside',
+    'closeOnClickInside',
+    'closeOnEscape',
+    'openClass',
+    'animationDuration',
+  ],
 
   init(element: HTMLDetailsElement, options: DropdownBehaviorOptions = {}) {
     // Merge options with defaults
@@ -98,11 +104,13 @@ export const dropdownBehaviorDefinition: BehaviorDefinition = {
           }
 
           // Dispatch custom event
-          element.dispatchEvent(new CustomEvent('dropdown:open', {
-            detail: { element },
-            bubbles: true,
-            cancelable: false
-          }));
+          element.dispatchEvent(
+            new CustomEvent('dropdown:open', {
+              detail: { element },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
         }
       },
 
@@ -126,11 +134,13 @@ export const dropdownBehaviorDefinition: BehaviorDefinition = {
           }
 
           // Dispatch custom event
-          element.dispatchEvent(new CustomEvent('dropdown:close', {
-            detail: { element },
-            bubbles: true,
-            cancelable: false
-          }));
+          element.dispatchEvent(
+            new CustomEvent('dropdown:close', {
+              detail: { element },
+              bubbles: true,
+              cancelable: false,
+            })
+          );
         }
       },
 
@@ -145,11 +155,13 @@ export const dropdownBehaviorDefinition: BehaviorDefinition = {
         }
 
         // Dispatch custom event
-        element.dispatchEvent(new CustomEvent('dropdown:toggle', {
-          detail: { element, open: element.open },
-          bubbles: true,
-          cancelable: false
-        }));
+        element.dispatchEvent(
+          new CustomEvent('dropdown:toggle', {
+            detail: { element, open: element.open },
+            bubbles: true,
+            cancelable: false,
+          })
+        );
       },
 
       /**
@@ -157,7 +169,7 @@ export const dropdownBehaviorDefinition: BehaviorDefinition = {
        */
       isDropdownOpen() {
         return element.open;
-      }
+      },
     };
 
     // Attach methods to element
@@ -169,20 +181,24 @@ export const dropdownBehaviorDefinition: BehaviorDefinition = {
         if (config.openClass) {
           element.classList.add(config.openClass);
         }
-        element.dispatchEvent(new CustomEvent('dropdown:open', {
-          detail: { element },
-          bubbles: true,
-          cancelable: false
-        }));
+        element.dispatchEvent(
+          new CustomEvent('dropdown:open', {
+            detail: { element },
+            bubbles: true,
+            cancelable: false,
+          })
+        );
       } else {
         if (config.openClass) {
           element.classList.remove(config.openClass);
         }
-        element.dispatchEvent(new CustomEvent('dropdown:close', {
-          detail: { element },
-          bubbles: true,
-          cancelable: false
-        }));
+        element.dispatchEvent(
+          new CustomEvent('dropdown:close', {
+            detail: { element },
+            bubbles: true,
+            cancelable: false,
+          })
+        );
       }
     };
     element.addEventListener('toggle', toggleHandler);
@@ -249,7 +265,7 @@ export const dropdownBehaviorDefinition: BehaviorDefinition = {
     if ((element as any)._dropdownCleanup) {
       (element as any)._dropdownCleanup();
     }
-  }
+  },
 };
 
 /**

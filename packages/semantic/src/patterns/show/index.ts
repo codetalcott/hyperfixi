@@ -92,4 +92,22 @@ export { getShowPatternsZh } from './zh';
 /**
  * Languages that have hand-crafted show patterns.
  */
-export const showPatternLanguages = ['ar', 'bn', 'de', 'fr', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const showPatternLanguages = [
+  'ar',
+  'bn',
+  'de',
+  'fr',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

@@ -29,16 +29,18 @@ interface TenantMiddlewareResult {
  */
 export function createExpressMiddleware(config: TenantMiddlewareConfig) {
   const tenantManager = config.tenantManager as TenantManager;
-  const isolation = config.enableIsolation ? new TenantIsolation({
-    enableDataIsolation: true,
-    enableStyleIsolation: true,
-    enableScriptIsolation: true,
-    enableEventIsolation: true,
-    enableStorageIsolation: true,
-    sandboxLevel: 'basic',
-    namespacePrefix: 'tenant',
-    allowCrossTenantAccess: false,
-  }) : null;
+  const isolation = config.enableIsolation
+    ? new TenantIsolation({
+        enableDataIsolation: true,
+        enableStyleIsolation: true,
+        enableScriptIsolation: true,
+        enableEventIsolation: true,
+        enableStorageIsolation: true,
+        sandboxLevel: 'basic',
+        namespacePrefix: 'tenant',
+        allowCrossTenantAccess: false,
+      })
+    : null;
   const customizationEngine = new TenantCustomizationEngine();
 
   return async function tenantMiddleware(req: any, res: any, next: any) {
@@ -55,7 +57,7 @@ export function createExpressMiddleware(config: TenantMiddlewareConfig) {
         if (config.onTenantError) {
           config.onTenantError(result.error, req);
         }
-        
+
         if (config.requireTenant) {
           return res.status(result.statusCode || 400).json({
             error: result.message || 'Tenant resolution failed',
@@ -78,7 +80,7 @@ export function createExpressMiddleware(config: TenantMiddlewareConfig) {
       if (config.onTenantError) {
         config.onTenantError(error instanceof Error ? error : new Error(String(error)), req);
       }
-      
+
       if (config.requireTenant) {
         res.status(500).json({
           error: 'Internal tenant resolution error',
@@ -95,16 +97,18 @@ export function createExpressMiddleware(config: TenantMiddlewareConfig) {
  */
 export function createElysiaPlugin(config: TenantMiddlewareConfig) {
   const tenantManager = config.tenantManager as TenantManager;
-  const isolation = config.enableIsolation ? new TenantIsolation({
-    enableDataIsolation: true,
-    enableStyleIsolation: true,
-    enableScriptIsolation: true,
-    enableEventIsolation: true,
-    enableStorageIsolation: true,
-    sandboxLevel: 'basic',
-    namespacePrefix: 'tenant',
-    allowCrossTenantAccess: false,
-  }) : null;
+  const isolation = config.enableIsolation
+    ? new TenantIsolation({
+        enableDataIsolation: true,
+        enableStyleIsolation: true,
+        enableScriptIsolation: true,
+        enableEventIsolation: true,
+        enableStorageIsolation: true,
+        sandboxLevel: 'basic',
+        namespacePrefix: 'tenant',
+        allowCrossTenantAccess: false,
+      })
+    : null;
   const customizationEngine = new TenantCustomizationEngine();
 
   return function tenantPlugin(app: any) {
@@ -142,27 +146,23 @@ export function createElysiaPlugin(config: TenantMiddlewareConfig) {
  */
 export function createTenantMiddleware(config: TenantMiddlewareConfig) {
   const tenantManager = config.tenantManager as TenantManager;
-  const isolation = config.enableIsolation ? new TenantIsolation({
-    enableDataIsolation: true,
-    enableStyleIsolation: true,
-    enableScriptIsolation: true,
-    enableEventIsolation: true,
-    enableStorageIsolation: true,
-    sandboxLevel: 'basic',
-    namespacePrefix: 'tenant',
-    allowCrossTenantAccess: false,
-  }) : null;
+  const isolation = config.enableIsolation
+    ? new TenantIsolation({
+        enableDataIsolation: true,
+        enableStyleIsolation: true,
+        enableScriptIsolation: true,
+        enableEventIsolation: true,
+        enableStorageIsolation: true,
+        sandboxLevel: 'basic',
+        namespacePrefix: 'tenant',
+        allowCrossTenantAccess: false,
+      })
+    : null;
   const customizationEngine = new TenantCustomizationEngine();
 
   return {
     async process(request: any): Promise<TenantMiddlewareResult> {
-      return resolveTenantContext(
-        request,
-        config,
-        tenantManager,
-        isolation,
-        customizationEngine
-      );
+      return resolveTenantContext(request, config, tenantManager, isolation, customizationEngine);
     },
   };
 }
@@ -180,15 +180,18 @@ async function resolveTenantContext(
   try {
     // Extract tenant identifier from request
     const identifier = await extractTenantIdentifier(request, config.tenantIdentifier);
-    
+
     if (!identifier) {
       if (config.defaultTenant) {
         // Use default tenant
-        const tenant = await tenantManager.resolveTenant({
-          type: 'id',
-          value: config.defaultTenant,
-        }, request);
-        
+        const tenant = await tenantManager.resolveTenant(
+          {
+            type: 'id',
+            value: config.defaultTenant,
+          },
+          request
+        );
+
         if (!tenant) {
           return {
             context: null,
@@ -197,16 +200,16 @@ async function resolveTenantContext(
             message: 'Default tenant not found',
           };
         }
-        
+
         return {
           context: await createTenantContext(tenant, request, tenantManager, customizationEngine),
         };
       }
-      
+
       if (config.onTenantNotFound) {
         config.onTenantNotFound('unknown', request);
       }
-      
+
       return {
         context: null,
         error: new Error('Tenant identifier not found'),
@@ -216,16 +219,19 @@ async function resolveTenantContext(
     }
 
     // Resolve tenant
-    const tenant = await tenantManager.resolveTenant({
-      type: 'id',
-      value: identifier,
-    }, request);
+    const tenant = await tenantManager.resolveTenant(
+      {
+        type: 'id',
+        value: identifier,
+      },
+      request
+    );
 
     if (!tenant) {
       if (config.onTenantNotFound) {
         config.onTenantNotFound(identifier, request);
       }
-      
+
       return {
         context: null,
         error: new Error(`Tenant not found: ${identifier}`),
@@ -246,7 +252,7 @@ async function resolveTenantContext(
 
     // Create full tenant context
     const context = await createTenantContext(tenant, request, tenantManager, customizationEngine);
-    
+
     return { context };
   } catch (error) {
     return {
@@ -292,7 +298,7 @@ async function extractTenantIdentifier(
 function extractDomain(request: any): string | null {
   const host = request.headers?.host || request.request?.headers?.get('host');
   if (!host) return null;
-  
+
   // Remove port if present
   return host.split(':')[0];
 }
@@ -303,12 +309,12 @@ function extractDomain(request: any): string | null {
 function extractSubdomain(request: any): string | null {
   const host = request.headers?.host || request.request?.headers?.get('host');
   if (!host) return null;
-  
+
   const parts = host.split('.');
   if (parts.length > 2) {
     return parts[0]; // Return first part as subdomain
   }
-  
+
   return null;
 }
 
@@ -316,9 +322,7 @@ function extractSubdomain(request: any): string | null {
  * Extract identifier from header
  */
 function extractFromHeader(request: any, headerName: string): string | null {
-  return request.headers?.[headerName] || 
-         request.request?.headers?.get(headerName) ||
-         null;
+  return request.headers?.[headerName] || request.request?.headers?.get(headerName) || null;
 }
 
 /**
@@ -335,13 +339,16 @@ async function createTenantContext(
     id: `req_${Date.now()}_${Math.random().toString(36).substring(2)}`,
     tenantId: tenant.id,
     ip: request.ip || request.request?.ip || 'unknown',
-    userAgent: request.headers?.['user-agent'] || 
-               request.request?.headers?.get('user-agent') || 
-               'unknown',
+    userAgent:
+      request.headers?.['user-agent'] || request.request?.headers?.get('user-agent') || 'unknown',
     path: request.path || request.url || request.request?.url || '/',
     method: request.method || request.request?.method || 'GET',
     headers: request.headers || Object.fromEntries(request.request?.headers?.entries() || []),
-    query: request.query || Object.fromEntries(new URL(request.url || 'http://localhost/', 'http://localhost').searchParams),
+    query:
+      request.query ||
+      Object.fromEntries(
+        new URL(request.url || 'http://localhost/', 'http://localhost').searchParams
+      ),
     timestamp: new Date(),
   };
 
@@ -350,7 +357,7 @@ async function createTenantContext(
     tenant,
     tenantRequest,
     undefined, // User would be resolved separately
-    undefined  // Session would be resolved separately
+    undefined // Session would be resolved separately
   );
 
   return context;
@@ -368,10 +375,10 @@ async function applyTenantIsolation(
   // Add tenant isolation headers
   response.setHeader('X-Tenant-ID', context.tenant.id);
   response.setHeader('X-Tenant-Namespace', isolation.getNamespace(context.tenant.id));
-  
+
   // Set up content isolation if response is HTML
   const originalSend = response.send;
-  response.send = function(body: any) {
+  response.send = function (body: any) {
     if (typeof body === 'string' && body.includes('<html')) {
       // Apply tenant isolation to HTML content
       const isolatedBody = applyHTMLIsolation(body, context, isolation);
@@ -392,11 +399,13 @@ async function applyTenantResponseProcessing(
     // Apply tenant isolation to HTML response
     context.response = applyHTMLIsolation(context.response, context.tenantContext, isolation);
   }
-  
+
   // Add tenant headers
   if (context.set && context.set.headers) {
     context.set.headers['X-Tenant-ID'] = context.tenantContext.tenant.id;
-    context.set.headers['X-Tenant-Namespace'] = isolation.getNamespace(context.tenantContext.tenant.id);
+    context.set.headers['X-Tenant-Namespace'] = isolation.getNamespace(
+      context.tenantContext.tenant.id
+    );
   }
 }
 
@@ -467,7 +476,7 @@ export function hasValidTenant(request: any): boolean {
  * Require tenant middleware (throws if no tenant)
  */
 export function requireTenant() {
-  return function(req: any, res: any, next: any) {
+  return function (req: any, res: any, next: any) {
     if (!hasValidTenant(req)) {
       return res.status(403).json({
         error: 'Valid tenant required',
@@ -481,7 +490,7 @@ export function requireTenant() {
  * Tenant feature guard middleware
  */
 export function requireFeature(feature: string) {
-  return function(req: any, res: any, next: any) {
+  return function (req: any, res: any, next: any) {
     const context = extractTenantContext(req);
     if (!context || !context.features.has(feature)) {
       return res.status(403).json({
@@ -496,7 +505,7 @@ export function requireFeature(feature: string) {
  * Tenant permission guard middleware
  */
 export function requirePermission(permission: string) {
-  return function(req: any, res: any, next: any) {
+  return function (req: any, res: any, next: any) {
     const context = extractTenantContext(req);
     if (!context || !context.permissions.has(permission)) {
       return res.status(403).json({

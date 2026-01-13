@@ -173,11 +173,7 @@ function emitStyledIssue(issue: PartialValidationIssue): void {
   console.log(`    %c\u{1F4A1} ${issue.suggestion}`, STYLES.suggestion);
 
   if (issue.targetSelector) {
-    console.log(
-      `    %cTarget: %c${issue.targetSelector}`,
-      STYLES.normal,
-      STYLES.target
-    );
+    console.log(`    %cTarget: %c${issue.targetSelector}`, STYLES.normal, STYLES.target);
   }
 }
 

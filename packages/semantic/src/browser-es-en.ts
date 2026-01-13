@@ -46,10 +46,7 @@ export function getSupportedLanguages(): string[] {
 // Tokenizers (from registry)
 // =============================================================================
 
-export {
-  getTokenizer,
-  isLanguageSupported,
-} from './registry';
+export { getTokenizer, isLanguageSupported } from './registry';
 
 import type { LanguageToken } from './types';
 import { tokenize as tokenizeInternal } from './tokenizers';
@@ -117,18 +114,19 @@ export { parseAny, parseExplicit, isExplicitSyntax } from './explicit';
 // Translation
 // =============================================================================
 
-import { translate as translateInternal, getAllTranslations as getAllTranslationsInternal } from './explicit';
+import {
+  translate as translateInternal,
+  getAllTranslations as getAllTranslationsInternal,
+} from './explicit';
 
 /**
  * Translate hyperscript between Spanish and English.
  */
-export function translate(
-  input: string,
-  sourceLang: string,
-  targetLang: string
-): string {
-  if ((sourceLang !== 'en' && sourceLang !== 'es') ||
-      (targetLang !== 'en' && targetLang !== 'es')) {
+export function translate(input: string, sourceLang: string, targetLang: string): string {
+  if (
+    (sourceLang !== 'en' && sourceLang !== 'es') ||
+    (targetLang !== 'en' && targetLang !== 'es')
+  ) {
     throw new Error('This bundle only supports translation between en and es');
   }
   return translateInternal(input, sourceLang, targetLang);
@@ -137,10 +135,7 @@ export function translate(
 /**
  * Get translations to both languages.
  */
-export function getAllTranslations(
-  input: string,
-  sourceLang: string
-): Record<string, string> {
+export function getAllTranslations(input: string, sourceLang: string): Record<string, string> {
   if (sourceLang !== 'en' && sourceLang !== 'es') {
     throw new Error(`Language not supported in this bundle: ${sourceLang}. Supported: en, es`);
   }

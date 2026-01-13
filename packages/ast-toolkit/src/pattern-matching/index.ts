@@ -47,24 +47,24 @@ const patternCache = new Map<string, ParsedPattern>();
  * Match a pattern against an AST node
  */
 export function matchPattern(
-  ast: ASTNode, 
-  pattern: string, 
+  ast: ASTNode,
+  pattern: string,
   options: MatchOptions = {}
 ): PatternMatch | null {
   const parsedPattern = parsePattern(pattern);
   const bindings: Record<string, any> = {};
-  
+
   const confidence = calculatePatternMatch(ast, parsedPattern, bindings, options);
-  
+
   if (confidence > (options.minConfidence || 0.7)) {
     return {
       pattern,
       node: ast,
       bindings,
-      confidence
+      confidence,
     };
   }
-  
+
   return null;
 }
 
@@ -76,7 +76,18 @@ export function matchWildcard(ast: ASTNode, pattern: string): boolean {
   const astValues = extractAstValues(ast);
 
   // Syntactic keywords that map to AST structure rather than appearing in values
-  const syntacticKeywords = new Set(['on', 'to', 'from', 'into', 'then', 'else', 'in', 'at', 'of', 'with']);
+  const syntacticKeywords = new Set([
+    'on',
+    'to',
+    'from',
+    'into',
+    'then',
+    'else',
+    'in',
+    'at',
+    'of',
+    'with',
+  ]);
 
   let patternIdx = 0;
   let astIdx = 0;
@@ -141,11 +152,11 @@ export function parsePattern(pattern: string): ParsedPattern {
   if (patternCache.has(pattern)) {
     return patternCache.get(pattern)!;
   }
-  
+
   const tokens: PatternToken[] = [];
   const variables = new Set<string>();
   const words = pattern.split(/\s+/);
-  
+
   for (const word of words) {
     if (word.startsWith('$')) {
       const variable = word.substring(1);
@@ -159,13 +170,13 @@ export function parsePattern(pattern: string): ParsedPattern {
       tokens.push({ type: 'literal', value: word });
     }
   }
-  
+
   const structure = buildPatternStructure(tokens);
   const parsed = { tokens, variables, structure };
-  
+
   // Cache the result
   patternCache.set(pattern, parsed);
-  
+
   return parsed;
 }
 
@@ -173,7 +184,7 @@ export function parsePattern(pattern: string): ParsedPattern {
  * Extract common patterns from multiple ASTs
  */
 export function extractPatterns(
-  asts: ASTNode[], 
+  asts: ASTNode[],
   options: { minOccurrences?: number; minConfidence?: number } = {}
 ): Array<{
   pattern: string;
@@ -181,12 +192,15 @@ export function extractPatterns(
   bindings: Record<string, any>[];
   confidence: number;
 }> {
-  const patternMap = new Map<string, {
-    count: number;
-    bindings: Record<string, any>[];
-    confidence: number;
-  }>();
-  
+  const patternMap = new Map<
+    string,
+    {
+      count: number;
+      bindings: Record<string, any>[];
+      confidence: number;
+    }
+  >();
+
   // Common hyperscript patterns to check
   const commonPatterns = [
     'on $event add $class to $target',
@@ -195,13 +209,13 @@ export function extractPatterns(
     'set $variable to $value',
     'if $condition then $action',
     'on $event $command $argument',
-    '$command $argument to $target'
+    '$command $argument to $target',
   ];
-  
+
   for (const pattern of commonPatterns) {
     const matches: Record<string, any>[] = [];
     let totalConfidence = 0;
-    
+
     for (const ast of asts) {
       const match = matchPattern(ast, pattern, { minConfidence: options.minConfidence || 0.6 });
       if (match) {
@@ -209,23 +223,23 @@ export function extractPatterns(
         totalConfidence += match.confidence;
       }
     }
-    
+
     if (matches.length >= (options.minOccurrences || 2)) {
       patternMap.set(pattern, {
         count: matches.length,
         bindings: matches,
-        confidence: totalConfidence / matches.length
+        confidence: totalConfidence / matches.length,
       });
     }
   }
-  
+
   // Sort by frequency and confidence
   return Array.from(patternMap.entries())
     .map(([pattern, data]) => ({
       pattern,
       occurrences: data.count,
       bindings: data.bindings,
-      confidence: data.confidence
+      confidence: data.confidence,
     }))
     .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence);
 }
@@ -234,20 +248,20 @@ export function extractPatterns(
  * Create a reusable pattern matcher with constraints
  */
 export function createPatternMatcher(
-  pattern: string, 
+  pattern: string,
   constraints: PatternConstraints = {}
 ): {
   match: (ast: ASTNode) => PatternMatch | null;
   pattern: string;
 } {
   const parsedPattern = parsePattern(pattern);
-  
+
   return {
     pattern,
     match(ast: ASTNode): PatternMatch | null {
       const bindings: Record<string, any> = {};
       const confidence = calculatePatternMatch(ast, parsedPattern, bindings);
-      
+
       if (confidence > 0.7) {
         // Check constraints
         for (const [variable, constraint] of Object.entries(constraints)) {
@@ -255,17 +269,17 @@ export function createPatternMatcher(
             return null;
           }
         }
-        
+
         return {
           pattern,
           node: ast,
           bindings,
-          confidence
+          confidence,
         };
       }
-      
+
       return null;
-    }
+    },
   };
 }
 
@@ -274,15 +288,15 @@ export function createPatternMatcher(
 // ============================================================================
 
 function calculatePatternMatch(
-  ast: ASTNode, 
-  pattern: ParsedPattern, 
+  ast: ASTNode,
+  pattern: ParsedPattern,
   bindings: Record<string, any>,
   options: MatchOptions = {}
 ): number {
   // Simple structural matching based on pattern tokens
   const astString = astToString(ast);
   const patternString = pattern.tokens.map(t => t.value).join(' ');
-  
+
   // Try to match the pattern against the AST string representation
   return matchTokensToAst(ast, pattern.tokens, bindings, options);
 }
@@ -299,7 +313,18 @@ function matchTokensToAst(
   let astIndex = 0;
 
   // Syntactic keywords that may not appear in AST values
-  const syntacticKeywords = new Set(['on', 'to', 'from', 'into', 'then', 'else', 'in', 'at', 'of', 'with']);
+  const syntacticKeywords = new Set([
+    'on',
+    'to',
+    'from',
+    'into',
+    'then',
+    'else',
+    'in',
+    'at',
+    'of',
+    'with',
+  ]);
 
   while (tokenIndex < tokens.length && astIndex <= astValues.length) {
     const token = tokens[tokenIndex];
@@ -328,9 +353,9 @@ function matchTokensToAst(
           astIndex++;
         } else {
           // Try to find this token in remaining AST values
-          const foundIndex = astValues.slice(astIndex).findIndex(
-            v => v === token.value || v?.toLowerCase() === token.value.toLowerCase()
-          );
+          const foundIndex = astValues
+            .slice(astIndex)
+            .findIndex(v => v === token.value || v?.toLowerCase() === token.value.toLowerCase());
           if (foundIndex >= 0) {
             astIndex += foundIndex;
           } else {
@@ -379,7 +404,7 @@ function extractAstValues(ast: ASTNode): string[] {
       if ((node as any).value) values.push(String((node as any).value));
       if ((node as any).event) values.push((node as any).event);
       if ((node as any).operator) values.push((node as any).operator);
-    }
+    },
   });
 
   visit(ast, visitor);
@@ -395,30 +420,58 @@ function buildPatternStructure(tokens: PatternToken[]): PatternStructure {
   // Convert tokens to PatternStructures for type compatibility
   const tokenStructures: PatternStructure[] = tokens.map(token => ({
     type: token.type,
-    properties: { value: token.value as unknown as PatternStructure }
+    properties: { value: token.value as unknown as PatternStructure },
   }));
   return {
     type: 'pattern',
     properties: {
-      tokens: tokenStructures
-    }
+      tokens: tokenStructures,
+    },
   };
 }
 
 function isKeyword(word: string): boolean {
   const keywords = new Set([
-    'on', 'add', 'remove', 'toggle', 'set', 'to', 'from', 'if', 'then', 'else', 'end',
-    'and', 'or', 'not', 'in', 'with', 'for', 'while', 'repeat', 'until', 'log',
-    'call', 'send', 'trigger', 'wait', 'go', 'put', 'take', 'make', 'hide', 'show'
+    'on',
+    'add',
+    'remove',
+    'toggle',
+    'set',
+    'to',
+    'from',
+    'if',
+    'then',
+    'else',
+    'end',
+    'and',
+    'or',
+    'not',
+    'in',
+    'with',
+    'for',
+    'while',
+    'repeat',
+    'until',
+    'log',
+    'call',
+    'send',
+    'trigger',
+    'wait',
+    'go',
+    'put',
+    'take',
+    'make',
+    'hide',
+    'show',
   ]);
-  
+
   return keywords.has(word.toLowerCase());
 }
 
 function astToString(ast: ASTNode): string {
   // Convert AST to a searchable string representation
   const parts: string[] = [];
-  
+
   const visitor = new ASTVisitor({
     enter(node) {
       if (node.type) parts.push(node.type);
@@ -426,9 +479,9 @@ function astToString(ast: ASTNode): string {
       if ((node as any).value) parts.push(String((node as any).value));
       if ((node as any).event) parts.push((node as any).event);
       if ((node as any).operator) parts.push((node as any).operator);
-    }
+    },
   });
-  
+
   visit(ast, visitor);
   return parts.join(' ');
 }
@@ -449,13 +502,13 @@ export function applyPatternTemplate(
   bindings: Record<string, any>
 ): string {
   let result = template.template;
-  
+
   // Replace variables with bindings
   for (const [variable, value] of Object.entries(bindings)) {
     const placeholder = `$${variable}`;
     result = result.replace(new RegExp(escapeRegex(placeholder), 'g'), String(value));
   }
-  
+
   return result;
 }
 
@@ -470,17 +523,14 @@ export function createPatternTemplate(
   return {
     pattern,
     template,
-    constraints
+    constraints,
   };
 }
 
 /**
  * Find and replace patterns in an AST using templates
  */
-export function transformWithPatterns(
-  ast: ASTNode,
-  templates: PatternTemplate[]
-): ASTNode {
+export function transformWithPatterns(ast: ASTNode, templates: PatternTemplate[]): ASTNode {
   if (templates.length === 0) {
     return ast;
   }
@@ -512,7 +562,7 @@ export function transformWithPatterns(
         _transformed: true,
         _transformedCode: transformedCode,
         _originalPattern: template.pattern,
-        _bindings: match.bindings
+        _bindings: match.bindings,
       } as ASTNode;
     }
   }
@@ -546,5 +596,5 @@ export {
   isPatternsReferenceAvailable,
   type PatternEntry,
   type LLMExample,
-  type PatternSource
+  type PatternSource,
 } from './patterns-bridge.js';

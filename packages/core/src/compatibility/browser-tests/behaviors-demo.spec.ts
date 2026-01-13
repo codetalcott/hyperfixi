@@ -16,10 +16,13 @@ test.describe('Behaviors Demo', () => {
     await page.goto('/examples/behaviors/demo.html');
 
     // Wait for init to complete (check debug log)
-    await page.waitForFunction(() => {
-      const dbg = (window as any).__hyperfixi_debug || [];
-      return dbg.includes('init() completed');
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const dbg = (window as any).__hyperfixi_debug || [];
+        return dbg.includes('init() completed');
+      },
+      { timeout: 10000 }
+    );
 
     // Give a bit more time for event handlers to be set up
     await page.waitForTimeout(200);
@@ -67,10 +70,13 @@ test.describe('Behaviors Demo', () => {
 
   test('Draggable behavior should move element on drag', async ({ page }) => {
     await page.goto('/examples/behaviors/demo.html');
-    await page.waitForFunction(() => {
-      const dbg = (window as any).__hyperfixi_debug || [];
-      return dbg.includes('init() completed');
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const dbg = (window as any).__hyperfixi_debug || [];
+        return dbg.includes('init() completed');
+      },
+      { timeout: 10000 }
+    );
 
     const draggableBox = page.locator('.draggable-box');
     const initialBox = await draggableBox.boundingBox();
@@ -93,10 +99,13 @@ test.describe('Behaviors Demo', () => {
 
   test('Removable behavior should remove element on click', async ({ page }) => {
     await page.goto('/examples/behaviors/demo.html');
-    await page.waitForFunction(() => {
-      const dbg = (window as any).__hyperfixi_debug || [];
-      return dbg.includes('init() completed');
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const dbg = (window as any).__hyperfixi_debug || [];
+        return dbg.includes('init() completed');
+      },
+      { timeout: 10000 }
+    );
 
     // Get all removable items
     const allItems = await page.locator('.removable-item').all();
@@ -117,10 +126,13 @@ test.describe('Behaviors Demo', () => {
 
   test('Accordion toggleable should expand/collapse', async ({ page }) => {
     await page.goto('/examples/behaviors/demo.html');
-    await page.waitForFunction(() => {
-      const dbg = (window as any).__hyperfixi_debug || [];
-      return dbg.includes('init() completed');
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const dbg = (window as any).__hyperfixi_debug || [];
+        return dbg.includes('init() completed');
+      },
+      { timeout: 10000 }
+    );
 
     const accordionItem = page.locator('.accordion-item').first();
 

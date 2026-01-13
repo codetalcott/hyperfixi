@@ -3,88 +3,88 @@
  * Provides fluent builders to create typed execution contexts
  */
 
-import type { TypedExecutionContext } from '../types/base-types'
-import type { TestExpressionContext } from '../test-utilities'
+import type { TypedExecutionContext } from '../types/base-types';
+import type { TestExpressionContext } from '../test-utilities';
 
 /**
  * Options for creating test execution context
  */
 export interface TestContextOptions {
-  element?: Element
-  me?: Element
-  you?: Element
-  it?: unknown
-  result?: unknown
-  target?: EventTarget
-  event?: Event
-  globals?: Record<string, unknown>
-  locals?: Map<string, unknown>
-  meta?: Map<string, unknown> | Record<string, unknown>
-  [key: string]: unknown
+  element?: Element;
+  me?: Element;
+  you?: Element;
+  it?: unknown;
+  result?: unknown;
+  target?: EventTarget;
+  event?: Event;
+  globals?: Record<string, unknown>;
+  locals?: Map<string, unknown>;
+  meta?: Map<string, unknown> | Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 /**
  * Fluent builder for creating test execution contexts
  */
 export class TestContextBuilder {
-  private options: TestContextOptions = {}
+  private options: TestContextOptions = {};
 
   /**
    * Set the primary element
    */
   withElement(element: Element): this {
-    this.options.element = element
-    this.options.me = element
-    return this
+    this.options.element = element;
+    this.options.me = element;
+    return this;
   }
 
   /**
    * Set the 'me' reference
    */
   withMe(me: Element): this {
-    this.options.me = me
-    return this
+    this.options.me = me;
+    return this;
   }
 
   /**
    * Set the 'you' reference (event target)
    */
   withYou(you: Element): this {
-    this.options.you = you
-    return this
+    this.options.you = you;
+    return this;
   }
 
   /**
    * Set the 'it' reference (last result)
    */
   withIt(it: unknown): this {
-    this.options.it = it
-    return this
+    this.options.it = it;
+    return this;
   }
 
   /**
    * Set the result value
    */
   withResult(result: unknown): this {
-    this.options.result = result
-    return this
+    this.options.result = result;
+    return this;
   }
 
   /**
    * Set the event target
    */
   withTarget(target: EventTarget): this {
-    this.options.target = target
-    return this
+    this.options.target = target;
+    return this;
   }
 
   /**
    * Set the event
    */
   withEvent(event: Event): this {
-    this.options.event = event
-    this.options.target = event.target || undefined
-    return this
+    this.options.event = event;
+    this.options.target = event.target || undefined;
+    return this;
   }
 
   /**
@@ -92,10 +92,10 @@ export class TestContextBuilder {
    */
   withGlobal<T>(key: string, value: T): this {
     if (!this.options.globals) {
-      this.options.globals = {}
+      this.options.globals = {};
     }
-    this.options.globals[key] = value
-    return this
+    this.options.globals[key] = value;
+    return this;
   }
 
   /**
@@ -105,8 +105,8 @@ export class TestContextBuilder {
     this.options.globals = {
       ...this.options.globals,
       ...globals,
-    }
-    return this
+    };
+    return this;
   }
 
   /**
@@ -114,10 +114,10 @@ export class TestContextBuilder {
    */
   withLocal<T>(key: string, value: T): this {
     if (!this.options.locals) {
-      this.options.locals = new Map()
+      this.options.locals = new Map();
     }
-    this.options.locals.set(key, value)
-    return this
+    this.options.locals.set(key, value);
+    return this;
   }
 
   /**
@@ -125,12 +125,12 @@ export class TestContextBuilder {
    */
   withLocals(locals: Record<string, unknown>): this {
     if (!this.options.locals) {
-      this.options.locals = new Map()
+      this.options.locals = new Map();
     }
     for (const [key, value] of Object.entries(locals)) {
-      this.options.locals.set(key, value)
+      this.options.locals.set(key, value);
     }
-    return this
+    return this;
   }
 
   /**
@@ -138,22 +138,22 @@ export class TestContextBuilder {
    */
   withMeta(key: string, value: unknown): this {
     if (!this.options.meta) {
-      this.options.meta = new Map()
+      this.options.meta = new Map();
     }
     if (this.options.meta instanceof Map) {
-      this.options.meta.set(key, value)
+      this.options.meta.set(key, value);
     } else {
-      this.options.meta[key] = value
+      this.options.meta[key] = value;
     }
-    return this
+    return this;
   }
 
   /**
    * Add arbitrary property
    */
   withProperty<T>(key: string, value: T): this {
-    this.options[key] = value
-    return this
+    this.options[key] = value;
+    return this;
   }
 
   /**
@@ -170,16 +170,14 @@ export class TestContextBuilder {
       meta: this.options.meta,
       ...this.options.globals,
       ...this.options,
-    } as unknown as TestExpressionContext
+    } as unknown as TestExpressionContext;
   }
 }
 
 /**
  * Create a basic test execution context
  */
-export function createTestContext(
-  options: TestContextOptions = {}
-): TestExpressionContext {
+export function createTestContext(options: TestContextOptions = {}): TestExpressionContext {
   return new TestContextBuilder()
     .withGlobals(options.globals || {})
     .withProperty('element', options.element)
@@ -191,16 +189,14 @@ export function createTestContext(
     .withProperty('event', options.event)
     .withProperty('locals', options.locals)
     .withProperty('meta', options.meta)
-    .build()
+    .build();
 }
 
 /**
  * Create a minimal test context with just an element
  */
 export function createMinimalContext(element?: Element): TestExpressionContext {
-  return new TestContextBuilder()
-    .withElement(element || createMockElement())
-    .build()
+  return new TestContextBuilder().withElement(element || createMockElement()).build();
 }
 
 /**
@@ -211,21 +207,21 @@ export function createMockElement(
   attributes: Record<string, string> = {}
 ): Element {
   const element: {
-    tagName: string
-    nodeName: string
-    nodeType: number
-    attributes: Map<string, string>
+    tagName: string;
+    nodeName: string;
+    nodeType: number;
+    attributes: Map<string, string>;
     classList: {
-      classes: Set<string>
-      add(...tokens: string[]): void
-      remove(...tokens: string[]): void
-      toggle(token: string): boolean
-      contains(token: string): boolean
-    }
-    getAttribute(name: string): string | null
-    setAttribute(name: string, value: string): void
-    removeAttribute(name: string): void
-    hasAttribute(name: string): boolean
+      classes: Set<string>;
+      add(...tokens: string[]): void;
+      remove(...tokens: string[]): void;
+      toggle(token: string): boolean;
+      contains(token: string): boolean;
+    };
+    getAttribute(name: string): string | null;
+    setAttribute(name: string, value: string): void;
+    removeAttribute(name: string): void;
+    hasAttribute(name: string): boolean;
   } = {
     tagName: tagName.toUpperCase(),
     nodeName: tagName.toUpperCase(),
@@ -234,39 +230,39 @@ export function createMockElement(
     classList: {
       classes: new Set<string>(),
       add(...tokens: string[]) {
-        tokens.forEach(t => this.classes.add(t))
+        tokens.forEach(t => this.classes.add(t));
       },
       remove(...tokens: string[]) {
-        tokens.forEach(t => this.classes.delete(t))
+        tokens.forEach(t => this.classes.delete(t));
       },
       toggle(token: string) {
         if (this.classes.has(token)) {
-          this.classes.delete(token)
-          return false
+          this.classes.delete(token);
+          return false;
         } else {
-          this.classes.add(token)
-          return true
+          this.classes.add(token);
+          return true;
         }
       },
       contains(token: string) {
-        return this.classes.has(token)
+        return this.classes.has(token);
       },
     },
     getAttribute(name: string) {
-      return element.attributes.get(name) || null
+      return element.attributes.get(name) || null;
     },
     setAttribute(name: string, value: string) {
-      element.attributes.set(name, value)
+      element.attributes.set(name, value);
     },
     removeAttribute(name: string) {
-      element.attributes.delete(name)
+      element.attributes.delete(name);
     },
     hasAttribute(name: string) {
-      return element.attributes.has(name)
+      return element.attributes.has(name);
     },
-  }
+  };
 
-  return element as unknown as Element
+  return element as unknown as Element;
 }
 
 /**
@@ -275,24 +271,24 @@ export function createMockElement(
 export function createMockEvent(
   type: string,
   options: {
-    target?: EventTarget
-    currentTarget?: EventTarget
-    bubbles?: boolean
-    cancelable?: boolean
-    [key: string]: unknown
+    target?: EventTarget;
+    currentTarget?: EventTarget;
+    bubbles?: boolean;
+    cancelable?: boolean;
+    [key: string]: unknown;
   } = {}
 ): Event {
   const event: {
-    type: string
-    target: EventTarget | null
-    currentTarget: EventTarget | null
-    bubbles: boolean
-    cancelable: boolean
-    defaultPrevented: boolean
-    preventDefault(): void
-    stopPropagation(): void
-    stopImmediatePropagation(): void
-    [key: string]: unknown
+    type: string;
+    target: EventTarget | null;
+    currentTarget: EventTarget | null;
+    bubbles: boolean;
+    cancelable: boolean;
+    defaultPrevented: boolean;
+    preventDefault(): void;
+    stopPropagation(): void;
+    stopImmediatePropagation(): void;
+    [key: string]: unknown;
   } = {
     type,
     target: options.target || null,
@@ -301,11 +297,11 @@ export function createMockEvent(
     cancelable: options.cancelable ?? true,
     defaultPrevented: false,
     preventDefault() {
-      event.defaultPrevented = true
+      event.defaultPrevented = true;
     },
     stopPropagation() {},
     stopImmediatePropagation() {},
     ...options,
-  }
-  return event as unknown as Event
+  };
+  return event as unknown as Event;
 }

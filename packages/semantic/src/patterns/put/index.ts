@@ -96,4 +96,23 @@ export { getPutPatternsZh } from './zh';
 /**
  * Languages that have hand-crafted put patterns.
  */
-export const putPatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const putPatternLanguages = [
+  'ar',
+  'bn',
+  'en',
+  'es',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

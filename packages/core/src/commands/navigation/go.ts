@@ -14,7 +14,13 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { getVariableValue } from '../helpers/variable-access';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for GoCommand
@@ -38,7 +44,8 @@ export interface GoCommandOutput {
  * After: ~350 lines (49% reduction)
  */
 @meta({
-  description: 'Navigation functionality including URL navigation, element scrolling, and browser history',
+  description:
+    'Navigation functionality including URL navigation, element scrolling, and browser history',
   syntax: ['go back', 'go to url <url> [in new window]', 'go to [position] [of] <element>'],
   examples: ['go back', 'go to url "https://example.com"', 'go to top of #header'],
   sideEffects: ['navigation', 'scrolling'],
@@ -62,10 +69,7 @@ export class GoCommand implements DecoratedCommand {
     return { args };
   }
 
-  async execute(
-    input: GoCommandInput,
-    context: TypedExecutionContext
-  ): Promise<GoCommandOutput> {
+  async execute(input: GoCommandInput, context: TypedExecutionContext): Promise<GoCommandOutput> {
     const { args } = input;
 
     if (args.length === 0) {
@@ -172,14 +176,20 @@ export class GoCommand implements DecoratedCommand {
 
   private mapVerticalPosition(pos: string): ScrollLogicalPosition {
     const map: Record<string, ScrollLogicalPosition> = {
-      top: 'start', middle: 'center', bottom: 'end', nearest: 'nearest'
+      top: 'start',
+      middle: 'center',
+      bottom: 'end',
+      nearest: 'nearest',
     };
     return map[pos] || 'start';
   }
 
   private mapHorizontalPosition(pos: string): ScrollLogicalPosition {
     const map: Record<string, ScrollLogicalPosition> = {
-      left: 'start', center: 'center', right: 'end', nearest: 'nearest'
+      left: 'start',
+      center: 'center',
+      right: 'end',
+      nearest: 'nearest',
     };
     return map[pos] || 'nearest';
   }
@@ -188,12 +198,18 @@ export class GoCommand implements DecoratedCommand {
     const position = { vertical: 'top', horizontal: 'nearest' };
     const vKeys = ['top', 'middle', 'bottom'];
     const hKeys = ['left', 'center', 'right'];
-    let hasV = false, hasH = false;
+    let hasV = false,
+      hasH = false;
 
     for (const arg of args) {
       if (typeof arg === 'string') {
-        if (vKeys.includes(arg)) { position.vertical = arg; hasV = true; }
-        else if (hKeys.includes(arg)) { position.horizontal = arg; hasH = true; }
+        if (vKeys.includes(arg)) {
+          position.vertical = arg;
+          hasV = true;
+        } else if (hKeys.includes(arg)) {
+          position.horizontal = arg;
+          hasH = true;
+        }
       }
     }
     if (hasH && !hasV) position.vertical = 'nearest';
@@ -212,10 +228,28 @@ export class GoCommand implements DecoratedCommand {
       if (typeof arg === 'object' && arg && (arg as any).nodeType) return arg as HTMLElement;
     }
 
-    const skip = ['top', 'middle', 'bottom', 'left', 'center', 'right', 'of', 'the', 'to', 'smoothly', 'instantly'];
+    const skip = [
+      'top',
+      'middle',
+      'bottom',
+      'left',
+      'center',
+      'right',
+      'of',
+      'the',
+      'to',
+      'smoothly',
+      'instantly',
+    ];
     for (const arg of args) {
-      if (typeof arg === 'string' && !skip.includes(arg) &&
-          (arg.startsWith('#') || arg.startsWith('.') || arg.includes('[') || /^[a-zA-Z][a-zA-Z0-9-]*$/.test(arg))) {
+      if (
+        typeof arg === 'string' &&
+        !skip.includes(arg) &&
+        (arg.startsWith('#') ||
+          arg.startsWith('.') ||
+          arg.includes('[') ||
+          /^[a-zA-Z][a-zA-Z0-9-]*$/.test(arg))
+      ) {
         return arg;
       }
     }
@@ -239,7 +273,8 @@ export class GoCommand implements DecoratedCommand {
   }
 
   private resolveScrollTarget(target: unknown, context: ExecutionContext): HTMLElement | null {
-    if (typeof target === 'object' && target && (target as any).nodeType) return target as HTMLElement;
+    if (typeof target === 'object' && target && (target as any).nodeType)
+      return target as HTMLElement;
 
     const str = typeof target === 'string' ? target : String(target);
 
@@ -261,7 +296,9 @@ export class GoCommand implements DecoratedCommand {
         try {
           const els = document.getElementsByTagName(str);
           if (els.length > 0) return els[0] as HTMLElement;
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
     }
     return null;
@@ -280,18 +317,31 @@ export class GoCommand implements DecoratedCommand {
     const innerWidth = window.innerWidth || 800;
     const innerHeight = window.innerHeight || 600;
 
-    let x = scrollLeft, y = scrollTop;
+    let x = scrollLeft,
+      y = scrollTop;
 
     switch (position.horizontal) {
-      case 'left': x = rect.left + scrollLeft; break;
-      case 'center': x = rect.left + scrollLeft + rect.width / 2 - innerWidth / 2; break;
-      case 'right': x = rect.right + scrollLeft - innerWidth; break;
+      case 'left':
+        x = rect.left + scrollLeft;
+        break;
+      case 'center':
+        x = rect.left + scrollLeft + rect.width / 2 - innerWidth / 2;
+        break;
+      case 'right':
+        x = rect.right + scrollLeft - innerWidth;
+        break;
     }
 
     switch (position.vertical) {
-      case 'top': y = rect.top + scrollTop + offset; break;
-      case 'middle': y = rect.top + scrollTop + rect.height / 2 - innerHeight / 2 + offset; break;
-      case 'bottom': y = rect.bottom + scrollTop - innerHeight + offset; break;
+      case 'top':
+        y = rect.top + scrollTop + offset;
+        break;
+      case 'middle':
+        y = rect.top + scrollTop + rect.height / 2 - innerHeight / 2 + offset;
+        break;
+      case 'bottom':
+        y = rect.bottom + scrollTop - innerHeight + offset;
+        break;
     }
 
     return { x: Math.max(0, x), y: Math.max(0, y) };

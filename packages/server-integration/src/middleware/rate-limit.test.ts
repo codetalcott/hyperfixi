@@ -4,10 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Response, NextFunction } from 'express';
-import {
-  createRateLimitMiddleware,
-  getRateLimitStatus,
-} from './rate-limit.js';
+import { createRateLimitMiddleware, getRateLimitStatus } from './rate-limit.js';
 import type { AuthenticatedRequest, ApiKeyRecord } from './auth.js';
 
 describe('Rate Limiting Middleware', () => {

@@ -171,11 +171,7 @@ export class ExpressionParser {
   private parseMultiplication(): ExpressionNode {
     let left = this.parseUnary();
 
-    while (
-      this.peek().value === '*' ||
-      this.peek().value === '/' ||
-      this.peek().value === '%'
-    ) {
+    while (this.peek().value === '*' || this.peek().value === '/' || this.peek().value === '%') {
       const operator = this.advance().value;
       const right = this.parseUnary();
       left = this.createBinaryExpression(operator, left, right);
@@ -252,9 +248,14 @@ export class ExpressionParser {
     }
 
     if (this.match(TokenType.BOOLEAN)) {
-      const value = token.value === 'true' ? true :
-                    token.value === 'false' ? false :
-                    token.value === 'null' ? null : undefined;
+      const value =
+        token.value === 'true'
+          ? true
+          : token.value === 'false'
+            ? false
+            : token.value === 'null'
+              ? null
+              : undefined;
       return this.createLiteral(value, token.value as any, token);
     }
 
@@ -404,7 +405,9 @@ export class ExpressionParser {
   }
 
   private parseTimeExpression(token: Token): TimeExpressionNode {
-    const match = token.value.match(/^(\d+(?:\.\d+)?)(ms|s|seconds?|milliseconds?|minutes?|hours?)$/i);
+    const match = token.value.match(
+      /^(\d+(?:\.\d+)?)(ms|s|seconds?|milliseconds?|minutes?|hours?)$/i
+    );
     if (!match) {
       throw new Error(`Invalid time expression: ${token.value}`);
     }
@@ -481,17 +484,23 @@ export class ExpressionParser {
     };
   }
 
-  private createPropertyAccess(object: ExpressionNode, property: string | ExpressionNode): PropertyAccessNode {
+  private createPropertyAccess(
+    object: ExpressionNode,
+    property: string | ExpressionNode
+  ): PropertyAccessNode {
     return {
       type: 'propertyAccess',
       object,
-      property: typeof property === 'string' ? property : (property as any).name ?? '',
+      property: typeof property === 'string' ? property : ((property as any).name ?? ''),
       start: object.start,
       end: this.previous().end,
     };
   }
 
-  private createPossessiveExpression(object: ExpressionNode, property: string): PossessiveExpressionNode {
+  private createPossessiveExpression(
+    object: ExpressionNode,
+    property: string
+  ): PossessiveExpressionNode {
     return {
       type: 'possessiveExpression',
       object,

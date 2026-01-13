@@ -110,11 +110,7 @@ export { hyperscriptI18nVitePlugin } from './plugins/vite';
 export { HyperscriptI18nWebpackPlugin } from './plugins/webpack';
 
 // SSR integration
-export {
-  SSRLocaleManager,
-  createExpressI18nMiddleware,
-  withI18n,
-} from './ssr-integration';
+export { SSRLocaleManager, createExpressI18nMiddleware, withI18n } from './ssr-integration';
 export type { SSRLocaleContext, SSRLocaleOptions } from './ssr-integration';
 
 // Pluralization
@@ -141,12 +137,7 @@ export type {
 } from './formatting';
 
 // Runtime i18n
-export {
-  RuntimeI18nManager,
-  initializeI18n,
-  getI18n,
-  runtimeI18n,
-} from './runtime';
+export { RuntimeI18nManager, initializeI18n, getI18n, runtimeI18n } from './runtime';
 export type { RuntimeI18nOptions } from './runtime';
 
 // Create and export default translator instance
@@ -164,7 +155,7 @@ export {
   createEnhancedI18n,
   enhancedI18nImplementation,
   EnhancedI18nInputSchema,
-  EnhancedI18nOutputSchema
+  EnhancedI18nOutputSchema,
 } from './enhanced-i18n';
 export type { EnhancedI18nInput, EnhancedI18nOutput } from './enhanced-i18n';
 

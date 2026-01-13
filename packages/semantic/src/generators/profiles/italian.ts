@@ -24,22 +24,22 @@ export const italianProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'io',        // "I/me"
-    it: 'esso',      // "it"
-    you: 'tu',       // "you"
+    me: 'io', // "I/me"
+    it: 'esso', // "it"
+    you: 'tu', // "you"
     result: 'risultato',
     event: 'evento',
     target: 'obiettivo',
     body: 'corpo',
   },
   possessive: {
-    marker: 'di',    // Italian uses "di" for general possession
+    marker: 'di', // Italian uses "di" for general possession
     markerPosition: 'before-property',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'mio',     // "my" (possessive adjective)
-      it: 'suo',     // "its"
-      you: 'tuo',    // "your"
+      me: 'mio', // "my" (possessive adjective)
+      it: 'suo', // "its"
+      you: 'tuo', // "your"
     },
   },
   roleMarkers: {

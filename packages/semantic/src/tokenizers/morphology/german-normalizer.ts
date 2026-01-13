@@ -19,17 +19,28 @@
  *   anzeigen → anzeigen (separable prefix verb)
  */
 
-import type {
-  MorphologicalNormalizer,
-  NormalizationResult,
-  ConjugationType,
-} from './types';
+import type { MorphologicalNormalizer, NormalizationResult, ConjugationType } from './types';
 import { noChange, normalized } from './types';
 
 /**
  * Common separable prefixes in German.
  */
-const SEPARABLE_PREFIXES = ['an', 'auf', 'aus', 'ein', 'mit', 'vor', 'zu', 'ab', 'bei', 'nach', 'weg', 'um', 'her', 'hin'];
+const SEPARABLE_PREFIXES = [
+  'an',
+  'auf',
+  'aus',
+  'ein',
+  'mit',
+  'vor',
+  'zu',
+  'ab',
+  'bei',
+  'nach',
+  'weg',
+  'um',
+  'her',
+  'hin',
+];
 
 /**
  * Check if a word looks like a German verb.
@@ -50,13 +61,18 @@ function looksLikeGermanVerb(word: string): boolean {
  * Verb conjugation endings.
  * German infinitives end in -en (or -eln/-ern for some verbs).
  */
-const VERB_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const VERB_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Present participle
   { ending: 'end', stem: 'en', confidence: 0.88, type: 'gerund' },
 
   // Present indicative (regular weak verbs)
   { ending: 'e', stem: 'en', confidence: 0.75, type: 'present' }, // ich
-  { ending: 'st', stem: 'en', confidence: 0.80, type: 'present' }, // du
+  { ending: 'st', stem: 'en', confidence: 0.8, type: 'present' }, // du
   { ending: 't', stem: 'en', confidence: 0.78, type: 'present' }, // er/sie/es, ihr
   { ending: 'en', stem: 'en', confidence: 0.85, type: 'dictionary' }, // wir/sie/Sie, infinitive
 
@@ -67,9 +83,9 @@ const VERB_ENDINGS: readonly { ending: string; stem: string; confidence: number;
   { ending: 'te', stem: 'en', confidence: 0.82, type: 'past' }, // ich/er/sie/es
 
   // Subjunctive II (weak verbs)
-  { ending: 'test', stem: 'en', confidence: 0.80, type: 'subjunctive' },
+  { ending: 'test', stem: 'en', confidence: 0.8, type: 'subjunctive' },
   { ending: 'ten', stem: 'en', confidence: 0.78, type: 'subjunctive' },
-  { ending: 'tet', stem: 'en', confidence: 0.80, type: 'subjunctive' },
+  { ending: 'tet', stem: 'en', confidence: 0.8, type: 'subjunctive' },
   { ending: 'te', stem: 'en', confidence: 0.78, type: 'subjunctive' },
 
   // Imperative
@@ -81,7 +97,12 @@ const VERB_ENDINGS: readonly { ending: string; stem: string; confidence: number;
 /**
  * -eln and -ern verb endings (sammeln, wandern).
  */
-const ELN_ERN_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const ELN_ERN_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Present
   { ending: 'le', stem: 'eln', confidence: 0.82, type: 'present' }, // ich sammle
   { ending: 'elst', stem: 'eln', confidence: 0.85, type: 'present' }, // du sammelst
@@ -97,8 +118,9 @@ const ELN_ERN_ENDINGS: readonly { ending: string; stem: string; confidence: numb
 /**
  * All endings combined, sorted by length (longest first).
  */
-const ALL_ENDINGS = [...VERB_ENDINGS, ...ELN_ERN_ENDINGS]
-  .sort((a, b) => b.ending.length - a.ending.length);
+const ALL_ENDINGS = [...VERB_ENDINGS, ...ELN_ERN_ENDINGS].sort(
+  (a, b) => b.ending.length - a.ending.length
+);
 
 /**
  * German morphological normalizer.
@@ -156,7 +178,11 @@ export class GermanMorphologicalNormalizer implements MorphologicalNormalizer {
         const afterPrefix = word.slice(prefix.length);
         const innerResult = this.trySimpleParticipleNormalization(afterPrefix);
         if (innerResult) {
-          const metadata: { removedPrefixes: string[]; removedSuffixes?: readonly string[]; conjugationType: 'participle' } = {
+          const metadata: {
+            removedPrefixes: string[];
+            removedSuffixes?: readonly string[];
+            conjugationType: 'participle';
+          } = {
             removedPrefixes: ['ge'],
             conjugationType: 'participle',
           };

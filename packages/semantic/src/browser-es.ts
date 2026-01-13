@@ -49,8 +49,8 @@ function validateLanguage(language: string): void {
   if (language !== SUPPORTED_LANGUAGE) {
     throw new Error(
       `Idioma no soportado en este paquete: ${language}. ` +
-      `Este paquete solo soporta: ${SUPPORTED_LANGUAGE}. ` +
-      `(Language not supported: ${language}. This bundle only supports: ${SUPPORTED_LANGUAGE})`
+        `Este paquete solo soporta: ${SUPPORTED_LANGUAGE}. ` +
+        `(Language not supported: ${language}. This bundle only supports: ${SUPPORTED_LANGUAGE})`
     );
   }
 }
@@ -59,10 +59,7 @@ function validateLanguage(language: string): void {
 // Tokenizers (from registry)
 // =============================================================================
 
-export {
-  getTokenizer,
-  isLanguageSupported,
-} from './registry';
+export { getTokenizer, isLanguageSupported } from './registry';
 
 import type { LanguageToken } from './types';
 import { tokenize as tokenizeInternal } from './tokenizers';

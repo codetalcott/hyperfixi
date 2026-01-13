@@ -188,7 +188,10 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(valueMap);
 
       const input = await command.parseInput(
-        { args: [targetNode, withNode, contentNode, usingNode, viewNode, transitionNode], modifiers: {} },
+        {
+          args: [targetNode, withNode, contentNode, usingNode, viewNode, transitionNode],
+          modifiers: {},
+        },
         evaluator,
         context
       );
@@ -261,11 +264,7 @@ describe('MorphCommand (Standalone V2)', () => {
       const evaluator = simpleEvaluator();
 
       await expect(
-        command.parseInput(
-          { args: [], modifiers: {} },
-          evaluator,
-          context
-        )
+        command.parseInput({ args: [], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('command requires arguments');
     });
 
@@ -279,17 +278,11 @@ describe('MorphCommand (Standalone V2)', () => {
       const withNode = mockIdentifier('with');
       const contentNode = mockLiteral('content');
 
-      const valueMap = new Map<ASTNode, unknown>([
-        [contentNode, 'content'],
-      ]);
+      const valueMap = new Map<ASTNode, unknown>([[contentNode, 'content']]);
       const evaluator = inlineEvaluator(valueMap);
 
       await expect(
-        command.parseInput(
-          { args: [withNode, contentNode], modifiers: {} },
-          evaluator,
-          context
-        )
+        command.parseInput({ args: [withNode, contentNode], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('could not determine target');
     });
 

@@ -4,7 +4,12 @@ import { test, expect } from '@playwright/test';
 test.skip('Sortable visual tracking test', async ({ page }) => {
   // Enable console logging
   page.on('console', msg => {
-    if (msg.text().includes('📍') || msg.text().includes('📐') || msg.text().includes('✅') || msg.text().includes('✨')) {
+    if (
+      msg.text().includes('📍') ||
+      msg.text().includes('📐') ||
+      msg.text().includes('✅') ||
+      msg.text().includes('✨')
+    ) {
       console.log(`Browser: ${msg.text()}`);
     }
   });

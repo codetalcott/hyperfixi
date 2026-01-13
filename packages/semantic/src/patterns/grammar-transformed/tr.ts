@@ -34,7 +34,7 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
         // Matches: ".activei tıklamade değiştir"
         format: '{patient} tıklamade değiştir',
         tokens: [
-          { type: 'role', role: 'patient' },  // Captures ".activei" (with suffix)
+          { type: 'role', role: 'patient' }, // Captures ".activei" (with suffix)
           { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'değiştir', alternatives: ['değiştirmek', 'aç/kapat'] },
         ],

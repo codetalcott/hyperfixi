@@ -21,22 +21,22 @@ export const turkishProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'ben',       // "I/me"
-    it: 'o',         // "it"
-    you: 'sen',      // "you"
+    me: 'ben', // "I/me"
+    it: 'o', // "it"
+    you: 'sen', // "you"
     result: 'sonuç',
     event: 'olay',
     target: 'hedef',
     body: 'gövde',
   },
   possessive: {
-    marker: '',      // Turkish uses genitive suffix -in/-ın + possessive suffix
+    marker: '', // Turkish uses genitive suffix -in/-ın + possessive suffix
     markerPosition: 'after-object',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'benim',   // "my" (genitive of "ben")
-      it: 'onun',    // "its"
-      you: 'senin',  // "your"
+      me: 'benim', // "my" (genitive of "ben")
+      it: 'onun', // "its"
+      you: 'senin', // "your"
     },
   },
   roleMarkers: {

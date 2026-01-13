@@ -188,7 +188,10 @@ export function findRelevantExamples(
 
     return stmt.all(language, ...params, limit) as LLMExampleRecord[];
   } catch (error) {
-    console.warn('[LLM Examples] Query failed:', error instanceof Error ? error.message : String(error));
+    console.warn(
+      '[LLM Examples] Query failed:',
+      error instanceof Error ? error.message : String(error)
+    );
     return [];
   }
 }
@@ -218,7 +221,10 @@ export function findExamplesByCommand(
     // Match command at start of completion (after 'on <event>' if present)
     return stmt.all(language, `%${command}%`, limit) as LLMExampleRecord[];
   } catch (error) {
-    console.warn('[LLM Examples] Query failed:', error instanceof Error ? error.message : String(error));
+    console.warn(
+      '[LLM Examples] Query failed:',
+      error instanceof Error ? error.message : String(error)
+    );
     return [];
   }
 }

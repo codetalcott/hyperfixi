@@ -93,7 +93,7 @@ export class ComponentValidator {
     for (const [componentId, componentDef] of Object.entries(collection.components)) {
       if (typeof componentDef === 'object') {
         const componentResult = this.validateComponent(componentDef);
-        
+
         // Prefix component errors with component ID
         for (const error of componentResult.errors) {
           errors.push({
@@ -177,20 +177,22 @@ export class ComponentValidator {
     errors: ValidationError[],
     warnings: ValidationError[]
   ): void {
-    const scripts = Array.isArray(component.hyperscript) 
-      ? component.hyperscript 
+    const scripts = Array.isArray(component.hyperscript)
+      ? component.hyperscript
       : [component.hyperscript];
 
     for (let i = 0; i < scripts.length; i++) {
       const script = scripts[i];
       if (!script) continue;
-      
+
       const path = Array.isArray(component.hyperscript) ? `hyperscript[${i}]` : 'hyperscript';
 
       // Check for common syntax patterns
-      if (!script.trim().startsWith('on ') && 
-          !script.trim().startsWith('def ') && 
-          !script.trim().startsWith('init')) {
+      if (
+        !script.trim().startsWith('on ') &&
+        !script.trim().startsWith('def ') &&
+        !script.trim().startsWith('init')
+      ) {
         warnings.push({
           path,
           message: 'Hyperscript should typically start with "on", "def", or "init"',
@@ -201,7 +203,7 @@ export class ComponentValidator {
       // Check for template variable syntax consistency
       const templateVarPattern = /\{\{[^}]+\}\}/g;
       const templateVars = script.match(templateVarPattern) || [];
-      
+
       if (templateVars.length > 0 && !component.template?.variables) {
         warnings.push({
           path,
@@ -223,14 +225,14 @@ export class ComponentValidator {
     const templateVars = component.template?.variables;
     if (!templateVars) return;
 
-    const scripts = Array.isArray(component.hyperscript) 
-      ? component.hyperscript.join(' ') 
+    const scripts = Array.isArray(component.hyperscript)
+      ? component.hyperscript.join(' ')
       : component.hyperscript;
 
     // Check if defined variables are actually used
     for (const [varName, varDef] of Object.entries(templateVars)) {
       const varPattern = new RegExp(`\\{\\{${varName}\\}\\}`, 'g');
-      
+
       if (!varPattern.test(scripts) && !varPattern.test(component.template?.html ?? '')) {
         warnings.push({
           path: `template.variables.${varName}`,
@@ -326,7 +328,7 @@ export class ComponentValidator {
     warnings: ValidationError[]
   ): void {
     const componentIds = new Set<string>();
-    
+
     // Collect all component IDs
     for (const [_, componentDef] of Object.entries(collection.components)) {
       if (typeof componentDef === 'object' && componentDef.id) {
@@ -355,8 +357,10 @@ export class ComponentValidator {
    */
   private isWarning(error: any): boolean {
     // Treat missing optional properties as warnings
-    if (error.keyword === 'required' && 
-        ['description', 'tags', 'template', 'metadata'].includes(error.params?.missingProperty)) {
+    if (
+      error.keyword === 'required' &&
+      ['description', 'tags', 'template', 'metadata'].includes(error.params?.missingProperty)
+    ) {
       return true;
     }
 

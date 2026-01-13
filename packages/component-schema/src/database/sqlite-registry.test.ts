@@ -346,7 +346,10 @@ describe('SqliteComponentRegistry', () => {
       expect(retrieved?.version).toBe('2.0.0');
       expect(retrieved?.category).toBe('ui-interaction');
       expect(retrieved?.tags).toEqual(['complete', 'test']);
-      expect(retrieved?.hyperscript).toEqual(['on click toggle .active', 'on hover add .highlight']);
+      expect(retrieved?.hyperscript).toEqual([
+        'on click toggle .active',
+        'on hover add .highlight',
+      ]);
       expect(retrieved?.template?.variables?.label.type).toBe('string');
       expect(retrieved?.dependencies?.components).toEqual(['base-button']);
       expect(retrieved?.configuration?.compilation?.minify).toBe(true);

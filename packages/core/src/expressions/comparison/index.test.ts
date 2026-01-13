@@ -4,10 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createTypedExpressionContext,
-  type TestExpressionContext,
-} from '../../test-utilities';
+import { createTypedExpressionContext, type TestExpressionContext } from '../../test-utilities';
 import {
   GreaterThanExpression,
   LessThanExpression,
@@ -551,12 +548,8 @@ describe('Enhanced Comparison Expressions Integration', () => {
     it('should provide all comparison expressions', () => {
       expect(comparisonExpressions.greaterThan).toBeInstanceOf(GreaterThanExpression);
       expect(comparisonExpressions.lessThan).toBeInstanceOf(LessThanExpression);
-      expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(
-        GreaterThanOrEqualExpression
-      );
-      expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(
-        LessThanOrEqualExpression
-      );
+      expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(GreaterThanOrEqualExpression);
+      expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(LessThanOrEqualExpression);
       expect(comparisonExpressions.equals).toBeInstanceOf(EqualityExpression);
       expect(comparisonExpressions.notEquals).toBeInstanceOf(InequalityExpression);
     });

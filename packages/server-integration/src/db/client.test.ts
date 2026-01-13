@@ -97,10 +97,9 @@ describe('DatabaseClient', () => {
         const result = await client.getApiKeyByHash('abc123hash');
 
         expect(result).toEqual(mockApiKeyRecord);
-        expect(mockPool.query).toHaveBeenCalledWith(
-          expect.stringContaining('FROM api_keys'),
-          ['abc123hash']
-        );
+        expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('FROM api_keys'), [
+          'abc123hash',
+        ]);
       });
 
       it('should return null when API key not found', async () => {
@@ -196,10 +195,7 @@ describe('DatabaseClient', () => {
 
         await client.incrementApiKeyUsage('key-id-123');
 
-        expect(mockPool.query).toHaveBeenCalledWith(
-          expect.anything(),
-          ['key-id-123', 1]
-        );
+        expect(mockPool.query).toHaveBeenCalledWith(expect.anything(), ['key-id-123', 1]);
       });
     });
 
@@ -224,10 +220,9 @@ describe('DatabaseClient', () => {
         const result = await client.getApiKeysByUserId('user-123');
 
         expect(result).toHaveLength(2);
-        expect(mockPool.query).toHaveBeenCalledWith(
-          expect.stringContaining('deleted_at IS NULL'),
-          ['user-123']
-        );
+        expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('deleted_at IS NULL'), [
+          'user-123',
+        ]);
       });
 
       it('should order by created_at DESC', async () => {
@@ -273,16 +268,7 @@ describe('DatabaseClient', () => {
 
         expect(mockPool.query).toHaveBeenCalledWith(
           expect.stringContaining('INSERT INTO usage_logs'),
-          [
-            'key-123',
-            '/api/compile',
-            'POST',
-            5,
-            150,
-            0,
-            'Mozilla/5.0',
-            '192.168.1.1',
-          ]
+          ['key-123', '/api/compile', 'POST', 5, 150, 0, 'Mozilla/5.0', '192.168.1.1']
         );
       });
 
@@ -346,10 +332,11 @@ describe('DatabaseClient', () => {
         );
 
         expect(result).toEqual(mockStats);
-        expect(mockPool.query).toHaveBeenCalledWith(
-          expect.stringContaining('FROM usage_monthly'),
-          ['key-123', expect.any(Date), expect.any(Date)]
-        );
+        expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('FROM usage_monthly'), [
+          'key-123',
+          expect.any(Date),
+          expect.any(Date),
+        ]);
       });
     });
   });

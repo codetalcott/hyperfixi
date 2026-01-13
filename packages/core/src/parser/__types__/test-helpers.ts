@@ -3,37 +3,37 @@
  * Provides properly typed interfaces for test assertions on AST nodes
  */
 
-import type { CommandNode, ASTNode, Token } from '../types'
-import type { ParserContext } from '../parser-types'
+import type { CommandNode, ASTNode, Token } from '../types';
+import type { ParserContext } from '../parser-types';
 
 /**
  * Result from parsing a statement in tests
  */
 export interface ParsedStatementResult {
-  node: CommandNode
-  tokens: Token[]
-  context?: ParserContext
-  metadata?: ParsingMetadata
+  node: CommandNode;
+  tokens: Token[];
+  context?: ParserContext;
+  metadata?: ParsingMetadata;
 }
 
 /**
  * Metadata about the parsing process
  */
 export interface ParsingMetadata {
-  duration?: number
-  warnings?: string[]
-  [key: string]: unknown
+  duration?: number;
+  warnings?: string[];
+  [key: string]: unknown;
 }
 
 /**
  * Assertable AST node with guaranteed properties for testing
  */
 export interface ASTNodeAssertable extends CommandNode {
-  name: string
-  type: 'Command'
-  children?: CommandNode[]
-  arguments: ASTNode[]
-  target?: ASTNode
+  name: string;
+  type: 'Command';
+  children?: CommandNode[];
+  arguments: ASTNode[];
+  target?: ASTNode;
 }
 
 /**
@@ -47,7 +47,7 @@ export function isCommandNode(node: unknown): node is CommandNode {
     node.type === 'Command' &&
     'name' in node &&
     typeof (node as CommandNode).name === 'string'
-  )
+  );
 }
 
 /**
@@ -55,21 +55,18 @@ export function isCommandNode(node: unknown): node is CommandNode {
  */
 export function assertCommandNode(node: unknown): asserts node is CommandNode {
   if (!isCommandNode(node)) {
-    throw new Error(`Expected CommandNode, got ${typeof node}`)
+    throw new Error(`Expected CommandNode, got ${typeof node}`);
   }
 }
 
 /**
  * Type-safe property accessor for AST nodes in tests
  */
-export function getNodeProperty<T = unknown>(
-  node: unknown,
-  property: string
-): T | undefined {
+export function getNodeProperty<T = unknown>(node: unknown, property: string): T | undefined {
   if (typeof node === 'object' && node !== null && property in node) {
-    return (node as Record<string, unknown>)[property] as T
+    return (node as Record<string, unknown>)[property] as T;
   }
-  return undefined
+  return undefined;
 }
 
 /**
@@ -80,6 +77,6 @@ export function assertNodeHasProperty<T = unknown>(
   property: string
 ): asserts node is Record<string, T> {
   if (typeof node !== 'object' || node === null || !(property in node)) {
-    throw new Error(`Expected node to have property '${property}'`)
+    throw new Error(`Expected node to have property '${property}'`);
   }
 }

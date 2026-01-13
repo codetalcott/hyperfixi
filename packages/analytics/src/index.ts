@@ -1,6 +1,6 @@
 /**
  * Analytics System for HyperFixi Applications
- * 
+ *
  * Provides comprehensive behavior analytics and instrumentation including:
  * - Event tracking and collection
  * - Performance monitoring
@@ -26,7 +26,7 @@ export {
   EnhancedAnalyticsInputSchema,
   EnhancedAnalyticsOutputSchema,
   type EnhancedAnalyticsInput,
-  type EnhancedAnalyticsOutput
+  type EnhancedAnalyticsOutput,
 } from './enhanced-analytics';
 
 // Type exports
@@ -40,25 +40,25 @@ export type {
   PerformanceTimingEvent,
   UserActionEvent,
   EventMetadata,
-  
+
   // Configuration types
   AnalyticsConfig,
   AnalyticsFilter,
   AnalyticsEnricher,
-  
+
   // Session types
   AnalyticsSession,
   SessionMetadata,
-  
+
   // Metrics types
   AnalyticsMetrics,
-  
+
   // Dashboard types
   DashboardConfig,
   DashboardWidget,
   DashboardFilter,
   WidgetConfig,
-  
+
   // Infrastructure types
   AnalyticsCollector,
   AnalyticsStorage,
@@ -66,11 +66,11 @@ export type {
   AggregationQuery,
   AnalyticsSubscription,
   AnalyticsExportConfig,
-  
+
   // Alert types
   AnalyticsAlert,
   AlertAction,
-  
+
   // Visualization types
   HeatMapDataPoint,
   ConversionFunnelStep,
@@ -99,60 +99,88 @@ export function createAnalyticsSystem(options: {
   };
 }) {
   const tracker = createAnalyticsTracker(options.tracker);
-  const collector = createEventCollector(options.storage, options.collector ? {
-    ...(options.collector.batchSize !== undefined && { batchSize: options.collector.batchSize }),
-    ...(options.collector.flushInterval !== undefined && { flushInterval: options.collector.flushInterval }),
-    ...(options.collector.maxBufferSize !== undefined && { maxBufferSize: options.collector.maxBufferSize }),
-    ...(options.collector.alerting && options.collector.alerting.enabled !== undefined && options.collector.alerting.checkInterval !== undefined ? { alerting: options.collector.alerting as { enabled: boolean; checkInterval: number } } : {}),
-    ...(options.collector.realtime && options.collector.realtime.enabled !== undefined && options.collector.realtime.maxSubscriptions !== undefined ? { realtime: options.collector.realtime as { enabled: boolean; maxSubscriptions: number } } : {}),
-  } : undefined);
+  const collector = createEventCollector(
+    options.storage,
+    options.collector
+      ? {
+          ...(options.collector.batchSize !== undefined && {
+            batchSize: options.collector.batchSize,
+          }),
+          ...(options.collector.flushInterval !== undefined && {
+            flushInterval: options.collector.flushInterval,
+          }),
+          ...(options.collector.maxBufferSize !== undefined && {
+            maxBufferSize: options.collector.maxBufferSize,
+          }),
+          ...(options.collector.alerting &&
+          options.collector.alerting.enabled !== undefined &&
+          options.collector.alerting.checkInterval !== undefined
+            ? {
+                alerting: options.collector.alerting as { enabled: boolean; checkInterval: number },
+              }
+            : {}),
+          ...(options.collector.realtime &&
+          options.collector.realtime.enabled !== undefined &&
+          options.collector.realtime.maxSubscriptions !== undefined
+            ? {
+                realtime: options.collector.realtime as {
+                  enabled: boolean;
+                  maxSubscriptions: number;
+                },
+              }
+            : {}),
+        }
+      : undefined
+  );
 
   return {
     tracker,
     collector,
-    
+
     // Convenience methods
     track: {
-      compilation: (data: import('./types').HyperscriptCompilationEvent['data']) => 
+      compilation: (data: import('./types').HyperscriptCompilationEvent['data']) =>
         tracker.trackCompilation(data),
-      execution: (data: import('./types').HyperscriptExecutionEvent['data']) => 
+      execution: (data: import('./types').HyperscriptExecutionEvent['data']) =>
         tracker.trackExecution(data),
-      interaction: (data: import('./types').ElementInteractionEvent['data']) => 
+      interaction: (data: import('./types').ElementInteractionEvent['data']) =>
         tracker.trackInteraction(data),
-      performance: (data: import('./types').PerformanceTimingEvent['data']) => 
+      performance: (data: import('./types').PerformanceTimingEvent['data']) =>
         tracker.trackPerformance(data),
-      userAction: (data: import('./types').UserActionEvent['data']) => 
+      userAction: (data: import('./types').UserActionEvent['data']) =>
         tracker.trackUserAction(data),
-      custom: (type: import('./types').AnalyticsEventType, data: Record<string, any>) => 
+      custom: (type: import('./types').AnalyticsEventType, data: Record<string, any>) =>
         tracker.trackCustomEvent(type, data),
-      error: (error: Error, context?: Record<string, any>) => 
-        tracker.trackError(error, context),
+      error: (error: Error, context?: Record<string, any>) => tracker.trackError(error, context),
     },
-    
+
     // Query methods
     query: (query: import('./types').AnalyticsQuery) => collector.query(query),
     aggregate: (query: import('./types').AggregationQuery) => collector.aggregate(query),
     getMetrics: () => collector.getMetrics(),
-    
+
     // Real-time methods
-    subscribe: (query: import('./types').AnalyticsQuery, callback: (events: import('./types').AnalyticsEvent[]) => void) => 
-      collector.subscribe(query, callback),
+    subscribe: (
+      query: import('./types').AnalyticsQuery,
+      callback: (events: import('./types').AnalyticsEvent[]) => void
+    ) => collector.subscribe(query, callback),
     unsubscribe: (subscriptionId: string) => collector.unsubscribe(subscriptionId),
-    
+
     // Alert methods
     addAlert: (alert: import('./types').AnalyticsAlert) => collector.addAlert(alert),
     removeAlert: (alertId: string) => collector.removeAlert(alertId),
-    
+
     // Session methods
     setUserId: (userId: string) => tracker.setUserId(userId),
     setTenantId: (tenantId: string) => tracker.setTenantId(tenantId),
     getSession: () => tracker.getSession(),
-    
+
     // Configuration methods
-    updateConfig: (config: Partial<import('./types').AnalyticsConfig>) => tracker.updateConfig(config),
+    updateConfig: (config: Partial<import('./types').AnalyticsConfig>) =>
+      tracker.updateConfig(config),
     addFilter: (filter: import('./types').AnalyticsFilter) => tracker.addFilter(filter),
     addEnricher: (enricher: import('./types').AnalyticsEnricher) => tracker.addEnricher(enricher),
-    
+
     // Lifecycle methods
     flush: () => tracker.flush(),
     destroy: () => {
@@ -182,44 +210,46 @@ export async function quickStartAnalytics(options: {
   };
 }) {
   // Create simple in-memory storage for demo purposes
-  const storage: import('./types').AnalyticsStorage & { events: import('./types').AnalyticsEvent[] } = {
+  const storage: import('./types').AnalyticsStorage & {
+    events: import('./types').AnalyticsEvent[];
+  } = {
     events: [] as import('./types').AnalyticsEvent[],
 
     async store(event) {
       this.events.push(event);
     },
-    
+
     async storeBatch(events) {
       this.events.push(...events);
     },
-    
+
     async query(query) {
       let filtered = this.events;
-      
+
       if (query.eventTypes) {
         filtered = filtered.filter(e => query.eventTypes!.includes(e.type));
       }
-      
+
       if (query.startTime) {
         filtered = filtered.filter(e => e.timestamp >= query.startTime!);
       }
-      
+
       if (query.endTime) {
         filtered = filtered.filter(e => e.timestamp <= query.endTime!);
       }
-      
+
       if (query.userId) {
         filtered = filtered.filter(e => e.userId === query.userId);
       }
-      
+
       if (query.tenantId) {
         filtered = filtered.filter(e => e.tenantId === query.tenantId);
       }
-      
+
       if (query.sessionId) {
         filtered = filtered.filter(e => e.sessionId === query.sessionId);
       }
-      
+
       if (query.filters) {
         filtered = filtered.filter(e => {
           for (const [key, value] of Object.entries(query.filters!)) {
@@ -228,7 +258,7 @@ export async function quickStartAnalytics(options: {
           return true;
         });
       }
-      
+
       if (query.orderBy) {
         filtered.sort((a, b) => {
           const aVal = (a as any)[query.orderBy!.field];
@@ -236,22 +266,22 @@ export async function quickStartAnalytics(options: {
           return query.orderBy!.direction === 'asc' ? aVal - bVal : bVal - aVal;
         });
       }
-      
+
       if (query.offset) {
         filtered = filtered.slice(query.offset);
       }
-      
+
       if (query.limit) {
         filtered = filtered.slice(0, query.limit);
       }
-      
+
       return filtered;
     },
-    
+
     async aggregate(query) {
       const events = await this.query(query);
       const result: any = {};
-      
+
       for (const [key, aggregation] of Object.entries(query.aggregations)) {
         switch (aggregation.type) {
           case 'count':
@@ -265,7 +295,8 @@ export async function quickStartAnalytics(options: {
           case 'avg':
             if (aggregation.field) {
               const values = events.map(e => e.data[aggregation.field!] || 0);
-              result[key] = values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+              result[key] =
+                values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
             }
             break;
           case 'min':
@@ -282,10 +313,10 @@ export async function quickStartAnalytics(options: {
             break;
         }
       }
-      
+
       return result;
     },
-    
+
     async delete(query) {
       const toDelete = await this.query(query);
       this.events = this.events.filter(e => !toDelete.includes(e));
@@ -449,9 +480,7 @@ export function integrateWithHyperFixi(
 
     afterExecute: (ctx: HookContext, result: unknown) => {
       const startTime = startTimes.get(ctx);
-      const executionTime = startTime !== undefined
-        ? performance.now() - startTime
-        : 0;
+      const executionTime = startTime !== undefined ? performance.now() - startTime : 0;
 
       if (startTime !== undefined) {
         startTimes.delete(ctx);
@@ -483,9 +512,7 @@ export function integrateWithHyperFixi(
 
     onError: (ctx: HookContext, error: Error) => {
       const startTime = startTimes.get(ctx);
-      const executionTime = startTime !== undefined
-        ? performance.now() - startTime
-        : 0;
+      const executionTime = startTime !== undefined ? performance.now() - startTime : 0;
 
       if (startTime !== undefined) {
         startTimes.delete(ctx);
@@ -547,9 +574,7 @@ export function integrateWithHyperFixi(
  * const result = trackedCompile('toggle .active');
  * ```
  */
-export function createTrackedCompile<
-  TCompile extends (code: string, options?: unknown) => unknown
->(
+export function createTrackedCompile<TCompile extends (code: string, options?: unknown) => unknown>(
   compile: TCompile,
   analytics: ReturnType<typeof createAnalyticsSystem>
 ): TCompile {
@@ -570,7 +595,7 @@ export function createTrackedCompile<
       selectors: (metadata?.selectors as string[]) || [],
       commands: (metadata?.commands as string[]) || [],
       errors: ((result?.errors || []) as Array<{ message?: string }>).map(
-        (e) => e?.message || String(e)
+        e => e?.message || String(e)
       ),
       warnings: (metadata?.warnings as string[]) || [],
     });
@@ -582,7 +607,9 @@ export function createTrackedCompile<
 /**
  * Create analytics middleware for Express
  */
-export function createExpressAnalyticsMiddleware(analytics: ReturnType<typeof createAnalyticsSystem>) {
+export function createExpressAnalyticsMiddleware(
+  analytics: ReturnType<typeof createAnalyticsSystem>
+) {
   return function analyticsMiddleware(req: any, res: any, next: any) {
     // Track page view
     analytics.track.custom('page:view', {
@@ -615,18 +642,17 @@ export function createExpressAnalyticsMiddleware(analytics: ReturnType<typeof cr
  */
 export function createElysiaAnalyticsPlugin(analytics: ReturnType<typeof createAnalyticsSystem>) {
   return function analyticsPlugin(app: any) {
-    return app
-      .derive(({ request, headers }: any) => {
-        // Track page view
-        analytics.track.custom('page:view', {
-          url: request.url,
-          method: request.method,
-          userAgent: headers['user-agent'],
-          referrer: headers.referer,
-        });
-
-        return { analytics };
+    return app.derive(({ request, headers }: any) => {
+      // Track page view
+      analytics.track.custom('page:view', {
+        url: request.url,
+        method: request.method,
+        userAgent: headers['user-agent'],
+        referrer: headers.referer,
       });
+
+      return { analytics };
+    });
   };
 }
 

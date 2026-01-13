@@ -171,7 +171,8 @@ export const ErrorMessages = {
   [ErrorCodes.VALIDATION.REPEAT_FAILED]: 'Repeat directive validation failed',
   [ErrorCodes.VALIDATION.GENERIC]: 'Validation error',
   [ErrorCodes.VALIDATION.PARTIAL_LAYOUT_ELEMENT]: 'Partial contains layout element: {0}',
-  [ErrorCodes.VALIDATION.PARTIAL_DUPLICATE_SEMANTIC]: 'Partial may create duplicate semantic landmark: {0}',
+  [ErrorCodes.VALIDATION.PARTIAL_DUPLICATE_SEMANTIC]:
+    'Partial may create duplicate semantic landmark: {0}',
   [ErrorCodes.VALIDATION.PARTIAL_METADATA_ELEMENT]: 'Partial contains metadata element: {0}',
 
   // Operation errors
@@ -328,7 +329,8 @@ export function createError(
   suggestions?: string[]
 ): ValidationError {
   // Get default message from registry
-  let message: string = ErrorMessages[errorCode as keyof typeof ErrorMessages] || customMessage || 'Unknown error';
+  let message: string =
+    ErrorMessages[errorCode as keyof typeof ErrorMessages] || customMessage || 'Unknown error';
 
   // Replace placeholders if provided
   if (placeholders && placeholders.length > 0) {

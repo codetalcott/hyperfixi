@@ -279,20 +279,19 @@ export class ExpressionTypeRegistry {
       description: 'Text string value',
       examples: ['hello', 'world', ''],
       coerceFrom: {
-        Number: (v) => String(v),
-        Boolean: (v) => String(v),
+        Number: v => String(v),
+        Boolean: v => String(v),
         Null: () => '',
         Undefined: () => '',
-        Array: (v) => (Array.isArray(v) ? v.join(', ') : null),
-        Object: (v) => {
+        Array: v => (Array.isArray(v) ? v.join(', ') : null),
+        Object: v => {
           try {
             return JSON.stringify(v);
           } catch {
             return String(v);
           }
         },
-        Element: (v) =>
-          v instanceof Element ? v.textContent ?? v.outerHTML : null,
+        Element: v => (v instanceof Element ? (v.textContent ?? v.outerHTML) : null),
       },
     });
 
@@ -306,11 +305,11 @@ export class ExpressionTypeRegistry {
       description: 'Numeric value (integer or float)',
       examples: [0, 1, 3.14, -42],
       coerceFrom: {
-        String: (v) => {
+        String: v => {
           const n = parseFloat(v as string);
           return isNaN(n) ? null : n;
         },
-        Boolean: (v) => (v ? 1 : 0),
+        Boolean: v => (v ? 1 : 0),
         Null: () => 0,
         Undefined: () => null,
       },
@@ -326,18 +325,18 @@ export class ExpressionTypeRegistry {
       description: 'True or false value',
       examples: [true, false],
       coerceFrom: {
-        String: (v) => {
+        String: v => {
           const s = (v as string).toLowerCase().trim();
           if (s === 'true' || s === 'yes' || s === '1') return true;
           if (s === 'false' || s === 'no' || s === '0' || s === '') return false;
           return s.length > 0; // Non-empty string is truthy
         },
-        Number: (v) => (v as number) !== 0,
+        Number: v => (v as number) !== 0,
         Null: () => false,
         Undefined: () => false,
-        Array: (v) => (Array.isArray(v) ? v.length > 0 : false),
-        Element: (v) => v instanceof Element,
-        ElementList: (v) => Array.isArray(v) && v.length > 0,
+        Array: v => (Array.isArray(v) ? v.length > 0 : false),
+        Element: v => v instanceof Element,
+        ElementList: v => Array.isArray(v) && v.length > 0,
       },
     });
 
@@ -362,8 +361,8 @@ export class ExpressionTypeRegistry {
           }
           return null;
         },
-        ElementList: (v) => (Array.isArray(v) && v.length > 0 ? v[0] : null),
-        NodeList: (v) => {
+        ElementList: v => (Array.isArray(v) && v.length > 0 ? v[0] : null),
+        NodeList: v => {
           const list = v as NodeList;
           return list.length > 0 ? (list[0] as Element) : null;
         },
@@ -376,22 +375,22 @@ export class ExpressionTypeRegistry {
       hyperscriptType: 'element-list',
       tsType: 'Element[]',
       isType: (v): v is Element[] =>
-        Array.isArray(v) && v.length > 0 && v.every((item) => item instanceof Element),
+        Array.isArray(v) && v.length > 0 && v.every(item => item instanceof Element),
       defaultValue: [],
       description: 'Array of DOM Elements',
       coerceFrom: {
-        Element: (v) => (v instanceof Element ? [v] : []),
-        NodeList: (v) => Array.from(v as NodeList) as Element[],
-        String: (v) => {
+        Element: v => (v instanceof Element ? [v] : []),
+        NodeList: v => Array.from(v as NodeList) as Element[],
+        String: v => {
           try {
             return Array.from(document.querySelectorAll(v as string));
           } catch {
             return [];
           }
         },
-        Array: (v) => {
+        Array: v => {
           const arr = v as unknown[];
-          if (arr.every((item) => item instanceof Element)) {
+          if (arr.every(item => item instanceof Element)) {
             return arr as Element[];
           }
           return [];
@@ -408,7 +407,7 @@ export class ExpressionTypeRegistry {
       defaultValue: [],
       description: 'Array of values',
       coerceFrom: {
-        String: (v) => {
+        String: v => {
           const s = v as string;
           // Try JSON parse first
           try {
@@ -417,11 +416,11 @@ export class ExpressionTypeRegistry {
           } catch {
             // Not JSON, split by comma
           }
-          return s.split(',').map((item) => item.trim());
+          return s.split(',').map(item => item.trim());
         },
-        ElementList: (v) => v as Element[],
-        NodeList: (v) => Array.from(v as NodeList),
-        Object: (v) => Object.values(v as object),
+        ElementList: v => v as Element[],
+        NodeList: v => Array.from(v as NodeList),
+        Object: v => Object.values(v as object),
       },
     });
 
@@ -435,7 +434,7 @@ export class ExpressionTypeRegistry {
       defaultValue: {},
       description: 'Plain JavaScript object',
       coerceFrom: {
-        String: (v) => {
+        String: v => {
           try {
             const parsed = JSON.parse(v as string);
             if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
@@ -446,7 +445,7 @@ export class ExpressionTypeRegistry {
           }
           return null;
         },
-        Array: (v) => {
+        Array: v => {
           const arr = v as unknown[];
           const obj: Record<string, unknown> = {};
           arr.forEach((item, index) => {
@@ -506,7 +505,7 @@ export class ExpressionTypeRegistry {
       defaultValue: null,
       description: 'DOM NodeList (typically from querySelectorAll)',
       coerceFrom: {
-        Array: (v) => {
+        Array: v => {
           // Can't coerce array to NodeList directly
           return null;
         },

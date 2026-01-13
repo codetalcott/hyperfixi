@@ -62,7 +62,8 @@ function getSemanticAnalyzer(): ReturnType<typeof semanticPackage.createSemantic
 export const lspBridgeTools = [
   {
     name: 'get_diagnostics',
-    description: 'Analyze hyperscript code and return LSP-compatible diagnostics (errors, warnings, hints). Supports 21 languages.',
+    description:
+      'Analyze hyperscript code and return LSP-compatible diagnostics (errors, warnings, hints). Supports 21 languages.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -72,7 +73,8 @@ export const lspBridgeTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
+          description:
+            'Language code (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
           default: 'en',
         },
         uri: {
@@ -85,7 +87,8 @@ export const lspBridgeTools = [
   },
   {
     name: 'get_completions',
-    description: 'Get context-aware code completions for hyperscript at a given position. Returns keywords in specified language.',
+    description:
+      'Get context-aware code completions for hyperscript at a given position. Returns keywords in specified language.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -103,7 +106,8 @@ export const lspBridgeTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
+          description:
+            'Language code (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
           default: 'en',
         },
         context: {
@@ -117,7 +121,8 @@ export const lspBridgeTools = [
   },
   {
     name: 'get_hover_info',
-    description: 'Get hover documentation for a hyperscript element at a given position. Supports multilingual keywords.',
+    description:
+      'Get hover documentation for a hyperscript element at a given position. Supports multilingual keywords.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -135,7 +140,8 @@ export const lspBridgeTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
+          description:
+            'Language code (en, ko, ja, es, zh, ar, tr, pt, fr, de, id, qu, sw, etc.). Default: en',
           default: 'en',
         },
       },
@@ -185,7 +191,12 @@ export async function handleLspBridgeTool(
         args.context as string | undefined
       );
     case 'get_hover_info':
-      return getHoverInfo(args.code as string, args.line as number, args.character as number, language);
+      return getHoverInfo(
+        args.code as string,
+        args.line as number,
+        args.character as number,
+        language
+      );
     case 'get_document_symbols':
       return getDocumentSymbols(args.code as string, language);
     default:
@@ -325,8 +336,8 @@ async function getDiagnostics(
             diagnostics,
             count: diagnostics.length,
             language,
-            hasErrors: diagnostics.some((d) => d.severity === 1),
-            hasWarnings: diagnostics.some((d) => d.severity === 2),
+            hasErrors: diagnostics.some(d => d.severity === 1),
+            hasWarnings: diagnostics.some(d => d.severity === 2),
             semanticConfidence: semanticConfidence > 0 ? semanticConfidence : undefined,
             // Phase 6: Include code actions for IDE/LLM automation
             codeActions: codeActions.length > 0 ? codeActions : undefined,
@@ -345,11 +356,34 @@ async function getDiagnostics(
  */
 function getValidCommandsForLanguage(language: string): string[] {
   const englishCommands = [
-    'toggle', 'add', 'remove', 'show', 'hide',
-    'set', 'get', 'put', 'append', 'prepend',
-    'increment', 'decrement', 'log', 'send', 'trigger',
-    'wait', 'fetch', 'call', 'go', 'focus', 'blur',
-    'on', 'if', 'then', 'else', 'end', 'repeat', 'for',
+    'toggle',
+    'add',
+    'remove',
+    'show',
+    'hide',
+    'set',
+    'get',
+    'put',
+    'append',
+    'prepend',
+    'increment',
+    'decrement',
+    'log',
+    'send',
+    'trigger',
+    'wait',
+    'fetch',
+    'call',
+    'go',
+    'focus',
+    'blur',
+    'on',
+    'if',
+    'then',
+    'else',
+    'end',
+    'repeat',
+    'for',
   ];
 
   if (!semanticPackage || language === 'en') {
@@ -422,7 +456,10 @@ function runSimpleDiagnostics(code: string, language: string = 'en'): Diagnostic
 
   // Build command pattern for 'missing then' check
   const commandPattern = validCommands.slice(0, 10).join('|'); // Use first 10 common commands
-  const missingThenRegex = new RegExp(`\\b(${commandPattern})\\s+\\.\\w+\\s+(${commandPattern})\\b`, 'i');
+  const missingThenRegex = new RegExp(
+    `\\b(${commandPattern})\\s+\\.\\w+\\s+(${commandPattern})\\b`,
+    'i'
+  );
 
   // Check for common issues
   for (let i = 0; i < lines.length; i++) {
@@ -605,7 +642,10 @@ async function getCompletions(
 /**
  * Get keyword translation for a command in a specific language.
  */
-function getKeywordTranslation(command: string, language: string): { label: string; englishLabel?: string } {
+function getKeywordTranslation(
+  command: string,
+  language: string
+): { label: string; englishLabel?: string } {
   if (!semanticPackage || language === 'en') {
     return { label: command };
   }
@@ -628,7 +668,10 @@ function getKeywordTranslation(command: string, language: string): { label: stri
 /**
  * Get reference translation (me, it, you) for a specific language.
  */
-function getReferenceTranslation(ref: string, language: string): { label: string; englishLabel?: string } {
+function getReferenceTranslation(
+  ref: string,
+  language: string
+): { label: string; englishLabel?: string } {
   if (!semanticPackage || language === 'en') {
     return { label: ref };
   }
@@ -746,8 +789,16 @@ function getContextualCompletions(
       // Top-level completions with multilingual support
       completions.push(
         { label: getKeywordTranslation('on', language).label, kind: 14, detail: 'Event handler' },
-        { label: getKeywordTranslation('init', language).label, kind: 14, detail: 'Initialization' },
-        { label: getKeywordTranslation('behavior', language).label, kind: 7, detail: 'Define behavior' },
+        {
+          label: getKeywordTranslation('init', language).label,
+          kind: 14,
+          detail: 'Initialization',
+        },
+        {
+          label: getKeywordTranslation('behavior', language).label,
+          kind: 7,
+          detail: 'Define behavior',
+        },
         { label: getKeywordTranslation('def', language).label, kind: 3, detail: 'Define function' }
       );
   }
@@ -798,7 +849,12 @@ async function getHoverInfo(
   // Fallback: token-based hover with multilingual support
   const hover = getTokenBasedHover(code, line, character, language);
   return {
-    content: [{ type: 'text', text: JSON.stringify(hover ? { ...hover, language } : { language }, null, 2) }],
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(hover ? { ...hover, language } : { language }, null, 2),
+      },
+    ],
   };
 }
 
@@ -903,33 +959,40 @@ function getHoverDocumentation(word: string, language: string = 'en'): string | 
 
   const docs: Record<string, string> = {
     // Commands
-    toggle: '**toggle**\n\nToggle a class, attribute, or visibility on elements.\n\n```hyperscript\ntoggle .active on me\ntoggle @disabled on #input\n```',
+    toggle:
+      '**toggle**\n\nToggle a class, attribute, or visibility on elements.\n\n```hyperscript\ntoggle .active on me\ntoggle @disabled on #input\n```',
     add: '**add**\n\nAdd a class, attribute, or style to elements.\n\n```hyperscript\nadd .highlight to me\nadd @required to #email\n```',
-    remove: '**remove**\n\nRemove a class, attribute, style, or element.\n\n```hyperscript\nremove .error from #form\nremove me\n```',
+    remove:
+      '**remove**\n\nRemove a class, attribute, style, or element.\n\n```hyperscript\nremove .error from #form\nremove me\n```',
     show: '**show**\n\nShow hidden elements with optional transition.\n\n```hyperscript\nshow #modal\nshow #panel with *opacity over 300ms\n```',
     hide: '**hide**\n\nHide elements with optional transition.\n\n```hyperscript\nhide #modal\nhide me with *opacity\n```',
     put: '**put**\n\nSet content or value of elements.\n\n```hyperscript\nput "Hello" into #greeting\nput it into #result\n```',
     set: '**set**\n\nSet a variable or element property.\n\n```hyperscript\nset :count to 0\nset $user to "guest"\n```',
-    fetch: '**fetch**\n\nMake HTTP requests.\n\n```hyperscript\nfetch /api/data\nfetch /api/data as json\n```',
+    fetch:
+      '**fetch**\n\nMake HTTP requests.\n\n```hyperscript\nfetch /api/data\nfetch /api/data as json\n```',
     wait: '**wait**\n\nPause execution.\n\n```hyperscript\nwait 1s\nwait 500ms\nwait for animationend\n```',
 
     // References
     me: '**me**\n\nThe current element with the `_` attribute.\n\n```hyperscript\nadd .active to me\n```',
     you: '**you**\n\nThe target of the current event (event.target).\n\n```hyperscript\non click from li add .selected to you\n```',
     it: '**it**\n\nThe result of the last expression or command.\n\n```hyperscript\nfetch /api then put it into #output\n```',
-    result: '**result**\n\nAlias for `it` - the result of the last expression.\n\n```hyperscript\nfetch /api then put result into #output\n```',
+    result:
+      '**result**\n\nAlias for `it` - the result of the last expression.\n\n```hyperscript\nfetch /api then put result into #output\n```',
 
     // Positional
     first: '**first**\n\nFirst element in a collection.\n\n```hyperscript\nremove first .item\n```',
     last: '**last**\n\nLast element in a collection.\n\n```hyperscript\nadd .active to last <li/>\n```',
     next: '**next**\n\nNext sibling element.\n\n```hyperscript\nfocus next <input/>\n```',
-    previous: '**previous**\n\nPrevious sibling element.\n\n```hyperscript\nshow previous .panel\n```',
-    closest: '**closest**\n\nNearest ancestor matching selector.\n\n```hyperscript\nadd .active to closest .card\n```',
+    previous:
+      '**previous**\n\nPrevious sibling element.\n\n```hyperscript\nshow previous .panel\n```',
+    closest:
+      '**closest**\n\nNearest ancestor matching selector.\n\n```hyperscript\nadd .active to closest .card\n```',
     parent: '**parent**\n\nDirect parent element.\n\n```hyperscript\nremove parent\n```',
 
     // Control flow
     if: '**if**\n\nConditional execution.\n\n```hyperscript\nif me matches .active remove .active else add .active\n```',
-    repeat: '**repeat**\n\nLoop a fixed number of times.\n\n```hyperscript\nrepeat 5 times append "<li/>" to #list\n```',
+    repeat:
+      '**repeat**\n\nLoop a fixed number of times.\n\n```hyperscript\nrepeat 5 times append "<li/>" to #list\n```',
     for: '**for**\n\nIterate over collections.\n\n```hyperscript\nfor each item in .items add .highlight to item\n```',
 
     // Keywords

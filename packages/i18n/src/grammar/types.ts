@@ -60,26 +60,26 @@
  */
 export type SemanticRole =
   // Core thematic roles
-  | 'action'       // The command/verb (increment, put, toggle)
-  | 'agent'        // Who/what performs action (reserved for future: AI agents, server-side)
-  | 'patient'      // What is acted upon (the counter, .active)
-  | 'source'       // Origin (from #input, from URL)
-  | 'destination'  // Target location (into #output, to .class)
-  | 'goal'         // Target value/state (to 'red', to 100)
-  | 'event'        // Trigger (click, input, keydown)
-  | 'condition'    // Boolean expression (if x > 5)
+  | 'action' // The command/verb (increment, put, toggle)
+  | 'agent' // Who/what performs action (reserved for future: AI agents, server-side)
+  | 'patient' // What is acted upon (the counter, .active)
+  | 'source' // Origin (from #input, from URL)
+  | 'destination' // Target location (into #output, to .class)
+  | 'goal' // Target value/state (to 'red', to 100)
+  | 'event' // Trigger (click, input, keydown)
+  | 'condition' // Boolean expression (if x > 5)
   // Quantitative roles
-  | 'quantity'     // Numeric amount (by 5, 3 times)
-  | 'duration'     // Time span (for 5 seconds, over 500ms)
+  | 'quantity' // Numeric amount (by 5, 3 times)
+  | 'duration' // Time span (for 5 seconds, over 500ms)
   // Adverbial roles
   | 'responseType' // Response format (as json, as text, as html)
-  | 'method'       // HTTP method/technique (via POST, using GET)
-  | 'style'        // Visual/behavioral manner (with fade, smoothly)
-  | 'manner'       // Insertion position (before, after)
+  | 'method' // HTTP method/technique (via POST, using GET)
+  | 'style' // Visual/behavioral manner (with fade, smoothly)
+  | 'manner' // Insertion position (before, after)
   // Control flow roles
-  | 'loopType'     // Loop variant: forever, times, for, while, until, until-event
+  | 'loopType' // Loop variant: forever, times, for, while, until, until-event
   // Structural roles (for parser control)
-  | 'continues';   // Continuation marker (then-chains)
+  | 'continues'; // Continuation marker (then-chains)
 
 /**
  * Word order patterns
@@ -96,20 +96,20 @@ export type AdpositionType = 'preposition' | 'postposition' | 'circumposition' |
  * Morphological typology - how words are constructed
  */
 export type MorphologyType =
-  | 'isolating'      // Chinese - no inflection, word order matters
-  | 'agglutinative'  // Turkish, Japanese - morphemes stack predictably
-  | 'fusional'       // Arabic, Spanish - morphemes blend together
+  | 'isolating' // Chinese - no inflection, word order matters
+  | 'agglutinative' // Turkish, Japanese - morphemes stack predictably
+  | 'fusional' // Arabic, Spanish - morphemes blend together
   | 'polysynthetic'; // Quechua - complex words encode full sentences
 
 /**
  * A grammatical marker (particle, case ending, preposition)
  */
 export interface GrammaticalMarker {
-  form: string;              // The actual text (を, に, to, 的)
-  role: SemanticRole;        // What semantic role it marks
-  position: AdpositionType;  // Where it appears
-  required: boolean;         // Is it mandatory?
-  alternatives?: string[];   // Alternative forms (e.g., 을/를 in Korean)
+  form: string; // The actual text (を, に, to, 的)
+  role: SemanticRole; // What semantic role it marks
+  position: AdpositionType; // Where it appears
+  required: boolean; // Is it mandatory?
+  alternatives?: string[]; // Alternative forms (e.g., 을/를 in Korean)
 }
 
 /**
@@ -134,8 +134,8 @@ export interface LineMetadata {
  * This captures the essential typological features needed for transformation
  */
 export interface LanguageProfile {
-  code: string;           // ISO 639-1 code
-  name: string;           // Native name
+  code: string; // ISO 639-1 code
+  name: string; // Native name
 
   // Typological features
   wordOrder: WordOrder;
@@ -221,10 +221,10 @@ export interface ParsedStatement {
  */
 export interface ParsedElement {
   role: SemanticRole;
-  value: string;           // Original English value
-  translated?: string;     // Translated value
-  isSelector?: boolean;    // CSS selector (don't translate)
-  isLiteral?: boolean;     // Literal value (don't translate)
+  value: string; // Original English value
+  translated?: string; // Translated value
+  isSelector?: boolean; // CSS selector (don't translate)
+  isLiteral?: boolean; // Literal value (don't translate)
 }
 
 // =============================================================================
@@ -315,7 +315,16 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
     adpositionType: 'preposition',
     morphology: 'fusional',
     direction: 'ltr',
-    canonicalOrder: ['action', 'patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style'],
+    canonicalOrder: [
+      'action',
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+    ],
   },
 
   // Romance (Spanish, French, Italian, Portuguese)
@@ -324,7 +333,16 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
     adpositionType: 'preposition',
     morphology: 'fusional',
     direction: 'ltr',
-    canonicalOrder: ['action', 'patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style'],
+    canonicalOrder: [
+      'action',
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+    ],
   },
 
   // Japonic (Japanese)
@@ -333,7 +351,16 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
     adpositionType: 'postposition',
     morphology: 'agglutinative',
     direction: 'ltr',
-    canonicalOrder: ['patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style', 'action'],
+    canonicalOrder: [
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+      'action',
+    ],
   },
 
   // Koreanic (Korean)
@@ -342,7 +369,16 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
     adpositionType: 'postposition',
     morphology: 'agglutinative',
     direction: 'ltr',
-    canonicalOrder: ['patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style', 'action'],
+    canonicalOrder: [
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+      'action',
+    ],
   },
 
   // Turkic (Turkish, Azerbaijani)
@@ -351,25 +387,53 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
     adpositionType: 'postposition',
     morphology: 'agglutinative',
     direction: 'ltr',
-    canonicalOrder: ['patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style', 'action'],
+    canonicalOrder: [
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+      'action',
+    ],
   },
 
   // Sinitic (Chinese, Cantonese)
   sinitic: {
-    wordOrder: 'SVO',  // Topic-prominent, flexible
+    wordOrder: 'SVO', // Topic-prominent, flexible
     adpositionType: 'preposition',
     morphology: 'isolating',
     direction: 'ltr',
-    canonicalOrder: ['action', 'patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style'],
+    canonicalOrder: [
+      'action',
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+    ],
   },
 
   // Semitic (Arabic, Hebrew)
   semitic: {
     wordOrder: 'VSO',
     adpositionType: 'preposition',
-    morphology: 'fusional',  // Root-pattern system
+    morphology: 'fusional', // Root-pattern system
     direction: 'rtl',
-    canonicalOrder: ['action', 'agent', 'patient', 'destination', 'source', 'quantity', 'duration', 'method', 'style'],
+    canonicalOrder: [
+      'action',
+      'agent',
+      'patient',
+      'destination',
+      'source',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+    ],
   },
 
   // Austronesian (Indonesian, Tagalog)
@@ -378,16 +442,34 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
     adpositionType: 'preposition',
     morphology: 'agglutinative',
     direction: 'ltr',
-    canonicalOrder: ['action', 'patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style'],
+    canonicalOrder: [
+      'action',
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+    ],
   },
 
   // Quechuan (Quechua)
   quechuan: {
     wordOrder: 'SOV',
     adpositionType: 'postposition',
-    morphology: 'agglutinative',  // Actually polysynthetic but simplified
+    morphology: 'agglutinative', // Actually polysynthetic but simplified
     direction: 'ltr',
-    canonicalOrder: ['patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style', 'action'],
+    canonicalOrder: [
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+      'action',
+    ],
   },
 
   // Bantu (Swahili)
@@ -396,7 +478,16 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
     adpositionType: 'preposition',
     morphology: 'agglutinative',
     direction: 'ltr',
-    canonicalOrder: ['action', 'patient', 'source', 'destination', 'quantity', 'duration', 'method', 'style'],
+    canonicalOrder: [
+      'action',
+      'patient',
+      'source',
+      'destination',
+      'quantity',
+      'duration',
+      'method',
+      'style',
+    ],
   },
 };
 
@@ -531,11 +622,7 @@ export function transformStatement(
   const reordered = reorderRoles(parsed.roles, targetProfile.canonicalOrder);
 
   // 2. Insert grammatical markers
-  const withMarkers = insertMarkers(
-    reordered,
-    targetProfile.markers,
-    targetProfile.adpositionType
-  );
+  const withMarkers = insertMarkers(reordered, targetProfile.markers, targetProfile.adpositionType);
 
   // 3. Join with intelligent spacing for agglutinative languages
   // (handles suffixes like -ta, prefixes like بـ-, etc.)

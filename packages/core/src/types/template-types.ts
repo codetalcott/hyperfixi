@@ -74,8 +74,10 @@ export type TemplateRenderStrategy = 'replace' | 'append' | 'conditional' | 'ite
  * Base interface for enhanced template directives
  * Extends BaseTypedExpression with template-specific functionality
  */
-export interface EnhancedTemplateDirective<TInput = unknown, TOutput = string>
-  extends BaseTypedExpression<TOutput> {
+export interface EnhancedTemplateDirective<
+  TInput = unknown,
+  TOutput = string,
+> extends BaseTypedExpression<TOutput> {
   /** Template directive type (@if, @else, @repeat, etc.) */
   readonly directiveType: TemplateDirectiveType;
 

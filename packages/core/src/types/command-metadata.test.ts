@@ -44,7 +44,7 @@ describe('Command Metadata Validation', () => {
 
       const result = validateCommandMetadata(metadata, 'test');
       expect(result.isValid).toBe(false);
-      expect(result.errors.some((e) => e.includes('description'))).toBe(true);
+      expect(result.errors.some(e => e.includes('description'))).toBe(true);
     });
 
     it('should require syntax', () => {
@@ -56,7 +56,7 @@ describe('Command Metadata Validation', () => {
 
       const result = validateCommandMetadata(metadata, 'test');
       expect(result.isValid).toBe(false);
-      expect(result.errors.some((e) => e.includes('syntax'))).toBe(true);
+      expect(result.errors.some(e => e.includes('syntax'))).toBe(true);
     });
 
     it('should require examples as non-empty array', () => {
@@ -69,7 +69,7 @@ describe('Command Metadata Validation', () => {
 
       const result = validateCommandMetadata(metadata, 'test');
       expect(result.isValid).toBe(false);
-      expect(result.errors.some((e) => e.includes('examples'))).toBe(true);
+      expect(result.errors.some(e => e.includes('examples'))).toBe(true);
     });
 
     it('should warn for single example', () => {
@@ -82,7 +82,7 @@ describe('Command Metadata Validation', () => {
 
       const result = validateCommandMetadata(metadata, 'test');
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some((w) => w.includes('at least 2 examples'))).toBe(true);
+      expect(result.warnings.some(w => w.includes('at least 2 examples'))).toBe(true);
     });
 
     it('should require valid category', () => {
@@ -95,7 +95,7 @@ describe('Command Metadata Validation', () => {
 
       const result = validateCommandMetadata(metadata, 'test');
       expect(result.isValid).toBe(false);
-      expect(result.errors.some((e) => e.includes('category'))).toBe(true);
+      expect(result.errors.some(e => e.includes('category'))).toBe(true);
     });
 
     it('should accept array syntax', () => {
@@ -121,7 +121,7 @@ describe('Command Metadata Validation', () => {
 
       const result = validateCommandMetadata(metadata, 'test');
       expect(result.isValid).toBe(true); // Unknown effects are warnings, not errors
-      expect(result.warnings.some((w) => w.includes('unknown-effect'))).toBe(true);
+      expect(result.warnings.some(w => w.includes('unknown-effect'))).toBe(true);
     });
 
     it('should warn about deprecated without message', () => {
@@ -135,7 +135,7 @@ describe('Command Metadata Validation', () => {
 
       const result = validateCommandMetadata(metadata, 'old');
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some((w) => w.includes('deprecationMessage'))).toBe(true);
+      expect(result.warnings.some(w => w.includes('deprecationMessage'))).toBe(true);
     });
   });
 });
@@ -339,8 +339,8 @@ describe('CommandMetadataRegistry', () => {
     it('should get commands by category', () => {
       const domCommands = registry.getByCategory('dom');
       expect(domCommands).toHaveLength(2);
-      expect(domCommands.map((c) => c.name)).toContain('add');
-      expect(domCommands.map((c) => c.name)).toContain('remove');
+      expect(domCommands.map(c => c.name)).toContain('add');
+      expect(domCommands.map(c => c.name)).toContain('remove');
 
       const asyncCommands = registry.getByCategory('async');
       expect(asyncCommands).toHaveLength(1);

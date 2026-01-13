@@ -21,15 +21,23 @@ export function getTogglePatternsAr(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'بدّل', alternatives: ['بدل', 'غيّر', 'غير'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'على', alternatives: ['في', 'ب'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'على', alternatives: ['في', 'ب'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'على', markerAlternatives: ['في', 'ب'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'على',
+          markerAlternatives: ['في', 'ب'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

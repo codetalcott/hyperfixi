@@ -35,6 +35,4 @@ export const swapSimpleEnglish: LanguagePattern = {
 /**
  * All English swap patterns.
  */
-export const swapPatternsEn: LanguagePattern[] = [
-  swapSimpleEnglish,
-];
+export const swapPatternsEn: LanguagePattern[] = [swapSimpleEnglish];

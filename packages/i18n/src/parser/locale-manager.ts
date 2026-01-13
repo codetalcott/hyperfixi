@@ -66,7 +66,7 @@ export class LocaleManager {
     if (normalizedLocale !== 'en' && !LocaleManager.providers.has(normalizedLocale)) {
       throw new Error(
         `Locale '${locale}' is not registered. ` +
-        `Available locales: ${LocaleManager.getAvailable().join(', ')}`
+          `Available locales: ${LocaleManager.getAvailable().join(', ')}`
       );
     }
     LocaleManager.defaultLocale = normalizedLocale;
@@ -100,7 +100,7 @@ export class LocaleManager {
     if (!provider) {
       throw new Error(
         `Locale '${targetLocale}' is not registered. ` +
-        `Available locales: ${LocaleManager.getAvailable().join(', ')}`
+          `Available locales: ${LocaleManager.getAvailable().join(', ')}`
       );
     }
 

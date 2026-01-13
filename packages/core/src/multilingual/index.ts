@@ -158,10 +158,7 @@ export class MultilingualHyperscript {
    * }
    * ```
    */
-  async parseToASTWithDetails(
-    input: string,
-    lang: string = 'en'
-  ): Promise<ParseToASTResult> {
+  async parseToASTWithDetails(input: string, lang: string = 'en'): Promise<ParseToASTResult> {
     await this.ensureInitialized();
     return this.bridge.parseToASTWithDetails(input, lang);
   }
@@ -199,11 +196,7 @@ export class MultilingualHyperscript {
    * @param to - Target language code
    * @returns Full translation result with metadata
    */
-  async translateWithDetails(
-    input: string,
-    from: string,
-    to: string
-  ): Promise<BridgeResult> {
+  async translateWithDetails(input: string, from: string, to: string): Promise<BridgeResult> {
     await this.ensureInitialized();
     return this.bridge.transform(input, from, to);
   }
@@ -234,10 +227,7 @@ export class MultilingualHyperscript {
    * @param from - Source language code
    * @returns Object mapping language codes to translation results
    */
-  async getAllTranslations(
-    input: string,
-    from: string
-  ): Promise<Record<string, BridgeResult>> {
+  async getAllTranslations(input: string, from: string): Promise<Record<string, BridgeResult>> {
     await this.ensureInitialized();
     return this.bridge.getAllTranslations(input, from);
   }
@@ -317,10 +307,22 @@ const LANGUAGE_INFO: Record<string, LanguageInfo> = {
   ko: { code: 'ko', name: 'Korean', nativeName: '한국어', direction: 'ltr', wordOrder: 'SOV' },
   zh: { code: 'zh', name: 'Chinese', nativeName: '中文', direction: 'ltr', wordOrder: 'SVO' },
   tr: { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', direction: 'ltr', wordOrder: 'SOV' },
-  pt: { code: 'pt', name: 'Portuguese', nativeName: 'Português', direction: 'ltr', wordOrder: 'SVO' },
+  pt: {
+    code: 'pt',
+    name: 'Portuguese',
+    nativeName: 'Português',
+    direction: 'ltr',
+    wordOrder: 'SVO',
+  },
   fr: { code: 'fr', name: 'French', nativeName: 'Français', direction: 'ltr', wordOrder: 'SVO' },
   de: { code: 'de', name: 'German', nativeName: 'Deutsch', direction: 'ltr', wordOrder: 'SVO' },
-  id: { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia', direction: 'ltr', wordOrder: 'SVO' },
+  id: {
+    code: 'id',
+    name: 'Indonesian',
+    nativeName: 'Bahasa Indonesia',
+    direction: 'ltr',
+    wordOrder: 'SVO',
+  },
   qu: { code: 'qu', name: 'Quechua', nativeName: 'Runasimi', direction: 'ltr', wordOrder: 'SOV' },
   sw: { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili', direction: 'ltr', wordOrder: 'SVO' },
 };

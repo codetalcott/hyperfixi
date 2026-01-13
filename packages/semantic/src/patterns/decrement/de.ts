@@ -20,7 +20,17 @@ export function getDecrementPatternsDe(): LanguagePattern[] {
       template: {
         format: 'verringere {patient}',
         tokens: [
-          { type: 'literal', value: 'verringere', alternatives: ['verringern', 'dekrementiere', 'dekrementieren', 'reduziere', 'decrement'] },
+          {
+            type: 'literal',
+            value: 'verringere',
+            alternatives: [
+              'verringern',
+              'dekrementiere',
+              'dekrementieren',
+              'reduziere',
+              'decrement',
+            ],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
         ],
       },

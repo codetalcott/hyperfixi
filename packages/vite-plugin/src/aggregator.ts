@@ -95,13 +95,24 @@ export class Aggregator {
    */
   hasUsage(): boolean {
     const usage = this.getUsage();
-    return usage.commands.size > 0 || usage.blocks.size > 0 || usage.positional || usage.detectedLanguages.size > 0;
+    return (
+      usage.commands.size > 0 ||
+      usage.blocks.size > 0 ||
+      usage.positional ||
+      usage.detectedLanguages.size > 0
+    );
   }
 
   /**
    * Get summary for logging
    */
-  getSummary(): { commands: string[]; blocks: string[]; positional: boolean; languages: string[]; fileCount: number } {
+  getSummary(): {
+    commands: string[];
+    blocks: string[];
+    positional: boolean;
+    languages: string[];
+    fileCount: number;
+  } {
     const usage = this.getUsage();
     return {
       commands: [...usage.commands].sort(),

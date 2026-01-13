@@ -19,11 +19,7 @@
  *   المستخدمين → مستخدم (the users → user)
  */
 
-import type {
-  MorphologicalNormalizer,
-  NormalizationResult,
-  PrefixRule,
-} from './types';
+import type { MorphologicalNormalizer, NormalizationResult, PrefixRule } from './types';
 import { noChange, normalized } from './types';
 
 /**
@@ -31,11 +27,13 @@ import { noChange, normalized } from './types';
  */
 function isArabic(char: string): boolean {
   const code = char.charCodeAt(0);
-  return (code >= 0x0600 && code <= 0x06FF) || // Arabic
-    (code >= 0x0750 && code <= 0x077F) || // Arabic Supplement
-    (code >= 0x08A0 && code <= 0x08FF) || // Arabic Extended-A
-    (code >= 0xFB50 && code <= 0xFDFF) || // Arabic Presentation Forms-A
-    (code >= 0xFE70 && code <= 0xFEFF);   // Arabic Presentation Forms-B
+  return (
+    (code >= 0x0600 && code <= 0x06ff) || // Arabic
+    (code >= 0x0750 && code <= 0x077f) || // Arabic Supplement
+    (code >= 0x08a0 && code <= 0x08ff) || // Arabic Extended-A
+    (code >= 0xfb50 && code <= 0xfdff) || // Arabic Presentation Forms-A
+    (code >= 0xfe70 && code <= 0xfeff)
+  ); // Arabic Presentation Forms-B
 }
 
 /**
@@ -67,7 +65,7 @@ const COMBINED_PREFIXES: readonly PrefixRule[] = [
   { pattern: 'فال', confidencePenalty: 0.15, prefixType: 'conjunction' }, // fa + al
   { pattern: 'بال', confidencePenalty: 0.15, prefixType: 'preposition' }, // bi + al
   { pattern: 'كال', confidencePenalty: 0.15, prefixType: 'preposition' }, // ka + al
-  { pattern: 'لل', confidencePenalty: 0.12, prefixType: 'preposition' },  // li + al (assimilation)
+  { pattern: 'لل', confidencePenalty: 0.12, prefixType: 'preposition' }, // li + al (assimilation)
 ];
 
 /**
@@ -82,9 +80,9 @@ const SINGLE_PREFIXES: readonly PrefixRule[] = [
   // Conjunctions and prepositions (1 char) - need longer stem to be safe
   { pattern: 'و', confidencePenalty: 0.08, prefixType: 'conjunction', minRemaining: 3 }, // wa- (and)
   { pattern: 'ف', confidencePenalty: 0.08, prefixType: 'conjunction', minRemaining: 3 }, // fa- (then/so)
-  { pattern: 'ب', confidencePenalty: 0.10, prefixType: 'preposition', minRemaining: 3 }, // bi- (with/by)
-  { pattern: 'ل', confidencePenalty: 0.10, prefixType: 'preposition', minRemaining: 3 }, // li- (to/for)
-  { pattern: 'ك', confidencePenalty: 0.10, prefixType: 'preposition', minRemaining: 3 }, // ka- (like/as)
+  { pattern: 'ب', confidencePenalty: 0.1, prefixType: 'preposition', minRemaining: 3 }, // bi- (with/by)
+  { pattern: 'ل', confidencePenalty: 0.1, prefixType: 'preposition', minRemaining: 3 }, // li- (to/for)
+  { pattern: 'ك', confidencePenalty: 0.1, prefixType: 'preposition', minRemaining: 3 }, // ka- (like/as)
 ];
 
 /**
@@ -105,18 +103,18 @@ const VERB_PREFIXES: readonly PrefixRule[] = [
  */
 const SUFFIXES: readonly { pattern: string; confidencePenalty: number; type: string }[] = [
   // Plural forms
-  { pattern: 'ون', confidencePenalty: 0.10, type: 'masculine-plural' },
-  { pattern: 'ين', confidencePenalty: 0.10, type: 'masculine-plural-accusative' },
-  { pattern: 'ات', confidencePenalty: 0.10, type: 'feminine-plural' },
+  { pattern: 'ون', confidencePenalty: 0.1, type: 'masculine-plural' },
+  { pattern: 'ين', confidencePenalty: 0.1, type: 'masculine-plural-accusative' },
+  { pattern: 'ات', confidencePenalty: 0.1, type: 'feminine-plural' },
   // Dual forms
-  { pattern: 'ان', confidencePenalty: 0.10, type: 'dual-nominative' },
-  { pattern: 'ين', confidencePenalty: 0.10, type: 'dual-accusative' },
+  { pattern: 'ان', confidencePenalty: 0.1, type: 'dual-nominative' },
+  { pattern: 'ين', confidencePenalty: 0.1, type: 'dual-accusative' },
   // Pronoun suffixes
-  { pattern: 'ها', confidencePenalty: 0.10, type: 'pronoun-her' },
-  { pattern: 'هم', confidencePenalty: 0.10, type: 'pronoun-them' },
-  { pattern: 'هن', confidencePenalty: 0.10, type: 'pronoun-them-f' },
-  { pattern: 'نا', confidencePenalty: 0.10, type: 'pronoun-us' },
-  { pattern: 'كم', confidencePenalty: 0.10, type: 'pronoun-you-pl' },
+  { pattern: 'ها', confidencePenalty: 0.1, type: 'pronoun-her' },
+  { pattern: 'هم', confidencePenalty: 0.1, type: 'pronoun-them' },
+  { pattern: 'هن', confidencePenalty: 0.1, type: 'pronoun-them-f' },
+  { pattern: 'نا', confidencePenalty: 0.1, type: 'pronoun-us' },
+  { pattern: 'كم', confidencePenalty: 0.1, type: 'pronoun-you-pl' },
   { pattern: 'ك', confidencePenalty: 0.08, type: 'pronoun-you' },
   { pattern: 'ه', confidencePenalty: 0.08, type: 'pronoun-him' },
   { pattern: 'ي', confidencePenalty: 0.08, type: 'pronoun-me' },
@@ -183,11 +181,20 @@ export class ArabicMorphologicalNormalizer implements MorphologicalNormalizer {
     // Try verb prefixes ONLY for words that look like verbs (not nouns)
     // Skip if the word has noun-pattern suffixes or pronoun suffixes
     // This prevents stripping ت from تغييرات (changes) or تغييرها (her change)
-    const looksLikeNoun = stem.endsWith('ات') || stem.endsWith('ة') ||
-                          stem.endsWith('ون') || stem.endsWith('ين') ||
-                          stem.endsWith('ها') || stem.endsWith('هم') || stem.endsWith('هن') ||
-                          stem.endsWith('نا') || stem.endsWith('كم');
-    if (!looksLikeNoun && (removedPrefixes.length === 0 || removedPrefixes[0] === 'و' || removedPrefixes[0] === 'ف')) {
+    const looksLikeNoun =
+      stem.endsWith('ات') ||
+      stem.endsWith('ة') ||
+      stem.endsWith('ون') ||
+      stem.endsWith('ين') ||
+      stem.endsWith('ها') ||
+      stem.endsWith('هم') ||
+      stem.endsWith('هن') ||
+      stem.endsWith('نا') ||
+      stem.endsWith('كم');
+    if (
+      !looksLikeNoun &&
+      (removedPrefixes.length === 0 || removedPrefixes[0] === 'و' || removedPrefixes[0] === 'ف')
+    ) {
       for (const rule of VERB_PREFIXES) {
         if (stem.startsWith(rule.pattern)) {
           const remaining = stem.slice(rule.pattern.length);

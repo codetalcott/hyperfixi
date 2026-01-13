@@ -20,7 +20,11 @@ export function getSetPatternsKo(): LanguagePattern[] {
       template: {
         format: '{destination} 를 {patient} 로 설정',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '를', alternatives: ['을'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
           { type: 'literal', value: '로', alternatives: ['으로'] },
@@ -40,7 +44,11 @@ export function getSetPatternsKo(): LanguagePattern[] {
       template: {
         format: '{destination} 에 {patient} 설정',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '에' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
           { type: 'literal', value: '설정', alternatives: ['설정하다'] },
@@ -59,7 +67,11 @@ export function getSetPatternsKo(): LanguagePattern[] {
       template: {
         format: '{destination} 는 {patient}',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '는', alternatives: ['은'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

@@ -178,7 +178,9 @@ export class LazyExpressionEvaluator extends BaseExpressionEvaluator {
 
       // Register all expressions from this category using the base class method
       this.registerCategory(expressions);
-      debug.expressions(`  ✓ Registered ${Object.keys(expressions).length} expressions from ${category}`);
+      debug.expressions(
+        `  ✓ Registered ${Object.keys(expressions).length} expressions from ${category}`
+      );
     } catch (error) {
       console.error(`Failed to load expression category: ${category}`, error);
       throw error;

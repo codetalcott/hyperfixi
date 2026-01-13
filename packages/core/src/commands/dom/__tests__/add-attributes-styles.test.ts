@@ -198,7 +198,12 @@ describe('AddCommand - Attribute Support (Feature Restoration)', () => {
   describe('validate - attribute input', () => {
     it('should validate correct attribute input', () => {
       const element = document.createElement('div');
-      const input = { type: 'attribute' as const, name: 'data-test', value: 'test', targets: [element] };
+      const input = {
+        type: 'attribute' as const,
+        name: 'data-test',
+        value: 'test',
+        targets: [element],
+      };
       expect(command.validate(input)).toBe(true);
     });
 
@@ -290,11 +295,7 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       await expect(
-        command.parseInput(
-          { args: [mockNode('*opacity')], modifiers: {} },
-          evaluator,
-          context
-        )
+        command.parseInput({ args: [mockNode('*opacity')], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('add *property requires a value argument');
     });
   });
@@ -304,10 +305,7 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const context = createMockContext();
       const element = document.createElement('div');
 
-      command.execute(
-        { type: 'styles', styles: { opacity: '0.5' }, targets: [element] },
-        context
-      );
+      command.execute({ type: 'styles', styles: { opacity: '0.5' }, targets: [element] }, context);
 
       expect(element.style.opacity).toBe('0.5');
     });
@@ -317,7 +315,11 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const element = document.createElement('div');
 
       command.execute(
-        { type: 'styles', styles: { opacity: '0.8', color: 'red', 'font-size': '16px' }, targets: [element] },
+        {
+          type: 'styles',
+          styles: { opacity: '0.8', color: 'red', 'font-size': '16px' },
+          targets: [element],
+        },
         context
       );
 
@@ -331,7 +333,11 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const element = document.createElement('div');
 
       command.execute(
-        { type: 'styles', styles: { 'background-color': 'blue', 'margin-top': '10px' }, targets: [element] },
+        {
+          type: 'styles',
+          styles: { 'background-color': 'blue', 'margin-top': '10px' },
+          targets: [element],
+        },
         context
       );
 
@@ -360,10 +366,7 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const element = document.createElement('div');
       element.style.opacity = '0.3';
 
-      command.execute(
-        { type: 'styles', styles: { opacity: '0.9' }, targets: [element] },
-        context
-      );
+      command.execute({ type: 'styles', styles: { opacity: '0.9' }, targets: [element] }, context);
 
       expect(element.style.opacity).toBe('0.9');
     });
@@ -384,13 +387,21 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
 
     it('should reject styles input with null styles', () => {
       const element = document.createElement('div');
-      const input = { type: 'styles' as const, styles: null as unknown as Record<string, string>, targets: [element] };
+      const input = {
+        type: 'styles' as const,
+        styles: null as unknown as Record<string, string>,
+        targets: [element],
+      };
       expect(command.validate(input)).toBe(false);
     });
 
     it('should reject styles input with array styles', () => {
       const element = document.createElement('div');
-      const input = { type: 'styles' as const, styles: ['opacity', '0.5'] as unknown as Record<string, string>, targets: [element] };
+      const input = {
+        type: 'styles' as const,
+        styles: ['opacity', '0.5'] as unknown as Record<string, string>,
+        targets: [element],
+      };
       expect(command.validate(input)).toBe(false);
     });
 
@@ -402,7 +413,11 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
 
     it('should reject styles input with non-string values', () => {
       const element = document.createElement('div');
-      const input = { type: 'styles' as const, styles: { opacity: 0.5 } as unknown as Record<string, string>, targets: [element] };
+      const input = {
+        type: 'styles' as const,
+        styles: { opacity: 0.5 } as unknown as Record<string, string>,
+        targets: [element],
+      };
       expect(command.validate(input)).toBe(false);
     });
   });

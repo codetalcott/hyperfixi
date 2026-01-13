@@ -38,7 +38,7 @@ import { thaiProfile } from '../generators/profiles/thai';
  */
 function isThai(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0x0E00 && code <= 0x0E7F;
+  return code >= 0x0e00 && code <= 0x0e7f;
 }
 
 // =============================================================================
@@ -138,7 +138,10 @@ export class ThaiTokenizer extends BaseTokenizer {
       }
 
       // Try number (use base class method)
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.tryNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);
@@ -188,9 +191,7 @@ export class ThaiTokenizer extends BaseTokenizer {
           pos++;
         }
         if (word) {
-          tokens.push(
-            createToken(word, 'identifier', createPosition(startPos, pos))
-          );
+          tokens.push(createToken(word, 'identifier', createPosition(startPos, pos)));
         }
         continue;
       }
@@ -211,9 +212,7 @@ export class ThaiTokenizer extends BaseTokenizer {
 
       // Operators and punctuation
       const startPos = pos;
-      tokens.push(
-        createToken(input[pos], 'operator', createPosition(startPos, pos + 1))
-      );
+      tokens.push(createToken(input[pos], 'operator', createPosition(startPos, pos + 1)));
       pos++;
     }
 

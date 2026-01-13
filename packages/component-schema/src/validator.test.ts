@@ -15,7 +15,7 @@ describe('ComponentValidator', () => {
         id: 'test-component',
         name: 'Test Component',
         version: '1.0.0',
-        hyperscript: 'on click toggle .active'
+        hyperscript: 'on click toggle .active',
       };
 
       const result = validator.validateComponent(component);
@@ -31,45 +31,42 @@ describe('ComponentValidator', () => {
         version: '2.1.0',
         category: 'ui-interaction',
         tags: ['button', 'interactive'],
-        hyperscript: [
-          'on click toggle .active',
-          'on mouseover add .hover'
-        ],
+        hyperscript: ['on click toggle .active', 'on mouseover add .hover'],
         template: {
           html: '<button class="{{buttonClass}}">{{buttonText}}</button>',
           variables: {
             buttonClass: {
               type: 'string',
               default: 'btn',
-              description: 'Button CSS class'
+              description: 'Button CSS class',
             },
             buttonText: {
               type: 'string',
               required: true,
-              description: 'Button text'
-            }
+              description: 'Button text',
+            },
           },
           slots: {
             content: {
               description: 'Button content',
-              required: true
-            }
-          }
+              required: true,
+            },
+          },
         },
         dependencies: {
           components: ['base-component'],
           css: ['styles.css'],
-          javascript: ['behavior.js']
+          javascript: ['behavior.js'],
         },
         configuration: {
           compilation: {
             minify: true,
-            compatibility: 'modern'
+            compatibility: 'modern',
           },
           deployment: {
             environments: ['production'],
-            frameworks: ['express']
-          }
+            frameworks: ['express'],
+          },
         },
         metadata: {
           author: 'Test Author',
@@ -78,25 +75,25 @@ describe('ComponentValidator', () => {
           examples: [
             {
               name: 'Basic Example',
-              html: '<button>Click me</button>'
-            }
-          ]
+              html: '<button>Click me</button>',
+            },
+          ],
         },
         validation: {
           events: ['click', 'mouseover'],
           selectors: ['.active', '.hover'],
           commands: ['toggle', 'add'],
-          complexity: 3
+          complexity: 3,
         },
         testing: {
           unit: [
             {
               name: 'Click toggles active',
               action: 'click button',
-              expected: 'button has class active'
-            }
-          ]
-        }
+              expected: 'button has class active',
+            },
+          ],
+        },
       };
 
       const result = validator.validateComponent(component);
@@ -109,7 +106,7 @@ describe('ComponentValidator', () => {
         id: 'Invalid_ID',
         name: 'Test Component',
         version: '1.0.0',
-        hyperscript: 'on click toggle .active'
+        hyperscript: 'on click toggle .active',
       };
 
       const result = validator.validateComponent(component);
@@ -120,7 +117,7 @@ describe('ComponentValidator', () => {
     it('should reject component with missing required fields', () => {
       const component = {
         name: 'Test Component',
-        hyperscript: 'on click toggle .active'
+        hyperscript: 'on click toggle .active',
       } as ComponentDefinition;
 
       const result = validator.validateComponent(component);
@@ -133,7 +130,7 @@ describe('ComponentValidator', () => {
         id: 'test-component',
         name: 'Test Component',
         version: 'invalid-version',
-        hyperscript: 'on click toggle .active'
+        hyperscript: 'on click toggle .active',
       };
 
       const result = validator.validateComponent(component);
@@ -146,10 +143,7 @@ describe('ComponentValidator', () => {
         id: 'multi-script-component',
         name: 'Multi Script Component',
         version: '1.0.0',
-        hyperscript: [
-          'on click toggle .active',
-          'on mouseover add .hover'
-        ]
+        hyperscript: ['on click toggle .active', 'on mouseover add .hover'],
       };
 
       const result = validator.validateComponent(component);
@@ -167,10 +161,10 @@ describe('ComponentValidator', () => {
           variables: {
             unusedVar: {
               type: 'string',
-              description: 'This variable is not used'
-            }
-          }
-        }
+              description: 'This variable is not used',
+            },
+          },
+        },
       };
 
       const result = validator.validateComponent(component);
@@ -184,8 +178,8 @@ describe('ComponentValidator', () => {
         version: '1.0.0',
         hyperscript: 'on click toggle .active',
         dependencies: {
-          components: ['self-dependent']
-        }
+          components: ['self-dependent'],
+        },
       };
 
       const result = validator.validateComponent(component);
@@ -204,15 +198,15 @@ describe('ComponentValidator', () => {
             id: 'component-1',
             name: 'Component 1',
             version: '1.0.0',
-            hyperscript: 'on click toggle .active'
+            hyperscript: 'on click toggle .active',
           },
           'component-2': {
             id: 'component-2',
             name: 'Component 2',
             version: '1.0.0',
-            hyperscript: 'on click add .selected'
-          }
-        }
+            hyperscript: 'on click add .selected',
+          },
+        },
       };
 
       const result = validator.validateCollection(collection);
@@ -229,15 +223,15 @@ describe('ComponentValidator', () => {
             id: 'duplicate-id',
             name: 'Component A',
             version: '1.0.0',
-            hyperscript: 'on click toggle .active'
+            hyperscript: 'on click toggle .active',
           },
           'component-b': {
             id: 'duplicate-id',
             name: 'Component B',
             version: '1.0.0',
-            hyperscript: 'on click add .selected'
-          }
-        }
+            hyperscript: 'on click add .selected',
+          },
+        },
       };
 
       const result = validator.validateCollection(collection);
@@ -254,10 +248,10 @@ describe('ComponentValidator', () => {
             id: 'internal-component',
             name: 'Internal Component',
             version: '1.0.0',
-            hyperscript: 'on click toggle .active'
+            hyperscript: 'on click toggle .active',
           },
-          'external-component': './external-component.json'
-        }
+          'external-component': './external-component.json',
+        },
       };
 
       const result = validator.validateCollection(collection);
@@ -276,10 +270,10 @@ describe('ComponentValidator', () => {
             version: '1.0.0',
             hyperscript: 'on click toggle .active',
             dependencies: {
-              components: ['missing-component']
-            }
-          }
-        }
+              components: ['missing-component'],
+            },
+          },
+        },
       };
 
       const result = validator.validateCollection(collection);
@@ -293,7 +287,7 @@ describe('ComponentValidator', () => {
         id: 'test-component',
         name: 'Test Component',
         version: '1.0.0',
-        hyperscript: 'on click toggle .active'
+        hyperscript: 'on click toggle .active',
       };
 
       const result = validateComponent(component);
@@ -309,9 +303,9 @@ describe('ComponentValidator', () => {
             id: 'test-component',
             name: 'Test Component',
             version: '1.0.0',
-            hyperscript: 'on click toggle .active'
-          }
-        }
+            hyperscript: 'on click toggle .active',
+          },
+        },
       };
 
       const result = validateCollection(collection);

@@ -21,10 +21,14 @@ export function getGetPatternsIt(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'ottenere', alternatives: ['ottieni', 'get', 'prendere'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'da', alternatives: ['di'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'da', alternatives: ['di'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {

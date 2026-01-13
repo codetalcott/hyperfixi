@@ -57,7 +57,10 @@ class TenantEventEmitter {
  */
 class TenantCache {
   private tenantCache = new Map<string, { tenant: TenantInfo; timestamp: number }>();
-  private customizationCache = new Map<string, { customization: TenantCustomization; timestamp: number }>();
+  private customizationCache = new Map<
+    string,
+    { customization: TenantCustomization; timestamp: number }
+  >();
   private readonly ttl: number;
   private readonly maxSize: number;
 
@@ -129,12 +132,9 @@ export class TenantManager {
 
   constructor(config: TenantManagerConfig) {
     this.config = config;
-    this.cache = new TenantCache(
-      config.caching.ttl,
-      config.caching.maxSize
-    );
+    this.cache = new TenantCache(config.caching.ttl, config.caching.maxSize);
     this.events = new TenantEventEmitter();
-    
+
     if (config.caching.enabled === false) {
       this.cache = new TenantCache(0, 0); // Disable caching
     }
@@ -145,7 +145,7 @@ export class TenantManager {
    */
   async resolveTenant(identifier: TenantIdentifier, request?: any): Promise<TenantInfo | null> {
     const cacheKey = this.getCacheKey(identifier);
-    
+
     // Try cache first
     if (this.config.caching.enabled) {
       const cached = this.cache.getTenant(cacheKey);
@@ -213,7 +213,7 @@ export class TenantManager {
 
     try {
       const customization = await this.config.customizationProvider.getCustomization(tenantId);
-      
+
       if (customization && this.config.caching.enabled) {
         this.cache.setCustomization(tenantId, customization);
       }
@@ -246,7 +246,7 @@ export class TenantManager {
     session?: TenantSession
   ): Promise<TenantContext> {
     const customization = await this.getCustomization(tenant.id);
-    
+
     const context: TenantContext = {
       tenant,
       customization: customization || this.getDefaultCustomization(tenant.id),
@@ -277,7 +277,7 @@ export class TenantManager {
   ): Promise<void> {
     try {
       await this.config.customizationProvider.updateCustomization(tenantId, changes);
-      
+
       // Clear cache
       if (this.config.caching.enabled) {
         this.cache.clearCustomization(tenantId);

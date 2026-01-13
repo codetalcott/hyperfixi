@@ -84,7 +84,11 @@ describe('Binary Tree - Array Serialization', () => {
   });
 
   it('should serialize and deserialize nested arrays', () => {
-    const nested = [[1, 2], [3, 4], [5, 6]];
+    const nested = [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+    ];
     expect(deserialize(serialize(nested))).toEqual(nested);
   });
 
@@ -346,13 +350,13 @@ describe('Binary Tree - Benchmark', () => {
     const suite = runBenchmarks(500);
 
     // Find single field access results
-    const singleFieldResults = suite.results.filter((r) => r.name.includes('Single Field'));
+    const singleFieldResults = suite.results.filter(r => r.name.includes('Single Field'));
 
     // At least some should show speedup (speedup > 1)
-    const hasSpeedup = singleFieldResults.some((r) => r.speedup > 1);
+    const hasSpeedup = singleFieldResults.some(r => r.speedup > 1);
     console.log(
       'Single field access speedups:',
-      singleFieldResults.map((r) => `${r.name}: ${r.speedup.toFixed(2)}x`)
+      singleFieldResults.map(r => `${r.name}: ${r.speedup.toFixed(2)}x`)
     );
 
     // This is informational - we don't fail if there's no speedup

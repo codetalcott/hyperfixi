@@ -174,7 +174,21 @@ const hyperfixi = {
     render,
     toExplicit,
     fromExplicit,
-    supportedLanguages: ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw'],
+    supportedLanguages: [
+      'en',
+      'ja',
+      'ar',
+      'es',
+      'ko',
+      'zh',
+      'tr',
+      'pt',
+      'fr',
+      'de',
+      'id',
+      'qu',
+      'sw',
+    ],
   },
 
   // Semantic debug API for monitoring parsing decisions

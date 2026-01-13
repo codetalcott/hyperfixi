@@ -14,10 +14,7 @@ import {
   ConversionUtilities,
 } from './bridge';
 import type { ExecutionContext } from '../../../types/core';
-import {
-  createTypedExpressionContext,
-  type TestExpressionContext,
-} from '../../../test-utilities';
+import { createTypedExpressionContext, type TestExpressionContext } from '../../../test-utilities';
 
 // Type alias for backward compatibility
 type TypedExpressionContext = TestExpressionContext;
@@ -61,7 +58,9 @@ describe.skip('Enhanced Conversion Bridge', () => {
 
   describe('Context Conversion', () => {
     it('should convert ExecutionContext to TypedExpressionContext', () => {
-      const typedContext = createTypedExpressionContext(mockExecutionContext as unknown as Record<string, unknown>);
+      const typedContext = createTypedExpressionContext(
+        mockExecutionContext as unknown as Record<string, unknown>
+      );
 
       // Check that core properties are preserved
       expect(typedContext.me).toBe(mockExecutionContext.me);
@@ -87,7 +86,9 @@ describe.skip('Enhanced Conversion Bridge', () => {
         event: undefined,
       };
 
-      const typedContext = createTypedExpressionContext(contextWithNulls as unknown as Record<string, unknown>);
+      const typedContext = createTypedExpressionContext(
+        contextWithNulls as unknown as Record<string, unknown>
+      );
 
       expect(typedContext.locals).toBeInstanceOf(Map);
       expect(typedContext.globals).toBeInstanceOf(Map);

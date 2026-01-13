@@ -23,11 +23,11 @@ export type PartialValidationSeverity = 'critical' | 'structural' | 'warning';
  * Element categories for validation
  */
 export type LayoutElementCategory =
-  | 'document-root'     // html, body, head
+  | 'document-root' // html, body, head
   | 'semantic-landmark' // header, footer, main, nav, aside
-  | 'sectioning'        // section, article with main semantic role
-  | 'metadata'          // title, meta, link, base
-  | 'script-style';     // script, style (potential issues in partials)
+  | 'sectioning' // section, article with main semantic role
+  | 'metadata' // title, meta, link, base
+  | 'script-style'; // script, style (potential issues in partials)
 
 // ============================================================================
 // Validation Issue Types

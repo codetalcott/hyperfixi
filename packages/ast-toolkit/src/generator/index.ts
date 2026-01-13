@@ -39,7 +39,7 @@ export function generate(ast: ASTNode, options: GeneratorOptions = {}): string {
     indentation: '  ',
     preserveRaw: true,
     _indentLevel: 0,
-    ...options
+    ...options,
   };
 
   return generateNode(ast, opts);
@@ -48,14 +48,17 @@ export function generate(ast: ASTNode, options: GeneratorOptions = {}): string {
 /**
  * Generate with result metadata
  */
-export function generateWithMetadata(ast: ASTNode, options: GeneratorOptions = {}): GeneratorResult {
+export function generateWithMetadata(
+  ast: ASTNode,
+  options: GeneratorOptions = {}
+): GeneratorResult {
   let nodeCount = 0;
   const opts: GeneratorOptions = {
     minify: false,
     indentation: '  ',
     preserveRaw: true,
     _indentLevel: 0,
-    ...options
+    ...options,
   };
 
   const countingOpts = { ...opts };
@@ -161,7 +164,9 @@ function generateEventHandler(node: ASTNode, opts: GeneratorOptions): string {
   if (commands.length > 0) {
     const cmdSeparator = opts.minify ? ' then ' : '\n' + indent(opts);
     const commandsStr = commands
-      .map((cmd: ASTNode) => generateNode(cmd, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 }))
+      .map((cmd: ASTNode) =>
+        generateNode(cmd, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 })
+      )
       .join(cmdSeparator);
 
     if (opts.minify) {
@@ -190,7 +195,9 @@ function generateBehavior(node: ASTNode, opts: GeneratorOptions): string {
   const body = data.body || data.eventHandlers || [];
   if (body.length > 0) {
     const bodyStr = body
-      .map((item: ASTNode) => generateNode(item, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 }))
+      .map((item: ASTNode) =>
+        generateNode(item, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 })
+      )
       .join(opts.minify ? ' ' : '\n' + indent(opts));
 
     if (opts.minify) {
@@ -219,7 +226,10 @@ function generateFunction(node: ASTNode, opts: GeneratorOptions): string {
 
   // Body
   if (data.body) {
-    const bodyStr = generateNode(data.body, { ...opts, _indentLevel: (opts._indentLevel || 0) + 1 });
+    const bodyStr = generateNode(data.body, {
+      ...opts,
+      _indentLevel: (opts._indentLevel || 0) + 1,
+    });
     if (opts.minify) {
       parts.push(bodyStr, 'end');
     } else {

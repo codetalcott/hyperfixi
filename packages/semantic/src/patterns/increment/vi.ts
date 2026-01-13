@@ -21,15 +21,23 @@ export function getIncrementPatternsVi(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'tăng', alternatives: ['tăng lên'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'thêm', alternatives: ['lên'] },
-            { type: 'role', role: 'quantity' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'thêm', alternatives: ['lên'] },
+              { type: 'role', role: 'quantity' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        quantity: { marker: 'thêm', markerAlternatives: ['lên'], default: { type: 'literal', value: '1' } },
+        quantity: {
+          marker: 'thêm',
+          markerAlternatives: ['lên'],
+          default: { type: 'literal', value: '1' },
+        },
       },
     },
     {

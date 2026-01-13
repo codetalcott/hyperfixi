@@ -9,7 +9,10 @@ import { test, expect, Page } from '@playwright/test';
 declare global {
   interface Window {
     testExpression: (expr: string, context: object) => { match: boolean; original: any; ours: any };
-    testExpressionWithContext: (expr: string, context: object) => { match: boolean; original: any; ours: any };
+    testExpressionWithContext: (
+      expr: string,
+      context: object
+    ) => { match: boolean; original: any; ours: any };
   }
 }
 

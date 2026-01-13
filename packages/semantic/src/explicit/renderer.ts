@@ -118,10 +118,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
    * native idiom patterns (e.g., "when clicked") because standard patterns
    * are more recognizable and closer to the original hyperscript syntax.
    */
-  private findBestPattern(
-    node: SemanticNode,
-    patterns: LanguagePattern[]
-  ): LanguagePattern | null {
+  private findBestPattern(node: SemanticNode, patterns: LanguagePattern[]): LanguagePattern | null {
     // Score patterns by how well they match our roles
     const scored = patterns.map(pattern => {
       let score = pattern.priority;
@@ -148,7 +145,11 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           score += 20; // Boost standard patterns for English rendering
         }
         // Penalize English "when", "if", "upon" variants (good for parsing, not output)
-        if (pattern.id.includes('-when') || pattern.id.includes('-if') || pattern.id.includes('-upon')) {
+        if (
+          pattern.id.includes('-when') ||
+          pattern.id.includes('-if') ||
+          pattern.id.includes('-upon')
+        ) {
           score -= 15;
         }
       }
@@ -179,9 +180,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
     if (node.kind === 'event-handler') {
       const eventNode = node as EventHandlerSemanticNode;
       if (eventNode.body && eventNode.body.length > 0) {
-        const bodyParts = eventNode.body.map(n =>
-          this.render(n, language)
-        );
+        const bodyParts = eventNode.body.map(n => this.render(n, language));
         parts.push(bodyParts.join(' '));
       }
     }
@@ -192,11 +191,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
   /**
    * Render a single pattern token.
    */
-  private renderPatternToken(
-    token: any,
-    node: SemanticNode,
-    language: string
-  ): string | null {
+  private renderPatternToken(token: any, node: SemanticNode, language: string): string | null {
     switch (token.type) {
       case 'literal':
         return token.value;
@@ -224,7 +219,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         // For optional groups with destination role, skip if destination is "me" (the default)
         // This avoids rendering "on me" / "en yo" when it's implicit
         if (token.optional) {
-          const destToken = token.tokens.find((t: any) => t.type === 'role' && t.role === 'destination');
+          const destToken = token.tokens.find(
+            (t: any) => t.type === 'role' && t.role === 'destination'
+          );
           if (destToken) {
             const destValue = node.roles.get('destination');
             if (destValue?.type === 'reference' && destValue.value === 'me') {
@@ -371,7 +368,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         switch (markerPosition) {
           case 'between':
             // Japanese: "自分の value", Chinese: "我的 value", Korean: "나의 value"
-            return profile.usesSpaces ? `${objectStr}${marker} ${property}` : `${objectStr}${marker}${property}`;
+            return profile.usesSpaces
+              ? `${objectStr}${marker} ${property}`
+              : `${objectStr}${marker}${property}`;
 
           case 'after-object':
             // Quechua: "ñuqapa value"

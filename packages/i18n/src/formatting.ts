@@ -74,7 +74,11 @@ export class NumberFormatter {
     }
   }
 
-  formatCurrency(value: number, currency: string, options: Omit<NumberFormatOptions, 'style' | 'currency'> = {}): string {
+  formatCurrency(
+    value: number,
+    currency: string,
+    options: Omit<NumberFormatOptions, 'style' | 'currency'> = {}
+  ): string {
     return this.format(value, {
       ...options,
       style: 'currency',
@@ -99,7 +103,9 @@ export class NumberFormatter {
     const minimumFractionDigits = options.minimumFractionDigits ?? defaultMin;
     const maximumFractionDigits = options.maximumFractionDigits ?? defaultMax;
 
-    let formatted = value.toFixed(Math.min(maximumFractionDigits, Math.max(minimumFractionDigits, 0)));
+    let formatted = value.toFixed(
+      Math.min(maximumFractionDigits, Math.max(minimumFractionDigits, 0))
+    );
 
     // Remove trailing zeros after decimal point if not required
     if (minimumFractionDigits === 0 && formatted.includes('.')) {
@@ -116,9 +122,21 @@ export class NumberFormatter {
     if (style === 'currency' && currency) {
       // Map currency codes to symbols
       const currencySymbols: Record<string, string> = {
-        USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥',
-        KRW: '₩', RUB: '₽', INR: '₹', THB: '฿', ILS: '₪',
-        UAH: '₴', PHP: '₱', VND: '₫', GHS: '₵', NGN: '₦',
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        JPY: '¥',
+        CNY: '¥',
+        KRW: '₩',
+        RUB: '₽',
+        INR: '₹',
+        THB: '฿',
+        ILS: '₪',
+        UAH: '₴',
+        PHP: '₱',
+        VND: '₫',
+        GHS: '₵',
+        NGN: '₦',
       };
       const symbol = currencySymbols[currency] || currency;
       return `${symbol}${formatted}`;
@@ -126,10 +144,13 @@ export class NumberFormatter {
 
     if (style === 'percent') {
       // Multiply by 100 for percent display (matching Intl behavior)
-      const percentValue = (value * 100).toFixed(Math.min(maximumFractionDigits, Math.max(minimumFractionDigits, 0)));
-      const cleanPercent = (minimumFractionDigits === 0 && percentValue.includes('.'))
-        ? percentValue.replace(/\.?0+$/, '')
-        : percentValue;
+      const percentValue = (value * 100).toFixed(
+        Math.min(maximumFractionDigits, Math.max(minimumFractionDigits, 0))
+      );
+      const cleanPercent =
+        minimumFractionDigits === 0 && percentValue.includes('.')
+          ? percentValue.replace(/\.?0+$/, '')
+          : percentValue;
       return `${cleanPercent}%`;
     }
 
@@ -169,15 +190,15 @@ export class DateFormatter {
     const dateObj = new Date(date);
     const now = new Date();
     const diffMs = dateObj.getTime() - now.getTime();
-    
+
     try {
       const rtf = new Intl.RelativeTimeFormat(this.locale, options);
-      
+
       const diffSeconds = Math.round(diffMs / 1000);
       const diffMinutes = Math.round(diffMs / (1000 * 60));
       const diffHours = Math.round(diffMs / (1000 * 60 * 60));
       const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-      
+
       if (Math.abs(diffSeconds) < 60) {
         return rtf.format(diffSeconds, 'second');
       } else if (Math.abs(diffMinutes) < 60) {
@@ -220,7 +241,7 @@ export class DateFormatter {
   private fallbackRelativeFormat(date: Date, now: Date): string {
     const diffMs = date.getTime() - now.getTime();
     const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'today';
     if (diffDays === 1) return 'tomorrow';
     if (diffDays === -1) return 'yesterday';
@@ -248,7 +269,11 @@ export class LocaleFormatter {
     return this.numberFormatter.format(value, options);
   }
 
-  formatCurrency(value: number, currency: string, options?: Omit<NumberFormatOptions, 'style' | 'currency'>): string {
+  formatCurrency(
+    value: number,
+    currency: string,
+    options?: Omit<NumberFormatOptions, 'style' | 'currency'>
+  ): string {
     return this.numberFormatter.formatCurrency(value, currency, options);
   }
 
@@ -276,19 +301,25 @@ export class LocaleFormatter {
       }
       return this.formatNumber(value);
     }
-    
+
     if (value instanceof Date || (typeof value === 'string' && !isNaN(Date.parse(value)))) {
       if (type === 'relative') {
         return this.formatRelativeTime(value);
       }
       return this.formatDate(value);
     }
-    
+
     return String(value);
   }
 
   // List formatting
-  formatList(items: string[], options: { style?: 'long' | 'short' | 'narrow'; type?: 'conjunction' | 'disjunction' | 'unit' } = {}): string {
+  formatList(
+    items: string[],
+    options: {
+      style?: 'long' | 'short' | 'narrow';
+      type?: 'conjunction' | 'disjunction' | 'unit';
+    } = {}
+  ): string {
     if (items.length === 0) return '';
     if (items.length === 1) return items[0];
 
@@ -304,51 +335,55 @@ export class LocaleFormatter {
       // Fallback for unsupported locales
       const { type = 'conjunction' } = options;
       const connector = type === 'disjunction' ? 'or' : 'and';
-      
+
       if (items.length === 2) {
         return `${items[0]} ${connector} ${items[1]}`;
       }
-      
+
       return `${items.slice(0, -1).join(', ')}, ${connector} ${items[items.length - 1]}`;
     }
   }
 
   // Unit formatting
-  formatUnit(value: number, unit: string, options: { style?: 'long' | 'short' | 'narrow' } = {}): string {
+  formatUnit(
+    value: number,
+    unit: string,
+    options: { style?: 'long' | 'short' | 'narrow' } = {}
+  ): string {
     try {
       // Map common hyperscript units to Intl units
       const unitMap: Record<string, string> = {
-        'second': 'second',
-        'seconds': 'second',
-        'minute': 'minute',
-        'minutes': 'minute',
-        'hour': 'hour',
-        'hours': 'hour',
-        'day': 'day',
-        'days': 'day',
-        'pixel': 'pixel',
-        'pixels': 'pixel',
-        'px': 'pixel',
-        'percent': 'percent',
+        second: 'second',
+        seconds: 'second',
+        minute: 'minute',
+        minutes: 'minute',
+        hour: 'hour',
+        hours: 'hour',
+        day: 'day',
+        days: 'day',
+        pixel: 'pixel',
+        pixels: 'pixel',
+        px: 'pixel',
+        percent: 'percent',
         '%': 'percent',
       };
 
       const intlUnit = unitMap[unit.toLowerCase()] || unit;
-      
+
       if (Intl.NumberFormat.prototype.constructor.name === 'NumberFormat') {
         // Check if environment supports unit formatting
         const testFormatter = new Intl.NumberFormat(this.locale, {
           style: 'unit',
           unit: intlUnit,
-          unitDisplay: options.style || 'long'
+          unitDisplay: options.style || 'long',
         } as any);
-        
+
         return testFormatter.format(value);
       }
     } catch (error) {
       // Fallback formatting
     }
-    
+
     return `${value} ${unit}`;
   }
 

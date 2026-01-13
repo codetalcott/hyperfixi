@@ -60,7 +60,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async request => {
   const { name, arguments: args } = request.params;
 
   // Analysis tools (from ast-toolkit)
@@ -69,7 +69,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   // Pattern tools (from patterns-reference)
-  if (name === 'search_patterns' || name === 'translate_hyperscript' || name === 'get_pattern_stats') {
+  if (
+    name === 'search_patterns' ||
+    name === 'translate_hyperscript' ||
+    name === 'get_pattern_stats'
+  ) {
     return handlePatternTool(name, args as Record<string, unknown>);
   }
 
@@ -88,7 +92,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   // LSP Bridge tools
-  if (name === 'get_diagnostics' || name === 'get_completions' || name === 'get_hover_info' || name === 'get_document_symbols') {
+  if (
+    name === 'get_diagnostics' ||
+    name === 'get_completions' ||
+    name === 'get_hover_info' ||
+    name === 'get_document_symbols'
+  ) {
     return handleLspBridgeTool(name, args as Record<string, unknown>);
   }
 
@@ -132,7 +141,7 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
   return { resources: listResources() };
 });
 
-server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+server.setRequestHandler(ReadResourceRequestSchema, async request => {
   const { uri } = request.params;
   return readResource(uri);
 });
@@ -147,7 +156,7 @@ async function main() {
   console.error('HyperFixi MCP server started');
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error('Failed to start MCP server:', error);
   process.exit(1);
 });

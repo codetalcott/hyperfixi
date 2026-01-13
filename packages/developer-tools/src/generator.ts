@@ -626,10 +626,22 @@ footer { text-align: center; padding: 1rem; background: #f5f5f5; }`,
  * Create a new project
  */
 export async function createProject(options: ScaffoldOptions): Promise<void> {
-  const { name, template, description, author, license, features = [], typescript, testing, linting, git, install } = options;
-  
+  const {
+    name,
+    template,
+    description,
+    author,
+    license,
+    features = [],
+    typescript,
+    testing,
+    linting,
+    git,
+    install,
+  } = options;
+
   const projectPath = path.resolve(name);
-  
+
   // Check if directory already exists
   if (await fs.pathExists(projectPath)) {
     throw new Error(`Directory ${name} already exists`);
@@ -686,7 +698,7 @@ export async function createProject(options: ScaffoldOptions): Promise<void> {
   if (typescript) {
     await addDevDependency(projectPath, 'typescript', '^5.0.0');
     await addDevDependency(projectPath, '@types/node', '^20.0.0');
-    
+
     // Create tsconfig.json
     const tsconfig = {
       compilerOptions: {
@@ -701,17 +713,14 @@ export async function createProject(options: ScaffoldOptions): Promise<void> {
       include: ['src/**/*'],
       exclude: ['node_modules', 'dist'],
     };
-    
-    await fs.writeFile(
-      path.join(projectPath, 'tsconfig.json'),
-      JSON.stringify(tsconfig, null, 2)
-    );
+
+    await fs.writeFile(path.join(projectPath, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
   }
 
   // Add testing setup
   if (testing) {
     await addDevDependency(projectPath, '@hyperfixi/testing-framework', '^0.1.0');
-    
+
     // Create test file
     const testContent = `import { describe, it, expect } from '@hyperfixi/testing-framework';
 
@@ -720,17 +729,14 @@ describe('${name}', () => {
     expect(true).toBe(true);
   });
 });`;
-    
-    await fs.writeFile(
-      path.join(projectPath, 'src/index.test.js'),
-      testContent
-    );
+
+    await fs.writeFile(path.join(projectPath, 'src/index.test.js'), testContent);
   }
 
   // Add linting setup
   if (linting) {
     await addDevDependency(projectPath, 'eslint', '^8.0.0');
-    
+
     const eslintConfig = {
       env: {
         browser: true,
@@ -743,7 +749,7 @@ describe('${name}', () => {
       },
       rules: {},
     };
-    
+
     await fs.writeFile(
       path.join(projectPath, '.eslintrc.json'),
       JSON.stringify(eslintConfig, null, 2)
@@ -753,10 +759,10 @@ describe('${name}', () => {
   // Initialize git repository
   if (git) {
     const { spawn } = await import('child_process');
-    
+
     await new Promise<void>((resolve, reject) => {
       const gitInit = spawn('git', ['init'], { cwd: projectPath });
-      gitInit.on('close', (code) => {
+      gitInit.on('close', code => {
         if (code === 0) resolve();
         else reject(new Error('Git initialization failed'));
       });
@@ -768,7 +774,7 @@ dist/
 .env
 .DS_Store
 *.log`;
-    
+
     await fs.writeFile(path.join(projectPath, '.gitignore'), gitignore);
   }
 
@@ -822,9 +828,10 @@ export async function createComponent(options: {
   const extension = typescript ? 'ts' : 'js';
 
   // Generate hyperscript for events
-  const eventHandlers = events.length > 0
-    ? events.map(e => `on ${e} log '${e} triggered'`).join('\n    ')
-    : `on click log 'Clicked ${name}'`;
+  const eventHandlers =
+    events.length > 0
+      ? events.map(e => `on ${e} log '${e} triggered'`).join('\n    ')
+      : `on click log 'Clicked ${name}'`;
 
   // If template option is true, create an HTML file
   if (template) {
@@ -893,20 +900,24 @@ export async function createComponent(options: {
   ],
 
   events: [
-    ${events.map(e => `{
+    ${
+      events
+        .map(
+          e => `{
       name: '${e}',
       description: 'Fired on ${e} event',
-    }`).join(',\n    ') || `{
+    }`
+        )
+        .join(',\n    ') ||
+      `{
       name: 'click',
       description: 'Fired when component is clicked',
-    }`}
+    }`
+    }
   ],
 };`;
 
-  await fs.writeFile(
-    path.join(componentDir, `index.${extension}`),
-    componentContent
-  );
+  await fs.writeFile(path.join(componentDir, `index.${extension}`), componentContent);
 
   // Component test
   const testContent = `import { describe, it, expect } from '@hyperfixi/testing-framework';
@@ -923,10 +934,7 @@ describe('${name} Component', () => {
   });
 });`;
 
-  await fs.writeFile(
-    path.join(componentDir, `index.test.${extension}`),
-    testContent
-  );
+  await fs.writeFile(path.join(componentDir, `index.test.${extension}`), testContent);
 
   // Component documentation
   const docsContent = `# ${name} Component
@@ -960,10 +968,7 @@ The component includes default styles that can be customized:
 \`\`\`
 `;
 
-  await fs.writeFile(
-    path.join(componentDir, 'README.md'),
-    docsContent
-  );
+  await fs.writeFile(path.join(componentDir, 'README.md'), docsContent);
 }
 
 /**
@@ -1080,39 +1085,39 @@ Explain how to customize this template.
 async function addDependency(projectPath: string, name: string, version: string): Promise<void> {
   const packageJsonPath = path.join(projectPath, 'package.json');
   const packageJson = await fs.readJson(packageJsonPath);
-  
+
   if (!packageJson.dependencies) {
     packageJson.dependencies = {};
   }
-  
+
   packageJson.dependencies[name] = version;
-  
+
   await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
 }
 
 async function addDevDependency(projectPath: string, name: string, version: string): Promise<void> {
   const packageJsonPath = path.join(projectPath, 'package.json');
   const packageJson = await fs.readJson(packageJsonPath);
-  
+
   if (!packageJson.devDependencies) {
     packageJson.devDependencies = {};
   }
-  
+
   packageJson.devDependencies[name] = version;
-  
+
   await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
 }
 
 async function installDependencies(projectPath: string): Promise<void> {
   const { spawn } = await import('child_process');
-  
+
   return new Promise<void>((resolve, reject) => {
-    const npm = spawn('npm', ['install'], { 
+    const npm = spawn('npm', ['install'], {
       cwd: projectPath,
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
-    
-    npm.on('close', (code) => {
+
+    npm.on('close', code => {
       if (code === 0) resolve();
       else reject(new Error('Package installation failed'));
     });
@@ -1131,9 +1136,7 @@ export async function generateCode(
 /**
  * Generate code from schema (schema-based API)
  */
-export async function generateCode(
-  schema: CodeGenerationSchema
-): Promise<SchemaGeneratedCode>;
+export async function generateCode(schema: CodeGenerationSchema): Promise<SchemaGeneratedCode>;
 
 /**
  * Generate code from templates or schema
@@ -1234,7 +1237,10 @@ async function generateFromSchema(schema: CodeGenerationSchema): Promise<SchemaG
 /**
  * Generate component HTML from schema
  */
-function generateComponent(name: string, schema: ComponentSchema): { html: string; js?: string; css?: string } {
+function generateComponent(
+  name: string,
+  schema: ComponentSchema
+): { html: string; js?: string; css?: string } {
   const { template, events = [], commands = [] } = schema;
 
   // Build hyperscript if there are events or commands
@@ -1264,7 +1270,10 @@ function generateComponent(name: string, schema: ComponentSchema): { html: strin
 /**
  * Generate page HTML from schema
  */
-function generatePage(name: string, schema: PageSchema): { html: string; js?: string; css?: string } {
+function generatePage(
+  name: string,
+  schema: PageSchema
+): { html: string; js?: string; css?: string } {
   const { title, components = [], layout = 'default' } = schema;
 
   const componentIncludes = components.map(c => `  <!-- Include: ${c} -->`).join('\n');
@@ -1291,38 +1300,47 @@ ${componentIncludes}
 /**
  * Generate form HTML from schema
  */
-function generateForm(name: string, schema: FormSchema): { html: string; js?: string; css?: string } {
+function generateForm(
+  name: string,
+  schema: FormSchema
+): { html: string; js?: string; css?: string } {
   const { fields, submitAction, validation = true } = schema;
 
-  const fieldHtml = fields.map(field => {
-    const label = field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1);
-    const required = field.required ? ' required' : '';
-    const placeholder = field.placeholder ? ` placeholder="${field.placeholder}"` : '';
+  const fieldHtml = fields
+    .map(field => {
+      const label = field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1);
+      const required = field.required ? ' required' : '';
+      const placeholder = field.placeholder ? ` placeholder="${field.placeholder}"` : '';
 
-    if (field.type === 'textarea') {
-      return `  <div class="form-field">
+      if (field.type === 'textarea') {
+        return `  <div class="form-field">
     <label for="${field.name}">${label}</label>
     <textarea id="${field.name}" name="${field.name}"${required}${placeholder}></textarea>
   </div>`;
-    }
+      }
 
-    if (field.type === 'select' && field.options) {
-      const options = field.options.map(opt => `      <option value="${opt}">${opt}</option>`).join('\n');
-      return `  <div class="form-field">
+      if (field.type === 'select' && field.options) {
+        const options = field.options
+          .map(opt => `      <option value="${opt}">${opt}</option>`)
+          .join('\n');
+        return `  <div class="form-field">
     <label for="${field.name}">${label}</label>
     <select id="${field.name}" name="${field.name}"${required}>
 ${options}
     </select>
   </div>`;
-    }
+      }
 
-    return `  <div class="form-field">
+      return `  <div class="form-field">
     <label for="${field.name}">${label}</label>
     <input type="${field.type}" id="${field.name}" name="${field.name}"${required}${placeholder}>
   </div>`;
-  }).join('\n');
+    })
+    .join('\n');
 
-  const validationAttr = validation ? ` _="on submit halt the event then send ${submitAction} to me"` : '';
+  const validationAttr = validation
+    ? ` _="on submit halt the event then send ${submitAction} to me"`
+    : '';
 
   const html = `<form id="${name}" class="form"${validationAttr}>
 ${fieldHtml}
@@ -1335,12 +1353,15 @@ ${fieldHtml}
 /**
  * Generate list HTML from schema
  */
-function generateList(name: string, schema: ListSchema): { html: string; js?: string; css?: string } {
+function generateList(
+  name: string,
+  schema: ListSchema
+): { html: string; js?: string; css?: string } {
   const { itemTemplate, actions = [], sortable = false, filterable = false } = schema;
 
-  const actionButtons = actions.map(action =>
-    `    <button _="on click send ${action} to closest <li/>">${action}</button>`
-  ).join('\n');
+  const actionButtons = actions
+    .map(action => `    <button _="on click send ${action} to closest <li/>">${action}</button>`)
+    .join('\n');
 
   const listAttrs: string[] = [];
   if (sortable) listAttrs.push('data-sortable="true"');

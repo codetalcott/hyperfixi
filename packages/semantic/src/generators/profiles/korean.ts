@@ -21,21 +21,21 @@ export const koreanProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: '나',        // "I/me" (informal)
-    it: '그것',      // "it"
-    you: '너',       // "you" (informal)
+    me: '나', // "I/me" (informal)
+    it: '그것', // "it"
+    you: '너', // "you" (informal)
     result: '결과',
     event: '이벤트',
     target: '대상',
     body: '본문',
   },
   possessive: {
-    marker: '의',    // Possessive particle
+    marker: '의', // Possessive particle
     markerPosition: 'between',
     specialForms: {
-      me: '내',      // Contracted form of 나의 (my)
-      it: '그것의',  // "its"
-      you: '네',     // Contracted form of 너의 (your)
+      me: '내', // Contracted form of 나의 (my)
+      it: '그것의', // "its"
+      you: '네', // Contracted form of 너의 (your)
     },
   },
   roleMarkers: {

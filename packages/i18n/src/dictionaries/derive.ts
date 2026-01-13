@@ -37,49 +37,118 @@ interface LanguageProfile {
  */
 const COMMAND_KEYWORDS = [
   // Event handling
-  'on', 'tell', 'trigger', 'send',
+  'on',
+  'tell',
+  'trigger',
+  'send',
   // DOM manipulation
-  'take', 'put', 'set', 'get', 'add', 'remove', 'toggle', 'hide', 'show',
+  'take',
+  'put',
+  'set',
+  'get',
+  'add',
+  'remove',
+  'toggle',
+  'hide',
+  'show',
   // Control flow
-  'if', 'unless', 'repeat', 'for', 'while', 'until', 'continue', 'break', 'halt',
+  'if',
+  'unless',
+  'repeat',
+  'for',
+  'while',
+  'until',
+  'continue',
+  'break',
+  'halt',
   // Async
-  'wait', 'fetch', 'call', 'return',
+  'wait',
+  'fetch',
+  'call',
+  'return',
   // Other commands
-  'make', 'log', 'throw', 'catch', 'measure', 'transition',
+  'make',
+  'log',
+  'throw',
+  'catch',
+  'measure',
+  'transition',
   // Data commands
-  'increment', 'decrement', 'bind', 'default', 'persist',
+  'increment',
+  'decrement',
+  'bind',
+  'default',
+  'persist',
   // Navigation
-  'go', 'pushUrl', 'replaceUrl',
+  'go',
+  'pushUrl',
+  'replaceUrl',
   // Utility
-  'copy', 'pick', 'beep',
+  'copy',
+  'pick',
+  'beep',
   // Advanced
-  'js', 'async', 'render',
+  'js',
+  'async',
+  'render',
   // Animation
-  'swap', 'morph', 'settle',
+  'swap',
+  'morph',
+  'settle',
   // Content
-  'append', 'prepend', 'clone',
+  'append',
+  'prepend',
+  'clone',
   // Control
   'exit',
   // Behaviors
-  'install', 'behavior', 'init',
+  'install',
+  'behavior',
+  'init',
   // Focus
-  'focus', 'blur',
+  'focus',
+  'blur',
 ] as const;
 
 /**
  * Keywords that belong to the 'modifiers' category.
  */
 const MODIFIER_KEYWORDS = [
-  'to', 'from', 'into', 'with', 'at', 'in', 'of', 'as', 'by',
-  'before', 'after', 'over', 'under', 'between', 'through', 'without',
+  'to',
+  'from',
+  'into',
+  'with',
+  'at',
+  'in',
+  'of',
+  'as',
+  'by',
+  'before',
+  'after',
+  'over',
+  'under',
+  'between',
+  'through',
+  'without',
 ] as const;
 
 /**
  * Keywords that belong to the 'logical' category.
  */
 const LOGICAL_KEYWORDS = [
-  'and', 'or', 'not', 'is', 'exists', 'matches', 'contains', 'includes', 'equals',
-  'then', 'else', 'otherwise', 'end',
+  'and',
+  'or',
+  'not',
+  'is',
+  'exists',
+  'matches',
+  'contains',
+  'includes',
+  'equals',
+  'then',
+  'else',
+  'otherwise',
+  'end',
 ] as const;
 
 /**
@@ -87,11 +156,21 @@ const LOGICAL_KEYWORDS = [
  */
 const EXPRESSION_KEYWORDS = [
   // Positional
-  'first', 'last', 'next', 'previous', 'prev', 'random',
+  'first',
+  'last',
+  'next',
+  'previous',
+  'prev',
+  'random',
   // DOM traversal
-  'closest', 'parent', 'children', 'within',
+  'closest',
+  'parent',
+  'children',
+  'within',
   // Emptiness/existence
-  'no', 'empty', 'some',
+  'no',
+  'empty',
+  'some',
 ] as const;
 
 // =============================================================================
@@ -119,9 +198,7 @@ function extractCategory(
 /**
  * Extract references from the profile (me, it, you, etc.).
  */
-function extractReferences(
-  references: Record<string, string> | undefined
-): Record<string, string> {
+function extractReferences(references: Record<string, string> | undefined): Record<string, string> {
   if (!references) return {};
   return { ...references };
 }
@@ -286,33 +363,21 @@ export function deriveFromProfile(
 
   // Build the dictionary with fallbacks
   const dictionary: Dictionary = {
-    commands: includeFallbacks
-      ? mergeWithFallback(derivedCommands, {})
-      : derivedCommands,
+    commands: includeFallbacks ? mergeWithFallback(derivedCommands, {}) : derivedCommands,
 
-    modifiers: includeFallbacks
-      ? mergeWithFallback(derivedModifiers, {})
-      : derivedModifiers,
+    modifiers: includeFallbacks ? mergeWithFallback(derivedModifiers, {}) : derivedModifiers,
 
-    events: includeFallbacks
-      ? { ...EVENT_FALLBACK }
-      : {},
+    events: includeFallbacks ? { ...EVENT_FALLBACK } : {},
 
-    logical: includeFallbacks
-      ? mergeWithFallback(derivedLogical, {})
-      : derivedLogical,
+    logical: includeFallbacks ? mergeWithFallback(derivedLogical, {}) : derivedLogical,
 
-    temporal: includeFallbacks
-      ? { ...TEMPORAL_FALLBACK }
-      : {},
+    temporal: includeFallbacks ? { ...TEMPORAL_FALLBACK } : {},
 
     values: includeFallbacks
       ? mergeWithFallback(derivedReferences, VALUES_FALLBACK)
       : derivedReferences,
 
-    attributes: includeFallbacks
-      ? { ...ATTRIBUTES_FALLBACK }
-      : {},
+    attributes: includeFallbacks ? { ...ATTRIBUTES_FALLBACK } : {},
 
     expressions: includeFallbacks
       ? mergeWithFallback(derivedExpressions, EXPRESSIONS_FALLBACK)
@@ -404,8 +469,14 @@ export function validateDictionary(
   original: Dictionary
 ): { missing: Record<DictionaryCategory, string[]>; coverage: number } {
   const categories: DictionaryCategory[] = [
-    'commands', 'modifiers', 'events', 'logical',
-    'temporal', 'values', 'attributes', 'expressions'
+    'commands',
+    'modifiers',
+    'events',
+    'logical',
+    'temporal',
+    'values',
+    'attributes',
+    'expressions',
   ];
 
   const missing: Record<DictionaryCategory, string[]> = {

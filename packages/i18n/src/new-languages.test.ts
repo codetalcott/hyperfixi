@@ -31,7 +31,10 @@ describe('New Language Support', () => {
     });
 
     it('should handle conditional logic', () => {
-      const result = translator.translate('if my value is empty then hide me else show me', { from: 'en', to: 'tr' });
+      const result = translator.translate('if my value is empty then hide me else show me', {
+        from: 'en',
+        to: 'tr',
+      });
       expect(result).toContain('eğer');
       expect(result).toContain('yoksa');
     });
@@ -81,14 +84,20 @@ describe('New Language Support', () => {
     });
 
     it('should handle form interactions', () => {
-      const result = translator.translate('on submit take form data then send it', { from: 'en', to: 'id' });
+      const result = translator.translate('on submit take form data then send it', {
+        from: 'en',
+        to: 'id',
+      });
       // TODO: Test expects Swahili-like translations - verify Indonesian dictionary values
       expect(result).toContain('kirim'); // submit/send → kirim
       expect(result).toContain('ambil'); // take → ambil
     });
 
     it('should translate async operations', () => {
-      const result = translator.translate('fetch /api/data then put result into #content', { from: 'en', to: 'id' });
+      const result = translator.translate('fetch /api/data then put result into #content', {
+        from: 'en',
+        to: 'id',
+      });
       expect(result).toContain('ambil'); // fetch → ambil
       expect(result).toContain('taruh'); // put → taruh
       expect(result).toContain('hasil'); // result → hasil
@@ -119,7 +128,10 @@ describe('New Language Support', () => {
     });
 
     it('should translate basic commands', () => {
-      const result = translator.translate('on click put "Allin p\'unchaw" into #greeting', { from: 'en', to: 'qu' });
+      const result = translator.translate('on click put "Allin p\'unchaw" into #greeting', {
+        from: 'en',
+        to: 'qu',
+      });
       // TODO: Once grammar transformation is implemented, test for native SOV word order
       expect(result).toContain('ñitiy'); // click → ñitiy
       expect(result).toContain('kaqpi'); // on → kaqpi
@@ -127,14 +139,20 @@ describe('New Language Support', () => {
     });
 
     it('should handle complex expressions', () => {
-      const result = translator.translate('if target matches .button then add .pressed', { from: 'en', to: 'qu' });
+      const result = translator.translate('if target matches .button then add .pressed', {
+        from: 'en',
+        to: 'qu',
+      });
       expect(result).toContain('sichus'); // if → sichus
       expect(result).toContain('tupan'); // matches → tupan
       expect(result).toContain('yapay'); // add → yapay
     });
 
     it('should translate element references', () => {
-      const result = translator.translate('tell closest .card to add .highlight', { from: 'en', to: 'qu' });
+      const result = translator.translate('tell closest .card to add .highlight', {
+        from: 'en',
+        to: 'qu',
+      });
       expect(result).toContain('niy'); // tell → niy
       expect(result).toContain('aswan_kaylla'); // closest → aswan_kaylla
     });
@@ -164,7 +182,10 @@ describe('New Language Support', () => {
     });
 
     it('should translate basic commands', () => {
-      const result = translator.translate('on click put "Habari za asubuhi" into .message', { from: 'en', to: 'sw' });
+      const result = translator.translate('on click put "Habari za asubuhi" into .message', {
+        from: 'en',
+        to: 'sw',
+      });
       // TODO: Once grammar transformation is implemented, test for native word order
       expect(result).toContain('bonyeza'); // click → bonyeza
       expect(result).toContain('kwenye'); // on → kwenye
@@ -178,7 +199,10 @@ describe('New Language Support', () => {
     });
 
     it('should translate navigation commands', () => {
-      const result = translator.translate('go to next .panel with transition', { from: 'en', to: 'sw' });
+      const result = translator.translate('go to next .panel with transition', {
+        from: 'en',
+        to: 'sw',
+      });
       expect(result).toContain('nenda'); // go → nenda
       expect(result).toContain('ijayo'); // next → ijayo
     });
@@ -203,7 +227,7 @@ describe('New Language Support', () => {
       'if my value exists then show me',
       'wait 2 seconds then hide me',
       'on mouseenter tell closest .parent to add .hover',
-      'fetch /api/data then put result into #content'
+      'fetch /api/data then put result into #content',
     ];
 
     const newLanguages = ['tr', 'id', 'qu', 'sw'];
@@ -222,7 +246,7 @@ describe('New Language Support', () => {
 
     it('should maintain consistent command translations', () => {
       const commands = ['add', 'remove', 'show', 'hide', 'wait', 'put'];
-      
+
       for (const lang of newLanguages) {
         const dict = dictionaries[lang];
         for (const cmd of commands) {
@@ -234,7 +258,7 @@ describe('New Language Support', () => {
 
     it('should have consistent event translations', () => {
       const events = ['click', 'mouseenter', 'mouseleave', 'focus', 'blur', 'submit'];
-      
+
       for (const lang of newLanguages) {
         const dict = dictionaries[lang];
         for (const event of events) {
@@ -249,7 +273,7 @@ describe('New Language Support', () => {
         const first = PluralAwareTranslator.getOrdinal(1, lang);
         const second = PluralAwareTranslator.getOrdinal(2, lang);
         const third = PluralAwareTranslator.getOrdinal(3, lang);
-        
+
         expect(first).toBeTruthy();
         expect(second).toBeTruthy();
         expect(third).toBeTruthy();
@@ -293,7 +317,8 @@ describe('New Language Support', () => {
 
   describe('Real-world usage scenarios', () => {
     it('should handle e-commerce interactions in Turkish', () => {
-      const expr = 'on click if stock exists then add product to cart else show out-of-stock message';
+      const expr =
+        'on click if stock exists then add product to cart else show out-of-stock message';
       const result = translator.translate(expr, { from: 'en', to: 'tr' });
       // TODO: Test native word order once grammar transformation is implemented
       expect(result).toContain('tıklama'); // click
@@ -331,7 +356,8 @@ describe('New Language Support', () => {
     const testLanguages = ['tr', 'id', 'qu', 'sw'];
 
     it('should handle very long expressions efficiently', () => {
-      const longExpr = 'on click if my value matches /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/ then add .valid to closest .form-group then remove .invalid from closest .form-group then put "Valid email" into next .feedback else add .invalid to closest .form-group then remove .valid from closest .form-group then put "Invalid email format" into next .feedback';
+      const longExpr =
+        'on click if my value matches /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/ then add .valid to closest .form-group then remove .invalid from closest .form-group then put "Valid email" into next .feedback else add .invalid to closest .form-group then remove .valid from closest .form-group then put "Invalid email format" into next .feedback';
 
       for (const lang of testLanguages) {
         expect(() => {

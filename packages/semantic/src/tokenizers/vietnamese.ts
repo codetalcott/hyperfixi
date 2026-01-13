@@ -48,7 +48,9 @@ function isVietnameseLetter(char: string): boolean {
   // Vietnamese-specific letters and diacritics
   // Lowercase: ă â đ ê ô ơ ư and all tone variants
   // Uppercase: Ă Â Đ Ê Ô Ơ Ư and all tone variants
-  return /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ]/.test(char);
+  return /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ]/.test(
+    char
+  );
 }
 
 /**
@@ -66,27 +68,27 @@ function isVietnameseIdentifierChar(char: string): boolean {
  * Vietnamese prepositions that mark grammatical roles.
  */
 const PREPOSITIONS = new Set([
-  'trong',      // in, inside
-  'ngoài',      // outside
-  'trên',       // on, above
-  'dưới',       // under, below
-  'vào',        // into
-  'ra',         // out
-  'đến',        // to
-  'từ',         // from
-  'với',        // with
-  'cho',        // for, to
-  'bởi',        // by
-  'qua',        // through
-  'trước',      // before
-  'sau',        // after
-  'giữa',       // between
-  'bên',        // beside
-  'theo',       // according to, along
-  'về',         // about, towards
-  'tới',        // to, towards
-  'lên',        // up
-  'xuống',      // down
+  'trong', // in, inside
+  'ngoài', // outside
+  'trên', // on, above
+  'dưới', // under, below
+  'vào', // into
+  'ra', // out
+  'đến', // to
+  'từ', // from
+  'với', // with
+  'cho', // for, to
+  'bởi', // by
+  'qua', // through
+  'trước', // before
+  'sau', // after
+  'giữa', // between
+  'bên', // beside
+  'theo', // according to, along
+  'về', // about, towards
+  'tới', // to, towards
+  'lên', // up
+  'xuống', // down
 ]);
 
 // =============================================================================
@@ -413,7 +415,13 @@ export class VietnameseTokenizer extends BaseTokenizer {
   classifyToken(token: string): TokenKind {
     if (PREPOSITIONS.has(token.toLowerCase())) return 'particle';
     if (VIETNAMESE_KEYWORDS.has(token.toLowerCase())) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[') || token.startsWith('<')) return 'selector';
+    if (
+      token.startsWith('#') ||
+      token.startsWith('.') ||
+      token.startsWith('[') ||
+      token.startsWith('<')
+    )
+      return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
 
@@ -463,29 +471,16 @@ export class VietnameseTokenizer extends BaseTokenizer {
     // Check if it's a keyword
     const normalized = VIETNAMESE_KEYWORDS.get(lower);
     if (normalized) {
-      return createToken(
-        word,
-        'keyword',
-        createPosition(startPos, pos),
-        normalized
-      );
+      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
     }
 
     // Check if it's a preposition
     if (PREPOSITIONS.has(lower)) {
-      return createToken(
-        word,
-        'particle',
-        createPosition(startPos, pos)
-      );
+      return createToken(word, 'particle', createPosition(startPos, pos));
     }
 
     // Return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -532,7 +527,11 @@ export class VietnameseTokenizer extends BaseTokenizer {
       } else if (remaining[0] === 's' && !isVietnameseLetter(remaining[1] || '')) {
         number += 's';
         pos += 1;
-      } else if (remaining[0] === 'm' && remaining[1] !== 's' && !isVietnameseLetter(remaining[1] || '')) {
+      } else if (
+        remaining[0] === 'm' &&
+        remaining[1] !== 's' &&
+        !isVietnameseLetter(remaining[1] || '')
+      ) {
         number += 'm';
         pos += 1;
       } else if (remaining[0] === 'h' && !isVietnameseLetter(remaining[1] || '')) {
@@ -543,11 +542,7 @@ export class VietnameseTokenizer extends BaseTokenizer {
 
     if (!number) return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
 
   /**

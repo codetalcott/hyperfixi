@@ -100,7 +100,7 @@ export function createHistorySwap(config: HistorySwapConfig): HistorySwapInstanc
   const resolveTarget = (): HTMLElement | null => {
     if (typeof target === 'string') {
       const element = document.querySelector(target);
-      return isHTMLElement(element) ? element as HTMLElement : null;
+      return isHTMLElement(element) ? (element as HTMLElement) : null;
     }
     return isHTMLElement(target) ? target : null;
   };
@@ -133,7 +133,7 @@ export function createHistorySwap(config: HistorySwapConfig): HistorySwapInstanc
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'text/html',
+          Accept: 'text/html',
           'HX-Request': 'true',
           'HX-History-Restore-Request': 'true',
         },
@@ -166,10 +166,11 @@ export function createHistorySwap(config: HistorySwapConfig): HistorySwapInstanc
       }
 
       // Dispatch event for monitoring
-      window.dispatchEvent(new CustomEvent('hyperfixi:historyswap', {
-        detail: { url, strategy, target },
-      }));
-
+      window.dispatchEvent(
+        new CustomEvent('hyperfixi:historyswap', {
+          detail: { url, strategy, target },
+        })
+      );
     } catch (error) {
       targetElement.classList.remove('hx-swapping');
 

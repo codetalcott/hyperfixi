@@ -119,10 +119,11 @@ test.describe('Multi-Word Command Parser (Session 32)', () => {
     await page.waitForTimeout(200);
 
     // Verify no "Unknown command: to" errors
-    const hasUnknownCommandError = consoleErrors.some(err =>
-      err.includes('Unknown command: to') ||
-      err.includes('Unknown command: as') ||
-      err.includes('Unknown command: a')
+    const hasUnknownCommandError = consoleErrors.some(
+      err =>
+        err.includes('Unknown command: to') ||
+        err.includes('Unknown command: as') ||
+        err.includes('Unknown command: a')
     );
 
     expect(hasUnknownCommandError).toBe(false);

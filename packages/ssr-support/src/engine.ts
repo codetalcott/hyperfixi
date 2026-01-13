@@ -71,9 +71,7 @@ export class HyperFixiSSREngine implements SSREngine {
       }
 
       // Generate SEO tags
-      const metaTags = context.seo 
-        ? this.generateSEOTags(this.transformSEOData(context.seo))
-        : [];
+      const metaTags = context.seo ? this.generateSEOTags(this.transformSEOData(context.seo)) : [];
 
       // Generate performance hints
       const linkTags = this.generateLinkTags(compiled, context, options);
@@ -112,7 +110,10 @@ export class HyperFixiSSREngine implements SSREngine {
         performance: {
           renderTime,
           hydrationSize: hydrationScript ? Buffer.byteLength(hydrationScript, 'utf8') : 0,
-          criticalCSSSize: criticalCSS.reduce((size, css) => size + Buffer.byteLength(css, 'utf8'), 0),
+          criticalCSSSize: criticalCSS.reduce(
+            (size, css) => size + Buffer.byteLength(css, 'utf8'),
+            0
+          ),
           totalSize: Buffer.byteLength(html, 'utf8'),
         },
       };
@@ -129,7 +130,6 @@ export class HyperFixiSSREngine implements SSREngine {
       }
 
       return result;
-
     } catch (error) {
       throw new SSRRenderError(
         `SSR rendering failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -208,7 +208,7 @@ export class HyperFixiSSREngine implements SSREngine {
         // Load CSS content (in real implementation, would read from file system or CDN)
         const cssContent = await this.loadCSSContent(cssFile);
         const result = await this.criticalCSS.extract(html, [cssContent]);
-        
+
         if (result.critical) {
           critical.push(result.critical);
         }
@@ -223,7 +223,7 @@ export class HyperFixiSSREngine implements SSREngine {
   /**
    * Generate SEO meta tags
    */
-  generateSEOTags(seoData: SEOData): Array<{ name?: string; property?: string; content: string; }> {
+  generateSEOTags(seoData: SEOData): Array<{ name?: string; property?: string; content: string }> {
     return this.seoGenerator.generateTags(seoData);
   }
 
@@ -248,44 +248,44 @@ export class HyperFixiSSREngine implements SSREngine {
    */
   private generateCacheKey(template: string, context: SSRContext, options: SSROptions): string {
     const hash = createHash('sha256');
-    
+
     hash.update(template);
     hash.update(JSON.stringify(context.variables ?? {}));
     hash.update(JSON.stringify(context.seo ?? {}));
     hash.update(JSON.stringify(options));
     hash.update(context.request?.url ?? '');
-    
+
     return hash.digest('hex');
   }
 
   private generateCacheTags(context: SSRContext): string[] {
     const tags: string[] = ['ssr'];
-    
+
     if (context.request?.url) {
       tags.push(`url:${context.request.url}`);
     }
-    
+
     if (context.user?.id) {
       tags.push(`user:${context.user.id}`);
     }
-    
+
     if (context.seo?.title) {
       tags.push('page');
     }
-    
+
     return tags;
   }
 
   private extractComponentState(
-    components: ComponentDefinition[], 
+    components: ComponentDefinition[],
     context: SSRContext
-  ): Record<string, { id: string; state: Record<string, any>; hyperscript: string[]; }> {
+  ): Record<string, { id: string; state: Record<string, any>; hyperscript: string[] }> {
     const componentState: Record<string, any> = {};
 
     components.forEach(component => {
       const state = this.extractStateFromContext(component, context);
-      const hyperscript = Array.isArray(component.hyperscript) 
-        ? component.hyperscript 
+      const hyperscript = Array.isArray(component.hyperscript)
+        ? component.hyperscript
         : [component.hyperscript];
 
       componentState[`#${component.id}`] = {
@@ -298,9 +298,12 @@ export class HyperFixiSSREngine implements SSREngine {
     return componentState;
   }
 
-  private extractStateFromContext(component: ComponentDefinition, context: SSRContext): Record<string, any> {
+  private extractStateFromContext(
+    component: ComponentDefinition,
+    context: SSRContext
+  ): Record<string, any> {
     const state: Record<string, any> = {};
-    
+
     if (component.template?.variables && context.variables) {
       Object.keys(component.template.variables).forEach(varName => {
         if (varName in context.variables!) {
@@ -339,11 +342,11 @@ export class HyperFixiSSREngine implements SSREngine {
   }
 
   private generateLinkTags(
-    compiled: any, 
-    context: SSRContext, 
+    compiled: any,
+    context: SSRContext,
     options: SSROptions
-  ): Array<{ rel: string; href: string; as?: string; type?: string; }> {
-    const linkTags: Array<{ rel: string; href: string; as?: string; type?: string; }> = [];
+  ): Array<{ rel: string; href: string; as?: string; type?: string }> {
+    const linkTags: Array<{ rel: string; href: string; as?: string; type?: string }> = [];
 
     // Preload JavaScript if enabled
     if (options.preloadJS) {
@@ -382,7 +385,11 @@ export class HyperFixiSSREngine implements SSREngine {
     return linkTags;
   }
 
-  private injectHydrationData(html: string, hydrationScript?: string, options: SSROptions = {}): string {
+  private injectHydrationData(
+    html: string,
+    hydrationScript?: string,
+    options: SSROptions = {}
+  ): string {
     if (!hydrationScript) {
       return html;
     }
@@ -395,9 +402,11 @@ export class HyperFixiSSREngine implements SSREngine {
     }
 
     // Insert hydration script before </body>
-    return html.substring(0, bodyCloseIndex) + 
-           `\n<script>${hydrationScript}</script>\n` + 
-           html.substring(bodyCloseIndex);
+    return (
+      html.substring(0, bodyCloseIndex) +
+      `\n<script>${hydrationScript}</script>\n` +
+      html.substring(bodyCloseIndex)
+    );
   }
 
   private async loadCSSContent(cssFile: string): Promise<string> {

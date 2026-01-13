@@ -19,11 +19,7 @@
  *   clicou → clicar (3rd person preterite)
  */
 
-import type {
-  MorphologicalNormalizer,
-  NormalizationResult,
-  ConjugationType,
-} from './types';
+import type { MorphologicalNormalizer, NormalizationResult, ConjugationType } from './types';
 import { noChange, normalized } from './types';
 
 /**
@@ -62,7 +58,12 @@ const REFLEXIVE_SUFFIXES = ['-se', '-me', '-te', '-nos', '-vos'];
 /**
  * -AR verb conjugation endings mapped to infinitive reconstruction.
  */
-const AR_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const AR_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-ando)
   { ending: 'ando', stem: 'ar', confidence: 0.88, type: 'gerund' },
   // Past participle (-ado)
@@ -76,7 +77,7 @@ const AR_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
   { ending: 'a', stem: 'ar', confidence: 0.75, type: 'present' }, // ele/ela/você
   { ending: 'amos', stem: 'ar', confidence: 0.85, type: 'present' }, // nós
   { ending: 'ais', stem: 'ar', confidence: 0.85, type: 'present' }, // vós
-  { ending: 'am', stem: 'ar', confidence: 0.80, type: 'present' }, // eles/elas/vocês
+  { ending: 'am', stem: 'ar', confidence: 0.8, type: 'present' }, // eles/elas/vocês
   // Preterite (past)
   { ending: 'ei', stem: 'ar', confidence: 0.88, type: 'past' }, // eu
   { ending: 'aste', stem: 'ar', confidence: 0.88, type: 'past' }, // tu
@@ -109,7 +110,12 @@ const AR_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
 /**
  * -ER verb conjugation endings.
  */
-const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const ER_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-endo)
   { ending: 'endo', stem: 'er', confidence: 0.88, type: 'gerund' },
   // Past participle (-ido)
@@ -146,7 +152,12 @@ const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
 /**
  * -IR verb conjugation endings.
  */
-const IR_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const IR_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-indo)
   { ending: 'indo', stem: 'ir', confidence: 0.88, type: 'gerund' },
   // Past participle (-ido)
@@ -183,8 +194,9 @@ const IR_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
 /**
  * All endings combined, sorted by length (longest first).
  */
-const ALL_ENDINGS = [...AR_ENDINGS, ...ER_ENDINGS, ...IR_ENDINGS]
-  .sort((a, b) => b.ending.length - a.ending.length);
+const ALL_ENDINGS = [...AR_ENDINGS, ...ER_ENDINGS, ...IR_ENDINGS].sort(
+  (a, b) => b.ending.length - a.ending.length
+);
 
 /**
  * Portuguese morphological normalizer.
@@ -242,7 +254,11 @@ export class PortugueseMorphologicalNormalizer implements MorphologicalNormalize
         const withoutReflexive = word.slice(0, -suffix.length);
 
         // Check if this looks like an infinitive
-        if (withoutReflexive.endsWith('ar') || withoutReflexive.endsWith('er') || withoutReflexive.endsWith('ir')) {
+        if (
+          withoutReflexive.endsWith('ar') ||
+          withoutReflexive.endsWith('er') ||
+          withoutReflexive.endsWith('ir')
+        ) {
           // It's a reflexive infinitive (e.g., mostrar-se → mostrar)
           return normalized(withoutReflexive, 0.88, {
             removedSuffixes: [suffix],

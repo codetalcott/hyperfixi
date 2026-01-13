@@ -12,7 +12,7 @@ describe('listResources', () => {
 
   it('includes commands reference', () => {
     const resources = listResources();
-    const commands = resources.find((r) => r.uri === 'hyperscript://docs/commands');
+    const commands = resources.find(r => r.uri === 'hyperscript://docs/commands');
     expect(commands).toBeDefined();
     expect(commands?.name).toContain('Commands');
     expect(commands?.mimeType).toBe('text/markdown');
@@ -20,7 +20,7 @@ describe('listResources', () => {
 
   it('includes expressions guide', () => {
     const resources = listResources();
-    const expressions = resources.find((r) => r.uri === 'hyperscript://docs/expressions');
+    const expressions = resources.find(r => r.uri === 'hyperscript://docs/expressions');
     expect(expressions).toBeDefined();
     expect(expressions?.name).toContain('Expressions');
     expect(expressions?.mimeType).toBe('text/markdown');
@@ -28,7 +28,7 @@ describe('listResources', () => {
 
   it('includes events reference', () => {
     const resources = listResources();
-    const events = resources.find((r) => r.uri === 'hyperscript://docs/events');
+    const events = resources.find(r => r.uri === 'hyperscript://docs/events');
     expect(events).toBeDefined();
     expect(events?.name).toContain('Events');
     expect(events?.mimeType).toBe('text/markdown');
@@ -36,7 +36,7 @@ describe('listResources', () => {
 
   it('includes common patterns', () => {
     const resources = listResources();
-    const patterns = resources.find((r) => r.uri === 'hyperscript://examples/common');
+    const patterns = resources.find(r => r.uri === 'hyperscript://examples/common');
     expect(patterns).toBeDefined();
     expect(patterns?.name).toContain('Patterns');
     expect(patterns?.mimeType).toBe('text/markdown');
@@ -44,14 +44,14 @@ describe('listResources', () => {
 
   it('includes languages', () => {
     const resources = listResources();
-    const languages = resources.find((r) => r.uri === 'hyperscript://languages');
+    const languages = resources.find(r => r.uri === 'hyperscript://languages');
     expect(languages).toBeDefined();
     expect(languages?.mimeType).toBe('application/json');
   });
 
   it('all resources have required properties', () => {
     const resources = listResources();
-    resources.forEach((resource) => {
+    resources.forEach(resource => {
       expect(resource.uri).toBeDefined();
       expect(resource.name).toBeDefined();
       expect(resource.description).toBeDefined();
@@ -119,8 +119,8 @@ describe('readResource - events', () => {
     // Should mention modifiers like .prevent, .once, etc.
     expect(
       result.contents[0].text.includes('prevent') ||
-      result.contents[0].text.includes('modifier') ||
-      result.contents[0].text.includes('.once')
+        result.contents[0].text.includes('modifier') ||
+        result.contents[0].text.includes('.once')
     ).toBe(true);
   });
 });
@@ -142,8 +142,8 @@ describe('readResource - common patterns', () => {
     // Should include some common pattern
     expect(
       result.contents[0].text.includes('toggle') ||
-      result.contents[0].text.includes('modal') ||
-      result.contents[0].text.includes('validation')
+        result.contents[0].text.includes('modal') ||
+        result.contents[0].text.includes('validation')
     ).toBe(true);
   });
 });
@@ -203,14 +203,14 @@ describe('readResource - error handling', () => {
 describe('resource URIs', () => {
   it('uses hyperscript:// protocol', () => {
     const resources = listResources();
-    resources.forEach((resource) => {
+    resources.forEach(resource => {
       expect(resource.uri.startsWith('hyperscript://')).toBe(true);
     });
   });
 
   it('URIs are unique', () => {
     const resources = listResources();
-    const uris = resources.map((r) => r.uri);
+    const uris = resources.map(r => r.uri);
     const uniqueUris = [...new Set(uris)];
     expect(uniqueUris.length).toBe(uris.length);
   });

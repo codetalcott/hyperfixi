@@ -18,7 +18,7 @@ describe('Component Utils', () => {
   describe('createComponent', () => {
     it('should create a basic component', () => {
       const component = createComponent('test-id', 'Test Component', 'on click toggle .active');
-      
+
       expect(component.id).toBe('test-id');
       expect(component.name).toBe('Test Component');
       expect(component.version).toBe('1.0.0');
@@ -26,15 +26,20 @@ describe('Component Utils', () => {
     });
 
     it('should create a component with custom version', () => {
-      const component = createComponent('test-id', 'Test Component', 'on click toggle .active', '2.0.0');
-      
+      const component = createComponent(
+        'test-id',
+        'Test Component',
+        'on click toggle .active',
+        '2.0.0'
+      );
+
       expect(component.version).toBe('2.0.0');
     });
 
     it('should create a component with hyperscript array', () => {
       const hyperscript = ['on click toggle .active', 'on mouseover add .hover'];
       const component = createComponent('test-id', 'Test Component', hyperscript);
-      
+
       expect(component.hyperscript).toEqual(hyperscript);
     });
   });
@@ -47,13 +52,18 @@ describe('Component Utils', () => {
           buttonText: {
             type: 'string' as const,
             required: true,
-            description: 'Button text'
-          }
-        }
+            description: 'Button text',
+          },
+        },
       };
 
-      const component = createTemplatedComponent('templated-component', 'Templated Component', 'on click toggle .active', template);
-      
+      const component = createTemplatedComponent(
+        'templated-component',
+        'Templated Component',
+        'on click toggle .active',
+        template
+      );
+
       expect(component.template).toEqual(template);
       expect(component.template?.variables?.buttonText.type).toBe('string');
     });
@@ -62,11 +72,11 @@ describe('Component Utils', () => {
   describe('createCollection', () => {
     it('should create a basic collection', () => {
       const components = {
-        'component-1': createComponent('component-1', 'Component 1', 'on click toggle .active')
+        'component-1': createComponent('component-1', 'Component 1', 'on click toggle .active'),
       };
 
       const collection = createCollection('Test Collection', components);
-      
+
       expect(collection.name).toBe('Test Collection');
       expect(collection.version).toBe('1.0.0');
       expect(collection.components).toEqual(components);
@@ -82,8 +92,8 @@ describe('Component Utils', () => {
         hyperscript: 'on click toggle .active',
         tags: ['base', 'component'],
         metadata: {
-          keywords: ['base']
-        }
+          keywords: ['base'],
+        },
       };
 
       const override: Partial<ComponentDefinition> = {
@@ -91,12 +101,12 @@ describe('Component Utils', () => {
         tags: ['extended'],
         metadata: {
           keywords: ['extended'],
-          author: 'Test Author'
-        }
+          author: 'Test Author',
+        },
       };
 
       const merged = mergeComponents(base, override);
-      
+
       expect(merged.description).toBe('Extended component');
       expect(merged.tags).toEqual(['base', 'component', 'extended']);
       expect(merged.metadata?.keywords).toEqual(['base', 'extended']);
@@ -113,10 +123,10 @@ describe('Component Utils', () => {
           variables: {
             baseVar: {
               type: 'string',
-              description: 'Base variable'
-            }
-          }
-        }
+              description: 'Base variable',
+            },
+          },
+        },
       };
 
       const override: Partial<ComponentDefinition> = {
@@ -124,14 +134,14 @@ describe('Component Utils', () => {
           variables: {
             extendedVar: {
               type: 'number',
-              description: 'Extended variable'
-            }
-          }
-        }
+              description: 'Extended variable',
+            },
+          },
+        },
       };
 
       const merged = mergeComponents(base, override);
-      
+
       expect(merged.template?.variables?.baseVar).toBeDefined();
       expect(merged.template?.variables?.extendedVar).toBeDefined();
     });
@@ -141,17 +151,17 @@ describe('Component Utils', () => {
     it('should extract variables from hyperscript string', () => {
       const hyperscript = 'on click fetch /api/users/{{userId}} then put result into #{{resultId}}';
       const variables = extractTemplateVariables(hyperscript);
-      
+
       expect(variables).toEqual(['resultId', 'userId']);
     });
 
     it('should extract variables from hyperscript array', () => {
       const hyperscript = [
         'on click fetch /api/users/{{userId}}',
-        'on submit put {{formData}} into #{{targetId}}'
+        'on submit put {{formData}} into #{{targetId}}',
       ];
       const variables = extractTemplateVariables(hyperscript);
-      
+
       expect(variables).toEqual(['formData', 'targetId', 'userId']);
     });
 
@@ -159,14 +169,14 @@ describe('Component Utils', () => {
       const hyperscript = 'on click toggle .active';
       const html = '<button class="{{buttonClass}}">{{buttonText}}</button>';
       const variables = extractTemplateVariables(hyperscript, html);
-      
+
       expect(variables).toEqual(['buttonClass', 'buttonText']);
     });
 
     it('should handle duplicate variables', () => {
       const hyperscript = 'on click fetch /api/users/{{userId}} then log {{userId}}';
       const variables = extractTemplateVariables(hyperscript);
-      
+
       expect(variables).toEqual(['userId']);
     });
   });
@@ -175,7 +185,7 @@ describe('Component Utils', () => {
     it('should generate basic string variables', () => {
       const variables = ['userName', 'message'];
       const definitions = generateTemplateVariableDefinitions(variables);
-      
+
       expect(definitions.userName.type).toBe('string');
       expect(definitions.message.type).toBe('string');
       expect(definitions.userName.required).toBe(false);
@@ -184,7 +194,7 @@ describe('Component Utils', () => {
     it('should infer number types from variable names', () => {
       const variables = ['userId', 'count', 'index'];
       const definitions = generateTemplateVariableDefinitions(variables);
-      
+
       expect(definitions.userId.type).toBe('number');
       expect(definitions.count.type).toBe('number');
       expect(definitions.index.type).toBe('number');
@@ -193,7 +203,7 @@ describe('Component Utils', () => {
     it('should infer boolean types from variable names', () => {
       const variables = ['isActive', 'hasData', 'enabled'];
       const definitions = generateTemplateVariableDefinitions(variables);
-      
+
       expect(definitions.isActive.type).toBe('boolean');
       expect(definitions.hasData.type).toBe('boolean');
       expect(definitions.enabled.type).toBe('boolean');
@@ -202,7 +212,7 @@ describe('Component Utils', () => {
     it('should infer array types from variable names', () => {
       const variables = ['itemList', 'items'];
       const definitions = generateTemplateVariableDefinitions(variables);
-      
+
       expect(definitions.itemList.type).toBe('array');
       expect(definitions.items.type).toBe('array');
     });
@@ -214,7 +224,7 @@ describe('Component Utils', () => {
         id: 'simple-component',
         name: 'Simple Component',
         version: '1.0.0',
-        hyperscript: 'on click toggle .active'
+        hyperscript: 'on click toggle .active',
       };
 
       const complexity = analyzeComplexity(component);
@@ -230,18 +240,18 @@ describe('Component Utils', () => {
         hyperscript: [
           'on click fetch /api/data then put result into #target',
           'on submit halt then validate then post to /api/save',
-          'on keydown if event.key == "Escape" then hide #modal'
+          'on keydown if event.key == "Escape" then hide #modal',
         ],
         dependencies: {
-          components: ['dependency-1', 'dependency-2']
+          components: ['dependency-1', 'dependency-2'],
         },
         template: {
           variables: {
             var1: { type: 'string' },
             var2: { type: 'number' },
-            var3: { type: 'boolean' }
-          }
-        }
+            var3: { type: 'boolean' },
+          },
+        },
       };
 
       const complexity = analyzeComplexity(component);
@@ -253,10 +263,14 @@ describe('Component Utils', () => {
         id: 'super-complex-component',
         name: 'Super Complex Component',
         version: '1.0.0',
-        hyperscript: Array(20).fill('on click fetch /api/data then put result into #target').join(' '),
+        hyperscript: Array(20)
+          .fill('on click fetch /api/data then put result into #target')
+          .join(' '),
         dependencies: {
-          components: Array(20).fill('dependency').map((_, i) => `dependency-${i}`)
-        }
+          components: Array(20)
+            .fill('dependency')
+            .map((_, i) => `dependency-${i}`),
+        },
       };
 
       const complexity = analyzeComplexity(component);
@@ -272,11 +286,11 @@ describe('Component Utils', () => {
         description: 'A simple test component for validation',
         version: '1.0.0',
         hyperscript: 'on click toggle .active',
-        category: 'ui-interaction'
+        category: 'ui-interaction',
       };
 
       const enhanced = generateMetadata(component);
-      
+
       expect(enhanced.metadata).toBeDefined();
       expect(enhanced.metadata?.keywords).toContain('test');
       expect(enhanced.metadata?.keywords).toContain('component');
@@ -295,12 +309,12 @@ describe('Component Utils', () => {
         metadata: {
           author: 'Original Author',
           keywords: ['original', 'keywords'],
-          created: '2023-01-01T00:00:00Z'
-        }
+          created: '2023-01-01T00:00:00Z',
+        },
       };
 
       const enhanced = generateMetadata(component);
-      
+
       expect(enhanced.metadata?.author).toBe('Original Author');
       expect(enhanced.metadata?.keywords).toEqual(['original', 'keywords']);
       expect(enhanced.metadata?.created).toBe('2023-01-01T00:00:00Z');
@@ -311,7 +325,7 @@ describe('Component Utils', () => {
   describe('createExample', () => {
     it('should create a basic example', () => {
       const example = createExample('Basic Example', '<button>Click me</button>');
-      
+
       expect(example.name).toBe('Basic Example');
       expect(example.html).toBe('<button>Click me</button>');
     });
@@ -324,7 +338,7 @@ describe('Component Utils', () => {
         variables,
         'Example with custom button text'
       );
-      
+
       expect(example.variables).toEqual(variables);
       expect(example.description).toBe('Example with custom button text');
     });
@@ -340,7 +354,7 @@ describe('Component Utils', () => {
             id: 'component-a',
             name: 'Component A',
             version: '1.0.0',
-            hyperscript: 'on click toggle .active'
+            hyperscript: 'on click toggle .active',
           },
           'component-b': {
             id: 'component-b',
@@ -348,10 +362,10 @@ describe('Component Utils', () => {
             version: '1.0.0',
             hyperscript: 'on click toggle .active',
             dependencies: {
-              components: ['component-a']
-            }
-          }
-        }
+              components: ['component-a'],
+            },
+          },
+        },
       };
 
       const cycles = checkCircularDependencies(collection);
@@ -369,8 +383,8 @@ describe('Component Utils', () => {
             version: '1.0.0',
             hyperscript: 'on click toggle .active',
             dependencies: {
-              components: ['component-b']
-            }
+              components: ['component-b'],
+            },
           },
           'component-b': {
             id: 'component-b',
@@ -378,10 +392,10 @@ describe('Component Utils', () => {
             version: '1.0.0',
             hyperscript: 'on click toggle .active',
             dependencies: {
-              components: ['component-a']
-            }
-          }
-        }
+              components: ['component-a'],
+            },
+          },
+        },
       };
 
       const cycles = checkCircularDependencies(collection);
@@ -403,14 +417,14 @@ describe('Component Utils', () => {
             version: '1.0.0',
             hyperscript: 'on click toggle .active',
             dependencies: {
-              components: ['component-a', 'component-b']
-            }
+              components: ['component-a', 'component-b'],
+            },
           },
           'component-a': {
             id: 'component-a',
             name: 'Component A',
             version: '1.0.0',
-            hyperscript: 'on click toggle .active'
+            hyperscript: 'on click toggle .active',
           },
           'component-b': {
             id: 'component-b',
@@ -418,14 +432,14 @@ describe('Component Utils', () => {
             version: '1.0.0',
             hyperscript: 'on click toggle .active',
             dependencies: {
-              components: ['component-a']
-            }
-          }
-        }
+              components: ['component-a'],
+            },
+          },
+        },
       };
 
       const order = getTopologicalOrder(collection);
-      
+
       expect(order.indexOf('component-a')).toBeLessThan(order.indexOf('component-b'));
       expect(order.indexOf('component-b')).toBeLessThan(order.indexOf('component-c'));
     });

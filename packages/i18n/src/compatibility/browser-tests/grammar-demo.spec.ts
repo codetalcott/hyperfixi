@@ -20,7 +20,9 @@ test.describe('Grammar Transformation Demo', () => {
     const hasTransformer = await page.evaluate(() => !!window.HyperFixiI18n.GrammarTransformer);
     expect(hasTransformer).toBe(true);
 
-    const hasTranslate = await page.evaluate(() => typeof window.HyperFixiI18n.translate === 'function');
+    const hasTranslate = await page.evaluate(
+      () => typeof window.HyperFixiI18n.translate === 'function'
+    );
     expect(hasTranslate).toBe(true);
   });
 

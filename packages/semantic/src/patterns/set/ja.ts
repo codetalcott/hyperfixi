@@ -20,7 +20,11 @@ export function getSetPatternsJa(): LanguagePattern[] {
       template: {
         format: '{destination} を {patient} に 設定',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'を' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
           { type: 'literal', value: 'に' },
@@ -40,7 +44,11 @@ export function getSetPatternsJa(): LanguagePattern[] {
       template: {
         format: '{destination} に {patient} を 設定',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'に' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
           { type: 'literal', value: 'を' },
@@ -60,7 +68,11 @@ export function getSetPatternsJa(): LanguagePattern[] {
       template: {
         format: '{destination} は {patient}',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'は' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

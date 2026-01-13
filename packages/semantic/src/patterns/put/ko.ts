@@ -20,11 +20,19 @@ export function getPutPatternsKo(): LanguagePattern[] {
       template: {
         format: '{patient} 를 {destination} 에 넣기',
         tokens: [
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '를', alternatives: ['을'] },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
           { type: 'literal', value: '에', alternatives: ['에게', '으로', '로'] },
-          { type: 'literal', value: '넣기', alternatives: ['넣다', '넣어', '놓다', '놓기', '두다', '두기'] },
+          {
+            type: 'literal',
+            value: '넣기',
+            alternatives: ['넣다', '넣어', '놓다', '놓기', '두다', '두기'],
+          },
         ],
       },
       extraction: {
@@ -40,7 +48,11 @@ export function getPutPatternsKo(): LanguagePattern[] {
       template: {
         format: '{patient} 를 {destination} 넣기',
         tokens: [
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '를', alternatives: ['을'] },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
           { type: 'literal', value: '넣기', alternatives: ['넣다', '넣어'] },

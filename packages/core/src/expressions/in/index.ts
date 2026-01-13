@@ -61,8 +61,6 @@ export class InExpression implements TypedExpressionImplementation<HyperScriptVa
     performance: { averageTime: 0.5, complexity: 'O(n)' as const },
   };
 
-  
-
   /**
    * Validate 'in' expression arguments
    */

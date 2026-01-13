@@ -103,10 +103,14 @@ export function initializeSchema(db: import('better-sqlite3').Database): void {
  * Check if the schema is initialized
  */
 export function isSchemaInitialized(db: import('better-sqlite3').Database): boolean {
-  const result = db.prepare(`
+  const result = db
+    .prepare(
+      `
     SELECT name FROM sqlite_master
     WHERE type='table' AND name='components'
-  `).get();
+  `
+    )
+    .get();
   return !!result;
 }
 

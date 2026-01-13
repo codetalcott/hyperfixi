@@ -40,10 +40,7 @@ import {
  *
  * Phase 9-3b: Extracted from Parser.parseRemoveCommand
  */
-export function parseRemoveCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-) {
+export function parseRemoveCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
 
   // Parse: remove <class> from <target>
@@ -86,10 +83,7 @@ export function parseRemoveCommand(
  *
  * Phase 9-3b: Extracted from Parser.parseToggleCommand
  */
-export function parseToggleCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-) {
+export function parseToggleCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
 
   // Parse: toggle <class> from <target> OR toggle <class> on <target>
@@ -138,10 +132,7 @@ export function parseToggleCommand(
  *
  * Phase 9-3b: Extracted from Parser.parseAddCommand
  */
-export function parseAddCommand(
-  ctx: ParserContext,
-  commandToken: Token
-) {
+export function parseAddCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
 
   // Parse first argument - can be classes (string/identifier) or CSS object literal
@@ -199,10 +190,7 @@ export function parseAddCommand(
  *
  * Phase 9-3b: Extracted from Parser.parsePutCommand
  */
-export function parsePutCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-) {
+export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   // Parse the content expression (everything before operation keyword)
   const contentExpr = ctx.parseExpression();
 
@@ -215,11 +203,13 @@ export function parsePutCommand(
   const currentToken = ctx.peek();
 
   if (!currentToken || !PUT_OPERATION_KEYWORDS.includes(currentToken.value as any)) {
-    ctx.addError(`Expected operation keyword (${PUT_OPERATION_KEYWORDS.join(', ')}) after put expression, got: ${currentToken?.value}`);
+    ctx.addError(
+      `Expected operation keyword (${PUT_OPERATION_KEYWORDS.join(', ')}) after put expression, got: ${currentToken?.value}`
+    );
     return null;
   }
 
-  let operation = ctx.advance().value;  // consume 'into', 'before', 'after', 'at', or compound keyword
+  let operation = ctx.advance().value; // consume 'into', 'before', 'after', 'at', or compound keyword
 
   // Handle compound keywords from tokenizer (e.g., "at start of", "at the start of")
   // These are tokenized as single keywords, so we just need to normalize them
@@ -233,19 +223,19 @@ export function parsePutCommand(
     // This handles cases where tokenizer produces individual tokens
     if (ctx.check(KEYWORDS.START) || ctx.check(KEYWORDS.THE)) {
       if (ctx.check(KEYWORDS.THE)) {
-        ctx.advance();  // consume 'the'
+        ctx.advance(); // consume 'the'
       }
       if (ctx.check(KEYWORDS.START)) {
-        ctx.advance();  // consume 'start'
+        ctx.advance(); // consume 'start'
         if (ctx.check(KEYWORDS.OF)) {
-          ctx.advance();  // consume 'of'
+          ctx.advance(); // consume 'of'
           operation = PUT_OPERATIONS.AT_START_OF;
         }
       }
     } else if (ctx.check(KEYWORDS.END)) {
-      ctx.advance();  // consume 'end'
+      ctx.advance(); // consume 'end'
       if (ctx.check(KEYWORDS.OF)) {
-        ctx.advance();  // consume 'of'
+        ctx.advance(); // consume 'of'
         operation = PUT_OPERATIONS.AT_END_OF;
       }
     }
@@ -269,7 +259,15 @@ export function parsePutCommand(
 /**
  * Swap strategy keywords that indicate a specific swap strategy
  */
-const SWAP_STRATEGY_KEYWORDS = ['innerhtml', 'outerhtml', 'into', 'over', 'delete', 'morph', 'morphouter'];
+const SWAP_STRATEGY_KEYWORDS = [
+  'innerhtml',
+  'outerhtml',
+  'into',
+  'over',
+  'delete',
+  'morph',
+  'morphouter',
+];
 
 /**
  * Parse swap command
@@ -285,10 +283,7 @@ const SWAP_STRATEGY_KEYWORDS = ['innerhtml', 'outerhtml', 'into', 'over', 'delet
  * @param identifierNode - The 'swap' identifier node
  * @returns CommandNode representing the swap command
  */
-export function parseSwapCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-) {
+export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   console.log('[PARSER DEBUG] parseSwapCommand called');
   const args: ASTNode[] = [];
 

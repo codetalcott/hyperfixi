@@ -123,7 +123,7 @@ function parseLite(code: string): LiteEventHandler | LiteCommand[] {
     return {
       event: normalizeEvent(onMatch[1]),
       filter: onMatch[2],
-      commands: parseCommands(onMatch[3])
+      commands: parseCommands(onMatch[3]),
     };
   }
 
@@ -133,7 +133,7 @@ function parseLite(code: string): LiteEventHandler | LiteCommand[] {
     const ms = everyMatch[2] === 's' ? parseInt(everyMatch[1]) * 1000 : parseInt(everyMatch[1]);
     return {
       event: `interval:${ms}`,
-      commands: parseCommands(everyMatch[3])
+      commands: parseCommands(everyMatch[3]),
     };
   }
 
@@ -142,7 +142,7 @@ function parseLite(code: string): LiteEventHandler | LiteCommand[] {
   if (initMatch) {
     return {
       event: 'init',
-      commands: parseCommands(initMatch[1])
+      commands: parseCommands(initMatch[1]),
     };
   }
 
@@ -216,7 +216,10 @@ function parseCommand(code: string): LiteCommand | null {
 
   // increment/decrement target [by N]
   match = trimmed.match(/^(\w+)\s+(.+?)(?:\s+by\s+(\d+))?$/i);
-  if (match && (normalizeCommand(match[1]) === 'increment' || normalizeCommand(match[1]) === 'decrement')) {
+  if (
+    match &&
+    (normalizeCommand(match[1]) === 'increment' || normalizeCommand(match[1]) === 'decrement')
+  ) {
     return { name: normalizeCommand(match[1]), args: [match[2], match[3] || '1'] };
   }
 
@@ -228,7 +231,10 @@ function parseCommand(code: string): LiteCommand | null {
 
   // send/trigger event [to target]
   match = trimmed.match(/^(\w+)\s+(\w+)(?:\s+to\s+(.+))?$/i);
-  if (match && (normalizeCommand(match[1]) === 'send' || normalizeCommand(match[1]) === 'trigger')) {
+  if (
+    match &&
+    (normalizeCommand(match[1]) === 'send' || normalizeCommand(match[1]) === 'trigger')
+  ) {
     return { name: 'send', args: [match[2]], target: match[3] };
   }
 
@@ -261,7 +267,9 @@ function parseCommand(code: string): LiteCommand | null {
   }
 
   // if/unless condition command
-  match = trimmed.match(/^(if|unless)\s+(.+?)\s+(toggle|add|remove|put|set|log|send|wait|show|hide|increment|decrement|focus|blur|go|take|append)\s+(.+)$/i);
+  match = trimmed.match(
+    /^(if|unless)\s+(.+?)\s+(toggle|add|remove|put|set|log|send|wait|show|hide|increment|decrement|focus|blur|go|take|append)\s+(.+)$/i
+  );
   if (match) {
     const innerCmd = parseCommand(`${match[3]} ${match[4]}`);
     if (innerCmd) {
@@ -392,7 +400,11 @@ function evaluateCondition(expr: string, me: Element, locals: Map<string, any>):
 /**
  * Execute a single command
  */
-async function executeCommand(cmd: LiteCommand, me: Element, locals: Map<string, any>): Promise<any> {
+async function executeCommand(
+  cmd: LiteCommand,
+  me: Element,
+  locals: Map<string, any>
+): Promise<any> {
   const target = resolveTarget(cmd.target, me);
   const elements = Array.isArray(target) ? target : target ? [target] : [me];
 
@@ -652,7 +664,7 @@ async function executeParsed(
 
   // Standard DOM event
   if (targetEl) {
-    targetEl.addEventListener(eventName, async (event) => {
+    targetEl.addEventListener(eventName, async event => {
       const handlerLocals = new Map(locals);
       handlerLocals.set('event', event);
       for (const cmd of handler.commands) {
@@ -737,11 +749,25 @@ const api = {
    * Available commands in this bundle
    */
   commands: [
-    'add', 'remove', 'toggle', 'take',
-    'put', 'append', 'set', 'increment', 'decrement',
-    'show', 'hide', 'focus', 'blur',
-    'log', 'send', 'trigger', 'wait', 'go'
-  ]
+    'add',
+    'remove',
+    'toggle',
+    'take',
+    'put',
+    'append',
+    'set',
+    'increment',
+    'decrement',
+    'show',
+    'hide',
+    'focus',
+    'blur',
+    'log',
+    'send',
+    'trigger',
+    'wait',
+    'go',
+  ],
 };
 
 // Auto-initialize

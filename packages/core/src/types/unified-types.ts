@@ -18,7 +18,12 @@ import type { ExecutionContext, ValidationError, ValidationResult } from './base
 
 // Re-export core context types
 export type { CoreExecutionContext } from './core-context';
-export { createCoreContext, isCoreExecutionContext, assertHTMLElement, asHTMLElement } from './core-context';
+export {
+  createCoreContext,
+  isCoreExecutionContext,
+  assertHTMLElement,
+  asHTMLElement,
+} from './core-context';
 
 // ============================================================================
 // Core Validation Types - Re-exported from base-types (single source of truth)
@@ -53,12 +58,7 @@ export type HyperScriptValueType =
 /**
  * Unified evaluation type - consolidates EvaluationType definitions
  */
-export type EvaluationType =
-  | HyperScriptValueType
-  | 'Any'
-  | 'Context'
-  | 'Command'
-  | 'Expression';
+export type EvaluationType = HyperScriptValueType | 'Any' | 'Context' | 'Command' | 'Expression';
 
 /**
  * Unified HyperScript value - actual value container
@@ -84,10 +84,7 @@ export type HyperScriptValue =
 
 // Re-export ExecutionContext and TypedExecutionContext from base-types
 // This ensures there's only ONE definition used throughout the codebase
-export type {
-  ExecutionContext,
-  TypedExecutionContext,
-} from './base-types';
+export type { ExecutionContext, TypedExecutionContext } from './base-types';
 
 // ============================================================================
 // Core Result Types

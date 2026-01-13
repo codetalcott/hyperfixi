@@ -4,16 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createTypedExpressionContext,
-  type TestExpressionContext,
-} from '../../../test-utilities';
-import {
-  AndExpression,
-  OrExpression,
-  NotExpression,
-  logicalExpressions,
-} from './index';
+import { createTypedExpressionContext, type TestExpressionContext } from '../../../test-utilities';
+import { AndExpression, OrExpression, NotExpression, logicalExpressions } from './index';
 
 // Type alias for backward compatibility
 type TypedExpressionContext = TestExpressionContext;
@@ -560,7 +552,10 @@ describe('Enhanced Logical Expressions Integration', () => {
 
       for (const expr of expressions) {
         // Test with missing right operand (undefined)
-        const result = await expr.evaluate(context, { left: true } as unknown as { left: boolean; right: boolean });
+        const result = await expr.evaluate(context, { left: true } as unknown as {
+          left: boolean;
+          right: boolean;
+        });
 
         expect(result.success).toBe(true);
         if (result.success) {

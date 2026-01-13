@@ -14,12 +14,7 @@
  *   [on event:click body:[toggle class:.active]]
  */
 
-import type {
-  SemanticNode,
-  SemanticValue,
-  SemanticRole,
-  ActionType,
-} from '../types';
+import type { SemanticNode, SemanticValue, SemanticRole, ActionType } from '../types';
 import {
   createCommandNode,
   createEventHandler,
@@ -175,9 +170,13 @@ function tokenizeExplicit(content: string): string[] {
  */
 function parseExplicitValue(valueStr: string): SemanticValue {
   // CSS selector
-  if (valueStr.startsWith('#') || valueStr.startsWith('.') ||
-      valueStr.startsWith('[') || valueStr.startsWith('@') ||
-      valueStr.startsWith('*')) {
+  if (
+    valueStr.startsWith('#') ||
+    valueStr.startsWith('.') ||
+    valueStr.startsWith('[') ||
+    valueStr.startsWith('@') ||
+    valueStr.startsWith('*')
+  ) {
     return createSelector(valueStr);
   }
 

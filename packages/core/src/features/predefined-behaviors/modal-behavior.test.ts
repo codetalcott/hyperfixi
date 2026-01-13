@@ -56,9 +56,16 @@ describe('Modal Behavior', () => {
   describe('Initialization', () => {
     it('should initialize on dialog element', () => {
       modalBehaviorDefinition.init(dialog);
-      expect(typeof (dialog as HTMLDialogElement & { openModal: () => void }).openModal).toBe('function');
-      expect(typeof (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal).toBe('function');
-      expect(typeof (dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen).toBe('function');
+      expect(typeof (dialog as HTMLDialogElement & { openModal: () => void }).openModal).toBe(
+        'function'
+      );
+      expect(
+        typeof (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void })
+          .closeModal
+      ).toBe('function');
+      expect(
+        typeof (dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen
+      ).toBe('function');
     });
 
     it('should handle non-dialog elements gracefully', () => {
@@ -76,7 +83,7 @@ describe('Modal Behavior', () => {
 
     it('should apply backdrop class when provided', () => {
       const options: ModalBehaviorOptions = {
-        backdropClass: 'custom-backdrop'
+        backdropClass: 'custom-backdrop',
       };
 
       modalBehaviorDefinition.init(dialog, options);
@@ -118,7 +125,9 @@ describe('Modal Behavior', () => {
 
     it('should close modal with return value', () => {
       (dialog as HTMLDialogElement & { openModal: () => void }).openModal();
-      (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal('confirmed');
+      (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal(
+        'confirmed'
+      );
 
       expect(dialog.open).toBe(false);
       expect(dialog.returnValue).toBe('confirmed');
@@ -139,13 +148,19 @@ describe('Modal Behavior', () => {
     });
 
     it('should report open state correctly', () => {
-      expect((dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen()).toBe(false);
+      expect((dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen()).toBe(
+        false
+      );
 
       (dialog as HTMLDialogElement & { openModal: () => void }).openModal();
-      expect((dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen()).toBe(true);
+      expect((dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen()).toBe(
+        true
+      );
 
       (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal();
-      expect((dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen()).toBe(false);
+      expect((dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen()).toBe(
+        false
+      );
     });
   });
 
@@ -179,7 +194,9 @@ describe('Modal Behavior', () => {
       }) as EventListener);
 
       (dialog as HTMLDialogElement & { openModal: () => void }).openModal();
-      (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal('test-value');
+      (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal(
+        'test-value'
+      );
 
       expect(eventFired).toBe(true);
       expect(eventDetail.element).toBe(dialog);
@@ -229,7 +246,7 @@ describe('Modal Behavior', () => {
       const clickEvent = new MouseEvent('click', {
         clientX: 0,
         clientY: 0,
-        bubbles: true
+        bubbles: true,
       });
 
       // Mock getBoundingClientRect to simulate click outside
@@ -243,7 +260,7 @@ describe('Modal Behavior', () => {
         height: 200,
         x: 100,
         y: 100,
-        toJSON: () => ({})
+        toJSON: () => ({}),
       }));
 
       dialog.dispatchEvent(clickEvent);
@@ -262,7 +279,7 @@ describe('Modal Behavior', () => {
       const clickEvent = new MouseEvent('click', {
         clientX: 200,
         clientY: 200,
-        bubbles: true
+        bubbles: true,
       });
 
       // Mock getBoundingClientRect
@@ -275,7 +292,7 @@ describe('Modal Behavior', () => {
         height: 200,
         x: 100,
         y: 100,
-        toJSON: () => ({})
+        toJSON: () => ({}),
       }));
 
       dialog.dispatchEvent(clickEvent);
@@ -293,7 +310,7 @@ describe('Modal Behavior', () => {
       const clickEvent = new MouseEvent('click', {
         clientX: 0,
         clientY: 0,
-        bubbles: true
+        bubbles: true,
       });
 
       dialog.getBoundingClientRect = vi.fn(() => ({
@@ -305,7 +322,7 @@ describe('Modal Behavior', () => {
         height: 200,
         x: 100,
         y: 100,
-        toJSON: () => ({})
+        toJSON: () => ({}),
       }));
 
       dialog.dispatchEvent(clickEvent);
@@ -318,15 +335,22 @@ describe('Modal Behavior', () => {
     it('should create modal behavior with createModalBehavior', () => {
       createModalBehavior(dialog);
 
-      expect(typeof (dialog as HTMLDialogElement & { openModal: () => void }).openModal).toBe('function');
-      expect(typeof (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal).toBe('function');
-      expect(typeof (dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen).toBe('function');
+      expect(typeof (dialog as HTMLDialogElement & { openModal: () => void }).openModal).toBe(
+        'function'
+      );
+      expect(
+        typeof (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void })
+          .closeModal
+      ).toBe('function');
+      expect(
+        typeof (dialog as HTMLDialogElement & { isModalOpen: () => boolean }).isModalOpen
+      ).toBe('function');
     });
 
     it('should create modal behavior with options', () => {
       createModalBehavior(dialog, {
         backdropClass: 'custom',
-        closeOnBackdropClick: false
+        closeOnBackdropClick: false,
       });
 
       expect(dialog.classList.contains('custom')).toBe(true);
@@ -393,7 +417,9 @@ describe('Modal Behavior', () => {
       // In a real browser, the form submission would close the dialog
       // In JSDOM, we need to manually trigger close
       if (dialog.open) {
-        (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal('confirm');
+        (dialog as HTMLDialogElement & { closeModal: (returnValue?: string) => void }).closeModal(
+          'confirm'
+        );
       }
 
       expect(closeEventFired).toBe(true);

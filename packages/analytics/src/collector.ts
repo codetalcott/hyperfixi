@@ -81,7 +81,7 @@ export class EventCollector implements AnalyticsCollector {
     };
 
     this.startFlushTimer();
-    
+
     if (this.config.alerting.enabled) {
       this.startAlertTimer();
     }
@@ -268,7 +268,7 @@ export class EventCollector implements AnalyticsCollector {
       if (!subscription.active) continue;
 
       // Filter events based on subscription query
-      const matchingEvents = events.filter(event => 
+      const matchingEvents = events.filter(event =>
         this.eventMatchesQuery(event, subscription.query)
       );
 
@@ -429,7 +429,10 @@ export class EventCollector implements AnalyticsCollector {
   /**
    * Send webhook alert
    */
-  private async sendWebhookAlert(config: Record<string, any>, alert: AnalyticsAlert): Promise<void> {
+  private async sendWebhookAlert(
+    config: Record<string, any>,
+    alert: AnalyticsAlert
+  ): Promise<void> {
     if (!config.url) return;
 
     await fetch(config.url, {
@@ -484,7 +487,7 @@ export class EventCollector implements AnalyticsCollector {
    */
   private calculateEventsByType(events: AnalyticsEvent[]): Record<string, number> {
     const byType: Record<string, number> = {};
-    
+
     for (const event of events) {
       byType[event.type] = (byType[event.type] || 0) + 1;
     }
@@ -494,7 +497,7 @@ export class EventCollector implements AnalyticsCollector {
 
   private calculateEventsByHour(events: AnalyticsEvent[]): Record<string, number> {
     const byHour: Record<string, number> = {};
-    
+
     for (const event of events) {
       const hour = new Date(event.timestamp).toISOString().substring(0, 13);
       byHour[hour] = (byHour[hour] || 0) + 1;
@@ -505,7 +508,7 @@ export class EventCollector implements AnalyticsCollector {
 
   private calculateEventsByDay(events: AnalyticsEvent[]): Record<string, number> {
     const byDay: Record<string, number> = {};
-    
+
     for (const event of events) {
       const day = new Date(event.timestamp).toISOString().substring(0, 10);
       byDay[day] = (byDay[day] || 0) + 1;
@@ -514,9 +517,11 @@ export class EventCollector implements AnalyticsCollector {
     return byDay;
   }
 
-  private async calculateSessionMetrics(events: AnalyticsEvent[]): Promise<AnalyticsMetrics['sessions']> {
+  private async calculateSessionMetrics(
+    events: AnalyticsEvent[]
+  ): Promise<AnalyticsMetrics['sessions']> {
     const sessions = new Map<string, AnalyticsSession>();
-    
+
     // Group events by session
     for (const event of events) {
       if (!sessions.has(event.sessionId)) {
@@ -534,14 +539,14 @@ export class EventCollector implements AnalyticsCollector {
         }
         sessions.set(event.sessionId, session);
       }
-      
+
       const session = sessions.get(event.sessionId)!;
       session.events.push(event);
-      
+
       if (event.timestamp < session.startTime) {
         session.startTime = event.timestamp;
       }
-      
+
       if (!session.endTime || event.timestamp > session.endTime) {
         session.endTime = event.timestamp;
       }
@@ -557,12 +562,14 @@ export class EventCollector implements AnalyticsCollector {
       .filter(session => session.endTime)
       .map(session => session.endTime! - session.startTime);
 
-    const averageDuration = durations.length > 0 ? 
-      durations.reduce((sum, duration) => sum + duration, 0) / durations.length : 0;
+    const averageDuration =
+      durations.length > 0
+        ? durations.reduce((sum, duration) => sum + duration, 0) / durations.length
+        : 0;
 
-    const bounceRate = Array.from(sessions.values()).filter(
-      session => session.events.length === 1
-    ).length / totalSessions;
+    const bounceRate =
+      Array.from(sessions.values()).filter(session => session.events.length === 1).length /
+      totalSessions;
 
     return {
       total: totalSessions,
@@ -572,16 +579,24 @@ export class EventCollector implements AnalyticsCollector {
     };
   }
 
-  private async calculatePerformanceMetrics(events: AnalyticsEvent[]): Promise<AnalyticsMetrics['performance']> {
+  private async calculatePerformanceMetrics(
+    events: AnalyticsEvent[]
+  ): Promise<AnalyticsMetrics['performance']> {
     const compilationEvents = events.filter(e => e.type === 'hyperscript:compiled');
     const executionEvents = events.filter(e => e.type === 'hyperscript:executed');
     const errorEvents = events.filter(e => e.type === 'hyperscript:error');
 
-    const avgCompilationTime = compilationEvents.length > 0 ?
-      compilationEvents.reduce((sum, e) => sum + (e.data.compilationTime || 0), 0) / compilationEvents.length : 0;
+    const avgCompilationTime =
+      compilationEvents.length > 0
+        ? compilationEvents.reduce((sum, e) => sum + (e.data.compilationTime || 0), 0) /
+          compilationEvents.length
+        : 0;
 
-    const avgExecutionTime = executionEvents.length > 0 ?
-      executionEvents.reduce((sum, e) => sum + (e.data.executionTime || 0), 0) / executionEvents.length : 0;
+    const avgExecutionTime =
+      executionEvents.length > 0
+        ? executionEvents.reduce((sum, e) => sum + (e.data.executionTime || 0), 0) /
+          executionEvents.length
+        : 0;
 
     const errorRate = events.length > 0 ? errorEvents.length / events.length : 0;
 
@@ -604,7 +619,9 @@ export class EventCollector implements AnalyticsCollector {
     };
   }
 
-  private async calculateInteractionMetrics(events: AnalyticsEvent[]): Promise<AnalyticsMetrics['interactions']> {
+  private async calculateInteractionMetrics(
+    events: AnalyticsEvent[]
+  ): Promise<AnalyticsMetrics['interactions']> {
     const interactionEvents = events.filter(e => e.type === 'element:interaction');
     const clickEvents = interactionEvents.filter(e => e.data.eventType === 'click');
 
@@ -664,14 +681,14 @@ export class EventCollector implements AnalyticsCollector {
   }
 
   private async calculateAvgExecutionTime(startTime: number, endTime: number): Promise<number> {
-    const events = await this.storage.query({ 
-      startTime, 
-      endTime, 
-      eventTypes: ['hyperscript:executed'] 
+    const events = await this.storage.query({
+      startTime,
+      endTime,
+      eventTypes: ['hyperscript:executed'],
     });
-    
+
     if (events.length === 0) return 0;
-    
+
     const totalTime = events.reduce((sum, e) => sum + (e.data.executionTime || 0), 0);
     return totalTime / events.length;
   }
@@ -706,7 +723,7 @@ export class EventCollector implements AnalyticsCollector {
  * Create event collector
  */
 export function createEventCollector(
-  storage: AnalyticsStorage, 
+  storage: AnalyticsStorage,
   config: Partial<CollectorConfig> = {}
 ): EventCollector {
   return new EventCollector(storage, config);

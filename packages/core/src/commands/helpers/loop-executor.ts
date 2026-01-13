@@ -27,7 +27,10 @@ export interface LoopConfig {
    * Called before each iteration to set up loop variables.
    * Use this to set the iteration variable, index variable, etc.
    */
-  beforeIteration?: (ctx: LoopIterationContext, context: TypedExecutionContext) => void | Promise<void>;
+  beforeIteration?: (
+    ctx: LoopIterationContext,
+    context: TypedExecutionContext
+  ) => void | Promise<void>;
 
   /**
    * For event-driven loops: setup and cleanup
@@ -189,7 +192,7 @@ export function createForLoopConfig(
 
   const config: LoopConfig = {
     type: 'for',
-    shouldContinue: (ctx) => ctx.index < (ctx.collection?.length ?? 0),
+    shouldContinue: ctx => ctx.index < (ctx.collection?.length ?? 0),
     beforeIteration: (ctx, context) => {
       ctx.item = ctx.collection?.[ctx.index];
       if (ctx.itemVariable && context.locals) {
@@ -216,7 +219,7 @@ export function createTimesLoopConfig(
 
   const config: LoopConfig = {
     type: 'times',
-    shouldContinue: (ctx) => ctx.index < (ctx.count ?? 0),
+    shouldContinue: ctx => ctx.index < (ctx.count ?? 0),
     beforeIteration: (_ctx, context) => {
       // Set context.it to 1-indexed for _hyperscript compatibility
       Object.assign(context, { it: _ctx.index + 1 });
@@ -288,7 +291,7 @@ export function createUntilEventLoopConfig(
 
   const config: LoopConfig = {
     type: 'until-event',
-    shouldContinue: (ctx) => !ctx.eventFired,
+    shouldContinue: ctx => !ctx.eventFired,
     eventSetup: {
       eventName,
       target: eventTarget,

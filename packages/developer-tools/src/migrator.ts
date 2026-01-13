@@ -188,9 +188,7 @@ export class HyperFixiMigrator {
       // Collect deprecation warnings
       for (const rule of rules) {
         if (rule.deprecationMessage) {
-          const affectedFiles = result.results.filter(r =>
-            r.changes.some(c => c.rule === rule.id)
-          );
+          const affectedFiles = result.results.filter(r => r.changes.some(c => c.rule === rule.id));
           if (affectedFiles.length > 0) {
             result.warnings.push(
               `${rule.deprecationMessage} (${affectedFiles.length} file(s) affected)`
@@ -325,10 +323,7 @@ export class HyperFixiMigrator {
   /**
    * Transform a single file
    */
-  async transformFile(
-    filePath: string,
-    rules: MigrationRule[]
-  ): Promise<FileTransformResult> {
+  async transformFile(filePath: string, rules: MigrationRule[]): Promise<FileTransformResult> {
     const result: FileTransformResult = {
       file: filePath,
       changes: [],

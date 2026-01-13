@@ -13,10 +13,7 @@
  */
 export function isInputElement(el: unknown): el is HTMLInputElement {
   return (
-    el !== null &&
-    typeof el === 'object' &&
-    'tagName' in el &&
-    (el as Element).tagName === 'INPUT'
+    el !== null && typeof el === 'object' && 'tagName' in el && (el as Element).tagName === 'INPUT'
   );
 }
 
@@ -147,9 +144,7 @@ export function isHTMLCollection(value: unknown): value is HTMLCollection {
 /**
  * Type guard for objects (non-null, non-array)
  */
-export function isPlainObject(
-  value: unknown
-): value is Record<string, unknown> {
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return (
     value !== null &&
     typeof value === 'object' &&
@@ -192,10 +187,7 @@ export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
  * Safe property access for unknown object types
  * Eliminates need for (obj as any)[key] casts
  */
-export function getProperty<T = unknown>(
-  obj: unknown,
-  key: string
-): T | undefined {
+export function getProperty<T = unknown>(obj: unknown, key: string): T | undefined {
   if (obj === null || obj === undefined) {
     return undefined;
   }
@@ -209,11 +201,7 @@ export function getProperty<T = unknown>(
  * Safe property setter for unknown object types
  * Returns true if property was set successfully
  */
-export function setProperty<T = unknown>(
-  obj: unknown,
-  key: string,
-  value: T
-): boolean {
+export function setProperty<T = unknown>(obj: unknown, key: string, value: T): boolean {
   if (obj === null || obj === undefined) {
     return false;
   }

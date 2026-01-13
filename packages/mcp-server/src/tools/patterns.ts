@@ -241,9 +241,19 @@ export async function handlePatternTool(
                   patterns: stats,
                   llmExamples: llmStats,
                   supportedLanguages: [
-                    'en', 'es', 'pt', 'fr', 'de',
-                    'ja', 'zh', 'ko', 'ar', 'tr',
-                    'id', 'sw', 'qu',
+                    'en',
+                    'es',
+                    'pt',
+                    'fr',
+                    'de',
+                    'ja',
+                    'zh',
+                    'ko',
+                    'ar',
+                    'tr',
+                    'id',
+                    'sw',
+                    'qu',
                   ],
                 },
                 null,
@@ -356,7 +366,7 @@ const BUILTIN_EXAMPLES = [
   },
   {
     task: 'scroll event from window',
-    code: "on scroll from window if window.scrollY > 100 add .scrolled to <body/> else remove .scrolled from <body/> end",
+    code: 'on scroll from window if window.scrollY > 100 add .scrolled to <body/> else remove .scrolled from <body/> end',
     category: 'events',
   },
   {
@@ -413,9 +423,9 @@ function handleWithBuiltinExamples(
 
       // Simple keyword matching
       const keywords = prompt.split(/\s+/);
-      const matches = BUILTIN_EXAMPLES.filter((ex) =>
+      const matches = BUILTIN_EXAMPLES.filter(ex =>
         keywords.some(
-          (kw) =>
+          kw =>
             ex.task.toLowerCase().includes(kw) ||
             ex.code.toLowerCase().includes(kw) ||
             ex.category.includes(kw)
@@ -467,12 +477,10 @@ function handleWithBuiltinExamples(
 
       let matches = BUILTIN_EXAMPLES;
       if (category) {
-        matches = matches.filter((ex) => ex.category === category);
+        matches = matches.filter(ex => ex.category === category);
       }
       matches = matches.filter(
-        (ex) =>
-          ex.task.toLowerCase().includes(query) ||
-          ex.code.toLowerCase().includes(query)
+        ex => ex.task.toLowerCase().includes(query) || ex.code.toLowerCase().includes(query)
       );
 
       return {
@@ -501,7 +509,7 @@ function handleWithBuiltinExamples(
             text: JSON.stringify(
               {
                 builtinExamples: BUILTIN_EXAMPLES.length,
-                categories: [...new Set(BUILTIN_EXAMPLES.map((ex) => ex.category))],
+                categories: [...new Set(BUILTIN_EXAMPLES.map(ex => ex.category))],
                 supportedLanguages: ['en'],
                 note: 'Install @hyperfixi/patterns-reference for 106 patterns, 1378 translations, 414 LLM examples',
               },

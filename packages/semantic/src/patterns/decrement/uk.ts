@@ -22,10 +22,14 @@ export function getDecrementPatternsUk(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'зменшити', alternatives: ['зменш'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'на' },
-            { type: 'role', role: 'quantity' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'на' },
+              { type: 'role', role: 'quantity' },
+            ],
+          },
         ],
       },
       extraction: {

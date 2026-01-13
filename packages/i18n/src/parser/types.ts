@@ -100,5 +100,14 @@ export interface KeywordProviderOptions {
   /**
    * Categories to include. If not specified, all categories are included.
    */
-  categories?: Array<'commands' | 'modifiers' | 'events' | 'logical' | 'temporal' | 'values' | 'attributes' | 'expressions'>;
+  categories?: Array<
+    | 'commands'
+    | 'modifiers'
+    | 'events'
+    | 'logical'
+    | 'temporal'
+    | 'values'
+    | 'attributes'
+    | 'expressions'
+  >;
 }

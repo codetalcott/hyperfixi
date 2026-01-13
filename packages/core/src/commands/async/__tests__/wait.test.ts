@@ -270,10 +270,7 @@ describe('WaitCommand (Standalone V2)', () => {
       const context = createMockContext();
       const startTime = Date.now();
 
-      const output = await command.execute(
-        { type: 'time', milliseconds: 50 },
-        context
-      );
+      const output = await command.execute({ type: 'time', milliseconds: 50 }, context);
 
       const elapsed = Date.now() - startTime;
 
@@ -286,10 +283,7 @@ describe('WaitCommand (Standalone V2)', () => {
     it('should return duration in output', async () => {
       const context = createMockContext();
 
-      const output = await command.execute(
-        { type: 'time', milliseconds: 50 },
-        context
-      );
+      const output = await command.execute({ type: 'time', milliseconds: 50 }, context);
 
       expect(output.duration).toBeGreaterThanOrEqual(45);
       expect(output.duration).toBeLessThan(100);
@@ -298,10 +292,7 @@ describe('WaitCommand (Standalone V2)', () => {
     it('should handle zero wait time', async () => {
       const context = createMockContext();
 
-      const output = await command.execute(
-        { type: 'time', milliseconds: 0 },
-        context
-      );
+      const output = await command.execute({ type: 'time', milliseconds: 0 }, context);
 
       expect(output.type).toBe('time');
       expect(output.result).toBe(0);

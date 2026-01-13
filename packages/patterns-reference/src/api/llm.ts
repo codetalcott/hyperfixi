@@ -236,9 +236,7 @@ export async function updateQualityScore(
 /**
  * Get LLM example statistics.
  */
-export async function getLLMStats(
-  options?: ConnectionOptions
-): Promise<{
+export async function getLLMStats(options?: ConnectionOptions): Promise<{
   total: number;
   byLanguage: Record<string, number>;
   avgQuality: number;
@@ -260,13 +258,13 @@ export async function getLLMStats(
     )
     .all() as { language: string; count: number }[];
 
-  const avgResult = db
-    .prepare('SELECT AVG(quality_score) as avg FROM llm_examples')
-    .get() as { avg: number };
+  const avgResult = db.prepare('SELECT AVG(quality_score) as avg FROM llm_examples').get() as {
+    avg: number;
+  };
 
-  const usageResult = db
-    .prepare('SELECT SUM(usage_count) as total FROM llm_examples')
-    .get() as { total: number };
+  const usageResult = db.prepare('SELECT SUM(usage_count) as total FROM llm_examples').get() as {
+    total: number;
+  };
 
   const byLanguage: Record<string, number> = {};
   for (const { language, count } of byLangResult) {

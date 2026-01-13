@@ -20,22 +20,22 @@ export const portugueseProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'eu',        // "I/me"
-    it: 'ele',       // "it"
-    you: 'você',     // "you"
+    me: 'eu', // "I/me"
+    it: 'ele', // "it"
+    you: 'você', // "you"
     result: 'resultado',
     event: 'evento',
     target: 'alvo',
     body: 'corpo',
   },
   possessive: {
-    marker: 'de',    // Uses "de" for general possession
+    marker: 'de', // Uses "de" for general possession
     markerPosition: 'before-property',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'meu',     // "my"
-      it: 'seu',     // "its"
-      you: 'teu',    // "your" (or "seu" in formal)
+      me: 'meu', // "my"
+      it: 'seu', // "its"
+      you: 'teu', // "your" (or "seu" in formal)
     },
   },
   roleMarkers: {

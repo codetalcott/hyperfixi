@@ -128,11 +128,9 @@ export class FirstExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 
@@ -229,11 +227,9 @@ export class LastExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 
@@ -329,11 +325,9 @@ export class AtExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 
@@ -450,11 +444,9 @@ export class RandomExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 

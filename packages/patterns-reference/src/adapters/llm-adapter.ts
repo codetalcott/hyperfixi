@@ -241,9 +241,9 @@ export function getLLMExampleStats(): {
       )
       .all() as { language: string; count: number }[];
 
-    const avgResult = db
-      .prepare('SELECT AVG(quality_score) as avg FROM llm_examples')
-      .get() as { avg: number };
+    const avgResult = db.prepare('SELECT AVG(quality_score) as avg FROM llm_examples').get() as {
+      avg: number;
+    };
 
     const byLanguage: Record<string, number> = {};
     for (const { language, count } of byLangResult) {

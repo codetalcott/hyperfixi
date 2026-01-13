@@ -76,7 +76,7 @@ describe('when/where conditional modifiers', () => {
   });
 
   afterEach(() => {
-    testElements.forEach((el) => cleanupElement(el));
+    testElements.forEach(el => cleanupElement(el));
     testElements = [];
   });
 

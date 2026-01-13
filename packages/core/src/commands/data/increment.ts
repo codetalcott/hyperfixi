@@ -13,16 +13,19 @@
 
 import type { TypedExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 import {
   parseNumericTargetInput,
   type NumericTargetRawInput,
   type NumericTargetInput,
 } from '../helpers/numeric-target-parser';
-import {
-  getCurrentNumericValue,
-  setTargetValue,
-} from '../helpers/variable-access';
+import { getCurrentNumericValue, setTargetValue } from '../helpers/variable-access';
 
 /**
  * Operation type for numeric modification
@@ -72,9 +75,8 @@ export class NumericModifyCommand implements DecoratedCommand {
     context: TypedExecutionContext
   ): Promise<NumericModifyInput> {
     // Detect operation from command name
-    const operation: NumericOperation = raw.commandName?.toLowerCase() === 'decrement'
-      ? 'decrement'
-      : 'increment';
+    const operation: NumericOperation =
+      raw.commandName?.toLowerCase() === 'decrement' ? 'decrement' : 'increment';
     const baseInput = await parseNumericTargetInput(raw, evaluator, context, operation);
     return { ...baseInput, operation };
   }
@@ -94,9 +96,7 @@ export class NumericModifyCommand implements DecoratedCommand {
       newValue = NaN;
     } else {
       const delta = isFinite(amount) ? amount : 1;
-      newValue = operation === 'increment'
-        ? currentValue + delta
-        : currentValue - delta;
+      newValue = operation === 'increment' ? currentValue + delta : currentValue - delta;
     }
 
     // Set the new value using shared helper

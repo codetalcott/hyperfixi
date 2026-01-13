@@ -21,15 +21,23 @@ export function getEventHandlerPatternsVi(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'khi', alternatives: ['lúc', 'trên'] },
           { type: 'role', role: 'event' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'trên', alternatives: ['tại'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'trên', alternatives: ['tại'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {
         event: { position: 1 },
-        source: { marker: 'trên', markerAlternatives: ['tại'], default: { type: 'reference', value: 'me' } },
+        source: {
+          marker: 'trên',
+          markerAlternatives: ['tại'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

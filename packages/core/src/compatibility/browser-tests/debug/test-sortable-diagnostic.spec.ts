@@ -61,7 +61,7 @@ test('Sortable diagnostic - check if behavior is working', async ({ page }) => {
       await firstItem.dispatchEvent('pointerdown', {
         clientX: box.x + box.width / 2,
         clientY: box.y + box.height / 2,
-        button: 0
+        button: 0,
       });
 
       // Wait a bit and check for any responses
@@ -80,12 +80,13 @@ test('Sortable diagnostic - check if behavior is working', async ({ page }) => {
   }
 
   // Check console messages for clues
-  const relevantMessages = consoleMessages.filter(msg =>
-    msg.includes('HyperFixi') ||
-    msg.includes('Sortable') ||
-    msg.includes('behavior') ||
-    msg.includes('ERROR') ||
-    msg.includes('error')
+  const relevantMessages = consoleMessages.filter(
+    msg =>
+      msg.includes('HyperFixi') ||
+      msg.includes('Sortable') ||
+      msg.includes('behavior') ||
+      msg.includes('ERROR') ||
+      msg.includes('error')
   );
   console.log('\n8. Relevant console messages:');
   relevantMessages.forEach(msg => console.log('   -', msg));

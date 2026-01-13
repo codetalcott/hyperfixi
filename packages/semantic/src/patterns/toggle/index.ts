@@ -92,4 +92,22 @@ export { getTogglePatternsZh } from './zh';
 /**
  * Languages that have hand-crafted toggle patterns.
  */
-export const togglePatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const togglePatternLanguages = [
+  'ar',
+  'bn',
+  'en',
+  'es',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

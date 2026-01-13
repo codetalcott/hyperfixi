@@ -19,11 +19,7 @@
  *   finissons → finir (1st person plural present)
  */
 
-import type {
-  MorphologicalNormalizer,
-  NormalizationResult,
-  ConjugationType,
-} from './types';
+import type { MorphologicalNormalizer, NormalizationResult, ConjugationType } from './types';
 import { noChange, normalized } from './types';
 
 /**
@@ -49,7 +45,12 @@ const REFLEXIVE_SUFFIXES = ['toi', 'vous', 'nous'];
 /**
  * -ER verb conjugation endings (1st group - largest group).
  */
-const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const ER_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Present participle
   { ending: 'ant', stem: 'er', confidence: 0.88, type: 'gerund' },
   // Past participle
@@ -70,7 +71,7 @@ const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
   { ending: 'iez', stem: 'er', confidence: 0.85, type: 'past' }, // vous
   { ending: 'aient', stem: 'er', confidence: 0.85, type: 'past' }, // ils/elles
   // Simple past (passé simple)
-  { ending: 'ai', stem: 'er', confidence: 0.80, type: 'past' }, // je
+  { ending: 'ai', stem: 'er', confidence: 0.8, type: 'past' }, // je
   { ending: 'as', stem: 'er', confidence: 0.78, type: 'past' }, // tu
   { ending: 'a', stem: 'er', confidence: 0.75, type: 'past' }, // il/elle
   { ending: 'âmes', stem: 'er', confidence: 0.88, type: 'past' }, // nous
@@ -90,8 +91,8 @@ const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
   { ending: 'eriez', stem: 'er', confidence: 0.88, type: 'conditional' }, // vous
   { ending: 'eraient', stem: 'er', confidence: 0.88, type: 'conditional' }, // ils/elles
   // Subjunctive
-  { ending: 'ions', stem: 'er', confidence: 0.80, type: 'subjunctive' }, // nous
-  { ending: 'iez', stem: 'er', confidence: 0.80, type: 'subjunctive' }, // vous
+  { ending: 'ions', stem: 'er', confidence: 0.8, type: 'subjunctive' }, // nous
+  { ending: 'iez', stem: 'er', confidence: 0.8, type: 'subjunctive' }, // vous
   // Imperative
   { ending: 'ons', stem: 'er', confidence: 0.82, type: 'imperative' }, // nous
   { ending: 'ez', stem: 'er', confidence: 0.82, type: 'imperative' }, // vous
@@ -103,11 +104,16 @@ const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
  * -IR verb conjugation endings (2nd group - verbs with -iss- forms).
  * Examples: finir → finissons, choisir → choisissons
  */
-const IR_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const IR_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Present participle
   { ending: 'issant', stem: 'ir', confidence: 0.88, type: 'gerund' },
   // Past participle
-  { ending: 'i', stem: 'ir', confidence: 0.80, type: 'participle' },
+  { ending: 'i', stem: 'ir', confidence: 0.8, type: 'participle' },
   { ending: 'ie', stem: 'ir', confidence: 0.82, type: 'participle' },
   { ending: 'is', stem: 'ir', confidence: 0.78, type: 'participle' },
   { ending: 'ies', stem: 'ir', confidence: 0.82, type: 'participle' },
@@ -131,18 +137,23 @@ const IR_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
   { ending: 'irez', stem: 'ir', confidence: 0.88, type: 'future' }, // vous
   { ending: 'iront', stem: 'ir', confidence: 0.88, type: 'future' }, // ils/elles
   // Infinitive
-  { ending: 'ir', stem: 'ir', confidence: 0.90, type: 'dictionary' },
+  { ending: 'ir', stem: 'ir', confidence: 0.9, type: 'dictionary' },
 ];
 
 /**
  * -RE verb conjugation endings (3rd group).
  * Examples: prendre, vendre, attendre
  */
-const RE_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const RE_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Present participle
   { ending: 'ant', stem: 're', confidence: 0.82, type: 'gerund' },
   // Past participle (common patterns)
-  { ending: 'u', stem: 're', confidence: 0.80, type: 'participle' },
+  { ending: 'u', stem: 're', confidence: 0.8, type: 'participle' },
   { ending: 'ue', stem: 're', confidence: 0.82, type: 'participle' },
   { ending: 'us', stem: 're', confidence: 0.82, type: 'participle' },
   { ending: 'ues', stem: 're', confidence: 0.82, type: 'participle' },
@@ -151,16 +162,17 @@ const RE_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
   { ending: 'd', stem: 're', confidence: 0.75, type: 'present' }, // il/elle (prend, vend)
   { ending: 'ons', stem: 're', confidence: 0.82, type: 'present' }, // nous
   { ending: 'ez', stem: 're', confidence: 0.82, type: 'present' }, // vous
-  { ending: 'ent', stem: 're', confidence: 0.80, type: 'present' }, // ils/elles
+  { ending: 'ent', stem: 're', confidence: 0.8, type: 'present' }, // ils/elles
   // Infinitive
-  { ending: 're', stem: 're', confidence: 0.90, type: 'dictionary' },
+  { ending: 're', stem: 're', confidence: 0.9, type: 'dictionary' },
 ];
 
 /**
  * All endings combined, sorted by length (longest first).
  */
-const ALL_ENDINGS = [...ER_ENDINGS, ...IR_ENDINGS, ...RE_ENDINGS]
-  .sort((a, b) => b.ending.length - a.ending.length);
+const ALL_ENDINGS = [...ER_ENDINGS, ...IR_ENDINGS, ...RE_ENDINGS].sort(
+  (a, b) => b.ending.length - a.ending.length
+);
 
 /**
  * French morphological normalizer.

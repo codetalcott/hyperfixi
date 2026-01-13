@@ -68,7 +68,9 @@ describe.skipIf(!serverAvailable)('Semantic Integration E2E', () => {
 
   test('semantic parser is enabled', async () => {
     // Verify hyperfixi is loaded and ready
-    const hasHyperfixi = await page.evaluate(() => typeof (window as any).hyperfixi !== 'undefined');
+    const hasHyperfixi = await page.evaluate(
+      () => typeof (window as any).hyperfixi !== 'undefined'
+    );
     expect(hasHyperfixi).toBe(true);
 
     // Verify multilingual buttons are present (semantic parser processes these)
@@ -80,57 +82,57 @@ describe.skipIf(!serverAvailable)('Semantic Integration E2E', () => {
 
   test('English toggle works', async () => {
     const btn = page.locator('button:has-text("EN: Toggle")');
-    const hasActiveBefore = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveBefore = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveBefore).toBe(false);
 
     await btn.click();
-    const hasActiveAfter = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveAfter = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveAfter).toBe(true);
 
     await btn.click();
-    const hasActiveToggle = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveToggle = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveToggle).toBe(false);
   });
 
   test('Japanese toggle works', async () => {
     const btn = page.locator('button:has-text("JA: トグル")');
-    const hasActiveBefore = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveBefore = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveBefore).toBe(false);
 
     await btn.click();
-    const hasActiveAfter = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveAfter = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveAfter).toBe(true);
 
     await btn.click();
-    const hasActiveToggle = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveToggle = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveToggle).toBe(false);
   });
 
   test('Spanish toggle works', async () => {
     const btn = page.locator('button:has-text("ES: Alternar")');
-    const hasActiveBefore = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveBefore = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveBefore).toBe(false);
 
     await btn.click();
-    const hasActiveAfter = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveAfter = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveAfter).toBe(true);
 
     await btn.click();
-    const hasActiveToggle = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveToggle = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveToggle).toBe(false);
   });
 
   test('Korean toggle works', async () => {
     const btn = page.locator('button:has-text("KO: 토글")');
-    const hasActiveBefore = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveBefore = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveBefore).toBe(false);
 
     await btn.click();
-    const hasActiveAfter = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveAfter = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveAfter).toBe(true);
 
     await btn.click();
-    const hasActiveToggle = await btn.evaluate((el) => el.classList.contains('active'));
+    const hasActiveToggle = await btn.evaluate(el => el.classList.contains('active'));
     expect(hasActiveToggle).toBe(false);
   });
 
@@ -147,14 +149,14 @@ describe.skipIf(!serverAvailable)('Semantic Integration E2E', () => {
 
       // Click to activate
       await btn.click();
-      const hasActive = await btn.evaluate((el) => el.classList.contains('active'));
+      const hasActive = await btn.evaluate(el => el.classList.contains('active'));
       expect(hasActive, `${lang} should have .active after click`).toBe(true);
     }
 
     // All should now be active
     for (const { label, lang } of buttons) {
       const btn = page.locator(`button:has-text("${label}")`);
-      const hasActive = await btn.evaluate((el) => el.classList.contains('active'));
+      const hasActive = await btn.evaluate(el => el.classList.contains('active'));
       expect(hasActive, `${lang} should still have .active`).toBe(true);
     }
   });

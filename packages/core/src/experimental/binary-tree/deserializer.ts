@@ -19,7 +19,14 @@ import {
   BOOLEAN_SIZE,
 } from './types';
 
-import { createReadCursor, readHeader, readUint8, readUint32, readFloat64, readString } from './buffer-context';
+import {
+  createReadCursor,
+  readHeader,
+  readUint8,
+  readUint32,
+  readFloat64,
+  readString,
+} from './buffer-context';
 
 // =============================================================================
 // Main Deserialization API
@@ -134,10 +141,7 @@ function deserializeArray(cursor: ReadCursor, offset: number): SerializableValue
  * Deserializes an object value
  * Layout: [type:1][keyCount:4][entries:keyCount*12][...keys][...values]
  */
-function deserializeObject(
-  cursor: ReadCursor,
-  offset: number
-): Record<string, SerializableValue> {
+function deserializeObject(cursor: ReadCursor, offset: number): Record<string, SerializableValue> {
   const keyCount = readUint32(cursor, offset + TYPE_TAG_SIZE);
   const tableOffset = offset + TYPE_TAG_SIZE + LENGTH_SIZE;
 

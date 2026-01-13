@@ -171,9 +171,9 @@ export async function getCommandByName(
 ): Promise<Command | null> {
   const db = getDatabase({ ...options, readonly: true });
 
-  const row = db
-    .prepare('SELECT * FROM commands WHERE LOWER(name) = LOWER(?)')
-    .get(name) as CommandRow | undefined;
+  const row = db.prepare('SELECT * FROM commands WHERE LOWER(name) = LOWER(?)').get(name) as
+    | CommandRow
+    | undefined;
 
   return row ? mapCommand(row) : null;
 }
@@ -223,9 +223,9 @@ export async function getExpressionByName(
 ): Promise<Expression | null> {
   const db = getDatabase({ ...options, readonly: true });
 
-  const row = db
-    .prepare('SELECT * FROM expressions WHERE LOWER(name) = LOWER(?)')
-    .get(name) as ExpressionRow | undefined;
+  const row = db.prepare('SELECT * FROM expressions WHERE LOWER(name) = LOWER(?)').get(name) as
+    | ExpressionRow
+    | undefined;
 
   if (!row) return null;
 
@@ -236,7 +236,7 @@ export async function getExpressionByName(
 
   return mapExpression(
     row,
-    operators.map((o) => o.operator)
+    operators.map(o => o.operator)
   );
 }
 
@@ -261,7 +261,7 @@ export async function getAllExpressions(options?: ConnectionOptions): Promise<Ex
     operatorMap.set(op.expression_id, ops);
   }
 
-  return rows.map((row) => mapExpression(row, operatorMap.get(row.id) || []));
+  return rows.map(row => mapExpression(row, operatorMap.get(row.id) || []));
 }
 
 /**
@@ -278,12 +278,14 @@ export async function getExpressionsByCategory(
     .all(category) as ExpressionRow[];
 
   // Get operators
-  const ids = rows.map((r) => r.id);
+  const ids = rows.map(r => r.id);
   if (ids.length === 0) return [];
 
   const placeholders = ids.map(() => '?').join(',');
   const allOperators = db
-    .prepare(`SELECT expression_id, operator FROM expression_operators WHERE expression_id IN (${placeholders})`)
+    .prepare(
+      `SELECT expression_id, operator FROM expression_operators WHERE expression_id IN (${placeholders})`
+    )
     .all(...ids) as { expression_id: string; operator: string }[];
 
   const operatorMap = new Map<string, string[]>();
@@ -293,7 +295,7 @@ export async function getExpressionsByCategory(
     operatorMap.set(op.expression_id, ops);
   }
 
-  return rows.map((row) => mapExpression(row, operatorMap.get(row.id) || []));
+  return rows.map(row => mapExpression(row, operatorMap.get(row.id) || []));
 }
 
 // =============================================================================
@@ -309,9 +311,9 @@ export async function getKeywordByName(
 ): Promise<Keyword | null> {
   const db = getDatabase({ ...options, readonly: true });
 
-  const row = db
-    .prepare('SELECT * FROM keywords WHERE LOWER(name) = LOWER(?)')
-    .get(name) as KeywordRow | undefined;
+  const row = db.prepare('SELECT * FROM keywords WHERE LOWER(name) = LOWER(?)').get(name) as
+    | KeywordRow
+    | undefined;
 
   return row ? mapKeyword(row) : null;
 }
@@ -340,9 +342,9 @@ export async function getFeatureByName(
 ): Promise<Feature | null> {
   const db = getDatabase({ ...options, readonly: true });
 
-  const row = db
-    .prepare('SELECT * FROM features WHERE LOWER(name) = LOWER(?)')
-    .get(name) as FeatureRow | undefined;
+  const row = db.prepare('SELECT * FROM features WHERE LOWER(name) = LOWER(?)').get(name) as
+    | FeatureRow
+    | undefined;
 
   return row ? mapFeature(row) : null;
 }
@@ -372,7 +374,9 @@ export async function getSpecialSymbolByName(
   const db = getDatabase({ ...options, readonly: true });
 
   const row = db
-    .prepare('SELECT * FROM special_symbols WHERE LOWER(name) = LOWER(?) OR LOWER(symbol) = LOWER(?)')
+    .prepare(
+      'SELECT * FROM special_symbols WHERE LOWER(name) = LOWER(?) OR LOWER(symbol) = LOWER(?)'
+    )
     .get(name, name) as SpecialSymbolRow | undefined;
 
   return row ? mapSpecialSymbol(row) : null;
@@ -408,7 +412,7 @@ export async function searchLanguageElements(
 
   if (searchTypes.includes('command')) {
     const commands = await searchCommands(query, options);
-    results.push(...commands.map((c) => ({ type: 'command' as const, element: c })));
+    results.push(...commands.map(c => ({ type: 'command' as const, element: c })));
   }
 
   if (searchTypes.includes('expression')) {
@@ -423,12 +427,14 @@ export async function searchLanguageElements(
       .all(pattern, pattern, pattern) as ExpressionRow[];
 
     // Get operators
-    const ids = rows.map((r) => r.id);
+    const ids = rows.map(r => r.id);
     const operatorMap = new Map<string, string[]>();
     if (ids.length > 0) {
       const placeholders = ids.map(() => '?').join(',');
       const ops = db
-        .prepare(`SELECT expression_id, operator FROM expression_operators WHERE expression_id IN (${placeholders})`)
+        .prepare(
+          `SELECT expression_id, operator FROM expression_operators WHERE expression_id IN (${placeholders})`
+        )
         .all(...ids) as { expression_id: string; operator: string }[];
       for (const op of ops) {
         const arr = operatorMap.get(op.expression_id) || [];
@@ -438,7 +444,7 @@ export async function searchLanguageElements(
     }
 
     results.push(
-      ...rows.map((row) => ({
+      ...rows.map(row => ({
         type: 'expression' as const,
         element: mapExpression(row, operatorMap.get(row.id) || []),
       }))
@@ -455,7 +461,7 @@ export async function searchLanguageElements(
          ORDER BY name`
       )
       .all(pattern, pattern) as KeywordRow[];
-    results.push(...rows.map((row) => ({ type: 'keyword' as const, element: mapKeyword(row) })));
+    results.push(...rows.map(row => ({ type: 'keyword' as const, element: mapKeyword(row) })));
   }
 
   if (searchTypes.includes('feature')) {
@@ -468,7 +474,7 @@ export async function searchLanguageElements(
          ORDER BY name`
       )
       .all(pattern, pattern) as FeatureRow[];
-    results.push(...rows.map((row) => ({ type: 'feature' as const, element: mapFeature(row) })));
+    results.push(...rows.map(row => ({ type: 'feature' as const, element: mapFeature(row) })));
   }
 
   if (searchTypes.includes('special_symbol')) {
@@ -482,7 +488,7 @@ export async function searchLanguageElements(
       )
       .all(pattern, pattern, pattern) as SpecialSymbolRow[];
     results.push(
-      ...rows.map((row) => ({ type: 'special_symbol' as const, element: mapSpecialSymbol(row) }))
+      ...rows.map(row => ({ type: 'special_symbol' as const, element: mapSpecialSymbol(row) }))
     );
   }
 
@@ -496,12 +502,16 @@ export async function searchLanguageElements(
 /**
  * Get language documentation statistics.
  */
-export async function getLanguageDocsStats(options?: ConnectionOptions): Promise<LanguageDocsStats> {
+export async function getLanguageDocsStats(
+  options?: ConnectionOptions
+): Promise<LanguageDocsStats> {
   const db = getDatabase({ ...options, readonly: true });
 
   const getCount = (table: string): number => {
     try {
-      const result = db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get() as { count: number };
+      const result = db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get() as {
+        count: number;
+      };
       return result.count;
     } catch {
       return 0;

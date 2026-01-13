@@ -126,10 +126,7 @@ export abstract class DOMModificationBase implements DecoratedCommand {
   /**
    * Shared validation for type discriminator
    */
-  protected validateType<T extends string>(
-    type: unknown,
-    validTypes: readonly T[]
-  ): type is T {
+  protected validateType<T extends string>(type: unknown, validTypes: readonly T[]): type is T {
     return isValidType(type, validTypes);
   }
 

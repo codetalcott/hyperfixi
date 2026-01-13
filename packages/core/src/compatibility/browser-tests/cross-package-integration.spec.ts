@@ -14,9 +14,7 @@ import { test, expect, Page } from '@playwright/test';
 const BASE_URL = 'http://127.0.0.1:3000';
 
 test.describe('Cross-Package Integration @comprehensive', () => {
-
   test.describe('Browser Bundle htmx Exports', () => {
-
     test('hyperfixi-browser.js exports htmx functionality', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
@@ -24,12 +22,11 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Navigate to a test page that loads the browser bundle
       await page.goto(`${BASE_URL}/examples/basics/02-toggle-class.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
-      await page.waitForFunction(() =>
-        (window as any).hyperfixi !== undefined ||
-        (window as any)._hyperscript !== undefined,
+      await page.waitForFunction(
+        () => (window as any).hyperfixi !== undefined || (window as any)._hyperscript !== undefined,
         { timeout: 10000 }
       );
 
@@ -59,12 +56,11 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Navigate to an htmx-like example which demonstrates htmx features
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
-      await page.waitForFunction(() =>
-        (window as any).hyperfixi !== undefined ||
-        (window as any)._hyperscript !== undefined,
+      await page.waitForFunction(
+        () => (window as any).hyperfixi !== undefined || (window as any)._hyperscript !== undefined,
         { timeout: 10000 }
       );
 
@@ -76,7 +72,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
         return {
           hasHyperfixi: !!hf,
           hasSwapTarget: !!document.querySelector('#morph-target'),
-          hasSwapButton: document.querySelectorAll('button').length > 0
+          hasSwapButton: document.querySelectorAll('button').length > 0,
         };
       });
 
@@ -94,19 +90,20 @@ test.describe('Cross-Package Integration @comprehensive', () => {
 
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
-      await page.waitForFunction(() =>
-        (window as any).hyperfixi !== undefined ||
-        (window as any)._hyperscript !== undefined,
+      await page.waitForFunction(
+        () => (window as any).hyperfixi !== undefined || (window as any)._hyperscript !== undefined,
         { timeout: 10000 }
       );
 
       // Verify page loads and HyperFixi works
       const hyperFixiLoaded = await page.evaluate(() => {
-        return typeof (window as any)._hyperscript !== 'undefined' ||
-               typeof (window as any).hyperfixi !== 'undefined';
+        return (
+          typeof (window as any)._hyperscript !== 'undefined' ||
+          typeof (window as any).hyperfixi !== 'undefined'
+        );
       });
 
       expect(hyperFixiLoaded).toBe(true);
@@ -115,14 +112,13 @@ test.describe('Cross-Package Integration @comprehensive', () => {
   });
 
   test.describe('Core + i18n Integration', () => {
-
     test('i18n bundle loads alongside core', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
 
       await page.goto(`${BASE_URL}/examples/multilingual/index.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
@@ -130,9 +126,10 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Check both bundles loaded
       const loaded = await page.evaluate(() => {
         return {
-          hasHyperfixi: typeof (window as any).hyperfixi !== 'undefined' ||
-                        typeof (window as any)._hyperscript !== 'undefined',
-          hasI18n: typeof (window as any).HyperFixiI18n !== 'undefined'
+          hasHyperfixi:
+            typeof (window as any).hyperfixi !== 'undefined' ||
+            typeof (window as any)._hyperscript !== 'undefined',
+          hasI18n: typeof (window as any).HyperFixiI18n !== 'undefined',
         };
       });
 
@@ -147,7 +144,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
 
       await page.goto(`${BASE_URL}/examples/multilingual/index.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
@@ -174,14 +171,13 @@ test.describe('Cross-Package Integration @comprehensive', () => {
   });
 
   test.describe('Core + Semantic Integration', () => {
-
     test('semantic demo page loads without errors', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
 
       await page.goto(`${BASE_URL}/examples/multilingual/semantic-demo.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
@@ -191,7 +187,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
         return {
           // The semantic demo only loads HyperFixiSemantic, not core hyperfixi
           hasSemantic: typeof (window as any).HyperFixiSemantic !== 'undefined',
-          hasParserInput: !!document.querySelector('#parser-input')
+          hasParserInput: !!document.querySelector('#parser-input'),
         };
       });
 
@@ -199,10 +195,8 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       expect(loaded.hasParserInput).toBe(true);
 
       // Page should load without critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::') &&
-        !e.includes('404')
+      const criticalErrors = errors.filter(
+        e => !e.includes('favicon') && !e.includes('net::') && !e.includes('404')
       );
       expect(criticalErrors).toHaveLength(0);
     });
@@ -214,7 +208,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Navigate to semantic demo which loads the semantic bundle
       await page.goto(`${BASE_URL}/examples/multilingual/semantic-demo.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
@@ -226,8 +220,9 @@ test.describe('Cross-Package Integration @comprehensive', () => {
         return {
           loaded: true,
           hasParse: typeof semantic.parse === 'function',
-          hasTranslate: typeof semantic.translate === 'function' ||
-                       typeof semantic.getAllTranslations === 'function'
+          hasTranslate:
+            typeof semantic.translate === 'function' ||
+            typeof semantic.getAllTranslations === 'function',
         };
       });
 
@@ -237,49 +232,45 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       }
 
       // Page should load without critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::') &&
-        !e.includes('404')
+      const criticalErrors = errors.filter(
+        e => !e.includes('favicon') && !e.includes('net::') && !e.includes('404')
       );
       expect(criticalErrors).toHaveLength(0);
     });
   });
 
   test.describe('Full Stack Integration: Core + i18n + Semantic', () => {
-
     test('multilingual demo page loads all packages', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
 
       await page.goto(`${BASE_URL}/examples/multilingual/index.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
 
       // Check core HyperFixi loaded
       const hyperFixiLoaded = await page.evaluate(() => {
-        return typeof (window as any)._hyperscript !== 'undefined' ||
-               typeof (window as any).hyperfixi !== 'undefined' ||
-               typeof (window as any).hyperFixi !== 'undefined';
+        return (
+          typeof (window as any)._hyperscript !== 'undefined' ||
+          typeof (window as any).hyperfixi !== 'undefined' ||
+          typeof (window as any).hyperFixi !== 'undefined'
+        );
       });
 
       expect(hyperFixiLoaded).toBe(true);
 
       // Page should load without JavaScript errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::')
-      );
+      const criticalErrors = errors.filter(e => !e.includes('favicon') && !e.includes('net::'));
       expect(criticalErrors).toHaveLength(0);
     });
 
     test('hyperscript commands execute on multilingual page', async ({ page }) => {
       await page.goto(`${BASE_URL}/examples/multilingual/index.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
@@ -307,16 +298,14 @@ test.describe('Cross-Package Integration @comprehensive', () => {
 
       await page.goto(`${BASE_URL}/examples/multilingual/semantic-demo.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
 
       // The semantic demo should load without errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::') &&
-        !e.includes('404')
+      const criticalErrors = errors.filter(
+        e => !e.includes('favicon') && !e.includes('net::') && !e.includes('404')
       );
 
       expect(criticalErrors).toHaveLength(0);
@@ -328,7 +317,6 @@ test.describe('Cross-Package Integration @comprehensive', () => {
   });
 
   test.describe('htmx + Multilingual Integration', () => {
-
     test('htmx examples work with hyperscript commands', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
@@ -336,12 +324,11 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Navigate to htmx example page which uses both htmx-style attributes and hyperscript
       await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
-      await page.waitForFunction(() =>
-        (window as any).hyperfixi !== undefined ||
-        (window as any)._hyperscript !== undefined,
+      await page.waitForFunction(
+        () => (window as any).hyperfixi !== undefined || (window as any)._hyperscript !== undefined,
         { timeout: 10000 }
       );
 
@@ -350,10 +337,11 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Verify the page loaded and has interactive elements
       const pageInfo = await page.evaluate(() => {
         return {
-          hasHyperfixi: typeof (window as any)._hyperscript !== 'undefined' ||
-                       typeof (window as any).hyperfixi !== 'undefined',
+          hasHyperfixi:
+            typeof (window as any)._hyperscript !== 'undefined' ||
+            typeof (window as any).hyperfixi !== 'undefined',
           buttonCount: document.querySelectorAll('button').length,
-          hasTargetElement: !!document.querySelector('#morph-target')
+          hasTargetElement: !!document.querySelector('#morph-target'),
         };
       });
 
@@ -361,10 +349,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       expect(pageInfo.buttonCount).toBeGreaterThan(0);
 
       // Page should load without critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::')
-      );
+      const criticalErrors = errors.filter(e => !e.includes('favicon') && !e.includes('net::'));
       expect(criticalErrors).toHaveLength(0);
     });
 
@@ -374,7 +359,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
 
       await page.goto(`${BASE_URL}/examples/multilingual/index.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
       await page.waitForTimeout(1000);
@@ -389,16 +374,12 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       }
 
       // Page should work without critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::')
-      );
+      const criticalErrors = errors.filter(e => !e.includes('favicon') && !e.includes('net::'));
       expect(criticalErrors).toHaveLength(0);
     });
   });
 
   test.describe('Bundle Export Verification', () => {
-
     test('core bundle exports are accessible via example pages', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
@@ -406,12 +387,11 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Navigate to a page that uses the browser bundle
       await page.goto(`${BASE_URL}/examples/basics/02-toggle-class.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
-      await page.waitForFunction(() =>
-        (window as any).hyperfixi !== undefined ||
-        (window as any)._hyperscript !== undefined,
+      await page.waitForFunction(
+        () => (window as any).hyperfixi !== undefined || (window as any)._hyperscript !== undefined,
         { timeout: 10000 }
       );
 
@@ -423,17 +403,14 @@ test.describe('Cross-Package Integration @comprehensive', () => {
           // Core functions
           hasInit: typeof hf.init === 'function',
           // Check for common API methods
-          hasAPI: typeof hf === 'object'
+          hasAPI: typeof hf === 'object',
         };
       });
 
       expect(exports.loaded).toBe(true);
 
       // Page should load without critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::')
-      );
+      const criticalErrors = errors.filter(e => !e.includes('favicon') && !e.includes('net::'));
       expect(criticalErrors).toHaveLength(0);
     });
 
@@ -444,22 +421,22 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Navigate to htmx example page
       await page.goto(`${BASE_URL}/examples/htmx-like/05-boosted-links.html`, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: 10000,
       });
 
-      await page.waitForFunction(() =>
-        (window as any).hyperfixi !== undefined ||
-        (window as any)._hyperscript !== undefined,
+      await page.waitForFunction(
+        () => (window as any).hyperfixi !== undefined || (window as any)._hyperscript !== undefined,
         { timeout: 10000 }
       );
 
       // Verify page loaded and has boosted links
       const pageInfo = await page.evaluate(() => {
         return {
-          hasHyperfixi: typeof (window as any)._hyperscript !== 'undefined' ||
-                       typeof (window as any).hyperfixi !== 'undefined',
+          hasHyperfixi:
+            typeof (window as any)._hyperscript !== 'undefined' ||
+            typeof (window as any).hyperfixi !== 'undefined',
           hasBoostedNav: !!document.querySelector('#boosted-nav'),
-          linkCount: document.querySelectorAll('#boosted-nav a').length
+          linkCount: document.querySelectorAll('#boosted-nav a').length,
         };
       });
 
@@ -468,10 +445,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       expect(pageInfo.linkCount).toBeGreaterThan(0);
 
       // Page should load without critical errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('favicon') &&
-        !e.includes('net::')
-      );
+      const criticalErrors = errors.filter(e => !e.includes('favicon') && !e.includes('net::'));
       expect(criticalErrors).toHaveLength(0);
     });
   });

@@ -348,7 +348,9 @@ describe('Logical Expressions', () => {
 
         // Mock Array.from behavior for this NodeList
         const originalArrayFrom = Array.from;
-        (Array as unknown as { from: (iterable: unknown) => unknown[] }).from = (iterable: unknown) => {
+        (Array as unknown as { from: (iterable: unknown) => unknown[] }).from = (
+          iterable: unknown
+        ) => {
           if (iterable === nodeList) {
             return ['item1', 'item2'];
           }

@@ -41,10 +41,10 @@ export class MinimalAttributeProcessor {
     this.scanDocument();
 
     // Watch for new elements with MutationObserver
-    this.observer = new MutationObserver((mutations) => {
+    this.observer = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach((node) => {
+          mutation.addedNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
               this.processElement(node as Element);
               this.scanElement(node as Element);
@@ -61,7 +61,7 @@ export class MinimalAttributeProcessor {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['_']
+      attributeFilter: ['_'],
     });
   }
 
@@ -115,7 +115,7 @@ export class MinimalAttributeProcessor {
     const context = createContext(element as HTMLElement);
 
     // Execute hyperscript code
-    this.runtime.execute(code, context).catch((error) => {
+    this.runtime.execute(code, context).catch(error => {
       console.error('[HyperFixi] Error executing _="" attribute:', error);
       console.error('Element:', element);
       console.error('Code:', code);
@@ -126,6 +126,8 @@ export class MinimalAttributeProcessor {
 /**
  * Create a default minimal attribute processor instance
  */
-export function createMinimalAttributeProcessor(runtime: MinimalRuntime): MinimalAttributeProcessor {
+export function createMinimalAttributeProcessor(
+  runtime: MinimalRuntime
+): MinimalAttributeProcessor {
   return new MinimalAttributeProcessor(runtime);
 }

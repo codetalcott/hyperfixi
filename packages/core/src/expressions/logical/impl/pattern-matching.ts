@@ -136,17 +136,22 @@ export class MatchesExpression extends BaseExpressionImpl<PatternMatchInput, boo
       }
 
       const { pattern } = parsed.data as { value: unknown; pattern: string | RegExp };
-      if (isString(pattern) && this.isCSSSelector(pattern as string) && !this.isValidCSSSelector(pattern as string)) {
-        return this.validationFailure(
-          'syntax-error',
-          `Invalid CSS selector: ${pattern}`,
-          ['Check CSS selector syntax', 'Use valid selector patterns like .class, #id, tag[attr]']
-        );
+      if (
+        isString(pattern) &&
+        this.isCSSSelector(pattern as string) &&
+        !this.isValidCSSSelector(pattern as string)
+      ) {
+        return this.validationFailure('syntax-error', `Invalid CSS selector: ${pattern}`, [
+          'Check CSS selector syntax',
+          'Use valid selector patterns like .class, #id, tag[attr]',
+        ]);
       }
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 
@@ -228,7 +233,9 @@ export class ContainsExpression extends BaseExpressionImpl<ContainsInput, boolea
       }
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -289,7 +296,9 @@ export class InExpression extends BaseExpressionImpl<InInput, boolean> {
       }
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }

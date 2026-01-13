@@ -339,7 +339,9 @@ describe('Enhanced Reference Expressions', () => {
       expect((selectorExpression as any).documentation.summary).toContain('CSS selectors');
       expect((selectorExpression as any).documentation.parameters).toHaveLength(2);
       expect((selectorExpression as any).documentation.examples).toHaveLength(4);
-      expect((selectorExpression as any).documentation.examples[0].title).toContain('Class selector');
+      expect((selectorExpression as any).documentation.examples[0].title).toContain(
+        'Class selector'
+      );
       expect((selectorExpression as any).documentation.tags).toContain('css');
     });
   });

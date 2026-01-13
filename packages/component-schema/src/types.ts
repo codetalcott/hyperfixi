@@ -3,9 +3,9 @@
  */
 
 // Core Component Types
-export type ComponentCategory = 
+export type ComponentCategory =
   | 'form'
-  | 'navigation' 
+  | 'navigation'
   | 'ui-interaction'
   | 'data-display'
   | 'animation'
@@ -22,16 +22,61 @@ export type DeploymentEnvironment = 'development' | 'staging' | 'production' | '
 export type SupportedFramework = 'express' | 'django' | 'flask' | 'fastapi' | 'gin' | 'vanilla';
 
 export type EventType =
-  | 'click' | 'dblclick' | 'mousedown' | 'mouseup' | 'mouseover' | 'mouseout'
-  | 'keydown' | 'keyup' | 'keypress' | 'focus' | 'blur' | 'change' | 'input'
-  | 'submit' | 'reset' | 'load' | 'unload' | 'resize' | 'scroll' | 'error'
-  | 'dragstart' | 'drag' | 'dragenter' | 'dragover' | 'dragleave' | 'drop' | 'dragend'
-  | 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel';
+  | 'click'
+  | 'dblclick'
+  | 'mousedown'
+  | 'mouseup'
+  | 'mouseover'
+  | 'mouseout'
+  | 'keydown'
+  | 'keyup'
+  | 'keypress'
+  | 'focus'
+  | 'blur'
+  | 'change'
+  | 'input'
+  | 'submit'
+  | 'reset'
+  | 'load'
+  | 'unload'
+  | 'resize'
+  | 'scroll'
+  | 'error'
+  | 'dragstart'
+  | 'drag'
+  | 'dragenter'
+  | 'dragover'
+  | 'dragleave'
+  | 'drop'
+  | 'dragend'
+  | 'touchstart'
+  | 'touchmove'
+  | 'touchend'
+  | 'touchcancel';
 
 export type HyperscriptCommand =
-  | 'add' | 'remove' | 'toggle' | 'put' | 'fetch' | 'post' | 'get' | 'delete'
-  | 'trigger' | 'wait' | 'halt' | 'log' | 'call' | 'set' | 'take' | 'make'
-  | 'hide' | 'show' | 'fadeIn' | 'fadeOut' | 'slideUp' | 'slideDown';
+  | 'add'
+  | 'remove'
+  | 'toggle'
+  | 'put'
+  | 'fetch'
+  | 'post'
+  | 'get'
+  | 'delete'
+  | 'trigger'
+  | 'wait'
+  | 'halt'
+  | 'log'
+  | 'call'
+  | 'set'
+  | 'take'
+  | 'make'
+  | 'hide'
+  | 'show'
+  | 'fadeIn'
+  | 'fadeOut'
+  | 'slideUp'
+  | 'slideDown';
 
 export type VariableType = 'string' | 'number' | 'boolean' | 'array' | 'object';
 

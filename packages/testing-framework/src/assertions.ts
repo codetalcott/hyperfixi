@@ -26,19 +26,19 @@ export class AssertionError extends Error {
  */
 function deepEqual(actual: any, expected: any): boolean {
   if (actual === expected) return true;
-  
+
   if (actual == null || expected == null) return actual === expected;
-  
+
   if (typeof actual !== typeof expected) return false;
-  
+
   if (actual instanceof Date && expected instanceof Date) {
     return actual.getTime() === expected.getTime();
   }
-  
+
   if (actual instanceof RegExp && expected instanceof RegExp) {
     return actual.toString() === expected.toString();
   }
-  
+
   if (Array.isArray(actual) && Array.isArray(expected)) {
     if (actual.length !== expected.length) return false;
     for (let i = 0; i < actual.length; i++) {
@@ -46,21 +46,21 @@ function deepEqual(actual: any, expected: any): boolean {
     }
     return true;
   }
-  
+
   if (typeof actual === 'object' && typeof expected === 'object') {
     const actualKeys = Object.keys(actual);
     const expectedKeys = Object.keys(expected);
-    
+
     if (actualKeys.length !== expectedKeys.length) return false;
-    
+
     for (const key of actualKeys) {
       if (!expectedKeys.includes(key)) return false;
       if (!deepEqual(actual[key], expected[key])) return false;
     }
-    
+
     return true;
   }
-  
+
   return false;
 }
 
@@ -70,13 +70,18 @@ function deepEqual(actual: any, expected: any): boolean {
 function generateDiff(actual: any, expected: any): string {
   const actualStr = typeof actual === 'string' ? actual : JSON.stringify(actual, null, 2);
   const expectedStr = typeof expected === 'string' ? expected : JSON.stringify(expected, null, 2);
-  
+
   const diff = diffLines(expectedStr, actualStr);
-  
-  return diff.map(part => {
-    const prefix = part.added ? '+' : part.removed ? '-' : ' ';
-    return part.value.split('\n').map(line => `${prefix} ${line}`).join('\n');
-  }).join('\n');
+
+  return diff
+    .map(part => {
+      const prefix = part.added ? '+' : part.removed ? '-' : ' ';
+      return part.value
+        .split('\n')
+        .map(line => `${prefix} ${line}`)
+        .join('\n');
+    })
+    .join('\n');
 }
 
 /**
@@ -92,11 +97,9 @@ function isInDocument(element: Element): boolean {
  */
 function isVisible(element: Element): boolean {
   if (!isInDocument(element)) return false;
-  
+
   const style = window.getComputedStyle(element);
-  return style.display !== 'none' && 
-         style.visibility !== 'hidden' && 
-         style.opacity !== '0';
+  return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
 }
 
 /**
@@ -116,7 +119,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!this.isPromise(this.actual)) {
       throw new AssertionError('Expected value to be a Promise');
     }
-    
+
     // Return a new matcher that operates on the resolved value
     return new ExpectMatcherImpl(
       this.actual.then((value: any) => value),
@@ -128,11 +131,13 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!this.isPromise(this.actual)) {
       throw new AssertionError('Expected value to be a Promise');
     }
-    
+
     // Return a new matcher that expects the promise to reject
     return new ExpectMatcherImpl(
       this.actual.then(
-        (value: any) => { throw new Error('Promise did not reject'); },
+        (value: any) => {
+          throw new Error('Promise did not reject');
+        },
         (error: any) => error
       ),
       this.isNot
@@ -141,17 +146,32 @@ class ExpectMatcherImpl implements ExpectMatcher {
 
   toBe(expected: any): void {
     const passed = this.actual === expected;
-    this.assert(passed, 'toBe', expected, `Expected ${this.format(this.actual)} to be ${this.format(expected)}`);
+    this.assert(
+      passed,
+      'toBe',
+      expected,
+      `Expected ${this.format(this.actual)} to be ${this.format(expected)}`
+    );
   }
 
   toEqual(expected: any): void {
     const passed = deepEqual(this.actual, expected);
-    this.assert(passed, 'toEqual', expected, `Expected ${this.format(this.actual)} to equal ${this.format(expected)}`);
+    this.assert(
+      passed,
+      'toEqual',
+      expected,
+      `Expected ${this.format(this.actual)} to equal ${this.format(expected)}`
+    );
   }
 
   toStrictEqual(expected: any): void {
     const passed = this.actual === expected && deepEqual(this.actual, expected);
-    this.assert(passed, 'toStrictEqual', expected, `Expected ${this.format(this.actual)} to strictly equal ${this.format(expected)}`);
+    this.assert(
+      passed,
+      'toStrictEqual',
+      expected,
+      `Expected ${this.format(this.actual)} to strictly equal ${this.format(expected)}`
+    );
   }
 
   toBeTruthy(): void {
@@ -171,12 +191,22 @@ class ExpectMatcherImpl implements ExpectMatcher {
 
   toBeUndefined(): void {
     const passed = this.actual === undefined;
-    this.assert(passed, 'toBeUndefined', undefined, `Expected ${this.format(this.actual)} to be undefined`);
+    this.assert(
+      passed,
+      'toBeUndefined',
+      undefined,
+      `Expected ${this.format(this.actual)} to be undefined`
+    );
   }
 
   toBeDefined(): void {
     const passed = this.actual !== undefined;
-    this.assert(passed, 'toBeDefined', 'defined', `Expected ${this.format(this.actual)} to be defined`);
+    this.assert(
+      passed,
+      'toBeDefined',
+      'defined',
+      `Expected ${this.format(this.actual)} to be defined`
+    );
   }
 
   toBeNaN(): void {
@@ -186,24 +216,34 @@ class ExpectMatcherImpl implements ExpectMatcher {
 
   toBeInstanceOf(constructor: any): void {
     const passed = this.actual instanceof constructor;
-    this.assert(passed, 'toBeInstanceOf', constructor, `Expected ${this.format(this.actual)} to be instance of ${constructor.name}`);
+    this.assert(
+      passed,
+      'toBeInstanceOf',
+      constructor,
+      `Expected ${this.format(this.actual)} to be instance of ${constructor.name}`
+    );
   }
 
   toBeCloseTo(expected: number, precision: number = 2): void {
     if (typeof this.actual !== 'number' || typeof expected !== 'number') {
       throw new AssertionError('Expected both values to be numbers');
     }
-    
+
     const diff = Math.abs(this.actual - expected);
     const passed = diff < Math.pow(10, -precision) / 2;
-    this.assert(passed, 'toBeCloseTo', expected, `Expected ${this.actual} to be close to ${expected} (precision: ${precision})`);
+    this.assert(
+      passed,
+      'toBeCloseTo',
+      expected,
+      `Expected ${this.actual} to be close to ${expected} (precision: ${precision})`
+    );
   }
 
   toMatch(expected: string | RegExp): void {
     if (typeof this.actual !== 'string') {
       throw new AssertionError('Expected value to be a string');
     }
-    
+
     const regex = typeof expected === 'string' ? new RegExp(expected) : expected;
     const passed = regex.test(this.actual);
     this.assert(passed, 'toMatch', expected, `Expected "${this.actual}" to match ${expected}`);
@@ -211,7 +251,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
 
   toContain(expected: any): void {
     let passed = false;
-    
+
     if (typeof this.actual === 'string' && typeof expected === 'string') {
       passed = this.actual.includes(expected);
     } else if (Array.isArray(this.actual)) {
@@ -219,32 +259,47 @@ class ExpectMatcherImpl implements ExpectMatcher {
     } else if (this.actual && typeof this.actual.has === 'function') {
       passed = this.actual.has(expected);
     }
-    
-    this.assert(passed, 'toContain', expected, `Expected ${this.format(this.actual)} to contain ${this.format(expected)}`);
+
+    this.assert(
+      passed,
+      'toContain',
+      expected,
+      `Expected ${this.format(this.actual)} to contain ${this.format(expected)}`
+    );
   }
 
   toHaveLength(expected: number): void {
     if (this.actual == null || typeof this.actual.length !== 'number') {
       throw new AssertionError('Expected value to have a length property');
     }
-    
+
     const passed = this.actual.length === expected;
-    this.assert(passed, 'toHaveLength', expected, `Expected length ${this.actual.length} to be ${expected}`);
+    this.assert(
+      passed,
+      'toHaveLength',
+      expected,
+      `Expected length ${this.actual.length} to be ${expected}`
+    );
   }
 
   toContainEqual(expected: any): void {
     if (!Array.isArray(this.actual)) {
       throw new AssertionError('Expected value to be an array');
     }
-    
+
     const passed = this.actual.some(item => deepEqual(item, expected));
-    this.assert(passed, 'toContainEqual', expected, `Expected array to contain equal to ${this.format(expected)}`);
+    this.assert(
+      passed,
+      'toContainEqual',
+      expected,
+      `Expected array to contain equal to ${this.format(expected)}`
+    );
   }
 
   toHaveProperty(path: string, value?: any): void {
     const keys = path.split('.');
     let current = this.actual;
-    
+
     for (const key of keys) {
       if (current == null || !Object.prototype.hasOwnProperty.call(current, key)) {
         this.assert(false, 'toHaveProperty', path, `Expected object to have property "${path}"`);
@@ -252,10 +307,15 @@ class ExpectMatcherImpl implements ExpectMatcher {
       }
       current = current[key];
     }
-    
+
     if (value !== undefined) {
       const passed = deepEqual(current, value);
-      this.assert(passed, 'toHaveProperty', value, `Expected property "${path}" to have value ${this.format(value)}, got ${this.format(current)}`);
+      this.assert(
+        passed,
+        'toHaveProperty',
+        value,
+        `Expected property "${path}" to have value ${this.format(value)}, got ${this.format(current)}`
+      );
     } else {
       this.assert(true, 'toHaveProperty', path, '');
     }
@@ -265,12 +325,17 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (typeof this.actual !== 'object' || this.actual === null) {
       throw new AssertionError('Expected value to be an object');
     }
-    
-    const passed = Object.keys(expected).every(key => 
+
+    const passed = Object.keys(expected).every(key =>
       deepEqual(this.actual[key], (expected as any)[key])
     );
-    
-    this.assert(passed, 'toMatchObject', expected, `Expected object to match ${this.format(expected)}`);
+
+    this.assert(
+      passed,
+      'toMatchObject',
+      expected,
+      `Expected object to match ${this.format(expected)}`
+    );
   }
 
   // DOM-specific matchers
@@ -278,16 +343,21 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const passed = isInDocument(this.actual);
-    this.assert(passed, 'toBeInTheDocument', 'in document', 'Expected element to be in the document');
+    this.assert(
+      passed,
+      'toBeInTheDocument',
+      'in document',
+      'Expected element to be in the document'
+    );
   }
 
   toBeVisible(): void {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const passed = isVisible(this.actual);
     this.assert(passed, 'toBeVisible', 'visible', 'Expected element to be visible');
   }
@@ -296,7 +366,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const passed = (this.actual as any).disabled === true || this.actual.hasAttribute('disabled');
     this.assert(passed, 'toBeDisabled', 'disabled', 'Expected element to be disabled');
   }
@@ -305,7 +375,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const passed = (this.actual as any).disabled !== true && !this.actual.hasAttribute('disabled');
     this.assert(passed, 'toBeEnabled', 'enabled', 'Expected element to be enabled');
   }
@@ -314,7 +384,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const passed = (this.actual as any).checked === true;
     this.assert(passed, 'toBeChecked', 'checked', 'Expected element to be checked');
   }
@@ -323,7 +393,7 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const passed = this.actual.classList.contains(className);
     this.assert(passed, 'toHaveClass', className, `Expected element to have class "${className}"`);
   }
@@ -332,13 +402,23 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     if (value === undefined) {
       const passed = this.actual.hasAttribute(name);
-      this.assert(passed, 'toHaveAttribute', `attribute "${name}"`, `Expected element to have attribute "${name}"`);
+      this.assert(
+        passed,
+        'toHaveAttribute',
+        `attribute "${name}"`,
+        `Expected element to have attribute "${name}"`
+      );
     } else {
       const passed = this.actual.getAttribute(name) === value;
-      this.assert(passed, 'toHaveAttribute', `${name}="${value}"`, `Expected element to have attribute "${name}" with value "${value}"`);
+      this.assert(
+        passed,
+        'toHaveAttribute',
+        `${name}="${value}"`,
+        `Expected element to have attribute "${name}" with value "${value}"`
+      );
     }
   }
 
@@ -346,48 +426,79 @@ class ExpectMatcherImpl implements ExpectMatcher {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const textContent = this.actual.textContent || '';
-    const passed = typeof text === 'string' 
-      ? textContent === text 
-      : text.test(textContent);
-    
-    this.assert(passed, 'toHaveTextContent', text, `Expected element to have text content "${text}"`);
+    const passed = typeof text === 'string' ? textContent === text : text.test(textContent);
+
+    this.assert(
+      passed,
+      'toHaveTextContent',
+      text,
+      `Expected element to have text content "${text}"`
+    );
   }
 
   toHaveValue(value: any): void {
     if (!(this.actual instanceof Element)) {
       throw new AssertionError('Expected value to be a DOM element');
     }
-    
+
     const actualValue = (this.actual as any).value;
     const passed = actualValue === value;
-    this.assert(passed, 'toHaveValue', value, `Expected element to have value "${value}", got "${actualValue}"`);
+    this.assert(
+      passed,
+      'toHaveValue',
+      value,
+      `Expected element to have value "${value}", got "${actualValue}"`
+    );
   }
 
   // HyperScript-specific matchers
   toHaveCompiledScript(): void {
     // Implementation would depend on HyperFixi API
     const passed = this.actual && typeof this.actual._hyperscript !== 'undefined';
-    this.assert(passed, 'toHaveCompiledScript', 'compiled script', 'Expected element to have compiled hyperscript');
+    this.assert(
+      passed,
+      'toHaveCompiledScript',
+      'compiled script',
+      'Expected element to have compiled hyperscript'
+    );
   }
 
   toHaveExecutedScript(): void {
     // Implementation would depend on HyperFixi API
     const passed = this.actual && this.actual._hyperscriptExecuted === true;
-    this.assert(passed, 'toHaveExecutedScript', 'executed script', 'Expected hyperscript to have executed');
+    this.assert(
+      passed,
+      'toHaveExecutedScript',
+      'executed script',
+      'Expected hyperscript to have executed'
+    );
   }
 
   toHaveTriggeredEvent(eventType: string): void {
     // Implementation would depend on event tracking
-    const passed = this.actual && this.actual._triggeredEvents && this.actual._triggeredEvents.includes(eventType);
-    this.assert(passed, 'toHaveTriggeredEvent', eventType, `Expected event "${eventType}" to have been triggered`);
+    const passed =
+      this.actual &&
+      this.actual._triggeredEvents &&
+      this.actual._triggeredEvents.includes(eventType);
+    this.assert(
+      passed,
+      'toHaveTriggeredEvent',
+      eventType,
+      `Expected event "${eventType}" to have been triggered`
+    );
   }
 
   toHaveUpdatedElement(): void {
     // Implementation would depend on DOM change tracking
     const passed = this.actual && this.actual._wasUpdated === true;
-    this.assert(passed, 'toHaveUpdatedElement', 'updated element', 'Expected element to have been updated');
+    this.assert(
+      passed,
+      'toHaveUpdatedElement',
+      'updated element',
+      'Expected element to have been updated'
+    );
   }
 
   private assert(passed: boolean, operator: string, expected: any, message: string): void {
@@ -395,14 +506,14 @@ class ExpectMatcherImpl implements ExpectMatcher {
       passed = !passed;
       message = message.replace('Expected', 'Expected NOT');
     }
-    
+
     if (!passed) {
       const error = new AssertionError(message, expected, this.actual, operator);
-      
+
       if (typeof this.actual === 'object' && typeof expected === 'object') {
         error.message += '\n\nDiff:\n' + generateDiff(this.actual, expected);
       }
-      
+
       throw error;
     }
   }
@@ -591,7 +702,9 @@ class AssertAPIImpl implements AssertAPI {
     }
 
     if (!isVisible(element)) {
-      throw new AssertionError(message || `Expected element with selector "${selector}" to be visible`);
+      throw new AssertionError(
+        message || `Expected element with selector "${selector}" to be visible`
+      );
     }
   }
 
@@ -606,7 +719,9 @@ class AssertAPIImpl implements AssertAPI {
     }
 
     if (!element.classList.contains(className)) {
-      throw new AssertionError(message || `Expected element with selector "${selector}" to have class "${className}"`);
+      throw new AssertionError(
+        message || `Expected element with selector "${selector}" to have class "${className}"`
+      );
     }
   }
 
@@ -621,7 +736,9 @@ class AssertAPIImpl implements AssertAPI {
     }
 
     if (element.textContent !== text) {
-      throw new AssertionError(message || `Expected element with selector "${selector}" to have text "${text}"`);
+      throw new AssertionError(
+        message || `Expected element with selector "${selector}" to have text "${text}"`
+      );
     }
   }
 

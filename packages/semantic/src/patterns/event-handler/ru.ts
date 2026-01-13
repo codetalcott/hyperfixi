@@ -22,15 +22,23 @@ export function getEventHandlerPatternsRu(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'при', alternatives: ['когда'] },
           { type: 'role', role: 'event' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'на', alternatives: ['в', 'от'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'на', alternatives: ['в', 'от'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {
         event: { position: 1 },
-        source: { marker: 'на', markerAlternatives: ['в', 'от'], default: { type: 'reference', value: 'me' } },
+        source: {
+          marker: 'на',
+          markerAlternatives: ['в', 'от'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

@@ -58,7 +58,10 @@ if (typeof window !== 'undefined' && typeof URLSearchParams !== 'undefined') {
     if (urlParams.get('debug') === 'semantic') {
       debugEnabled = true;
       debugEventTarget = window;
-      console.log('%c[HyperFixi] Semantic debug auto-enabled via URL param', 'color: #667eea; font-weight: bold');
+      console.log(
+        '%c[HyperFixi] Semantic debug auto-enabled via URL param',
+        'color: #667eea; font-weight: bold'
+      );
     }
   } catch {
     // Ignore errors in restricted environments
@@ -101,7 +104,11 @@ export function emitSemanticParseEvent(detail: SemanticParseEventDetail): void {
   }
 
   // Always log to console when debug is enabled
-  const method = detail.semanticSuccess ? 'semantic' : detail.fallbackTriggered ? 'fallback' : 'traditional';
+  const method = detail.semanticSuccess
+    ? 'semantic'
+    : detail.fallbackTriggered
+      ? 'fallback'
+      : 'traditional';
   const confidencePercent = Math.round(detail.confidence * 100);
   const thresholdPercent = Math.round(detail.threshold * 100);
 
@@ -194,7 +201,8 @@ export function updateDebugStats(event: SemanticParseEventDetail): void {
   }
 
   // Calculate average
-  stats.averageConfidence = stats.confidenceHistory.reduce((a, b) => a + b, 0) / stats.confidenceHistory.length;
+  stats.averageConfidence =
+    stats.confidenceHistory.reduce((a, b) => a + b, 0) / stats.confidenceHistory.length;
 }
 
 /**

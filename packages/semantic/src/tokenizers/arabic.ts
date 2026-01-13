@@ -34,11 +34,13 @@ import { ArabicMorphologicalNormalizer } from './morphology/arabic-normalizer';
  */
 function isArabic(char: string): boolean {
   const code = char.charCodeAt(0);
-  return (code >= 0x0600 && code <= 0x06FF) ||  // Arabic
-         (code >= 0x0750 && code <= 0x077F) ||  // Arabic Supplement
-         (code >= 0x08A0 && code <= 0x08FF) ||  // Arabic Extended-A
-         (code >= 0xFB50 && code <= 0xFDFF) ||  // Arabic Presentation Forms-A
-         (code >= 0xFE70 && code <= 0xFEFF);    // Arabic Presentation Forms-B
+  return (
+    (code >= 0x0600 && code <= 0x06ff) || // Arabic
+    (code >= 0x0750 && code <= 0x077f) || // Arabic Supplement
+    (code >= 0x08a0 && code <= 0x08ff) || // Arabic Extended-A
+    (code >= 0xfb50 && code <= 0xfdff) || // Arabic Presentation Forms-A
+    (code >= 0xfe70 && code <= 0xfeff)
+  ); // Arabic Presentation Forms-B
 }
 
 // =============================================================================
@@ -50,10 +52,10 @@ function isArabic(char: string): boolean {
  * These are marked with trailing hyphen in patterns to indicate attachment.
  */
 const ATTACHED_PREFIXES = new Set([
-  'بـ',  // bi- (with, by)
-  'لـ',  // li- (to, for)
-  'كـ',  // ka- (like, as)
-  'وـ',  // wa- (and)
+  'بـ', // bi- (with, by)
+  'لـ', // li- (to, for)
+  'كـ', // ka- (like, as)
+  'وـ', // wa- (and)
 ]);
 
 /**
@@ -66,25 +68,25 @@ const ATTACHED_PREFIXES = new Set([
  * @see NATIVE_REVIEW_NEEDED.md for implementation details
  */
 const PROCLITICS = new Map<string, string>([
-  ['و', 'and'],   // wa - conjunction "and"
-  ['ف', 'then'],  // fa - conjunction "then/so"
+  ['و', 'and'], // wa - conjunction "and"
+  ['ف', 'then'], // fa - conjunction "then/so"
 ]);
 
 /**
  * Arabic standalone prepositions.
  */
 const PREPOSITIONS = new Set([
-  'في',     // fī (in)
-  'على',    // ʿalā (on)
-  'من',     // min (from)
-  'إلى',    // ilā (to)
-  'الى',    // ilā (alternative spelling)
-  'عند',    // ʿinda (at, when)
-  'مع',     // maʿa (with)
-  'عن',     // ʿan (about, from)
-  'قبل',    // qabl (before)
-  'بعد',    // baʿd (after)
-  'بين',    // bayn (between)
+  'في', // fī (in)
+  'على', // ʿalā (on)
+  'من', // min (from)
+  'إلى', // ilā (to)
+  'الى', // ilā (alternative spelling)
+  'عند', // ʿinda (at, when)
+  'مع', // maʿa (with)
+  'عن', // ʿan (about, from)
+  'قبل', // qabl (before)
+  'بعد', // baʿd (after)
+  'بين', // bayn (between)
 ]);
 
 // =============================================================================
@@ -149,10 +151,10 @@ const ARABIC_KEYWORDS: Map<string, string> = new Map([
   ['لدى', 'on'],
   ['حين', 'on'],
   // Native idiom temporal conjunctions (higher priority)
-  ['عندما', 'on'],     // when (temporal conjunction) - most natural
-  ['حينما', 'on'],     // when (alternative)
-  ['لمّا', 'on'],       // when (past emphasis)
-  ['لما', 'on'],        // when (without shadda)
+  ['عندما', 'on'], // when (temporal conjunction) - most natural
+  ['حينما', 'on'], // when (alternative)
+  ['لمّا', 'on'], // when (past emphasis)
+  ['لما', 'on'], // when (without shadda)
   ['تشغيل', 'trigger'],
   ['شغّل', 'trigger'],
   ['شغل', 'trigger'],
@@ -395,11 +397,7 @@ export class ArabicTokenizer extends BaseTokenizer {
         // Check that it's a standalone word (followed by space or non-Arabic)
         const nextPos = pos + prep.length;
         if (nextPos >= input.length || isWhitespace(input[nextPos]) || !isArabic(input[nextPos])) {
-          return createToken(
-            prep,
-            'particle',
-            createPosition(pos, nextPos)
-          );
+          return createToken(prep, 'particle', createPosition(pos, nextPos));
         }
       }
     }
@@ -449,12 +447,7 @@ export class ArabicTokenizer extends BaseTokenizer {
     }
 
     return {
-      conjunction: createToken(
-        char,
-        'conjunction',
-        createPosition(pos, nextPos),
-        normalized
-      ),
+      conjunction: createToken(char, 'conjunction', createPosition(pos, nextPos), normalized),
     };
   }
 
@@ -486,21 +479,12 @@ export class ArabicTokenizer extends BaseTokenizer {
     const normalized = ARABIC_KEYWORDS.get(word);
 
     if (normalized) {
-      return createToken(
-        word,
-        'keyword',
-        createPosition(startPos, pos),
-        normalized
-      );
+      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
     }
 
     // Check if it's a preposition
     if (PREPOSITIONS.has(word)) {
-      return createToken(
-        word,
-        'particle',
-        createPosition(startPos, pos)
-      );
+      return createToken(word, 'particle', createPosition(startPos, pos));
     }
 
     // Try morphological normalization for conjugated/inflected forms
@@ -517,21 +501,12 @@ export class ArabicTokenizer extends BaseTokenizer {
           stemConfidence: morphResult.confidence,
         };
 
-        return createToken(
-          word,
-          'keyword',
-          createPosition(startPos, pos),
-          tokenOptions
-        );
+        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
       }
     }
 
     // Not a keyword or recognized form, return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -547,11 +522,7 @@ export class ArabicTokenizer extends BaseTokenizer {
 
     if (!word) return null;
 
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -598,11 +569,7 @@ export class ArabicTokenizer extends BaseTokenizer {
 
     if (!number) return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
 }
 

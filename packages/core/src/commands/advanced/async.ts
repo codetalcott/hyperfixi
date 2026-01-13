@@ -11,7 +11,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export interface AsyncCommandInput {
   commands: any[];
@@ -33,7 +39,11 @@ export interface AsyncCommandOutput {
 @meta({
   description: 'Execute commands asynchronously without blocking',
   syntax: ['async <command> [<command> ...]'],
-  examples: ['async command1 command2', 'async fetchData processData', 'async animateIn showContent'],
+  examples: [
+    'async command1 command2',
+    'async fetchData processData',
+    'async animateIn showContent',
+  ],
   sideEffects: ['async-execution'],
 })
 @command({ name: 'async', category: 'advanced' })

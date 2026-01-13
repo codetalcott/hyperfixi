@@ -62,7 +62,7 @@ describe('htmx lifecycle events', () => {
       button.setAttribute('hx-get', '/api/data');
       container.appendChild(button);
 
-      button.addEventListener('htmx:configuring', (e) => {
+      button.addEventListener('htmx:configuring', e => {
         e.preventDefault();
       });
 
@@ -127,7 +127,7 @@ describe('htmx lifecycle events', () => {
       button.setAttribute('hx-get', '/api/data');
       container.appendChild(button);
 
-      button.addEventListener('htmx:beforeRequest', (e) => {
+      button.addEventListener('htmx:beforeRequest', e => {
         e.preventDefault();
       });
 

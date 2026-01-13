@@ -17,7 +17,9 @@ test('simple toggle test: click button should add active class', async ({ page }
   await page.goto('/examples/behaviors/demo.html');
 
   // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, { timeout: 10000 });
+  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+    timeout: 10000,
+  });
   await page.waitForTimeout(1000); // Extra time for behaviors to install
 
   // Check if behavior was installed
@@ -61,7 +63,9 @@ test('simple removable test: click should remove element', async ({ page }) => {
   await page.goto('/examples/behaviors/demo.html');
 
   // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, { timeout: 10000 });
+  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+    timeout: 10000,
+  });
   await page.waitForTimeout(1000);
 
   // Count removable items before
@@ -98,7 +102,9 @@ test('removable with confirmation: cancel should not remove', async ({ page }) =
   await page.goto('/examples/behaviors/demo.html');
 
   // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, { timeout: 10000 });
+  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+    timeout: 10000,
+  });
   await page.waitForTimeout(1000);
 
   // Set up dialog handler to cancel
@@ -133,7 +139,9 @@ test('removable with confirmation: accept should remove', async ({ page }) => {
   await page.goto('/examples/behaviors/demo.html');
 
   // Wait for hyperscript to initialize
-  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, { timeout: 10000 });
+  await page.waitForFunction(() => (window as any)._hyperscript?.behaviors !== undefined, {
+    timeout: 10000,
+  });
   await page.waitForTimeout(1000);
 
   // Set up dialog handler to accept

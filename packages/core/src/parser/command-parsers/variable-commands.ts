@@ -44,10 +44,7 @@ import { createBinaryExpression, createLiteral, createIdentifier } from '../help
  *
  * Phase 9-3b: Extracted from Parser.parseSetCommand
  */
-export function parseSetCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-) {
+export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const startPosition = ctx.current;
   let targetExpression: ASTNode | null = null;
 
@@ -295,10 +292,7 @@ export function parseSetCommand(
  * Phase 9-3b: Extracted from Parser.parseCommand (special handling section)
  * Phase 1 (Bundle Reduction): Transformed to emit `set` command
  */
-export function parseIncrementDecrementCommand(
-  ctx: ParserContext,
-  commandToken: Token
-) {
+export function parseIncrementDecrementCommand(ctx: ParserContext, commandToken: Token) {
   const commandName = commandToken.value;
   const isIncrement = commandName === 'increment';
   const operator = isIncrement ? '+' : '-';

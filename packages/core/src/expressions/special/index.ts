@@ -123,7 +123,9 @@ export class StringLiteralExpression extends BaseExpressionImpl<StringLiteralInp
       }
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 
@@ -259,16 +261,17 @@ export class NumberLiteralExpression extends BaseExpressionImpl<NumberLiteralInp
       }
 
       if (!isFinite((parsed.data as any).value)) {
-        return this.validationFailure(
-          'invalid-argument',
-          'Number literal value must be finite',
-          ['Use finite numbers only', 'Avoid Infinity and NaN values']
-        );
+        return this.validationFailure('invalid-argument', 'Number literal value must be finite', [
+          'Use finite numbers only',
+          'Avoid Infinity and NaN values',
+        ]);
       }
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -328,13 +331,16 @@ export class BooleanLiteralExpression extends BaseExpressionImpl<BooleanLiteralI
       if (!parsed.success) {
         return this.validationFailure(
           'type-mismatch',
-          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid boolean literal input',
+          parsed.error?.errors.map(err => err.message).join(', ') ||
+            'Invalid boolean literal input',
           ['Provide a value parameter', 'Ensure value is a boolean']
         );
       }
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -405,7 +411,9 @@ export class AdditionExpression extends BaseExpressionImpl<BinaryOperationInput,
       }
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -414,7 +422,10 @@ export class AdditionExpression extends BaseExpressionImpl<BinaryOperationInput,
 // Enhanced String Concatenation Expression
 // ============================================================================
 
-export class StringConcatenationExpression extends BaseExpressionImpl<BinaryOperationInput, string> {
+export class StringConcatenationExpression extends BaseExpressionImpl<
+  BinaryOperationInput,
+  string
+> {
   public readonly name = 'stringConcatenation';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left + right (string concatenation)';
@@ -470,7 +481,8 @@ export class StringConcatenationExpression extends BaseExpressionImpl<BinaryOper
     if (!parsed.success) {
       return this.validationFailure(
         'type-mismatch',
-        parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid string concatenation input',
+        parsed.error?.errors.map(err => err.message).join(', ') ||
+          'Invalid string concatenation input',
         ['Provide left and right operands for concatenation']
       );
     }
@@ -559,7 +571,9 @@ export class MultiplicationExpression extends BaseExpressionImpl<BinaryOperation
       }
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }

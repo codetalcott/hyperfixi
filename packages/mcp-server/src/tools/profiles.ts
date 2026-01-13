@@ -57,15 +57,13 @@ export const profileTools: Tool[] = [
   },
   {
     name: 'get_keyword_translations',
-    description:
-      'Get translations of a specific keyword/command across languages',
+    description: 'Get translations of a specific keyword/command across languages',
     inputSchema: {
       type: 'object',
       properties: {
         keyword: {
           type: 'string',
-          description:
-            'The English keyword to look up (e.g., "toggle", "add", "remove", "put")',
+          description: 'The English keyword to look up (e.g., "toggle", "add", "remove", "put")',
         },
         languages: {
           type: 'array',
@@ -79,8 +77,7 @@ export const profileTools: Tool[] = [
   },
   {
     name: 'get_role_markers',
-    description:
-      'Get role markers (destination, source, patient, etc.) for a language',
+    description: 'Get role markers (destination, source, patient, etc.) for a language',
     inputSchema: {
       type: 'object',
       properties: {
@@ -100,8 +97,7 @@ export const profileTools: Tool[] = [
   },
   {
     name: 'compare_language_profiles',
-    description:
-      'Compare two language profiles to find differences and gaps in translations',
+    description: 'Compare two language profiles to find differences and gaps in translations',
     inputSchema: {
       type: 'object',
       properties: {
@@ -212,9 +208,10 @@ export async function handleProfileTool(
   }
 }
 
-function handleGetLanguageProfile(
-  args: Record<string, unknown>
-): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+function handleGetLanguageProfile(args: Record<string, unknown>): {
+  content: Array<{ type: string; text: string }>;
+  isError?: boolean;
+} {
   const language = args.language as string;
   const section = (args.section as string) || 'all';
 
@@ -243,9 +240,9 @@ function handleGetLanguageProfile(
   };
 }
 
-function handleListSupportedLanguages(
-  args: Record<string, unknown>
-): { content: Array<{ type: string; text: string }> } {
+function handleListSupportedLanguages(args: Record<string, unknown>): {
+  content: Array<{ type: string; text: string }>;
+} {
   const includeDetails = args.includeDetails !== false;
   const languages = getRegisteredLanguages();
 
@@ -260,7 +257,7 @@ function handleListSupportedLanguages(
     };
   }
 
-  const details = languages.map((code) => {
+  const details = languages.map(code => {
     const profile = tryGetProfile(code);
     if (!profile) return { code, error: 'Profile not found' };
 
@@ -285,9 +282,9 @@ function handleListSupportedLanguages(
   };
 }
 
-function handleGetKeywordTranslations(
-  args: Record<string, unknown>
-): { content: Array<{ type: string; text: string }> } {
+function handleGetKeywordTranslations(args: Record<string, unknown>): {
+  content: Array<{ type: string; text: string }>;
+} {
   const keyword = args.keyword as string;
   const targetLanguages = args.languages as string[] | undefined;
   const languages = targetLanguages || getRegisteredLanguages();
@@ -319,9 +316,10 @@ function handleGetKeywordTranslations(
   };
 }
 
-function handleGetRoleMarkers(
-  args: Record<string, unknown>
-): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+function handleGetRoleMarkers(args: Record<string, unknown>): {
+  content: Array<{ type: string; text: string }>;
+  isError?: boolean;
+} {
   const language = args.language as string;
   const role = args.role as string | undefined;
 
@@ -372,9 +370,10 @@ function handleGetRoleMarkers(
   };
 }
 
-function handleCompareProfiles(
-  args: Record<string, unknown>
-): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+function handleCompareProfiles(args: Record<string, unknown>): {
+  content: Array<{ type: string; text: string }>;
+  isError?: boolean;
+} {
   const baseLanguage = args.baseLanguage as string;
   const targetLanguage = args.targetLanguage as string;
   const section = (args.section as string) || 'all';
@@ -405,8 +404,8 @@ function handleCompareProfiles(
     const baseKeywords = Object.keys(baseProfile.keywords || {});
     const targetKeywords = Object.keys(targetProfile.keywords || {});
 
-    const missing = baseKeywords.filter((k) => !targetKeywords.includes(k));
-    const extra = targetKeywords.filter((k) => !baseKeywords.includes(k));
+    const missing = baseKeywords.filter(k => !targetKeywords.includes(k));
+    const extra = targetKeywords.filter(k => !baseKeywords.includes(k));
 
     comparison.keywords = {
       baseCount: baseKeywords.length,
@@ -422,7 +421,7 @@ function handleCompareProfiles(
     const baseMarkers = Object.keys(baseProfile.roleMarkers || {});
     const targetMarkers = Object.keys(targetProfile.roleMarkers || {});
 
-    const missing = baseMarkers.filter((k) => !targetMarkers.includes(k));
+    const missing = baseMarkers.filter(k => !targetMarkers.includes(k));
     comparison.markers = {
       baseCount: baseMarkers.length,
       targetCount: targetMarkers.length,
@@ -435,7 +434,7 @@ function handleCompareProfiles(
     const baseRefs = Object.keys(baseProfile.references || {});
     const targetRefs = Object.keys(targetProfile.references || {});
 
-    const missing = baseRefs.filter((k) => !targetRefs.includes(k));
+    const missing = baseRefs.filter(k => !targetRefs.includes(k));
     comparison.references = {
       baseCount: baseRefs.length,
       targetCount: targetRefs.length,

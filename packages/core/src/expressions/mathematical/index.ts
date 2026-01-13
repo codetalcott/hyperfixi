@@ -53,10 +53,7 @@ export class AdditionExpression implements BaseTypedExpression<number> {
   public readonly outputType: EvaluationType = 'number';
   public readonly metadata: ExpressionMetadata = { category: 'Special', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<number>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<number>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -72,7 +69,12 @@ export class AdditionExpression implements BaseTypedExpression<number> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Addition failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Addition failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are numeric'],
       };
     }
@@ -86,14 +88,24 @@ export class AdditionExpression implements BaseTypedExpression<number> {
     if (!isNumeric(left) && typeof left !== 'boolean' && left !== null && left !== undefined) {
       return {
         isValid: false,
-        errors: [createError('type-mismatch', `Left operand cannot be converted to number: ${String(left)}`)],
+        errors: [
+          createError(
+            'type-mismatch',
+            `Left operand cannot be converted to number: ${String(left)}`
+          ),
+        ],
         suggestions: ['Provide a numeric value for left operand'],
       };
     }
     if (!isNumeric(right) && typeof right !== 'boolean' && right !== null && right !== undefined) {
       return {
         isValid: false,
-        errors: [createError('type-mismatch', `Right operand cannot be converted to number: ${String(right)}`)],
+        errors: [
+          createError(
+            'type-mismatch',
+            `Right operand cannot be converted to number: ${String(right)}`
+          ),
+        ],
         suggestions: ['Provide a numeric value for right operand'],
       };
     }
@@ -112,10 +124,7 @@ export class SubtractionExpression implements BaseTypedExpression<number> {
   public readonly outputType: EvaluationType = 'number';
   public readonly metadata: ExpressionMetadata = { category: 'Special', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<number>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<number>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -131,7 +140,12 @@ export class SubtractionExpression implements BaseTypedExpression<number> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Subtraction failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Subtraction failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are numeric'],
       };
     }
@@ -155,10 +169,7 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
   public readonly outputType: EvaluationType = 'number';
   public readonly metadata: ExpressionMetadata = { category: 'Special', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<number>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<number>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -174,7 +185,12 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are numeric'],
       };
     }
@@ -197,10 +213,7 @@ export class DivisionExpression implements BaseTypedExpression<number> {
   public readonly outputType: EvaluationType = 'number';
   public readonly metadata: ExpressionMetadata = { category: 'Special', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<number>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<number>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -217,7 +230,12 @@ export class DivisionExpression implements BaseTypedExpression<number> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Division failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Division failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are numeric'],
       };
     }
@@ -240,10 +258,7 @@ export class ModuloExpression implements BaseTypedExpression<number> {
   public readonly outputType: EvaluationType = 'number';
   public readonly metadata: ExpressionMetadata = { category: 'Special', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<number>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<number>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -259,7 +274,12 @@ export class ModuloExpression implements BaseTypedExpression<number> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Modulo failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Modulo failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are numeric and divisor is not zero'],
       };
     }

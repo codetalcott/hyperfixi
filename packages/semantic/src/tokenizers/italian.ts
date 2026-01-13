@@ -49,52 +49,52 @@ function isItalianIdentifierChar(char: string): boolean {
  * Italian prepositions that mark grammatical roles.
  */
 const PREPOSITIONS = new Set([
-  'in',         // in, into
-  'a',          // to, at
-  'di',         // of, from
-  'da',         // from, by
-  'con',        // with
-  'su',         // on
-  'per',        // for
-  'tra',        // between
-  'fra',        // between (variant)
-  'dopo',       // after
-  'prima',      // before
-  'dentro',     // inside
-  'fuori',      // outside
-  'sopra',      // above
-  'sotto',      // under
+  'in', // in, into
+  'a', // to, at
+  'di', // of, from
+  'da', // from, by
+  'con', // with
+  'su', // on
+  'per', // for
+  'tra', // between
+  'fra', // between (variant)
+  'dopo', // after
+  'prima', // before
+  'dentro', // inside
+  'fuori', // outside
+  'sopra', // above
+  'sotto', // under
   // Articulated prepositions
-  'al',         // a + il
-  'allo',       // a + lo
-  'alla',       // a + la
-  'ai',         // a + i
-  'agli',       // a + gli
-  'alle',       // a + le
-  'del',        // di + il
-  'dello',      // di + lo
-  'della',      // di + la
-  'dei',        // di + i
-  'degli',      // di + gli
-  'delle',      // di + le
-  'dal',        // da + il
-  'dallo',      // da + lo
-  'dalla',      // da + la
-  'dai',        // da + i
-  'dagli',      // da + gli
-  'dalle',      // da + le
-  'nel',        // in + il
-  'nello',      // in + lo
-  'nella',      // in + la
-  'nei',        // in + i
-  'negli',      // in + gli
-  'nelle',      // in + le
-  'sul',        // su + il
-  'sullo',      // su + lo
-  'sulla',      // su + la
-  'sui',        // su + i
-  'sugli',      // su + gli
-  'sulle',      // su + le
+  'al', // a + il
+  'allo', // a + lo
+  'alla', // a + la
+  'ai', // a + i
+  'agli', // a + gli
+  'alle', // a + le
+  'del', // di + il
+  'dello', // di + lo
+  'della', // di + la
+  'dei', // di + i
+  'degli', // di + gli
+  'delle', // di + le
+  'dal', // da + il
+  'dallo', // da + lo
+  'dalla', // da + la
+  'dai', // da + i
+  'dagli', // da + gli
+  'dalle', // da + le
+  'nel', // in + il
+  'nello', // in + lo
+  'nella', // in + la
+  'nei', // in + i
+  'negli', // in + gli
+  'nelle', // in + le
+  'sul', // su + il
+  'sullo', // su + lo
+  'sulla', // su + la
+  'sui', // su + i
+  'sugli', // su + gli
+  'sulle', // su + le
 ]);
 
 // =============================================================================
@@ -325,7 +325,10 @@ export class ItalianTokenizer extends BaseTokenizer {
       }
 
       // Try number
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractItalianNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);
@@ -410,7 +413,11 @@ export class ItalianTokenizer extends BaseTokenizer {
       if (candidate === phrase) {
         // Check word boundary
         const nextPos = pos + phrase.length;
-        if (nextPos >= input.length || isWhitespace(input[nextPos]) || !isItalianLetter(input[nextPos])) {
+        if (
+          nextPos >= input.length ||
+          isWhitespace(input[nextPos]) ||
+          !isItalianLetter(input[nextPos])
+        ) {
           const normalized = ITALIAN_KEYWORDS.get(phrase);
           return createToken(
             input.slice(pos, pos + phrase.length),
@@ -448,21 +455,12 @@ export class ItalianTokenizer extends BaseTokenizer {
     const normalized = ITALIAN_KEYWORDS.get(lower);
 
     if (normalized) {
-      return createToken(
-        word,
-        'keyword',
-        createPosition(startPos, pos),
-        normalized
-      );
+      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
     }
 
     // Check if it's a preposition
     if (PREPOSITIONS.has(lower)) {
-      return createToken(
-        word,
-        'particle',
-        createPosition(startPos, pos)
-      );
+      return createToken(word, 'particle', createPosition(startPos, pos));
     }
 
     // Try morphological normalization for conjugated/reflexive forms
@@ -479,21 +477,12 @@ export class ItalianTokenizer extends BaseTokenizer {
           stemConfidence: morphResult.confidence,
         };
 
-        return createToken(
-          word,
-          'keyword',
-          createPosition(startPos, pos),
-          tokenOptions
-        );
+        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
       }
     }
 
     // Not a keyword, return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -545,11 +534,7 @@ export class ItalianTokenizer extends BaseTokenizer {
 
     if (!number || number === '-' || number === '+') return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
 
   /**

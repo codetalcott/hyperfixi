@@ -292,7 +292,11 @@ describe('Enhanced Array Expressions', () => {
 
     describe('Array-like Objects', () => {
       test('indexes NodeList-like objects', async () => {
-        const nodeListLike: { [key: number]: string; length: number; [Symbol.iterator]: () => Generator<string> } = {
+        const nodeListLike: {
+          [key: number]: string;
+          length: number;
+          [Symbol.iterator]: () => Generator<string>;
+        } = {
           0: 'first',
           1: 'second',
           2: 'third',

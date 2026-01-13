@@ -17,11 +17,7 @@
  *   mostra → mostrare (3rd person present)
  */
 
-import type {
-  MorphologicalNormalizer,
-  NormalizationResult,
-  ConjugationType,
-} from './types';
+import type { MorphologicalNormalizer, NormalizationResult, ConjugationType } from './types';
 import { noChange, normalized } from './types';
 
 /**
@@ -59,7 +55,12 @@ const REFLEXIVE_SUFFIXES = ['si', 'mi', 'ti', 'ci', 'vi'];
 /**
  * -ARE verb conjugation endings mapped to infinitive reconstruction.
  */
-const ARE_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const ARE_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-ando)
   { ending: 'ando', stem: 'are', confidence: 0.88, type: 'gerund' },
   // Past participle (-ato)
@@ -100,7 +101,12 @@ const ARE_ENDINGS: readonly { ending: string; stem: string; confidence: number; 
 /**
  * -ERE verb conjugation endings.
  */
-const ERE_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const ERE_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-endo)
   { ending: 'endo', stem: 'ere', confidence: 0.88, type: 'gerund' },
   // Past participle (-uto)
@@ -139,7 +145,12 @@ const ERE_ENDINGS: readonly { ending: string; stem: string; confidence: number; 
 /**
  * -IRE verb conjugation endings.
  */
-const IRE_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const IRE_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-endo)
   { ending: 'endo', stem: 'ire', confidence: 0.85, type: 'gerund' },
   // Past participle (-ito)
@@ -148,9 +159,9 @@ const IRE_ENDINGS: readonly { ending: string; stem: string; confidence: number; 
   { ending: 'iti', stem: 'ire', confidence: 0.85, type: 'participle' },
   { ending: 'ite', stem: 'ire', confidence: 0.85, type: 'participle' },
   // Present indicative (standard)
-  { ending: 'o', stem: 'ire', confidence: 0.70, type: 'present' }, // io
-  { ending: 'i', stem: 'ire', confidence: 0.70, type: 'present' }, // tu
-  { ending: 'e', stem: 'ire', confidence: 0.70, type: 'present' }, // lui/lei
+  { ending: 'o', stem: 'ire', confidence: 0.7, type: 'present' }, // io
+  { ending: 'i', stem: 'ire', confidence: 0.7, type: 'present' }, // tu
+  { ending: 'e', stem: 'ire', confidence: 0.7, type: 'present' }, // lui/lei
   { ending: 'iamo', stem: 'ire', confidence: 0.85, type: 'present' }, // noi
   { ending: 'ite', stem: 'ire', confidence: 0.85, type: 'present' }, // voi
   { ending: 'ono', stem: 'ire', confidence: 0.78, type: 'present' }, // loro
@@ -180,8 +191,9 @@ const IRE_ENDINGS: readonly { ending: string; stem: string; confidence: number; 
 /**
  * All endings combined, sorted by length (longest first).
  */
-const ALL_ENDINGS = [...ARE_ENDINGS, ...ERE_ENDINGS, ...IRE_ENDINGS]
-  .sort((a, b) => b.ending.length - a.ending.length);
+const ALL_ENDINGS = [...ARE_ENDINGS, ...ERE_ENDINGS, ...IRE_ENDINGS].sort(
+  (a, b) => b.ending.length - a.ending.length
+);
 
 /**
  * Italian morphological normalizer.
@@ -207,7 +219,11 @@ export class ItalianMorphologicalNormalizer implements MorphologicalNormalizer {
     if (lower.endsWith('are') || lower.endsWith('ere') || lower.endsWith('ire')) {
       // If it's a simple infinitive, return as-is with 1.0 confidence
       // (unless it's a reflexive like "mostrarsi")
-      if (!REFLEXIVE_SUFFIXES.some(s => lower.endsWith(s + 'are') || lower.endsWith(s + 'ere') || lower.endsWith(s + 'ire'))) {
+      if (
+        !REFLEXIVE_SUFFIXES.some(
+          s => lower.endsWith(s + 'are') || lower.endsWith(s + 'ere') || lower.endsWith(s + 'ire')
+        )
+      ) {
         return noChange(word);
       }
     }
@@ -244,7 +260,11 @@ export class ItalianMorphologicalNormalizer implements MorphologicalNormalizer {
         // In Italian, reflexive infinitives are formed by dropping the final -e
         // So mostrarsi = mostrar + si, where mostrar comes from mostrare
         // Check if adding 'e' gives us a valid infinitive
-        if (withoutReflexive.endsWith('ar') || withoutReflexive.endsWith('er') || withoutReflexive.endsWith('ir')) {
+        if (
+          withoutReflexive.endsWith('ar') ||
+          withoutReflexive.endsWith('er') ||
+          withoutReflexive.endsWith('ir')
+        ) {
           // Reconstruct the infinitive by adding 'e'
           const infinitive = withoutReflexive + 'e';
           return normalized(infinitive, 0.88, {
@@ -254,7 +274,11 @@ export class ItalianMorphologicalNormalizer implements MorphologicalNormalizer {
         }
 
         // Check if this already looks like an infinitive (less common case)
-        if (withoutReflexive.endsWith('are') || withoutReflexive.endsWith('ere') || withoutReflexive.endsWith('ire')) {
+        if (
+          withoutReflexive.endsWith('are') ||
+          withoutReflexive.endsWith('ere') ||
+          withoutReflexive.endsWith('ire')
+        ) {
           return normalized(withoutReflexive, 0.88, {
             removedSuffixes: [suffix],
             conjugationType: 'reflexive',

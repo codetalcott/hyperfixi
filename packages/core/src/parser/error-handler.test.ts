@@ -157,7 +157,9 @@ describe('Enhanced Error Handler', () => {
       const tokens = createTestTokens('value++');
       const errors = ErrorHandler.detectErrorPatterns(tokens);
 
-      const invalidOpError = errors.find((e: EnhancedParseError) => e.message.includes('Invalid operator'));
+      const invalidOpError = errors.find((e: EnhancedParseError) =>
+        e.message.includes('Invalid operator')
+      );
 
       if (invalidOpError) {
         expect(invalidOpError.suggestion).toContain('value + 1');
@@ -179,7 +181,9 @@ describe('Enhanced Error Handler', () => {
 
       const errors = ErrorHandler.detectErrorPatterns(syntheticTokens);
 
-      const unclosedStringError = errors.find((e: EnhancedParseError) => e.message.includes('Unclosed string'));
+      const unclosedStringError = errors.find((e: EnhancedParseError) =>
+        e.message.includes('Unclosed string')
+      );
 
       if (unclosedStringError) {
         expect(unclosedStringError.suggestion).toContain('closing quote');

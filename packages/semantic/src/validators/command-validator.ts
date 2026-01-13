@@ -154,7 +154,12 @@ function valueMatchesType(
         }
         // Check if literal/reference looks like a selector
         const selectorStr = getStringValue(value);
-        if (selectorStr && (selectorStr.startsWith('.') || selectorStr.startsWith('#') || selectorStr.startsWith('['))) {
+        if (
+          selectorStr &&
+          (selectorStr.startsWith('.') ||
+            selectorStr.startsWith('#') ||
+            selectorStr.startsWith('['))
+        ) {
           return true;
         }
         break;
@@ -181,7 +186,12 @@ function valueMatchesType(
         }
         // Check if it looks like a reference
         const refStr = getStringValue(value);
-        if (refStr && ['me', 'you', 'it', 'my', 'its', 'result', 'event', 'target'].includes(refStr.toLowerCase())) {
+        if (
+          refStr &&
+          ['me', 'you', 'it', 'my', 'its', 'result', 'event', 'target'].includes(
+            refStr.toLowerCase()
+          )
+        ) {
           return true;
         }
         break;
@@ -268,9 +278,7 @@ export function validateSemanticResult(result: SemanticParseResult): ValidationR
           expected: roleSpec.expectedTypes,
           severity: 'error',
         });
-        suggestions.push(
-          `Add ${roleSpec.description.toLowerCase()} to the command.`
-        );
+        suggestions.push(`Add ${roleSpec.description.toLowerCase()} to the command.`);
         confidenceAdjustment -= 0.2;
       }
       continue;

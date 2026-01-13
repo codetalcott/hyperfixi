@@ -17,7 +17,13 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { createCustomEvent, parseEventValue } from '../helpers/event-helpers';
 import type { EventOptions } from '../helpers/event-helpers';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export type { EventOptions } from '../helpers/event-helpers';
 
@@ -117,7 +123,9 @@ export class EventDispatchCommand implements DecoratedCommand {
         targets = [context.me as EventTarget];
       } else {
         const afterTarget = raw.args.slice(targetKeywordIndex + 1);
-        const withIdx = afterTarget.findIndex(a => ((a as any).name || (a as any).value) === 'with');
+        const withIdx = afterTarget.findIndex(
+          a => ((a as any).name || (a as any).value) === 'with'
+        );
         const targetArgs = withIdx === -1 ? afterTarget : afterTarget.slice(0, withIdx);
         targets = await this.resolveTargets(targetArgs, evaluator, context, cmdName);
       }
@@ -142,25 +150,47 @@ export class EventDispatchCommand implements DecoratedCommand {
     const targets: EventTarget[] = [];
     for (const arg of args) {
       const val = await evaluator.evaluate(arg, context);
-      if (val === 'window' || val === window) { targets.push(window); continue; }
-      if (val === 'document' || val === document) { targets.push(document); continue; }
-      if (isHTMLElement(val)) { targets.push(val as HTMLElement); continue; }
-      if (val instanceof NodeList) { targets.push(...Array.from(val).filter(isHTMLElement)); continue; }
-      if (Array.isArray(val)) { targets.push(...val.filter(isHTMLElement)); continue; }
+      if (val === 'window' || val === window) {
+        targets.push(window);
+        continue;
+      }
+      if (val === 'document' || val === document) {
+        targets.push(document);
+        continue;
+      }
+      if (isHTMLElement(val)) {
+        targets.push(val as HTMLElement);
+        continue;
+      }
+      if (val instanceof NodeList) {
+        targets.push(...Array.from(val).filter(isHTMLElement));
+        continue;
+      }
+      if (Array.isArray(val)) {
+        targets.push(...val.filter(isHTMLElement));
+        continue;
+      }
       if (typeof val === 'string') {
         const els = document.querySelectorAll(val);
         if (els.length === 0) throw new Error(`No elements found: "${val}"`);
         targets.push(...Array.from(els).filter(isHTMLElement));
         continue;
       }
-      if (val && typeof val === 'object' && 'addEventListener' in val) { targets.push(val as EventTarget); continue; }
+      if (val && typeof val === 'object' && 'addEventListener' in val) {
+        targets.push(val as EventTarget);
+        continue;
+      }
       throw new Error(`Invalid target: ${typeof val}`);
     }
     if (!targets.length) throw new Error(`${cmdName}: no valid targets`);
     return targets;
   }
 
-  private async parseEventDetail(args: ASTNode[], evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<any> {
+  private async parseEventDetail(
+    args: ASTNode[],
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<any> {
     if (!args?.length) return undefined;
     if (args.length === 1) return await evaluator.evaluate(args[0], context);
     const detail: Record<string, any> = {};
@@ -175,7 +205,11 @@ export class EventDispatchCommand implements DecoratedCommand {
     return Object.keys(detail).length ? detail : undefined;
   }
 
-  private async parseEventOptions(args: ASTNode[], evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<EventOptions> {
+  private async parseEventOptions(
+    args: ASTNode[],
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<EventOptions> {
     const options: EventOptions = { bubbles: true, cancelable: true, composed: false };
     const withIdx = args.findIndex(a => ((a as any).name || (a as any).value) === 'with');
     if (withIdx === -1) return options;

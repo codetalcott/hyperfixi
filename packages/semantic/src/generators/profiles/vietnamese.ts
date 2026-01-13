@@ -23,21 +23,21 @@ export const vietnameseProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: 'tôi',        // "I/me"
-    it: 'nó',         // "it"
-    you: 'bạn',       // "you"
+    me: 'tôi', // "I/me"
+    it: 'nó', // "it"
+    you: 'bạn', // "you"
     result: 'kết quả',
     event: 'sự kiện',
     target: 'mục tiêu',
     body: 'body',
   },
   possessive: {
-    marker: 'của',    // Vietnamese uses "của" for possession (của tôi = my)
+    marker: 'của', // Vietnamese uses "của" for possession (của tôi = my)
     markerPosition: 'between',
     specialForms: {
-      me: 'của tôi',   // "my"
-      it: 'của nó',    // "its"
-      you: 'của bạn',  // "your"
+      me: 'của tôi', // "my"
+      it: 'của nó', // "its"
+      you: 'của bạn', // "your"
     },
   },
   roleMarkers: {

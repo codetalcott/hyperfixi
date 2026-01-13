@@ -53,7 +53,10 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         async: false,
       };
 
-      const result = await parseAndEvaluateExpression('me.className', context as unknown as ExecutionContext);
+      const result = await parseAndEvaluateExpression(
+        'me.className',
+        context as unknown as ExecutionContext
+      );
       expect(result).toBe('test-class');
     });
 
@@ -98,11 +101,17 @@ describe('Dot Notation Property Access - TDD Fix', () => {
       };
 
       // Test dot notation
-      const dotResult = await parseAndEvaluateExpression('me.prop', context as unknown as ExecutionContext);
+      const dotResult = await parseAndEvaluateExpression(
+        'me.prop',
+        context as unknown as ExecutionContext
+      );
       expect(dotResult).toBe('dot-value');
 
       // Test possessive should still work
-      const possessiveResult = await parseAndEvaluateExpression('my otherProp', context as unknown as ExecutionContext);
+      const possessiveResult = await parseAndEvaluateExpression(
+        'my otherProp',
+        context as unknown as ExecutionContext
+      );
       expect(possessiveResult).toBe('possessive-value');
     });
   });
@@ -170,7 +179,10 @@ describe('Dot Notation Property Access - TDD Fix', () => {
       };
 
       // Fixed: dot notation now works correctly
-      const result = await parseAndEvaluateExpression('me.className', context as unknown as ExecutionContext);
+      const result = await parseAndEvaluateExpression(
+        'me.className',
+        context as unknown as ExecutionContext
+      );
       expect(result).toBe('test');
     });
   });

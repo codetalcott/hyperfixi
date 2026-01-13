@@ -17,7 +17,10 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
   /**
    * Extract critical CSS from HTML and stylesheets
    */
-  async extract(html: string, css: string[]): Promise<{
+  async extract(
+    html: string,
+    css: string[]
+  ): Promise<{
     critical: string;
     remaining: string;
     coverage: number;
@@ -38,10 +41,10 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
 
       // Combine all CSS
       const allCSS = css.join('\n');
-      
+
       // Parse CSS rules
       const cssRules = this.parseCSS(allCSS);
-      
+
       // Determine which rules are critical
       const criticalRules: string[] = [];
       const remainingRules: string[] = [];
@@ -69,10 +72,9 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
         remaining,
         coverage,
       };
-
     } catch (error) {
       console.warn('Critical CSS extraction failed:', error);
-      
+
       // Fallback: return all CSS as critical
       return {
         critical: css.join('\n'),
@@ -114,7 +116,7 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
           braceCount++;
         } else if (char === '}') {
           braceCount--;
-          
+
           if (braceCount === 0) {
             // End of rule
             const rule = current.trim();
@@ -149,9 +151,11 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
       const selector = selectorMatch[1].trim();
 
       // Skip certain rule types
-      if (selector.startsWith('@media') || 
-          selector.startsWith('@keyframes') || 
-          selector.startsWith('@font-face')) {
+      if (
+        selector.startsWith('@media') ||
+        selector.startsWith('@keyframes') ||
+        selector.startsWith('@font-face')
+      ) {
         return this.isMediaQueryCritical(rule, window);
       }
 
@@ -165,7 +169,6 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
       }
 
       return false;
-
     } catch (error) {
       // If we can't parse the rule, consider it critical to be safe
       return true;
@@ -191,14 +194,14 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
       ];
 
       const normalizedSelector = selector.replace(/::?[a-z-]+/g, '').trim();
-      
+
       if (alwaysCritical.some(critical => normalizedSelector.startsWith(critical))) {
         return true;
       }
 
       // Try to query the DOM
       const elements = document.querySelectorAll(normalizedSelector);
-      
+
       if (elements.length === 0) {
         return false;
       }
@@ -211,7 +214,6 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
       }
 
       return false;
-
     } catch (error) {
       // If selector is invalid, skip it
       return false;
@@ -224,7 +226,7 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
   private isElementCritical(element: Element, window: Window): boolean {
     // Always include certain elements
     const alwaysCritical = ['html', 'body', 'head', 'meta', 'title', 'link', 'style'];
-    
+
     if (alwaysCritical.includes(element.tagName.toLowerCase())) {
       return true;
     }
@@ -237,12 +239,14 @@ export class CriticalCSSExtractor implements ICriticalCSSExtractor {
 
     // Get element position
     const rect = element.getBoundingClientRect();
-    
+
     // Element is critical if any part is visible in viewport
-    return rect.top < this.viewport.height && 
-           rect.bottom > 0 && 
-           rect.left < this.viewport.width && 
-           rect.right > 0;
+    return (
+      rect.top < this.viewport.height &&
+      rect.bottom > 0 &&
+      rect.left < this.viewport.width &&
+      rect.right > 0
+    );
   }
 
   /**

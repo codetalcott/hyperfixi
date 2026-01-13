@@ -21,7 +21,11 @@ export function getSetPatternsAr(): LanguagePattern[] {
         format: 'اضبط {destination} إلى {patient}',
         tokens: [
           { type: 'literal', value: 'اضبط', alternatives: ['أضبط', 'عيّن', 'عين', 'حدد'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'إلى', alternatives: ['الى', 'ل', 'لـ'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
@@ -40,7 +44,11 @@ export function getSetPatternsAr(): LanguagePattern[] {
         format: 'اضبط {destination} {patient}',
         tokens: [
           { type: 'literal', value: 'اضبط', alternatives: ['أضبط', 'عيّن'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
       },
@@ -58,7 +66,11 @@ export function getSetPatternsAr(): LanguagePattern[] {
         format: 'اضبط {destination} على {patient}',
         tokens: [
           { type: 'literal', value: 'اضبط', alternatives: ['أضبط'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'على' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

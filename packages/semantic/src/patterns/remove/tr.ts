@@ -21,9 +21,17 @@ export function getRemovePatternsTr(): LanguagePattern[] {
         format: "{destination}'dan {patient} kaldır",
         tokens: [
           { type: 'role', role: 'destination' },
-          { type: 'literal', value: "'dan", alternatives: ["'den", "'tan", "'ten", '-dan', '-den'] },
+          {
+            type: 'literal',
+            value: "'dan",
+            alternatives: ["'den", "'tan", "'ten", '-dan', '-den'],
+          },
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'kaldır', alternatives: ['kaldırmak', 'sil', 'silmek', 'çıkar'] },
+          {
+            type: 'literal',
+            value: 'kaldır',
+            alternatives: ['kaldırmak', 'sil', 'silmek', 'çıkar'],
+          },
         ],
       },
       extraction: {

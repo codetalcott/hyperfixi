@@ -41,7 +41,9 @@ export class FileComponentRegistry implements ComponentRegistry {
     // Validate component before registration
     const validation = this.validate(component);
     if (!validation.valid) {
-      throw new Error(`Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+      throw new Error(
+        `Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`
+      );
     }
 
     // Store in memory
@@ -95,13 +97,13 @@ export class FileComponentRegistry implements ComponentRegistry {
     }
 
     if (filter.tags && filter.tags.length > 0) {
-      components = components.filter(c => 
-        c.tags && filter.tags!.some(tag => c.tags!.includes(tag))
+      components = components.filter(
+        c => c.tags && filter.tags!.some(tag => c.tags!.includes(tag))
       );
     }
 
     if (filter.author) {
-      components = components.filter(c => 
+      components = components.filter(c =>
         c.metadata?.author?.toLowerCase().includes(filter.author!.toLowerCase())
       );
     }
@@ -111,13 +113,12 @@ export class FileComponentRegistry implements ComponentRegistry {
     }
 
     if (filter.keywords && filter.keywords.length > 0) {
-      components = components.filter(c =>
-        c.metadata?.keywords && 
-        filter.keywords!.some(keyword => 
-          c.metadata!.keywords!.some(k => 
-            k.toLowerCase().includes(keyword.toLowerCase())
+      components = components.filter(
+        c =>
+          c.metadata?.keywords &&
+          filter.keywords!.some(keyword =>
+            c.metadata!.keywords!.some(k => k.toLowerCase().includes(keyword.toLowerCase()))
           )
-        )
       );
     }
 
@@ -125,10 +126,9 @@ export class FileComponentRegistry implements ComponentRegistry {
       components = components.filter(c => {
         const complexity = c.validation?.complexity;
         if (complexity === undefined) return false;
-        
+
         const { min, max } = filter.complexity!;
-        return (min === undefined || complexity >= min) && 
-               (max === undefined || complexity <= max);
+        return (min === undefined || complexity >= min) && (max === undefined || complexity <= max);
       });
     }
 
@@ -140,23 +140,22 @@ export class FileComponentRegistry implements ComponentRegistry {
    */
   async search(query: string): Promise<ComponentDefinition[]> {
     const lowerQuery = query.toLowerCase();
-    
+
     return Array.from(this.components.values()).filter(component => {
       // Search in name, description, tags, and keywords
       if (component.name.toLowerCase().includes(lowerQuery)) return true;
       if (component.description?.toLowerCase().includes(lowerQuery)) return true;
       if (component.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))) return true;
-      if (component.metadata?.keywords?.some(keyword => 
-        keyword.toLowerCase().includes(lowerQuery)
-      )) return true;
-      
+      if (component.metadata?.keywords?.some(keyword => keyword.toLowerCase().includes(lowerQuery)))
+        return true;
+
       // Search in hyperscript content
-      const scripts = Array.isArray(component.hyperscript) 
-        ? component.hyperscript 
+      const scripts = Array.isArray(component.hyperscript)
+        ? component.hyperscript
         : [component.hyperscript];
-      
+
       if (scripts.some(script => script.toLowerCase().includes(lowerQuery))) return true;
-      
+
       return false;
     });
   }
@@ -174,9 +173,9 @@ export class FileComponentRegistry implements ComponentRegistry {
   async loadCollection(filePath: string): Promise<ComponentCollection> {
     const content = await fs.readFile(filePath, 'utf-8');
     const extension = path.extname(filePath).toLowerCase();
-    
+
     let collection: ComponentCollection;
-    
+
     if (extension === '.yaml' || extension === '.yml') {
       collection = yaml.parse(content);
     } else {
@@ -186,7 +185,9 @@ export class FileComponentRegistry implements ComponentRegistry {
     // Validate collection
     const validation = validator.validateCollection(collection);
     if (!validation.valid) {
-      throw new Error(`Collection validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+      throw new Error(
+        `Collection validation failed: ${validation.errors.map(e => e.message).join(', ')}`
+      );
     }
 
     return collection;
@@ -198,7 +199,7 @@ export class FileComponentRegistry implements ComponentRegistry {
   async saveCollection(collection: ComponentCollection, filePath: string): Promise<void> {
     const extension = path.extname(filePath).toLowerCase();
     let content: string;
-    
+
     if (extension === '.yaml' || extension === '.yml') {
       content = yaml.stringify(collection);
     } else {
@@ -223,11 +224,11 @@ export class FileComponentRegistry implements ComponentRegistry {
    * Export components to a collection
    */
   async exportCollection(
-    componentIds: string[], 
+    componentIds: string[],
     collectionInfo: Partial<ComponentCollection>
   ): Promise<ComponentCollection> {
     const components: Record<string, ComponentDefinition> = {};
-    
+
     for (const id of componentIds) {
       const component = await this.get(id);
       if (component) {
@@ -263,14 +264,14 @@ export class FileComponentRegistry implements ComponentRegistry {
   private async loadComponents(): Promise<void> {
     try {
       const files = await fs.readdir(this.registryPath);
-      
+
       for (const file of files) {
         if (file.endsWith('.json')) {
           try {
             const filePath = path.join(this.registryPath, file);
             const content = await fs.readFile(filePath, 'utf-8');
             const component: ComponentDefinition = JSON.parse(content);
-            
+
             // Validate before loading
             const validation = this.validate(component);
             if (validation.valid) {
@@ -339,7 +340,9 @@ export class MemoryComponentRegistry implements ComponentRegistry {
   async register(component: ComponentDefinition): Promise<void> {
     const validation = this.validate(component);
     if (!validation.valid) {
-      throw new Error(`Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+      throw new Error(
+        `Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`
+      );
     }
 
     this.components.set(component.id, component);
@@ -369,8 +372,8 @@ export class MemoryComponentRegistry implements ComponentRegistry {
     }
 
     if (filter.tags && filter.tags.length > 0) {
-      components = components.filter(c =>
-        c.tags && filter.tags!.some(tag => c.tags!.includes(tag))
+      components = components.filter(
+        c => c.tags && filter.tags!.some(tag => c.tags!.includes(tag))
       );
     }
 
@@ -385,13 +388,12 @@ export class MemoryComponentRegistry implements ComponentRegistry {
     }
 
     if (filter.keywords && filter.keywords.length > 0) {
-      components = components.filter(c =>
-        c.metadata?.keywords &&
-        filter.keywords!.some(keyword =>
-          c.metadata!.keywords!.some(k =>
-            k.toLowerCase().includes(keyword.toLowerCase())
+      components = components.filter(
+        c =>
+          c.metadata?.keywords &&
+          filter.keywords!.some(keyword =>
+            c.metadata!.keywords!.some(k => k.toLowerCase().includes(keyword.toLowerCase()))
           )
-        )
       );
     }
 
@@ -401,8 +403,7 @@ export class MemoryComponentRegistry implements ComponentRegistry {
         if (complexity === undefined) return false;
 
         const { min, max } = filter.complexity!;
-        return (min === undefined || complexity >= min) &&
-               (max === undefined || complexity <= max);
+        return (min === undefined || complexity >= min) && (max === undefined || complexity <= max);
       });
     }
 
@@ -417,9 +418,8 @@ export class MemoryComponentRegistry implements ComponentRegistry {
       if (component.name.toLowerCase().includes(lowerQuery)) return true;
       if (component.description?.toLowerCase().includes(lowerQuery)) return true;
       if (component.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))) return true;
-      if (component.metadata?.keywords?.some(keyword =>
-        keyword.toLowerCase().includes(lowerQuery)
-      )) return true;
+      if (component.metadata?.keywords?.some(keyword => keyword.toLowerCase().includes(lowerQuery)))
+        return true;
 
       // Search in hyperscript content
       const scripts = Array.isArray(component.hyperscript)
@@ -455,7 +455,7 @@ export function createRegistry(
   options?: string | RegistryOptions
 ): ComponentRegistry {
   // Handle legacy string path argument
-  const opts: RegistryOptions = typeof options === 'string' ? { path: options } : (options || {});
+  const opts: RegistryOptions = typeof options === 'string' ? { path: options } : options || {};
 
   if (type === 'memory') {
     return new MemoryComponentRegistry();

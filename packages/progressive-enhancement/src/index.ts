@@ -9,9 +9,25 @@
 import { enhance as enhanceInternal } from './enhancer';
 
 // Core exports
-export { ProgressiveEnhancer, getEnhancer, initProgressiveEnhancement, enhance, enhanceElement } from './enhancer';
-export { detectCapabilities, detectUserPreferences, clearCapabilityCache, getCachedCapabilities } from './detector';
-export { getEnhancementsForLevel, getFallbackEnhancements, filterEnhancementsByConditions, ENHANCEMENT_LEVELS } from './levels';
+export {
+  ProgressiveEnhancer,
+  getEnhancer,
+  initProgressiveEnhancement,
+  enhance,
+  enhanceElement,
+} from './enhancer';
+export {
+  detectCapabilities,
+  detectUserPreferences,
+  clearCapabilityCache,
+  getCachedCapabilities,
+} from './detector';
+export {
+  getEnhancementsForLevel,
+  getFallbackEnhancements,
+  filterEnhancementsByConditions,
+  ENHANCEMENT_LEVELS,
+} from './levels';
 
 // Type exports
 export type {
@@ -31,13 +47,15 @@ export type {
 /**
  * Quick start function for basic progressive enhancement
  */
-export async function quickStart(options: {
-  selector?: string;
-  templateVars?: Record<string, any>;
-  strategy?: 'conservative' | 'balanced' | 'aggressive';
-} = {}): Promise<void> {
+export async function quickStart(
+  options: {
+    selector?: string;
+    templateVars?: Record<string, any>;
+    strategy?: 'conservative' | 'balanced' | 'aggressive';
+  } = {}
+): Promise<void> {
   const { selector = '[data-enhance]', templateVars, strategy = 'balanced' } = options;
-  
+
   // Configure strategy based on preset
   let enhancementStrategy;
   switch (strategy) {
@@ -68,7 +86,7 @@ export async function quickStart(options: {
         respectUserPreferences: true,
       };
   }
-  
+
   const config = {
     strategy: enhancementStrategy,
     detector: {
@@ -77,7 +95,7 @@ export async function quickStart(options: {
       cacheResults: true,
     },
   };
-  
+
   try {
     await enhanceInternal(selector, templateVars, config);
     console.log(`Progressive enhancement applied to elements matching "${selector}"`);
@@ -89,11 +107,13 @@ export async function quickStart(options: {
 /**
  * Auto-enhance function that runs on DOM ready
  */
-export function autoEnhance(options: {
-  selector?: string;
-  templateVars?: Record<string, any>;
-  strategy?: 'conservative' | 'balanced' | 'aggressive';
-} = {}): void {
+export function autoEnhance(
+  options: {
+    selector?: string;
+    templateVars?: Record<string, any>;
+    strategy?: 'conservative' | 'balanced' | 'aggressive';
+  } = {}
+): void {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => quickStart(options));
   } else {

@@ -10,11 +10,11 @@ import type {
   EvaluationResult,
   EvaluationType,
   ContextMetadata,
-  LLMDocumentation
+  LLMDocumentation,
 } from './enhanced-types.js';
-import type { 
-  TenantInfo, 
-  TenantContext, 
+import type {
+  TenantInfo,
+  TenantContext,
   TenantCustomization,
   TenantIsolationConfig,
   TenantResolver,
@@ -23,7 +23,7 @@ import type {
   TenantMetrics,
   TenantUser,
   TenantRequest,
-  TenantSession
+  TenantSession,
 } from './types.js';
 
 // ============================================================================
@@ -36,25 +36,31 @@ export const EnhancedMultiTenantInputSchema = z.object({
     enabled: z.boolean().default(true),
     tenantResolver: z.any(), // Function or resolver instance
     customizationProvider: z.any().optional(), // Function or provider instance
-    isolation: z.object({
-      enableDataIsolation: z.boolean().default(true),
-      enableStyleIsolation: z.boolean().default(true),
-      enableScriptIsolation: z.boolean().default(true),
-      enableEventIsolation: z.boolean().default(true),
-      enableStorageIsolation: z.boolean().default(true),
-      sandboxLevel: z.enum(['none', 'basic', 'strict', 'complete']).default('basic'),
-      namespacePrefix: z.string().default('tenant'),
-      allowCrossTenantAccess: z.boolean().default(false),
-    }).default({}),
-    caching: z.object({
-      enabled: z.boolean().default(true),
-      ttl: z.number().default(300000), // 5 minutes
-      maxSize: z.number().default(1000),
-    }).default({}),
-    monitoring: z.object({
-      enabled: z.boolean().default(true),
-      metricsCollector: z.function().optional(),
-    }).default({}),
+    isolation: z
+      .object({
+        enableDataIsolation: z.boolean().default(true),
+        enableStyleIsolation: z.boolean().default(true),
+        enableScriptIsolation: z.boolean().default(true),
+        enableEventIsolation: z.boolean().default(true),
+        enableStorageIsolation: z.boolean().default(true),
+        sandboxLevel: z.enum(['none', 'basic', 'strict', 'complete']).default('basic'),
+        namespacePrefix: z.string().default('tenant'),
+        allowCrossTenantAccess: z.boolean().default(false),
+      })
+      .default({}),
+    caching: z
+      .object({
+        enabled: z.boolean().default(true),
+        ttl: z.number().default(300000), // 5 minutes
+        maxSize: z.number().default(1000),
+      })
+      .default({}),
+    monitoring: z
+      .object({
+        enabled: z.boolean().default(true),
+        metricsCollector: z.function().optional(),
+      })
+      .default({}),
   }),
   /** Tenant identification */
   identifier: z.object({
@@ -63,15 +69,17 @@ export const EnhancedMultiTenantInputSchema = z.object({
     resolver: z.function().optional(),
   }),
   /** Request context */
-  request: z.object({
-    domain: z.string().optional(),
-    subdomain: z.string().optional(),
-    headers: z.record(z.string()).optional(),
-    ip: z.string().optional(),
-    userAgent: z.string().optional(),
-    path: z.string().optional(),
-    method: z.string().optional(),
-  }).optional(),
+  request: z
+    .object({
+      domain: z.string().optional(),
+      subdomain: z.string().optional(),
+      headers: z.record(z.string()).optional(),
+      ip: z.string().optional(),
+      userAgent: z.string().optional(),
+      path: z.string().optional(),
+      method: z.string().optional(),
+    })
+    .optional(),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('universal'),
   debug: z.boolean().default(false),
@@ -147,7 +155,8 @@ export type EnhancedMultiTenantOutput = z.infer<typeof EnhancedMultiTenantOutput
 export class TypedMultiTenantContextImplementation {
   public readonly name = 'multiTenantContext';
   public readonly category = 'Universal' as const;
-  public readonly description = 'Type-safe multi-tenant management with enhanced isolation and customization capabilities';
+  public readonly description =
+    'Type-safe multi-tenant management with enhanced isolation and customization capabilities';
   public readonly inputSchema = EnhancedMultiTenantInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -162,32 +171,42 @@ export class TypedMultiTenantContextImplementation {
   private currentTenant: TenantInfo | null = null;
   private currentContext: TenantContext | null = null;
   private tenantCache: Map<string, { tenant: TenantInfo; timestamp: number }> = new Map();
-  private customizationCache: Map<string, { customization: TenantCustomization; timestamp: number }> = new Map();
+  private customizationCache: Map<
+    string,
+    { customization: TenantCustomization; timestamp: number }
+  > = new Map();
   private isolationEnabled: boolean = false;
   private metricsHistory: TenantMetrics[] = [];
 
   public readonly metadata: ContextMetadata = {
     category: 'Universal',
     complexity: 'complex',
-    sideEffects: ['tenant-resolution', 'isolation-enforcement', 'customization-application', 'metrics-collection'],
+    sideEffects: [
+      'tenant-resolution',
+      'isolation-enforcement',
+      'customization-application',
+      'metrics-collection',
+    ],
     dependencies: ['tenant-resolver', 'customization-provider', 'isolation-engine'],
     returnTypes: ['Context'],
     examples: [
       {
-        input: '{ config: { tenantResolver: resolver }, identifier: { type: "domain", value: "example.com" } }',
+        input:
+          '{ config: { tenantResolver: resolver }, identifier: { type: "domain", value: "example.com" } }',
         description: 'Initialize tenant context with domain-based resolution',
-        expectedOutput: 'TypedMultiTenantContext with tenant isolation and customization'
+        expectedOutput: 'TypedMultiTenantContext with tenant isolation and customization',
       },
       {
-        input: '{ config: { isolation: { sandboxLevel: "strict" } }, identifier: { type: "subdomain" } }',
+        input:
+          '{ config: { isolation: { sandboxLevel: "strict" } }, identifier: { type: "subdomain" } }',
         description: 'Configure strict tenant isolation with subdomain identification',
-        expectedOutput: 'Isolated tenant environment with strict sandbox enforcement'
+        expectedOutput: 'Isolated tenant environment with strict sandbox enforcement',
       },
       {
         input: '{ config: { monitoring: { enabled: true } }, environment: "backend" }',
         description: 'Backend multi-tenant setup with monitoring enabled',
-        expectedOutput: 'Multi-tenant context with metrics collection and usage tracking'
-      }
+        expectedOutput: 'Multi-tenant context with metrics collection and usage tracking',
+      },
     ],
     relatedContexts: ['analyticsContext', 'i18nContext', 'authContext'],
     relatedExpressions: [],
@@ -195,66 +214,83 @@ export class TypedMultiTenantContextImplementation {
     environmentRequirements: {
       browser: true,
       server: true,
-      nodejs: true
+      nodejs: true,
     },
     performance: {
       averageTime: 18.7,
-      complexity: 'O(log n)' // n = number of cached tenants
-    }
+      complexity: 'O(log n)', // n = number of cached tenants
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe multi-tenant context for comprehensive tenant management with isolation, customization, and real-time monitoring',
+    summary:
+      'Creates type-safe multi-tenant context for comprehensive tenant management with isolation, customization, and real-time monitoring',
     parameters: [
       {
         name: 'multiTenantConfig',
         type: 'EnhancedMultiTenantInput',
-        description: 'Multi-tenant configuration including resolver, isolation settings, and identification strategy',
+        description:
+          'Multi-tenant configuration including resolver, isolation settings, and identification strategy',
         optional: false,
         examples: [
           '{ config: { tenantResolver: resolver }, identifier: { type: "domain" } }',
           '{ config: { isolation: { sandboxLevel: "strict" } }, identifier: { type: "subdomain" } }',
-          '{ config: { monitoring: { enabled: true } }, environment: "backend" }'
-        ]
-      }
+          '{ config: { monitoring: { enabled: true } }, environment: "backend" }',
+        ],
+      },
     ],
     returns: {
       type: 'EnhancedMultiTenantContext',
-      description: 'Initialized multi-tenant context with tenant resolution, isolation enforcement, and customization capabilities',
+      description:
+        'Initialized multi-tenant context with tenant resolution, isolation enforcement, and customization capabilities',
       examples: [
         'context.tenant.resolve("example.com") → resolved tenant information',
         'context.features.isEnabled("premium-features") → true/false',
         'context.isolation.enable() → tenant isolation activated',
-        'context.metrics.getUsage() → current tenant usage metrics'
-      ]
+        'context.metrics.getUsage() → current tenant usage metrics',
+      ],
     },
     examples: [
       {
         title: 'Basic tenant resolution',
         code: 'const multiTenant = await createMultiTenantContext({ config: { tenantResolver }, identifier: { type: "domain" } })',
         explanation: 'Initialize multi-tenant system with domain-based tenant identification',
-        output: 'Multi-tenant context with automatic tenant resolution'
+        output: 'Multi-tenant context with automatic tenant resolution',
       },
       {
         title: 'Advanced isolation setup',
         code: 'await multiTenant.initialize({ config: { isolation: { sandboxLevel: "strict", enableStorageIsolation: true } } })',
         explanation: 'Configure strict tenant isolation with storage separation',
-        output: 'Isolated tenant environment with complete data separation'
+        output: 'Isolated tenant environment with complete data separation',
       },
       {
         title: 'Customization management',
         code: 'multiTenant.customization.apply(tenantId, { branding: customBranding })',
         explanation: 'Apply tenant-specific customizations and branding',
-        output: 'Customized tenant experience with applied branding and settings'
-      }
+        output: 'Customized tenant experience with applied branding and settings',
+      },
     ],
-    seeAlso: ['tenantResolver', 'isolationEngine', 'customizationProvider', 'multiTenantMiddleware'],
-    tags: ['multi-tenant', 'isolation', 'customization', 'tenant-management', 'type-safe', 'enhanced-pattern']
+    seeAlso: [
+      'tenantResolver',
+      'isolationEngine',
+      'customizationProvider',
+      'multiTenantMiddleware',
+    ],
+    tags: [
+      'multi-tenant',
+      'isolation',
+      'customization',
+      'tenant-management',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
-  async initialize(input: EnhancedMultiTenantInput): Promise<EvaluationResult<EnhancedMultiTenantOutput>> {
+  async initialize(
+    input: EnhancedMultiTenantInput
+  ): Promise<EvaluationResult<EnhancedMultiTenantOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -262,22 +298,29 @@ export class TypedMultiTenantContextImplementation {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: [...validation.suggestions]
+          suggestions: [...validation.suggestions],
         };
       }
 
       // Initialize tenant configuration
       const config = await this.initializeConfig(input);
       const resolver = await this.initializeResolver(input);
-      
+
       // Create enhanced multi-tenant context
       const context: EnhancedMultiTenantOutput = {
         contextId: `multi-tenant-${Date.now()}`,
         timestamp: startTime,
         category: 'Universal',
-        capabilities: ['tenant-resolution', 'isolation-enforcement', 'customization-management', 'feature-control', 'permission-management', 'metrics-collection'],
+        capabilities: [
+          'tenant-resolution',
+          'isolation-enforcement',
+          'customization-management',
+          'feature-control',
+          'permission-management',
+          'metrics-collection',
+        ],
         state: 'ready',
-        
+
         // Enhanced tenant management functions
         tenant: {
           resolve: this.createTenantResolver(config, resolver),
@@ -285,7 +328,7 @@ export class TypedMultiTenantContextImplementation {
           getContext: this.createContextGetter(),
           switchTo: this.createTenantSwitcher(config),
         },
-        
+
         // Customization management
         customization: {
           get: this.createCustomizationGetter(config),
@@ -293,7 +336,7 @@ export class TypedMultiTenantContextImplementation {
           update: this.createCustomizationUpdater(config),
           validate: this.createCustomizationValidator(),
         },
-        
+
         // Isolation management
         isolation: {
           enable: this.createIsolationEnabler(config),
@@ -302,7 +345,7 @@ export class TypedMultiTenantContextImplementation {
           getNamespace: this.createNamespaceGetter(config),
           checkViolation: this.createViolationChecker(),
         },
-        
+
         // Feature management
         features: {
           isEnabled: this.createFeatureChecker(),
@@ -311,7 +354,7 @@ export class TypedMultiTenantContextImplementation {
           enable: this.createFeatureEnabler(),
           disable: this.createFeatureDisabler(),
         },
-        
+
         // Permission management
         permissions: {
           check: this.createPermissionChecker(),
@@ -320,46 +363,47 @@ export class TypedMultiTenantContextImplementation {
           grant: this.createPermissionGranter(),
           revoke: this.createPermissionRevoker(),
         },
-        
+
         // Metrics and monitoring
         metrics: {
           collect: this.createMetricsCollector(config),
           getMetrics: this.createMetricsGetter(),
           getUsage: this.createUsageGetter(),
           getLimits: this.createLimitsGetter(),
-        }
+        },
       };
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'Context',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Multi-tenant context initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [
-            'Verify tenant resolver configuration is valid',
-            'Check customization provider setup',
-            'Ensure isolation settings are supported',
-            'Validate tenant identifier configuration'
-          ]
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Multi-tenant context initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [
+              'Verify tenant resolver configuration is valid',
+              'Check customization provider setup',
+              'Ensure isolation settings are supported',
+              'Validate tenant identifier configuration',
+            ],
+          },
+        ],
         suggestions: [
           'Verify tenant resolver configuration is valid',
           'Check customization provider setup',
           'Ensure isolation settings are supported',
-          'Validate tenant identifier configuration'
-        ]
+          'Validate tenant identifier configuration',
+        ],
       };
     }
   }
@@ -371,7 +415,7 @@ export class TypedMultiTenantContextImplementation {
         return {
           isValid: false,
           errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
-          suggestions: ['Provide a valid multi-tenant configuration object']
+          suggestions: ['Provide a valid multi-tenant configuration object'],
         };
       }
 
@@ -388,7 +432,7 @@ export class TypedMultiTenantContextImplementation {
           type: 'missing-tenant-resolver',
           message: 'Tenant resolver is required for multi-tenant functionality',
           path: 'config.tenantResolver',
-          suggestions: ['Provide a valid tenant resolver function or object']
+          suggestions: ['Provide a valid tenant resolver function or object'],
         });
         suggestions.push('Provide a valid tenant resolver function or object');
       }
@@ -399,7 +443,7 @@ export class TypedMultiTenantContextImplementation {
           type: 'missing-custom-resolver',
           message: 'Custom identifier type requires a resolver function',
           path: 'identifier.resolver',
-          suggestions: ['Provide a custom resolver function for custom identifier type']
+          suggestions: ['Provide a custom resolver function for custom identifier type'],
         });
         suggestions.push('Provide a custom resolver function for custom identifier type');
       }
@@ -410,7 +454,7 @@ export class TypedMultiTenantContextImplementation {
           type: 'missing-header-name',
           message: 'Header identifier type requires a header name',
           path: 'identifier.value',
-          suggestions: ['Specify the header name for tenant identification (e.g., "x-tenant-id")']
+          suggestions: ['Specify the header name for tenant identification (e.g., "x-tenant-id")'],
         });
         suggestions.push('Specify the header name for tenant identification (e.g., "x-tenant-id")');
       }
@@ -421,7 +465,7 @@ export class TypedMultiTenantContextImplementation {
           type: 'incompatible-sandbox-level',
           message: 'Complete sandbox isolation is not supported in frontend environment',
           path: 'config.isolation.sandboxLevel',
-          suggestions: ['Use "strict" or "basic" sandbox level for frontend environments']
+          suggestions: ['Use "strict" or "basic" sandbox level for frontend environments'],
         });
         suggestions.push('Use "strict" or "basic" sandbox level for frontend environments');
       }
@@ -432,7 +476,7 @@ export class TypedMultiTenantContextImplementation {
           type: 'invalid-cache-ttl',
           message: 'Cache TTL should be at least 1000ms for optimal performance',
           path: 'config.caching.ttl',
-          suggestions: ['Set cache TTL to at least 1 second (1000ms)']
+          suggestions: ['Set cache TTL to at least 1 second (1000ms)'],
         });
         suggestions.push('Set cache TTL to at least 1 second (1000ms)');
       }
@@ -440,22 +484,23 @@ export class TypedMultiTenantContextImplementation {
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'schema-validation',
-          suggestions: [],
-          message: error instanceof Error ? error.message : 'Invalid input format'
-        }],
+        errors: [
+          {
+            type: 'schema-validation',
+            suggestions: [],
+            message: error instanceof Error ? error.message : 'Invalid input format',
+          },
+        ],
         suggestions: [
           'Ensure input matches EnhancedMultiTenantInput schema',
           'Check multi-tenant configuration structure',
-          'Verify tenant resolver and identifier settings are valid'
-        ]
+          'Verify tenant resolver and identifier settings are valid',
+        ],
       };
     }
   }
@@ -470,15 +515,17 @@ export class TypedMultiTenantContextImplementation {
       environment: input.environment,
       debug: input.debug,
       identifier: input.identifier,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
   private async initializeResolver(input: EnhancedMultiTenantInput): Promise<TenantResolver> {
     // If tenantResolver is already a proper resolver, return it
-    if (input.config.tenantResolver && 
-        typeof input.config.tenantResolver === 'object' &&
-        typeof input.config.tenantResolver.resolveTenant === 'function') {
+    if (
+      input.config.tenantResolver &&
+      typeof input.config.tenantResolver === 'object' &&
+      typeof input.config.tenantResolver.resolveTenant === 'function'
+    ) {
       return input.config.tenantResolver as TenantResolver;
     }
 
@@ -493,7 +540,7 @@ export class TypedMultiTenantContextImplementation {
       },
       resolveTenantById: async (id: string) => {
         return await input.config.tenantResolver({ type: 'id', value: id });
-      }
+      },
     };
   }
 
@@ -515,7 +562,10 @@ export class TypedMultiTenantContextImplementation {
               result = await resolver.resolveTenantById(identifier);
               break;
             default:
-              result = await resolver.resolveTenant({ type: config.identifier.type, value: identifier });
+              result = await resolver.resolveTenant({
+                type: config.identifier.type,
+                value: identifier,
+              });
           }
         } else {
           result = await resolver.resolveTenant(identifier);
@@ -632,7 +682,7 @@ export class TypedMultiTenantContextImplementation {
 
       return {
         isValid: errors.length === 0,
-        errors
+        errors,
       };
     };
   }
@@ -665,12 +715,12 @@ export class TypedMultiTenantContextImplementation {
   private createViolationChecker() {
     return (action: string, resource: string) => {
       if (!this.isolationEnabled) return false;
-      
+
       // Check for cross-tenant access violations
       const currentTenant = this.currentTenant?.id || 'default';
       const currentNamespace = `tenant-${currentTenant}`;
       const resourceNamespace = resource.split('-')[0];
-      
+
       return currentNamespace !== resourceNamespace;
     };
   }
@@ -805,7 +855,7 @@ export class TypedMultiTenantContextImplementation {
         responseTime: 0,
         memoryUsage: 0,
         customizations: 0,
-        ...metrics
+        ...metrics,
       };
 
       this.metricsHistory.push(fullMetrics);
@@ -835,16 +885,17 @@ export class TypedMultiTenantContextImplementation {
       if (!this.currentTenant) return null;
 
       const tenantMetrics = this.metricsHistory.filter(m => m.tenantId === this.currentTenant!.id);
-      
+
       return {
         requests: tenantMetrics.reduce((sum, m) => sum + m.requests, 0),
         scriptsExecuted: tenantMetrics.reduce((sum, m) => sum + m.scriptsExecuted, 0),
         errors: tenantMetrics.reduce((sum, m) => sum + m.errors, 0),
-        averageResponseTime: tenantMetrics.length > 0
-          ? tenantMetrics.reduce((sum, m) => sum + m.responseTime, 0) / tenantMetrics.length
-          : 0,
+        averageResponseTime:
+          tenantMetrics.length > 0
+            ? tenantMetrics.reduce((sum, m) => sum + m.responseTime, 0) / tenantMetrics.length
+            : 0,
         memoryUsage: tenantMetrics.at(-1)?.memoryUsage ?? 0,
-        customizations: tenantMetrics.at(-1)?.customizations ?? 0
+        customizations: tenantMetrics.at(-1)?.customizations ?? 0,
       };
     };
   }
@@ -858,39 +909,47 @@ export class TypedMultiTenantContextImplementation {
   private updateTenantCache(tenant: TenantInfo): void {
     this.tenantCache.set(tenant.id, {
       tenant,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
   private updateCustomizationCache(tenantId: string, customization: TenantCustomization): void {
     this.customizationCache.set(tenantId, {
       customization,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
-  private trackPerformance(startTime: number, success: boolean, output?: EnhancedMultiTenantOutput): void {
+  private trackPerformance(
+    startTime: number,
+    success: boolean,
+    output?: EnhancedMultiTenantOutput
+  ): void {
     const duration = Date.now() - startTime;
     this.evaluationHistory.push({
       input: {} as EnhancedMultiTenantInput, // Would store actual input in real implementation
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10), // Last 10 evaluations
       currentTenantId: this.currentTenant?.id || null,
       isolationEnabled: this.isolationEnabled,
       cacheSize: this.tenantCache.size + this.customizationCache.size,
-      metricsCount: this.metricsHistory.length
+      metricsCount: this.metricsHistory.length,
     };
   }
 }
@@ -930,7 +989,7 @@ export async function createEnhancedMultiTenant(
       monitoring: {
         enabled: true,
       },
-      ...config
+      ...config,
     },
     identifier: {
       type: 'subdomain',
@@ -938,7 +997,7 @@ export async function createEnhancedMultiTenant(
     },
     environment: 'universal',
     debug: false,
-    ...options
+    ...options,
   });
 }
 

@@ -39,7 +39,7 @@ export function createSSRContext(data: {
         ...(data.seo.twitter?.description && { twitterDescription: data.seo.twitter.description }),
         ...(data.seo.twitter?.image && { twitterImage: data.seo.twitter.image }),
         ...(data.seo.structuredData && { structuredData: data.seo.structuredData }),
-      }
+      },
     }),
   };
 }
@@ -49,10 +49,10 @@ export function createSSRContext(data: {
  */
 export function extractHydrationData(
   context: SSRContext,
-  components: Array<{ id: string; state: Record<string, any>; hyperscript: string[]; }>
+  components: Array<{ id: string; state: Record<string, any>; hyperscript: string[] }>
 ): HydrationData {
   const componentData: HydrationData['components'] = {};
-  
+
   components.forEach(component => {
     componentData[`#${component.id}`] = {
       id: component.id,
@@ -93,14 +93,17 @@ export function generateSlug(text: string): string {
 /**
  * Calculate reading time for content
  */
-export function calculateReadingTime(content: string, wordsPerMinute: number = 200): {
+export function calculateReadingTime(
+  content: string,
+  wordsPerMinute: number = 200
+): {
   minutes: number;
   words: number;
   text: string;
 } {
   const words = content.trim().split(/\s+/).length;
   const minutes = Math.ceil(words / wordsPerMinute);
-  
+
   return {
     minutes,
     words,
@@ -128,10 +131,10 @@ export function generateBreadcrumbs(
   path: string,
   baseUrl: string = '',
   labels?: Record<string, string>
-): Array<{ name: string; url?: string; }> {
+): Array<{ name: string; url?: string }> {
   const segments = path.split('/').filter(Boolean);
-  const breadcrumbs: Array<{ name: string; url?: string; }> = [];
-  
+  const breadcrumbs: Array<{ name: string; url?: string }> = [];
+
   // Add home
   breadcrumbs.push({
     name: 'Home',
@@ -143,7 +146,7 @@ export function generateBreadcrumbs(
   segments.forEach((segment, index) => {
     currentPath += '/' + segment;
     const isLast = index === segments.length - 1;
-    
+
     breadcrumbs.push({
       name: labels?.[segment] || segment.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       ...(!isLast && { url: baseUrl + currentPath }),
@@ -194,7 +197,7 @@ export function validateHTMLStructure(html: string): {
   // Check for unclosed tags (basic check)
   const openTags = (html.match(/<[^/][^>]*>/g) || []).filter(tag => !tag.endsWith('/>'));
   const closeTags = html.match(/<\/[^>]*>/g) || [];
-  
+
   if (openTags.length !== closeTags.length) {
     warnings.push('Possible unclosed HTML tags detected');
   }
@@ -209,20 +212,20 @@ export function validateHTMLStructure(html: string): {
 /**
  * Optimize images in HTML for SSR
  */
-export function optimizeImagesForSSR(html: string, options: {
-  lazyLoading?: boolean;
-  responsiveImages?: boolean;
-  webpSupport?: boolean;
-  baseUrl?: string;
-} = {}): string {
+export function optimizeImagesForSSR(
+  html: string,
+  options: {
+    lazyLoading?: boolean;
+    responsiveImages?: boolean;
+    webpSupport?: boolean;
+    baseUrl?: string;
+  } = {}
+): string {
   let optimizedHTML = html;
 
   // Add lazy loading
   if (options.lazyLoading) {
-    optimizedHTML = optimizedHTML.replace(
-      /<img([^>]*)>/g,
-      '<img$1 loading="lazy">'
-    );
+    optimizedHTML = optimizedHTML.replace(/<img([^>]*)>/g, '<img$1 loading="lazy">');
   }
 
   // Add responsive image attributes
@@ -233,7 +236,7 @@ export function optimizeImagesForSSR(html: string, options: {
         // Generate srcset for different sizes (simplified)
         const baseSrc = src.replace(/\.[^.]+$/, '');
         const ext = src.match(/\.[^.]+$/)?.[0] || '.jpg';
-        
+
         const srcset = [
           `${baseSrc}-320w${ext} 320w`,
           `${baseSrc}-640w${ext} 640w`,
@@ -286,11 +289,7 @@ export function extractPerformanceMetrics(result: any): {
 /**
  * Generate cache key for SSR result
  */
-export function generateCacheKey(
-  template: string,
-  context: SSRContext,
-  options: any = {}
-): string {
+export function generateCacheKey(template: string, context: SSRContext, options: any = {}): string {
   const hash = cryptoCreateHash('sha256');
 
   // Include template content

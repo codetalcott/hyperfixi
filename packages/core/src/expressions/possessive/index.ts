@@ -46,9 +46,7 @@ export type PossessiveExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced possessive expression for property and attribute access
  * Supports style properties (*property), attribute brackets ([@attr]), and possessive chaining
  */
-export class PossessiveExpression
-  implements TypedExpressionImplementation<HyperScriptValue>
-{
+export class PossessiveExpression implements TypedExpressionImplementation<HyperScriptValue> {
   public readonly name = 'possessive';
   public readonly category = 'object' as const;
   public readonly precedence = 10; // High precedence for property access
@@ -63,8 +61,6 @@ export class PossessiveExpression
   };
 
   public readonly inputSchema = PossessiveExpressionInputSchema;
-
-  
 
   /**
    * Validate possessive expression arguments

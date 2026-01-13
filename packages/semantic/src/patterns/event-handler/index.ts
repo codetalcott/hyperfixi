@@ -116,4 +116,28 @@ export { getEventHandlerPatternsZh } from './zh';
 /**
  * Languages that have hand-crafted event-handler patterns.
  */
-export const eventhandlerPatternLanguages = ['ar', 'bn', 'de', 'en', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const eventhandlerPatternLanguages = [
+  'ar',
+  'bn',
+  'de',
+  'en',
+  'es',
+  'fr',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
+  'qu',
+  'ru',
+  'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

@@ -22,10 +22,14 @@ export function getShowPatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'pokaż', alternatives: ['pokaz', 'wyświetl', 'wyswietl'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'z', alternatives: ['ze', 'jako'] },
-            { type: 'role', role: 'style' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'z', alternatives: ['ze', 'jako'] },
+              { type: 'role', role: 'style' },
+            ],
+          },
         ],
       },
       extraction: {

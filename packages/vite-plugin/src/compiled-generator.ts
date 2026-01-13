@@ -70,9 +70,7 @@ export function generateCompiledBundle(options: CompiledBundleOptions): string {
   // Generate handler map with optional debug comments
   const handlerEntries = handlers.map(h => {
     const isAsync = h.code.includes('await');
-    const fn = isAsync
-      ? `async(m,e,y)=>{${h.code}}`
-      : `(m,e,y)=>{${h.code}}`;
+    const fn = isAsync ? `async(m,e,y)=>{${h.code}}` : `(m,e,y)=>{${h.code}}`;
 
     if (debug) {
       // Include original hyperscript as comment for debugging
@@ -162,12 +160,13 @@ function generateModifiersCode(h: CompiledHandler): string {
  * Check if any handler has modifiers
  */
 function hasModifiers(handlers: CompiledHandler[]): boolean {
-  return handlers.some(h =>
-    h.modifiers.prevent ||
-    h.modifiers.stop ||
-    h.modifiers.once ||
-    h.modifiers.debounce ||
-    h.modifiers.throttle
+  return handlers.some(
+    h =>
+      h.modifiers.prevent ||
+      h.modifiers.stop ||
+      h.modifiers.once ||
+      h.modifiers.debounce ||
+      h.modifiers.throttle
   );
 }
 
@@ -185,15 +184,21 @@ function generateModifierWrappers(handlers: CompiledHandler[]): string {
   const lines: string[] = [];
 
   if (handlers.some(h => h.modifiers.prevent || h.modifiers.stop)) {
-    lines.push(`  if(m?.p||m?.s){const _h=h;h=e=>{m.p&&e.preventDefault();m.s&&e.stopPropagation();_h(e.currentTarget,e,e.target)};}`);
+    lines.push(
+      `  if(m?.p||m?.s){const _h=h;h=e=>{m.p&&e.preventDefault();m.s&&e.stopPropagation();_h(e.currentTarget,e,e.target)};}`
+    );
   }
 
   if (handlers.some(h => h.modifiers.debounce)) {
-    lines.push(`  if(m?.d){let t;const _h=h;h=e=>{clearTimeout(t);t=setTimeout(()=>_h(e.currentTarget,e,e.target),m.d)};}`);
+    lines.push(
+      `  if(m?.d){let t;const _h=h;h=e=>{clearTimeout(t);t=setTimeout(()=>_h(e.currentTarget,e,e.target),m.d)};}`
+    );
   }
 
   if (handlers.some(h => h.modifiers.throttle)) {
-    lines.push(`  if(m?.t){let l=0;const _h=h;h=e=>{const n=Date.now();if(n-l>=m.t){l=n;_h(e.currentTarget,e,e.target)}};}`);
+    lines.push(
+      `  if(m?.t){let l=0;const _h=h;h=e=>{const n=Date.now();if(n-l>=m.t){l=n;_h(e.currentTarget,e,e.target)}};}`
+    );
   }
 
   return lines.join('\n');

@@ -50,12 +50,7 @@ export interface Err<E> {
  * Control flow signals that are NOT errors.
  * These represent intentional execution flow changes, not failures.
  */
-export type ExecutionSignal =
-  | HaltSignal
-  | ExitSignal
-  | BreakSignal
-  | ContinueSignal
-  | ReturnSignal;
+export type ExecutionSignal = HaltSignal | ExitSignal | BreakSignal | ContinueSignal | ReturnSignal;
 
 export interface HaltSignal {
   readonly type: 'halt';
@@ -212,18 +207,14 @@ export function isSignal(error: unknown): error is ExecutionSignal {
     error !== null &&
     'type' in error &&
     typeof (error as ExecutionSignal).type === 'string' &&
-    ['halt', 'exit', 'break', 'continue', 'return'].includes(
-      (error as ExecutionSignal).type
-    )
+    ['halt', 'exit', 'break', 'continue', 'return'].includes((error as ExecutionSignal).type)
   );
 }
 
 /**
  * Type guard to check if a Result contains a signal.
  */
-export function isSignalResult<T>(
-  result: Result<T, unknown>
-): result is Err<ExecutionSignal> {
+export function isSignalResult<T>(result: Result<T, unknown>): result is Err<ExecutionSignal> {
   if (isOk(result)) return false;
   return isSignal((result as Err<unknown>).error);
 }
@@ -256,10 +247,7 @@ export function unwrapOr<T, E>(result: Result<T, E>, defaultValue: T): T {
 /**
  * Unwraps a Result, returning the value or computing a default.
  */
-export function unwrapOrElse<T, E>(
-  result: Result<T, E>,
-  fn: (error: E) => T
-): T {
+export function unwrapOrElse<T, E>(result: Result<T, E>, fn: (error: E) => T): T {
   if (isOk(result)) {
     return result.value;
   }
@@ -269,10 +257,7 @@ export function unwrapOrElse<T, E>(
 /**
  * Maps a Result's value if Ok, otherwise returns Err unchanged.
  */
-export function map<T, U, E>(
-  result: Result<T, E>,
-  fn: (value: T) => U
-): Result<U, E> {
+export function map<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {
   if (isOk(result)) {
     return ok(fn(result.value));
   }
@@ -282,10 +267,7 @@ export function map<T, U, E>(
 /**
  * Maps a Result's error if Err, otherwise returns Ok unchanged.
  */
-export function mapErr<T, E, F>(
-  result: Result<T, E>,
-  fn: (error: E) => F
-): Result<T, F> {
+export function mapErr<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {
   if (isOk(result)) {
     return result;
   }
@@ -309,9 +291,7 @@ export function andThen<T, U, E>(
  * Converts a Promise that might throw to a Promise<Result>.
  * Useful for wrapping existing exception-based code.
  */
-export async function fromPromise<T>(
-  promise: Promise<T>
-): Promise<Result<T, Error>> {
+export async function fromPromise<T>(promise: Promise<T>): Promise<Result<T, Error>> {
   try {
     const value = await promise;
     return ok(value);

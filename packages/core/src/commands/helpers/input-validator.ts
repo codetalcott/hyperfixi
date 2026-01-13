@@ -84,11 +84,7 @@ export function validateTargetArray(
  * ```
  */
 export function isValidTargetArray(targets: unknown[]): targets is HTMLElement[] {
-  return (
-    Array.isArray(targets) &&
-    targets.length > 0 &&
-    targets.every(t => isHTMLElement(t))
-  );
+  return Array.isArray(targets) && targets.length > 0 && targets.every(t => isHTMLElement(t));
 }
 
 /**
@@ -157,10 +153,7 @@ export function validateStringArray(
  * @param minLength - Minimum required length (default: 1)
  * @returns true if arr is a string array with at least minLength non-empty items
  */
-export function isValidStringArray(
-  arr: unknown[],
-  minLength: number = 1
-): arr is string[] {
+export function isValidStringArray(arr: unknown[], minLength: number = 1): arr is string[] {
   return (
     Array.isArray(arr) &&
     arr.length >= minLength &&
@@ -219,10 +212,7 @@ export function validateTypeDiscriminator<T extends string>(
  * @param allowed - Array of allowed type values
  * @returns true if type is one of the allowed values
  */
-export function isValidType<T extends string>(
-  type: unknown,
-  allowed: readonly T[]
-): type is T {
+export function isValidType<T extends string>(type: unknown, allowed: readonly T[]): type is T {
   return typeof type === 'string' && allowed.includes(type as T);
 }
 
@@ -233,10 +223,7 @@ export function isValidType<T extends string>(
  * @param fieldName - Field name for error messages
  * @returns Validation result
  */
-export function validateDefined(
-  value: unknown,
-  fieldName: string
-): ValidationResult {
+export function validateDefined(value: unknown, fieldName: string): ValidationResult {
   if (value === null || value === undefined) {
     return {
       valid: false,
@@ -263,10 +250,7 @@ export function isDefined<T>(value: T | null | undefined): value is T {
  * @param fieldName - Field name for error messages
  * @returns Validation result
  */
-export function validateNonEmptyString(
-  value: unknown,
-  fieldName: string
-): ValidationResult {
+export function validateNonEmptyString(value: unknown, fieldName: string): ValidationResult {
   if (typeof value !== 'string') {
     return {
       valid: false,
@@ -344,9 +328,7 @@ export function createValidator(commandName: string) {
       validateStringArray(arr, fieldName, minLength),
     type: <T extends string>(type: unknown, allowed: readonly T[]) =>
       validateTypeDiscriminator(type, allowed, commandName),
-    defined: (value: unknown, fieldName: string) =>
-      validateDefined(value, fieldName),
-    nonEmptyString: (value: unknown, fieldName: string) =>
-      validateNonEmptyString(value, fieldName),
+    defined: (value: unknown, fieldName: string) => validateDefined(value, fieldName),
+    nonEmptyString: (value: unknown, fieldName: string) => validateNonEmptyString(value, fieldName),
   };
 }

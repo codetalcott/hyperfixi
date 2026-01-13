@@ -38,11 +38,11 @@ export class HyperscriptI18nWebpackPlugin implements WebpackPluginInstance {
       targetLocale: options.targetLocale || 'en',
       preserveOriginal: options.preserveOriginal ?? false,
       attributes: options.attributes || ['_', 'script', 'data-script'],
-      test: options.test || /\.(html)$/
+      test: options.test || /\.(html)$/,
     };
 
-    this.translator = new HyperscriptTranslator({ 
-      locale: this.options.sourceLocale 
+    this.translator = new HyperscriptTranslator({
+      locale: this.options.sourceLocale,
     });
   }
 
@@ -59,7 +59,7 @@ export class HyperscriptI18nWebpackPlugin implements WebpackPluginInstance {
       compilation.hooks.processAssets.tapPromise(
         {
           name: pluginName,
-          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE,
         },
         async (assets: any) => {
           const promises = Object.keys(assets)
@@ -78,18 +78,16 @@ export class HyperscriptI18nWebpackPlugin implements WebpackPluginInstance {
 
     try {
       const processed = this.processHtml(source);
-      
+
       if (processed !== source) {
         compilation.assets[filename] = {
           source: () => processed,
-          size: () => processed.length
+          size: () => processed.length,
         };
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      compilation.errors.push(
-        new Error(`Failed to process ${filename}: ${message}`)
-      );
+      compilation.errors.push(new Error(`Failed to process ${filename}: ${message}`));
     }
   }
 
@@ -106,19 +104,16 @@ export class HyperscriptI18nWebpackPlugin implements WebpackPluginInstance {
 
         const translated = this.translator.translate(original, {
           from: this.options.sourceLocale,
-          to: this.options.targetLocale
+          to: this.options.targetLocale,
         });
 
         if (original !== translated) {
           hasChanges = true;
-          
+
           if (this.options.preserveOriginal) {
-            element.setAttribute(
-              `${attr}-${this.options.sourceLocale}`,
-              original
-            );
+            element.setAttribute(`${attr}-${this.options.sourceLocale}`, original);
           }
-          
+
           element.setAttribute(attr, translated);
         }
       });

@@ -91,14 +91,10 @@ describe('Toggle Command E2E', () => {
   ];
 
   // V2 languages
-  const v2TestCases = [
-    { lang: 'de', code: 'umschalten .active' },
-  ];
+  const v2TestCases = [{ lang: 'de', code: 'umschalten .active' }];
 
   // VSO languages
-  const vsoTestCases = [
-    { lang: 'ar', code: 'بدّل .active' },
-  ];
+  const vsoTestCases = [{ lang: 'ar', code: 'بدّل .active' }];
 
   const allTestCases = [...svoTestCases, ...sovTestCases, ...v2TestCases, ...vsoTestCases];
 

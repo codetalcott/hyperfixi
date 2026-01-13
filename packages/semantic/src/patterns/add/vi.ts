@@ -21,15 +21,23 @@ export function getAddPatternsVi(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'thêm', alternatives: ['bổ sung'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'vào', alternatives: ['cho'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'vào', alternatives: ['cho'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'vào', markerAlternatives: ['cho'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'vào',
+          markerAlternatives: ['cho'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

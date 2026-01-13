@@ -50,7 +50,9 @@ export class MinimalCommandRegistry {
       const command = this.commands.get(commandName);
 
       if (!command) {
-        throw new Error(`Command '${node.name}' not found. Available commands: ${Array.from(this.commands.keys()).join(', ')}`);
+        throw new Error(
+          `Command '${node.name}' not found. Available commands: ${Array.from(this.commands.keys()).join(', ')}`
+        );
       }
 
       // Evaluate arguments
@@ -66,7 +68,7 @@ export class MinimalCommandRegistry {
       // Build input object for command
       const input: any = {
         args: evaluatedArgs,
-        rawArgs: node.args || []
+        rawArgs: node.args || [],
       };
 
       // Execute command

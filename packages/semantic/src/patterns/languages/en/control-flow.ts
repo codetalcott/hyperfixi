@@ -90,8 +90,4 @@ export const unlessEnglish: LanguagePattern = {
 /**
  * All English control flow patterns.
  */
-export const controlFlowPatternsEn: LanguagePattern[] = [
-  forEnglish,
-  ifEnglish,
-  unlessEnglish,
-];
+export const controlFlowPatternsEn: LanguagePattern[] = [forEnglish, ifEnglish, unlessEnglish];

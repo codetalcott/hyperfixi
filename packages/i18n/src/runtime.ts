@@ -63,10 +63,10 @@ export class RuntimeI18nManager {
 
       // Set up event listeners
       this.setupEventListeners();
-      
+
       // Translate existing elements
       this.translatePage();
-      
+
       // Update document attributes
       this.updateDocumentAttributes();
     }
@@ -164,18 +164,20 @@ export class RuntimeI18nManager {
   /**
    * Create a locale switcher element
    */
-  createLocaleSwitcher(options: {
-    type?: 'dropdown' | 'buttons';
-    className?: string;
-    showNativeNames?: boolean;
-  } = {}): HTMLElement {
+  createLocaleSwitcher(
+    options: {
+      type?: 'dropdown' | 'buttons';
+      className?: string;
+      showNativeNames?: boolean;
+    } = {}
+  ): HTMLElement {
     const { type = 'dropdown', className = 'locale-switcher', showNativeNames = true } = options;
     const supportedLocales = this.getSupportedLocales();
 
     if (type === 'dropdown') {
       const select = document.createElement('select');
       select.className = className;
-      
+
       supportedLocales.forEach(locale => {
         const option = document.createElement('option');
         option.value = locale;
@@ -184,7 +186,7 @@ export class RuntimeI18nManager {
         select.appendChild(option);
       });
 
-      select.addEventListener('change', (e) => {
+      select.addEventListener('change', e => {
         const target = e.target as HTMLSelectElement;
         this.setLocale(target.value);
       });
@@ -199,7 +201,7 @@ export class RuntimeI18nManager {
         button.textContent = this.getLocaleDisplayName(locale, showNativeNames);
         button.dataset.locale = locale;
         button.className = locale === this.currentLocale ? 'active' : '';
-        
+
         button.addEventListener('click', () => {
           this.setLocale(locale);
         });
@@ -304,7 +306,7 @@ export class RuntimeI18nManager {
 
     // Find all elements with hyperscript attributes
     const attributes = ['_', 'data-script', 'script'];
-    
+
     attributes.forEach(attr => {
       const elements = document.querySelectorAll(`[${attr}]`);
       elements.forEach(element => {
@@ -322,7 +324,7 @@ export class RuntimeI18nManager {
             if (this.options.preserveOriginalAttribute) {
               element.setAttribute(this.options.preserveOriginalAttribute, original);
             }
-            
+
             element.setAttribute(attr, translated);
           }
         } catch (error) {
@@ -397,7 +399,7 @@ export class RuntimeI18nManager {
    */
   private getCookie(name: string): string | null {
     if (typeof document === 'undefined') return null;
-    
+
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) {
@@ -408,7 +410,7 @@ export class RuntimeI18nManager {
 
   private setCookie(name: string, value: string, days: number): void {
     if (typeof document === 'undefined') return;
-    
+
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;

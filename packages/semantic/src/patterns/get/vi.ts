@@ -20,9 +20,7 @@ export function getGetPatternsVi(): LanguagePattern[] {
         format: 'lấy giá trị của {target}',
         tokens: [
           { type: 'literal', value: 'lấy giá trị', alternatives: ['nhận', 'lấy'] },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'của' },
-          ]},
+          { type: 'group', optional: true, tokens: [{ type: 'literal', value: 'của' }] },
           { type: 'role', role: 'patient' },
         ],
       },

@@ -296,7 +296,7 @@ export function createRuntime(options: RuntimeOptions): HyperFixiRuntime {
       if (!options.parser) {
         throw new Error(
           'No parser provided. Either provide a parser in createRuntime() options, ' +
-          'or use execute() with pre-parsed AST.'
+            'or use execute() with pre-parsed AST.'
         );
       }
 
@@ -321,9 +321,7 @@ export function createRuntime(options: RuntimeOptions): HyperFixiRuntime {
 
     parse(code: string): any {
       if (!options.parser) {
-        throw new Error(
-          'No parser provided. Provide a parser in createRuntime() options.'
-        );
+        throw new Error('No parser provided. Provide a parser in createRuntime() options.');
       }
       return options.parser.parse(code);
     },

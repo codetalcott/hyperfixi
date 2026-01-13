@@ -40,10 +40,7 @@ import { isIdentifierLike } from '../token-predicates';
  *
  * Phase 9-3b: Extracted from Parser.parseWaitCommand
  */
-export function parseWaitCommand(
-  ctx: ParserContext,
-  commandToken: Token
-) {
+export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
 
   // Check if this is a simple time-based wait (e.g., "wait 1s")
@@ -208,10 +205,7 @@ export function parseWaitCommand(
  *
  * Phase 9-3b: Extracted from Parser.parseInstallCommand
  */
-export function parseInstallCommand(
-  ctx: ParserContext,
-  commandToken: Token
-) {
+export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
 
   // Parse behavior name (identifier)

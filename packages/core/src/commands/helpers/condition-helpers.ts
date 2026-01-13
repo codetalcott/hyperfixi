@@ -42,9 +42,7 @@ export function evaluateCondition(condition: unknown, context: ExecutionContext)
 
   // Handle Promises (error - must be awaited)
   if (condition instanceof Promise) {
-    throw new Error(
-      'Condition must be awaited - use await in the condition expression'
-    );
+    throw new Error('Condition must be awaited - use await in the condition expression');
   }
 
   // Handle string conditions (variable names or literal strings)

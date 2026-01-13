@@ -67,47 +67,47 @@ export type ConjugationType =
   | 'volitional'
   // Japanese conditional forms
   | 'conditional-tara' // たら/したら - if/when (completed action)
-  | 'conditional-to'   // と/すると - when (habitual/expected)
-  | 'conditional-ba'   // ば/すれば - if (hypothetical)
+  | 'conditional-to' // と/すると - when (habitual/expected)
+  | 'conditional-ba' // ば/すれば - if (hypothetical)
   // Korean-specific
   | 'connective' // 하고, 해서 etc.
-  | 'conditional-myeon'  // -(으)면 - if/when (general conditional)
-  | 'temporal-ttae'      // -(으)ㄹ 때 - when (at the time of)
-  | 'causal-nikka'       // -(으)니까 - because/since
+  | 'conditional-myeon' // -(으)면 - if/when (general conditional)
+  | 'temporal-ttae' // -(으)ㄹ 때 - when (at the time of)
+  | 'causal-nikka' // -(으)니까 - because/since
   // Korean honorific forms (-시- infix)
-  | 'honorific-conditional'  // -하시면 - if (honorific)
-  | 'honorific-temporal'     // -하실 때 - when (honorific)
-  | 'honorific-causal'       // -하시니까 - because (honorific)
-  | 'honorific-past'         // -하셨어요 - past (honorific)
-  | 'honorific-polite'       // -하십니다 - polite (honorific)
+  | 'honorific-conditional' // -하시면 - if (honorific)
+  | 'honorific-temporal' // -하실 때 - when (honorific)
+  | 'honorific-causal' // -하시니까 - because (honorific)
+  | 'honorific-past' // -하셨어요 - past (honorific)
+  | 'honorific-polite' // -하십니다 - polite (honorific)
   // Korean sequential forms
-  | 'sequential-after'       // -고 나서 - after doing
-  | 'sequential-before'      // -기 전에 - before doing
-  | 'immediate'              // -자마자 - as soon as
-  | 'obligation'             // -아야/어야 해 - must do, should do
+  | 'sequential-after' // -고 나서 - after doing
+  | 'sequential-before' // -기 전에 - before doing
+  | 'immediate' // -자마자 - as soon as
+  | 'obligation' // -아야/어야 해 - must do, should do
   // Spanish-specific
   | 'reflexive'
   | 'reflexive-imperative'
   | 'gerund'
   | 'participle'
   // Arabic-specific
-  | 'conditional-idha'    // إذا - if/when (hypothetical)
-  | 'temporal-indama'     // عندما - when (temporal conjunction)
-  | 'temporal-hina'       // حين - at the time of
-  | 'temporal-lamma'      // لمّا - when (past emphasis)
-  | 'past-verb'           // فعل ماضي - past tense verb
+  | 'conditional-idha' // إذا - if/when (hypothetical)
+  | 'temporal-indama' // عندما - when (temporal conjunction)
+  | 'temporal-hina' // حين - at the time of
+  | 'temporal-lamma' // لمّا - when (past emphasis)
+  | 'past-verb' // فعل ماضي - past tense verb
   // Turkish-specific
-  | 'conditional-se'      // -se/-sa - if (hypothetical)
-  | 'temporal-ince'       // -ince/-ınca/-unca/-ünce - when/as
-  | 'temporal-dikce'      // -dikçe/-dıkça/-dukça/-dükçe - as/while
-  | 'aorist'              // -ir/-ar - habitual/general
-  | 'optative'            // -eyim/-ayım/-elim/-alım - let me/us
-  | 'necessitative'       // -meli/-malı - must/should
+  | 'conditional-se' // -se/-sa - if (hypothetical)
+  | 'temporal-ince' // -ince/-ınca/-unca/-ünce - when/as
+  | 'temporal-dikce' // -dikçe/-dıkça/-dukça/-dükçe - as/while
+  | 'aorist' // -ir/-ar - habitual/general
+  | 'optative' // -eyim/-ayım/-elim/-alım - let me/us
+  | 'necessitative' // -meli/-malı - must/should
   // Japanese request/contracted forms
-  | 'request'          // てください/でください - polite request
-  | 'casual-request'   // てくれ/でくれ - casual request
-  | 'contracted'       // ちゃう/じゃう - contracted completion (てしまう)
-  | 'contracted-past'  // ちゃった/じゃった - contracted past completion
+  | 'request' // てください/でください - polite request
+  | 'casual-request' // てくれ/でくれ - casual request
+  | 'contracted' // ちゃう/じゃう - contracted completion (てしまう)
+  | 'contracted-past' // ちゃった/じゃった - contracted past completion
   // Compound
   | 'te-form' // Japanese て-form
   | 'dictionary'; // Base/infinitive form

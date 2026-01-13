@@ -73,7 +73,7 @@ export async function getPatternSource(): Promise<PatternSource | null> {
           confidence: 1.0,
           verified: true,
           title: p.title,
-          category: p.feature
+          category: p.feature,
         }));
       },
 
@@ -87,7 +87,7 @@ export async function getPatternSource(): Promise<PatternSource | null> {
           confidence: 1.0,
           verified: true,
           title: p.title,
-          category: p.feature
+          category: p.feature,
         }));
       },
 
@@ -96,14 +96,14 @@ export async function getPatternSource(): Promise<PatternSource | null> {
         return examples.map((e: any) => ({
           prompt: e.prompt,
           completion: e.completion,
-          qualityScore: e.qualityScore
+          qualityScore: e.qualityScore,
         }));
       },
 
       close() {
         ref.close();
         patternSourceInstance = null;
-      }
+      },
     };
 
     return patternSourceInstance;
@@ -175,6 +175,8 @@ export function closePatternSource(): void {
 // Helper to extract command name from hyperscript code
 function extractCommand(code: string): string | null {
   // Match common command patterns
-  const match = code.match(/\b(add|remove|toggle|put|set|show|hide|fetch|wait|trigger|send|call|go|log)\b/i);
+  const match = code.match(
+    /\b(add|remove|toggle|put|set|show|hide|fetch|wait|trigger|send|call|go|log)\b/i
+  );
   return match?.[1]?.toLowerCase() ?? null;
 }

@@ -130,7 +130,7 @@ export class CoreTestRunner implements TestRunner {
    */
   async runTest(test: TestCase, context: TestContext): Promise<TestResult> {
     const startTime = Date.now();
-    
+
     // Skip test if marked
     if (test.skip) {
       return this.createSkippedResult(context.suite, context.test);
@@ -155,16 +155,13 @@ export class CoreTestRunner implements TestRunner {
       });
 
       // Run test function
-      await Promise.race([
-        test.fn(context),
-        timeoutPromise,
-      ]);
+      await Promise.race([test.fn(context), timeoutPromise]);
 
       status = 'passed';
     } catch (err) {
       status = 'failed';
       error = this.formatError(err);
-      
+
       // Take screenshot on failure for browser tests
       if (this.executionContext?.page && this.executionContext.config.environment === 'browser') {
         try {
@@ -196,7 +193,7 @@ export class CoreTestRunner implements TestRunner {
       status,
       duration,
       error,
-      logs: [...logs, ...this.executionContext?.logs || []],
+      logs: [...logs, ...(this.executionContext?.logs || [])],
       screenshots,
     };
   }
@@ -235,7 +232,7 @@ export class CoreTestRunner implements TestRunner {
    */
   private async setupJSDOMContext(context: ExecutionContext): Promise<void> {
     const { config } = context;
-    
+
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
       url: config.baseURL || 'http://localhost',
       contentType: 'text/html',
@@ -260,7 +257,7 @@ export class CoreTestRunner implements TestRunner {
     try {
       const { chromium, firefox, webkit } = await import('playwright');
       const { config } = context;
-      
+
       let browserEngine;
       switch (config.browser) {
         case 'firefox':
@@ -457,12 +454,12 @@ export class CoreTestRunner implements TestRunner {
     try {
       const filename = `${suite}-${test}-${Date.now()}.png`;
       const path = `./screenshots/${filename}`;
-      
-      await this.executionContext.page.screenshot({ 
-        path, 
-        fullPage: true 
+
+      await this.executionContext.page.screenshot({
+        path,
+        fullPage: true,
       });
-      
+
       return path;
     } catch (error) {
       console.error('Screenshot failed:', error);
@@ -546,10 +543,8 @@ export class ParallelTestRunner extends CoreTestRunner {
 
     const workers = Math.min(config.maxWorkers, suites.length);
     const chunks = this.chunkSuites(suites, workers);
-    
-    const workerPromises = chunks.map(chunk => 
-      this.runWorker(chunk, config)
-    );
+
+    const workerPromises = chunks.map(chunk => this.runWorker(chunk, config));
 
     const workerResults = await Promise.all(workerPromises);
     return workerResults.flat();
@@ -602,7 +597,7 @@ export async function measurePerformance(
   });
 
   const startTime = Date.now();
-  
+
   // Run the test function
   await testFn();
 
@@ -610,9 +605,10 @@ export async function measurePerformance(
   const metrics = await page.evaluate(() => {
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     const paint = performance.getEntriesByType('paint');
-    
+
     const firstPaint = paint.find(entry => entry.name === 'first-paint')?.startTime || 0;
-    const firstContentfulPaint = paint.find(entry => entry.name === 'first-contentful-paint')?.startTime || 0;
+    const firstContentfulPaint =
+      paint.find(entry => entry.name === 'first-contentful-paint')?.startTime || 0;
 
     return {
       loadTime: navigation ? navigation.loadEventEnd - navigation.startTime : 0,
@@ -620,22 +616,24 @@ export async function measurePerformance(
       firstPaint,
       firstContentfulPaint,
       largestContentfulPaint: 0, // Would need additional measurement
-      cumulativeLayoutShift: 0, // Would need additional measurement  
+      cumulativeLayoutShift: 0, // Would need additional measurement
       firstInputDelay: 0, // Would need additional measurement
-      memoryUsage: (performance as any).memory ? {
-        usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
-        totalJSHeapSize: (performance as any).memory.totalJSHeapSize,
-        jsHeapSizeLimit: (performance as any).memory.jsHeapSizeLimit,
-      } : {
-        usedJSHeapSize: 0,
-        totalJSHeapSize: 0,
-        jsHeapSizeLimit: 0,
-      },
+      memoryUsage: (performance as any).memory
+        ? {
+            usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
+            totalJSHeapSize: (performance as any).memory.totalJSHeapSize,
+            jsHeapSizeLimit: (performance as any).memory.jsHeapSizeLimit,
+          }
+        : {
+            usedJSHeapSize: 0,
+            totalJSHeapSize: 0,
+            jsHeapSizeLimit: 0,
+          },
     };
   });
 
   return {
     ...metrics,
-    loadTime: metrics.loadTime || (Date.now() - startTime),
+    loadTime: metrics.loadTime || Date.now() - startTime,
   };
 }

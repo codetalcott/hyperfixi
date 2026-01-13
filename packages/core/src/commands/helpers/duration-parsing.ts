@@ -104,7 +104,7 @@ export function parseCSSDurations(durationString: string): number[] {
     return [0];
   }
 
-  return durationString.split(',').map((duration) => {
+  return durationString.split(',').map(duration => {
     const value = parseFloat(duration.trim());
     if (isNaN(value)) return 0;
 

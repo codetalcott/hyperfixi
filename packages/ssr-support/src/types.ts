@@ -134,11 +134,14 @@ export interface SSRResult {
 
 export interface HydrationData {
   /** Component state to hydrate */
-  components: Record<string, {
-    id: string;
-    state: Record<string, any>;
-    hyperscript: string[];
-  }>;
+  components: Record<
+    string,
+    {
+      id: string;
+      state: Record<string, any>;
+      hyperscript: string[];
+    }
+  >;
   /** Global application state */
   appState: Record<string, any>;
   /** Client-side configuration */
@@ -211,11 +214,14 @@ export interface SSRCache {
 
 export interface ProgressiveEnhancement {
   /** Feature detection tests */
-  features: Record<string, {
-    test: string;
-    polyfill?: string;
-    fallback?: string;
-  }>;
+  features: Record<
+    string,
+    {
+      test: string;
+      polyfill?: string;
+      fallback?: string;
+    }
+  >;
   /** Enhancement levels */
   levels: Array<{
     name: string;
@@ -235,7 +241,7 @@ export interface SSREngine {
   /** Extract critical CSS */
   extractCriticalCSS(html: string, allCSS: string[]): Promise<string[]>;
   /** Generate SEO tags */
-  generateSEOTags(seoData: SEOData): Array<{ name?: string; property?: string; content: string; }>;
+  generateSEOTags(seoData: SEOData): Array<{ name?: string; property?: string; content: string }>;
   /** Set cache implementation */
   setCache(cache: SSRCache): void;
   /** Register component for SSR */
@@ -246,7 +252,7 @@ export interface StaticGenerator {
   /** Generate static site */
   generate(routes: string[], options: StaticGenerationOptions): Promise<StaticGenerationResult>;
   /** Generate sitemap */
-  generateSitemap(routes: Array<{ path: string; lastmod?: Date; priority?: number; }>): string;
+  generateSitemap(routes: Array<{ path: string; lastmod?: Date; priority?: number }>): string;
   /** Generate robots.txt */
   generateRobots(options: RobotsOptions): string;
 }
@@ -312,7 +318,10 @@ export interface RobotsOptions {
 
 export interface CriticalCSSExtractor {
   /** Extract critical CSS from HTML */
-  extract(html: string, css: string[]): Promise<{
+  extract(
+    html: string,
+    css: string[]
+  ): Promise<{
     critical: string;
     remaining: string;
     coverage: number;

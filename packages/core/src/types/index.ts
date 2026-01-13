@@ -48,11 +48,7 @@ export type {
   LLMDocumentation,
 } from './unified-types';
 
-export {
-  Validator,
-  isValidationResult,
-  isExecutionContext,
-} from './unified-types';
+export { Validator, isValidationResult, isExecutionContext } from './unified-types';
 
 // ============================================================================
 // Type Guards (eliminates as any casts)
@@ -224,12 +220,7 @@ export type {
   RuntimeHooks,
 } from './hooks';
 
-export {
-  HookRegistry,
-  createHooks,
-  loggingHooks,
-  createTimingHooks,
-} from './hooks';
+export { HookRegistry, createHooks, loggingHooks, createTimingHooks } from './hooks';
 
 // ============================================================================
 // CodeFix Types (LSP-compatible auto-fix suggestions)
@@ -276,16 +267,10 @@ export {
 // ============================================================================
 
 // Swap Executor types
-export type {
-  SwapStrategy,
-  SwapExecutionOptions,
-} from '../lib/swap-executor';
+export type { SwapStrategy, SwapExecutionOptions } from '../lib/swap-executor';
 
 // Morph Adapter types
-export type {
-  MorphOptions,
-  MorphEngine,
-} from '../lib/morph-adapter';
+export type { MorphOptions, MorphEngine } from '../lib/morph-adapter';
 
 // View Transitions types
 export type {
@@ -295,20 +280,12 @@ export type {
 } from '../lib/view-transitions';
 
 // Behavior types
-export type {
-  HistorySwapConfig,
-  HistorySwapInstance,
-} from '../behaviors/history-swap';
+export type { HistorySwapConfig, HistorySwapInstance } from '../behaviors/history-swap';
 
-export type {
-  BoostedConfig,
-  BoostedInstance,
-} from '../behaviors/boosted';
+export type { BoostedConfig, BoostedInstance } from '../behaviors/boosted';
 
 // Swap Command types
-export type {
-  SwapCommandInput,
-} from '../commands/dom/swap';
+export type { SwapCommandInput } from '../commands/dom/swap';
 
 // URL Command types (consolidated in HistoryCommand)
 export type {
@@ -317,6 +294,4 @@ export type {
   PushUrlCommandInput,
 } from '../commands/navigation/push-url';
 
-export type {
-  ReplaceUrlCommandInput,
-} from '../commands/navigation/replace-url';
+export type { ReplaceUrlCommandInput } from '../commands/navigation/replace-url';

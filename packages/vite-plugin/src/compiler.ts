@@ -66,10 +66,7 @@ let buildASTFn: BuildASTFn | null = null;
  * setSemanticParser(createSemanticAnalyzer(), buildAST);
  * ```
  */
-export function setSemanticParser(
-  analyzer: SemanticAnalyzer,
-  buildAST: BuildASTFn
-): void {
+export function setSemanticParser(analyzer: SemanticAnalyzer, buildAST: BuildASTFn): void {
   semanticAnalyzer = analyzer;
   buildASTFn = buildAST;
 }
@@ -127,7 +124,7 @@ export function setMultilingualAliases(aliases: Record<string, string>): void {
   if (Object.keys(aliases).length > 0) {
     // Build regex pattern to match multilingual keywords
     const escapedKeys = Object.keys(aliases)
-      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       .join('|');
     multilingualRegex = new RegExp(`(^|\\s)(${escapedKeys})(?=\\s|\\.|$)`, 'g');
   } else {
@@ -186,11 +183,11 @@ function sanitizeClassName(name: string): string | null {
  */
 function sanitizeSelector(selector: string): string {
   return selector
-    .replace(/\\/g, '\\\\')  // Escape backslashes first
-    .replace(/'/g, "\\'")     // Escape single quotes
-    .replace(/\n/g, '\\n')    // Escape newlines
-    .replace(/\r/g, '\\r')    // Escape carriage returns
-    .replace(/\0/g, '');      // Remove null bytes
+    .replace(/\\/g, '\\\\') // Escape backslashes first
+    .replace(/'/g, "\\'") // Escape single quotes
+    .replace(/\n/g, '\\n') // Escape newlines
+    .replace(/\r/g, '\\r') // Escape carriage returns
+    .replace(/\0/g, ''); // Remove null bytes
 }
 
 // =============================================================================
@@ -330,12 +327,15 @@ export function compile(script: string, options: CompileOptions = {}): CompiledH
           ast = builtAST;
 
           if (debug) {
-            console.log(`[hyperfixi] Compiled ${language}: "${script}" (confidence: ${result.confidence.toFixed(2)})`);
+            console.log(
+              `[hyperfixi] Compiled ${language}: "${script}" (confidence: ${result.confidence.toFixed(2)})`
+            );
           }
         } else {
           // Semantic parsing failed or low confidence
           if (debug) {
-            const reason = result.errors?.join(', ') || `low confidence (${result.confidence.toFixed(2)})`;
+            const reason =
+              result.errors?.join(', ') || `low confidence (${result.confidence.toFixed(2)})`;
             console.log(`[hyperfixi] Semantic parse failed for "${script}": ${reason}`);
           }
           return null;
@@ -350,7 +350,9 @@ export function compile(script: string, options: CompileOptions = {}): CompiledH
     } else if (language !== 'en') {
       // Non-English but no semantic parser available
       if (debug) {
-        console.log(`[hyperfixi] Semantic parser not available for "${language}". Install @hyperfixi/semantic and call setSemanticParser().`);
+        console.log(
+          `[hyperfixi] Semantic parser not available for "${language}". Install @hyperfixi/semantic and call setSemanticParser().`
+        );
       }
       return null;
     } else {
@@ -501,16 +503,36 @@ function compileCommand(cmd: CommandNode): NodeCompilation | null {
       return compileRemoveClass(cmd.args, target);
 
     case 'show':
-      return { code: `${target}.style.display = ''`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.style.display = ''`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
 
     case 'hide':
-      return { code: `${target}.style.display = 'none'`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.style.display = 'none'`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
 
     case 'focus':
-      return { code: `${target}.focus()`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.focus()`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
 
     case 'blur':
-      return { code: `${target}.blur()`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.blur()`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
 
     case 'log':
       return compileLog(cmd.args);
@@ -549,7 +571,12 @@ function compileToggle(args: ASTNode[], target: string): NodeCompilation | null 
   if (!className) return null;
 
   if (target === 'm') {
-    return { code: `m.classList.toggle('${className}')`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+    return {
+      code: `m.classList.toggle('${className}')`,
+      needsEvaluator: false,
+      needsLocals: false,
+      needsGlobals: false,
+    };
   }
 
   return {
@@ -565,7 +592,12 @@ function compileAdd(args: ASTNode[], target: string): NodeCompilation | null {
   if (!className) return null;
 
   if (target === 'm') {
-    return { code: `m.classList.add('${className}')`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+    return {
+      code: `m.classList.add('${className}')`,
+      needsEvaluator: false,
+      needsLocals: false,
+      needsGlobals: false,
+    };
   }
 
   return {
@@ -579,7 +611,12 @@ function compileAdd(args: ASTNode[], target: string): NodeCompilation | null {
 function compileRemove(args: ASTNode[], target: string): NodeCompilation | null {
   // If no args, remove the element itself
   if (!args || args.length === 0) {
-    return { code: `${target}.remove()`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+    return {
+      code: `${target}.remove()`,
+      needsEvaluator: false,
+      needsLocals: false,
+      needsGlobals: false,
+    };
   }
 
   // Otherwise remove a class
@@ -587,7 +624,12 @@ function compileRemove(args: ASTNode[], target: string): NodeCompilation | null 
   if (!className) return null;
 
   if (target === 'm') {
-    return { code: `m.classList.remove('${className}')`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+    return {
+      code: `m.classList.remove('${className}')`,
+      needsEvaluator: false,
+      needsLocals: false,
+      needsGlobals: false,
+    };
   }
 
   return {
@@ -603,7 +645,12 @@ function compileRemoveClass(args: ASTNode[], target: string): NodeCompilation | 
   if (!className) return null;
 
   if (target === 'm') {
-    return { code: `m.classList.remove('${className}')`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+    return {
+      code: `m.classList.remove('${className}')`,
+      needsEvaluator: false,
+      needsLocals: false,
+      needsGlobals: false,
+    };
   }
 
   return {
@@ -618,10 +665,20 @@ function compileLog(args: ASTNode[]): NodeCompilation | null {
   const compiled = args.map(compileExpression).filter(Boolean);
   if (compiled.length !== args.length) {
     // Some args couldn't be compiled
-    return { code: `console.log(${compiled.join(', ')})`, needsEvaluator: true, needsLocals: false, needsGlobals: false };
+    return {
+      code: `console.log(${compiled.join(', ')})`,
+      needsEvaluator: true,
+      needsLocals: false,
+      needsGlobals: false,
+    };
   }
 
-  return { code: `console.log(${compiled.join(', ')})`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+  return {
+    code: `console.log(${compiled.join(', ')})`,
+    needsEvaluator: false,
+    needsLocals: false,
+    needsGlobals: false,
+  };
 }
 
 function compileSet(args: ASTNode[]): NodeCompilation | null {
@@ -803,17 +860,47 @@ function compilePut(args: ASTNode[], target: string, modifier?: string): NodeCom
 
   switch (mod) {
     case 'into':
-      return { code: `${target}.innerHTML = ${content}`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.innerHTML = ${content}`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
     case 'before':
-      return { code: `${target}.insertAdjacentHTML('beforebegin', ${content})`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.insertAdjacentHTML('beforebegin', ${content})`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
     case 'after':
-      return { code: `${target}.insertAdjacentHTML('afterend', ${content})`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.insertAdjacentHTML('afterend', ${content})`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
     case 'at start of':
-      return { code: `${target}.insertAdjacentHTML('afterbegin', ${content})`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.insertAdjacentHTML('afterbegin', ${content})`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
     case 'at end of':
-      return { code: `${target}.insertAdjacentHTML('beforeend', ${content})`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.insertAdjacentHTML('beforeend', ${content})`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
     default:
-      return { code: `${target}.innerHTML = ${content}`, needsEvaluator: false, needsLocals: false, needsGlobals: false };
+      return {
+        code: `${target}.innerHTML = ${content}`,
+        needsEvaluator: false,
+        needsLocals: false,
+        needsGlobals: false,
+      };
   }
 }
 

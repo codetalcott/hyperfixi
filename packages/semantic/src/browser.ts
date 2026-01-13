@@ -113,23 +113,13 @@ export { parseAny, parseExplicit, isExplicitSyntax } from './explicit';
 // Translation
 // =============================================================================
 
-export {
-  translate,
-  getAllTranslations,
-  roundTrip,
-  validateTranslation,
-} from './explicit';
+export { translate, getAllTranslations, roundTrip, validateTranslation } from './explicit';
 
 // =============================================================================
 // Rendering
 // =============================================================================
 
-export {
-  render,
-  renderExplicit,
-  toExplicit,
-  fromExplicit,
-} from './explicit';
+export { render, renderExplicit, toExplicit, fromExplicit } from './explicit';
 
 // =============================================================================
 // Semantic Analyzer (for core parser integration)

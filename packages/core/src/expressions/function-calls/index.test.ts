@@ -4,11 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import {
-  FunctionCallExpression,
-  createFunctionCallExpression,
-  callFunction,
-} from './index';
+import { FunctionCallExpression, createFunctionCallExpression, callFunction } from './index';
 import { createTypedExpressionContext } from '../../test-utilities';
 import type { TypedExpressionContext } from '../../types/base-types';
 

@@ -19,7 +19,10 @@
  * @module @hyperfixi/patterns-reference/semantic-bridge
  */
 
-import { createPatternsProvider, type DatabasePatternsProvider } from './registry/patterns-provider';
+import {
+  createPatternsProvider,
+  type DatabasePatternsProvider,
+} from './registry/patterns-provider';
 import type { ConnectionOptions } from './types';
 
 // =============================================================================

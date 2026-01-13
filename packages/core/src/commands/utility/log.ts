@@ -13,7 +13,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for LogCommand
@@ -61,10 +67,7 @@ export class LogCommand implements DecoratedCommand {
     return { values };
   }
 
-  async execute(
-    input: LogCommandInput,
-    _context: TypedExecutionContext
-  ): Promise<undefined> {
+  async execute(input: LogCommandInput, _context: TypedExecutionContext): Promise<undefined> {
     // Use window.console to prevent Terser's drop_console from stripping this
     const logger = typeof window !== 'undefined' ? window.console : console;
 

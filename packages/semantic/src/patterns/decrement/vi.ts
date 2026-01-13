@@ -21,15 +21,23 @@ export function getDecrementPatternsVi(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'giảm', alternatives: ['giảm đi'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'đi', alternatives: ['xuống'] },
-            { type: 'role', role: 'quantity' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'đi', alternatives: ['xuống'] },
+              { type: 'role', role: 'quantity' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        quantity: { marker: 'đi', markerAlternatives: ['xuống'], default: { type: 'literal', value: '1' } },
+        quantity: {
+          marker: 'đi',
+          markerAlternatives: ['xuống'],
+          default: { type: 'literal', value: '1' },
+        },
       },
     },
     {

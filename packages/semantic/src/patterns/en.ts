@@ -144,7 +144,11 @@ const setPossessiveEnglish: LanguagePattern = {
     format: 'set {destination} to {patient}',
     tokens: [
       { type: 'literal', value: 'set' },
-      { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+      {
+        type: 'role',
+        role: 'destination',
+        expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+      },
       { type: 'literal', value: 'to' },
       { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
     ],
@@ -287,7 +291,7 @@ export function buildEnglishPatterns(): LanguagePattern[] {
     ifEnglish,
     unlessEnglish,
     temporalInEnglish,
-    temporalAfterEnglish,
+    temporalAfterEnglish
   );
 
   // 3. Generated patterns for English

@@ -276,10 +276,7 @@ function buildTokens(
 /**
  * Build tokens for roles.
  */
-function buildRoleTokens(
-  schema: CommandSchema,
-  profile: LanguageProfile
-): PatternToken[] {
+function buildRoleTokens(schema: CommandSchema, profile: LanguageProfile): PatternToken[] {
   const tokens: PatternToken[] = [];
 
   // Sort roles by position (depends on word order)
@@ -311,10 +308,7 @@ function buildRoleTokens(
 /**
  * Build token(s) for a single role.
  */
-function buildRoleToken(
-  roleSpec: RoleSpec,
-  profile: LanguageProfile
-): PatternToken[] {
+function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternToken[] {
   const tokens: PatternToken[] = [];
 
   // Check for command-specific marker override first
@@ -349,7 +343,11 @@ function buildRoleToken(
       // Preposition: "on #button"
       if (defaultMarker.primary) {
         const markerToken: PatternToken = defaultMarker.alternatives
-          ? { type: 'literal', value: defaultMarker.primary, alternatives: defaultMarker.alternatives }
+          ? {
+              type: 'literal',
+              value: defaultMarker.primary,
+              alternatives: defaultMarker.alternatives,
+            }
           : { type: 'literal', value: defaultMarker.primary };
         tokens.push(markerToken);
       }
@@ -358,7 +356,11 @@ function buildRoleToken(
       // Postposition/particle: "#button に"
       tokens.push(roleValueToken);
       const markerToken: PatternToken = defaultMarker.alternatives
-        ? { type: 'literal', value: defaultMarker.primary, alternatives: defaultMarker.alternatives }
+        ? {
+            type: 'literal',
+            value: defaultMarker.primary,
+            alternatives: defaultMarker.alternatives,
+          }
         : { type: 'literal', value: defaultMarker.primary };
       tokens.push(markerToken);
     }

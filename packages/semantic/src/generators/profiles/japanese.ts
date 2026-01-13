@@ -24,9 +24,9 @@ export const japaneseProfile: LanguageProfile = {
     subjectDrop: true,
   },
   references: {
-    me: '自分',      // "self" - in hyperscript context, refers to current element
-    it: 'それ',      // "it"
-    you: 'あなた',   // "you"
+    me: '自分', // "self" - in hyperscript context, refers to current element
+    it: 'それ', // "it"
+    you: 'あなた', // "you"
     result: '結果',
     event: 'イベント',
     target: 'ターゲット',
@@ -48,13 +48,21 @@ export const japaneseProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations
-    toggle: { primary: '切り替え', alternatives: ['切り替える', 'トグル', 'トグルする'], normalized: 'toggle' },
+    toggle: {
+      primary: '切り替え',
+      alternatives: ['切り替える', 'トグル', 'トグルする'],
+      normalized: 'toggle',
+    },
     add: { primary: '追加', alternatives: ['追加する', '加える'], normalized: 'add' },
     remove: { primary: '削除', alternatives: ['削除する', '取り除く'], normalized: 'remove' },
     // Content operations
     put: { primary: '置く', alternatives: ['入れる', 'セット'], normalized: 'put' },
     append: { primary: '末尾追加', alternatives: ['末尾に追加', 'アペンド'], normalized: 'append' },
-    prepend: { primary: '先頭追加', alternatives: ['先頭に追加', 'プリペンド'], normalized: 'prepend' },
+    prepend: {
+      primary: '先頭追加',
+      alternatives: ['先頭に追加', 'プリペンド'],
+      normalized: 'prepend',
+    },
     take: { primary: '取る', alternatives: ['取得'], normalized: 'take' },
     make: { primary: '作る', alternatives: ['作成'], normalized: 'make' },
     clone: { primary: '複製', alternatives: ['クローン'], normalized: 'clone' },
@@ -63,13 +71,25 @@ export const japaneseProfile: LanguageProfile = {
     // Variable operations
     set: { primary: '設定', alternatives: ['設定する', 'セット'], normalized: 'set' },
     get: { primary: '取得', alternatives: ['取得する', 'ゲット'], normalized: 'get' },
-    increment: { primary: '増加', alternatives: ['増やす', 'インクリメント'], normalized: 'increment' },
-    decrement: { primary: '減少', alternatives: ['減らす', 'デクリメント'], normalized: 'decrement' },
+    increment: {
+      primary: '増加',
+      alternatives: ['増やす', 'インクリメント'],
+      normalized: 'increment',
+    },
+    decrement: {
+      primary: '減少',
+      alternatives: ['減らす', 'デクリメント'],
+      normalized: 'decrement',
+    },
     log: { primary: '記録', alternatives: ['ログ', '出力'], normalized: 'log' },
     // Visibility
     show: { primary: '表示', alternatives: ['表示する', '見せる'], normalized: 'show' },
     hide: { primary: '隠す', alternatives: ['非表示', '非表示にする'], normalized: 'hide' },
-    transition: { primary: '遷移', alternatives: ['トランジション', 'アニメーション'], normalized: 'transition' },
+    transition: {
+      primary: '遷移',
+      alternatives: ['トランジション', 'アニメーション'],
+      normalized: 'transition',
+    },
     // Events
     on: { primary: 'で', alternatives: ['時', 'とき'], normalized: 'on' },
     trigger: { primary: '引き金', alternatives: ['発火', 'トリガー'], normalized: 'trigger' },

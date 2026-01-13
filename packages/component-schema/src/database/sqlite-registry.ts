@@ -45,7 +45,9 @@ export class SqliteComponentRegistry implements ComponentRegistry {
   async register(component: ComponentDefinition): Promise<void> {
     const validation = this.validate(component);
     if (!validation.valid) {
-      throw new Error(`Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+      throw new Error(
+        `Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`
+      );
     }
 
     const stmt = this.db.prepare(`
@@ -73,7 +75,7 @@ export class SqliteComponentRegistry implements ComponentRegistry {
       component.configuration ? JSON.stringify(component.configuration) : null,
       component.metadata ? JSON.stringify(component.metadata) : null,
       component.validation ? JSON.stringify(component.validation) : null,
-      component.testing ? JSON.stringify(component.testing) : null,
+      component.testing ? JSON.stringify(component.testing) : null
     );
   }
 
@@ -129,8 +131,8 @@ export class SqliteComponentRegistry implements ComponentRegistry {
 
     if (filter.tags && filter.tags.length > 0) {
       // Match any tag using JSON functions
-      const tagConditions = filter.tags.map(() =>
-        `EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)`
+      const tagConditions = filter.tags.map(
+        () => `EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)`
       );
       conditions.push(`(${tagConditions.join(' OR ')})`);
       params.push(...filter.tags);
@@ -142,8 +144,9 @@ export class SqliteComponentRegistry implements ComponentRegistry {
     }
 
     if (filter.keywords && filter.keywords.length > 0) {
-      const keywordConditions = filter.keywords.map(() =>
-        `EXISTS (SELECT 1 FROM json_each(json_extract(metadata, '$.keywords')) WHERE LOWER(value) LIKE ?)`
+      const keywordConditions = filter.keywords.map(
+        () =>
+          `EXISTS (SELECT 1 FROM json_each(json_extract(metadata, '$.keywords')) WHERE LOWER(value) LIKE ?)`
       );
       conditions.push(`(${keywordConditions.join(' OR ')})`);
       params.push(...filter.keywords.map(k => `%${k.toLowerCase()}%`));
@@ -229,7 +232,9 @@ export class SqliteComponentRegistry implements ComponentRegistry {
           // Synchronously register within transaction
           const validation = this.validate(componentDef);
           if (!validation.valid) {
-            throw new Error(`Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+            throw new Error(
+              `Component validation failed: ${validation.errors.map(e => e.message).join(', ')}`
+            );
           }
 
           const stmt = this.db.prepare(`
@@ -257,7 +262,7 @@ export class SqliteComponentRegistry implements ComponentRegistry {
             componentDef.configuration ? JSON.stringify(componentDef.configuration) : null,
             componentDef.metadata ? JSON.stringify(componentDef.metadata) : null,
             componentDef.validation ? JSON.stringify(componentDef.validation) : null,
-            componentDef.testing ? JSON.stringify(componentDef.testing) : null,
+            componentDef.testing ? JSON.stringify(componentDef.testing) : null
           );
         }
       }

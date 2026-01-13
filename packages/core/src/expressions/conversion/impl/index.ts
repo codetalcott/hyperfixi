@@ -91,9 +91,12 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       if (value == null) return success([], 'array');
       return success([value], 'array');
     } catch (error) {
-      return converterError('Array', 'ARRAY_CONVERSION_FAILED',
+      return converterError(
+        'Array',
+        'ARRAY_CONVERSION_FAILED',
         errorMsg('Failed to convert value to Array', error),
-        ['Check if value is iterable', 'Ensure value is not circular reference']);
+        ['Check if value is iterable', 'Ensure value is not circular reference']
+      );
     }
   },
 
@@ -104,9 +107,12 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       if (isObject(value)) return success(JSON.stringify(value), 'string');
       return success(String(value), 'string');
     } catch (error) {
-      return converterError('String', 'STRING_CONVERSION_FAILED',
+      return converterError(
+        'String',
+        'STRING_CONVERSION_FAILED',
         errorMsg('Failed to convert value to String', error),
-        ['Check if object has circular references', 'Ensure value is serializable']);
+        ['Check if object has circular references', 'Ensure value is serializable']
+      );
     }
   },
 
@@ -116,14 +122,21 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       if (value == null) return success(false, 'boolean');
       if (isString(value)) {
         const lowerValue = (value as string).toLowerCase().trim();
-        return success(lowerValue !== 'false' && lowerValue !== '0' && lowerValue !== '', 'boolean');
+        return success(
+          lowerValue !== 'false' && lowerValue !== '0' && lowerValue !== '',
+          'boolean'
+        );
       }
-      if (isNumber(value)) return success((value as number) !== 0 && !isNaN(value as number), 'boolean');
+      if (isNumber(value))
+        return success((value as number) !== 0 && !isNaN(value as number), 'boolean');
       return success(Boolean(value), 'boolean');
     } catch (error) {
-      return converterError('Boolean', 'BOOLEAN_CONVERSION_FAILED',
+      return converterError(
+        'Boolean',
+        'BOOLEAN_CONVERSION_FAILED',
         errorMsg('Failed to convert value to Boolean', error),
-        ['Use explicit true/false values', 'Check for unexpected data types']);
+        ['Use explicit true/false values', 'Check for unexpected data types']
+      );
     }
   },
 
@@ -133,16 +146,22 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       if (value == null) return success(0, 'number');
       const num = Number(value);
       if (isNaN(num)) {
-        return converterError('Number', 'INVALID_NUMBER',
+        return converterError(
+          'Number',
+          'INVALID_NUMBER',
           `Cannot convert "${value}" to a valid number`,
           ['Check if value contains non-numeric characters', 'Use a valid numeric format'],
-          'invalid-argument');
+          'invalid-argument'
+        );
       }
       return success(num, 'number');
     } catch (error) {
-      return converterError('Number', 'NUMBER_CONVERSION_FAILED',
+      return converterError(
+        'Number',
+        'NUMBER_CONVERSION_FAILED',
         errorMsg('Failed to convert value to Number', error),
-        ['Ensure value is convertible to number', 'Check for special characters']);
+        ['Ensure value is convertible to number', 'Check for special characters']
+      );
     }
   },
 
@@ -169,16 +188,26 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       }
       const date = new Date(value as string | number | Date);
       if (isNaN(date.getTime())) {
-        return converterError('Date', 'INVALID_DATE',
+        return converterError(
+          'Date',
+          'INVALID_DATE',
           `Cannot convert "${value}" to a valid date`,
-          ['Use ISO 8601 format (YYYY-MM-DD)', 'Check date string format', 'Ensure date values are valid'],
-          'invalid-argument');
+          [
+            'Use ISO 8601 format (YYYY-MM-DD)',
+            'Check date string format',
+            'Ensure date values are valid',
+          ],
+          'invalid-argument'
+        );
       }
       return success(date, 'object');
     } catch (error) {
-      return converterError('Date', 'DATE_CONVERSION_FAILED',
+      return converterError(
+        'Date',
+        'DATE_CONVERSION_FAILED',
         errorMsg('Failed to convert value to Date', error),
-        ['Check date format', 'Ensure value is a valid date string or timestamp']);
+        ['Check date format', 'Ensure value is a valid date string or timestamp']
+      );
     }
   },
 
@@ -186,34 +215,53 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     try {
       return success(JSON.stringify(value), 'string');
     } catch (error) {
-      return converterError('JSON', 'JSON_STRINGIFY_FAILED',
+      return converterError(
+        'JSON',
+        'JSON_STRINGIFY_FAILED',
         errorMsg('Failed to convert value to JSON', error),
-        ['Check for circular references', 'Ensure all properties are serializable', 'Remove functions and undefined values']);
+        [
+          'Check for circular references',
+          'Ensure all properties are serializable',
+          'Remove functions and undefined values',
+        ]
+      );
     }
   },
 
-  Object: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Record<string, unknown>> => {
+  Object: (
+    value: unknown,
+    _context: TypedExpressionContext
+  ): EvaluationResult<Record<string, unknown>> => {
     try {
       if (isObject(value)) return success(value as Record<string, unknown>, 'object');
       if (isString(value)) {
         try {
           return success(JSON.parse(value as string), 'object');
         } catch (parseError) {
-          return converterError('Object', 'JSON_PARSE_FAILED',
+          return converterError(
+            'Object',
+            'JSON_PARSE_FAILED',
             errorMsg('Cannot parse JSON string', parseError),
             ['Check JSON syntax', 'Ensure proper escaping of quotes', 'Validate JSON format'],
-            'syntax-error');
+            'syntax-error'
+          );
         }
       }
       return success({}, 'object');
     } catch (error) {
-      return converterError('Object', 'OBJECT_CONVERSION_FAILED',
+      return converterError(
+        'Object',
+        'OBJECT_CONVERSION_FAILED',
         errorMsg('Failed to convert value to Object', error),
-        ['Ensure value is valid JSON string or object', 'Check for syntax errors']);
+        ['Ensure value is valid JSON string or object', 'Check for syntax errors']
+      );
     }
   },
 
-  Values: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Record<string, unknown>> => {
+  Values: (
+    value: unknown,
+    _context: TypedExpressionContext
+  ): EvaluationResult<Record<string, unknown>> => {
     try {
       if (value instanceof HTMLFormElement) {
         return success(extractFormValues(value), 'object');
@@ -234,9 +282,16 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       }
       return success({}, 'object');
     } catch (error) {
-      return converterError('FormValues', 'FORM_VALUES_EXTRACTION_FAILED',
+      return converterError(
+        'FormValues',
+        'FORM_VALUES_EXTRACTION_FAILED',
         errorMsg('Failed to extract form values', error),
-        ['Ensure element is a form or contains form inputs', 'Check form structure', 'Verify input names are set']);
+        [
+          'Ensure element is a form or contains form inputs',
+          'Check form structure',
+          'Verify input names are set',
+        ]
+      );
     }
   },
 };
@@ -267,7 +322,10 @@ export class AsExpression
   readonly description = 'Converts values between different types using the "as" keyword';
   readonly outputType: EvaluationType = 'Any';
   // Type assertion needed because v.object inference differs from explicit generic parameter
-  readonly inputSchema = AsExpressionInputSchema as RuntimeValidator<{ value: unknown; type: string }>;
+  readonly inputSchema = AsExpressionInputSchema as RuntimeValidator<{
+    value: unknown;
+    type: string;
+  }>;
 
   readonly metadata: ExpressionMetadata = {
     category: 'Conversion',
@@ -510,11 +568,9 @@ export class AsExpression
       }
       return { isValid: true, errors: [], suggestions: [] };
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed',
-        ['Check input structure']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed', [
+        'Check input structure',
+      ]);
     }
   }
 }
@@ -544,7 +600,10 @@ export class IsExpression
   readonly syntax = 'value is Type';
   readonly description = 'Checks if a value is of a specific type';
   readonly outputType: EvaluationType = 'Boolean';
-  readonly inputSchema = IsExpressionInputSchema as RuntimeValidator<{ value: unknown; type: string }>;
+  readonly inputSchema = IsExpressionInputSchema as RuntimeValidator<{
+    value: unknown;
+    type: string;
+  }>;
 
   readonly metadata: ExpressionMetadata = {
     category: 'Conversion',
@@ -736,11 +795,9 @@ export class IsExpression
       }
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed',
-        ['Check input structure']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed', [
+        'Check input structure',
+      ]);
     }
   }
 }

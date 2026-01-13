@@ -12,7 +12,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for GetCommand
@@ -68,10 +74,7 @@ export class GetCommand implements DecoratedCommand {
     return { value };
   }
 
-  execute(
-    input: GetCommandInput,
-    context: TypedExecutionContext
-  ): GetCommandOutput {
+  execute(input: GetCommandInput, context: TypedExecutionContext): GetCommandOutput {
     (context as { it: unknown }).it = input.value;
     Object.assign(context, { result: input.value });
     return { value: input.value };

@@ -39,19 +39,19 @@ vi.mock('ora', () => ({
 // Mock chalk
 vi.mock('chalk', () => ({
   default: {
-    green: vi.fn((s) => s),
-    red: vi.fn((s) => s),
-    yellow: vi.fn((s) => s),
-    blue: vi.fn((s) => s),
-    cyan: vi.fn((s) => s),
-    gray: vi.fn((s) => s),
-    bold: vi.fn((s) => s),
+    green: vi.fn(s => s),
+    red: vi.fn(s => s),
+    yellow: vi.fn(s => s),
+    blue: vi.fn(s => s),
+    cyan: vi.fn(s => s),
+    gray: vi.fn(s => s),
+    bold: vi.fn(s => s),
   },
 }));
 
 // Mock boxen
 vi.mock('boxen', () => ({
-  default: vi.fn((s) => s),
+  default: vi.fn(s => s),
 }));
 
 // Mock fs-extra

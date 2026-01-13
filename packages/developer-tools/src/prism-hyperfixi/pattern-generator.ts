@@ -81,7 +81,9 @@ export function generatePatterns(languageCode: string): LanguagePatterns {
   // Get dictionary for this language
   const dict = dictionaries[languageCode];
   if (!dict) {
-    throw new Error(`Unknown language: ${languageCode}. Available: ${Object.keys(dictionaries).join(', ')}`);
+    throw new Error(
+      `Unknown language: ${languageCode}. Available: ${Object.keys(dictionaries).join(', ')}`
+    );
   }
 
   const isNonLatin = isNonLatinLanguage(languageCode);

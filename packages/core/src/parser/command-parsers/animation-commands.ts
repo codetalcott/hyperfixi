@@ -41,10 +41,7 @@ import { isIdentifierLike } from '../token-predicates';
  *
  * Phase 9-3b: Extracted from Parser.parseMeasureCommand
  */
-export function parseMeasureCommand(
-  ctx: ParserContext,
-  identifierNode: IdentifierNode
-) {
+export function parseMeasureCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   // Parse measure command with multi-argument syntax
   // Patterns:
   //   measure width                          → 1 arg (property)
@@ -57,11 +54,7 @@ export function parseMeasureCommand(
   // Parse optional target (selector or expression)
   // If next token is a selector, identifier, or context var, parse it as target
   // Phase 4: Using predicate methods instead of direct TokenType checks
-  if (
-    ctx.checkAnySelector() ||
-    ctx.checkContextVar() ||
-    ctx.match('<')
-  ) {
+  if (ctx.checkAnySelector() || ctx.checkContextVar() || ctx.match('<')) {
     // Parse the target element expression
     const target = ctx.parsePrimary();
     args.push(target);
@@ -148,10 +141,7 @@ export function parseMeasureCommand(
  *
  * Phase 9-3b: Extracted from Parser.parseTransitionCommand
  */
-export function parseTransitionCommand(
-  ctx: ParserContext,
-  commandToken: Token
-) {
+export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
   const modifiers: Record<string, ExpressionNode> = {};
 

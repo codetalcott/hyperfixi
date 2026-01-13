@@ -22,10 +22,14 @@ export function getHidePatternsPl(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'ukryj', alternatives: ['schowaj', 'zasłoń', 'zaslon'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'z', alternatives: ['ze', 'jako'] },
-            { type: 'role', role: 'style' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'z', alternatives: ['ze', 'jako'] },
+              { type: 'role', role: 'style' },
+            ],
+          },
         ],
       },
       extraction: {

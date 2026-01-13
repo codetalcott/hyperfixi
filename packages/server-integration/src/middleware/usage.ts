@@ -150,12 +150,7 @@ async function logUsage(
 /**
  * Buffer usage for Stripe reporting
  */
-function bufferUsage(
-  keyId: string,
-  customerId: string,
-  compileCount: number,
-  scriptCount: number
-) {
+function bufferUsage(keyId: string, customerId: string, compileCount: number, scriptCount: number) {
   const existing = usageBuffer.get(keyId);
 
   if (existing) {

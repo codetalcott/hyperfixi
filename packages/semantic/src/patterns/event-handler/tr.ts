@@ -22,11 +22,23 @@ export function getEventHandlerPatternsTr(): LanguagePattern[] {
           { type: 'role', role: 'source' },
           { type: 'literal', value: 'den', alternatives: ['dan', 'ten', 'tan'] },
           { type: 'role', role: 'event' },
-          { type: 'literal', value: 'dığında', alternatives: [
-            'diğinde', 'duğunda', 'düğünde',
-            'tığında', 'tiğinde', 'tuğunda', 'tüğünde',
-            'dıgında', 'diginde', 'dugunda', 'dügünde',
-          ]},
+          {
+            type: 'literal',
+            value: 'dığında',
+            alternatives: [
+              'diğinde',
+              'duğunda',
+              'düğünde',
+              'tığında',
+              'tiğinde',
+              'tuğunda',
+              'tüğünde',
+              'dıgında',
+              'diginde',
+              'dugunda',
+              'dügünde',
+            ],
+          },
         ],
       },
       extraction: {
@@ -43,11 +55,23 @@ export function getEventHandlerPatternsTr(): LanguagePattern[] {
         format: '{event}dığında {body}',
         tokens: [
           { type: 'role', role: 'event' },
-          { type: 'literal', value: 'dığında', alternatives: [
-            'diğinde', 'duğunda', 'düğünde',
-            'tığında', 'tiğinde', 'tuğunda', 'tüğünde',
-            'dıgında', 'diginde', 'dugunda', 'dügünde',
-          ]},
+          {
+            type: 'literal',
+            value: 'dığında',
+            alternatives: [
+              'diğinde',
+              'duğunda',
+              'düğünde',
+              'tığında',
+              'tiğinde',
+              'tuğunda',
+              'tüğünde',
+              'dıgında',
+              'diginde',
+              'dugunda',
+              'dügünde',
+            ],
+          },
         ],
       },
       extraction: {
@@ -63,10 +87,11 @@ export function getEventHandlerPatternsTr(): LanguagePattern[] {
         format: '{event}ınca {body}',
         tokens: [
           { type: 'role', role: 'event' },
-          { type: 'literal', value: 'ınca', alternatives: [
-            'ince', 'unca', 'ünce',
-            'yınca', 'yince', 'yunca', 'yünce',
-          ]},
+          {
+            type: 'literal',
+            value: 'ınca',
+            alternatives: ['ince', 'unca', 'ünce', 'yınca', 'yince', 'yunca', 'yünce'],
+          },
         ],
       },
       extraction: {
@@ -114,7 +139,11 @@ export function getEventHandlerPatternsTr(): LanguagePattern[] {
         format: '{event}dikçe {body}',
         tokens: [
           { type: 'role', role: 'event' },
-          { type: 'literal', value: 'dikçe', alternatives: ['dıkça', 'dukça', 'dükçe', 'tikçe', 'tıkça', 'tukça', 'tükçe'] },
+          {
+            type: 'literal',
+            value: 'dikçe',
+            alternatives: ['dıkça', 'dukça', 'dükçe', 'tikçe', 'tıkça', 'tukça', 'tükçe'],
+          },
         ],
       },
       extraction: {

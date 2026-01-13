@@ -545,7 +545,7 @@ addDescribeToValidator = function <T>(validator: any): RuntimeValidator<T> {
       const originalValidate = this.validate.bind(this);
       const optionalValidator = {
         ...this,
-        _isOptional: true,  // Mark as optional for object validator
+        _isOptional: true, // Mark as optional for object validator
         validate: (value: unknown): ValidationResult<T | undefined> => {
           // Allow undefined and null for optional validators
           if (value === undefined || value === null) {

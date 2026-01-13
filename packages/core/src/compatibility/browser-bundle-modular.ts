@@ -58,9 +58,9 @@ import {
 // STEP 2: Import only the expression categories you need
 // =============================================================================
 import {
-  references,  // me, you, it, CSS selectors
-  logical,     // comparisons, and/or/not
-  special,     // literals, math
+  references, // me, you, it, CSS selectors
+  logical, // comparisons, and/or/not
+  special, // literals, math
 } from '../expressions';
 
 // =============================================================================
@@ -82,23 +82,10 @@ import { createRuntime, type HyperFixiRuntime } from '../runtime/runtime-factory
 import { ConfigurableExpressionEvaluator } from '../core/configurable-expression-evaluator';
 
 // List of command factories to register
-const commandFactories = [
-  toggle,
-  add,
-  remove,
-  show,
-  hide,
-  set,
-  log,
-  send,
-];
+const commandFactories = [toggle, add, remove, show, hide, set, log, send];
 
 // Expression categories to include
-const expressionCategories = [
-  references,
-  logical,
-  special,
-];
+const expressionCategories = [references, logical, special];
 
 // Create the runtime
 const hyperfixi: HyperFixiRuntime = createRuntime({

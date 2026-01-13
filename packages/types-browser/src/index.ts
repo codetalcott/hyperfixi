@@ -55,8 +55,8 @@
  * ```
  */
 
-export * from './core-api'
-export * from './semantic-api'
-export * from './i18n-api'
-export * from './type-guards'
-export * from './globals'
+export * from './core-api';
+export * from './semantic-api';
+export * from './i18n-api';
+export * from './type-guards';
+export * from './globals';

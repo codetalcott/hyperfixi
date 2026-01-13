@@ -39,28 +39,28 @@ function isFrenchIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const PREPOSITIONS = new Set([
-  'à',          // to, at
-  'a',          // to, at (no accent)
-  'de',         // of, from
-  'du',         // de + le
-  'des',        // de + les
-  'dans',       // in
-  'sur',        // on
-  'sous',       // under
-  'avec',       // with
-  'sans',       // without
-  'par',        // by
-  'pour',       // for
-  'entre',      // between
-  'avant',      // before
-  'après',      // after
-  'apres',      // after (no accent)
-  'depuis',     // since, from
-  'vers',       // towards
-  'chez',       // at (someone's place)
-  'contre',     // against
-  'au',         // à + le
-  'aux',        // à + les
+  'à', // to, at
+  'a', // to, at (no accent)
+  'de', // of, from
+  'du', // de + le
+  'des', // de + les
+  'dans', // in
+  'sur', // on
+  'sous', // under
+  'avec', // with
+  'sans', // without
+  'par', // by
+  'pour', // for
+  'entre', // between
+  'avant', // before
+  'après', // after
+  'apres', // after (no accent)
+  'depuis', // since, from
+  'vers', // towards
+  'chez', // at (someone's place)
+  'contre', // against
+  'au', // à + le
+  'aux', // à + les
 ]);
 
 // =============================================================================
@@ -272,7 +272,10 @@ export class FrenchTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

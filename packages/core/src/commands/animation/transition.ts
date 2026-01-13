@@ -17,7 +17,13 @@ import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
 import { parseDuration, camelToKebab } from '../helpers/duration-parsing';
 import { waitForTransitionEnd } from '../helpers/event-waiting';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for TransitionCommand
@@ -51,7 +57,11 @@ export interface TransitionCommandOutput {
 @meta({
   description: 'Animate CSS properties using CSS transitions',
   syntax: 'transition <property> to <value> [over <duration>] [with <timing>]',
-  examples: ['transition opacity to 0.5', 'transition left to 100px over 500ms', 'transition background-color to red over 1s with ease-in-out'],
+  examples: [
+    'transition opacity to 0.5',
+    'transition left to 100px over 500ms',
+    'transition background-color to red over 1s with ease-in-out',
+  ],
   sideEffects: ['style-change', 'timing'],
 })
 @command({ name: 'transition', category: 'animation' })
@@ -71,7 +81,10 @@ export class TransitionCommand implements DecoratedCommand {
 
     const firstArg = await evaluator.evaluate(raw.args[0], context);
 
-    if (isHTMLElement(firstArg) || (typeof firstArg === 'string' && /^[#.]|^(?:me|it|you)$/.test(firstArg))) {
+    if (
+      isHTMLElement(firstArg) ||
+      (typeof firstArg === 'string' && /^[#.]|^(?:me|it|you)$/.test(firstArg))
+    ) {
       target = firstArg as string | HTMLElement;
       property = String(await evaluator.evaluate(raw.args[1], context));
     } else {
@@ -91,12 +104,17 @@ export class TransitionCommand implements DecoratedCommand {
 
     const result: TransitionCommandInput = { property, value: value as string | number };
     if (target !== undefined) result.target = target;
-    if (raw.modifiers?.over) result.duration = await evaluator.evaluate(raw.modifiers.over, context);
-    if (raw.modifiers?.with) result.timingFunction = String(await evaluator.evaluate(raw.modifiers.with, context));
+    if (raw.modifiers?.over)
+      result.duration = await evaluator.evaluate(raw.modifiers.over, context);
+    if (raw.modifiers?.with)
+      result.timingFunction = String(await evaluator.evaluate(raw.modifiers.with, context));
     return result;
   }
 
-  async execute(input: TransitionCommandInput, context: TypedExecutionContext): Promise<TransitionCommandOutput> {
+  async execute(
+    input: TransitionCommandInput,
+    context: TypedExecutionContext
+  ): Promise<TransitionCommandOutput> {
     let { property } = input;
     const { target, value, duration: durationInput, timingFunction } = input;
 
@@ -109,14 +127,21 @@ export class TransitionCommand implements DecoratedCommand {
 
     const originalTransition = targetElement.style.transition;
     const transitionProp = `${property} ${duration}ms ${timingFunction || 'ease'}`;
-    targetElement.style.transition = originalTransition ? `${originalTransition}, ${transitionProp}` : transitionProp;
+    targetElement.style.transition = originalTransition
+      ? `${originalTransition}, ${transitionProp}`
+      : transitionProp;
 
     let toValue = String(value);
     let removeInlineAfter = false;
 
     // Handle CSS keywords that should restore to stylesheet value, not CSS spec initial
     // 'initial' in hyperscript means "restore to original" not CSS's transparent/default
-    if (toValue === 'initial' || toValue === 'inherit' || toValue === 'unset' || toValue === 'revert') {
+    if (
+      toValue === 'initial' ||
+      toValue === 'inherit' ||
+      toValue === 'unset' ||
+      toValue === 'revert'
+    ) {
       // Get the stylesheet value by temporarily removing inline style
       const currentInline = targetElement.style.getPropertyValue(property);
       targetElement.style.removeProperty(property);
@@ -140,7 +165,14 @@ export class TransitionCommand implements DecoratedCommand {
 
     Object.assign(context, { it: targetElement });
 
-    return { element: targetElement, property, fromValue, toValue, duration, completed: result.completed };
+    return {
+      element: targetElement,
+      property,
+      fromValue,
+      toValue,
+      duration,
+      completed: result.completed,
+    };
   }
 }
 

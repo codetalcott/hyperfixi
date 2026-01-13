@@ -25,22 +25,22 @@ export const polishProfile: LanguageProfile = {
     suffixes: ['ać', 'eć', 'ić', 'yć', 'ąć', 'ować'],
   },
   references: {
-    me: 'ja',          // "I/me"
-    it: 'to',          // "it"
-    you: 'ty',         // "you"
+    me: 'ja', // "I/me"
+    it: 'to', // "it"
+    you: 'ty', // "you"
     result: 'wynik',
     event: 'zdarzenie',
     target: 'cel',
     body: 'body',
   },
   possessive: {
-    marker: '',        // Polish uses genitive case, not a marker
+    marker: '', // Polish uses genitive case, not a marker
     markerPosition: 'after-object',
     usePossessiveAdjectives: true,
     specialForms: {
-      me: 'mój',       // "my" (masculine)
-      it: 'jego',      // "its"
-      you: 'twój',     // "your"
+      me: 'mój', // "my" (masculine)
+      it: 'jego', // "its"
+      you: 'twój', // "your"
     },
   },
   roleMarkers: {
@@ -51,55 +51,164 @@ export const polishProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations (imperative form)
-    toggle: { primary: 'przełącz', alternatives: ['przelacz'], normalized: 'toggle', form: 'imperative' },
+    toggle: {
+      primary: 'przełącz',
+      alternatives: ['przelacz'],
+      normalized: 'toggle',
+      form: 'imperative',
+    },
     add: { primary: 'dodaj', normalized: 'add', form: 'imperative' },
-    remove: { primary: 'usuń', alternatives: ['usun', 'wyczyść', 'wyczysc'], normalized: 'remove', form: 'imperative' },
+    remove: {
+      primary: 'usuń',
+      alternatives: ['usun', 'wyczyść', 'wyczysc'],
+      normalized: 'remove',
+      form: 'imperative',
+    },
     // Content operations
-    put: { primary: 'umieść', alternatives: ['umiesc', 'wstaw'], normalized: 'put', form: 'imperative' },
-    append: { primary: 'dołącz', alternatives: ['dolacz'], normalized: 'append', form: 'imperative' },
-    prepend: { primary: 'poprzedź', alternatives: ['poprzedz'], normalized: 'prepend', form: 'imperative' },
-    take: { primary: 'weź', alternatives: ['wez', 'pobierz'], normalized: 'take', form: 'imperative' },
-    make: { primary: 'utwórz', alternatives: ['utworz', 'stwórz', 'stworz'], normalized: 'make', form: 'imperative' },
-    clone: { primary: 'sklonuj', alternatives: ['kopiuj'], normalized: 'clone', form: 'imperative' },
+    put: {
+      primary: 'umieść',
+      alternatives: ['umiesc', 'wstaw'],
+      normalized: 'put',
+      form: 'imperative',
+    },
+    append: {
+      primary: 'dołącz',
+      alternatives: ['dolacz'],
+      normalized: 'append',
+      form: 'imperative',
+    },
+    prepend: {
+      primary: 'poprzedź',
+      alternatives: ['poprzedz'],
+      normalized: 'prepend',
+      form: 'imperative',
+    },
+    take: {
+      primary: 'weź',
+      alternatives: ['wez', 'pobierz'],
+      normalized: 'take',
+      form: 'imperative',
+    },
+    make: {
+      primary: 'utwórz',
+      alternatives: ['utworz', 'stwórz', 'stworz'],
+      normalized: 'make',
+      form: 'imperative',
+    },
+    clone: {
+      primary: 'sklonuj',
+      alternatives: ['kopiuj'],
+      normalized: 'clone',
+      form: 'imperative',
+    },
     swap: { primary: 'zamień', alternatives: ['zamien'], normalized: 'swap', form: 'imperative' },
-    morph: { primary: 'przekształć', alternatives: ['przeksztalc'], normalized: 'morph', form: 'imperative' },
+    morph: {
+      primary: 'przekształć',
+      alternatives: ['przeksztalc'],
+      normalized: 'morph',
+      form: 'imperative',
+    },
     // Variable operations
-    set: { primary: 'ustaw', alternatives: ['określ', 'okresl'], normalized: 'set', form: 'imperative' },
-    get: { primary: 'pobierz', alternatives: ['weź', 'wez'], normalized: 'get', form: 'imperative' },
-    increment: { primary: 'zwiększ', alternatives: ['zwieksz'], normalized: 'increment', form: 'imperative' },
+    set: {
+      primary: 'ustaw',
+      alternatives: ['określ', 'okresl'],
+      normalized: 'set',
+      form: 'imperative',
+    },
+    get: {
+      primary: 'pobierz',
+      alternatives: ['weź', 'wez'],
+      normalized: 'get',
+      form: 'imperative',
+    },
+    increment: {
+      primary: 'zwiększ',
+      alternatives: ['zwieksz'],
+      normalized: 'increment',
+      form: 'imperative',
+    },
     decrement: { primary: 'zmniejsz', normalized: 'decrement', form: 'imperative' },
     log: { primary: 'loguj', alternatives: ['wypisz'], normalized: 'log', form: 'imperative' },
     // Visibility
-    show: { primary: 'pokaż', alternatives: ['pokaz', 'wyświetl', 'wyswietl'], normalized: 'show', form: 'imperative' },
+    show: {
+      primary: 'pokaż',
+      alternatives: ['pokaz', 'wyświetl', 'wyswietl'],
+      normalized: 'show',
+      form: 'imperative',
+    },
     hide: { primary: 'ukryj', alternatives: ['schowaj'], normalized: 'hide', form: 'imperative' },
-    transition: { primary: 'animuj', alternatives: ['przejście', 'przejscie'], normalized: 'transition', form: 'imperative' },
+    transition: {
+      primary: 'animuj',
+      alternatives: ['przejście', 'przejscie'],
+      normalized: 'transition',
+      form: 'imperative',
+    },
     // Events
     on: { primary: 'gdy', alternatives: ['kiedy', 'przy', 'na'], normalized: 'on' },
-    trigger: { primary: 'wywołaj', alternatives: ['wywolaj', 'wyzwól', 'wyzwol'], normalized: 'trigger', form: 'imperative' },
+    trigger: {
+      primary: 'wywołaj',
+      alternatives: ['wywolaj', 'wyzwól', 'wyzwol'],
+      normalized: 'trigger',
+      form: 'imperative',
+    },
     send: { primary: 'wyślij', alternatives: ['wyslij'], normalized: 'send', form: 'imperative' },
     // DOM focus
-    focus: { primary: 'skup', alternatives: ['skupienie'], normalized: 'focus', form: 'imperative' },
+    focus: {
+      primary: 'skup',
+      alternatives: ['skupienie'],
+      normalized: 'focus',
+      form: 'imperative',
+    },
     blur: { primary: 'rozmyj', alternatives: ['odskup'], normalized: 'blur', form: 'imperative' },
     // Navigation
-    go: { primary: 'idź', alternatives: ['idz', 'przejdź', 'przejdz', 'nawiguj'], normalized: 'go', form: 'imperative' },
+    go: {
+      primary: 'idź',
+      alternatives: ['idz', 'przejdź', 'przejdz', 'nawiguj'],
+      normalized: 'go',
+      form: 'imperative',
+    },
     // Async
     wait: { primary: 'czekaj', alternatives: ['poczekaj'], normalized: 'wait', form: 'imperative' },
-    fetch: { primary: 'pobierz', alternatives: ['załaduj', 'zaladuj'], normalized: 'fetch', form: 'imperative' },
+    fetch: {
+      primary: 'pobierz',
+      alternatives: ['załaduj', 'zaladuj'],
+      normalized: 'fetch',
+      form: 'imperative',
+    },
     settle: { primary: 'ustabilizuj', normalized: 'settle', form: 'imperative' },
     // Control flow
     if: { primary: 'jeśli', alternatives: ['jesli', 'jeżeli', 'jezeli'], normalized: 'if' },
     when: { primary: 'kiedy', normalized: 'when' },
     where: { primary: 'gdzie', normalized: 'where' },
     else: { primary: 'inaczej', alternatives: ['wpp'], normalized: 'else' },
-    repeat: { primary: 'powtórz', alternatives: ['powtorz'], normalized: 'repeat', form: 'imperative' },
+    repeat: {
+      primary: 'powtórz',
+      alternatives: ['powtorz'],
+      normalized: 'repeat',
+      form: 'imperative',
+    },
     for: { primary: 'dla', alternatives: ['każdy', 'kazdy'], normalized: 'for' },
     while: { primary: 'dopóki', alternatives: ['dopoki', 'podczas'], normalized: 'while' },
-    continue: { primary: 'kontynuuj', alternatives: ['dalej'], normalized: 'continue', form: 'imperative' },
-    halt: { primary: 'zatrzymaj', alternatives: ['przerwij', 'stop'], normalized: 'halt', form: 'imperative' },
+    continue: {
+      primary: 'kontynuuj',
+      alternatives: ['dalej'],
+      normalized: 'continue',
+      form: 'imperative',
+    },
+    halt: {
+      primary: 'zatrzymaj',
+      alternatives: ['przerwij', 'stop'],
+      normalized: 'halt',
+      form: 'imperative',
+    },
     throw: { primary: 'rzuć', alternatives: ['rzuc'], normalized: 'throw', form: 'imperative' },
     call: { primary: 'wywołaj', alternatives: ['wywolaj'], normalized: 'call', form: 'imperative' },
     return: { primary: 'zwróć', alternatives: ['zwroc'], normalized: 'return', form: 'imperative' },
-    then: { primary: 'wtedy', alternatives: ['potem', 'następnie', 'nastepnie'], normalized: 'then' },
+    then: {
+      primary: 'wtedy',
+      alternatives: ['potem', 'następnie', 'nastepnie'],
+      normalized: 'then',
+    },
     and: { primary: 'i', alternatives: ['oraz'], normalized: 'and' },
     end: { primary: 'koniec', normalized: 'end' },
     // Advanced

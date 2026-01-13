@@ -22,20 +22,14 @@ export {
   japaneseMorphologicalNormalizer,
 } from './japanese-normalizer';
 
-export {
-  KoreanMorphologicalNormalizer,
-  koreanMorphologicalNormalizer,
-} from './korean-normalizer';
+export { KoreanMorphologicalNormalizer, koreanMorphologicalNormalizer } from './korean-normalizer';
 
 export {
   SpanishMorphologicalNormalizer,
   spanishMorphologicalNormalizer,
 } from './spanish-normalizer';
 
-export {
-  ArabicMorphologicalNormalizer,
-  arabicMorphologicalNormalizer,
-} from './arabic-normalizer';
+export { ArabicMorphologicalNormalizer, arabicMorphologicalNormalizer } from './arabic-normalizer';
 
 export {
   TurkishMorphologicalNormalizer,
@@ -47,12 +41,6 @@ export {
   portugueseMorphologicalNormalizer,
 } from './portuguese-normalizer';
 
-export {
-  FrenchMorphologicalNormalizer,
-  frenchMorphologicalNormalizer,
-} from './french-normalizer';
+export { FrenchMorphologicalNormalizer, frenchMorphologicalNormalizer } from './french-normalizer';
 
-export {
-  GermanMorphologicalNormalizer,
-  germanMorphologicalNormalizer,
-} from './german-normalizer';
+export { GermanMorphologicalNormalizer, germanMorphologicalNormalizer } from './german-normalizer';

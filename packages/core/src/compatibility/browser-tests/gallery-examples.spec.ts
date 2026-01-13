@@ -49,10 +49,9 @@ test.describe('Gallery Examples', () => {
       await page.waitForTimeout(1000);
 
       // Filter out expected errors (like failed network requests)
-      const criticalErrors = errors.filter(e =>
-        !e.includes('net::') &&
-        !e.includes('Failed to load resource') &&
-        !e.includes('favicon')
+      const criticalErrors = errors.filter(
+        e =>
+          !e.includes('net::') && !e.includes('Failed to load resource') && !e.includes('favicon')
       );
 
       if (criticalErrors.length > 0) {

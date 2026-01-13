@@ -4,11 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Response, NextFunction } from 'express';
-import {
-  createUsageMiddleware,
-  getBufferedUsage,
-  forceFlush,
-} from './usage.js';
+import { createUsageMiddleware, getBufferedUsage, forceFlush } from './usage.js';
 import type { AuthenticatedRequest, ApiKeyRecord } from './auth.js';
 
 describe('Usage Tracking Middleware', () => {
@@ -172,10 +168,7 @@ describe('Usage Tracking Middleware', () => {
       res.json({
         success: false,
         compiled: {},
-        errors: [
-          { message: 'Error 1' },
-          { message: 'Error 2' },
-        ],
+        errors: [{ message: 'Error 1' }, { message: 'Error 2' }],
       });
 
       await vi.runAllTimersAsync();

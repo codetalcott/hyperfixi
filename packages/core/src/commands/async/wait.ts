@@ -15,11 +15,28 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { parseDurationStrict } from '../helpers/duration-parsing';
 import { waitForTime, waitForEvent } from '../helpers/event-waiting';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
-export interface WaitTimeInput { type: 'time'; milliseconds: number; }
-export interface WaitEventInput { type: 'event'; eventName: string; target?: EventTarget; destructure?: string[]; }
-export interface WaitRaceInput { type: 'race'; conditions: (WaitTimeInput | WaitEventInput)[]; }
+export interface WaitTimeInput {
+  type: 'time';
+  milliseconds: number;
+}
+export interface WaitEventInput {
+  type: 'event';
+  eventName: string;
+  target?: EventTarget;
+  destructure?: string[];
+}
+export interface WaitRaceInput {
+  type: 'race';
+  conditions: (WaitTimeInput | WaitEventInput)[];
+}
 export type WaitCommandInput = WaitTimeInput | WaitEventInput | WaitRaceInput;
 
 export interface WaitCommandOutput {
@@ -37,7 +54,12 @@ export interface WaitCommandOutput {
 @meta({
   description: 'Wait for time delay, event, or race condition',
   syntax: ['wait <time>', 'wait for <event>', 'wait for <event> or <condition>'],
-  examples: ['wait 2s', 'wait for click', 'wait for click or 1s', 'wait for mousemove(clientX, clientY)'],
+  examples: [
+    'wait 2s',
+    'wait for click',
+    'wait for click or 1s',
+    'wait for mousemove(clientX, clientY)',
+  ],
   sideEffects: ['time', 'event-listening'],
 })
 @command({ name: 'wait', category: 'async' })
@@ -53,7 +75,8 @@ export class WaitCommand implements DecoratedCommand {
     if (!raw.args?.length) throw new Error('wait command requires an argument');
 
     if (raw.modifiers.or) return this.parseRaceCondition(raw, evaluator, context);
-    if (raw.modifiers.for) return this.parseEventWait(raw.modifiers.for, raw.modifiers.from, evaluator, context);
+    if (raw.modifiers.for)
+      return this.parseEventWait(raw.modifiers.for, raw.modifiers.from, evaluator, context);
 
     const firstArg = raw.args[0] as any;
     if (firstArg.type === 'arrayLiteral' && firstArg.elements) {
@@ -63,7 +86,10 @@ export class WaitCommand implements DecoratedCommand {
     return this.parseTimeWait(raw.args[0], evaluator, context);
   }
 
-  async execute(input: WaitCommandInput, context: TypedExecutionContext): Promise<WaitCommandOutput> {
+  async execute(
+    input: WaitCommandInput,
+    context: TypedExecutionContext
+  ): Promise<WaitCommandOutput> {
     const startTime = Date.now();
 
     if (input.type === 'time') {
@@ -87,20 +113,37 @@ export class WaitCommand implements DecoratedCommand {
     // Race
     const { result, winningCondition } = await this.executeRace(input.conditions, context);
     Object.assign(context, { it: result });
-    if (result instanceof Event && winningCondition?.type === 'event' && winningCondition.destructure) {
+    if (
+      result instanceof Event &&
+      winningCondition?.type === 'event' &&
+      winningCondition.destructure
+    ) {
       for (const prop of winningCondition.destructure) {
         if (prop in result) context.locals.set(prop, (result as any)[prop]);
       }
     }
-    return { type: result instanceof Event ? 'event' : 'time', result, duration: Date.now() - startTime };
+    return {
+      type: result instanceof Event ? 'event' : 'time',
+      result,
+      duration: Date.now() - startTime,
+    };
   }
 
-  private async parseTimeWait(arg: ASTNode, evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<WaitTimeInput> {
+  private async parseTimeWait(
+    arg: ASTNode,
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<WaitTimeInput> {
     const value = await evaluator.evaluate(arg, context);
     return { type: 'time', milliseconds: parseDurationStrict(value) };
   }
 
-  private async parseEventWait(arg: ASTNode, fromMod: ASTNode | undefined, evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<WaitEventInput> {
+  private async parseEventWait(
+    arg: ASTNode,
+    fromMod: ASTNode | undefined,
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<WaitEventInput> {
     const value = await evaluator.evaluate(arg, context);
     if (typeof value !== 'string') throw new Error('wait for: event name must be a string');
 
@@ -120,7 +163,12 @@ export class WaitCommand implements DecoratedCommand {
     return { type: 'event', eventName, target, destructure };
   }
 
-  private async parseEventArrayWait(elements: ASTNode[], targetArg: ASTNode | undefined, evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<WaitEventInput | WaitRaceInput> {
+  private async parseEventArrayWait(
+    elements: ASTNode[],
+    targetArg: ASTNode | undefined,
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<WaitEventInput | WaitRaceInput> {
     const events: { name: string; params: string[] }[] = [];
     for (const el of elements) {
       const obj = el as any;
@@ -130,7 +178,8 @@ export class WaitCommand implements DecoratedCommand {
         for (const p of obj.properties) {
           const k = p.key?.name || p.key?.value;
           if (k === 'name' && p.value) name = p.value.value || '';
-          else if (k === 'args' && p.value?.elements) params = p.value.elements.map((e: any) => e.value || e.name || '');
+          else if (k === 'args' && p.value?.elements)
+            params = p.value.elements.map((e: any) => e.value || e.name || '');
         }
         if (name) events.push({ name, params });
       }
@@ -144,17 +193,36 @@ export class WaitCommand implements DecoratedCommand {
     if (!target) target = context.me ?? undefined;
 
     if (events.length === 1) {
-      return { type: 'event', eventName: events[0].name, target, destructure: events[0].params.length > 0 ? events[0].params : undefined };
+      return {
+        type: 'event',
+        eventName: events[0].name,
+        target,
+        destructure: events[0].params.length > 0 ? events[0].params : undefined,
+      };
     }
 
-    return { type: 'race', conditions: events.map(e => ({ type: 'event' as const, eventName: e.name, target, destructure: e.params.length > 0 ? e.params : undefined })) };
+    return {
+      type: 'race',
+      conditions: events.map(e => ({
+        type: 'event' as const,
+        eventName: e.name,
+        target,
+        destructure: e.params.length > 0 ? e.params : undefined,
+      })),
+    };
   }
 
-  private async parseRaceCondition(raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> }, evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<WaitRaceInput> {
+  private async parseRaceCondition(
+    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<WaitRaceInput> {
     const conditions: (WaitTimeInput | WaitEventInput)[] = [];
 
     if (raw.modifiers.for) {
-      conditions.push(await this.parseEventWait(raw.modifiers.for, raw.modifiers.from, evaluator, context));
+      conditions.push(
+        await this.parseEventWait(raw.modifiers.for, raw.modifiers.from, evaluator, context)
+      );
     } else if (raw.args[0]) {
       conditions.push(await this.parseTimeWait(raw.args[0], evaluator, context));
     }
@@ -168,9 +236,16 @@ export class WaitCommand implements DecoratedCommand {
       } catch {
         if (typeof v === 'string') {
           const match = v.match(/^(\w+)\(([^)]+)\)$/);
-          conditions.push(match
-            ? { type: 'event', eventName: match[1], target: context.me ?? undefined, destructure: match[2].split(',').map(s => s.trim()) }
-            : { type: 'event', eventName: v, target: context.me ?? undefined });
+          conditions.push(
+            match
+              ? {
+                  type: 'event',
+                  eventName: match[1],
+                  target: context.me ?? undefined,
+                  destructure: match[2].split(',').map(s => s.trim()),
+                }
+              : { type: 'event', eventName: v, target: context.me ?? undefined }
+          );
         }
       }
     }
@@ -179,13 +254,22 @@ export class WaitCommand implements DecoratedCommand {
     return { type: 'race', conditions };
   }
 
-  private async executeRace(conditions: (WaitTimeInput | WaitEventInput)[], context: TypedExecutionContext): Promise<{ result: Event | number; winningCondition: WaitTimeInput | WaitEventInput | null }> {
+  private async executeRace(
+    conditions: (WaitTimeInput | WaitEventInput)[],
+    context: TypedExecutionContext
+  ): Promise<{ result: Event | number; winningCondition: WaitTimeInput | WaitEventInput | null }> {
     const promises = conditions.map(c => {
       if (c.type === 'time') {
-        return waitForTime(c.milliseconds).then(() => ({ result: c.milliseconds as number, winningCondition: c }));
+        return waitForTime(c.milliseconds).then(() => ({
+          result: c.milliseconds as number,
+          winningCondition: c,
+        }));
       }
       const target = c.target ?? context.me ?? document;
-      return waitForEvent(target, c.eventName).then(res => ({ result: res.event as Event, winningCondition: c }));
+      return waitForEvent(target, c.eventName).then(res => ({
+        result: res.event as Event,
+        winningCondition: c,
+      }));
     });
     return Promise.race(promises);
   }

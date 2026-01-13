@@ -190,26 +190,34 @@ export function createKeywordProvider(
 
     isModifier(token: string): boolean {
       const normalized = token.toLowerCase();
-      return reverseModifiers.has(normalized) ||
-        (allowEnglishFallback && ENGLISH_MODIFIERS.has(normalized));
+      return (
+        reverseModifiers.has(normalized) ||
+        (allowEnglishFallback && ENGLISH_MODIFIERS.has(normalized))
+      );
     },
 
     isLogical(token: string): boolean {
       const normalized = token.toLowerCase();
-      return reverseLogical.has(normalized) ||
-        (allowEnglishFallback && ENGLISH_LOGICAL_KEYWORDS.has(normalized));
+      return (
+        reverseLogical.has(normalized) ||
+        (allowEnglishFallback && ENGLISH_LOGICAL_KEYWORDS.has(normalized))
+      );
     },
 
     isValue(token: string): boolean {
       const normalized = token.toLowerCase();
-      return reverseValues.has(normalized) ||
-        (allowEnglishFallback && ENGLISH_VALUE_KEYWORDS.has(normalized));
+      return (
+        reverseValues.has(normalized) ||
+        (allowEnglishFallback && ENGLISH_VALUE_KEYWORDS.has(normalized))
+      );
     },
 
     isExpression(token: string): boolean {
       const normalized = token.toLowerCase();
-      return reverseExpressions.has(normalized) ||
-        (allowEnglishFallback && ENGLISH_EXPRESSION_KEYWORDS.has(normalized));
+      return (
+        reverseExpressions.has(normalized) ||
+        (allowEnglishFallback && ENGLISH_EXPRESSION_KEYWORDS.has(normalized))
+      );
     },
 
     getCommands(): string[] {
@@ -236,7 +244,11 @@ export function createEnglishProvider(): KeywordProvider {
 
     resolve(token: string): string | undefined {
       const normalized = token.toLowerCase();
-      if (ENGLISH_COMMANDS.has(normalized) || ENGLISH_KEYWORDS.has(normalized) || UNIVERSAL_ENGLISH_KEYWORDS.has(normalized)) {
+      if (
+        ENGLISH_COMMANDS.has(normalized) ||
+        ENGLISH_KEYWORDS.has(normalized) ||
+        UNIVERSAL_ENGLISH_KEYWORDS.has(normalized)
+      ) {
         return normalized;
       }
       return undefined;

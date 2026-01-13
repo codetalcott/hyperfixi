@@ -61,8 +61,6 @@ export class LambdaExpression implements BaseTypedExpression<Function> {
     dependencies: ['context'],
   };
 
-  
-
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
@@ -215,8 +213,6 @@ export class PromiseExpression implements BaseTypedExpression<Promise<unknown>> 
     complexity: 'medium',
   };
 
-  
-
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
@@ -348,8 +344,6 @@ export class AwaitExpression implements BaseTypedExpression<unknown> {
     complexity: 'medium',
   };
 
-  
-
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
@@ -429,8 +423,6 @@ export class ErrorExpression implements BaseTypedExpression<Error> {
     category: 'Special',
     complexity: 'simple',
   };
-
-  
 
   validate(input: unknown): ValidationResult {
     try {
@@ -514,8 +506,6 @@ export class TypeofExpression implements BaseTypedExpression<string> {
     category: 'Special',
     complexity: 'simple',
   };
-
-  
 
   validate(input: unknown): ValidationResult {
     try {

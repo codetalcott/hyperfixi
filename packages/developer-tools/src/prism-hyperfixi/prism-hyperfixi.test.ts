@@ -10,11 +10,7 @@ import {
   getSupportedLanguages,
   isLanguageSupported,
 } from './pattern-generator';
-import {
-  detectLanguage,
-  isValidLanguage,
-  getHighlightLanguage,
-} from './language-detector';
+import { detectLanguage, isValidLanguage, getHighlightLanguage } from './language-detector';
 import {
   isNonLatinLanguage,
   getTextDirection,
@@ -96,7 +92,7 @@ describe('Pattern Generator', () => {
       const keywords = getAllKeywords('es');
 
       expect(keywords).toContain('alternar'); // toggle
-      expect(keywords).toContain('agregar');  // add
+      expect(keywords).toContain('agregar'); // add
       expect(keywords.length).toBeGreaterThan(10);
     });
 

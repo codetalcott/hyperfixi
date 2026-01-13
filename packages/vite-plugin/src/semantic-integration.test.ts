@@ -161,7 +161,9 @@ describe('getSemanticExports', () => {
     const config = {
       enabled: false,
       bundleType: null,
-      languages: new Set<'en' | 'es' | 'pt' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'ar' | 'tr' | 'id' | 'sw' | 'qu'>(),
+      languages: new Set<
+        'en' | 'es' | 'pt' | 'fr' | 'de' | 'ja' | 'zh' | 'ko' | 'ar' | 'tr' | 'id' | 'sw' | 'qu'
+      >(),
       grammarEnabled: false,
     };
     expect(getSemanticExports(config)).toEqual([]);

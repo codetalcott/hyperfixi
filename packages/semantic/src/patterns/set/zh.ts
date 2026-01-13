@@ -21,7 +21,11 @@ export function getSetPatternsZh(): LanguagePattern[] {
         format: '设置 {destination} 为 {patient}',
         tokens: [
           { type: 'literal', value: '设置', alternatives: ['設置', '设定', '設定'] },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '为', alternatives: ['為', '到', '成'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
@@ -40,7 +44,11 @@ export function getSetPatternsZh(): LanguagePattern[] {
         format: '把 {destination} 设置为 {patient}',
         tokens: [
           { type: 'literal', value: '把' },
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '设置为', alternatives: ['設置為', '设定为', '設定為'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
@@ -58,7 +66,11 @@ export function getSetPatternsZh(): LanguagePattern[] {
       template: {
         format: '{destination} = {patient}',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

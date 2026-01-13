@@ -22,8 +22,15 @@
 import hybridComplete from './browser-bundle-hybrid-complete.js';
 
 // Import htmx compatibility layer
-import { HtmxAttributeProcessor, type HtmxProcessorOptions } from '../htmx/htmx-attribute-processor.js';
-import { translateToHyperscript, hasHtmxAttributes, type HtmxConfig } from '../htmx/htmx-translator.js';
+import {
+  HtmxAttributeProcessor,
+  type HtmxProcessorOptions,
+} from '../htmx/htmx-attribute-processor.js';
+import {
+  translateToHyperscript,
+  hasHtmxAttributes,
+  type HtmxConfig,
+} from '../htmx/htmx-translator.js';
 
 // ============== HTMX COMPATIBILITY ==============
 
@@ -119,10 +126,20 @@ const api = {
 
   // All supported htmx attributes
   htmxAttributes: [
-    'hx-get', 'hx-post', 'hx-put', 'hx-patch', 'hx-delete',
-    'hx-target', 'hx-swap', 'hx-trigger', 'hx-confirm',
-    'hx-boost', 'hx-vals', 'hx-headers',
-    'hx-push-url', 'hx-replace-url',
+    'hx-get',
+    'hx-post',
+    'hx-put',
+    'hx-patch',
+    'hx-delete',
+    'hx-target',
+    'hx-swap',
+    'hx-trigger',
+    'hx-confirm',
+    'hx-boost',
+    'hx-vals',
+    'hx-headers',
+    'hx-push-url',
+    'hx-replace-url',
     'hx-on:*',
   ],
 };

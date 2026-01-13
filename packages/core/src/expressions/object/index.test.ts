@@ -63,9 +63,7 @@ describe('Enhanced Object Expression', () => {
 
     // Aspirational: validation currently rejects non-string keys, tests expect acceptance
     test.skip('accepts non-string static key (aspirational permissive validation)', async () => {
-      const result = await objectExpression.validate!([
-        createField(123, 'value', false),
-      ]);
+      const result = await objectExpression.validate!([createField(123, 'value', false)]);
       expect(result.isValid).toBe(true);
     });
   });

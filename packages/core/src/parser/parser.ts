@@ -21,10 +21,7 @@ import type { ParseError as LocalParseError, KeywordResolver, ParserOptions } fr
 import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
 // Note: isDebugEnabled is used in semantic-integration.ts for debug event emission
-import {
-  SemanticIntegrationAdapter,
-  DEFAULT_CONFIDENCE_THRESHOLD,
-} from './semantic-integration';
+import { SemanticIntegrationAdapter, DEFAULT_CONFIDENCE_THRESHOLD } from './semantic-integration';
 
 // Phase 1 Refactoring: Import new helper modules
 import {
@@ -138,7 +135,7 @@ export class Parser {
     // Store original input for commands that need raw code (js...end, etc.)
     // Also used for semantic analysis if adapter is present
     // Fallback to reconstructing from tokens if not provided
-    this.originalInput = originalInput || tokens.map((t) => t.value).join(' ');
+    this.originalInput = originalInput || tokens.map(t => t.value).join(' ');
   }
 
   /**
@@ -486,7 +483,18 @@ export class Parser {
 
     while (
       this.matchComparisonOperator() ||
-      this.match('is', 'match', 'matches', 'contains', 'include', 'includes', 'in', 'of', 'as', 'really')
+      this.match(
+        'is',
+        'match',
+        'matches',
+        'contains',
+        'include',
+        'includes',
+        'in',
+        'of',
+        'as',
+        'really'
+      )
     ) {
       const operator = this.previous().value;
 
@@ -690,10 +698,7 @@ export class Parser {
             break;
           }
         }
-      } else if (
-        expr.type === 'literal' &&
-        (this.checkNumber() || this.checkIdentifier())
-      ) {
+      } else if (expr.type === 'literal' && (this.checkNumber() || this.checkIdentifier())) {
         // Detect missing operator between literals/numbers like "5 3" or "123abc"
         const nextToken = this.peek();
         this.addError(
@@ -1096,7 +1101,9 @@ export class Parser {
         expr = this.finishCall(expr);
       } else if (this.match('.')) {
         // Phase 8: Use predicate-based consume
-        const name = this.consumeIdentifier("Expected property name after '.' - malformed member access");
+        const name = this.consumeIdentifier(
+          "Expected property name after '.' - malformed member access"
+        );
         expr = this.createMemberExpression(expr, this.createIdentifier(name.value), false);
       } else if (this.match('[')) {
         const index = this.parseExpression();
@@ -1112,7 +1119,9 @@ export class Parser {
           // Consume the * operator
           this.advance();
           // Get the property name after * - Phase 8: Use predicate-based consume
-          const propertyToken = this.consumeIdentifier('Expected property name after * in CSS property syntax');
+          const propertyToken = this.consumeIdentifier(
+            'Expected property name after * in CSS property syntax'
+          );
           // Combine * with property name
           propertyName = '*' + propertyToken.value;
         } else {
@@ -1598,13 +1607,13 @@ export class Parser {
       // Create value node - if it has ${} syntax, make it a template literal
       const value: ASTNode = hasTemplateExpression
         ? {
-          type: 'templateLiteral',
-          value: valueString,
-          start: pos.start,
-          end: this.getPosition().end,
-          line: pos.line,
-          column: pos.column,
-        }
+            type: 'templateLiteral',
+            value: valueString,
+            start: pos.start,
+            end: this.getPosition().end,
+            line: pos.line,
+            column: pos.column,
+          }
         : this.createLiteral(valueString, valueString);
 
       properties.push({ key, value });
@@ -1883,7 +1892,9 @@ export class Parser {
     if (this.match('from')) {
       const targetToken = this.advance();
       target = targetToken.value;
-      debug.parse(`🔧 parseEventHandler: Parsed 'from' target: ${target} (kind: ${targetToken.kind})`);
+      debug.parse(
+        `🔧 parseEventHandler: Parsed 'from' target: ${target} (kind: ${targetToken.kind})`
+      );
     }
 
     // Optional: handle "of attribute" for mutation events
@@ -1937,9 +1948,7 @@ export class Parser {
 
       // Stop parsing commands if we encounter 'end' (for top-level event handlers)
       if (this.check('end')) {
-        debug.parse(
-          `✅ parseEventHandler: Stopping command parsing, found 'end' keyword`
-        );
+        debug.parse(`✅ parseEventHandler: Stopping command parsing, found 'end' keyword`);
         this.advance(); // consume the 'end' keyword
         break;
       }
@@ -2053,15 +2062,15 @@ export class Parser {
                       },
                       ...(preposition
                         ? [
-                          {
-                            key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                            value: {
-                              type: 'literal',
-                              value: preposition,
-                              raw: `"${preposition}"`,
-                            } as LiteralNode,
-                          },
-                        ]
+                            {
+                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
+                              value: {
+                                type: 'literal',
+                                value: preposition,
+                                raw: `"${preposition}"`,
+                              } as LiteralNode,
+                            },
+                          ]
                         : []),
                       {
                         key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
@@ -2257,15 +2266,15 @@ export class Parser {
                       },
                       ...(preposition
                         ? [
-                          {
-                            key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                            value: {
-                              type: 'literal',
-                              value: preposition,
-                              raw: `"${preposition}"`,
-                            } as LiteralNode,
-                          },
-                        ]
+                            {
+                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
+                              value: {
+                                type: 'literal',
+                                value: preposition,
+                                raw: `"${preposition}"`,
+                              } as LiteralNode,
+                            },
+                          ]
                         : []),
                       {
                         key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
@@ -2375,7 +2384,9 @@ export class Parser {
       column: pos.column,
     };
 
-    debug.parse(`🔧 parseEventHandler: Created node with events: ${eventNames.join(', ')}, attributeName: ${attributeName || 'none'}, watchTarget: ${watchTarget ? 'yes' : 'none'}`);
+    debug.parse(
+      `🔧 parseEventHandler: Created node with events: ${eventNames.join(', ')}, attributeName: ${attributeName || 'none'}, watchTarget: ${watchTarget ? 'yes' : 'none'}`
+    );
     return node;
   }
 
@@ -2607,7 +2618,7 @@ export class Parser {
         if (this.error && this.error !== savedError) {
           // Only treat unclosed parentheses as critical (not 'Expected end' which can be false positive)
           const isCriticalError =
-            this.error.message.includes("Expected closing parenthesis") ||
+            this.error.message.includes('Expected closing parenthesis') ||
             this.error.message.includes("Expected ')'") ||
             this.error.message.includes('unclosed parenthes') ||
             this.error.message.includes('Unclosed parenthes');
@@ -2851,7 +2862,7 @@ export class Parser {
       'exit',
       'closest',
       // Body-based commands that require traditional parsing:
-      'js',   // js ... end with body content
+      'js', // js ... end with body content
       'tell', // tell <target> <commands> with body
       // ✅ 'call'/'get' now supported via parseExpressionString() in SemanticIntegrationAdapter
       // which properly handles method calls like me.insertBefore(a, b)
@@ -3179,7 +3190,9 @@ export class Parser {
       // Standard JavaScript property access: my className, its value, your name
       // Phase 8: Use predicate-based consume
       const contextLabels = { me: 'my', it: 'its', you: 'your' };
-      const property = this.consumeIdentifier(`Expected property name after '${contextLabels[contextVar]}'`);
+      const property = this.consumeIdentifier(
+        `Expected property name after '${contextLabels[contextVar]}'`
+      );
       return this.createMemberExpression(
         this.createIdentifier(contextVar),
         this.createIdentifier(property.value),
@@ -3214,7 +3227,7 @@ export class Parser {
       if (CommandClassification.isCSSFunction(funcName)) {
         debug.parse(
           `💡 Tip: CSS functions like ${funcName}() should be quoted for clean parsing. ` +
-          `Use '${funcName}(...)' or \`${funcName}(...)\` instead.`
+            `Use '${funcName}(...)' or \`${funcName}(...)\` instead.`
         );
       }
     }

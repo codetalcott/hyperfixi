@@ -72,11 +72,7 @@ describe('LogCommand (Standalone V2)', () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
-      const input = await command.parseInput(
-        { args: [], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       expect(input.values).toEqual([]);
     });
@@ -88,7 +84,7 @@ describe('LogCommand (Standalone V2)', () => {
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        { args: [{ type: 'literal', value:'Hello World' }], modifiers: {} },
+        { args: [{ type: 'literal', value: 'Hello World' }], modifiers: {} },
         evaluator,
         context
       );
@@ -103,7 +99,7 @@ describe('LogCommand (Standalone V2)', () => {
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        { args: [{ type: 'literal', value:42 }], modifiers: {} },
+        { args: [{ type: 'literal', value: 42 }], modifiers: {} },
         evaluator,
         context
       );
@@ -122,9 +118,9 @@ describe('LogCommand (Standalone V2)', () => {
       const input = await command.parseInput(
         {
           args: [
-            { type: 'literal', value:'Result:' },
-            { type: 'literal', value:42 },
-            { type: 'literal', value:true },
+            { type: 'literal', value: 'Result:' },
+            { type: 'literal', value: 42 },
+            { type: 'literal', value: true },
           ],
           modifiers: {},
         },
@@ -143,7 +139,7 @@ describe('LogCommand (Standalone V2)', () => {
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        { args: [{ type: 'literal', value:obj }], modifiers: {} },
+        { args: [{ type: 'literal', value: obj }], modifiers: {} },
         evaluator,
         context
       );
@@ -160,7 +156,7 @@ describe('LogCommand (Standalone V2)', () => {
       } as unknown as import('../../../core/expression-evaluator').ExpressionEvaluator;
 
       const input = await command.parseInput(
-        { args: [{ type: 'literal', value:arr }], modifiers: {} },
+        { args: [{ type: 'literal', value: arr }], modifiers: {} },
         evaluator,
         context
       );
@@ -179,7 +175,10 @@ describe('LogCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ type: 'literal', value:null }, { type: 'literal', value:undefined }],
+          args: [
+            { type: 'literal', value: null },
+            { type: 'literal', value: undefined },
+          ],
           modifiers: {},
         },
         evaluator,
@@ -333,7 +332,7 @@ describe('LogCommand (Standalone V2)', () => {
 
       // Parse input
       const input = await command.parseInput(
-        { args: [{ type: 'literal', value:'Test Message' }], modifiers: {} },
+        { args: [{ type: 'literal', value: 'Test Message' }], modifiers: {} },
         evaluator,
         context
       );
@@ -364,10 +363,10 @@ describe('LogCommand (Standalone V2)', () => {
       const input = await command.parseInput(
         {
           args: [
-            { type: 'literal', value:'X:' },
-            { type: 'literal', value:100 },
-            { type: 'literal', value:'Y:' },
-            { type: 'literal', value:200 },
+            { type: 'literal', value: 'X:' },
+            { type: 'literal', value: 100 },
+            { type: 'literal', value: 'Y:' },
+            { type: 'literal', value: 200 },
           ],
           modifiers: {},
         },
@@ -394,11 +393,7 @@ describe('LogCommand (Standalone V2)', () => {
       const evaluator = createMockEvaluator();
 
       // Parse input (no args)
-      const input = await command.parseInput(
-        { args: [], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Validate
       expect(command.validate(input)).toBe(true);

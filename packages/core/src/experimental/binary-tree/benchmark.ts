@@ -344,7 +344,9 @@ export function runBenchmarks(iterations = 1000): BenchmarkSuite {
     ...benchmarkSingleFieldAccess(complexAST, iterations),
     name: 'Single Field Access (Complex AST)',
   });
-  results.push(benchmarkNestedFieldAccess(complexAST, ['body', 0, 'type'] as unknown as string[], iterations));
+  results.push(
+    benchmarkNestedFieldAccess(complexAST, ['body', 0, 'type'] as unknown as string[], iterations)
+  );
 
   // Large AST benchmarks
   const largeAST = generateLargeAST(100);
@@ -394,10 +396,15 @@ export function formatBenchmarkResults(suite: BenchmarkSuite): string {
   lines.push(
     `${'Test'.padEnd(40)} | ${'JSON'.padStart(10)} | ${'Binary'.padStart(10)} | ${'Speedup'.padStart(8)} | ${'Size Ratio'.padStart(10)}`
   );
-  lines.push(`${'-'.repeat(40)}-+-${'-'.repeat(10)}-+-${'-'.repeat(10)}-+-${'-'.repeat(8)}-+-${'-'.repeat(10)}`);
+  lines.push(
+    `${'-'.repeat(40)}-+-${'-'.repeat(10)}-+-${'-'.repeat(10)}-+-${'-'.repeat(8)}-+-${'-'.repeat(10)}`
+  );
 
   for (const result of suite.results) {
-    const speedupStr = result.speedup >= 1 ? `${result.speedup.toFixed(2)}x` : `${(1 / result.speedup).toFixed(2)}x slower`;
+    const speedupStr =
+      result.speedup >= 1
+        ? `${result.speedup.toFixed(2)}x`
+        : `${(1 / result.speedup).toFixed(2)}x slower`;
 
     lines.push(
       `${result.name.padEnd(40)} | ${result.jsonTime.toFixed(2).padStart(7)}ms | ${result.binaryTime.toFixed(2).padStart(7)}ms | ${speedupStr.padStart(8)} | ${result.sizeRatio.toFixed(2).padStart(10)}`

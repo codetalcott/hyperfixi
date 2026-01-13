@@ -74,12 +74,18 @@ describe('Scanner', () => {
 
   describe('block detection', () => {
     it('detects if block', () => {
-      const usage = scanner.scan('<button _="on click if me has .active then remove .active">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click if me has .active then remove .active">',
+        'test.html'
+      );
       expect(usage.blocks.has('if')).toBe(true);
     });
 
     it('detects unless block (uses if block)', () => {
-      const usage = scanner.scan('<button _="on click unless me has .disabled add .active">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click unless me has .disabled add .active">',
+        'test.html'
+      );
       expect(usage.blocks.has('if')).toBe(true);
     });
 
@@ -89,17 +95,26 @@ describe('Scanner', () => {
     });
 
     it('detects repeat block with local variable', () => {
-      const usage = scanner.scan('<button _="on click repeat :count times add .pulse">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click repeat :count times add .pulse">',
+        'test.html'
+      );
       expect(usage.blocks.has('repeat')).toBe(true);
     });
 
     it('detects repeat block with global variable', () => {
-      const usage = scanner.scan('<button _="on click repeat $count times add .pulse">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click repeat $count times add .pulse">',
+        'test.html'
+      );
       expect(usage.blocks.has('repeat')).toBe(true);
     });
 
     it('detects repeat block with identifier', () => {
-      const usage = scanner.scan('<button _="on click repeat count times add .pulse">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click repeat count times add .pulse">',
+        'test.html'
+      );
       expect(usage.blocks.has('repeat')).toBe(true);
     });
 
@@ -146,17 +161,26 @@ describe('Scanner', () => {
     });
 
     it('detects next', () => {
-      const usage = scanner.scan('<button _="on click add .active to next <button/>">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click add .active to next <button/>">',
+        'test.html'
+      );
       expect(usage.positional).toBe(true);
     });
 
     it('detects previous', () => {
-      const usage = scanner.scan('<button _="on click add .active to previous <button/>">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click add .active to previous <button/>">',
+        'test.html'
+      );
       expect(usage.positional).toBe(true);
     });
 
     it('detects closest', () => {
-      const usage = scanner.scan('<button _="on click toggle .open on closest .card">', 'test.html');
+      const usage = scanner.scan(
+        '<button _="on click toggle .open on closest .card">',
+        'test.html'
+      );
       expect(usage.positional).toBe(true);
     });
 
@@ -171,7 +195,10 @@ describe('Scanner', () => {
       expect(usage.positional).toBe(false);
 
       // 'unfirst' also shouldn't match 'first' at word boundary
-      const usage2 = scanner.scan('<button _="on click put \'unfirst\' into #output">', 'test.html');
+      const usage2 = scanner.scan(
+        '<button _="on click put \'unfirst\' into #output">',
+        'test.html'
+      );
       expect(usage2.positional).toBe(false);
 
       // But 'first item' SHOULD match at word boundary

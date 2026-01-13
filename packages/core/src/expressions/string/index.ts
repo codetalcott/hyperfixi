@@ -20,9 +20,7 @@ import type {
 /**
  * Enhanced string interpolation expression with comprehensive variable substitution
  */
-export class StringInterpolationExpression
-  implements TypedExpressionImplementation<string>
-{
+export class StringInterpolationExpression implements TypedExpressionImplementation<string> {
   public readonly name = 'string-interpolation';
   public readonly category = 'string' as const;
   public readonly precedence = 1;
@@ -35,8 +33,6 @@ export class StringInterpolationExpression
     complexity: 'O(n)' as const,
     dependencies: ['context-variables'],
   };
-
-  
 
   async evaluate(
     context: TypedExecutionContext,
@@ -136,9 +132,7 @@ export class StringInterpolationExpression
 /**
  * Enhanced string concatenation with type coercion
  */
-export class StringConcatenationExpression
-  implements TypedExpressionImplementation<string>
-{
+export class StringConcatenationExpression implements TypedExpressionImplementation<string> {
   public readonly name = 'string-concat';
   public readonly category = 'string' as const;
   public readonly precedence = 6;
@@ -151,8 +145,6 @@ export class StringConcatenationExpression
     complexity: 'O(n)' as const,
     dependencies: [],
   };
-
-  
 
   async evaluate(
     _context: TypedExecutionContext,
@@ -212,8 +204,6 @@ export class StringLengthExpression implements TypedExpressionImplementation<num
     complexity: 'O(1)' as const,
     dependencies: [],
   };
-
-  
 
   async evaluate(
     _context: TypedExecutionContext,

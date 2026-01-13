@@ -22,10 +22,14 @@ export function getGetPatternsUk(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'отримати', alternatives: ['отримай', 'взяти', 'візьми'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'з', alternatives: ['від', 'із'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'з', alternatives: ['від', 'із'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {

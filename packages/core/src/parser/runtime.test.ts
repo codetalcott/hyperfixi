@@ -162,7 +162,7 @@ describe('Hyperscript Runtime Evaluator', () => {
         type: 'unknown' as 'Literal',
         position: { start: 0, end: 0, line: 1, column: 1 },
         value: null,
-        raw: 'null'
+        raw: 'null',
       };
 
       await expect(evaluateAST(invalidNode, context)).rejects.toThrow();

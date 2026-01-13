@@ -293,7 +293,7 @@ describe('KeywordProvider Integration', () => {
     it('should resolve Korean logical operators', () => {
       expect(koKeywords.resolve('그리고')).toBe('and');
       expect(koKeywords.resolve('또는')).toBe('or');
-      expect(koKeywords.resolve('아니')).toBe('not');  // dictionary uses '아니'
+      expect(koKeywords.resolve('아니')).toBe('not'); // dictionary uses '아니'
       expect(koKeywords.resolve('그러면')).toBe('then');
       // Note: '아니면' is used for both 'unless' (command) and 'else' (logical)
       // Both commands and logical have priority=true, so logical overwrites commands
@@ -312,7 +312,7 @@ describe('KeywordProvider Integration', () => {
 
     it('should handle Hangul script correctly', () => {
       // Korean uses syllabic blocks (Hangul)
-      expect(koKeywords.resolve('에')).toBe('on');  // commands.on has priority
+      expect(koKeywords.resolve('에')).toBe('on'); // commands.on has priority
       expect(koKeywords.resolve('토글')).toBe('toggle');
       // Verify round-trip
       expect(koKeywords.toLocale('toggle')).toBe('토글');
@@ -331,7 +331,7 @@ describe('KeywordProvider Integration', () => {
 
     it('should resolve Chinese modifiers', () => {
       expect(zhKeywords.resolve('到')).toBe('to');
-      expect(zhKeywords.resolve('与')).toBe('with');  // dictionary uses '与' not '用'
+      expect(zhKeywords.resolve('与')).toBe('with'); // dictionary uses '与' not '用'
     });
 
     it('should resolve Chinese logical operators', () => {
@@ -384,7 +384,7 @@ describe('KeywordProvider Integration', () => {
       expect(trKeywords.resolve('ve')).toBe('and');
       expect(trKeywords.resolve('veya')).toBe('or');
       expect(trKeywords.resolve('değil')).toBe('not');
-      expect(trKeywords.resolve('sonra')).toBe('then');  // dictionary uses 'sonra'
+      expect(trKeywords.resolve('sonra')).toBe('then'); // dictionary uses 'sonra'
       expect(trKeywords.resolve('yoksa')).toBe('else');
     });
 

@@ -20,10 +20,7 @@ import {
   resolveElements as resolveElementsHelper,
   resolvePossessive,
 } from '../helpers/element-resolution';
-import {
-  setElementProperty,
-  isPlainObject,
-} from '../helpers/element-property-access';
+import { setElementProperty, isPlainObject } from '../helpers/element-property-access';
 import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulation';
 import { isAttributeSyntax } from '../helpers/attribute-manipulation';
 import {
@@ -31,7 +28,13 @@ import {
   resolveAnyPropertyTarget,
   resolvePropertyTargetFromString,
 } from '../helpers/property-target';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
@@ -72,15 +75,29 @@ export class SetCommand implements DecoratedCommand {
     const argName = (firstArg?.name || firstArg?.value) as string | undefined;
 
     // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
-    const propertyTarget = await resolveAnyPropertyTarget(firstArg as import('../../types/base-types').ASTNode, evaluator, context);
+    const propertyTarget = await resolveAnyPropertyTarget(
+      firstArg as import('../../types/base-types').ASTNode,
+      evaluator,
+      context
+    );
     if (propertyTarget) {
       const value = await this.extractValue(raw, evaluator, context);
       // Handle CSS style properties (*opacity syntax)
       if (propertyTarget.property.startsWith('*')) {
         const styleProp = propertyTarget.property.substring(1);
-        return { type: 'style', element: propertyTarget.element, property: styleProp, value: String(value) };
+        return {
+          type: 'style',
+          element: propertyTarget.element,
+          property: styleProp,
+          value: String(value),
+        };
       }
-      return { type: 'property', element: propertyTarget.element, property: propertyTarget.property, value };
+      return {
+        type: 'property',
+        element: propertyTarget.element,
+        property: propertyTarget.property,
+        value,
+      };
     }
 
     // Handle memberExpression: "set my innerHTML to X"
@@ -91,10 +108,16 @@ export class SetCommand implements DecoratedCommand {
 
     // Get first value (identifier/variable nodes use name directly, others evaluated)
     let firstValue: unknown;
-    if ((firstArg?.type === 'identifier' || firstArg?.type === 'variable') && typeof argName === 'string') {
+    if (
+      (firstArg?.type === 'identifier' || firstArg?.type === 'variable') &&
+      typeof argName === 'string'
+    ) {
       firstValue = argName;
     } else {
-      firstValue = await evaluator.evaluate(firstArg as import('../../types/base-types').ASTNode, context);
+      firstValue = await evaluator.evaluate(
+        firstArg as import('../../types/base-types').ASTNode,
+        context
+      );
     }
 
     // Object literal: set { x: 1, y: 2 } on element
@@ -193,7 +216,11 @@ export class SetCommand implements DecoratedCommand {
           }
         }
         Object.assign(context, { it: input.properties });
-        return { target: input.targets[0] || 'unknown', value: input.properties, targetType: 'property' };
+        return {
+          target: input.targets[0] || 'unknown',
+          value: input.properties,
+          targetType: 'property',
+        };
 
       default:
         throw new Error(`Unknown input type: ${(input as { type: string }).type}`);
@@ -263,7 +290,10 @@ export class SetCommand implements DecoratedCommand {
   ): Promise<HTMLElement[]> {
     if (!onModifier) return resolveElementsHelper(undefined, context);
     const evaluated = await evaluator.evaluate(onModifier, context);
-    return resolveElementsHelper(evaluated as string | HTMLElement | HTMLElement[] | NodeList | undefined, context);
+    return resolveElementsHelper(
+      evaluated as string | HTMLElement | HTMLElement[] | NodeList | undefined,
+      context
+    );
   }
 
   private async parseTheXofY(
@@ -290,12 +320,28 @@ export class SetCommand implements DecoratedCommand {
     const validTypes = ['variable', 'attribute', 'property', 'style', 'object-literal'];
     if (!validTypes.includes(obj.type)) return false;
     switch (obj.type) {
-      case 'variable': return typeof obj.name === 'string' && 'value' in obj;
-      case 'attribute': return typeof obj.name === 'string' && isHTMLElement(obj.element) && 'value' in obj;
-      case 'property': return typeof obj.property === 'string' && isHTMLElement(obj.element) && 'value' in obj;
-      case 'style': return typeof obj.property === 'string' && obj.property !== '' && isHTMLElement(obj.element) && typeof obj.value === 'string';
-      case 'object-literal': return obj.properties !== null && typeof obj.properties === 'object' && Array.isArray(obj.targets) && obj.targets.length > 0;
-      default: return false;
+      case 'variable':
+        return typeof obj.name === 'string' && 'value' in obj;
+      case 'attribute':
+        return typeof obj.name === 'string' && isHTMLElement(obj.element) && 'value' in obj;
+      case 'property':
+        return typeof obj.property === 'string' && isHTMLElement(obj.element) && 'value' in obj;
+      case 'style':
+        return (
+          typeof obj.property === 'string' &&
+          obj.property !== '' &&
+          isHTMLElement(obj.element) &&
+          typeof obj.value === 'string'
+        );
+      case 'object-literal':
+        return (
+          obj.properties !== null &&
+          typeof obj.properties === 'object' &&
+          Array.isArray(obj.targets) &&
+          obj.targets.length > 0
+        );
+      default:
+        return false;
     }
   }
 }

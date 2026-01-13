@@ -54,9 +54,9 @@ export type ObjectLiteralInput = any; // Inferred from RuntimeValidator
  * Enhanced object literal expression for object creation
  * Provides comprehensive object literal creation with dynamic field names and type safety
  */
-export class ObjectLiteralExpression
-  implements TypedExpressionImplementation<Record<string, HyperScriptValue>>
-{
+export class ObjectLiteralExpression implements TypedExpressionImplementation<
+  Record<string, HyperScriptValue>
+> {
   public readonly name = 'ObjectLiteral';
   public readonly category = 'Special' as const;
   public readonly syntax = '{ key1: value1, key2: value2, ... }';
@@ -82,8 +82,6 @@ export class ObjectLiteralExpression
     relatedExpressions: ['Property', 'Possessive'],
     performance: { averageTime: 0.2, complexity: 'O(n)' as const },
   };
-
-  
 
   /**
    * Validate object literal expression arguments

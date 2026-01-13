@@ -105,7 +105,9 @@ test.describe('CSS Selector Property Access @comprehensive', () => {
     expect(result).toContain('test-getelementbyid');
   });
 
-  test("should access property via query ref possessive: first <#selector/>'s value", async ({ page }) => {
+  test("should access property via query ref possessive: first <#selector/>'s value", async ({
+    page,
+  }) => {
     // Set a known value
     await page.fill('#test-input', 'test-query-ref');
 

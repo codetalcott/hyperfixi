@@ -19,27 +19,27 @@ function getTextContent(result: { content: Array<{ type: string; text?: string }
 
 describe('Multilingual Tool Schemas', () => {
   it('get_diagnostics has language parameter', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_diagnostics');
+    const tool = lspBridgeTools.find(t => t.name === 'get_diagnostics');
     expect(tool?.inputSchema.properties).toHaveProperty('language');
   });
 
   it('get_completions has language parameter', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_completions');
+    const tool = lspBridgeTools.find(t => t.name === 'get_completions');
     expect(tool?.inputSchema.properties).toHaveProperty('language');
   });
 
   it('get_hover_info has language parameter', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_hover_info');
+    const tool = lspBridgeTools.find(t => t.name === 'get_hover_info');
     expect(tool?.inputSchema.properties).toHaveProperty('language');
   });
 
   it('get_document_symbols has language parameter', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_document_symbols');
+    const tool = lspBridgeTools.find(t => t.name === 'get_document_symbols');
     expect(tool?.inputSchema.properties).toHaveProperty('language');
   });
 
   it('suggest_command has language parameter', () => {
-    const tool = validationTools.find((t) => t.name === 'suggest_command');
+    const tool = validationTools.find(t => t.name === 'suggest_command');
     expect(tool?.inputSchema.properties).toHaveProperty('language');
   });
 });

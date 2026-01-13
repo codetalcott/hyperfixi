@@ -20,9 +20,11 @@ export function getGetPatternsHi(): LanguagePattern[] {
           { type: 'role', role: 'source' },
           { type: 'literal', value: 'से' },
           { type: 'literal', value: 'प्राप्त', alternatives: ['पाएं'] },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'करें', alternatives: ['करो'] },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: 'करें', alternatives: ['करो'] }],
+          },
         ],
       },
       extraction: {

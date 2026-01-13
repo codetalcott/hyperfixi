@@ -169,7 +169,7 @@ Object.defineProperty(globalThis, 'Intl', {
 // Helper function to reset mocks between tests
 export function resetMocks() {
   vi.clearAllMocks();
-  
+
   // Reset DOM state
   if (typeof document !== 'undefined') {
     document.documentElement.lang = 'en';
@@ -177,7 +177,7 @@ export function resetMocks() {
     document.title = 'Test Page';
     document.cookie = '';
   }
-  
+
   // Reset localStorage
   if (typeof window !== 'undefined' && window.localStorage) {
     window.localStorage.getItem = vi.fn();

@@ -19,9 +19,7 @@ import {
 // Mock Semantic Analyzer
 // =============================================================================
 
-function createMockAnalyzer(
-  supportedLangs: string[] = ['en', 'es', 'ja', 'ar']
-): SemanticAnalyzer {
+function createMockAnalyzer(supportedLangs: string[] = ['en', 'es', 'ja', 'ar']): SemanticAnalyzer {
   return {
     analyze: vi.fn((input: string, _language: string) => {
       // Mock successful analysis for "toggle .active" pattern
@@ -30,9 +28,7 @@ function createMockAnalyzer(
           confidence: 0.9,
           command: {
             name: 'toggle',
-            roles: new Map([
-              ['patient', { type: 'selector', value: '.active' }],
-            ]),
+            roles: new Map([['patient', { type: 'selector', value: '.active' }]]),
           },
           tokensConsumed: 3,
         };

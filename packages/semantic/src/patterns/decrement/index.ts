@@ -76,4 +76,18 @@ export { getDecrementPatternsZh } from './zh';
 /**
  * Languages that have hand-crafted decrement patterns.
  */
-export const decrementPatternLanguages = ['bn', 'de', 'hi', 'it', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+export const decrementPatternLanguages = [
+  'bn',
+  'de',
+  'hi',
+  'it',
+  'ms',
+  'pl',
+  'ru',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
+];

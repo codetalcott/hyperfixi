@@ -259,7 +259,12 @@ describe('Role Transformation', () => {
         { role: 'destination', value: '#output', translated: '#output' },
       ];
       const markers = [
-        { form: 'to', role: 'destination' as SemanticRole, position: 'preposition' as const, required: false },
+        {
+          form: 'to',
+          role: 'destination' as SemanticRole,
+          position: 'preposition' as const,
+          required: false,
+        },
       ];
 
       const result = insertMarkers(elements, markers, 'preposition');
@@ -271,7 +276,12 @@ describe('Role Transformation', () => {
         { role: 'patient', value: '#count', translated: '#count' },
       ];
       const markers = [
-        { form: 'を', role: 'patient' as SemanticRole, position: 'postposition' as const, required: true },
+        {
+          form: 'を',
+          role: 'patient' as SemanticRole,
+          position: 'postposition' as const,
+          required: true,
+        },
       ];
 
       const result = insertMarkers(elements, markers, 'postposition');

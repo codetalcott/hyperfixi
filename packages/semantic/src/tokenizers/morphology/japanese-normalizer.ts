@@ -48,8 +48,8 @@ const JAPANESE_SUFFIX_RULES: readonly SuffixRule[] = [
   { pattern: 'てある', confidence: 0.82, conjugationType: 'progressive', minStemLength: 2 },
 
   // Casual request forms
-  { pattern: 'てくれ', confidence: 0.80, conjugationType: 'casual-request', minStemLength: 2 },
-  { pattern: 'でくれ', confidence: 0.80, conjugationType: 'casual-request', minStemLength: 2 },
+  { pattern: 'てくれ', confidence: 0.8, conjugationType: 'casual-request', minStemLength: 2 },
+  { pattern: 'でくれ', confidence: 0.8, conjugationType: 'casual-request', minStemLength: 2 },
 
   // Contracted/colloquial forms (ちゃう/じゃう = てしまう/でしまう)
   { pattern: 'ちゃった', confidence: 0.82, conjugationType: 'contracted-past', minStemLength: 2 },
@@ -71,18 +71,18 @@ const JAPANESE_SUFFIX_RULES: readonly SuffixRule[] = [
   { pattern: 'なかった', confidence: 0.82, conjugationType: 'past', minStemLength: 2 },
 
   // Potential forms
-  { pattern: 'られる', confidence: 0.80, conjugationType: 'potential', minStemLength: 2 },
+  { pattern: 'られる', confidence: 0.8, conjugationType: 'potential', minStemLength: 2 },
   { pattern: 'れる', confidence: 0.78, conjugationType: 'potential', minStemLength: 2 },
 
   // Passive forms
-  { pattern: 'られた', confidence: 0.80, conjugationType: 'passive', minStemLength: 2 },
+  { pattern: 'られた', confidence: 0.8, conjugationType: 'passive', minStemLength: 2 },
 
   // Causative forms
-  { pattern: 'させる', confidence: 0.80, conjugationType: 'causative', minStemLength: 2 },
+  { pattern: 'させる', confidence: 0.8, conjugationType: 'causative', minStemLength: 2 },
   { pattern: 'せる', confidence: 0.78, conjugationType: 'causative', minStemLength: 2 },
 
   // Volitional forms
-  { pattern: 'よう', confidence: 0.80, conjugationType: 'volitional', minStemLength: 2 },
+  { pattern: 'よう', confidence: 0.8, conjugationType: 'volitional', minStemLength: 2 },
 
   // Dictionary form ending (る-verbs) - lower confidence due to ambiguity
   { pattern: 'る', confidence: 0.75, conjugationType: 'dictionary', minStemLength: 3 },
@@ -93,7 +93,11 @@ const JAPANESE_SUFFIX_RULES: readonly SuffixRule[] = [
  * する verbs are formed by noun + する, very common in Japanese.
  * Order by length (longest first) for greedy matching.
  */
-const SURU_PATTERNS: readonly { pattern: string; confidence: number; conjugationType: ConjugationType }[] = [
+const SURU_PATTERNS: readonly {
+  pattern: string;
+  confidence: number;
+  conjugationType: ConjugationType;
+}[] = [
   // Conditional forms (most important for native idioms)
   { pattern: 'したら', confidence: 0.88, conjugationType: 'conditional-tara' },
   { pattern: 'すると', confidence: 0.88, conjugationType: 'conditional-to' },
@@ -115,7 +119,7 @@ const SURU_PATTERNS: readonly { pattern: string; confidence: number; conjugation
  */
 function isHiragana(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0x3040 && code <= 0x309F;
+  return code >= 0x3040 && code <= 0x309f;
 }
 
 /**
@@ -123,7 +127,7 @@ function isHiragana(char: string): boolean {
  */
 function isKatakana(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0x30A0 && code <= 0x30FF;
+  return code >= 0x30a0 && code <= 0x30ff;
 }
 
 /**
@@ -131,7 +135,7 @@ function isKatakana(char: string): boolean {
  */
 function isKanji(char: string): boolean {
   const code = char.charCodeAt(0);
-  return (code >= 0x4E00 && code <= 0x9FFF) || (code >= 0x3400 && code <= 0x4DBF);
+  return (code >= 0x4e00 && code <= 0x9fff) || (code >= 0x3400 && code <= 0x4dbf);
 }
 
 /**
@@ -185,7 +189,10 @@ export class JapaneseMorphologicalNormalizer implements MorphologicalNormalizer 
         if (stem.length < minLength) continue;
 
         // Return normalized result
-        const metadata: { removedSuffixes: string[]; conjugationType?: typeof rule.conjugationType } = {
+        const metadata: {
+          removedSuffixes: string[];
+          conjugationType?: typeof rule.conjugationType;
+        } = {
           removedSuffixes: [rule.pattern],
         };
         if (rule.conjugationType) {

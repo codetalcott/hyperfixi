@@ -513,9 +513,7 @@ describe('AttributeProcessor System Events', () => {
 
       await processor.scanAndProcessAll();
 
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('found no matching elements')
-      );
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('found no matching elements'));
 
       warnSpy.mockRestore();
     });

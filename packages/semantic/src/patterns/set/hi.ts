@@ -21,9 +21,11 @@ export function getSetPatternsHi(): LanguagePattern[] {
           { type: 'literal', value: 'को' },
           { type: 'role', role: 'patient' },
           { type: 'literal', value: 'सेट', alternatives: ['निर्धारित'] },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'करें', alternatives: ['करो'] },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: 'करें', alternatives: ['करो'] }],
+          },
         ],
       },
       extraction: {

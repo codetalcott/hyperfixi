@@ -9,13 +9,15 @@ import type { AnalysisResult } from '../types';
 /**
  * Quick start analyzer with sensible defaults
  */
-export function quickStartAnalyzer(options: {
-  projectPath?: string;
-  recursive?: boolean;
-  format?: 'table' | 'json' | 'detailed';
-  include?: string[];
-  exclude?: string[];
-} = {}) {
+export function quickStartAnalyzer(
+  options: {
+    projectPath?: string;
+    recursive?: boolean;
+    format?: 'table' | 'json' | 'detailed';
+    include?: string[];
+    exclude?: string[];
+  } = {}
+) {
   const {
     projectPath = '.',
     recursive = true,
@@ -69,23 +71,28 @@ export function quickStartAnalyzer(options: {
       suggestions: string[];
     }> {
       const results = await this.analyzeProject();
-      
+
       const totalIssues = results.reduce((sum, r) => sum + r.issues.length, 0);
       const totalScripts = results.reduce((sum, r) => sum + r.scripts.length, 0);
-      const avgComplexity = results.length > 0 
-        ? results.reduce((sum, r) => sum + r.complexity, 0) / results.length
-        : 0;
+      const avgComplexity =
+        results.length > 0 ? results.reduce((sum, r) => sum + r.complexity, 0) / results.length : 0;
 
       // Calculate score (0-100)
       let score = 100;
-      
+
       // Deduct for issues
-      const errorCount = results.reduce((sum, r) => sum + r.issues.filter(i => i.type === 'error').length, 0);
-      const warningCount = results.reduce((sum, r) => sum + r.issues.filter(i => i.type === 'warning').length, 0);
-      
+      const errorCount = results.reduce(
+        (sum, r) => sum + r.issues.filter(i => i.type === 'error').length,
+        0
+      );
+      const warningCount = results.reduce(
+        (sum, r) => sum + r.issues.filter(i => i.type === 'warning').length,
+        0
+      );
+
       score -= errorCount * 10; // -10 for each error
       score -= warningCount * 2; // -2 for each warning
-      
+
       // Deduct for high complexity
       if (avgComplexity > 10) {
         score -= (avgComplexity - 10) * 2;
@@ -102,19 +109,19 @@ export function quickStartAnalyzer(options: {
 
       // Generate suggestions
       const suggestions: string[] = [];
-      
+
       if (errorCount > 0) {
         suggestions.push(`Fix ${errorCount} critical error${errorCount > 1 ? 's' : ''}`);
       }
-      
+
       if (warningCount > 5) {
         suggestions.push('Address code warnings to improve maintainability');
       }
-      
+
       if (avgComplexity > 10) {
         suggestions.push('Break down complex scripts into smaller components');
       }
-      
+
       if (totalScripts === 0) {
         suggestions.push('Add HyperScript to make your pages interactive');
       }
@@ -132,7 +139,7 @@ export function quickStartAnalyzer(options: {
      */
     watch(callback: (results: AnalysisResult[]) => void): void {
       const chokidar = require('chokidar');
-      
+
       const watcher = chokidar.watch(include, {
         ignored: exclude,
         persistent: true,

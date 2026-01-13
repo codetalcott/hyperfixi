@@ -43,11 +43,7 @@ describe('SemanticGrammarBridge', () => {
     });
 
     it('should handle complex statements', async () => {
-      const result = await bridge.transform(
-        'toggle .active on #button',
-        'en',
-        'ja'
-      );
+      const result = await bridge.transform('toggle .active on #button', 'en', 'ja');
       expect(result.output).toContain('.active');
       expect(result.output).toContain('#button');
     });
@@ -110,12 +106,7 @@ describe('SemanticGrammarBridge', () => {
 // MultilingualHyperscript API Tests
 // =============================================================================
 
-import {
-  MultilingualHyperscript,
-  getMultilingual,
-  multilingual,
-  type LanguageInfo,
-} from './index';
+import { MultilingualHyperscript, getMultilingual, multilingual, type LanguageInfo } from './index';
 
 describe('MultilingualHyperscript', () => {
   let ml: MultilingualHyperscript;
@@ -481,8 +472,12 @@ describe('Cross-Language AST Consistency', () => {
     expect((spanishAst as unknown as { name: string }).name).toBe('toggle');
 
     // All should have same type
-    expect((englishAst as unknown as { type: string }).type).toBe((japaneseAst as unknown as { type: string }).type);
-    expect((englishAst as unknown as { type: string }).type).toBe((spanishAst as unknown as { type: string }).type);
+    expect((englishAst as unknown as { type: string }).type).toBe(
+      (japaneseAst as unknown as { type: string }).type
+    );
+    expect((englishAst as unknown as { type: string }).type).toBe(
+      (spanishAst as unknown as { type: string }).type
+    );
   });
 
   it('should produce equivalent AST for add command across languages', async () => {
@@ -503,7 +498,9 @@ describe('Cross-Language AST Consistency', () => {
     // If it works, verify consistency
     if (japaneseResult.usedDirectPath && japaneseResult.ast) {
       expect((japaneseResult.ast as unknown as { name: string }).name).toBe('add');
-      expect((japaneseResult.ast as unknown as { type: string }).type).toBe((englishResult.ast as unknown as { type: string }).type);
+      expect((japaneseResult.ast as unknown as { type: string }).type).toBe(
+        (englishResult.ast as unknown as { type: string }).type
+      );
     }
   });
 });

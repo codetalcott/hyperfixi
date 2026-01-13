@@ -51,71 +51,68 @@ export function createWebhookRouter(
   const router = Router();
 
   // Webhook endpoint - needs raw body for signature verification
-  router.post(
-    '/stripe',
-    async (req: Request, res: Response) => {
-      const signature = req.headers['stripe-signature'] as string;
+  router.post('/stripe', async (req: Request, res: Response) => {
+    const signature = req.headers['stripe-signature'] as string;
 
-      if (!signature) {
-        return res.status(400).json({ error: 'Missing stripe-signature header' });
-      }
-
-      let event: Stripe.Event;
-
-      try {
-        // req.body should be raw buffer for webhook verification
-        event = stripe.constructWebhookEvent(req.body, signature, webhookSecret);
-      } catch (error) {
-        console.error('Webhook signature verification failed:', error);
-        return res.status(400).json({ error: 'Invalid signature' });
-      }
-
-      // Check for duplicate events (idempotency)
-      const alreadyProcessed = await db.isStripeEventProcessed(event.id);
-      if (alreadyProcessed) {
-        console.log(`Event ${event.id} already processed, skipping`);
-        return res.json({ received: true, skipped: true });
-      }
-
-      console.log(`Processing Stripe event: ${event.type} (${event.id})`);
-
-      try {
-        switch (event.type) {
-          case 'customer.subscription.created':
-            await handleSubscriptionCreated(db, event.data.object as Stripe.Subscription, apiKeySalt);
-            break;
-
-          case 'customer.subscription.updated':
-            await handleSubscriptionUpdated(db, event.data.object as Stripe.Subscription);
-            break;
-
-          case 'customer.subscription.deleted':
-            await handleSubscriptionDeleted(db, event.data.object as Stripe.Subscription);
-            break;
-
-          case 'invoice.paid':
-            await handleInvoicePaid(db, event.data.object as Stripe.Invoice);
-            break;
-
-          case 'invoice.payment_failed':
-            await handlePaymentFailed(db, event.data.object as Stripe.Invoice);
-            break;
-
-          default:
-            console.log(`Unhandled event type: ${event.type}`);
-        }
-
-        // Mark event as processed
-        await db.markStripeEventProcessed(event.id, event.type);
-
-        res.json({ received: true });
-      } catch (error) {
-        console.error(`Error processing event ${event.id}:`, error);
-        // Return 500 so Stripe retries
-        res.status(500).json({ error: 'Event processing failed' });
-      }
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing stripe-signature header' });
     }
-  );
+
+    let event: Stripe.Event;
+
+    try {
+      // req.body should be raw buffer for webhook verification
+      event = stripe.constructWebhookEvent(req.body, signature, webhookSecret);
+    } catch (error) {
+      console.error('Webhook signature verification failed:', error);
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    // Check for duplicate events (idempotency)
+    const alreadyProcessed = await db.isStripeEventProcessed(event.id);
+    if (alreadyProcessed) {
+      console.log(`Event ${event.id} already processed, skipping`);
+      return res.json({ received: true, skipped: true });
+    }
+
+    console.log(`Processing Stripe event: ${event.type} (${event.id})`);
+
+    try {
+      switch (event.type) {
+        case 'customer.subscription.created':
+          await handleSubscriptionCreated(db, event.data.object as Stripe.Subscription, apiKeySalt);
+          break;
+
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdated(db, event.data.object as Stripe.Subscription);
+          break;
+
+        case 'customer.subscription.deleted':
+          await handleSubscriptionDeleted(db, event.data.object as Stripe.Subscription);
+          break;
+
+        case 'invoice.paid':
+          await handleInvoicePaid(db, event.data.object as Stripe.Invoice);
+          break;
+
+        case 'invoice.payment_failed':
+          await handlePaymentFailed(db, event.data.object as Stripe.Invoice);
+          break;
+
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      // Mark event as processed
+      await db.markStripeEventProcessed(event.id, event.type);
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error(`Error processing event ${event.id}:`, error);
+      // Return 500 so Stripe retries
+      res.status(500).json({ error: 'Event processing failed' });
+    }
+  });
 
   return router;
 }
@@ -135,7 +132,8 @@ async function handleSubscriptionCreated(
   console.log(`New subscription: customer=${customerId}, tier=${tier}`);
 
   // Get or create user
-  const customerEmail = (subscription as any).customer_email || `customer_${customerId}@hyperfixi.dev`;
+  const customerEmail =
+    (subscription as any).customer_email || `customer_${customerId}@hyperfixi.dev`;
   const user = await db.getOrCreateUserByStripeId(customerId, customerEmail);
 
   // Check if user already has an API key
@@ -191,7 +189,10 @@ async function handleSubscriptionUpdated(
   console.log(`Subscription updated: customer=${customerId}, tier=${tier}`);
 
   // Find user's API keys and update tier
-  const user = await db.getOrCreateUserByStripeId(customerId, `customer_${customerId}@hyperfixi.dev`);
+  const user = await db.getOrCreateUserByStripeId(
+    customerId,
+    `customer_${customerId}@hyperfixi.dev`
+  );
   const keys = await db.getApiKeysByUserId(user.id);
 
   for (const key of keys) {
@@ -212,7 +213,10 @@ async function handleSubscriptionDeleted(
   console.log(`Subscription deleted: customer=${customerId}`);
 
   // Downgrade to free tier (don't delete keys)
-  const user = await db.getOrCreateUserByStripeId(customerId, `customer_${customerId}@hyperfixi.dev`);
+  const user = await db.getOrCreateUserByStripeId(
+    customerId,
+    `customer_${customerId}@hyperfixi.dev`
+  );
   const keys = await db.getApiKeysByUserId(user.id);
 
   for (const key of keys) {
@@ -230,7 +234,10 @@ async function handleInvoicePaid(db: DatabaseClient, invoice: Stripe.Invoice): P
   console.log(`Invoice paid: customer=${customerId}, amount=${invoice.amount_paid / 100}`);
 
   // Reset monthly usage counter on billing cycle
-  const user = await db.getOrCreateUserByStripeId(customerId, `customer_${customerId}@hyperfixi.dev`);
+  const user = await db.getOrCreateUserByStripeId(
+    customerId,
+    `customer_${customerId}@hyperfixi.dev`
+  );
   const keys = await db.getApiKeysByUserId(user.id);
 
   for (const key of keys) {
@@ -248,7 +255,10 @@ async function handlePaymentFailed(db: DatabaseClient, invoice: Stripe.Invoice):
   console.log(`Payment failed: customer=${customerId}`);
 
   // Get user for notification
-  const user = await db.getOrCreateUserByStripeId(customerId, `customer_${customerId}@hyperfixi.dev`);
+  const user = await db.getOrCreateUserByStripeId(
+    customerId,
+    `customer_${customerId}@hyperfixi.dev`
+  );
 
   // Log payment failed notification (replace with actual email service in production)
   logNotification({

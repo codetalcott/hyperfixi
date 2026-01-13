@@ -67,8 +67,7 @@ import { isLanguageRegistered } from './registry';
 export function tokenize(input: string, language: string): LanguageToken[] {
   if (!isLanguageRegistered(language)) {
     throw new Error(
-      `Language '${language}' is not loaded. ` +
-      `Load it via script tag or loadLanguageFromUrl().`
+      `Language '${language}' is not loaded. ` + `Load it via script tag or loadLanguageFromUrl().`
     );
   }
   const stream = tokenizeInternal(input, language);

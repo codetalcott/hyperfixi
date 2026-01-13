@@ -15,19 +15,19 @@ export function createExpressSSRMiddleware(
   return async (req: any, res: any, next?: () => void) => {
     try {
       // Extract context from request
-      const context = options.contextExtractor 
+      const context = options.contextExtractor
         ? options.contextExtractor(req, res)
         : extractExpressContext(req, res);
 
       // Load template (in real implementation, would be configurable)
       const template = await loadTemplateForRoute(req.path, options.templatePath);
-      
+
       // Render with SSR
       const result = await engine.render(template, context, options.ssrOptions);
 
       // Set response headers
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      
+
       // Add cache headers if caching is enabled
       if (result.cache) {
         res.setHeader('Cache-Control', `public, max-age=${result.cache.ttl}`);
@@ -38,10 +38,9 @@ export function createExpressSSRMiddleware(
       const fullHTML = generateFullHTMLResponse(result);
 
       res.send(fullHTML);
-
     } catch (error) {
       console.error('SSR middleware error:', error);
-      
+
       if (next) {
         next(); // Fall back to next middleware
       } else {
@@ -65,19 +64,19 @@ export function createKoaSSRMiddleware(
   return async (ctx: any, next: () => Promise<any>) => {
     try {
       // Extract context from Koa context
-      const context = options.contextExtractor 
+      const context = options.contextExtractor
         ? options.contextExtractor(ctx)
         : extractKoaContext(ctx);
 
       // Load template
       const template = await loadTemplateForRoute(ctx.path, options.templatePath);
-      
+
       // Render with SSR
       const result = await engine.render(template, context, options.ssrOptions);
 
       // Set response headers
       ctx.type = 'text/html; charset=utf-8';
-      
+
       if (result.cache) {
         ctx.set('Cache-Control', `public, max-age=${result.cache.ttl}`);
         ctx.set('ETag', `"${result.cache.key}"`);
@@ -85,7 +84,6 @@ export function createKoaSSRMiddleware(
 
       // Generate and set response body
       ctx.body = generateFullHTMLResponse(result);
-
     } catch (error) {
       console.error('SSR middleware error:', error);
       await next(); // Fall back to next middleware
@@ -109,17 +107,17 @@ export function createFastifySSRPlugin(
       // Add SSR render method to reply
       reply.renderSSR = async (templateOverride?: string) => {
         try {
-          const context = options.contextExtractor 
+          const context = options.contextExtractor
             ? options.contextExtractor(request, reply)
             : extractFastifyContext(request, reply);
 
-          const template = templateOverride || 
-            await loadTemplateForRoute(request.url, options.templatePath);
-          
+          const template =
+            templateOverride || (await loadTemplateForRoute(request.url, options.templatePath));
+
           const result = await engine.render(template, context, options.ssrOptions);
 
           reply.type('text/html; charset=utf-8');
-          
+
           if (result.cache) {
             reply.header('Cache-Control', `public, max-age=${result.cache.ttl}`);
             reply.header('ETag', `"${result.cache.key}"`);
@@ -127,7 +125,6 @@ export function createFastifySSRPlugin(
 
           const fullHTML = generateFullHTMLResponse(result);
           reply.send(fullHTML);
-
         } catch (error) {
           console.error('SSR plugin error:', error);
           reply.code(500).send('Internal Server Error');
@@ -149,17 +146,17 @@ export function createNextSSRHandler(
 ) {
   return async (req: any, res: any) => {
     try {
-      const context = options.contextExtractor 
+      const context = options.contextExtractor
         ? options.contextExtractor(req, res)
         : extractNextContext(req, res);
 
       // In Next.js, template would typically come from pages or components
       const template = await loadNextTemplate(req.query);
-      
+
       const result = await engine.render(template, context, options.ssrOptions);
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      
+
       if (result.cache) {
         res.setHeader('Cache-Control', `public, max-age=${result.cache.ttl}`);
         res.setHeader('ETag', `"${result.cache.key}"`);
@@ -167,7 +164,6 @@ export function createNextSSRHandler(
 
       const fullHTML = generateFullHTMLResponse(result);
       res.status(200).send(fullHTML);
-
     } catch (error) {
       console.error('Next.js SSR handler error:', error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -240,7 +236,7 @@ function extractNextContext(req: any, res: any): SSRContext {
 async function loadTemplateForRoute(route: string, templatePath?: string): Promise<string> {
   // In a real implementation, this would load templates from the file system
   // based on route patterns or explicit template paths
-  
+
   if (templatePath) {
     try {
       const fs = require('fs').promises;
@@ -293,36 +289,42 @@ async function loadNextTemplate(query: any): Promise<string> {
  */
 function generateFullHTMLResponse(result: any): string {
   // Generate meta tags
-  const metaTags = result.metaTags.map((tag: any) => {
-    if (tag.name) {
-      return `<meta name="${tag.name}" content="${escapeHtml(tag.content)}" />`;
-    } else if (tag.property) {
-      return `<meta property="${tag.property}" content="${escapeHtml(tag.content)}" />`;
-    }
-    return '';
-  }).filter(Boolean).join('\n    ');
+  const metaTags = result.metaTags
+    .map((tag: any) => {
+      if (tag.name) {
+        return `<meta name="${tag.name}" content="${escapeHtml(tag.content)}" />`;
+      } else if (tag.property) {
+        return `<meta property="${tag.property}" content="${escapeHtml(tag.content)}" />`;
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join('\n    ');
 
   // Generate link tags
-  const linkTags = result.linkTags.map((link: any) => {
-    let attrs = `rel="${link.rel}" href="${escapeHtml(link.href)}"`;
-    if (link.as) attrs += ` as="${link.as}"`;
-    if (link.type) attrs += ` type="${link.type}"`;
-    return `<link ${attrs} />`;
-  }).join('\n    ');
+  const linkTags = result.linkTags
+    .map((link: any) => {
+      let attrs = `rel="${link.rel}" href="${escapeHtml(link.href)}"`;
+      if (link.as) attrs += ` as="${link.as}"`;
+      if (link.type) attrs += ` type="${link.type}"`;
+      return `<link ${attrs} />`;
+    })
+    .join('\n    ');
 
   // Generate critical CSS
-  const criticalCSS = result.criticalCSS.length > 0 
-    ? `\n    <style>\n${result.criticalCSS.join('\n')}\n    </style>`
-    : '';
+  const criticalCSS =
+    result.criticalCSS.length > 0
+      ? `\n    <style>\n${result.criticalCSS.join('\n')}\n    </style>`
+      : '';
 
   // Generate hydration script
-  const hydrationScript = result.hydrationScript 
+  const hydrationScript = result.hydrationScript
     ? `\n    <script>\n${result.hydrationScript}\n    </script>`
     : '';
 
   // Insert everything into the HTML
   let html = result.html;
-  
+
   // Insert into head
   const headInsert = [metaTags, linkTags, criticalCSS].filter(Boolean).join('\n    ');
   if (headInsert) {
@@ -381,7 +383,7 @@ export interface SSRMiddlewareConfig {
 
 export function configureSSRMiddleware(config: SSRMiddlewareConfig = {}) {
   const engine = config.engine || new HyperFixiSSREngine();
-  
+
   // Configure cache if specified
   if (config.cache) {
     const { createSSRCache } = require('./cache');

@@ -17,11 +17,7 @@
  *   muestra → mostrar (3rd person present)
  */
 
-import type {
-  MorphologicalNormalizer,
-  NormalizationResult,
-  ConjugationType,
-} from './types';
+import type { MorphologicalNormalizer, NormalizationResult, ConjugationType } from './types';
 import { noChange, normalized } from './types';
 
 /**
@@ -65,7 +61,12 @@ const REFLEXIVE_SUFFIXES = ['se', 'me', 'te', 'nos', 'os'];
 /**
  * -AR verb conjugation endings mapped to infinitive reconstruction.
  */
-const AR_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const AR_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-ando)
   { ending: 'ando', stem: 'ar', confidence: 0.88, type: 'gerund' },
   // Past participle (-ado)
@@ -80,7 +81,7 @@ const AR_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
   { ending: 'amos', stem: 'ar', confidence: 0.85, type: 'present' }, // nosotros
   { ending: 'áis', stem: 'ar', confidence: 0.85, type: 'present' }, // vosotros
   { ending: 'ais', stem: 'ar', confidence: 0.82, type: 'present' }, // vosotros (no accent)
-  { ending: 'an', stem: 'ar', confidence: 0.80, type: 'present' }, // ellos
+  { ending: 'an', stem: 'ar', confidence: 0.8, type: 'present' }, // ellos
   // Preterite
   { ending: 'é', stem: 'ar', confidence: 0.85, type: 'past' }, // yo
   { ending: 'aste', stem: 'ar', confidence: 0.88, type: 'past' }, // tú
@@ -112,7 +113,12 @@ const AR_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
 /**
  * -ER verb conjugation endings.
  */
-const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const ER_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-iendo)
   { ending: 'iendo', stem: 'er', confidence: 0.88, type: 'gerund' },
   // Past participle (-ido)
@@ -154,7 +160,12 @@ const ER_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
 /**
  * -IR verb conjugation endings.
  */
-const IR_ENDINGS: readonly { ending: string; stem: string; confidence: number; type: ConjugationType }[] = [
+const IR_ENDINGS: readonly {
+  ending: string;
+  stem: string;
+  confidence: number;
+  type: ConjugationType;
+}[] = [
   // Gerund (-iendo)
   { ending: 'iendo', stem: 'ir', confidence: 0.88, type: 'gerund' },
   // Past participle (-ido)
@@ -196,8 +207,9 @@ const IR_ENDINGS: readonly { ending: string; stem: string; confidence: number; t
 /**
  * All endings combined, sorted by length (longest first).
  */
-const ALL_ENDINGS = [...AR_ENDINGS, ...ER_ENDINGS, ...IR_ENDINGS]
-  .sort((a, b) => b.ending.length - a.ending.length);
+const ALL_ENDINGS = [...AR_ENDINGS, ...ER_ENDINGS, ...IR_ENDINGS].sort(
+  (a, b) => b.ending.length - a.ending.length
+);
 
 /**
  * Spanish morphological normalizer.
@@ -223,7 +235,11 @@ export class SpanishMorphologicalNormalizer implements MorphologicalNormalizer {
     if (lower.endsWith('ar') || lower.endsWith('er') || lower.endsWith('ir')) {
       // If it's a simple infinitive, return as-is with 1.0 confidence
       // (unless it's a reflexive like "mostrarse")
-      if (!REFLEXIVE_SUFFIXES.some(s => lower.endsWith(s + 'ar') || lower.endsWith(s + 'er') || lower.endsWith(s + 'ir'))) {
+      if (
+        !REFLEXIVE_SUFFIXES.some(
+          s => lower.endsWith(s + 'ar') || lower.endsWith(s + 'er') || lower.endsWith(s + 'ir')
+        )
+      ) {
         return noChange(word);
       }
     }
@@ -255,7 +271,11 @@ export class SpanishMorphologicalNormalizer implements MorphologicalNormalizer {
         const withoutReflexive = word.slice(0, -suffix.length);
 
         // Check if this looks like an infinitive
-        if (withoutReflexive.endsWith('ar') || withoutReflexive.endsWith('er') || withoutReflexive.endsWith('ir')) {
+        if (
+          withoutReflexive.endsWith('ar') ||
+          withoutReflexive.endsWith('er') ||
+          withoutReflexive.endsWith('ir')
+        ) {
           // It's a reflexive infinitive (e.g., mostrarse → mostrar)
           return normalized(withoutReflexive, 0.88, {
             removedSuffixes: [suffix],

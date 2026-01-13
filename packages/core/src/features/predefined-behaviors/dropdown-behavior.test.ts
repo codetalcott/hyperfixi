@@ -57,10 +57,18 @@ describe('Dropdown Behavior', () => {
   describe('Initialization', () => {
     it('should initialize on details element', () => {
       dropdownBehaviorDefinition.init(details);
-      expect(typeof (details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown).toBe('function');
-      expect(typeof (details as HTMLDetailsElement & { closeDropdown: () => void }).closeDropdown).toBe('function');
-      expect(typeof (details as HTMLDetailsElement & { toggleDropdown: () => void }).toggleDropdown).toBe('function');
-      expect(typeof (details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown
+      ).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { closeDropdown: () => void }).closeDropdown
+      ).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { toggleDropdown: () => void }).toggleDropdown
+      ).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen
+      ).toBe('function');
     });
 
     it('should handle non-details elements gracefully', () => {
@@ -78,7 +86,7 @@ describe('Dropdown Behavior', () => {
 
     it('should apply open class when provided', () => {
       const options: DropdownBehaviorOptions = {
-        openClass: 'dropdown-open'
+        openClass: 'dropdown-open',
       };
 
       dropdownBehaviorDefinition.init(details, options);
@@ -90,7 +98,9 @@ describe('Dropdown Behavior', () => {
 
     it('should use default options when not provided', () => {
       dropdownBehaviorDefinition.init(details);
-      expect((details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown).toBeDefined();
+      expect(
+        (details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown
+      ).toBeDefined();
     });
   });
 
@@ -137,13 +147,19 @@ describe('Dropdown Behavior', () => {
     });
 
     it('should report open state correctly', () => {
-      expect((details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen()).toBe(false);
+      expect(
+        (details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen()
+      ).toBe(false);
 
       (details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown();
-      expect((details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen()).toBe(true);
+      expect(
+        (details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen()
+      ).toBe(true);
 
       (details as HTMLDetailsElement & { closeDropdown: () => void }).closeDropdown();
-      expect((details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen()).toBe(false);
+      expect(
+        (details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen()
+      ).toBe(false);
     });
   });
 
@@ -381,16 +397,24 @@ describe('Dropdown Behavior', () => {
     it('should create dropdown behavior with createDropdownBehavior', () => {
       createDropdownBehavior(details);
 
-      expect(typeof (details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown).toBe('function');
-      expect(typeof (details as HTMLDetailsElement & { closeDropdown: () => void }).closeDropdown).toBe('function');
-      expect(typeof (details as HTMLDetailsElement & { toggleDropdown: () => void }).toggleDropdown).toBe('function');
-      expect(typeof (details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown
+      ).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { closeDropdown: () => void }).closeDropdown
+      ).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { toggleDropdown: () => void }).toggleDropdown
+      ).toBe('function');
+      expect(
+        typeof (details as HTMLDetailsElement & { isDropdownOpen: () => boolean }).isDropdownOpen
+      ).toBe('function');
     });
 
     it('should create dropdown behavior with options', () => {
       createDropdownBehavior(details, {
         openClass: 'custom-open',
-        closeOnClickOutside: false
+        closeOnClickOutside: false,
       });
 
       (details as HTMLDetailsElement & { openDropdown: () => void }).openDropdown();
@@ -460,7 +484,7 @@ describe('Dropdown Behavior', () => {
     it('should support navigation with keyboard and mouse', () => {
       createDropdownBehavior(details, {
         closeOnEscape: true,
-        closeOnClickInside: true
+        closeOnClickInside: true,
       });
 
       // Open with method

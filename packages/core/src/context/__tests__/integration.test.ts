@@ -329,8 +329,12 @@ describe('Enhanced Context System Integration', () => {
       // Test with invalid input that should fail validation
       const invalidInput = { invalidProperty: 'test' };
 
-      const frontendResult = await frontendContext?.initialize(invalidInput as Record<string, unknown>);
-      const backendResult = await backendContext?.initialize(invalidInput as Record<string, unknown>);
+      const frontendResult = await frontendContext?.initialize(
+        invalidInput as Record<string, unknown>
+      );
+      const backendResult = await backendContext?.initialize(
+        invalidInput as Record<string, unknown>
+      );
 
       // Log errors for debugging
       if (!frontendResult?.success && frontendResult?.errors) {

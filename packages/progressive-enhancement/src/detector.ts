@@ -3,12 +3,12 @@
  * Detects browser capabilities and assigns enhancement levels
  */
 
-import type { 
-  CapabilityReport, 
-  CapabilityLevel, 
-  Capability, 
+import type {
+  CapabilityReport,
+  CapabilityLevel,
+  Capability,
   DetectorConfig,
-  UserPreferences 
+  UserPreferences,
 } from './types';
 
 /**
@@ -29,54 +29,62 @@ let cachedReport: CapabilityReport | null = null;
 /**
  * Detect browser capabilities and return comprehensive report
  */
-export async function detectCapabilities(config: Partial<DetectorConfig> = {}): Promise<CapabilityReport> {
+export async function detectCapabilities(
+  config: Partial<DetectorConfig> = {}
+): Promise<CapabilityReport> {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  
+
   // Return cached result if available and caching enabled
   if (finalConfig.cacheResults && cachedReport) {
     return cachedReport;
   }
 
   const startTime = performance.now();
-  
+
   // Detect individual capabilities
   const capabilities: Record<string, Capability> = {};
-  
+
   // JavaScript capabilities
   capabilities.javascript = await testCapability('javascript', () => true);
   capabilities.es6 = await testCapability('es6', testES6Support);
   capabilities.modules = await testCapability('modules', testModuleSupport);
   capabilities.promises = await testCapability('promises', testPromiseSupport);
   capabilities.asyncAwait = await testCapability('asyncAwait', testAsyncAwaitSupport);
-  
+
   // DOM APIs
-  capabilities.intersectionObserver = await testCapability('intersectionObserver', testIntersectionObserver);
+  capabilities.intersectionObserver = await testCapability(
+    'intersectionObserver',
+    testIntersectionObserver
+  );
   capabilities.mutationObserver = await testCapability('mutationObserver', testMutationObserver);
   capabilities.webComponents = await testCapability('webComponents', testWebComponents);
-  
+
   // Network APIs
   capabilities.fetchAPI = await testCapability('fetchAPI', testFetchAPI);
-  
+
   // CSS capabilities
   capabilities.cssGrid = await testCapability('cssGrid', testCSSGrid);
-  capabilities.cssCustomProperties = await testCapability('cssCustomProperties', testCSSCustomProperties);
+  capabilities.cssCustomProperties = await testCapability(
+    'cssCustomProperties',
+    testCSSCustomProperties
+  );
   capabilities.webAnimations = await testCapability('webAnimations', testWebAnimations);
-  
+
   // Web APIs
   capabilities.serviceWorker = await testCapability('serviceWorker', testServiceWorker);
   capabilities.webWorkers = await testCapability('webWorkers', testWebWorkers);
   capabilities.localStorage = await testCapability('localStorage', testLocalStorage);
   capabilities.sessionStorage = await testCapability('sessionStorage', testSessionStorage);
-  
+
   // Run custom tests
   for (const [name, test] of Object.entries(finalConfig.customTests || {})) {
     capabilities[name] = await testCapability(name, test);
   }
-  
+
   // Calculate capability score and level
   const score = calculateCapabilityScore(capabilities);
   const level = determineCapabilityLevel(score, capabilities);
-  
+
   // Create feature summary
   const features = {
     javascript: capabilities.javascript?.supported || false,
@@ -96,7 +104,7 @@ export async function detectCapabilities(config: Partial<DetectorConfig> = {}): 
     localStorage: capabilities.localStorage?.supported || false,
     sessionStorage: capabilities.sessionStorage?.supported || false,
   };
-  
+
   const report: CapabilityReport = {
     level,
     score,
@@ -105,34 +113,29 @@ export async function detectCapabilities(config: Partial<DetectorConfig> = {}): 
     timestamp: Date.now(),
     features,
   };
-  
+
   // Cache result if enabled
   if (finalConfig.cacheResults) {
     cachedReport = report;
   }
-  
+
   return report;
 }
 
 /**
  * Test a single capability with error handling and timeout
  */
-async function testCapability<T>(
-  name: string, 
-  test: () => T | Promise<T>
-): Promise<Capability> {
+async function testCapability<T>(name: string, test: () => T | Promise<T>): Promise<Capability> {
   try {
     const result = await Promise.race([
       Promise.resolve(test()),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 1000)
-      )
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1000)),
     ]);
-    
+
     return {
       name,
       supported: Boolean(result),
-      details: typeof result === 'object' ? result as Record<string, any> : undefined,
+      details: typeof result === 'object' ? (result as Record<string, any>) : undefined,
     };
   } catch (error) {
     return {
@@ -161,9 +164,11 @@ function testModuleSupport(): boolean {
 }
 
 function testPromiseSupport(): boolean {
-  return typeof Promise !== 'undefined' && 
-         typeof Promise.resolve === 'function' &&
-         typeof Promise.reject === 'function';
+  return (
+    typeof Promise !== 'undefined' &&
+    typeof Promise.resolve === 'function' &&
+    typeof Promise.reject === 'function'
+  );
 }
 
 function testAsyncAwaitSupport(): boolean {
@@ -184,9 +189,11 @@ function testMutationObserver(): boolean {
 }
 
 function testWebComponents(): boolean {
-  return 'customElements' in window && 
-         'attachShadow' in Element.prototype &&
-         'getRootNode' in Element.prototype;
+  return (
+    'customElements' in window &&
+    'attachShadow' in Element.prototype &&
+    'getRootNode' in Element.prototype
+  );
 }
 
 function testFetchAPI(): boolean {
@@ -256,10 +263,10 @@ function calculateCapabilityScore(capabilities: Record<string, Capability>): num
     localStorage: 1,
     sessionStorage: 1,
   };
-  
+
   let totalScore = 0;
   let maxScore = 0;
-  
+
   for (const [name, capability] of Object.entries(capabilities)) {
     const weight = weights[name as keyof typeof weights] || 1;
     if (capability.supported) {
@@ -267,7 +274,7 @@ function calculateCapabilityScore(capabilities: Record<string, Capability>): num
     }
     maxScore += weight;
   }
-  
+
   return maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
 }
 
@@ -275,30 +282,30 @@ function calculateCapabilityScore(capabilities: Record<string, Capability>): num
  * Determine capability level based on score and specific features
  */
 function determineCapabilityLevel(
-  score: number, 
+  score: number,
   capabilities: Record<string, Capability>
 ): CapabilityLevel {
   const hasJS = capabilities.javascript?.supported;
   const hasES6 = capabilities.es6?.supported;
   const hasModules = capabilities.modules?.supported;
   const hasModernAPIs = capabilities.fetchAPI?.supported && capabilities.promises?.supported;
-  
+
   if (!hasJS) {
     return 'basic';
   }
-  
+
   if (score >= 85 && hasES6 && hasModules && hasModernAPIs) {
     return 'cutting-edge';
   }
-  
+
   if (score >= 70 && hasES6 && hasModernAPIs) {
     return 'modern';
   }
-  
+
   if (score >= 50 && hasJS) {
     return 'enhanced';
   }
-  
+
   return 'basic';
 }
 
@@ -307,13 +314,14 @@ function determineCapabilityLevel(
  */
 export function detectUserPreferences(): UserPreferences {
   const mediaQuery = (query: string) => window.matchMedia(query).matches;
-  
+
   return {
     reduceMotion: mediaQuery('(prefers-reduced-motion: reduce)'),
     highContrast: mediaQuery('(prefers-contrast: high)'),
     reducedData: mediaQuery('(prefers-reduced-data: reduce)'),
-    preferBasic: mediaQuery('(prefers-reduced-motion: reduce)') || 
-                 mediaQuery('(prefers-reduced-data: reduce)'),
+    preferBasic:
+      mediaQuery('(prefers-reduced-motion: reduce)') ||
+      mediaQuery('(prefers-reduced-data: reduce)'),
     javascriptEnabled: true, // If this runs, JS is enabled
   };
 }

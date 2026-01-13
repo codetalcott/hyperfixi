@@ -231,9 +231,7 @@ export function getCommandMetadata<T extends new (...args: any[]) => object>(
  * export const createIncrementCommand = createFactory(IncrementCommand);
  * ```
  */
-export function createFactory<T extends new () => object>(
-  CommandClass: T
-): () => InstanceType<T> {
+export function createFactory<T extends new () => object>(CommandClass: T): () => InstanceType<T> {
   return () => new CommandClass() as InstanceType<T>;
 }
 

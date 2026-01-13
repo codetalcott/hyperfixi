@@ -74,7 +74,13 @@ export class CommandNodeBuilder {
    * Create a builder from an identifier node
    * @param node Identifier node with name and position info
    */
-  static fromIdentifier(node: { name: string; start?: number; end?: number; line?: number; column?: number }): CommandNodeBuilder {
+  static fromIdentifier(node: {
+    name: string;
+    start?: number;
+    end?: number;
+    line?: number;
+    column?: number;
+  }): CommandNodeBuilder {
     const builder = new CommandNodeBuilder(node.name);
     if (node.start !== undefined) {
       builder.startPos = {
@@ -157,7 +163,9 @@ export class CommandNodeBuilder {
    * Set the start position from a token or node
    * @param source Token or node with position information
    */
-  startingAt(source: Token | { start?: number; end?: number; line?: number; column?: number }): this {
+  startingAt(
+    source: Token | { start?: number; end?: number; line?: number; column?: number }
+  ): this {
     this.startPos = {
       start: source.start ?? 0,
       end: source.end ?? 0,

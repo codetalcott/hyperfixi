@@ -5,12 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../../test-utilities';
-import {
-  AsExpression,
-  IsExpression,
-  conversionExpressions,
-  enhancedConverters,
-} from './index';
+import { AsExpression, IsExpression, conversionExpressions, enhancedConverters } from './index';
 
 describe('Enhanced Conversion Expressions', () => {
   let context: TypedExpressionContext;

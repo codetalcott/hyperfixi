@@ -13,7 +13,13 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { resolveElement } from '../helpers/element-resolution';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 export interface TakeCommandInput {
   property: string;
@@ -36,7 +42,10 @@ export interface TakeCommandOutput {
 @meta({
   description: 'Move classes, attributes, and properties from one element to another',
   syntax: ['take <property> from <source>', 'take <property> from <source> and put it on <target>'],
-  examples: ['take class from <#source/>', 'take @data-value from <.source/> and put it on <#target/>'],
+  examples: [
+    'take class from <#source/>',
+    'take @data-value from <.source/> and put it on <#target/>',
+  ],
   sideEffects: ['dom-mutation', 'property-transfer'],
 })
 @command({ name: 'take', category: 'animation' })
@@ -59,8 +68,16 @@ export class TakeCommand implements DecoratedCommand {
 
     let target: unknown;
     if (raw.args.length >= 8) {
-      const kws = await Promise.all([3, 4, 5, 6].map(i => evaluator.evaluate(raw.args[i], context)));
-      if (kws[0] === 'and' && kws[1] === 'put' && kws[2] === 'it' && kws[3] === 'on' && raw.args[7]) {
+      const kws = await Promise.all(
+        [3, 4, 5, 6].map(i => evaluator.evaluate(raw.args[i], context))
+      );
+      if (
+        kws[0] === 'and' &&
+        kws[1] === 'put' &&
+        kws[2] === 'it' &&
+        kws[3] === 'on' &&
+        raw.args[7]
+      ) {
         target = await evaluator.evaluate(raw.args[7], context);
       }
     } else if (raw.args.length > 3) {
@@ -72,7 +89,10 @@ export class TakeCommand implements DecoratedCommand {
     return { property, source, target };
   }
 
-  async execute(input: TakeCommandInput, context: TypedExecutionContext): Promise<TakeCommandOutput> {
+  async execute(
+    input: TakeCommandInput,
+    context: TypedExecutionContext
+  ): Promise<TakeCommandOutput> {
     const sourceElement = resolveElement(input.source as string | HTMLElement | undefined, context);
     const targetElement = input.target
       ? resolveElement(input.target as string | HTMLElement | undefined, context)
@@ -96,7 +116,10 @@ export class TakeCommand implements DecoratedCommand {
 
     if (p.startsWith('.')) {
       const cn = p.substring(1);
-      if (el.classList.contains(cn)) { el.classList.remove(cn); return cn; }
+      if (el.classList.contains(cn)) {
+        el.classList.remove(cn);
+        return cn;
+      }
       return null;
     }
 
@@ -113,21 +136,43 @@ export class TakeCommand implements DecoratedCommand {
       return v;
     }
 
-    if (lp === 'id') { const v = el.id; el.id = ''; return v; }
-    if (lp === 'title') { const v = el.title; el.title = ''; return v; }
-    if (lp === 'value' && 'value' in el) { const v = (el as HTMLInputElement).value; (el as HTMLInputElement).value = ''; return v; }
+    if (lp === 'id') {
+      const v = el.id;
+      el.id = '';
+      return v;
+    }
+    if (lp === 'title') {
+      const v = el.title;
+      el.title = '';
+      return v;
+    }
+    if (lp === 'value' && 'value' in el) {
+      const v = (el as HTMLInputElement).value;
+      (el as HTMLInputElement).value = '';
+      return v;
+    }
 
     const camel = p.replace(/-([a-z])/g, (_, l) => l.toUpperCase());
     if (p.includes('-') || camel in el.style || p in el.style) {
       let v: string;
-      if (camel in el.style) { v = (el.style as any)[camel]; (el.style as any)[camel] = ''; }
-      else if (p in el.style) { v = (el.style as any)[p]; (el.style as any)[p] = ''; }
-      else { v = el.style.getPropertyValue(p); el.style.removeProperty(p); }
+      if (camel in el.style) {
+        v = (el.style as any)[camel];
+        (el.style as any)[camel] = '';
+      } else if (p in el.style) {
+        v = (el.style as any)[p];
+        (el.style as any)[p] = '';
+      } else {
+        v = el.style.getPropertyValue(p);
+        el.style.removeProperty(p);
+      }
       return v;
     }
 
     const v = el.getAttribute(prop);
-    if (v !== null) { el.removeAttribute(prop); return v; }
+    if (v !== null) {
+      el.removeAttribute(prop);
+      return v;
+    }
     return null;
   }
 
@@ -138,18 +183,37 @@ export class TakeCommand implements DecoratedCommand {
     const lp = p.toLowerCase();
 
     if (lp === 'class' || lp === 'classes') {
-      if (Array.isArray(value)) value.forEach(c => c && typeof c === 'string' && el.classList.add(c));
+      if (Array.isArray(value))
+        value.forEach(c => c && typeof c === 'string' && el.classList.add(c));
       else if (typeof value === 'string') el.className = value;
       return;
     }
 
-    if (p.startsWith('.')) { if (value) el.classList.add(p.substring(1)); return; }
-    if (p.startsWith('@')) { el.setAttribute(p.substring(1), String(value)); return; }
-    if (p.startsWith('data-')) { el.setAttribute(p, String(value)); return; }
+    if (p.startsWith('.')) {
+      if (value) el.classList.add(p.substring(1));
+      return;
+    }
+    if (p.startsWith('@')) {
+      el.setAttribute(p.substring(1), String(value));
+      return;
+    }
+    if (p.startsWith('data-')) {
+      el.setAttribute(p, String(value));
+      return;
+    }
 
-    if (lp === 'id') { el.id = String(value); return; }
-    if (lp === 'title') { el.title = String(value); return; }
-    if (lp === 'value' && 'value' in el) { (el as HTMLInputElement).value = String(value); return; }
+    if (lp === 'id') {
+      el.id = String(value);
+      return;
+    }
+    if (lp === 'title') {
+      el.title = String(value);
+      return;
+    }
+    if (lp === 'value' && 'value' in el) {
+      (el as HTMLInputElement).value = String(value);
+      return;
+    }
 
     const camel = p.replace(/-([a-z])/g, (_, l) => l.toUpperCase());
     if (p.includes('-') || camel in el.style || p in el.style) {

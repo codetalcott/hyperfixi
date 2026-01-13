@@ -16,7 +16,7 @@ export type {
   ExecutionContext,
   ElementType,
   ExpressionCategory,
-  EvaluationType
+  EvaluationType,
 } from '@hyperfixi/core';
 
 // Import ASTNode directly for use in this file
@@ -29,22 +29,22 @@ import type { ASTNode } from '@hyperfixi/core';
 export interface VisitorContext {
   /** Skip visiting children of current node */
   skip(): void;
-  
+
   /** Stop traversal completely */
   stop(): void;
-  
+
   /** Replace current node with another node */
   replace(node: ASTNode): void;
-  
+
   /** Get the path to current node from root */
   getPath(): (string | number)[];
-  
+
   /** Get parent node if exists */
   getParent(): ASTNode | null;
-  
+
   /** Get current scope variables */
   getScope(): Map<string, any>;
-  
+
   /** Set variable in current scope */
   setScope(key: string, value: any): void;
 }
@@ -52,10 +52,10 @@ export interface VisitorContext {
 export interface VisitorHandlers {
   /** Called when entering a node */
   enter?(node: ASTNode, context: VisitorContext): void;
-  
+
   /** Called when exiting a node */
   exit?(node: ASTNode, context: VisitorContext): void;
-  
+
   /** Node-type specific handlers */
   [nodeType: string]: ((node: any, context: VisitorContext) => void) | undefined;
 }

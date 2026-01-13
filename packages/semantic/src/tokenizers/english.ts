@@ -29,47 +29,140 @@ import {
  */
 const ENGLISH_KEYWORDS = new Set([
   // Commands - Class/Attribute operations
-  'toggle', 'add', 'remove',
+  'toggle',
+  'add',
+  'remove',
   // Commands - Content operations
-  'put', 'append', 'prepend', 'take', 'make', 'clone', 'swap', 'morph',
+  'put',
+  'append',
+  'prepend',
+  'take',
+  'make',
+  'clone',
+  'swap',
+  'morph',
   // Swap strategies
-  'delete', 'innerHTML', 'outerHTML', 'beforebegin', 'afterend', 'beforeend', 'afterbegin',
+  'delete',
+  'innerHTML',
+  'outerHTML',
+  'beforebegin',
+  'afterend',
+  'beforeend',
+  'afterbegin',
   // Commands - Variable operations
-  'set', 'get', 'increment', 'decrement', 'log',
+  'set',
+  'get',
+  'increment',
+  'decrement',
+  'log',
   // Commands - Visibility
-  'show', 'hide', 'transition',
+  'show',
+  'hide',
+  'transition',
   // Commands - Events
-  'on', 'trigger', 'send',
+  'on',
+  'trigger',
+  'send',
   // Commands - DOM focus
-  'focus', 'blur',
+  'focus',
+  'blur',
   // Commands - Navigation
   'go',
   // Commands - Async
-  'wait', 'fetch', 'settle', 'install', 'measure',
+  'wait',
+  'fetch',
+  'settle',
+  'install',
+  'measure',
   // Commands - Control flow
-  'if', 'else', 'repeat', 'for', 'while', 'continue', 'halt', 'throw', 'call', 'return',
+  'if',
+  'else',
+  'repeat',
+  'for',
+  'while',
+  'continue',
+  'halt',
+  'throw',
+  'call',
+  'return',
   // Commands - Advanced
-  'js', 'async', 'tell', 'default', 'init', 'behavior',
+  'js',
+  'async',
+  'tell',
+  'default',
+  'init',
+  'behavior',
   // Event handling
-  'every', 'when', 'upon',
+  'every',
+  'when',
+  'upon',
   // Control flow helpers
-  'then', 'end', 'unless', 'until', 'forever', 'times',
+  'then',
+  'end',
+  'unless',
+  'until',
+  'forever',
+  'times',
   // Prepositions/modifiers
-  'into', 'in', 'to', 'from', 'at', 'by', 'with', 'without',
-  'before', 'after', 'of', 'as',
+  'into',
+  'in',
+  'to',
+  'from',
+  'at',
+  'by',
+  'with',
+  'without',
+  'before',
+  'after',
+  'of',
+  'as',
   // Logical
-  'and', 'or', 'not', 'is', 'exists', 'empty',
+  'and',
+  'or',
+  'not',
+  'is',
+  'exists',
+  'empty',
   // References
-  'me', 'my', 'you', 'your', 'it', 'its', 'the', 'a', 'an',
-  'result', 'event', 'target', 'body',
+  'me',
+  'my',
+  'you',
+  'your',
+  'it',
+  'its',
+  'the',
+  'a',
+  'an',
+  'result',
+  'event',
+  'target',
+  'body',
   // Positional
-  'first', 'last', 'next', 'previous', 'closest',
+  'first',
+  'last',
+  'next',
+  'previous',
+  'closest',
   // Misc
-  'true', 'false', 'null', 'undefined',
+  'true',
+  'false',
+  'null',
+  'undefined',
   // Command synonyms (developer-friendly alternatives)
-  'flip', 'switch', 'increase', 'decrease', 'display', 'reveal', 'conceal',
+  'flip',
+  'switch',
+  'increase',
+  'decrease',
+  'display',
+  'reveal',
+  'conceal',
   // British spelling aliases
-  'colour', 'grey', 'centre', 'behaviour', 'initialise', 'favourite',
+  'colour',
+  'grey',
+  'centre',
+  'behaviour',
+  'initialise',
+  'favourite',
 ]);
 
 /**
@@ -78,35 +171,61 @@ const ENGLISH_KEYWORDS = new Set([
  */
 const ENGLISH_SYNONYMS: Record<string, string> = {
   // Toggle synonyms
-  'flip': 'toggle',
-  'switch': 'toggle',
+  flip: 'toggle',
+  switch: 'toggle',
   // Increment/Decrement synonyms
-  'increase': 'increment',
-  'decrease': 'decrement',
+  increase: 'increment',
+  decrease: 'decrement',
   // Show/Hide synonyms
-  'display': 'show',
-  'reveal': 'show',
-  'conceal': 'hide',
+  display: 'show',
+  reveal: 'show',
+  conceal: 'hide',
   // British spelling aliases
-  'colour': 'color',
-  'grey': 'gray',
-  'centre': 'center',
-  'behaviour': 'behavior',
-  'initialise': 'initialize',
-  'favourite': 'favorite',
+  colour: 'color',
+  grey: 'gray',
+  centre: 'center',
+  behaviour: 'behavior',
+  initialise: 'initialize',
+  favourite: 'favorite',
 };
 
 /**
  * English event names.
  */
 const ENGLISH_EVENTS = new Set([
-  'click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout',
-  'mouseenter', 'mouseleave', 'mousemove',
-  'keydown', 'keyup', 'keypress',
-  'input', 'change', 'submit', 'reset', 'focus', 'blur',
-  'load', 'unload', 'scroll', 'resize',
-  'dragstart', 'drag', 'dragend', 'dragenter', 'dragleave', 'dragover', 'drop',
-  'touchstart', 'touchmove', 'touchend', 'touchcancel',
+  'click',
+  'dblclick',
+  'mousedown',
+  'mouseup',
+  'mouseover',
+  'mouseout',
+  'mouseenter',
+  'mouseleave',
+  'mousemove',
+  'keydown',
+  'keyup',
+  'keypress',
+  'input',
+  'change',
+  'submit',
+  'reset',
+  'focus',
+  'blur',
+  'load',
+  'unload',
+  'scroll',
+  'resize',
+  'dragstart',
+  'drag',
+  'dragend',
+  'dragenter',
+  'dragleave',
+  'dragover',
+  'drop',
+  'touchstart',
+  'touchmove',
+  'touchend',
+  'touchcancel',
 ]);
 
 // =============================================================================
@@ -139,9 +258,12 @@ export class EnglishTokenizer extends BaseTokenizer {
           // Property access requires NO whitespace between tokens (e.g., "obj.prop")
           // CSS selectors have whitespace (e.g., "add .active")
           const hasWhitespaceBefore = lastToken && lastToken.position.end < pos;
-          const isPropertyAccess = lastToken &&
+          const isPropertyAccess =
+            lastToken &&
             !hasWhitespaceBefore &&
-            (lastToken.kind === 'identifier' || lastToken.kind === 'keyword' || lastToken.kind === 'selector');
+            (lastToken.kind === 'identifier' ||
+              lastToken.kind === 'keyword' ||
+              lastToken.kind === 'selector');
 
           if (isPropertyAccess) {
             // Tokenize . as property accessor
@@ -201,7 +323,10 @@ export class EnglishTokenizer extends BaseTokenizer {
       }
 
       // Try number
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.tryNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);
@@ -340,11 +465,7 @@ export class EnglishTokenizer extends BaseTokenizer {
         // Note: we DON'T consume "class" here - let the noise word handling in
         // pattern-matcher skip it. This keeps the token stream cleaner.
         return {
-          token: createToken(
-            selectorValue,
-            'selector',
-            createPosition(pos - word.length, pos)
-          ),
+          token: createToken(selectorValue, 'selector', createPosition(pos - word.length, pos)),
           endPos: pos,
         };
       }

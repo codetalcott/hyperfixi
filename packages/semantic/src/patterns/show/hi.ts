@@ -51,9 +51,7 @@ export function getShowPatternsHi(): LanguagePattern[] {
       priority: 80,
       template: {
         format: 'दिखाएं',
-        tokens: [
-          { type: 'literal', value: 'दिखाएं', alternatives: ['दिखा'] },
-        ],
+        tokens: [{ type: 'literal', value: 'दिखाएं', alternatives: ['दिखा'] }],
       },
       extraction: {
         patient: { default: { type: 'reference', value: 'me' } },

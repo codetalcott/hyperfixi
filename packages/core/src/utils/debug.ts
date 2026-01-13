@@ -157,7 +157,9 @@ export const debugControl = {
         console.warn('⚠️  Could not enable debug logging (localStorage unavailable):', e);
       }
     } else {
-      console.warn('⚠️  localStorage not available. Set window.__HYPERFIXI_DEBUG__ = true instead.');
+      console.warn(
+        '⚠️  localStorage not available. Set window.__HYPERFIXI_DEBUG__ = true instead.'
+      );
     }
   },
 
@@ -174,7 +176,9 @@ export const debugControl = {
         console.warn('⚠️  Could not disable debug logging:', e);
       }
     } else {
-      console.warn('⚠️  localStorage not available. Set window.__HYPERFIXI_DEBUG__ = false instead.');
+      console.warn(
+        '⚠️  localStorage not available. Set window.__HYPERFIXI_DEBUG__ = false instead.'
+      );
     }
   },
 

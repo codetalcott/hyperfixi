@@ -39,7 +39,14 @@ import liteApi from '../compatibility/browser-bundle-lite';
 class RegexParserImpl implements ParserInterface {
   readonly name = 'regex';
   readonly supportedCommands = [
-    'add', 'remove', 'toggle', 'put', 'set', 'log', 'send', 'wait',
+    'add',
+    'remove',
+    'toggle',
+    'put',
+    'set',
+    'log',
+    'send',
+    'wait',
   ] as const;
 
   parse(code: string): CommandNode | ASTNode {
@@ -104,7 +111,7 @@ class RegexParserImpl implements ParserInterface {
     }
 
     // Check for supported commands
-    return this.supportedCommands.includes(firstWord as typeof this.supportedCommands[number]);
+    return this.supportedCommands.includes(firstWord as (typeof this.supportedCommands)[number]);
   }
 }
 

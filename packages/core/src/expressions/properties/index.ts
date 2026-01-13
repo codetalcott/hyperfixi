@@ -271,7 +271,13 @@ export const attributeWithValueExpression: ExpressionImplementation = {
 
   validate(args: any[]): string | null {
     return (
-      validateArgRange(args, 2, 3, 'attributeWithValue', 'attributeName, expectedValue, optional element') ??
+      validateArgRange(
+        args,
+        2,
+        3,
+        'attributeWithValue',
+        'attributeName, expectedValue, optional element'
+      ) ??
       validateArgIsString(args, 0, 'attributeWithValue', 'attribute name') ??
       validateArgIsString(args, 1, 'attributeWithValue', 'expected value') ??
       (args.length >= 3 && args[2] != null && !(args[2] instanceof Element)

@@ -1086,11 +1086,15 @@ describe('Enhanced Behaviors Feature Implementation', () => {
         expect(definition?.parameters).toEqual(['constraint', 'grid', 'axis', 'revert']);
 
         // Verify event handler configurations
-        const mouseDownHandler = definition?.eventHandlers.find((h: { event: string }) => h.event === 'mousedown');
+        const mouseDownHandler = definition?.eventHandlers.find(
+          (h: { event: string }) => h.event === 'mousedown'
+        );
         expect(mouseDownHandler?.filter).toBe('event.button === 0');
         expect(mouseDownHandler?.options.capture).toBe(true);
 
-        const mouseMoveHandler = definition?.eventHandlers.find((h: { event: string }) => h.event === 'mousemove');
+        const mouseMoveHandler = definition?.eventHandlers.find(
+          (h: { event: string }) => h.event === 'mousemove'
+        );
         expect(mouseMoveHandler?.eventSource).toBe('document');
         expect(mouseMoveHandler?.options.throttle).toBe(16);
       }
@@ -1155,7 +1159,9 @@ describe('Enhanced Behaviors Feature Implementation', () => {
         expect(definition?.eventHandlers).toHaveLength(4);
 
         // Verify input handler with debouncing
-        const inputHandler = definition?.eventHandlers.find((h: { event: string }) => h.event === 'input');
+        const inputHandler = definition?.eventHandlers.find(
+          (h: { event: string }) => h.event === 'input'
+        );
         expect(inputHandler?.options.debounce).toBe(300);
         expect(inputHandler?.filter).toContain('hasAttribute("data-validate")');
       }

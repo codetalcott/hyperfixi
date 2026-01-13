@@ -12,7 +12,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for HaltCommand
@@ -39,7 +45,12 @@ export interface HaltCommandOutput {
 @meta({
   description: 'Stop command execution or prevent event defaults',
   syntax: ['halt', 'halt the event'],
-  examples: ['halt', 'halt the event', 'if error then halt', 'on click halt the event then log "clicked"'],
+  examples: [
+    'halt',
+    'halt the event',
+    'if error then halt',
+    'on click halt the event then log "clicked"',
+  ],
   sideEffects: ['control-flow', 'event-prevention'],
 })
 @command({ name: 'halt', category: 'control-flow' })
@@ -54,11 +65,16 @@ export class HaltCommand implements DecoratedCommand {
   ): Promise<HaltCommandInput> {
     if (raw.args && raw.args.length > 0) {
       const firstArg = raw.args[0] as any;
-      const secondArg = raw.args.length > 1 ? raw.args[1] as any : null;
+      const secondArg = raw.args.length > 1 ? (raw.args[1] as any) : null;
 
       // Check for "halt the event" pattern
-      if (firstArg.type === 'identifier' && firstArg.name === 'the' &&
-          secondArg && secondArg.type === 'identifier' && secondArg.name === 'event') {
+      if (
+        firstArg.type === 'identifier' &&
+        firstArg.name === 'the' &&
+        secondArg &&
+        secondArg.type === 'identifier' &&
+        secondArg.name === 'event'
+      ) {
         return { target: context.event };
       }
 

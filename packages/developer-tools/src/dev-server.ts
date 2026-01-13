@@ -73,8 +73,11 @@ export class DevServer {
       this.app.use((req, res, next) => {
         res.header('Access-Control-Allow-Origin', '*');
         res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-        
+        res.header(
+          'Access-Control-Allow-Headers',
+          'Content-Type, Authorization, Content-Length, X-Requested-With'
+        );
+
         if (req.method === 'OPTIONS') {
           res.sendStatus(200);
         } else {
@@ -102,11 +105,14 @@ export class DevServer {
       try {
         const { createProxyMiddleware } = require('http-proxy-middleware');
         for (const [proxyPath, target] of Object.entries(this.config.proxy)) {
-          this.app.use(proxyPath, createProxyMiddleware({
-            target,
-            changeOrigin: true,
-            logLevel: 'warn',
-          }));
+          this.app.use(
+            proxyPath,
+            createProxyMiddleware({
+              target,
+              changeOrigin: true,
+              logLevel: 'warn',
+            })
+          );
         }
       } catch {
         // http-proxy-middleware not available, skip proxy setup
@@ -143,7 +149,7 @@ export class DevServer {
     // File serving with live reload injection
     this.app.get('*.html', (req, res, next) => {
       const filePath = path.join(process.cwd(), req.path);
-      
+
       fs.readFile(filePath, 'utf-8')
         .then(content => {
           if (this.config.livereload) {
@@ -158,14 +164,14 @@ export class DevServer {
     // Default route - serve index.html if it exists
     this.app.get('/', async (req, res, next) => {
       const indexPath = path.join(process.cwd(), 'index.html');
-      
+
       if (await fs.pathExists(indexPath)) {
         let content = await fs.readFile(indexPath, 'utf-8');
-        
+
         if (this.config.livereload) {
           content = this.injectLiveReloadScript(content);
         }
-        
+
         res.setHeader('Content-Type', 'text/html');
         res.send(content);
       } else {
@@ -210,18 +216,20 @@ export class DevServer {
 
     this.wss = new WebSocketServer({ server: this.server });
 
-    this.wss.on('connection', (ws) => {
+    this.wss.on('connection', ws => {
       this.clients.add(ws);
-      
+
       ws.on('close', () => {
         this.clients.delete(ws);
       });
 
       // Send initial connection message
-      ws.send(JSON.stringify({
-        type: 'connected',
-        message: 'HyperFixi dev server connected',
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'connected',
+          message: 'HyperFixi dev server connected',
+        })
+      );
     });
   }
 
@@ -231,37 +239,25 @@ export class DevServer {
   private setupFileWatcher(): void {
     if (!this.config.livereload) return;
 
-    const watchPaths = [
-      '**/*.html',
-      '**/*.css',
-      '**/*.js',
-      '**/*.ts',
-      '**/*.json',
-    ];
+    const watchPaths = ['**/*.html', '**/*.css', '**/*.js', '**/*.ts', '**/*.json'];
 
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: [
-        '**/node_modules/**',
-        '**/dist/**',
-        '**/build/**',
-        '**/.git/**',
-        '**/.*',
-      ],
+      ignored: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**', '**/.*'],
       ignoreInitial: true,
       persistent: true,
     });
 
-    this.watcher.on('change', (filePath) => {
+    this.watcher.on('change', filePath => {
       console.log(`📁 Changed: ${filePath}`);
       this.broadcastReload(filePath, 'change');
     });
 
-    this.watcher.on('add', (filePath) => {
+    this.watcher.on('add', filePath => {
       console.log(`➕ Added: ${filePath}`);
       this.broadcastReload(filePath, 'add');
     });
 
-    this.watcher.on('unlink', (filePath) => {
+    this.watcher.on('unlink', filePath => {
       console.log(`🗑️  Removed: ${filePath}`);
       this.broadcastReload(filePath, 'remove');
     });
@@ -626,17 +622,17 @@ export class DevServer {
       this.server.listen(this.config.port, this.config.host, () => {
         const url = `http://${this.config.host}:${this.config.port}`;
         console.log(`🚀 Dev server started at ${url}`);
-        
+
         // Setup file watching after server starts
         this.setupFileWatcher();
-        
+
         // Open browser if requested
         if (this.config.open) {
           open(url).catch(() => {
             // Ignore open errors
           });
         }
-        
+
         resolve();
       });
 
@@ -665,7 +661,7 @@ export class DevServer {
       this.wss.close();
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.server.close(() => {
         console.log('🛑 Dev server stopped');
         resolve();

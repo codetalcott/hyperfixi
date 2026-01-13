@@ -30,7 +30,8 @@ const globalVars = new Map<string, any>();
 
 async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
   switch (node.type) {
-    case 'literal': return node.value;
+    case 'literal':
+      return node.value;
 
     case 'identifier':
       if (node.value === 'me' || node.value === 'my') return ctx.me;
@@ -83,14 +84,19 @@ async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
       return undefined;
     }
 
-    default: return undefined;
+    default:
+      return undefined;
   }
 }
 
 async function evaluateBinary(node: ASTNode, ctx: Context): Promise<any> {
   if (node.operator === 'has') {
     const left = await evaluate(node.left, ctx);
-    if (left instanceof Element && node.right.type === 'selector' && node.right.value.startsWith('.')) {
+    if (
+      left instanceof Element &&
+      node.right.type === 'selector' &&
+      node.right.value.startsWith('.')
+    ) {
       return left.classList.contains(node.right.value.slice(1));
     }
     return false;
@@ -100,26 +106,42 @@ async function evaluateBinary(node: ASTNode, ctx: Context): Promise<any> {
   const right = await evaluate(node.right, ctx);
 
   switch (node.operator) {
-    case '+': return left + right;
-    case '-': return left - right;
-    case '*': return left * right;
-    case '/': return left / right;
-    case '==': case 'is': return left == right;
-    case '!=': case 'is not': return left != right;
-    case '<': return left < right;
-    case '>': return left > right;
-    case '<=': return left <= right;
-    case '>=': return left >= right;
-    case 'and': case '&&': return left && right;
-    case 'or': case '||': return left || right;
-    default: return undefined;
+    case '+':
+      return left + right;
+    case '-':
+      return left - right;
+    case '*':
+      return left * right;
+    case '/':
+      return left / right;
+    case '==':
+    case 'is':
+      return left == right;
+    case '!=':
+    case 'is not':
+      return left != right;
+    case '<':
+      return left < right;
+    case '>':
+      return left > right;
+    case '<=':
+      return left <= right;
+    case '>=':
+      return left >= right;
+    case 'and':
+    case '&&':
+      return left && right;
+    case 'or':
+    case '||':
+      return left || right;
+    default:
+      return undefined;
   }
 }
 
 // =============================================================================
 // COMMAND EXECUTOR
 // =============================================================================
-
 
 const isStyleProp = (prop: string) => prop?.startsWith('*');
 const getStyleName = (prop: string) => prop.substring(1);
@@ -128,9 +150,6 @@ const setStyleProp = (el: Element, prop: string, value: any): boolean => {
   (el as HTMLElement).style.setProperty(getStyleName(prop), String(value));
   return true;
 };
-
-
-
 
 async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
   const getTarget = async (): Promise<Element[]> => {
@@ -154,7 +173,6 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
   };
 
   switch (cmd.name) {
-
     case 'toggle': {
       const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
@@ -293,7 +311,8 @@ async function executeAST(ast: ASTNode, me: Element, event?: Event): Promise<any
       if (mods.stop) e.stopPropagation();
 
       const handlerCtx: Context = {
-        me, event: e,
+        me,
+        event: e,
         you: e.target instanceof Element ? e.target : undefined,
         locals: new Map(),
       };
@@ -375,7 +394,7 @@ const api = {
   init: processElements,
   process: processElements,
 
-  commands: ["toggle","add","remove","show","hide","set","get","focus","blur","send"],
+  commands: ['toggle', 'add', 'remove', 'show', 'hide', 'set', 'get', 'focus', 'blur', 'send'],
   parserName: 'hybrid',
 };
 
@@ -398,7 +417,6 @@ if (typeof window !== 'undefined') {
     const target = (e as CustomEvent).detail?.target;
     if (target) processElements(target);
   });
-
 }
 
 export default api;

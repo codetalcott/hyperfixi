@@ -32,7 +32,9 @@ export interface AuthenticatedRequest extends Request {
  * Hash an API key for secure storage/comparison
  */
 export function hashApiKey(key: string, salt: string): string {
-  return createHash('sha256').update(key + salt).digest('hex');
+  return createHash('sha256')
+    .update(key + salt)
+    .digest('hex');
 }
 
 /**
@@ -103,7 +105,7 @@ export function createAuthMiddleware(db: DatabaseClient, salt: string) {
       req.tier = record.tier;
 
       // Update last used timestamp (async, don't block request)
-      db.updateApiKeyLastUsed(record.id).catch((err) => {
+      db.updateApiKeyLastUsed(record.id).catch(err => {
         console.error('Failed to update API key last used:', err);
       });
 

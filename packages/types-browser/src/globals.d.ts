@@ -1,6 +1,6 @@
 /**
  * Global type augmentation for HyperFixi browser APIs
- * 
+ *
  * This file augments the Window and globalThis interfaces to include
  * HyperFixi global variables, providing IDE autocomplete and type safety.
  */
@@ -16,9 +16,9 @@ declare global {
   interface Window {
     /**
      * HyperFixi Core - Main hyperscript runtime and parser
-     * 
+     *
      * Loaded from: hyperfixi-browser.js or hyperfixi-multilingual.js
-     * 
+     *
      * @example
      * ```typescript
      * window.hyperfixi.execute('toggle .active', document.body)
@@ -29,7 +29,7 @@ declare global {
 
     /**
      * Compatibility alias for hyperfixi (follows _hyperscript naming)
-     * 
+     *
      * @example
      * ```typescript
      * window._hyperscript.compile('on click toggle .active')
@@ -39,9 +39,9 @@ declare global {
 
     /**
      * HyperFixi Semantic - Multilingual semantic parsing (13 languages)
-     * 
+     *
      * Loaded from: hyperfixi-semantic.browser.global.js
-     * 
+     *
      * @example
      * ```typescript
      * const result = window.HyperFixiSemantic.parse('トグル .active', 'ja')
@@ -52,9 +52,9 @@ declare global {
 
     /**
      * HyperFixi I18n - Grammar transformation for natural language word order
-     * 
+     *
      * Loaded from: hyperfixi-i18n.min.js
-     * 
+     *
      * @example
      * ```typescript
      * const japanese = window.HyperFixiI18n.translate('on click toggle .active', 'en', 'ja')

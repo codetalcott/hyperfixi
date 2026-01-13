@@ -51,9 +51,17 @@ export const VERSION = '1.0.0-priority';
 // =============================================================================
 
 const SUPPORTED_LANGUAGES = [
-  'en', 'es', 'pt', 'fr', 'de',  // Western
-  'ja', 'zh', 'ko',              // East Asian
-  'ar', 'tr', 'id',              // Other
+  'en',
+  'es',
+  'pt',
+  'fr',
+  'de', // Western
+  'ja',
+  'zh',
+  'ko', // East Asian
+  'ar',
+  'tr',
+  'id', // Other
 ] as const;
 
 /**
@@ -75,10 +83,7 @@ function validateLanguage(language: string): void {
 // Tokenizers (from registry)
 // =============================================================================
 
-export {
-  getTokenizer,
-  isLanguageSupported,
-} from './registry';
+export { getTokenizer, isLanguageSupported } from './registry';
 
 import type { LanguageToken } from './types';
 import { tokenize as tokenizeInternal } from './tokenizers';

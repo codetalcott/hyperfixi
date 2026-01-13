@@ -81,8 +81,8 @@ export function getBehavior(name: string): BehaviorModule {
     const registered = Array.from(behaviors.keys()).join(', ');
     throw new Error(
       `Behavior '${name}' is not registered. ` +
-      `Registered behaviors: ${registered || 'none'}. ` +
-      `Use loadBehavior('${name}') to lazy load it.`
+        `Registered behaviors: ${registered || 'none'}. ` +
+        `Use loadBehavior('${name}') to lazy load it.`
     );
   }
   return behavior;
@@ -218,12 +218,12 @@ export async function loadBehavior(name: string): Promise<BehaviorModule> {
   if (!loader) {
     throw new Error(
       `No loader registered for behavior '${name}'. ` +
-      `Available loaders: ${Array.from(loaders.keys()).join(', ') || 'none'}`
+        `Available loaders: ${Array.from(loaders.keys()).join(', ') || 'none'}`
     );
   }
 
   // Load and cache
-  const promise = loader().then((mod) => {
+  const promise = loader().then(mod => {
     const module = mod.default;
     registerBehavior(name, module);
     loadingPromises.delete(name);
@@ -239,7 +239,7 @@ export async function loadBehavior(name: string): Promise<BehaviorModule> {
  */
 export async function preloadTier(tier: BehaviorTier): Promise<void> {
   const names = getBehaviorsByTier(tier);
-  await Promise.all(names.map((name) => loadBehavior(name).catch(() => {})));
+  await Promise.all(names.map(name => loadBehavior(name).catch(() => {})));
 }
 
 /**
@@ -247,7 +247,7 @@ export async function preloadTier(tier: BehaviorTier): Promise<void> {
  */
 export async function preloadCategory(category: BehaviorCategory): Promise<void> {
   const names = getBehaviorsByCategory(category);
-  await Promise.all(names.map((name) => loadBehavior(name).catch(() => {})));
+  await Promise.all(names.map(name => loadBehavior(name).catch(() => {})));
 }
 
 /**
@@ -255,7 +255,7 @@ export async function preloadCategory(category: BehaviorCategory): Promise<void>
  */
 export async function loadAll(): Promise<void> {
   const names = getAvailableBehaviors();
-  await Promise.all(names.map((name) => loadBehavior(name).catch(() => {})));
+  await Promise.all(names.map(name => loadBehavior(name).catch(() => {})));
 }
 
 // =============================================================================
@@ -277,11 +277,7 @@ export async function registerWithRuntime(
 /**
  * Register all loaded behaviors with HyperFixi runtime.
  */
-export async function registerAllWithRuntime(
-  hyperfixi?: HyperFixiInstance
-): Promise<void> {
-  const registrations = Array.from(behaviors.values()).map((module) =>
-    module.register(hyperfixi)
-  );
+export async function registerAllWithRuntime(hyperfixi?: HyperFixiInstance): Promise<void> {
+  const registrations = Array.from(behaviors.values()).map(module => module.register(hyperfixi));
   await Promise.all(registrations);
 }

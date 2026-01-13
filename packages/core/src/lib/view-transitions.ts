@@ -77,8 +77,9 @@ interface QueuedTransition {
  * Check if View Transitions API is supported
  */
 export function isViewTransitionsSupported(): boolean {
-  return typeof document !== 'undefined' &&
-         typeof (document as any).startViewTransition === 'function';
+  return (
+    typeof document !== 'undefined' && typeof (document as any).startViewTransition === 'function'
+  );
 }
 
 // ============================================================================
@@ -189,10 +190,7 @@ async function executeTransition(
   });
 
   try {
-    await Promise.race([
-      transition.finished,
-      timeoutPromise,
-    ]);
+    await Promise.race([transition.finished, timeoutPromise]);
   } catch (error) {
     // Log timeout errors in debug mode but don't throw
     if (config.debug) {

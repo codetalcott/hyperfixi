@@ -109,10 +109,7 @@ export function parseHaltCommand(
  *
  * Phase 9-3b: Extracted from Parser.parseRepeatCommand
  */
-export function parseRepeatCommand(
-  ctx: ParserContext,
-  commandToken: Token
-): CommandNode {
+export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): CommandNode {
   const args: ASTNode[] = [];
   let loopType: string = 'forever';
   let eventName: string | null = null;
@@ -219,8 +216,7 @@ export function parseRepeatCommand(
   let indexVariable: string | null = null;
   if (ctx.check(KEYWORDS.WITH)) {
     // Peek ahead to verify this is "with index" pattern
-    const nextToken =
-      ctx.current + 1 < ctx.tokens.length ? ctx.tokens[ctx.current + 1] : null;
+    const nextToken = ctx.current + 1 < ctx.tokens.length ? ctx.tokens[ctx.current + 1] : null;
     if (nextToken && nextToken.value.toLowerCase() === KEYWORDS.INDEX) {
       ctx.advance(); // consume 'with'
       ctx.advance(); // consume 'index'
@@ -336,10 +332,7 @@ export function parseRepeatCommand(
  *
  * Phase 9-3b: Extracted from Parser.parseIfCommand
  */
-export function parseIfCommand(
-  ctx: ParserContext,
-  commandToken: Token
-): CommandNode {
+export function parseIfCommand(ctx: ParserContext, commandToken: Token): CommandNode {
   const args: ASTNode[] = [];
 
   // Check if this is multi-line:
@@ -358,7 +351,12 @@ export function parseIfCommand(
       break;
     }
     // Stop at structural boundaries
-    if (token.value === KEYWORDS.END || token.value === KEYWORDS.BEHAVIOR || token.value === KEYWORDS.DEF || token.value === KEYWORDS.ON) {
+    if (
+      token.value === KEYWORDS.END ||
+      token.value === KEYWORDS.BEHAVIOR ||
+      token.value === KEYWORDS.DEF ||
+      token.value === KEYWORDS.ON
+    ) {
       break;
     }
     ctx.advance();
@@ -615,10 +613,7 @@ export function parseIfCommand(
  *
  * Natural English support: "for each item in the list"
  */
-export function parseForCommand(
-  ctx: ParserContext,
-  commandToken: Token
-): CommandNode {
+export function parseForCommand(ctx: ParserContext, commandToken: Token): CommandNode {
   const args: ASTNode[] = [];
   let variable: string | null = null;
   let collection: ASTNode | null = null;
@@ -653,8 +648,7 @@ export function parseForCommand(
   // Parse optional index variable (same as repeat)
   let indexVariable: string | null = null;
   if (ctx.check(KEYWORDS.WITH)) {
-    const nextToken =
-      ctx.current + 1 < ctx.tokens.length ? ctx.tokens[ctx.current + 1] : null;
+    const nextToken = ctx.current + 1 < ctx.tokens.length ? ctx.tokens[ctx.current + 1] : null;
     if (nextToken && nextToken.value.toLowerCase() === KEYWORDS.INDEX) {
       ctx.advance(); // consume 'with'
       ctx.advance(); // consume 'index'

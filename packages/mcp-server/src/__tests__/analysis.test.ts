@@ -12,19 +12,19 @@ describe('analysisTools', () => {
   });
 
   it('has analyze_complexity tool', () => {
-    const tool = analysisTools.find((t) => t.name === 'analyze_complexity');
+    const tool = analysisTools.find(t => t.name === 'analyze_complexity');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
   });
 
   it('has analyze_metrics tool', () => {
-    const tool = analysisTools.find((t) => t.name === 'analyze_metrics');
+    const tool = analysisTools.find(t => t.name === 'analyze_metrics');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
   });
 
   it('has explain_code tool', () => {
-    const tool = analysisTools.find((t) => t.name === 'explain_code');
+    const tool = analysisTools.find(t => t.name === 'explain_code');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
     expect(tool?.inputSchema.properties?.audience).toBeDefined();
@@ -32,7 +32,7 @@ describe('analysisTools', () => {
   });
 
   it('has recognize_intent tool', () => {
-    const tool = analysisTools.find((t) => t.name === 'recognize_intent');
+    const tool = analysisTools.find(t => t.name === 'recognize_intent');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
   });
@@ -50,8 +50,8 @@ describe('analyze_complexity', () => {
     // Either returns full metrics or simple analysis
     expect(
       parsed.cyclomatic !== undefined ||
-      parsed.estimatedComplexity !== undefined ||
-      parsed.error !== undefined
+        parsed.estimatedComplexity !== undefined ||
+        parsed.error !== undefined
     ).toBe(true);
   });
 
@@ -101,8 +101,8 @@ describe('analyze_metrics', () => {
     // Either returns full metrics or simple analysis
     expect(
       parsed.complexity !== undefined ||
-      parsed.commandCount !== undefined ||
-      parsed.error !== undefined
+        parsed.commandCount !== undefined ||
+        parsed.error !== undefined
     ).toBe(true);
   });
 
@@ -133,8 +133,8 @@ describe('explain_code', () => {
     // Should have some form of explanation
     expect(
       parsed.overview !== undefined ||
-      parsed.explanation !== undefined ||
-      parsed.error !== undefined
+        parsed.explanation !== undefined ||
+        parsed.error !== undefined
     ).toBe(true);
   });
 

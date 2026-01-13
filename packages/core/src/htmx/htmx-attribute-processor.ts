@@ -84,7 +84,7 @@ const HTMX_ALL_ATTRS = [
 ];
 
 /** Build CSS selector for elements with any hx-* attribute */
-const HTMX_SELECTOR = HTMX_REQUEST_ATTRS.map((attr) => `[${attr}]`).join(', ') + ', [hx-on\\:]';
+const HTMX_SELECTOR = HTMX_REQUEST_ATTRS.map(attr => `[${attr}]`).join(', ') + ', [hx-on\\:]';
 
 export class HtmxAttributeProcessor {
   private options: Required<HtmxProcessorOptions>;
@@ -97,7 +97,9 @@ export class HtmxAttributeProcessor {
       processExisting: options.processExisting ?? true,
       watchMutations: options.watchMutations ?? true,
       debug: options.debug ?? false,
-      root: options.root ?? (typeof document !== 'undefined' ? document.body : (null as unknown as Element)),
+      root:
+        options.root ??
+        (typeof document !== 'undefined' ? document.body : (null as unknown as Element)),
     };
   }
 
@@ -112,7 +114,11 @@ export class HtmxAttributeProcessor {
       this.processSubtree(this.options.root);
     }
 
-    if (this.options.watchMutations && typeof MutationObserver !== 'undefined' && this.options.root) {
+    if (
+      this.options.watchMutations &&
+      typeof MutationObserver !== 'undefined' &&
+      this.options.root
+    ) {
       this.startObserver();
     }
   }
@@ -275,15 +281,18 @@ export class HtmxAttributeProcessor {
       element.setAttribute('data-hx-generated', hyperscript);
 
       // Dispatch htmx:beforeRequest event (cancelable)
-      const beforeRequestEvent = new CustomEvent<HtmxBeforeRequestEventDetail>('htmx:beforeRequest', {
-        detail: {
-          element,
-          url: config.url,
-          method: config.method || 'GET',
-        },
-        bubbles: true,
-        cancelable: true,
-      });
+      const beforeRequestEvent = new CustomEvent<HtmxBeforeRequestEventDetail>(
+        'htmx:beforeRequest',
+        {
+          detail: {
+            element,
+            url: config.url,
+            method: config.method || 'GET',
+          },
+          bubbles: true,
+          cancelable: true,
+        }
+      );
       if (!element.dispatchEvent(beforeRequestEvent)) {
         if (this.options.debug) {
           console.log('[htmx-compat] Execution cancelled by htmx:beforeRequest handler');
@@ -301,7 +310,7 @@ export class HtmxAttributeProcessor {
             })
           );
         })
-        .catch((error) => {
+        .catch(error => {
           console.error('[htmx-compat] Execution error:', error);
           // Dispatch htmx:error event (not cancelable)
           element.dispatchEvent(
@@ -328,7 +337,7 @@ export class HtmxAttributeProcessor {
    * Start MutationObserver for dynamic elements
    */
   private startObserver(): void {
-    this.observer = new MutationObserver((mutations) => {
+    this.observer = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         // Handle added nodes
         for (const node of mutation.addedNodes) {
@@ -340,7 +349,10 @@ export class HtmxAttributeProcessor {
         // Handle attribute changes
         if (mutation.type === 'attributes' && mutation.target instanceof Element) {
           const attrName = mutation.attributeName;
-          if (attrName && HTMX_ALL_ATTRS.some((a) => attrName === a || attrName.startsWith('hx-on:'))) {
+          if (
+            attrName &&
+            HTMX_ALL_ATTRS.some(a => attrName === a || attrName.startsWith('hx-on:'))
+          ) {
             // Re-process element if htmx attributes changed
             this.processedElements.delete(mutation.target);
             this.processElement(mutation.target);

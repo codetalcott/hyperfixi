@@ -255,7 +255,6 @@ export class Runtime extends RuntimeBase {
       // Phase 6-6 Commands (2)
       registry.register(createTakeCommand());
       registry.register(createRenderCommand());
-
     }
 
     // Create expression evaluator

@@ -76,7 +76,9 @@ export const config: HyperscriptConfig = {
  * Get or create the singleton bridge instance for direct AST path.
  * Lazy initialization to avoid overhead if not used.
  */
-async function getOrCreateBridge(): Promise<import('../multilingual/bridge').SemanticGrammarBridge> {
+async function getOrCreateBridge(): Promise<
+  import('../multilingual/bridge').SemanticGrammarBridge
+> {
   if (!bridgeInstance) {
     const { SemanticGrammarBridge } = await import('../multilingual/bridge');
     bridgeInstance = new SemanticGrammarBridge();
@@ -127,9 +129,9 @@ export interface CompilationResult {
   // Debug metadata (always included, minimal overhead <1%)
   metadata?: {
     parserUsed: 'semantic' | 'traditional' | 'expression-only';
-    semanticConfidence?: number;  // 0-1, only if semantic attempted
-    semanticLanguage?: string;     // e.g., 'en', 'ja'
-    warnings?: string[];           // Non-fatal issues detected during compilation
+    semanticConfidence?: number; // 0-1, only if semantic attempted
+    semanticLanguage?: string; // e.g., 'en', 'ja'
+    warnings?: string[]; // Non-fatal issues detected during compilation
   };
 }
 
@@ -155,7 +157,10 @@ export interface MultilingualCompilationResult extends CompilationResult {
 export interface HyperscriptAPI {
   // Core compilation and execution
   compile(code: string, options?: CompileOptions): CompilationResult;
-  compileMultilingual(code: string, options?: CompileOptions): Promise<MultilingualCompilationResult>;
+  compileMultilingual(
+    code: string,
+    options?: CompileOptions
+  ): Promise<MultilingualCompilationResult>;
   execute(ast: ASTNode, context?: ExecutionContext): Promise<unknown>;
   run(code: string, context?: ExecutionContext): Promise<unknown>;
   evaluate(code: string, context?: ExecutionContext): Promise<unknown>; // Alias for run
@@ -345,7 +350,7 @@ function compile(code: string, options?: CompileOptions): CompilationResult {
     // Create metadata about the compilation
     const metadata: CompilationResult['metadata'] = {
       parserUsed: usesSemanticParser ? 'semantic' : 'traditional',
-      semanticLanguage: usesSemanticParser ? (options?.language || 'en') : undefined,
+      semanticLanguage: usesSemanticParser ? options?.language || 'en' : undefined,
       warnings: [],
     };
 

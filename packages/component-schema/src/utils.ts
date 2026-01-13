@@ -97,10 +97,7 @@ export function mergeComponents(
         ...(base.dependencies.components ?? []),
         ...(override.dependencies?.components ?? []),
       ],
-      css: [
-        ...(base.dependencies.css ?? []),
-        ...(override.dependencies?.css ?? []),
-      ],
+      css: [...(base.dependencies.css ?? []), ...(override.dependencies?.css ?? [])],
       javascript: [
         ...(base.dependencies.javascript ?? []),
         ...(override.dependencies?.javascript ?? []),
@@ -112,14 +109,8 @@ export function mergeComponents(
     merged.metadata = {
       ...base.metadata,
       ...override.metadata,
-      keywords: [
-        ...(base.metadata.keywords ?? []),
-        ...(override.metadata?.keywords ?? []),
-      ],
-      examples: [
-        ...(base.metadata.examples ?? []),
-        ...(override.metadata?.examples ?? []),
-      ],
+      keywords: [...(base.metadata.keywords ?? []), ...(override.metadata?.keywords ?? [])],
+      examples: [...(base.metadata.examples ?? []), ...(override.metadata?.examples ?? [])],
     };
   }
 
@@ -129,10 +120,7 @@ export function mergeComponents(
 /**
  * Extract template variables from hyperscript and HTML
  */
-export function extractTemplateVariables(
-  hyperscript: string | string[],
-  html?: string
-): string[] {
+export function extractTemplateVariables(hyperscript: string | string[], html?: string): string[] {
   const templateVarPattern = /\{\{([^}]+)\}\}/g;
   const variables = new Set<string>();
 
@@ -171,17 +159,20 @@ export function generateTemplateVariableDefinitions(
   for (const variable of variables) {
     // Try to infer type from variable name
     let type: TemplateVariable['type'] = 'string';
-    
-    if (variable.toLowerCase().includes('list') ||
-        variable.toLowerCase().includes('items')) {
+
+    if (variable.toLowerCase().includes('list') || variable.toLowerCase().includes('items')) {
       type = 'array';
-    } else if (variable.toLowerCase().includes('count') || 
-               variable.toLowerCase().includes('index') ||
-               variable.toLowerCase().includes('id')) {
+    } else if (
+      variable.toLowerCase().includes('count') ||
+      variable.toLowerCase().includes('index') ||
+      variable.toLowerCase().includes('id')
+    ) {
       type = 'number';
-    } else if (variable.toLowerCase().includes('is') || 
-               variable.toLowerCase().includes('has') ||
-               variable.toLowerCase().includes('enabled')) {
+    } else if (
+      variable.toLowerCase().includes('is') ||
+      variable.toLowerCase().includes('has') ||
+      variable.toLowerCase().includes('enabled')
+    ) {
       type = 'boolean';
     }
 
@@ -201,8 +192,8 @@ export function generateTemplateVariableDefinitions(
 export function analyzeComplexity(component: ComponentDefinition): number {
   let complexity = 1;
 
-  const scripts = Array.isArray(component.hyperscript) 
-    ? component.hyperscript 
+  const scripts = Array.isArray(component.hyperscript)
+    ? component.hyperscript
     : [component.hyperscript];
 
   for (const script of scripts) {
@@ -211,7 +202,10 @@ export function analyzeComplexity(component: ComponentDefinition): number {
     complexity += eventMatches.length;
 
     // Count commands (each command adds complexity)
-    const commandMatches = script.match(/\b(add|remove|toggle|put|fetch|post|get|delete|trigger|wait|halt|log|call|set|take|make|hide|show|fadeIn|fadeOut|slideUp|slideDown)\b/g) || [];
+    const commandMatches =
+      script.match(
+        /\b(add|remove|toggle|put|fetch|post|get|delete|trigger|wait|halt|log|call|set|take|make|hide|show|fadeIn|fadeOut|slideUp|slideDown)\b/g
+      ) || [];
     complexity += commandMatches.length * 0.5;
 
     // Count selectors (complex selectors add complexity)
@@ -254,7 +248,7 @@ export function generateMetadata(component: ComponentDefinition): ComponentDefin
   // Extract and set keywords from name and description
   if (!updated.metadata.keywords) {
     const keywords = new Set<string>();
-    
+
     // Add words from name
     const nameWords = updated.name.toLowerCase().split(/[\s-_]+/);
     nameWords.forEach(word => {
@@ -316,11 +310,9 @@ export function createExample(
 /**
  * Resolve component dependencies in a collection
  */
-export function resolveDependencies(
-  collection: ComponentCollection
-): Map<string, string[]> {
+export function resolveDependencies(collection: ComponentCollection): Map<string, string[]> {
   const dependencyGraph = new Map<string, string[]>();
-  
+
   for (const [componentId, componentDef] of Object.entries(collection.components)) {
     if (typeof componentDef === 'object') {
       const deps = componentDef.dependencies?.components || [];
@@ -334,9 +326,7 @@ export function resolveDependencies(
 /**
  * Check for circular dependencies in a collection
  */
-export function checkCircularDependencies(
-  collection: ComponentCollection
-): string[] {
+export function checkCircularDependencies(collection: ComponentCollection): string[] {
   const dependencyGraph = resolveDependencies(collection);
   const visited = new Set<string>();
   const recursionStack = new Set<string>();
@@ -378,9 +368,7 @@ export function checkCircularDependencies(
 /**
  * Get topological order of components (for dependency resolution)
  */
-export function getTopologicalOrder(
-  collection: ComponentCollection
-): string[] {
+export function getTopologicalOrder(collection: ComponentCollection): string[] {
   const dependencyGraph = resolveDependencies(collection);
   const visited = new Set<string>();
   const result: string[] = [];
@@ -391,7 +379,7 @@ export function getTopologicalOrder(
     }
 
     visited.add(componentId);
-    
+
     const dependencies = dependencyGraph.get(componentId) || [];
     for (const depId of dependencies) {
       visit(depId);
@@ -410,10 +398,7 @@ export function getTopologicalOrder(
 /**
  * Convert component to different formats
  */
-export function convertComponent(
-  component: ComponentDefinition,
-  format: 'json' | 'yaml'
-): string {
+export function convertComponent(component: ComponentDefinition, format: 'json' | 'yaml'): string {
   if (format === 'yaml') {
     const yaml = require('yaml');
     return yaml.stringify(component);
@@ -424,10 +409,7 @@ export function convertComponent(
 /**
  * Parse component from different formats
  */
-export function parseComponent(
-  content: string,
-  format: 'json' | 'yaml'
-): ComponentDefinition {
+export function parseComponent(content: string, format: 'json' | 'yaml'): ComponentDefinition {
   if (format === 'yaml') {
     const yaml = require('yaml');
     return yaml.parse(content);

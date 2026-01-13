@@ -20,7 +20,11 @@ export function getSetPatternsTr(): LanguagePattern[] {
       template: {
         format: '{destination} yi {patient} yap',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'yi', alternatives: ['yı', 'yu', 'yü', 'i', 'ı', 'u', 'ü'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
           { type: 'literal', value: 'yap', alternatives: ['yapmak'] },
@@ -39,7 +43,11 @@ export function getSetPatternsTr(): LanguagePattern[] {
       template: {
         format: "{destination}'i {patient} olarak ayarla",
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: "'i", alternatives: ["'ı", "'u", "'ü", '-i', '-ı'] },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
           { type: 'literal', value: 'olarak' },
@@ -59,7 +67,11 @@ export function getSetPatternsTr(): LanguagePattern[] {
       template: {
         format: '{destination} {patient} ayarla',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
           { type: 'literal', value: 'ayarla', alternatives: ['ayarlamak'] },
         ],
@@ -77,7 +89,11 @@ export function getSetPatternsTr(): LanguagePattern[] {
       template: {
         format: '{destination} = {patient}',
         tokens: [
-          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: '=' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],

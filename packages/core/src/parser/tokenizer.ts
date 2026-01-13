@@ -359,11 +359,13 @@ export function tokenize(input: string): Token[] {
       // Keywords that can precede CSS selectors (not member access)
       const SELECTOR_CONTEXT_KEYWORDS = new Set(['from', 'to', 'into', 'on', 'in', 'at']);
       // Commands like add, remove, toggle can be followed by class selectors
-      const isCommandContext = prevToken &&
+      const isCommandContext =
+        prevToken &&
         prevToken.kind === TokenKind.IDENTIFIER &&
         COMMANDS.has(prevToken.value.toLowerCase());
       // Keywords like 'from' can also be followed by class selectors
-      const isKeywordContext = prevToken &&
+      const isKeywordContext =
+        prevToken &&
         prevToken.kind === TokenKind.IDENTIFIER &&
         SELECTOR_CONTEXT_KEYWORDS.has(prevToken.value.toLowerCase());
       const isCSSSelectorContext =
@@ -816,10 +818,7 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
     tokenizer.position < inputLength &&
     input[tokenizer.position] === '.' &&
     // Don't consume '.' if it's part of the range operator '..'
-    !(
-      tokenizer.position + 1 < inputLength &&
-      input[tokenizer.position + 1] === '.'
-    )
+    !(tokenizer.position + 1 < inputLength && input[tokenizer.position + 1] === '.')
   ) {
     value += advance(tokenizer);
     while (tokenizer.position < inputLength) {
@@ -841,7 +840,8 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
 
       // Check if this is actually an exponent (followed by optional +/- and digits)
       const hasDigitAfterE = nextChar >= '0' && nextChar <= '9';
-      const hasSignThenDigit = (nextChar === '+' || nextChar === '-') && (afterSign >= '0' && afterSign <= '9');
+      const hasSignThenDigit =
+        (nextChar === '+' || nextChar === '-') && afterSign >= '0' && afterSign <= '9';
 
       if (hasDigitAfterE || hasSignThenDigit) {
         value += advance(tokenizer); // consume 'e' or 'E'

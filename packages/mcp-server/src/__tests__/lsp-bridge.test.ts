@@ -19,13 +19,13 @@ describe('lspBridgeTools', () => {
   });
 
   it('has get_diagnostics tool', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_diagnostics');
+    const tool = lspBridgeTools.find(t => t.name === 'get_diagnostics');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
   });
 
   it('has get_completions tool', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_completions');
+    const tool = lspBridgeTools.find(t => t.name === 'get_completions');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
     // Uses line and character instead of position object
@@ -34,7 +34,7 @@ describe('lspBridgeTools', () => {
   });
 
   it('has get_hover_info tool', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_hover_info');
+    const tool = lspBridgeTools.find(t => t.name === 'get_hover_info');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
     // Uses line and character instead of position object
@@ -43,7 +43,7 @@ describe('lspBridgeTools', () => {
   });
 
   it('has get_document_symbols tool', () => {
-    const tool = lspBridgeTools.find((t) => t.name === 'get_document_symbols');
+    const tool = lspBridgeTools.find(t => t.name === 'get_document_symbols');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
   });
@@ -157,7 +157,9 @@ describe('get_completions', () => {
     const parsed = JSON.parse(getTextContent(result));
     const labels = parsed.completions.map((c: any) => c.label);
     // Should include commands after event
-    expect(labels.some((l: string) => ['toggle', 'add', 'remove', 'show', 'hide'].includes(l))).toBe(true);
+    expect(
+      labels.some((l: string) => ['toggle', 'add', 'remove', 'show', 'hide'].includes(l))
+    ).toBe(true);
   });
 
   it('returns completions with LSP kind codes', async () => {

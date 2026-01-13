@@ -136,7 +136,9 @@ describe('Expression Integration Tests - Core Combinations', () => {
         'button.primary'
       );
       expect(primaryButtons).toHaveLength(1);
-      expect((primaryButtons as unknown[] & { [index: number]: { id: string } })[0].id).toBe('btn1');
+      expect((primaryButtons as unknown[] & { [index: number]: { id: string } })[0].id).toBe(
+        'btn1'
+      );
     });
 
     it('should handle "first button text content"', async () => {
@@ -246,7 +248,11 @@ describe('Expression Integration Tests - Core Combinations', () => {
         context,
         (formValues as Record<string, unknown>).username === ''
       );
-      const ageValid = await logicalExpressions.greaterThan.evaluate(context, (formValues as Record<string, unknown>).age, 0);
+      const ageValid = await logicalExpressions.greaterThan.evaluate(
+        context,
+        (formValues as Record<string, unknown>).age,
+        0
+      );
       const isActive = (formValues as Record<string, unknown>).active;
 
       // Combine all conditions
@@ -266,7 +272,7 @@ describe('Expression Integration Tests - Core Combinations', () => {
 
       // Filter for visible elements (not .hidden)
       let visibleCount = 0;
-      for (const element of (contentElements as unknown[])) {
+      for (const element of contentElements as unknown[]) {
         const hasHidden = await logicalExpressions.matches.evaluate(context, element, '.hidden');
         const isVisible = await logicalExpressions.not.evaluate(context, hasHidden);
         if (isVisible) visibleCount++;

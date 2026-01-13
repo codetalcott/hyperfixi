@@ -51,8 +51,6 @@ export class NotExpression implements TypedExpressionImplementation<boolean> {
 
   public readonly inputSchema = NotExpressionInputSchema;
 
-  
-
   /**
    * Validate 'not' expression arguments
    */

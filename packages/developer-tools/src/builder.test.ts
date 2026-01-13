@@ -36,7 +36,7 @@ vi.mock('open', () => ({
 // Mock http - need both default and named export for ESM compatibility
 const mockHttpServer = {
   listen: vi.fn((port, host, cb) => cb?.()),
-  close: vi.fn((cb) => cb?.()),
+  close: vi.fn(cb => cb?.()),
   on: vi.fn(),
 };
 vi.mock('http', () => ({
@@ -79,14 +79,16 @@ vi.mock('chokidar', () => ({
 
 // Mock esbuild
 vi.mock('esbuild', () => ({
-  build: vi.fn(() => Promise.resolve({
-    metafile: {
-      outputs: {
-        'dist/bundle.js': { bytes: 1024 }
-      }
-    },
-    warnings: []
-  }))
+  build: vi.fn(() =>
+    Promise.resolve({
+      metafile: {
+        outputs: {
+          'dist/bundle.js': { bytes: 1024 },
+        },
+      },
+      warnings: [],
+    })
+  ),
 }));
 
 describe('Builder', () => {

@@ -22,15 +22,23 @@ export function getAddPatternsUk(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'додати', alternatives: ['додай'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'до', alternatives: ['на', 'в'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'до', alternatives: ['на', 'в'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'до', markerAlternatives: ['на', 'в'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'до',
+          markerAlternatives: ['на', 'в'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

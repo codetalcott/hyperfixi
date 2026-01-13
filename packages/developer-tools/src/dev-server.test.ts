@@ -28,7 +28,7 @@ const mockHttpServer = {
     mockHttpServer.listening = true;
     cb?.();
   }),
-  close: vi.fn((cb) => {
+  close: vi.fn(cb => {
     mockHttpServer.listening = false;
     cb?.();
   }),
@@ -397,7 +397,7 @@ describe('DevServer', () => {
           // Simulate EADDRINUSE
           cb?.(new Error('EADDRINUSE'));
         }),
-        close: vi.fn((cb) => cb?.()),
+        close: vi.fn(cb => cb?.()),
         on: vi.fn(),
       });
 

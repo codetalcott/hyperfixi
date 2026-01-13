@@ -22,10 +22,14 @@ export function getHidePatternsRu(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'скрыть', alternatives: ['скрой', 'спрятать', 'спрячь'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'с', alternatives: ['со', 'как'] },
-            { type: 'role', role: 'style' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'с', alternatives: ['со', 'как'] },
+              { type: 'role', role: 'style' },
+            ],
+          },
         ],
       },
       extraction: {

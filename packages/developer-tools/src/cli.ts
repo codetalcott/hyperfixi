@@ -23,11 +23,7 @@ const program = new Command();
 /**
  * CLI version and info
  */
-program
-  .name('hyperfixi')
-  .alias('hfx')
-  .description('HyperFixi Developer Tools')
-  .version('0.1.0');
+program.name('hyperfixi').alias('hfx').description('HyperFixi Developer Tools').version('0.1.0');
 
 /**
  * Create new project command
@@ -46,7 +42,7 @@ program
   .option('--no-install', 'Skip package installation')
   .action(async (name: string, options: any) => {
     const spinner = ora('Creating project...').start();
-    
+
     try {
       const scaffoldOptions: ScaffoldOptions = {
         template: options.template,
@@ -78,7 +74,7 @@ program
             ],
           },
         ]);
-        
+
         scaffoldOptions.features = answers.features;
       }
 
@@ -88,20 +84,27 @@ program
       spinner.succeed('Project created successfully!');
 
       // Display success message
-      console.log(boxen(
-        chalk.green(`🎉 Successfully created ${name}!`) + '\n\n' +
-        chalk.white('Next steps:') + '\n' +
-        chalk.gray(`  cd ${name}`) + '\n' +
-        chalk.gray('  npm run dev') + '\n\n' +
-        chalk.white('Documentation:') + '\n' +
-        chalk.gray('  https://hyperfixi.dev/docs'),
-        {
-          padding: 1,
-          margin: 1,
-          borderStyle: 'round',
-          borderColor: 'green',
-        }
-      ));
+      console.log(
+        boxen(
+          chalk.green(`🎉 Successfully created ${name}!`) +
+            '\n\n' +
+            chalk.white('Next steps:') +
+            '\n' +
+            chalk.gray(`  cd ${name}`) +
+            '\n' +
+            chalk.gray('  npm run dev') +
+            '\n\n' +
+            chalk.white('Documentation:') +
+            '\n' +
+            chalk.gray('  https://hyperfixi.dev/docs'),
+          {
+            padding: 1,
+            margin: 1,
+            borderStyle: 'round',
+            borderColor: 'green',
+          }
+        )
+      );
     } catch (error) {
       spinner.fail('Failed to create project');
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
@@ -121,7 +124,7 @@ program
   .option('--typescript', 'Generate TypeScript version', false)
   .action(async (name: string, options: any) => {
     const spinner = ora('Generating component...').start();
-    
+
     try {
       await createComponent({
         name,
@@ -149,7 +152,7 @@ program
   .option('-o, --output <file>', 'Output file')
   .action(async (targetPath: string = '.', options: any) => {
     const spinner = ora('Analyzing project...').start();
-    
+
     try {
       const results = await analyzeProject(targetPath, {
         recursive: options.recursive,
@@ -165,13 +168,13 @@ program
         // Display results in console
         console.log('\n' + chalk.bold('Analysis Results:'));
         console.log(chalk.gray('─'.repeat(50)));
-        
+
         for (const result of results) {
           console.log(chalk.blue(`📁 ${result.file}`));
           console.log(`   Scripts: ${result.scripts.length}`);
           console.log(`   Elements: ${result.elements.length}`);
           console.log(`   Complexity: ${result.complexity}`);
-          
+
           if (result.issues.length > 0) {
             console.log(`   Issues: ${chalk.red(result.issues.length)}`);
             result.issues.forEach(issue => {
@@ -197,11 +200,11 @@ program
   .description('Start development server')
   .option('-p, --port <port>', 'Server port', '3000')
   .option('-h, --host <host>', 'Server host', 'localhost')
-  .option('--no-open', 'Don\'t open browser')
+  .option('--no-open', "Don't open browser")
   .option('--no-livereload', 'Disable live reload')
   .action(async (options: any) => {
     const spinner = ora('Starting development server...').start();
-    
+
     try {
       const config = {
         port: parseInt(options.port),
@@ -231,7 +234,7 @@ program
   .option('--analyze', 'Analyze bundle', false)
   .action(async (options: any) => {
     const spinner = ora('Building project...').start();
-    
+
     try {
       const result = await buildProject({
         output: options.output,
@@ -244,7 +247,7 @@ program
 
       console.log('\n' + chalk.bold('Build Results:'));
       console.log(chalk.gray('─'.repeat(30)));
-      
+
       result.files.forEach(file => {
         const size = (file.size / 1024).toFixed(2);
         console.log(`📦 ${chalk.blue(file.path)} ${chalk.gray(`(${size} KB)`)}`);
@@ -294,7 +297,7 @@ program
       });
 
       await new Promise<void>((resolve, reject) => {
-        proc.on('close', (code) => {
+        proc.on('close', code => {
           if (code === 0) {
             spinner.succeed('All tests passed!');
             resolve();
@@ -319,7 +322,7 @@ program
   .command('builder')
   .description('Start visual builder')
   .option('-p, --port <port>', 'Builder port', '8000')
-  .option('--no-open', 'Don\'t open browser')
+  .option('--no-open', "Don't open browser")
   .action(async (options: any) => {
     const spinner = ora('Starting visual builder...').start();
 
@@ -412,9 +415,7 @@ program
 /**
  * Template management commands
  */
-const templateCmd = program
-  .command('template')
-  .description('Manage project templates');
+const templateCmd = program.command('template').description('Manage project templates');
 
 templateCmd
   .command('list')
@@ -422,7 +423,7 @@ templateCmd
   .action(async () => {
     console.log(chalk.bold('Available templates:'));
     console.log(chalk.gray('─'.repeat(30)));
-    
+
     const templates = [
       { name: 'basic', description: 'Basic HyperFixi project' },
       { name: 'multi-tenant', description: 'Multi-tenant application' },
@@ -442,7 +443,7 @@ templateCmd
   .option('-d, --description <description>', 'Template description')
   .action(async (name: string, options: any) => {
     const spinner = ora('Creating template...').start();
-    
+
     try {
       await createTemplate({
         name,
@@ -465,26 +466,31 @@ program
   .description('Check project health and configuration')
   .action(async () => {
     const spinner = ora('Running diagnostics...').start();
-    
+
     try {
       const issues: string[] = [];
       const warnings: string[] = [];
-      
+
       // Check for package.json
-      if (!await fs.pathExists('package.json')) {
+      if (!(await fs.pathExists('package.json'))) {
         issues.push('package.json not found');
       }
 
       // Check for HyperFixi config
-      const configExists = await fs.pathExists('hyperfixi.config.js') || 
-                          await fs.pathExists('hyperfixi.config.ts');
+      const configExists =
+        (await fs.pathExists('hyperfixi.config.js')) ||
+        (await fs.pathExists('hyperfixi.config.ts'));
       if (!configExists) {
         warnings.push('No HyperFixi configuration found');
       }
 
       // Check Node.js version
       const nodeVersion = process.version;
-      if (!nodeVersion.startsWith('v16') && !nodeVersion.startsWith('v18') && !nodeVersion.startsWith('v20')) {
+      if (
+        !nodeVersion.startsWith('v16') &&
+        !nodeVersion.startsWith('v18') &&
+        !nodeVersion.startsWith('v20')
+      ) {
         warnings.push(`Node.js ${nodeVersion} may not be supported`);
       }
 
@@ -519,12 +525,12 @@ program
 /**
  * Global error handler
  */
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error(chalk.red('Uncaught exception:'), error);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason) => {
+process.on('unhandledRejection', reason => {
   console.error(chalk.red('Unhandled rejection:'), reason);
   process.exit(1);
 });

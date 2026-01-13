@@ -234,7 +234,7 @@ export function createHooks(config: {
  * Logging hooks for debugging
  */
 export const loggingHooks: RuntimeHooks = {
-  beforeExecute: (ctx) => {
+  beforeExecute: ctx => {
     console.log(`[HyperFixi] Executing: ${ctx.commandName}`, {
       element: ctx.element,
       args: ctx.args,
@@ -258,10 +258,10 @@ export function createTimingHooks(
   const startTimes = new WeakMap<object, number>();
 
   return {
-    beforeExecute: (ctx) => {
+    beforeExecute: ctx => {
       startTimes.set(ctx, performance.now());
     },
-    afterExecute: (ctx) => {
+    afterExecute: ctx => {
       const start = startTimes.get(ctx);
       if (start !== undefined) {
         const duration = performance.now() - start;

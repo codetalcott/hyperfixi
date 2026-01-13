@@ -45,26 +45,26 @@ function isPortugueseIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const PREPOSITIONS = new Set([
-  'em',         // in, on
-  'a',          // to
-  'de',         // of, from
-  'desde',      // from, since
-  'até',        // until, to
-  'ate',        // until (no accent)
-  'com',        // with
-  'sem',        // without
-  'por',        // by, for
-  'para',       // for, to
-  'sobre',      // on, about
-  'entre',      // between
-  'antes',      // before
-  'depois',     // after
-  'dentro',     // inside
-  'fora',       // outside
-  'ao',         // a + o (contraction)
-  'do',         // de + o (contraction)
-  'no',         // em + o (contraction)
-  'na',         // em + a (contraction)
+  'em', // in, on
+  'a', // to
+  'de', // of, from
+  'desde', // from, since
+  'até', // until, to
+  'ate', // until (no accent)
+  'com', // with
+  'sem', // without
+  'por', // by, for
+  'para', // for, to
+  'sobre', // on, about
+  'entre', // between
+  'antes', // before
+  'depois', // after
+  'dentro', // inside
+  'fora', // outside
+  'ao', // a + o (contraction)
+  'do', // de + o (contraction)
+  'no', // em + o (contraction)
+  'na', // em + a (contraction)
 ]);
 
 // =============================================================================
@@ -256,7 +256,10 @@ export class PortugueseTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

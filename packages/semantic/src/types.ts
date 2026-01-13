@@ -219,11 +219,11 @@ export interface CompoundSemanticNode extends SemanticNode {
  * Loop variant discriminant for different loop types.
  */
 export type LoopVariant =
-  | 'forever'      // repeat forever
-  | 'times'        // repeat 5 times
-  | 'for'          // for item in collection
-  | 'while'        // while condition
-  | 'until';       // until condition
+  | 'forever' // repeat forever
+  | 'times' // repeat 5 times
+  | 'for' // for item in collection
+  | 'while' // while condition
+  | 'until'; // until condition
 
 /**
  * A loop semantic node - represents repeat/for/while loops.
@@ -295,10 +295,7 @@ export interface PatternTemplate {
   readonly tokens: PatternToken[];
 }
 
-export type PatternToken =
-  | LiteralPatternToken
-  | RolePatternToken
-  | GroupPatternToken;
+export type PatternToken = LiteralPatternToken | RolePatternToken | GroupPatternToken;
 
 export interface LiteralPatternToken {
   readonly type: 'literal';
@@ -544,10 +541,7 @@ export function createReference(value: ReferenceValue['value']): ReferenceValue 
 /**
  * Create a property path semantic value.
  */
-export function createPropertyPath(
-  object: SemanticValue,
-  property: string
-): PropertyPathValue {
+export function createPropertyPath(object: SemanticValue, property: string): PropertyPathValue {
   return { type: 'property-path', object, property };
 }
 

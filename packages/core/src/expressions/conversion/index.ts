@@ -432,8 +432,7 @@ export const isExpression: ExpressionImplementation = {
 
   validate(args: unknown[]): string | null {
     return (
-      validateArgCount(args, 2, 'is', 'value, type') ??
-      validateArgIsString(args, 1, 'is', 'type')
+      validateArgCount(args, 2, 'is', 'value, type') ?? validateArgIsString(args, 1, 'is', 'type')
     );
   },
 };
@@ -477,7 +476,4 @@ export type ConversionExpressionName = keyof typeof conversionExpressions;
 export { getFormValues, getFormValuesProcessed, getInputValue, parseFixedPrecision };
 
 // Re-export enhanced implementations for tests
-export {
-  AsExpression,
-  createAsExpression,
-} from './impl/index';
+export { AsExpression, createAsExpression } from './impl/index';

@@ -21,10 +21,14 @@ export function getHidePatternsVi(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'ẩn', alternatives: ['che', 'giấu'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'với' },
-            { type: 'role', role: 'style' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'với' },
+              { type: 'role', role: 'style' },
+            ],
+          },
         ],
       },
       extraction: {

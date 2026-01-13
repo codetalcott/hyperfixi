@@ -74,7 +74,7 @@ export class CompilationCache {
       result,
       timestamp: Date.now(),
       options,
-      hits: 0
+      hits: 0,
     };
 
     this.cache.set(key, entry);
@@ -86,7 +86,7 @@ export class CompilationCache {
   has(script: string, options: CompilationOptions): boolean {
     const key = this.generateKey(script, options);
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return false;
     }
@@ -128,7 +128,7 @@ export class CompilationCache {
       misses: this.misses,
       hitRatio: Math.round(hitRatio * 100) / 100, // Round to 2 decimal places
       size: this.cache.size,
-      maxSize: this.maxSize
+      maxSize: this.maxSize,
     };
   }
 
@@ -159,7 +159,7 @@ export class CompilationCache {
       compatibility: options.compatibility || 'modern',
       sourceMap: options.sourceMap || false,
       optimization: options.optimization || false,
-      templateVars: this.sortObject(options.templateVars || {})
+      templateVars: this.sortObject(options.templateVars || {}),
     });
 
     // Simple hash function for the key
@@ -175,11 +175,11 @@ export class CompilationCache {
   private sortObject(obj: Record<string, any>): Record<string, any> {
     const sorted: Record<string, any> = {};
     const keys = Object.keys(obj).sort();
-    
+
     for (const key of keys) {
       sorted[key] = obj[key];
     }
-    
+
     return sorted;
   }
 
@@ -188,13 +188,13 @@ export class CompilationCache {
    */
   private simpleHash(str: string): string {
     let hash = 0;
-    
+
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    
+
     return Math.abs(hash).toString(36);
   }
 
@@ -202,7 +202,7 @@ export class CompilationCache {
    * Check if a cache entry has expired
    */
   private isExpired(entry: CacheEntry, now: number = Date.now()): boolean {
-    return (now - entry.timestamp) > this.ttl;
+    return now - entry.timestamp > this.ttl;
   }
 
   /**

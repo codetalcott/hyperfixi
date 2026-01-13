@@ -136,7 +136,13 @@ export class ASTVisitor {
 
     // Visit all enumerable properties that could contain child nodes
     for (const [key, value] of Object.entries(node)) {
-      if (key === 'type' || key === 'start' || key === 'end' || key === 'line' || key === 'column') {
+      if (
+        key === 'type' ||
+        key === 'start' ||
+        key === 'end' ||
+        key === 'line' ||
+        key === 'column'
+      ) {
         continue; // Skip metadata
       }
 
@@ -193,9 +199,7 @@ export class ASTVisitor {
    * Check if a value is an AST node
    */
   private isASTNode(value: any): value is ASTNode {
-    return value && 
-           typeof value === 'object' && 
-           typeof value.type === 'string';
+    return value && typeof value === 'object' && typeof value.type === 'string';
     // Note: start/end are optional for flexibility in testing
   }
 }
@@ -224,17 +228,17 @@ export function visit(ast: ASTNode | null, visitor: ASTVisitor): ASTNode | null 
  */
 export function findNodes(ast: ASTNode | null, predicate: (node: ASTNode) => boolean): ASTNode[] {
   if (!ast) return [];
-  
+
   const results: ASTNode[] = [];
-  
+
   const visitor = new ASTVisitor({
     enter(node) {
       if (predicate(node)) {
         results.push(node);
       }
-    }
+    },
   });
-  
+
   visit(ast, visitor);
   return results;
 }
@@ -242,20 +246,23 @@ export function findNodes(ast: ASTNode | null, predicate: (node: ASTNode) => boo
 /**
  * Find the first node matching a predicate
  */
-export function findFirst(ast: ASTNode | null, predicate: (node: ASTNode) => boolean): ASTNode | null {
+export function findFirst(
+  ast: ASTNode | null,
+  predicate: (node: ASTNode) => boolean
+): ASTNode | null {
   if (!ast) return null;
-  
+
   let result: ASTNode | null = null;
-  
+
   const visitor = new ASTVisitor({
     enter(node, context) {
       if (predicate(node)) {
         result = node;
         context.stop();
       }
-    }
+    },
   });
-  
+
   visit(ast, visitor);
   return result;
 }
@@ -265,22 +272,28 @@ export function findFirst(ast: ASTNode | null, predicate: (node: ASTNode) => boo
  */
 export function getAncestors(ast: ASTNode | null, targetNode: ASTNode): ASTNode[] {
   if (!ast || !targetNode) return [];
-  
+
   const ancestors: ASTNode[] = [];
   let found = false;
-  
+
   function findPath(node: ASTNode, path: ASTNode[]): boolean {
     if (node === targetNode) {
       ancestors.push(...path.reverse());
       return true;
     }
-    
+
     // Check all child properties
     for (const [key, value] of Object.entries(node)) {
-      if (key === 'type' || key === 'start' || key === 'end' || key === 'line' || key === 'column') {
+      if (
+        key === 'type' ||
+        key === 'start' ||
+        key === 'end' ||
+        key === 'line' ||
+        key === 'column'
+      ) {
         continue;
       }
-      
+
       if (Array.isArray(value)) {
         for (const item of value) {
           if (item && typeof item === 'object' && typeof item.type === 'string') {
@@ -295,10 +308,10 @@ export function getAncestors(ast: ASTNode | null, targetNode: ASTNode): ASTNode[
         }
       }
     }
-    
+
     return false;
   }
-  
+
   findPath(ast, []);
   return ancestors;
 }
@@ -309,17 +322,17 @@ export function getAncestors(ast: ASTNode | null, targetNode: ASTNode): ASTNode[
 export function createTypeCollector(types: string[]): ASTVisitor {
   const typeSet = new Set(types);
   const collected: Record<string, ASTNode[]> = {};
-  
+
   for (const type of types) {
     collected[type] = [];
   }
-  
+
   return new ASTVisitor({
     enter(node) {
       if (typeSet.has(node.type)) {
         collected[node.type]!.push(node);
       }
-    }
+    },
   });
 }
 
@@ -329,7 +342,7 @@ export function createTypeCollector(types: string[]): ASTVisitor {
 export function measureDepth(ast: ASTNode): number {
   let maxDepth = 0;
   let currentDepth = 0;
-  
+
   const visitor = new ASTVisitor({
     enter() {
       currentDepth++;
@@ -337,9 +350,9 @@ export function measureDepth(ast: ASTNode): number {
     },
     exit() {
       currentDepth--;
-    }
+    },
   });
-  
+
   visit(ast, visitor);
   return maxDepth;
 }
@@ -353,7 +366,7 @@ export function countNodeTypes(ast: ASTNode): Record<string, number> {
   const visitor = new ASTVisitor({
     enter(node) {
       counts[node.type] = (counts[node.type] || 0) + 1;
-    }
+    },
   });
 
   visit(ast, visitor);

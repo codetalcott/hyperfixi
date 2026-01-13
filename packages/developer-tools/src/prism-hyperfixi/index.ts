@@ -120,10 +120,7 @@ export function registerPrismHyperfixi(
   Prism: PrismLike,
   options: PrismHyperfixiOptions = {}
 ): void {
-  const {
-    language = 'auto',
-    preloadLanguages = ['en'],
-  } = options;
+  const { language = 'auto', preloadLanguages = ['en'] } = options;
 
   // Preload patterns for specified languages (performance optimization)
   for (const lang of preloadLanguages) {
@@ -194,7 +191,18 @@ export function highlightHyperscript(
 }
 
 // Re-export utilities for advanced usage
-export { generatePatterns, clearPatternCache, getAllKeywords, getSupportedLanguages, isLanguageSupported } from './pattern-generator';
+export {
+  generatePatterns,
+  clearPatternCache,
+  getAllKeywords,
+  getSupportedLanguages,
+  isLanguageSupported,
+} from './pattern-generator';
 export { detectLanguage, isValidLanguage, getHighlightLanguage } from './language-detector';
-export { TOKEN_CLASSES, UNIVERSAL_PATTERNS, isNonLatinLanguage, getTextDirection } from './token-definitions';
+export {
+  TOKEN_CLASSES,
+  UNIVERSAL_PATTERNS,
+  isNonLatinLanguage,
+  getTextDirection,
+} from './token-definitions';
 export type * from './types';

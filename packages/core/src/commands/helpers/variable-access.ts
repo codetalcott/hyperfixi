@@ -198,10 +198,7 @@ export function setVariableValue(
  * @param context - Execution context
  * @returns Resolved element or null
  */
-export function resolveElementRef(
-  elementRef: string,
-  context: ExecutionContext
-): unknown {
+export function resolveElementRef(elementRef: string, context: ExecutionContext): unknown {
   if (elementRef === 'me') {
     return context.me;
   } else if (elementRef === 'it') {
@@ -227,10 +224,7 @@ export function resolveElementRef(
  * @param context - Execution context
  * @returns Property value (as number for arithmetic commands)
  */
-export function getElementPropertyValue(
-  propertyPath: string,
-  context: ExecutionContext
-): number {
+export function getElementPropertyValue(propertyPath: string, context: ExecutionContext): number {
   const parts = propertyPath.split('.');
   const elementRef = parts[0];
   const property = parts[1];

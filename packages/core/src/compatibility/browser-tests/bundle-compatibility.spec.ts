@@ -12,7 +12,7 @@ const BASE_URL = 'http://127.0.0.1:3000';
 
 // Bundle configurations with expected capabilities
 const BUNDLES = {
-  'lite': {
+  lite: {
     file: 'hyperfixi-lite.js',
     size: '1.9 KB',
     features: {
@@ -24,7 +24,7 @@ const BUNDLES = {
       blocks: false,
       eventModifiers: false,
       i18nAliases: false,
-    }
+    },
   },
   'lite-plus': {
     file: 'hyperfixi-lite-plus.js',
@@ -38,7 +38,7 @@ const BUNDLES = {
       blocks: false,
       eventModifiers: false,
       i18nAliases: true,
-    }
+    },
   },
   'hybrid-complete': {
     file: 'hyperfixi-hybrid-complete.js',
@@ -52,9 +52,9 @@ const BUNDLES = {
       blocks: true,
       eventModifiers: true,
       i18nAliases: true,
-    }
+    },
   },
-  'browser': {
+  browser: {
     file: 'hyperfixi-browser.js',
     size: '224 KB',
     features: {
@@ -66,8 +66,8 @@ const BUNDLES = {
       blocks: true,
       eventModifiers: true,
       i18nAliases: true,
-    }
-  }
+    },
+  },
 };
 
 // Gallery examples with functional tests
@@ -79,13 +79,13 @@ const GALLERY_EXAMPLES = [
     test: async (page: Page) => {
       // Find a button that toggles a class
       const btn = page.locator('button').first();
-      if (await btn.count() === 0) return { passed: false, reason: 'No button found' };
+      if ((await btn.count()) === 0) return { passed: false, reason: 'No button found' };
 
       await btn.click();
       await page.waitForTimeout(200);
       // Just verify it doesn't throw
       return { passed: true, reason: 'Button click successful' };
-    }
+    },
   },
   {
     name: 'Counter',
@@ -93,18 +93,22 @@ const GALLERY_EXAMPLES = [
     requiredFeatures: ['increment'],
     test: async (page: Page) => {
       // Find increment button (the "Increase" button with +)
-      const incBtn = page.locator('button').filter({ hasText: /Increase|➕/ }).first();
-      if (await incBtn.count() === 0) return { passed: false, reason: 'No increment button found' };
+      const incBtn = page
+        .locator('button')
+        .filter({ hasText: /Increase|➕/ })
+        .first();
+      if ((await incBtn.count()) === 0)
+        return { passed: false, reason: 'No increment button found' };
 
       // Get initial count from #count element
       const countEl = page.locator('#count');
-      const initialText = await countEl.textContent() ?? '0';
+      const initialText = (await countEl.textContent()) ?? '0';
       const initialCount = parseInt(initialText) || 0;
 
       await incBtn.click();
       await page.waitForTimeout(300);
 
-      const newText = await countEl.textContent() ?? '0';
+      const newText = (await countEl.textContent()) ?? '0';
       const newCount = parseInt(newText) || 0;
 
       // For hybrid-complete, the increment syntax might differ slightly
@@ -114,7 +118,7 @@ const GALLERY_EXAMPLES = [
       }
       // Even if count didn't change, clicking worked without errors
       return { passed: true, reason: `Click worked (count: ${initialCount} -> ${newCount})` };
-    }
+    },
   },
   {
     name: 'Input Mirror',
@@ -122,28 +126,27 @@ const GALLERY_EXAMPLES = [
     requiredFeatures: ['put'],
     test: async (page: Page) => {
       const input = page.locator('input').first();
-      if (await input.count() === 0) return { passed: false, reason: 'No input found' };
+      if ((await input.count()) === 0) return { passed: false, reason: 'No input found' };
 
       await input.fill('test123');
       await page.waitForTimeout(200);
 
       // Check if value was mirrored somewhere
       const mirror = page.locator('#mirror, .mirror, #output, .output').first();
-      if (await mirror.count() > 0) {
+      if ((await mirror.count()) > 0) {
         const text = await mirror.textContent();
         if (text?.includes('test123')) {
           return { passed: true, reason: 'Input mirrored correctly' };
         }
       }
       return { passed: true, reason: 'Input interaction successful' };
-    }
+    },
   },
 ];
 
 // Test each bundle against gallery examples
 for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
   test.describe(`Bundle: ${bundleKey} (${bundleConfig.size})`, () => {
-
     // Test bundle loads without errors
     test('loads without critical errors', async ({ page }) => {
       const errors: string[] = [];
@@ -158,11 +161,12 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
       await page.waitForTimeout(1000);
 
       // Filter out expected errors
-      const criticalErrors = errors.filter(e =>
-        !e.includes('net::') &&
-        !e.includes('Failed to load resource') &&
-        !e.includes('favicon') &&
-        !e.includes('enable') // debug panel errors
+      const criticalErrors = errors.filter(
+        e =>
+          !e.includes('net::') &&
+          !e.includes('Failed to load resource') &&
+          !e.includes('favicon') &&
+          !e.includes('enable') // debug panel errors
       );
 
       expect(criticalErrors).toHaveLength(0);
@@ -175,13 +179,13 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
 
       // This example toggles .active on #box, not on the button
       const box = page.locator('#box');
-      const initialClasses = await box.getAttribute('class') ?? '';
+      const initialClasses = (await box.getAttribute('class')) ?? '';
       const hasActiveInitially = initialClasses.includes('active');
 
       await page.locator('button').first().click();
       await page.waitForTimeout(200);
 
-      const newClasses = await box.getAttribute('class') ?? '';
+      const newClasses = (await box.getAttribute('class')) ?? '';
       const hasActiveNow = newClasses.includes('active');
 
       // Class should have toggled
@@ -208,10 +212,7 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
           const result = await example.test(page);
 
           // Filter critical errors
-          const criticalErrors = errors.filter(e =>
-            !e.includes('enable') &&
-            !e.includes('debug')
-          );
+          const criticalErrors = errors.filter(e => !e.includes('enable') && !e.includes('debug'));
 
           expect(criticalErrors).toHaveLength(0);
           expect(result.passed).toBe(true);
@@ -239,7 +240,9 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
             <div id="out">-</div>
           </body></html>
         `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, { timeout: 10000 });
+        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
+          timeout: 10000,
+        });
         await page.evaluate(() => (window as any).hyperfixi.init());
 
         await page.click('#btn');
@@ -257,7 +260,9 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
             <div id="log"></div>
           </body></html>
         `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, { timeout: 10000 });
+        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
+          timeout: 10000,
+        });
         await page.evaluate(() => (window as any).hyperfixi.init());
 
         // First click should add class
@@ -286,7 +291,9 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
             <div id="box" style="width:100px;height:100px;background:red;">Box</div>
           </body></html>
         `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, { timeout: 10000 });
+        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
+          timeout: 10000,
+        });
         await page.evaluate(() => (window as any).hyperfixi.init());
 
         await page.click('#btn');
@@ -304,7 +311,9 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
             <div id="box" style="width:100px;height:100px;background:blue;">Box</div>
           </body></html>
         `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, { timeout: 10000 });
+        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
+          timeout: 10000,
+        });
         await page.evaluate(() => (window as any).hyperfixi.init());
 
         await page.click('#btn');
@@ -322,7 +331,9 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
             <script src="${BASE_URL}/packages/core/dist/${bundleConfig.file}"></script>
           </body></html>
         `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, { timeout: 10000 });
+        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
+          timeout: 10000,
+        });
         // Don't call init() - bundle auto-initializes
 
         // Get initial opacity (should be 0)
@@ -346,7 +357,16 @@ test.describe('Bundle Summary', () => {
     console.log('║           HYPERFIXI BUNDLE COMPATIBILITY MATRIX            ║');
     console.log('╠════════════════════════════════════════════════════════════╣');
 
-    const features = ['toggle', 'addClass', 'put', 'increment', 'show', 'blocks', 'eventModifiers', 'i18nAliases'];
+    const features = [
+      'toggle',
+      'addClass',
+      'put',
+      'increment',
+      'show',
+      'blocks',
+      'eventModifiers',
+      'i18nAliases',
+    ];
 
     // Header
     console.log('║ Feature        │ lite │ lite+ │ hybrid │ browser ║');
@@ -357,7 +377,9 @@ test.describe('Bundle Summary', () => {
       const cols = Object.values(BUNDLES).map(config =>
         config.features[feature as keyof typeof config.features] ? ' ✅ ' : ' ❌ '
       );
-      console.log(`║ ${feature.padEnd(14)} │${cols[0]}│ ${cols[1]} │  ${cols[2]} │   ${cols[3]}  ║`);
+      console.log(
+        `║ ${feature.padEnd(14)} │${cols[0]}│ ${cols[1]} │  ${cols[2]} │   ${cols[3]}  ║`
+      );
     }
 
     console.log('╠════════════════════════════════════════════════════════════╣');

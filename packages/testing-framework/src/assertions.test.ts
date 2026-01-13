@@ -356,7 +356,11 @@ describe('Assertions Library', () => {
 
     describe('throws', () => {
       it('should pass when function throws', () => {
-        expect(() => assert.throws(() => { throw new Error('test'); })).not.toThrow();
+        expect(() =>
+          assert.throws(() => {
+            throw new Error('test');
+          })
+        ).not.toThrow();
       });
 
       it('should fail when function does not throw', () => {
@@ -364,18 +368,42 @@ describe('Assertions Library', () => {
       });
 
       it('should match error message', () => {
-        expect(() => assert.throws(() => { throw new Error('test'); }, 'test')).not.toThrow();
-        expect(() => assert.throws(() => { throw new Error('test'); }, 'other')).toThrow(AssertionError);
+        expect(() =>
+          assert.throws(() => {
+            throw new Error('test');
+          }, 'test')
+        ).not.toThrow();
+        expect(() =>
+          assert.throws(() => {
+            throw new Error('test');
+          }, 'other')
+        ).toThrow(AssertionError);
       });
 
       it('should match error type', () => {
-        expect(() => assert.throws(() => { throw new TypeError('test'); }, TypeError)).not.toThrow();
-        expect(() => assert.throws(() => { throw new Error('test'); }, TypeError)).toThrow(AssertionError);
+        expect(() =>
+          assert.throws(() => {
+            throw new TypeError('test');
+          }, TypeError)
+        ).not.toThrow();
+        expect(() =>
+          assert.throws(() => {
+            throw new Error('test');
+          }, TypeError)
+        ).toThrow(AssertionError);
       });
 
       it('should match error regex', () => {
-        expect(() => assert.throws(() => { throw new Error('test error'); }, /test/)).not.toThrow();
-        expect(() => assert.throws(() => { throw new Error('test error'); }, /other/)).toThrow(AssertionError);
+        expect(() =>
+          assert.throws(() => {
+            throw new Error('test error');
+          }, /test/)
+        ).not.toThrow();
+        expect(() =>
+          assert.throws(() => {
+            throw new Error('test error');
+          }, /other/)
+        ).toThrow(AssertionError);
       });
     });
 
@@ -386,7 +414,11 @@ describe('Assertions Library', () => {
       });
 
       it('should fail when function throws', () => {
-        expect(() => assert.doesNotThrow(() => { throw new Error('test'); })).toThrow(AssertionError);
+        expect(() =>
+          assert.doesNotThrow(() => {
+            throw new Error('test');
+          })
+        ).toThrow(AssertionError);
       });
     });
 
@@ -414,8 +446,12 @@ describe('Assertions Library', () => {
       });
 
       it('should match error message', async () => {
-        await expect(assert.rejects(Promise.reject(new Error('test')), 'test')).resolves.toBeUndefined();
-        await expect(assert.rejects(Promise.reject(new Error('test')), 'other')).rejects.toThrow(AssertionError);
+        await expect(
+          assert.rejects(Promise.reject(new Error('test')), 'test')
+        ).resolves.toBeUndefined();
+        await expect(assert.rejects(Promise.reject(new Error('test')), 'other')).rejects.toThrow(
+          AssertionError
+        );
       });
     });
 
@@ -425,7 +461,9 @@ describe('Assertions Library', () => {
       });
 
       it('should fail when promise rejects', async () => {
-        await expect(assert.doesNotReject(Promise.reject(new Error('test')))).rejects.toThrow(AssertionError);
+        await expect(assert.doesNotReject(Promise.reject(new Error('test')))).rejects.toThrow(
+          AssertionError
+        );
       });
     });
   });

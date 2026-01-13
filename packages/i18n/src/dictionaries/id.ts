@@ -9,7 +9,7 @@ export const id: Dictionary = {
     tell: 'katakan',
     trigger: 'picu',
     send: 'kirim',
-    
+
     // DOM manipulation
     take: 'ambil',
     put: 'taruh',
@@ -20,7 +20,7 @@ export const id: Dictionary = {
     toggle: 'ganti',
     hide: 'sembunyikan',
     show: 'tampilkan',
-    
+
     // Control flow
     if: 'jika',
     unless: 'kecuali',
@@ -31,13 +31,13 @@ export const id: Dictionary = {
     continue: 'lanjutkan',
     break: 'hentikan',
     halt: 'berhenti',
-    
+
     // Async
     wait: 'tunggu',
     fetch: 'ambil',
     call: 'panggil',
     return: 'kembali',
-    
+
     // Other commands
     make: 'buat',
     log: 'catat',
@@ -82,7 +82,7 @@ export const id: Dictionary = {
     // Behaviors
     install: 'pasang',
   },
-  
+
   modifiers: {
     to: 'ke',
     from: 'dari',
@@ -101,7 +101,7 @@ export const id: Dictionary = {
     through: 'melalui',
     without: 'tanpa',
   },
-  
+
   events: {
     click: 'klik',
     dblclick: 'klik_ganda',
@@ -112,29 +112,29 @@ export const id: Dictionary = {
     mouseover: 'mouse_atas',
     mouseout: 'mouse_luar',
     mousemove: 'gerak_mouse',
-    
+
     keydown: 'tekan_tombol',
     keyup: 'lepas_tombol',
     keypress: 'pencet_tombol',
-    
+
     focus: 'fokus',
     blur: 'blur',
     change: 'ubah',
     input: 'masukan',
     submit: 'kirim',
     reset: 'reset',
-    
+
     load: 'muat',
     unload: 'bongkar',
     resize: 'ubah_ukuran',
     scroll: 'gulir',
-    
+
     touchstart: 'mulai_sentuh',
     touchend: 'akhir_sentuh',
     touchmove: 'gerak_sentuh',
     touchcancel: 'batal_sentuh',
   },
-  
+
   logical: {
     when: 'ketika',
     where: 'di_mana',
@@ -152,7 +152,7 @@ export const id: Dictionary = {
     otherwise: 'sebaliknya',
     end: 'akhir',
   },
-  
+
   temporal: {
     seconds: 'detik',
     second: 'detik',
@@ -167,7 +167,7 @@ export const id: Dictionary = {
     min: 'mnt',
     h: 'j',
   },
-  
+
   values: {
     true: 'benar',
     false: 'salah',
@@ -191,7 +191,7 @@ export const id: Dictionary = {
     result: 'hasil',
     value: 'nilai',
   },
-  
+
   attributes: {
     class: 'kelas',
     classes: 'kelas_kelas',

@@ -40,28 +40,28 @@ function isIndonesianIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const PREPOSITIONS = new Set([
-  'di',         // at, in
-  'ke',         // to
-  'dari',       // from
-  'pada',       // on, at
-  'dengan',     // with
-  'tanpa',      // without
-  'untuk',      // for
-  'oleh',       // by
-  'antara',     // between
-  'sebelum',    // before
-  'sesudah',    // after
-  'setelah',    // after
-  'selama',     // during
-  'sampai',     // until
-  'hingga',     // until
-  'sejak',      // since
-  'menuju',     // towards
-  'tentang',    // about
-  'terhadap',   // towards, against
-  'melalui',    // through
-  'dalam',      // inside
-  'luar',       // outside
+  'di', // at, in
+  'ke', // to
+  'dari', // from
+  'pada', // on, at
+  'dengan', // with
+  'tanpa', // without
+  'untuk', // for
+  'oleh', // by
+  'antara', // between
+  'sebelum', // before
+  'sesudah', // after
+  'setelah', // after
+  'selama', // during
+  'sampai', // until
+  'hingga', // until
+  'sejak', // since
+  'menuju', // towards
+  'tentang', // about
+  'terhadap', // towards, against
+  'melalui', // through
+  'dalam', // inside
+  'luar', // outside
 ]);
 
 // =============================================================================
@@ -268,7 +268,10 @@ export class IndonesianTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

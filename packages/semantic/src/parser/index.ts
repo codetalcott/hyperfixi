@@ -4,12 +4,7 @@
  * Exports the semantic parser and pattern matcher.
  */
 
-export {
-  PatternMatcher,
-  patternMatcher,
-  matchPattern,
-  matchBest,
-} from './pattern-matcher';
+export { PatternMatcher, patternMatcher, matchPattern, matchBest } from './pattern-matcher';
 
 export {
   SemanticParserImpl,

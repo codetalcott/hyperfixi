@@ -40,26 +40,26 @@ function isSwahiliIdentifierChar(char: string): boolean {
 // =============================================================================
 
 const PREPOSITIONS = new Set([
-  'kwa',        // to, for, with, by
-  'na',         // and, with
-  'katika',     // in, at
-  'kwenye',     // on, at
-  'kutoka',     // from
-  'hadi',       // until, to
-  'mpaka',      // until, up to
-  'kabla',      // before
-  'baada',      // after
-  'wakati',     // during, when
-  'bila',       // without
-  'kuhusu',     // about
-  'karibu',     // near
-  'mbele',      // in front of
-  'nyuma',      // behind
-  'ndani',      // inside
-  'nje',        // outside
-  'juu',        // above, on
-  'chini',      // below, under
-  'kati',       // between
+  'kwa', // to, for, with, by
+  'na', // and, with
+  'katika', // in, at
+  'kwenye', // on, at
+  'kutoka', // from
+  'hadi', // until, to
+  'mpaka', // until, up to
+  'kabla', // before
+  'baada', // after
+  'wakati', // during, when
+  'bila', // without
+  'kuhusu', // about
+  'karibu', // near
+  'mbele', // in front of
+  'nyuma', // behind
+  'ndani', // inside
+  'nje', // outside
+  'juu', // above, on
+  'chini', // below, under
+  'kati', // between
 ]);
 
 // =============================================================================
@@ -252,7 +252,10 @@ export class SwahiliTokenizer extends BaseTokenizer {
         }
       }
 
-      if (isDigit(input[pos]) || (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))) {
+      if (
+        isDigit(input[pos]) ||
+        (input[pos] === '-' && pos + 1 < input.length && isDigit(input[pos + 1]))
+      ) {
         const numberToken = this.extractNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);

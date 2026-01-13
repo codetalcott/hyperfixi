@@ -21,15 +21,23 @@ export function getTogglePatternsZh(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: '切换' },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: '在', alternatives: ['到', '于'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: '在', alternatives: ['到', '于'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: '在', markerAlternatives: ['到', '于'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: '在',
+          markerAlternatives: ['到', '于'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

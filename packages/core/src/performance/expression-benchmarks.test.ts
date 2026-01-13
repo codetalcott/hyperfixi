@@ -354,9 +354,17 @@ describe.skip('Enhanced Expression Performance Benchmarks', () => {
           // @ts-ignore - Test uses legacy signature
           const valueResult = await myExpression.evaluate(context, 'testValue');
           // @ts-ignore - Test uses legacy signature
-          const addResult = await addExpression.evaluate(context, valueResult.success ? valueResult.value : 0, 10);
+          const addResult = await addExpression.evaluate(
+            context,
+            valueResult.success ? valueResult.value : 0,
+            10
+          );
           // @ts-ignore - Test uses legacy signature
-          const finalResult = await equalsExpression.evaluate(context, addResult.success ? addResult.value : 0, 52);
+          const finalResult = await equalsExpression.evaluate(
+            context,
+            addResult.success ? addResult.value : 0,
+            52
+          );
 
           return finalResult;
         },
@@ -384,7 +392,11 @@ describe.skip('Enhanced Expression Performance Benchmarks', () => {
           // @ts-ignore - Test uses legacy signature
           const valueResult = await myExpression.evaluate(context, 'nonExistentProperty');
           // @ts-ignore - Test uses legacy signature
-          const comparisonResult = await equalsExpression.evaluate(context, valueResult.success ? valueResult.value : null, null);
+          const comparisonResult = await equalsExpression.evaluate(
+            context,
+            valueResult.success ? valueResult.value : null,
+            null
+          );
 
           return comparisonResult;
         },

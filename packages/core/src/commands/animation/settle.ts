@@ -15,9 +15,19 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
-import { parseDuration, parseCSSDurations, calculateMaxAnimationTime } from '../helpers/duration-parsing';
+import {
+  parseDuration,
+  parseCSSDurations,
+  calculateMaxAnimationTime,
+} from '../helpers/duration-parsing';
 import { waitForAnimationComplete } from '../helpers/event-waiting';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for SettleCommand
@@ -66,10 +76,12 @@ export class SettleCommand implements DecoratedCommand {
       const firstArg = await evaluator.evaluate(raw.args[0], context);
       if (
         isHTMLElement(firstArg) ||
-        (typeof firstArg === 'string' && (
-          firstArg.startsWith('#') || firstArg.startsWith('.') ||
-          firstArg === 'me' || firstArg === 'it' || firstArg === 'you'
-        ))
+        (typeof firstArg === 'string' &&
+          (firstArg.startsWith('#') ||
+            firstArg.startsWith('.') ||
+            firstArg === 'me' ||
+            firstArg === 'it' ||
+            firstArg === 'you'))
       ) {
         target = firstArg as string | HTMLElement;
       }

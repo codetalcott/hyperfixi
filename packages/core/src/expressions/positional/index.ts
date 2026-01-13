@@ -241,7 +241,12 @@ export const previousExpression: ExpressionImplementation = {
   },
 
   validate(args: any[]): string | null {
-    const maxError = validateMaxArgs(args, 2, 'previous', 'optional selector, optional fromElement');
+    const maxError = validateMaxArgs(
+      args,
+      2,
+      'previous',
+      'optional selector, optional fromElement'
+    );
     if (maxError) return maxError;
     if (args.length >= 1 && args[0] != null && typeof args[0] !== 'string') {
       return 'selector must be a string';
@@ -341,7 +346,13 @@ export const nextWithinExpression: ExpressionImplementation = {
   },
 
   validate(args: any[]): string | null {
-    const rangeError = validateArgRange(args, 2, 3, 'nextWithin', 'selector, withinSelector, optional fromElement');
+    const rangeError = validateArgRange(
+      args,
+      2,
+      3,
+      'nextWithin',
+      'selector, withinSelector, optional fromElement'
+    );
     if (rangeError) return rangeError;
     if (typeof args[0] !== 'string') {
       return 'selector must be a string';
@@ -381,7 +392,13 @@ export const previousWithinExpression: ExpressionImplementation = {
   },
 
   validate(args: any[]): string | null {
-    const rangeError = validateArgRange(args, 2, 3, 'previousWithin', 'selector, withinSelector, optional fromElement');
+    const rangeError = validateArgRange(
+      args,
+      2,
+      3,
+      'previousWithin',
+      'selector, withinSelector, optional fromElement'
+    );
     if (rangeError) return rangeError;
     if (typeof args[0] !== 'string') {
       return 'selector must be a string';

@@ -33,27 +33,62 @@ class FullParserImpl implements ParserInterface {
   readonly name = 'full';
   readonly supportedCommands = [
     // DOM
-    'hide', 'show', 'add', 'remove', 'toggle', 'put', 'make', 'swap', 'morph',
+    'hide',
+    'show',
+    'add',
+    'remove',
+    'toggle',
+    'put',
+    'make',
+    'swap',
+    'morph',
     // Async
-    'wait', 'fetch',
+    'wait',
+    'fetch',
     // Data
-    'set', 'get', 'increment', 'decrement', 'bind', 'persist', 'default',
+    'set',
+    'get',
+    'increment',
+    'decrement',
+    'bind',
+    'persist',
+    'default',
     // Utility
-    'log', 'tell', 'copy', 'pick', 'beep',
+    'log',
+    'tell',
+    'copy',
+    'pick',
+    'beep',
     // Events
-    'trigger', 'send',
+    'trigger',
+    'send',
     // Navigation
-    'go', 'push-url', 'replace-url',
+    'go',
+    'push-url',
+    'replace-url',
     // Control Flow
-    'if', 'unless', 'repeat', 'break', 'continue', 'halt', 'return', 'exit', 'throw',
+    'if',
+    'unless',
+    'repeat',
+    'break',
+    'continue',
+    'halt',
+    'return',
+    'exit',
+    'throw',
     // Execution
-    'call', 'pseudo',
+    'call',
+    'pseudo',
     // Content
     'append',
     // Animation
-    'transition', 'measure', 'settle', 'take',
+    'transition',
+    'measure',
+    'settle',
+    'take',
     // Advanced
-    'js', 'async',
+    'js',
+    'async',
     // Behaviors
     'install',
     // Templates

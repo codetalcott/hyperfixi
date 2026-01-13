@@ -24,28 +24,15 @@ export {
   getCurrentDbPath,
   getDefaultDbPath,
 } from './database/connection';
-export {
-  initializeSchema,
-  isSchemaInitialized,
-  dropSchema,
-  SCHEMA,
-} from './database/schema';
+export { initializeSchema, isSchemaInitialized, dropSchema, SCHEMA } from './database/schema';
 
 // Version information
 export const VERSION = '0.2.0';
 
 // Re-export commonly used functions for convenience
-export {
-  validateComponent,
-  validateCollection,
-  validator,
-} from './validator';
+export { validateComponent, validateCollection, validator } from './validator';
 
-export {
-  createRegistry,
-  FileComponentRegistry,
-  MemoryComponentRegistry,
-} from './registry';
+export { createRegistry, FileComponentRegistry, MemoryComponentRegistry } from './registry';
 export type { RegistryOptions } from './registry';
 
 export {

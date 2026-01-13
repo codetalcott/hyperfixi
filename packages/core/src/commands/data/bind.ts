@@ -16,7 +16,13 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolvePossessive } from '../helpers/element-resolution';
 import { getElementProperty, setElementProperty } from '../helpers/element-property-access';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for BindCommand
@@ -69,8 +75,16 @@ const activeBindings: Map<string, ActiveBinding> = new Map();
  */
 @meta({
   description: 'Create two-way data binding between variables and DOM elements',
-  syntax: ['bind :variable to <element>.<property>', 'bind :variable from <element>.<property>', 'bind :variable to <element>.<property> bidirectional'],
-  examples: ['bind :username to my.value', 'bind :count from #display.textContent', 'bind :message to #input.value bidirectional'],
+  syntax: [
+    'bind :variable to <element>.<property>',
+    'bind :variable from <element>.<property>',
+    'bind :variable to <element>.<property> bidirectional',
+  ],
+  examples: [
+    'bind :username to my.value',
+    'bind :count from #display.textContent',
+    'bind :message to #input.value bidirectional',
+  ],
   sideEffects: ['data-binding', 'event-listeners', 'dom-observation'],
 })
 @command({ name: 'bind', category: 'data' })
@@ -90,9 +104,10 @@ export class BindCommand implements DecoratedCommand {
 
     // Parse variable name (first argument, may have : prefix)
     const variableRaw = await evaluator.evaluate(raw.args[0], context);
-    const variable = typeof variableRaw === 'string' && variableRaw.startsWith(':')
-      ? variableRaw.substring(1)
-      : String(variableRaw);
+    const variable =
+      typeof variableRaw === 'string' && variableRaw.startsWith(':')
+        ? variableRaw.substring(1)
+        : String(variableRaw);
 
     // Determine direction (default: 'to')
     let direction: 'to' | 'from' | 'bidirectional' = 'to';
@@ -368,10 +383,10 @@ export class BindCommand implements DecoratedCommand {
    */
   private getEventTypeForProperty(property: string): string {
     const eventMap: Record<string, string> = {
-      'value': 'input',
-      'checked': 'change',
-      'textContent': 'input',
-      'innerHTML': 'input',
+      value: 'input',
+      checked: 'change',
+      textContent: 'input',
+      innerHTML: 'input',
     };
 
     return eventMap[property] || 'change';

@@ -27,18 +27,10 @@ export {
 } from './index';
 
 // Re-export tracker
-export {
-  AnalyticsTracker,
-  createAnalyticsTracker,
-  getTracker,
-  initAnalytics,
-} from './tracker';
+export { AnalyticsTracker, createAnalyticsTracker, getTracker, initAnalytics } from './tracker';
 
 // Re-export collector
-export {
-  EventCollector,
-  createEventCollector,
-} from './collector';
+export { EventCollector, createEventCollector } from './collector';
 
 // Re-export types
 export type {
@@ -137,7 +129,9 @@ export function createInMemoryStorage(options: InMemoryStorageOptions = {}) {
       enforceMaxEvents();
     },
 
-    async query(query: import('./types').AnalyticsQuery): Promise<import('./types').AnalyticsEvent[]> {
+    async query(
+      query: import('./types').AnalyticsQuery
+    ): Promise<import('./types').AnalyticsEvent[]> {
       let result = [...events];
       if (query.eventTypes?.length) {
         result = result.filter(e => query.eventTypes!.includes(e.type));

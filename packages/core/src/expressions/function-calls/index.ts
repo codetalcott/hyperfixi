@@ -161,12 +161,11 @@ export type FunctionCallExpressionInput = any; // Inferred from RuntimeValidator
  * @see BaseExpressionEvaluator#evaluateCallExpression() in packages/core/src/core/base-expression-evaluator.ts
  * @see BaseExpressionEvaluator#evaluateMethodCall() for the AST-based method call handler
  */
-export class FunctionCallExpression
-  implements TypedExpressionImplementation<HyperScriptValue, TypedExpressionContext>
-{
+export class FunctionCallExpression implements TypedExpressionImplementation<
+  HyperScriptValue,
+  TypedExpressionContext
+> {
   public readonly inputSchema = FunctionCallExpressionInputSchema;
-
-  
 
   // Required TypedExpressionImplementation properties
   public readonly name = 'functionCall';

@@ -9,7 +9,7 @@ export const fr: Dictionary = {
     tell: 'dire',
     trigger: 'déclencher',
     send: 'envoyer',
-    
+
     // DOM manipulation
     take: 'prendre',
     put: 'mettre',
@@ -20,7 +20,7 @@ export const fr: Dictionary = {
     toggle: 'basculer',
     hide: 'cacher',
     show: 'montrer',
-    
+
     // Control flow
     if: 'si',
     unless: 'saufsi',
@@ -31,13 +31,13 @@ export const fr: Dictionary = {
     continue: 'continuer',
     break: 'arrêter',
     halt: 'stopper',
-    
+
     // Async
     wait: 'attendre',
     fetch: 'récupérer',
     call: 'appeler',
     return: 'retourner',
-    
+
     // Other commands
     make: 'créer',
     log: 'enregistrer',
@@ -82,7 +82,7 @@ export const fr: Dictionary = {
     // Behaviors
     install: 'installer',
   },
-  
+
   modifiers: {
     to: 'à',
     from: 'de',
@@ -101,7 +101,7 @@ export const fr: Dictionary = {
     through: 'à travers',
     without: 'sans',
   },
-  
+
   events: {
     click: 'clic',
     dblclick: 'doubleclic',
@@ -112,29 +112,29 @@ export const fr: Dictionary = {
     mouseover: 'sourissur',
     mouseout: 'sourisdehors',
     mousemove: 'sourisbouger',
-    
+
     keydown: 'toucheappuyée',
     keyup: 'toucherelâchée',
     keypress: 'touchepressée',
-    
+
     focus: 'focus',
     blur: 'flou',
     change: 'changer',
     input: 'saisie',
     submit: 'soumettre',
     reset: 'réinitialiser',
-    
+
     load: 'charger',
     unload: 'décharger',
     resize: 'redimensionner',
     scroll: 'défiler',
-    
+
     touchstart: 'touchercommencer',
     touchend: 'toucherfin',
     touchmove: 'toucherbouger',
     touchcancel: 'toucherannuler',
   },
-  
+
   logical: {
     when: 'quand',
     where: 'où',
@@ -152,7 +152,7 @@ export const fr: Dictionary = {
     otherwise: 'autrement',
     end: 'fin',
   },
-  
+
   temporal: {
     seconds: 'secondes',
     second: 'seconde',
@@ -167,7 +167,7 @@ export const fr: Dictionary = {
     min: 'min',
     h: 'h',
   },
-  
+
   values: {
     true: 'vrai',
     false: 'faux',
@@ -191,7 +191,7 @@ export const fr: Dictionary = {
     result: 'résultat',
     value: 'valeur',
   },
-  
+
   attributes: {
     class: 'classe',
     classes: 'classes',

@@ -51,9 +51,7 @@ export function getHidePatternsHi(): LanguagePattern[] {
       priority: 80,
       template: {
         format: 'छिपाएं',
-        tokens: [
-          { type: 'literal', value: 'छिपाएं', alternatives: ['छिपा'] },
-        ],
+        tokens: [{ type: 'literal', value: 'छिपाएं', alternatives: ['छिपा'] }],
       },
       extraction: {
         patient: { default: { type: 'reference', value: 'me' } },

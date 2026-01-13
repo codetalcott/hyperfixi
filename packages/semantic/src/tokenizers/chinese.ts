@@ -186,7 +186,7 @@ const CHINESE_KEYWORDS: Map<string, string> = new Map([
   ['从', 'from'],
   // Modifiers
   ['到里面', 'into'],
-  ['进入', 'into'],   // profile primary
+  ['进入', 'into'], // profile primary
   ['里', 'into'],
   ['之前', 'before'],
   ['前', 'before'],
@@ -283,7 +283,13 @@ export class ChineseTokenizer extends BaseTokenizer {
 
       // Try string literal (both ASCII and Chinese quotes)
       // Chinese quotes: \u201C " \u201D " \u2018 ' \u2019 '
-      if (isQuote(input[pos]) || input[pos] === '\u201C' || input[pos] === '\u201D' || input[pos] === '\u2018' || input[pos] === '\u2019') {
+      if (
+        isQuote(input[pos]) ||
+        input[pos] === '\u201C' ||
+        input[pos] === '\u201D' ||
+        input[pos] === '\u2018' ||
+        input[pos] === '\u2019'
+      ) {
         const stringToken = this.tryChineseString(input, pos);
         if (stringToken) {
           tokens.push(stringToken);
@@ -358,8 +364,20 @@ export class ChineseTokenizer extends BaseTokenizer {
   classifyToken(token: string): TokenKind {
     if (PARTICLES.has(token)) return 'particle';
     if (CHINESE_KEYWORDS.has(token)) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[') || token.startsWith('<')) return 'selector';
-    if (token.startsWith('"') || token.startsWith("'") || token.startsWith('\u201C') || token.startsWith('\u2018')) return 'literal';
+    if (
+      token.startsWith('#') ||
+      token.startsWith('.') ||
+      token.startsWith('[') ||
+      token.startsWith('<')
+    )
+      return 'selector';
+    if (
+      token.startsWith('"') ||
+      token.startsWith("'") ||
+      token.startsWith('\u201C') ||
+      token.startsWith('\u2018')
+    )
+      return 'literal';
     if (/^\d/.test(token)) return 'literal';
 
     return 'identifier';
@@ -371,11 +389,7 @@ export class ChineseTokenizer extends BaseTokenizer {
   private tryMultiCharParticle(input: string, pos: number): LanguageToken | null {
     for (const particle of MULTI_CHAR_PARTICLES) {
       if (input.slice(pos, pos + particle.length) === particle) {
-        return createToken(
-          particle,
-          'particle',
-          createPosition(pos, pos + particle.length)
-        );
+        return createToken(particle, 'particle', createPosition(pos, pos + particle.length));
       }
     }
     return null;
@@ -440,19 +454,11 @@ export class ChineseTokenizer extends BaseTokenizer {
 
     // Check if this word is a particle
     if (PARTICLES.has(word)) {
-      return createToken(
-        word,
-        'particle',
-        createPosition(startPos, pos)
-      );
+      return createToken(word, 'particle', createPosition(startPos, pos));
     }
 
     // Not a keyword, return as identifier
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -468,11 +474,7 @@ export class ChineseTokenizer extends BaseTokenizer {
 
     if (!word) return null;
 
-    return createToken(
-      word,
-      'identifier',
-      createPosition(startPos, pos)
-    );
+    return createToken(word, 'identifier', createPosition(startPos, pos));
   }
 
   /**
@@ -561,7 +563,11 @@ export class ChineseTokenizer extends BaseTokenizer {
       } else if (remaining[0] === 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
         number += 's';
         pos += 1;
-      } else if (remaining[0] === 'm' && remaining[1] !== 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
+      } else if (
+        remaining[0] === 'm' &&
+        remaining[1] !== 's' &&
+        !isAsciiIdentifierChar(remaining[1] || '')
+      ) {
         number += 'm';
         pos += 1;
       } else if (remaining[0] === 'h' && !isAsciiIdentifierChar(remaining[1] || '')) {
@@ -572,11 +578,7 @@ export class ChineseTokenizer extends BaseTokenizer {
 
     if (!number) return null;
 
-    return createToken(
-      number,
-      'literal',
-      createPosition(startPos, pos)
-    );
+    return createToken(number, 'literal', createPosition(startPos, pos));
   }
 }
 

@@ -18,7 +18,7 @@ export function parseLocale(locale: string): LocaleInfo {
   const parts = locale.split('-');
   const info: LocaleInfo = {
     code: locale,
-    language: parts[0].toLowerCase()
+    language: parts[0].toLowerCase(),
   };
 
   if (parts.length > 1) {
@@ -112,8 +112,7 @@ export function getBestMatchingLocale(
   if (requested.script) {
     const scriptMatch = availableLocales.find(locale => {
       const available = parseLocale(locale);
-      return available.language === requested.language && 
-             available.script === requested.script;
+      return available.language === requested.language && available.script === requested.script;
     });
 
     if (scriptMatch) {
@@ -175,7 +174,7 @@ export function formatLocaleName(locale: string): string {
     de: 'Deutsch',
     pt: 'Português',
     hi: 'हिन्दी',
-    ar: 'العربية'
+    ar: 'العربية',
   };
 
   return names[locale] || locale;

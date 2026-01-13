@@ -20,8 +20,16 @@ export function getPutPatternsTr(): LanguagePattern[] {
       template: {
         format: '{patient} yi {destination} a koy',
         tokens: [
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'reference', 'expression'] },
-          { type: 'literal', value: 'yi', alternatives: ['yı', 'yu', 'yü', 'i', 'ı', 'u', 'ü', "'i", "'ı"] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+          },
+          {
+            type: 'literal',
+            value: 'yi',
+            alternatives: ['yı', 'yu', 'yü', 'i', 'ı', 'u', 'ü', "'i", "'ı"],
+          },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
           { type: 'literal', value: 'a', alternatives: ['e', "'a", "'e", '-a', '-e'] },
           { type: 'literal', value: 'koy', alternatives: ['koymak', 'yerleştir', 'yerleştirmek'] },
@@ -42,7 +50,11 @@ export function getPutPatternsTr(): LanguagePattern[] {
         tokens: [
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
           { type: 'literal', value: 'a', alternatives: ['e', "'a", "'e"] },
-          { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'reference', 'expression'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'selector', 'reference', 'expression'],
+          },
           { type: 'literal', value: 'koy', alternatives: ['koymak'] },
         ],
       },

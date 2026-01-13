@@ -68,11 +68,7 @@ export function compareValues(
 /**
  * Handle comparisons involving null or undefined
  */
-function compareNullish(
-  left: unknown,
-  right: unknown,
-  operator: ComparisonOperator
-): boolean {
+function compareNullish(left: unknown, right: unknown, operator: ComparisonOperator): boolean {
   const leftIsNullish = left == null;
   const rightIsNullish = right == null;
 

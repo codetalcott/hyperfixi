@@ -5,11 +5,7 @@
  * Converts SemanticNodes to the CommandNode format expected by the runtime.
  */
 
-import type {
-  SemanticNode,
-  EventHandlerSemanticNode,
-  SemanticValue,
-} from './types';
+import type { SemanticNode, EventHandlerSemanticNode, SemanticValue } from './types';
 
 // =============================================================================
 // CommandNode Interface (from @hyperfixi/core)
@@ -132,9 +128,7 @@ export function toCommandNode(semantic: SemanticNode): CommandNode {
  */
 export function toEventHandlerNode(semantic: EventHandlerSemanticNode): EventHandlerNode {
   const eventValue = semantic.roles.get('event');
-  const eventName = eventValue
-    ? valueToString(eventValue)
-    : 'click';
+  const eventName = eventValue ? valueToString(eventValue) : 'click';
 
   const body: StatementNode[] = semantic.body.map(node => {
     if (node.kind === 'event-handler') {
@@ -152,8 +146,10 @@ export function toEventHandlerNode(semantic: EventHandlerSemanticNode): EventHan
   if (semantic.eventModifiers) {
     const mods: { once?: boolean; debounce?: number; throttle?: number } = {};
     if (semantic.eventModifiers.once !== undefined) mods.once = semantic.eventModifiers.once;
-    if (semantic.eventModifiers.debounce !== undefined) mods.debounce = semantic.eventModifiers.debounce;
-    if (semantic.eventModifiers.throttle !== undefined) mods.throttle = semantic.eventModifiers.throttle;
+    if (semantic.eventModifiers.debounce !== undefined)
+      mods.debounce = semantic.eventModifiers.debounce;
+    if (semantic.eventModifiers.throttle !== undefined)
+      mods.throttle = semantic.eventModifiers.throttle;
     if (Object.keys(mods).length > 0) {
       result.modifiers = mods;
     }

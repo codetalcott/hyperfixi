@@ -20,12 +20,20 @@ export function getPutPatternsUk(): LanguagePattern[] {
       template: {
         format: 'покласти {patient} в {destination}',
         tokens: [
-          { type: 'literal', value: 'покласти', alternatives: ['поклади', 'помістити', 'помісти', 'вставити', 'встав'] },
+          {
+            type: 'literal',
+            value: 'покласти',
+            alternatives: ['поклади', 'помістити', 'помісти', 'вставити', 'встав'],
+          },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'в', alternatives: ['у', 'на'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'в', alternatives: ['у', 'на'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {

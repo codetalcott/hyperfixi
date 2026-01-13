@@ -22,16 +22,14 @@ export interface HyperscriptI18nViteOptions {
   exclude?: RegExp | string[];
 }
 
-export function hyperscriptI18nVitePlugin(
-  options: HyperscriptI18nViteOptions = {}
-): Plugin {
+export function hyperscriptI18nVitePlugin(options: HyperscriptI18nViteOptions = {}): Plugin {
   const {
     sourceLocale = 'en',
     targetLocale = 'en',
     preserveOriginal = false,
     attributes = ['_', 'script', 'data-script'],
     include = /\.(html|vue|svelte)$/,
-    exclude = /node_modules/
+    exclude = /node_modules/,
   } = options;
 
   const translator = new HyperscriptTranslator({ locale: sourceLocale });
@@ -57,7 +55,7 @@ export function hyperscriptI18nVitePlugin(
             sourceLocale,
             targetLocale,
             preserveOriginal,
-            attributes
+            attributes,
           });
         }
 
@@ -67,7 +65,7 @@ export function hyperscriptI18nVitePlugin(
             sourceLocale,
             targetLocale,
             preserveOriginal,
-            attributes
+            attributes,
           });
         }
 
@@ -77,7 +75,7 @@ export function hyperscriptI18nVitePlugin(
             sourceLocale,
             targetLocale,
             preserveOriginal,
-            attributes
+            attributes,
           });
         }
 
@@ -96,7 +94,7 @@ export function hyperscriptI18nVitePlugin(
         res.setHeader('X-Hyperscript-I18n-Target', targetLocale);
         next();
       });
-    }
+    },
   };
 }
 
@@ -105,13 +103,9 @@ function shouldProcess(
   include: RegExp | string[],
   exclude: RegExp | string[]
 ): boolean {
-  const includePattern = Array.isArray(include)
-    ? new RegExp(include.join('|'))
-    : include;
-  
-  const excludePattern = Array.isArray(exclude)
-    ? new RegExp(exclude.join('|'))
-    : exclude;
+  const includePattern = Array.isArray(include) ? new RegExp(include.join('|')) : include;
+
+  const excludePattern = Array.isArray(exclude) ? new RegExp(exclude.join('|')) : exclude;
 
   return includePattern.test(id) && !excludePattern.test(id);
 }
@@ -139,19 +133,16 @@ function transformHtml(
 
       const translated = translator.translate(original, {
         from: options.sourceLocale,
-        to: options.targetLocale
+        to: options.targetLocale,
       });
 
       if (original !== translated) {
         hasTransformations = true;
-        
+
         if (options.preserveOriginal) {
-          element.setAttribute(
-            `${attr}-${options.sourceLocale}`,
-            original
-          );
+          element.setAttribute(`${attr}-${options.sourceLocale}`, original);
         }
-        
+
         element.setAttribute(attr, translated);
       }
     });
@@ -163,7 +154,7 @@ function transformHtml(
 
   return {
     code: root.toString(),
-    map: null // Source maps could be added here
+    map: null, // Source maps could be added here
   };
 }
 
@@ -186,10 +177,7 @@ function transformVue(
   }
 
   // Replace template content
-  const newCode = code.replace(
-    templateMatch[0],
-    `<template>${transformed.code}</template>`
-  );
+  const newCode = code.replace(templateMatch[0], `<template>${transformed.code}</template>`);
 
   return { code: newCode };
 }
@@ -202,7 +190,7 @@ function transformSvelte(
   // Svelte components have HTML at the top level
   const scriptMatch = code.match(/<script[^>]*>[\s\S]*?<\/script>/g);
   const styleMatch = code.match(/<style[^>]*>[\s\S]*?<\/style>/g);
-  
+
   // Extract HTML portion
   let html = code;
   if (scriptMatch) {

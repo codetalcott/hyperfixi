@@ -7,42 +7,86 @@ export const RequiredCategories = [
   'logical',
   'temporal',
   'values',
-  'attributes'
+  'attributes',
 ] as const;
 
 export const RequiredKeys = {
   commands: [
-    'on', 'tell', 'trigger', 'send',
-    'take', 'put', 'set', 'get', 'add', 'remove', 'toggle', 'hide', 'show',
-    'if', 'repeat', 'for', 'while', 'wait', 'fetch', 'call', 'return',
-    'make', 'log', 'throw', 'catch'
+    'on',
+    'tell',
+    'trigger',
+    'send',
+    'take',
+    'put',
+    'set',
+    'get',
+    'add',
+    'remove',
+    'toggle',
+    'hide',
+    'show',
+    'if',
+    'repeat',
+    'for',
+    'while',
+    'wait',
+    'fetch',
+    'call',
+    'return',
+    'make',
+    'log',
+    'throw',
+    'catch',
   ],
-  
+
   modifiers: [
-    'to', 'from', 'into', 'with', 'at', 'in', 'of', 'as', 'by',
-    'before', 'after', 'over', 'under', 'between'
+    'to',
+    'from',
+    'into',
+    'with',
+    'at',
+    'in',
+    'of',
+    'as',
+    'by',
+    'before',
+    'after',
+    'over',
+    'under',
+    'between',
   ],
-  
+
   events: [
-    'click', 'change', 'focus', 'blur', 'keydown', 'keyup',
-    'mouseenter', 'mouseleave', 'submit', 'load', 'scroll'
+    'click',
+    'change',
+    'focus',
+    'blur',
+    'keydown',
+    'keyup',
+    'mouseenter',
+    'mouseleave',
+    'submit',
+    'load',
+    'scroll',
   ],
-  
-  logical: [
-    'and', 'or', 'not', 'is', 'then', 'else', 'end'
-  ],
-  
-  temporal: [
-    'seconds', 'milliseconds', 'minutes', 'hours'
-  ],
-  
-  values: [
-    'true', 'false', 'null', 'it', 'me', 'my', 'element', 'window', 'document'
-  ],
-  
+
+  logical: ['and', 'or', 'not', 'is', 'then', 'else', 'end'],
+
+  temporal: ['seconds', 'milliseconds', 'minutes', 'hours'],
+
+  values: ['true', 'false', 'null', 'it', 'me', 'my', 'element', 'window', 'document'],
+
   attributes: [
-    'class', 'style', 'attribute', 'first', 'last', 'next', 'previous', 'parent', 'children'
-  ]
+    'class',
+    'style',
+    'attribute',
+    'first',
+    'last',
+    'next',
+    'previous',
+    'parent',
+    'children',
+  ],
 } as const;
 
 export interface DictionarySchema {
@@ -52,16 +96,16 @@ export interface DictionarySchema {
 
 export const schema: DictionarySchema = {
   categories: RequiredCategories,
-  requiredKeys: RequiredKeys
+  requiredKeys: RequiredKeys,
 };
 
 // Helper type for strict dictionary validation
 export type StrictDictionary = {
-  [K in typeof RequiredCategories[number]]: Record<string, string>;
+  [K in (typeof RequiredCategories)[number]]: Record<string, string>;
 };
 
 // Validation helpers
-export function isValidCategory(category: string): category is typeof RequiredCategories[number] {
+export function isValidCategory(category: string): category is (typeof RequiredCategories)[number] {
   return RequiredCategories.includes(category as any);
 }
 

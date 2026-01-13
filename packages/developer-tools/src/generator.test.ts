@@ -5,12 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import {
-  createProject,
-  createComponent,
-  createTemplate,
-  generateCode,
-} from './generator';
+import { createProject, createComponent, createTemplate, generateCode } from './generator';
 
 // Mock fs-extra
 vi.mock('fs-extra', async () => {
@@ -88,27 +83,31 @@ describe('Generator', () => {
     it('should throw error if directory exists', async () => {
       mockFs.pathExists.mockResolvedValue(true);
 
-      await expect(createProject({
-        name: 'existing-project',
-        template: 'basic',
-        typescript: false,
-        testing: false,
-        linting: false,
-        git: false,
-        install: false,
-      })).rejects.toThrow('Directory existing-project already exists');
+      await expect(
+        createProject({
+          name: 'existing-project',
+          template: 'basic',
+          typescript: false,
+          testing: false,
+          linting: false,
+          git: false,
+          install: false,
+        })
+      ).rejects.toThrow('Directory existing-project already exists');
     });
 
     it('should throw error for unknown template', async () => {
-      await expect(createProject({
-        name: 'test',
-        template: 'nonexistent' as any,
-        typescript: false,
-        testing: false,
-        linting: false,
-        git: false,
-        install: false,
-      })).rejects.toThrow('Template nonexistent not found');
+      await expect(
+        createProject({
+          name: 'test',
+          template: 'nonexistent' as any,
+          typescript: false,
+          testing: false,
+          linting: false,
+          git: false,
+          install: false,
+        })
+      ).rejects.toThrow('Template nonexistent not found');
     });
 
     it('should replace template variables', async () => {
@@ -330,11 +329,13 @@ describe('Generator', () => {
     });
 
     it('should throw for unknown type', async () => {
-      await expect(generateCode({
-        type: 'unknown' as any,
-        name: 'test',
-        schema: {},
-      })).rejects.toThrow();
+      await expect(
+        generateCode({
+          type: 'unknown' as any,
+          name: 'test',
+          schema: {},
+        })
+      ).rejects.toThrow();
     });
 
     it('should include hyperscript for interactive components', async () => {

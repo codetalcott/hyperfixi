@@ -49,12 +49,25 @@ describe('Toggle Group Behavior', () => {
   describe('Initialization', () => {
     it('should initialize on container element', () => {
       toggleGroupBehaviorDefinition.init(container);
-      expect(typeof (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem).toBe('function');
-      expect(typeof (container as HTMLElement & { deactivateAll: () => void }).deactivateAll).toBe('function');
-      expect(typeof (container as HTMLElement & { getActiveItem: () => HTMLElement | null }).getActiveItem).toBe('function');
-      expect(typeof (container as HTMLElement & { getActiveValue: () => string | null }).getActiveValue).toBe('function');
+      expect(
+        typeof (
+          container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+        ).activateItem
+      ).toBe('function');
+      expect(typeof (container as HTMLElement & { deactivateAll: () => void }).deactivateAll).toBe(
+        'function'
+      );
+      expect(
+        typeof (container as HTMLElement & { getActiveItem: () => HTMLElement | null })
+          .getActiveItem
+      ).toBe('function');
+      expect(
+        typeof (container as HTMLElement & { getActiveValue: () => string | null }).getActiveValue
+      ).toBe('function');
       expect(typeof (container as HTMLElement & { next: () => void }).next).toBe('function');
-      expect(typeof (container as HTMLElement & { previous: () => void }).previous).toBe('function');
+      expect(typeof (container as HTMLElement & { previous: () => void }).previous).toBe(
+        'function'
+      );
     });
 
     it('should use custom selector when provided', () => {
@@ -66,7 +79,11 @@ describe('Toggle Group Behavior', () => {
       document.body.appendChild(customContainer);
 
       toggleGroupBehaviorDefinition.init(customContainer, { itemSelector: '.tab' });
-      expect((customContainer as unknown as HTMLElement & { getActiveItem: () => HTMLElement | null }).getActiveItem()).not.toBeNull();
+      expect(
+        (
+          customContainer as unknown as HTMLElement & { getActiveItem: () => HTMLElement | null }
+        ).getActiveItem()
+      ).not.toBeNull();
 
       document.body.removeChild(customContainer);
     });
@@ -77,7 +94,7 @@ describe('Toggle Group Behavior', () => {
 
       toggleGroupBehaviorDefinition.init(container, {
         activeClass: 'selected',
-        initialActive: 'tab1'
+        initialActive: 'tab1',
       });
 
       // Wait for setTimeout in init
@@ -98,7 +115,9 @@ describe('Toggle Group Behavior', () => {
 
       expect(tab1.classList.contains('active')).toBe(true);
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem(tab2);
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem(tab2);
 
       expect(tab1.classList.contains('active')).toBe(false);
       expect(tab2.classList.contains('active')).toBe(true);
@@ -108,7 +127,9 @@ describe('Toggle Group Behavior', () => {
       const tab2 = container.querySelector('[data-toggle="tab2"]') as HTMLElement;
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
 
       expect(tab1.classList.contains('active')).toBe(false);
       expect(tab2.classList.contains('active')).toBe(true);
@@ -118,7 +139,9 @@ describe('Toggle Group Behavior', () => {
       const tab3 = container.querySelector('[data-toggle="tab3"]') as HTMLElement;
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem(2); // Zero-indexed
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem(2); // Zero-indexed
 
       expect(tab1.classList.contains('active')).toBe(false);
       expect(tab3.classList.contains('active')).toBe(true);
@@ -130,7 +153,9 @@ describe('Toggle Group Behavior', () => {
 
       expect(tab1.classList.contains('active')).toBe(true);
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
 
       expect(tab1.classList.contains('active')).toBe(false);
       expect(tab2.classList.contains('active')).toBe(true);
@@ -139,7 +164,9 @@ describe('Toggle Group Behavior', () => {
     it('should handle invalid item gracefully', () => {
       const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('nonexistent');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('nonexistent');
 
       expect(consoleWarn).toHaveBeenCalledWith('Toggle item not found:', 'nonexistent');
 
@@ -160,7 +187,9 @@ describe('Toggle Group Behavior', () => {
       (container as HTMLElement & { deactivateAll: () => void }).deactivateAll();
 
       expect(tab1.classList.contains('active')).toBe(false);
-      expect((container as HTMLElement & { getActiveItem: () => HTMLElement | null }).getActiveItem()).toBeNull();
+      expect(
+        (container as HTMLElement & { getActiveItem: () => HTMLElement | null }).getActiveItem()
+      ).toBeNull();
     });
 
     it('should allow deactivating by clicking active item when allowNone is true', () => {
@@ -171,7 +200,9 @@ describe('Toggle Group Behavior', () => {
 
       expect(tab1.classList.contains('active')).toBe(true);
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem(tab1);
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem(tab1);
 
       expect(tab1.classList.contains('active')).toBe(false);
     });
@@ -182,7 +213,9 @@ describe('Toggle Group Behavior', () => {
       expect(tab1.classList.contains('active')).toBe(true);
 
       // Clicking active item should not deactivate
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem(tab1);
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem(tab1);
 
       expect(tab1.classList.contains('active')).toBe(true);
     });
@@ -195,21 +228,29 @@ describe('Toggle Group Behavior', () => {
 
     it('should get active item', () => {
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
-      const active = (container as HTMLElement & { getActiveItem: () => HTMLElement | null }).getActiveItem();
+      const active = (
+        container as HTMLElement & { getActiveItem: () => HTMLElement | null }
+      ).getActiveItem();
 
       expect(active).toBe(tab1);
     });
 
     it('should get active value', () => {
-      const value = (container as HTMLElement & { getActiveValue: () => string | null }).getActiveValue();
+      const value = (
+        container as HTMLElement & { getActiveValue: () => string | null }
+      ).getActiveValue();
       expect(value).toBe('tab1');
     });
 
     it('should return null when no active item', () => {
       (container as HTMLElement & { deactivateAll: () => void }).deactivateAll();
 
-      expect((container as HTMLElement & { getActiveItem: () => HTMLElement | null }).getActiveItem()).toBeNull();
-      expect((container as HTMLElement & { getActiveValue: () => string | null }).getActiveValue()).toBeNull();
+      expect(
+        (container as HTMLElement & { getActiveItem: () => HTMLElement | null }).getActiveItem()
+      ).toBeNull();
+      expect(
+        (container as HTMLElement & { getActiveValue: () => string | null }).getActiveValue()
+      ).toBeNull();
     });
   });
 
@@ -231,7 +272,9 @@ describe('Toggle Group Behavior', () => {
     });
 
     it('should navigate to previous item', () => {
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
 
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
       const tab2 = container.querySelector('[data-toggle="tab2"]') as HTMLElement;
@@ -245,7 +288,9 @@ describe('Toggle Group Behavior', () => {
     });
 
     it('should wrap around from last to first on next()', () => {
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab3');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab3');
 
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
       const tab3 = container.querySelector('[data-toggle="tab3"]') as HTMLElement;
@@ -314,7 +359,9 @@ describe('Toggle Group Behavior', () => {
     });
 
     it('should navigate with ArrowLeft', () => {
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
       const tab2 = container.querySelector('[data-toggle="tab2"]') as HTMLElement;
 
@@ -337,7 +384,9 @@ describe('Toggle Group Behavior', () => {
     });
 
     it('should navigate with ArrowUp', () => {
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
       const tab2 = container.querySelector('[data-toggle="tab2"]') as HTMLElement;
 
@@ -349,7 +398,9 @@ describe('Toggle Group Behavior', () => {
     });
 
     it('should navigate to first with Home key', () => {
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab3');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab3');
       const tab1 = container.querySelector('[data-toggle="tab1"]') as HTMLElement;
       const tab3 = container.querySelector('[data-toggle="tab3"]') as HTMLElement;
 
@@ -402,7 +453,9 @@ describe('Toggle Group Behavior', () => {
         eventDetail = e.detail;
       }) as EventListener);
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
 
       expect(eventFired).toBe(true);
       expect(eventDetail.element).toBe(tab2);
@@ -418,7 +471,9 @@ describe('Toggle Group Behavior', () => {
         eventDetail = e.detail;
       }) as EventListener);
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
 
       expect(eventFired).toBe(true);
       expect(eventDetail.element).toBe(tab1);
@@ -433,7 +488,9 @@ describe('Toggle Group Behavior', () => {
         eventDetail = e.detail;
       }) as EventListener);
 
-      (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem('tab2');
+      (
+        container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+      ).activateItem('tab2');
 
       expect(eventFired).toBe(true);
       expect(eventDetail.value).toBe('tab2');
@@ -445,17 +502,24 @@ describe('Toggle Group Behavior', () => {
     it('should create toggle group behavior with createToggleGroupBehavior', () => {
       createToggleGroupBehavior(container);
 
-      expect(typeof (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem).toBe('function');
+      expect(
+        typeof (
+          container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }
+        ).activateItem
+      ).toBe('function');
       expect(typeof (container as HTMLElement & { next: () => void }).next).toBe('function');
     });
 
     it('should create toggle group behavior with options', () => {
       createToggleGroupBehavior(container, {
         name: 'custom-group',
-        allowNone: true
+        allowNone: true,
       });
 
-      expect((container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void }).activateItem).toBeDefined();
+      expect(
+        (container as HTMLElement & { activateItem: (item: HTMLElement | string | number) => void })
+          .activateItem
+      ).toBeDefined();
     });
   });
 
@@ -520,14 +584,24 @@ describe('Toggle Group Behavior', () => {
 
       createToggleGroupBehavior(radioContainer, {
         name: 'options',
-        allowNone: false
+        allowNone: false,
       });
 
-      expect((radioContainer as unknown as HTMLElement & { getActiveValue: () => string | null }).getActiveValue()).toBe('option1');
+      expect(
+        (
+          radioContainer as unknown as HTMLElement & { getActiveValue: () => string | null }
+        ).getActiveValue()
+      ).toBe('option1');
 
-      (radioContainer as unknown as HTMLElement & { activateItem: (item: string) => void }).activateItem('option2');
+      (
+        radioContainer as unknown as HTMLElement & { activateItem: (item: string) => void }
+      ).activateItem('option2');
 
-      expect((radioContainer as unknown as HTMLElement & { getActiveValue: () => string | null }).getActiveValue()).toBe('option2');
+      expect(
+        (
+          radioContainer as unknown as HTMLElement & { getActiveValue: () => string | null }
+        ).getActiveValue()
+      ).toBe('option2');
 
       document.body.removeChild(radioContainer);
     });

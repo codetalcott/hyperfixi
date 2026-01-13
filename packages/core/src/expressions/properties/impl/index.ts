@@ -132,11 +132,9 @@ export class PossessiveExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 
@@ -302,11 +300,9 @@ export class MyExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -391,11 +387,9 @@ export class ItsExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -480,11 +474,9 @@ export class YourExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -570,11 +562,9 @@ export class AttributeExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }
@@ -660,11 +650,9 @@ export class AttributeWithValueExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Check input structure and types']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Check input structure and types',
+      ]);
     }
   }
 }

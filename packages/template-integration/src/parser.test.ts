@@ -13,7 +13,7 @@ describe('TemplateParser', () => {
     it('should parse simple text', () => {
       const template = 'Hello, World!';
       const nodes = parser.parse(template);
-      
+
       expect(nodes).toHaveLength(1);
       expect(nodes[0].type).toBe('text');
       expect(nodes[0].content).toBe('Hello, World!');
@@ -22,7 +22,7 @@ describe('TemplateParser', () => {
     it('should parse simple HTML element', () => {
       const template = '<div>Hello</div>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes).toHaveLength(1);
       expect(nodes[0].type).toBe('element');
       expect(nodes[0].tagName).toBe('div');
@@ -33,7 +33,7 @@ describe('TemplateParser', () => {
     it('should parse self-closing tags', () => {
       const template = '<br/>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes).toHaveLength(1);
       expect(nodes[0].type).toBe('element');
       expect(nodes[0].tagName).toBe('br');
@@ -45,7 +45,7 @@ describe('TemplateParser', () => {
     it('should parse quoted attributes', () => {
       const template = '<div class="container" id="main">Content</div>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes[0].attributes).toEqual({
         class: 'container',
         id: 'main',
@@ -55,7 +55,7 @@ describe('TemplateParser', () => {
     it('should parse boolean attributes', () => {
       const template = '<input type="checkbox" checked disabled>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes[0].attributes).toEqual({
         type: 'checkbox',
         checked: '',
@@ -66,7 +66,7 @@ describe('TemplateParser', () => {
     it('should parse hyperscript attributes', () => {
       const template = '<button _="on click toggle .active">Click me</button>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes[0].type).toBe('hyperscript');
       expect(nodes[0].hyperscript).toBe('on click toggle .active');
     });
@@ -76,19 +76,19 @@ describe('TemplateParser', () => {
     it('should parse template variables', () => {
       const template = 'Hello, {{name}}!';
       const nodes = parser.parse(template);
-      
+
       expect(nodes).toHaveLength(1);
       expect(nodes[0].content).toBe('Hello, {{name}}!');
     });
 
     it('should handle custom delimiters', () => {
       const customParser = new TemplateParser({
-        delimiters: { start: '[[', end: ']]' }
+        delimiters: { start: '[[', end: ']]' },
       });
-      
+
       const template = 'Hello, [[name]]!';
       const nodes = customParser.parse(template);
-      
+
       expect(nodes).toHaveLength(1);
       expect(nodes[0].content).toBe('Hello, [[name]]!');
     });
@@ -96,7 +96,7 @@ describe('TemplateParser', () => {
     it('should parse variables with spaces', () => {
       const template = '{{ user.firstName }} {{ user.lastName }}';
       const nodes = parser.parse(template);
-      
+
       expect(nodes).toHaveLength(1);
       expect(nodes[0].content).toBe('{{ user.firstName }} {{ user.lastName }}');
     });
@@ -106,7 +106,7 @@ describe('TemplateParser', () => {
     it('should parse nested HTML elements', () => {
       const template = '<div><p>Hello <strong>World</strong></p></div>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes[0].tagName).toBe('div');
       expect(nodes[0].children![0].tagName).toBe('p');
       expect(nodes[0].children![0].children![1].tagName).toBe('strong');
@@ -114,9 +114,10 @@ describe('TemplateParser', () => {
     });
 
     it('should handle deeply nested structures', () => {
-      const template = '<div><section><article><h1>Title</h1><p>Content</p></article></section></div>';
+      const template =
+        '<div><section><article><h1>Title</h1><p>Content</p></article></section></div>';
       const nodes = parser.parse(template);
-      
+
       const article = nodes[0].children![0].children![0];
       expect(article.tagName).toBe('article');
       expect(article.children![0].tagName).toBe('h1');
@@ -128,7 +129,7 @@ describe('TemplateParser', () => {
     it('should parse conditional directives', () => {
       const template = '<div v-if="showContent">Content</div>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes[0].type).toBe('directive');
       expect(nodes[0].directive!.name).toBe('if');
       expect(nodes[0].directive!.expression).toBe('showContent');
@@ -137,7 +138,7 @@ describe('TemplateParser', () => {
     it('should parse loop directives', () => {
       const template = '<li hf-for="item in items">{{item}}</li>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes[0].type).toBe('directive');
       expect(nodes[0].directive!.name).toBe('for');
       expect(nodes[0].directive!.expression).toBe('item in items');
@@ -150,30 +151,31 @@ describe('TemplateParser', () => {
         <button _="on click toggle .active">Toggle</button>
         <div data-hyperscript="on mouseover add .hover">Hover me</div>
       `;
-      
+
       const nodes = parser.parse(template);
       const blocks = parser.extractHyperscriptBlocks(nodes);
-      
+
       expect(blocks).toHaveLength(2);
       expect(blocks[0].code).toBe('on click toggle .active');
       expect(blocks[1].code).toBe('on mouseover add .hover');
     });
 
     it('should extract template variables from hyperscript', () => {
-      const template = '<button _="on click fetch /api/{{endpoint}} then put result into #{{target}}">Load</button>';
-      
+      const template =
+        '<button _="on click fetch /api/{{endpoint}} then put result into #{{target}}">Load</button>';
+
       const nodes = parser.parse(template);
       const blocks = parser.extractHyperscriptBlocks(nodes);
-      
+
       expect(blocks[0].variables).toEqual(['endpoint', 'target']);
     });
 
     it('should extract component references', () => {
       const template = '<div _="on click call modal-component">Show Modal</div>';
-      
+
       const nodes = parser.parse(template);
       const blocks = parser.extractHyperscriptBlocks(nodes);
-      
+
       expect(blocks[0].components).toEqual(['modal']);
     });
   });
@@ -182,7 +184,7 @@ describe('TemplateParser', () => {
     it('should parse HTML comments', () => {
       const template = '<!-- This is a comment --><div>Content</div>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes).toHaveLength(2);
       expect(nodes[0].content).toBe('<!-- This is a comment -->');
       expect(nodes[1].tagName).toBe('div');
@@ -205,7 +207,7 @@ describe('TemplateParser', () => {
   describe('error handling', () => {
     it('should handle malformed HTML gracefully', () => {
       const template = '<div><p>Unclosed paragraph</div>';
-      
+
       // Should not throw, but might produce warnings
       const nodes = parser.parse(template);
       expect(nodes).toBeDefined();
@@ -240,7 +242,7 @@ describe('TemplateParser', () => {
     it('should preserve significant whitespace', () => {
       const template = '<pre>  Formatted   text  </pre>';
       const nodes = parser.parse(template);
-      
+
       expect(nodes[0].children![0].content).toBe('  Formatted   text  ');
     });
 
@@ -252,7 +254,7 @@ describe('TemplateParser', () => {
           More text
         </div>
       `;
-      
+
       const nodes = parser.parse(template);
       const div = nodes.find(n => n.tagName === 'div');
       expect(div?.children).toBeDefined();
@@ -282,7 +284,7 @@ describe('TemplateParser', () => {
       const divNode = nodes.find(n => n.tagName === 'div');
       expect(divNode).toBeDefined();
       expect(blocks).toHaveLength(2);
-      
+
       // Check for extracted variables
       const allVariables = blocks.flatMap(b => b.variables);
       expect(allVariables).toContain('userId');

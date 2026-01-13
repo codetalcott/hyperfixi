@@ -45,7 +45,7 @@ function parseLite(code: string): LiteEventHandler | LiteCommand[] {
     return {
       event: onMatch[1],
       filter: onMatch[2],
-      commands: parseCommands(onMatch[3])
+      commands: parseCommands(onMatch[3]),
     };
   }
 
@@ -55,7 +55,7 @@ function parseLite(code: string): LiteEventHandler | LiteCommand[] {
     const ms = everyMatch[2] === 's' ? parseInt(everyMatch[1]) * 1000 : parseInt(everyMatch[1]);
     return {
       event: `interval:${ms}`,
-      commands: parseCommands(everyMatch[3])
+      commands: parseCommands(everyMatch[3]),
     };
   }
 
@@ -64,7 +64,7 @@ function parseLite(code: string): LiteEventHandler | LiteCommand[] {
   if (initMatch) {
     return {
       event: 'init',
-      commands: parseCommands(initMatch[1])
+      commands: parseCommands(initMatch[1]),
     };
   }
 
@@ -142,7 +142,9 @@ function parseCommand(code: string): LiteCommand | null {
   }
 
   // if condition command | unless condition command
-  match = trimmed.match(/^(if|unless)\s+(.+?)\s+(toggle|add|remove|put|set|log|send|wait)\s+(.+)$/i);
+  match = trimmed.match(
+    /^(if|unless)\s+(.+?)\s+(toggle|add|remove|put|set|log|send|wait)\s+(.+)$/i
+  );
   if (match) {
     const innerCmd = parseCommand(`${match[3]} ${match[4]}`);
     if (innerCmd) {
@@ -206,7 +208,11 @@ function getClassName(arg: string): string {
 /**
  * Execute a single lite command
  */
-async function executeCommand(cmd: LiteCommand, me: Element, locals: Map<string, any>): Promise<any> {
+async function executeCommand(
+  cmd: LiteCommand,
+  me: Element,
+  locals: Map<string, any>
+): Promise<any> {
   const target = resolveTarget(cmd.target, me);
   const elements = Array.isArray(target) ? target : target ? [target] : [me];
 
@@ -407,7 +413,7 @@ async function executeParsed(
 
   // Standard DOM event
   if (targetEl) {
-    targetEl.addEventListener(eventName, async (event) => {
+    targetEl.addEventListener(eventName, async event => {
       const handlerLocals = new Map(locals);
       handlerLocals.set('event', event);
 
@@ -501,7 +507,7 @@ const api = {
   /**
    * Available commands in this lite bundle
    */
-  commands: ['add', 'remove', 'toggle', 'put', 'set', 'log', 'send', 'wait']
+  commands: ['add', 'remove', 'toggle', 'put', 'set', 'log', 'send', 'wait'],
 };
 
 // Auto-initialize

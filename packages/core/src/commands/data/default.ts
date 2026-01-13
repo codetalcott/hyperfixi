@@ -23,7 +23,13 @@ import {
   setElementValue,
   isEmpty,
 } from '../helpers/element-property-access';
-import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for DefaultCommand
@@ -47,9 +53,13 @@ export interface DefaultCommandOutput {
 }
 
 @meta({
-  description: 'Set a value only if it doesn\'t already exist',
+  description: "Set a value only if it doesn't already exist",
   syntax: ['default <expression> to <expression>'],
-  examples: ['default myVar to "fallback"', 'default @data-theme to "light"', 'default my innerHTML to "No content"'],
+  examples: [
+    'default myVar to "fallback"',
+    'default @data-theme to "light"',
+    'default my innerHTML to "No content"',
+  ],
   sideEffects: ['data-mutation', 'dom-mutation'],
 })
 @command({ name: 'default', category: 'data' })

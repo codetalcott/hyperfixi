@@ -20,7 +20,11 @@ export function getIncrementPatternsDe(): LanguagePattern[] {
       template: {
         format: 'erhöhe {patient}',
         tokens: [
-          { type: 'literal', value: 'erhöhe', alternatives: ['erhoehe', 'erhöhen', 'inkrementiere', 'inkrementieren', 'increment'] },
+          {
+            type: 'literal',
+            value: 'erhöhe',
+            alternatives: ['erhoehe', 'erhöhen', 'inkrementiere', 'inkrementieren', 'increment'],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['selector', 'reference', 'expression'] },
         ],
       },

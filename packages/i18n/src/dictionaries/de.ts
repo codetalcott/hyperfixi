@@ -9,7 +9,7 @@ export const de: Dictionary = {
     tell: 'sagen',
     trigger: 'auslösen',
     send: 'senden',
-    
+
     // DOM manipulation
     take: 'nehmen',
     put: 'setzen',
@@ -20,7 +20,7 @@ export const de: Dictionary = {
     toggle: 'umschalten',
     hide: 'verstecken',
     show: 'zeigen',
-    
+
     // Control flow
     if: 'wenn',
     unless: 'wennnicht',
@@ -31,13 +31,13 @@ export const de: Dictionary = {
     continue: 'weiter',
     break: 'unterbrechen',
     halt: 'anhalten',
-    
+
     // Async
     wait: 'warten',
     fetch: 'holen',
     call: 'aufrufen',
     return: 'zurückgeben',
-    
+
     // Other commands
     make: 'erstellen',
     log: 'protokollieren',
@@ -82,7 +82,7 @@ export const de: Dictionary = {
     // Behaviors
     install: 'installieren',
   },
-  
+
   modifiers: {
     to: 'zu',
     from: 'von',
@@ -101,7 +101,7 @@ export const de: Dictionary = {
     through: 'durch',
     without: 'ohne',
   },
-  
+
   events: {
     click: 'klick',
     dblclick: 'doppelklick',
@@ -112,29 +112,29 @@ export const de: Dictionary = {
     mouseover: 'mausüber',
     mouseout: 'maushinaus',
     mousemove: 'mausbewegen',
-    
+
     keydown: 'tasteunten',
     keyup: 'tasteoben',
     keypress: 'tastedrücken',
-    
+
     focus: 'fokus',
     blur: 'unscharf',
     change: 'ändern',
     input: 'eingabe',
     submit: 'absenden',
     reset: 'zurücksetzen',
-    
+
     load: 'laden',
     unload: 'entladen',
     resize: 'größeändern',
     scroll: 'scrollen',
-    
+
     touchstart: 'berührungstart',
     touchend: 'berührungend',
     touchmove: 'berührungbewegen',
     touchcancel: 'berührungabbrechen',
   },
-  
+
   logical: {
     when: 'wenn',
     where: 'wo',
@@ -152,7 +152,7 @@ export const de: Dictionary = {
     otherwise: 'andernfalls',
     end: 'ende',
   },
-  
+
   temporal: {
     seconds: 'sekunden',
     second: 'sekunde',
@@ -167,7 +167,7 @@ export const de: Dictionary = {
     min: 'min',
     h: 'std',
   },
-  
+
   values: {
     true: 'wahr',
     false: 'falsch',
@@ -191,7 +191,7 @@ export const de: Dictionary = {
     result: 'ergebnis',
     value: 'wert',
   },
-  
+
   attributes: {
     class: 'klasse',
     classes: 'klassen',

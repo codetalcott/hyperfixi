@@ -277,9 +277,7 @@ export async function loadLanguage(
       // Dynamic import from package
       const importer = LANGUAGE_IMPORTERS[code];
       if (!importer) {
-        throw new Error(
-          `Unknown language: ${code}. Supported: ${SUPPORTED_LANGUAGES.join(', ')}`
-        );
+        throw new Error(`Unknown language: ${code}. Supported: ${SUPPORTED_LANGUAGES.join(', ')}`);
       }
       languageModule = await importer();
     }
@@ -321,7 +319,7 @@ export async function loadLanguages(
   codes: string[],
   options: Omit<LoadLanguageOptions, 'module'> = {}
 ): Promise<LoadLanguageResult[]> {
-  return Promise.all(codes.map((code) => loadLanguage(code, options)));
+  return Promise.all(codes.map(code => loadLanguage(code, options)));
 }
 
 /**
@@ -342,5 +340,5 @@ export function getLoadedLanguages(): string[] {
  * Get list of languages that are not yet loaded.
  */
 export function getUnloadedLanguages(): string[] {
-  return SUPPORTED_LANGUAGES.filter((code) => !isLanguageRegistered(code));
+  return SUPPORTED_LANGUAGES.filter(code => !isLanguageRegistered(code));
 }

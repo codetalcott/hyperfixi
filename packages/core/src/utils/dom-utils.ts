@@ -215,10 +215,7 @@ export function isValidClassName(className: string): boolean {
  * parseClasses('btn, active') // ['btn', 'active']
  * parseClasses(['btn', 'active']) // ['btn', 'active']
  */
-export function parseClasses(
-  classExpression: unknown,
-  validate = true
-): string[] {
+export function parseClasses(classExpression: unknown, validate = true): string[] {
   if (!classExpression) {
     return [];
   }

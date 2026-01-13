@@ -18,11 +18,7 @@ import type {
 } from '../../types/index';
 
 // Import shared primitives - breaks the coupling
-import {
-  compareValues,
-  validateBinaryInput,
-  createError,
-} from '../shared';
+import { compareValues, validateBinaryInput, createError } from '../shared';
 
 // ============================================================================
 // Base Interface
@@ -49,10 +45,7 @@ export class GreaterThanExpression implements BaseTypedExpression<boolean> {
   public readonly outputType: EvaluationType = 'boolean';
   public readonly metadata: ExpressionMetadata = { category: 'Logical', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<boolean>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<boolean>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -66,7 +59,12 @@ export class GreaterThanExpression implements BaseTypedExpression<boolean> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Greater than comparison failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Greater than comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are comparable'],
       };
     }
@@ -88,10 +86,7 @@ export class LessThanExpression implements BaseTypedExpression<boolean> {
   public readonly outputType: EvaluationType = 'boolean';
   public readonly metadata: ExpressionMetadata = { category: 'Logical', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<boolean>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<boolean>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -105,7 +100,12 @@ export class LessThanExpression implements BaseTypedExpression<boolean> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Less than comparison failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Less than comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are comparable'],
       };
     }
@@ -127,10 +127,7 @@ export class GreaterThanOrEqualExpression implements BaseTypedExpression<boolean
   public readonly outputType: EvaluationType = 'boolean';
   public readonly metadata: ExpressionMetadata = { category: 'Logical', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<boolean>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<boolean>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -144,7 +141,12 @@ export class GreaterThanOrEqualExpression implements BaseTypedExpression<boolean
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Greater than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Greater than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are comparable'],
       };
     }
@@ -166,10 +168,7 @@ export class LessThanOrEqualExpression implements BaseTypedExpression<boolean> {
   public readonly outputType: EvaluationType = 'boolean';
   public readonly metadata: ExpressionMetadata = { category: 'Logical', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<boolean>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<boolean>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -183,7 +182,12 @@ export class LessThanOrEqualExpression implements BaseTypedExpression<boolean> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Less than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Less than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Ensure both operands are comparable'],
       };
     }
@@ -205,10 +209,7 @@ export class EqualityExpression implements BaseTypedExpression<boolean> {
   public readonly outputType: EvaluationType = 'boolean';
   public readonly metadata: ExpressionMetadata = { category: 'Logical', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<boolean>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<boolean>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -222,7 +223,12 @@ export class EqualityExpression implements BaseTypedExpression<boolean> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Equality comparison failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Equality comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Check for comparable values'],
       };
     }
@@ -244,10 +250,7 @@ export class InequalityExpression implements BaseTypedExpression<boolean> {
   public readonly outputType: EvaluationType = 'boolean';
   public readonly metadata: ExpressionMetadata = { category: 'Logical', complexity: 'simple' };
 
-  async evaluate(
-    _context: TypedExpressionContext,
-    input: unknown
-  ): Promise<TypedResult<boolean>> {
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<boolean>> {
     const validation = this.validate(input);
     if (!validation.isValid) {
       return { success: false, errors: validation.errors, suggestions: validation.suggestions };
@@ -261,7 +264,12 @@ export class InequalityExpression implements BaseTypedExpression<boolean> {
     } catch (error) {
       return {
         success: false,
-        errors: [createError('runtime-error', `Inequality comparison failed: ${error instanceof Error ? error.message : String(error)}`)],
+        errors: [
+          createError(
+            'runtime-error',
+            `Inequality comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
         suggestions: ['Check for comparable values'],
       };
     }

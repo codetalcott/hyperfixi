@@ -24,7 +24,11 @@ export function getRemovePatternsKo(): LanguagePattern[] {
           { type: 'literal', value: '에서' },
           { type: 'role', role: 'patient' },
           { type: 'literal', value: '를', alternatives: ['을'] },
-          { type: 'literal', value: '제거', alternatives: ['제거하다', '삭제', '삭제하다', '빼다'] },
+          {
+            type: 'literal',
+            value: '제거',
+            alternatives: ['제거하다', '삭제', '삭제하다', '빼다'],
+          },
         ],
       },
       extraction: {

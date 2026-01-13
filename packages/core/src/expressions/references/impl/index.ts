@@ -76,11 +76,9 @@ export class MeExpression
 
   validate(input: unknown): ValidationResult {
     if (input !== undefined) {
-      return this.validationFailure(
-        'type-mismatch',
-        '"me" expression takes no arguments',
-        ['Use "me" without any parameters']
-      );
+      return this.validationFailure('type-mismatch', '"me" expression takes no arguments', [
+        'Use "me" without any parameters',
+      ]);
     }
     return this.validationSuccess();
   }
@@ -130,7 +128,10 @@ export class YouExpression
         'runtime-error',
         error instanceof Error ? error.message : 'Failed to evaluate "you"',
         'YOU_EVALUATION_FAILED',
-        ['Ensure target element is available in context', 'Check if "you" is set by event or command']
+        [
+          'Ensure target element is available in context',
+          'Check if "you" is set by event or command',
+        ]
       );
       this.trackPerformance(context, input, errorResult, startTime);
       return errorResult;
@@ -139,11 +140,9 @@ export class YouExpression
 
   validate(input: unknown): ValidationResult {
     if (input !== undefined) {
-      return this.validationFailure(
-        'type-mismatch',
-        '"you" expression takes no arguments',
-        ['Use "you" without any parameters']
-      );
+      return this.validationFailure('type-mismatch', '"you" expression takes no arguments', [
+        'Use "you" without any parameters',
+      ]);
     }
     return this.validationSuccess();
   }
@@ -205,11 +204,9 @@ export class ItExpression
 
   validate(input: unknown): ValidationResult {
     if (input !== undefined) {
-      return this.validationFailure(
-        'type-mismatch',
-        '"it" expression takes no arguments',
-        ['Use "it" without any parameters']
-      );
+      return this.validationFailure('type-mismatch', '"it" expression takes no arguments', [
+        'Use "it" without any parameters',
+      ]);
     }
     return this.validationSuccess();
   }
@@ -349,11 +346,9 @@ export class CSSSelectorExpression
 
       return this.validationSuccess();
     } catch (_error) {
-      return this.validationFailure(
-        'runtime-error',
-        'Validation failed with exception',
-        ['Ensure input matches expected format']
-      );
+      return this.validationFailure('runtime-error', 'Validation failed with exception', [
+        'Ensure input matches expected format',
+      ]);
     }
   }
 

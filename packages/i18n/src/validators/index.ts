@@ -15,7 +15,7 @@ export function validate(dictionary: Dictionary, locale: string): ValidationResu
   const coverage = {
     total: 0,
     translated: 0,
-    missing: [] as string[]
+    missing: [] as string[],
   };
 
   // Check required categories
@@ -24,7 +24,7 @@ export function validate(dictionary: Dictionary, locale: string): ValidationResu
       errors.push({
         type: 'missing',
         key: category,
-        message: `Missing required category: ${category}`
+        message: `Missing required category: ${category}`,
       });
     }
   }
@@ -32,24 +32,24 @@ export function validate(dictionary: Dictionary, locale: string): ValidationResu
   // Check required keys in each category
   for (const [category, requiredKeys] of Object.entries(RequiredKeys)) {
     const categoryDict = dictionary[category as keyof Dictionary];
-    
+
     if (!categoryDict) continue;
 
     for (const key of requiredKeys) {
       coverage.total++;
-      
+
       if (!(key in categoryDict)) {
         errors.push({
           type: 'missing',
           key: `${category}.${key}`,
-          message: `Missing required key: ${key} in category ${category}`
+          message: `Missing required key: ${key} in category ${category}`,
         });
         coverage.missing.push(`${category}.${key}`);
       } else if (!categoryDict[key] || categoryDict[key].trim() === '') {
         errors.push({
           type: 'invalid',
           key: `${category}.${key}`,
-          message: `Empty translation for key: ${key} in category ${category}`
+          message: `Empty translation for key: ${key} in category ${category}`,
         });
       } else {
         coverage.translated++;
@@ -69,7 +69,7 @@ export function validate(dictionary: Dictionary, locale: string): ValidationResu
         warnings.push({
           type: 'inconsistent',
           key: `${category}.${key}`,
-          message: `Duplicate translation "${value}" also used for ${seen.get(value)}`
+          message: `Duplicate translation "${value}" also used for ${seen.get(value)}`,
         });
       } else {
         seen.set(value, `${category}.${key}`);
@@ -84,7 +84,7 @@ export function validate(dictionary: Dictionary, locale: string): ValidationResu
     valid: errors.length === 0,
     errors,
     warnings,
-    coverage
+    coverage,
   };
 }
 
@@ -105,7 +105,7 @@ function validateLocaleSpecific(
       warnings.push({
         type: 'inconsistent',
         key: 'values.true/false',
-        message: 'Gender inconsistency between true/false translations'
+        message: 'Gender inconsistency between true/false translations',
       });
     }
   }
@@ -136,7 +136,7 @@ function validateLocaleSpecific(
       warnings.push({
         type: 'inconsistent',
         key: 'global',
-        message: 'Mixed formal and informal speech levels'
+        message: 'Mixed formal and informal speech levels',
       });
     }
   }
@@ -167,7 +167,7 @@ function validateLocaleSpecific(
       warnings.push({
         type: 'inconsistent',
         key: 'global',
-        message: 'Mixed simplified and traditional Chinese characters'
+        message: 'Mixed simplified and traditional Chinese characters',
       });
     }
   }

@@ -22,15 +22,23 @@ export function getRemovePatternsRu(): LanguagePattern[] {
         tokens: [
           { type: 'literal', value: 'удалить', alternatives: ['удали', 'убрать', 'убери'] },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'из', alternatives: ['от', 'с'] },
-            { type: 'role', role: 'source' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'из', alternatives: ['от', 'с'] },
+              { type: 'role', role: 'source' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        source: { marker: 'из', markerAlternatives: ['от', 'с'], default: { type: 'reference', value: 'me' } },
+        source: {
+          marker: 'из',
+          markerAlternatives: ['от', 'с'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {

@@ -91,23 +91,23 @@ export interface TestContext {
   suite: string;
   test: string;
   environment: TestEnvironment;
-  
+
   // Browser context (if applicable)
   page?: any; // Browser page instance
   browser?: any; // Browser instance
-  
+
   // DOM context
   document?: Document;
   window?: Window;
-  
+
   // HyperFixi context
   hyperfixi?: any;
-  
+
   // Utilities
   fixtures: Record<string, any>;
   expect: ExpectAPI;
   assert: AssertAPI;
-  
+
   // Lifecycle methods
   skip: () => void;
   fail: (message: string) => never;
@@ -213,21 +213,21 @@ export interface ExpectMatcher {
   toBeNaN(): void;
   toBeInstanceOf(constructor: any): void;
   toBeCloseTo(expected: number, precision?: number): void;
-  
+
   // String matchers
   toMatch(expected: string | RegExp): void;
   toContain(expected: any): void;
   toHaveLength(expected: number): void;
-  
+
   // Array/Object matchers
   toContainEqual(expected: any): void;
   toHaveProperty(path: string, value?: any): void;
   toMatchObject(expected: object): void;
-  
+
   // Promise matchers
   resolves: ExpectMatcher;
   rejects: ExpectMatcher;
-  
+
   // DOM matchers
   toBeInTheDocument(): void;
   toBeVisible(): void;
@@ -238,13 +238,13 @@ export interface ExpectMatcher {
   toHaveAttribute(name: string, value?: string): void;
   toHaveTextContent(text: string | RegExp): void;
   toHaveValue(value: any): void;
-  
+
   // HyperScript specific matchers
   toHaveCompiledScript(): void;
   toHaveExecutedScript(): void;
   toHaveTriggeredEvent(eventType: string): void;
   toHaveUpdatedElement(): void;
-  
+
   // Negation
   not: ExpectMatcher;
 }
@@ -259,22 +259,22 @@ export interface AssertAPI {
   strictEqual(actual: any, expected: any, message?: string): void;
   notEqual(actual: any, expected: any, message?: string): void;
   notStrictEqual(actual: any, expected: any, message?: string): void;
-  
+
   // Type assertions
   throws(fn: () => void, error?: any, message?: string): void;
   doesNotThrow(fn: () => void, message?: string): void;
   ifError(value: any): void;
-  
+
   // Async assertions
   rejects(promise: Promise<any>, error?: any, message?: string): Promise<void>;
   doesNotReject(promise: Promise<any>, message?: string): Promise<void>;
-  
+
   // DOM assertions
   elementExists(selector: string, message?: string): void;
   elementVisible(selector: string, message?: string): void;
   elementHasClass(selector: string, className: string, message?: string): void;
   elementHasText(selector: string, text: string, message?: string): void;
-  
+
   // HyperScript assertions
   scriptCompiled(script: string, message?: string): void;
   scriptExecuted(script: string, message?: string): void;
@@ -348,7 +348,7 @@ export interface E2EStep {
 /**
  * E2E action types
  */
-export type E2EAction = 
+export type E2EAction =
   | 'goto'
   | 'click'
   | 'type'

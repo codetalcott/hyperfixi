@@ -375,7 +375,12 @@ describe.skip('Enhanced Command Performance Benchmarks', () => {
         'PutCommand.error-path',
         'integration',
         // @ts-ignore - Test uses legacy signature, commands expect (input, context)
-        () => putCommand.execute(context, 'content', 'invalid-position' as unknown as 'before' | 'after'),
+        () =>
+          putCommand.execute(
+            context,
+            'content',
+            'invalid-position' as unknown as 'before' | 'after'
+          ),
         {
           iterations: 300,
           complexity: 'medium',

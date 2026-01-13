@@ -52,7 +52,7 @@ export class TemplateCompiler {
   async compile(template: string, options?: TemplateOptions): Promise<CompilationResult> {
     const startTime = performance.now();
     const compileOptions = { ...this.options, ...options };
-    
+
     try {
       // Parse template into AST
       const parseStartTime = performance.now();
@@ -72,7 +72,10 @@ export class TemplateCompiler {
       };
 
       const compiledHtml = await this.compileNodes(nodes, compilationContext);
-      const compiledHyperscript = await this.compileHyperscript(hyperscriptBlocks, compilationContext);
+      const compiledHyperscript = await this.compileHyperscript(
+        hyperscriptBlocks,
+        compilationContext
+      );
 
       const compileTime = performance.now() - parseTime - parseStartTime;
       const totalTime = performance.now() - startTime;
@@ -91,13 +94,14 @@ export class TemplateCompiler {
           totalTime,
         },
       };
-
     } catch (error) {
       if (error instanceof TemplateError) {
         throw error;
       }
 
-      const templateError = new Error(`Compilation failed: ${error instanceof Error ? error.message : String(error)}`) as TemplateError;
+      const templateError = new Error(
+        `Compilation failed: ${error instanceof Error ? error.message : String(error)}`
+      ) as TemplateError;
       templateError.type = 'compile';
       throw templateError;
     }
@@ -144,10 +148,7 @@ export class TemplateCompiler {
   /**
    * Compile template nodes recursively
    */
-  private async compileNodes(
-    nodes: TemplateNode[], 
-    context: CompilationContext
-  ): Promise<string> {
+  private async compileNodes(nodes: TemplateNode[], context: CompilationContext): Promise<string> {
     let html = '';
 
     for (const node of nodes) {
@@ -160,10 +161,7 @@ export class TemplateCompiler {
   /**
    * Compile single template node
    */
-  private async compileNode(
-    node: TemplateNode,
-    context: CompilationContext
-  ): Promise<string> {
+  private async compileNode(node: TemplateNode, context: CompilationContext): Promise<string> {
     switch (node.type) {
       case 'text': {
         const content = node.content || '';
@@ -199,10 +197,7 @@ export class TemplateCompiler {
   /**
    * Compile HTML element
    */
-  private async compileElement(
-    node: TemplateNode, 
-    context: CompilationContext
-  ): Promise<string> {
+  private async compileElement(node: TemplateNode, context: CompilationContext): Promise<string> {
     if (!node.tagName) {
       return '';
     }
@@ -250,10 +245,7 @@ export class TemplateCompiler {
   /**
    * Compile template directive
    */
-  private async compileDirective(
-    node: TemplateNode, 
-    context: CompilationContext
-  ): Promise<string> {
+  private async compileDirective(node: TemplateNode, context: CompilationContext): Promise<string> {
     if (!node.directive) {
       return '';
     }
@@ -284,10 +276,7 @@ export class TemplateCompiler {
   /**
    * Compile component instance
    */
-  private async compileComponent(
-    node: TemplateNode, 
-    context: CompilationContext
-  ): Promise<string> {
+  private async compileComponent(node: TemplateNode, context: CompilationContext): Promise<string> {
     if (!node.component) {
       return '';
     }
@@ -324,14 +313,12 @@ export class TemplateCompiler {
    * Compile element with hyperscript
    */
   private async compileHyperscriptElement(
-    node: TemplateNode, 
+    node: TemplateNode,
     context: CompilationContext
   ): Promise<string> {
     // Process hyperscript and extract variables
     if (node.hyperscript) {
-      const code = Array.isArray(node.hyperscript) 
-        ? node.hyperscript.join(' ') 
-        : node.hyperscript;
+      const code = Array.isArray(node.hyperscript) ? node.hyperscript.join(' ') : node.hyperscript;
 
       const variables = extractTemplateVariables(code);
       variables.forEach(variable => context.variables.add(variable));
@@ -345,7 +332,7 @@ export class TemplateCompiler {
    * Compile hyperscript blocks
    */
   private async compileHyperscript(
-    blocks: HyperscriptBlock[], 
+    blocks: HyperscriptBlock[],
     context: CompilationContext
   ): Promise<string[]> {
     const compiled: string[] = [];
@@ -372,7 +359,6 @@ export class TemplateCompiler {
         // For now, just pass through the hyperscript code
         // In a full implementation, this would compile to JavaScript
         compiled.push(block.code);
-
       } catch (error) {
         context.warnings.push({
           type: 'invalid-hyperscript',
@@ -392,7 +378,10 @@ export class TemplateCompiler {
     let result = html;
 
     for (const [name, value] of Object.entries(variables)) {
-      const pattern = new RegExp(`\\{\\{\\s*${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\}\\}`, 'g');
+      const pattern = new RegExp(
+        `\\{\\{\\s*${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\}\\}`,
+        'g'
+      );
       const stringValue = this.valueToString(value);
       result = result.replace(pattern, stringValue);
     }
@@ -404,16 +393,19 @@ export class TemplateCompiler {
    * Render component instances in HTML
    */
   private async renderComponentInstances(
-    html: string, 
-    component: ComponentDefinition, 
+    html: string,
+    component: ComponentDefinition,
     context: TemplateContext
   ): Promise<string> {
-    const componentPattern = new RegExp(`<${component.id}([^>]*)>([\\s\\S]*?)<\\/${component.id}>`, 'g');
-    
+    const componentPattern = new RegExp(
+      `<${component.id}([^>]*)>([\\s\\S]*?)<\\/${component.id}>`,
+      'g'
+    );
+
     return html.replace(componentPattern, (match, attributes, content) => {
       // Parse component attributes for variable values
       const instanceVariables = this.parseComponentAttributes(attributes);
-      
+
       // Merge with context variables
       const mergedVariables = { ...context.variables, ...instanceVariables };
 
@@ -449,7 +441,13 @@ export class TemplateCompiler {
    */
   private parseAttributeValue(value: string): any {
     // Try to parse as JSON first
-    if (value.startsWith('{') || value.startsWith('[') || value === 'true' || value === 'false' || /^\d+$/.test(value)) {
+    if (
+      value.startsWith('{') ||
+      value.startsWith('[') ||
+      value === 'true' ||
+      value === 'false' ||
+      /^\d+$/.test(value)
+    ) {
       try {
         return JSON.parse(value);
       } catch {
@@ -519,7 +517,7 @@ export class TemplateCompiler {
           return ['If directive requires an expression'];
         }
         return [];
-      }
+      },
     });
 
     // For directive - loop rendering
@@ -553,7 +551,7 @@ export class TemplateCompiler {
                 ...child.attributes,
                 'data-loop-item': itemName,
                 'data-loop-index': String(index),
-              }
+              },
             });
           }
         }
@@ -566,10 +564,12 @@ export class TemplateCompiler {
         }
         const match = directive.expression.match(/^\s*(\w+)\s+(?:in|of)\s+(.+)\s*$/);
         if (!match) {
-          return ['For directive expression must be in format "item in collection" or "item of collection"'];
+          return [
+            'For directive expression must be in format "item in collection" or "item of collection"',
+          ];
         }
         return [];
-      }
+      },
     });
 
     // Show directive - visibility toggle
@@ -584,10 +584,10 @@ export class TemplateCompiler {
           ...child,
           attributes: {
             ...child.attributes,
-            style: 'display: none;'
-          }
+            style: 'display: none;',
+          },
         }));
-      }
+      },
     });
 
     // Component directive
@@ -601,18 +601,20 @@ export class TemplateCompiler {
           return [];
         }
 
-        return [{
-          type: 'component' as const,
-          component,
-          children: directive.children || [],
-        }];
+        return [
+          {
+            type: 'component' as const,
+            component,
+            children: directive.children || [],
+          },
+        ];
       },
       validate(directive) {
         if (!directive.expression || directive.expression.trim() === '') {
           return ['Component directive requires a component ID'];
         }
         return [];
-      }
+      },
     });
   }
 
@@ -632,18 +634,15 @@ export class TemplateCompiler {
   }
 
   private escapeAttribute(text: string): string {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   private isDirectiveAttribute(name: string): boolean {
     const directivePatterns = [
-      /^v-/,    // Vue-style
-      /^x-/,    // Alpine-style
-      /^hf-/,   // HyperFixi-style
-      /^_$/,    // Hyperscript attribute
+      /^v-/, // Vue-style
+      /^x-/, // Alpine-style
+      /^hf-/, // HyperFixi-style
+      /^_$/, // Hyperscript attribute
       /^data-hyperscript$/,
       /^hx-script$/,
     ];
@@ -653,18 +652,30 @@ export class TemplateCompiler {
 
   private isSelfClosingTag(tagName: string): boolean {
     const selfClosingTags = [
-      'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-      'link', 'meta', 'param', 'source', 'track', 'wbr'
+      'area',
+      'base',
+      'br',
+      'col',
+      'embed',
+      'hr',
+      'img',
+      'input',
+      'link',
+      'meta',
+      'param',
+      'source',
+      'track',
+      'wbr',
     ];
     return selfClosingTags.includes(tagName.toLowerCase());
   }
 
   private minifyHtml(html: string): string {
     return html
-      .replace(/\s+/g, ' ')              // Collapse whitespace
-      .replace(/>\s+</g, '><')           // Remove space between tags
-      .replace(/^\s+|\s+$/g, '')         // Trim
-      .replace(/<!--[\s\S]*?-->/g, '');  // Remove comments
+      .replace(/\s+/g, ' ') // Collapse whitespace
+      .replace(/>\s+</g, '><') // Remove space between tags
+      .replace(/^\s+|\s+$/g, '') // Trim
+      .replace(/<!--[\s\S]*?-->/g, ''); // Remove comments
   }
 }
 

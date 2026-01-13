@@ -31,7 +31,11 @@ export interface MultiWordPattern {
  */
 export const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
   { command: 'append', keywords: ['to'], syntax: 'append <value> [to <target>]' },
-  { command: 'fetch', keywords: ['as', 'with'], syntax: 'fetch <url> [as <type>] [with <options>]' },
+  {
+    command: 'fetch',
+    keywords: ['as', 'with'],
+    syntax: 'fetch <url> [as <type>] [with <options>]',
+  },
   { command: 'make', keywords: ['a', 'an'], syntax: 'make (a|an) <type>' },
   { command: 'send', keywords: ['to'], syntax: 'send <event> to <target>' },
   { command: 'throw', keywords: [], syntax: 'throw <error>' },

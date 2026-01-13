@@ -3,11 +3,7 @@
  * Provides data, style, script, and event isolation between tenants
  */
 
-import type {
-  TenantContext,
-  TenantIsolationConfig,
-  TenantInfo,
-} from './types';
+import type { TenantContext, TenantIsolationConfig, TenantInfo } from './types';
 
 /**
  * Isolation violation error
@@ -67,11 +63,11 @@ export class TenantIsolation {
     }
 
     const namespace = this.getNamespace(tenantId);
-    
+
     // Add tenant namespace to element
     element.setAttribute('data-tenant', tenantId);
     element.setAttribute('data-tenant-namespace', namespace);
-    
+
     // Track isolated element
     this.isolatedElements.set(element, tenantId);
 
@@ -97,10 +93,7 @@ export class TenantIsolation {
     const existingStyles = element.getAttribute('style');
     if (existingStyles) {
       // Prefix CSS custom properties with namespace
-      const isolatedStyles = existingStyles.replace(
-        /--([a-zA-Z-]+)/g,
-        `--${namespace}-$1`
-      );
+      const isolatedStyles = existingStyles.replace(/--([a-zA-Z-]+)/g, `--${namespace}-$1`);
       element.setAttribute('style', isolatedStyles);
     }
   }
@@ -113,7 +106,7 @@ export class TenantIsolation {
     const originalRemoveEventListener = element.removeEventListener;
 
     // Override addEventListener to add tenant context
-    element.addEventListener = function(
+    element.addEventListener = function (
       type: string,
       listener: EventListenerOrEventListenerObject,
       options?: boolean | AddEventListenerOptions
@@ -135,7 +128,7 @@ export class TenantIsolation {
     };
 
     // Override removeEventListener (basic implementation)
-    element.removeEventListener = function(
+    element.removeEventListener = function (
       type: string,
       listener: EventListenerOrEventListenerObject,
       options?: boolean | EventListenerOptions
@@ -153,7 +146,7 @@ export class TenantIsolation {
     }
 
     const namespace = this.getNamespace(tenantId);
-    
+
     // Track script for tenant
     if (!this.isolatedScripts.has(tenantId)) {
       this.isolatedScripts.set(tenantId, new Set());
@@ -162,7 +155,7 @@ export class TenantIsolation {
 
     // Wrap script in isolated context
     const isolatedScript = this.wrapScriptInIsolation(script, tenantId, namespace);
-    
+
     return isolatedScript;
   }
 
@@ -173,10 +166,7 @@ export class TenantIsolation {
     let isolatedScript = script;
 
     // Replace global variables with namespaced versions
-    isolatedScript = isolatedScript.replace(
-      /\b(localStorage|sessionStorage)\b/g,
-      `${namespace}$1`
-    );
+    isolatedScript = isolatedScript.replace(/\b(localStorage|sessionStorage)\b/g, `${namespace}$1`);
 
     // Replace document queries with tenant-scoped versions
     isolatedScript = isolatedScript.replace(
@@ -239,7 +229,7 @@ export class TenantIsolation {
    */
   static getStorageItem(tenantId: string, type: 'local' | 'session', key: string): string | null {
     const storageKey = `${type}_${tenantId}_${key}`;
-    
+
     try {
       if (type === 'local') {
         return localStorage.getItem(storageKey);
@@ -255,9 +245,14 @@ export class TenantIsolation {
   /**
    * Set isolated storage item
    */
-  static setStorageItem(tenantId: string, type: 'local' | 'session', key: string, value: string): void {
+  static setStorageItem(
+    tenantId: string,
+    type: 'local' | 'session',
+    key: string,
+    value: string
+  ): void {
     const storageKey = `${type}_${tenantId}_${key}`;
-    
+
     try {
       if (type === 'local') {
         localStorage.setItem(storageKey, value);
@@ -274,7 +269,7 @@ export class TenantIsolation {
    */
   static removeStorageItem(tenantId: string, type: 'local' | 'session', key: string): void {
     const storageKey = `${type}_${tenantId}_${key}`;
-    
+
     try {
       if (type === 'local') {
         localStorage.removeItem(storageKey);
@@ -292,7 +287,7 @@ export class TenantIsolation {
   static clearStorage(tenantId: string, type: 'local' | 'session'): void {
     const prefix = `${type}_${tenantId}_`;
     const storage = type === 'local' ? localStorage : sessionStorage;
-    
+
     try {
       const keysToRemove: string[] = [];
       for (let i = 0; i < storage.length; i++) {
@@ -301,7 +296,7 @@ export class TenantIsolation {
           keysToRemove.push(key);
         }
       }
-      
+
       keysToRemove.forEach(key => storage.removeItem(key));
     } catch (error) {
       console.warn(`Failed to clear ${type} storage for tenant ${tenantId}:`, error);
@@ -325,7 +320,7 @@ export class TenantIsolation {
    */
   validateElementAccess(element: Element, tenantId: string): boolean {
     const elementTenantId = this.isolatedElements.get(element);
-    
+
     if (!elementTenantId) {
       // Element is not isolated, allow access
       return true;
@@ -342,11 +337,10 @@ export class TenantIsolation {
     }
 
     // Access denied
-    throw new IsolationViolationError(
-      tenantId,
-      'unauthorized_element_access',
-      { targetTenant: elementTenantId, element: element.tagName }
-    );
+    throw new IsolationViolationError(tenantId, 'unauthorized_element_access', {
+      targetTenant: elementTenantId,
+      element: element.tagName,
+    });
   }
 
   /**
@@ -358,23 +352,23 @@ export class TenantIsolation {
     }
 
     const namespace = this.getNamespace(tenantId);
-    
+
     // Prefix all CSS rules with tenant namespace
-    const isolatedCSS = css.replace(
-      /([^{}]+)\s*{/g,
-      (match, selector) => {
-        const trimmedSelector = selector.trim();
-        
-        // Skip @rules and already namespaced selectors
-        if (trimmedSelector.startsWith('@') || trimmedSelector.includes(`[data-tenant="${tenantId}"]`)) {
-          return match;
-        }
-        
-        // Add tenant attribute selector
-        const namespacedSelector = `[data-tenant="${tenantId}"] ${trimmedSelector}`;
-        return `${namespacedSelector} {`;
+    const isolatedCSS = css.replace(/([^{}]+)\s*{/g, (match, selector) => {
+      const trimmedSelector = selector.trim();
+
+      // Skip @rules and already namespaced selectors
+      if (
+        trimmedSelector.startsWith('@') ||
+        trimmedSelector.includes(`[data-tenant="${tenantId}"]`)
+      ) {
+        return match;
       }
-    );
+
+      // Add tenant attribute selector
+      const namespacedSelector = `[data-tenant="${tenantId}"] ${trimmedSelector}`;
+      return `${namespacedSelector} {`;
+    });
 
     return isolatedCSS;
   }
@@ -420,14 +414,14 @@ export class TenantIsolation {
   cleanup(tenantId: string): void {
     // Clear namespace
     this.tenantNamespaces.delete(tenantId);
-    
+
     // Clear scripts
     this.isolatedScripts.delete(tenantId);
-    
+
     // Clear storage
     TenantIsolation.clearStorage(tenantId, 'local');
     TenantIsolation.clearStorage(tenantId, 'session');
-    
+
     // Remove isolated elements (WeakMap will handle cleanup automatically)
   }
 
@@ -454,7 +448,7 @@ export class TenantIsolation {
   private hasIsolatedStorage(tenantId: string): boolean {
     const localPrefix = `local_${tenantId}_`;
     const sessionPrefix = `session_${tenantId}_`;
-    
+
     try {
       // Check localStorage
       for (let i = 0; i < localStorage.length; i++) {
@@ -463,7 +457,7 @@ export class TenantIsolation {
           return true;
         }
       }
-      
+
       // Check sessionStorage
       for (let i = 0; i < sessionStorage.length; i++) {
         const key = sessionStorage.key(i);
@@ -474,7 +468,7 @@ export class TenantIsolation {
     } catch (error) {
       console.warn('Failed to check isolated storage:', error);
     }
-    
+
     return false;
   }
 
@@ -483,14 +477,14 @@ export class TenantIsolation {
    */
   private getIsolatedElementsCount(tenantId: string): number {
     let count = 0;
-    
+
     try {
       const elements = document.querySelectorAll(`[data-tenant="${tenantId}"]`);
       count = elements.length;
     } catch (error) {
       console.warn('Failed to count isolated elements:', error);
     }
-    
+
     return count;
   }
 }
@@ -498,7 +492,9 @@ export class TenantIsolation {
 /**
  * Create tenant isolation with default configuration
  */
-export function createTenantIsolation(config: Partial<TenantIsolationConfig> = {}): TenantIsolation {
+export function createTenantIsolation(
+  config: Partial<TenantIsolationConfig> = {}
+): TenantIsolation {
   const defaultConfig: TenantIsolationConfig = {
     enableDataIsolation: true,
     enableStyleIsolation: true,

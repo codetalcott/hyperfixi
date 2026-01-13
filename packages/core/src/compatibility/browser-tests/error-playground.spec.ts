@@ -17,10 +17,9 @@ test.describe('Error Playground', () => {
     await page.goto(`${baseURL}/examples/playground/error-playground.html`);
 
     // Wait for HyperFixiSemantic to load
-    await page.waitForFunction(
-      () => typeof (window as any).HyperFixiSemantic !== 'undefined',
-      { timeout: 10000 }
-    );
+    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+      timeout: 10000,
+    });
   });
 
   // =============================================================================
@@ -484,7 +483,7 @@ test.describe('Error Playground', () => {
 
       // Page should not show alert or error
       const errors: string[] = [];
-      page.on('pageerror', (err) => errors.push(err.message));
+      page.on('pageerror', err => errors.push(err.message));
 
       await page.waitForTimeout(200);
       expect(errors).toHaveLength(0);
@@ -504,7 +503,7 @@ test.describe('Error Playground', () => {
       // If there are error diagnostics, check they're not about quotes
       if (count > 0) {
         const messages = await page.locator('.diagnostic-message').allTextContents();
-        const quoteErrors = messages.filter((m) => m.toLowerCase().includes('quote'));
+        const quoteErrors = messages.filter(m => m.toLowerCase().includes('quote'));
         expect(quoteErrors).toHaveLength(0);
       }
     });

@@ -96,7 +96,6 @@ export class SmartBundler {
 
       console.log('✅ Bundle completed successfully!');
       return result;
-
     } catch (error) {
       job.status = 'failed';
       job.error = error instanceof Error ? error.message : String(error);
@@ -161,7 +160,7 @@ export class SmartBundler {
 
     // Choose bundler based on configuration
     const bundler = this.chooseBundler(config);
-    
+
     let chunks: BundleChunk[] = [];
     let outputFiles: OutputFile[] = [];
     const warnings: string[] = [];
@@ -390,11 +389,11 @@ export class SmartBundler {
 
     return {
       config,
-      addChunk: (chunk) => chunks.push(chunk),
-      addTransform: (transform) => transforms.push(transform),
-      addAsset: (asset) => assets.push(asset),
-      emitFile: (file) => files.push(file),
-      getModuleInfo: (id) => null, // Would implement module info lookup
+      addChunk: chunk => chunks.push(chunk),
+      addTransform: transform => transforms.push(transform),
+      addAsset: asset => assets.push(asset),
+      emitFile: file => files.push(file),
+      getModuleInfo: id => null, // Would implement module info lookup
     };
   }
 
@@ -468,7 +467,7 @@ export class SmartBundler {
    */
   private findDuplicatedModules(chunks: BundleChunk[]): string[] {
     const moduleCount = new Map<string, number>();
-    
+
     for (const chunk of chunks) {
       for (const module of chunk.modules) {
         const count = moduleCount.get(module.id) || 0;
@@ -544,7 +543,7 @@ export class SmartBundler {
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(16);
@@ -562,7 +561,7 @@ export async function quickBundle(options: {
   format?: 'esm' | 'cjs' | 'umd';
 }): Promise<BundleResult> {
   const bundler = new SmartBundler();
-  
+
   const config: BundleConfig = {
     entry: options.entry,
     output: {
@@ -601,7 +600,7 @@ export async function productionBundle(options: {
   analyze?: boolean;
 }): Promise<BundleResult> {
   const bundler = new SmartBundler();
-  
+
   const config: BundleConfig = {
     entry: options.entry,
     output: {

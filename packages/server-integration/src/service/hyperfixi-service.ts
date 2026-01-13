@@ -18,9 +18,14 @@ import type {
   BatchCompileRequest,
   CompilationOptions,
   DocsRequest,
-  DocsResponse
+  DocsResponse,
 } from '../types.js';
-import { generateDocumentation, generateMarkdown, generateHTML, analyzeMetrics } from '@hyperfixi/ast-toolkit';
+import {
+  generateDocumentation,
+  generateMarkdown,
+  generateHTML,
+  analyzeMetrics,
+} from '@hyperfixi/ast-toolkit';
 
 export class HyperfixiService {
   private app: Application;
@@ -37,11 +42,11 @@ export class HyperfixiService {
     this.app = express();
     this.cache = new CompilationCache({
       maxSize: config.cache.maxSize,
-      ttl: config.cache.ttl
+      ttl: config.cache.ttl,
     });
     this.parser = new ServerContextParser();
     this.compiler = new HyperscriptCompiler(this.cache);
-    
+
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -66,7 +71,7 @@ export class HyperfixiService {
    * Stop the HTTP server
    */
   async stop(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (this.server) {
         this.server.close(() => {
           console.log('HyperfixiService stopped');
@@ -101,11 +106,11 @@ export class HyperfixiService {
 
     // CORS
     if (this.config.cors.enabled) {
-      this.app.use(cors({
-        origin: this.config.cors.origins.includes('*') 
-          ? true 
-          : this.config.cors.origins
-      }));
+      this.app.use(
+        cors({
+          origin: this.config.cors.origins.includes('*') ? true : this.config.cors.origins,
+        })
+      );
     }
 
     // JSON parsing
@@ -120,15 +125,15 @@ export class HyperfixiService {
     // Error handling
     this.app.use((error: any, req: Request, res: Response, next: any) => {
       console.error('Request error:', error);
-      
+
       if (error instanceof SyntaxError && 'body' in error) {
         return res.status(400).json({
-          error: 'Invalid JSON in request body'
+          error: 'Invalid JSON in request body',
         });
       }
 
       res.status(500).json({
-        error: 'Internal server error'
+        error: 'Internal server error',
       });
     });
   }
@@ -158,7 +163,7 @@ export class HyperfixiService {
     this.app.use('*', (req, res) => {
       res.status(404).json({
         error: 'Endpoint not found',
-        path: req.originalUrl
+        path: req.originalUrl,
       });
     });
   }
@@ -175,7 +180,7 @@ export class HyperfixiService {
       version: '0.1.0',
       uptime,
       cache: cacheStats,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -185,11 +190,11 @@ export class HyperfixiService {
   private async handleCompile(req: Request, res: Response): Promise<void> {
     try {
       const compileRequest = req.body as CompileRequest;
-      
+
       // Validate request
       if (!compileRequest.scripts || typeof compileRequest.scripts !== 'object') {
         res.status(400).json({
-          error: 'Missing or invalid "scripts" field'
+          error: 'Missing or invalid "scripts" field',
         });
         return;
       }
@@ -205,7 +210,7 @@ export class HyperfixiService {
       console.error('Compilation error:', error);
       res.status(500).json({
         error: 'Compilation failed',
-        message: error instanceof Error ? error.message : String(error)
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -216,11 +221,11 @@ export class HyperfixiService {
   private async handleValidate(req: Request, res: Response): Promise<void> {
     try {
       const validateRequest = req.body as ValidateRequest;
-      
+
       // Validate request
       if (!validateRequest.script || typeof validateRequest.script !== 'string') {
         res.status(400).json({
-          error: 'Missing or invalid "script" field'
+          error: 'Missing or invalid "script" field',
         });
         return;
       }
@@ -231,7 +236,7 @@ export class HyperfixiService {
       console.error('Validation error:', error);
       res.status(500).json({
         error: 'Validation failed',
-        message: error instanceof Error ? error.message : String(error)
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -242,11 +247,11 @@ export class HyperfixiService {
   private async handleBatch(req: Request, res: Response): Promise<void> {
     try {
       const batchRequest = req.body as BatchCompileRequest;
-      
+
       // Validate request
       if (!batchRequest.definitions || !Array.isArray(batchRequest.definitions)) {
         res.status(400).json({
-          error: 'Missing or invalid "definitions" field'
+          error: 'Missing or invalid "definitions" field',
         });
         return;
       }
@@ -262,7 +267,7 @@ export class HyperfixiService {
       console.error('Batch compilation error:', error);
       res.status(500).json({
         error: 'Batch compilation failed',
-        message: error instanceof Error ? error.message : String(error)
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -273,7 +278,7 @@ export class HyperfixiService {
   private async handleCacheClear(req: Request, res: Response): Promise<void> {
     this.cache.clear();
     res.json({
-      message: 'Cache cleared successfully'
+      message: 'Cache cleared successfully',
     });
   }
 
@@ -294,7 +299,7 @@ export class HyperfixiService {
 
       if (!docsRequest.script || typeof docsRequest.script !== 'string') {
         res.status(400).json({
-          error: 'Missing or invalid "script" field'
+          error: 'Missing or invalid "script" field',
         });
         return;
       }
@@ -304,7 +309,7 @@ export class HyperfixiService {
 
       if (!ast) {
         res.status(400).json({
-          error: 'Could not parse script'
+          error: 'Could not parse script',
         });
         return;
       }
@@ -319,8 +324,8 @@ export class HyperfixiService {
           metrics: {
             complexity: metrics.complexity.cyclomatic,
             maintainability: metrics.maintainabilityIndex,
-            readability: metrics.readabilityScore
-          }
+            readability: metrics.readabilityScore,
+          },
         });
       } else {
         res.json(docs);
@@ -329,7 +334,7 @@ export class HyperfixiService {
       console.error('Documentation generation error:', error);
       res.status(500).json({
         error: 'Documentation generation failed',
-        message: error instanceof Error ? error.message : String(error)
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -343,7 +348,7 @@ export class HyperfixiService {
 
       if (!docsRequest.script || typeof docsRequest.script !== 'string') {
         res.status(400).json({
-          error: 'Missing or invalid "script" field'
+          error: 'Missing or invalid "script" field',
         });
         return;
       }
@@ -353,7 +358,7 @@ export class HyperfixiService {
 
       if (!ast) {
         res.status(400).json({
-          error: 'Could not parse script'
+          error: 'Could not parse script',
         });
         return;
       }
@@ -364,7 +369,7 @@ export class HyperfixiService {
       console.error('Markdown generation error:', error);
       res.status(500).json({
         error: 'Markdown generation failed',
-        message: error instanceof Error ? error.message : String(error)
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -378,7 +383,7 @@ export class HyperfixiService {
 
       if (!docsRequest.script || typeof docsRequest.script !== 'string') {
         res.status(400).json({
-          error: 'Missing or invalid "script" field'
+          error: 'Missing or invalid "script" field',
         });
         return;
       }
@@ -388,7 +393,7 @@ export class HyperfixiService {
 
       if (!ast) {
         res.status(400).json({
-          error: 'Could not parse script'
+          error: 'Could not parse script',
         });
         return;
       }
@@ -399,7 +404,7 @@ export class HyperfixiService {
       console.error('HTML generation error:', error);
       res.status(500).json({
         error: 'HTML generation failed',
-        message: error instanceof Error ? error.message : String(error)
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -412,51 +417,47 @@ export class HyperfixiService {
     const metadata: Record<string, any> = {};
     const warnings: any[] = [];
     const errors: any[] = [];
-    
+
     const timings = {
       total: 0,
       parse: 0,
       compile: 0,
-      cache: 0
+      cache: 0,
     };
 
     for (const [name, script] of Object.entries(request.scripts)) {
       try {
         const parseStart = performance.now();
-        
+
         // Parse with context
         const parsed = this.parser.parse(script, request.context);
-        
+
         const parseEnd = performance.now();
         timings.parse += parseEnd - parseStart;
 
         const compileStart = performance.now();
-        
+
         // Compile the processed script
-        const result = await this.compiler.compile(
-          parsed.processed, 
-          request.options || {}
-        );
-        
+        const result = await this.compiler.compile(parsed.processed, request.options || {});
+
         const compileEnd = performance.now();
         timings.compile += compileEnd - compileStart;
 
         compiled[name] = result.compiled;
         metadata[name] = {
           ...parsed.metadata,
-          ...result.metadata
+          ...result.metadata,
         };
-        
+
         warnings.push(...result.warnings);
         errors.push(...result.errors);
-        
       } catch (error) {
         errors.push({
           type: 'CompilationError',
           message: error instanceof Error ? error.message : String(error),
           script: name,
           line: 1,
-          column: 1
+          column: 1,
         });
       }
     }
@@ -466,7 +467,7 @@ export class HyperfixiService {
       metadata,
       timings,
       warnings,
-      errors
+      errors,
     };
   }
 
@@ -477,29 +478,31 @@ export class HyperfixiService {
     try {
       // Parse with context
       const parsed = this.parser.parse(request.script, request.context);
-      
+
       // Try to compile to check for errors
       const result = await this.compiler.compile(parsed.processed, {}, true); // validation mode
-      
+
       return {
         valid: result.errors.length === 0,
         errors: result.errors,
         warnings: result.warnings,
         metadata: {
           ...parsed.metadata,
-          ...result.metadata
-        }
+          ...result.metadata,
+        },
       };
     } catch (error) {
       return {
         valid: false,
-        errors: [{
-          type: 'ValidationError',
-          message: error instanceof Error ? error.message : String(error),
-          line: 1,
-          column: 1
-        }],
-        warnings: []
+        errors: [
+          {
+            type: 'ValidationError',
+            message: error instanceof Error ? error.message : String(error),
+            line: 1,
+            column: 1,
+          },
+        ],
+        warnings: [],
       };
     }
   }
@@ -512,30 +515,27 @@ export class HyperfixiService {
     const metadata: Record<string, any> = {};
     const warnings: any[] = [];
     const errors: any[] = [];
-    
+
     const timings = {
       total: 0,
       parse: 0,
       compile: 0,
-      cache: 0
+      cache: 0,
     };
 
     // Process definitions in parallel for better performance
     const results = await Promise.allSettled(
-      request.definitions.map(async (definition) => {
+      request.definitions.map(async definition => {
         const parseStart = performance.now();
-        
+
         const parsed = this.parser.parse(definition.script, definition.context);
-        
+
         const parseEnd = performance.now();
-        
+
         const compileStart = performance.now();
-        
-        const result = await this.compiler.compile(
-          parsed.processed, 
-          definition.options || {}
-        );
-        
+
+        const result = await this.compiler.compile(parsed.processed, definition.options || {});
+
         const compileEnd = performance.now();
 
         return {
@@ -543,14 +543,14 @@ export class HyperfixiService {
           compiled: result.compiled,
           metadata: {
             ...parsed.metadata,
-            ...result.metadata
+            ...result.metadata,
           },
           warnings: result.warnings,
           errors: result.errors,
           timings: {
             parse: parseEnd - parseStart,
-            compile: compileEnd - compileStart
-          }
+            compile: compileEnd - compileStart,
+          },
         };
       })
     );
@@ -558,7 +558,7 @@ export class HyperfixiService {
     // Collect results
     results.forEach((result, index) => {
       const definition = request.definitions[index];
-      
+
       if (result.status === 'fulfilled') {
         const value = result.value;
         compiled[value.id] = value.compiled;
@@ -573,7 +573,7 @@ export class HyperfixiService {
           message: result.reason?.message || 'Unknown error',
           script: definition.id,
           line: 1,
-          column: 1
+          column: 1,
         });
       }
     });
@@ -583,7 +583,7 @@ export class HyperfixiService {
       metadata,
       timings,
       warnings,
-      errors
+      errors,
     };
   }
 }

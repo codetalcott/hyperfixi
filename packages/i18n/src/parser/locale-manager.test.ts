@@ -44,9 +44,7 @@ describe('LocaleManager', () => {
     });
 
     it('should throw when setting unregistered locale as default', () => {
-      expect(() => LocaleManager.setDefault('xyz')).toThrow(
-        "Locale 'xyz' is not registered"
-      );
+      expect(() => LocaleManager.setDefault('xyz')).toThrow("Locale 'xyz' is not registered");
     });
 
     it('should allow setting en as default without registration', () => {
@@ -75,9 +73,7 @@ describe('LocaleManager', () => {
     });
 
     it('should throw for unregistered locale', () => {
-      expect(() => LocaleManager.get('xyz')).toThrow(
-        "Locale 'xyz' is not registered"
-      );
+      expect(() => LocaleManager.get('xyz')).toThrow("Locale 'xyz' is not registered");
     });
   });
 

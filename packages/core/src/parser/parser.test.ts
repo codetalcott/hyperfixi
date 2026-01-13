@@ -193,7 +193,7 @@ describe('Hyperscript AST Parser', () => {
       });
     });
 
-    it('should parse chained context possessive (my value\'s length)', () => {
+    it("should parse chained context possessive (my value's length)", () => {
       expectAST("my value's length", {
         type: 'possessiveExpression',
         object: {
@@ -215,7 +215,7 @@ describe('Hyperscript AST Parser', () => {
       });
     });
 
-    it('should parse chained context possessive (its data\'s items)', () => {
+    it("should parse chained context possessive (its data's items)", () => {
       expectAST("its data's items", {
         type: 'possessiveExpression',
         object: {
@@ -237,7 +237,7 @@ describe('Hyperscript AST Parser', () => {
       });
     });
 
-    it('should parse chained context possessive (your name\'s first)', () => {
+    it("should parse chained context possessive (your name's first)", () => {
       expectAST("your name's first", {
         type: 'possessiveExpression',
         object: {
@@ -499,9 +499,7 @@ describe('Hyperscript AST Parser', () => {
       expectAST('hide #target', {
         type: 'command',
         name: 'hide',
-        args: [
-          { type: 'selector', value: '#target' },
-        ],
+        args: [{ type: 'selector', value: '#target' }],
       });
     });
 
@@ -545,9 +543,7 @@ describe('Hyperscript AST Parser', () => {
       expectAST('add .active', {
         type: 'command',
         name: 'add',
-        args: [
-          { type: 'selector', value: '.active' },
-        ],
+        args: [{ type: 'selector', value: '.active' }],
       });
     });
 
@@ -736,7 +732,9 @@ describe('Hyperscript AST Parser', () => {
       expect(node!.type).toBe('command');
       expect(node!.name).toBe('if');
       expect(node!.args).toBeDefined();
-      expect(((node as { args?: unknown }).args as unknown[] | { length: number }).length).toBeGreaterThanOrEqual(2); // condition + then block + optional else block
+      expect(
+        ((node as { args?: unknown }).args as unknown[] | { length: number }).length
+      ).toBeGreaterThanOrEqual(2); // condition + then block + optional else block
 
       // Verify condition exists (may be identifier, expression, or binaryExpression depending on parsing)
       const condition = ((node as { args?: unknown }).args as unknown[])[0];
@@ -1158,9 +1156,13 @@ describe('Hyperscript AST Parser', () => {
       const globalCommand = globalResult.node;
 
       // :x should have scope: 'local'
-      expect((((localCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe('local');
+      expect((((localCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe(
+        'local'
+      );
       // x should have no scope (or undefined)
-      expect((((globalCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBeUndefined();
+      expect(
+        (((globalCommand as { args?: unknown }).args as unknown[])[0] as any).scope
+      ).toBeUndefined();
     });
 
     it('should handle complex expressions with :variable', () => {
@@ -1277,9 +1279,13 @@ describe('Hyperscript AST Parser', () => {
       const globalCommand = globalResult.node;
 
       // :x should have scope: 'local'
-      expect((((localCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe('local');
+      expect((((localCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe(
+        'local'
+      );
       // ::x should have scope: 'global'
-      expect((((globalCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe('global');
+      expect((((globalCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe(
+        'global'
+      );
     });
 
     it('should distinguish ::global from implicit global', () => {
@@ -1293,9 +1299,13 @@ describe('Hyperscript AST Parser', () => {
       const explicitCommand = explicitResult.node;
 
       // x (implicit) should have no scope
-      expect((((implicitCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBeUndefined();
+      expect(
+        (((implicitCommand as { args?: unknown }).args as unknown[])[0] as any).scope
+      ).toBeUndefined();
       // ::x should have scope: 'global'
-      expect((((explicitCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe('global');
+      expect((((explicitCommand as { args?: unknown }).args as unknown[])[0] as any).scope).toBe(
+        'global'
+      );
     });
 
     it('should handle ::variable in complex expressions', () => {

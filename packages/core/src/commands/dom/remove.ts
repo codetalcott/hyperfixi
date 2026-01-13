@@ -18,7 +18,11 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { parseAttributeName } from '../helpers/attribute-manipulation';
 import { removeElement } from '../helpers/dom-mutation';
-import { batchRemoveClasses, batchRemoveAttribute, batchRemoveStyles } from '../helpers/batch-dom-operations';
+import {
+  batchRemoveClasses,
+  batchRemoveAttribute,
+  batchRemoveStyles,
+} from '../helpers/batch-dom-operations';
 import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { command, meta, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
@@ -86,7 +90,10 @@ export class RemoveCommand extends DOMModificationBase {
 
     // Check if we're removing multiple elements (e.g., "remove <.items/>")
     if (Array.isArray(firstValue) && firstValue.length > 0 && isHTMLElement(firstValue[0])) {
-      return { type: 'element', targets: firstValue.filter((el): el is HTMLElement => isHTMLElement(el)) };
+      return {
+        type: 'element',
+        targets: firstValue.filter((el): el is HTMLElement => isHTMLElement(el)),
+      };
     }
 
     // Check for string-based patterns
@@ -96,14 +103,24 @@ export class RemoveCommand extends DOMModificationBase {
       // Attribute syntax: [@attr] or @attr
       if (this.isAttribute(trimmed)) {
         const name = parseAttributeName(trimmed);
-        const targets = await this.resolveTargets(raw.args.slice(1), evaluator, context, raw.modifiers);
+        const targets = await this.resolveTargets(
+          raw.args.slice(1),
+          evaluator,
+          context,
+          raw.modifiers
+        );
         return { type: 'attribute', name, targets };
       }
 
       // CSS property shorthand: *property
       if (this.isCSSProperty(trimmed)) {
         const property = trimmed.substring(1).trim();
-        const targets = await this.resolveTargets(raw.args.slice(1), evaluator, context, raw.modifiers);
+        const targets = await this.resolveTargets(
+          raw.args.slice(1),
+          evaluator,
+          context,
+          raw.modifiers
+        );
         return { type: 'styles', properties: [property], targets };
       }
     }
@@ -146,7 +163,8 @@ export class RemoveCommand extends DOMModificationBase {
     if (typeof input !== 'object' || input === null) return false;
     const typed = input as Partial<RemoveCommandInput>;
 
-    if (!this.validateType(typed.type, ['classes', 'attribute', 'styles', 'element'] as const)) return false;
+    if (!this.validateType(typed.type, ['classes', 'attribute', 'styles', 'element'] as const))
+      return false;
     if (!this.validateTargets(typed.targets)) return false;
 
     if (typed.type === 'classes') {

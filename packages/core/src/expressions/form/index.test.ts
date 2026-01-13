@@ -291,7 +291,10 @@ describe('Enhanced Form Values Expression', () => {
     });
 
     test('handles invalid element type', async () => {
-      const result = await expression.evaluate(context, 'not an element' as unknown as HTMLFormElement);
+      const result = await expression.evaluate(
+        context,
+        'not an element' as unknown as HTMLFormElement
+      );
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -631,12 +634,8 @@ describe('Enhanced Form Serialization Expression', () => {
 describe('Expression Registry', () => {
   test('exports all enhanced form expressions', () => {
     expect(enhancedFormExpressions['form-values']).toBeInstanceOf(FormValuesExpression);
-    expect(enhancedFormExpressions['form-validate']).toBeInstanceOf(
-      FormValidationExpression
-    );
-    expect(enhancedFormExpressions['form-serialize']).toBeInstanceOf(
-      FormSerializationExpression
-    );
+    expect(enhancedFormExpressions['form-validate']).toBeInstanceOf(FormValidationExpression);
+    expect(enhancedFormExpressions['form-serialize']).toBeInstanceOf(FormSerializationExpression);
   });
 });
 

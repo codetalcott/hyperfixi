@@ -19,17 +19,29 @@ export function getTogglePatternsIt(): LanguagePattern[] {
       template: {
         format: 'commutare {patient} su {target}',
         tokens: [
-          { type: 'literal', value: 'commutare', alternatives: ['alternare', 'toggle', 'cambiare'] },
+          {
+            type: 'literal',
+            value: 'commutare',
+            alternatives: ['alternare', 'toggle', 'cambiare'],
+          },
           { type: 'role', role: 'patient' },
-          { type: 'group', optional: true, tokens: [
-            { type: 'literal', value: 'su', alternatives: ['in', 'di'] },
-            { type: 'role', role: 'destination' },
-          ]},
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'su', alternatives: ['in', 'di'] },
+              { type: 'role', role: 'destination' },
+            ],
+          },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { marker: 'su', markerAlternatives: ['in', 'di'], default: { type: 'reference', value: 'me' } },
+        destination: {
+          marker: 'su',
+          markerAlternatives: ['in', 'di'],
+          default: { type: 'reference', value: 'me' },
+        },
       },
     },
     {
@@ -40,7 +52,11 @@ export function getTogglePatternsIt(): LanguagePattern[] {
       template: {
         format: 'commutare {patient}',
         tokens: [
-          { type: 'literal', value: 'commutare', alternatives: ['alternare', 'toggle', 'cambiare'] },
+          {
+            type: 'literal',
+            value: 'commutare',
+            alternatives: ['alternare', 'toggle', 'cambiare'],
+          },
           { type: 'role', role: 'patient' },
         ],
       },

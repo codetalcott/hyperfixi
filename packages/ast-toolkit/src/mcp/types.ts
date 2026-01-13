@@ -3,8 +3,8 @@
  * Based on MCP schema 2025-03-26
  */
 
-export const JSONRPC_VERSION = "2.0";
-export const LATEST_PROTOCOL_VERSION = "2025-03-26";
+export const JSONRPC_VERSION = '2.0';
+export const LATEST_PROTOCOL_VERSION = '2025-03-26';
 
 // ============================================================================
 // Base Protocol Types
@@ -83,7 +83,7 @@ export interface ServerCapabilities {
 }
 
 export interface InitializeRequest extends Request {
-  method: "initialize";
+  method: 'initialize';
   params: {
     protocolVersion: string;
     capabilities: ClientCapabilities;
@@ -106,7 +106,7 @@ export interface Tool {
   name: string;
   description?: string;
   inputSchema: {
-    type: "object";
+    type: 'object';
     properties?: { [key: string]: object };
     required?: string[];
   };
@@ -122,7 +122,7 @@ export interface ToolAnnotations {
 }
 
 export interface ListToolsRequest extends Request {
-  method: "tools/list";
+  method: 'tools/list';
 }
 
 export interface ListToolsResult extends Result {
@@ -130,7 +130,7 @@ export interface ListToolsResult extends Result {
 }
 
 export interface CallToolRequest extends Request {
-  method: "tools/call";
+  method: 'tools/call';
   params: {
     name: string;
     arguments?: { [key: string]: unknown };
@@ -164,7 +164,7 @@ export interface ResourceTemplate {
 }
 
 export interface ListResourcesRequest extends Request {
-  method: "resources/list";
+  method: 'resources/list';
 }
 
 export interface ListResourcesResult extends Result {
@@ -172,7 +172,7 @@ export interface ListResourcesResult extends Result {
 }
 
 export interface ReadResourceRequest extends Request {
-  method: "resources/read";
+  method: 'resources/read';
   params: {
     uri: string;
   };
@@ -204,30 +204,30 @@ export interface Annotations {
   priority?: number;
 }
 
-export type Role = "user" | "assistant";
+export type Role = 'user' | 'assistant';
 
 export interface TextContent {
-  type: "text";
+  type: 'text';
   text: string;
   annotations?: Annotations;
 }
 
 export interface ImageContent {
-  type: "image";
+  type: 'image';
   data: string;
   mimeType: string;
   annotations?: Annotations;
 }
 
 export interface AudioContent {
-  type: "audio";
+  type: 'audio';
   data: string;
   mimeType: string;
   annotations?: Annotations;
 }
 
 export interface EmbeddedResource {
-  type: "resource";
+  type: 'resource';
   resource: TextResourceContents | BlobResourceContents;
   annotations?: Annotations;
 }
@@ -262,14 +262,14 @@ export const INTERNAL_ERROR = -32603;
 // Message Union Types
 // ============================================================================
 
-export type MCPRequest = 
+export type MCPRequest =
   | InitializeRequest
   | ListToolsRequest
   | CallToolRequest
   | ListResourcesRequest
   | ReadResourceRequest;
 
-export type MCPResult = 
+export type MCPResult =
   | InitializeResult
   | ListToolsResult
   | CallToolResult

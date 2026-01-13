@@ -68,7 +68,7 @@ class LRUCache<T> {
     entry.accessCount++;
     this.cache.delete(key);
     this.cache.set(key, entry);
-    
+
     return entry.value;
   }
 
@@ -86,7 +86,7 @@ class LRUCache<T> {
       value,
       timestamp: Date.now(),
       accessCount: 1,
-      computationTime
+      computationTime,
     });
   }
 
@@ -106,12 +106,13 @@ class LRUCache<T> {
     const entries = Array.from(this.cache.values());
     const totalAccess = entries.reduce((sum, entry) => sum + entry.accessCount, 0);
     const hits = entries.filter(entry => entry.accessCount > 1).length;
-    const avgComputationTime = entries.reduce((sum, entry) => sum + entry.computationTime, 0) / entries.length;
+    const avgComputationTime =
+      entries.reduce((sum, entry) => sum + entry.computationTime, 0) / entries.length;
 
     return {
       hitRate: totalAccess > 0 ? hits / totalAccess : 0,
       avgComputationTime: avgComputationTime || 0,
-      totalEntries: entries.length
+      totalEntries: entries.length,
     };
   }
 }
@@ -131,14 +132,14 @@ const DEFAULT_PERFORMANCE_CONFIG: PerformanceConfig = {
   enableMemoization: true,
   enableParallelization: false, // Keep false for now as we don't have worker support
   maxConcurrency: 4,
-  benchmarkIterations: 100
+  benchmarkIterations: 100,
 };
 
 let currentConfig: PerformanceConfig = { ...DEFAULT_PERFORMANCE_CONFIG };
 
 export function setPerformanceConfig(config: Partial<PerformanceConfig>): void {
   currentConfig = { ...currentConfig, ...config };
-  
+
   // Update cache sizes if needed
   if (config.cacheSize) {
     complexityCache.clear();
@@ -165,7 +166,7 @@ export function calculateComplexityOptimized(ast: ASTNode): ComplexityMetrics {
 
   const cacheKey = generateASTHash(ast);
   const cached = complexityCache.get(cacheKey);
-  
+
   if (cached) {
     return cached;
   }
@@ -188,7 +189,7 @@ export function analyzeMetricsOptimized(ast: ASTNode): AnalysisResult {
 
   const cacheKey = generateASTHash(ast);
   const cached = analysisCache.get(cacheKey);
-  
+
   if (cached) {
     return cached;
   }
@@ -204,10 +205,7 @@ export function analyzeMetricsOptimized(ast: ASTNode): AnalysisResult {
 /**
  * Optimized node finding with caching
  */
-export function findNodesOptimized(
-  ast: ASTNode, 
-  predicate: (node: ASTNode) => boolean
-): ASTNode[] {
+export function findNodesOptimized(ast: ASTNode, predicate: (node: ASTNode) => boolean): ASTNode[] {
   if (!currentConfig.enableCaching) {
     return findNodes(ast, predicate);
   }
@@ -216,7 +214,7 @@ export function findNodesOptimized(
   const predicateHash = predicate.toString().slice(0, 100);
   const cacheKey = `${generateASTHash(ast)}-${predicateHash}`;
   const cached = nodeQueryCache.get(cacheKey);
-  
+
   if (cached) {
     return cached;
   }
@@ -321,7 +319,7 @@ export function benchmarkOperation(
     averageTime,
     minTime,
     maxTime,
-    nodeCount: 0 // Will be set by caller if relevant
+    nodeCount: 0, // Will be set by caller if relevant
   };
 }
 
@@ -336,30 +334,30 @@ export function benchmarkASTOperations(ast: ASTNode): BenchmarkResult[] {
   const operations = [
     {
       name: 'Node Counting',
-      operation: () => countNodes(ast)
+      operation: () => countNodes(ast),
     },
     {
       name: 'Event Handler Finding',
-      operation: () => findNodes(ast, node => node.type === 'eventHandler')
+      operation: () => findNodes(ast, node => node.type === 'eventHandler'),
     },
     {
-      name: 'Command Finding', 
-      operation: () => findNodes(ast, node => node.type === 'command')
+      name: 'Command Finding',
+      operation: () => findNodes(ast, node => node.type === 'command'),
     },
     {
       name: 'Complexity Calculation',
-      operation: () => calculateComplexity(ast)
+      operation: () => calculateComplexity(ast),
     },
     {
       name: 'Full Analysis',
-      operation: () => analyzeMetrics(ast)
+      operation: () => analyzeMetrics(ast),
     },
     {
       name: 'AST Traversal',
       operation: () => {
         return countNodes(ast);
-      }
-    }
+      },
+    },
   ];
 
   // Run benchmarks
@@ -376,16 +374,14 @@ export function benchmarkASTOperations(ast: ASTNode): BenchmarkResult[] {
     analysisCache.clear();
     nodeQueryCache.clear();
 
-    const unoptimizedComplexity = benchmarkOperation(
-      'Complexity (Unoptimized)',
-      () => calculateComplexity(ast)
+    const unoptimizedComplexity = benchmarkOperation('Complexity (Unoptimized)', () =>
+      calculateComplexity(ast)
     );
     unoptimizedComplexity.nodeCount = nodeCount;
     results.push(unoptimizedComplexity);
 
-    const optimizedComplexity = benchmarkOperation(
-      'Complexity (Optimized)',
-      () => calculateComplexityOptimized(ast)
+    const optimizedComplexity = benchmarkOperation('Complexity (Optimized)', () =>
+      calculateComplexityOptimized(ast)
     );
     optimizedComplexity.nodeCount = nodeCount;
     optimizedComplexity.optimizationApplied = 'caching';
@@ -421,31 +417,31 @@ export function benchmarkScalability(
 /**
  * Analyze performance characteristics and suggest optimizations
  */
-export function analyzePerformance(
-  benchmarkResults: BenchmarkResult[]
-): OptimizationSuggestion[] {
+export function analyzePerformance(benchmarkResults: BenchmarkResult[]): OptimizationSuggestion[] {
   const suggestions: OptimizationSuggestion[] = [];
 
   for (const result of benchmarkResults) {
     // Analyze throughput
-    if (result.throughput < 100) { // Less than 100 ops/sec
+    if (result.throughput < 100) {
+      // Less than 100 ops/sec
       suggestions.push({
         type: 'algorithm',
         description: `${result.operation} is running slowly (${result.throughput.toFixed(1)} ops/sec)`,
         expectedImprovement: '2-5x performance improvement',
         implementation: 'Consider algorithmic optimizations or caching',
-        priority: 'high'
+        priority: 'high',
       });
     }
 
     // Analyze memory usage
-    if (result.memoryUsed > 10 * 1024 * 1024) { // > 10MB
+    if (result.memoryUsed > 10 * 1024 * 1024) {
+      // > 10MB
       suggestions.push({
         type: 'memory',
         description: `${result.operation} uses significant memory (${(result.memoryUsed / 1024 / 1024).toFixed(1)}MB)`,
         expectedImprovement: '50-80% memory reduction',
         implementation: 'Implement memory-efficient data structures or streaming processing',
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -457,7 +453,7 @@ export function analyzePerformance(
         description: `${result.operation} has high time variance (${timeVariance.toFixed(2)}ms range)`,
         expectedImprovement: 'More predictable performance',
         implementation: 'Investigate and eliminate performance bottlenecks',
-        priority: 'medium'
+        priority: 'medium',
       });
     }
 
@@ -468,7 +464,7 @@ export function analyzePerformance(
         description: `${result.operation} could benefit from caching (${result.averageTime.toFixed(2)}ms per operation)`,
         expectedImprovement: '90%+ improvement for repeated operations',
         implementation: 'Implement LRU cache with appropriate invalidation strategy',
-        priority: 'high'
+        priority: 'high',
       });
     }
   }
@@ -480,7 +476,7 @@ export function analyzePerformance(
       description: 'Large ASTs could benefit from parallel processing',
       expectedImprovement: '2-4x improvement depending on CPU cores',
       implementation: 'Use Web Workers or worker threads for parallel AST processing',
-      priority: 'medium'
+      priority: 'medium',
     });
   }
 
@@ -498,7 +494,7 @@ export function getCacheStats(): {
   return {
     complexity: complexityCache.getStats(),
     analysis: analysisCache.getStats(),
-    nodeQuery: nodeQueryCache.getStats()
+    nodeQuery: nodeQueryCache.getStats(),
   };
 }
 
@@ -524,17 +520,17 @@ function generateASTHash(ast: ASTNode): string {
     nodeCount: countNodes(ast),
     features: (ast as any).features?.length || 0,
     start: ast.start,
-    end: ast.end
+    end: ast.end,
   });
-  
+
   // Simple hash function
   let hash = 0;
   for (let i = 0; i < key.length; i++) {
     const char = key.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  
+
   return hash.toString(36);
 }
 
@@ -543,15 +539,22 @@ function generateASTHash(ast: ASTNode): string {
  */
 function countNodes(ast: ASTNode): number {
   let count = 0;
-  
+
   function traverse(node: any) {
     if (!node || typeof node !== 'object') return;
-    
+
     count++;
-    
+
     // Traverse all properties that might contain child nodes
     for (const [key, value] of Object.entries(node)) {
-      if (key === 'features' || key === 'commands' || key === 'then' || key === 'else' || key === 'body' || key === 'args') {
+      if (
+        key === 'features' ||
+        key === 'commands' ||
+        key === 'then' ||
+        key === 'else' ||
+        key === 'body' ||
+        key === 'args'
+      ) {
         if (Array.isArray(value)) {
           value.forEach(child => traverse(child));
         } else if (value) {
@@ -560,7 +563,7 @@ function countNodes(ast: ASTNode): number {
       }
     }
   }
-  
+
   traverse(ast);
   return count;
 }
@@ -572,21 +575,21 @@ export function formatBenchmarkResults(results: BenchmarkResult[]): string {
   const lines: string[] = [];
   lines.push('Performance Benchmark Results');
   lines.push('============================');
-  
+
   for (const result of results) {
     lines.push(`\n${result.operation}:`);
     lines.push(`  Average Time: ${result.averageTime.toFixed(3)}ms`);
     lines.push(`  Throughput: ${result.throughput.toFixed(1)} ops/sec`);
     lines.push(`  Memory Used: ${(result.memoryUsed / 1024).toFixed(1)}KB`);
     lines.push(`  Node Count: ${result.nodeCount}`);
-    
+
     if (result.optimizationApplied) {
       lines.push(`  Optimization: ${result.optimizationApplied}`);
     }
-    
+
     lines.push(`  Range: ${result.minTime.toFixed(3)}ms - ${result.maxTime.toFixed(3)}ms`);
   }
-  
+
   return lines.join('\n');
 }
 
@@ -597,15 +600,15 @@ export function formatOptimizationSuggestions(suggestions: OptimizationSuggestio
   const lines: string[] = [];
   lines.push('Performance Optimization Suggestions');
   lines.push('===================================');
-  
+
   const priorityOrder = ['high', 'medium', 'low'];
-  
+
   for (const priority of priorityOrder) {
     const prioritySuggestions = suggestions.filter(s => s.priority === priority);
     if (prioritySuggestions.length === 0) continue;
-    
+
     lines.push(`\n${priority.toUpperCase()} PRIORITY:`);
-    
+
     for (const suggestion of prioritySuggestions) {
       lines.push(`\n• ${suggestion.description}`);
       lines.push(`  Type: ${suggestion.type}`);
@@ -613,6 +616,6 @@ export function formatOptimizationSuggestions(suggestions: OptimizationSuggestio
       lines.push(`  Implementation: ${suggestion.implementation}`);
     }
   }
-  
+
   return lines.join('\n');
 }

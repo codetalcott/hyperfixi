@@ -107,11 +107,7 @@ describe('HideCommand (Standalone V2)', () => {
       const context = createMockContext(element);
       const evaluator = createMockEvaluator();
 
-      const input = await command.parseInput(
-        { args: [], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       expect(input.targets).toEqual([element]);
     });
@@ -192,11 +188,7 @@ describe('HideCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator('<<<invalid>>>');
 
       await expect(
-        command.parseInput(
-          { args: [mockNode('<<<invalid>>>')], modifiers: {} },
-          evaluator,
-          context
-        )
+        command.parseInput({ args: [mockNode('<<<invalid>>>')], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('Invalid CSS selector');
     });
 
@@ -208,11 +200,7 @@ describe('HideCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator(12345); // number, not element
 
       await expect(
-        command.parseInput(
-          { args: [mockNode(12345)], modifiers: {} },
-          evaluator,
-          context
-        )
+        command.parseInput({ args: [mockNode(12345)], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('Invalid hide target');
     });
 
@@ -224,11 +212,7 @@ describe('HideCommand (Standalone V2)', () => {
       const evaluator = inlineEvaluator([]); // empty array
 
       await expect(
-        command.parseInput(
-          { args: [mockNode([])], modifiers: {} },
-          evaluator,
-          context
-        )
+        command.parseInput({ args: [mockNode([])], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('no valid targets found');
     });
   });
@@ -371,11 +355,7 @@ describe('HideCommand (Standalone V2)', () => {
       const evaluator = createMockEvaluator();
 
       // Parse input
-      const input = await command.parseInput(
-        { args: [], modifiers: {} },
-        evaluator,
-        context
-      );
+      const input = await command.parseInput({ args: [], modifiers: {} }, evaluator, context);
 
       // Validate
       expect(command.validate(input)).toBe(true);
@@ -390,7 +370,9 @@ describe('HideCommand (Standalone V2)', () => {
 
     it('should handle complex selector', async () => {
       // Create multiple elements with different selectors
-      const parent = createTestElement('<div id="parent"><button class="btn">1</button><button class="btn">2</button></div>');
+      const parent = createTestElement(
+        '<div id="parent"><button class="btn">1</button><button class="btn">2</button></div>'
+      );
       testElements.push(parent);
 
       const context = createMockContext(parent);

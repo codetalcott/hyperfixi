@@ -228,7 +228,11 @@ describe('Tailwind CSS Extension', () => {
 
       // Mock the command to use the Tailwind strategy
       const originalExecute = hideCommand.execute.bind(hideCommand);
-      (hideCommand as any).execute = async (context: ExecutionContext, target?: any, strategy?: string) => {
+      (hideCommand as any).execute = async (
+        context: ExecutionContext,
+        target?: any,
+        strategy?: string
+      ) => {
         if (strategy === 'twDisplay') {
           const elements = target ? [target] : context.me ? [context.me] : [];
           for (const element of elements) {
@@ -253,7 +257,11 @@ describe('Tailwind CSS Extension', () => {
 
       // Mock the command to use the Tailwind strategy
       const originalExecute = showCommand.execute.bind(showCommand);
-      (showCommand as any).execute = async (context: ExecutionContext, target?: any, strategy?: string) => {
+      (showCommand as any).execute = async (
+        context: ExecutionContext,
+        target?: any,
+        strategy?: string
+      ) => {
         if (strategy === 'twVisibility') {
           const elements = target ? [target] : context.me ? [context.me] : [];
           for (const element of elements) {
@@ -341,9 +349,9 @@ describe('Tailwind CSS Extension', () => {
     });
 
     it('should handle null elements gracefully', async () => {
-      await expect(extension.executeStrategy('twDisplay', 'hide', null as unknown as HTMLElement)).rejects.toThrow(
-        'Element is required'
-      );
+      await expect(
+        extension.executeStrategy('twDisplay', 'hide', null as unknown as HTMLElement)
+      ).rejects.toThrow('Element is required');
     });
   });
 

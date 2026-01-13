@@ -19,10 +19,13 @@ import type {
  */
 const HYPERSCRIPT_PATTERNS = {
   events: /on\s+(\w+)/g,
-  commands: /\b(add|remove|toggle|put|take|make|wait|send|trigger|call|get|set|log|halt|prevent|stop)\b/g,
-  selectors: /<[^>]+>|#[\w-]+|\.[\w-]+|\[[\w-]+(=.*?)?\]|closest\s+[^,\s]+|first\s+[^,\s]+|last\s+[^,\s]+/g,
+  commands:
+    /\b(add|remove|toggle|put|take|make|wait|send|trigger|call|get|set|log|halt|prevent|stop)\b/g,
+  selectors:
+    /<[^>]+>|#[\w-]+|\.[\w-]+|\[[\w-]+(=.*?)?\]|closest\s+[^,\s]+|first\s+[^,\s]+|last\s+[^,\s]+/g,
   references: /\b(me|my|you|your|it|its|the|this|that|target|event|detail)\b/g,
-  operators: /\b(and|or|not|is|is\s+not|matches|contains|does\s+not\s+contain|starts\s+with|ends\s+with)\b/g,
+  operators:
+    /\b(and|or|not|is|is\s+not|matches|contains|does\s+not\s+contain|starts\s+with|ends\s+with)\b/g,
   literals: /"[^"]*"|'[^']*'|\b\d+(?:\.\d+)?\b|\btrue\b|\bfalse\b|\bnull\b|\bundefined\b/g,
   variables: /\$\w+|\b[a-zA-Z_]\w*(?=\s*:)/g,
   functions: /\b\w+\s*\(/g,
@@ -83,7 +86,11 @@ export async function analyzeProject(
     exclude?: string[];
   } = {}
 ): Promise<AnalysisResult[]> {
-  const { recursive = true, include = ['**/*.html', '**/*.htm'], exclude = ['node_modules/**', 'dist/**'] } = options;
+  const {
+    recursive = true,
+    include = ['**/*.html', '**/*.htm'],
+    exclude = ['node_modules/**', 'dist/**'],
+  } = options;
 
   // Find all HTML files (use Set to deduplicate)
   const patterns = include.map(pattern => path.join(projectPath, pattern));
@@ -113,13 +120,15 @@ export async function analyzeProject(
         elements: [],
         dependencies: [],
         complexity: 0,
-        issues: [{
-          type: 'error',
-          code: 'E002',
-          message: `Failed to analyze file: ${error instanceof Error ? error.message : String(error)}`,
-          line: 0,
-          column: 0,
-        }],
+        issues: [
+          {
+            type: 'error',
+            code: 'E002',
+            message: `Failed to analyze file: ${error instanceof Error ? error.message : String(error)}`,
+            line: 0,
+            column: 0,
+          },
+        ],
         metrics: {
           totalScripts: 0,
           totalElements: 0,
@@ -142,23 +151,23 @@ export async function analyzeProject(
 export async function analyzeFile(filePath: string): Promise<AnalysisResult> {
   const content = await fs.readFile(filePath, 'utf-8');
   const lines = content.split('\n');
-  
+
   // Parse HTML and extract hyperscript
   const elements = parseElements(content);
   const scripts = extractHyperScripts(elements, lines);
-  
+
   // Analyze scripts
   const analyzedScripts = scripts.map(script => analyzeScript(script, lines));
-  
+
   // Extract dependencies
   const dependencies = extractDependencies(content);
-  
+
   // Calculate complexity
   const complexity = calculateComplexity(analyzedScripts);
-  
+
   // Collect all issues
   const issues = analyzedScripts.flatMap(script => script.issues);
-  
+
   // Calculate metrics
   const metrics = calculateMetrics(analyzedScripts, elements);
 
@@ -179,22 +188,22 @@ export async function analyzeFile(filePath: string): Promise<AnalysisResult> {
 function parseElements(html: string): ElementAnalysis[] {
   const elements: ElementAnalysis[] = [];
   const lines = html.split('\n');
-  
+
   // Simple HTML parser - in production, would use a proper HTML parser
   const elementRegex = /<(\w+)([^>]*)>/g;
   let match;
-  
+
   while ((match = elementRegex.exec(html)) !== null) {
     const [fullMatch, tag, attributes] = match;
     const lineNumber = html.substring(0, match.index).split('\n').length;
     const columnNumber = match.index - html.lastIndexOf('\n', match.index);
-    
+
     // Parse attributes
     const attrs: Record<string, string> = {};
     const classes: string[] = [];
     let id: string | undefined;
     let hyperscript: string | undefined;
-    
+
     // Handle both single and double quoted attributes, including nested quotes
     const attrRegex = /(\w+(?:-\w+)*)=(?:"([^"]*)"|'([^']*)')/g;
     let attrMatch;
@@ -203,7 +212,7 @@ function parseElements(html: string): ElementAnalysis[] {
       const [, name, doubleQuotedValue, singleQuotedValue] = attrMatch;
       const value = doubleQuotedValue ?? singleQuotedValue ?? '';
       attrs[name] = value;
-      
+
       if (name === 'class') {
         classes.push(...value.split(/\s+/).filter(Boolean));
       } else if (name === 'id') {
@@ -212,7 +221,7 @@ function parseElements(html: string): ElementAnalysis[] {
         hyperscript = value;
       }
     }
-    
+
     elements.push({
       tag,
       id,
@@ -224,20 +233,23 @@ function parseElements(html: string): ElementAnalysis[] {
       column: columnNumber,
     });
   }
-  
+
   return elements;
 }
 
 /**
  * Extract HyperScript code from elements
  */
-function extractHyperScripts(elements: ElementAnalysis[], lines: string[]): Array<{
+function extractHyperScripts(
+  elements: ElementAnalysis[],
+  lines: string[]
+): Array<{
   content: string;
   line: number;
   column: number;
 }> {
   const scripts: Array<{ content: string; line: number; column: number }> = [];
-  
+
   for (const element of elements) {
     if (element.hyperscript) {
       scripts.push({
@@ -247,7 +259,7 @@ function extractHyperScripts(elements: ElementAnalysis[], lines: string[]): Arra
       });
     }
   }
-  
+
   return scripts;
 }
 
@@ -259,7 +271,7 @@ function analyzeScript(
   lines: string[]
 ): ScriptAnalysis {
   const { content, line, column } = script;
-  
+
   // Extract features
   const features: string[] = [];
   const events: string[] = [];
@@ -268,14 +280,14 @@ function analyzeScript(
   const variables: string[] = [];
   const references: string[] = [];
   const issues: AnalysisIssue[] = [];
-  
+
   // Analyze patterns
   for (const [featureName, pattern] of Object.entries(HYPERSCRIPT_PATTERNS)) {
     const matches = Array.from(content.matchAll(pattern));
-    
+
     if (matches.length > 0) {
       features.push(featureName);
-      
+
       switch (featureName) {
         case 'events':
           events.push(...matches.map(m => m[1]?.trim()).filter(Boolean));
@@ -295,15 +307,15 @@ function analyzeScript(
       }
     }
   }
-  
+
   // Check for issues
   for (const issuePattern of ISSUE_PATTERNS) {
     const matches = Array.from(content.matchAll(issuePattern.pattern));
-    
+
     for (const match of matches) {
       const matchLine = content.substring(0, match.index).split('\n').length;
       const matchColumn = match.index! - content.lastIndexOf('\n', match.index!);
-      
+
       issues.push({
         type: issuePattern.type,
         code: issuePattern.code,
@@ -314,10 +326,10 @@ function analyzeScript(
       });
     }
   }
-  
+
   // Calculate complexity
   const complexity = calculateScriptComplexity(content, features);
-  
+
   return {
     content,
     line,
@@ -338,7 +350,7 @@ function analyzeScript(
  */
 function calculateScriptComplexity(content: string, features: string[]): number {
   let score = 1; // Base complexity
-  
+
   // Add complexity for different features
   const complexityWeights = {
     events: 1,
@@ -349,20 +361,20 @@ function calculateScriptComplexity(content: string, features: string[]): number 
     functions: 2,
     variables: 1,
   };
-  
+
   for (const feature of features) {
     const weight = complexityWeights[feature as keyof typeof complexityWeights] || 1;
     score += weight;
   }
-  
+
   // Add complexity for nesting (rough estimate)
   const nestingLevel = (content.match(/\(/g) || []).length;
   score += nestingLevel;
-  
+
   // Add complexity for length
   const lengthFactor = Math.floor(content.length / 50);
   score += lengthFactor;
-  
+
   return Math.max(1, score);
 }
 
@@ -371,7 +383,7 @@ function calculateScriptComplexity(content: string, features: string[]): number 
  */
 function calculateComplexity(scripts: ScriptAnalysis[]): number {
   if (scripts.length === 0) return 0;
-  
+
   const totalComplexity = scripts.reduce((sum, script) => sum + script.complexity, 0);
   return Math.round(totalComplexity / scripts.length);
 }
@@ -381,14 +393,14 @@ function calculateComplexity(scripts: ScriptAnalysis[]): number {
  */
 function extractDependencies(html: string): string[] {
   const dependencies: Set<string> = new Set();
-  
+
   // Look for script tags
   const scriptRegex = /<script[^>]*src=["']([^"']+)["']/g;
   let match;
-  
+
   while ((match = scriptRegex.exec(html)) !== null) {
     const src = match[1];
-    
+
     // Extract library names from CDN URLs
     if (src.includes('hyperscript') || src.includes('_hyperscript')) {
       dependencies.add('hyperscript');
@@ -403,7 +415,7 @@ function extractDependencies(html: string): string[] {
       dependencies.add('htmx.org');
     }
   }
-  
+
   return Array.from(dependencies);
 }
 
@@ -416,7 +428,7 @@ function calculateMetrics(scripts: ScriptAnalysis[], elements: ElementAnalysis[]
   const allEvents = new Set<string>();
   let totalLines = 0;
   let totalComplexity = 0;
-  
+
   for (const script of scripts) {
     script.features.forEach(feature => allFeatures.add(feature));
     script.commands.forEach(command => allCommands.add(command));
@@ -424,7 +436,7 @@ function calculateMetrics(scripts: ScriptAnalysis[], elements: ElementAnalysis[]
     totalLines += script.content.split('\n').length;
     totalComplexity += script.complexity;
   }
-  
+
   return {
     totalScripts: scripts.length,
     totalElements: elements.length,
@@ -439,14 +451,17 @@ function calculateMetrics(scripts: ScriptAnalysis[], elements: ElementAnalysis[]
 /**
  * Generate analysis report
  */
-export function generateReport(results: AnalysisResult[], format: 'table' | 'json' | 'detailed' = 'table'): string {
+export function generateReport(
+  results: AnalysisResult[],
+  format: 'table' | 'json' | 'detailed' = 'table'
+): string {
   switch (format) {
     case 'json':
       return JSON.stringify(results, null, 2);
-      
+
     case 'detailed':
       return generateDetailedReport(results);
-      
+
     case 'table':
     default:
       return generateTableReport(results);
@@ -458,41 +473,42 @@ export function generateReport(results: AnalysisResult[], format: 'table' | 'jso
  */
 function generateTableReport(results: AnalysisResult[]): string {
   const lines: string[] = [];
-  
+
   lines.push('File Analysis Report');
   lines.push('='.repeat(50));
   lines.push('');
-  
+
   for (const result of results) {
     lines.push(`📁 ${result.file}`);
     lines.push(`   Scripts: ${result.scripts.length}`);
     lines.push(`   Elements: ${result.elements.length}`);
     lines.push(`   Complexity: ${result.complexity}`);
     lines.push(`   Dependencies: ${result.dependencies.join(', ') || 'None'}`);
-    
+
     if (result.issues.length > 0) {
       lines.push(`   Issues: ${result.issues.length}`);
-      
+
       const errorCount = result.issues.filter(i => i.type === 'error').length;
       const warningCount = result.issues.filter(i => i.type === 'warning').length;
       const infoCount = result.issues.filter(i => i.type === 'info').length;
-      
+
       if (errorCount > 0) lines.push(`     Errors: ${errorCount}`);
       if (warningCount > 0) lines.push(`     Warnings: ${warningCount}`);
       if (infoCount > 0) lines.push(`     Info: ${infoCount}`);
     }
-    
+
     lines.push('');
   }
-  
+
   // Summary
   const totalScripts = results.reduce((sum, r) => sum + r.scripts.length, 0);
   const totalElements = results.reduce((sum, r) => sum + r.elements.length, 0);
   const totalIssues = results.reduce((sum, r) => sum + r.issues.length, 0);
-  const avgComplexity = results.length > 0 
-    ? Math.round(results.reduce((sum, r) => sum + r.complexity, 0) / results.length)
-    : 0;
-  
+  const avgComplexity =
+    results.length > 0
+      ? Math.round(results.reduce((sum, r) => sum + r.complexity, 0) / results.length)
+      : 0;
+
   lines.push('Summary');
   lines.push('-'.repeat(20));
   lines.push(`Total Files: ${results.length}`);
@@ -500,7 +516,7 @@ function generateTableReport(results: AnalysisResult[]): string {
   lines.push(`Total Elements: ${totalElements}`);
   lines.push(`Total Issues: ${totalIssues}`);
   lines.push(`Average Complexity: ${avgComplexity}`);
-  
+
   return lines.join('\n');
 }
 
@@ -509,16 +525,16 @@ function generateTableReport(results: AnalysisResult[]): string {
  */
 function generateDetailedReport(results: AnalysisResult[]): string {
   const lines: string[] = [];
-  
+
   lines.push('# HyperScript Analysis Report');
   lines.push('');
   lines.push(`Generated: ${new Date().toISOString()}`);
   lines.push('');
-  
+
   for (const result of results) {
     lines.push(`## ${result.file}`);
     lines.push('');
-    
+
     // Metrics
     lines.push('### Metrics');
     lines.push('');
@@ -527,7 +543,7 @@ function generateDetailedReport(results: AnalysisResult[]): string {
     lines.push(`- Lines: ${result.metrics.totalLines}`);
     lines.push(`- Average Complexity: ${result.metrics.averageComplexity}`);
     lines.push('');
-    
+
     // Features
     if (result.metrics.featuresUsed.length > 0) {
       lines.push('### Features Used');
@@ -557,7 +573,7 @@ function generateDetailedReport(results: AnalysisResult[]): string {
       });
       lines.push('');
     }
-    
+
     // Dependencies
     if (result.dependencies.length > 0) {
       lines.push('### Dependencies');
@@ -567,23 +583,23 @@ function generateDetailedReport(results: AnalysisResult[]): string {
       });
       lines.push('');
     }
-    
+
     // Issues
     if (result.issues.length > 0) {
       lines.push('### Issues');
       lines.push('');
-      
+
       const groupedIssues = {
         error: result.issues.filter(i => i.type === 'error'),
         warning: result.issues.filter(i => i.type === 'warning'),
         info: result.issues.filter(i => i.type === 'info'),
       };
-      
+
       for (const [type, issues] of Object.entries(groupedIssues)) {
         if (issues.length > 0) {
           lines.push(`#### ${type.charAt(0).toUpperCase() + type.slice(1)}s`);
           lines.push('');
-          
+
           for (const issue of issues) {
             lines.push(`- **${issue.code}**: ${issue.message} (${issue.line}:${issue.column})`);
             if (issue.suggestion) {
@@ -594,11 +610,11 @@ function generateDetailedReport(results: AnalysisResult[]): string {
         }
       }
     }
-    
+
     lines.push('---');
     lines.push('');
   }
-  
+
   return lines.join('\n');
 }
 
@@ -670,29 +686,29 @@ export function validateScript(content: string): AnalysisIssue[] {
  */
 export function getSuggestions(analysis: AnalysisResult): string[] {
   const suggestions: string[] = [];
-  
+
   // Complexity suggestions
   if (analysis.complexity > 10) {
     suggestions.push('Consider breaking complex scripts into smaller, more focused scripts');
   }
-  
+
   // Performance suggestions
   const selectorCount = analysis.scripts.reduce((sum, s) => sum + s.selectors.length, 0);
   if (selectorCount > 5) {
     suggestions.push('Consider caching frequently used selectors in variables');
   }
-  
+
   // Maintainability suggestions
   const totalLength = analysis.scripts.reduce((sum, s) => sum + s.content.length, 0);
   if (totalLength > 500) {
     suggestions.push('Consider extracting common behavior into reusable components');
   }
-  
+
   // Error-specific suggestions
   const errorCount = analysis.issues.filter(i => i.type === 'error').length;
   if (errorCount > 0) {
     suggestions.push('Fix critical errors before deploying to production');
   }
-  
+
   return suggestions;
 }

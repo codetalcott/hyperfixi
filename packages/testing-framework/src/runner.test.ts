@@ -149,9 +149,7 @@ describe('CoreTestRunner', () => {
     it('should skip suite when marked as skip', async () => {
       const suite: TestSuite = {
         name: 'Skipped Suite',
-        tests: [
-          { name: 'test 1', fn: async () => {}, tags: [], fixtures: {} },
-        ],
+        tests: [{ name: 'test 1', fn: async () => {}, tags: [], fixtures: {} }],
         suites: [],
         skip: true,
       };
@@ -222,8 +220,12 @@ describe('CoreTestRunner', () => {
         name: 'Suite with hooks',
         tests: [{ name: 'test', fn: async () => {}, tags: [], fixtures: {} }],
         suites: [],
-        setup: async () => { setupCalled.value = true; },
-        teardown: async () => { teardownCalled.value = true; },
+        setup: async () => {
+          setupCalled.value = true;
+        },
+        teardown: async () => {
+          teardownCalled.value = true;
+        },
       };
 
       const config: TestConfig = {
@@ -253,7 +255,9 @@ describe('CoreTestRunner', () => {
         name: 'Suite with failing setup',
         tests: [{ name: 'test', fn: async () => {}, tags: [], fixtures: {} }],
         suites: [],
-        setup: async () => { throw new Error('Setup failed'); },
+        setup: async () => {
+          throw new Error('Setup failed');
+        },
       };
 
       const config: TestConfig = {
@@ -297,8 +301,12 @@ describe('CoreTestRunner', () => {
         fixtures: {},
         expect: {} as any,
         assert: {} as any,
-        skip: () => { throw new Error('SKIP_TEST'); },
-        fail: (msg: string) => { throw new Error(msg); },
+        skip: () => {
+          throw new Error('SKIP_TEST');
+        },
+        fail: (msg: string) => {
+          throw new Error(msg);
+        },
         timeout: () => {},
       };
 
@@ -322,8 +330,12 @@ describe('CoreTestRunner', () => {
         fixtures: {},
         expect: {} as any,
         assert: {} as any,
-        skip: () => { throw new Error('SKIP_TEST'); },
-        fail: (msg: string) => { throw new Error(msg); },
+        skip: () => {
+          throw new Error('SKIP_TEST');
+        },
+        fail: (msg: string) => {
+          throw new Error(msg);
+        },
         timeout: () => {},
       };
 
@@ -336,7 +348,9 @@ describe('CoreTestRunner', () => {
     it('should mark test as failed on error', async () => {
       const test: TestCase = {
         name: 'failing test',
-        fn: async () => { throw new Error('Test failed'); },
+        fn: async () => {
+          throw new Error('Test failed');
+        },
         tags: [],
         fixtures: {},
       };
@@ -348,8 +362,12 @@ describe('CoreTestRunner', () => {
         fixtures: {},
         expect: {} as any,
         assert: {} as any,
-        skip: () => { throw new Error('SKIP_TEST'); },
-        fail: (msg: string) => { throw new Error(msg); },
+        skip: () => {
+          throw new Error('SKIP_TEST');
+        },
+        fail: (msg: string) => {
+          throw new Error(msg);
+        },
         timeout: () => {},
       };
 
@@ -362,7 +380,9 @@ describe('CoreTestRunner', () => {
     it('should handle test timeout', async () => {
       const test: TestCase = {
         name: 'slow test',
-        fn: async () => { await new Promise(r => setTimeout(r, 200)); },
+        fn: async () => {
+          await new Promise(r => setTimeout(r, 200));
+        },
         timeout: 50,
         tags: [],
         fixtures: {},
@@ -375,8 +395,12 @@ describe('CoreTestRunner', () => {
         fixtures: {},
         expect: {} as any,
         assert: {} as any,
-        skip: () => { throw new Error('SKIP_TEST'); },
-        fail: (msg: string) => { throw new Error(msg); },
+        skip: () => {
+          throw new Error('SKIP_TEST');
+        },
+        fail: (msg: string) => {
+          throw new Error(msg);
+        },
         timeout: () => {},
       };
 
@@ -389,7 +413,9 @@ describe('CoreTestRunner', () => {
     it('should record test duration', async () => {
       const test: TestCase = {
         name: 'timed test',
-        fn: async () => { await new Promise(r => setTimeout(r, 50)); },
+        fn: async () => {
+          await new Promise(r => setTimeout(r, 50));
+        },
         tags: [],
         fixtures: {},
       };
@@ -401,8 +427,12 @@ describe('CoreTestRunner', () => {
         fixtures: {},
         expect: {} as any,
         assert: {} as any,
-        skip: () => { throw new Error('SKIP_TEST'); },
-        fail: (msg: string) => { throw new Error(msg); },
+        skip: () => {
+          throw new Error('SKIP_TEST');
+        },
+        fail: (msg: string) => {
+          throw new Error(msg);
+        },
         timeout: () => {},
       };
 
@@ -596,7 +626,8 @@ describe('measurePerformance', () => {
   it('should execute test function and return metrics', async () => {
     let executed = false;
     const mockPage = {
-      evaluate: vi.fn()
+      evaluate: vi
+        .fn()
         .mockResolvedValueOnce(undefined) // First call to clear marks
         .mockResolvedValueOnce({
           loadTime: 100,
@@ -630,7 +661,8 @@ describe('measurePerformance', () => {
 
   it('should use elapsed time when loadTime is 0', async () => {
     const mockPage = {
-      evaluate: vi.fn()
+      evaluate: vi
+        .fn()
         .mockResolvedValueOnce(undefined)
         .mockResolvedValueOnce({
           loadTime: 0,

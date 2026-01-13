@@ -12,7 +12,13 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  command,
+  meta,
+  createFactory,
+  type DecoratedCommand,
+  type CommandMetadata,
+} from '../decorators';
 
 /**
  * Typed input for PickCommand
@@ -69,9 +75,7 @@ export class PickCommand implements DecoratedCommand {
       throw new Error('pick command requires items to choose from');
     }
 
-    const items = await Promise.all(
-      raw.args.map((arg) => evaluator.evaluate(arg, context))
-    );
+    const items = await Promise.all(raw.args.map(arg => evaluator.evaluate(arg, context)));
     return { items };
   }
 

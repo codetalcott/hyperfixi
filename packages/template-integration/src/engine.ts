@@ -113,7 +113,11 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
   /**
    * Compile and render template in one step
    */
-  async compileAndRender(template: string, context: TemplateContext = {}, options?: TemplateOptions): Promise<string> {
+  async compileAndRender(
+    template: string,
+    context: TemplateContext = {},
+    options?: TemplateOptions
+  ): Promise<string> {
     const compiled = await this.compile(template, options);
     return await this.render(compiled, context);
   }
@@ -121,7 +125,10 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
   /**
    * Create template bundle for deployment
    */
-  async createBundle(templates: Record<string, string>, options?: TemplateOptions): Promise<TemplateBundle> {
+  async createBundle(
+    templates: Record<string, string>,
+    options?: TemplateOptions
+  ): Promise<TemplateBundle> {
     const startTime = performance.now();
     const mergedOptions = { ...this.options, ...options };
 
@@ -212,7 +219,10 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
   /**
    * Precompile templates for better performance
    */
-  async precompile(templates: Record<string, string>, options?: TemplateOptions): Promise<Record<string, CompilationResult>> {
+  async precompile(
+    templates: Record<string, string>,
+    options?: TemplateOptions
+  ): Promise<Record<string, CompilationResult>> {
     const results: Record<string, CompilationResult> = {};
 
     for (const [name, template] of Object.entries(templates)) {
@@ -261,7 +271,7 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
     let hash = 0;
     for (let i = 0; i < template.length; i++) {
       const char = template.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(16);
@@ -274,7 +284,7 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
 
   private isCacheValid(entry: CacheEntry): boolean {
     const maxAge = 1000 * 60 * 60; // 1 hour
-    return (Date.now() - entry.timestamp) < maxAge;
+    return Date.now() - entry.timestamp < maxAge;
   }
 }
 
@@ -286,18 +296,23 @@ export const templateEngine = new HyperFixiTemplateEngine();
 /**
  * Convenience functions
  */
-export async function compileTemplate(template: string, options?: TemplateOptions): Promise<CompilationResult> {
+export async function compileTemplate(
+  template: string,
+  options?: TemplateOptions
+): Promise<CompilationResult> {
   return await templateEngine.compile(template, options);
 }
 
 export async function renderTemplate(
-  template: string, 
-  context: TemplateContext = {}, 
+  template: string,
+  context: TemplateContext = {},
   options?: TemplateOptions
 ): Promise<string> {
   return await templateEngine.compileAndRender(template, context, options);
 }
 
-export async function createTemplateEngine(options?: TemplateOptions): Promise<HyperFixiTemplateEngine> {
+export async function createTemplateEngine(
+  options?: TemplateOptions
+): Promise<HyperFixiTemplateEngine> {
   return new HyperFixiTemplateEngine(options);
 }

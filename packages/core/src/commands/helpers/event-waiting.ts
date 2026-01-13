@@ -53,7 +53,7 @@ export function waitForEvent<T extends Event = Event>(
     return Promise.reject(new Error('waitForEvent: no target provided'));
   }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const cleanup = () => {
@@ -84,7 +84,7 @@ export function waitForEvent<T extends Event = Event>(
  * @returns Promise that resolves after the duration
  */
 export function waitForTime(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ============================================================================
@@ -107,7 +107,7 @@ export function waitForTransitionEnd(
   property: string,
   duration: number
 ): Promise<TransitionWaitResult> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const onEnd = (e: TransitionEvent) => {
       if (e.target === element && e.propertyName === property) {
         finish({ completed: true, cancelled: false });
@@ -163,7 +163,7 @@ export function waitForAnimationComplete(
     return Promise.resolve({ completed: true, type: 'timeout' as const });
   }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const onTransitionEnd = (event: Event) => {
       if (event.target === element) {
         finish({ completed: true, type: 'transition' });
@@ -232,7 +232,7 @@ export function waitForFirst(conditions: WaitCondition[]): Promise<RaceResult> {
     return Promise.reject(new Error('waitForFirst: no conditions provided'));
   }
 
-  const promises = conditions.map((condition) => {
+  const promises = conditions.map(condition => {
     if (condition.type === 'time') {
       return waitForTime(condition.ms).then(() => ({
         winner: condition,
@@ -240,7 +240,7 @@ export function waitForFirst(conditions: WaitCondition[]): Promise<RaceResult> {
       }));
     }
 
-    return waitForEvent(condition.target, condition.eventName).then((res) => ({
+    return waitForEvent(condition.target, condition.eventName).then(res => ({
       winner: condition,
       result: res.event as Event,
     }));

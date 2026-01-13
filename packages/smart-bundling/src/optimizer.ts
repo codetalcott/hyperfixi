@@ -69,10 +69,7 @@ export class BundleOptimizer {
   /**
    * Optimize bundle configuration based on usage analysis
    */
-  async optimizeBundle(
-    analysis: UsageAnalysis,
-    baseConfig: BundleConfig
-  ): Promise<BundleConfig> {
+  async optimizeBundle(analysis: UsageAnalysis, baseConfig: BundleConfig): Promise<BundleConfig> {
     const optimizedConfig = { ...baseConfig };
 
     // Apply tree-shaking optimizations
@@ -104,11 +101,8 @@ export class BundleOptimizer {
     const externalDeps = analysis.dependencies
       .filter(dep => dep.size > this.config.splitting.threshold && dep.usedExports.length > 0)
       .map(dep => dep.name);
-    
-    optimizedConfig.externals = [
-      ...(optimizedConfig.externals || []),
-      ...externalDeps,
-    ];
+
+    optimizedConfig.externals = [...(optimizedConfig.externals || []), ...externalDeps];
 
     return optimizedConfig;
   }
@@ -141,7 +135,7 @@ export class BundleOptimizer {
     if (vendorPattern) {
       strategies.push({
         name: 'vendor',
-        test: (module) => this.isVendorModule(module),
+        test: module => this.isVendorModule(module),
         priority: 10,
         minSize: 30000,
         maxSize: 500000,
@@ -154,7 +148,7 @@ export class BundleOptimizer {
     if (criticalPattern) {
       strategies.push({
         name: 'critical',
-        test: (module) => this.isCriticalModule(module, analysis),
+        test: module => this.isCriticalModule(module, analysis),
         priority: 20,
         minSize: 0,
         maxSize: 100000,
@@ -167,7 +161,7 @@ export class BundleOptimizer {
     if (lazyPattern) {
       strategies.push({
         name: 'lazy',
-        test: (module) => this.isLazyModule(module, analysis),
+        test: module => this.isLazyModule(module, analysis),
         priority: 5,
         minSize: 10000,
         maxSize: 200000,
@@ -178,7 +172,7 @@ export class BundleOptimizer {
     // Common chunk strategy
     strategies.push({
       name: 'common',
-      test: (module) => this.isCommonModule(module, analysis),
+      test: module => this.isCommonModule(module, analysis),
       priority: 1,
       minSize: 20000,
       maxSize: 300000,
@@ -283,13 +277,14 @@ export class BundleOptimizer {
     // This would integrate with a tree-shaking library
     // For now, estimate the reduction
     const reductionFactor = 0.8; // Assume 20% reduction from tree-shaking
-    
+
     return {
       ...module,
       size: Math.floor(module.size * reductionFactor),
-      exports: module.exports.filter(exp => 
-        // Keep exports that are likely to be used
-        !exp.startsWith('_') && exp !== 'unused'
+      exports: module.exports.filter(
+        exp =>
+          // Keep exports that are likely to be used
+          !exp.startsWith('_') && exp !== 'unused'
       ),
     };
   }
@@ -319,7 +314,7 @@ export class BundleOptimizer {
         if (result.code) {
           const originalSize = Buffer.byteLength(content, 'utf-8');
           const minifiedSize = Buffer.byteLength(result.code, 'utf-8');
-          
+
           return {
             ...module,
             size: minifiedSize,
@@ -406,10 +401,10 @@ export class BundleOptimizer {
    */
   calculateCompressionSavings(content: string): { gzip: number; brotli: number } {
     const originalSize = Buffer.byteLength(content, 'utf-8');
-    
+
     const gzipped = gzipSync(content);
     const brotlied = brotliCompressSync(content);
-    
+
     return {
       gzip: (originalSize - gzipped.length) / originalSize,
       brotli: (originalSize - brotlied.length) / originalSize,
@@ -419,11 +414,7 @@ export class BundleOptimizer {
   /**
    * Generate performance metrics
    */
-  generateMetrics(
-    chunks: BundleChunk[],
-    startTime: number,
-    endTime: number
-  ): PerformanceMetrics {
+  generateMetrics(chunks: BundleChunk[], startTime: number, endTime: number): PerformanceMetrics {
     const totalSize = chunks.reduce((sum, chunk) => sum + chunk.size, 0);
     const bundleTime = endTime - startTime;
 
@@ -431,10 +422,11 @@ export class BundleOptimizer {
     const compressionRatio = 0.7; // 30% compression
 
     // Estimate tree-shaking ratio
-    const treeshakingRatio = chunks.reduce((sum, chunk) => {
-      const treeshakableModules = chunk.modules.filter(m => m.treeshakable);
-      return sum + (treeshakableModules.length / chunk.modules.length);
-    }, 0) / chunks.length;
+    const treeshakingRatio =
+      chunks.reduce((sum, chunk) => {
+        const treeshakableModules = chunk.modules.filter(m => m.treeshakable);
+        return sum + treeshakableModules.length / chunk.modules.length;
+      }, 0) / chunks.length;
 
     return {
       bundleTime,
@@ -452,32 +444,32 @@ export class BundleOptimizer {
    * Helper methods for chunk strategies
    */
   private isVendorModule(module: ModuleInfo): boolean {
-    return module.path.includes('node_modules') || 
-           module.id.startsWith('@') ||
-           !module.path.startsWith('.');
-  }
-
-  private isCriticalModule(module: ModuleInfo, analysis: UsageAnalysis): boolean {
-    return analysis.files.some(file => 
-      file.path === module.path && file.criticalPath
+    return (
+      module.path.includes('node_modules') ||
+      module.id.startsWith('@') ||
+      !module.path.startsWith('.')
     );
   }
 
+  private isCriticalModule(module: ModuleInfo, analysis: UsageAnalysis): boolean {
+    return analysis.files.some(file => file.path === module.path && file.criticalPath);
+  }
+
   private isLazyModule(module: ModuleInfo, analysis: UsageAnalysis): boolean {
-    return analysis.files.some(file => 
-      file.path === module.path && 
-      file.accessFrequency < 0.5 &&
-      !file.criticalPath
+    return analysis.files.some(
+      file => file.path === module.path && file.accessFrequency < 0.5 && !file.criticalPath
     );
   }
 
   private isCommonModule(module: ModuleInfo, analysis: UsageAnalysis): boolean {
     // Module is common if it's imported by multiple files
     const usageCount = analysis.files.reduce((count, file) => {
-      return count + file.imports.filter(imp => 
-        imp.source === module.id || 
-        imp.source.endsWith(path.basename(module.path))
-      ).length;
+      return (
+        count +
+        file.imports.filter(
+          imp => imp.source === module.id || imp.source.endsWith(path.basename(module.path))
+        ).length
+      );
     }, 0);
 
     return usageCount > 2;
@@ -485,7 +477,9 @@ export class BundleOptimizer {
 
   private calculateContentHash(filePath: string): string {
     // Simple hash calculation - in production, use a proper hash function
-    return Buffer.from(filePath + Date.now()).toString('base64').slice(0, 16);
+    return Buffer.from(filePath + Date.now())
+      .toString('base64')
+      .slice(0, 16);
   }
 }
 
@@ -497,8 +491,9 @@ class MemoryBundleCache implements BundleCache {
 
   get(key: string): CacheEntry | null {
     const entry = this.cache.get(key);
-    
-    if (entry && Date.now() - entry.timestamp < 86400000) { // 24 hours
+
+    if (entry && Date.now() - entry.timestamp < 86400000) {
+      // 24 hours
       return entry;
     }
 
@@ -547,10 +542,10 @@ export class FileBundleCache implements BundleCache {
   get(key: string): CacheEntry | null {
     try {
       const filePath = path.join(this.cacheDir, `${this.sanitizeKey(key)}.json`);
-      
+
       if (fs.existsSync(filePath)) {
         const entry: CacheEntry = fs.readJsonSync(filePath);
-        
+
         // Check if entry is still valid (24 hours)
         if (Date.now() - entry.timestamp < 86400000) {
           return entry;

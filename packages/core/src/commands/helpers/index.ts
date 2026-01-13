@@ -79,11 +79,7 @@ export {
 } from './duration-parsing';
 
 // Class manipulation helpers
-export {
-  parseClasses,
-  isValidClassName,
-  normalizeClassName,
-} from './class-manipulation';
+export { parseClasses, isValidClassName, normalizeClassName } from './class-manipulation';
 
 // Attribute manipulation helpers
 export {
@@ -94,18 +90,11 @@ export {
 } from './attribute-manipulation';
 
 // Event helpers
-export {
-  createCustomEvent,
-  parseEventValue,
-  dispatchCustomEvent,
-} from './event-helpers';
+export { createCustomEvent, parseEventValue, dispatchCustomEvent } from './event-helpers';
 export type { EventOptions } from './event-helpers';
 
 // Condition helpers
-export {
-  evaluateCondition,
-  isTruthy,
-} from './condition-helpers';
+export { evaluateCondition, isTruthy } from './condition-helpers';
 
 // URL validation helpers
 export {
@@ -246,11 +235,7 @@ export {
   setupTemporalModifiers,
   setupTemporalModifiersForElements,
 } from './temporal-modifiers';
-export type {
-  ToggleType,
-  CleanupFn,
-  TemporalModifierOptions,
-} from './temporal-modifiers';
+export type { ToggleType, CleanupFn, TemporalModifierOptions } from './temporal-modifiers';
 
 // Loop execution helpers (Phase 5 - Size Optimization)
 export {
@@ -262,11 +247,7 @@ export {
   createUntilEventLoopConfig,
   createForeverLoopConfig,
 } from './loop-executor';
-export type {
-  LoopConfig,
-  LoopIterationContext,
-  LoopResult,
-} from './loop-executor';
+export type { LoopConfig, LoopIterationContext, LoopResult } from './loop-executor';
 
 // Error helpers (standardized command error creation)
 export {

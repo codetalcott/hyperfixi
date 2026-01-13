@@ -48,7 +48,7 @@ export class StripeClient {
   async initializeMeter(): Promise<string> {
     // Check if meter already exists
     const meters = await this.stripe.billing.meters.list({ limit: 10 });
-    const existingMeter = meters.data.find((m) => m.event_name === METER_EVENT_NAME);
+    const existingMeter = meters.data.find(m => m.event_name === METER_EVENT_NAME);
 
     if (existingMeter) {
       this.meterId = existingMeter.id;
@@ -148,7 +148,10 @@ export class StripeClient {
   /**
    * Create a billing portal session
    */
-  async createPortalSession(customerId: string, returnUrl: string): Promise<Stripe.BillingPortal.Session> {
+  async createPortalSession(
+    customerId: string,
+    returnUrl: string
+  ): Promise<Stripe.BillingPortal.Session> {
     return this.stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
@@ -178,7 +181,11 @@ export class StripeClient {
   /**
    * Construct webhook event from request
    */
-  constructWebhookEvent(payload: string | Buffer, signature: string, webhookSecret: string): Stripe.Event {
+  constructWebhookEvent(
+    payload: string | Buffer,
+    signature: string,
+    webhookSecret: string
+  ): Stripe.Event {
     return this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   }
 

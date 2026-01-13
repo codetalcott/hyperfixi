@@ -227,7 +227,7 @@ describe('Authentication Middleware', () => {
       await middleware(req, res, nextFn);
 
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(mockDb.updateApiKeyLastUsed).toHaveBeenCalledWith('key-123');
     });
