@@ -1143,15 +1143,17 @@ export class Parser {
     // Handle CSS property syntax: *display, *opacity, *visibility
     // Must check before binary operator error case
     if (this.check('*')) {
-      const nextToken = this.peek(1);
+      const savedPos = this.current;
+      this.advance(); // consume '*'
       // If * is followed by an identifier, it's a CSS property
-      if (nextToken && isIdentifierLike(nextToken)) {
-        this.advance(); // consume '*'
+      if (!this.isAtEnd() && isIdentifierLike(this.peek())) {
         const propertyName = this.advance().value; // consume property name
         // Return a selector node with *property syntax
         // This will be recognized by toggle command's detectExpressionType
         return this.createSelector('*' + propertyName);
       }
+      // Not a CSS property, restore position and fall through to error case
+      this.current = savedPos;
     }
 
     // Check for binary operators that cannot start an expression

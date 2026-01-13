@@ -404,6 +404,42 @@ describe('Hyperscript AST Parser', () => {
         value: 'button.primary:not(.disabled)',
       });
     });
+
+    it('should parse CSS property syntax *display in toggle command', () => {
+      expectAST('toggle *display', {
+        type: 'command',
+        name: 'toggle',
+        args: [{ type: 'selector', value: '*display' }],
+      });
+    });
+
+    it('should parse CSS property syntax *opacity in toggle command', () => {
+      expectAST('toggle *opacity', {
+        type: 'command',
+        name: 'toggle',
+        args: [{ type: 'selector', value: '*opacity' }],
+      });
+    });
+
+    it('should parse CSS property syntax *visibility in toggle command', () => {
+      expectAST('toggle *visibility', {
+        type: 'command',
+        name: 'toggle',
+        args: [{ type: 'selector', value: '*visibility' }],
+      });
+    });
+
+    it('should parse toggle *display on #element', () => {
+      expectAST('toggle *display on #target', {
+        type: 'command',
+        name: 'toggle',
+        args: [
+          { type: 'selector', value: '*display' },
+          { type: 'identifier', name: 'on' },
+          { type: 'selector', value: '#target' },
+        ],
+      });
+    });
   });
 
   describe('Event Handler Parsing', () => {
