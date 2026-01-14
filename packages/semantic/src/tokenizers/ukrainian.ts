@@ -22,7 +22,9 @@ import {
   isQuote,
   isDigit,
   isUrlStart,
+  type KeywordEntry,
 } from './base';
+import { ukrainianProfile } from '../generators/profiles/ukrainian';
 
 // =============================================================================
 // Ukrainian Character Classification
@@ -73,190 +75,81 @@ const PREPOSITIONS = new Set([
 ]);
 
 // =============================================================================
-// Ukrainian Keywords
+// Ukrainian Extras (keywords not in profile)
 // =============================================================================
 
-const UKRAINIAN_KEYWORDS: Map<string, string> = new Map([
-  // Commands - Class/Attribute operations
-  ['перемкнути', 'toggle'],
-  ['перемкни', 'toggle'], // imperative
-  ['додати', 'add'],
-  ['додай', 'add'], // imperative
-  ['видалити', 'remove'],
-  ['видали', 'remove'], // imperative
-  ['прибрати', 'remove'],
-  ['прибери', 'remove'], // imperative
-
-  // Commands - Content operations
-  ['покласти', 'put'],
-  ['поклади', 'put'], // imperative
-  ['помістити', 'put'],
-  ['помісти', 'put'], // imperative
-  ['вставити', 'put'],
-  ['встав', 'put'], // imperative
-  ['додати_в_кінець', 'append'],
-  ['взяти', 'take'],
-  ['візьми', 'take'], // imperative
-  ['створити', 'make'],
-  ['створи', 'make'], // imperative
-  ['клонувати', 'clone'],
-  ['клонуй', 'clone'], // imperative
-  ['поміняти', 'swap'],
-  ['поміняй', 'swap'], // imperative
-  ['трансформувати', 'morph'],
-  ['трансформуй', 'morph'], // imperative
-
-  // Commands - Variable operations
-  ['встановити', 'set'],
-  ['встанови', 'set'], // imperative
-  ['задати', 'set'],
-  ['задай', 'set'], // imperative
-  ['отримати', 'get'],
-  ['отримай', 'get'], // imperative
-  ['збільшити', 'increment'],
-  ['збільш', 'increment'], // imperative
-  ['зменшити', 'decrement'],
-  ['зменш', 'decrement'], // imperative
-  ['записати', 'log'],
-  ['запиши', 'log'], // imperative
-
-  // Commands - Visibility
-  ['показати', 'show'],
-  ['покажи', 'show'], // imperative
-  ['сховати', 'hide'],
-  ['сховай', 'hide'], // imperative
-  ['приховати', 'hide'],
-  ['приховай', 'hide'], // imperative
-  ['анімувати', 'transition'],
-  ['анімуй', 'transition'], // imperative
-
-  // Commands - Events
-  ['коли', 'on'],
-  ['при', 'on'],
-  ['викликати', 'trigger'],
-  ['виклич', 'trigger'], // imperative
-  ['надіслати', 'send'],
-  ['надішли', 'send'], // imperative
-
-  // Commands - DOM focus
-  ['сфокусувати', 'focus'],
-  ['сфокусуй', 'focus'], // imperative
-  ['фокус', 'focus'],
-  ['розфокусувати', 'blur'],
-  ['розфокусуй', 'blur'], // imperative
-
-  // Commands - Navigation
-  ['перейти', 'go'],
-  ['перейди', 'go'], // imperative
-  ['йти', 'go'],
-  ['йди', 'go'], // imperative
-
-  // Commands - Async
-  ['чекати', 'wait'],
-  ['чекай', 'wait'], // imperative
-  ['зачекай', 'wait'], // imperative
-  ['завантажити', 'fetch'],
-  ['завантаж', 'fetch'], // imperative
-  ['стабілізувати', 'settle'],
-
-  // Commands - Control flow
-  ['якщо', 'if'],
-  ['інакше', 'else'],
-  ['повторити', 'repeat'],
-  ['повтори', 'repeat'], // imperative
-  ['для', 'for'],
-  ['кожний', 'for'],
-  ['поки', 'while'],
-  ['продовжити', 'continue'],
-  ['продовжуй', 'continue'], // imperative
-  ['зупинити', 'halt'],
-  ['зупинись', 'halt'], // imperative
-  ['стоп', 'halt'],
-  ['кинути', 'throw'],
-  ['кинь', 'throw'], // imperative
-  ['повернути', 'return'],
-  ['поверни', 'return'], // imperative
-
-  // Commands - Advanced
-  ['js', 'js'],
-  ['асинхронно', 'async'],
-  ['async', 'async'],
-  ['сказати', 'tell'],
-  ['скажи', 'tell'], // imperative
-  ['за_замовчуванням', 'default'],
-  ['ініціалізувати', 'init'],
-  ['ініціалізуй', 'init'], // imperative
-  ['поведінка', 'behavior'],
-  ['встановити_пакет', 'install'],
-  ['виміряти', 'measure'],
-  ['виміряй', 'measure'], // imperative
-
-  // Control flow connectors
-  ['потім', 'then'],
-  ['далі', 'then'],
-  ['тоді', 'then'],
-  ['і', 'and'],
-  ['та', 'and'],
-  ['кінець', 'end'],
-
-  // Modifiers
-  ['до', 'before'],
-  ['перед', 'before'],
-  ['після', 'after'],
-  ['подія', 'event'],
-
-  // Events (also as keywords)
-  ['клік', 'click'],
-  ['натискання', 'click'],
-  ['зміна', 'change'],
-  ['надсилання', 'submit'],
-  ['клавіша', 'keydown'],
-  ['наведення', 'mouseover'],
-  ['відведення', 'mouseout'],
-  ['завантаження', 'load'],
-  ['прокрутка', 'scroll'],
-
-  // References
-  ['я', 'me'],
-  ['мій', 'my'],
-  ['моя', 'my'],
-  ['моє', 'my'],
-  ['мої', 'my'],
-  ['це', 'it'],
-  ['результат', 'result'],
-  ['ціль', 'target'],
+/**
+ * Extra keywords not covered by the profile:
+ * - Literals (true, false)
+ * - Positional words
+ * - Event names
+ * - Time units
+ * - Additional verb forms
+ */
+const UKRAINIAN_EXTRAS: KeywordEntry[] = [
+  // Values/Literals
+  { native: 'істина', normalized: 'true' },
+  { native: 'правда', normalized: 'true' },
+  { native: 'хибність', normalized: 'false' },
+  { native: 'null', normalized: 'null' },
+  { native: 'невизначено', normalized: 'undefined' },
 
   // Positional
-  ['перший', 'first'],
-  ['перша', 'first'],
-  ['перше', 'first'],
-  ['останній', 'last'],
-  ['остання', 'last'],
-  ['останнє', 'last'],
-  ['наступний', 'next'],
-  ['наступна', 'next'],
-  ['попередній', 'previous'],
-  ['попередня', 'previous'],
+  { native: 'перший', normalized: 'first' },
+  { native: 'перша', normalized: 'first' },
+  { native: 'перше', normalized: 'first' },
+  { native: 'останній', normalized: 'last' },
+  { native: 'остання', normalized: 'last' },
+  { native: 'останнє', normalized: 'last' },
+  { native: 'наступний', normalized: 'next' },
+  { native: 'наступна', normalized: 'next' },
+  { native: 'попередній', normalized: 'previous' },
+  { native: 'попередня', normalized: 'previous' },
+  { native: 'найближчий', normalized: 'closest' },
+  { native: 'батько', normalized: 'parent' },
 
-  // Boolean
-  ['істина', 'true'],
-  ['правда', 'true'],
-  ['хибність', 'false'],
+  // Events
+  { native: 'клік', normalized: 'click' },
+  { native: 'натискання', normalized: 'click' },
+  { native: 'click', normalized: 'click' },
+  { native: 'зміна', normalized: 'change' },
+  { native: 'надсилання', normalized: 'submit' },
+  { native: 'клавіша', normalized: 'keydown' },
+  { native: 'наведення', normalized: 'mouseover' },
+  { native: 'відведення', normalized: 'mouseout' },
+  { native: 'завантаження', normalized: 'load' },
+  { native: 'прокрутка', normalized: 'scroll' },
+  { native: 'введення', normalized: 'input' },
+
+  // References - possessive forms
+  { native: 'мій', normalized: 'my' },
+  { native: 'моя', normalized: 'my' },
+  { native: 'моє', normalized: 'my' },
+  { native: 'мої', normalized: 'my' },
 
   // Time units
-  ['секунда', 's'],
-  ['секунди', 's'],
-  ['секунд', 's'],
-  ['мілісекунда', 'ms'],
-  ['мілісекунди', 'ms'],
-  ['мілісекунд', 'ms'],
-  ['хвилина', 'm'],
-  ['хвилини', 'm'],
-  ['хвилин', 'm'],
-  ['година', 'h'],
-  ['години', 'h'],
-  ['годин', 'h'],
-]);
+  { native: 'секунда', normalized: 's' },
+  { native: 'секунди', normalized: 's' },
+  { native: 'секунд', normalized: 's' },
+  { native: 'мілісекунда', normalized: 'ms' },
+  { native: 'мілісекунди', normalized: 'ms' },
+  { native: 'мілісекунд', normalized: 'ms' },
+  { native: 'хвилина', normalized: 'm' },
+  { native: 'хвилини', normalized: 'm' },
+  { native: 'хвилин', normalized: 'm' },
+  { native: 'година', normalized: 'h' },
+  { native: 'години', normalized: 'h' },
+  { native: 'годин', normalized: 'h' },
+
+  // Logical/conditional
+  { native: 'або', normalized: 'or' },
+  { native: 'не', normalized: 'not' },
+  { native: 'є', normalized: 'is' },
+  { native: 'існує', normalized: 'exists' },
+  { native: 'порожній', normalized: 'empty' },
+  { native: 'порожня', normalized: 'empty' },
+  { native: 'порожнє', normalized: 'empty' },
+];
 
 // =============================================================================
 // Ukrainian Tokenizer
@@ -265,6 +158,12 @@ const UKRAINIAN_KEYWORDS: Map<string, string> = new Map([
 export class UkrainianTokenizer extends BaseTokenizer {
   readonly language = 'uk';
   readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    // Initialize keywords from profile + extras (single source of truth)
+    this.initializeKeywordsFromProfile(ukrainianProfile, UKRAINIAN_EXTRAS);
+  }
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
@@ -347,7 +246,10 @@ export class UkrainianTokenizer extends BaseTokenizer {
   classifyToken(token: string): TokenKind {
     const lower = token.toLowerCase();
     if (PREPOSITIONS.has(lower)) return 'particle';
-    if (UKRAINIAN_KEYWORDS.has(lower)) return 'keyword';
+    // Check profile keywords (case-insensitive)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) return 'keyword';
+    }
     if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
@@ -365,14 +267,17 @@ export class UkrainianTokenizer extends BaseTokenizer {
     if (!word) return null;
 
     const lower = word.toLowerCase();
-    const normalized = UKRAINIAN_KEYWORDS.get(lower);
 
-    if (normalized) {
-      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
-    }
-
+    // Check if it's a preposition first
     if (PREPOSITIONS.has(lower)) {
       return createToken(word, 'particle', createPosition(startPos, pos));
+    }
+
+    // Check if this is a known keyword (exact match via profile keywords)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) {
+        return createToken(word, 'keyword', createPosition(startPos, pos), entry.normalized);
+      }
     }
 
     return createToken(word, 'identifier', createPosition(startPos, pos));

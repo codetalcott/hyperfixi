@@ -21,7 +21,9 @@ import {
   isDigit,
   isAsciiIdentifierChar,
   isUrlStart,
+  type KeywordEntry,
 } from './base';
+import { hindiProfile } from '../generators/profiles/hindi';
 
 // =============================================================================
 // Hindi Character Classification
@@ -54,141 +56,43 @@ function isHindi(char: string): boolean {
 const SINGLE_POSTPOSITIONS = new Set(['को', 'में', 'पर', 'से', 'का', 'की', 'के', 'तक', 'ने']);
 
 // =============================================================================
-// Hindi Keywords
+// Hindi Extras (not in profile)
 // =============================================================================
 
 /**
- * Hindi command keywords mapped to their English equivalents.
+ * Extra keywords not covered by the Hindi profile.
+ * Profile provides: commands, references, possessives, roleMarkers
+ * Extras provide: values, positional, events, modifiers
  */
-const HINDI_KEYWORDS: Map<string, string> = new Map([
-  // Commands - Class/Attribute operations
-  ['टॉगल', 'toggle'],
-  ['बदलें', 'toggle'],
-  ['बदल', 'toggle'],
-  ['जोड़ें', 'add'],
-  ['जोड़', 'add'],
-  ['हटाएं', 'remove'],
-  ['हटा', 'remove'],
-  ['मिटाएं', 'remove'],
-
-  // Commands - Content operations
-  ['रखें', 'put'],
-  ['रख', 'put'],
-  ['डालें', 'put'],
-  ['डाल', 'put'],
-  ['लें', 'take'],
-  ['ले', 'take'],
-  ['बनाएं', 'make'],
-  ['बना', 'make'],
-  ['कॉपी', 'clone'],
-  ['प्रतिलिपि', 'clone'],
-
-  // Commands - Variable operations
-  ['सेट', 'set'],
-  ['निर्धारित', 'set'],
-  ['प्राप्त', 'get'],
-  ['पाएं', 'get'],
-  ['बढ़ाएं', 'increment'],
-  ['बढ़ा', 'increment'],
-  ['घटाएं', 'decrement'],
-  ['घटा', 'decrement'],
-  ['लॉग', 'log'],
-  ['दर्ज', 'log'],
-
-  // Commands - Visibility
-  ['दिखाएं', 'show'],
-  ['दिखा', 'show'],
-  ['छिपाएं', 'hide'],
-  ['छिपा', 'hide'],
-  ['संक्रमण', 'transition'],
-
-  // Commands - Events
-  ['पर', 'on'],
-  ['जब', 'when'],
-
-  // Commands - DOM focus
-  ['फोकस', 'focus'],
-  ['केंद्रित', 'focus'],
-  ['धुंधला', 'blur'],
-
-  // Commands - Navigation
-  ['जाएं', 'go'],
-  ['जा', 'go'],
-
-  // Commands - Async
-  ['प्रतीक्षा', 'wait'],
-  ['रुकें', 'wait'],
-  ['लाएं', 'fetch'],
-  ['स्थिर', 'settle'],
-
-  // Commands - Control flow
-  ['अगर', 'if'],
-  ['यदि', 'if'],
-  ['वरना', 'else'],
-  ['नहीं तो', 'else'],
-  ['दोहराएं', 'repeat'],
-  ['दोहरा', 'repeat'],
-  ['के लिए', 'for'],
-  ['जब तक', 'while'],
-  ['जारी', 'continue'],
-  ['रोकें', 'halt'],
-  ['रोक', 'halt'],
-  ['फेंकें', 'throw'],
-  ['फेंक', 'throw'],
-  ['कॉल', 'call'],
-  ['बुलाएं', 'call'],
-  ['लौटाएं', 'return'],
-  ['लौटा', 'return'],
-
-  // Commands - Advanced
-  ['जेएस', 'js'],
-  ['असिंक', 'async'],
-  ['बताएं', 'tell'],
-  ['बता', 'tell'],
-  ['डिफ़ॉल्ट', 'default'],
-  ['प्रारंभ', 'init'],
-  ['व्यवहार', 'behavior'],
-
-  // Control flow helpers
-  ['फिर', 'then'],
-  ['तब', 'then'],
-  ['समाप्त', 'end'],
-  ['अंत', 'end'],
-
-  // Modifiers
-  ['से पहले', 'before'],
-  ['के बाद', 'after'],
-  ['से', 'from'],
-  ['को', 'to'],
-  ['के साथ', 'with'],
-
+const HINDI_EXTRAS: KeywordEntry[] = [
   // Values
-  ['सच', 'true'],
-  ['सत्य', 'true'],
-  ['झूठ', 'false'],
-  ['असत्य', 'false'],
-  ['खाली', 'null'],
-  ['अपरिभाषित', 'undefined'],
-  ['मैं', 'me'],
-  ['यह', 'it'],
-  ['परिणाम', 'result'],
+  { native: 'सच', normalized: 'true' },
+  { native: 'सत्य', normalized: 'true' },
+  { native: 'झूठ', normalized: 'false' },
+  { native: 'असत्य', normalized: 'false' },
+  { native: 'खाली', normalized: 'null' },
+  { native: 'अपरिभाषित', normalized: 'undefined' },
 
   // Positional
-  ['पहला', 'first'],
-  ['अंतिम', 'last'],
-  ['अगला', 'next'],
-  ['पिछला', 'previous'],
-  ['निकटतम', 'closest'],
-  ['मूल', 'parent'],
+  { native: 'पहला', normalized: 'first' },
+  { native: 'अंतिम', normalized: 'last' },
+  { native: 'अगला', normalized: 'next' },
+  { native: 'पिछला', normalized: 'previous' },
+  { native: 'निकटतम', normalized: 'closest' },
+  { native: 'मूल', normalized: 'parent' },
 
   // Events
-  ['क्लिक', 'click'],
-  ['परिवर्तन', 'change'],
-  ['जमा', 'submit'],
-  ['इनपुट', 'input'],
-  ['लोड', 'load'],
-  ['स्क्रॉल', 'scroll'],
-]);
+  { native: 'क्लिक', normalized: 'click' },
+  { native: 'परिवर्तन', normalized: 'change' },
+  { native: 'जमा', normalized: 'submit' },
+  { native: 'इनपुट', normalized: 'input' },
+  { native: 'लोड', normalized: 'load' },
+  { native: 'स्क्रॉल', normalized: 'scroll' },
+
+  // Additional modifiers not in profile
+  { native: 'को', normalized: 'to' },
+  { native: 'के साथ', normalized: 'with' },
+];
 
 // =============================================================================
 // Hindi Tokenizer Class
@@ -197,6 +101,11 @@ const HINDI_KEYWORDS: Map<string, string> = new Map([
 export class HindiTokenizer extends BaseTokenizer {
   readonly language = 'hi';
   readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    this.initializeKeywordsFromProfile(hindiProfile, HINDI_EXTRAS);
+  }
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
@@ -305,9 +214,13 @@ export class HindiTokenizer extends BaseTokenizer {
         }
 
         // Check if it's a keyword
-        const normalized = HINDI_KEYWORDS.get(word);
-        if (normalized) {
-          tokens.push(createToken(word, 'keyword', createPosition(startPos, pos), normalized));
+        const keywordEntry = this.profileKeywords.find(
+          k => k.native === word || k.native.toLowerCase() === word.toLowerCase()
+        );
+        if (keywordEntry) {
+          tokens.push(
+            createToken(word, 'keyword', createPosition(startPos, pos), keywordEntry.normalized)
+          );
         } else if (SINGLE_POSTPOSITIONS.has(word)) {
           // It's a particle
           tokens.push(createToken(word, 'particle', createPosition(startPos, pos)));
@@ -328,10 +241,17 @@ export class HindiTokenizer extends BaseTokenizer {
         }
 
         // Check if it's a known keyword
-        const normalized = HINDI_KEYWORDS.get(word.toLowerCase());
-        const kind: TokenKind = normalized ? 'keyword' : 'identifier';
+        const keywordEntry = this.profileKeywords.find(
+          k => k.native.toLowerCase() === word.toLowerCase()
+        );
+        const kind: TokenKind = keywordEntry ? 'keyword' : 'identifier';
         tokens.push(
-          createToken(word, kind, createPosition(startPos, pos), normalized || word.toLowerCase())
+          createToken(
+            word,
+            kind,
+            createPosition(startPos, pos),
+            keywordEntry?.normalized || word.toLowerCase()
+          )
         );
         continue;
       }
@@ -346,7 +266,13 @@ export class HindiTokenizer extends BaseTokenizer {
   }
 
   classifyToken(value: string): TokenKind {
-    if (HINDI_KEYWORDS.has(value)) return 'keyword';
+    if (
+      this.profileKeywords.some(
+        k => k.native === value || k.native.toLowerCase() === value.toLowerCase()
+      )
+    ) {
+      return 'keyword';
+    }
     if (SINGLE_POSTPOSITIONS.has(value)) return 'particle';
     if (value.startsWith('.') || value.startsWith('#') || value.startsWith('[')) return 'selector';
     if (value.startsWith(':')) return 'identifier';

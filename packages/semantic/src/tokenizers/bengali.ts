@@ -21,7 +21,9 @@ import {
   isDigit,
   isAsciiIdentifierChar,
   isUrlStart,
+  type KeywordEntry,
 } from './base';
+import { bengaliProfile } from '../generators/profiles/bengali';
 
 // =============================================================================
 // Bengali Character Classification
@@ -46,136 +48,40 @@ function isBengali(char: string): boolean {
 const SINGLE_POSTPOSITIONS = new Set(['কে', 'তে', 'থেকে', 'র', 'এর', 'দিয়ে', 'জন্য', 'পর্যন্ত']);
 
 // =============================================================================
-// Bengali Keywords
+// Bengali Extras (not in profile)
 // =============================================================================
 
 /**
- * Bengali command keywords mapped to their English equivalents.
+ * Extra keywords not covered by the Bengali profile.
+ * Profile provides: commands, references, possessives, roleMarkers
+ * Extras provide: values, positional, events, modifiers
  */
-const BENGALI_KEYWORDS: Map<string, string> = new Map([
-  // Commands - Class/Attribute operations
-  ['টগল', 'toggle'],
-  ['পরিবর্তন', 'toggle'],
-  ['যোগ', 'add'],
-  ['যোগ করুন', 'add'],
-  ['সরান', 'remove'],
-  ['সরিয়ে ফেলুন', 'remove'],
-  ['মুছুন', 'remove'],
-
-  // Commands - Content operations
-  ['রাখুন', 'put'],
-  ['রাখ', 'put'],
-  ['নিন', 'take'],
-  ['নে', 'take'],
-  ['তৈরি করুন', 'make'],
-  ['বানান', 'make'],
-  ['কপি', 'clone'],
-  ['প্রতিলিপি', 'clone'],
-
-  // Commands - Variable operations
-  ['সেট', 'set'],
-  ['নির্ধারণ', 'set'],
-  ['পান', 'get'],
-  ['নিন', 'get'],
-  ['বৃদ্ধি', 'increment'],
-  ['বাড়ান', 'increment'],
-  ['হ্রাস', 'decrement'],
-  ['কমান', 'decrement'],
-  ['লগ', 'log'],
-  ['রেকর্ড', 'log'],
-
-  // Commands - Visibility
-  ['দেখান', 'show'],
-  ['দেখাও', 'show'],
-  ['লুকান', 'hide'],
-  ['লুকাও', 'hide'],
-  ['সংক্রমণ', 'transition'],
-
-  // Commands - Events
-  ['তে', 'on'],
-  ['এ', 'on'],
-  ['যখন', 'when'],
-
-  // Commands - DOM focus
-  ['ফোকাস', 'focus'],
-  ['মনোযোগ', 'focus'],
-  ['ঝাপসা', 'blur'],
-
-  // Commands - Navigation
-  ['যান', 'go'],
-  ['যাও', 'go'],
-
-  // Commands - Async
-  ['অপেক্ষা', 'wait'],
-  ['থামুন', 'wait'],
-  ['আনুন', 'fetch'],
-  ['স্থির', 'settle'],
-
-  // Commands - Control flow
-  ['যদি', 'if'],
-  ['নতুবা', 'else'],
-  ['না হলে', 'else'],
-  ['পুনরাবৃত্তি', 'repeat'],
-  ['বার বার', 'repeat'],
-  ['জন্য', 'for'],
-  ['যতক্ষণ', 'while'],
-  ['চালিয়ে যান', 'continue'],
-  ['থামুন', 'halt'],
-  ['থামাও', 'halt'],
-  ['নিক্ষেপ', 'throw'],
-  ['ছুঁড়ে দিন', 'throw'],
-  ['কল', 'call'],
-  ['ডাকুন', 'call'],
-  ['ফিরুন', 'return'],
-  ['ফেরত দিন', 'return'],
-
-  // Commands - Advanced
-  ['জেএস', 'js'],
-  ['অ্যাসিঙ্ক', 'async'],
-  ['বলুন', 'tell'],
-  ['বল', 'tell'],
-  ['ডিফল্ট', 'default'],
-  ['শুরু', 'init'],
-  ['আচরণ', 'behavior'],
-
-  // Control flow helpers
-  ['তারপর', 'then'],
-  ['তখন', 'then'],
-  ['শেষ', 'end'],
-  ['সমাপ্ত', 'end'],
-
-  // Modifiers
-  ['আগে', 'before'],
-  ['পরে', 'after'],
-  ['থেকে', 'from'],
-  ['কে', 'to'],
-  ['সাথে', 'with'],
-
+const BENGALI_EXTRAS: KeywordEntry[] = [
   // Values
-  ['সত্য', 'true'],
-  ['মিথ্যা', 'false'],
-  ['শূন্য', 'null'],
-  ['অনির্ধারিত', 'undefined'],
-  ['আমি', 'me'],
-  ['এটি', 'it'],
-  ['ফলাফল', 'result'],
+  { native: 'সত্য', normalized: 'true' },
+  { native: 'মিথ্যা', normalized: 'false' },
+  { native: 'শূন্য', normalized: 'null' },
+  { native: 'অনির্ধারিত', normalized: 'undefined' },
 
   // Positional
-  ['প্রথম', 'first'],
-  ['শেষ', 'last'],
-  ['পরবর্তী', 'next'],
-  ['আগের', 'previous'],
-  ['নিকটতম', 'closest'],
-  ['মূল', 'parent'],
+  { native: 'প্রথম', normalized: 'first' },
+  // Note: 'শেষ' means both 'end' and 'last' in Bengali - profile has it as 'end'
+  { native: 'পরবর্তী', normalized: 'next' },
+  { native: 'আগের', normalized: 'previous' },
+  { native: 'নিকটতম', normalized: 'closest' },
+  { native: 'মূল', normalized: 'parent' },
 
   // Events
-  ['ক্লিক', 'click'],
-  ['পরিবর্তন', 'change'],
-  ['জমা', 'submit'],
-  ['ইনপুট', 'input'],
-  ['লোড', 'load'],
-  ['স্ক্রোল', 'scroll'],
-]);
+  { native: 'ক্লিক', normalized: 'click' },
+  { native: 'জমা', normalized: 'submit' },
+  { native: 'ইনপুট', normalized: 'input' },
+  { native: 'লোড', normalized: 'load' },
+  { native: 'স্ক্রোল', normalized: 'scroll' },
+
+  // Additional modifiers not in profile
+  { native: 'কে', normalized: 'to' },
+  { native: 'সাথে', normalized: 'with' },
+];
 
 // =============================================================================
 // Bengali Tokenizer Class
@@ -184,6 +90,11 @@ const BENGALI_KEYWORDS: Map<string, string> = new Map([
 export class BengaliTokenizer extends BaseTokenizer {
   readonly language = 'bn';
   readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    this.initializeKeywordsFromProfile(bengaliProfile, BENGALI_EXTRAS);
+  }
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
@@ -282,9 +193,14 @@ export class BengaliTokenizer extends BaseTokenizer {
           pos++;
         }
 
-        const normalized = BENGALI_KEYWORDS.get(word);
-        if (normalized) {
-          tokens.push(createToken(word, 'keyword', createPosition(startPos, pos), normalized));
+        // Check if it's a keyword
+        const keywordEntry = this.profileKeywords.find(
+          k => k.native === word || k.native.toLowerCase() === word.toLowerCase()
+        );
+        if (keywordEntry) {
+          tokens.push(
+            createToken(word, 'keyword', createPosition(startPos, pos), keywordEntry.normalized)
+          );
         } else if (SINGLE_POSTPOSITIONS.has(word)) {
           tokens.push(createToken(word, 'particle', createPosition(startPos, pos)));
         } else {
@@ -302,10 +218,18 @@ export class BengaliTokenizer extends BaseTokenizer {
           pos++;
         }
 
-        const normalized = BENGALI_KEYWORDS.get(word.toLowerCase());
-        const kind: TokenKind = normalized ? 'keyword' : 'identifier';
+        // Check if it's a known keyword
+        const keywordEntry = this.profileKeywords.find(
+          k => k.native.toLowerCase() === word.toLowerCase()
+        );
+        const kind: TokenKind = keywordEntry ? 'keyword' : 'identifier';
         tokens.push(
-          createToken(word, kind, createPosition(startPos, pos), normalized || word.toLowerCase())
+          createToken(
+            word,
+            kind,
+            createPosition(startPos, pos),
+            keywordEntry?.normalized || word.toLowerCase()
+          )
         );
         continue;
       }
@@ -320,7 +244,13 @@ export class BengaliTokenizer extends BaseTokenizer {
   }
 
   classifyToken(value: string): TokenKind {
-    if (BENGALI_KEYWORDS.has(value)) return 'keyword';
+    if (
+      this.profileKeywords.some(
+        k => k.native === value || k.native.toLowerCase() === value.toLowerCase()
+      )
+    ) {
+      return 'keyword';
+    }
     if (SINGLE_POSTPOSITIONS.has(value)) return 'particle';
     if (value.startsWith('.') || value.startsWith('#') || value.startsWith('[')) return 'selector';
     if (value.startsWith(':')) return 'identifier';

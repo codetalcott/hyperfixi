@@ -20,8 +20,10 @@ import {
   isDigit,
   isUrlStart,
   type CreateTokenOptions,
+  type KeywordEntry,
 } from './base';
 import { ItalianMorphologicalNormalizer } from './morphology/italian-normalizer';
+import { italianProfile } from '../generators/profiles/italian';
 
 // =============================================================================
 // Italian Character Classification
@@ -98,179 +100,133 @@ const PREPOSITIONS = new Set([
 ]);
 
 // =============================================================================
-// Italian Keywords
+// Italian Extras (keywords not in profile)
 // =============================================================================
 
 /**
- * Italian command keywords mapped to their English equivalents.
+ * Extra keywords not covered by the profile:
+ * - Literals (true, false)
+ * - Positional words
+ * - Event names
+ * - Time units
+ * - Multi-word phrases
+ * - Imperative forms (profile uses infinitives)
  */
-const ITALIAN_KEYWORDS: Map<string, string> = new Map([
-  // Commands - Class/Attribute operations
-  ['commutare', 'toggle'],
-  ['alternare', 'toggle'],
-  ['toggle', 'toggle'],
-  ['cambiare', 'toggle'],
-  ['aggiungere', 'add'],
-  ['aggiungi', 'add'],
-  ['rimuovere', 'remove'],
-  ['rimuovi', 'remove'],
-  ['eliminare', 'remove'],
-  ['elimina', 'remove'],
-  ['togliere', 'remove'],
-  ['togli', 'remove'],
-  // Commands - Content operations
-  ['mettere', 'put'],
-  ['metti', 'put'],
-  ['inserire', 'put'],
-  ['inserisci', 'put'],
-  ['prendere', 'take'],
-  ['prendi', 'take'],
-  ['fare', 'make'],
-  ['fai', 'make'],
-  ['creare', 'make'],
-  ['crea', 'make'],
-  ['clonare', 'clone'],
-  ['clona', 'clone'],
-  ['copiare', 'clone'],
-  ['copia', 'clone'],
-  // Commands - Variable operations
-  ['impostare', 'set'],
-  ['imposta', 'set'],
-  ['ottenere', 'get'],
-  ['ottieni', 'get'],
-  ['incrementare', 'increment'],
-  ['incrementa', 'increment'],
-  ['aumentare', 'increment'],
-  ['aumenta', 'increment'],
-  ['decrementare', 'decrement'],
-  ['decrementa', 'decrement'],
-  ['diminuire', 'decrement'],
-  ['diminuisci', 'decrement'],
-  ['registrare', 'log'],
-  ['registra', 'log'],
-  // Commands - Visibility
-  ['mostrare', 'show'],
-  ['mostra', 'show'],
-  ['visualizzare', 'show'],
-  ['visualizza', 'show'],
-  ['nascondere', 'hide'],
-  ['nascondi', 'hide'],
-  ['transizione', 'transition'],
-  ['animare', 'transition'],
-  ['anima', 'transition'],
-  // Commands - Events
-  ['su', 'on'],
-  ['quando', 'on'],
-  ['al', 'on'],
-  ['scatenare', 'trigger'],
-  ['scatena', 'trigger'],
-  ['attivare', 'trigger'],
-  ['attiva', 'trigger'],
-  ['inviare', 'send'],
-  ['invia', 'send'],
-  // Commands - DOM focus
-  ['focalizzare', 'focus'],
-  ['focalizza', 'focus'],
-  ['sfuocare', 'blur'],
-  ['sfuoca', 'blur'],
-  // Commands - Navigation
-  ['andare', 'go'],
-  ['vai', 'go'],
-  ['navigare', 'go'],
-  ['naviga', 'go'],
-  // Commands - Async
-  ['aspettare', 'wait'],
-  ['aspetta', 'wait'],
-  ['attendere', 'wait'],
-  ['attendi', 'wait'],
-  ['recuperare', 'fetch'],
-  ['recupera', 'fetch'],
-  ['stabilizzare', 'settle'],
-  ['stabilizza', 'settle'],
-  // Commands - Control flow
-  ['se', 'if'],
-  ['altrimenti', 'else'],
-  ['ripetere', 'repeat'],
-  ['ripeti', 'repeat'],
-  ['per', 'for'],
-  ['mentre', 'while'],
-  ['continuare', 'continue'],
-  ['continua', 'continue'],
-  ['fermare', 'halt'],
-  ['ferma', 'halt'],
-  ['lanciare', 'throw'],
-  ['lancia', 'throw'],
-  ['chiamare', 'call'],
-  ['chiama', 'call'],
-  ['ritornare', 'return'],
-  ['ritorna', 'return'],
-  // Commands - Advanced
-  ['js', 'js'],
-  ['asincrono', 'async'],
-  ['dire', 'tell'],
-  ['di', 'tell'],
-  ['predefinito', 'default'],
-  ['inizializzare', 'init'],
-  ['inizializza', 'init'],
-  ['comportamento', 'behavior'],
-  ['installare', 'install'],
-  ['installa', 'install'],
-  ['misurare', 'measure'],
-  ['misura', 'measure'],
-  ['fino', 'until'],
-  ['evento', 'event'],
-  // Modifiers
-  ['dentro', 'into'],
-  ['prima', 'before'],
-  ['dopo', 'after'],
-  // Control flow helpers
-  ['allora', 'then'],
-  ['poi', 'then'],
-  ['fine', 'end'],
-  ['fino a', 'until'],
-  // Events (for event name recognition)
-  ['clic', 'click'],
-  ['click', 'click'],
-  ['fare clic', 'click'],
-  ['input', 'input'],
-  ['cambio', 'change'],
-  ['invio', 'submit'],
-  ['tasto giù', 'keydown'],
-  ['tasto su', 'keyup'],
-  ['mouse sopra', 'mouseover'],
-  ['mouse fuori', 'mouseout'],
-  ['fuoco', 'focus'],
-  ['sfuocatura', 'blur'],
-  ['caricamento', 'load'],
-  ['scorrimento', 'scroll'],
-  // References
-  ['io', 'me'],
-  ['me', 'me'],
-  ['esso', 'it'],
-  ['risultato', 'result'],
-  ['obiettivo', 'target'],
-  ['destinazione', 'target'],
+const ITALIAN_EXTRAS: KeywordEntry[] = [
+  // Values/Literals
+  { native: 'vero', normalized: 'true' },
+  { native: 'falso', normalized: 'false' },
+  { native: 'nullo', normalized: 'null' },
+  { native: 'indefinito', normalized: 'undefined' },
+
   // Positional
-  ['primo', 'first'],
-  ['prima', 'first'],
-  ['ultimo', 'last'],
-  ['ultima', 'last'],
-  ['prossimo', 'next'],
-  ['successivo', 'next'],
-  ['precedente', 'previous'],
-  // Boolean
-  ['vero', 'true'],
-  ['falso', 'false'],
+  { native: 'primo', normalized: 'first' },
+  { native: 'prima', normalized: 'first' },
+  { native: 'ultimo', normalized: 'last' },
+  { native: 'ultima', normalized: 'last' },
+  { native: 'prossimo', normalized: 'next' },
+  { native: 'successivo', normalized: 'next' },
+  { native: 'precedente', normalized: 'previous' },
+  { native: 'vicino', normalized: 'closest' },
+  { native: 'padre', normalized: 'parent' },
+
+  // Events
+  { native: 'clic', normalized: 'click' },
+  { native: 'click', normalized: 'click' },
+  { native: 'fare clic', normalized: 'click' },
+  { native: 'input', normalized: 'input' },
+  { native: 'cambio', normalized: 'change' },
+  { native: 'invio', normalized: 'submit' },
+  { native: 'tasto giù', normalized: 'keydown' },
+  { native: 'tasto su', normalized: 'keyup' },
+  { native: 'mouse sopra', normalized: 'mouseover' },
+  { native: 'mouse fuori', normalized: 'mouseout' },
+  { native: 'fuoco', normalized: 'focus' },
+  { native: 'sfuocatura', normalized: 'blur' },
+  { native: 'caricamento', normalized: 'load' },
+  { native: 'scorrimento', normalized: 'scroll' },
+
+  // References
+  { native: 'io', normalized: 'me' },
+  { native: 'me', normalized: 'me' },
+  { native: 'destinazione', normalized: 'target' },
+
   // Time units
-  ['secondo', 's'],
-  ['secondi', 's'],
-  ['millisecondo', 'ms'],
-  ['millisecondi', 'ms'],
-  ['minuto', 'm'],
-  ['minuti', 'm'],
-  ['ora', 'h'],
-  ['ore', 'h'],
-]);
+  { native: 'secondo', normalized: 's' },
+  { native: 'secondi', normalized: 's' },
+  { native: 'millisecondo', normalized: 'ms' },
+  { native: 'millisecondi', normalized: 'ms' },
+  { native: 'minuto', normalized: 'm' },
+  { native: 'minuti', normalized: 'm' },
+  { native: 'ora', normalized: 'h' },
+  { native: 'ore', normalized: 'h' },
+
+  // Multi-word phrases
+  { native: 'fino a', normalized: 'until' },
+  { native: 'prima di', normalized: 'before' },
+  { native: 'dopo di', normalized: 'after' },
+  { native: 'dentro di', normalized: 'into' },
+  { native: 'fuori di', normalized: 'out' },
+
+  // Override profile conflicts (aggiungere is both add and append in profile, prefer add)
+  { native: 'aggiungere', normalized: 'add' },
+
+  // Imperative forms (profile has infinitives)
+  { native: 'aggiungi', normalized: 'add' },
+  { native: 'rimuovi', normalized: 'remove' },
+  { native: 'elimina', normalized: 'remove' },
+  { native: 'togli', normalized: 'remove' },
+  { native: 'metti', normalized: 'put' },
+  { native: 'inserisci', normalized: 'put' },
+  { native: 'prendi', normalized: 'take' },
+  { native: 'fai', normalized: 'make' },
+  { native: 'crea', normalized: 'make' },
+  { native: 'clona', normalized: 'clone' },
+  { native: 'copia', normalized: 'clone' },
+  { native: 'imposta', normalized: 'set' },
+  { native: 'ottieni', normalized: 'get' },
+  { native: 'incrementa', normalized: 'increment' },
+  { native: 'aumenta', normalized: 'increment' },
+  { native: 'decrementa', normalized: 'decrement' },
+  { native: 'diminuisci', normalized: 'decrement' },
+  { native: 'registra', normalized: 'log' },
+  { native: 'mostra', normalized: 'show' },
+  { native: 'visualizza', normalized: 'show' },
+  { native: 'nascondi', normalized: 'hide' },
+  { native: 'anima', normalized: 'transition' },
+  { native: 'scatena', normalized: 'trigger' },
+  { native: 'attiva', normalized: 'trigger' },
+  { native: 'invia', normalized: 'send' },
+  { native: 'focalizza', normalized: 'focus' },
+  { native: 'sfuoca', normalized: 'blur' },
+  { native: 'vai', normalized: 'go' },
+  { native: 'naviga', normalized: 'go' },
+  { native: 'aspetta', normalized: 'wait' },
+  { native: 'attendi', normalized: 'wait' },
+  { native: 'recupera', normalized: 'fetch' },
+  { native: 'stabilizza', normalized: 'settle' },
+  { native: 'ripeti', normalized: 'repeat' },
+  { native: 'continua', normalized: 'continue' },
+  { native: 'ferma', normalized: 'halt' },
+  { native: 'lancia', normalized: 'throw' },
+  { native: 'chiama', normalized: 'call' },
+  { native: 'ritorna', normalized: 'return' },
+  { native: 'inizializza', normalized: 'init' },
+  { native: 'installa', normalized: 'install' },
+  { native: 'misura', normalized: 'measure' },
+
+  // Logical/conditional
+  { native: 'e', normalized: 'and' },
+  { native: 'o', normalized: 'or' },
+  { native: 'non', normalized: 'not' },
+  { native: 'è', normalized: 'is' },
+  { native: 'esiste', normalized: 'exists' },
+  { native: 'vuoto', normalized: 'empty' },
+
+  // Synonyms not in profile
+  { native: 'toggle', normalized: 'toggle' },
+  { native: 'di', normalized: 'tell' },
+];
 
 // =============================================================================
 // Italian Tokenizer Implementation
@@ -282,6 +238,12 @@ export class ItalianTokenizer extends BaseTokenizer {
 
   /** Morphological normalizer for Italian verb conjugations */
   private morphNormalizer = new ItalianMorphologicalNormalizer();
+
+  constructor() {
+    super();
+    // Initialize keywords from profile + extras (single source of truth)
+    this.initializeKeywordsFromProfile(italianProfile, ITALIAN_EXTRAS);
+  }
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
@@ -382,7 +344,10 @@ export class ItalianTokenizer extends BaseTokenizer {
     const lower = token.toLowerCase();
 
     if (PREPOSITIONS.has(lower)) return 'particle';
-    if (ITALIAN_KEYWORDS.has(lower)) return 'keyword';
+    // Check profile keywords (case-insensitive)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) return 'keyword';
+    }
     if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
@@ -393,24 +358,18 @@ export class ItalianTokenizer extends BaseTokenizer {
 
   /**
    * Try to match multi-word phrases that function as single units.
+   * Multi-word phrases are included in profileKeywords and sorted longest-first,
+   * so they'll be matched before their constituent words.
    */
   private tryMultiWordPhrase(input: string, pos: number): LanguageToken | null {
-    const multiWordPhrases = [
-      'fino a',
-      'prima di',
-      'dopo di',
-      'dentro di',
-      'fuori di',
-      'tasto giù',
-      'tasto su',
-      'mouse sopra',
-      'mouse fuori',
-      'fare clic',
-    ];
+    // Check against multi-word entries in profileKeywords (sorted longest-first)
+    for (const entry of this.profileKeywords) {
+      // Only check multi-word phrases (contain space)
+      if (!entry.native.includes(' ')) continue;
 
-    for (const phrase of multiWordPhrases) {
+      const phrase = entry.native;
       const candidate = input.slice(pos, pos + phrase.length).toLowerCase();
-      if (candidate === phrase) {
+      if (candidate === phrase.toLowerCase()) {
         // Check word boundary
         const nextPos = pos + phrase.length;
         if (
@@ -418,12 +377,11 @@ export class ItalianTokenizer extends BaseTokenizer {
           isWhitespace(input[nextPos]) ||
           !isItalianLetter(input[nextPos])
         ) {
-          const normalized = ITALIAN_KEYWORDS.get(phrase);
           return createToken(
             input.slice(pos, pos + phrase.length),
-            normalized ? 'keyword' : 'particle',
+            'keyword',
             createPosition(pos, nextPos),
-            normalized
+            entry.normalized
           );
         }
       }
@@ -451,16 +409,16 @@ export class ItalianTokenizer extends BaseTokenizer {
 
     const lower = word.toLowerCase();
 
-    // Check if this is a known keyword (exact match)
-    const normalized = ITALIAN_KEYWORDS.get(lower);
-
-    if (normalized) {
-      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
-    }
-
-    // Check if it's a preposition
+    // Check if it's a preposition first
     if (PREPOSITIONS.has(lower)) {
       return createToken(word, 'particle', createPosition(startPos, pos));
+    }
+
+    // Check if this is a known keyword (exact match via profile keywords)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) {
+        return createToken(word, 'keyword', createPosition(startPos, pos), entry.normalized);
+      }
     }
 
     // Try morphological normalization for conjugated/reflexive forms
@@ -468,16 +426,15 @@ export class ItalianTokenizer extends BaseTokenizer {
 
     if (morphResult.stem !== lower && morphResult.confidence >= 0.7) {
       // Check if the stem (infinitive) is a known keyword
-      const stemNormalized = ITALIAN_KEYWORDS.get(morphResult.stem);
-
-      if (stemNormalized) {
-        const tokenOptions: CreateTokenOptions = {
-          normalized: stemNormalized,
-          stem: morphResult.stem,
-          stemConfidence: morphResult.confidence,
-        };
-
-        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
+      for (const entry of this.profileKeywords) {
+        if (morphResult.stem === entry.native.toLowerCase()) {
+          const tokenOptions: CreateTokenOptions = {
+            normalized: entry.normalized,
+            stem: morphResult.stem,
+            stemConfidence: morphResult.confidence,
+          };
+          return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
+        }
       }
     }
 

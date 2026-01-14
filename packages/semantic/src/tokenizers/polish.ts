@@ -22,7 +22,9 @@ import {
   isQuote,
   isDigit,
   isUrlStart,
+  type KeywordEntry,
 } from './base';
+import { polishProfile } from '../generators/profiles/polish';
 
 // =============================================================================
 // Polish Character Classification
@@ -75,200 +77,90 @@ const PREPOSITIONS = new Set([
 ]);
 
 // =============================================================================
-// Polish Keywords
+// Polish Extras (keywords not in profile)
 // =============================================================================
 
-const POLISH_KEYWORDS: Map<string, string> = new Map([
-  // Commands - Class/Attribute operations (imperative form)
-  ['przełącz', 'toggle'],
-  ['przelacz', 'toggle'], // without diacritic
-  ['dodaj', 'add'],
-  ['usuń', 'remove'],
-  ['usun', 'remove'], // without diacritic
-  ['wyczyść', 'remove'], // clear/clean
-  ['wyczysc', 'remove'], // without diacritic
-
-  // Commands - Content operations
-  ['umieść', 'put'],
-  ['umiesc', 'put'], // without diacritic
-  ['wstaw', 'put'],
-  ['połóż', 'put'],
-  ['poloz', 'put'], // without diacritic
-  ['dołącz', 'append'],
-  ['dolacz', 'append'], // without diacritic
-  ['weź', 'take'],
-  ['wez', 'take'], // without diacritic
-  ['pobierz', 'get'], // "pobierz" means "get/fetch" - primary keyword for 'get' command
-  ['utwórz', 'make'],
-  ['utworz', 'make'], // without diacritic
-  ['stwórz', 'make'],
-  ['stworz', 'make'], // without diacritic
-  ['sklonuj', 'clone'],
-  ['kopiuj', 'clone'],
-  ['zamień', 'swap'],
-  ['zamien', 'swap'], // without diacritic
-  ['przekształć', 'morph'],
-  ['przeksztalc', 'morph'], // without diacritic
-
-  // Commands - Variable operations
-  ['ustaw', 'set'],
-  ['określ', 'set'],
-  ['okresl', 'set'], // without diacritic
-  ['zwiększ', 'increment'],
-  ['zwieksz', 'increment'], // without diacritic
-  ['zmniejsz', 'decrement'],
-  ['loguj', 'log'],
-  ['wypisz', 'log'],
-
-  // Commands - Visibility
-  ['pokaż', 'show'],
-  ['pokaz', 'show'], // without diacritic
-  ['wyświetl', 'show'],
-  ['wyswietl', 'show'], // without diacritic
-  ['ukryj', 'hide'],
-  ['schowaj', 'hide'],
-  ['animuj', 'transition'],
-  ['przejście', 'transition'],
-  ['przejscie', 'transition'], // without diacritic
-
-  // Commands - Events
-  ['gdy', 'on'],
-  ['kiedy', 'on'],
-  ['przy', 'on'],
-  ['wywołaj', 'trigger'],
-  ['wywolaj', 'trigger'], // without diacritic
-  ['wyzwól', 'trigger'],
-  ['wyzwol', 'trigger'], // without diacritic
-  ['wyślij', 'send'],
-  ['wyslij', 'send'], // without diacritic
-
-  // Commands - DOM focus
-  ['skup', 'focus'],
-  ['skupienie', 'focus'],
-  ['rozmyj', 'blur'],
-  ['odskup', 'blur'],
-
-  // Commands - Navigation
-  ['idź', 'go'],
-  ['idz', 'go'], // without diacritic
-  ['przejdź', 'go'],
-  ['przejdz', 'go'], // without diacritic
-  ['nawiguj', 'go'],
-
-  // Commands - Async
-  ['czekaj', 'wait'],
-  ['poczekaj', 'wait'],
-  ['załaduj', 'fetch'],
-  ['zaladuj', 'fetch'], // without diacritic
-  ['ustabilizuj', 'settle'],
-
-  // Commands - Control flow
-  ['jeśli', 'if'],
-  ['jesli', 'if'], // without diacritic
-  ['jeżeli', 'if'],
-  ['jezeli', 'if'], // without diacritic
-  ['inaczej', 'else'],
-  ['wpp', 'else'], // w przeciwnym przypadku
-  ['powtórz', 'repeat'],
-  ['powtorz', 'repeat'], // without diacritic
-  ['każdy', 'for'],
-  ['kazdy', 'for'], // without diacritic
-  ['dopóki', 'while'],
-  ['dopoki', 'while'], // without diacritic
-  ['podczas', 'while'],
-  ['kontynuuj', 'continue'],
-  ['dalej', 'continue'],
-  ['zatrzymaj', 'halt'],
-  ['przerwij', 'halt'],
-  ['stop', 'halt'],
-  ['rzuć', 'throw'],
-  ['rzuc', 'throw'], // without diacritic
-  ['zwróć', 'return'],
-  ['zwroc', 'return'], // without diacritic
-
-  // Commands - Advanced
-  ['js', 'js'],
-  ['asynchronicznie', 'async'],
-  ['async', 'async'],
-  ['powiedz', 'tell'],
-  ['domyślnie', 'default'],
-  ['domyslnie', 'default'], // without diacritic
-  ['inicjuj', 'init'],
-  ['zachowanie', 'behavior'],
-  ['zainstaluj', 'install'],
-  ['zmierz', 'measure'],
-
-  // Control flow connectors
-  ['wtedy', 'then'],
-  ['potem', 'then'],
-  ['następnie', 'then'],
-  ['nastepnie', 'then'], // without diacritic
-  ['i', 'and'],
-  ['oraz', 'and'],
-  ['koniec', 'end'],
-
-  // Modifiers
-  ['przed', 'before'],
-  ['aż', 'until'],
-  ['az', 'until'], // without diacritic
-  ['zdarzenie', 'event'],
-
-  // Events (also as keywords)
-  ['kliknięcie', 'click'],
-  ['klikniecie', 'click'],
-  ['klik', 'click'],
-  ['zmiana', 'change'],
-  ['wysłanie', 'submit'],
-  ['wyslanie', 'submit'],
-  ['naciśnięcie', 'keydown'],
-  ['nacisniecie', 'keydown'],
-  ['klawisz', 'keydown'],
-  ['najechanie', 'mouseover'],
-  ['zjechanie', 'mouseout'],
-  ['rozmycie', 'blur'],
-  ['załadowanie', 'load'],
-  ['zaladowanie', 'load'],
-  ['przewinięcie', 'scroll'],
-  ['przewiniecie', 'scroll'],
-
-  // References
-  ['ja', 'me'],
-  ['mój', 'my'],
-  ['moj', 'my'],
-  ['to', 'it'],
-  ['wynik', 'result'],
-  ['cel', 'target'],
+/**
+ * Extra keywords not covered by the profile:
+ * - Literals (true, false)
+ * - Positional words
+ * - Event names
+ * - Time units
+ * - Additional verb forms and synonyms
+ */
+const POLISH_EXTRAS: KeywordEntry[] = [
+  // Values/Literals
+  { native: 'prawda', normalized: 'true' },
+  { native: 'fałsz', normalized: 'false' },
+  { native: 'falsz', normalized: 'false' },
+  { native: 'null', normalized: 'null' },
+  { native: 'nieokreślony', normalized: 'undefined' },
+  { native: 'nieokreslony', normalized: 'undefined' },
 
   // Positional
-  ['pierwszy', 'first'],
-  ['pierwsza', 'first'],
-  ['pierwsze', 'first'],
-  ['ostatni', 'last'],
-  ['ostatnia', 'last'],
-  ['ostatnie', 'last'],
-  ['następny', 'next'],
-  ['nastepny', 'next'],
-  ['poprzedni', 'previous'],
+  { native: 'pierwszy', normalized: 'first' },
+  { native: 'pierwsza', normalized: 'first' },
+  { native: 'pierwsze', normalized: 'first' },
+  { native: 'ostatni', normalized: 'last' },
+  { native: 'ostatnia', normalized: 'last' },
+  { native: 'ostatnie', normalized: 'last' },
+  { native: 'następny', normalized: 'next' },
+  { native: 'nastepny', normalized: 'next' },
+  { native: 'poprzedni', normalized: 'previous' },
+  { native: 'najbliższy', normalized: 'closest' },
+  { native: 'najblizszy', normalized: 'closest' },
+  { native: 'rodzic', normalized: 'parent' },
 
-  // Boolean
-  ['prawda', 'true'],
-  ['fałsz', 'false'],
-  ['falsz', 'false'],
+  // Events
+  { native: 'kliknięcie', normalized: 'click' },
+  { native: 'klikniecie', normalized: 'click' },
+  { native: 'klik', normalized: 'click' },
+  { native: 'click', normalized: 'click' },
+  { native: 'zmiana', normalized: 'change' },
+  { native: 'wysłanie', normalized: 'submit' },
+  { native: 'wyslanie', normalized: 'submit' },
+  { native: 'naciśnięcie', normalized: 'keydown' },
+  { native: 'nacisniecie', normalized: 'keydown' },
+  { native: 'klawisz', normalized: 'keydown' },
+  { native: 'najechanie', normalized: 'mouseover' },
+  { native: 'zjechanie', normalized: 'mouseout' },
+  { native: 'rozmycie', normalized: 'blur' },
+  { native: 'załadowanie', normalized: 'load' },
+  { native: 'zaladowanie', normalized: 'load' },
+  { native: 'przewinięcie', normalized: 'scroll' },
+  { native: 'przewiniecie', normalized: 'scroll' },
+  { native: 'input', normalized: 'input' },
+
+  // References
+  { native: 'mój', normalized: 'my' },
+  { native: 'moj', normalized: 'my' },
 
   // Time units
-  ['sekunda', 's'],
-  ['sekundy', 's'],
-  ['sekund', 's'],
-  ['milisekunda', 'ms'],
-  ['milisekundy', 'ms'],
-  ['milisekund', 'ms'],
-  ['minuta', 'm'],
-  ['minuty', 'm'],
-  ['minut', 'm'],
-  ['godzina', 'h'],
-  ['godziny', 'h'],
-  ['godzin', 'h'],
-]);
+  { native: 'sekunda', normalized: 's' },
+  { native: 'sekundy', normalized: 's' },
+  { native: 'sekund', normalized: 's' },
+  { native: 'milisekunda', normalized: 'ms' },
+  { native: 'milisekundy', normalized: 'ms' },
+  { native: 'milisekund', normalized: 'ms' },
+  { native: 'minuta', normalized: 'm' },
+  { native: 'minuty', normalized: 'm' },
+  { native: 'minut', normalized: 'm' },
+  { native: 'godzina', normalized: 'h' },
+  { native: 'godziny', normalized: 'h' },
+  { native: 'godzin', normalized: 'h' },
+
+  // Additional verb forms not in profile (lay/put variants)
+  { native: 'połóż', normalized: 'put' },
+  { native: 'poloz', normalized: 'put' },
+
+  // Logical/conditional
+  { native: 'lub', normalized: 'or' },
+  { native: 'nie', normalized: 'not' },
+  { native: 'jest', normalized: 'is' },
+  { native: 'istnieje', normalized: 'exists' },
+  { native: 'pusty', normalized: 'empty' },
+  { native: 'puste', normalized: 'empty' },
+];
 
 // =============================================================================
 // Polish Tokenizer
@@ -277,6 +169,12 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
 export class PolishTokenizer extends BaseTokenizer {
   readonly language = 'pl';
   readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    // Initialize keywords from profile + extras (single source of truth)
+    this.initializeKeywordsFromProfile(polishProfile, POLISH_EXTRAS);
+  }
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
@@ -359,7 +257,10 @@ export class PolishTokenizer extends BaseTokenizer {
   classifyToken(token: string): TokenKind {
     const lower = token.toLowerCase();
     if (PREPOSITIONS.has(lower)) return 'particle';
-    if (POLISH_KEYWORDS.has(lower)) return 'keyword';
+    // Check profile keywords (case-insensitive)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) return 'keyword';
+    }
     if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
@@ -377,14 +278,17 @@ export class PolishTokenizer extends BaseTokenizer {
     if (!word) return null;
 
     const lower = word.toLowerCase();
-    const normalized = POLISH_KEYWORDS.get(lower);
 
-    if (normalized) {
-      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
-    }
-
+    // Check if it's a preposition first
     if (PREPOSITIONS.has(lower)) {
       return createToken(word, 'particle', createPosition(startPos, pos));
+    }
+
+    // Check if this is a known keyword (exact match via profile keywords)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) {
+        return createToken(word, 'keyword', createPosition(startPos, pos), entry.normalized);
+      }
     }
 
     return createToken(word, 'identifier', createPosition(startPos, pos));

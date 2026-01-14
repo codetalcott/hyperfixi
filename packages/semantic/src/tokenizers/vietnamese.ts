@@ -30,7 +30,9 @@ import {
   isQuote,
   isDigit,
   isUrlStart,
+  type KeywordEntry,
 } from './base';
+import { vietnameseProfile } from '../generators/profiles/vietnamese';
 
 // =============================================================================
 // Vietnamese Character Classification
@@ -92,225 +94,78 @@ const PREPOSITIONS = new Set([
 ]);
 
 // =============================================================================
-// Vietnamese Keywords
+// Vietnamese Extras (keywords not in profile)
 // =============================================================================
 
 /**
- * Vietnamese command keywords mapped to their English equivalents.
+ * Extra keywords not covered by the profile:
+ * - Literals (true, false)
+ * - Positional words
+ * - Event names
+ * - Time units
+ * - Multi-word phrases not in profile
+ * - Additional synonyms
  */
-const VIETNAMESE_KEYWORDS: Map<string, string> = new Map([
-  // Commands - Class/Attribute operations
-  ['chuyển đổi', 'toggle'],
-  ['chuyển', 'toggle'],
-  ['bật tắt', 'toggle'],
-  ['thêm', 'add'],
-  ['bổ sung', 'add'],
-  ['xóa', 'remove'],
-  ['gỡ bỏ', 'remove'],
-  ['loại bỏ', 'remove'],
-  ['bỏ', 'remove'],
-
-  // Commands - Content operations
-  ['đặt', 'put'],
-  ['để', 'put'],
-  ['đưa', 'put'],
-  ['thêm vào cuối', 'append'],
-  ['nối', 'append'],
-  ['thêm vào đầu', 'prepend'],
-  ['lấy', 'take'],
-  ['tạo', 'make'],
-  ['tạo ra', 'make'],
-  ['sao chép', 'clone'],
-  ['nhân bản', 'clone'],
-
-  // Commands - Variable operations
-  ['thiết lập', 'set'],
-  ['gán', 'set'],
-  ['đặt giá trị', 'set'],
-  ['lấy giá trị', 'get'],
-  ['nhận', 'get'],
-  ['tăng', 'increment'],
-  ['tăng lên', 'increment'],
-  ['giảm', 'decrement'],
-  ['giảm đi', 'decrement'],
-  ['ghi nhật ký', 'log'],
-  ['in ra', 'log'],
-
-  // Commands - Visibility
-  ['hiển thị', 'show'],
-  ['hiện', 'show'],
-  ['ẩn', 'hide'],
-  ['che', 'hide'],
-  ['giấu', 'hide'],
-  ['chuyển tiếp', 'transition'],
-
-  // Commands - Events
-  ['khi', 'on'],
-  ['trên', 'on'],
-  ['lúc', 'on'],
-  ['kích hoạt', 'trigger'],
-  ['gửi', 'send'],
-
-  // Commands - DOM focus
-  ['tập trung', 'focus'],
-  ['mất tập trung', 'blur'],
-
-  // Commands - Navigation
-  ['đi', 'go'],
-  ['đi đến', 'go'],
-  ['chuyển tới', 'go'],
-
-  // Commands - Async
-  ['chờ', 'wait'],
-  ['đợi', 'wait'],
-  ['tải', 'fetch'],
-  ['ổn định', 'settle'],
-
-  // Commands - Control flow
-  ['nếu', 'if'],
-  ['không thì', 'else'],
-  ['ngược lại', 'else'],
-  ['lặp lại', 'repeat'],
-  ['lặp', 'repeat'],
-  ['với mỗi', 'for'],
-  ['trong khi', 'while'],
-  ['tiếp tục', 'continue'],
-  ['dừng', 'halt'],
-  ['dừng lại', 'halt'],
-  ['ném', 'throw'],
-  ['gọi', 'call'],
-  ['trả về', 'return'],
-
-  // Commands - Advanced
-  ['js', 'js'],
-  ['javascript', 'js'],
-  ['bất đồng bộ', 'async'],
-  ['nói với', 'tell'],
-  ['mặc định', 'default'],
-  ['khởi tạo', 'init'],
-  ['hành vi', 'behavior'],
-  ['cài đặt', 'install'],
-  ['đo lường', 'measure'],
-
-  // Modifiers
-  ['vào', 'into'],
-  ['vào trong', 'into'],
-  ['trước', 'before'],
-  ['trước khi', 'before'],
-  ['sau', 'after'],
-  ['sau khi', 'after'],
-  ['rồi', 'then'],
-  ['sau đó', 'then'],
-  ['tiếp theo', 'then'],
-  ['kết thúc', 'end'],
-  ['cho đến khi', 'until'],
-
-  // Events
-  ['nhấp', 'click'],
-  ['nhấp chuột', 'click'],
-  ['nhấp đúp', 'dblclick'],
-  ['nhập', 'input'],
-  ['thay đổi', 'change'],
-  ['gửi biểu mẫu', 'submit'],
-  ['phím xuống', 'keydown'],
-  ['phím lên', 'keyup'],
-  ['chuột vào', 'mouseover'],
-  ['chuột ra', 'mouseout'],
-  ['tải trang', 'load'],
-  ['cuộn', 'scroll'],
-
-  // References
-  ['tôi', 'me'],
-  ['của tôi', 'my'],
-  ['nó', 'it'],
-  ['của nó', 'its'],
-  ['kết quả', 'result'],
-  ['sự kiện', 'event'],
-  ['mục tiêu', 'target'],
+const VIETNAMESE_EXTRAS: KeywordEntry[] = [
+  // Values/Literals
+  { native: 'đúng', normalized: 'true' },
+  { native: 'sai', normalized: 'false' },
+  { native: 'null', normalized: 'null' },
+  { native: 'không xác định', normalized: 'undefined' },
 
   // Positional
-  ['đầu tiên', 'first'],
-  ['cuối cùng', 'last'],
-  ['tiếp theo', 'next'],
-  ['trước đó', 'previous'],
+  { native: 'đầu tiên', normalized: 'first' },
+  { native: 'cuối cùng', normalized: 'last' },
+  { native: 'tiếp theo', normalized: 'next' },
+  { native: 'trước đó', normalized: 'previous' },
+  { native: 'gần nhất', normalized: 'closest' },
+  { native: 'cha', normalized: 'parent' },
 
-  // Logical
-  ['và', 'and'],
-  ['hoặc', 'or'],
-  ['không', 'not'],
-  ['là', 'is'],
+  // Events
+  { native: 'nhấp', normalized: 'click' },
+  { native: 'nhấp chuột', normalized: 'click' },
+  { native: 'click', normalized: 'click' },
+  { native: 'nhấp đúp', normalized: 'dblclick' },
+  { native: 'nhập', normalized: 'input' },
+  { native: 'thay đổi', normalized: 'change' },
+  { native: 'gửi biểu mẫu', normalized: 'submit' },
+  { native: 'phím xuống', normalized: 'keydown' },
+  { native: 'phím lên', normalized: 'keyup' },
+  { native: 'chuột vào', normalized: 'mouseover' },
+  { native: 'chuột ra', normalized: 'mouseout' },
+  { native: 'tải trang', normalized: 'load' },
+  { native: 'cuộn', normalized: 'scroll' },
 
-  // Boolean
-  ['đúng', 'true'],
-  ['sai', 'false'],
+  // References - possessive forms
+  { native: 'của tôi', normalized: 'my' },
+  { native: 'của nó', normalized: 'its' },
 
   // Time units
-  ['giây', 's'],
-  ['mili giây', 'ms'],
-  ['phút', 'm'],
-  ['giờ', 'h'],
-]);
+  { native: 'giây', normalized: 's' },
+  { native: 'mili giây', normalized: 'ms' },
+  { native: 'phút', normalized: 'm' },
+  { native: 'giờ', normalized: 'h' },
 
-/**
- * Multi-word phrases to match (sorted by length for greedy matching)
- */
-const MULTI_WORD_PHRASES = [
-  'chuyển đổi',
-  'bật tắt',
-  'gỡ bỏ',
-  'loại bỏ',
-  'thêm vào cuối',
-  'thêm vào đầu',
-  'tạo ra',
-  'sao chép',
-  'nhân bản',
-  'thiết lập',
-  'đặt giá trị',
-  'lấy giá trị',
-  'tăng lên',
-  'giảm đi',
-  'ghi nhật ký',
-  'in ra',
-  'hiển thị',
-  'chuyển tiếp',
-  'kích hoạt',
-  'mất tập trung',
-  'đi đến',
-  'chuyển tới',
-  'không thì',
-  'ngược lại',
-  'lặp lại',
-  'với mỗi',
-  'trong khi',
-  'dừng lại',
-  'trả về',
-  'bất đồng bộ',
-  'nói với',
-  'mặc định',
-  'khởi tạo',
-  'cài đặt',
-  'đo lường',
-  'vào trong',
-  'trước khi',
-  'sau khi',
-  'sau đó',
-  'tiếp theo',
-  'cho đến khi',
-  'nhấp chuột',
-  'nhấp đúp',
-  'gửi biểu mẫu',
-  'phím xuống',
-  'phím lên',
-  'chuột vào',
-  'chuột ra',
-  'tải trang',
-  'của tôi',
-  'của nó',
-  'đầu tiên',
-  'cuối cùng',
-  'trước đó',
-  'mili giây',
-].sort((a, b) => b.length - a.length);
+  // Additional multi-word phrases not in profile
+  { native: 'thêm vào cuối', normalized: 'append' },
+  { native: 'nhân bản', normalized: 'clone' },
+  { native: 'tạo ra', normalized: 'make' },
+  { native: 'đặt giá trị', normalized: 'set' },
+  { native: 'ghi nhật ký', normalized: 'log' },
+  { native: 'chuyển tới', normalized: 'go' },
+  { native: 'ngược lại', normalized: 'else' },
+  { native: 'lặp', normalized: 'repeat' },
+
+  // Logical/conditional
+  { native: 'hoặc', normalized: 'or' },
+  { native: 'không', normalized: 'not' },
+  { native: 'là', normalized: 'is' },
+  { native: 'tồn tại', normalized: 'exists' },
+  { native: 'rỗng', normalized: 'empty' },
+
+  // English synonyms
+  { native: 'javascript', normalized: 'js' },
+];
 
 // =============================================================================
 // Vietnamese Tokenizer Implementation
@@ -319,6 +174,12 @@ const MULTI_WORD_PHRASES = [
 export class VietnameseTokenizer extends BaseTokenizer {
   readonly language = 'vi';
   readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    // Initialize keywords from profile + extras (single source of truth)
+    this.initializeKeywordsFromProfile(vietnameseProfile, VIETNAMESE_EXTRAS);
+  }
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
@@ -413,8 +274,12 @@ export class VietnameseTokenizer extends BaseTokenizer {
   }
 
   classifyToken(token: string): TokenKind {
-    if (PREPOSITIONS.has(token.toLowerCase())) return 'particle';
-    if (VIETNAMESE_KEYWORDS.has(token.toLowerCase())) return 'keyword';
+    const lower = token.toLowerCase();
+    if (PREPOSITIONS.has(lower)) return 'particle';
+    // Check profile keywords (case-insensitive)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) return 'keyword';
+    }
     if (
       token.startsWith('#') ||
       token.startsWith('.') ||
@@ -430,22 +295,26 @@ export class VietnameseTokenizer extends BaseTokenizer {
 
   /**
    * Try to match a multi-word phrase.
+   * Multi-word phrases are included in profileKeywords and sorted longest-first.
    */
   private tryMultiWordPhrase(input: string, pos: number): LanguageToken | null {
-    const remaining = input.slice(pos).toLowerCase();
+    // Check against multi-word entries in profileKeywords (sorted longest-first)
+    for (const entry of this.profileKeywords) {
+      // Only check multi-word phrases (contain space)
+      if (!entry.native.includes(' ')) continue;
 
-    for (const phrase of MULTI_WORD_PHRASES) {
-      if (remaining.startsWith(phrase)) {
+      const phrase = entry.native;
+      const candidate = input.slice(pos, pos + phrase.length).toLowerCase();
+      if (candidate === phrase.toLowerCase()) {
         // Make sure we're at a word boundary after the phrase
         const nextChar = input[pos + phrase.length];
         if (nextChar && isVietnameseLetter(nextChar)) continue;
 
-        const normalized = VIETNAMESE_KEYWORDS.get(phrase);
         return createToken(
           input.slice(pos, pos + phrase.length),
-          normalized ? 'keyword' : 'identifier',
+          'keyword',
           createPosition(pos, pos + phrase.length),
-          normalized
+          entry.normalized
         );
       }
     }
@@ -468,15 +337,16 @@ export class VietnameseTokenizer extends BaseTokenizer {
 
     const lower = word.toLowerCase();
 
-    // Check if it's a keyword
-    const normalized = VIETNAMESE_KEYWORDS.get(lower);
-    if (normalized) {
-      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
-    }
-
-    // Check if it's a preposition
+    // Check if it's a preposition first
     if (PREPOSITIONS.has(lower)) {
       return createToken(word, 'particle', createPosition(startPos, pos));
+    }
+
+    // Check if this is a known keyword (exact match via profile keywords)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) {
+        return createToken(word, 'keyword', createPosition(startPos, pos), entry.normalized);
+      }
     }
 
     // Return as identifier

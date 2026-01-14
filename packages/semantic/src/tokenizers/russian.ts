@@ -22,7 +22,9 @@ import {
   isQuote,
   isDigit,
   isUrlStart,
+  type KeywordEntry,
 } from './base';
+import { russianProfile } from '../generators/profiles/russian';
 
 // =============================================================================
 // Russian Character Classification
@@ -76,188 +78,81 @@ const PREPOSITIONS = new Set([
 ]);
 
 // =============================================================================
-// Russian Keywords
+// Russian Extras (keywords not in profile)
 // =============================================================================
 
-const RUSSIAN_KEYWORDS: Map<string, string> = new Map([
-  // Commands - Class/Attribute operations
-  ['переключить', 'toggle'],
-  ['переключи', 'toggle'], // imperative
-  ['добавить', 'add'],
-  ['добавь', 'add'], // imperative
-  ['удалить', 'remove'],
-  ['удали', 'remove'], // imperative
-  ['убрать', 'remove'],
-  ['убери', 'remove'], // imperative
-
-  // Commands - Content operations
-  ['положить', 'put'],
-  ['положи', 'put'], // imperative
-  ['поместить', 'put'],
-  ['помести', 'put'], // imperative
-  ['вставить', 'put'],
-  ['вставь', 'put'], // imperative
-  ['добавить_в_конец', 'append'],
-  ['взять', 'take'],
-  ['возьми', 'take'], // imperative
-  ['создать', 'make'],
-  ['создай', 'make'], // imperative
-  ['клонировать', 'clone'],
-  ['клонируй', 'clone'], // imperative
-  ['поменять', 'swap'],
-  ['поменяй', 'swap'], // imperative
-  ['трансформировать', 'morph'],
-  ['трансформируй', 'morph'], // imperative
-
-  // Commands - Variable operations
-  ['установить', 'set'],
-  ['установи', 'set'], // imperative
-  ['задать', 'set'],
-  ['задай', 'set'], // imperative
-  ['получить', 'get'],
-  ['получи', 'get'], // imperative
-  ['увеличить', 'increment'],
-  ['увеличь', 'increment'], // imperative
-  ['уменьшить', 'decrement'],
-  ['уменьши', 'decrement'], // imperative
-  ['записать', 'log'],
-  ['запиши', 'log'], // imperative
-
-  // Commands - Visibility
-  ['показать', 'show'],
-  ['покажи', 'show'], // imperative
-  ['скрыть', 'hide'],
-  ['скрой', 'hide'], // imperative
-  ['спрятать', 'hide'],
-  ['спрячь', 'hide'], // imperative
-  ['анимировать', 'transition'],
-  ['анимируй', 'transition'], // imperative
-
-  // Commands - Events
-  ['когда', 'on'],
-  ['при', 'on'],
-  ['вызвать', 'trigger'],
-  ['вызови', 'trigger'], // imperative
-  ['отправить', 'send'],
-  ['отправь', 'send'], // imperative
-
-  // Commands - DOM focus
-  ['сфокусировать', 'focus'],
-  ['сфокусируй', 'focus'], // imperative
-  ['фокус', 'focus'],
-  ['размыть', 'blur'],
-  ['размой', 'blur'], // imperative
-
-  // Commands - Navigation
-  ['перейти', 'go'],
-  ['перейди', 'go'], // imperative
-  ['идти', 'go'],
-  ['иди', 'go'], // imperative
-
-  // Commands - Async
-  ['ждать', 'wait'],
-  ['жди', 'wait'], // imperative
-  ['подожди', 'wait'], // imperative
-  ['загрузить', 'fetch'],
-  ['загрузи', 'fetch'], // imperative
-  ['стабилизировать', 'settle'],
-
-  // Commands - Control flow
-  ['если', 'if'],
-  ['иначе', 'else'],
-  ['повторить', 'repeat'],
-  ['повтори', 'repeat'], // imperative
-  ['для', 'for'],
-  ['каждый', 'for'],
-  ['пока', 'while'],
-  ['продолжить', 'continue'],
-  ['продолжи', 'continue'], // imperative
-  ['остановить', 'halt'],
-  ['остановись', 'halt'], // imperative
-  ['стоп', 'halt'],
-  ['бросить', 'throw'],
-  ['брось', 'throw'], // imperative
-  ['вернуть', 'return'],
-  ['верни', 'return'], // imperative
-
-  // Commands - Advanced
-  ['js', 'js'],
-  ['асинхронно', 'async'],
-  ['async', 'async'],
-  ['сказать', 'tell'],
-  ['скажи', 'tell'], // imperative
-  ['по_умолчанию', 'default'],
-  ['инициализировать', 'init'],
-  ['инициализируй', 'init'], // imperative
-  ['поведение', 'behavior'],
-  ['установить_пакет', 'install'],
-  ['измерить', 'measure'],
-  ['измерь', 'measure'], // imperative
-
-  // Control flow connectors
-  ['затем', 'then'],
-  ['потом', 'then'],
-  ['тогда', 'then'],
-  ['и', 'and'],
-  ['конец', 'end'],
-
-  // Modifiers
-  ['до', 'before'],
-  ['после', 'after'],
-  ['событие', 'event'],
-
-  // Events (also as keywords)
-  ['клик', 'click'],
-  ['нажатие', 'click'],
-  ['изменение', 'change'],
-  ['отправка', 'submit'],
-  ['клавиша', 'keydown'],
-  ['наведение', 'mouseover'],
-  ['уход', 'mouseout'],
-  ['загрузка', 'load'],
-  ['прокрутка', 'scroll'],
-
-  // References
-  ['я', 'me'],
-  ['мой', 'my'],
-  ['моя', 'my'],
-  ['моё', 'my'],
-  ['мои', 'my'],
-  ['это', 'it'],
-  ['результат', 'result'],
-  ['цель', 'target'],
+/**
+ * Extra keywords not covered by the profile:
+ * - Literals (true, false)
+ * - Positional words
+ * - Event names
+ * - Time units
+ * - Additional verb forms and synonyms
+ */
+const RUSSIAN_EXTRAS: KeywordEntry[] = [
+  // Values/Literals
+  { native: 'истина', normalized: 'true' },
+  { native: 'правда', normalized: 'true' },
+  { native: 'ложь', normalized: 'false' },
+  { native: 'null', normalized: 'null' },
+  { native: 'неопределено', normalized: 'undefined' },
 
   // Positional
-  ['первый', 'first'],
-  ['первая', 'first'],
-  ['первое', 'first'],
-  ['последний', 'last'],
-  ['последняя', 'last'],
-  ['последнее', 'last'],
-  ['следующий', 'next'],
-  ['следующая', 'next'],
-  ['предыдущий', 'previous'],
-  ['предыдущая', 'previous'],
+  { native: 'первый', normalized: 'first' },
+  { native: 'первая', normalized: 'first' },
+  { native: 'первое', normalized: 'first' },
+  { native: 'последний', normalized: 'last' },
+  { native: 'последняя', normalized: 'last' },
+  { native: 'последнее', normalized: 'last' },
+  { native: 'следующий', normalized: 'next' },
+  { native: 'следующая', normalized: 'next' },
+  { native: 'предыдущий', normalized: 'previous' },
+  { native: 'предыдущая', normalized: 'previous' },
+  { native: 'ближайший', normalized: 'closest' },
+  { native: 'родитель', normalized: 'parent' },
 
-  // Boolean
-  ['истина', 'true'],
-  ['правда', 'true'],
-  ['ложь', 'false'],
+  // Events
+  { native: 'клик', normalized: 'click' },
+  { native: 'нажатие', normalized: 'click' },
+  { native: 'click', normalized: 'click' },
+  { native: 'изменение', normalized: 'change' },
+  { native: 'отправка', normalized: 'submit' },
+  { native: 'клавиша', normalized: 'keydown' },
+  { native: 'наведение', normalized: 'mouseover' },
+  { native: 'уход', normalized: 'mouseout' },
+  { native: 'загрузка', normalized: 'load' },
+  { native: 'прокрутка', normalized: 'scroll' },
+  { native: 'ввод', normalized: 'input' },
+
+  // References - possessive forms
+  { native: 'мой', normalized: 'my' },
+  { native: 'моя', normalized: 'my' },
+  { native: 'моё', normalized: 'my' },
+  { native: 'мои', normalized: 'my' },
 
   // Time units
-  ['секунда', 's'],
-  ['секунды', 's'],
-  ['секунд', 's'],
-  ['миллисекунда', 'ms'],
-  ['миллисекунды', 'ms'],
-  ['миллисекунд', 'ms'],
-  ['минута', 'm'],
-  ['минуты', 'm'],
-  ['минут', 'm'],
-  ['час', 'h'],
-  ['часа', 'h'],
-  ['часов', 'h'],
-]);
+  { native: 'секунда', normalized: 's' },
+  { native: 'секунды', normalized: 's' },
+  { native: 'секунд', normalized: 's' },
+  { native: 'миллисекунда', normalized: 'ms' },
+  { native: 'миллисекунды', normalized: 'ms' },
+  { native: 'миллисекунд', normalized: 'ms' },
+  { native: 'минута', normalized: 'm' },
+  { native: 'минуты', normalized: 'm' },
+  { native: 'минут', normalized: 'm' },
+  { native: 'час', normalized: 'h' },
+  { native: 'часа', normalized: 'h' },
+  { native: 'часов', normalized: 'h' },
+
+  // Logical/conditional
+  { native: 'или', normalized: 'or' },
+  { native: 'не', normalized: 'not' },
+  { native: 'есть', normalized: 'is' },
+  { native: 'существует', normalized: 'exists' },
+  { native: 'пустой', normalized: 'empty' },
+  { native: 'пустая', normalized: 'empty' },
+  { native: 'пустое', normalized: 'empty' },
+];
 
 // =============================================================================
 // Russian Tokenizer
@@ -266,6 +161,12 @@ const RUSSIAN_KEYWORDS: Map<string, string> = new Map([
 export class RussianTokenizer extends BaseTokenizer {
   readonly language = 'ru';
   readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    // Initialize keywords from profile + extras (single source of truth)
+    this.initializeKeywordsFromProfile(russianProfile, RUSSIAN_EXTRAS);
+  }
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
@@ -348,7 +249,10 @@ export class RussianTokenizer extends BaseTokenizer {
   classifyToken(token: string): TokenKind {
     const lower = token.toLowerCase();
     if (PREPOSITIONS.has(lower)) return 'particle';
-    if (RUSSIAN_KEYWORDS.has(lower)) return 'keyword';
+    // Check profile keywords (case-insensitive)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) return 'keyword';
+    }
     if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
@@ -366,14 +270,17 @@ export class RussianTokenizer extends BaseTokenizer {
     if (!word) return null;
 
     const lower = word.toLowerCase();
-    const normalized = RUSSIAN_KEYWORDS.get(lower);
 
-    if (normalized) {
-      return createToken(word, 'keyword', createPosition(startPos, pos), normalized);
-    }
-
+    // Check if it's a preposition first
     if (PREPOSITIONS.has(lower)) {
       return createToken(word, 'particle', createPosition(startPos, pos));
+    }
+
+    // Check if this is a known keyword (exact match via profile keywords)
+    for (const entry of this.profileKeywords) {
+      if (lower === entry.native.toLowerCase()) {
+        return createToken(word, 'keyword', createPosition(startPos, pos), entry.normalized);
+      }
     }
 
     return createToken(word, 'identifier', createPosition(startPos, pos));

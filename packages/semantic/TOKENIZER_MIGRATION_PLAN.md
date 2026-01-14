@@ -4,7 +4,7 @@
 
 This plan documents the validated approach for migrating tokenizers from hardcoded keyword maps to the profile-derived pattern.
 
-**Completed**: All 13 tokenizers migrated (2118 semantic + 3493 core + 401 i18n tests passing)
+**Completed**: All 23 tokenizers migrated (2118 semantic tests passing)
 
 ---
 
@@ -117,6 +117,18 @@ export class JapaneseTokenizer extends BaseTokenizer {
 | `quechua.ts`    | ✅ Migrated | Suffix handling preserved |
 | `swahili.ts`    | ✅ Migrated |                           |
 
+### Priority 4: Additional Languages ✅ COMPLETE
+
+| Tokenizer       | Status      | Notes                               |
+| --------------- | ----------- | ----------------------------------- |
+| `italian.ts`    | ✅ Migrated | Morphological normalization kept    |
+| `polish.ts`     | ✅ Migrated | Slavic language                     |
+| `russian.ts`    | ✅ Migrated | Cyrillic script, multi-word phrases |
+| `ukrainian.ts`  | ✅ Migrated | Cyrillic script                     |
+| `vietnamese.ts` | ✅ Migrated | Tonal language, multi-word phrases  |
+| `hindi.ts`      | ✅ Migrated | Devanagari script                   |
+| `bengali.ts`    | ✅ Migrated | Bengali script                      |
+
 ---
 
 ## Migration Steps Per Tokenizer
@@ -197,13 +209,13 @@ Only the keyword map is replaced; all script-specific logic stays.
 
 For each migrated tokenizer:
 
-- [ ] All existing tests pass
-- [ ] Keyword recognition works for primary keywords
-- [ ] Keyword recognition works for alternatives
-- [ ] Morphological normalization still works (if applicable)
-- [ ] Particle handling works (if applicable)
-- [ ] Mixed script handling works (if applicable)
-- [ ] Time unit parsing works (if applicable)
+- [x] All existing tests pass (2118 tests)
+- [x] Keyword recognition works for primary keywords
+- [x] Keyword recognition works for alternatives
+- [x] Morphological normalization still works (if applicable)
+- [x] Particle handling works (if applicable)
+- [x] Mixed script handling works (if applicable)
+- [x] Time unit parsing works (if applicable)
 
 ---
 
@@ -211,9 +223,9 @@ For each migrated tokenizer:
 
 1. **Single source of truth**: All keywords defined in language profiles
 2. **Automatic propagation**: Profile changes flow to tokenizers
-3. **Reduced maintenance**: ~50 extras per tokenizer vs ~150 hardcoded
-4. **Consistency**: All tokenizers follow same pattern
-5. **Code reduction**: Estimated 1,500-2,000 lines saved
+3. **Reduced maintenance**: ~20-50 extras per tokenizer vs ~100-150 hardcoded
+4. **Consistency**: All 23 tokenizers follow same pattern
+5. **Code reduction**: Estimated 2,500+ lines saved across all tokenizers
 
 ---
 
