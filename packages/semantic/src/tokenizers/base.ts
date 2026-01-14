@@ -937,4 +937,28 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
 
     return null;
   }
+
+  /**
+   * Try to match a multi-character particle from a list.
+   *
+   * Used by languages like Japanese, Korean, and Chinese that have
+   * multi-character particles (e.g., Japanese から, まで, より).
+   *
+   * @param input - Input string
+   * @param pos - Current position
+   * @param particles - Array of multi-character particles to match
+   * @returns Token if matched, null otherwise
+   */
+  protected tryMultiCharParticle(
+    input: string,
+    pos: number,
+    particles: readonly string[]
+  ): LanguageToken | null {
+    for (const particle of particles) {
+      if (input.slice(pos, pos + particle.length) === particle) {
+        return createToken(particle, 'particle', createPosition(pos, pos + particle.length));
+      }
+    }
+    return null;
+  }
 }

@@ -260,7 +260,7 @@ export class ChineseTokenizer extends BaseTokenizer {
       }
 
       // Try multi-character particle (before single-character)
-      const multiParticle = this.tryMultiCharParticle(input, pos);
+      const multiParticle = this.tryMultiCharParticle(input, pos, MULTI_CHAR_PARTICLES);
       if (multiParticle) {
         tokens.push(multiParticle);
         pos = multiParticle.position.end;
@@ -315,18 +315,6 @@ export class ChineseTokenizer extends BaseTokenizer {
     if (/^\d/.test(token)) return 'literal';
 
     return 'identifier';
-  }
-
-  /**
-   * Try to match a multi-character particle.
-   */
-  private tryMultiCharParticle(input: string, pos: number): LanguageToken | null {
-    for (const particle of MULTI_CHAR_PARTICLES) {
-      if (input.slice(pos, pos + particle.length) === particle) {
-        return createToken(particle, 'particle', createPosition(pos, pos + particle.length));
-      }
-    }
-    return null;
   }
 
   /**
