@@ -825,7 +825,7 @@ export class PatternMatcher {
    *
    * Confidence is reduced for:
    * - Stem matches (morphological normalization has inherent uncertainty)
-   * - Missing optional roles
+   * - Missing optional roles (but less penalty if role has a default value)
    */
   private calculateConfidence(
     pattern: LanguagePattern,
@@ -833,6 +833,11 @@ export class PatternMatcher {
   ): number {
     let score = 0;
     let maxScore = 0;
+
+    // Helper to check if a role has a default value in extraction rules
+    const hasDefault = (role: SemanticRole): boolean => {
+      return pattern.extraction?.[role]?.default !== undefined;
+    };
 
     // Score based on captured roles
     for (const token of pattern.template.tokens) {
@@ -842,13 +847,22 @@ export class PatternMatcher {
           score += 1;
         }
       } else if (token.type === 'group') {
-        // Group tokens contribute to score (optional groups get 80% weight)
+        // Group tokens are optional - weight depends on whether they have defaults
         for (const subToken of token.tokens) {
           if (subToken.type === 'role') {
-            maxScore += 0.8; // Optional groups: 80% weight (was 0.5)
+            const roleHasDefault = hasDefault(subToken.role);
+            const weight = 0.8; // Optional roles: 80% weight
+            maxScore += weight;
+
             if (captured.has(subToken.role)) {
-              score += 0.8;
+              // Role was explicitly provided by user
+              score += weight;
+            } else if (roleHasDefault) {
+              // Role has a default - give 60% partial credit since command is semantically complete
+              // This prevents penalizing common patterns like "toggle .active" (default: me)
+              score += weight * 0.6;
             }
+            // If no default and not captured, score += 0 (true penalty for missing info)
           }
         }
       }

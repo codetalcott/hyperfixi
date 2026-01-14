@@ -98,7 +98,7 @@ export const polishProfile: LanguageProfile = {
     },
     take: {
       primary: 'weź',
-      alternatives: ['wez', 'pobierz'],
+      alternatives: ['wez'], // removed 'pobierz' - it's the primary keyword for 'get'
       normalized: 'take',
       form: 'imperative',
     },

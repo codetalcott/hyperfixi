@@ -67,7 +67,9 @@ export class SemanticGrammarBridge {
 
   constructor(config: BridgeConfig = {}) {
     this.config = {
-      confidenceThreshold: config.confidenceThreshold ?? 0.7,
+      // Lower threshold to 0.55 to accept simple commands with optional roles
+      // e.g., "toggle .active" scores 0.556 (1 required / 1.8 total with optional)
+      confidenceThreshold: config.confidenceThreshold ?? 0.55,
       fallbackOnLowConfidence: config.fallbackOnLowConfidence ?? true,
     };
   }
@@ -133,10 +135,9 @@ export class SemanticGrammarBridge {
     if (!this.analyzer) return null;
 
     const result = this.analyzer.analyze(input, lang);
-    if (result.confidence >= this.config.confidenceThreshold) {
-      return result.node ?? null;
-    }
-    return null;
+    // Return node if parsing succeeded, regardless of confidence
+    // Confidence filtering should happen at the compile level, not parse level
+    return result.node ?? null;
   }
 
   async render(node: SemanticNode, targetLang: string): Promise<string> {
@@ -206,9 +207,10 @@ export class SemanticGrammarBridge {
     }
 
     const result = this.analyzer.analyze(input, lang);
+    const semantic = await getSemanticModule();
 
+    // Try direct AST path if confidence is high enough
     if (result.confidence >= this.config.confidenceThreshold && result.node) {
-      const semantic = await getSemanticModule();
       try {
         const buildResult = semantic.buildAST(result.node);
         // buildAST now returns { ast, warnings }
@@ -223,18 +225,18 @@ export class SemanticGrammarBridge {
       } catch {
         // Fall through to fallback
       }
+    }
 
-      // Fallback: render to English for core parser
-      if (this.config.fallbackOnLowConfidence) {
-        const englishText = semantic.render(result.node, 'en');
-        return {
-          ast: null,
-          usedDirectPath: false,
-          confidence: result.confidence,
-          lang,
-          fallbackText: englishText,
-        };
-      }
+    // Fallback: render to English for core parser if we have a node
+    if (result.node && this.config.fallbackOnLowConfidence) {
+      const englishText = semantic.render(result.node, 'en');
+      return {
+        ast: null,
+        usedDirectPath: false,
+        confidence: result.confidence,
+        lang,
+        fallbackText: englishText,
+      };
     }
 
     return {

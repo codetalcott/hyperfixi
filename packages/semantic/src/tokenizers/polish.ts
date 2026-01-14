@@ -98,7 +98,7 @@ const POLISH_KEYWORDS: Map<string, string> = new Map([
   ['dolacz', 'append'], // without diacritic
   ['weź', 'take'],
   ['wez', 'take'], // without diacritic
-  ['pobierz', 'take'],
+  ['pobierz', 'get'], // "pobierz" means "get/fetch" - primary keyword for 'get' command
   ['utwórz', 'make'],
   ['utworz', 'make'], // without diacritic
   ['stwórz', 'make'],

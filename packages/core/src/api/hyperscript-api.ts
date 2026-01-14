@@ -461,7 +461,9 @@ async function compileMultilingual(
 
     // Direct path failed, fall back to traditional
     debug.runtime('COMPILE_MULTILINGUAL: falling back to traditional path');
-    const result = compile(code, options);
+    // Use the bridge's English fallback text if available, otherwise original code
+    const fallbackCode = astResult.fallbackText || code;
+    const result = compile(fallbackCode, options);
     return {
       ...result,
       usedDirectPath: false,
