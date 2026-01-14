@@ -23,7 +23,6 @@ import {
   isDigit,
   isAsciiIdentifierChar,
   isUrlStart,
-  type CreateTokenOptions,
   type KeywordEntry,
 } from './base';
 import { JapaneseMorphologicalNormalizer } from './morphology/japanese-normalizer';
@@ -156,13 +155,12 @@ export class JapaneseTokenizer extends BaseTokenizer {
   readonly language = 'ja';
   readonly direction = 'ltr' as const;
 
-  /** Morphological normalizer for Japanese verb conjugations */
-  private morphNormalizer = new JapaneseMorphologicalNormalizer();
-
   constructor() {
     super();
     // Initialize keywords from profile + extras (single source of truth)
     this.initializeKeywordsFromProfile(japaneseProfile, JAPANESE_EXTRAS);
+    // Set morphological normalizer for verb conjugations
+    this.normalizer = new JapaneseMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {
@@ -346,21 +344,8 @@ export class JapaneseTokenizer extends BaseTokenizer {
     }
 
     // Try morphological normalization for conjugated forms
-    const morphResult = this.morphNormalizer.normalize(word);
-
-    if (morphResult.stem !== word && morphResult.confidence >= 0.7) {
-      // O(1) Map lookup for stem
-      const stemEntry = this.lookupKeyword(morphResult.stem);
-      if (stemEntry) {
-        // Found via morphological normalization
-        const tokenOptions: CreateTokenOptions = {
-          normalized: stemEntry.normalized,
-          stem: morphResult.stem,
-          stemConfidence: morphResult.confidence,
-        };
-        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
-      }
-    }
+    const morphToken = this.tryMorphKeywordMatch(word, startPos, pos);
+    if (morphToken) return morphToken;
 
     // Not a keyword, return as identifier
     return createToken(word, 'identifier', createPosition(startPos, pos));

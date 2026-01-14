@@ -23,7 +23,6 @@ import {
   isDigit,
   isAsciiIdentifierChar,
   isUrlStart,
-  type CreateTokenOptions,
   type KeywordEntry,
 } from './base';
 import { KoreanMorphologicalNormalizer } from './morphology/korean-normalizer';
@@ -213,13 +212,12 @@ export class KoreanTokenizer extends BaseTokenizer {
   readonly language = 'ko';
   readonly direction = 'ltr' as const;
 
-  /** Morphological normalizer for Korean verb conjugations */
-  private morphNormalizer = new KoreanMorphologicalNormalizer();
-
   constructor() {
     super();
     // Initialize keywords from profile + extras (single source of truth)
     this.initializeKeywordsFromProfile(koreanProfile, KOREAN_EXTRAS);
+    // Set morphological normalizer for verb conjugations
+    this.normalizer = new KoreanMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {
@@ -381,24 +379,8 @@ export class KoreanTokenizer extends BaseTokenizer {
       }
 
       // Try morphological normalization for conjugated forms
-      const morphResult = this.morphNormalizer.normalize(candidate);
-      if (morphResult.stem !== candidate && morphResult.confidence >= 0.7) {
-        // O(1) Map lookup for stem
-        const stemEntry = this.lookupKeyword(morphResult.stem);
-        if (stemEntry) {
-          const tokenOptions: CreateTokenOptions = {
-            normalized: stemEntry.normalized,
-            stem: morphResult.stem,
-            stemConfidence: morphResult.confidence,
-          };
-          return createToken(
-            candidate,
-            'keyword',
-            createPosition(startPos, startPos + len),
-            tokenOptions
-          );
-        }
-      }
+      const morphToken = this.tryMorphKeywordMatch(candidate, startPos, startPos + len);
+      if (morphToken) return morphToken;
     }
 
     // No keyword match - extract as regular word using particle boundaries
@@ -458,20 +440,8 @@ export class KoreanTokenizer extends BaseTokenizer {
     }
 
     // Try morphological normalization for conjugated forms
-    const morphResult = this.morphNormalizer.normalize(word);
-
-    if (morphResult.stem !== word && morphResult.confidence >= 0.7) {
-      // O(1) Map lookup for stem
-      const stemEntry = this.lookupKeyword(morphResult.stem);
-      if (stemEntry) {
-        const tokenOptions: CreateTokenOptions = {
-          normalized: stemEntry.normalized,
-          stem: morphResult.stem,
-          stemConfidence: morphResult.confidence,
-        };
-        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
-      }
-    }
+    const morphToken = this.tryMorphKeywordMatch(word, startPos, pos);
+    if (morphToken) return morphToken;
 
     // Not a keyword, return as identifier
     return createToken(word, 'identifier', createPosition(startPos, pos));

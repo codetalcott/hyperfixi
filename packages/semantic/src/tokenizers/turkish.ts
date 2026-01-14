@@ -22,7 +22,6 @@ import {
   isQuote,
   isDigit,
   isUrlStart,
-  type CreateTokenOptions,
   type KeywordEntry,
 } from './base';
 import { TurkishMorphologicalNormalizer } from './morphology/turkish-normalizer';
@@ -236,12 +235,11 @@ export class TurkishTokenizer extends BaseTokenizer {
   readonly language = 'tr';
   readonly direction = 'ltr' as const;
 
-  /** Morphological normalizer for Turkish verb conjugations */
-  private morphNormalizer = new TurkishMorphologicalNormalizer();
-
   constructor() {
     super();
     this.initializeKeywordsFromProfile(turkishProfile, TURKISH_EXTRAS);
+    // Set morphological normalizer for verb conjugations
+    this.normalizer = new TurkishMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {
@@ -362,20 +360,8 @@ export class TurkishTokenizer extends BaseTokenizer {
     }
 
     // Try morphological normalization for conjugated forms
-    const morphResult = this.morphNormalizer.normalize(lowerWord);
-
-    if (morphResult.stem !== lowerWord && morphResult.confidence >= 0.7) {
-      // O(1) Map lookup for stem
-      const stemEntry = this.lookupKeyword(morphResult.stem);
-      if (stemEntry) {
-        const tokenOptions: CreateTokenOptions = {
-          normalized: stemEntry.normalized,
-          stem: morphResult.stem,
-          stemConfidence: morphResult.confidence,
-        };
-        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
-      }
-    }
+    const morphToken = this.tryMorphKeywordMatch(lowerWord, startPos, pos);
+    if (morphToken) return morphToken;
 
     // Not a keyword or recognized form, return as identifier
     return createToken(word, 'identifier', createPosition(startPos, pos));

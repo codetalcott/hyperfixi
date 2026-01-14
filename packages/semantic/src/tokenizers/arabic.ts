@@ -22,7 +22,6 @@ import {
   isDigit,
   isAsciiIdentifierChar,
   isUrlStart,
-  type CreateTokenOptions,
   type KeywordEntry,
 } from './base';
 import { ArabicMorphologicalNormalizer } from './morphology/arabic-normalizer';
@@ -207,12 +206,11 @@ export class ArabicTokenizer extends BaseTokenizer {
   readonly language = 'ar';
   readonly direction = 'rtl' as const;
 
-  /** Morphological normalizer for Arabic prefix/suffix stripping */
-  private morphNormalizer = new ArabicMorphologicalNormalizer();
-
   constructor() {
     super();
     this.initializeKeywordsFromProfile(arabicProfile, ARABIC_EXTRAS);
+    // Set morphological normalizer for prefix/suffix stripping
+    this.normalizer = new ArabicMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {
@@ -431,20 +429,8 @@ export class ArabicTokenizer extends BaseTokenizer {
     }
 
     // Try morphological normalization for conjugated/inflected forms
-    const morphResult = this.morphNormalizer.normalize(word);
-
-    if (morphResult.stem !== word && morphResult.confidence >= 0.7) {
-      // O(1) Map lookup for stem
-      const stemEntry = this.lookupKeyword(morphResult.stem);
-      if (stemEntry) {
-        const tokenOptions: CreateTokenOptions = {
-          normalized: stemEntry.normalized,
-          stem: morphResult.stem,
-          stemConfidence: morphResult.confidence,
-        };
-        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
-      }
-    }
+    const morphToken = this.tryMorphKeywordMatch(word, startPos, pos);
+    if (morphToken) return morphToken;
 
     // Not a keyword or recognized form, return as identifier
     return createToken(word, 'identifier', createPosition(startPos, pos));

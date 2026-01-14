@@ -20,7 +20,6 @@ import {
   isQuote,
   isDigit,
   isUrlStart,
-  type CreateTokenOptions,
   type KeywordEntry,
 } from './base';
 import { SpanishMorphologicalNormalizer } from './morphology/spanish-normalizer';
@@ -170,13 +169,12 @@ export class SpanishTokenizer extends BaseTokenizer {
   readonly language = 'es';
   readonly direction = 'ltr' as const;
 
-  /** Morphological normalizer for Spanish verb conjugations */
-  private morphNormalizer = new SpanishMorphologicalNormalizer();
-
   constructor() {
     super();
     // Initialize keywords from profile + extras (single source of truth)
     this.initializeKeywordsFromProfile(spanishProfile, SPANISH_EXTRAS);
+    // Set morphological normalizer for verb conjugations
+    this.normalizer = new SpanishMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {
@@ -353,20 +351,8 @@ export class SpanishTokenizer extends BaseTokenizer {
     }
 
     // Try morphological normalization for conjugated/reflexive forms
-    const morphResult = this.morphNormalizer.normalize(lower);
-
-    if (morphResult.stem !== lower && morphResult.confidence >= 0.7) {
-      // O(1) Map lookup for stem (infinitive) keyword match
-      const stemEntry = this.lookupKeyword(morphResult.stem);
-      if (stemEntry) {
-        const tokenOptions: CreateTokenOptions = {
-          normalized: stemEntry.normalized,
-          stem: morphResult.stem,
-          stemConfidence: morphResult.confidence,
-        };
-        return createToken(word, 'keyword', createPosition(startPos, pos), tokenOptions);
-      }
-    }
+    const morphToken = this.tryMorphKeywordMatch(lower, startPos, pos);
+    if (morphToken) return morphToken;
 
     // Not a keyword, return as identifier
     return createToken(word, 'identifier', createPosition(startPos, pos));

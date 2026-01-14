@@ -796,14 +796,13 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   /**
    * Try to normalize a word using the morphological normalizer.
    * Returns null if no normalizer is set or normalization fails.
+   *
+   * Note: We don't check isNormalizable() here because the individual tokenizers
+   * historically called normalize() directly without that check. The normalize()
+   * method itself handles returning noChange() for words that can't be normalized.
    */
   protected tryNormalize(word: string): NormalizationResult | null {
     if (!this.normalizer) return null;
-
-    // Check if word is normalizable (if the method exists)
-    if (this.normalizer.isNormalizable && !this.normalizer.isNormalizable(word)) {
-      return null;
-    }
 
     const result = this.normalizer.normalize(word);
 
@@ -813,6 +812,42 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
     }
 
     return null;
+  }
+
+  /**
+   * Try morphological normalization and keyword lookup.
+   *
+   * If the word can be normalized to a stem that matches a known keyword,
+   * returns a keyword token with morphological metadata (stem, stemConfidence).
+   *
+   * This is the common pattern for handling conjugated verbs across languages:
+   * 1. Normalize the word (e.g., "toggled" → "toggle")
+   * 2. Look up the stem in the keyword map
+   * 3. Create a token with both the original form and stem metadata
+   *
+   * @param word - The word to normalize and look up
+   * @param startPos - Start position for the token
+   * @param endPos - End position for the token
+   * @returns Token if stem matches a keyword, null otherwise
+   */
+  protected tryMorphKeywordMatch(
+    word: string,
+    startPos: number,
+    endPos: number
+  ): LanguageToken | null {
+    const result = this.tryNormalize(word);
+    if (!result) return null;
+
+    // Check if the stem is a known keyword
+    const stemEntry = this.lookupKeyword(result.stem);
+    if (!stemEntry) return null;
+
+    const tokenOptions: CreateTokenOptions = {
+      normalized: stemEntry.normalized,
+      stem: result.stem,
+      stemConfidence: result.confidence,
+    };
+    return createToken(word, 'keyword', createPosition(startPos, endPos), tokenOptions);
   }
 
   /**
