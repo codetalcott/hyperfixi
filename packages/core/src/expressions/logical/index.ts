@@ -455,18 +455,22 @@ export const noExpression: ExpressionImplementation = {
   operators: ['no'],
 
   async evaluate(_context: ExecutionContext, value: unknown): Promise<boolean> {
-    // The 'no' operator should return true for empty/null/undefined values
-    // but false for actual values including false and 0
+    // The 'no' operator returns true for "absence of value":
+    // - null/undefined: true (no value)
+    // - false: true (boolean false is "no value" in _hyperscript)
+    // - empty arrays/NodeLists: true (empty collections)
+    // - everything else: false (including empty strings, 0, objects)
     if (value == null) return true;
-    // Uses registry-based type checks
-    if (isString(value)) return (value as string).length === 0;
+    if (value === false) return true;
     if (Array.isArray(value)) return value.length === 0;
     if (value instanceof NodeList) return value.length === 0;
-    // DOM elements (Node, Element, HTMLElement) should NEVER be considered empty
-    // They are real, tangible objects with properties on the prototype chain
+    // Strings exist even when empty - not "no value"
+    if (isString(value)) return false;
+    // DOM elements are real objects
     if (value instanceof Node || value instanceof Element) return false;
+    // Objects with keys exist
     if (isObject(value)) return Object.keys(value as object).length === 0;
-    // For primitives like false, 0, etc., they are actual values so return false
+    // Numbers (including 0), true, etc. are values
     return false;
   },
 

@@ -385,9 +385,15 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       if (
         tokenValue === KEYWORDS.BEHAVIOR ||
         tokenValue === KEYWORDS.DEF ||
-        tokenValue === KEYWORDS.ON ||
-        tokenValue === KEYWORDS.END
+        tokenValue === KEYWORDS.ON
       ) {
+        break;
+      }
+
+      // If we see 'else' or 'end', this must be multi-line form even on same line
+      // e.g., "if x > 3 set y to 1 else set y to 2 end" requires multi-line parsing
+      if (tokenValue === KEYWORDS.ELSE || tokenValue === KEYWORDS.END) {
+        hasImplicitMultiLineEnd = true;
         break;
       }
 
@@ -398,9 +404,9 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
         // If first command is on the SAME line as if, it's single-line
         if (token.line !== undefined && token.line !== ifStatementLine) {
           hasImplicitMultiLineEnd = true;
+          break;
         }
-        // Found first command, stop scanning
-        break;
+        // Don't break - continue scanning to find 'else' or 'end' on same line
       }
 
       ctx.advance();

@@ -2876,6 +2876,7 @@ export class Parser {
       'halt',
       'remove',
       'exit',
+      'return', // return can have complex expressions like 'return x + y'
       'closest',
       // Body-based commands that require traditional parsing:
       'js', // js ... end with body content

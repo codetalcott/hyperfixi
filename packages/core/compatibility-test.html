@@ -94,16 +94,48 @@
         Object.defineProperty(Object.prototype, 'should', {
             get: function() {
                 const self = this;
+
+                // Helper for deep equality check
+                function deepEqual(a, b) {
+                    if (a === b) return true;
+                    if (a == null || b == null) return a === b;
+                    if (typeof a !== typeof b) return false;
+                    if (Array.isArray(a) && Array.isArray(b)) {
+                        if (a.length !== b.length) return false;
+                        return a.every((val, i) => deepEqual(val, b[i]));
+                    }
+                    if (typeof a === 'object') {
+                        const keysA = Object.keys(a);
+                        const keysB = Object.keys(b);
+                        if (keysA.length !== keysB.length) return false;
+                        return keysA.every(key => deepEqual(a[key], b[key]));
+                    }
+                    return false;
+                }
+
                 return {
                     equal: function(expected) {
                         // Convert String objects to primitives for comparison
                         const actualValue = (self != null && self.constructor === String) ? self.valueOf() : self;
                         const expectedValue = (expected != null && expected.constructor === String) ? expected.valueOf() : expected;
 
-                        if (actualValue !== expectedValue) {
+                        // Use loose equality for numbers (handles 10 === 10.0)
+                        if (typeof actualValue === 'number' && typeof expectedValue === 'number') {
+                            if (actualValue !== expectedValue) {
+                                throw new Error(`Expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)}`);
+                            }
+                        } else if (actualValue !== expectedValue) {
                             throw new Error(`Expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)}`);
                         }
                         return this;
+                    },
+                    deep: {
+                        equal: function(expected) {
+                            if (!deepEqual(self, expected)) {
+                                throw new Error(`Expected deep equal ${JSON.stringify(expected)}, got ${JSON.stringify(self)}`);
+                            }
+                            return this;
+                        }
                     },
                     be: {
                         get a() {
@@ -114,7 +146,17 @@
                                 }
                                 return this;
                             };
-                        }
+                        },
+                        true: (function() {
+                            if (self !== true) {
+                                throw new Error(`Expected true, got ${self}`);
+                            }
+                        })(),
+                        false: (function() {
+                            if (self !== false) {
+                                throw new Error(`Expected false, got ${self}`);
+                            }
+                        })()
                     }
                 };
             },
@@ -126,7 +168,70 @@
         window.clearWorkArea = function() {
             document.getElementById('work-area').innerHTML = '';
         };
-        
+
+        // Get work area helper (matches official util.js)
+        window.getWorkArea = function() {
+            return document.getElementById('work-area');
+        };
+
+        // byId helper (matches official util.js)
+        window.byId = function(id) {
+            return document.getElementById(id);
+        };
+
+        // Promise helpers for async tests (matches official util.js)
+        window.promiseAnIntIn = function(millis) {
+            return new Promise(function(resolve) {
+                setTimeout(function() {
+                    console.log('promiseAnIntIn resolving to 42');
+                    resolve(42);
+                }, millis);
+            });
+        };
+
+        window.promiseValueBackIn = function(value, millis) {
+            return new Promise(function(resolve) {
+                setTimeout(function() {
+                    console.log('promiseValueBackIn resolving to', value);
+                    resolve(value);
+                }, millis);
+            });
+        };
+
+        // startsWith assertion helper (matches official util.js)
+        window.startsWith = function(str, expected) {
+            if (str === null || str === undefined) {
+                throw new Error('Expected string to not be null');
+            }
+            if (str.indexOf(expected) !== 0) {
+                throw new Error("Expected string:\n\n'" + str + "'\n\nto start with:\n\n" + expected);
+            }
+        };
+
+        // Chai-style assert object for compatibility
+        window.assert = {
+            isNotNull: function(value) {
+                if (value === null || value === undefined) {
+                    throw new Error('Expected value to not be null');
+                }
+            },
+            equal: function(actual, expected, message) {
+                if (actual !== expected) {
+                    throw new Error(message || ('Expected ' + expected + ', got ' + actual));
+                }
+            },
+            isTrue: function(value) {
+                if (value !== true) {
+                    throw new Error('Expected true, got ' + value);
+                }
+            },
+            isFalse: function(value) {
+                if (value !== false) {
+                    throw new Error('Expected false, got ' + value);
+                }
+            }
+        };
+
         // Make function for creating DOM elements with hyperscript behavior
         window.make = function(htmlString) {
             try {

@@ -1979,8 +1979,18 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
       // Fallback implementation for logical not
       return !operand;
     case 'no':
-      // 'no' checks for emptiness, not falsiness
-      return isEmpty(operand);
+      // 'no' returns true for "absence of value":
+      // - null/undefined: true (no value)
+      // - false: true (boolean false is "no value" in _hyperscript)
+      // - empty arrays/NodeLists: true (empty collections)
+      // - everything else: false (including empty strings, 0, objects)
+      if (operand == null) return true;
+      if (operand === false) return true;
+      if (Array.isArray(operand)) return operand.length === 0;
+      if (operand && typeof operand === 'object' && 'length' in operand) {
+        return (operand as any).length === 0; // NodeList/HTMLCollection
+      }
+      return false;
     case 'exists':
       // Fallback implementation for existence check
       return operand !== null && operand !== undefined;

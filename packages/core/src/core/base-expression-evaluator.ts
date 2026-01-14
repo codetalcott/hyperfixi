@@ -140,6 +140,9 @@ export class BaseExpressionEvaluator {
       case 'queryReference':
         return this.evaluateQueryReference(node as any, context);
 
+      case 'idSelector':
+        return this.evaluateIdSelector(node as any, context);
+
       default:
         throw new Error(`Unsupported AST node type for evaluation: ${node.type}`);
     }
@@ -1440,6 +1443,18 @@ export class BaseExpressionEvaluator {
 
     const elements = document.querySelectorAll(selector);
     return Array.from(elements).filter((el): el is HTMLElement => el instanceof HTMLElement);
+  }
+
+  /**
+   * Evaluate ID selector expressions (#id)
+   * Used when parsing "set the X of #target" syntax
+   */
+  protected async evaluateIdSelector(
+    node: { value: string },
+    _context: ExecutionContext
+  ): Promise<Element | null> {
+    const id = node.value.startsWith('#') ? node.value.slice(1) : node.value;
+    return document.getElementById(id);
   }
 
   /**

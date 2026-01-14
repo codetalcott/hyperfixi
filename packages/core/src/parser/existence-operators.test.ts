@@ -39,19 +39,22 @@ describe('Existence Operators', () => {
       expect(result).toBe(true);
     });
 
-    it('should return true for empty string', async () => {
+    it('should return false for empty string (string exists)', async () => {
+      // Per official _hyperscript semantics, empty string is a real value (just empty)
       const result = await parseAndEvaluateExpression('no emptyString', context);
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
-    it('should return true for empty array', async () => {
+    it('should return true for empty array (no elements)', async () => {
+      // Empty arrays have no elements, so `no []` returns true
       const result = await parseAndEvaluateExpression('no emptyArray', context);
       expect(result).toBe(true);
     });
 
-    it('should return true for empty object', async () => {
+    it('should return false for empty object (object exists)', async () => {
+      // Per official _hyperscript semantics, empty object is a real value (just empty)
       const result = await parseAndEvaluateExpression('no emptyObject', context);
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('should return false for non-empty string', async () => {
@@ -69,9 +72,11 @@ describe('Existence Operators', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false for false boolean (not empty)', async () => {
+    it('should return true for false boolean (false is "no value")', async () => {
+      // Per official _hyperscript semantics, `no false` returns true
+      // because false represents "no value" / absence of truthiness
       const result = await parseAndEvaluateExpression('no falseValue', context);
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
     it('should return false for zero number (not empty)', async () => {

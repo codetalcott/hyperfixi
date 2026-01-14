@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
 // Window.hyperfixi and Window.evalHyperScript types are declared globally in browser-bundle.ts
 // Additional test helper functions (make, clearWorkArea, getParseErrorFor) are injected by compatibility-test.html
@@ -13,7 +13,9 @@ import { join } from 'path';
  * across all categories: core, expressions, commands, and features
  */
 
-const HYPERSCRIPT_TEST_ROOT = process.env.HYPERSCRIPT_TEST_ROOT || '../../../_hyperscript/test';
+// Use environment variable or resolve to the local _hyperscript test directory
+const HYPERSCRIPT_TEST_ROOT =
+  process.env.HYPERSCRIPT_TEST_ROOT || resolve(__dirname, '../../../../../../_hyperscript/test');
 
 interface TestFile {
   category: string;
@@ -168,13 +170,13 @@ class OfficialTestSuiteRunner {
   }
 
   /**
-   * Run a single test case using HyperFixi - NEW APPROACH: Run complete test code
+   * Run a single test case using HyperFixi
+   * Uses utilities from compatibility-test.html including proper Chai-style should assertions
    */
   async runTestCase(page: any, testFile: TestFile, testCase: TestCase): Promise<boolean> {
     try {
-      // NEW: Run the complete test code in browser context
       const testResult = await page.evaluate(
-        async ({ code, description }: { code: string; description: string }) => {
+        async ({ code }: { code: string }) => {
           try {
             // Cast window to any to access test helper functions injected by compatibility-test.html
             const win = window as any;
@@ -184,54 +186,33 @@ class OfficialTestSuiteRunner {
               win.clearWorkArea();
             }
 
-            // Create a test execution context with all utilities
-            const testContext = {
-              make: win.make,
-              clearWorkArea: win.clearWorkArea,
-              evalHyperScript: win.evalHyperScript,
-              getParseErrorFor: win.getParseErrorFor,
-              document: document,
-              window: window,
-              console: console,
-              // Chai-style assertion helper
-              should: {
-                equal: function (this: { value?: any }, expected: any) {
-                  return {
-                    actual: this.value,
-                    equal: (actual: any) => {
-                      if (actual !== expected) {
-                        throw new Error(
-                          `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
-                        );
-                      }
-                    },
-                  };
-                },
-              },
-            };
+            // Execute the test code directly in window context
+            // This ensures all utilities (make, evalHyperScript, should on Object.prototype, etc.)
+            // are available without being shadowed by parameters
+            //
+            // The test code uses: evalHyperScript, make, clearWorkArea, getParseErrorFor,
+            // promiseAnIntIn, promiseValueBackIn, byId, startsWith, assert, getWorkArea
+            // and .should.equal() on results (via Object.prototype)
+            const testFn = new Function(`
+              return (async function() {
+                // All utilities are available from window context
+                const make = window.make;
+                const clearWorkArea = window.clearWorkArea;
+                const evalHyperScript = window.evalHyperScript;
+                const getParseErrorFor = window.getParseErrorFor;
+                const promiseAnIntIn = window.promiseAnIntIn;
+                const promiseValueBackIn = window.promiseValueBackIn;
+                const byId = window.byId;
+                const startsWith = window.startsWith;
+                const assert = window.assert;
+                const getWorkArea = window.getWorkArea;
 
-            // Execute the test code with access to utilities
-            // Wrap in async function to handle async operations
-            const testFn = new Function(
-              'make',
-              'clearWorkArea',
-              'evalHyperScript',
-              'getParseErrorFor',
-              'document',
-              'window',
-              'should',
-              `return (async function() { ${code} })();`
-            );
+                // Run the actual test code
+                ${code}
+              })();
+            `);
 
-            await testFn(
-              testContext.make,
-              testContext.clearWorkArea,
-              testContext.evalHyperScript,
-              testContext.getParseErrorFor,
-              testContext.document,
-              testContext.window,
-              testContext.should
-            );
+            await testFn();
 
             return { success: true };
           } catch (error) {
@@ -241,7 +222,7 @@ class OfficialTestSuiteRunner {
             };
           }
         },
-        { code: testCase.code, description: testCase.description }
+        { code: testCase.code }
       );
 
       if (testResult.success) {
