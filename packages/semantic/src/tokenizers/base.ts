@@ -16,6 +16,29 @@ import type {
 import type { MorphologicalNormalizer, NormalizationResult } from './morphology/types';
 
 // =============================================================================
+// Time Unit Configuration
+// =============================================================================
+
+/**
+ * Configuration for a native language time unit pattern.
+ * Used by tryNumberWithTimeUnits() to match language-specific time units.
+ */
+export interface TimeUnitMapping {
+  /** The pattern to match (e.g., 'segundos', 'ミリ秒') */
+  readonly pattern: string;
+  /** The standard suffix to use (ms, s, m, h) */
+  readonly suffix: string;
+  /** Length of the pattern (for optimization) */
+  readonly length: number;
+  /** Whether to check for word boundary after the pattern */
+  readonly checkBoundary?: boolean;
+  /** Character that cannot follow the pattern (e.g., 's' for 'm' to avoid 'ms') */
+  readonly notFollowedBy?: string;
+  /** Whether to do case-insensitive matching */
+  readonly caseInsensitive?: boolean;
+}
+
+// =============================================================================
 // Token Stream Implementation
 // =============================================================================
 
@@ -881,6 +904,155 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
       return createToken(number, 'literal', createPosition(pos, pos + number.length));
     }
     return null;
+  }
+
+  /**
+   * Configuration for native language time units.
+   * Maps patterns to their standard suffix (ms, s, m, h).
+   */
+  protected static readonly STANDARD_TIME_UNITS: readonly TimeUnitMapping[] = [
+    { pattern: 'ms', suffix: 'ms', length: 2 },
+    { pattern: 's', suffix: 's', length: 1, checkBoundary: true },
+    { pattern: 'm', suffix: 'm', length: 1, checkBoundary: true, notFollowedBy: 's' },
+    { pattern: 'h', suffix: 'h', length: 1, checkBoundary: true },
+  ];
+
+  /**
+   * Try to match a time unit from a list of patterns.
+   *
+   * @param input - Input string
+   * @param pos - Position after the number
+   * @param timeUnits - Array of time unit mappings (native pattern → standard suffix)
+   * @param skipWhitespace - Whether to skip whitespace before time unit (default: false)
+   * @returns Object with matched suffix and new position, or null if no match
+   */
+  protected tryMatchTimeUnit(
+    input: string,
+    pos: number,
+    timeUnits: readonly TimeUnitMapping[],
+    skipWhitespace = false
+  ): { suffix: string; endPos: number } | null {
+    let unitPos = pos;
+
+    // Optionally skip whitespace before time unit
+    if (skipWhitespace) {
+      while (unitPos < input.length && isWhitespace(input[unitPos])) {
+        unitPos++;
+      }
+    }
+
+    const remaining = input.slice(unitPos);
+
+    // Check each time unit pattern
+    for (const unit of timeUnits) {
+      const candidate = remaining.slice(0, unit.length);
+      const matches = unit.caseInsensitive
+        ? candidate.toLowerCase() === unit.pattern.toLowerCase()
+        : candidate === unit.pattern;
+
+      if (matches) {
+        // Check notFollowedBy constraint (e.g., 'm' should not match 'ms')
+        if (unit.notFollowedBy) {
+          const nextChar = remaining[unit.length] || '';
+          if (nextChar === unit.notFollowedBy) continue;
+        }
+
+        // Check word boundary if required
+        if (unit.checkBoundary) {
+          const nextChar = remaining[unit.length] || '';
+          if (isAsciiIdentifierChar(nextChar)) continue;
+        }
+
+        return { suffix: unit.suffix, endPos: unitPos + unit.length };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Parse a base number (sign, integer, decimal) without time units.
+   * Returns the number string and end position.
+   *
+   * @param input - Input string
+   * @param startPos - Start position
+   * @param allowSign - Whether to allow +/- sign (default: true)
+   * @returns Object with number string and end position, or null
+   */
+  protected parseBaseNumber(
+    input: string,
+    startPos: number,
+    allowSign = true
+  ): { number: string; endPos: number } | null {
+    let pos = startPos;
+    let number = '';
+
+    // Optional sign
+    if (allowSign && (input[pos] === '-' || input[pos] === '+')) {
+      number += input[pos++];
+    }
+
+    // Must have at least one digit
+    if (pos >= input.length || !isDigit(input[pos])) {
+      return null;
+    }
+
+    // Integer part
+    while (pos < input.length && isDigit(input[pos])) {
+      number += input[pos++];
+    }
+
+    // Optional decimal
+    if (pos < input.length && input[pos] === '.') {
+      number += input[pos++];
+      while (pos < input.length && isDigit(input[pos])) {
+        number += input[pos++];
+      }
+    }
+
+    if (!number || number === '-' || number === '+') return null;
+
+    return { number, endPos: pos };
+  }
+
+  /**
+   * Try to extract a number with native language time units.
+   *
+   * This is a template method that handles the common pattern:
+   * 1. Parse the base number (sign, integer, decimal)
+   * 2. Try to match native language time units
+   * 3. Fall back to standard time units (ms, s, m, h)
+   *
+   * @param input - Input string
+   * @param pos - Start position
+   * @param nativeTimeUnits - Language-specific time unit mappings
+   * @param options - Configuration options
+   * @returns Token if number found, null otherwise
+   */
+  protected tryNumberWithTimeUnits(
+    input: string,
+    pos: number,
+    nativeTimeUnits: readonly TimeUnitMapping[],
+    options: { allowSign?: boolean; skipWhitespace?: boolean } = {}
+  ): LanguageToken | null {
+    const { allowSign = true, skipWhitespace = false } = options;
+
+    // Parse base number
+    const baseResult = this.parseBaseNumber(input, pos, allowSign);
+    if (!baseResult) return null;
+
+    let { number, endPos } = baseResult;
+
+    // Try native time units first, then standard
+    const allUnits = [...nativeTimeUnits, ...BaseTokenizer.STANDARD_TIME_UNITS];
+    const timeMatch = this.tryMatchTimeUnit(input, endPos, allUnits, skipWhitespace);
+
+    if (timeMatch) {
+      number += timeMatch.suffix;
+      endPos = timeMatch.endPos;
+    }
+
+    return createToken(number, 'literal', createPosition(pos, endPos));
   }
 
   /**

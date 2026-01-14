@@ -21,6 +21,7 @@ import {
   isDigit,
   isUrlStart,
   type KeywordEntry,
+  type TimeUnitMapping,
 } from './base';
 import { SpanishMorphologicalNormalizer } from './morphology/spanish-normalizer';
 import { spanishProfile } from '../generators/profiles/spanish';
@@ -31,6 +32,25 @@ import { spanishProfile } from '../generators/profiles/spanish';
 
 const { isLetter: isSpanishLetter, isIdentifierChar: isSpanishIdentifierChar } =
   createLatinCharClassifiers(/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/);
+
+// =============================================================================
+// Spanish Time Units
+// =============================================================================
+
+/**
+ * Spanish time unit patterns for number parsing.
+ * Sorted by length (longest first) to ensure correct matching.
+ */
+const SPANISH_TIME_UNITS: readonly TimeUnitMapping[] = [
+  { pattern: 'milisegundos', suffix: 'ms', length: 12, caseInsensitive: true },
+  { pattern: 'milisegundo', suffix: 'ms', length: 11, caseInsensitive: true },
+  { pattern: 'segundos', suffix: 's', length: 8, caseInsensitive: true },
+  { pattern: 'segundo', suffix: 's', length: 7, caseInsensitive: true },
+  { pattern: 'minutos', suffix: 'm', length: 7, caseInsensitive: true },
+  { pattern: 'minuto', suffix: 'm', length: 6, caseInsensitive: true },
+  { pattern: 'horas', suffix: 'h', length: 5, caseInsensitive: true },
+  { pattern: 'hora', suffix: 'h', length: 4, caseInsensitive: true },
+];
 
 // =============================================================================
 // Spanish Prepositions
@@ -362,52 +382,10 @@ export class SpanishTokenizer extends BaseTokenizer {
    * Extract a number, including Spanish time unit suffixes.
    */
   private extractSpanishNumber(input: string, startPos: number): LanguageToken | null {
-    let pos = startPos;
-    let number = '';
-
-    // Optional sign
-    if (input[pos] === '-' || input[pos] === '+') {
-      number += input[pos++];
-    }
-
-    // Integer part
-    while (pos < input.length && isDigit(input[pos])) {
-      number += input[pos++];
-    }
-
-    // Optional decimal
-    if (pos < input.length && input[pos] === '.') {
-      number += input[pos++];
-      while (pos < input.length && isDigit(input[pos])) {
-        number += input[pos++];
-      }
-    }
-
-    // Skip whitespace before time unit
-    let unitPos = pos;
-    while (unitPos < input.length && isWhitespace(input[unitPos])) {
-      unitPos++;
-    }
-
-    // Check for Spanish time units
-    const remaining = input.slice(unitPos).toLowerCase();
-    if (remaining.startsWith('milisegundos') || remaining.startsWith('milisegundo')) {
-      number += 'ms';
-      pos = unitPos + (remaining.startsWith('milisegundos') ? 12 : 11);
-    } else if (remaining.startsWith('segundos') || remaining.startsWith('segundo')) {
-      number += 's';
-      pos = unitPos + (remaining.startsWith('segundos') ? 8 : 7);
-    } else if (remaining.startsWith('minutos') || remaining.startsWith('minuto')) {
-      number += 'm';
-      pos = unitPos + (remaining.startsWith('minutos') ? 7 : 6);
-    } else if (remaining.startsWith('horas') || remaining.startsWith('hora')) {
-      number += 'h';
-      pos = unitPos + (remaining.startsWith('horas') ? 5 : 4);
-    }
-
-    if (!number || number === '-' || number === '+') return null;
-
-    return createToken(number, 'literal', createPosition(startPos, pos));
+    return this.tryNumberWithTimeUnits(input, startPos, SPANISH_TIME_UNITS, {
+      allowSign: true,
+      skipWhitespace: true,
+    });
   }
 }
 

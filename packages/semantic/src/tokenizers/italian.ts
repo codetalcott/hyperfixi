@@ -21,6 +21,7 @@ import {
   isDigit,
   isUrlStart,
   type KeywordEntry,
+  type TimeUnitMapping,
 } from './base';
 import { ItalianMorphologicalNormalizer } from './morphology/italian-normalizer';
 import { italianProfile } from '../generators/profiles/italian';
@@ -31,6 +32,24 @@ import { italianProfile } from '../generators/profiles/italian';
 
 const { isLetter: isItalianLetter, isIdentifierChar: isItalianIdentifierChar } =
   createLatinCharClassifiers(/[a-zA-ZàèéìíîòóùúÀÈÉÌÍÎÒÓÙÚ]/);
+
+// =============================================================================
+// Italian Time Units
+// =============================================================================
+
+/**
+ * Italian time unit patterns for number parsing.
+ */
+const ITALIAN_TIME_UNITS: readonly TimeUnitMapping[] = [
+  { pattern: 'millisecondi', suffix: 'ms', length: 12, caseInsensitive: true },
+  { pattern: 'millisecondo', suffix: 'ms', length: 12, caseInsensitive: true },
+  { pattern: 'secondi', suffix: 's', length: 7, caseInsensitive: true },
+  { pattern: 'secondo', suffix: 's', length: 7, caseInsensitive: true },
+  { pattern: 'minuti', suffix: 'm', length: 6, caseInsensitive: true },
+  { pattern: 'minuto', suffix: 'm', length: 6, caseInsensitive: true },
+  { pattern: 'ore', suffix: 'h', length: 3, caseInsensitive: true },
+  { pattern: 'ora', suffix: 'h', length: 3, caseInsensitive: true },
+];
 
 // =============================================================================
 // Italian Prepositions
@@ -418,52 +437,10 @@ export class ItalianTokenizer extends BaseTokenizer {
    * Extract a number, including Italian time unit suffixes.
    */
   private extractItalianNumber(input: string, startPos: number): LanguageToken | null {
-    let pos = startPos;
-    let number = '';
-
-    // Optional sign
-    if (input[pos] === '-' || input[pos] === '+') {
-      number += input[pos++];
-    }
-
-    // Integer part
-    while (pos < input.length && isDigit(input[pos])) {
-      number += input[pos++];
-    }
-
-    // Optional decimal
-    if (pos < input.length && input[pos] === '.') {
-      number += input[pos++];
-      while (pos < input.length && isDigit(input[pos])) {
-        number += input[pos++];
-      }
-    }
-
-    // Skip whitespace before time unit
-    let unitPos = pos;
-    while (unitPos < input.length && isWhitespace(input[unitPos])) {
-      unitPos++;
-    }
-
-    // Check for Italian time units
-    const remaining = input.slice(unitPos).toLowerCase();
-    if (remaining.startsWith('millisecondi') || remaining.startsWith('millisecondo')) {
-      number += 'ms';
-      pos = unitPos + (remaining.startsWith('millisecondi') ? 12 : 12);
-    } else if (remaining.startsWith('secondi') || remaining.startsWith('secondo')) {
-      number += 's';
-      pos = unitPos + (remaining.startsWith('secondi') ? 7 : 7);
-    } else if (remaining.startsWith('minuti') || remaining.startsWith('minuto')) {
-      number += 'm';
-      pos = unitPos + (remaining.startsWith('minuti') ? 6 : 6);
-    } else if (remaining.startsWith('ore') || remaining.startsWith('ora')) {
-      number += 'h';
-      pos = unitPos + (remaining.startsWith('ore') ? 3 : 3);
-    }
-
-    if (!number || number === '-' || number === '+') return null;
-
-    return createToken(number, 'literal', createPosition(startPos, pos));
+    return this.tryNumberWithTimeUnits(input, startPos, ITALIAN_TIME_UNITS, {
+      allowSign: true,
+      skipWhitespace: true,
+    });
   }
 }
 
