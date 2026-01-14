@@ -11,6 +11,10 @@ import type { LanguageProfile } from './language-profiles';
 import type { CommandSchema, RoleSpec } from './command-schemas';
 import { getDefinedSchemas } from './command-schemas';
 
+// Import shared utilities
+import { sortRolesByWordOrder } from '../parser/utils/role-positioning';
+import { resolveMarkerForRole } from '../parser/utils/marker-resolution';
+
 // Note: languageProfiles is no longer imported here.
 // Pattern generation for specific languages uses the registry instead.
 
@@ -280,13 +284,8 @@ function buildTokens(
 function buildRoleTokens(schema: CommandSchema, profile: LanguageProfile): PatternToken[] {
   const tokens: PatternToken[] = [];
 
-  // Sort roles by position (depends on word order)
-  const sortKey = profile.wordOrder === 'SOV' ? 'sovPosition' : 'svoPosition';
-  const sortedRoles = [...schema.roles].sort((a, b) => {
-    const aPos = a[sortKey] ?? 99;
-    const bPos = b[sortKey] ?? 99;
-    return aPos - bPos;
-  });
+  // Sort roles by position using shared utility
+  const sortedRoles = sortRolesByWordOrder(schema.roles, profile.wordOrder);
 
   for (const roleSpec of sortedRoles) {
     const roleToken = buildRoleToken(roleSpec, profile);
@@ -444,40 +443,24 @@ function buildFormatString(
 ): string {
   const parts: string[] = [];
 
-  // Sort roles by position
-  const sortKey = profile.wordOrder === 'SOV' ? 'sovPosition' : 'svoPosition';
-  const sortedRoles = [...schema.roles].sort((a, b) => {
-    const aPos = a[sortKey] ?? 99;
-    const bPos = b[sortKey] ?? 99;
-    return aPos - bPos;
-  });
+  // Sort roles by position using shared utility
+  const sortedRoles = sortRolesByWordOrder(schema.roles, profile.wordOrder);
 
   // Build role parts
   const roleParts = sortedRoles.map(roleSpec => {
-    // Check for command-specific marker override first
-    const overrideMarker = roleSpec.markerOverride?.[profile.code];
-    const defaultMarker = profile.roleMarkers[roleSpec.role];
+    // Use shared marker resolution utility
+    const resolved = resolveMarkerForRole(roleSpec, profile);
     let part = '';
 
-    if (overrideMarker !== undefined) {
-      // Use override marker
-      const position = defaultMarker?.position ?? 'before';
-      if (position === 'before' && overrideMarker) {
-        part = `${overrideMarker} {${roleSpec.role}}`;
-      } else if (position === 'after' && overrideMarker) {
-        part = `{${roleSpec.role}} ${overrideMarker}`;
+    if (resolved && resolved.primary) {
+      // Has a marker
+      if (resolved.position === 'before') {
+        part = `${resolved.primary} {${roleSpec.role}}`;
       } else {
-        part = `{${roleSpec.role}}`;
-      }
-    } else if (defaultMarker) {
-      if (defaultMarker.position === 'before' && defaultMarker.primary) {
-        part = `${defaultMarker.primary} {${roleSpec.role}}`;
-      } else if (defaultMarker.position === 'after') {
-        part = `{${roleSpec.role}} ${defaultMarker.primary}`;
-      } else {
-        part = `{${roleSpec.role}}`;
+        part = `{${roleSpec.role}} ${resolved.primary}`;
       }
     } else {
+      // No marker
       part = `{${roleSpec.role}}`;
     }
 
