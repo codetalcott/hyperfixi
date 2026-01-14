@@ -574,6 +574,9 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   /** Keywords derived from profile, sorted longest-first for greedy matching */
   protected profileKeywords: KeywordEntry[] = [];
 
+  /** Map for O(1) keyword lookups by lowercase native word */
+  protected profileKeywordMap: Map<string, KeywordEntry> = new Map();
+
   abstract tokenize(input: string): TokenStream;
   abstract classifyToken(token: string): TokenKind;
 
@@ -648,6 +651,9 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
     this.profileKeywords = Array.from(keywordMap.values()).sort(
       (a, b) => b.native.length - a.native.length
     );
+
+    // Build Map for O(1) lookups (case-insensitive)
+    this.profileKeywordMap = new Map(this.profileKeywords.map(k => [k.native.toLowerCase(), k]));
   }
 
   /**
@@ -683,6 +689,28 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   protected isKeywordStart(input: string, pos: number): boolean {
     const remaining = input.slice(pos);
     return this.profileKeywords.some(entry => remaining.startsWith(entry.native));
+  }
+
+  /**
+   * Look up a keyword by native word (case-insensitive).
+   * O(1) lookup using the keyword map.
+   *
+   * @param native - Native word to look up
+   * @returns KeywordEntry if found, undefined otherwise
+   */
+  protected lookupKeyword(native: string): KeywordEntry | undefined {
+    return this.profileKeywordMap.get(native.toLowerCase());
+  }
+
+  /**
+   * Check if a word is a known keyword (case-insensitive).
+   * O(1) lookup using the keyword map.
+   *
+   * @param native - Native word to check
+   * @returns true if the word is a keyword
+   */
+  protected isKeyword(native: string): boolean {
+    return this.profileKeywordMap.has(native.toLowerCase());
   }
 
   /**
