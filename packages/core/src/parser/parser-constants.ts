@@ -38,6 +38,7 @@ export const KEYWORDS = {
   OF: 'of',
   AT: 'at',
   BY: 'by',
+  BETWEEN: 'between',
 
   // Conversion
   AS: 'as',
@@ -476,6 +477,7 @@ export const TOKENIZER_KEYWORDS = new Set([
   'before',
   'by',
   'at',
+  'between',
   'async',
   'no',
   // Compound syntax keywords

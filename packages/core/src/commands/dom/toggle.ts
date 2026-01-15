@@ -73,7 +73,15 @@ export type ToggleCommandInput =
   | { type: 'property'; target: PropertyTarget }
   | { type: 'dialog'; mode: 'modal' | 'non-modal'; targets: HTMLDialogElement[] }
   | { type: 'details'; targets: HTMLDetailsElement[] }
-  | { type: 'select'; targets: HTMLSelectElement[] };
+  | { type: 'select'; targets: HTMLSelectElement[] }
+  | {
+      type: 'classes-between';
+      classA: string;
+      classB: string;
+      targets: HTMLElement[];
+      duration?: number;
+      untilEvent?: string;
+    };
 
 /** Parse modal mode from args and modifiers */
 async function parseModalMode(
@@ -179,6 +187,53 @@ export class ToggleCommand implements DecoratedCommand {
     if (!raw.args?.length) throw new Error('toggle command requires an argument');
 
     const firstArg = raw.args[0];
+
+    // Check for "toggle between" syntax
+    // Parser produces: [between, classA, and, classB, on?, target?]
+    const firstArgName = (firstArg as Record<string, unknown>)?.name as string | undefined;
+    if (firstArgName === 'between' && raw.args.length >= 4) {
+      const { duration, untilEvent } = await parseTemporalModifiers(
+        raw.modifiers,
+        evaluator,
+        context
+      );
+
+      // Extract classA (index 1) and classB (index 3, after 'and')
+      const classAValue = await evaluator.evaluate(raw.args[1], context);
+      const classBValue = await evaluator.evaluate(raw.args[3], context);
+
+      // Find target args (skip between, classA, and, classB, and any 'on'/'from' keywords)
+      const targetArgs: ASTNode[] = [];
+      for (let i = 4; i < raw.args.length; i++) {
+        const argName = (raw.args[i] as Record<string, unknown>)?.name as string | undefined;
+        if (argName !== 'on' && argName !== 'from') {
+          targetArgs.push(raw.args[i]);
+        }
+      }
+
+      const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
+      const targets = await resolveTargetsFromArgs(
+        targetArgs,
+        evaluator,
+        context,
+        'toggle',
+        resolveOpts,
+        raw.modifiers
+      );
+
+      // Parse class values - strip leading dot if present
+      const classA = String(classAValue).replace(/^\./, '');
+      const classB = String(classBValue).replace(/^\./, '');
+
+      return {
+        type: 'classes-between',
+        classA,
+        classB,
+        targets,
+        duration,
+        untilEvent,
+      };
+    }
 
     // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
     const propertyTarget = await resolveAnyPropertyTarget(firstArg, evaluator, context);
@@ -338,6 +393,34 @@ export class ToggleCommand implements DecoratedCommand {
         return batchApply(input.targets as HTMLElement[], el =>
           toggleSelect(el as HTMLSelectElement)
         );
+
+      case 'classes-between': {
+        // Toggle between two mutually exclusive classes
+        // If element has classA, switch to classB; if has classB, switch to classA
+        for (const el of input.targets) {
+          const hasA = el.classList.contains(input.classA);
+          const hasB = el.classList.contains(input.classB);
+
+          if (hasA) {
+            el.classList.remove(input.classA);
+            el.classList.add(input.classB);
+          } else if (hasB) {
+            el.classList.remove(input.classB);
+            el.classList.add(input.classA);
+          } else {
+            // Neither present - add first class as default
+            el.classList.add(input.classA);
+          }
+        }
+
+        if (input.duration || input.untilEvent) {
+          for (const el of input.targets) {
+            if (input.duration) setupDurationReversion(el, 'class', input.classA, input.duration);
+            if (input.untilEvent) setupEventReversion(el, 'class', input.classA, input.untilEvent);
+          }
+        }
+        return [...input.targets];
+      }
     }
   }
 }

@@ -8,17 +8,10 @@ import { test, expect } from '@playwright/test';
  *
  * FIXED Issues:
  * - set the X of Y with ID selectors (idSelector now supported)
- *
- * TODO: Known Limitations to Fix
- * ==============================
- * 1. TODO: toggle between .classA and .classB syntax not supported
- *    - Test: "toggle between two classes"
- *    - Syntax: `toggle between .on and .off on #target`
- *
- * 2. TODO: if/else + variable scope issues (likely same root cause)
- *    - Test: "if condition with variable set" - comparison in condition fails
- *    - Test: "return computed value" - y variable not found in x + y
- *    - Both seem related to variable resolution in expressions
+ * - if/else parsing on same line (improved else/end keyword detection) - commit ff6985ca
+ * - return with binary expressions (x + y) (added 'return' to skipSemanticParsing) - commit ff6985ca
+ * - 'no' operator semantics matching official _hyperscript - commit ff6985ca
+ * - toggle between .classA and .classB syntax - now supported
  */
 
 test.describe('Command Compatibility Tests', () => {
@@ -123,8 +116,7 @@ test.describe('Command Compatibility Tests', () => {
       expect(result).toBe(true);
     });
 
-    test.skip('toggle between two classes (not supported)', async ({ page }) => {
-      // Known limitation: toggle between syntax not supported
+    test('toggle between two classes', async ({ page }) => {
       const result = await page.evaluate(async () => {
         const div = document.createElement('div');
         div.id = 'target';

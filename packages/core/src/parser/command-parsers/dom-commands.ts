@@ -68,14 +68,21 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
 /**
  * Parse toggle command
  *
- * Syntax: toggle <class> from <target> OR toggle <class> on <target>
+ * Syntax:
+ *   - toggle <class> from <target> OR toggle <class> on <target>
+ *   - toggle between <classA> and <classB> [on <target>]
  *
  * This command toggles a class on/off for a target element. It supports
  * both 'from' (HyperFixi) and 'on' (official _hyperscript) for compatibility.
  *
+ * The 'between' syntax switches mutually exclusive classes:
+ *   - If element has classA, switches to classB
+ *   - If element has classB, switches to classA
+ *
  * Examples:
  *   - toggle .active from <button/>
  *   - toggle "selected" on <div/>
+ *   - toggle between .on and .off on #target
  *
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'toggle' identifier node
@@ -86,7 +93,42 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
 export function parseToggleCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
 
-  // Parse: toggle <class> from <target> OR toggle <class> on <target>
+  // Check for "toggle between" syntax
+  if (ctx.check(KEYWORDS.BETWEEN)) {
+    ctx.advance(); // consume 'between'
+    args.push(ctx.createIdentifier('between'));
+
+    // Parse first class/attribute (stops at 'and')
+    const firstArg = parseOneArgument(ctx, [KEYWORDS.AND]);
+    if (firstArg) {
+      args.push(firstArg);
+    }
+
+    // Consume 'and' keyword
+    consumeKeywordToArgs(ctx, KEYWORDS.AND, args);
+
+    // Parse second class/attribute (stops at 'on'/'from'/'for')
+    const secondArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON, KEYWORDS.FOR]);
+    if (secondArg) {
+      args.push(secondArg);
+    }
+
+    // Accept 'from' or 'on' for target specification
+    const preposition = consumeOneOfKeywordsToArgs(ctx, [KEYWORDS.FROM, KEYWORDS.ON], args);
+    if (preposition) {
+      const targetArg = parseOneArgument(ctx);
+      if (targetArg) {
+        args.push(targetArg);
+      }
+    }
+
+    return CommandNodeBuilder.fromIdentifier(identifierNode)
+      .withArgs(...args)
+      .endingAt(ctx.getPosition())
+      .build();
+  }
+
+  // Standard toggle syntax: toggle <class> from <target> OR toggle <class> on <target>
   // Support both 'from' (HyperFixi) and 'on' (official _hyperscript) for compatibility
 
   // Parse first argument (class) until 'from' or 'on'
