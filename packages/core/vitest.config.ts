@@ -45,16 +45,16 @@ export default defineConfig({
         'src/generator/**',
         'src/benchmark/**',
       ],
-      // Thresholds disabled - coverage tracked via Codecov instead
-      // Re-enable incrementally as coverage improves
-      // thresholds: {
-      //   global: {
-      //     branches: 80,
-      //     functions: 80,
-      //     lines: 80,
-      //     statements: 80,
-      //   },
-      // },
+      // Coverage thresholds enabled at 60% (starting point)
+      // Will incrementally increase to 70% then 80% as coverage improves
+      thresholds: {
+        global: {
+          branches: 60,
+          functions: 60,
+          lines: 60,
+          statements: 60,
+        },
+      },
     },
     
     // Test timeout for async operations

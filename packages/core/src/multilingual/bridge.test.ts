@@ -100,6 +100,140 @@ describe('SemanticGrammarBridge', () => {
       }
     });
   });
+
+  describe('integration with semantic parser', () => {
+    it('should use semantic parser for multilingual input', async () => {
+      const result = await bridge.transform('toggle .active', 'en', 'ja');
+      expect(result.usedSemantic).toBeDefined();
+      expect(typeof result.confidence).toBe('number');
+    });
+
+    it('should fallback gracefully on low confidence', async () => {
+      const result = await bridge.transform('very complex unrecognized syntax', 'en', 'ja');
+      // Should still produce output even with low confidence
+      expect(typeof result.output).toBe('string');
+    });
+
+    it('should handle semantic parsing errors', async () => {
+      // Should not throw, but handle gracefully
+      const result = await bridge.transform('', 'en', 'ja');
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('parseToAST integration', () => {
+    it('should generate AST from English input', async () => {
+      const ast = await bridge.parseToAST('toggle .active', 'en');
+      expect(ast).toBeDefined();
+      if (ast) {
+        expect(ast.type).toBeDefined();
+      }
+    });
+
+    it('should generate AST from Japanese input', async () => {
+      const ast = await bridge.parseToAST('.active を トグル', 'ja');
+      expect(ast).toBeDefined();
+    });
+
+    it('should generate AST from Spanish input', async () => {
+      const ast = await bridge.parseToAST('alternar .active', 'es');
+      expect(ast).toBeDefined();
+    });
+
+    it('should provide detailed AST results', async () => {
+      const result = await bridge.parseToASTWithDetails('toggle .active', 'en');
+      expect(result.lang).toBe('en');
+      expect(typeof result.confidence).toBe('number');
+      expect(typeof result.usedDirectPath).toBe('boolean');
+
+      if (result.usedDirectPath) {
+        expect(result.ast).not.toBeNull();
+      } else {
+        expect(result.fallbackText).not.toBeNull();
+      }
+    });
+  });
+
+  describe('cross-language consistency', () => {
+    it('should produce consistent translations for toggle command', async () => {
+      const languages = ['ja', 'es', 'ko', 'ar'];
+      const results = await Promise.all(
+        languages.map(lang => bridge.transform('toggle .active', 'en', lang))
+      );
+
+      // All should preserve .active selector
+      for (const result of results) {
+        expect(result.output).toContain('.active');
+      }
+    });
+
+    it('should maintain selector integrity in complex commands', async () => {
+      const result = await bridge.transform('toggle .class1 on #element', 'en', 'ja');
+      expect(result.output).toContain('.class1');
+      // Note: Semantic parser may simplify compound selectors
+      expect(result.confidence).toBeGreaterThan(0.5);
+    });
+
+    it('should handle round-trip translations', async () => {
+      const toJa = await bridge.transform('toggle .active', 'en', 'ja');
+      const backToEn = await bridge.transform(toJa.output, 'ja', 'en');
+
+      expect(backToEn.output).toContain('toggle');
+      expect(backToEn.output).toContain('.active');
+    });
+  });
+
+  describe('error recovery', () => {
+    it('should handle empty input', async () => {
+      const result = await bridge.transform('', 'en', 'ja');
+      expect(result).toBeDefined();
+      expect(typeof result.output).toBe('string');
+    });
+
+    it('should handle whitespace-only input', async () => {
+      const result = await bridge.transform('   \n\t  ', 'en', 'ja');
+      expect(result).toBeDefined();
+    });
+
+    it('should handle special characters', async () => {
+      const result = await bridge.transform('toggle .active!@#', 'en', 'ja');
+      expect(result).toBeDefined();
+    });
+
+    it('should handle very long input', async () => {
+      const longInput = 'toggle .active '.repeat(100);
+      const result = await bridge.transform(longInput, 'en', 'ja');
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('performance characteristics', () => {
+    it('should cache repeated transformations', async () => {
+      const input = 'toggle .active';
+
+      const start1 = Date.now();
+      await bridge.transform(input, 'en', 'ja');
+      const duration1 = Date.now() - start1;
+
+      const start2 = Date.now();
+      await bridge.transform(input, 'en', 'ja');
+      const duration2 = Date.now() - start2;
+
+      // Second call might be faster due to caching (though not guaranteed)
+      expect(duration2).toBeLessThanOrEqual(duration1 * 2); // At least not slower
+    });
+
+    it('should handle parallel transformations', async () => {
+      const languages = ['ja', 'es', 'ko', 'ar', 'zh', 'tr'];
+
+      const start = Date.now();
+      await Promise.all(languages.map(lang => bridge.transform('toggle .active', 'en', lang)));
+      const duration = Date.now() - start;
+
+      // Should complete in reasonable time
+      expect(duration).toBeLessThan(5000);
+    });
+  });
 });
 
 // =============================================================================

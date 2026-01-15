@@ -18,6 +18,16 @@ export default defineConfig({
         '**/test-setup.ts',
         'vitest.config.ts',
       ],
+      // Coverage thresholds enabled at 60% (starting point)
+      // Will incrementally increase to 70% then 80% as coverage improves
+      thresholds: {
+        global: {
+          branches: 60,
+          functions: 60,
+          lines: 60,
+          statements: 60,
+        },
+      },
     },
     include: ['src/**/*.test.ts'],
     exclude: ['node_modules/', 'dist/', 'src/compatibility/**/*.spec.ts'],

@@ -144,6 +144,7 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "add-language": "npx tsx scripts/add-language.ts",
     "update-keywords": "npx tsx scripts/update-keywords.ts",
@@ -170,9 +171,9 @@
   ],
   "author": "Hyperfixi Team",
   "license": "MIT",
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.0.17",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.0.0"
