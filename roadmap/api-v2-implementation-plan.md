@@ -79,7 +79,7 @@ This plan covers the remaining work to fully roll out the new HyperFixi API (v2)
 ...
 ```
 
-### 3.2 Update types-browser Package
+### 3.2 Update types-browser Package ✅
 
 **Priority:** High
 **Effort:** 30 minutes
@@ -87,13 +87,13 @@ This plan covers the remaining work to fully roll out the new HyperFixi API (v2)
 
 Update browser type definitions to include new methods:
 
-- [ ] Add `compileSync()` method
-- [ ] Add `eval()` method
-- [ ] Add `validate()` method
-- [ ] Update `compile()` signature (now async)
-- [ ] Update `createContext()` signature (optional parent)
-- [ ] Add `CompileResult`, `ValidateResult` types
-- [ ] Mark deprecated methods with `@deprecated` JSDoc
+- [x] Add `compileSync()` method
+- [x] Add `eval()` method
+- [x] Add `validate()` method
+- [x] Update `compile()` signature (now async)
+- [x] Update `createContext()` signature (optional parent)
+- [x] Add `CompileResult`, `ValidateResult` types
+- [x] Mark deprecated methods with `@deprecated` JSDoc
 
 ### 3.3 Add JSDoc Examples for IDE Support
 
@@ -121,16 +121,16 @@ Enhance `hyperscript-api.ts` with JSDoc examples:
 compile(code: string, options?: NewCompileOptions): Promise<CompileResult>;
 ````
 
-### 3.4 Update Cookbook Examples
+### 3.4 Update Cookbook Examples ✅
 
 **Priority:** Medium
 **Effort:** 30 minutes
 
 Update examples in `cookbook/` to use new API:
 
-- [ ] `cookbook/README.md` - update API examples
-- [ ] `cookbook/complete-demo.html` - if uses old API
-- [ ] Check other cookbook files for old API usage
+- [x] `cookbook/README.md` - updated in Phase 3
+- [x] `cookbook/complete-demo.html` - updated references to `eval()` instead of `evaluate()`
+- [x] Other cookbook files verified - use attribute-based syntax, not affected
 
 ---
 
@@ -193,16 +193,16 @@ Before removing deprecated methods:
 - [ ] Remove old type definitions (`CompilationResult`, `CompileOptions`, etc.)
 - [ ] Final test pass
 
-### 4.4 Update MCP Server Tools
+### 4.4 Update MCP Server Tools ✅
 
 **Priority:** Low
 **Effort:** 1 hour
 
 If MCP tools use the API, update them:
 
-- [ ] Check `packages/*/src/mcp/` for API usage
-- [ ] Update to use new method names
-- [ ] Update tool descriptions if they mention old API
+- [x] Checked `packages/*/src/mcp/` for API usage
+- [x] Verified: MCP tools do not directly use hyperscript API
+- [x] No updates needed
 
 ---
 
