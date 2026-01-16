@@ -2,34 +2,35 @@
   "name": "@hyperfixi/i18n",
   "version": "0.1.0",
   "description": "Grammar transformation and keyword translation for hyperscript",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./browser": {
+      "types": "./dist/browser.d.ts",
       "import": "./dist/browser.mjs",
-      "require": "./dist/browser.js",
-      "types": "./dist/browser.d.ts"
+      "require": "./dist/browser.js"
     },
     "./dictionaries": {
+      "types": "./dist/dictionaries/index.d.ts",
       "import": "./dist/dictionaries/index.mjs",
-      "require": "./dist/dictionaries/index.js",
-      "types": "./dist/dictionaries/index.d.ts"
+      "require": "./dist/dictionaries/index.js"
     },
     "./plugins/vite": {
+      "types": "./dist/plugins/vite.d.ts",
       "import": "./dist/plugins/vite.mjs",
-      "require": "./dist/plugins/vite.js",
-      "types": "./dist/plugins/vite.d.ts"
+      "require": "./dist/plugins/vite.js"
     },
     "./plugins/webpack": {
+      "types": "./dist/plugins/webpack.d.ts",
       "import": "./dist/plugins/webpack.mjs",
-      "require": "./dist/plugins/webpack.js",
-      "types": "./dist/plugins/webpack.d.ts"
+      "require": "./dist/plugins/webpack.js"
     }
   },
   "scripts": {
