@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'lcov'], // Terminal output + CI-compatible format
       exclude: ['node_modules/', 'dist/', 'tests/']
     },
     testTimeout: 10000,

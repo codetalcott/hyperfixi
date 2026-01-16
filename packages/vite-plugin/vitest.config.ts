@@ -12,7 +12,7 @@ export default defineConfig({
     // Coverage configuration
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'lcov'], // Terminal output + CI-compatible format
       reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
       exclude: [

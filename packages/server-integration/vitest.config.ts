@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: ['./src/test-setup.ts'],
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'lcov'], // Terminal output + CI-compatible format
       exclude: [
         'node_modules/',
         'dist/',

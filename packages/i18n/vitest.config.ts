@@ -9,7 +9,7 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html', 'lcov'],
+      reporter: ['text', 'lcov'], // Terminal output + CI-compatible format
       exclude: [
         'node_modules/',
         'dist/',

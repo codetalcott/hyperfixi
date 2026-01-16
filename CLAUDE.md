@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**HyperFixi** is a complete _hyperscript ecosystem with server-side compilation, multi-language i18n (13 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling.
+**HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (13 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling.
 
 - **2838+ tests** passing across all suites
 - **224 KB** browser bundle (39% reduction from original)
-- **~85%** compatibility with official _hyperscript
+- **~85%** compatibility with official \_hyperscript
 
 ## Monorepo Structure
 
@@ -101,6 +101,16 @@ npm run build:browser --prefix packages/semantic        # Browser bundle
 npm run typecheck --prefix packages/semantic
 ```
 
+### Test Output Management
+
+```bash
+# Clean all test outputs (coverage, HTML reports, playwright reports)
+npm run clean:test
+
+# Generate HTML test reports (optional, disabled by default to reduce disk usage)
+VITEST_HTML=1 npm test --prefix packages/core
+```
+
 ### Live Testing
 
 ```bash
@@ -137,6 +147,7 @@ The i18n package transforms hyperscript to native word order:
 - **VSO** (Arabic): `زِد #count عند النقر`
 
 Key files:
+
 - `packages/i18n/src/grammar/transformer.ts` - GrammarTransformer class
 - `packages/i18n/src/grammar/profiles/` - Language profiles with word order rules
 - `packages/i18n/src/grammar/types.ts` - Semantic roles, joinTokens for agglutinative suffixes
@@ -169,6 +180,7 @@ Key files:
 ### Expression System
 
 Six categories in `packages/core/src/expressions/`:
+
 - **references/** - `me`, `you`, `it`, CSS selectors
 - **logical/** - Comparisons, boolean logic
 - **conversion/** - `as` keyword, type conversion
@@ -179,6 +191,7 @@ Six categories in `packages/core/src/expressions/`:
 ### Parser Context
 
 The parser uses dependency injection via `ParserContext` interface:
+
 - 48 methods exposed through `.bind(this)` delegation
 - Command parsers in `packages/core/src/parser/commands/` are pure functions
 - AST helpers in `packages/core/src/parser/ast-helpers.ts`
@@ -258,11 +271,11 @@ The vite-plugin exports utilities for customizing language detection:
 
 ```javascript
 import {
-  registerCustomKeywords,  // Add custom keywords for a language
-  getKeywordsForLanguage,  // Get keyword set for a language
-  isNonLatinLanguage,      // Check if language uses non-Latin script
-  getAllLanguageCodes,     // Get all supported language codes
-  clearCustomKeywords,     // Clear custom keywords
+  registerCustomKeywords, // Add custom keywords for a language
+  getKeywordsForLanguage, // Get keyword set for a language
+  isNonLatinLanguage, // Check if language uses non-Latin script
+  getAllLanguageCodes, // Get all supported language codes
+  clearCustomKeywords, // Clear custom keywords
 } from '@hyperfixi/vite-plugin';
 
 // Register custom keywords for detection
@@ -290,6 +303,7 @@ console.log(result.metadata);
 ```
 
 This helps identify:
+
 - Which parser processed the code (semantic vs traditional)
 - Confidence score if semantic parser was used
 - Any warnings about ambiguous type conversions or potential issues
@@ -297,14 +311,16 @@ This helps identify:
 ### Enable Debug Logging
 
 In browser console:
+
 ```javascript
-hyperfixi.debugControl.enable();   // Enable detailed logging
-hyperfixi.debugControl.disable();  // Disable logging
+hyperfixi.debugControl.enable(); // Enable detailed logging
+hyperfixi.debugControl.disable(); // Disable logging
 hyperfixi.debugControl.isEnabled(); // Check status
-hyperfixi.debugControl.status();   // Get detailed status
+hyperfixi.debugControl.status(); // Get detailed status
 ```
 
 Or set localStorage directly:
+
 ```javascript
 localStorage.setItem('hyperfixi:debug', '*');
 // Then reload page
@@ -317,7 +333,7 @@ Debug logging persists across page reloads via localStorage and works in product
 Listen to semantic parse events to understand parser decisions:
 
 ```javascript
-window.addEventListener('hyperfixi:semantic-parse', (e) => {
+window.addEventListener('hyperfixi:semantic-parse', e => {
   console.log('Semantic parse:', e.detail);
   // {
   //   input: 'toggle .active',
@@ -333,6 +349,7 @@ window.addEventListener('hyperfixi:semantic-parse', (e) => {
 ### Debug Statistics
 
 Get parsing statistics:
+
 ```javascript
 const stats = hyperfixi.semanticDebug.getStats();
 console.log(stats);
@@ -348,6 +365,7 @@ console.log(stats);
 ### Compilation Options
 
 Disable semantic parsing for specific code:
+
 ```javascript
 // Use traditional parser only (useful for complex behaviors)
 const result = hyperfixi.compile(code, { disableSemanticParsing: true });
@@ -355,16 +373,16 @@ const result = hyperfixi.compile(code, { disableSemanticParsing: true });
 
 ## Important Files
 
-| File | Purpose |
-|------|---------|
-| `packages/core/src/runtime/runtime.ts` | Main runtime (extends RuntimeBase) |
-| `packages/core/src/parser/parser.ts` | Hyperscript parser (~3000 lines) |
-| `packages/core/src/commands-v2/` | All 43 command implementations |
-| `packages/i18n/src/grammar/transformer.ts` | GrammarTransformer class |
-| `packages/i18n/src/browser.ts` | Browser bundle exports |
-| `packages/semantic/src/parser/semantic-parser.ts` | Semantic parser |
-| `packages/semantic/src/tokenizers/` | 13 language tokenizers |
-| `roadmap/plan.md` | Development context and status |
+| File                                              | Purpose                            |
+| ------------------------------------------------- | ---------------------------------- |
+| `packages/core/src/runtime/runtime.ts`            | Main runtime (extends RuntimeBase) |
+| `packages/core/src/parser/parser.ts`              | Hyperscript parser (~3000 lines)   |
+| `packages/core/src/commands-v2/`                  | All 43 command implementations     |
+| `packages/i18n/src/grammar/transformer.ts`        | GrammarTransformer class           |
+| `packages/i18n/src/browser.ts`                    | Browser bundle exports             |
+| `packages/semantic/src/parser/semantic-parser.ts` | Semantic parser                    |
+| `packages/semantic/src/tokenizers/`               | 13 language tokenizers             |
+| `roadmap/plan.md`                                 | Development context and status     |
 
 ## Vite Plugin (Recommended)
 
@@ -375,7 +393,7 @@ For Vite projects, use `@hyperfixi/vite-plugin` for automatic minimal bundles:
 import { hyperfixi } from '@hyperfixi/vite-plugin';
 
 export default {
-  plugins: [hyperfixi()]
+  plugins: [hyperfixi()],
 };
 ```
 
@@ -388,34 +406,34 @@ The plugin automatically scans your files for `_="..."` attributes and generates
 
 ```javascript
 hyperfixi({
-  extraCommands: ['fetch'],  // Always include these commands
-  extraBlocks: ['if'],       // Always include these blocks
-  positional: true,          // Include positional expressions
-  htmx: true,                // Enable htmx integration
-  debug: true,               // Verbose logging
-})
+  extraCommands: ['fetch'], // Always include these commands
+  extraBlocks: ['if'], // Always include these blocks
+  positional: true, // Include positional expressions
+  htmx: true, // Enable htmx integration
+  debug: true, // Verbose logging
+});
 ```
 
 ## Browser Bundles
 
 ### Core Bundles
 
-| Bundle | Global | Size | Use Case |
-|--------|--------|------|----------|
-| `packages/core/dist/hyperfixi-browser.js` | `window.hyperfixi` | 663 KB | Full bundle with parser |
-| `packages/core/dist/hyperfixi-multilingual.js` | `window.hyperfixi` | 250 KB | Multilingual (no parser) |
-| `packages/i18n/dist/hyperfixi-i18n.min.js` | `window.HyperFixiI18n` | 68 KB | Grammar transformation |
+| Bundle                                         | Global                 | Size   | Use Case                 |
+| ---------------------------------------------- | ---------------------- | ------ | ------------------------ |
+| `packages/core/dist/hyperfixi-browser.js`      | `window.hyperfixi`     | 663 KB | Full bundle with parser  |
+| `packages/core/dist/hyperfixi-multilingual.js` | `window.hyperfixi`     | 250 KB | Multilingual (no parser) |
+| `packages/i18n/dist/hyperfixi-i18n.min.js`     | `window.HyperFixiI18n` | 68 KB  | Grammar transformation   |
 
 ### Lite Bundles (Size-Optimized)
 
 For projects prioritizing bundle size over features:
 
-| Bundle | Size (gzip) | Commands | Features |
-|--------|-------------|----------|----------|
-| `hyperfixi-lite.js` | 1.9 KB | 8 | Regex parser, basic commands |
-| `hyperfixi-lite-plus.js` | 2.6 KB | 14 | Regex parser, more commands, i18n aliases |
-| `hyperfixi-hybrid-complete.js` | 6.7 KB | 21+blocks | Full AST parser, expressions, event modifiers |
-| `hyperfixi-hybrid-hx.js` | 9.7 KB | 21+blocks | hybrid-complete + htmx attribute support |
+| Bundle                         | Size (gzip) | Commands  | Features                                      |
+| ------------------------------ | ----------- | --------- | --------------------------------------------- |
+| `hyperfixi-lite.js`            | 1.9 KB      | 8         | Regex parser, basic commands                  |
+| `hyperfixi-lite-plus.js`       | 2.6 KB      | 14        | Regex parser, more commands, i18n aliases     |
+| `hyperfixi-hybrid-complete.js` | 6.7 KB      | 21+blocks | Full AST parser, expressions, event modifiers |
+| `hyperfixi-hybrid-hx.js`       | 9.7 KB      | 21+blocks | hybrid-complete + htmx attribute support      |
 
 **Hybrid Complete** (~85% hyperscript coverage) is recommended - it supports:
 
@@ -429,14 +447,17 @@ For projects prioritizing bundle size over features:
 
 ```html
 <!-- Example: Hybrid Complete with expressions and blocks -->
-<button _="on click
+<button
+  _="on click
   set :total to #price's textContent then
   set :tax to :total * 0.1 then
-  put :total + :tax into #grand-total">
+  put :total + :tax into #grand-total"
+>
   Calculate Total
 </button>
 
-<button _="on click.debounce(300)
+<button
+  _="on click.debounce(300)
   if me has .loading
     return
   end then
@@ -445,7 +466,8 @@ For projects prioritizing bundle size over features:
   for each item in result
     append item.name to #results
   end then
-  remove .loading">
+  remove .loading"
+>
   Load Data
 </button>
 ```
@@ -454,9 +476,7 @@ For projects prioritizing bundle size over features:
 
 ```html
 <!-- htmx-style attributes (hybrid-hx bundle) -->
-<button hx-get="/api/users" hx-target="#users-list" hx-swap="innerHTML">
-  Load Users
-</button>
+<button hx-get="/api/users" hx-target="#users-list" hx-swap="innerHTML">Load Users</button>
 
 <!-- hx-on:* for inline hyperscript -->
 <button hx-on:click="toggle .active on me">Toggle</button>
@@ -466,35 +486,35 @@ For projects prioritizing bundle size over features:
 
 The htmx compatibility layer dispatches CustomEvents at key points in the request lifecycle:
 
-| Event | When | Cancelable | Detail |
-|-------|------|------------|--------|
-| `htmx:configuring` | After attributes collected, before translation | Yes | `{ config, element }` |
-| `htmx:beforeRequest` | Before hyperscript execution | Yes | `{ element, url, method }` |
-| `htmx:afterSettle` | After successful execution | No | `{ element, target }` |
-| `htmx:error` | On execution failure | No | `{ element, error }` |
+| Event                | When                                           | Cancelable | Detail                     |
+| -------------------- | ---------------------------------------------- | ---------- | -------------------------- |
+| `htmx:configuring`   | After attributes collected, before translation | Yes        | `{ config, element }`      |
+| `htmx:beforeRequest` | Before hyperscript execution                   | Yes        | `{ element, url, method }` |
+| `htmx:afterSettle`   | After successful execution                     | No         | `{ element, target }`      |
+| `htmx:error`         | On execution failure                           | No         | `{ element, error }`       |
 
 **Example usage:**
 
 ```javascript
 // Intercept and modify config before processing
-document.addEventListener('htmx:configuring', (e) => {
+document.addEventListener('htmx:configuring', e => {
   e.detail.config.headers = { 'X-Custom': 'value' };
 });
 
 // Cancel request based on condition
-document.addEventListener('htmx:beforeRequest', (e) => {
+document.addEventListener('htmx:beforeRequest', e => {
   if (someCondition) {
     e.preventDefault(); // Cancels execution
   }
 });
 
 // React to successful completion
-document.addEventListener('htmx:afterSettle', (e) => {
+document.addEventListener('htmx:afterSettle', e => {
   console.log('Request completed for:', e.detail.url);
 });
 
 // Handle errors
-document.addEventListener('htmx:error', (e) => {
+document.addEventListener('htmx:error', e => {
   showErrorNotification(e.detail.error.message);
 });
 ```
@@ -517,15 +537,15 @@ See [bundle-configs/README.md](packages/core/bundle-configs/README.md) for full 
 
 ### Semantic Bundles (Regional Options)
 
-| Bundle | Global | Size (gzip) | Languages |
-|--------|--------|-------------|-----------|
-| `browser.global.js` | `HyperFixiSemantic` | 61 KB | All 13 |
-| `browser-priority.priority.global.js` | `HyperFixiSemanticPriority` | 48 KB | 11 priority |
-| `browser-western.western.global.js` | `HyperFixiSemanticWestern` | 30 KB | en, es, pt, fr, de |
-| `browser-east-asian.east-asian.global.js` | `HyperFixiSemanticEastAsian` | 24 KB | ja, zh, ko |
-| `browser-es-en.es-en.global.js` | `HyperFixiSemanticEsEn` | 25 KB | en, es |
-| `browser-en.en.global.js` | `HyperFixiSemanticEn` | 20 KB | en only |
-| `browser-es.es.global.js` | `HyperFixiSemanticEs` | 16 KB | es only |
+| Bundle                                    | Global                       | Size (gzip) | Languages          |
+| ----------------------------------------- | ---------------------------- | ----------- | ------------------ |
+| `browser.global.js`                       | `HyperFixiSemantic`          | 61 KB       | All 13             |
+| `browser-priority.priority.global.js`     | `HyperFixiSemanticPriority`  | 48 KB       | 11 priority        |
+| `browser-western.western.global.js`       | `HyperFixiSemanticWestern`   | 30 KB       | en, es, pt, fr, de |
+| `browser-east-asian.east-asian.global.js` | `HyperFixiSemanticEastAsian` | 24 KB       | ja, zh, ko         |
+| `browser-es-en.es-en.global.js`           | `HyperFixiSemanticEsEn`      | 25 KB       | en, es             |
+| `browser-en.en.global.js`                 | `HyperFixiSemanticEn`        | 20 KB       | en only            |
+| `browser-es.es.global.js`                 | `HyperFixiSemanticEs`        | 16 KB       | es only            |
 
 Choose the smallest bundle that covers your target languages. See `packages/semantic/README.md` for details.
 

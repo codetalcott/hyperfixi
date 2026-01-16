@@ -37,7 +37,7 @@ export default defineConfig({
     // Coverage configuration
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'lcov'], // Terminal output + CI-compatible format
       reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
       exclude: [
@@ -66,8 +66,9 @@ export default defineConfig({
     
     // Watch disabled in config - use command line
 
-    // Reporter configuration
-    reporters: ['verbose', 'json', 'html'],
+    // Reporter configuration - minimal output to reduce disk usage
+    // Use VITEST_HTML=1 environment variable to enable HTML reports when needed
+    reporters: process.env.VITEST_HTML ? ['verbose', 'html'] : ['verbose'],
     
     // Parallel test execution
     pool: 'threads',
