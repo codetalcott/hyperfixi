@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, resolve } from 'path';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 /**
  * Official _hyperscript Expressions Test Suite
@@ -8,6 +9,9 @@ import { join, resolve } from 'path';
  * Tests HyperFixi compatibility with expression evaluation from the official test suite.
  * This file focuses ONLY on the expressions category (33 files).
  */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const HYPERSCRIPT_TEST_ROOT =
   process.env.HYPERSCRIPT_TEST_ROOT || resolve(__dirname, '../../../../../../_hyperscript/test');

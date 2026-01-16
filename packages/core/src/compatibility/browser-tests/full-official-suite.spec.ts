@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, resolve } from 'path';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 // Window.hyperfixi and Window.evalHyperScript types are declared globally in browser-bundle.ts
 // Additional test helper functions (make, clearWorkArea, getParseErrorFor) are injected by compatibility-test.html
@@ -12,6 +13,9 @@ import { join, resolve } from 'path';
  * This test file dynamically discovers and runs all 84 official _hyperscript test files
  * across all categories: core, expressions, commands, and features
  */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Use environment variable or resolve to the local _hyperscript test directory
 const HYPERSCRIPT_TEST_ROOT =

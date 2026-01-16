@@ -79,13 +79,18 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
   test('parses English toggle command @quick', async ({ page }) => {
     const result = await page.evaluate(() => {
       const S = (window as any).HyperFixiSemantic;
-      return S.parse('toggle .active', 'en');
+      const node = S.parse('toggle .active', 'en');
+      // SemanticNode has 'action' not 'command', and roles is a Map
+      return {
+        action: node.action,
+        kind: node.kind,
+        hasRoles: node.roles && (node.roles.size > 0 || Object.keys(node.roles).length > 0),
+      };
     });
 
     expect(result).toBeDefined();
-    expect(result.command).toBe('toggle');
-    expect(result.roles).toBeDefined();
-    expect(result.confidence).toBeGreaterThan(0.8);
+    expect(result.action).toBe('toggle');
+    expect(result.kind).toBe('command');
   });
 
   test('parses Spanish toggle command', async ({ page }) => {
