@@ -18,6 +18,15 @@ import {
   type SemanticAnalyzer,
 } from '@hyperfixi/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
+import {
+  process as processDOMElements,
+  processHyperscriptAttribute,
+  setupEventHandler,
+  createHyperscriptContext,
+  extractEventInfo,
+  detectLanguage,
+  initializeDOMProcessor,
+} from './dom-processor';
 
 // =============================================================================
 // Constants
@@ -325,40 +334,6 @@ function getDefaultRuntime(): Runtime {
 }
 
 // ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Log compilation error with optional debug details
- */
-function logCompileError(element: Element, code: string, result: CompileResult): void {
-  console.error(`Failed to compile hyperscript on element:`, element);
-  console.error(`Code: "${code}"`);
-
-  if (result.errors?.length) {
-    result.errors.forEach((error, i) => {
-      console.error(`Error ${i + 1}: ${error.message} (line ${error.line}, col ${error.column})`);
-    });
-  }
-
-  // Detailed debug info only when debug mode is enabled
-  if (debug.isEnabled?.('parser')) {
-    debug.parser('Detailed error analysis:', {
-      code,
-      errors: result.errors,
-      codeLines: code.split('\n'),
-      tokens: (() => {
-        try {
-          return tokenize(code).map((t: Token) => `${t.kind}:"${t.value}"`);
-        } catch {
-          return null;
-        }
-      })(),
-    });
-  }
-}
-
-// ============================================================================
 // API Implementation
 // ============================================================================
 
@@ -390,285 +365,12 @@ function getVersion(): string {
 }
 
 // ============================================================================
-// Public API Object
+// DOM Processing (Delegated to dom-processor.ts)
 // ============================================================================
 
-/**
- * Process DOM elements to initialize hyperscript behaviors
- */
-function process(element: Element): void {
-  try {
-    // Process the element itself if it has hyperscript
-    const hyperscriptAttr = element.getAttribute('_');
-    if (hyperscriptAttr) {
-      processHyperscriptAttribute(element, hyperscriptAttr);
-    }
-
-    // Process all child elements with hyperscript attributes
-    const hyperscriptElements = element.querySelectorAll('[_]');
-    hyperscriptElements.forEach(child => {
-      const childHyperscriptAttr = child.getAttribute('_');
-      if (childHyperscriptAttr) {
-        processHyperscriptAttribute(child, childHyperscriptAttr);
-      }
-    });
-  } catch (error) {
-    console.error('Error processing hyperscript node:', error);
-  }
-}
-
-/**
- * Detect language from element attributes or document.
- * Checks: data-lang, lang attribute, closest parent with lang, document lang.
- */
-function detectLanguage(element: Element): string {
-  // Check data-lang attribute on element (explicit hyperscript language)
-  const dataLang = element.getAttribute('data-lang');
-  if (dataLang) return dataLang;
-
-  // Check lang attribute (HTML standard) on element or closest parent
-  const langAttr = element.closest('[lang]')?.getAttribute('lang');
-  if (langAttr) return langAttr.split('-')[0]; // 'en-US' → 'en'
-
-  // Check document language
-  if (typeof document !== 'undefined') {
-    const docLang = document.documentElement?.lang;
-    if (docLang) return docLang.split('-')[0];
-  }
-
-  // Default to English
-  return DEFAULT_LANGUAGE;
-}
-
-/**
- * Process a single hyperscript attribute on an element
- */
-function processHyperscriptAttribute(element: Element, hyperscriptCode: string): void {
-  // Detect language from element
-  const lang = detectLanguage(element);
-
-  // For non-English, use async multilingual path
-  if (lang !== DEFAULT_LANGUAGE) {
-    void processHyperscriptAttributeAsync(element, hyperscriptCode, lang);
-    return;
-  }
-
-  // For English, use synchronous path
-  processHyperscriptAttributeSync(element, hyperscriptCode);
-}
-
-/**
- * Async processing for multilingual hyperscript (uses direct AST path)
- */
-async function processHyperscriptAttributeAsync(
-  element: Element,
-  hyperscriptCode: string,
-  lang: string
-): Promise<void> {
-  try {
-    debug.runtime('Processing multilingual hyperscript:', { code: hyperscriptCode, lang });
-
-    // Use direct AST path
-    const compileResult = await compileAsync(hyperscriptCode, { language: lang });
-
-    if (!compileResult.ok) {
-      logCompileError(element, hyperscriptCode, compileResult);
-      return;
-    }
-
-    if (!compileResult.ast) {
-      console.warn('⚠️ No AST generated for hyperscript:', hyperscriptCode);
-      return;
-    }
-
-    debug.runtime('Successfully compiled multilingual hyperscript:', {
-      code: hyperscriptCode,
-      lang,
-      directPath: compileResult.meta.directPath,
-      confidence: compileResult.meta.confidence,
-    });
-
-    // Create execution context for this element
-    const context = createHyperscriptContext(element as HTMLElement);
-
-    // Check if this is an event handler (starts with "on ")
-    if (hyperscriptCode.trim().startsWith('on ') || compileResult.ast.type === 'eventHandler') {
-      debug.event('Setting up multilingual event handler:', { code: hyperscriptCode, lang });
-      setupEventHandler(element, compileResult.ast, context);
-    } else {
-      debug.runtime('Executing immediate multilingual hyperscript:', hyperscriptCode);
-      void executeHyperscriptAST(compileResult.ast, context);
-    }
-  } catch (error) {
-    console.error('❌ Error processing multilingual hyperscript:', error, 'on element:', element);
-  }
-}
-
-/**
- * Synchronous processing for English hyperscript (traditional path)
- */
-function processHyperscriptAttributeSync(element: Element, hyperscriptCode: string): void {
-  try {
-    debug.runtime('Processing hyperscript:', hyperscriptCode);
-
-    // Compile the hyperscript code
-    const compileResult = compileSync(hyperscriptCode);
-
-    if (!compileResult.ok) {
-      logCompileError(element, hyperscriptCode, compileResult);
-      return;
-    }
-
-    if (!compileResult.ast) {
-      console.warn('⚠️ No AST generated for hyperscript:', hyperscriptCode);
-      return;
-    }
-
-    debug.runtime('Successfully compiled hyperscript:', hyperscriptCode);
-    debug.runtime('Generated AST:', compileResult.ast);
-
-    // Create execution context for this element
-    const context = createHyperscriptContext(element as HTMLElement);
-
-    // Check if this is an event handler (starts with "on ")
-    if (hyperscriptCode.trim().startsWith('on ')) {
-      debug.event('Setting up event handler for:', hyperscriptCode);
-      debug.event('Element for event handler:', element);
-      debug.event('AST for event handler:', compileResult.ast);
-
-      try {
-        debug.event('About to call setupEventHandler...');
-        setupEventHandler(element, compileResult.ast, context);
-        debug.event('setupEventHandler completed successfully');
-      } catch (setupError) {
-        console.error('❌ Error in setupEventHandler:', setupError);
-        console.error(
-          '❌ setupError stack:',
-          setupError instanceof Error ? setupError.stack : 'No stack trace'
-        );
-        throw setupError; // Re-throw to see it in outer catch
-      }
-    } else {
-      debug.runtime('Executing immediate hyperscript:', hyperscriptCode);
-      // Execute immediately for non-event code
-      void executeHyperscriptAST(compileResult.ast, context);
-    }
-  } catch (error) {
-    console.error('❌ Error processing hyperscript attribute:', error, 'on element:', element);
-  }
-}
-
-/**
- * Set up event handler for hyperscript "on" statements
- */
-function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionContext): void {
-  try {
-    // Parse the event from the AST (simplified - assumes "on eventName" structure)
-    const eventInfo = extractEventInfo(ast);
-
-    if (!eventInfo) {
-      console.error('❌ Could not extract event information from AST:', ast);
-      return;
-    }
-
-    debug.event('Setting up event handler:', {
-      element: element.tagName,
-      eventType: eventInfo.eventType,
-    });
-
-    // Add event listener
-    const eventHandler = async (event: Event) => {
-      try {
-        // Set event context
-        context.locals.set('event', event);
-        context.locals.set('target', event.target);
-
-        // Execute the event handler body
-        await executeHyperscriptAST(eventInfo.body, context);
-      } catch (error) {
-        console.error('❌ Error executing hyperscript event handler:', error);
-        console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-        console.error('❌ Event info body:', eventInfo.body);
-        console.error('❌ Context:', context);
-      }
-    };
-
-    element.addEventListener(eventInfo.eventType, eventHandler);
-    debug.event('Event handler attached:', eventInfo.eventType);
-  } catch (error) {
-    console.error('Error setting up event handler:', error);
-  }
-}
-
-/**
- * Extract event information from AST
- */
-function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | null {
-  try {
-    // Handle the actual HyperFixi AST structure
-    if (ast.type === 'eventHandler') {
-      const eventType = (ast as { event?: string }).event || DEFAULT_EVENT_TYPE;
-      const commands = (ast as { commands?: ASTNode[] }).commands;
-
-      // Create a body node from the commands
-      const body: ASTNode = {
-        type: 'CommandSequence',
-        commands: commands || [],
-        start: ast.start || 0,
-        end: ast.end || 0,
-        line: ast.line || 1,
-        column: ast.column || 1,
-      };
-
-      debug.event('Extracted event info:', {
-        type: ast.type,
-        eventType,
-        commandCount: commands?.length || 0,
-      });
-      return { eventType, body };
-    }
-
-    // Handle legacy AST structures
-    if (ast.type === 'FeatureNode' && (ast as { name?: string }).name === 'on') {
-      const eventType =
-        (ast as { args?: Array<{ value?: string }> }).args?.[0]?.value || DEFAULT_EVENT_TYPE;
-      const body = (ast as { body?: ASTNode }).body || ast;
-      debug.event('Extracted event info:', { type: ast.type, eventType });
-      return { eventType, body };
-    }
-
-    // Handle direct command sequences
-    if (ast.type === 'CommandSequence' || ast.type === 'Block') {
-      debug.event('Extracted event info:', { type: ast.type, eventType: DEFAULT_EVENT_TYPE });
-      return { eventType: DEFAULT_EVENT_TYPE, body: ast };
-    }
-
-    console.warn('⚠️ Unknown AST structure for event extraction:', ast.type);
-    return null;
-  } catch (error) {
-    console.error('❌ Error extracting event info:', error);
-    return null;
-  }
-}
-
-/**
- * Execute hyperscript AST
- */
-async function executeHyperscriptAST(ast: ASTNode, context: ExecutionContext): Promise<unknown> {
-  try {
-    return await getDefaultRuntime().execute(ast, context);
-  } catch (error) {
-    console.error('Error executing hyperscript AST:', error);
-    throw error;
-  }
-}
-
-/**
- * Create hyperscript execution context for an element
- */
-function createHyperscriptContext(element?: HTMLElement | null): ExecutionContext {
-  return createContext(element);
-}
+// DOM processing functions are now in dom-processor.ts to maintain separation
+// between the API layer and DOM-specific code. The functions are imported at
+// the top of this file and re-exported through the hyperscript API object.
 
 // ============================================================================
 // New API Implementation (v2)
@@ -851,6 +553,9 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
   }
 }
 
+// Initialize DOM processor with compile functions and runtime
+initializeDOMProcessor(compileSync, compileAsync, getDefaultRuntime);
+
 /**
  * Compiles and executes hyperscript code in a single call.
  *
@@ -1022,7 +727,7 @@ export const hyperscript: HyperscriptAPI = {
   validate,
 
   // Process DOM elements
-  process,
+  process: processDOMElements,
 
   // Create context (with optional parent)
   createContext: createContextWithParent,
