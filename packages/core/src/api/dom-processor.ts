@@ -92,15 +92,46 @@ export function detectLanguage(element: Element): string {
   return DEFAULT_LANGUAGE;
 }
 
+// =============================================================================
+// AST Type Guards
+// =============================================================================
+
+/**
+ * Type guard for EventHandler AST nodes
+ */
+interface EventHandlerAST extends ASTNode {
+  type: 'eventHandler';
+  event?: string;
+  commands?: ASTNode[];
+}
+
+function isEventHandlerAST(ast: ASTNode): ast is EventHandlerAST {
+  return ast.type === 'eventHandler';
+}
+
+/**
+ * Type guard for Feature AST nodes (legacy)
+ */
+interface FeatureAST extends ASTNode {
+  type: 'FeatureNode';
+  name?: string;
+  args?: Array<{ value?: string }>;
+  body?: ASTNode;
+}
+
+function isFeatureAST(ast: ASTNode): ast is FeatureAST {
+  return ast.type === 'FeatureNode';
+}
+
 /**
  * Extract event information from AST
  */
 export function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | null {
   try {
     // Handle the actual HyperFixi AST structure
-    if (ast.type === 'eventHandler') {
-      const eventType = (ast as { event?: string }).event || DEFAULT_EVENT_TYPE;
-      const commands = (ast as { commands?: ASTNode[] }).commands;
+    if (isEventHandlerAST(ast)) {
+      const eventType = ast.event || DEFAULT_EVENT_TYPE;
+      const commands = ast.commands;
 
       // Create a body node from the commands
       const body: ASTNode = {
@@ -121,10 +152,9 @@ export function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNo
     }
 
     // Handle legacy AST structures
-    if (ast.type === 'FeatureNode' && (ast as { name?: string }).name === 'on') {
-      const eventType =
-        (ast as { args?: Array<{ value?: string }> }).args?.[0]?.value || DEFAULT_EVENT_TYPE;
-      const body = (ast as { body?: ASTNode }).body || ast;
+    if (isFeatureAST(ast) && ast.name === 'on') {
+      const eventType = ast.args?.[0]?.value || DEFAULT_EVENT_TYPE;
+      const body = ast.body || ast;
       debug.event('Extracted event info:', { type: ast.type, eventType });
       return { eventType, body };
     }

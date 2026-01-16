@@ -128,6 +128,9 @@ function getSemanticAnalyzer(): SemanticAnalyzerInterface {
   if (!semanticAnalyzerInstance) {
     semanticAnalyzerInstance = createSemanticAnalyzer();
   }
+  // Type cast required: SemanticAnalyzer from @hyperfixi/semantic has compatible
+  // interface but different internal types (ActionType vs string, SemanticValue vs object)
+  // This is safe because the parser only uses the public interface methods
   return semanticAnalyzerInstance as unknown as SemanticAnalyzerInterface;
 }
 
@@ -143,7 +146,7 @@ function getDefaultParserOptions() {
 
   return {
     semanticAnalyzer: getSemanticAnalyzer(),
-    language: config.language as 'en',
+    language: config.language,
     semanticConfidenceThreshold: config.confidenceThreshold,
   };
 }
@@ -331,6 +334,26 @@ function getDefaultRuntime(): Runtime {
     }
   }
   return _defaultRuntime;
+}
+
+// ============================================================================
+// Type Guards
+// ============================================================================
+
+/**
+ * Type guard to check if value is an ExecutionContext
+ */
+function isExecutionContext(value: unknown): value is ExecutionContext {
+  return (
+    typeof value === 'object' && value !== null && 'locals' in value && value.locals instanceof Map
+  );
+}
+
+/**
+ * Type guard to check if value has a 'me' property (partial context)
+ */
+function hasMe(value: unknown): value is { me?: HTMLElement } {
+  return typeof value === 'object' && value !== null && 'me' in value;
 }
 
 // ============================================================================
@@ -608,11 +631,18 @@ async function evalCode(
     executionContext = createContext();
   } else if (context instanceof Element) {
     executionContext = createContext(context as HTMLElement);
-  } else if ((context as ExecutionContext).locals instanceof Map) {
-    executionContext = context as ExecutionContext;
+  } else if (isExecutionContext(context)) {
+    executionContext = context;
   } else {
-    const partialContext = context as unknown as { me?: HTMLElement };
-    executionContext = createContext(partialContext.me);
+    // Check if it's a partial context object with 'me' property
+    // Using type assertion here is safe because we've ruled out Element and ExecutionContext
+    const potentialPartialContext = context as unknown;
+    if (hasMe(potentialPartialContext)) {
+      executionContext = createContext(potentialPartialContext.me);
+    } else {
+      // Fallback: create empty context
+      executionContext = createContext();
+    }
   }
 
   const compiled = await compileAsync(code.trim(), options);
