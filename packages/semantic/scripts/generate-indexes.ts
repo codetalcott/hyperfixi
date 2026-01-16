@@ -171,7 +171,7 @@ function generateTokenizerExports(): void {
  */
 function generateProfilesIndex(): void {
   const dir = path.join(SEMANTIC_SRC, 'generators/profiles');
-  const files = getLanguageFiles(dir, ['index.ts', 'types.ts']);
+  const files = getLanguageFiles(dir, ['index.ts', 'types.ts', 'marker-templates.ts']);
 
   const exports = files.map(f => {
     const code = Object.keys(LANGUAGE_NAMES).find(c =>
@@ -216,7 +216,7 @@ ${exports.join('\n')}
  */
 function generateLanguageProfiles(): void {
   const dir = path.join(SEMANTIC_SRC, 'generators/profiles');
-  const files = getLanguageFiles(dir, ['index.ts', 'types.ts']);
+  const files = getLanguageFiles(dir, ['index.ts', 'types.ts', 'marker-templates.ts']);
 
   // Build code → file/profile mapping
   const languages = files.map(f => {

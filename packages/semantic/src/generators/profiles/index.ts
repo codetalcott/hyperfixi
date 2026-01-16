@@ -20,36 +20,6 @@ export type {
   TokenizationConfig,
 } from './types';
 
-// Marker templates for reducing profile duplication
-export {
-  // Role marker templates
-  SVO_PREPOSITION_MARKERS,
-  SOV_PARTICLE_MARKERS,
-  KOREAN_PARTICLE_MARKERS,
-  TURKISH_SUFFIX_MARKERS,
-  ARABIC_PREPOSITION_MARKERS,
-  // Verb configuration templates
-  SVO_VERB_CONFIG,
-  SVO_PRODROP_VERB_CONFIG,
-  SOV_VERB_CONFIG,
-  VSO_VERB_CONFIG,
-  V2_VERB_CONFIG,
-  // Possessive templates
-  ENGLISH_POSSESSIVE,
-  ROMANCE_POSSESSIVE_BASE,
-  JAPANESE_POSSESSIVE,
-  KOREAN_POSSESSIVE,
-  GERMAN_POSSESSIVE,
-  // Base configurations
-  SVO_BASE_CONFIG,
-  SOV_PARTICLE_CONFIG,
-  SOV_SPACE_CONFIG,
-  VSO_BASE_CONFIG,
-  // Helper functions
-  createRoleMarkers,
-  createRomancePossessive,
-} from './marker-templates';
-
 // Individual profiles - import individually for tree-shaking
 export { arabicProfile } from './arabic';
 export { bengaliProfile } from './bengali';

@@ -180,6 +180,22 @@
   },
   "files": [
     "dist",
-    "src"
-  ]
+    "src",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyperfixi/hyperfixi.git",
+    "directory": "packages/semantic"
+  },
+  "bugs": {
+    "url": "https://github.com/hyperfixi/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/hyperfixi/hyperfixi/tree/main/packages/semantic#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
