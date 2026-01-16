@@ -390,10 +390,15 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
         break;
       }
 
-      // If we see 'else' or 'end', this must be multi-line form even on same line
+      // If we see 'else' or 'end' on the SAME line, this must be multi-line form
       // e.g., "if x > 3 set y to 1 else set y to 2 end" requires multi-line parsing
+      // But if 'else' or 'end' is on a DIFFERENT line, it belongs to an outer block
+      // e.g., in behaviors: "if no x set x to y" followed by "end" (closing init block)
       if (tokenValue === KEYWORDS.ELSE || tokenValue === KEYWORDS.END) {
-        hasImplicitMultiLineEnd = true;
+        // Only treat as multi-line if on same line as if statement
+        if (token.line === ifStatementLine) {
+          hasImplicitMultiLineEnd = true;
+        }
         break;
       }
 

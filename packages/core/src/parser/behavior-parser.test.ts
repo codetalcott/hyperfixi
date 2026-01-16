@@ -425,4 +425,44 @@ describe('Behavior Parser', () => {
       expect(behavior.eventHandlers[0].type).toBe('eventHandler');
     });
   });
+
+  describe('complex nested behavior patterns', () => {
+    it('should parse behavior with repeat until event from document', () => {
+      const input = `
+        behavior Draggable(dragHandle)
+          init
+            if no dragHandle set the dragHandle to me
+          end
+          on pointerdown(clientX, clientY) from dragHandle
+            halt the event
+            trigger draggable:start
+            set startX to 0
+            set startY to 0
+            set xoff to clientX - startX
+            set yoff to clientY - startY
+            repeat until event pointerup from document
+              wait for pointermove(clientX, clientY) from document
+              set x to clientX - xoff
+              set y to clientY - yoff
+            end
+            trigger draggable:end
+          end
+        end
+      `;
+
+      const result = parse(input);
+
+      expect(result.success).toBe(true);
+
+      const behavior = result.node as BehaviorNode;
+      expect(behavior.name).toBe('Draggable');
+      expect(behavior.parameters).toEqual(['dragHandle']);
+      expect(behavior.eventHandlers).toHaveLength(1);
+
+      const handler = behavior.eventHandlers[0];
+      expect(handler.event).toBe('pointerdown');
+      expect(handler.args).toEqual(['clientX', 'clientY']);
+      expect(handler.target).toBe('dragHandle');
+    });
+  });
 });

@@ -504,14 +504,16 @@
       return;
     }
 
-    // Enable debug events
-    window.hyperfixi.semanticDebug.enable();
+    // Enable debug events (if semantic debugging is available)
+    if (window.hyperfixi.semanticDebug?.enable) {
+      window.hyperfixi.semanticDebug.enable();
+    }
 
     // Listen for future parse events
     window.addEventListener('hyperfixi:semantic:parse', handleParseEvent);
 
     // Replay any events that occurred before panel initialized
-    if (window.hyperfixi.semanticDebug.getEventHistory) {
+    if (window.hyperfixi.semanticDebug?.getEventHistory) {
       const history = window.hyperfixi.semanticDebug.getEventHistory();
       history.forEach(event => {
         eventLog.unshift(event);
