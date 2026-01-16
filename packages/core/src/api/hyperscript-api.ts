@@ -325,6 +325,40 @@ function getDefaultRuntime(): Runtime {
 }
 
 // ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Log compilation error with optional debug details
+ */
+function logCompileError(element: Element, code: string, result: CompileResult): void {
+  console.error(`Failed to compile hyperscript on element:`, element);
+  console.error(`Code: "${code}"`);
+
+  if (result.errors?.length) {
+    result.errors.forEach((error, i) => {
+      console.error(`Error ${i + 1}: ${error.message} (line ${error.line}, col ${error.column})`);
+    });
+  }
+
+  // Detailed debug info only when debug mode is enabled
+  if (debug.isEnabled?.('parser')) {
+    debug.parser('Detailed error analysis:', {
+      code,
+      errors: result.errors,
+      codeLines: code.split('\n'),
+      tokens: (() => {
+        try {
+          return tokenize(code).map((t: Token) => `${t.kind}:"${t.value}"`);
+        } catch {
+          return null;
+        }
+      })(),
+    });
+  }
+}
+
+// ============================================================================
 // API Implementation
 // ============================================================================
 
@@ -438,9 +472,7 @@ async function processHyperscriptAttributeAsync(
     const compileResult = await compileAsync(hyperscriptCode, { language: lang });
 
     if (!compileResult.ok) {
-      console.error(`❌ Failed to compile ${lang} hyperscript on element:`, element);
-      console.error(`❌ Hyperscript code: "${hyperscriptCode}"`);
-      console.error(`❌ Parse errors:`, compileResult.errors);
+      logCompileError(element, hyperscriptCode, compileResult);
       return;
     }
 
@@ -483,59 +515,7 @@ function processHyperscriptAttributeSync(element: Element, hyperscriptCode: stri
     const compileResult = compileSync(hyperscriptCode);
 
     if (!compileResult.ok) {
-      console.error(`❌ Failed to compile hyperscript on element:`, element);
-      console.error(`❌ Hyperscript code: "${hyperscriptCode}"`);
-      console.error(
-        `❌ Parse errors (count: ${compileResult.errors?.length || 0}):`,
-        compileResult.errors
-      );
-
-      // Enhanced error logging
-      if (!compileResult.errors || compileResult.errors.length === 0) {
-        console.error(`❌ No specific error details available - compilation failed without errors`);
-      } else {
-        compileResult.errors.forEach((error, index) => {
-          console.error(`❌ Error ${index + 1}:`);
-          console.error(`   Message: ${error.message || 'No message'}`);
-          console.error(
-            `   Line: ${error.line || 'Unknown'}, Column: ${error.column || 'Unknown'}`
-          );
-          console.error(`   Full error object:`, JSON.stringify(error, null, 2));
-        });
-      }
-
-      // Try to identify the specific syntax issue
-      const lines = hyperscriptCode.split('\n');
-      lines.forEach((line, lineIndex) => {
-        console.error(`❌ Line ${lineIndex + 1}: "${line.trim()}"`);
-      });
-
-      // Test tokenization of the failing code
-      try {
-        const tokens = tokenize(hyperscriptCode);
-        console.error(
-          `🔍 Tokens generated:`,
-          tokens.map((t: Token) => `${t.kind}:"${t.value}"`).join(', ')
-        );
-        console.error(`🔍 Token count: ${tokens.length}`);
-      } catch (tokenError) {
-        console.error(`❌ Tokenization failed:`, tokenError);
-      }
-
-      // Also try to parse manually to get more details
-      try {
-        console.error(`🔧 Attempting manual parse for debugging...`);
-        const parseResult = parseToResult(hyperscriptCode, getDefaultParserOptions());
-        console.error(`🔧 Manual parse result:`, {
-          success: parseResult.success,
-          errorCount: parseResult.error ? 1 : 0,
-          error: parseResult.error,
-          nodeType: parseResult.node?.type || 'none',
-        });
-      } catch (manualError) {
-        console.error(`❌ Manual parse also failed:`, manualError);
-      }
-
+      logCompileError(element, hyperscriptCode, compileResult);
       return;
     }
 
@@ -583,38 +563,28 @@ function processHyperscriptAttributeSync(element: Element, hyperscriptCode: stri
  */
 function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionContext): void {
   try {
-    debug.event('setupEventHandler called with:');
-    debug.event('Element:', element);
-    debug.event('AST:', ast);
-    debug.event('Context:', context);
-
     // Parse the event from the AST (simplified - assumes "on eventName" structure)
     const eventInfo = extractEventInfo(ast);
-    debug.event('extractEventInfo returned:', eventInfo);
 
     if (!eventInfo) {
       console.error('❌ Could not extract event information from AST:', ast);
       return;
     }
 
+    debug.event('Setting up event handler:', {
+      element: element.tagName,
+      eventType: eventInfo.eventType,
+    });
+
     // Add event listener
     const eventHandler = async (event: Event) => {
-      debug.event(`Event handler triggered: ${eventInfo.eventType} on element:`, element);
-      debug.event(`Event object:`, event);
-      debug.event(`Event target:`, event.target);
-      debug.event(`Current element:`, element);
-
       try {
         // Set event context
         context.locals.set('event', event);
         context.locals.set('target', event.target);
 
-        debug.event('About to execute hyperscript AST:', eventInfo.body);
-        debug.event('Context:', context);
-
         // Execute the event handler body
-        const result = await executeHyperscriptAST(eventInfo.body, context);
-        debug.event('Hyperscript AST execution completed, result:', result);
+        await executeHyperscriptAST(eventInfo.body, context);
       } catch (error) {
         console.error('❌ Error executing hyperscript event handler:', error);
         console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -624,10 +594,7 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
     };
 
     element.addEventListener(eventInfo.eventType, eventHandler);
-    debug.event(`Event listener attached: ${eventInfo.eventType} on element:`, element);
-    debug.event(`Event handler function:`, eventHandler);
-
-    debug.event(`Set up ${eventInfo.eventType} event handler on element:`, element);
+    debug.event('Event handler attached:', eventInfo.eventType);
   } catch (error) {
     console.error('Error setting up event handler:', error);
   }
@@ -638,17 +605,10 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
  */
 function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | null {
   try {
-    debug.event('Extracting event info from AST:', ast);
-    debug.event('AST type:', ast.type);
-    debug.event('AST keys:', Object.keys(ast));
-    debug.event('Full AST structure:', JSON.stringify(ast, null, 2));
-
     // Handle the actual HyperFixi AST structure
     if (ast.type === 'eventHandler') {
       const eventType = (ast as { event?: string }).event || DEFAULT_EVENT_TYPE;
       const commands = (ast as { commands?: ASTNode[] }).commands;
-
-      debug.event(`Found event handler: ${eventType} with ${commands?.length || 0} commands`);
 
       // Create a body node from the commands
       const body: ASTNode = {
@@ -660,6 +620,11 @@ function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | 
         column: ast.column || 1,
       };
 
+      debug.event('Extracted event info:', {
+        type: ast.type,
+        eventType,
+        commandCount: commands?.length || 0,
+      });
       return { eventType, body };
     }
 
@@ -668,11 +633,13 @@ function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | 
       const eventType =
         (ast as { args?: Array<{ value?: string }> }).args?.[0]?.value || DEFAULT_EVENT_TYPE;
       const body = (ast as { body?: ASTNode }).body || ast;
+      debug.event('Extracted event info:', { type: ast.type, eventType });
       return { eventType, body };
     }
 
     // Handle direct command sequences
     if (ast.type === 'CommandSequence' || ast.type === 'Block') {
+      debug.event('Extracted event info:', { type: ast.type, eventType: DEFAULT_EVENT_TYPE });
       return { eventType: DEFAULT_EVENT_TYPE, body: ast };
     }
 
