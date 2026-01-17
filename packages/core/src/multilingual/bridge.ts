@@ -12,13 +12,28 @@
  */
 
 import type { SemanticNode, SemanticAnalyzer, ASTNode } from '@hyperfixi/semantic';
+import { DEFAULT_CONFIDENCE_THRESHOLD } from '@hyperfixi/semantic';
 
 // =============================================================================
 // Bridge Implementation
 // =============================================================================
 
+/**
+ * Configuration options for SemanticGrammarBridge.
+ */
 export interface BridgeConfig {
+  /**
+   * Minimum confidence for semantic parsing (0-1).
+   * Defaults to DEFAULT_CONFIDENCE_THRESHOLD (0.5).
+   * - Set higher (e.g., 0.8) for stricter matching
+   * - Set lower (e.g., 0.3) for more flexible parsing
+   */
   confidenceThreshold?: number;
+
+  /**
+   * Whether to fall back to traditional parser on low confidence.
+   * Default: true
+   */
   fallbackOnLowConfidence?: boolean;
 }
 
@@ -67,9 +82,10 @@ export class SemanticGrammarBridge {
 
   constructor(config: BridgeConfig = {}) {
     this.config = {
-      // Lower threshold to 0.55 to accept simple commands with optional roles
+      // Use standard confidence threshold (0.5) from semantic package
+      // This accepts simple commands with optional roles
       // e.g., "toggle .active" scores 0.556 (1 required / 1.8 total with optional)
-      confidenceThreshold: config.confidenceThreshold ?? 0.55,
+      confidenceThreshold: config.confidenceThreshold ?? DEFAULT_CONFIDENCE_THRESHOLD,
       fallbackOnLowConfidence: config.fallbackOnLowConfidence ?? true,
     };
   }
@@ -252,21 +268,9 @@ export class SemanticGrammarBridge {
     input: string,
     sourceLang: string
   ): Promise<Record<string, BridgeResult>> {
-    const languages = [
-      'en',
-      'ja',
-      'ar',
-      'es',
-      'ko',
-      'zh',
-      'tr',
-      'pt',
-      'fr',
-      'de',
-      'id',
-      'qu',
-      'sw',
-    ];
+    // Use dynamic language list from semantic package
+    const semantic = await getSemanticModule();
+    const languages = semantic.getSupportedLanguages();
     const results: Record<string, BridgeResult> = {};
 
     for (const lang of languages) {

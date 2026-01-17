@@ -54,11 +54,14 @@ export {
    * Use this to get AST for execution by the hyperfixi runtime.
    *
    * @param node - The SemanticNode from parse()
-   * @returns AST node compatible with hyperfixi runtime
+   * @returns Object with ast and warnings array
    *
    * @example
    * const semanticNode = parse('toggle .active', 'en');
-   * const ast = buildAST(semanticNode);
+   * const { ast, warnings } = buildAST(semanticNode);
+   * if (warnings.length > 0) {
+   *   console.warn('AST build warnings:', warnings);
+   * }
    * await runtime.execute(ast, context);
    */
   buildAST,
@@ -68,6 +71,14 @@ export {
    * Usually you should use buildAST() instead.
    */
   ASTBuilder,
+} from './ast-builder';
+
+export type {
+  /**
+   * Result type returned by buildAST().
+   * Contains the compiled AST and any warnings from the build process.
+   */
+  BuildASTResult,
 } from './ast-builder';
 
 // =============================================================================
@@ -140,6 +151,30 @@ export {
    */
   getSupportedLanguages,
 } from './parser/semantic-parser';
+
+// =============================================================================
+// Constants & Thresholds
+// =============================================================================
+
+export {
+  /**
+   * Default confidence threshold for semantic parsing (0.5).
+   * Results with confidence >= this threshold are considered reliable.
+   *
+   * @example
+   * const result = analyzer.analyze('toggle .active', 'en');
+   * if (result.confidence >= DEFAULT_CONFIDENCE_THRESHOLD) {
+   *   // Use semantic result
+   * }
+   */
+  DEFAULT_CONFIDENCE_THRESHOLD,
+
+  /**
+   * High confidence threshold (0.8) for very certain matches.
+   * Use this when you need stricter validation.
+   */
+  HIGH_CONFIDENCE_THRESHOLD,
+} from './core-bridge';
 
 // =============================================================================
 // Rendering
