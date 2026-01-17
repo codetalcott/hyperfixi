@@ -4,15 +4,21 @@
  */
 
 // Export the main API
+// Primary: lokascript (new name reflecting multilingual world/realm scope)
 export {
-  hyperscript,
-  type HyperscriptAPI,
+  lokascript,
+  type LokascriptAPI,
+  type HyperscriptAPI, // Re-export for compatibility
   // API types (v2)
   type CompileResult,
   type CompileError,
   type NewCompileOptions,
   type ValidateResult,
-} from './api/hyperscript-api';
+  type HyperscriptConfig,
+} from './api/lokascript-api';
+
+// Compatibility: hyperscript (deprecated, use lokascript)
+export { hyperscript } from './api/hyperscript-api';
 
 // Export core types for advanced usage
 export type {

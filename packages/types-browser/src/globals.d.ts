@@ -15,7 +15,26 @@ declare global {
    */
   interface Window {
     /**
+     * Lokascript - Multilingual scripting language (primary global)
+     *
+     * Etymology: "loka" (Sanskrit/Indo-European: "world/realm/universe")
+     * Reflects the multilingual scope - 23 languages with SOV/VSO/SVO grammar.
+     *
+     * Loaded from: hyperfixi-browser.js or hyperfixi-multilingual.js
+     *
+     * @example
+     * ```typescript
+     * window.lokascript.execute('toggle .active', document.body)
+     * window.lokascript.compile('on click add .highlight')
+     * await lokascript.execute('トグル .active', 'ja')
+     * ```
+     */
+    lokascript: HyperFixiCoreAPI;
+
+    /**
      * HyperFixi Core - Main hyperscript runtime and parser
+     *
+     * @deprecated Use `lokascript` instead
      *
      * Loaded from: hyperfixi-browser.js or hyperfixi-multilingual.js
      *
@@ -28,7 +47,7 @@ declare global {
     hyperfixi: HyperFixiCoreAPI;
 
     /**
-     * Compatibility alias for hyperfixi (follows _hyperscript naming)
+     * Compatibility alias for official _hyperscript API compatibility
      *
      * @example
      * ```typescript
@@ -67,6 +86,7 @@ declare global {
   /**
    * globalThis interface augmentation (same as Window for browser contexts)
    */
+  var lokascript: HyperFixiCoreAPI;
   var hyperfixi: HyperFixiCoreAPI;
   var _hyperscript: HyperFixiCoreAPI;
   var HyperFixiSemantic: HyperFixiSemanticAPI;

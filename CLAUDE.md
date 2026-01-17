@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (13 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling.
+**HyperFixi** is a complete \_hyperscript ecosystem with server-side compilation, multi-language i18n (23 languages including SOV/VSO grammar transformation), semantic-first multilingual parsing, and comprehensive developer tooling.
 
 - **2838+ tests** passing across all suites
 - **224 KB** browser bundle (39% reduction from original)
@@ -23,16 +23,16 @@ packages/
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi-browser.js)
 │
-├── i18n/           # Internationalization (13 languages + grammar transformation)
+├── i18n/           # Internationalization (23 languages + grammar transformation)
 │   ├── src/
 │   │   ├── grammar/          # SOV/VSO word order transformation
 │   │   ├── dictionaries/     # Per-language keyword dictionaries
 │   │   └── parser/           # Multilingual keyword providers
 │   └── dist/                 # Built bundles (hyperfixi-i18n.min.js)
 │
-├── semantic/       # Semantic-first multilingual parsing (13 languages)
+├── semantic/       # Semantic-first multilingual parsing (23 languages)
 │   ├── src/
-│   │   ├── tokenizers/       # Language-specific tokenizers (en, ja, ar, es, ko, tr, zh, pt, fr, de, id, qu, sw)
+│   │   ├── tokenizers/       # Language-specific tokenizers (ar, bn, de, en, es, fr, hi, id, it, ja, ko, ms, pl, pt, qu, ru, sw, th, tl, tr, uk, vi, zh)
 │   │   ├── generators/       # Pattern generation from command schemas
 │   │   ├── parser/           # Semantic parser with confidence scoring
 │   │   └── explicit/         # Language-agnostic intermediate representation
@@ -120,7 +120,7 @@ npx http-server . -p 3000 -c-1
 # Test pages:
 # http://127.0.0.1:3000/packages/core/test-dashboard.html       # Auto-running tests
 # http://127.0.0.1:3000/examples/multilingual/index.html        # Grammar demo (i18n)
-# http://127.0.0.1:3000/examples/multilingual/semantic-demo.html # Semantic parser demo (13 languages)
+# http://127.0.0.1:3000/examples/multilingual/semantic-demo.html # Semantic parser demo (23 languages)
 # http://127.0.0.1:3000/packages/core/compatibility-test.html   # Side-by-side comparison
 ```
 
@@ -162,7 +162,7 @@ import { MultilingualHyperscript } from '@hyperfixi/core';
 const ml = new MultilingualHyperscript();
 await ml.initialize();
 
-// Parse from any of 13 languages
+// Parse from any of 23 languages
 const node = await ml.parse('#button の .active を 切り替え', 'ja');
 
 // Translate between any languages
@@ -624,7 +624,7 @@ For developers writing hyperscript in their native language:
   // Grammar transformation (i18n)
   const result = HyperFixiI18n.translate('on click toggle .active', 'en', 'ja');
 
-  // Semantic parsing (13 languages)
+  // Semantic parsing (23 languages)
   const parsed = HyperFixiSemantic.parse('トグル .active', 'ja');
   const translations = HyperFixiSemantic.getAllTranslations('toggle .active', 'en');
 </script>

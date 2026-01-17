@@ -168,6 +168,56 @@ const LANGUAGE_IMPORTERS: Record<string, () => Promise<LanguageModule>> = {
     const { swahiliProfile } = await import('./generators/profiles/swahili');
     return { tokenizer: swahiliTokenizer, profile: swahiliProfile };
   },
+  bn: async () => {
+    const { bengaliTokenizer } = await import('./tokenizers/bengali');
+    const { bengaliProfile } = await import('./generators/profiles/bengali');
+    return { tokenizer: bengaliTokenizer, profile: bengaliProfile };
+  },
+  hi: async () => {
+    const { hindiTokenizer } = await import('./tokenizers/hindi');
+    const { hindiProfile } = await import('./generators/profiles/hindi');
+    return { tokenizer: hindiTokenizer, profile: hindiProfile };
+  },
+  it: async () => {
+    const { italianTokenizer } = await import('./tokenizers/italian');
+    const { italianProfile } = await import('./generators/profiles/italian');
+    return { tokenizer: italianTokenizer, profile: italianProfile };
+  },
+  ms: async () => {
+    const { malayTokenizer } = await import('./tokenizers/ms');
+    const { malayProfile } = await import('./generators/profiles/ms');
+    return { tokenizer: malayTokenizer, profile: malayProfile };
+  },
+  pl: async () => {
+    const { polishTokenizer } = await import('./tokenizers/polish');
+    const { polishProfile } = await import('./generators/profiles/polish');
+    return { tokenizer: polishTokenizer, profile: polishProfile };
+  },
+  ru: async () => {
+    const { russianTokenizer } = await import('./tokenizers/russian');
+    const { russianProfile } = await import('./generators/profiles/russian');
+    return { tokenizer: russianTokenizer, profile: russianProfile };
+  },
+  th: async () => {
+    const { thaiTokenizer } = await import('./tokenizers/thai');
+    const { thaiProfile } = await import('./generators/profiles/thai');
+    return { tokenizer: thaiTokenizer, profile: thaiProfile };
+  },
+  tl: async () => {
+    const { tagalogTokenizer } = await import('./tokenizers/tl');
+    const { tagalogProfile } = await import('./generators/profiles/tl');
+    return { tokenizer: tagalogTokenizer, profile: tagalogProfile };
+  },
+  uk: async () => {
+    const { ukrainianTokenizer } = await import('./tokenizers/ukrainian');
+    const { ukrainianProfile } = await import('./generators/profiles/ukrainian');
+    return { tokenizer: ukrainianTokenizer, profile: ukrainianProfile };
+  },
+  vi: async () => {
+    const { vietnameseTokenizer } = await import('./tokenizers/vietnamese');
+    const { vietnameseProfile } = await import('./generators/profiles/vietnamese');
+    return { tokenizer: vietnameseTokenizer, profile: vietnameseProfile };
+  },
 };
 
 /**

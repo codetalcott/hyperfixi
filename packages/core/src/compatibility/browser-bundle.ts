@@ -18,7 +18,7 @@
  */
 
 import { evalHyperScript, evalHyperScriptAsync, evalHyperScriptSmart } from './eval-hyperscript';
-import { hyperscript, config } from '../api/hyperscript-api';
+import { lokascript, hyperscript, config } from '../api/lokascript-api';
 import type { RuntimeHooks } from '../types/hooks';
 import { defaultAttributeProcessor } from '../dom/attribute-processor';
 import { tailwindExtension } from '../extensions/tailwind';
@@ -50,57 +50,63 @@ import {
 // Import CompileResult type for browser bundle
 import type { CompileResult } from '../api/hyperscript-api';
 
+// HyperFixi Browser API Type
+interface HyperFixiBrowserAPI {
+  evalHyperScript: typeof evalHyperScript;
+  evalHyperScriptAsync: typeof evalHyperScriptAsync;
+  evalHyperScriptSmart: typeof evalHyperScriptSmart;
+  tailwindExtension: typeof tailwindExtension;
+  compile: (code: string) => CompileResult;
+  compileMultilingual: (code: string, language: string) => Promise<CompileResult>;
+  execute: typeof hyperscript.execute;
+  run: (code: string, context?: any) => Promise<unknown>;
+  createContext: typeof hyperscript.createContext;
+  createRuntime: typeof hyperscript.createRuntime;
+  processNode: (element: Element | Document) => Promise<void>;
+  process: (element: Element | Document) => Promise<void>;
+  Parser: typeof Parser;
+  Runtime: typeof Runtime;
+  tokenize: typeof tokenize;
+  attributeProcessor: typeof defaultAttributeProcessor;
+  debug: typeof debug;
+  debugControl: typeof debugControl;
+  styleBatcher: typeof styleBatcher;
+  ObjectPool: typeof ObjectPool;
+  // Semantic parsing API for multilingual support
+  semantic: {
+    createAnalyzer: typeof createSemanticAnalyzer;
+    parse: typeof semanticParse;
+    translate: typeof translate;
+    render: typeof render;
+    toExplicit: typeof toExplicit;
+    fromExplicit: typeof fromExplicit;
+    supportedLanguages: string[];
+  };
+  // Semantic debug API
+  semanticDebug: {
+    enable: typeof enableDebugEvents;
+    disable: typeof disableDebugEvents;
+    isEnabled: typeof isDebugEnabled;
+    getStats: typeof getDebugStats;
+    resetStats: typeof resetDebugStats;
+    getEventHistory: typeof getEventHistory;
+    replayEvents: typeof replayEvents;
+  };
+  // Global configuration
+  config: typeof config;
+  // Runtime hooks for analytics, logging, etc.
+  registerHooks: (name: string, hooks: RuntimeHooks) => void;
+  unregisterHooks: (name: string) => boolean;
+  getRegisteredHooks: () => string[];
+}
+
 // Export to global scope for browser testing
 declare global {
   interface Window {
-    hyperfixi: {
-      evalHyperScript: typeof evalHyperScript;
-      evalHyperScriptAsync: typeof evalHyperScriptAsync;
-      evalHyperScriptSmart: typeof evalHyperScriptSmart;
-      tailwindExtension: typeof tailwindExtension;
-      compile: (code: string) => CompileResult;
-      compileMultilingual: (code: string, language: string) => Promise<CompileResult>;
-      execute: typeof hyperscript.execute;
-      run: (code: string, context?: any) => Promise<unknown>;
-      createContext: typeof hyperscript.createContext;
-      createRuntime: typeof hyperscript.createRuntime;
-      processNode: (element: Element | Document) => Promise<void>;
-      process: (element: Element | Document) => Promise<void>;
-      Parser: typeof Parser;
-      Runtime: typeof Runtime;
-      tokenize: typeof tokenize;
-      attributeProcessor: typeof defaultAttributeProcessor;
-      debug: typeof debug;
-      debugControl: typeof debugControl;
-      styleBatcher: typeof styleBatcher;
-      ObjectPool: typeof ObjectPool;
-      // Semantic parsing API for multilingual support
-      semantic: {
-        createAnalyzer: typeof createSemanticAnalyzer;
-        parse: typeof semanticParse;
-        translate: typeof translate;
-        render: typeof render;
-        toExplicit: typeof toExplicit;
-        fromExplicit: typeof fromExplicit;
-        supportedLanguages: string[];
-      };
-      // Semantic debug API
-      semanticDebug: {
-        enable: typeof enableDebugEvents;
-        disable: typeof disableDebugEvents;
-        isEnabled: typeof isDebugEnabled;
-        getStats: typeof getDebugStats;
-        resetStats: typeof resetDebugStats;
-        getEventHistory: typeof getEventHistory;
-        replayEvents: typeof replayEvents;
-      };
-      // Global configuration
-      config: typeof config;
-      // Runtime hooks for analytics, logging, etc.
-      registerHooks: (name: string, hooks: RuntimeHooks) => void;
-      unregisterHooks: (name: string) => boolean;
-      getRegisteredHooks: () => string[];
-    };
+    // Primary: lokascript (new name)
+    lokascript: HyperFixiBrowserAPI;
+    // Compatibility: hyperfixi (deprecated, use lokascript)
+    hyperfixi: HyperFixiBrowserAPI;
     // Also expose as direct globals for test compatibility
     evalHyperScript: typeof evalHyperScript;
     evalHyperScriptAsync: typeof evalHyperScriptAsync;
@@ -183,19 +189,29 @@ const hyperfixi = {
     toExplicit,
     fromExplicit,
     supportedLanguages: [
-      'en',
-      'ja',
       'ar',
-      'es',
-      'ko',
-      'zh',
-      'tr',
-      'pt',
-      'fr',
+      'bn',
       'de',
+      'en',
+      'es',
+      'fr',
+      'hi',
       'id',
+      'it',
+      'ja',
+      'ko',
+      'ms',
+      'pl',
+      'pt',
       'qu',
+      'ru',
       'sw',
+      'th',
+      'tl',
+      'tr',
+      'uk',
+      'vi',
+      'zh',
     ],
   },
 
@@ -229,6 +245,9 @@ if (typeof window !== 'undefined') {
   // Note: Debug auto-enable via URL param is handled in debug-events.ts module load
   // This ensures it happens before attribute processing
 
+  // Primary: lokascript (new name reflecting multilingual world/realm scope)
+  window.lokascript = hyperfixi;
+  // Compatibility: hyperfixi (deprecated, use lokascript)
   window.hyperfixi = hyperfixi;
 
   // Also expose functions as direct globals for test compatibility
