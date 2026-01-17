@@ -316,3 +316,12 @@ export const context = {
 export function definePlugin(plugin: HyperFixiPlugin): HyperFixiPlugin {
   return plugin;
 }
+
+// Re-export runtime integration
+export {
+  RegistryIntegration,
+  createRegistryIntegration,
+  getDefaultRegistryIntegration,
+  resetDefaultRegistryIntegration,
+  type RegistryIntegrationOptions,
+} from './runtime-integration';

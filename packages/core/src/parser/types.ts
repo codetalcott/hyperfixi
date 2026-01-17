@@ -303,6 +303,26 @@ export interface ParserOptions {
    * @default 0.5
    */
   semanticConfidenceThreshold?: number;
+
+  /**
+   * Optional registry integration for custom event sources.
+   *
+   * When provided, the parser will check if event names in 'on' commands
+   * match registered custom event sources (e.g., 'request', 'websocket')
+   * and mark them appropriately for runtime handling.
+   *
+   * This enables server-side hyperscript with custom event sources:
+   * @example
+   * ```typescript
+   * import { Parser } from '@hyperfixi/core';
+   * import { getDefaultRegistryIntegration } from '@hyperfixi/core/registry';
+   *
+   * const parser = new Parser(tokens, {
+   *   registryIntegration: getDefaultRegistryIntegration()
+   * });
+   * ```
+   */
+  registryIntegration?: any; // Typed as 'any' to avoid circular dependency with registry module
 }
 
 // ============================================================================

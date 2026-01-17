@@ -110,6 +110,7 @@ export class Parser {
   private keywordResolver?: KeywordResolver;
   private semanticAdapter?: SemanticIntegrationAdapter;
   private originalInput?: string;
+  private registryIntegration?: any; // From ParserOptions - typed as 'any' to avoid circular dependency
 
   // Postfix unary operators that do NOT take a right operand
   private static readonly POSTFIX_UNARY_OPERATORS = new Set([
@@ -122,6 +123,7 @@ export class Parser {
   constructor(tokens: Token[], options?: ParserOptions, originalInput?: string) {
     this.tokens = tokens;
     this.keywordResolver = options?.keywords;
+    this.registryIntegration = options?.registryIntegration;
 
     // Initialize semantic integration if analyzer provided
     if (options?.semanticAnalyzer && options?.language) {
@@ -1880,6 +1882,19 @@ export class Parser {
 
     debug.parse(`🔧 parseEventHandler: Total events parsed: ${eventNames.join(', ')}`);
 
+    // Check if the first event name matches a registered custom event source
+    let customEventSource: string | undefined;
+    if (this.registryIntegration) {
+      const firstEvent = eventNames[0];
+      if (this.registryIntegration.hasEventSource(firstEvent)) {
+        const source = this.registryIntegration.getEventSource(firstEvent);
+        customEventSource = source?.name;
+        debug.parse(
+          `🔧 parseEventHandler: Detected custom event source '${customEventSource}' for event '${firstEvent}'`
+        );
+      }
+    }
+
     // Check for parameter syntax: (param1, param2, ...)
     // This is used for custom events like "on addHistory(action)"
     const eventParams: string[] = [];
@@ -2394,6 +2409,7 @@ export class Parser {
       ...(target && { target }), // Add target if present
       ...(attributeName && { attributeName }), // Add attributeName if present
       ...(watchTarget && { watchTarget }), // Add watchTarget if present
+      ...(customEventSource && { customEventSource }), // Add custom event source if detected
       start: pos.start,
       end: pos.end,
       line: pos.line,

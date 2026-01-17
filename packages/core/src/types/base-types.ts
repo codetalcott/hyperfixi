@@ -580,6 +580,7 @@ export interface EventHandlerNode extends ASTNode {
   readonly watchTarget?: ASTNode; // Target element to watch for changes ("in <target>" syntax)
   readonly args?: string[]; // Event parameter names to destructure (e.g., ['clientX', 'clientY'])
   readonly commands: ASTNode[];
+  readonly customEventSource?: string; // Name of registered custom event source (e.g., 'request', 'websocket')
 }
 
 /**
