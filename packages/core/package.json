@@ -103,6 +103,26 @@
       "import": "./dist/bundle-generator/index.mjs",
       "require": "./dist/bundle-generator/index.js"
     },
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "import": "./dist/registry/index.mjs",
+      "require": "./dist/registry/index.js"
+    },
+    "./registry/browser": {
+      "types": "./dist/registry/browser-types.d.ts",
+      "import": "./dist/registry/browser-types.mjs",
+      "require": "./dist/registry/browser-types.js"
+    },
+    "./registry/universal": {
+      "types": "./dist/registry/universal-types.d.ts",
+      "import": "./dist/registry/universal-types.mjs",
+      "require": "./dist/registry/universal-types.js"
+    },
+    "./registry/environment": {
+      "types": "./dist/registry/environment.d.ts",
+      "import": "./dist/registry/environment.mjs",
+      "require": "./dist/registry/environment.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

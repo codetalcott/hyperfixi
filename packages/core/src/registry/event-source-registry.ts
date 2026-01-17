@@ -17,22 +17,98 @@
 
 import type { ExecutionContext } from '../types/core';
 import type { ASTNode } from '../types/base-types';
+import type { RuntimeEnvironment } from './environment';
+
+// Re-export RuntimeEnvironment for convenience
+export type { RuntimeEnvironment } from './environment';
+
+/**
+ * Environment-specific target types
+ *
+ * Conditional type that resolves to the correct target type based on runtime environment:
+ * - Browser: Element (DOM element)
+ * - Node: object (generic context object)
+ * - Universal: Element | object (works in both)
+ */
+export type EventTarget<TEnv extends RuntimeEnvironment> = TEnv extends 'browser'
+  ? Element
+  : TEnv extends 'node'
+    ? object
+    : Element | object;
+
+/**
+ * Environment-specific native event types
+ *
+ * Conditional type that resolves to the correct event type based on runtime environment:
+ * - Browser: Event (native DOM event)
+ * - Node: never (no native events in Node.js)
+ * - Universal: Event | undefined (optional in universal code)
+ */
+export type NativeEvent<TEnv extends RuntimeEnvironment> = TEnv extends 'browser'
+  ? Event
+  : TEnv extends 'node'
+    ? never
+    : Event | undefined;
 
 /**
  * Event payload passed to event handlers
+ *
+ * Generic interface that adapts to the runtime environment:
+ * - In browser: target is Element, nativeEvent is Event
+ * - In Node.js: target is object, nativeEvent is never (not available)
+ * - Universal (default): target is Element | object, nativeEvent is optional
+ *
+ * @template TEnv - Runtime environment ('browser' | 'node' | 'universal')
+ *
+ * @example
+ * // Browser-specific payload
+ * const browserPayload: EventSourcePayload<'browser'> = {
+ *   type: 'click',
+ *   data: {},
+ *   target: element,      // ✅ Must be Element
+ *   nativeEvent: event,   // ✅ Must be Event
+ * };
+ *
+ * @example
+ * // Node-specific payload
+ * const nodePayload: EventSourcePayload<'node'> = {
+ *   type: 'request',
+ *   data: { request, response },
+ *   target: {},           // ✅ Can be any object
+ *   // nativeEvent: event // ❌ TypeScript error - not available in Node
+ * };
+ *
+ * @example
+ * // Universal payload (default)
+ * const universalPayload: EventSourcePayload = {
+ *   type: 'custom',
+ *   data: {},
+ *   target: element,      // ✅ Can be Element or object
+ *   nativeEvent: event,   // ✅ Optional
+ * };
  */
-export interface EventSourcePayload {
-  /** The event type (e.g., 'request', 'message', 'connection') */
+export interface EventSourcePayload<TEnv extends RuntimeEnvironment = 'universal'> {
+  /** The event type (e.g., 'request', 'message', 'connection', 'click') */
   type: string;
 
   /** Raw event data from the source */
   data: unknown;
 
-  /** Target element or context object */
-  target?: Element | object | null;
+  /**
+   * Event target
+   * - Browser: Element (DOM element)
+   * - Node: object (generic context object)
+   * - Universal: Element | object
+   */
+  target?: EventTarget<TEnv> | null;
 
-  /** Original native event if applicable */
-  nativeEvent?: Event;
+  /**
+   * Original native event (browser only)
+   * - Browser: Event (native DOM event)
+   * - Node: never (not available)
+   * - Universal: Event | undefined
+   */
+  nativeEvent?: NativeEvent<TEnv>;
 
   /** Additional metadata */
   meta?: Record<string, unknown>;
@@ -40,8 +116,13 @@ export interface EventSourcePayload {
 
 /**
  * Handler function invoked when an event source fires
+ *
+ * @template TEnv - Runtime environment ('browser' | 'node' | 'universal')
  */
-export type EventSourceHandler = (payload: EventSourcePayload, context: ExecutionContext) => void;
+export type EventSourceHandler<TEnv extends RuntimeEnvironment = 'universal'> = (
+  payload: EventSourcePayload<TEnv>,
+  context: ExecutionContext
+) => void;
 
 /**
  * Subscription returned when attaching to an event source

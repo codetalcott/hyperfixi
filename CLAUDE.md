@@ -413,20 +413,66 @@ See [packages/core/docs/API.md](packages/core/docs/API.md) for complete document
 
 > **Note:** Legacy methods (`compile()`, `run()`, `evaluate()`) still work but show deprecation warnings. Migrate to `compileSync()`, `eval()`, `validate()` for new code.
 
+## Type Safety: Environment-Specific Conditional Types
+
+HyperFixi uses TypeScript conditional types for zero-cost type safety across browser and server environments:
+
+**Browser code** (full DOM type safety):
+
+```typescript
+import type { BrowserEventPayload } from '@hyperfixi/core/registry/browser';
+
+const payload: BrowserEventPayload = {
+  type: 'click',
+  target: element, // ✅ Must be Element
+  nativeEvent: event, // ✅ Must be Event
+};
+```
+
+**Server code** (prevents DOM API misuse):
+
+```typescript
+import type { ServerEventPayload } from '@hyperfixi/server-integration';
+
+const payload: ServerEventPayload = {
+  type: 'request',
+  data: { request, response },
+  target: null, // ✅ Generic object
+  // nativeEvent        // ❌ TypeScript error - not available in Node.js
+};
+```
+
+**Universal code** (works in both):
+
+```typescript
+import type { UniversalEventPayload } from '@hyperfixi/core/registry/universal';
+
+function handle(payload: UniversalEventPayload) {
+  if (payload.target instanceof Element) {
+    payload.target.classList.add('active'); // ✅ Type-safe
+  }
+}
+```
+
+See [TYPE_SAFETY_DESIGN.md](TYPE_SAFETY_DESIGN.md) for implementation details.
+
 ## Important Files
 
-| File                                              | Purpose                            |
-| ------------------------------------------------- | ---------------------------------- |
-| `packages/core/src/runtime/runtime.ts`            | Main runtime (extends RuntimeBase) |
-| `packages/core/src/parser/parser.ts`              | Hyperscript parser (~3000 lines)   |
-| `packages/core/src/commands-v2/`                  | All 43 command implementations     |
-| `packages/i18n/src/grammar/transformer.ts`        | GrammarTransformer class           |
-| `packages/i18n/src/browser.ts`                    | Browser bundle exports             |
-| `packages/semantic/src/parser/semantic-parser.ts` | Semantic parser                    |
-| `packages/semantic/src/tokenizers/`               | 13 language tokenizers             |
-| `packages/core/src/api/hyperscript-api.ts`        | Main API implementation (v2)       |
-| `packages/core/docs/API.md`                       | API documentation                  |
-| `roadmap/plan.md`                                 | Development context and status     |
+| File                                              | Purpose                                     |
+| ------------------------------------------------- | ------------------------------------------- |
+| `packages/core/src/runtime/runtime.ts`            | Main runtime (extends RuntimeBase)          |
+| `packages/core/src/parser/parser.ts`              | Hyperscript parser (~3000 lines)            |
+| `packages/core/src/commands-v2/`                  | All 43 command implementations              |
+| `packages/core/src/registry/`                     | Registry system (commands, events, context) |
+| `packages/core/src/registry/browser-types.ts`     | Browser-specific types                      |
+| `packages/server-integration/src/types/`          | Server-specific types                       |
+| `packages/i18n/src/grammar/transformer.ts`        | GrammarTransformer class                    |
+| `packages/i18n/src/browser.ts`                    | Browser bundle exports                      |
+| `packages/semantic/src/parser/semantic-parser.ts` | Semantic parser                             |
+| `packages/semantic/src/tokenizers/`               | 13 language tokenizers                      |
+| `packages/core/src/api/hyperscript-api.ts`        | Main API implementation (v2)                |
+| `packages/core/docs/API.md`                       | API documentation                           |
+| `roadmap/plan.md`                                 | Development context and status              |
 
 ## Vite Plugin (Recommended)
 

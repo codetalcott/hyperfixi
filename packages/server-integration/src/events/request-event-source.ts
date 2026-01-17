@@ -13,42 +13,17 @@ import type {
   EventSource,
   EventSourceSubscription,
   EventSourceSubscribeOptions,
-  EventSourcePayload,
 } from '@hyperfixi/core/registry';
 import type { ExecutionContext } from '@hyperfixi/core';
+import type {
+  ServerEventPayload,
+  ServerRequest,
+  ServerResponse,
+  HttpMethod,
+} from '../types/server-types';
 
-/**
- * HTTP Method type
- */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | '*';
-
-/**
- * Framework-agnostic request interface
- */
-export interface ServerRequest {
-  method: HttpMethod;
-  url: string;
-  path: string;
-  query: Record<string, string | string[]>;
-  params: Record<string, string>;
-  headers: Record<string, string | string[]>;
-  body: unknown;
-  ip?: string;
-  originalUrl?: string;
-}
-
-/**
- * Framework-agnostic response interface
- */
-export interface ServerResponse {
-  status(code: number): ServerResponse;
-  header(name: string, value: string): ServerResponse;
-  json(data: unknown): void;
-  html(content: string): void;
-  text(content: string): void;
-  redirect(url: string, code?: number): void;
-  send(data: unknown): void;
-}
+// Re-export types for backward compatibility
+export type { HttpMethod, ServerRequest, ServerResponse } from '../types/server-types';
 
 /**
  * Request handler registered via the event source
@@ -57,7 +32,7 @@ export interface RequestHandler {
   id: string;
   method: HttpMethod | '*';
   pattern: string | RegExp;
-  handler: (payload: EventSourcePayload, context: ExecutionContext) => void;
+  handler: (payload: ServerEventPayload, context: ExecutionContext) => void;
   priority: number; // Higher priority handlers are checked first
 }
 
@@ -250,7 +225,7 @@ export function createRequestEventSource(): EventSource & {
             `[RequestEventSource] Matched ${request.method} ${request.path} -> handler ${handler.id}`
           );
 
-          const payload: EventSourcePayload = {
+          const payload: ServerEventPayload = {
             type: request.method,
             data: {
               request,
