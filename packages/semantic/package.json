@@ -1,7 +1,7 @@
 {
   "name": "@hyperfixi/semantic",
   "version": "0.1.0",
-  "description": "Semantic multilingual parser for hyperscript (13 languages)",
+  "description": "Semantic multilingual parser for hyperscript (23 languages)",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

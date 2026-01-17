@@ -16,7 +16,7 @@ import type {
 import { PatternMatcher } from './parser/pattern-matcher';
 import { getTokenizer } from './tokenizers';
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
-import { getPatternsForLanguage } from './registry';
+import { getPatternsForLanguage, getRegisteredLanguages } from './registry';
 import { SemanticCache, semanticCache, type SemanticCacheConfig, type CacheStats } from './cache';
 
 // =============================================================================
@@ -106,22 +106,8 @@ export class SemanticAnalyzerImpl implements SemanticAnalyzer {
 
   constructor(options: SemanticAnalyzerOptions = {}) {
     this.patternMatcher = new PatternMatcher();
-    // All 13 supported languages
-    this.languages = new Set([
-      'en',
-      'ja',
-      'ar',
-      'es',
-      'ko',
-      'tr',
-      'zh',
-      'pt',
-      'fr',
-      'de',
-      'id',
-      'qu',
-      'sw',
-    ]);
+    // Get all registered languages from the registry (dynamically updated as languages are loaded)
+    this.languages = new Set(getRegisteredLanguages());
 
     // Initialize cache
     if (options.cache === false) {

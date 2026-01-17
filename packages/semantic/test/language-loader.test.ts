@@ -53,12 +53,12 @@ describe('Language Loader', () => {
   // ==========================================================================
 
   describe('SUPPORTED_LANGUAGES', () => {
-    it('contains exactly 13 languages', () => {
-      expect(SUPPORTED_LANGUAGES).toHaveLength(13);
+    it('contains exactly 23 languages', () => {
+      expect(SUPPORTED_LANGUAGES).toHaveLength(23);
     });
 
     it('contains all expected language codes', () => {
-      const expected = ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw'];
+      const expected = ['ar', 'bn', 'de', 'en', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
       for (const code of expected) {
         expect(SUPPORTED_LANGUAGES).toContain(code);
       }
@@ -148,9 +148,9 @@ describe('Language Loader', () => {
       expect(results[2].error).toBeUndefined();
     });
 
-    it('loads all 13 languages without errors', async () => {
+    it('loads all 23 languages without errors', async () => {
       const results = await loadLanguages(SUPPORTED_LANGUAGES, { skipIfRegistered: false });
-      expect(results).toHaveLength(13);
+      expect(results).toHaveLength(23);
       const errors = results.filter(r => r.error);
       expect(errors).toHaveLength(0);
     });
@@ -169,7 +169,7 @@ describe('Language Loader', () => {
     it('returns all languages when all are registered', () => {
       // Test setup registers all languages
       const loaded = getLoadedLanguages();
-      expect(loaded.length).toBe(13);
+      expect(loaded.length).toBe(23);
     });
 
     it('contains only valid language codes', () => {

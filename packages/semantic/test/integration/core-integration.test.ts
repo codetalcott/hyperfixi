@@ -34,24 +34,14 @@ describe('Core Integration', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support all 13 languages', () => {
+    it('should support all 23 languages', () => {
       const languages = analyzer.supportedLanguages();
-      // Original 7 languages
-      expect(languages).toContain('en');
-      expect(languages).toContain('ja');
-      expect(languages).toContain('ar');
-      expect(languages).toContain('es');
-      expect(languages).toContain('ko');
-      expect(languages).toContain('tr');
-      expect(languages).toContain('zh');
-      // 6 new languages
-      expect(languages).toContain('pt');
-      expect(languages).toContain('fr');
-      expect(languages).toContain('de');
-      expect(languages).toContain('id');
-      expect(languages).toContain('qu');
-      expect(languages).toContain('sw');
-      expect(languages.length).toBe(13);
+      // All 23 languages (alphabetical)
+      const expected = ['ar', 'bn', 'de', 'en', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+      for (const code of expected) {
+        expect(languages).toContain(code);
+      }
+      expect(languages.length).toBe(23);
     });
 
     it('should return true for supported languages', () => {
