@@ -369,6 +369,8 @@ export interface LanguageToken {
   readonly stem?: string;
   /** Confidence in the morphological stem (0.0-1.0) */
   readonly stemConfidence?: number;
+  /** Additional metadata for specific token types (e.g., event modifier data) */
+  readonly metadata?: Record<string, unknown>;
 }
 
 export type TokenKind =
@@ -377,6 +379,7 @@ export type TokenKind =
   | 'literal' // String or number literal
   | 'particle' // Grammatical particle (を, に, من)
   | 'conjunction' // Grammatical conjunction (Arabic و/ف proclitics)
+  | 'event-modifier' // Event modifier (.once, .debounce(300), .throttle(100))
   | 'identifier' // Variable or property name
   | 'operator' // Comparison or logical operator
   | 'punctuation' // Brackets, quotes, etc.

@@ -251,7 +251,11 @@ export class KoreanMorphologicalNormalizer implements MorphologicalNormalizer {
    * Normalize a Korean word to its stem form.
    */
   normalize(word: string): NormalizationResult {
-    // Check for 하다 verb patterns first (most common verb type)
+    // Check for compound conjugations first (multi-layer suffixes)
+    const compoundResult = this.normalizeCompound(word);
+    if (compoundResult) return compoundResult;
+
+    // Check for 하다 verb patterns (most common verb type)
     const hadaResult = this.tryHadaNormalization(word);
     if (hadaResult) return hadaResult;
 
@@ -301,6 +305,121 @@ export class KoreanMorphologicalNormalizer implements MorphologicalNormalizer {
         });
       }
     }
+    return null;
+  }
+
+  /**
+   * Normalize compound conjugations (multi-layer suffixes).
+   * Korean has complex compound forms that combine multiple grammatical elements.
+   */
+  private normalizeCompound(word: string): NormalizationResult | null {
+    // Compound patterns with sequential/modal forms
+    const compoundPatterns: readonly {
+      pattern: string;
+      suffixes: string[];
+      confidence: number;
+      conjugationType: ConjugationType;
+      minStemLength: number;
+    }[] = [
+      // Sequential past forms (after doing, was)
+      {
+        pattern: '하고나서였어',
+        suffixes: ['하고나서', '였어'],
+        confidence: 0.78,
+        conjugationType: 'sequential-after',
+        minStemLength: 2,
+      },
+      {
+        pattern: '하고나서였다',
+        suffixes: ['하고나서', '였다'],
+        confidence: 0.78,
+        conjugationType: 'sequential-after',
+        minStemLength: 2,
+      },
+      {
+        pattern: '하고나서',
+        suffixes: ['하고', '나서'],
+        confidence: 0.85,
+        conjugationType: 'sequential-after',
+        minStemLength: 2,
+      },
+
+      // Modal necessity past forms (had to do)
+      {
+        pattern: '해야했어',
+        suffixes: ['해야', '했어'],
+        confidence: 0.8,
+        conjugationType: 'obligation',
+        minStemLength: 2,
+      },
+      {
+        pattern: '해야했다',
+        suffixes: ['해야', '했다'],
+        confidence: 0.8,
+        conjugationType: 'obligation',
+        minStemLength: 2,
+      },
+      {
+        pattern: '해야했습니다',
+        suffixes: ['해야', '했습니다'],
+        confidence: 0.8,
+        conjugationType: 'obligation',
+        minStemLength: 2,
+      },
+
+      // Honorific simultaneous forms (while doing, honorific)
+      {
+        pattern: '하시면서',
+        suffixes: ['하시', '면서'],
+        confidence: 0.82,
+        conjugationType: 'connective',
+        minStemLength: 2,
+      },
+      {
+        pattern: '하시며',
+        suffixes: ['하시', '며'],
+        confidence: 0.82,
+        conjugationType: 'connective',
+        minStemLength: 2,
+      },
+
+      // Progressive forms with copula
+      {
+        pattern: '하고있었어',
+        suffixes: ['하고', '있었어'],
+        confidence: 0.8,
+        conjugationType: 'progressive',
+        minStemLength: 2,
+      },
+      {
+        pattern: '하고있었다',
+        suffixes: ['하고', '있었다'],
+        confidence: 0.8,
+        conjugationType: 'progressive',
+        minStemLength: 2,
+      },
+    ];
+
+    for (const {
+      pattern,
+      suffixes,
+      confidence,
+      conjugationType,
+      minStemLength,
+    } of compoundPatterns) {
+      if (word.endsWith(pattern)) {
+        const stem = word.slice(0, -pattern.length);
+
+        // Validate minimum stem length
+        if (stem.length < minStemLength) continue;
+
+        return normalized(stem, confidence, {
+          removedSuffixes: suffixes,
+          conjugationType,
+        });
+      }
+    }
+
     return null;
   }
 }

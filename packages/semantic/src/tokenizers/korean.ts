@@ -104,6 +104,128 @@ const SINGLE_CHAR_PARTICLES = new Set([
  */
 const MULTI_CHAR_PARTICLES = ['에서', '으로', '부터', '까지', '처럼', '보다'];
 
+/**
+ * Particle metadata mapping particles to semantic roles, confidence scores,
+ * and vowel harmony variants. Korean particles change based on whether the
+ * preceding syllable ends in a consonant or vowel.
+ */
+interface ParticleMetadata {
+  readonly role: string; // SemanticRole
+  readonly confidence: number;
+  readonly variant?: 'consonant' | 'vowel'; // For vowel harmony pairs
+  readonly description?: string;
+}
+
+const PARTICLE_ROLES = new Map<string, ParticleMetadata>([
+  // Subject markers (vowel harmony pair)
+  [
+    '이',
+    {
+      role: 'agent',
+      confidence: 0.85,
+      variant: 'consonant',
+      description: 'subject marker (after consonant)',
+    },
+  ],
+  [
+    '가',
+    {
+      role: 'agent',
+      confidence: 0.85,
+      variant: 'vowel',
+      description: 'subject marker (after vowel)',
+    },
+  ],
+
+  // Object markers (vowel harmony pair)
+  [
+    '을',
+    {
+      role: 'patient',
+      confidence: 0.95,
+      variant: 'consonant',
+      description: 'object marker (after consonant)',
+    },
+  ],
+  [
+    '를',
+    {
+      role: 'patient',
+      confidence: 0.95,
+      variant: 'vowel',
+      description: 'object marker (after vowel)',
+    },
+  ],
+
+  // Topic markers (vowel harmony pair)
+  [
+    '은',
+    {
+      role: 'agent',
+      confidence: 0.75,
+      variant: 'consonant',
+      description: 'topic marker (after consonant)',
+    },
+  ],
+  [
+    '는',
+    {
+      role: 'agent',
+      confidence: 0.75,
+      variant: 'vowel',
+      description: 'topic marker (after vowel)',
+    },
+  ],
+
+  // Location/time markers
+  ['에', { role: 'destination', confidence: 0.85, description: 'at/to marker' }],
+  ['에서', { role: 'source', confidence: 0.8, description: 'at/from marker (action location)' }],
+
+  // Direction/means markers (vowel harmony pair)
+  [
+    '로',
+    {
+      role: 'destination',
+      confidence: 0.85,
+      variant: 'vowel',
+      description: 'to/by means (after vowel or ㄹ)',
+    },
+  ],
+  [
+    '으로',
+    {
+      role: 'destination',
+      confidence: 0.85,
+      variant: 'consonant',
+      description: 'to/by means (after consonant)',
+    },
+  ],
+
+  // And/with markers (vowel harmony pair)
+  [
+    '와',
+    { role: 'style', confidence: 0.7, variant: 'vowel', description: 'and/with (after vowel)' },
+  ],
+  [
+    '과',
+    {
+      role: 'style',
+      confidence: 0.7,
+      variant: 'consonant',
+      description: 'and/with (after consonant)',
+    },
+  ],
+
+  // Other markers
+  ['의', { role: 'patient', confidence: 0.6, description: 'possessive marker' }],
+  ['도', { role: 'patient', confidence: 0.65, description: 'also/too marker' }],
+  ['만', { role: 'patient', confidence: 0.65, description: 'only marker' }],
+  ['부터', { role: 'source', confidence: 0.9, description: 'from/since marker' }],
+  ['까지', { role: 'destination', confidence: 0.75, description: 'until/to marker' }],
+  ['처럼', { role: 'manner', confidence: 0.8, description: 'like/as marker' }],
+  ['보다', { role: 'source', confidence: 0.75, description: 'than marker' }],
+]);
+
 // =============================================================================
 // Korean Extras (keywords not in profile)
 // =============================================================================
@@ -250,6 +372,14 @@ export class KoreanTokenizer extends BaseTokenizer {
 
       // Try CSS selector first (ASCII-based, highest priority)
       if (isSelectorStart(input[pos])) {
+        // Check for event modifier first (.once, .debounce(), etc.)
+        const modifierToken = this.tryEventModifier(input, pos);
+        if (modifierToken) {
+          tokens.push(modifierToken);
+          pos = modifierToken.position.end;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);
@@ -310,14 +440,40 @@ export class KoreanTokenizer extends BaseTokenizer {
       // Try multi-character particle (before single-character)
       const multiParticle = this.tryMultiCharParticle(input, pos, MULTI_CHAR_PARTICLES);
       if (multiParticle) {
-        tokens.push(multiParticle);
+        // Add role metadata to particle token
+        const metadata = PARTICLE_ROLES.get(multiParticle.value);
+        if (metadata) {
+          tokens.push({
+            ...multiParticle,
+            metadata: {
+              particleRole: metadata.role,
+              particleConfidence: metadata.confidence,
+              particleVariant: metadata.variant,
+            },
+          });
+        } else {
+          tokens.push(multiParticle);
+        }
         pos = multiParticle.position.end;
         continue;
       }
 
       // Try single-character particle
       if (SINGLE_CHAR_PARTICLES.has(input[pos])) {
-        tokens.push(createToken(input[pos], 'particle', createPosition(pos, pos + 1)));
+        const particle = input[pos];
+        const metadata = PARTICLE_ROLES.get(particle);
+        if (metadata) {
+          tokens.push({
+            ...createToken(particle, 'particle', createPosition(pos, pos + 1)),
+            metadata: {
+              particleRole: metadata.role,
+              particleConfidence: metadata.confidence,
+              particleVariant: metadata.variant,
+            },
+          });
+        } else {
+          tokens.push(createToken(particle, 'particle', createPosition(pos, pos + 1)));
+        }
         pos++;
         continue;
       }

@@ -885,6 +885,45 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   }
 
   /**
+   * Try to extract an event modifier at the current position.
+   * Event modifiers are .once, .debounce(N), .throttle(N), .queue(strategy)
+   */
+  protected tryEventModifier(input: string, pos: number): LanguageToken | null {
+    // Must start with a dot
+    if (input[pos] !== '.') {
+      return null;
+    }
+
+    // Match pattern: .(once|debounce|throttle|queue) followed by optional (value)
+    const match = input
+      .slice(pos)
+      .match(/^\.(?:once|debounce|throttle|queue)(?:\(([^)]+)\))?(?:\s|$|\.)/);
+    if (!match) {
+      return null;
+    }
+
+    const fullMatch = match[0].replace(/(\s|\.)$/, ''); // Remove trailing space or dot
+    const modifierName = fullMatch.slice(1).split('(')[0]; // Extract modifier name
+    const value = match[1]; // Extract value from parentheses if present
+
+    // Create token with metadata
+    const token = createToken(
+      fullMatch,
+      'event-modifier',
+      createPosition(pos, pos + fullMatch.length)
+    );
+
+    // Add metadata for the modifier
+    return {
+      ...token,
+      metadata: {
+        modifierName,
+        value: value ? (modifierName === 'queue' ? value : parseInt(value, 10)) : undefined,
+      },
+    };
+  }
+
+  /**
    * Try to extract a string literal at the current position.
    */
   protected tryString(input: string, pos: number): LanguageToken | null {

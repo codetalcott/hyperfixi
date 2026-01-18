@@ -125,6 +125,9 @@ export class SemanticParserImpl implements ISemanticParser {
       throw new Error('Event handler pattern matched but no event captured');
     }
 
+    // Extract event modifiers (.once, .debounce(), .throttle(), etc.)
+    const eventModifiers = patternMatcher.extractEventModifiers(tokens);
+
     let body: SemanticNode[];
 
     // Check if pattern captured an action (grammar-transformed patterns)
@@ -186,7 +189,7 @@ export class SemanticParserImpl implements ISemanticParser {
       body = this.parseBody(tokens, commandPatterns, language);
     }
 
-    return createEventHandler(eventValue, body, undefined, {
+    return createEventHandler(eventValue, body, eventModifiers, {
       sourceLanguage: language,
       patternId: match.pattern.id,
     });

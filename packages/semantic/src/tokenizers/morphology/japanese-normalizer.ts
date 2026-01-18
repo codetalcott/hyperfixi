@@ -175,7 +175,11 @@ export class JapaneseMorphologicalNormalizer implements MorphologicalNormalizer 
    * Normalize a Japanese word to its stem form.
    */
   normalize(word: string): NormalizationResult {
-    // Check for する verb patterns first (most common compound verbs)
+    // Check for compound conjugations first (multi-layer suffixes)
+    const compoundResult = this.normalizeCompound(word);
+    if (compoundResult) return compoundResult;
+
+    // Check for する verb patterns (most common compound verbs)
     const suruResult = this.trySuruNormalization(word);
     if (suruResult) return suruResult;
 
@@ -225,6 +229,57 @@ export class JapaneseMorphologicalNormalizer implements MorphologicalNormalizer 
         });
       }
     }
+    return null;
+  }
+
+  /**
+   * Normalize compound conjugations (multi-layer suffixes).
+   * These are combinations like ていなかった (was not doing), でいない (is not doing).
+   * Handles cases that single-suffix rules miss.
+   */
+  private normalizeCompound(word: string): NormalizationResult | null {
+    // Compound patterns with negative progressive forms
+    const compoundPatterns: readonly {
+      pattern: string;
+      suffixes: string[];
+      confidence: number;
+      minStemLength: number;
+    }[] = [
+      // Progressive negative past forms
+      {
+        pattern: 'ていなかった',
+        suffixes: ['て', 'い', 'なかった'],
+        confidence: 0.8,
+        minStemLength: 2,
+      },
+      {
+        pattern: 'でいなかった',
+        suffixes: ['で', 'い', 'なかった'],
+        confidence: 0.8,
+        minStemLength: 2,
+      },
+      // Progressive negative forms
+      { pattern: 'ていない', suffixes: ['て', 'い', 'ない'], confidence: 0.82, minStemLength: 2 },
+      { pattern: 'でいない', suffixes: ['で', 'い', 'ない'], confidence: 0.82, minStemLength: 2 },
+      // Progressive past forms
+      { pattern: 'ていた', suffixes: ['て', 'い', 'た'], confidence: 0.85, minStemLength: 2 },
+      { pattern: 'でいた', suffixes: ['で', 'い', 'た'], confidence: 0.85, minStemLength: 2 },
+    ];
+
+    for (const { pattern, suffixes, confidence, minStemLength } of compoundPatterns) {
+      if (word.endsWith(pattern)) {
+        const stem = word.slice(0, -pattern.length);
+
+        // Validate minimum stem length
+        if (stem.length < minStemLength) continue;
+
+        return normalized(stem, confidence, {
+          removedSuffixes: suffixes,
+          conjugationType: 'compound',
+        });
+      }
+    }
+
     return null;
   }
 }

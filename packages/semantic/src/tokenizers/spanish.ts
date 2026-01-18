@@ -210,6 +210,14 @@ export class SpanishTokenizer extends BaseTokenizer {
 
       // Try CSS selector first
       if (isSelectorStart(input[pos])) {
+        // Check for event modifier first (.once, .debounce(), etc.)
+        const modifierToken = this.tryEventModifier(input, pos);
+        if (modifierToken) {
+          tokens.push(modifierToken);
+          pos = modifierToken.position.end;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);

@@ -174,6 +174,14 @@ export class EnglishTokenizer extends BaseTokenizer {
       // Try CSS selector first (highest priority)
       // But check if this is a property access or method call first
       if (isSelectorStart(input[pos])) {
+        // Check for event modifier first (.once, .debounce(), etc.)
+        const modifierToken = this.tryEventModifier(input, pos);
+        if (modifierToken) {
+          tokens.push(modifierToken);
+          pos = modifierToken.position.end;
+          continue;
+        }
+
         // Check for property access pattern: identifier.identifier or identifier.method()
         // When the previous token is an identifier or keyword AND there's no whitespace,
         // treat . as property accessor. With whitespace (e.g., "add .active"), it's a selector.

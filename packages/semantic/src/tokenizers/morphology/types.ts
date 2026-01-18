@@ -109,6 +109,7 @@ export type ConjugationType =
   | 'contracted' // ちゃう/じゃう - contracted completion (てしまう)
   | 'contracted-past' // ちゃった/じゃった - contracted past completion
   // Compound
+  | 'compound' // Multi-layer suffixes (ていなかった, 하고나서였어)
   | 'te-form' // Japanese て-form
   | 'dictionary'; // Base/infinitive form
 

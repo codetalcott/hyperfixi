@@ -81,6 +81,31 @@ const SINGLE_CHAR_PARTICLES = new Set(['を', 'に', 'で', 'へ', 'と', 'の',
  */
 const MULTI_CHAR_PARTICLES = ['から', 'まで', 'より'];
 
+/**
+ * Particle metadata mapping particles to semantic roles and confidence scores.
+ * Used to enhance particle tokens with role information for the pattern matcher.
+ */
+interface ParticleMetadata {
+  readonly role: string; // SemanticRole
+  readonly confidence: number;
+  readonly description?: string;
+}
+
+const PARTICLE_ROLES = new Map<string, ParticleMetadata>([
+  ['を', { role: 'patient', confidence: 0.95, description: 'object marker' }],
+  ['に', { role: 'destination', confidence: 0.85, description: 'destination/time marker' }],
+  ['で', { role: 'manner', confidence: 0.88, description: 'means/location marker' }],
+  ['から', { role: 'source', confidence: 0.9, description: 'from/source marker' }],
+  ['まで', { role: 'destination', confidence: 0.75, description: 'until/boundary marker' }],
+  ['へ', { role: 'destination', confidence: 0.9, description: 'direction marker' }],
+  ['と', { role: 'style', confidence: 0.7, description: 'with/and marker' }],
+  ['の', { role: 'patient', confidence: 0.6, description: 'possessive marker' }],
+  ['が', { role: 'agent', confidence: 0.85, description: 'subject marker' }],
+  ['は', { role: 'agent', confidence: 0.75, description: 'topic marker' }],
+  ['も', { role: 'patient', confidence: 0.65, description: 'also/too marker' }],
+  ['より', { role: 'source', confidence: 0.85, description: 'from/than marker' }],
+]);
+
 // =============================================================================
 // Japanese Extras (keywords not in profile)
 // =============================================================================
@@ -193,6 +218,14 @@ export class JapaneseTokenizer extends BaseTokenizer {
 
       // Try CSS selector first (ASCII-based, highest priority)
       if (isSelectorStart(input[pos])) {
+        // Check for event modifier first (.once, .debounce(), etc.)
+        const modifierToken = this.tryEventModifier(input, pos);
+        if (modifierToken) {
+          tokens.push(modifierToken);
+          pos = modifierToken.position.end;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);
@@ -242,7 +275,19 @@ export class JapaneseTokenizer extends BaseTokenizer {
       // Try multi-character particle (before single-character)
       const multiParticle = this.tryMultiCharParticle(input, pos, MULTI_CHAR_PARTICLES);
       if (multiParticle) {
-        tokens.push(multiParticle);
+        // Add role metadata to particle token
+        const metadata = PARTICLE_ROLES.get(multiParticle.value);
+        if (metadata) {
+          tokens.push({
+            ...multiParticle,
+            metadata: {
+              particleRole: metadata.role,
+              particleConfidence: metadata.confidence,
+            },
+          });
+        } else {
+          tokens.push(multiParticle);
+        }
         pos = multiParticle.position.end;
         continue;
       }
@@ -258,7 +303,19 @@ export class JapaneseTokenizer extends BaseTokenizer {
           continue;
         }
         // Not a multi-char keyword, treat as particle
-        tokens.push(createToken(input[pos], 'particle', createPosition(pos, pos + 1)));
+        const particle = input[pos];
+        const metadata = PARTICLE_ROLES.get(particle);
+        if (metadata) {
+          tokens.push({
+            ...createToken(particle, 'particle', createPosition(pos, pos + 1)),
+            metadata: {
+              particleRole: metadata.role,
+              particleConfidence: metadata.confidence,
+            },
+          });
+        } else {
+          tokens.push(createToken(particle, 'particle', createPosition(pos, pos + 1)));
+        }
         pos++;
         continue;
       }

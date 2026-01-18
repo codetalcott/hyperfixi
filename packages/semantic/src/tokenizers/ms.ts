@@ -87,6 +87,14 @@ export class MalayTokenizer extends BaseTokenizer {
 
       // CSS selectors
       if (isSelectorStart(input[pos])) {
+        // Check for event modifier first (.once, .debounce(), etc.)
+        const modifierToken = this.tryEventModifier(input, pos);
+        if (modifierToken) {
+          tokens.push(modifierToken);
+          pos = modifierToken.position.end;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);

@@ -926,6 +926,72 @@ export class PatternMatcher {
       tokens.advance();
     }
   }
+
+  /**
+   * Extract event modifiers from the token stream.
+   * Event modifiers are .once, .debounce(N), .throttle(N), .queue(strategy)
+   * that can appear after event names.
+   *
+   * Returns EventModifiers object or undefined if no modifiers found.
+   */
+  extractEventModifiers(tokens: TokenStream): import('../types').EventModifiers | undefined {
+    const modifiers: {
+      once?: boolean;
+      debounce?: number;
+      throttle?: number;
+      queue?: 'first' | 'last' | 'all' | 'none';
+      from?: SemanticValue;
+    } = {};
+
+    let foundModifier = false;
+
+    // Consume all consecutive event modifier tokens
+    while (!tokens.isAtEnd()) {
+      const token = tokens.peek();
+      if (!token || token.kind !== 'event-modifier') {
+        break;
+      }
+
+      const metadata = token.metadata as
+        | { modifierName: string; value?: number | string }
+        | undefined;
+      if (!metadata) {
+        break;
+      }
+
+      foundModifier = true;
+
+      switch (metadata.modifierName) {
+        case 'once':
+          modifiers.once = true;
+          break;
+        case 'debounce':
+          if (typeof metadata.value === 'number') {
+            modifiers.debounce = metadata.value;
+          }
+          break;
+        case 'throttle':
+          if (typeof metadata.value === 'number') {
+            modifiers.throttle = metadata.value;
+          }
+          break;
+        case 'queue':
+          if (
+            metadata.value === 'first' ||
+            metadata.value === 'last' ||
+            metadata.value === 'all' ||
+            metadata.value === 'none'
+          ) {
+            modifiers.queue = metadata.value;
+          }
+          break;
+      }
+
+      tokens.advance();
+    }
+
+    return foundModifier ? modifiers : undefined;
+  }
 }
 
 // =============================================================================
