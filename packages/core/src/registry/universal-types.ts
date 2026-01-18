@@ -100,23 +100,8 @@ export type UniversalEventHandler = EventSourceHandler<'universal'>;
 export interface UniversalEventSource<
   TEnv extends RuntimeEnvironment = 'universal',
 > extends EventSource {
-  /**
-   * Subscribe to events in any environment
-   *
-   * @param options Subscription options
-   * @param context Execution context
-   * @returns Subscription for cleanup
-   */
-  subscribe(
-    options: {
-      event: string;
-      handler: EventSourceHandler<TEnv>;
-      target?: string | Element | object;
-      selector?: string;
-      options?: Record<string, unknown>;
-    },
-    context: ExecutionContext
-  ): EventSourceSubscription;
+  // Inherits subscribe() from EventSource - no override needed
+  // The generic TEnv parameter is available for other members if needed
 }
 
 /**

@@ -3,12 +3,17 @@
  */
 
 import { existsSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import type { LanguageCode, BundleInfo, BundleBuildOptions } from './types';
 
 const execAsync = promisify(exec);
+
+// ESM __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Predefined bundle mappings
 const PREDEFINED_BUNDLES = new Map<string, LanguageCode[]>([
@@ -28,7 +33,9 @@ const PREDEFINED_BUNDLES = new Map<string, LanguageCode[]>([
  * Get bundle path in semantic package
  */
 function getBundlePath(bundleName: string): string {
-  const semanticRoot = join(process.cwd(), 'packages/semantic');
+  // Resolve from this file's location: testing-framework/src/multilingual -> project root
+  const projectRoot = join(__dirname, '../../../..');
+  const semanticRoot = join(projectRoot, 'packages/semantic');
   // Bundle naming: browser-{group}.{group}.global.js
   const group = bundleName.replace('browser-', '');
   return join(semanticRoot, 'dist', `${bundleName}.${group}.global.js`);

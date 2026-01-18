@@ -125,7 +125,7 @@ export const sendEmailCommand: MultilingualCommand = {
 
   semanticRoles: {
     primary: 'destination', // Email recipient
-    optional: ['content', 'source'], // Email body, from address
+    optional: ['source'], // From address
   },
 
   metadata: {

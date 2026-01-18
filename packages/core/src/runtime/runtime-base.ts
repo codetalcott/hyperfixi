@@ -998,7 +998,7 @@ export class RuntimeBase {
         // Execute commands
         debug.runtime(`CUSTOM EVENT: Executing commands for event '${event}'`);
         try {
-          await this.evaluateNode({ type: 'program', commands }, eventContext);
+          await this.execute({ type: 'program', commands }, eventContext);
         } catch (e) {
           console.error(`[HyperFixi] Error executing commands for custom event '${event}':`, e);
         }

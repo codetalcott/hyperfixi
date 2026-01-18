@@ -12,4 +12,5 @@ export default defineConfig({
   treeshake: true,
   external: ['better-sqlite3'],
   splitting: false,
+  shims: true, // Enable __dirname and import.meta.url shims
 });

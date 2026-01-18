@@ -59,4 +59,22 @@ export default [
     plugins: commonPlugins,
     external: [],
   },
+  // Multilingual subpath export (for testing-framework)
+  {
+    input: 'src/multilingual/index.ts',
+    output: [
+      {
+        file: 'dist/multilingual/index.mjs',
+        format: 'es',
+        sourcemap: true,
+      },
+      {
+        file: 'dist/multilingual/index.js',
+        format: 'cjs',
+        sourcemap: true,
+      },
+    ],
+    plugins: commonPlugins,
+    external: ['@hyperfixi/semantic'],
+  },
 ];

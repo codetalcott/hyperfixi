@@ -13,11 +13,13 @@ import type { ConnectionOptions } from '../types';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Default path relative to this file's location (src/database/ -> data/)
+// Default path resolved from the dist directory after bundling
+// When bundled by tsup, __dirname will be the dist/ folder
+// So we need to go up one level to reach the package root, then into data/
 const DEFAULT_DB_PATH =
   process.env.LSP_DB_PATH ||
   process.env.HYPERSCRIPT_LSP_DB ||
-  join(__dirname, '../../data/patterns.db');
+  join(__dirname, '../data/patterns.db');
 
 let dbInstance: InstanceType<typeof Database> | null = null;
 let currentDbPath: string | null = null;
