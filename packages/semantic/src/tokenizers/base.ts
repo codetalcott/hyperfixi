@@ -346,14 +346,42 @@ export function extractCssSelector(input: string, startPos: number): string | nu
       }
     }
   } else if (char === '[') {
-    // Attribute selector: [attr] or [attr=value]
+    // Attribute selector: [attr] or [attr=value] or [attr="value"]
+    // Need to track quote state to avoid counting brackets inside quotes
     let depth = 1;
-    selector += input[pos++];
+    let inQuote = false;
+    let quoteChar: string | null = null;
+    let escaped = false;
+
+    selector += input[pos++]; // [
+
     while (pos < input.length && depth > 0) {
       const c = input[pos];
       selector += c;
-      if (c === '[') depth++;
-      else if (c === ']') depth--;
+
+      if (escaped) {
+        // Skip escaped character
+        escaped = false;
+      } else if (c === '\\') {
+        // Next character is escaped
+        escaped = true;
+      } else if (inQuote) {
+        // Inside a quoted string
+        if (c === quoteChar) {
+          inQuote = false;
+          quoteChar = null;
+        }
+      } else {
+        // Not inside a quoted string
+        if (c === '"' || c === "'" || c === '`') {
+          inQuote = true;
+          quoteChar = c;
+        } else if (c === '[') {
+          depth++;
+        } else if (c === ']') {
+          depth--;
+        }
+      }
       pos++;
     }
     if (depth !== 0) return null;
@@ -372,7 +400,14 @@ export function extractCssSelector(input: string, startPos: number): string | nu
     }
     if (selector.length <= 1) return null;
   } else if (char === '<') {
-    // JSX-style element selector: <form>, <form />, <div>
+    // HTML literal selector with optional modifiers and attributes:
+    // - <div>
+    // - <div.class>
+    // - <div#id>
+    // - <div.class#id>
+    // - <button[disabled]/>
+    // - <div.card/>
+    // - <div.class#id[attr="value"]/>
     selector += input[pos++]; // <
 
     // Must be followed by an identifier (tag name)
@@ -383,7 +418,72 @@ export function extractCssSelector(input: string, startPos: number): string | nu
       selector += input[pos++];
     }
 
-    // Skip whitespace
+    // Process modifiers and attributes
+    // Can have multiple .class, one #id, and multiple [attr] in any order
+    while (pos < input.length) {
+      const modChar = input[pos];
+
+      if (modChar === '.') {
+        // Class modifier
+        selector += input[pos++]; // .
+        if (pos >= input.length || !isAsciiIdentifierChar(input[pos])) {
+          return null; // Invalid - class name required after .
+        }
+        while (pos < input.length && isAsciiIdentifierChar(input[pos])) {
+          selector += input[pos++];
+        }
+      } else if (modChar === '#') {
+        // ID modifier
+        selector += input[pos++]; // #
+        if (pos >= input.length || !isAsciiIdentifierChar(input[pos])) {
+          return null; // Invalid - ID required after #
+        }
+        while (pos < input.length && isAsciiIdentifierChar(input[pos])) {
+          selector += input[pos++];
+        }
+      } else if (modChar === '[') {
+        // Attribute modifier: [disabled] or [type="button"]
+        // Need to track quote state to avoid counting brackets inside quotes
+        let depth = 1;
+        let inQuote = false;
+        let quoteChar: string | null = null;
+        let escaped = false;
+
+        selector += input[pos++]; // [
+
+        while (pos < input.length && depth > 0) {
+          const c = input[pos];
+          selector += c;
+
+          if (escaped) {
+            escaped = false;
+          } else if (c === '\\') {
+            escaped = true;
+          } else if (inQuote) {
+            if (c === quoteChar) {
+              inQuote = false;
+              quoteChar = null;
+            }
+          } else {
+            if (c === '"' || c === "'" || c === '`') {
+              inQuote = true;
+              quoteChar = c;
+            } else if (c === '[') {
+              depth++;
+            } else if (c === ']') {
+              depth--;
+            }
+          }
+          pos++;
+        }
+        if (depth !== 0) return null; // Unclosed bracket
+      } else {
+        // No more modifiers
+        break;
+      }
+    }
+
+    // Skip whitespace before optional self-closing /
     while (pos < input.length && isWhitespace(input[pos])) {
       selector += input[pos++];
     }
