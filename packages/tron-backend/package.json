@@ -1,0 +1,80 @@
+{
+  "name": "@hyperfixi/tron-backend",
+  "version": "0.1.0",
+  "description": "TRON (Tree Root Object Notation) backend integration for HyperFixi",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./protocol": {
+      "import": "./dist/types/protocol.js",
+      "types": "./dist/types/protocol.d.ts"
+    },
+    "./adapters": {
+      "import": "./dist/adapters/adapter-interface.js",
+      "types": "./dist/adapters/adapter-interface.d.ts"
+    },
+    "./nodejs": {
+      "import": "./dist/backends/nodejs/adapter.js",
+      "types": "./dist/backends/nodejs/adapter.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts"
+  },
+  "files": [
+    "dist",
+    "src/backends/go",
+    "src/backends/rust",
+    "src/backends/mojo",
+    "README.md"
+  ],
+  "keywords": [
+    "hyperfixi",
+    "hyperscript",
+    "tron",
+    "lite3",
+    "serialization",
+    "zero-copy",
+    "backend",
+    "ssr"
+  ],
+  "author": "HyperFixi Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperfixi/hyperfixi.git",
+    "directory": "packages/tron-backend"
+  },
+  "peerDependencies": {
+    "@hyperfixi/core": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@hyperfixi/core": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "optionalDependencies": {
+    "ffi-napi": "^4.0.0",
+    "ref-napi": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
