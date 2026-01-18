@@ -826,6 +826,9 @@ export class PatternMatcher {
    * Confidence is reduced for:
    * - Stem matches (morphological normalization has inherent uncertainty)
    * - Missing optional roles (but less penalty if role has a default value)
+   *
+   * Confidence is increased for:
+   * - VSO languages (Arabic) when pattern starts with a verb
    */
   private calculateConfidence(
     pattern: LanguagePattern,
@@ -878,7 +881,154 @@ export class PatternMatcher {
       baseConfidence = Math.max(0.5, baseConfidence - stemPenalty);
     }
 
+    // Apply VSO confidence boost for Arabic verb-first patterns
+    const vsoBoost = this.calculateVSOConfidenceBoost(pattern);
+    baseConfidence = Math.min(1.0, baseConfidence + vsoBoost);
+
+    // Apply preposition disambiguation adjustment for Arabic
+    const prepositionAdjustment = this.arabicPrepositionDisambiguation(pattern, captured);
+    baseConfidence = Math.max(0.0, Math.min(1.0, baseConfidence + prepositionAdjustment));
+
     return baseConfidence;
+  }
+
+  /**
+   * Calculate confidence boost for VSO (Verb-Subject-Object) language patterns.
+   * Arabic naturally uses VSO word order, so patterns that start with a verb
+   * should receive a confidence boost.
+   *
+   * Returns +0.15 confidence boost if:
+   * - Language is Arabic ('ar')
+   * - Pattern's first token is a verb keyword
+   *
+   * @param pattern The language pattern being matched
+   * @returns Confidence boost (0 or 0.15)
+   */
+  private calculateVSOConfidenceBoost(pattern: LanguagePattern): number {
+    // Only apply to Arabic
+    if (pattern.language !== 'ar') {
+      return 0;
+    }
+
+    // Check if first token in pattern is a literal (keyword)
+    const firstToken = pattern.template.tokens[0];
+    if (!firstToken || firstToken.type !== 'literal') {
+      return 0;
+    }
+
+    // List of Arabic verb keywords (command verbs)
+    const ARABIC_VERBS = new Set([
+      'بدل',
+      'غير',
+      'أضف',
+      'أزل',
+      'ضع',
+      'اجعل',
+      'عين',
+      'زد',
+      'انقص',
+      'سجل',
+      'أظهر',
+      'أخف',
+      'شغل',
+      'أرسل',
+      'ركز',
+      'شوش',
+      'توقف',
+      'انسخ',
+      'احذف',
+      'اصنع',
+      'انتظر',
+      'انتقال',
+      'أو',
+    ]);
+
+    // Check if first token value is a verb
+    if (ARABIC_VERBS.has(firstToken.value)) {
+      return 0.15;
+    }
+
+    // Check alternatives
+    if (firstToken.alternatives) {
+      for (const alt of firstToken.alternatives) {
+        if (ARABIC_VERBS.has(alt)) {
+          return 0.15;
+        }
+      }
+    }
+
+    return 0;
+  }
+
+  /**
+   * Arabic preposition disambiguation for confidence adjustment.
+   *
+   * Different Arabic prepositions are more or less natural for different semantic roles:
+   * - على (on/upon) is preferred for patient/target roles (element selectors)
+   * - إلى (to) is preferred for destination roles
+   * - من (from) is preferred for source roles
+   * - في (in) is preferred for location roles
+   *
+   * This method analyzes the prepositions used with captured semantic roles and
+   * adjusts confidence based on idiomaticity:
+   * - +0.10 for highly idiomatic preposition choices
+   * - -0.10 for less natural preposition choices
+   *
+   * @param pattern The language pattern being matched
+   * @param captured The captured semantic values
+   * @returns Confidence adjustment (-0.10 to +0.10)
+   */
+  private arabicPrepositionDisambiguation(
+    pattern: LanguagePattern,
+    captured: Map<SemanticRole, SemanticValue>
+  ): number {
+    // Only apply to Arabic
+    if (pattern.language !== 'ar') {
+      return 0;
+    }
+
+    let adjustment = 0;
+
+    // Preferred prepositions for each semantic role
+    // Only including roles that commonly use prepositions in Arabic
+    const PREFERRED_PREPOSITIONS: Partial<Record<SemanticRole, string[]>> = {
+      patient: ['على'], // element selectors prefer على (on/upon)
+      destination: ['إلى', 'الى'], // destination prefers إلى (to)
+      source: ['من'], // source prefers من (from)
+      agent: ['من'], // agent/by prefers من (from/by)
+      manner: ['ب'], // manner prefers ب (with/by)
+      style: ['ب'], // style prefers ب (with)
+      goal: ['إلى', 'الى'], // target state prefers إلى (to)
+      method: ['ب'], // method prefers ب (with/by)
+    };
+
+    // Check each captured role for preposition metadata
+    for (const [role, value] of captured.entries()) {
+      // Skip if no preferred prepositions defined for this role
+      const preferred = PREFERRED_PREPOSITIONS[role];
+      if (!preferred || preferred.length === 0) {
+        continue;
+      }
+
+      // Check if the value has preposition metadata (from Arabic tokenizer)
+      // This metadata is attached when a preposition particle token is consumed
+      const metadata = (value as any).metadata;
+      if (metadata && typeof metadata.prepositionValue === 'string') {
+        const usedPreposition = metadata.prepositionValue;
+
+        // Check if the used preposition is in the preferred list
+        if (preferred.includes(usedPreposition)) {
+          // Idiomatic choice - boost confidence
+          adjustment += 0.1;
+        } else {
+          // Less natural choice - reduce confidence
+          adjustment -= 0.1;
+        }
+      }
+    }
+
+    // Cap total adjustment at ±0.10 (even if multiple roles analyzed)
+    return Math.max(-0.1, Math.min(0.1, adjustment));
   }
 
   // ===========================================================================

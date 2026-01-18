@@ -57,17 +57,118 @@ const ATTACHED_PREFIXES = new Set([
 ]);
 
 /**
- * Arabic proclitic conjunctions that attach directly to the following word.
+ * Arabic proclitic conjunctions and prefixes that attach directly to the following word.
  * These are separated during tokenization for proper list/coordination handling.
  *
- * Unlike ATTACHED_PREFIXES which are kept with the word, proclitics are
- * emitted as separate tokens to support polysyndetic coordination (A وB وC).
+ * Single-character proclitics (و, ف) are emitted as separate conjunction tokens
+ * to support polysyndetic coordination (A وB وC).
+ *
+ * Attached prefixes (بـ, لـ, كـ) are prepositions that attach to words.
+ * Multi-proclitic sequences (ولـ, وبـ, فلـ, etc.) are split into components.
  *
  * @see NATIVE_REVIEW_NEEDED.md for implementation details
  */
-const PROCLITICS = new Map<string, string>([
-  ['و', 'and'], // wa - conjunction "and"
-  ['ف', 'then'], // fa - conjunction "then/so"
+const PROCLITICS = new Map<string, { normalized: string; type: 'conjunction' | 'preposition' }>([
+  // Conjunctions (single character)
+  ['و', { normalized: 'and', type: 'conjunction' }], // wa - conjunction "and"
+  ['ف', { normalized: 'then', type: 'conjunction' }], // fa - conjunction "then/so"
+
+  // Attached prefix prepositions
+  ['ب', { normalized: 'with', type: 'preposition' }], // bi- (with, by)
+  ['ل', { normalized: 'to', type: 'preposition' }], // li- (to, for)
+  ['ك', { normalized: 'like', type: 'preposition' }], // ka- (like, as)
+
+  // Multi-proclitic sequences (conjunction + preposition)
+  ['ول', { normalized: 'and-to', type: 'conjunction' }], // wa + li-
+  ['وب', { normalized: 'and-with', type: 'conjunction' }], // wa + bi-
+  ['وك', { normalized: 'and-like', type: 'conjunction' }], // wa + ka-
+  ['فل', { normalized: 'then-to', type: 'conjunction' }], // fa + li-
+  ['فب', { normalized: 'then-with', type: 'conjunction' }], // fa + bi-
+  ['فك', { normalized: 'then-like', type: 'conjunction' }], // fa + ka-
+]);
+
+/**
+ * Arabic temporal markers (event trigger keywords) with formality and confidence tracking.
+ *
+ * Formality levels:
+ * - 'formal': Modern Standard Arabic (MSA) - preferred in written/formal contexts
+ * - 'neutral': Common in both MSA and dialects
+ * - 'dialectal': Informal/colloquial - common in spoken Arabic
+ *
+ * Confidence reflects how reliably the marker indicates an event trigger ("on" event).
+ * Formal markers have higher confidence due to standardization.
+ */
+interface TemporalMarkerMetadata {
+  readonly normalized: string;
+  readonly formality: 'formal' | 'neutral' | 'dialectal';
+  readonly confidence: number;
+  readonly description: string;
+}
+
+const TEMPORAL_MARKERS = new Map<string, TemporalMarkerMetadata>([
+  [
+    'عندما',
+    {
+      normalized: 'on',
+      formality: 'formal',
+      confidence: 0.95,
+      description: 'when (formal MSA)',
+    },
+  ],
+  [
+    'حينما',
+    {
+      normalized: 'on',
+      formality: 'formal',
+      confidence: 0.93,
+      description: 'when/whenever (formal)',
+    },
+  ],
+  [
+    'عند',
+    {
+      normalized: 'on',
+      formality: 'neutral',
+      confidence: 0.88,
+      description: 'at/when (neutral)',
+    },
+  ],
+  [
+    'حين',
+    {
+      normalized: 'on',
+      formality: 'neutral',
+      confidence: 0.85,
+      description: 'when/time (neutral)',
+    },
+  ],
+  [
+    'لمّا',
+    {
+      normalized: 'on',
+      formality: 'dialectal',
+      confidence: 0.7,
+      description: 'when (dialectal, with shadda)',
+    },
+  ],
+  [
+    'لما',
+    {
+      normalized: 'on',
+      formality: 'dialectal',
+      confidence: 0.68,
+      description: 'when (dialectal, no diacritic)',
+    },
+  ],
+  [
+    'لدى',
+    {
+      normalized: 'on',
+      formality: 'neutral',
+      confidence: 0.82,
+      description: 'at/with (temporal)',
+    },
+  ],
 ]);
 
 /**
@@ -376,26 +477,68 @@ export class ArabicTokenizer extends BaseTokenizer {
   }
 
   /**
-   * Try to extract a proclitic conjunction (و or ف) that's attached to the following word.
+   * Try to extract a proclitic (conjunction or preposition) that's attached to the following word.
    *
    * Arabic proclitics attach directly to words without space:
    * - والنقر → و + النقر (and + the-click)
    * - فالتبديل → ف + التبديل (then + the-toggle)
+   * - بالنقر → ب + النقر (with + the-click)
+   * - ولالنقر → و + ل + النقر (and + to + the-click)
    *
-   * This enables polysyndetic coordination: A وB وC
+   * This enables:
+   * - Polysyndetic coordination: A وB وC
+   * - Attached prepositions: بالنقر (with-the-click)
+   * - Multi-proclitic sequences: ولالنقر (and-to-the-click)
    *
    * Returns null if:
-   * - Not a proclitic character
+   * - Not a proclitic character/sequence
    * - Proclitic is standalone (followed by space)
    * - Remaining word is too short (< 2 chars, to avoid false positives)
    *
    * @see NATIVE_REVIEW_NEEDED.md for implementation rationale
    */
   private tryProclitic(input: string, pos: number): { conjunction: LanguageToken } | null {
-    const char = input[pos];
-    const normalized = PROCLITICS.get(char);
+    // Try multi-character proclitics first (longest match)
+    // Check 2-character sequences (ول, وب, فل, فب, etc.)
+    if (pos + 2 <= input.length) {
+      const twoChar = input.slice(pos, pos + 2);
+      const twoCharEntry = PROCLITICS.get(twoChar);
+      if (twoCharEntry) {
+        // Check if there's a following Arabic character (proclitic must be attached)
+        const nextPos = pos + 2;
+        if (nextPos < input.length && isArabic(input[nextPos])) {
+          // Count remaining Arabic characters to ensure meaningful word follows
+          let remainingLength = 0;
+          let checkPos = nextPos;
+          while (checkPos < input.length && isArabic(input[checkPos])) {
+            remainingLength++;
+            checkPos++;
+          }
 
-    if (!normalized) return null;
+          // Require at least 2 characters after proclitic to avoid false positives
+          if (remainingLength >= 2) {
+            const tokenKind =
+              twoCharEntry.type === 'conjunction'
+                ? ('conjunction' as const)
+                : ('particle' as const);
+            return {
+              conjunction: createToken(
+                twoChar,
+                tokenKind,
+                createPosition(pos, nextPos),
+                twoCharEntry.normalized
+              ),
+            };
+          }
+        }
+      }
+    }
+
+    // Try single-character proclitics
+    const char = input[pos];
+    const entry = PROCLITICS.get(char);
+
+    if (!entry) return null;
 
     // Check if there's a following Arabic character (proclitic must be attached)
     const nextPos = pos + 1;
@@ -417,14 +560,17 @@ export class ArabicTokenizer extends BaseTokenizer {
       return null;
     }
 
+    const tokenKind =
+      entry.type === 'conjunction' ? ('conjunction' as const) : ('particle' as const);
     return {
-      conjunction: createToken(char, 'conjunction', createPosition(pos, nextPos), normalized),
+      conjunction: createToken(char, tokenKind, createPosition(pos, nextPos), entry.normalized),
     };
   }
 
   /**
    * Extract an Arabic word.
    * Uses morphological normalization to handle prefix/suffix variations.
+   * Attaches metadata for temporal markers (formality, confidence).
    */
   private extractArabicWord(input: string, startPos: number): LanguageToken | null {
     let pos = startPos;
@@ -446,15 +592,39 @@ export class ArabicTokenizer extends BaseTokenizer {
 
     if (!word) return null;
 
+    // Check if it's a temporal marker (with formality metadata)
+    const temporalMarker = TEMPORAL_MARKERS.get(word);
+    if (temporalMarker) {
+      const token = createToken(
+        word,
+        'keyword',
+        createPosition(startPos, pos),
+        temporalMarker.normalized
+      );
+      return {
+        ...token,
+        metadata: {
+          temporalFormality: temporalMarker.formality,
+          temporalConfidence: temporalMarker.confidence,
+        },
+      };
+    }
+
     // O(1) Map lookup instead of O(n) array search
     const keywordEntry = this.lookupKeyword(word);
     if (keywordEntry) {
       return createToken(word, 'keyword', createPosition(startPos, pos), keywordEntry.normalized);
     }
 
-    // Check if it's a preposition
+    // Check if it's a preposition (with metadata for disambiguation)
     if (PREPOSITIONS.has(word)) {
-      return createToken(word, 'particle', createPosition(startPos, pos));
+      const token = createToken(word, 'particle', createPosition(startPos, pos));
+      return {
+        ...token,
+        metadata: {
+          prepositionValue: word,
+        },
+      };
     }
 
     // Try morphological normalization for conjugated/inflected forms
