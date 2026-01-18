@@ -173,6 +173,8 @@ const TEMPORAL_MARKERS = new Map<string, TemporalMarkerMetadata>([
 
 /**
  * Arabic standalone prepositions.
+ * Note: Temporal markers (عند, لدى, etc.) are NOT in this set - they're handled
+ * separately in TEMPORAL_MARKERS with formality metadata.
  */
 const PREPOSITIONS = new Set([
   'في', // fī (in)
@@ -180,7 +182,7 @@ const PREPOSITIONS = new Set([
   'من', // min (from)
   'إلى', // ilā (to)
   'الى', // ilā (alternative spelling)
-  'عند', // ʿinda (at, when)
+  // 'عند' removed - it's a temporal marker with metadata
   'مع', // maʿa (with)
   'عن', // ʿan (about, from)
   'قبل', // qabl (before)
@@ -254,13 +256,8 @@ const ARABIC_EXTRAS: KeywordEntry[] = [
   { native: 'ساعة', normalized: 'h' },
   { native: 'ساعات', normalized: 'h' },
 
-  // Temporal conjunctions (for "on" event)
-  { native: 'عندما', normalized: 'on' },
-  { native: 'حينما', normalized: 'on' },
-  { native: 'لمّا', normalized: 'on' },
-  { native: 'لما', normalized: 'on' },
-  { native: 'حين', normalized: 'on' },
-  { native: 'لدى', normalized: 'on' },
+  // Note: Temporal markers (عندما, حينما, etc.) are in TEMPORAL_MARKERS map
+  // with formality metadata, not in ARABIC_EXTRAS
 
   // Additional spelling variants (without diacritics)
   { native: 'بدل', normalized: 'toggle' },

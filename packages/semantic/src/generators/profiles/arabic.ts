@@ -56,7 +56,7 @@ export const arabicProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations
-    toggle: { primary: 'بدل', alternatives: ['بدّل', 'غيّر', 'غير'], normalized: 'toggle' },
+    toggle: { primary: 'بدّل', alternatives: ['بدل', 'غيّر', 'غير'], normalized: 'toggle' },
     add: { primary: 'أضف', alternatives: ['اضف', 'زِد'], normalized: 'add' },
     remove: { primary: 'احذف', alternatives: ['أزل', 'امسح'], normalized: 'remove' },
     // Content operations
@@ -66,7 +66,7 @@ export const arabicProfile: LanguageProfile = {
     take: { primary: 'خذ', normalized: 'take' },
     make: { primary: 'اصنع', alternatives: ['أنشئ'], normalized: 'make' },
     clone: { primary: 'استنسخ', alternatives: ['انسخ'], normalized: 'clone' },
-    swap: { primary: 'بدّل', alternatives: ['استبدل'], normalized: 'swap' },
+    swap: { primary: 'استبدل', alternatives: ['تبادل'], normalized: 'swap' },
     morph: { primary: 'حوّل', alternatives: ['غيّر'], normalized: 'morph' },
     // Variable operations
     set: { primary: 'اضبط', alternatives: ['عيّن', 'حدد'], normalized: 'set' },
@@ -105,7 +105,7 @@ export const arabicProfile: LanguageProfile = {
     call: { primary: 'استدع', alternatives: ['نادِ'], normalized: 'call' },
     return: { primary: 'ارجع', alternatives: ['عُد'], normalized: 'return' },
     then: { primary: 'ثم', alternatives: ['بعدها', 'ثمّ'], normalized: 'then' },
-    and: { primary: 'و', alternatives: ['وأيضاً'], normalized: 'and' },
+    and: { primary: 'وأيضاً', alternatives: ['أيضاً'], normalized: 'and' },
     end: { primary: 'نهاية', alternatives: ['انتهى', 'آخر'], normalized: 'end' },
     // Advanced
     js: { primary: 'جافاسكربت', alternatives: ['js'], normalized: 'js' },

@@ -848,8 +848,33 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
       (a, b) => b.native.length - a.native.length
     );
 
-    // Build Map for O(1) lookups (case-insensitive)
-    this.profileKeywordMap = new Map(this.profileKeywords.map(k => [k.native.toLowerCase(), k]));
+    // Build Map for O(1) lookups (case-insensitive + diacritic-insensitive)
+    // This allows matching both 'بدّل' (with shadda) and 'بدل' (without) to the same entry
+    this.profileKeywordMap = new Map();
+    for (const keyword of this.profileKeywords) {
+      // Add original form (with diacritics if present)
+      this.profileKeywordMap.set(keyword.native.toLowerCase(), keyword);
+
+      // Add diacritic-normalized form (for Arabic, Turkish, etc.)
+      const normalized = this.removeDiacritics(keyword.native);
+      if (normalized !== keyword.native && !this.profileKeywordMap.has(normalized.toLowerCase())) {
+        this.profileKeywordMap.set(normalized.toLowerCase(), keyword);
+      }
+    }
+  }
+
+  /**
+   * Remove diacritical marks from a word for normalization.
+   * Primarily for Arabic (shadda, fatha, kasra, damma, sukun, etc.)
+   * but could be extended for other languages.
+   *
+   * @param word - Word to normalize
+   * @returns Word without diacritics
+   */
+  protected removeDiacritics(word: string): string {
+    // Arabic diacritics: U+064B-U+0652 (fatha, kasra, damma, sukun, shadda, etc.)
+    // U+0670 (superscript alif)
+    return word.replace(/[\u064B-\u0652\u0670]/g, '');
   }
 
   /**
