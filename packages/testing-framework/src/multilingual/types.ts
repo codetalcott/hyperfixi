@@ -179,6 +179,8 @@ export interface Baseline {
         parseRate: number;
         avgConfidence: number;
         bundleSize: number | undefined;
+        /** Pattern-level results for detailed tracking */
+        patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
       }
     >
   >;

@@ -153,12 +153,26 @@ export class RegressionReporter implements Reporter {
   /**
    * Find patterns that failed in current but passed in baseline
    */
-  private findNewFailures(current: LanguageResults, _baseline: { parseSuccess: number }): string[] {
-    // Simplified: just return failed pattern IDs
-    return current.parseResults
-      .filter(r => !r.success)
-      .map(r => r.pattern.codeExampleId)
-      .slice(0, 10); // Limit to 10
+  private findNewFailures(
+    current: LanguageResults,
+    baseline: {
+      parseSuccess: number;
+      patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
+    }
+  ): string[] {
+    // If no pattern-level baseline, return empty array
+    if (!baseline.patterns) return [];
+
+    const newFailures: string[] = [];
+
+    for (const result of current.parseResults) {
+      const baselinePattern = baseline.patterns[result.pattern.codeExampleId];
+      if (baselinePattern && baselinePattern.success && !result.success) {
+        newFailures.push(result.pattern.codeExampleId);
+      }
+    }
+
+    return newFailures.slice(0, 10); // Limit to 10 for reporting
   }
 
   /**
@@ -166,13 +180,24 @@ export class RegressionReporter implements Reporter {
    */
   private findNewSuccesses(
     current: LanguageResults,
-    _baseline: { parseSuccess: number }
+    baseline: {
+      parseSuccess: number;
+      patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
+    }
   ): string[] {
-    // Simplified: return successful patterns
-    return current.parseResults
-      .filter(r => r.success)
-      .map(r => r.pattern.codeExampleId)
-      .slice(0, 10); // Limit to 10
+    // If no pattern-level baseline, return empty array
+    if (!baseline.patterns) return [];
+
+    const newSuccesses: string[] = [];
+
+    for (const result of current.parseResults) {
+      const baselinePattern = baseline.patterns[result.pattern.codeExampleId];
+      if (baselinePattern && !baselinePattern.success && result.success) {
+        newSuccesses.push(result.pattern.codeExampleId);
+      }
+    }
+
+    return newSuccesses.slice(0, 10); // Limit to 10 for reporting
   }
 
   /**
@@ -199,12 +224,22 @@ export class RegressionReporter implements Reporter {
     }
 
     for (const langResult of results.languageResults) {
+      // Build pattern-level tracking
+      const patterns: Record<string, { success: boolean; confidence: number | undefined }> = {};
+      for (const result of langResult.parseResults) {
+        patterns[result.pattern.codeExampleId] = {
+          success: result.success,
+          confidence: result.confidence,
+        };
+      }
+
       baseline.languages[langResult.language] = {
         parseSuccess: langResult.parseSuccess,
         parseFailure: langResult.parseFailure,
         parseRate: langResult.parseRate,
         avgConfidence: langResult.avgConfidence,
         bundleSize: langResult.bundleSize ?? undefined,
+        patterns,
       };
     }
 

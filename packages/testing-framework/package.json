@@ -51,6 +51,7 @@
     "test:multilingual:quick": "tsx src/multilingual/cli.ts --quick",
     "test:multilingual:full": "tsx src/multilingual/cli.ts --full",
     "test:multilingual:regression": "tsx src/multilingual/cli.ts --regression",
+    "analyze-failures": "tsx src/multilingual/tools/analyze-failures.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext ts,tsx",
     "lint:fix": "eslint src --ext ts,tsx --fix"
