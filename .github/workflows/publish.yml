@@ -1,0 +1,203 @@
+name: Publish Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Packages to publish (comma-separated, e.g., core,semantic,i18n)'
+        required: true
+        type: string
+      version-type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+          - custom
+        default: 'patch'
+      custom-version:
+        description: 'Custom version (only if version-type is custom)'
+        required: false
+        type: string
+      npm-tag:
+        description: 'npm dist-tag (latest, beta, next, etc.)'
+        required: true
+        type: string
+        default: 'latest'
+      dry-run:
+        description: 'Dry run (do not actually publish)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          npm test --prefix packages/core -- --run
+          npm test --prefix packages/semantic -- --run
+          npm test --prefix packages/i18n -- --run
+
+      - name: Build packages
+        run: |
+          npm run build --prefix packages/core
+          npm run build --prefix packages/semantic
+          npm run build --prefix packages/i18n
+          npm run build --prefix packages/vite-plugin
+
+      - name: Parse package list
+        id: packages
+        run: |
+          PACKAGES="${{ github.event.inputs.packages }}"
+          echo "Packages to publish: $PACKAGES"
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+
+      - name: Version bump
+        if: ${{ github.event.inputs.version-type != 'custom' }}
+        run: |
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)  # trim whitespace
+            if [ -d "packages/$pkg" ]; then
+              echo "Bumping version for @hyperfixi/$pkg (${{ github.event.inputs.version-type }})"
+              cd "packages/$pkg"
+              npm version ${{ github.event.inputs.version-type }} --no-git-tag-version
+              cd ../..
+            else
+              echo "Warning: Package directory packages/$pkg not found"
+            fi
+          done
+
+      - name: Set custom version
+        if: ${{ github.event.inputs.version-type == 'custom' }}
+        run: |
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ]; then
+              echo "Setting version for @hyperfixi/$pkg to ${{ github.event.inputs.custom-version }}"
+              cd "packages/$pkg"
+              npm version ${{ github.event.inputs.custom-version }} --no-git-tag-version --allow-same-version
+              cd ../..
+            fi
+          done
+
+      - name: Update package-lock.json
+        run: npm install --package-lock-only
+
+      - name: Publish to npm (dry-run)
+        if: ${{ github.event.inputs.dry-run == 'true' }}
+        run: |
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ]; then
+              echo "DRY RUN: Would publish @hyperfixi/$pkg with tag ${{ github.event.inputs.npm-tag }}"
+              cd "packages/$pkg"
+              npm publish --dry-run --tag ${{ github.event.inputs.npm-tag }} --access public
+              cd ../..
+            fi
+          done
+
+      - name: Publish to npm
+        if: ${{ github.event.inputs.dry-run == 'false' }}
+        run: |
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ]; then
+              echo "Publishing @hyperfixi/$pkg with tag ${{ github.event.inputs.npm-tag }}"
+              cd "packages/$pkg"
+              npm publish --tag ${{ github.event.inputs.npm-tag }} --access public
+              cd ../..
+            fi
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Commit version changes
+        if: ${{ github.event.inputs.dry-run == 'false' }}
+        run: |
+          git add packages/*/package.json package-lock.json
+          git commit -m "chore: release ${{ steps.packages.outputs.packages }}" || echo "No changes to commit"
+          git push
+
+      - name: Create Git tags
+        if: ${{ github.event.inputs.dry-run == 'false' }}
+        run: |
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ]; then
+              VERSION=$(node -p "require('./packages/$pkg/package.json').version")
+              git tag "@hyperfixi/${pkg}@${VERSION}"
+              git push origin "@hyperfixi/${pkg}@${VERSION}"
+            fi
+          done
+
+      - name: Create GitHub Release
+        if: ${{ github.event.inputs.dry-run == 'false' && github.event.inputs.npm-tag == 'latest' }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: 'release-${{ github.run_number }}'
+          release_name: 'Release ${{ steps.packages.outputs.packages }}'
+          body: |
+            Published packages: ${{ steps.packages.outputs.packages }}
+            Version: ${{ github.event.inputs.version-type }}
+            Tag: ${{ github.event.inputs.npm-tag }}
+
+            See individual package CHANGELOGs for details.
+          draft: false
+          prerelease: ${{ github.event.inputs.npm-tag != 'latest' }}
+
+      - name: Summary
+        run: |
+          echo "## Publication Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Packages**: ${{ steps.packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version Type**: ${{ github.event.inputs.version-type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**npm Tag**: ${{ github.event.inputs.npm-tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Dry Run**: ${{ github.event.inputs.dry-run }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event.inputs.dry-run }}" = "true" ]; then
+            echo "✅ **Dry run completed successfully**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No packages were published. Re-run with dry-run=false to publish." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Packages published successfully to npm**" >> $GITHUB_STEP_SUMMARY
+          fi

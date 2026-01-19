@@ -141,7 +141,11 @@ describe('Hyperscript Runtime', () => {
       const ast = parse('on click hide me').node!;
       await runtime.execute(ast, context);
 
-      expect(mockElement.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+      expect(mockElement.addEventListener).toHaveBeenCalledWith(
+        'click',
+        expect.any(Function),
+        undefined
+      );
     });
 
     it('should execute commands when event is triggered', async () => {

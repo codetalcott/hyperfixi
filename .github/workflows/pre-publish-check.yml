@@ -1,0 +1,206 @@
+name: Pre-Publish Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Packages to check (comma-separated, e.g., core,semantic,i18n or "all")'
+        required: true
+        type: string
+        default: 'core,semantic,i18n,vite-plugin,mcp-server'
+
+jobs:
+  pre-publish-check:
+    name: Validate Publication Readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Parse package list
+        id: packages
+        run: |
+          PACKAGES="${{ github.event.inputs.packages }}"
+          if [ "$PACKAGES" = "all" ]; then
+            PACKAGES="core,semantic,i18n,vite-plugin,mcp-server,ast-toolkit,behaviors,multi-tenant"
+          fi
+          echo "Checking packages: $PACKAGES"
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+
+      - name: Check versions
+        id: versions
+        run: |
+          echo "## Package Versions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Version | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -f "packages/$pkg/package.json" ]; then
+              VERSION=$(node -p "require('./packages/$pkg/package.json').version")
+              PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
+
+              if [ "$PRIVATE" = "true" ]; then
+                echo "| @hyperfixi/$pkg | $VERSION | ⚠️ Private |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| @hyperfixi/$pkg | $VERSION | ✅ Public |" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "| @hyperfixi/$pkg | N/A | ❌ Not found |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Check required files
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Required Files Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | README | CHANGELOG | LICENSE | package.json |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|-----------|---------|--------------|" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ]; then
+              README="❌"
+              CHANGELOG="❌"
+              LICENSE="❌"
+              PACKAGE="❌"
+
+              [ -f "packages/$pkg/README.md" ] && README="✅"
+              [ -f "packages/$pkg/CHANGELOG.md" ] && CHANGELOG="✅"
+              [ -f "packages/$pkg/LICENSE" ] || [ -f "LICENSE" ] && LICENSE="✅"
+              [ -f "packages/$pkg/package.json" ] && PACKAGE="✅"
+
+              echo "| @hyperfixi/$pkg | $README | $CHANGELOG | $LICENSE | $PACKAGE |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: TypeCheck
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## TypeScript Compilation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/tsconfig.json" ]; then
+              echo "Checking @hyperfixi/$pkg..."
+              if npm run typecheck --prefix "packages/$pkg" 2>&1 | tee /tmp/${pkg}-typecheck.log; then
+                echo "✅ @hyperfixi/$pkg - TypeScript OK" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "❌ @hyperfixi/$pkg - TypeScript errors found" >> $GITHUB_STEP_SUMMARY
+                echo "<details><summary>Errors</summary>" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+                cat /tmp/${pkg}-typecheck.log >> $GITHUB_STEP_SUMMARY
+                echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+                echo "</details>" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+      - name: Run tests
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
+              if grep -q '"test"' "packages/$pkg/package.json"; then
+                echo "Testing @hyperfixi/$pkg..."
+                if npm test --prefix "packages/$pkg" -- --run 2>&1 | tee /tmp/${pkg}-test.log; then
+                  TESTS=$(grep -o '[0-9]* passed' /tmp/${pkg}-test.log | head -1 || echo "0 passed")
+                  echo "✅ @hyperfixi/$pkg - $TESTS" >> $GITHUB_STEP_SUMMARY
+                else
+                  echo "❌ @hyperfixi/$pkg - Tests failed" >> $GITHUB_STEP_SUMMARY
+                fi
+              else
+                echo "⚠️ @hyperfixi/$pkg - No tests configured" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+      - name: Build check
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
+              if grep -q '"build"' "packages/$pkg/package.json"; then
+                echo "Building @hyperfixi/$pkg..."
+                if npm run build --prefix "packages/$pkg" 2>&1 | tee /tmp/${pkg}-build.log; then
+                  # Check dist directory
+                  if [ -d "packages/$pkg/dist" ] && [ "$(ls -A packages/$pkg/dist)" ]; then
+                    FILES=$(ls packages/$pkg/dist | wc -l)
+                    echo "✅ @hyperfixi/$pkg - Built successfully ($FILES files)" >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "⚠️ @hyperfixi/$pkg - Built but dist is empty" >> $GITHUB_STEP_SUMMARY
+                  fi
+                else
+                  echo "❌ @hyperfixi/$pkg - Build failed" >> $GITHUB_STEP_SUMMARY
+                fi
+              else
+                echo "⚠️ @hyperfixi/$pkg - No build script" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+      - name: Package.json validation
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## package.json Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | name | version | main | types | license | publishConfig |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|------|---------|------|-------|---------|---------------|" >> $GITHUB_STEP_SUMMARY
+
+          IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
+          for pkg in "${PKG_ARRAY[@]}"; do
+            pkg=$(echo "$pkg" | xargs)
+            if [ -f "packages/$pkg/package.json" ]; then
+              NAME=$(node -p "require('./packages/$pkg/package.json').name || '❌'" 2>/dev/null)
+              VERSION=$(node -p "require('./packages/$pkg/package.json').version || '❌'" 2>/dev/null)
+              MAIN=$(node -p "require('./packages/$pkg/package.json').main ? '✅' : '❌'" 2>/dev/null)
+              TYPES=$(node -p "require('./packages/$pkg/package.json').types ? '✅' : '❌'" 2>/dev/null)
+              LICENSE=$(node -p "require('./packages/$pkg/package.json').license || '❌'" 2>/dev/null)
+              PUB_CONFIG=$(node -p "require('./packages/$pkg/package.json').publishConfig?.access || '❌'" 2>/dev/null)
+
+              echo "| $pkg | $NAME | $VERSION | $MAIN | $TYPES | $LICENSE | $PUB_CONFIG |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Final verdict
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Publication Readiness Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Review the checks above. All items should show ✅ for publication." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "If all checks pass, proceed to the \`Publish Packages\` workflow." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review all ❌ and ⚠️ items above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Fix any issues" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run this check again" >> $GITHUB_STEP_SUMMARY
+          echo "4. When all green, use \`Publish Packages\` workflow" >> $GITHUB_STEP_SUMMARY
