@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multilingual Examples - HyperFixi</title>
+    <title>Multilingual Examples - LokaScript</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Showcase - dark themed */
@@ -678,15 +678,15 @@
 
         <footer>
             <p>
-                HyperFixi uses <strong>native idioms</strong>, not just translated keywords.<br>
+                LokaScript uses <strong>native idioms</strong>, not just translated keywords.<br>
                 <a href="semantic-demo.html">Try the Semantic Parser Demo</a> |
                 <a href="../index.html">Back to Gallery</a>
             </p>
         </footer>
     </div>
 
-    <!-- Load HyperFixi bundles -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript bundles -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../../packages/semantic/dist/browser.global.js"></script>
 
     <script>
@@ -742,8 +742,8 @@
 
         // Check if semantic package is loaded
         function checkSemantic() {
-            if (!window.HyperFixiSemantic) {
-                console.error('HyperFixiSemantic not loaded! Translation will not work.');
+            if (!window.LokaScriptSemantic) {
+                console.error('LokaScriptSemantic not loaded! Translation will not work.');
                 return false;
             }
             return true;
@@ -753,7 +753,7 @@
         function translateScript(script, targetLang) {
             if (!checkSemantic()) return script;
             try {
-                return HyperFixiSemantic.translate(script, 'en', targetLang);
+                return LokaScriptSemantic.translate(script, 'en', targetLang);
             } catch (e) {
                 console.warn('Translation failed:', e);
                 return script;
@@ -794,8 +794,8 @@
                     if (demoEl) {
                         demoEl.setAttribute('_', translatedScript);
                         // Re-process with hyperfixi
-                        if (window.hyperfixi && window.hyperfixi.processNode) {
-                            window.hyperfixi.processNode(demoEl);
+                        if (window.lokascript && window.lokascript.processNode) {
+                            window.lokascript.processNode(demoEl);
                         }
                     }
                 }
@@ -879,7 +879,7 @@
             updateLanguage(currentLang);
 
             console.log('Multilingual Showcase loaded');
-            console.log('Semantic package:', window.HyperFixiSemantic ? 'loaded' : 'NOT LOADED');
+            console.log('Semantic package:', window.LokaScriptSemantic ? 'loaded' : 'NOT LOADED');
         });
     </script>
 </body>

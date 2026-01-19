@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperFixi - Sortable List Examples</title>
+    <title>LokaScript - Sortable List Examples</title>
 
     <!-- Test Navigation -->
     <script src="test-nav.js"></script>
@@ -299,7 +299,7 @@
         🐛 Debug: OFF
     </button>
 
-    <h1>📑 HyperFixi - Sortable List Examples</h1>
+    <h1>📑 LokaScript - Sortable List Examples</h1>
 
     <div class="description">
         <strong>Pure Hyperscript Sortable Lists</strong> - These examples demonstrate drag-to-reorder functionality
@@ -549,7 +549,7 @@
             💡 <strong>Testing Strategy:</strong>
             <ol>
                 <li>Open this page at <a href="http://127.0.0.1:3000/sortable-examples.html">http://127.0.0.1:3000/sortable-examples.html</a></li>
-                <li>Check browser console for HyperFixi loading</li>
+                <li>Check browser console for LokaScript loading</li>
                 <li>Try dragging items in the TODO list</li>
                 <li>Verify visual feedback (dragging class)</li>
                 <li>Check if items reorder correctly</li>
@@ -558,11 +558,11 @@
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
+    <!-- Load LokaScript -->
     <script>
         // Cache busting for development - force fresh load
         const script = document.createElement('script');
-        script.src = '/dist/hyperfixi-browser.js?v=' + Date.now();
+        script.src = '/dist/lokascript-browser.js?v=' + Date.now();
         document.write(script.outerHTML);
     </script>
 
@@ -615,13 +615,13 @@ end
     <script>
         // Pure JavaScript for debug toggle and event logging
         window.addEventListener('load', () => {
-            console.log('🚀 HyperFixi Sortable Examples Page Loaded');
-            console.log('📊 HyperFixi Available:', typeof hyperfixi !== 'undefined');
+            console.log('🚀 LokaScript Sortable Examples Page Loaded');
+            console.log('📊 LokaScript Available:', typeof hyperfixi !== 'undefined');
 
             if (typeof hyperfixi !== 'undefined') {
-                console.log('✅ HyperFixi Methods:', Object.keys(hyperfixi));
+                console.log('✅ LokaScript Methods:', Object.keys(hyperfixi));
             } else {
-                console.error('❌ HyperFixi not loaded! Check /dist/hyperfixi-browser.js');
+                console.error('❌ LokaScript not loaded! Check /dist/lokascript-browser.js');
             }
         });
 

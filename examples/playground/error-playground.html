@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HyperFixi Error Playground - Diagnostics & Auto-Fix</title>
+  <title>LokaScript Error Playground - Diagnostics & Auto-Fix</title>
   <link rel="stylesheet" href="../gallery.css">
   <style>
     /* Error playground-specific layout - full viewport app */
@@ -385,7 +385,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>HyperFixi Error Playground</h1>
+    <h1>LokaScript Error Playground</h1>
     <div class="header-actions">
       <select id="language-select">
         <option value="en">English</option>
@@ -487,8 +487,8 @@ Try these examples with errors:
     </div>
   </div>
 
-  <!-- Load HyperFixi bundles -->
-  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <!-- Load LokaScript bundles -->
+  <script src="../../packages/core/dist/lokascript-browser.js"></script>
   <script src="../../packages/semantic/dist/browser.global.js"></script>
 
   <script>
@@ -517,8 +517,8 @@ Try these examples with errors:
     });
 
     // Check if semantic bundle loaded
-    if (!window.HyperFixiSemantic) {
-      console.warn('HyperFixiSemantic not loaded - semantic analysis will be skipped');
+    if (!window.LokaScriptSemantic) {
+      console.warn('LokaScriptSemantic not loaded - semantic analysis will be skipped');
       document.getElementById('parse-status').textContent = 'Semantic bundle not loaded';
       document.getElementById('parse-status').style.color = '#f39c12';
     }
@@ -561,9 +561,9 @@ Try these examples with errors:
       let warningCount = 0;
 
       // 1. Try semantic parsing
-      if (window.HyperFixiSemantic) {
+      if (window.LokaScriptSemantic) {
         try {
-          const analyzer = HyperFixiSemantic.createSemanticAnalyzer();
+          const analyzer = LokaScriptSemantic.createSemanticAnalyzer();
           const result = analyzer.analyze(code, language);
           confidence = result.confidence;
 

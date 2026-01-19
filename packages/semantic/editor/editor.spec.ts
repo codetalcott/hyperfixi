@@ -11,7 +11,7 @@ test.describe('Semantic Language Profile Editor', () => {
     // Wait for both bundles to load and selectLanguage to be available
     await page.waitForFunction(() => {
       const w = window as any;
-      return w.hyperfixi && w.HyperFixiSemantic &&
+      return w.hyperfixi && w.LokaScriptSemantic &&
              typeof w.selectLanguage === 'function';
     }, { timeout: 10000 });
   });
@@ -26,15 +26,15 @@ test.describe('Semantic Language Profile Editor', () => {
     const hyperfixi = await page.evaluate(() => typeof (window as any).hyperfixi);
     expect(hyperfixi).toBe('object');
 
-    // Check HyperFixiSemantic global is defined
-    const semantic = await page.evaluate(() => typeof (window as any).HyperFixiSemantic);
+    // Check LokaScriptSemantic global is defined
+    const semantic = await page.evaluate(() => typeof (window as any).LokaScriptSemantic);
     expect(semantic).toBe('object');
   });
 
   test('loads language profiles', async ({ page }) => {
     // Wait for profiles to load
     const profiles = await page.evaluate(() => {
-      const hs = (window as any).HyperFixiSemantic;
+      const hs = (window as any).LokaScriptSemantic;
       return hs && hs.registeredLanguageProfiles
         ? Object.keys(hs.registeredLanguageProfiles)
         : null;

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>HyperFixi Enhanced Increment/Decrement Demo</title>
+    <title>LokaScript Enhanced Increment/Decrement Demo</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -70,7 +70,7 @@
     </style>
 </head>
 <body>
-    <h1>🚀 HyperFixi Enhanced Increment/Decrement Demo</h1>
+    <h1>🚀 LokaScript Enhanced Increment/Decrement Demo</h1>
     
     <div class="demo-section">
         <h2>⚡ Enhanced Increment/Decrement Commands</h2>
@@ -125,10 +125,10 @@
                 🔄 Reset to 0
             </button>
             
-            <!-- Simple test button to verify HyperFixi is working -->
+            <!-- Simple test button to verify LokaScript is working -->
             <button class="test-button" _="on click 
                 log 'Simple test button clicked!' then
-                set the textContent of #enhanced-counter-display to 'Test: HyperFixi Working!'">
+                set the textContent of #enhanced-counter-display to 'Test: LokaScript Working!'">
                 🧪 Simple Test
             </button>
             
@@ -142,7 +142,7 @@
 
     <div class="demo-section">
         <h2>🔍 Command Status & Diagnostics</h2>
-        <div id="status-output" class="status">Loading HyperFixi...</div>
+        <div id="status-output" class="status">Loading LokaScript...</div>
         <button class="test-button" _="on click 
             log 'Status check button clicked' then
             set the textContent of #status-output to 'Status check initiated at: ' + new Date().toLocaleTimeString()">
@@ -183,27 +183,27 @@
         <div id="debug-output" class="status">Click test buttons to see debug output...</div>
     </div>
 
-    <!-- Include HyperFixi library -->
-    <script src="/dist/hyperfixi-browser.js?v=21.22.detailed-error-logging"></script>
+    <!-- Include LokaScript library -->
+    <script src="/dist/lokascript-browser.js?v=21.22.detailed-error-logging"></script>
     
     <script>
-        // Minimal initialization - let HyperFixi handle everything
+        // Minimal initialization - let LokaScript handle everything
         window.addEventListener('load', function() {
-            console.log('🚀 HyperFixi Enhanced Increment/Decrement Demo loaded');
+            console.log('🚀 LokaScript Enhanced Increment/Decrement Demo loaded');
             
             if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
                 hyperfixi.processNode(document.body).then(() => {
-                    console.log('✅ HyperFixi processed page elements successfully');
+                    console.log('✅ LokaScript processed page elements successfully');
                     document.getElementById('status-output').textContent = 
-                        '✅ HyperFixi loaded and ready! Try the increment/decrement buttons.';
+                        '✅ LokaScript loaded and ready! Try the increment/decrement buttons.';
                 }).catch(error => {
-                    console.error('❌ HyperFixi processing failed:', error);
+                    console.error('❌ LokaScript processing failed:', error);
                     document.getElementById('status-output').textContent = 
-                        '❌ HyperFixi processing failed: ' + error.message;
+                        '❌ LokaScript processing failed: ' + error.message;
                 });
             } else {
                 document.getElementById('status-output').textContent = 
-                    '❌ HyperFixi not available. Check browser bundle.';
+                    '❌ LokaScript not available. Check browser bundle.';
             }
         });
     </script>

@@ -18,7 +18,7 @@ test.describe('Multilingual Bundle E2E', () => {
     await page.waitForFunction(
       () => {
         return (
-          typeof (window as any).HyperFixiSemantic !== 'undefined' &&
+          typeof (window as any).LokaScriptSemantic !== 'undefined' &&
           typeof (window as any).hyperfixi !== 'undefined'
         );
       },
@@ -28,7 +28,7 @@ test.describe('Multilingual Bundle E2E', () => {
 
   test('bundles load correctly @quick', async ({ page }) => {
     const bundles = await page.evaluate(() => ({
-      semantic: typeof (window as any).HyperFixiSemantic !== 'undefined',
+      semantic: typeof (window as any).LokaScriptSemantic !== 'undefined',
       multilingual: typeof (window as any).hyperfixi !== 'undefined',
     }));
 

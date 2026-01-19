@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>HyperFixi Live Demo - Progressive Feature Testing</title>
+    <title>LokaScript Live Demo - Progressive Feature Testing</title>
 
     <!-- Test Navigation -->
     <script src="test-nav.js"></script>
@@ -87,7 +87,7 @@
     </style>
 </head>
 <body>
-    <h1>🚀 HyperFixi Live Demo - Progressive Feature Testing</h1>
+    <h1>🚀 LokaScript Live Demo - Progressive Feature Testing</h1>
     
     <div class="demo-section">
         <h2>📊 Feature Compatibility Progress</h2>
@@ -150,14 +150,14 @@ hide #test-element then show #test-element"></textarea>
 
     <div class="demo-section">
         <h2>🔍 Debug Console</h2>
-        <p>Real-time debugging information from HyperFixi runtime</p>
+        <p>Real-time debugging information from LokaScript runtime</p>
         <button class="test-button" onclick="clearDebugConsole()">Clear Debug Console</button>
         <button class="test-button" onclick="toggleDebugMode()">Toggle Debug Mode</button>
         <div class="output" id="debug-console" style="max-height: 300px; overflow-y: auto; font-size: 12px;"></div>
     </div>
 
-    <!-- Include our HyperFixi library -->
-    <script src="/dist/hyperfixi-browser.js"></script>
+    <!-- Include our LokaScript library -->
+    <script src="/dist/lokascript-browser.js"></script>
     
     <script>
         let testsCompleted = 0;
@@ -233,7 +233,7 @@ hide #test-element then show #test-element"></textarea>
             let passed = 0;
             
             if (!hyperfixi || !hyperfixi.evalHyperScript) {
-                logError('HyperFixi not available', 'basic-output');
+                logError('LokaScript not available', 'basic-output');
                 logDebug('Available globals', 'basic-output', { 
                     hyperfixi: typeof hyperfixi, 
                     hyperfixiKeys: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
@@ -319,8 +319,8 @@ hide #test-element then show #test-element"></textarea>
             let passed = 0;
             
             if (!hyperfixi || !hyperfixi.processNode) {
-                logError('HyperFixi processNode not available', 'simple-output');
-                logDebug('Available HyperFixi methods', 'simple-output', { 
+                logError('LokaScript processNode not available', 'simple-output');
+                logDebug('Available LokaScript methods', 'simple-output', { 
                     hyperfixi: typeof hyperfixi, 
                     methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
                 });
@@ -372,8 +372,8 @@ hide #test-element then show #test-element"></textarea>
                         attached: document.body.contains(scriptElement)
                     });
                     
-                    // Process with HyperFixi
-                    logDebug('Processing with HyperFixi...', 'simple-output');
+                    // Process with LokaScript
+                    logDebug('Processing with LokaScript...', 'simple-output');
                     const result = await hyperfixi.processNode(scriptElement);
                     const duration = performance.now() - startTime;
                     
@@ -452,8 +452,8 @@ hide #test-element then show #test-element"></textarea>
             let passed = 0;
             
             if (!hyperfixi || !hyperfixi.processNode) {
-                logError('HyperFixi processNode not available', 'compound-output');
-                logDebug('Available HyperFixi methods', 'compound-output', { 
+                logError('LokaScript processNode not available', 'compound-output');
+                logDebug('Available LokaScript methods', 'compound-output', { 
                     hyperfixi: typeof hyperfixi, 
                     methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
                 });
@@ -496,8 +496,8 @@ hide #test-element then show #test-element"></textarea>
                         attached: document.body.contains(scriptElement)
                     });
                     
-                    // Process with HyperFixi
-                    logDebug('Processing with HyperFixi...', 'compound-output');
+                    // Process with LokaScript
+                    logDebug('Processing with LokaScript...', 'compound-output');
                     const result = await hyperfixi.processNode(scriptElement);
                     const duration = performance.now() - startTime;
                     
@@ -571,8 +571,8 @@ hide #test-element then show #test-element"></textarea>
             let passed = 0;
             
             if (!hyperfixi || !hyperfixi.processNode) {
-                logError('HyperFixi processNode not available', 'events-output');
-                logDebug('Available HyperFixi methods', 'events-output', { 
+                logError('LokaScript processNode not available', 'events-output');
+                logDebug('Available LokaScript methods', 'events-output', { 
                     hyperfixi: typeof hyperfixi, 
                     methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
                 });
@@ -630,8 +630,8 @@ hide #test-element then show #test-element"></textarea>
                         attribute: button.getAttribute('_')
                     });
                     
-                    // Process with HyperFixi
-                    logDebug('Processing event handler with HyperFixi...', 'events-output');
+                    // Process with LokaScript
+                    logDebug('Processing event handler with LokaScript...', 'events-output');
                     const result = await hyperfixi.processNode(button);
                     const duration = performance.now() - startTime;
                     
@@ -729,8 +729,8 @@ hide #test-element then show #test-element"></textarea>
             });
             
             if (!hyperfixi || !hyperfixi.processNode) {
-                logError('HyperFixi processNode not available', 'custom-output');
-                logDebug('Available HyperFixi methods', 'custom-output', { 
+                logError('LokaScript processNode not available', 'custom-output');
+                logDebug('Available LokaScript methods', 'custom-output', { 
                     hyperfixi: typeof hyperfixi, 
                     methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
                 });
@@ -767,8 +767,8 @@ hide #test-element then show #test-element"></textarea>
                     scriptLength: script.length
                 });
                 
-                // Process with HyperFixi
-                logDebug('Processing custom script with HyperFixi...', 'custom-output');
+                // Process with LokaScript
+                logDebug('Processing custom script with LokaScript...', 'custom-output');
                 const result = await hyperfixi.processNode(scriptElement);
                 const duration = performance.now() - startTime;
                 
@@ -877,7 +877,7 @@ hide #test-element then show #test-element"></textarea>
         
         // Initialize on load
         window.addEventListener('load', function() {
-            logSuccess('HyperFixi Live Demo Ready!', 'basic-output');
+            logSuccess('LokaScript Live Demo Ready!', 'basic-output');
             
             const systemInfo = {
                 hyperfixi: {
@@ -901,13 +901,13 @@ hide #test-element then show #test-element"></textarea>
             logDebug('System initialization complete', 'basic-output', systemInfo);
             
             if (typeof hyperfixi !== 'undefined') {
-                logSuccess('HyperFixi library loaded successfully', 'basic-output', {
+                logSuccess('LokaScript library loaded successfully', 'basic-output', {
                     methods: Object.keys(hyperfixi),
                     readyForTesting: true
                 });
             } else {
-                logError('HyperFixi library not available', 'basic-output', {
-                    suggestion: 'Check if /dist/hyperfixi-browser.js is accessible',
+                logError('LokaScript library not available', 'basic-output', {
+                    suggestion: 'Check if /dist/lokascript-browser.js is accessible',
                     debugInfo: 'This may indicate a build or server issue'
                 });
             }

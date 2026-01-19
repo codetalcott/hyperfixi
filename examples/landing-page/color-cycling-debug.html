@@ -128,7 +128,7 @@
       appendLog('pointerup event fired (document level)');
     });
 
-    appendLog('Debug page loaded, waiting for HyperFixi...');
+    appendLog('Debug page loaded, waiting for LokaScript...');
   </script>
 
   <!-- Enable debug mode -->
@@ -136,11 +136,11 @@
     window.__HYPERFIXI_DEBUG__ = true;
   </script>
 
-  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../../packages/core/dist/lokascript-browser.js"></script>
   <script src="../debug-panel.js"></script>
 
   <script>
-    appendLog('HyperFixi loaded: ' + (typeof hyperfixi !== 'undefined'));
+    appendLog('LokaScript loaded: ' + (typeof hyperfixi !== 'undefined'));
 
     // Check what the parsed AST looks like
     if (typeof hyperfixi !== 'undefined') {

@@ -861,8 +861,8 @@
   </main>
 
   <!-- Load hyperfixi for UI interactions -->
-  <script src="../../core/dist/hyperfixi-browser.js"
-    onerror="console.error('Failed to load hyperfixi-browser.js'); alert('Failed to load core bundle. Check path: ../../core/dist/hyperfixi-browser.js')"></script>
+  <script src="../../core/dist/lokascript-browser.js"
+    onerror="console.error('Failed to load lokascript-browser.js'); alert('Failed to load core bundle. Check path: ../../core/dist/lokascript-browser.js')"></script>
 
   <!-- Load semantic bundle for profiles and parsing -->
   <script src="../dist/browser.global.js"
@@ -874,8 +874,8 @@
       if (typeof hyperfixi === 'undefined') {
         console.warn('hyperfixi core not loaded - hyperscript UI will not work');
       }
-      if (typeof HyperFixiSemantic === 'undefined') {
-        console.error('HyperFixiSemantic not loaded');
+      if (typeof LokaScriptSemantic === 'undefined') {
+        console.error('LokaScriptSemantic not loaded');
       }
     });
   </script>
@@ -903,18 +903,18 @@
     // Initialization
     // ==========================================================================
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM loaded, checking HyperFixiSemantic...');
-      console.log('HyperFixiSemantic:', typeof HyperFixiSemantic);
+      console.log('DOM loaded, checking LokaScriptSemantic...');
+      console.log('LokaScriptSemantic:', typeof LokaScriptSemantic);
 
-      if (typeof HyperFixiSemantic === 'undefined') {
-        console.error('HyperFixiSemantic not loaded! Check script path.');
+      if (typeof LokaScriptSemantic === 'undefined') {
+        console.error('LokaScriptSemantic not loaded! Check script path.');
         document.getElementById('language-select').innerHTML =
           '<option value="">ERROR: Semantic bundle not loaded</option>';
         return;
       }
 
-      console.log('HyperFixiSemantic keys:', Object.keys(HyperFixiSemantic).slice(0, 10));
-      console.log('registeredLanguageProfiles:', HyperFixiSemantic.registeredLanguageProfiles);
+      console.log('LokaScriptSemantic keys:', Object.keys(LokaScriptSemantic).slice(0, 10));
+      console.log('registeredLanguageProfiles:', LokaScriptSemantic.registeredLanguageProfiles);
 
       populateLanguageSelector();
       loadFromLocalStorage();
@@ -923,12 +923,12 @@
     function populateLanguageSelector() {
       const select = document.getElementById('language-select');
 
-      if (typeof HyperFixiSemantic === 'undefined') {
+      if (typeof LokaScriptSemantic === 'undefined') {
         select.innerHTML = '<option value="">Semantic bundle not loaded</option>';
         return;
       }
 
-      const profiles = HyperFixiSemantic.registeredLanguageProfiles;
+      const profiles = LokaScriptSemantic.registeredLanguageProfiles;
       console.log('Profiles object:', profiles);
       console.log('Profile keys:', profiles ? Object.keys(profiles) : 'null');
 
@@ -951,7 +951,7 @@
     window.selectLanguage = function(code) {
       if (!code) return;
 
-      const profiles = HyperFixiSemantic.registeredLanguageProfiles;
+      const profiles = LokaScriptSemantic.registeredLanguageProfiles;
       const profile = profiles[code];
 
       if (!profile) {
@@ -1162,8 +1162,8 @@
       // Try to get patterns - this may not be exposed in browser bundle
       let patterns = [];
       try {
-        if (typeof HyperFixiSemantic.getPatternsForLanguage === 'function') {
-          patterns = HyperFixiSemantic.getPatternsForLanguage(langCode);
+        if (typeof LokaScriptSemantic.getPatternsForLanguage === 'function') {
+          patterns = LokaScriptSemantic.getPatternsForLanguage(langCode);
         }
       } catch (e) {
         console.warn('getPatternsForLanguage not available:', e);
@@ -1266,7 +1266,7 @@
       }
 
       try {
-        const result = HyperFixiSemantic.parse(input, state.currentLanguage);
+        const result = LokaScriptSemantic.parse(input, state.currentLanguage);
 
         if (result) {
           const output = {
@@ -1471,8 +1471,8 @@
 
       let patterns = 0;
       try {
-        if (typeof HyperFixiSemantic.getPatternsForLanguage === 'function') {
-          patterns = HyperFixiSemantic.getPatternsForLanguage(langCode).length;
+        if (typeof LokaScriptSemantic.getPatternsForLanguage === 'function') {
+          patterns = LokaScriptSemantic.getPatternsForLanguage(langCode).length;
         }
       } catch (e) {}
 

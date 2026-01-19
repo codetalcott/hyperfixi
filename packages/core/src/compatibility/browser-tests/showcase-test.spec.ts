@@ -6,7 +6,7 @@ test.describe('Multilingual Showcase Page', () => {
     // Wait for bundles to load
     await page.waitForFunction(
       () =>
-        typeof (window as any).HyperFixiSemantic !== 'undefined' &&
+        typeof (window as any).LokaScriptSemantic !== 'undefined' &&
         typeof (window as any).hyperfixi !== 'undefined'
     );
   });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polyglot Code Playground - HyperFixi Experiments</title>
+    <title>Polyglot Code Playground - LokaScript Experiments</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles for Polyglot Playground */
@@ -334,7 +334,7 @@
         <div class="info-box">
             <h3>How This Works</h3>
             <p>
-                HyperFixi's grammar transformation system understands <strong>semantic roles</strong> (action, patient, event)
+                LokaScript's grammar transformation system understands <strong>semantic roles</strong> (action, patient, event)
                 rather than just keywords. When you write code in Japanese (SOV order: Object-Verb), it recognizes the pattern
                 and can transform it to English (SVO order: Verb-Object) for execution. The demo elements above use real
                 hyperscript via the <code>_=""</code> attribute - try clicking them, then try writing code to control them.
@@ -342,10 +342,10 @@
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../debug-panel.js"></script>
-    <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+    <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
 
     <script>
         const languages = [
@@ -360,7 +360,7 @@
 
         function updateTranslations(englishCode) {
             const grid = document.getElementById('translations-grid');
-            const translate = window.HyperFixiI18n?.translate;
+            const translate = window.LokaScriptI18n?.translate;
 
             let html = '';
             for (const lang of languages) {
@@ -404,8 +404,8 @@
 
         // Dynamically execute hyperscript on an element
         function executeHyperscript(code, targetSelector) {
-            if (!window.hyperfixi) {
-                showStatus('HyperFixi runtime not loaded', 'error');
+            if (!window.lokascript) {
+                showStatus('LokaScript runtime not loaded', 'error');
                 return;
             }
 
@@ -417,8 +417,8 @@
                 document.body.appendChild(tempBtn);
 
                 // Initialize hyperscript on the element
-                if (window.hyperfixi.processNode) {
-                    window.hyperfixi.processNode(tempBtn);
+                if (window.lokascript.processNode) {
+                    window.lokascript.processNode(tempBtn);
                 }
 
                 // Trigger click to execute
@@ -474,8 +474,8 @@
             updateTranslations('on click increment #count');
             input.value = 'on click increment #count';
 
-            console.log('HyperFixi loaded:', !!window.hyperfixi);
-            console.log('HyperFixi i18n loaded:', !!window.HyperFixiI18n);
+            console.log('LokaScript loaded:', !!window.lokascript);
+            console.log('LokaScript i18n loaded:', !!window.LokaScriptI18n);
         });
     </script>
 </body>

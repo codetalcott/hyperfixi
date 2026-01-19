@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('HyperFixi Classic i18n Bundle', () => {
+test.describe('LokaScript Classic i18n Bundle', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/examples/multilingual/test-classic-i18n.html');
   });

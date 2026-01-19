@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Hyperscript Injection - HyperFixi Experiments</title>
+    <title>Dynamic Hyperscript Injection - LokaScript Experiments</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles for Dynamic Injection */
@@ -427,17 +427,17 @@
             <p>
                 This experiment demonstrates a <strong>dynamic code injection pipeline</strong>. Code snippets
                 are stored as English hyperscript, then transformed to your selected locale using the grammar
-                transformation system. The transformed code is injected into the DOM and processed by HyperFixi's
+                transformation system. The transformed code is injected into the DOM and processed by LokaScript's
                 runtime. Click a snippet, then click "Inject" to attach the behavior to the target elements.
                 The code you see is the actual hyperscript that will execute - in your language.
             </p>
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../debug-panel.js"></script>
-    <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+    <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
 
     <script>
         // Code snippets (stored as English, transformed on demand)
@@ -477,7 +477,7 @@
         function translateCode(english, locale) {
             if (locale === 'en') return english;
 
-            const translate = window.HyperFixiI18n?.translate;
+            const translate = window.LokaScriptI18n?.translate;
             if (!translate) return english;
 
             try {
@@ -559,9 +559,9 @@
             // Inject the English code (runtime needs English)
             target.setAttribute('_', snippet.english);
 
-            // Process with HyperFixi
-            if (window.hyperfixi?.processNode) {
-                window.hyperfixi.processNode(target);
+            // Process with LokaScript
+            if (window.lokascript?.processNode) {
+                window.lokascript.processNode(target);
             }
 
             // Mark as loaded
@@ -599,8 +599,8 @@
             // Initial render
             renderSnippets();
 
-            console.log('HyperFixi loaded:', !!window.hyperfixi);
-            console.log('HyperFixi i18n loaded:', !!window.HyperFixiI18n);
+            console.log('LokaScript loaded:', !!window.lokascript);
+            console.log('LokaScript i18n loaded:', !!window.LokaScriptI18n);
         });
     </script>
 </body>

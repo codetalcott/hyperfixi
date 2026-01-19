@@ -17,7 +17,7 @@ test.describe('Direct AST Path Execution', () => {
     // Wait for both bundles to load
     await page.waitForFunction(
       () =>
-        typeof (window as any).HyperFixiSemantic !== 'undefined' &&
+        typeof (window as any).LokaScriptSemantic !== 'undefined' &&
         typeof (window as any).hyperfixi !== 'undefined',
       { timeout: 10000 }
     );
@@ -26,7 +26,7 @@ test.describe('Direct AST Path Execution', () => {
   test.describe('English Commands via Direct AST', () => {
     test('toggle command via direct AST', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         // Use analyzer for parsing with confidence
         const analyzer = S.createSemanticAnalyzer();
@@ -57,7 +57,7 @@ test.describe('Direct AST Path Execution', () => {
 
     test('show command with improved confidence', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         // Use analyzer for confidence scoring
         const analyzer = S.createSemanticAnalyzer();
@@ -78,7 +78,7 @@ test.describe('Direct AST Path Execution', () => {
 
     test('hide command with improved confidence', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         const analyzer = S.createSemanticAnalyzer();
         const analysisResult = analyzer.analyze('hide #modal', 'en');
@@ -99,7 +99,7 @@ test.describe('Direct AST Path Execution', () => {
   test.describe('Japanese Commands via Direct AST (SOV)', () => {
     test('toggle command from Japanese', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         // Use analyzer for parsing
         const analyzer = S.createSemanticAnalyzer();
@@ -128,7 +128,7 @@ test.describe('Direct AST Path Execution', () => {
 
     test('add command from Japanese', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         const analyzer = S.createSemanticAnalyzer();
         const analysisResult = analyzer.analyze('.highlight を 追加', 'ja');
@@ -156,7 +156,7 @@ test.describe('Direct AST Path Execution', () => {
 
     test('show command from Japanese', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         const analyzer = S.createSemanticAnalyzer();
         const analysisResult = analyzer.analyze('#modal を 表示', 'ja');
@@ -176,7 +176,7 @@ test.describe('Direct AST Path Execution', () => {
   test.describe('Spanish Commands via Direct AST (SVO)', () => {
     test('toggle command from Spanish', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         const analyzer = S.createSemanticAnalyzer();
         const analysisResult = analyzer.analyze('alternar .active en #button', 'es');
@@ -205,7 +205,7 @@ test.describe('Direct AST Path Execution', () => {
   test.describe('Korean Commands via Direct AST (SOV)', () => {
     test('toggle command from Korean', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         const analyzer = S.createSemanticAnalyzer();
         const analysisResult = analyzer.analyze('#button 의 .active 를 토글', 'ko');
@@ -233,7 +233,7 @@ test.describe('Direct AST Path Execution', () => {
   test.describe('Arabic Commands via Direct AST (VSO)', () => {
     test('toggle command from Arabic', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         const analyzer = S.createSemanticAnalyzer();
         const analysisResult = analyzer.analyze('بدّل .active على #button', 'ar');
@@ -261,7 +261,7 @@ test.describe('Direct AST Path Execution', () => {
   test.describe('Chinese Commands via Direct AST (SVO)', () => {
     test('toggle command from Chinese', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
 
         const analyzer = S.createSemanticAnalyzer();
         const analysisResult = analyzer.analyze('切换 .active 在 #button', 'zh');
@@ -305,7 +305,7 @@ test.describe('Direct AST Path Execution', () => {
   test.describe('Cross-Language Consistency', () => {
     test('same command produces equivalent AST in different languages', async ({ page }) => {
       const result = await page.evaluate(async () => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const analyzer = S.createSemanticAnalyzer();
 
         // Parse same command in multiple languages

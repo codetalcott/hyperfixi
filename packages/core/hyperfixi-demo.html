@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>HyperFixi Pure Demo - No JavaScript Workarounds</title>
+    <title>LokaScript Pure Demo - No JavaScript Workarounds</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -94,11 +94,11 @@
     </style>
 </head>
 <body>
-    <h1>🚀 HyperFixi Pure Demo - Testing with HyperScript Only</h1>
+    <h1>🚀 LokaScript Pure Demo - Testing with HyperScript Only</h1>
     
     <div class="demo-section">
         <h2>🧪 Level 1: Basic DOM Commands</h2>
-        <p>Test basic HyperFixi commands without JavaScript</p>
+        <p>Test basic LokaScript commands without JavaScript</p>
         <div class="work-area">
             <div id="test-element" style="padding: 10px; background: yellow; transition: all 0.3s;">Test Element</div>
         </div>
@@ -167,8 +167,8 @@
                 set the textContent of #counter-display to 'Count: 0'">🔄 Reset</button>
         </div>
 
-        <!-- HyperFixi Enhanced Commands Approach -->
-        <h3>⚡ HyperFixi Enhanced Commands</h3>
+        <!-- LokaScript Enhanced Commands Approach -->
+        <h3>⚡ LokaScript Enhanced Commands</h3>
         <div class="work-area">
             <div id="enhanced-counter-display" style="font-size: 24px; padding: 10px; text-align: center; background: #e8f5e8; border-radius: 5px; margin: 10px 0;">Enhanced Count: 0</div>
             <button class="test-button" _="on click 
@@ -224,17 +224,17 @@ on click hide #custom-target then wait 1s then show #custom-target"></textarea>
     </div>
 
     <div class="demo-section">
-        <h2>🔍 HyperFixi Status</h2>
+        <h2>🔍 LokaScript Status</h2>
         <p>Pure HyperScript implementation status</p>
         <div id="status-output" style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-family: monospace;">
-            Loading HyperFixi...
+            Loading LokaScript...
         </div>
         <button class="test-button" _="on click 
-            set the textContent of #status-output to 'HyperFixi Status Check Initiated...'">Check Status</button>
+            set the textContent of #status-output to 'LokaScript Status Check Initiated...'">Check Status</button>
     </div>
 
-    <!-- Include our HyperFixi library (LLM bundle for debugging) -->
-    <script src="/dist/hyperfixi-browser.llm.js?v=FINAL-INPUT-EXTRACTION-FIX"></script>
+    <!-- Include our LokaScript library (LLM bundle for debugging) -->
+    <script src="/dist/lokascript-browser.llm.js?v=FINAL-INPUT-EXTRACTION-FIX"></script>
     
     <!-- Automated Test Suite -->
     <script>
@@ -272,8 +272,8 @@ on click hide #custom-target then wait 1s then show #custom-target"></textarea>
             }
             
             try {
-                // Test 1: HyperFixi API availability
-                logTest('HyperFixi API loaded', typeof hyperfixi !== 'undefined');
+                // Test 1: LokaScript API availability
+                logTest('LokaScript API loaded', typeof hyperfixi !== 'undefined');
                 logTest('processNode method available', typeof hyperfixi?.processNode === 'function');
                 logTest('run method available', typeof hyperfixi?.run === 'function');
                 
@@ -713,11 +713,11 @@ on click hide #custom-target then wait 1s then show #custom-target"></textarea>
                 });
             };
             
-            // Initialize HyperFixi and run initial tests
+            // Initialize LokaScript and run initial tests
             if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
                 hyperfixi.processNode(document.body).then(() => {
                     document.getElementById('status-output').textContent = 
-                        '✅ HyperFixi loaded and processed successfully!\n' +
+                        '✅ LokaScript loaded and processed successfully!\n' +
                         'Available methods: ' + Object.keys(hyperfixi).join(', ') + '\n' +
                         'Available commands: ' + (hyperfixi.createRuntime ? 
                             hyperfixi.createRuntime().getAvailableCommands().join(', ') : 'unknown') + '\n' +
@@ -727,11 +727,11 @@ on click hide #custom-target then wait 1s then show #custom-target"></textarea>
                     setTimeout(runAutomatedTests, 1000);
                 }).catch(error => {
                     document.getElementById('status-output').textContent = 
-                        '❌ HyperFixi processing failed: ' + error.message;
+                        '❌ LokaScript processing failed: ' + error.message;
                 });
             } else {
                 document.getElementById('status-output').textContent = 
-                    '❌ HyperFixi not available. Check if browser bundle loaded properly.';
+                    '❌ LokaScript not available. Check if browser bundle loaded properly.';
             }
         });
     </script>

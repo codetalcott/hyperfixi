@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>04: Multi-Target Swaps - HyperFixi htmx-like Examples</title>
+    <title>04: Multi-Target Swaps - LokaScript htmx-like Examples</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles */
@@ -145,7 +145,7 @@
 
         <div class="description">
             <strong>Update multiple elements from a single response</strong><br>
-            HyperFixi supports two patterns for multi-target updates:
+            LokaScript supports two patterns for multi-target updates:
             <ul style="margin: 10px 0;">
                 <li><strong>Explicit swaps:</strong> Multiple swap commands in sequence</li>
                 <li><strong>Partials:</strong> <code>&lt;hx-partial&gt;</code> elements for automatic distribution</li>
@@ -231,7 +231,7 @@
 
             <div class="note">
                 <strong>How it works:</strong> The server returns HTML with <code>&lt;hx-partial target="#id"&gt;</code>
-                elements. HyperFixi extracts each partial and swaps it into the specified target.
+                elements. LokaScript extracts each partial and swaps it into the specified target.
             </div>
 
             <button
@@ -436,7 +436,7 @@
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr style="background: var(--tag-htmx-bg);">
                     <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">htmx</th>
-                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">HyperFixi</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">LokaScript</th>
                 </tr>
                 <tr>
                     <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>hx-swap-oob="true"</code></td>
@@ -464,8 +464,8 @@
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../prism-loader.js"></script>
     <script src="../debug-panel.js"></script>
 </body>

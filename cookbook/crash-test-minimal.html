@@ -291,14 +291,14 @@
       container.appendChild(section);
     });
 
-    log(`✅ Page rendered. Waiting for HyperFixi bundle...`, '#00ffff');
+    log(`✅ Page rendered. Waiting for LokaScript bundle...`, '#00ffff');
   </script>
 
-  <!-- Load HyperFixi bundle AFTER test definitions -->
-  <script src="../packages/core/dist/hyperfixi-browser.js"></script>
+  <!-- Load LokaScript bundle AFTER test definitions -->
+  <script src="../packages/core/dist/lokascript-browser.js"></script>
 
   <script>
-    log(`✅ HyperFixi bundle loaded`, '#00ff00');
+    log(`✅ LokaScript bundle loaded`, '#00ff00');
     log(`🚀 processNode() should be processing ${maxTest} test(s)...`, '#ffff00');
 
     // Set max-test input value

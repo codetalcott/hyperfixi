@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HyperFixi Complete Cookbook Test</title>
+  <title>LokaScript Complete Cookbook Test</title>
   <style>
     * {
       box-sizing: border-box;
@@ -252,8 +252,8 @@
   </style>
 </head>
 <body>
-  <h1>🧪 HyperFixi Complete Cookbook Test Suite</h1>
-  <p>Testing all 9 official _hyperscript cookbook examples with HyperFixi</p>
+  <h1>🧪 LokaScript Complete Cookbook Test Suite</h1>
+  <p>Testing all 9 official _hyperscript cookbook examples with LokaScript</p>
 
   <div class="test-summary">
     <h3>Test Summary</h3>
@@ -496,8 +496,8 @@ Drop Here</pre>
     }
   </script>
 
-  <!-- Load HyperFixi -->
-  <script src="../packages/core/dist/hyperfixi-browser.js"></script>
+  <!-- Load LokaScript -->
+  <script src="../packages/core/dist/lokascript-browser.js"></script>
 
   <script>
     const consoleOutput = document.getElementById('console-output');
@@ -705,8 +705,8 @@ Drop Here</pre>
         container.insertBefore(btn, container.firstChild);
 
         // Re-process the element to bind hyperscript
-        if (window.hyperfixi && window.hyperfixi.processNode) {
-          window.hyperfixi.processNode(btn);
+        if (window.lokascript && window.lokascript.processNode) {
+          window.lokascript.processNode(btn);
         }
       }
     }

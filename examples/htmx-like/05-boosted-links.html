@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>05: Boosted Links - HyperFixi htmx-like Examples</title>
+    <title>05: Boosted Links - LokaScript htmx-like Examples</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles */
@@ -163,7 +163,7 @@
 
         <div class="note">
             <strong>How it works:</strong> When you click a link inside a boosted container,
-            HyperFixi intercepts the click, fetches the content via AJAX, swaps it into
+            LokaScript intercepts the click, fetches the content via AJAX, swaps it into
             the target area, and updates the URL. No page reload!
         </div>
 
@@ -353,7 +353,7 @@
         <h3>Programmatic Boosted Behavior:</h3>
         <div class="code">
 <span class="comment">// Using the pre-built Boosted behavior (JavaScript)</span>
-<span class="keyword">import</span> { createBoosted } <span class="keyword">from</span> <span class="string">'@hyperfixi/core/behaviors'</span>;
+<span class="keyword">import</span> { createBoosted } <span class="keyword">from</span> <span class="string">'@lokascript/core/behaviors'</span>;
 
 <span class="keyword">const</span> boost = createBoosted({
   container: document.querySelector(<span class="string">'nav'</span>),
@@ -399,7 +399,7 @@
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr style="background: var(--color-surface, #f4f4f5);">
                     <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">htmx</th>
-                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">HyperFixi</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">LokaScript</th>
                 </tr>
                 <tr>
                     <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>&lt;body hx-boost="true"&gt;</code></td>
@@ -436,8 +436,8 @@
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../prism-loader.js"></script>
     <script src="../debug-panel.js"></script>
 </body>

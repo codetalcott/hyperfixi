@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HyperFixi Interactive Translation Playground</title>
+  <title>LokaScript Interactive Translation Playground</title>
   <link rel="stylesheet" href="../gallery.css">
   <style>
     /* Playground-specific layout - full viewport app */
@@ -406,7 +406,7 @@
 </head>
 <body>
   <header class="header">
-    <h1>HyperFixi Translation Playground</h1>
+    <h1>LokaScript Translation Playground</h1>
     <div class="header-actions">
       <button class="btn" id="share-btn" title="Copy shareable link"
               _="on click call buildShareUrl() then copy it then call logToConsole('Copied to clipboard!', 'success') then set my textContent to 'Copied!' then wait 2s then set my textContent to 'Share'">Share</button>
@@ -505,17 +505,17 @@ Examples:
                 _='on click put "<span class=info>[info]</span> Console cleared" into #console-output'>Clear</button>
       </div>
       <div class="console-output" id="console-output">
-<span class="info">[info]</span> HyperFixi Playground loaded
+<span class="info">[info]</span> LokaScript Playground loaded
 <span class="info">[info]</span> 13 languages available with grammar transformation
 <span class="success">[ready]</span> Type hyperscript and see live translations
       </div>
     </div>
   </div>
 
-  <!-- Load HyperFixi bundles -->
-  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <!-- Load LokaScript bundles -->
+  <script src="../../packages/core/dist/lokascript-browser.js"></script>
   <script src="../debug-panel.js"></script>
-  <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+  <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
 
   <script>
     // Language metadata
@@ -581,10 +581,10 @@ Examples:
           const pairKey = `${source}->${lang}`;
           const isDirect = DIRECT_PAIRS.has(pairKey);
 
-          // Use HyperFixiI18n if available, otherwise simulate
+          // Use LokaScriptI18n if available, otherwise simulate
           let translated = code;
-          if (window.HyperFixiI18n && window.HyperFixiI18n.translate) {
-            translated = window.HyperFixiI18n.translate(code, source, lang);
+          if (window.LokaScriptI18n && window.LokaScriptI18n.translate) {
+            translated = window.LokaScriptI18n.translate(code, source, lang);
           }
 
           html += `
@@ -619,13 +619,13 @@ Examples:
       const code = codeEditor.value.trim();
       const source = sourceLang.value;
 
-      if (!code || !window.HyperFixiI18n || !window.HyperFixiI18n.parseStatement) {
+      if (!code || !window.LokaScriptI18n || !window.LokaScriptI18n.parseStatement) {
         semanticRoles.innerHTML = '<span style="color: #666;">Enter code to analyze</span>';
         return;
       }
 
       try {
-        const parsed = window.HyperFixiI18n.parseStatement(code, source);
+        const parsed = window.LokaScriptI18n.parseStatement(code, source);
         if (!parsed || !parsed.roles) {
           semanticRoles.innerHTML = '<span style="color: #666;">Could not parse statement</span>';
           return;
@@ -684,14 +684,14 @@ Examples:
       try {
         // Translate to English if needed
         let englishCode = code;
-        if (source !== 'en' && window.HyperFixiI18n && window.HyperFixiI18n.toEnglish) {
-          englishCode = window.HyperFixiI18n.toEnglish(code, source);
+        if (source !== 'en' && window.LokaScriptI18n && window.LokaScriptI18n.toEnglish) {
+          englishCode = window.LokaScriptI18n.toEnglish(code, source);
         }
 
         logToConsole(`Applying: ${englishCode}`, 'info');
 
         // Apply hyperscript to the demo button
-        if (window.hyperfixi) {
+        if (window.lokascript) {
           const btn = window.demoBtn || document.getElementById('demo-btn');
 
           // Clear any previous hyperscript by replacing the button
@@ -701,9 +701,9 @@ Examples:
           window.demoBtn = newBtn;
 
           // Use the programmatic API
-          const context = window.hyperfixi.createContext(newBtn);
+          const context = window.lokascript.createContext(newBtn);
 
-          window.hyperfixi.run(englishCode, context).then(() => {
+          window.lokascript.run(englishCode, context).then(() => {
             newBtn.setAttribute('_', englishCode);
             document.getElementById('current-code').textContent = englishCode;
             logToConsole('Hyperscript applied! Click the button to test.', 'success');
@@ -713,7 +713,7 @@ Examples:
 
           currentDemoScript = englishCode;
         } else {
-          logToConsole('HyperFixi runtime not available', 'warning');
+          logToConsole('LokaScript runtime not available', 'warning');
         }
       } catch (e) {
         logToConsole('Execution error: ' + e.message, 'error');
@@ -754,13 +754,13 @@ Examples:
     updateTransformations();
     updateSemanticAnalysis();
 
-    // Check for HyperFixi availability
-    if (window.HyperFixiI18n) {
-      logToConsole('HyperFixi i18n module loaded successfully', 'success');
-      const profiles = window.HyperFixiI18n.getSupportedLocales ? window.HyperFixiI18n.getSupportedLocales() : [];
+    // Check for LokaScript availability
+    if (window.LokaScriptI18n) {
+      logToConsole('LokaScript i18n module loaded successfully', 'success');
+      const profiles = window.LokaScriptI18n.getSupportedLocales ? window.LokaScriptI18n.getSupportedLocales() : [];
       logToConsole(`Supported locales: ${profiles.join(', ')}`, 'info');
     } else {
-      logToConsole('HyperFixi i18n module not found - running in demo mode', 'warning');
+      logToConsole('LokaScript i18n module not found - running in demo mode', 'warning');
     }
   </script>
 </body>

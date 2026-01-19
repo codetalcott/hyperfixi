@@ -16,8 +16,8 @@ test.describe('Error Playground', () => {
   test.beforeEach(async ({ page, baseURL }) => {
     await page.goto(`${baseURL}/examples/playground/error-playground.html`);
 
-    // Wait for HyperFixiSemantic to load
-    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+    // Wait for LokaScriptSemantic to load
+    await page.waitForFunction(() => typeof (window as any).LokaScriptSemantic !== 'undefined', {
       timeout: 10000,
     });
   });

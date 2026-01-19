@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semantic-First Multilingual Parsing - HyperFixi</title>
+    <title>Semantic-First Multilingual Parsing - LokaScript</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Semantic demo - dark themed app */
@@ -542,15 +542,15 @@
     <!-- Load the semantic package (IIFE bundle) -->
     <script src="../../packages/semantic/dist/browser.global.js"></script>
     <script>
-        // Using the real HyperFixiSemantic bundle!
-        const Semantic = window.HyperFixiSemantic;
+        // Using the real LokaScriptSemantic bundle!
+        const Semantic = window.LokaScriptSemantic;
 
         // Check if bundle loaded
         if (!Semantic) {
-            console.error('HyperFixiSemantic bundle not loaded!');
+            console.error('LokaScriptSemantic bundle not loaded!');
             document.body.innerHTML = '<h1 style="color: red; text-align: center; margin-top: 100px;">Error: Semantic bundle not loaded. Run "npm run build:browser" in packages/semantic/</h1>';
         } else {
-            console.log('HyperFixiSemantic loaded:', Semantic.VERSION || 'unknown version');
+            console.log('LokaScriptSemantic loaded:', Semantic.VERSION || 'unknown version');
             console.log('Supported languages:', Semantic.getSupportedLanguages ? Semantic.getSupportedLanguages() : 'API not available');
         }
 

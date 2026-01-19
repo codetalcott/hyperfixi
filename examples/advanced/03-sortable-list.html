@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>03: Sortable List - HyperFixi Examples</title>
+    <title>03: Sortable List - LokaScript Examples</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles */
@@ -354,7 +354,7 @@
                               return clone;
                             end
                             set newItem to it
-                            call window.hyperfixi.processNode(newItem)
+                            call window.lokascript.processNode(newItem)
                             put '' into input.value
                           end">
                     Add Task
@@ -562,8 +562,8 @@
         window.__HYPERFIXI_DEBUG__ = true;
         localStorage.setItem('hyperfixi:debug', '*');
     </script>
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../prism-loader.js"></script>
     <script src="../debug-panel.js"></script>
 </body>

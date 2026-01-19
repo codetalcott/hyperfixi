@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>02: Fetch Data - HyperFixi Examples</title>
+    <title>02: Fetch Data - LokaScript Examples</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles */
@@ -101,11 +101,11 @@
 
         <div class="description">
             <strong>Load data from external APIs dynamically</strong><br>
-            HyperFixi now supports the native <code>fetch URL as json</code> syntax! You can also use the <code>call fetch()</code> method with JavaScript's Fetch API.
+            LokaScript now supports the native <code>fetch URL as json</code> syntax! You can also use the <code>call fetch()</code> method with JavaScript's Fetch API.
             <br><br>
             <strong>Two Methods:</strong>
             <ul style="margin: 10px 0;">
-                <li><strong>Native:</strong> <code>fetch 'URL' as json</code> - Built-in HyperFixi syntax</li>
+                <li><strong>Native:</strong> <code>fetch 'URL' as json</code> - Built-in LokaScript syntax</li>
                 <li><strong>Alternative:</strong> <code>call fetch('URL').then(r => r.json())</code> - JavaScript Fetch API</li>
             </ul>
         </div>
@@ -119,7 +119,7 @@
 
         <!-- Demo 0: Native Fetch Syntax -->
         <div class="demo">
-            <h2>Demo 0: Native Fetch Syntax (HyperFixi)</h2>
+            <h2>Demo 0: Native Fetch Syntax (LokaScript)</h2>
             <p>Test the built-in <code>fetch URL as json</code> syntax:</p>
 
             <button
@@ -287,7 +287,7 @@
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
-                <li><code>fetch 'URL' as json</code> - Built-in HyperFixi fetch command</li>
+                <li><code>fetch 'URL' as json</code> - Built-in LokaScript fetch command</li>
                 <li><code>put it into variable</code> - Store the parsed response data</li>
                 <li><code>fetch</code> command - Automatically waits for the request to complete</li>
                 <li><code>repeat for item in items</code> - Loops through array results</li>
@@ -362,8 +362,8 @@ log 'User deleted'
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../prism-loader.js"></script>
     <script src="../debug-panel.js"></script>
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HyperFixi i18n - Live Test</title>
+  <title>LokaScript i18n - Live Test</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -189,7 +189,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>🌍 HyperFixi i18n - Live Test</h1>
+      <h1>🌍 LokaScript i18n - Live Test</h1>
       <p>Testing multilingual hyperscript keyword providers in the browser</p>
     </div>
 
@@ -311,11 +311,11 @@
     </div>
   </div>
 
-  <!-- Load HyperFixi Core -->
-  <script src="../core/dist/hyperfixi-browser.js"></script>
+  <!-- Load LokaScript Core -->
+  <script src="../core/dist/lokascript-browser.js"></script>
 
   <!-- Load i18n Bundle -->
-  <script src="./dist/hyperfixi-i18n.min.js"></script>
+  <script src="./dist/lokascript-i18n.min.js"></script>
 
   <script>
     // Test results tracking
@@ -363,7 +363,7 @@
         el.textContent = 'Testing...';
       });
 
-      const i18n = window.HyperFixiI18n;
+      const i18n = window.LokaScriptI18n;
 
       // Test Spanish
       testProviderResolution('es', i18n.esKeywords, [
@@ -439,14 +439,14 @@
       const loading = document.getElementById('loading');
       const container = document.getElementById('test-container');
 
-      if (typeof window.hyperfixi === 'undefined') {
-        loading.textContent = '❌ Error: HyperFixi core bundle not loaded';
+      if (typeof window.lokascript === 'undefined') {
+        loading.textContent = '❌ Error: LokaScript core bundle not loaded';
         loading.style.color = '#dc3545';
         return;
       }
 
-      if (typeof window.HyperFixiI18n === 'undefined') {
-        loading.textContent = '❌ Error: HyperFixi i18n bundle not loaded';
+      if (typeof window.LokaScriptI18n === 'undefined') {
+        loading.textContent = '❌ Error: LokaScript i18n bundle not loaded';
         loading.style.color = '#dc3545';
         return;
       }
@@ -455,9 +455,9 @@
       loading.style.display = 'none';
       container.style.display = 'grid';
 
-      console.log('✓ HyperFixi core loaded:', window.hyperfixi);
-      console.log('✓ HyperFixi i18n loaded:', window.HyperFixiI18n);
-      console.log('Available providers:', Object.keys(window.HyperFixiI18n).filter(k => k.endsWith('Keywords')));
+      console.log('✓ LokaScript core loaded:', window.lokascript);
+      console.log('✓ LokaScript i18n loaded:', window.LokaScriptI18n);
+      console.log('Available providers:', Object.keys(window.LokaScriptI18n).filter(k => k.endsWith('Keywords')));
 
       // Auto-run tests
       setTimeout(runAllTests, 100);

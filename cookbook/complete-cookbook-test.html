@@ -437,8 +437,8 @@
     </div>
   </div>
 
-  <!-- Load HyperFixi -->
-  <script src="../packages/core/dist/hyperfixi-browser.js"></script>
+  <!-- Load LokaScript -->
+  <script src="../packages/core/dist/lokascript-browser.js"></script>
 
   <script>
     function resetFadeExample() {
@@ -451,8 +451,8 @@
         btn.setAttribute('_', 'on click transition opacity to 0 then remove me');
         btn.textContent = 'Fade & Remove';
         container.insertBefore(btn, container.firstChild);
-        if (window.hyperfixi && window.hyperfixi.processNode) {
-          window.hyperfixi.processNode(btn);
+        if (window.lokascript && window.lokascript.processNode) {
+          window.lokascript.processNode(btn);
         }
       }
     }

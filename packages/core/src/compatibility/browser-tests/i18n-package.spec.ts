@@ -10,14 +10,14 @@
 
 import { test, expect } from '@playwright/test';
 
-test.describe('HyperFixi i18n Bundle', () => {
+test.describe('LokaScript i18n Bundle', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/packages/i18n/provider-test.html');
   });
 
-  test('bundle loads and exposes HyperFixiI18n global @quick', async ({ page }) => {
+  test('bundle loads and exposes LokaScriptI18n global @quick', async ({ page }) => {
     const isLoaded = await page.evaluate(
-      () => typeof (window as any).HyperFixiI18n !== 'undefined'
+      () => typeof (window as any).LokaScriptI18n !== 'undefined'
     );
     expect(isLoaded).toBe(true);
   });
@@ -29,7 +29,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('exposes keyword providers for all supported languages @quick', async ({ page }) => {
     const providers = await page.evaluate(() => {
-      const i18n = (window as any).HyperFixiI18n;
+      const i18n = (window as any).LokaScriptI18n;
       return {
         es: typeof i18n.esKeywords,
         ja: typeof i18n.jaKeywords,
@@ -56,7 +56,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('Spanish provider resolves keywords correctly @quick', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.esKeywords;
+      const provider = (window as any).LokaScriptI18n.esKeywords;
       return {
         toggle: provider.resolve('alternar'),
         click: provider.resolve('clic'),
@@ -73,7 +73,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('Japanese provider resolves keywords correctly @quick', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.jaKeywords;
+      const provider = (window as any).LokaScriptI18n.jaKeywords;
       return {
         toggle: provider.resolve('切り替え'),
         click: provider.resolve('クリック'),
@@ -90,7 +90,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('French provider resolves keywords correctly', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.frKeywords;
+      const provider = (window as any).LokaScriptI18n.frKeywords;
       return {
         toggle: provider.resolve('basculer'),
         click: provider.resolve('clic'),
@@ -105,7 +105,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('German provider resolves keywords correctly', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.deKeywords;
+      const provider = (window as any).LokaScriptI18n.deKeywords;
       return {
         toggle: provider.resolve('umschalten'),
         click: provider.resolve('klick'),
@@ -120,7 +120,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('Arabic provider resolves keywords correctly', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.arKeywords;
+      const provider = (window as any).LokaScriptI18n.arKeywords;
       return {
         toggle: provider.resolve('بدل'),
         click: provider.resolve('نقر'),
@@ -135,7 +135,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('Korean provider resolves keywords correctly', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.koKeywords;
+      const provider = (window as any).LokaScriptI18n.koKeywords;
       return {
         toggle: provider.resolve('토글'),
         click: provider.resolve('클릭'),
@@ -150,7 +150,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('Chinese provider resolves keywords correctly', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.zhKeywords;
+      const provider = (window as any).LokaScriptI18n.zhKeywords;
       return {
         toggle: provider.resolve('切换'),
         click: provider.resolve('点击'),
@@ -165,7 +165,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('Turkish provider resolves keywords correctly', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const provider = (window as any).HyperFixiI18n.trKeywords;
+      const provider = (window as any).LokaScriptI18n.trKeywords;
       return {
         toggle: provider.resolve('değiştir'),
         click: provider.resolve('tıklama'),
@@ -180,8 +180,8 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('provider fallback to English works @quick', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const esProvider = (window as any).HyperFixiI18n.esKeywords;
-      const jaProvider = (window as any).HyperFixiI18n.jaKeywords;
+      const esProvider = (window as any).LokaScriptI18n.esKeywords;
+      const jaProvider = (window as any).LokaScriptI18n.jaKeywords;
       return {
         esFallback: esProvider.resolve('remove'), // English word
         jaFallback: jaProvider.resolve('add'), // English word
@@ -200,7 +200,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('all providers have resolve method', async ({ page }) => {
     const hasResolve = await page.evaluate(() => {
-      const i18n = (window as any).HyperFixiI18n;
+      const i18n = (window as any).LokaScriptI18n;
       const providers = ['es', 'ja', 'zh', 'ar', 'ko', 'de', 'fr', 'tr', 'pt'];
       return providers.map(lang => {
         const provider = i18n[`${lang}Keywords`];
@@ -262,7 +262,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('grammar profiles are available', async ({ page }) => {
     const profiles = await page.evaluate(() => {
-      const i18n = (window as any).HyperFixiI18n;
+      const i18n = (window as any).LokaScriptI18n;
 
       // Check if grammar transformation is available
       if (typeof i18n.getProfile !== 'function') {
@@ -284,7 +284,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('providers expose expected keywords', async ({ page }) => {
     const keywords = await page.evaluate(() => {
-      const esProvider = (window as any).HyperFixiI18n.esKeywords;
+      const esProvider = (window as any).LokaScriptI18n.esKeywords;
 
       // Get some common keywords
       return {
@@ -304,7 +304,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('non-existent keyword returns original string', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const esProvider = (window as any).HyperFixiI18n.esKeywords;
+      const esProvider = (window as any).LokaScriptI18n.esKeywords;
       return esProvider.resolve('nonexistentkeyword123');
     });
 
@@ -314,7 +314,7 @@ test.describe('HyperFixi i18n Bundle', () => {
 
   test('keyword resolution is case-insensitive or normalized', async ({ page }) => {
     const results = await page.evaluate(() => {
-      const esProvider = (window as any).HyperFixiI18n.esKeywords;
+      const esProvider = (window as any).LokaScriptI18n.esKeywords;
       return {
         lowercase: esProvider.resolve('alternar'),
         uppercase: esProvider.resolve('ALTERNAR'),

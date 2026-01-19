@@ -16,16 +16,16 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
     await page.goto('/packages/semantic/test-browser.html');
   });
 
-  test('bundle loads and exposes HyperFixiSemantic global @quick', async ({ page }) => {
+  test('bundle loads and exposes LokaScriptSemantic global @quick', async ({ page }) => {
     const isLoaded = await page.evaluate(
-      () => typeof (window as any).HyperFixiSemantic !== 'undefined'
+      () => typeof (window as any).LokaScriptSemantic !== 'undefined'
     );
     expect(isLoaded).toBe(true);
   });
 
   test('exposes all core API methods @quick', async ({ page }) => {
     const apiCheck = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return {
         parse: typeof S.parse,
         translate: typeof S.translate,
@@ -56,7 +56,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('supports all 13 languages @quick', async ({ page }) => {
     const languages = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.getSupportedLanguages();
     });
 
@@ -78,7 +78,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('parses English toggle command @quick', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       const node = S.parse('toggle .active', 'en');
       // SemanticNode has 'action' not 'command', and roles is a Map
       return {
@@ -95,7 +95,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('parses Spanish toggle command', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.parse('alternar .active', 'es');
     });
 
@@ -106,7 +106,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('parses Japanese toggle command', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.parse('トグル .active', 'ja');
     });
 
@@ -117,7 +117,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('parses Korean toggle command', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.parse('토글 .active', 'ko');
     });
 
@@ -128,7 +128,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('parses Arabic toggle command @quick', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.parse('زِد .active', 'ar');
     });
 
@@ -138,7 +138,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('translates English to Spanish', async ({ page }) => {
     const translated = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.translate('toggle .active', 'en', 'es');
     });
 
@@ -149,7 +149,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('translates English to Japanese', async ({ page }) => {
     const translated = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.translate('toggle .active', 'en', 'ja');
     });
 
@@ -160,7 +160,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('round-trip translation preserves meaning @quick', async ({ page }) => {
     const roundTripResult = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.roundTrip('toggle .active', 'en', 'es');
     });
 
@@ -174,7 +174,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('converts to explicit syntax', async ({ page }) => {
     const explicit = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.toExplicit('toggle .active', 'en');
     });
 
@@ -185,7 +185,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('converts from explicit syntax', async ({ page }) => {
     const natural = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       const explicit = 'TOGGLE PATIENT=".active"';
       return S.fromExplicit(explicit, 'en');
     });
@@ -197,7 +197,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('tokenizes English correctly', async ({ page }) => {
     const tokens = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.tokenize('toggle .active on me', 'en');
     });
 
@@ -210,7 +210,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('tokenizes Japanese correctly', async ({ page }) => {
     const tokens = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.tokenize('トグル .active', 'ja');
     });
 
@@ -221,7 +221,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('tokenizes Arabic correctly (RTL)', async ({ page }) => {
     const tokens = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.tokenize('زِد .active', 'ar');
     });
 
@@ -232,7 +232,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('getAllTranslations returns all language translations @quick', async ({ page }) => {
     const allTranslations = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.getAllTranslations('toggle .active', 'en');
     });
 
@@ -246,7 +246,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('canParse returns confidence score', async ({ page }) => {
     const canParse = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.canParse('toggle .active', 'en');
     });
 
@@ -258,7 +258,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('canParse returns low confidence for invalid input', async ({ page }) => {
     const canParse = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.canParse('xyzabc123 notvalid', 'en');
     });
 
@@ -269,7 +269,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('isExplicitSyntax correctly identifies explicit syntax', async ({ page }) => {
     const check = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return {
         explicit: S.isExplicitSyntax('TOGGLE PATIENT=".active"'),
         natural: S.isExplicitSyntax('toggle .active'),
@@ -282,7 +282,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('createSemanticAnalyzer creates analyzer instance', async ({ page }) => {
     const analyzerCheck = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       const analyzer = S.createSemanticAnalyzer('en');
       return {
         exists: !!analyzer,
@@ -298,7 +298,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('parses add command with destination', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.parse('add .active to #button', 'en');
     });
 
@@ -310,7 +310,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('parses remove command', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.parse('remove .active', 'en');
     });
 
@@ -321,7 +321,7 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
 
   test('handles complex multi-word commands', async ({ page }) => {
     const result = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.parse('add .highlight to #element', 'en');
     });
 

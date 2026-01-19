@@ -24,12 +24,14 @@ test.describe('Semantic Lazy Loading', () => {
     expect(failures).toBe(0);
   });
 
-  test('HyperFixiSemanticLazy global is available', async ({ page }) => {
+  test('LokaScriptSemanticLazy global is available', async ({ page }) => {
     // Wait for page load
-    await page.waitForSelector('text=HyperFixiSemanticLazy global', { timeout: 10000 });
+    await page.waitForSelector('text=LokaScriptSemanticLazy global', { timeout: 10000 });
 
     // Check the global availability test passed
-    const globalTest = await page.locator('text=HyperFixiSemanticLazy global is available').count();
+    const globalTest = await page
+      .locator('text=LokaScriptSemanticLazy global is available')
+      .count();
     expect(globalTest).toBeGreaterThan(0);
   });
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adaptive RTL/LTR - HyperFixi Experiments</title>
+    <title>Adaptive RTL/LTR - LokaScript Experiments</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles for Adaptive RTL/LTR */
@@ -388,10 +388,10 @@
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../debug-panel.js"></script>
-    <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+    <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
 
     <script>
         const translations = {
@@ -503,7 +503,7 @@
                 document.getElementById('progress-bar').style.width = `${progress}%`;
             }, 500);
 
-            console.log('HyperFixi loaded:', !!window.hyperfixi);
+            console.log('LokaScript loaded:', !!window.lokascript);
             console.log('View Transitions supported:', !!document.startViewTransition);
         });
     </script>

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>HyperFixi Secure Demo - No Third Party Calls</title>
+    <title>LokaScript Secure Demo - No Third Party Calls</title>
     
     <!-- Content Security Policy to block third-party tracking -->
     <meta http-equiv="Content-Security-Policy" content="
@@ -79,7 +79,7 @@
     </style>
 </head>
 <body>
-    <h1>🔒 HyperFixi Secure Demo</h1>
+    <h1>🔒 LokaScript Secure Demo</h1>
     
     <div class="security-info">
         <h3>🛡️ Security Features Active</h3>
@@ -92,7 +92,7 @@
     </div>
     
     <div class="demo-section">
-        <h2>🧪 Test HyperFixi Commands (Secure)</h2>
+        <h2>🧪 Test LokaScript Commands (Secure)</h2>
         <p>All commands run locally with no third-party calls.</p>
         
         <div id="test-display" class="counter-display">Initial Display</div>
@@ -139,10 +139,10 @@
         <button onclick="clearNetworkLog()">Clear Log</button>
     </div>
     
-    <div id="status-output" class="status">Loading secure HyperFixi...</div>
+    <div id="status-output" class="status">Loading secure LokaScript...</div>
     
-    <!-- Load HyperFixi from local server only -->
-    <script src="/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript from local server only -->
+    <script src="/dist/lokascript-browser.js"></script>
     
     <script>
         // Network monitoring to catch any third-party calls
@@ -205,29 +205,29 @@
         observer.observe(document.head, { childList: true, subtree: true });
         observer.observe(document.body, { childList: true, subtree: true });
         
-        // Initialize HyperFixi
+        // Initialize LokaScript
         window.addEventListener('load', function() {
             logNetwork('🚀 Secure demo loaded');
             
             if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
                 hyperfixi.processNode(document.body).then(() => {
-                    logNetwork('✅ HyperFixi processed successfully');
+                    logNetwork('✅ LokaScript processed successfully');
                     document.getElementById('status-output').textContent = 
-                        '✅ HyperFixi loaded securely with no third-party calls!';
+                        '✅ LokaScript loaded securely with no third-party calls!';
                     
                     // Initialize counter
                     hyperfixi.run('set global secureCounter to 0').catch(err => {
                         logNetwork(`❌ Counter init failed: ${err.message}`, 'error');
                     });
                 }).catch(error => {
-                    logNetwork(`❌ HyperFixi processing failed: ${error.message}`, 'error');
+                    logNetwork(`❌ LokaScript processing failed: ${error.message}`, 'error');
                     document.getElementById('status-output').textContent = 
-                        '❌ HyperFixi processing failed: ' + error.message;
+                        '❌ LokaScript processing failed: ' + error.message;
                 });
             } else {
-                logNetwork('❌ HyperFixi not available', 'error');
+                logNetwork('❌ LokaScript not available', 'error');
                 document.getElementById('status-output').textContent = 
-                    '❌ HyperFixi not available. Check browser bundle.';
+                    '❌ LokaScript not available. Check browser bundle.';
             }
         });
         

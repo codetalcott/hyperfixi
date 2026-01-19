@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Direct AST Path Tests</title>
   <!-- Load bundles using absolute paths from server root -->
-  <script src="/packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="/packages/core/dist/lokascript-browser.js"></script>
   <script src="/packages/semantic/dist/browser.global.js"></script>
   <style>
     body { font-family: system-ui, sans-serif; padding: 20px; }
@@ -27,7 +27,7 @@
     // Helper to wait for bundles to load
     window.bundlesReady = new Promise((resolve) => {
       const checkBundles = () => {
-        if (window.HyperFixiSemantic && window.hyperfixi) {
+        if (window.LokaScriptSemantic && window.lokascript) {
           resolve(true);
         } else {
           setTimeout(checkBundles, 50);

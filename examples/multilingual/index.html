@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multilingual Hyperscript Demo - HyperFixi</title>
+    <title>Multilingual Hyperscript Demo - LokaScript</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Multilingual demo - uses gradient background */
@@ -441,7 +441,7 @@
         <div class="example-card" id="grammar-demo">
             <h3>&#x1F9E0; Live Grammar Transformation</h3>
             <p style="color: #666; margin-bottom: 20px;">
-                Beyond word-by-word translation, HyperFixi adapts code to natural grammar patterns.
+                Beyond word-by-word translation, LokaScript adapts code to natural grammar patterns.
                 SOV languages (Japanese, Korean) reorder elements; VSO languages (Arabic) place verbs first.
                 Try the demo below.
             </p>
@@ -492,16 +492,16 @@
         </div>
 
         <div class="info-note">
-            <strong>How it works:</strong> HyperFixi's i18n module goes beyond simple keyword translation. It uses a <em>grammar transformation system</em> that understands semantic roles (action, patient, event, destination) and reorders them according to each language's natural word order. SOV languages like Japanese place the object before the verb (<code>#count を 増加</code>), VSO languages like Arabic place the verb first (<code>زِد #count</code>), and Chinese uses circumfix patterns (<code>当 点击 时</code>). Grammatical markers (particles, prepositions, case suffixes) are inserted appropriately for each language family.
+            <strong>How it works:</strong> LokaScript's i18n module goes beyond simple keyword translation. It uses a <em>grammar transformation system</em> that understands semantic roles (action, patient, event, destination) and reorders them according to each language's natural word order. SOV languages like Japanese place the object before the verb (<code>#count を 増加</code>), VSO languages like Arabic place the verb first (<code>زِد #count</code>), and Chinese uses circumfix patterns (<code>当 点击 时</code>). Grammatical markers (particles, prepositions, case suffixes) are inserted appropriately for each language family.
         </div>
     </div>
 
-    <!-- Load HyperFixi Core -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript Core -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../debug-panel.js"></script>
 
     <!-- Load i18n Bundle -->
-    <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+    <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
 
     <script>
         // Language configurations
@@ -520,14 +520,14 @@
         // Keyword providers from i18n bundle
         const providers = {
             en: null, // English is passthrough
-            es: window.HyperFixiI18n?.esKeywords,
-            ja: window.HyperFixiI18n?.jaKeywords,
-            fr: window.HyperFixiI18n?.frKeywords,
-            de: window.HyperFixiI18n?.deKeywords,
-            ar: window.HyperFixiI18n?.arKeywords,
-            ko: window.HyperFixiI18n?.koKeywords,
-            zh: window.HyperFixiI18n?.zhKeywords,
-            tr: window.HyperFixiI18n?.trKeywords
+            es: window.LokaScriptI18n?.esKeywords,
+            ja: window.LokaScriptI18n?.jaKeywords,
+            fr: window.LokaScriptI18n?.frKeywords,
+            de: window.LokaScriptI18n?.deKeywords,
+            ar: window.LokaScriptI18n?.arKeywords,
+            ko: window.LokaScriptI18n?.koKeywords,
+            zh: window.LokaScriptI18n?.zhKeywords,
+            tr: window.LokaScriptI18n?.trKeywords
         };
 
         // Example code templates (English)
@@ -608,12 +608,12 @@
             });
 
             // Check if i18n bundle loaded
-            if (!window.HyperFixiI18n) {
-                console.warn('HyperFixi i18n bundle not loaded');
+            if (!window.LokaScriptI18n) {
+                console.warn('LokaScript i18n bundle not loaded');
             } else {
-                console.log('HyperFixi i18n loaded');
-                console.log('GrammarTransformer available:', !!window.HyperFixiI18n.GrammarTransformer);
-                console.log('Profiles available:', window.HyperFixiI18n.getSupportedLocales?.() || 'N/A');
+                console.log('LokaScript i18n loaded');
+                console.log('GrammarTransformer available:', !!window.LokaScriptI18n.GrammarTransformer);
+                console.log('Profiles available:', window.LokaScriptI18n.getSupportedLocales?.() || 'N/A');
             }
 
             // Initialize grammar transformation demo
@@ -669,8 +669,8 @@
             }
 
             // Check if GrammarTransformer is available
-            const GrammarTransformer = window.HyperFixiI18n?.GrammarTransformer;
-            const translate = window.HyperFixiI18n?.translate;
+            const GrammarTransformer = window.LokaScriptI18n?.GrammarTransformer;
+            const translate = window.LokaScriptI18n?.translate;
 
             if (!GrammarTransformer && !translate) {
                 resultsDiv.innerHTML = '<p style="color: #c00;">Grammar transformation not available. Check console for errors.</p>';

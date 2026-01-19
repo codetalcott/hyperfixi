@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multilingual Sync - HyperFixi Experiments</title>
+    <title>Multilingual Sync - LokaScript Experiments</title>
     <link rel="stylesheet" href="../gallery.css">
     <style>
         /* Example-specific styles for Multilingual Sync */
@@ -252,11 +252,11 @@
         </div>
     </div>
 
-    <!-- Load HyperFixi -->
-    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
     <script src="../prism-loader.js"></script>
     <script src="../debug-panel.js"></script>
-    <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+    <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
 
     <script>
         const users = [
@@ -313,7 +313,7 @@
             const englishCode = actionTemplates[action];
             if (!englishCode) return {};
 
-            const translate = window.HyperFixiI18n?.translate;
+            const translate = window.LokaScriptI18n?.translate;
             const translations = {};
 
             for (const user of users) {
@@ -366,8 +366,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             createUserPanels();
-            console.log('HyperFixi loaded:', !!window.hyperfixi);
-            console.log('HyperFixi i18n loaded:', !!window.HyperFixiI18n);
+            console.log('LokaScript loaded:', !!window.lokascript);
+            console.log('LokaScript i18n loaded:', !!window.LokaScriptI18n);
         });
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HyperFixi Dictionary Editor</title>
+  <title>LokaScript Dictionary Editor</title>
   <link rel="stylesheet" href="../gallery.css">
   <style>
     /* Dictionary Editor - Complex app layout */
@@ -402,7 +402,7 @@
 </head>
 <body>
   <header class="header">
-    <h1>HyperFixi Dictionary Editor</h1>
+    <h1>LokaScript Dictionary Editor</h1>
     <p>Contribute translations for multilingual hyperscript support</p>
   </header>
 
@@ -523,8 +523,8 @@
     </div>
   </div>
 
-  <!-- Load HyperFixi i18n bundle for dictionary data -->
-  <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+  <!-- Load LokaScript i18n bundle for dictionary data -->
+  <script src="../../packages/i18n/dist/lokascript-i18n.min.js"></script>
 
   <script>
     // State
@@ -625,9 +625,9 @@
 
     // Get dictionary for language
     function getDictionary(lang) {
-      // Try to get from HyperFixiI18n
-      if (window.HyperFixiI18n && window.HyperFixiI18n[lang]) {
-        return window.HyperFixiI18n[lang];
+      // Try to get from LokaScriptI18n
+      if (window.LokaScriptI18n && window.LokaScriptI18n[lang]) {
+        return window.LokaScriptI18n[lang];
       }
       // Fallback to empty
       return {};
@@ -837,16 +837,16 @@
 
     // Local storage
     function saveToLocalStorage() {
-      localStorage.setItem('hyperfixi-dict-pending',
+      localStorage.setItem('lokascript-dict-pending',
         JSON.stringify(Array.from(state.pendingChanges.entries()))
       );
-      localStorage.setItem('hyperfixi-dict-flagged',
+      localStorage.setItem('lokascript-dict-flagged',
         JSON.stringify(Array.from(state.flaggedForReview))
       );
     }
 
     function loadFromLocalStorage() {
-      const saved = localStorage.getItem('hyperfixi-dict-pending');
+      const saved = localStorage.getItem('lokascript-dict-pending');
       if (saved) {
         try {
           state.pendingChanges = new Map(JSON.parse(saved));
@@ -854,7 +854,7 @@
           console.error('Failed to load pending changes:', e);
         }
       }
-      const flagged = localStorage.getItem('hyperfixi-dict-flagged');
+      const flagged = localStorage.getItem('lokascript-dict-flagged');
       if (flagged) {
         try {
           state.flaggedForReview = new Set(JSON.parse(flagged));
@@ -885,7 +885,7 @@
         flaggedByLang.get(lang)[category].push({ english, translation: target[english] || '' });
       }
 
-      let output = `# HyperFixi Dictionary Contribution\n\n`;
+      let output = `# LokaScript Dictionary Contribution\n\n`;
       output += `Generated: ${new Date().toISOString()}\n\n`;
       output += `## Changes Summary\n\n`;
       output += `- Total changes: ${state.pendingChanges.size}\n`;

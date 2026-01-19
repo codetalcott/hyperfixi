@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧪 HyperFixi Complete Cookbook Demo</title>
+  <title>🧪 LokaScript Complete Cookbook Demo</title>
   <style>
     * {
       box-sizing: border-box;
@@ -249,13 +249,13 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>🧪 HyperFixi Complete Demo</h1>
+      <h1>🧪 LokaScript Complete Demo</h1>
       <p>Your target code working: <code>hyperscript.eval('on click toggle .active on me')</code></p>
     </div>
 
     <div class="status">
       <strong>✅ Implementation Status: COMPLETE</strong><br>
-      All cookbook examples verified and working with the HyperFixi implementation.
+      All cookbook examples verified and working with the LokaScript implementation.
     </div>
 
     <div class="stats">
@@ -292,7 +292,7 @@
         </div>
         
         <div class="example-box">
-          <h4>HyperFixi API</h4>
+          <h4>LokaScript API</h4>
           <p id="first-api">Hello</p>
           <p id="second-api">World</p>
           <button id="concat-api" class="btn btn-success">
@@ -321,11 +321,11 @@
         </div>
         
         <div class="example-box">
-          <h4>HyperFixi API</h4>
+          <h4>LokaScript API</h4>
           <div class="checkbox-demo">
             <label>
               <input id="api-checkbox" class="indeterminate-api" type="checkbox">
-              HyperFixi API Indeterminate
+              LokaScript API Indeterminate
             </label>
             <button id="api-reset" class="reset-btn">
               Reset API
@@ -371,7 +371,7 @@
         </div>
         
         <div class="example-box" id="api-fade-container">
-          <h4>HyperFixi API</h4>
+          <h4>LokaScript API</h4>
           <button class="btn btn-warning fade-btn api-fade">
             API Fade & Remove
           </button>
@@ -387,7 +387,7 @@
     <div class="demo-section">
       <h2>🖥️ Console Output</h2>
       <div class="console" id="console-output">
-        Initializing HyperFixi Demo...<br>
+        Initializing LokaScript Demo...<br>
       </div>
       <button class="btn btn-primary" onclick="clearConsole()">Clear Console</button>
     </div>
@@ -399,7 +399,7 @@
   </script>
 
   <!-- Load all-in-one browser bundle with classic API + i18n support -->
-  <script src="../packages/core/dist/hyperfixi-browser-classic-i18n.js"></script>
+  <script src="../packages/core/dist/lokascript-browser-classic-i18n.js"></script>
 
   <script>
     // Console logging system
@@ -416,7 +416,7 @@
       consoleOutput.innerHTML = 'Console cleared...<br>';
     };
 
-    log('🚀 Starting HyperFixi Demo Setup...');
+    log('🚀 Starting LokaScript Demo Setup...');
 
     // Note: The classic-i18n bundle auto-initializes and processes all _="" attributes
     // on DOMContentLoaded, so traditional hyperscript already works!
@@ -521,7 +521,7 @@
       const fadeContainer = document.getElementById('api-fade-container');
       if (fadeContainer) {
         fadeContainer.innerHTML = `
-          <h4>HyperFixi API</h4>
+          <h4>LokaScript API</h4>
           <button class="btn btn-warning fade-btn api-fade">
             API Fade & Remove
           </button>
@@ -545,7 +545,7 @@
         await setupFadeRemove();
 
         log('🎉 ALL EXAMPLES SETUP COMPLETE!', '#00ffff');
-        log('🎯 HyperFixi classic-i18n bundle loaded!', '#00ff00');
+        log('🎯 LokaScript classic-i18n bundle loaded!', '#00ff00');
         log(`📊 Version: ${hyperfixi.version}`, '#00ff00');
         log(`🌍 Available locales: ${hyperfixi.locales.join(', ')}`, '#00ff00');
 

@@ -129,7 +129,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
           hasHyperfixi:
             typeof (window as any).hyperfixi !== 'undefined' ||
             typeof (window as any)._hyperscript !== 'undefined',
-          hasI18n: typeof (window as any).HyperFixiI18n !== 'undefined',
+          hasI18n: typeof (window as any).LokaScriptI18n !== 'undefined',
         };
       });
 
@@ -151,7 +151,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
 
       // Test translation function
       const translation = await page.evaluate(() => {
-        const i18n = (window as any).HyperFixiI18n;
+        const i18n = (window as any).LokaScriptI18n;
         if (!i18n || !i18n.translate) return null;
         try {
           return i18n.translate('on click toggle .active', 'en', 'ja');
@@ -185,8 +185,8 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       // Check semantic bundle loaded (this page only loads semantic, not core hyperfixi)
       const loaded = await page.evaluate(() => {
         return {
-          // The semantic demo only loads HyperFixiSemantic, not core hyperfixi
-          hasSemantic: typeof (window as any).HyperFixiSemantic !== 'undefined',
+          // The semantic demo only loads LokaScriptSemantic, not core hyperfixi
+          hasSemantic: typeof (window as any).LokaScriptSemantic !== 'undefined',
           hasParserInput: !!document.querySelector('#parser-input'),
         };
       });
@@ -215,7 +215,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
 
       // Check if semantic bundle is loaded and has expected API
       const semanticInfo = await page.evaluate(() => {
-        const semantic = (window as any).HyperFixiSemantic;
+        const semantic = (window as any).LokaScriptSemantic;
         if (!semantic) return { loaded: false };
         return {
           loaded: true,

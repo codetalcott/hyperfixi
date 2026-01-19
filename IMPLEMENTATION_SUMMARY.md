@@ -199,7 +199,7 @@ All core libraries should remain open-source:
   - [x] Phase 1: Package names and dependencies
   - [x] Phase 2: Browser globals, class names, and event names
   - [x] Phase 3: Documentation (README, CHANGELOG, etc.)
-  - [ ] Phase 4: Examples and HTML files
+  - [x] Phase 4: Examples and HTML files
   - [ ] Phase 5: Verification and testing
 - [ ] Pre-publish check workflow run (green)
 - [ ] Dry-run publish successful

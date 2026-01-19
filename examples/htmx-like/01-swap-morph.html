@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>01: Swap & Morph - HyperFixi htmx-like Examples</title>
+  <title>01: Swap & Morph - LokaScript htmx-like Examples</title>
   <link rel="stylesheet" href="../gallery.css">
   <style>
     /* Example-specific styles */
@@ -161,7 +161,7 @@
     </div>
   </div>
 
-  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../../packages/core/dist/lokascript-browser.js"></script>
   <script src="../debug-panel.js"></script>
   <script>
     // Debug logging - capture ALL console output
@@ -189,12 +189,12 @@
       addToLog('ERROR', args);
     };
 
-    console.log('HyperFixi loaded:', typeof window.hyperfixi);
-    console.log('Registry commands:', window.hyperfixi?.Runtime ? 'Runtime available' : 'No Runtime');
+    console.log('LokaScript loaded:', typeof window.lokascript);
+    console.log('Registry commands:', window.lokascript?.Runtime ? 'Runtime available' : 'No Runtime');
 
     // Test compilation
     try {
-      const result = window.hyperfixi.compile('swap innerHTML of #test with "hello"');
+      const result = window.lokascript.compile('swap innerHTML of #test with "hello"');
       console.log('Swap compile result:', result);
     } catch (e) {
       console.error('Swap compile error:', e.message);

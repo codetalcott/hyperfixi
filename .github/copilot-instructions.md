@@ -1,4 +1,5 @@
-# HyperFixi Copilot Instructions
+# LokaScript Copilot Instructions
+
 - Monorepo uses npm workspaces; install Node >=18 and run `npm install` once at the repo root.
 - Root scripts fan out to every workspace; when iterating prefer targeted commands like `npm run test --prefix packages/core` to avoid 20+ package runs.
 - Core engine lives in `packages/core`; key folders are `src/parser`, `src/expressions`, `src/runtime`, and `src/commands`.
@@ -7,14 +8,14 @@
 - Command implementations live under `src/commands/<domain>`; register factories through `command-registry.ts` so `ENHANCED_COMMAND_FACTORIES` stays in sync.
 - Runtime orchestration is in `src/runtime/runtime.ts`; preserve async execution and context cloning patterns when extending execution flow.
 - Public exports are centralized in `src/index.ts` and mirrored in the `package.json` exports map; update Rollup configs when exposing new entry points.
-- Server API sits in `packages/server-integration`: Express service (`src/service/hyperfixi-service.ts`) invokes the compiler, cache layer (`src/cache`), and context parser (`src/parser`).
+- Server API sits in `packages/server-integration`: Express service (`src/service/lokascript-service.ts`) invokes the compiler, cache layer (`src/cache`), and context parser (`src/parser`).
 - Multi-language clients under `clients/*` consume the HTTP API; keep payload shapes consistent with `packages/server-integration/src/types.ts`.
 - Shared schemas/types live in `packages/component-schema`; consume validators there rather than redefining payload shapes.
 - Docs and cookbook examples live under `docs/` and `cookbook/`; update matching demo HTML when changing public APIs.
 - Examples gallery (`examples/`) can be served via `npm run dev` which starts an HTTP server at port 3000.
 - Docs site (`apps/docs-site`) serves documentation; build with `npm run docs:build` or preview via `npm run docs:dev`.
 - Quick regression loop for core: `npm run test:quick --prefix packages/core` (build + targeted suite) or `npm run test:feedback --prefix packages/core` for rich summaries.
-- Browser compatibility uses Playwright; run `npm run test:browser --prefix packages/core` for full official _hyperscript parity and expect multi-minute runs.
+- Browser compatibility uses Playwright; run `npm run test:browser --prefix packages/core` for full official \_hyperscript parity and expect multi-minute runs.
 - Continuous metrics tracked by `scripts/compatibility-monitor.js`; it writes `metrics/compatibility-history.json` and exits non-zero when thresholds slip.
 - Manual browser dashboards live in `packages/core/test-dashboard.html`; serve via `npx http-server packages/core -p 3000 -c-1` for visual feedback.
 - Vitest defaults use Happy DOM; shared setup is in `packages/core/src/test-setup.ts`—import it in new spec files for DOM globals.
@@ -23,7 +24,7 @@
 - Linting uses ESLint+Prettier; run `npm run lint --prefix packages/<name>` for focused fixes and respect side-effect free modules.
 - Browser bundles are built with Rollup (`rollup.config.mjs`, `rollup.browser.config.mjs`); update both when changing entry names or output formats.
 - For Deno support, update `packages/core/src/deno-*.ts` and keep `deno-*.test.ts` passing.
-- AI-facing MCP server lives in `mcp-server-hyperscript`; its handlers embed `@hyperfixi/core` so changes to analysis APIs must be reflected in `setupHandlers()`.
+- AI-facing MCP server lives in `mcp-server-hyperscript`; its handlers embed `@lokascript/core` so changes to analysis APIs must be reflected in `setupHandlers()`.
 - Metric dashboards and reports live in root markdown files (e.g. `COMPLETE_COMPATIBILITY_REPORT.md`); update them when altering compatibility workflows.
 - For test data reuse, prefer fixtures under `packages/core/tests` and `packages/core/src/test-utilities.ts` rather than ad-hoc mocks.
 - When touching DOM-facing code, sync the demos in `cookbook/` and `packages/core/src/examples` to avoid regression drift.

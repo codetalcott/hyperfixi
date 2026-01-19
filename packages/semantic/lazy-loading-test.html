@@ -108,13 +108,13 @@
     }
 
     async function runTests() {
-      const Lazy = window.HyperFixiSemanticLazy;
+      const Lazy = window.LokaScriptSemanticLazy;
 
       // Test 1: Global available
       if (Lazy) {
-        log('<code>HyperFixiSemanticLazy</code> global is available');
+        log('<code>LokaScriptSemanticLazy</code> global is available');
       } else {
-        log('<code>HyperFixiSemanticLazy</code> not found - bundle failed to load', 'fail');
+        log('<code>LokaScriptSemanticLazy</code> not found - bundle failed to load', 'fail');
         updateSummary();
         return;
       }

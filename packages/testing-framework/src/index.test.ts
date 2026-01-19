@@ -22,7 +22,7 @@ import {
   createSpy,
   waitFor,
   createPageObject,
-  createHyperFixiTestContext,
+  createLokaScriptTestContext,
   quickStartTesting,
   VERSION,
   DEFAULT_CONFIG,
@@ -400,13 +400,13 @@ describe('createPageObject', () => {
   });
 });
 
-describe('createHyperFixiTestContext', () => {
+describe('createLokaScriptTestContext', () => {
   it('should create context with compile and test methods', () => {
     const mockHyperFixi = {
       compile: async (script: string) => `compiled: ${script}`,
     };
 
-    const context = createHyperFixiTestContext(mockHyperFixi);
+    const context = createLokaScriptTestContext(mockHyperFixi);
 
     expect(context.compileAndTest).toBeDefined();
     expect(context.testCompilation).toBeDefined();
@@ -418,7 +418,7 @@ describe('createHyperFixiTestContext', () => {
       compile: async (script: string) => `compiled: ${script}`,
     };
 
-    const context = createHyperFixiTestContext(mockHyperFixi);
+    const context = createLokaScriptTestContext(mockHyperFixi);
     const result = await context.testCompilation('on click log "hello"');
 
     expect(result.success).toBe(true);
@@ -432,7 +432,7 @@ describe('createHyperFixiTestContext', () => {
       },
     };
 
-    const context = createHyperFixiTestContext(mockHyperFixi);
+    const context = createLokaScriptTestContext(mockHyperFixi);
     const result = await context.testCompilation('invalid script');
 
     expect(result.success).toBe(false);

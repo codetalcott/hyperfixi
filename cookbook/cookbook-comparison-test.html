@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📚 Cookbook Comparison: _hyperscript vs HyperFixi</title>
+  <title>📚 Cookbook Comparison: _hyperscript vs LokaScript</title>
 
   <!-- Load BOTH libraries for side-by-side comparison -->
   <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
@@ -286,7 +286,7 @@
   <div class="container">
     <div class="header">
       <h1>📚 Cookbook Comparison Test</h1>
-      <p>Testing HyperFixi against official _hyperscript cookbook examples</p>
+      <p>Testing LokaScript against official _hyperscript cookbook examples</p>
     </div>
 
     <div class="stats">
@@ -328,7 +328,7 @@
 
         <div class="implementation">
           <div class="implementation-header">
-            <h3>HyperFixi</h3>
+            <h3>LokaScript</h3>
             <span class="status-badge status-testing" id="status-test-1">⏳ Testing</span>
           </div>
           <div class="demo-content">
@@ -362,7 +362,7 @@
 
         <div class="implementation">
           <div class="implementation-header">
-            <h3>HyperFixi</h3>
+            <h3>LokaScript</h3>
             <span class="status-badge status-testing" id="status-test-2">⏳ Testing</span>
           </div>
           <div class="demo-content">
@@ -394,12 +394,12 @@
 
         <div class="implementation">
           <div class="implementation-header">
-            <h3>HyperFixi</h3>
+            <h3>LokaScript</h3>
             <span class="status-badge status-testing" id="status-test-3">⏳ Testing</span>
           </div>
           <div class="demo-content">
             <button class="btn primary" id="toggle-fixi">
-              Toggle Me (HyperFixi)
+              Toggle Me (LokaScript)
             </button>
           </div>
         </div>
@@ -425,12 +425,12 @@
 
         <div class="implementation">
           <div class="implementation-header">
-            <h3>HyperFixi</h3>
+            <h3>LokaScript</h3>
             <span class="status-badge status-testing" id="status-test-4">⏳ Testing</span>
           </div>
           <div class="demo-content" id="fade-fixi-container">
             <button class="btn danger" id="fade-fixi">
-              Fade Out (HyperFixi)
+              Fade Out (LokaScript)
             </button>
             <button class="btn-primary" onclick="regenerateFadeFixi()">Regenerate</button>
           </div>
@@ -457,7 +457,7 @@
 
         <div class="implementation">
           <div class="implementation-header">
-            <h3>HyperFixi</h3>
+            <h3>LokaScript</h3>
             <span class="status-badge status-testing" id="status-test-5">⏳ Testing</span>
           </div>
           <div class="demo-content">
@@ -481,7 +481,7 @@
   </div>
 
   <!-- Load optimized browser bundle (450K instead of 1.4M) -->
-  <script src="../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../packages/core/dist/lokascript-browser.js"></script>
 
   <script>
     // Use global hyperfixi object from browser bundle
@@ -619,7 +619,7 @@
       const container = document.getElementById('fade-fixi-container');
       container.innerHTML = `
         <button class="btn danger" id="fade-fixi">
-          Fade Out (HyperFixi)
+          Fade Out (LokaScript)
         </button>
         <button class="btn-primary" onclick="regenerateFadeFixi()">Regenerate</button>
       `;
@@ -674,7 +674,7 @@
       // Initialize original first
       initOriginal();
 
-      // Run HyperFixi tests
+      // Run LokaScript tests
       await test1_ConcatStrings();
       await test2_IndeterminateCheckbox();
       await test3_ToggleActive();

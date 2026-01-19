@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>HyperFixi vs _hyperscript Test Runner</title>
+    <title>LokaScript vs _hyperscript Test Runner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Test Navigation -->
     <script src="/test-nav.js"></script>
@@ -84,8 +84,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>🎯 HyperFixi vs _hyperscript Test Runner</h1>
-        <p>Running official _hyperscript tests against HyperFixi implementation</p>
+        <h1>🎯 LokaScript vs _hyperscript Test Runner</h1>
+        <p>Running official _hyperscript tests against LokaScript implementation</p>
         
         <div class="stats">
             <div class="stat passing">
@@ -148,8 +148,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.3.10/chai.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/10.2.0/mocha.min.js"></script>
     
-    <!-- Load HyperFixi -->
-    <script src="/dist/hyperfixi-browser.js"></script>
+    <!-- Load LokaScript -->
+    <script src="/dist/lokascript-browser.js"></script>
 
     <!-- Load comprehensive tests -->
     <script type="module" id="comprehensive-tests-loader">
@@ -162,7 +162,7 @@
 
     <!-- Load our test adapter -->
     <script>
-        // Create test adapter using HyperFixi browser bundle
+        // Create test adapter using LokaScript browser bundle
         window.evalHyperScript = async function(src, ctx) {
             return await hyperfixi.evalHyperScript(src, ctx);
         };
@@ -230,7 +230,7 @@
 
         // Test running functions
         window.runAllTests = function() {
-            console.log('🚀 Starting comprehensive HyperFixi test suite...');
+            console.log('🚀 Starting comprehensive LokaScript test suite...');
             document.getElementById('stop-btn').disabled = false;
 
             // Reset counters

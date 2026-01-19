@@ -14,42 +14,42 @@ test.describe('Semantic Multilingual Parser', () => {
     await page.goto(`${baseURL}/packages/semantic/test-browser.html`);
 
     // Wait for the semantic bundle to load
-    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+    await page.waitForFunction(() => typeof (window as any).LokaScriptSemantic !== 'undefined', {
       timeout: 5000,
     });
   });
 
-  test('bundle loads and exposes HyperFixiSemantic global @quick', async ({ page }) => {
+  test('bundle loads and exposes LokaScriptSemantic global @quick', async ({ page }) => {
     const hasGlobal = await page.evaluate(() => {
-      return typeof (window as any).HyperFixiSemantic !== 'undefined';
+      return typeof (window as any).LokaScriptSemantic !== 'undefined';
     });
     expect(hasGlobal).toBe(true);
   });
 
   test('exposes parse function @quick', async ({ page }) => {
     const hasParseFunction = await page.evaluate(() => {
-      return typeof (window as any).HyperFixiSemantic.parse === 'function';
+      return typeof (window as any).LokaScriptSemantic.parse === 'function';
     });
     expect(hasParseFunction).toBe(true);
   });
 
   test('exposes translate function', async ({ page }) => {
     const hasTranslateFunction = await page.evaluate(() => {
-      return typeof (window as any).HyperFixiSemantic.translate === 'function';
+      return typeof (window as any).LokaScriptSemantic.translate === 'function';
     });
     expect(hasTranslateFunction).toBe(true);
   });
 
   test('exposes createSemanticAnalyzer function', async ({ page }) => {
     const hasAnalyzerFunction = await page.evaluate(() => {
-      return typeof (window as any).HyperFixiSemantic.createSemanticAnalyzer === 'function';
+      return typeof (window as any).LokaScriptSemantic.createSemanticAnalyzer === 'function';
     });
     expect(hasAnalyzerFunction).toBe(true);
   });
 
   test('reports supported languages @quick', async ({ page }) => {
     const languages = await page.evaluate(() => {
-      return (window as any).HyperFixiSemantic.getSupportedLanguages();
+      return (window as any).LokaScriptSemantic.getSupportedLanguages();
     });
     // Original 4 languages
     expect(languages).toContain('en');
@@ -71,7 +71,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('English Parsing', () => {
     test('parses "toggle .active on #button" @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('toggle .active on #button', 'en');
       });
       expect(result).toBe(true);
@@ -79,7 +79,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "toggle .active" with implicit target', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('toggle .active', 'en');
       });
       expect(result).toBe(true);
@@ -89,7 +89,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Japanese Parsing (SOV)', () => {
     test('parses ".active を 切り替え" @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('.active を 切り替え', 'ja');
       });
       expect(result).toBe(true);
@@ -97,7 +97,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "#button の .active を 切り替え"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('#button の .active を 切り替え', 'ja');
       });
       expect(result).toBe(true);
@@ -107,7 +107,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Arabic Parsing (VSO)', () => {
     test('parses "بدّل .active" @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('بدّل .active', 'ar');
       });
       expect(result).toBe(true);
@@ -115,7 +115,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "بدّل .active على #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('بدّل .active على #button', 'ar');
       });
       expect(result).toBe(true);
@@ -125,7 +125,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Spanish Parsing (SVO)', () => {
     test('parses "alternar .active" @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('alternar .active', 'es');
       });
       expect(result).toBe(true);
@@ -133,7 +133,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "alternar .active en #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('alternar .active en #button', 'es');
       });
       expect(result).toBe(true);
@@ -149,7 +149,7 @@ test.describe('Semantic Multilingual Parser', () => {
     // ".active 를 토글" = "toggle .active" (Object-marker Verb)
     test('parses ".active 를 토글" (SOV with object marker) @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('.active 를 토글', 'ko');
       });
       expect(result).toBe(true);
@@ -157,7 +157,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses ".active 을 토글" (alternate object marker)', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('.active 을 토글', 'ko');
       });
       expect(result).toBe(true);
@@ -167,7 +167,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Turkish Parsing (SOV)', () => {
     test('parses "değiştir .active" @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('değiştir .active', 'tr');
       });
       expect(result).toBe(true);
@@ -175,7 +175,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses ".active değiştir"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('.active değiştir', 'tr');
       });
       expect(result).toBe(true);
@@ -185,7 +185,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Chinese Parsing (SVO)', () => {
     test('parses "切换 .active" @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('切换 .active', 'zh');
       });
       expect(result).toBe(true);
@@ -193,7 +193,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "切换 .active 在 #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('切换 .active 在 #button', 'zh');
       });
       expect(result).toBe(true);
@@ -203,7 +203,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Portuguese Parsing (SVO)', () => {
     test('parses "alternar .active"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('alternar .active', 'pt');
       });
       expect(result).toBe(true);
@@ -211,7 +211,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "alternar .active em #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('alternar .active em #button', 'pt');
       });
       expect(result).toBe(true);
@@ -221,7 +221,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('French Parsing (SVO)', () => {
     test('parses "basculer .active"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('basculer .active', 'fr');
       });
       expect(result).toBe(true);
@@ -229,7 +229,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "basculer .active sur #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('basculer .active sur #button', 'fr');
       });
       expect(result).toBe(true);
@@ -239,7 +239,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('German Parsing (SVO)', () => {
     test('parses "umschalten .active"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('umschalten .active', 'de');
       });
       expect(result).toBe(true);
@@ -247,7 +247,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "umschalten .active auf #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('umschalten .active auf #button', 'de');
       });
       expect(result).toBe(true);
@@ -257,7 +257,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Indonesian Parsing (SVO)', () => {
     test('parses "alihkan .active"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('alihkan .active', 'id');
       });
       expect(result).toBe(true);
@@ -265,7 +265,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "alihkan .active pada #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('alihkan .active pada #button', 'id');
       });
       expect(result).toBe(true);
@@ -278,7 +278,7 @@ test.describe('Semantic Multilingual Parser', () => {
     // -ta marks accusative (direct object)
     test('parses ".active -ta tikray" (SOV with accusative suffix)', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('.active -ta tikray', 'qu');
       });
       expect(result).toBe(true);
@@ -286,7 +286,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses ".active -ta t\'ikray" (with glottal stop)', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse(".active -ta t'ikray", 'qu');
       });
       expect(result).toBe(true);
@@ -296,7 +296,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Swahili Parsing (SVO)', () => {
     test('parses "badilisha .active"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('badilisha .active', 'sw');
       });
       expect(result).toBe(true);
@@ -304,7 +304,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses "badilisha .active kwenye #button"', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.canParse('badilisha .active kwenye #button', 'sw');
       });
       expect(result).toBe(true);
@@ -314,7 +314,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Translation', () => {
     test('translates English to Japanese', async ({ page }) => {
       const translation = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.translate('toggle .active on #button', 'en', 'ja');
       });
       // Japanese should have particles and different word order
@@ -325,7 +325,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('translates English to Arabic', async ({ page }) => {
       const translation = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.translate('toggle .active on #button', 'en', 'ar');
       });
       expect(translation).toContain('.active');
@@ -336,7 +336,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('translates English to Spanish', async ({ page }) => {
       const translation = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.translate('toggle .active on #button', 'en', 'es');
       });
       expect(translation).toContain('alternar');
@@ -346,7 +346,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('translates Japanese to English', async ({ page }) => {
       const translation = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.translate('#button の .active を 切り替え', 'ja', 'en');
       });
       expect(translation).toContain('toggle');
@@ -355,7 +355,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('getAllTranslations returns all languages', async ({ page }) => {
       const translations = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.getAllTranslations('toggle .active on #button', 'en');
       });
       // Original 4 languages
@@ -379,7 +379,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Explicit Mode', () => {
     test('converts to explicit syntax', async ({ page }) => {
       const explicit = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.toExplicit('toggle .active on #button', 'en');
       });
       // Explicit syntax should have brackets and role labels
@@ -389,7 +389,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('parses explicit syntax', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.isExplicitSyntax('[toggle patient:.active destination:#button]');
       });
       expect(result).toBe(true);
@@ -397,7 +397,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('converts explicit back to natural', async ({ page }) => {
       const natural = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.fromExplicit('[toggle patient:.active destination:#button]', 'en');
       });
       expect(natural).toContain('toggle');
@@ -408,7 +408,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('SemanticAnalyzer', () => {
     test('creates analyzer instance', async ({ page }) => {
       const hasAnalyzer = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const analyzer = S.createSemanticAnalyzer();
         return analyzer && typeof analyzer.analyze === 'function';
       });
@@ -417,7 +417,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('analyzer supports expected languages', async ({ page }) => {
       const supportedLangs = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const analyzer = S.createSemanticAnalyzer();
         return analyzer.supportedLanguages();
       });
@@ -440,7 +440,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('analyzer returns confidence score', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const analyzer = S.createSemanticAnalyzer();
         return analyzer.analyze('toggle .active on #button', 'en');
       });
@@ -451,7 +451,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('analyzer returns low confidence for unknown input', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const analyzer = S.createSemanticAnalyzer();
         return analyzer.analyze('unknown gibberish command', 'en');
       });
@@ -462,7 +462,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Round-Trip Verification', () => {
     test('English round-trip preserves meaning', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const original = 'toggle .active on #button';
         // Parse to semantic, render back to English
         const roundTripped = S.roundTrip(original, 'en', 'en');
@@ -475,7 +475,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('cross-language round-trip preserves meaning', async ({ page }) => {
       const result = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const original = 'toggle .active on #button';
         // English -> Japanese -> English
         const japanese = S.translate(original, 'en', 'ja');
@@ -491,7 +491,7 @@ test.describe('Semantic Multilingual Parser', () => {
   test.describe('Tokenizers', () => {
     test('tokenize returns token stream', async ({ page }) => {
       const tokens = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         return S.tokenize('toggle .active on #button', 'en');
       });
       expect(Array.isArray(tokens)).toBe(true);
@@ -500,7 +500,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('English tokenizer handles selectors', async ({ page }) => {
       const hasSelector = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const tokens = S.tokenize('toggle .active', 'en');
         return tokens.some((t: any) => t.kind === 'selector' || t.value === '.active');
       });
@@ -509,7 +509,7 @@ test.describe('Semantic Multilingual Parser', () => {
 
     test('Japanese tokenizer handles particles', async ({ page }) => {
       const hasParticle = await page.evaluate(() => {
-        const S = (window as any).HyperFixiSemantic;
+        const S = (window as any).LokaScriptSemantic;
         const tokens = S.tokenize('.active を 切り替え', 'ja');
         return tokens.some((t: any) => t.kind === 'particle' || t.value === 'を');
       });
@@ -524,13 +524,13 @@ test.describe('Semantic Demo Page', () => {
     await page.goto('http://localhost:3000/examples/multilingual/semantic-demo.html');
 
     // Wait for bundle to load
-    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+    await page.waitForFunction(() => typeof (window as any).LokaScriptSemantic !== 'undefined', {
       timeout: 5000,
     });
 
     // Verify the bundle is loaded
     const hasGlobal = await page.evaluate(
-      () => typeof (window as any).HyperFixiSemantic !== 'undefined'
+      () => typeof (window as any).LokaScriptSemantic !== 'undefined'
     );
     expect(hasGlobal).toBe(true);
   });
@@ -538,12 +538,12 @@ test.describe('Semantic Demo Page', () => {
   test('semantic-demo.html has parse function', async ({ page }) => {
     await page.goto('http://localhost:3000/examples/multilingual/semantic-demo.html');
 
-    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+    await page.waitForFunction(() => typeof (window as any).LokaScriptSemantic !== 'undefined', {
       timeout: 5000,
     });
 
     const hasParse = await page.evaluate(
-      () => typeof (window as any).HyperFixiSemantic.parse === 'function'
+      () => typeof (window as any).LokaScriptSemantic.parse === 'function'
     );
     expect(hasParse).toBe(true);
   });
@@ -551,20 +551,20 @@ test.describe('Semantic Demo Page', () => {
   test('semantic-demo.html can parse input', async ({ page }) => {
     await page.goto('http://localhost:3000/examples/multilingual/semantic-demo.html');
 
-    await page.waitForFunction(() => typeof (window as any).HyperFixiSemantic !== 'undefined', {
+    await page.waitForFunction(() => typeof (window as any).LokaScriptSemantic !== 'undefined', {
       timeout: 5000,
     });
 
     // Use canParse for simple boolean check
     const canParse = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.canParse('toggle .active on #button', 'en');
     });
     expect(canParse).toBe(true);
 
     // Check toExplicit works
     const explicit = await page.evaluate(() => {
-      const S = (window as any).HyperFixiSemantic;
+      const S = (window as any).LokaScriptSemantic;
       return S.toExplicit('toggle .active on #button', 'en');
     });
     expect(explicit).toMatch(/\[toggle/);
