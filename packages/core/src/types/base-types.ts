@@ -581,6 +581,14 @@ export interface EventHandlerNode extends ASTNode {
   readonly args?: string[]; // Event parameter names to destructure (e.g., ['clientX', 'clientY'])
   readonly commands: ASTNode[];
   readonly customEventSource?: string; // Name of registered custom event source (e.g., 'request', 'websocket')
+  readonly modifiers?: {
+    // Event modifiers for controlling event behavior
+    once?: boolean; // Fire event handler only once (.once)
+    prevent?: boolean; // Call preventDefault() on the event (.prevent)
+    stop?: boolean; // Call stopPropagation() on the event (.stop)
+    debounce?: number; // Debounce delay in milliseconds (.debounce(N))
+    throttle?: number; // Throttle delay in milliseconds (.throttle(N))
+  };
 }
 
 /**

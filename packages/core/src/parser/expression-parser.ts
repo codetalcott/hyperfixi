@@ -1506,6 +1506,28 @@ function resolveIdentifier(name: string, context: ExecutionContext): any {
 async function evaluateBinaryExpression(node: any, context: ExecutionContext): Promise<any> {
   const operator = node.operator;
 
+  // Handle 'has' operator for CSS class checking
+  if (operator === 'has') {
+    const left = await evaluateASTNode(node.left, context);
+    // Check if left is an Element and right is a class selector
+    if (left instanceof Element) {
+      // Handle both 'cssSelector' and 'selector' node types
+      if (node.right.type === 'cssSelector' && node.right.selectorType === 'class') {
+        const className = node.right.selector?.startsWith('.')
+          ? node.right.selector.slice(1)
+          : node.right.selector || '';
+        return left.classList.contains(className);
+      } else if (
+        node.right.type === 'selector' &&
+        typeof node.right.value === 'string' &&
+        node.right.value.startsWith('.')
+      ) {
+        return left.classList.contains(node.right.value.slice(1));
+      }
+    }
+    return false;
+  }
+
   // Special handling for 'in' operator with queryReference (e.g., <button/> in closest nav)
   // Don't evaluate the left side first - use it as a selector within the context element
   if (operator === 'in' && node.left?.type === 'queryReference') {

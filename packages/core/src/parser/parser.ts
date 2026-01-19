@@ -1910,6 +1910,63 @@ export class Parser {
       debug.parse(`🔧 parseEventHandler: Parsed event parameters: ${eventParams.join(', ')}`);
     }
 
+    // Parse event modifiers: .once, .prevent, .stop, .debounce(N), .throttle(N)
+    const modifiers: {
+      once?: boolean;
+      prevent?: boolean;
+      stop?: boolean;
+      debounce?: number;
+      throttle?: number;
+    } = {};
+
+    while (this.check('.')) {
+      this.advance(); // consume '.'
+
+      const modToken = this.advance();
+      const modName = modToken.value.toLowerCase();
+
+      if (modName === 'once') {
+        modifiers.once = true;
+        debug.parse(`🔧 parseEventHandler: Parsed modifier '.once'`);
+      } else if (modName === 'prevent') {
+        modifiers.prevent = true;
+        debug.parse(`🔧 parseEventHandler: Parsed modifier '.prevent'`);
+      } else if (modName === 'stop') {
+        modifiers.stop = true;
+        debug.parse(`🔧 parseEventHandler: Parsed modifier '.stop'`);
+      } else if (modName === 'debounce' || modName === 'throttle') {
+        // Expect parentheses with number: .debounce(300)
+        if (this.check('(')) {
+          this.advance(); // consume '('
+          const numToken = this.advance();
+          const delayMs = parseInt(numToken.value, 10);
+
+          if (isNaN(delayMs)) {
+            throw new Error(`Expected number for ${modName} delay, got: ${numToken.value}`);
+          }
+
+          if (modName === 'debounce') {
+            modifiers.debounce = delayMs;
+            debug.parse(`🔧 parseEventHandler: Parsed modifier '.debounce(${delayMs})'`);
+          } else {
+            modifiers.throttle = delayMs;
+            debug.parse(`🔧 parseEventHandler: Parsed modifier '.throttle(${delayMs})'`);
+          }
+
+          this.consume(')', `Expected ')' after ${modName} delay`);
+        } else {
+          throw new Error(`Expected '(' after '.${modName}'`);
+        }
+      } else {
+        // Unknown modifier - log warning and continue
+        debug.parse(`🔧 parseEventHandler: Warning - unknown modifier '.${modName}'`);
+      }
+    }
+
+    if (Object.keys(modifiers).length > 0) {
+      debug.parse(`🔧 parseEventHandler: Parsed modifiers:`, modifiers);
+    }
+
     // Check for conditional syntax: [condition]
     let condition: ASTNode | undefined;
     if (this.match('[')) {
@@ -2410,6 +2467,7 @@ export class Parser {
       ...(attributeName && { attributeName }), // Add attributeName if present
       ...(watchTarget && { watchTarget }), // Add watchTarget if present
       ...(customEventSource && { customEventSource }), // Add custom event source if detected
+      ...(Object.keys(modifiers).length > 0 && { modifiers }), // Add modifiers if present
       start: pos.start,
       end: pos.end,
       line: pos.line,

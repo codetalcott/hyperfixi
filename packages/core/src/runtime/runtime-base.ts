@@ -916,8 +916,17 @@ export class RuntimeBase {
     node: EventHandlerNode,
     context: ExecutionContext
   ): Promise<void> {
-    const { event, events, commands, target, args, selector, attributeName, watchTarget } =
-      node as any;
+    const {
+      event,
+      events,
+      commands,
+      target,
+      args,
+      selector,
+      attributeName,
+      watchTarget,
+      modifiers,
+    } = node as any;
     const eventNames = events && events.length > 0 ? events : [event];
     debug.runtime(`BEHAVIOR: executeEventHandler: event='${event}', target='${target}'`);
 
@@ -1038,7 +1047,7 @@ export class RuntimeBase {
     }
 
     // STANDARD CASE: DOM Event Listeners
-    const eventHandler = async (domEvent: Event) => {
+    const baseEventHandler = async (domEvent: Event) => {
       // Recursion Guard
       const currentDepth = (domEvent as any).__hyperfixi_recursion_depth || 0;
       if (currentDepth >= 100) {
@@ -1152,11 +1161,66 @@ export class RuntimeBase {
       }
     };
 
+    // Apply event modifiers
+    let eventHandler: (domEvent: Event) => void | Promise<void>;
+
+    if (modifiers) {
+      let wrappedHandler = baseEventHandler;
+
+      // Apply .prevent modifier - call preventDefault()
+      if (modifiers.prevent) {
+        const preventHandler = wrappedHandler;
+        wrappedHandler = async (domEvent: Event) => {
+          domEvent.preventDefault();
+          return preventHandler(domEvent);
+        };
+      }
+
+      // Apply .stop modifier - call stopPropagation()
+      if (modifiers.stop) {
+        const stopHandler = wrappedHandler;
+        wrappedHandler = async (domEvent: Event) => {
+          domEvent.stopPropagation();
+          return stopHandler(domEvent);
+        };
+      }
+
+      // Apply .debounce modifier - delay execution until pause
+      if (modifiers.debounce) {
+        const delay = modifiers.debounce;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+        eventHandler = (domEvent: Event) => {
+          if (timeoutId) clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => wrappedHandler(domEvent), delay);
+        };
+      }
+      // Apply .throttle modifier - limit execution frequency
+      else if (modifiers.throttle) {
+        const delay = modifiers.throttle;
+        let lastCall = 0;
+
+        eventHandler = (domEvent: Event) => {
+          const now = Date.now();
+          if (now - lastCall >= delay) {
+            lastCall = now;
+            wrappedHandler(domEvent);
+          }
+        };
+      } else {
+        eventHandler = wrappedHandler;
+      }
+    } else {
+      eventHandler = baseEventHandler;
+    }
+
     // Attach Listeners
+    const listenerOptions = modifiers?.once ? { once: true } : undefined;
+
     if (globalTarget) {
       // Attach to global event source (window or document)
       for (const evt of eventNames) {
-        globalTarget.addEventListener(evt, eventHandler);
+        globalTarget.addEventListener(evt, eventHandler, listenerOptions);
         // Register for cleanup - use first target element or register as global
         if (targets.length > 0) {
           this.cleanupRegistry.registerListener(targets[0], globalTarget, evt, eventHandler);
@@ -1172,7 +1236,7 @@ export class RuntimeBase {
       // Attach to HTMLElement targets
       for (const el of targets) {
         for (const evt of eventNames) {
-          el.addEventListener(evt, eventHandler);
+          el.addEventListener(evt, eventHandler, listenerOptions);
           // Register for cleanup
           this.cleanupRegistry.registerListener(el, el, evt, eventHandler);
         }

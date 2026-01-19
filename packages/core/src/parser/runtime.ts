@@ -209,8 +209,23 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
  * Evaluates binary expressions using Phase 3 logical expressions
  */
 async function evaluateBinaryExpression(node: any, context: ExecutionContext): Promise<any> {
-  const left = await evaluateAST(node.left, context);
   const operator = node.operator;
+
+  // Handle 'has' operator for CSS class checking
+  if (operator === 'has') {
+    const left = await evaluateAST(node.left, context);
+    if (
+      left instanceof Element &&
+      node.right.type === 'selector' &&
+      typeof node.right.value === 'string' &&
+      node.right.value.startsWith('.')
+    ) {
+      return left.classList.contains(node.right.value.slice(1));
+    }
+    return false;
+  }
+
+  const left = await evaluateAST(node.left, context);
 
   // Handle short-circuit evaluation for logical operators
   if (operator === 'and') {

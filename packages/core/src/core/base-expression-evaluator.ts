@@ -838,6 +838,21 @@ export class BaseExpressionEvaluator {
     const leftValue = await this.evaluate(left, context);
     const rightValue = await this.evaluate(right, context);
 
+    // Handle 'has' operator for CSS class checking (before general switch)
+    if (operator === 'has') {
+      if (leftValue instanceof Element) {
+        // Handle different selector node types
+        if (
+          (right.type === 'cssSelector' && right.selectorType === 'class') ||
+          (right.type === 'selector' && right.value?.startsWith('.'))
+        ) {
+          const className = right.selector?.slice(1) || right.value?.slice(1) || '';
+          return leftValue.classList.contains(className);
+        }
+      }
+      return false;
+    }
+
     switch (operator) {
       case '>':
       case 'is greater than':
