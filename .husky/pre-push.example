@@ -1,0 +1,57 @@
+#!/bin/sh
+# Pre-push hook (optional)
+# To enable: cp .husky/pre-push.example .husky/pre-push
+#
+# This runs validation before git push to catch issues early.
+# Trade-off: Adds ~30-45 seconds to push time.
+
+echo ""
+echo "🔍 Running pre-push validation..."
+echo ""
+
+# 1. Type checking
+echo "1️⃣  Type checking..."
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Type checking failed"
+  echo "   Fix type errors or use: git push --no-verify"
+  echo ""
+  exit 1
+fi
+echo "   ✅ Type checks passed"
+echo ""
+
+# 2. Changelog validation (only if CHANGELOG.md was modified)
+if git diff --cached --name-only | grep -q "CHANGELOG.md"; then
+  echo "2️⃣  Validating changelog..."
+  npm run changelog:validate
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Changelog validation failed"
+    echo "   Remove private package mentions or use: git push --no-verify"
+    echo ""
+    exit 1
+  fi
+  echo "   ✅ Changelog validated"
+  echo ""
+fi
+
+# 3. Version validation (only if package.json files were modified)
+if git diff --cached --name-only | grep -q "package.json"; then
+  echo "3️⃣  Validating versions..."
+  npm run version:validate
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Version validation failed"
+    echo "   Run: npm run version:set -- X.Y.Z"
+    echo ""
+    exit 1
+  fi
+  echo "   ✅ Versions validated"
+  echo ""
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ Pre-push validation passed!"
+echo ""
