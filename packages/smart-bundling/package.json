@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/smart-bundling",
+  "name": "@lokascript/smart-bundling",
   "version": "0.1.0",
   "private": true,
   "description": "Intelligent bundling system for HyperFixi applications based on usage patterns",
@@ -51,7 +51,7 @@
   "author": "HyperFixi Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "*",
+    "@lokascript/core": "*",
     "acorn": "^8.10.0",
     "acorn-walk": "^8.2.0",
     "esbuild": "^0.25.11",

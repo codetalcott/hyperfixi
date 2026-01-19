@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/i18n",
+  "name": "@lokascript/i18n",
   "version": "1.0.0",
   "description": "Grammar transformation and keyword translation for hyperscript",
   "type": "module",
@@ -55,9 +55,9 @@
   "author": "Hyperfixi Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/ast-toolkit": "*",
-    "@hyperfixi/core": "*",
-    "@hyperfixi/semantic": "*",
+    "@lokascript/ast-toolkit": "*",
+    "@lokascript/core": "*",
+    "@lokascript/semantic": "*",
     "esbuild": "0.25.11",
     "happy-dom": "20.0.6",
     "vite": "^7.1.12"

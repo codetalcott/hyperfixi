@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/vite-plugin",
+  "name": "@lokascript/vite-plugin",
   "version": "1.0.0",
   "description": "Vite plugin for automatic tree-shaken hyperscript bundles",
   "type": "module",
@@ -29,7 +29,7 @@
     "vite": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "dependencies": {
-    "@hyperfixi/core": "file:../core",
+    "@lokascript/core": "file:../core",
     "glob": "^10.0.0"
   },
   "devDependencies": {

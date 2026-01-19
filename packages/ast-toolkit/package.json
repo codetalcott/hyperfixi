@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/ast-toolkit",
+  "name": "@lokascript/ast-toolkit",
   "version": "0.1.0",
   "description": "Advanced AST toolkit for hyperscript with AI-friendly APIs",
   "type": "module",
@@ -62,8 +62,8 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "file:../core",
-    "@hyperfixi/patterns-reference": "file:../patterns-reference",
+    "@lokascript/core": "file:../core",
+    "@lokascript/patterns-reference": "file:../patterns-reference",
     "esbuild": "0.25.11",
     "vite": "^7.1.12"
   },

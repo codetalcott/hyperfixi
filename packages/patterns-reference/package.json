@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/patterns-reference",
+  "name": "@lokascript/patterns-reference",
   "version": "0.1.0",
   "description": "Queryable patterns database for hyperscript with multilingual translations and LLM support",
   "main": "dist/index.js",
@@ -51,7 +51,7 @@
   "author": "Hyperfixi Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/semantic": "*",
+    "@lokascript/semantic": "*",
     "better-sqlite3": "^9.0.0"
   },
   "devDependencies": {

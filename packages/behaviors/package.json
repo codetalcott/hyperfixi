@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/behaviors",
+  "name": "@lokascript/behaviors",
   "version": "0.1.0",
   "description": "Reusable hyperscript behaviors for HyperFixi",
   "type": "module",
@@ -74,10 +74,10 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "^1.0.0"
+    "@lokascript/core": "^1.0.0"
   },
   "devDependencies": {
-    "@hyperfixi/core": "*",
+    "@lokascript/core": "*",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.0.0"

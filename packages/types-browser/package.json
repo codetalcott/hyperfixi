@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/types-browser",
+  "name": "@lokascript/types-browser",
   "version": "1.0.0",
   "description": "TypeScript type definitions for HyperFixi browser globals",
   "type": "module",
@@ -10,13 +10,23 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist/", "src/", "README.md"],
+  "files": [
+    "dist/",
+    "src/",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["hyperfixi", "types", "typescript", "browser", "globals"],
+  "keywords": [
+    "hyperfixi",
+    "types",
+    "typescript",
+    "browser",
+    "globals"
+  ],
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "devDependencies": {

@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/ssr-support",
+  "name": "@lokascript/ssr-support",
   "version": "0.1.0",
   "description": "Server-side rendering with behavior injection for HyperFixi applications",
   "main": "dist/index.js",
@@ -37,8 +37,8 @@
     "directory": "packages/ssr-support"
   },
   "dependencies": {
-    "@hyperfixi/component-schema": "file:../component-schema",
-    "@hyperfixi/template-integration": "file:../template-integration",
+    "@lokascript/component-schema": "file:../component-schema",
+    "@lokascript/template-integration": "file:../template-integration",
     "esbuild": "0.25.11",
     "jsdom": "^23.0.1",
     "vite": "^7.1.12"

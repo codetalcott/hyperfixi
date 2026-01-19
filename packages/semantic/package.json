@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/semantic",
+  "name": "@lokascript/semantic",
   "version": "1.0.0",
   "description": "Semantic multilingual parser for hyperscript (23 languages)",
   "type": "module",

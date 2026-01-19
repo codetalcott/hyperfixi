@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/developer-tools",
+  "name": "@lokascript/developer-tools",
   "version": "0.1.0",
   "private": true,
   "description": "CLI tools and visual builder API for HyperFixi development",
@@ -75,10 +75,10 @@
   "author": "HyperFixi Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/ast-toolkit": "*",
-    "@hyperfixi/core": "*",
-    "@hyperfixi/i18n": "*",
-    "@hyperfixi/template-integration": "*",
+    "@lokascript/ast-toolkit": "*",
+    "@lokascript/core": "*",
+    "@lokascript/i18n": "*",
+    "@lokascript/template-integration": "*",
     "boxen": "^7.1.0",
     "chalk": "^5.3.0",
     "chokidar": "^3.5.0",

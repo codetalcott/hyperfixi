@@ -91,7 +91,7 @@ jobs:
           for pkg in "${PKG_ARRAY[@]}"; do
             pkg=$(echo "$pkg" | xargs)  # trim whitespace
             if [ -d "packages/$pkg" ]; then
-              echo "Bumping version for @hyperfixi/$pkg (${{ github.event.inputs.version-type }})"
+              echo "Bumping version for @lokascript/$pkg (${{ github.event.inputs.version-type }})"
               cd "packages/$pkg"
               npm version ${{ github.event.inputs.version-type }} --no-git-tag-version
               cd ../..
@@ -107,7 +107,7 @@ jobs:
           for pkg in "${PKG_ARRAY[@]}"; do
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ]; then
-              echo "Setting version for @hyperfixi/$pkg to ${{ github.event.inputs.custom-version }}"
+              echo "Setting version for @lokascript/$pkg to ${{ github.event.inputs.custom-version }}"
               cd "packages/$pkg"
               npm version ${{ github.event.inputs.custom-version }} --no-git-tag-version --allow-same-version
               cd ../..
@@ -124,7 +124,7 @@ jobs:
           for pkg in "${PKG_ARRAY[@]}"; do
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ]; then
-              echo "DRY RUN: Would publish @hyperfixi/$pkg with tag ${{ github.event.inputs.npm-tag }}"
+              echo "DRY RUN: Would publish @lokascript/$pkg with tag ${{ github.event.inputs.npm-tag }}"
               cd "packages/$pkg"
               npm publish --dry-run --tag ${{ github.event.inputs.npm-tag }} --access public
               cd ../..
@@ -138,7 +138,7 @@ jobs:
           for pkg in "${PKG_ARRAY[@]}"; do
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ]; then
-              echo "Publishing @hyperfixi/$pkg with tag ${{ github.event.inputs.npm-tag }}"
+              echo "Publishing @lokascript/$pkg with tag ${{ github.event.inputs.npm-tag }}"
               cd "packages/$pkg"
               npm publish --tag ${{ github.event.inputs.npm-tag }} --access public
               cd ../..
@@ -162,8 +162,8 @@ jobs:
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ]; then
               VERSION=$(node -p "require('./packages/$pkg/package.json').version")
-              git tag "@hyperfixi/${pkg}@${VERSION}"
-              git push origin "@hyperfixi/${pkg}@${VERSION}"
+              git tag "@lokascript/${pkg}@${VERSION}"
+              git push origin "@lokascript/${pkg}@${VERSION}"
             fi
           done
 

@@ -193,8 +193,9 @@ All core libraries should remain open-source:
 - [x] README files verified and up-to-date
 - [x] LICENSE file in place (MIT)
 - [x] GitHub Actions workflows tested
-- [ ] npm organization (@hyperfixi) set up
-- [ ] NPM_TOKEN added to GitHub secrets
+- [x] npm organization (@lokascript) set up
+- [x] NPM_TOKEN added to GitHub secrets
+- [ ] Rebrand from HyperFixi to LokaScript (in progress)
 - [ ] Pre-publish check workflow run (green)
 - [ ] Dry-run publish successful
 

@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/component-schema",
+  "name": "@lokascript/component-schema",
   "version": "0.2.0",
   "description": "Universal component definition schema and validation for HyperFixi server-side hyperscript compilation",
   "main": "dist/index.js",

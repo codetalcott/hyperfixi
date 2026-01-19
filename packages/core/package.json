@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/core",
+  "name": "@lokascript/core",
   "version": "2.0.0",
   "description": "Multilingual, tree-shakeable hyperscript",
   "type": "module",
@@ -240,15 +240,15 @@
     "access": "public"
   },
   "dependencies": {
-    "@hyperfixi/semantic": "^0.1.0",
+    "@lokascript/semantic": "^0.1.0",
     "morphlex": "^1.0.5",
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
-    "@hyperfixi/patterns-reference": "^0.1.0"
+    "@lokascript/patterns-reference": "^0.1.0"
   },
   "peerDependenciesMeta": {
-    "@hyperfixi/patterns-reference": {
+    "@lokascript/patterns-reference": {
       "optional": true
     }
   },

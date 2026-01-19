@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/template-integration",
+  "name": "@lokascript/template-integration",
   "version": "0.1.0",
   "description": "Template compiler that processes embedded hyperscript with component integration",
   "main": "dist/index.js",
@@ -36,7 +36,7 @@
     "directory": "packages/template-integration"
   },
   "dependencies": {
-    "@hyperfixi/component-schema": "file:../component-schema",
+    "@lokascript/component-schema": "file:../component-schema",
     "esbuild": "0.25.11",
     "happy-dom": "20.0.6",
     "vite": "^7.1.12"

@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/server-integration",
+  "name": "@lokascript/server-integration",
   "version": "0.1.0",
   "private": true,
   "description": "Server-side hyperscript integration with multi-language support",
@@ -16,8 +16,8 @@
     "start": "node dist/server/index.js"
   },
   "dependencies": {
-    "@hyperfixi/ast-toolkit": "file:../ast-toolkit",
-    "@hyperfixi/core": "file:../core",
+    "@lokascript/ast-toolkit": "file:../ast-toolkit",
+    "@lokascript/core": "file:../core",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "esbuild": "0.25.11",

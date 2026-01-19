@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/analytics",
+  "name": "@lokascript/analytics",
   "version": "0.1.0",
   "private": true,
   "description": "Behavior analytics and instrumentation for HyperFixi applications",
@@ -57,7 +57,7 @@
   "author": "HyperFixi Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "*",
+    "@lokascript/core": "*",
     "esbuild": "0.25.11",
     "happy-dom": "20.0.6",
     "vite": "^7.1.12"

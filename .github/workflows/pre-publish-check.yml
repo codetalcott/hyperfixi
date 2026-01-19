@@ -54,12 +54,12 @@ jobs:
               PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
 
               if [ "$PRIVATE" = "true" ]; then
-                echo "| @hyperfixi/$pkg | $VERSION | ⚠️ Private |" >> $GITHUB_STEP_SUMMARY
+                echo "| @lokascript/$pkg | $VERSION | ⚠️ Private |" >> $GITHUB_STEP_SUMMARY
               else
-                echo "| @hyperfixi/$pkg | $VERSION | ✅ Public |" >> $GITHUB_STEP_SUMMARY
+                echo "| @lokascript/$pkg | $VERSION | ✅ Public |" >> $GITHUB_STEP_SUMMARY
               fi
             else
-              echo "| @hyperfixi/$pkg | N/A | ❌ Not found |" >> $GITHUB_STEP_SUMMARY
+              echo "| @lokascript/$pkg | N/A | ❌ Not found |" >> $GITHUB_STEP_SUMMARY
             fi
           done
 
@@ -85,7 +85,7 @@ jobs:
               [ -f "packages/$pkg/LICENSE" ] || [ -f "LICENSE" ] && LICENSE="✅"
               [ -f "packages/$pkg/package.json" ] && PACKAGE="✅"
 
-              echo "| @hyperfixi/$pkg | $README | $CHANGELOG | $LICENSE | $PACKAGE |" >> $GITHUB_STEP_SUMMARY
+              echo "| @lokascript/$pkg | $README | $CHANGELOG | $LICENSE | $PACKAGE |" >> $GITHUB_STEP_SUMMARY
             fi
           done
 
@@ -99,11 +99,11 @@ jobs:
           for pkg in "${PKG_ARRAY[@]}"; do
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/tsconfig.json" ]; then
-              echo "Checking @hyperfixi/$pkg..."
+              echo "Checking @lokascript/$pkg..."
               if npm run typecheck --prefix "packages/$pkg" 2>&1 | tee /tmp/${pkg}-typecheck.log; then
-                echo "✅ @hyperfixi/$pkg - TypeScript OK" >> $GITHUB_STEP_SUMMARY
+                echo "✅ @lokascript/$pkg - TypeScript OK" >> $GITHUB_STEP_SUMMARY
               else
-                echo "❌ @hyperfixi/$pkg - TypeScript errors found" >> $GITHUB_STEP_SUMMARY
+                echo "❌ @lokascript/$pkg - TypeScript errors found" >> $GITHUB_STEP_SUMMARY
                 echo "<details><summary>Errors</summary>" >> $GITHUB_STEP_SUMMARY
                 echo "" >> $GITHUB_STEP_SUMMARY
                 echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
@@ -125,15 +125,15 @@ jobs:
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
               if grep -q '"test"' "packages/$pkg/package.json"; then
-                echo "Testing @hyperfixi/$pkg..."
+                echo "Testing @lokascript/$pkg..."
                 if npm test --prefix "packages/$pkg" -- --run 2>&1 | tee /tmp/${pkg}-test.log; then
                   TESTS=$(grep -o '[0-9]* passed' /tmp/${pkg}-test.log | head -1 || echo "0 passed")
-                  echo "✅ @hyperfixi/$pkg - $TESTS" >> $GITHUB_STEP_SUMMARY
+                  echo "✅ @lokascript/$pkg - $TESTS" >> $GITHUB_STEP_SUMMARY
                 else
-                  echo "❌ @hyperfixi/$pkg - Tests failed" >> $GITHUB_STEP_SUMMARY
+                  echo "❌ @lokascript/$pkg - Tests failed" >> $GITHUB_STEP_SUMMARY
                 fi
               else
-                echo "⚠️ @hyperfixi/$pkg - No tests configured" >> $GITHUB_STEP_SUMMARY
+                echo "⚠️ @lokascript/$pkg - No tests configured" >> $GITHUB_STEP_SUMMARY
               fi
             fi
           done
@@ -149,20 +149,20 @@ jobs:
             pkg=$(echo "$pkg" | xargs)
             if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/package.json" ]; then
               if grep -q '"build"' "packages/$pkg/package.json"; then
-                echo "Building @hyperfixi/$pkg..."
+                echo "Building @lokascript/$pkg..."
                 if npm run build --prefix "packages/$pkg" 2>&1 | tee /tmp/${pkg}-build.log; then
                   # Check dist directory
                   if [ -d "packages/$pkg/dist" ] && [ "$(ls -A packages/$pkg/dist)" ]; then
                     FILES=$(ls packages/$pkg/dist | wc -l)
-                    echo "✅ @hyperfixi/$pkg - Built successfully ($FILES files)" >> $GITHUB_STEP_SUMMARY
+                    echo "✅ @lokascript/$pkg - Built successfully ($FILES files)" >> $GITHUB_STEP_SUMMARY
                   else
-                    echo "⚠️ @hyperfixi/$pkg - Built but dist is empty" >> $GITHUB_STEP_SUMMARY
+                    echo "⚠️ @lokascript/$pkg - Built but dist is empty" >> $GITHUB_STEP_SUMMARY
                   fi
                 else
-                  echo "❌ @hyperfixi/$pkg - Build failed" >> $GITHUB_STEP_SUMMARY
+                  echo "❌ @lokascript/$pkg - Build failed" >> $GITHUB_STEP_SUMMARY
                 fi
               else
-                echo "⚠️ @hyperfixi/$pkg - No build script" >> $GITHUB_STEP_SUMMARY
+                echo "⚠️ @lokascript/$pkg - No build script" >> $GITHUB_STEP_SUMMARY
               fi
             fi
           done

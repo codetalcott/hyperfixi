@@ -1,5 +1,5 @@
 {
-  "name": "@hyperfixi/testing-framework",
+  "name": "@lokascript/testing-framework",
   "version": "0.1.0",
   "description": "Cross-platform behavior testing suite for HyperFixi applications",
   "main": "dist/index.js",
@@ -70,9 +70,9 @@
   "author": "HyperFixi Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "*",
-    "@hyperfixi/patterns-reference": "*",
-    "@hyperfixi/semantic": "*",
+    "@lokascript/core": "*",
+    "@lokascript/patterns-reference": "*",
+    "@lokascript/semantic": "*",
     "diff": "^8.0.3",
     "esbuild": "0.25.11",
     "happy-dom": "20.0.6",
