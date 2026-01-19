@@ -87,14 +87,14 @@ const BUNDLES = {
       toggle: true,
       addClass: true,
       put: true,
-      increment: true,
+      increment: false, // Not in 10-command minimal set
       show: true,
       hide: true,
-      blocks: true,
-      eventModifiers: true,
+      blocks: false, // No block commands
+      eventModifiers: false, // No event modifiers
       i18nAliases: false,
       semanticParser: false,
-      fetch: true,
+      fetch: false, // Not in 10-command minimal set
     },
   },
   standard: {
@@ -104,14 +104,14 @@ const BUNDLES = {
       toggle: true,
       addClass: true,
       put: true,
-      increment: true,
+      increment: true, // Has increment/decrement in 16-command set
       show: true,
       hide: true,
-      blocks: true,
-      eventModifiers: true,
+      blocks: false, // No block commands
+      eventModifiers: false, // No event modifiers
       i18nAliases: false,
       semanticParser: false,
-      fetch: true,
+      fetch: true, // Has fetch in 16-command set
     },
   },
   browser: {
@@ -362,129 +362,119 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
       });
     }
 
-    // Bundle-specific feature tests (skip for large bundles - too slow to inject via setContent)
-    // Browser (203KB), Minimal (269KB), Standard (285KB) are too large for inline injection
-    if (bundleConfig.features.blocks && !['browser', 'minimal', 'standard'].includes(bundleKey)) {
+    // Bundle-specific feature tests using dedicated test pages (works for all bundle sizes)
+    if (bundleConfig.features.blocks) {
       test('if/else blocks work', async ({ page }) => {
-        await page.setContent(`
-          <!DOCTYPE html>
-          <html><body>
-            <script src="${BASE_URL}/packages/core/dist/${bundleConfig.file}"></script>
-            <button id="btn" class="active" _="on click
-              if me has .active
-                put 'yes' into #out
-              else
-                put 'no' into #out
-              end">Test</button>
-            <div id="out">-</div>
-          </body></html>
-        `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
-          timeout: 10000,
-        });
-        await page.evaluate(() => (window as any).hyperfixi.init());
+        await page.goto(
+          `${BASE_URL}/packages/core/test-pages/blocks-if-else.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
 
         await page.click('#btn');
+        await page.waitForTimeout(200);
         await expect(page.locator('#out')).toHaveText('yes');
       });
     }
 
-    if (
-      bundleConfig.features.eventModifiers &&
-      !['browser', 'minimal', 'standard'].includes(bundleKey)
-    ) {
+    if (bundleConfig.features.eventModifiers) {
       test('.once modifier works', async ({ page }) => {
-        await page.setContent(`
-          <!DOCTYPE html>
-          <html><body>
-            <script src="${BASE_URL}/packages/core/dist/${bundleConfig.file}"></script>
-            <button id="btn" _="on click.once add .clicked">Click</button>
-            <div id="log"></div>
-          </body></html>
-        `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
-          timeout: 10000,
-        });
-        await page.evaluate(() => (window as any).hyperfixi.init());
+        await page.goto(
+          `${BASE_URL}/packages/core/test-pages/event-modifiers.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
 
         // First click should add class
-        await page.click('#btn');
+        await page.click('#once-btn');
         await page.waitForTimeout(100);
-        await expect(page.locator('#btn')).toHaveClass(/clicked/);
+        await expect(page.locator('#once-btn')).toHaveClass(/clicked/);
 
         // Remove class manually
-        await page.evaluate(() => document.getElementById('btn')!.classList.remove('clicked'));
+        await page.evaluate(() => document.getElementById('once-btn')!.classList.remove('clicked'));
 
         // Second click should NOT add class back (handler was once)
-        await page.click('#btn');
+        await page.click('#once-btn');
         await page.waitForTimeout(100);
-        await expect(page.locator('#btn')).not.toHaveClass(/clicked/);
+        await expect(page.locator('#once-btn')).not.toHaveClass(/clicked/);
+      });
+
+      test('.prevent modifier works', async ({ page }) => {
+        await page.goto(
+          `${BASE_URL}/packages/core/test-pages/event-modifiers.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
+
+        const initialUrl = page.url();
+        await page.click('#prevent-link');
+        await page.waitForTimeout(200);
+
+        // URL should not have changed (preventDefault worked)
+        expect(page.url()).toBe(initialUrl);
+        await expect(page.locator('#prevent-link')).toHaveClass(/prevented/);
+      });
+
+      test('.stop modifier works', async ({ page }) => {
+        await page.goto(
+          `${BASE_URL}/packages/core/test-pages/event-modifiers.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
+
+        await page.click('#stop-btn');
+        await page.waitForTimeout(200);
+
+        // Inner button should have class
+        await expect(page.locator('#stop-btn')).toHaveClass(/inner-clicked/);
+        // Outer div should NOT have class (propagation stopped)
+        await expect(page.locator('#outer')).not.toHaveClass(/outer-clicked/);
       });
     }
 
     // Test *property CSS style syntax (hybrid-complete only)
     if (bundleKey === 'hybrid-complete') {
       test('*property CSS style syntax works with set', async ({ page }) => {
-        await page.setContent(`
-          <!DOCTYPE html>
-          <html><body>
-            <script src="${BASE_URL}/packages/core/dist/${bundleConfig.file}"></script>
-            <button id="btn" _="on click set #box's *opacity to 0.5">Set Opacity</button>
-            <div id="box" style="width:100px;height:100px;background:red;">Box</div>
-          </body></html>
-        `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
-          timeout: 10000,
-        });
-        await page.evaluate(() => (window as any).hyperfixi.init());
+        await page.goto(
+          `${BASE_URL}/packages/core/test-pages/css-property-syntax.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
 
-        await page.click('#btn');
-        await page.waitForTimeout(100);
-        const opacity = await page.locator('#box').evaluate(el => el.style.opacity);
+        await page.click('#set-btn');
+        await page.waitForTimeout(200);
+        const opacity = await page
+          .locator('#set-box')
+          .evaluate(el => (el as HTMLElement).style.opacity);
         expect(opacity).toBe('0.5');
       });
 
       test('*property CSS style syntax works with put', async ({ page }) => {
-        await page.setContent(`
-          <!DOCTYPE html>
-          <html><body>
-            <script src="${BASE_URL}/packages/core/dist/${bundleConfig.file}"></script>
-            <button id="btn" _="on click put '0.3' into #box's *opacity">Put Opacity</button>
-            <div id="box" style="width:100px;height:100px;background:blue;">Box</div>
-          </body></html>
-        `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
-          timeout: 10000,
-        });
-        await page.evaluate(() => (window as any).hyperfixi.init());
+        await page.goto(
+          `${BASE_URL}/packages/core/test-pages/css-property-syntax.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
 
-        await page.click('#btn');
-        await page.waitForTimeout(100);
-        const opacity = await page.locator('#box').evaluate(el => el.style.opacity);
+        await page.click('#put-btn');
+        await page.waitForTimeout(200);
+        const opacity = await page
+          .locator('#put-box')
+          .evaluate(el => (el as HTMLElement).style.opacity);
         expect(opacity).toBe('0.3');
       });
 
       test('*property CSS style syntax works with increment', async ({ page }) => {
-        await page.setContent(`
-          <!DOCTYPE html>
-          <html><body>
-            <div id="box" style="width:100px;height:100px;background:green;opacity:0;">Box</div>
-            <button id="btn" _="on click increment #box's *opacity by 0.2">Increment Opacity</button>
-            <script src="${BASE_URL}/packages/core/dist/${bundleConfig.file}"></script>
-          </body></html>
-        `);
-        await page.waitForFunction(() => (window as any).hyperfixi !== undefined, {
-          timeout: 10000,
-        });
-        // Don't call init() - bundle auto-initializes
+        await page.goto(
+          `${BASE_URL}/packages/core/test-pages/css-property-syntax.html?bundle=${bundleKey}`
+        );
+        await page.waitForTimeout(500);
 
         // Get initial opacity (should be 0)
-        const initialOpacity = await page.locator('#box').evaluate(el => el.style.opacity);
+        const initialOpacity = await page
+          .locator('#inc-box')
+          .evaluate(el => (el as HTMLElement).style.opacity);
         expect(initialOpacity).toBe('0');
 
-        await page.click('#btn');
-        await page.waitForTimeout(100);
-        const opacity = await page.locator('#box').evaluate(el => el.style.opacity);
+        await page.click('#inc-btn');
+        await page.waitForTimeout(200);
+        const opacity = await page
+          .locator('#inc-box')
+          .evaluate(el => (el as HTMLElement).style.opacity);
         // Initial 0 + 0.2 = 0.2
         expect(opacity).toBe('0.2');
       });

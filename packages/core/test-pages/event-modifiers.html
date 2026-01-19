@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test: Event Modifiers</title>
+</head>
+<body>
+  <h1>Test: Event Modifiers</h1>
+
+  <!-- Test .once modifier -->
+  <button id="once-btn" _="on click.once add .clicked">
+    Click Once
+  </button>
+
+  <!-- Test .prevent modifier -->
+  <a id="prevent-link" href="#should-not-navigate" _="on click.prevent add .prevented">
+    Prevented Link
+  </a>
+
+  <!-- Test .stop modifier -->
+  <div id="outer" _="on click add .outer-clicked">
+    <button id="stop-btn" _="on click.stop add .inner-clicked">
+      Stop Propagation
+    </button>
+  </div>
+
+  <script src="../../../examples/bundle-loader.js"></script>
+</body>
+</html>

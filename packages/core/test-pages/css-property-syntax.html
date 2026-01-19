@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test: CSS *property Syntax</title>
+  <style>
+    .test-box {
+      width: 100px;
+      height: 100px;
+      background: red;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test: CSS *property Syntax</h1>
+
+  <!-- Test set with *property -->
+  <button id="set-btn" _="on click set #set-box's *opacity to 0.5">
+    Set Opacity
+  </button>
+  <div id="set-box" class="test-box" style="opacity: 1;">Set Test</div>
+
+  <!-- Test put with *property -->
+  <button id="put-btn" _="on click put '0.3' into #put-box's *opacity">
+    Put Opacity
+  </button>
+  <div id="put-box" class="test-box" style="opacity: 1;">Put Test</div>
+
+  <!-- Test increment with *property -->
+  <button id="inc-btn" _="on click increment #inc-box's *opacity by 0.2">
+    Increment Opacity
+  </button>
+  <div id="inc-box" class="test-box" style="opacity: 0;">Increment Test</div>
+
+  <script src="../../../examples/bundle-loader.js"></script>
+</body>
+</html>
