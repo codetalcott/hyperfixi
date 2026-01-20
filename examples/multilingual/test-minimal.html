@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minimal i18n Test</title>
+</head>
+<body>
+  <h1>Minimal Test</h1>
+  <button id="test-btn">Test</button>
+  <span id="result">not clicked</span>
+
+  <script src="../../packages/core/dist/hyperfixi-browser-classic-i18n.js"></script>
+  <script>
+    console.log('hyperfixi:', typeof hyperfixi);
+    console.log('version:', hyperfixi.version);
+
+    // Manual test - don't use init()
+    const btn = document.getElementById('test-btn');
+    const result = document.getElementById('result');
+
+    btn.addEventListener('click', async () => {
+      console.log('Button clicked - testing hyperfixi.execute');
+      try {
+        await hyperfixi.execute('set #result to "clicked!"');
+        console.log('Execute succeeded');
+      } catch (e) {
+        console.error('Execute failed:', e);
+      }
+    });
+
+    // Also test parse
+    console.log('Testing parse...');
+    try {
+      const pr = hyperfixi.parse('on click log "hello"');
+      console.log('Parse result:', pr);
+    } catch (e) {
+      console.error('Parse failed:', e);
+    }
+  </script>
+</body>
+</html>

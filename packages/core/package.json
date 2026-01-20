@@ -133,7 +133,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "rollup -c && tsc -p tsconfig.build.json",
+    "build": "rollup -c && rollup -c rollup.parser-modules.config.mjs && tsc -p tsconfig.build.json",
     "build:types": "tsc -p tsconfig.build.json",
     "build:browser": "rollup -c rollup.browser.config.mjs",
     "build:browser:dev": "rollup -c rollup.browser.dev.config.mjs",

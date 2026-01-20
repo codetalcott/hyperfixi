@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LokaScript Classic i18n Bundle Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      line-height: 1.6;
+    }
+    .test-section {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    .counter {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2563eb;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0.5rem 0.5rem 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #f0f0f0;
+    }
+    .result {
+      background: #f8f8f8;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: monospace;
+      margin: 0.5rem 0;
+      white-space: pre-wrap;
+    }
+    .success { color: green; }
+    .error { color: red; }
+    #locale-display {
+      background: #e8f4ff;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>LokaScript Classic i18n Bundle Test</h1>
+
+  <div class="test-section">
+    <h3>Current Locale</h3>
+    <p id="locale-display">Loading...</p>
+    <div>
+      <button onclick="setLocale('en')">English</button>
+      <button onclick="setLocale('es')">Español</button>
+      <button onclick="setLocale('ja')">日本語</button>
+      <button onclick="setLocale('zh')">中文</button>
+      <button onclick="setLocale('ar')">العربية</button>
+      <button onclick="setLocale('ko')">한국어</button>
+      <button onclick="setLocale('de')">Deutsch</button>
+      <button onclick="setLocale('fr')">Français</button>
+      <button onclick="setLocale('tr')">Türkçe</button>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h3>1. Basic Counter (English)</h3>
+    <p>Tests: increment, set, toggle</p>
+    <span id="count" class="counter">0</span>
+    <button _="on click increment #count">Increment</button>
+    <button _="on click set #count to 0">Reset</button>
+    <button _="on click toggle .highlight on #count">Toggle Highlight</button>
+  </div>
+
+  <div class="test-section">
+    <h3>2. Grammar Transformation Test</h3>
+    <p>Convert English to other locales:</p>
+    <div id="transform-results" class="result"></div>
+    <button onclick="testTransformations()">Run Transformation Test</button>
+  </div>
+
+  <div class="test-section">
+    <h3>3. API Verification</h3>
+    <div id="api-results" class="result"></div>
+    <button onclick="testApi()">Verify API</button>
+  </div>
+
+  <div class="test-section">
+    <h3>4. Parse with Locale Keywords</h3>
+    <div id="parse-results" class="result"></div>
+    <button onclick="testParsing()">Test Parsing</button>
+  </div>
+
+  <script src="../../packages/core/dist/hyperfixi-browser-classic-i18n.js"></script>
+  <script>
+    function updateLocaleDisplay() {
+      const locale = hyperfixi.i18n.getLocale();
+      const profile = hyperfixi.i18n.getProfile(locale);
+      document.getElementById('locale-display').textContent =
+        `Locale: ${locale}` +
+        (profile ? ` (${profile.name}, ${profile.wordOrder} word order)` : '');
+    }
+
+    function setLocale(locale) {
+      hyperfixi.i18n.setLocale(locale);
+      updateLocaleDisplay();
+    }
+
+    function testTransformations() {
+      const results = [];
+      const testCode = 'on click increment #count';
+
+      results.push(`Original (English): ${testCode}\n`);
+
+      const locales = ['es', 'ja', 'zh', 'ar', 'ko', 'de', 'fr', 'tr'];
+      for (const locale of locales) {
+        try {
+          const transformed = hyperfixi.i18n.toLocale(testCode, locale);
+          const profile = hyperfixi.i18n.getProfile(locale);
+          results.push(`${locale} (${profile?.name || 'Unknown'}): ${transformed}`);
+        } catch (e) {
+          results.push(`${locale}: Error - ${e.message}`);
+        }
+      }
+
+      document.getElementById('transform-results').textContent = results.join('\n');
+    }
+
+    function testApi() {
+      const results = [];
+
+      // Check version
+      results.push(`Version: ${hyperfixi.version}`);
+
+      // Check locales
+      results.push(`Available locales: ${hyperfixi.locales.join(', ')}`);
+
+      // Check commands
+      results.push(`Commands count: ${hyperfixi.commands.length}`);
+      results.push(`Commands: ${hyperfixi.commands.slice(0, 10).join(', ')}...`);
+
+      // Check i18n API
+      const i18nMethods = Object.keys(hyperfixi.i18n);
+      results.push(`i18n methods: ${i18nMethods.join(', ')}`);
+
+      // Check dictionaries
+      const dictLocales = Object.keys(hyperfixi.i18n.dictionaries);
+      results.push(`Dictionary locales: ${dictLocales.join(', ')}`);
+
+      // Check grammar locales
+      try {
+        const grammarLocales = hyperfixi.i18n.getSupportedGrammarLocales();
+        results.push(`Grammar transformation locales: ${grammarLocales.join(', ')}`);
+      } catch (e) {
+        results.push(`Grammar locales: Error - ${e.message}`);
+      }
+
+      document.getElementById('api-results').innerHTML =
+        '<span class="success">' + results.join('\n') + '</span>';
+    }
+
+    function testParsing() {
+      const results = [];
+
+      // Test English parsing
+      try {
+        const parseResult = hyperfixi.parse('on click log "Hello"');
+        results.push(`English parse: ${parseResult.success ? 'SUCCESS' : 'FAILED'}`);
+        if (parseResult.node) {
+          results.push(`  Node type: ${parseResult.node.type}`);
+        }
+      } catch (e) {
+        results.push(`English parse: Error - ${e.message}`);
+      }
+
+      // Test Spanish keywords (should work when locale is set)
+      hyperfixi.i18n.setLocale('es');
+      try {
+        // Parse with Spanish keywords - 'clic' should be recognized as 'click'
+        const parseResult = hyperfixi.parse('al clic registro "Hola"');
+        results.push(`Spanish parse: ${parseResult.success ? 'SUCCESS' : 'FAILED'}`);
+        if (!parseResult.success && parseResult.error) {
+          results.push(`  Error: ${parseResult.error.message}`);
+        }
+      } catch (e) {
+        results.push(`Spanish parse: Error - ${e.message}`);
+      }
+
+      // Reset to English
+      hyperfixi.i18n.setLocale('en');
+      updateLocaleDisplay();
+
+      document.getElementById('parse-results').textContent = results.join('\n');
+    }
+
+    // Initial setup
+    updateLocaleDisplay();
+
+    // Log bundle info
+    console.log('LokaScript Classic i18n Bundle loaded');
+    console.log('Version:', hyperfixi.version);
+    console.log('Commands:', hyperfixi.commands.length);
+    console.log('Locales:', hyperfixi.locales);
+  </script>
+</body>
+</html>
