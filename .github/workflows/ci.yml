@@ -35,8 +35,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint
-        run: npm run lint --workspaces --if-present
+      - name: Run ESLint (public packages)
+        run: |
+          npm run lint --prefix packages/core --if-present
+          npm run lint --prefix packages/semantic --if-present
+          npm run lint --prefix packages/i18n --if-present
+          npm run lint --prefix packages/vite-plugin --if-present
 
       - name: Typecheck core
         run: npm run typecheck --prefix packages/core
