@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build semantic package (dependency of core)
+        run: npm run build --prefix packages/semantic
+
       - name: TypeScript type checking
         run: |
           npm run typecheck --prefix packages/core
@@ -69,6 +72,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build semantic package (dependency)
+        run: npm run build --prefix packages/semantic
 
       - name: Populate patterns database
         run: npm run populate --prefix packages/patterns-reference
@@ -125,6 +131,9 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
+
+      - name: Build semantic package (dependency)
+        run: npm run build --prefix packages/semantic
 
       - name: Build browser bundles
         run: npm run build:browser --prefix packages/core
