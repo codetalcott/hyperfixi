@@ -57,6 +57,9 @@ jobs:
       - name: Typecheck i18n
         run: npm run typecheck --prefix packages/i18n
 
+      - name: Build core package (dependency of vite-plugin)
+        run: npm run build --prefix packages/core
+
       - name: Typecheck vite-plugin
         run: npm run typecheck --prefix packages/vite-plugin
 
@@ -101,6 +104,9 @@ jobs:
 
       - name: Test i18n
         run: npm test --prefix packages/i18n -- --run
+
+      - name: Build core package (dependency of vite-plugin)
+        run: npm run build --prefix packages/core
 
       - name: Test vite-plugin
         run: npm test --prefix packages/vite-plugin -- --run

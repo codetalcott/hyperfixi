@@ -38,13 +38,13 @@ jobs:
         working-directory: packages/patterns-reference
         run: npm run typecheck
 
-      - name: Run tests
-        working-directory: packages/patterns-reference
-        run: npm run test:run
-
       - name: Populate database
         working-directory: packages/patterns-reference
         run: npm run populate
+
+      - name: Run tests
+        working-directory: packages/patterns-reference
+        run: npm run test:run
 
       - name: Validate translations
         working-directory: packages/patterns-reference
