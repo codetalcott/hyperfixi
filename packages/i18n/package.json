@@ -9,28 +9,28 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./browser": {
       "types": "./dist/browser.d.ts",
-      "import": "./dist/browser.mjs",
-      "require": "./dist/browser.js"
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.cjs"
     },
     "./dictionaries": {
       "types": "./dist/dictionaries/index.d.ts",
-      "import": "./dist/dictionaries/index.mjs",
-      "require": "./dist/dictionaries/index.js"
+      "import": "./dist/dictionaries/index.js",
+      "require": "./dist/dictionaries/index.cjs"
     },
     "./plugins/vite": {
       "types": "./dist/plugins/vite.d.ts",
-      "import": "./dist/plugins/vite.mjs",
-      "require": "./dist/plugins/vite.js"
+      "import": "./dist/plugins/vite.js",
+      "require": "./dist/plugins/vite.cjs"
     },
     "./plugins/webpack": {
       "types": "./dist/plugins/webpack.d.ts",
-      "import": "./dist/plugins/webpack.mjs",
-      "require": "./dist/plugins/webpack.js"
+      "import": "./dist/plugins/webpack.js",
+      "require": "./dist/plugins/webpack.cjs"
     }
   },
   "scripts": {

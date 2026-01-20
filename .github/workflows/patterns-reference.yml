@@ -68,6 +68,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build semantic package (dependency of patterns-reference)
+        run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency of patterns-reference)
+        run: npm run build --prefix packages/i18n
+
       - name: Build package
         working-directory: packages/patterns-reference
         run: npm run build
