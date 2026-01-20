@@ -42,6 +42,12 @@ jobs:
           npm run lint --prefix packages/i18n --if-present
           npm run lint --prefix packages/vite-plugin --if-present
 
+      - name: Build semantic package (dependency of core)
+        run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency of core)
+        run: npm run build --prefix packages/i18n
+
       - name: Typecheck core
         run: npm run typecheck --prefix packages/core
 
@@ -81,6 +87,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build semantic package (dependency of core)
+        run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency of core)
+        run: npm run build --prefix packages/i18n
+
       - name: Test core
         run: npm test --prefix packages/core -- --run
 
@@ -114,6 +126,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build semantic package (dependency of core)
+        run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency of core)
+        run: npm run build --prefix packages/i18n
 
       - name: Generate coverage - core
         run: npm run test:coverage --prefix packages/core
@@ -175,6 +193,12 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
+
+      - name: Build semantic package (dependency of core)
+        run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency of core)
+        run: npm run build --prefix packages/i18n
 
       - name: Build browser bundles
         run: npm run build:browser --prefix packages/core

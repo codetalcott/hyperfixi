@@ -27,6 +27,9 @@ jobs:
       - name: Build semantic package (dependency of core)
         run: npm run build --prefix packages/semantic
 
+      - name: Build i18n package (dependency of core)
+        run: npm run build --prefix packages/i18n
+
       - name: TypeScript type checking
         run: |
           npm run typecheck --prefix packages/core
@@ -70,6 +73,9 @@ jobs:
 
       - name: Build semantic package (dependency)
         run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency)
+        run: npm run build --prefix packages/i18n
 
       - name: Populate patterns database
         run: npm run populate --prefix packages/patterns-reference
@@ -129,6 +135,9 @@ jobs:
 
       - name: Build semantic package (dependency)
         run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency)
+        run: npm run build --prefix packages/i18n
 
       - name: Build browser bundles
         run: npm run build:browser --prefix packages/core

@@ -28,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build semantic package (dependency)
+        run: npm run build --prefix packages/semantic
+
+      - name: Build i18n package (dependency)
+        run: npm run build --prefix packages/i18n
+
       - name: Typecheck
         working-directory: packages/patterns-reference
         run: npm run typecheck
