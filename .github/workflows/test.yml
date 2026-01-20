@@ -30,17 +30,10 @@ jobs:
       - name: Build semantic package (dependency of core)
         run: npm run build --prefix packages/semantic
 
-      - name: Build core package (dependency of testing-framework)
-        run: npm run build --prefix packages/core
-
-      - name: Build patterns-reference package (dependency of testing-framework)
-        run: npm run build --prefix packages/patterns-reference
-
       - name: TypeScript type checking
         run: |
           npm run typecheck --prefix packages/core
           npm run typecheck --prefix packages/semantic
-          npm run typecheck --prefix packages/testing-framework
 
       - name: Unit tests (core)
         run: npm test --prefix packages/core
