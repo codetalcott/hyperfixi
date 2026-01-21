@@ -35,22 +35,24 @@ jobs:
           npm run typecheck --prefix packages/core
           npm run typecheck --prefix packages/semantic
 
-      - name: Unit tests (core)
-        run: npm test --prefix packages/core
+      - name: Unit tests with coverage (core)
+        run: npm run test:coverage --prefix packages/core
 
-      - name: Unit tests (semantic)
-        run: npm test --prefix packages/semantic
+      - name: Unit tests with coverage (semantic)
+        run: npm run test:coverage --prefix packages/semantic
 
-      - name: Unit tests (i18n)
-        run: npm test --prefix packages/i18n
+      - name: Unit tests with coverage (i18n)
+        run: npm run test:coverage --prefix packages/i18n
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         with:
           files: |
-            packages/core/coverage/coverage-final.json
-            packages/semantic/coverage/coverage-final.json
-            packages/i18n/coverage/coverage-final.json
+            packages/core/coverage/lcov.info
+            packages/semantic/coverage/lcov.info
+            packages/i18n/coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
         continue-on-error: true
 
   multilingual:
