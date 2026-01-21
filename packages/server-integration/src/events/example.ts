@@ -53,12 +53,12 @@ async function example2() {
   app.use(express.json());
 
   // Import registry and hyperscript compiler
-  const { registry } = await import('@lokascript/core/registry');
+  const { getDefaultRegistry } = await import('@lokascript/core/registry');
   const { hyperscript } = await import('@lokascript/core');
 
   // Setup hyperscript routes
   const { middleware } = await setupHyperscriptRoutes(app, {
-    registry,
+    registry: getDefaultRegistry(),
     debug: true,
     alwaysCallNext: false, // Don't continue to Express routes if hyperscript handled it
     onError: (error, req, res) => {
@@ -80,7 +80,7 @@ async function example2() {
   `;
 
   // Compile the script (this registers the event handler)
-  await hyperscript.compileAsync(getUsersScript);
+  await hyperscript.compile(getUsersScript);
 
   // You can also use traditional Express routes alongside hyperscript
   app.get('/health', (req, res) => {
@@ -115,8 +115,8 @@ async function example3() {
   };
 
   // Make db available in context
-  const { registry } = await import('@lokascript/core/registry');
-  registry.context.register('db', () => db);
+  const { context } = await import('@lokascript/core/registry');
+  context.register('db', () => db);
 
   // Hyperscript CRUD routes
   const apiScript = `
@@ -175,7 +175,7 @@ async function example3() {
     end
   `;
 
-  await hyperscript.compileAsync(apiScript);
+  await hyperscript.compile(apiScript);
 
   app.listen(3000, () => {
     console.log('RESTful API running on http://localhost:3000');
@@ -212,7 +212,7 @@ async function example4() {
 
   // Compile and register all routes
   for (const route of routes) {
-    await hyperscript.compileAsync(route.script);
+    await hyperscript.compile(route.script);
     console.log(`Registered ${route.method} ${route.path}`);
   }
 

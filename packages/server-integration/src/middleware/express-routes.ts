@@ -7,7 +7,7 @@
  * For maximum flexibility, use framework-agnostic-routes.ts directly.
  */
 
-import type { Registry } from '@lokascript/core/registry';
+import type { LokaScriptRegistry } from '@lokascript/core/registry';
 import {
   createHyperscriptMiddleware,
   setupHyperscriptRoutes as genericSetup,
@@ -16,7 +16,7 @@ import { createExpressAdapter } from './adapters.js';
 
 export interface ExpressHyperscriptRoutesOptions {
   /** Registry to use (defaults to global registry) */
-  registry?: Registry;
+  registry?: LokaScriptRegistry;
 
   /** Enable debug logging */
   debug?: boolean;

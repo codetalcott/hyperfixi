@@ -5,13 +5,13 @@
  * Use this with adapters from ./adapters.ts for your specific framework.
  */
 
-import type { Registry } from '@lokascript/core/registry';
+import type { LokaScriptRegistry } from '@lokascript/core/registry';
 import { createRequestEventSource } from '../events/request-event-source.js';
 import type { FrameworkAdapter } from './adapters.js';
 
 export interface HyperscriptRoutesOptions {
   /** Registry to use (defaults to global registry) */
-  registry?: Registry;
+  registry?: LokaScriptRegistry;
 
   /** Framework adapter (required) */
   adapter: FrameworkAdapter;
@@ -60,8 +60,8 @@ export function createHyperscriptMiddleware(options: HyperscriptRoutesOptions) {
 
     try {
       // Dynamic import to avoid circular dependencies
-      const { registry: defaultRegistry } = await import('@lokascript/core/registry');
-      const registry = options.registry || defaultRegistry;
+      const { getDefaultRegistry } = await import('@lokascript/core/registry');
+      const registry = options.registry || getDefaultRegistry();
 
       // Create and register the request event source
       requestSource = createRequestEventSource();
@@ -144,8 +144,8 @@ export async function setupHyperscriptRoutes(app: any, options: HyperscriptRoute
 
   try {
     // Import registry
-    const { registry: defaultRegistry } = await import('@lokascript/core/registry');
-    const registry = options.registry || defaultRegistry;
+    const { getDefaultRegistry } = await import('@lokascript/core/registry');
+    const registry = options.registry || getDefaultRegistry();
 
     // Create the middleware
     const middleware = createHyperscriptMiddleware({ ...options, registry });
@@ -171,7 +171,7 @@ export async function setupHyperscriptRoutes(app: any, options: HyperscriptRoute
  * Setup context providers for server-side hyperscript
  * Makes request, response, params, etc. available in hyperscript code
  */
-function setupContextProviders(registry: Registry) {
+function setupContextProviders(registry: LokaScriptRegistry) {
   // Only register if not already registered
   if (!registry.context.has('request')) {
     registry.context.register('request', context => context.locals.get('request'), {

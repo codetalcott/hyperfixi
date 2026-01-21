@@ -18,7 +18,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import type { Registry } from '@lokascript/core/registry';
+import type { LokaScriptRegistry } from '@lokascript/core/registry';
 import {
   createRequestEventSource,
   expressRequestToServerRequest,
@@ -27,7 +27,7 @@ import {
 
 export interface HyperscriptRoutesOptions {
   /** Registry to use (defaults to global registry) */
-  registry?: Registry;
+  registry?: LokaScriptRegistry;
 
   /** Enable debug logging */
   debug?: boolean;
@@ -60,8 +60,8 @@ export function createHyperscriptRoutesMiddleware(options: HyperscriptRoutesOpti
     if (!initialized) {
       try {
         // Dynamic import to avoid circular dependencies
-        const { registry: defaultRegistry } = await import('@lokascript/core/registry');
-        const registry = options.registry || defaultRegistry;
+        const { getDefaultRegistry } = await import('@lokascript/core/registry');
+        const registry = options.registry || getDefaultRegistry();
 
         // Create and register the request event source
         requestSource = createRequestEventSource();
@@ -123,8 +123,8 @@ export async function setupHyperscriptRoutes(
 
   try {
     // Import registry
-    const { registry: defaultRegistry } = await import('@lokascript/core/registry');
-    const registry = options.registry || defaultRegistry;
+    const { getDefaultRegistry } = await import('@lokascript/core/registry');
+    const registry = options.registry || getDefaultRegistry();
 
     // Register context providers for request/response
     setupContextProviders(registry);
@@ -151,7 +151,7 @@ export async function setupHyperscriptRoutes(
  * Setup context providers for server-side hyperscript
  * Makes request, response, params, etc. available in hyperscript code
  */
-function setupContextProviders(registry: Registry) {
+function setupContextProviders(registry: LokaScriptRegistry) {
   // Register request context provider
   registry.context.register(
     'request',
