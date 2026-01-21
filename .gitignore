@@ -69,8 +69,26 @@ coverage/
 tmp/
 temp/
 
+# Generated output directories
+analysis-output/
+console-logs/
+dist-release/
+metrics/
+test-results/
+
+# Generated reports
+pattern-coverage-report.json
+
+# Test files in root (should be in tests/)
+/test-*.mjs
+/test-*.js
+
 # Optional npm cache directory
 .npm
+
+# Alternative package manager lockfiles (if not using)
+bun.lock
+deno.lock
 
 # Optional eslint cache
 .eslintcache
