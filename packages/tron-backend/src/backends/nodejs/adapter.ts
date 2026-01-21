@@ -127,7 +127,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
       // Use hyperfixi's compilation API
       const { hyperscript } = await import('@lokascript/core');
 
-      const result = await hyperscript.compileAsync(request.source, {
+      const result = await hyperscript.compile(request.source, {
         language: request.language,
         confidenceThreshold: request.options?.confidenceThreshold,
         traditional: request.options?.traditional,
@@ -140,13 +140,13 @@ export class NodeTronAdapter extends BaseTronAdapter {
           success: false,
           error: {
             code: 2000 as TronErrorCode, // PARSE_ERROR
-            message: result.errors.map(e => e.message).join('; '),
+            message: result.errors?.map(e => e.message).join('; ') ?? 'Unknown parse error',
           },
         };
       }
 
       // Encode AST to TRON format
-      const ast = await this.encodeAST(result.code);
+      const ast = await this.encodeAST(result.ast);
 
       return {
         success: true,
@@ -156,10 +156,10 @@ export class NodeTronAdapter extends BaseTronAdapter {
             parserUsed: result.meta.parser as 'semantic' | 'traditional',
             semanticConfidence: result.meta.confidence,
             detectedLanguage: result.meta.language,
-            warnings: result.meta.warnings,
+            warnings: [],
             compileTimeMs: compileTime,
           },
-          sourceMap: request.options?.sourceMap ? result.meta.sourceMap : undefined,
+          sourceMap: undefined, // Not currently available in CompileResult.meta
         },
       };
     } catch (error) {
@@ -204,7 +204,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
       // Set up locals and globals
       if (request.context?.locals) {
         for (const [key, value] of Object.entries(request.context.locals)) {
-          context.locals[key] = value;
+          context.locals.set(key, value);
         }
       }
 
@@ -221,7 +221,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
           success: true,
           value,
           context: {
-            locals: { ...context.locals },
+            locals: Object.fromEntries(context.locals),
             globals: request.context?.globals,
           },
           meta: {
@@ -253,19 +253,13 @@ export class NodeTronAdapter extends BaseTronAdapter {
         success: true,
         data: {
           valid: result.valid,
-          errors: result.errors.map(e => ({
-            message: e.message,
-            line: e.line,
-            column: e.column,
-            code: e.code,
-          })),
-          warnings:
-            result.warnings?.map(w => ({
-              message: w.message,
-              line: w.line,
-              column: w.column,
-              code: w.code,
-            })) || [],
+          errors:
+            result.errors?.map(e => ({
+              message: e.message,
+              line: e.line,
+              column: e.column,
+            })) ?? [],
+          warnings: [],
         },
       };
     } catch (error) {
@@ -281,7 +275,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
 
   async translate(request: TranslateRequest): Promise<AdapterResult<TranslateResult>> {
     try {
-      const { MultilingualHyperscript } = await import('@lokascript/core');
+      const { MultilingualHyperscript } = await import('@lokascript/core/multilingual');
 
       const ml = new MultilingualHyperscript();
       await ml.initialize();
@@ -314,10 +308,13 @@ export class NodeTronAdapter extends BaseTronAdapter {
   async hydrate(request: HydrateRequest): Promise<AdapterResult<HydrateResult>> {
     try {
       // Encode hydration state to TRON
-      const stateData = {
+      // Note: stateData would be used for more advanced state serialization
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _stateData = {
         components: request.components,
         globalState: request.globalState,
       };
+      void _stateData; // Suppress unused variable warning
 
       const stateBlob = await this.encode({
         header: this.createHeader(),
@@ -402,7 +399,16 @@ export class NodeTronAdapter extends BaseTronAdapter {
             id: op.id,
             success: result.success,
             result: result.success ? result.data : undefined,
-            error: result.success ? undefined : result.error,
+            error: result.success
+              ? undefined
+              : {
+                  type: 'error' as const,
+                  id: op.id,
+                  data: {
+                    code: result.error.code,
+                    message: result.error.message,
+                  },
+                },
           };
         } catch (error) {
           return {
@@ -455,7 +461,16 @@ export class NodeTronAdapter extends BaseTronAdapter {
             id: op.id,
             success: result.success,
             result: result.success ? result.data : undefined,
-            error: result.success ? undefined : (result.error as any),
+            error: result.success
+              ? undefined
+              : {
+                  type: 'error' as const,
+                  id: op.id,
+                  data: {
+                    code: result.error.code,
+                    message: result.error.message,
+                  },
+                },
           });
 
           if (!result.success && request.stopOnError) {

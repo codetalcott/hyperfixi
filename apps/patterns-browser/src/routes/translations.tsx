@@ -1,17 +1,17 @@
 /**
  * Translation routes for the patterns browser.
  *
- * Uses @hyperfixi/semantic for live translation of hyperscript patterns.
+ * Uses @lokascript/semantic for live translation of hyperscript patterns.
  */
 
 import { Elysia } from 'elysia';
 import { BaseLayout } from '../layouts/base';
 import { getPatterns, getPatternTranslations, getLanguages, type Translation } from '../db';
 import { AlignmentBadge } from '../components/alignment-indicator';
-import { getAllTranslations, getSupportedLanguages, canParse } from '@hyperfixi/semantic';
+import { getAllTranslations, getSupportedLanguages, canParse } from '@lokascript/semantic';
 
 /**
- * Get live translation for a pattern using @hyperfixi/semantic.
+ * Get live translation for a pattern using @lokascript/semantic.
  * Falls back gracefully if translation fails.
  */
 function getLiveTranslation(code: string, targetLang: string): { code: string; confidence: number } | null {
@@ -88,7 +88,7 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
         <h1>Translation Explorer</h1>
         <p class="muted">
           View hyperscript patterns translated to {supportedLangs.length} languages with different word orders.
-          Powered by <code>@hyperfixi/semantic</code> live translation.
+          Powered by <code>@lokascript/semantic</code> live translation.
         </p>
 
         <div class="meta" style="margin-bottom: 1rem">

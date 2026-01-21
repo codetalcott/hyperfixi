@@ -53,21 +53,21 @@ export function getHyperFixiCore(): LokaScriptCoreAPI | null {
 }
 
 /**
- * Safe access to window.HyperFixiSemantic with type checking
+ * Safe access to window.LokaScriptSemantic with type checking
  */
 export function getHyperFixiSemantic(): LokaScriptSemanticAPI | null {
-  if (typeof window !== 'undefined' && isHyperFixiSemanticAvailable(window.HyperFixiSemantic)) {
-    return window.HyperFixiSemantic;
+  if (typeof window !== 'undefined' && isHyperFixiSemanticAvailable(window.LokaScriptSemantic)) {
+    return window.LokaScriptSemantic;
   }
   return null;
 }
 
 /**
- * Safe access to window.HyperFixiI18n with type checking
+ * Safe access to window.LokaScriptI18n with type checking
  */
 export function getHyperFixiI18n(): LokaScriptI18nAPI | null {
-  if (typeof window !== 'undefined' && isHyperFixiI18nAvailable(window.HyperFixiI18n)) {
-    return window.HyperFixiI18n;
+  if (typeof window !== 'undefined' && isHyperFixiI18nAvailable(window.LokaScriptI18n)) {
+    return window.LokaScriptI18n;
   }
   return null;
 }
