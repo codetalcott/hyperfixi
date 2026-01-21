@@ -4,12 +4,12 @@ I analyzed the literal/identifier patterns across parser files and found signifi
 
 ## Inconsistencies
 
-File	Pattern	Example
-expression-parser.ts	valueType, has position	{ type: 'literal', value: X, valueType: 'string', start, end }
-parser.ts	raw, no position	{ type: 'literal', value: X, raw: '"X"' }
-async-commands.ts	raw, no position	{ type: 'literal', value: X, raw: '"X"' }
-utility-commands.ts	no raw/valueType, has position	{ type: 'literal', value: X, start, end }
-ast-helpers.ts	raw, full Position	{ type: 'literal', value, raw, start, end, line, column }
+File Pattern Example
+expression-parser.ts valueType, has position { type: 'literal', value: X, valueType: 'string', start, end }
+parser.ts raw, no position { type: 'literal', value: X, raw: '"X"' }
+async-commands.ts raw, no position { type: 'literal', value: X, raw: '"X"' }
+utility-commands.ts no raw/valueType, has position { type: 'literal', value: X, start, end }
+ast-helpers.ts raw, full Position { type: 'literal', value, raw, start, end, line, column }
 
 ## Key Differences
 

@@ -1,50 +1,23 @@
 # LokaScript Documentation
 
-Welcome to the LokaScript documentation directory.
+**[Full Documentation](https://lokascript.dev)**
 
-## Documentation Structure
+- [Getting Started](https://lokascript.dev/en/guide/)
+- [API Reference](https://lokascript.dev/en/api/)
+- [Cookbook](https://lokascript.dev/en/cookbook/)
 
-### Core Documentation
+## Package Documentation
 
-- **[API Reference](../packages/core/docs/API.md)** - Complete API documentation
-- **[Examples](../packages/core/docs/EXAMPLES.md)** - Real-world usage examples
-- **[Coverage](../packages/core/docs/COVERAGE.md)** - Feature support matrix
+- [@lokascript/core](../packages/core/README.md)
+- [@lokascript/semantic](../packages/semantic/README.md)
+- [@lokascript/i18n](../packages/i18n/README.md)
+- [@lokascript/vite-plugin](../packages/vite-plugin/README.md)
 
-### Package Documentation
+## For LLM Agents
 
-- **[@lokascript/core](../packages/core/README.md)** - Pure hyperscript engine
-- **[@lokascript/i18n](../packages/i18n/README.md)** - 13-language internationalization
-- **[@lokascript/semantic](../packages/semantic/README.md)** - Semantic-first parsing
+Each package contains a `CLAUDE.md` file with development context.
+Root [CLAUDE.md](../CLAUDE.md) provides project overview.
 
-### Development Documentation
+---
 
-- **[Roadmap](../roadmap/)** - Project planning and development roadmap
-- **[CLAUDE.md](../CLAUDE.md)** - AI development context and guidelines
-
-### Archive
-
-- **[archive/](./archive/)** - Historical documentation and implementation notes
-
-## Quick Links
-
-### Getting Started
-
-- [Installation & Setup](../README.md#quick-start)
-- [Examples Gallery](../examples/)
-- [Basic Examples](../packages/core/docs/EXAMPLES.md#basic-dom-manipulation)
-
-### API Reference
-
-- [Main API](../packages/core/docs/API.md#main-api)
-- [Expression Types](../packages/core/docs/API.md#types)
-- [Error Handling](../packages/core/docs/API.md#error-handling)
-
-### Advanced Usage
-
-- [Performance Patterns](../packages/core/docs/EXAMPLES.md#performance-patterns)
-- [Integration Patterns](../packages/core/docs/EXAMPLES.md#state-management)
-- [Internationalization](../packages/i18n/README.md)
-
-## Contributing
-
-See the main [README](../README.md#contributing) for contribution guidelines.
+_Internal development notes: [docs-internal/](../docs-internal/)_

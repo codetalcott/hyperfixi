@@ -18,6 +18,7 @@ Source Code → Tokenizer → Parser → AST Nodes → Runtime (interpreted)
 ```
 
 Key AST node types:
+
 - `CommandNode`: name, args, modifiers, body
 - `EventHandlerNode`: event, body (commands)
 - `ExpressionNode`: selector, literal, identifier, binary, etc.
@@ -31,6 +32,7 @@ Native Input → Language Tokenizer → Pattern Matcher → Semantic Roles → A
 ```
 
 For example:
+
 ```
 English:   "toggle .active on #button"     ─┐
 Japanese:  "#button の .active を 切り替え"  ├─► CommandNode { name: "toggle", ... }
@@ -44,25 +46,27 @@ Arabic:    "بدّل .active على #button"      ─┘
 Each language tokenizer maintains a keyword map that normalizes variants to canonical English:
 
 **Arabic** (`packages/semantic/src/tokenizers/arabic.ts`):
+
 ```typescript
 const ARABIC_KEYWORDS: Map<string, string> = new Map([
-  ['بدّل', 'toggle'],   // with shadda (gemination mark)
-  ['بدل', 'toggle'],    // without shadda
-  ['غيّر', 'toggle'],   // synonym (change)
-  ['غير', 'toggle'],    // variant spelling
-  ['أضف', 'add'],       // formal (with hamza)
-  ['اضف', 'add'],       // informal (without hamza)
+  ['بدّل', 'toggle'], // with shadda (gemination mark)
+  ['بدل', 'toggle'], // without shadda
+  ['غيّر', 'toggle'], // synonym (change)
+  ['غير', 'toggle'], // variant spelling
+  ['أضف', 'add'], // formal (with hamza)
+  ['اضف', 'add'], // informal (without hamza)
   // ...
 ]);
 ```
 
 **Japanese** (`packages/semantic/src/tokenizers/japanese.ts`):
+
 ```typescript
 const JAPANESE_KEYWORDS: Map<string, string> = new Map([
-  ['切り替え', 'toggle'],     // noun/stem form
-  ['切り替える', 'toggle'],   // dictionary form (infinitive)
-  ['トグル', 'toggle'],       // katakana loanword
-  ['トグルする', 'toggle'],   // する-verb form
+  ['切り替え', 'toggle'], // noun/stem form
+  ['切り替える', 'toggle'], // dictionary form (infinitive)
+  ['トグル', 'toggle'], // katakana loanword
+  ['トグルする', 'toggle'], // する-verb form
   // ...
 ]);
 ```
@@ -115,6 +119,7 @@ interface KeywordResolver {
 Arabic uses triliteral consonant roots with vowel patterns. Current system lists variants explicitly but has no stemming capability.
 
 **Example**: Root ب-د-ل (b-d-l = change/substitute)
+
 ```
 ├── بَدَّلَ (baddala) - he changed (past)        ← NOT in map
 ├── يُبَدِّل (yubaddil) - he changes (present)   ← NOT in map
@@ -130,6 +135,7 @@ Arabic uses triliteral consonant roots with vowel patterns. Current system lists
 Turkish and Korean build words by stacking suffixes. Profile defines markers but no stripping logic exists.
 
 **Example**: Turkish verb with suffixes
+
 ```
 değiştir-i-yor-um  (I am changing it)
 │        │  │  └── 1st person singular
@@ -156,6 +162,7 @@ verb: {
 ### Gap 4: Compound Words / Sandhi
 
 No handling for:
+
 - Japanese て-form verb compounds (食べてみる)
 - Arabic prefix attachments (بِـ + word)
 - Korean particle + verb fusions
@@ -163,6 +170,7 @@ No handling for:
 ### Gap 5: No Equivalent Keywords
 
 Some languages may not have natural equivalents to English keywords. For example:
+
 - "toggle" is a fairly technical term without direct translations in many languages
 - Some languages use circumlocutions or borrowed words
 
@@ -184,7 +192,7 @@ Add optional `stem(word): string` function to tokenizers:
 ```typescript
 interface LanguageTokenizer {
   tokenize(input: string): TokenStream;
-  stem?(word: string): string;  // Optional stemmer
+  stem?(word: string): string; // Optional stemmer
 }
 
 // Example: Arabic stemmer (simplified)
@@ -209,12 +217,12 @@ class ArabicTokenizer {
 
 Integrate existing NLP libraries:
 
-| Language | Library Options |
-|----------|----------------|
-| Arabic | `aramorph`, `qalsadi`, `camel-tools` |
-| Japanese | `kuromoji`, `mecab`, `sudachi` |
-| Korean | `KoNLPy`, `Mecab-ko` |
-| Turkish | `TRmorph`, `zemberek` |
+| Language | Library Options                      |
+| -------- | ------------------------------------ |
+| Arabic   | `aramorph`, `qalsadi`, `camel-tools` |
+| Japanese | `kuromoji`, `mecab`, `sudachi`       |
+| Korean   | `KoNLPy`, `Mecab-ko`                 |
+| Turkish  | `TRmorph`, `zemberek`                |
 
 **Pros**: Production-quality analysis, handles edge cases
 **Cons**: Bundle size, external dependencies, WASM compilation needed for browser
@@ -261,9 +269,9 @@ const TOGGLE_CONCEPT = {
 // Pattern matching uses concepts, not literal strings
 template: {
   tokens: [
-    { type: 'concept', concept: 'TOGGLE' },  // Matches any form
+    { type: 'concept', concept: 'TOGGLE' }, // Matches any form
     { type: 'role', role: 'patient' },
-  ]
+  ];
 }
 ```
 
@@ -314,10 +322,10 @@ Test common verb forms and inflections:
 ```typescript
 describe('Morphological Variants', () => {
   const arabicToggleForms = [
-    'بَدِّل',      // imperative (expected to work)
-    'يُبَدِّل',    // present (may not work)
-    'بَدَّلَ',     // past (may not work)
-    'التَبْدِيل',  // verbal noun (may not work)
+    'بَدِّل', // imperative (expected to work)
+    'يُبَدِّل', // present (may not work)
+    'بَدَّلَ', // past (may not work)
+    'التَبْدِيل', // verbal noun (may not work)
   ];
 
   arabicToggleForms.forEach(form => {
@@ -396,6 +404,7 @@ Rate naturalness (1-5): ___
 The current semantic parsing architecture provides a solid foundation for multilingual hyperscript. The tokenizer normalization and pattern matching system can handle many common cases. However, significant gaps exist in morphological handling that limit naturalness for languages with rich inflection systems.
 
 The recommended approach is:
+
 1. **Immediate**: Expand explicit variants (low effort, immediate benefit)
 2. **Short-term**: Add lightweight stemming per language
 3. **Long-term**: Integrate proper morphological analysis

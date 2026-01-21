@@ -97,6 +97,12 @@ await ml.parse('alternar .active', 'es'); // Spanish
 const arabic = await ml.translate('toggle .active', 'en', 'ar');
 ```
 
+## Documentation
+
+**[Full Documentation](https://lokascript.dev)** — guides, API reference, and cookbook
+
+For LLM agents (Claude Code, etc.): see [CLAUDE.md](./CLAUDE.md) and package-level CLAUDE.md files.
+
 ## Architecture
 
 ```text

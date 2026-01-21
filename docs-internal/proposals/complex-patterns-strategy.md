@@ -19,6 +19,7 @@ Parse Coverage: 51% → Target: 80%+
 ## Complexity Hierarchy
 
 ### Level 1: Simple Commands (Current ✅)
+
 ```hyperscript
 toggle .active
 add .foo to .bar
@@ -26,28 +27,32 @@ send myEvent to #target
 ```
 
 ### Level 2: Event Handlers with Simple Body (Current ✅)
+
 ```hyperscript
 on click toggle .active
 on mouseenter add .hover
 ```
 
 ### Level 3: Chained Commands (TODO)
+
 ```hyperscript
 toggle .active then wait 500ms then remove me
 on click add .loading then fetch /api then remove .loading
 ```
 
 **Strategy**: Extend SemanticNode with `next` field for chaining
+
 ```typescript
 interface CommandSemanticNode {
   kind: 'command';
   action: ActionType;
   roles: Map<string, SemanticValue>;
-  next?: SemanticNode;  // For 'then' chaining
+  next?: SemanticNode; // For 'then' chaining
 }
 ```
 
 ### Level 4: Multi-line Event Bodies (TODO)
+
 ```hyperscript
 on click
   add .loading
@@ -58,6 +63,7 @@ end
 ```
 
 **Strategy**: Parse as compound node
+
 ```typescript
 interface CompoundSemanticNode {
   kind: 'compound';
@@ -68,12 +74,14 @@ interface CompoundSemanticNode {
 ### Level 5: Behaviors (TODO)
 
 #### 5a: Install Command (basic support exists)
+
 ```hyperscript
 install Draggable
 install Removable(removeButton: #close)
 ```
 
 #### 5b: Behavior Definition
+
 ```hyperscript
 behavior Removable
   on click
@@ -89,16 +97,18 @@ end
 ```
 
 **Strategy**: Behavior Template Pattern
+
 ```typescript
 interface BehaviorSemanticNode {
   kind: 'behavior';
   name: string;
-  parameters?: Array<{name: string; default?: SemanticValue}>;
-  body: SemanticNode[];  // Event handlers, init blocks
+  parameters?: Array<{ name: string; default?: SemanticValue }>;
+  body: SemanticNode[]; // Event handlers, init blocks
 }
 ```
 
 ### Level 6: Definitions (TODO)
+
 ```hyperscript
 def greet(name)
   return "Hello, " + name
@@ -106,6 +116,7 @@ end
 ```
 
 **Strategy**: Similar to behaviors
+
 ```typescript
 interface DefSemanticNode {
   kind: 'def';
@@ -120,25 +131,30 @@ interface DefSemanticNode {
 ## Implementation Plan
 
 ### Phase 1: Chained Commands
+
 1. Add `then` parsing to event-handler patterns
 2. Extend SemanticNode with `next` field
 3. Update renderer to handle chains
 4. Validate: 9 examples should now parse
 
 ### Phase 2: Multi-line Bodies
+
 1. Add compound node type
 2. Parse indented blocks as compound
 3. Handle `end` keyword
 4. Validate: 22 examples improve
 
 ### Phase 3: Behaviors
+
 1. Add behavior node type
 2. Parse behavior definitions with body
 3. Parse install with parameters
 4. Validate: 3 examples should parse
 
 ### Phase 4: Coverage Gaps
+
 Focus on commands with low success rates:
+
 - `set`: Missing variable assignment patterns
 - `log`: Missing expression variants
 - `get`: Need property access patterns
@@ -149,7 +165,9 @@ Focus on commands with low success rates:
 ## Multilingual Considerations
 
 ### Behavior Names
+
 Behavior names are PascalCase identifiers - keep unchanged across languages:
+
 ```
 en: install Draggable
 ja: Draggable を インストール
@@ -157,7 +175,9 @@ ar: ثبّت Draggable
 ```
 
 ### Chaining Keywords
+
 The `then` keyword needs translation:
+
 ```
 en: toggle .active then wait 1s
 es: alternar .active entonces esperar 1s
@@ -166,6 +186,7 @@ ar: بدّل .active ثم انتظر 1 ثانية
 ```
 
 ### Block Keywords
+
 ```
 en: on click ... end
 ja: クリック したら ... 終わり
@@ -178,6 +199,7 @@ ar: عندما click ... نهاية
 ## Integration with Database
 
 ### Store Complex Patterns
+
 ```sql
 -- Add complexity field to pattern_translations
 ALTER TABLE pattern_translations ADD COLUMN complexity TEXT;
@@ -187,12 +209,14 @@ ALTER TABLE pattern_translations ADD COLUMN has_body INTEGER DEFAULT 0;
 ```
 
 ### Validation Workflow
+
 1. Generate translations (current sync script)
 2. Run validation (pattern-discovery.ts --validate)
 3. Mark `verified_parses` for passing translations
 4. Log failures for pattern improvement
 
 ### Quality Metrics
+
 ```sql
 SELECT
   language,
@@ -207,13 +231,13 @@ GROUP BY language;
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/types.ts` | Add CompoundNode, BehaviorNode, next field |
-| `src/parser/semantic-parser.ts` | Handle chaining, blocks |
-| `src/patterns/event-handler/*.ts` | Add 'then' support |
-| `src/explicit/renderer.ts` | Render chains, compounds |
-| `src/generators/command-schemas.ts` | Add chaining metadata |
+| File                                | Changes                                    |
+| ----------------------------------- | ------------------------------------------ |
+| `src/types.ts`                      | Add CompoundNode, BehaviorNode, next field |
+| `src/parser/semantic-parser.ts`     | Handle chaining, blocks                    |
+| `src/patterns/event-handler/*.ts`   | Add 'then' support                         |
+| `src/explicit/renderer.ts`          | Render chains, compounds                   |
+| `src/generators/command-schemas.ts` | Add chaining metadata                      |
 
 ---
 

@@ -9,6 +9,7 @@
 ## 🔍 Investigation Summary
 
 ### Commands Investigated
+
 1. `append` - append <value> [to <target>]
 2. `fetch` - fetch <url> [as (json|html|response)] [with <options>]
 3. `make` - make a <type>
@@ -19,15 +20,15 @@
 
 ### Actual Status Discovered
 
-| Command | Implementation | Registry | Notes from Pattern Registry | Reality |
-|---------|---------------|----------|------------------------------|---------|
-| `append` | ✅ Complete | ✅ Registered | "parser cannot recognize multi-word syntax" | **NEEDS TESTING** |
-| `fetch` | ✅ Complete | ❌ **WAS** Commented Out | "disabled in command registry for unknown reasons" | **NOW ENABLED** |
-| `make` | ✅ Complete | ✅ Registered | "parser integration gap prevents use" | **NEEDS TESTING** |
-| `send` | ✅ Complete | ✅ Registered | "parser integration missing" | **NEEDS TESTING** |
-| `throw` | ✅ Complete | ✅ Registered | "parser integration gap" | **NEEDS TESTING** |
-| `break` | ✅ Complete | ✅ Registered | "runtime error propagation issues" | **CONFIRMED ISSUE** |
-| `continue` | ✅ Complete | ✅ Registered | "throws CONTINUE_LOOP error not caught" | **CONFIRMED ISSUE** |
+| Command    | Implementation | Registry                 | Notes from Pattern Registry                        | Reality             |
+| ---------- | -------------- | ------------------------ | -------------------------------------------------- | ------------------- |
+| `append`   | ✅ Complete    | ✅ Registered            | "parser cannot recognize multi-word syntax"        | **NEEDS TESTING**   |
+| `fetch`    | ✅ Complete    | ❌ **WAS** Commented Out | "disabled in command registry for unknown reasons" | **NOW ENABLED**     |
+| `make`     | ✅ Complete    | ✅ Registered            | "parser integration gap prevents use"              | **NEEDS TESTING**   |
+| `send`     | ✅ Complete    | ✅ Registered            | "parser integration missing"                       | **NEEDS TESTING**   |
+| `throw`    | ✅ Complete    | ✅ Registered            | "parser integration gap"                           | **NEEDS TESTING**   |
+| `break`    | ✅ Complete    | ✅ Registered            | "runtime error propagation issues"                 | **CONFIRMED ISSUE** |
+| `continue` | ✅ Complete    | ✅ Registered            | "throws CONTINUE_LOOP error not caught"            | **CONFIRMED ISSUE** |
 
 ### Key Discoveries
 
@@ -42,6 +43,7 @@
 ### Command Implementations (All Production-Ready)
 
 #### 1. `/packages/core/src/commands/content/append.ts`
+
 ```typescript
 export class AppendCommand implements CommandImplementation<...> {
   metadata = {
@@ -60,11 +62,13 @@ export class AppendCommand implements CommandImplementation<...> {
   }
 }
 ```
+
 **Status:** ✅ Production-ready, comprehensive implementation
 
 ---
 
 #### 2. `/packages/core/src/commands/async/fetch.ts`
+
 ```typescript
 export class FetchCommand implements TypedCommandImplementation<...> {
   public readonly name = 'fetch' as const;
@@ -80,23 +84,27 @@ export class FetchCommand implements TypedCommandImplementation<...> {
   }
 }
 ```
+
 **Status:** ✅ Production-ready, comprehensive implementation with event lifecycle
 
 ---
 
 #### 3. `/packages/core/src/commands/creation/make.ts`
+
 **Status:** ✅ Registered in command-registry.ts (line 14, 94, 204)
 **Note:** Did not read full implementation but it's imported and exported properly
 
 ---
 
 #### 4. `/packages/core/src/commands/events/send.ts`
+
 **Status:** ✅ Registered in command-registry.ts (line 66, 172, 252)
 **Note:** Did not read full implementation but it's imported and exported properly
 
 ---
 
 #### 5. `/packages/core/src/commands/control-flow/throw.ts`
+
 **Status:** ✅ Registered in command-registry.ts (line 33, 117, 219)
 **Note:** Did not read full implementation but it's imported and exported properly
 
@@ -105,6 +113,7 @@ export class FetchCommand implements TypedCommandImplementation<...> {
 ### Command Registry Changes Made
 
 #### Before (Fetch Disabled)
+
 ```typescript
 // Async Commands
 import { createWaitCommand, WaitCommand } from './async/wait';
@@ -126,23 +135,24 @@ export const ENHANCED_COMMAND_FACTORIES = {
 ```
 
 #### After (Fetch Enabled) ✅
+
 ```typescript
 // Async Commands
 import { createWaitCommand, WaitCommand } from './async/wait';
-import { createFetchCommand, FetchCommand } from './async/fetch';  // ← ENABLED
+import { createFetchCommand, FetchCommand } from './async/fetch'; // ← ENABLED
 
 export {
   // ...
   createWaitCommand,
   WaitCommand,
-  createFetchCommand,  // ← ENABLED
-  FetchCommand,        // ← ENABLED
+  createFetchCommand, // ← ENABLED
+  FetchCommand, // ← ENABLED
 };
 
 export const ENHANCED_COMMAND_FACTORIES = {
   // ...
   wait: createWaitCommand,
-  fetch: createFetchCommand,  // ← ENABLED
+  fetch: createFetchCommand, // ← ENABLED
 } as const;
 ```
 
@@ -151,6 +161,7 @@ export const ENHANCED_COMMAND_FACTORIES = {
 ## 🧪 Testing Strategy
 
 ### Test File Created
+
 - **Location:** `/packages/core/test-architecture-ready-commands.html`
 - **Purpose:** Verify all "architecture-ready" commands work in practice
 - **Tests Include:**
@@ -179,16 +190,19 @@ export const ENHANCED_COMMAND_FACTORIES = {
 **Issue:** Pattern registry notes: "Implementation exists but has runtime error propagation issues with repeat command"
 
 **Expected Behavior:**
+
 ```hyperscript
 repeat 10 times
   if count is 5 break end
 end
 ```
+
 Should exit loop early when count reaches 5.
 
 **Likely Problem:** BREAK error not being caught properly by repeat command.
 
 **Files to Investigate:**
+
 - `/packages/core/src/commands/control-flow/break.ts`
 - `/packages/core/src/commands/control-flow/repeat.ts`
 
@@ -199,17 +213,20 @@ Should exit loop early when count reaches 5.
 **Issue:** Pattern registry notes: "Implementation exists but throws CONTINUE_LOOP error not properly caught by repeat"
 
 **Expected Behavior:**
+
 ```hyperscript
 repeat for item in list
   if item is null continue end
   log item
 end
 ```
+
 Should skip null items and continue to next iteration.
 
 **Likely Problem:** CONTINUE_LOOP error not being caught/handled by repeat command.
 
 **Files to Investigate:**
+
 - `/packages/core/src/commands/control-flow/continue.ts`
 - `/packages/core/src/commands/control-flow/repeat.ts`
 
@@ -220,6 +237,7 @@ Should skip null items and continue to next iteration.
 ### If All Commands Work (After Testing)
 
 **Before Investigation:**
+
 - Total patterns: 77
 - Implemented: 66 (86%)
 - Partial: 2 (3%) - break/continue
@@ -228,6 +246,7 @@ Should skip null items and continue to next iteration.
 - **Realistic Compatibility: 88%**
 
 **After Fetch Enabled + Testing Verification (Optimistic):**
+
 - Total patterns: 77
 - **Implemented: 71 (92%)** ← +5 commands verified working
 - **Partial: 2 (3%)** - break/continue (if we don't fix them)
@@ -236,6 +255,7 @@ Should skip null items and continue to next iteration.
 - **Realistic Compatibility: 95%** ← +7% improvement!
 
 **After Break/Continue Fixed (Best Case):**
+
 - Total patterns: 77
 - **Implemented: 73 (95%)** ← +7 commands total
 - Partial: 0
@@ -250,11 +270,13 @@ Should skip null items and continue to next iteration.
 ### Priority 1: Verify Commands Work in Browser (IMMEDIATE)
 
 1. Start HTTP server (if not running):
+
    ```bash
    npx http-server packages/core -p 3000 -c-1
    ```
 
 2. Open test page:
+
    ```
    http://127.0.0.1:3000/test-architecture-ready-commands.html
    ```
@@ -264,11 +286,13 @@ Should skip null items and continue to next iteration.
 ### Priority 2: Fix Break/Continue Runtime Issues (HIGH IMPACT)
 
 **Why High Priority:**
+
 - Confirmed issues from pattern registry
 - Loop control is important functionality
 - Only 2 commands to fix for +2.6% compatibility
 
 **Investigation Steps:**
+
 1. Read break.ts and continue.ts implementations
 2. Read repeat.ts to see how it handles these commands
 3. Identify where BREAK and CONTINUE_LOOP errors should be caught
@@ -278,12 +302,14 @@ Should skip null items and continue to next iteration.
 ### Priority 3: Implement Missing Commands (MEDIUM IMPACT)
 
 **Commands to Implement:**
+
 1. `put <value> before <target>` - DOM insertion
 2. `put <value> after <target>` - DOM insertion
 3. `on <event> from <selector>` - Event delegation (needs verification - may already work)
 4. `on mutation of <attribute>` - MutationObserver pattern
 
 **Why Medium Priority:**
+
 - 4 commands for +5.2% compatibility
 - But requires more implementation work
 - Lower usage frequency than break/continue
@@ -291,6 +317,7 @@ Should skip null items and continue to next iteration.
 ### Priority 4: Verify Event Handler Patterns
 
 **Commands to Verify:**
+
 - `on <event> from <selector>` - May already work via event delegation
 - `on mutation of <attribute>` - May need MutationObserver integration
 
@@ -326,6 +353,7 @@ Should skip null items and continue to next iteration.
 **Session Goal:** Test + Fix break/continue to achieve 95% compatibility
 
 **Tasks:**
+
 1. Test architecture-ready commands page in browser (10 min)
 2. Update pattern registry based on test results (5 min)
 3. Fix break command runtime error handling (30 min)

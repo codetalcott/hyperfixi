@@ -6,44 +6,48 @@ All documents are in the project root directory and ready to use.
 
 ### Start Here 👇
 
-| Document | Size | Time | Best For |
-|----------|------|------|----------|
-| **ASSESSMENT_EXECUTIVE_SUMMARY.md** | 6 KB | 5 min | Overview + decision making |
-| **ANALYSIS_QUICK_FIX.md** | 5 KB | 10 min | Immediate implementation |
+| Document                            | Size | Time   | Best For                   |
+| ----------------------------------- | ---- | ------ | -------------------------- |
+| **ASSESSMENT_EXECUTIVE_SUMMARY.md** | 6 KB | 5 min  | Overview + decision making |
+| **ANALYSIS_QUICK_FIX.md**           | 5 KB | 10 min | Immediate implementation   |
 
 ### Deep Dives 🔍
 
-| Document | Size | Time | Best For |
-|----------|------|------|----------|
-| **ANALYSIS_SUMMARY.md** | 3 KB | 5 min | Quick reference of issues |
-| **ANALYSIS_TOOLS_README.md** | 8 KB | 10 min | Navigation & context |
-| **COMPARISON_ANALYSIS_ASSESSMENT.md** | 10 KB | 20 min | Detailed technical review |
-| **ANALYSIS_ENHANCEMENT_PLAN.md** | 13 KB | 30 min | Complete implementation guide |
-| **ANALYSIS_VISUAL_SUMMARY.txt** | 8 KB | 10 min | Visual scorecards & diagrams |
+| Document                              | Size  | Time   | Best For                      |
+| ------------------------------------- | ----- | ------ | ----------------------------- |
+| **ANALYSIS_SUMMARY.md**               | 3 KB  | 5 min  | Quick reference of issues     |
+| **ANALYSIS_TOOLS_README.md**          | 8 KB  | 10 min | Navigation & context          |
+| **COMPARISON_ANALYSIS_ASSESSMENT.md** | 10 KB | 20 min | Detailed technical review     |
+| **ANALYSIS_ENHANCEMENT_PLAN.md**      | 13 KB | 30 min | Complete implementation guide |
+| **ANALYSIS_VISUAL_SUMMARY.txt**       | 8 KB  | 10 min | Visual scorecards & diagrams  |
 
 ---
 
 ## 🎯 Quick Navigation
 
 ### "I want to fix it NOW" ⚡
+
 1. Read: **ANALYSIS_QUICK_FIX.md** (10 min)
 2. Do: Copy code snippets (30 min)
 3. Run: `node scripts/analysis/comparison/compare-implementations.mjs`
 4. Result: Accurate baseline metrics
 
 ### "I want to understand first" 🤔
+
 1. Read: **ASSESSMENT_EXECUTIVE_SUMMARY.md** (5 min)
 2. Read: **ANALYSIS_SUMMARY.md** (5 min)
 3. Read: **COMPARISON_ANALYSIS_ASSESSMENT.md** (20 min)
 4. Decide: Which phases to implement
 
 ### "Show me the full plan" 📋
+
 1. Read: **ANALYSIS_ENHANCEMENT_PLAN.md** (30 min)
 2. Review: Code snippets and phases
 3. Choose: Phases based on effort/benefit
 4. Implement: Follow step-by-step guide
 
 ### "Visual overview preferred" 📊
+
 1. Read: **ANALYSIS_VISUAL_SUMMARY.txt** (10 min)
 2. Read: **ANALYSIS_TOOLS_README.md** (10 min)
 3. Choose: Your path forward
@@ -53,6 +57,7 @@ All documents are in the project root directory and ready to use.
 ## 📚 Document Details
 
 ### ASSESSMENT_EXECUTIVE_SUMMARY.md
+
 - High-level overview of assessment
 - Bottom-line findings
 - Recommended path forward
@@ -61,6 +66,7 @@ All documents are in the project root directory and ready to use.
 - **USE CASE:** Decision maker, project leads
 
 ### ANALYSIS_QUICK_FIX.md
+
 - 30-minute fix for critical issue
 - Exact code changes needed
 - Before/after examples
@@ -69,6 +75,7 @@ All documents are in the project root directory and ready to use.
 - **USE CASE:** Developers ready to implement immediately
 
 ### ANALYSIS_SUMMARY.md
+
 - 5-minute overview of issues
 - Impact table
 - Decision tree
@@ -77,6 +84,7 @@ All documents are in the project root directory and ready to use.
 - **USE CASE:** Quick reference, executives
 
 ### ANALYSIS_TOOLS_README.md
+
 - Comprehensive navigation guide
 - Document descriptions
 - Current situation summary
@@ -85,6 +93,7 @@ All documents are in the project root directory and ready to use.
 - **USE CASE:** New readers, orientation
 
 ### COMPARISON_ANALYSIS_ASSESSMENT.md
+
 - Executive summary
 - Issues & limitations (6 identified)
 - Recommendations (5 proposed)
@@ -93,6 +102,7 @@ All documents are in the project root directory and ready to use.
 - **USE CASE:** Detailed technical review
 
 ### ANALYSIS_ENHANCEMENT_PLAN.md
+
 - Phase 1: Fix command discovery (code)
 - Phase 1b: Add minified metrics (code)
 - Phase 2: Bundle composition analyzer (complete code)
@@ -102,6 +112,7 @@ All documents are in the project root directory and ready to use.
 - **USE CASE:** Implementation roadmap with code
 
 ### ANALYSIS_VISUAL_SUMMARY.txt
+
 - Visual scorecards
 - Timeline visualization
 - Impact rankings
@@ -117,17 +128,20 @@ All documents are in the project root directory and ready to use.
 ### Recommended Timeline
 
 **Today (30 min - 2 hours)**
+
 - Read ASSESSMENT_EXECUTIVE_SUMMARY.md
 - Read ANALYSIS_QUICK_FIX.md
 - Implement Phase 1 fix
 - Run analysis and validate
 
 **Next Week (Optional, 3-4 hours)**
+
 - Read ANALYSIS_ENHANCEMENT_PLAN.md Phase 2 section
 - Implement bundle composition analyzer
 - Review and prioritize based on findings
 
 **Ongoing**
+
 - Run analysis after optimization work
 - Track metrics in snapshots
 - Use data to guide decisions
@@ -137,24 +151,28 @@ All documents are in the project root directory and ready to use.
 ## 📊 What You'll Learn
 
 ### After Reading Assessment Docs
+
 - Current state of your analysis tools
 - What works and what doesn't
 - Why fixes are needed
 - How to prioritize improvements
 
 ### After Phase 1 Implementation
+
 - All 43 commands are analyzed (not just 25)
 - Accurate minified size metrics
 - Real code ratio (maybe better than 2.97x)
 - Verification of recent optimizations
 
 ### After Phase 2 Implementation
+
 - Bundle composition breakdown
 - Which component to optimize next
 - Parser size vs command bloat
 - Evidence-based prioritization
 
 ### After Phase 3 Implementation
+
 - Optimization effectiveness tracked
 - Before/after metrics visible
 - Pattern identification for future work
@@ -166,20 +184,21 @@ All documents are in the project root directory and ready to use.
 
 These analysis tools help you track:
 
-| Metric | Current | Phase | Measure |
-|--------|---------|-------|---------|
-| Bundle Size | 664 KB | 1 | Verified |
-| Code Ratio | 2.97x | 1 | Accurate |
-| Top Offenders | Unknown | 1 | Identified |
-| Minified Size | None | 1 | Per-command |
-| Composition | Unknown | 2 | Breakdown |
-| Progress | Untracked | 3 | Verified |
+| Metric        | Current   | Phase | Measure     |
+| ------------- | --------- | ----- | ----------- |
+| Bundle Size   | 664 KB    | 1     | Verified    |
+| Code Ratio    | 2.97x     | 1     | Accurate    |
+| Top Offenders | Unknown   | 1     | Identified  |
+| Minified Size | None      | 1     | Per-command |
+| Composition   | Unknown   | 2     | Breakdown   |
+| Progress      | Untracked | 3     | Verified    |
 
 ---
 
 ## ✅ Completion Checklist
 
 ### Phase 1 (30 min - 2 hours)
+
 - [ ] Read ANALYSIS_QUICK_FIX.md
 - [ ] Update extract-command-metrics.mjs with commands-v2 support
 - [ ] Add minified size estimation
@@ -188,6 +207,7 @@ These analysis tools help you track:
 - [ ] Verify: Code ratio reflects reality
 
 ### Phase 2 (2-3 hours, optional)
+
 - [ ] Read ANALYSIS_ENHANCEMENT_PLAN.md Phase 2 section
 - [ ] Create analyze-bundle-composition.mjs
 - [ ] Update compare-implementations.mjs to run composition analysis
@@ -195,6 +215,7 @@ These analysis tools help you track:
 - [ ] Review: Bundle breakdown results
 
 ### Phase 3 (1 hour, optional)
+
 - [ ] Add optimization progress tracking
 - [ ] Update reporting to show before/after
 - [ ] Verify optimization effectiveness
@@ -264,6 +285,7 @@ After working through these documents, you'll understand:
 ## 📞 Questions?
 
 Each document is self-contained with:
+
 - Clear sections and headers
 - Code examples where relevant
 - Tables for quick reference

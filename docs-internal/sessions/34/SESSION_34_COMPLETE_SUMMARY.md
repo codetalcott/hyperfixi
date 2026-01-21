@@ -10,11 +10,13 @@
 ## 🎯 Initial Problem Statement
 
 Counter example at http://localhost:3000/examples/basics/05-counter.html had:
+
 - ✅ Increment/decrement buttons working (counter display updates)
 - ❌ Reactive mirror "Current value: X" doesn't update
 - ❌ MutationObserver not triggering put command
 
 **Reactive Pattern Being Tested**:
+
 ```hyperscript
 <span id="count-mirror"
   _="on change in #count
@@ -33,6 +35,7 @@ Counter example at http://localhost:3000/examples/basics/05-counter.html had:
 **Key Findings from Console Logs**:
 
 1. **Increment DOES work** ✅ (Lines 209-213):
+
    ```
    🔧 INCREMENT setTargetValue: target type=object, isElement=true, newValue=1
    🔧   → Target is HTMLElement: DIV#count
@@ -41,6 +44,7 @@ Counter example at http://localhost:3000/examples/basics/05-counter.html had:
    ```
 
 2. **MutationObserver DOES fire** ✅ (Lines 214-216):
+
    ```
    🎯 CONTENT CHANGE DETECTED on <div id="count" class="counter-display">
    mutation type: childList
@@ -50,6 +54,7 @@ Counter example at http://localhost:3000/examples/basics/05-counter.html had:
    ```
    🔧 executeCommand() called: Object { name: "put", argsLength: 5, ...
    ```
+
    - Expected: `[possessiveExpression, 'into', selectorExpression]` (3 args)
    - Actual: `[#count, 's, textContent, into, me]` (5 primitives)
 
@@ -65,6 +70,7 @@ Counter example at http://localhost:3000/examples/basics/05-counter.html had:
 **Method**: `parsePutCommand()`
 
 **Old Implementation**:
+
 ```typescript
 private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
   const allArgs: ASTNode[] = [];
@@ -89,6 +95,7 @@ private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
 ```
 
 **Why It Failed**:
+
 - `parsePrimary()` only parses simple tokens (identifiers, literals)
 - Cannot handle:
   - Possessive syntax: `#count's textContent` (3 tokens: `#count`, `'s`, `textContent`)
@@ -98,6 +105,7 @@ private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
 ### Solution: Strategy 1 (Expression-Based Parsing)
 
 **New Implementation** (lines 750-824):
+
 ```typescript
 private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
   // Step 1: Parse the content expression (everything before operation keyword)
@@ -152,6 +160,7 @@ private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
 ### Impact
 
 **Now Supports**:
+
 ```hyperscript
 ✅ put "hello" into #target                           # Simple literal
 ✅ put 123 into #target                                # Number
@@ -174,6 +183,7 @@ private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
 ### Root Cause
 
 After fixing the parser, console logs showed:
+
 ```
 🚀 RUNTIME: DEFAULT CASE - Expression evaluator returned: undefined
 🔧 PUT command execution:
@@ -185,6 +195,7 @@ content: ""  ← PROBLEM!
 **Method**: `evaluatePossessiveExpression()`
 
 **The Bug**:
+
 1. Parser creates possessiveExpression node: `{ object: {type: 'selector', value: '#count'}, property: 'textContent' }`
 2. Expression evaluator evaluates `object` → `evaluateSelector()` returns **ARRAY**: `[HTMLDivElement]`
 3. Line 1044 tries: `arrayValue['textContent']` → `undefined` ❌
@@ -194,6 +205,7 @@ content: ""  ← PROBLEM!
 ### Solution: Extract First Element from Arrays
 
 **Old Code**:
+
 ```typescript
 private async evaluatePossessiveExpression(node: any, context: ExecutionContext): Promise<any> {
   const { object, property } = node;
@@ -214,6 +226,7 @@ private async evaluatePossessiveExpression(node: any, context: ExecutionContext)
 ```
 
 **New Code** (lines 1016-1022):
+
 ```typescript
 private async evaluatePossessiveExpression(node: any, context: ExecutionContext): Promise<any> {
   const { object, property } = node;
@@ -242,6 +255,7 @@ private async evaluatePossessiveExpression(node: any, context: ExecutionContext)
 ### Impact
 
 **Fixed Patterns**:
+
 ```hyperscript
 ✅ #count's textContent              # Selector possessive (was: undefined, now: "1")
 ✅ .button's disabled                # Class selector possessive
@@ -275,15 +289,15 @@ private async evaluatePossessiveExpression(node: any, context: ExecutionContext)
 
 **Counter Example** (http://localhost:3000/examples/basics/05-counter.html):
 
-| Component | Before | After | Status |
-|-----------|--------|-------|--------|
-| Increment button | ✅ Works | ✅ Works | No change |
-| Decrement button | ✅ Works | ✅ Works | No change |
-| Counter display | ✅ Updates | ✅ Updates | No change |
-| MutationObserver | ✅ Fires | ✅ Fires | Already working |
-| Put command parsing | ❌ 5 primitives | ✅ 3 expressions | **FIXED** |
-| Possessive evaluation | ❌ undefined | ✅ "1" | **FIXED** |
-| Reactive mirror | ❌ Never updates | ✅ Updates | **FIXED** |
+| Component             | Before           | After            | Status          |
+| --------------------- | ---------------- | ---------------- | --------------- |
+| Increment button      | ✅ Works         | ✅ Works         | No change       |
+| Decrement button      | ✅ Works         | ✅ Works         | No change       |
+| Counter display       | ✅ Updates       | ✅ Updates       | No change       |
+| MutationObserver      | ✅ Fires         | ✅ Fires         | Already working |
+| Put command parsing   | ❌ 5 primitives  | ✅ 3 expressions | **FIXED**       |
+| Possessive evaluation | ❌ undefined     | ✅ "1"           | **FIXED**       |
+| Reactive mirror       | ❌ Never updates | ✅ Updates       | **FIXED**       |
 
 ---
 
@@ -294,14 +308,17 @@ private async evaluatePossessiveExpression(node: any, context: ExecutionContext)
 **Lesson**: When parsing commands with expressions, ALWAYS use `parseExpression()`, not `parsePrimary()`.
 
 **Rule**:
+
 - `parsePrimary()`: Simple tokens only (identifiers, literals, selectors)
 - `parseExpression()`: Complex expressions (binary ops, possessive, type conversion, etc.)
 
 **Commands Fixed**:
+
 - ✅ Put command (this session)
 - ✅ Increment/Decrement commands (Session 33, commit 1350224)
 
 **Commands to Review** (may have similar issues):
+
 - Set command
 - Default command
 - Any command that takes expressions as arguments
@@ -313,10 +330,12 @@ private async evaluatePossessiveExpression(node: any, context: ExecutionContext)
 **Why**: Consistency with `querySelectorAll()` behavior and future multi-element support.
 
 **Implications**:
+
 - Expression evaluators MUST handle arrays when selectors are used
 - Consider: Should we add a `querySelector` (single) vs `querySelectorAll` (multiple) distinction?
 
 **Fix Pattern**:
+
 ```typescript
 let objectValue = await this.evaluate(object, context);
 
@@ -329,6 +348,7 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
 ### 3. Debugging Strategy That Worked
 
 **Process**:
+
 1. Add targeted debug logging at key points
 2. Capture console logs from browser
 3. Analyze logs to isolate the exact failure point
@@ -337,6 +357,7 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
 6. Verify with new console logs
 
 **Tools Used**:
+
 - Debug logging: `debug.command()`, `debug.runtime()`
 - Console export: Manual copy from browser DevTools
 - Investigation plan: Systematic hypothesis testing
@@ -346,12 +367,14 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
 ## 🚀 Reactive Patterns Now Working
 
 ### Pattern 1: Basic Content Mirroring
+
 ```hyperscript
 <div id="count">0</div>
 <span _="on change in #count put #count's textContent into me">0</span>
 ```
 
 ### Pattern 2: Computed Values
+
 ```hyperscript
 <div id="count">0</div>
 <span _="on change in #count
@@ -359,6 +382,7 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
 ```
 
 ### Pattern 3: Multi-Element Updates
+
 ```hyperscript
 <div id="source">Updated!</div>
 <span class="mirror" _="on change in #source put #source's textContent into me"></span>
@@ -366,6 +390,7 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
 ```
 
 ### Pattern 4: Attribute Mirroring
+
 ```hyperscript
 <input id="name" value="John">
 <span _="on change in #name put #name's @value into me">John</span>
@@ -376,11 +401,13 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
 ## 📝 Next Steps
 
 ### Immediate
+
 - ✅ Test counter example to verify all fixes
 - ✅ Verify reactive mirror updates correctly
 - ✅ Document complete solution
 
 ### Short Term (Next Session)
+
 1. **Review other commands** for similar parser issues
    - Set command: Does it handle complex expressions?
    - Default command: Does it use parsePrimary()?
@@ -401,6 +428,7 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
    - Regression tests for selector + possessive combinations
 
 ### Long Term
+
 1. **Expression system audit**
    - Review all expression evaluators for array handling
    - Document which expressions should handle arrays vs singles
@@ -430,6 +458,7 @@ if (Array.isArray(objectValue) && objectValue.length > 0) {
 
 **Session Completed**: 2025-01-15
 **Total Commits**: 3
+
 - d2b4711: debug: Add detailed logging to increment command + investigation plan
 - efc87a3: fix: Rewrite put command parser to handle complex expressions
 - 0906edb: fix: Handle array results in possessive expression evaluation

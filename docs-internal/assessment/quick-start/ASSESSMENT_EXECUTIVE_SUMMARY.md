@@ -11,30 +11,33 @@
 
 Your comparison tools (`scripts/analysis/comparison/`) are **well-designed and functional**, but have **critical gaps** that prevent accurate optimization tracking:
 
-| Problem | Impact | Fix Time | Value |
-|---------|--------|----------|-------|
-| **Analysis only finds ~25 of 43 commands** | Incomplete metrics | 30 min | HIGH |
-| **Uses source lines, not minified size** | Unrealistic comparison | 1 hour | HIGH |
-| **No bundle composition breakdown** | Don't know where bloat is | 2-3 hours | VERY HIGH |
-| **Optimization progress not tracked** | Can't verify if changes help | 1 hour | MEDIUM |
+| Problem                                    | Impact                       | Fix Time  | Value     |
+| ------------------------------------------ | ---------------------------- | --------- | --------- |
+| **Analysis only finds ~25 of 43 commands** | Incomplete metrics           | 30 min    | HIGH      |
+| **Uses source lines, not minified size**   | Unrealistic comparison       | 1 hour    | HIGH      |
+| **No bundle composition breakdown**        | Don't know where bloat is    | 2-3 hours | VERY HIGH |
+| **Optimization progress not tracked**      | Can't verify if changes help | 1 hour    | MEDIUM    |
 
 ---
 
 ## Current State
 
 ### What Works ✅
+
 - Solid orchestration and reporting
 - Good pattern detection
 - Clear snapshot tracking
 - JSON output for automation
 
 ### What's Broken 🔴
+
 - **Command discovery:** Only finds v1 commands, misses v2 implementations (25 of 43)
 - **Metrics:** Uses source lines instead of minified/gzipped sizes
 - **Composition:** No understanding of what contributes to 664 KB bundle
 - **Progress:** No tracking of optimization effectiveness
 
 ### Key Questions Can't Answer
+
 - [ ] Is the 2.97x code ratio accurate or outdated?
 - [ ] Did recent optimizations actually help?
 - [ ] Which commands take the most space in production?
@@ -46,6 +49,7 @@ Your comparison tools (`scripts/analysis/comparison/`) are **well-designed and f
 ## Recommended Path Forward
 
 ### Phase 1: Foundation (2-3 hours) - DO THIS FIRST
+
 **Critical fixes that enable all other analysis**
 
 1. **Fix command discovery** (30 min)
@@ -66,6 +70,7 @@ Your comparison tools (`scripts/analysis/comparison/`) are **well-designed and f
 **Outcome:** Accurate baseline metrics enabling intelligent optimization
 
 ### Phase 2: Intelligence (3-4 hours) - DO IF NEEDED
+
 **Understand where optimization efforts should focus**
 
 1. Create bundle composition analyzer
@@ -79,6 +84,7 @@ Your comparison tools (`scripts/analysis/comparison/`) are **well-designed and f
 **Outcome:** Clear prioritization of next optimization targets
 
 ### Phase 3: Tracking (1 hour) - OPTIONAL
+
 **Measure optimization effectiveness**
 
 1. Track optimization progress
@@ -150,19 +156,20 @@ All documents are in the project root:
 
 After Phase 1 completes, these metrics should guide optimization:
 
-| Metric | Current | Accurate After P1 | Target | Tool |
-|--------|---------|-------------------|--------|------|
-| Bundle Size | 664 KB | ✓ | <550 KB | Actual |
-| Gzipped | ~224 KB | ✓ | <190 KB | Actual |
-| Code Ratio | 2.97x | ✓ | <2.5x | Analysis |
-| Top Command | repeat? | ✓ | <40 lines | Analysis |
-| Parser Size | ~125 KB? | ✓ after P2 | <100 KB | P2 Analysis |
+| Metric      | Current  | Accurate After P1 | Target    | Tool        |
+| ----------- | -------- | ----------------- | --------- | ----------- |
+| Bundle Size | 664 KB   | ✓                 | <550 KB   | Actual      |
+| Gzipped     | ~224 KB  | ✓                 | <190 KB   | Actual      |
+| Code Ratio  | 2.97x    | ✓                 | <2.5x     | Analysis    |
+| Top Command | repeat?  | ✓                 | <40 lines | Analysis    |
+| Parser Size | ~125 KB? | ✓ after P2        | <100 KB   | P2 Analysis |
 
 ---
 
 ## What Success Looks Like
 
 ### After Phase 1 (2-3 hours)
+
 ```
 ✅ Analysis finds all 43 commands
 ✅ Metrics reflect minified sizes
@@ -172,6 +179,7 @@ After Phase 1 completes, these metrics should guide optimization:
 ```
 
 ### After Phase 2 (additional 3-4 hours)
+
 ```
 ✅ Know exact bundle composition
 ✅ Runtime vs Parser vs Commands breakdown
@@ -180,6 +188,7 @@ After Phase 1 completes, these metrics should guide optimization:
 ```
 
 ### After Phase 3 (additional 1 hour)
+
 ```
 ✅ Track optimization effectiveness
 ✅ Before/after metrics visible
@@ -191,18 +200,21 @@ After Phase 1 completes, these metrics should guide optimization:
 ## Risk Assessment
 
 ### If You Don't Do This
+
 - Optimization efforts may not have measurable impact
 - Can't verify recent changes helped
 - Will optimize blindly (parser or commands?)
 - May waste time on low-impact targets
 
 ### If You Do Phase 1 Only
+
 - Can measure impact of future changes
 - Know which commands are heavy
 - Can prioritize smartly
 - Baseline established for tracking
 
 ### If You Do Phase 1 + 2
+
 - Know exactly where bloat is
 - Can focus efforts effectively
 - Evidence for architectural decisions
@@ -213,17 +225,20 @@ After Phase 1 completes, these metrics should guide optimization:
 ## Recommended Action Items
 
 ### This Week
+
 - [ ] Read ANALYSIS_QUICK_FIX.md (10 min)
 - [ ] Implement Phase 1 fix (30 min)
 - [ ] Run analysis (5 min)
 - [ ] Review metrics (15 min)
 
 ### Next Week (If Pursuing P2)
+
 - [ ] Read ANALYSIS_ENHANCEMENT_PLAN.md (20 min)
 - [ ] Implement bundle composition analyzer (2-3 hours)
 - [ ] Analyze results and prioritize (1 hour)
 
 ### Ongoing
+
 - [ ] Run analysis after optimization work
 - [ ] Track metrics in snapshots
 - [ ] Guide decisions with data
@@ -247,7 +262,7 @@ A: Yes. The 2.97x is likely outdated given recent optimizations. Phase 1 will sh
 **Q: Should I do all phases?**
 A: Phase 1 is critical. Phase 2 is valuable. Phase 3 is nice-to-have. Start with Phase 1.
 
-**Q: What if my _hyperscript folder isn't at the hardcoded path?**
+**Q: What if my \_hyperscript folder isn't at the hardcoded path?**
 A: Phase 1 fix handles this. See ANALYSIS_QUICK_FIX.md for details.
 
 ---
@@ -257,6 +272,7 @@ A: Phase 1 fix handles this. See ANALYSIS_QUICK_FIX.md for details.
 👉 **Open and read [ANALYSIS_QUICK_FIX.md](./ANALYSIS_QUICK_FIX.md)**
 
 That file has:
+
 - Exact code changes (copy-paste ready)
 - 30-minute implementation timeline
 - Validation checklist
@@ -266,6 +282,6 @@ That file has:
 
 ---
 
-*Assessment completed: December 18, 2025*
-*Documents: 5 comprehensive guides + visual summary*
-*Ready to implement: Phase 1 complete with code snippets*
+_Assessment completed: December 18, 2025_
+_Documents: 5 comprehensive guides + visual summary_
+_Ready to implement: Phase 1 complete with code snippets_

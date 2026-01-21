@@ -11,18 +11,40 @@ Modern libraries like Zod, Prisma, and tRPC prove these aren't theoretical—the
 Mapped types iterate over properties to create new types, eliminating the need for manual readonly, optional, or transformed versions of existing interfaces.
 
 **Before (manual duplication):**
+
 ```typescript
-interface User { id: string; name: string; email: string; }
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
 // Must manually maintain each variant
-interface ReadonlyUser { readonly id: string; readonly name: string; readonly email: string; }
-interface PartialUser { id?: string; name?: string; email?: string; }
-interface NullableUser { id: string | null; name: string | null; email: string | null; }
+interface ReadonlyUser {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string;
+}
+interface PartialUser {
+  id?: string;
+  name?: string;
+  email?: string;
+}
+interface NullableUser {
+  id: string | null;
+  name: string | null;
+  email: string | null;
+}
 ```
 
 **After (derived automatically):**
+
 ```typescript
-interface User { id: string; name: string; email: string; }
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
 type ReadonlyUser = Readonly<User>;
 type PartialUser = Partial<User>;
@@ -57,41 +79,41 @@ type RemovePrivateFields<T> = {
 Conditional types use the `T extends U ? X : Y` pattern for type-level branching, with `infer` extracting types from complex structures.
 
 **Extracting nested types:**
+
 ```typescript
 // Extract element type from any array
 type ElementType<T> = T extends (infer U)[] ? U : never;
-type StringEl = ElementType<string[]>;  // string
+type StringEl = ElementType<string[]>; // string
 
 // Extract return type from any function
 type GetReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
 
 // Recursive unwrap for nested promises
 type Awaited<T> = T extends PromiseLike<infer U> ? Awaited<U> : T;
-type Deep = Awaited<Promise<Promise<number>>>;  // number
+type Deep = Awaited<Promise<Promise<number>>>; // number
 ```
 
 **Distributive conditional types** automatically map over unions:
 
 ```typescript
 type ToArray<T> = T extends any ? T[] : never;
-type Result = ToArray<string | number>;  // string[] | number[]
+type Result = ToArray<string | number>; // string[] | number[]
 
 // Prevent distribution with brackets
 type ToArrayNonDist<T> = [T] extends [any] ? T[] : never;
-type Result2 = ToArrayNonDist<string | number>;  // (string | number)[]
+type Result2 = ToArrayNonDist<string | number>; // (string | number)[]
 ```
 
 The real power emerges when combining with template literal types for **string manipulation at the type level**:
 
 ```typescript
-type ExtractParams<T extends string> = 
-  T extends `${string}:${infer Param}/${infer Rest}` 
-    ? Param | ExtractParams<Rest>
-    : T extends `${string}:${infer Param}` 
-      ? Param 
-      : never;
+type ExtractParams<T extends string> = T extends `${string}:${infer Param}/${infer Rest}`
+  ? Param | ExtractParams<Rest>
+  : T extends `${string}:${infer Param}`
+    ? Param
+    : never;
 
-type RouteParams = ExtractParams<"/users/:userId/posts/:postId">;
+type RouteParams = ExtractParams<'/users/:userId/posts/:postId'>;
 // Result: "userId" | "postId"
 ```
 
@@ -102,19 +124,29 @@ type RouteParams = ExtractParams<"/users/:userId/posts/:postId">;
 Generic functions and classes replace multiple type-specific implementations with a single definition.
 
 **Before (one function per type):**
+
 ```typescript
-function firstNumber(arr: number[]): number | undefined { return arr[0]; }
-function firstString(arr: string[]): string | undefined { return arr[0]; }
-function firstUser(arr: User[]): User | undefined { return arr[0]; }
+function firstNumber(arr: number[]): number | undefined {
+  return arr[0];
+}
+function firstString(arr: string[]): string | undefined {
+  return arr[0];
+}
+function firstUser(arr: User[]): User | undefined {
+  return arr[0];
+}
 ```
 
 **After (single generic):**
-```typescript
-function first<T>(arr: T[]): T | undefined { return arr[0]; }
 
-first([1, 2, 3]);       // number | undefined
-first(["a", "b"]);      // string | undefined
-first([{ id: 1 }]);     // { id: number } | undefined
+```typescript
+function first<T>(arr: T[]): T | undefined {
+  return arr[0];
+}
+
+first([1, 2, 3]); // number | undefined
+first(['a', 'b']); // string | undefined
+first([{ id: 1 }]); // { id: number } | undefined
 ```
 
 **Variadic tuple types** (TypeScript 4.0+) handle heterogeneous tuples without overload signatures:
@@ -124,7 +156,7 @@ function concat<T extends any[], U extends any[]>(a: T, b: U): [...T, ...U] {
   return [...a, ...b] as [...T, ...U];
 }
 
-const result = concat([1, 2] as const, ["a", "b"] as const);
+const result = concat([1, 2] as const, ['a', 'b'] as const);
 // Type: readonly [1, 2, "a", "b"] - exact tuple preserved
 ```
 
@@ -135,9 +167,9 @@ function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
   return obj[key];
 }
 
-const user = { name: "Alice", age: 30 };
-getProperty(user, "name");  // string
-getProperty(user, "foo");   // Compile error: "foo" not in keyof user
+const user = { name: 'Alice', age: 30 };
+getProperty(user, 'name'); // string
+getProperty(user, 'foo'); // Compile error: "foo" not in keyof user
 ```
 
 ---
@@ -148,11 +180,14 @@ Function factories create specialized functions from templates, eliminating boil
 
 ```typescript
 // Factory: multiplier generator
-const createMultiplier = (factor: number) => (x: number): number => x * factor;
+const createMultiplier =
+  (factor: number) =>
+  (x: number): number =>
+    x * factor;
 
 const double = createMultiplier(2);
 const triple = createMultiplier(3);
-double(5);  // 10 - return type inferred correctly
+double(5); // 10 - return type inferred correctly
 ```
 
 **Pipe composition** chains transformations with full type inference:
@@ -160,17 +195,15 @@ double(5);  // 10 - return type inferred correctly
 ```typescript
 function pipe<A, B>(fn1: (a: A) => B): (a: A) => B;
 function pipe<A, B, C>(fn1: (a: A) => B, fn2: (b: B) => C): (a: A) => C;
-function pipe<A, B, C, D>(
-  fn1: (a: A) => B, fn2: (b: B) => C, fn3: (c: C) => D
-): (a: A) => D;
+function pipe<A, B, C, D>(fn1: (a: A) => B, fn2: (b: B) => C, fn3: (c: C) => D): (a: A) => D;
 function pipe(...fns: Function[]) {
   return (x: any) => fns.reduce((v, f) => f(v), x);
 }
 
 const transform = pipe(
   (x: number) => x + 1,
-  (x) => x * 2,
-  (x) => x.toString()
+  x => x * 2,
+  x => x.toString()
 );
 // Type: (x: number) => string
 ```
@@ -178,14 +211,17 @@ const transform = pipe(
 **Point-free utilities** extract common operations:
 
 ```typescript
-const prop = <T, K extends keyof T>(key: K) => (obj: T): T[K] => obj[key];
-const map = <A, B>(fn: (a: A) => B) => (arr: A[]): B[] => arr.map(fn);
+const prop =
+  <T, K extends keyof T>(key: K) =>
+  (obj: T): T[K] =>
+    obj[key];
+const map =
+  <A, B>(fn: (a: A) => B) =>
+  (arr: A[]): B[] =>
+    arr.map(fn);
 
 // Point-free: no explicit parameter naming
-const getNames = pipe(
-  filter<User>(prop('active')),
-  map(prop('name'))
-);
+const getNames = pipe(filter<User>(prop('active')), map(prop('name')));
 ```
 
 ---
@@ -196,13 +232,13 @@ const getNames = pipe(
 
 ```typescript
 // Before: required explicit as const
-const old = getConfig({ routes: ["/home", "/users"] } as const);
+const old = getConfig({ routes: ['/home', '/users'] } as const);
 
 // After: const modifier on generic preserves literals
 function getConfig<const T extends { routes: readonly string[] }>(config: T): T {
   return config;
 }
-const config = getConfig({ routes: ["/home", "/users"] });
+const config = getConfig({ routes: ['/home', '/users'] });
 // Type: { routes: readonly ["/home", "/users"] }
 ```
 
@@ -211,10 +247,10 @@ const config = getConfig({ routes: ["/home", "/users"] });
 ```typescript
 const colors = {
   red: [255, 0, 0],
-  green: "#00ff00"
+  green: '#00ff00',
 } satisfies Record<string, [number, number, number] | string>;
 
-colors.red.map(x => x);  // Works! TypeScript knows it's an array
+colors.red.map(x => x); // Works! TypeScript knows it's an array
 ```
 
 **TC39 decorators** (TS 5.0) provide type-safe metaprogramming:
@@ -224,7 +260,7 @@ function loggedMethod<This, Args extends any[], Return>(
   target: (this: This, ...args: Args) => Return,
   context: ClassMethodDecoratorContext
 ) {
-  return function(this: This, ...args: Args): Return {
+  return function (this: This, ...args: Args): Return {
     console.log(`Entering ${String(context.name)}`);
     return target.call(this, ...args);
   };
@@ -232,7 +268,9 @@ function loggedMethod<This, Args extends any[], Return>(
 
 class Service {
   @loggedMethod
-  process(data: string) { return data.toUpperCase(); }
+  process(data: string) {
+    return data.toUpperCase();
+  }
 }
 ```
 
@@ -240,13 +278,13 @@ class Service {
 
 ## Build-time optimization yields significant bundle reductions
 
-| Optimization | Typical Savings | Implementation Effort |
-|--------------|-----------------|----------------------|
-| `importHelpers` + tslib | **5-15%** (up to 500KB in large projects) | Low |
-| `const enum` over `enum` | 1-5% | Low |
-| `verbatimModuleSyntax` | Enables tree-shaking | Low |
-| Named exports pattern | 10-30% | Medium |
-| `sideEffects: false` | 10-50% | Low |
+| Optimization             | Typical Savings                           | Implementation Effort |
+| ------------------------ | ----------------------------------------- | --------------------- |
+| `importHelpers` + tslib  | **5-15%** (up to 500KB in large projects) | Low                   |
+| `const enum` over `enum` | 1-5%                                      | Low                   |
+| `verbatimModuleSyntax`   | Enables tree-shaking                      | Low                   |
+| Named exports pattern    | 10-30%                                    | Medium                |
+| `sideEffects: false`     | 10-50%                                    | Low                   |
 
 **Critical tsconfig.json settings for applications:**
 
@@ -268,11 +306,17 @@ class Service {
 
 ```typescript
 // Regular enum: creates runtime object (~100 bytes)
-enum Status { Active = 1, Inactive = 2 }
+enum Status {
+  Active = 1,
+  Inactive = 2,
+}
 
 // const enum: inlined to literal (0 bytes)
-const enum Status { Active = 1, Inactive = 2 }
-const s = Status.Active;  // Compiles to: const s = 1;
+const enum Status {
+  Active = 1,
+  Inactive = 2,
+}
+const s = Status.Active; // Compiles to: const s = 1;
 ```
 
 **Tree-shakeable exports require named exports, not default objects:**
@@ -292,12 +336,12 @@ export { add, subtract, multiply };
 ### Zod: Single source of truth for types and validation
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 
 const UserSchema = z.object({
   id: z.number(),
   email: z.string().email(),
-  role: z.enum(["admin", "user", "guest"])
+  role: z.enum(['admin', 'user', 'guest']),
 });
 
 // Derive type automatically - NO DUPLICATION
@@ -314,14 +358,16 @@ const user = UserSchema.parse(apiResponse);
 const appRouter = t.router({
   getUser: t.procedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => ({ id: input.id, name: "Alice" }))
+    .query(async ({ input }) => ({ id: input.id, name: 'Alice' })),
 });
 
 export type AppRouter = typeof appRouter;
 
 // Client: full type safety, no generated code
-const client = createTRPCProxyClient<AppRouter>({ /* ... */ });
-const user = await client.getUser.query({ id: "123" });
+const client = createTRPCProxyClient<AppRouter>({
+  /* ... */
+});
+const user = await client.getUser.query({ id: '123' });
 // user is typed as { id: string; name: string }
 ```
 
@@ -331,13 +377,13 @@ const user = await client.getUser.query({ id: "123" });
 // Return type changes based on include/select options
 const user = await prisma.user.findUnique({
   where: { id: 1 },
-  include: { posts: true }
+  include: { posts: true },
 });
 // Type automatically includes: { ...UserFields, posts: Post[] }
 
 const userEmail = await prisma.user.findUnique({
   where: { id: 1 },
-  select: { email: true }
+  select: { email: true },
 });
 // Type narrowed to: { email: string }
 ```
@@ -347,7 +393,7 @@ const userEmail = await prisma.user.findUnique({
 ```typescript
 import { match, P } from 'ts-pattern';
 
-type Response = 
+type Response =
   | { status: 'loading' }
   | { status: 'success'; data: User[] }
   | { status: 'error'; error: Error };
@@ -364,25 +410,27 @@ const result = match(response)
 ## Trade-offs between brevity and maintainability
 
 **When aggressive type-level programming helps:**
+
 - Deriving multiple types from a single source definition
 - Eliminating manual synchronization between types and runtime code
 - Building library APIs with flexible, inference-driven interfaces
 
 **When it harms readability:**
+
 - Deeply nested conditional types (error messages become cryptic)
 - Recursive types approaching the ~100-500 level depth limit
 - Complex template literal manipulations that obscure intent
 
 **Performance considerations by technique:**
 
-| Pattern | Compile-time Impact | Runtime Cost |
-|---------|--------------------:|-------------:|
-| Mapped types | Moderate | Zero |
-| Conditional types | Can be heavy | Zero |
-| Generics | Minimal | Zero |
-| Higher-order functions | None | Slight closure overhead |
-| Decorators | Minimal | One-time setup cost |
-| Runtime validation (Zod) | None | **~13KB gzipped** + parse time |
+| Pattern                  | Compile-time Impact |                   Runtime Cost |
+| ------------------------ | ------------------: | -----------------------------: |
+| Mapped types             |            Moderate |                           Zero |
+| Conditional types        |        Can be heavy |                           Zero |
+| Generics                 |             Minimal |                           Zero |
+| Higher-order functions   |                None |        Slight closure overhead |
+| Decorators               |             Minimal |            One-time setup cost |
+| Runtime validation (Zod) |                None | **~13KB gzipped** + parse time |
 
 ## Conclusion
 
