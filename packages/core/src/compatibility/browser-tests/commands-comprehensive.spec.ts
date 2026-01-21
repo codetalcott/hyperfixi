@@ -28,8 +28,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== ADD Command ====================
-  test.describe('ADD Command', () => {
-    test('add class to element', async ({ page }) => {
+  test.describe('ADD Command @add', () => {
+    test('add class to element @quick', async ({ page }) => {
       const result = await page.evaluate(async () => {
         const div = document.createElement('div');
         div.id = 'target';
@@ -66,8 +66,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== REMOVE Command ====================
-  test.describe('REMOVE Command', () => {
-    test('remove class from element', async ({ page }) => {
+  test.describe('REMOVE Command @remove', () => {
+    test('remove class from element @quick', async ({ page }) => {
       const result = await page.evaluate(async () => {
         const div = document.createElement('div');
         div.id = 'target';
@@ -92,8 +92,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== TOGGLE Command ====================
-  test.describe('TOGGLE Command', () => {
-    test('toggle adds class when missing', async ({ page }) => {
+  test.describe('TOGGLE Command @toggle', () => {
+    test('toggle adds class when missing @quick @smoke', async ({ page }) => {
       const result = await page.evaluate(async () => {
         const div = document.createElement('div');
         div.id = 'target';
@@ -130,8 +130,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== SET Command ====================
-  test.describe('SET Command', () => {
-    test('set variable', async ({ page }) => {
+  test.describe('SET Command @set', () => {
+    test('set variable @quick', async ({ page }) => {
       const result = await page.evaluate(async () => {
         return await (window as any).evalHyperScript('set x to 42 then return x');
       });
@@ -163,8 +163,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== PUT Command ====================
-  test.describe('PUT Command', () => {
-    test('put into element', async ({ page }) => {
+  test.describe('PUT Command @put', () => {
+    test('put into element @quick @smoke', async ({ page }) => {
       const result = await page.evaluate(async () => {
         const div = document.createElement('div');
         div.id = 'target';
@@ -208,7 +208,7 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== LOG Command ====================
-  test.describe('LOG Command', () => {
+  test.describe('LOG Command @log', () => {
     test('log executes without error', async ({ page }) => {
       const result = await page.evaluate(async () => {
         try {
@@ -223,8 +223,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== SHOW/HIDE Commands ====================
-  test.describe('SHOW/HIDE Commands', () => {
-    test('hide element', async ({ page }) => {
+  test.describe('SHOW/HIDE Commands @show @hide', () => {
+    test('hide element @quick', async ({ page }) => {
       const result = await page.evaluate(async () => {
         const div = document.createElement('div');
         div.id = 'target';
@@ -249,8 +249,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== INCREMENT/DECREMENT Commands ====================
-  test.describe('INCREMENT/DECREMENT Commands', () => {
-    test('increment variable', async ({ page }) => {
+  test.describe('INCREMENT/DECREMENT Commands @increment @decrement', () => {
+    test('increment variable @quick', async ({ page }) => {
       const result = await page.evaluate(async () => {
         return await (window as any).evalHyperScript('set x to 5 then increment x then return x');
       });
@@ -284,7 +284,7 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== WAIT Command ====================
-  test.describe('WAIT Command', () => {
+  test.describe('WAIT Command @wait', () => {
     test('wait executes without error', async ({ page }) => {
       const result = await page.evaluate(async () => {
         const start = Date.now();
@@ -297,8 +297,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== IF/THEN/ELSE ====================
-  test.describe('IF/THEN/ELSE', () => {
-    test('if condition with variable set', async ({ page }) => {
+  test.describe('IF/THEN/ELSE @if @control-flow', () => {
+    test('if condition with variable set @quick', async ({ page }) => {
       const result = await page.evaluate(async () => {
         return await (window as any).evalHyperScript(
           'set x to 5 then if x > 3 set result to "big" else set result to "small" end then return result'
@@ -327,8 +327,8 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== REPEAT Command ====================
-  test.describe('REPEAT Command', () => {
-    test('repeat N times', async ({ page }) => {
+  test.describe('REPEAT Command @repeat @control-flow', () => {
+    test('repeat N times @quick', async ({ page }) => {
       const result = await page.evaluate(async () => {
         return await (window as any).evalHyperScript(
           'set count to 0 then repeat 5 times increment count end then return count'
@@ -339,7 +339,7 @@ test.describe('Command Compatibility Tests', () => {
   });
 
   // ==================== CALL Command ====================
-  test.describe('CALL/Function Invocation', () => {
+  test.describe('CALL/Function Invocation @call @expression', () => {
     test('call global function and use result', async ({ page }) => {
       const result = await page.evaluate(async () => {
         (window as any).testFunc = () => 42;

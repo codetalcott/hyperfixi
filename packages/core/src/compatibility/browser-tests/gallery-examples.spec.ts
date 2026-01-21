@@ -30,9 +30,11 @@ const EXAMPLES_TO_TEST = [
   '/examples/advanced/03-sortable-list.html',
 ];
 
-test.describe('Gallery Examples', () => {
+test.describe('Gallery Examples @gallery', () => {
   for (const example of EXAMPLES_TO_TEST) {
-    test(`${example} loads without JS errors`, async ({ page }) => {
+    const isBasic = example.startsWith('/examples/basics/');
+    const tagSuffix = isBasic ? ' @quick' : '';
+    test(`${example} loads without JS errors${tagSuffix}`, async ({ page }) => {
       const errors: string[] = [];
 
       page.on('console', msg => {

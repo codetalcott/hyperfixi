@@ -31,7 +31,7 @@ export default defineConfig({
       timeout: 10000,
     },
     {
-      // Quick validation tests (~10-15s) - broader coverage than smoke
+      // Quick validation tests (~20-30s) - broader coverage than smoke
       name: 'quick',
       grep: /@quick|@smoke/,
       timeout: 15000,
@@ -66,6 +66,38 @@ export default defineConfig({
       testDir: './src/compatibility/browser-tests/debug',
       testIgnore: [],
       timeout: 120000,
+    },
+
+    // Feature-based projects for targeted testing
+    {
+      name: 'commands',
+      grep: /@toggle|@add|@remove|@set|@put|@show|@hide|@increment|@decrement|@log|@wait/,
+      timeout: 30000,
+    },
+    {
+      name: 'expressions',
+      grep: /@expression|@math|@comparison|@logical/,
+      timeout: 30000,
+    },
+    {
+      name: 'control-flow',
+      grep: /@if|@repeat|@control-flow/,
+      timeout: 30000,
+    },
+    {
+      name: 'i18n',
+      grep: /@i18n|@multilingual/,
+      timeout: 30000,
+    },
+    {
+      name: 'bundles',
+      grep: /@bundle|@lite|@hybrid/,
+      timeout: 30000,
+    },
+    {
+      name: 'gallery',
+      grep: /@gallery/,
+      timeout: 30000,
     },
   ],
 

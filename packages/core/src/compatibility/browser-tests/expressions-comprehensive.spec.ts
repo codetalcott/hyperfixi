@@ -22,7 +22,7 @@ import { test, expect } from '@playwright/test';
  * not JavaScript falsiness. See official _hyperscript semantics.
  */
 
-test.describe('Expression Compatibility Tests', () => {
+test.describe('Expression Compatibility Tests @expression', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(300);
@@ -34,8 +34,8 @@ test.describe('Expression Compatibility Tests', () => {
   });
 
   // ==================== Math Operators ====================
-  test.describe('Math Operators', () => {
-    test('addition', async ({ page }) => {
+  test.describe('Math Operators @math', () => {
+    test('addition @quick @smoke', async ({ page }) => {
       expect(await page.evaluate(async () => (window as any).evalHyperScript('1 + 1'))).toBe(2);
     });
 
@@ -73,8 +73,8 @@ test.describe('Expression Compatibility Tests', () => {
   });
 
   // ==================== Comparison Operators ====================
-  test.describe('Comparison Operators', () => {
-    test('equals true', async ({ page }) => {
+  test.describe('Comparison Operators @comparison', () => {
+    test('equals true @quick', async ({ page }) => {
       expect(await page.evaluate(async () => (window as any).evalHyperScript('5 == 5'))).toBe(true);
     });
 
@@ -116,8 +116,8 @@ test.describe('Expression Compatibility Tests', () => {
   });
 
   // ==================== Logical Operators ====================
-  test.describe('Logical Operators', () => {
-    test('and true', async ({ page }) => {
+  test.describe('Logical Operators @logical', () => {
+    test('and true @quick', async ({ page }) => {
       expect(
         await page.evaluate(async () => (window as any).evalHyperScript('true and true'))
       ).toBe(true);
