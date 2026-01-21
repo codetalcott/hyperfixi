@@ -20,6 +20,11 @@ out/
 .env.test.local
 .env.production.local
 
+# Package manager credentials (security)
+.npmrc
+.yarnrc
+.yarnrc.yml
+
 # IDE and editor files
 .vscode/
 .idea/

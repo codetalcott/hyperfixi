@@ -115,6 +115,92 @@ The server integration package (`@lokascript/server-integration`) provides APIs 
 - TypeScript provides static type checking
 - Strict TypeScript configuration reduces runtime errors
 
+### Publishing Security
+
+#### Package File Exclusions
+
+All published packages use a whitelist approach via the `files` field in package.json, ensuring only approved files are included in npm packages:
+
+**Included in published packages:**
+
+- `dist/` - Built distribution files
+- `src/` - Source code (for debugging and source maps)
+- `README.md`, `LICENSE` - Documentation
+- Package-specific files only
+
+**Automatically excluded from npm packages:**
+
+- `.npmrc` - npm authentication tokens
+- `.yarnrc` / `.yarnrc.yml` - Yarn configuration
+- `.env*` - Environment variables
+- `.git/` - Git repository data
+- `node_modules/` - Dependencies
+- Configuration files (`.eslintrc`, `.prettierrc`, etc.)
+- Test files and CI/CD configurations
+
+**Verification:**
+
+```bash
+# Verify what would be published (dry-run)
+npm pack --dry-run --workspace=@lokascript/core
+npm pack --dry-run --workspace=@lokascript/semantic
+npm pack --dry-run --workspace=@lokascript/i18n
+npm pack --dry-run --workspace=@lokascript/vite-plugin
+```
+
+#### GitHub Secrets Management
+
+Secrets are securely managed via GitHub repository secrets:
+
+- **NPM_TOKEN**: Used for automated npm publishing (automation token with publish permissions)
+- **GITHUB_TOKEN**: Auto-provided by GitHub Actions for repository operations
+- **CODECOV_TOKEN**: Optional, for code coverage reporting
+
+**Security measures:**
+
+- Secrets are never logged, echoed, or printed in workflow outputs
+- Referenced via `${{ secrets.SECRET_NAME }}` syntax only
+- Used in environment variables, not command parameters
+- No debug modes enabled that could expose secrets
+- Manual workflow triggers only (no automatic publishing)
+
+#### Pre-Publish Validation
+
+Before any package is published, automated checks run:
+
+1. **Version validation** - Ensures semantic versioning compliance
+2. **Changelog validation** - Verifies CHANGELOG.md is up to date
+3. **Build verification** - Full build of all packages
+4. **Test suite** - Complete test coverage (2800+ tests)
+5. **TypeScript compilation** - No type errors
+6. **Dry-run option** - Test publishing without actual release
+
+See [.github/workflows/pre-publish-check.yml](.github/workflows/pre-publish-check.yml) and [.github/workflows/publish.yml](.github/workflows/publish.yml) for implementation details.
+
+#### Git Repository Protection
+
+Sensitive files are explicitly excluded from version control via `.gitignore`:
+
+```gitignore
+# Package manager credentials (security)
+.npmrc
+.yarnrc
+.yarnrc.yml
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+```
+
+**Before committing, always verify:**
+
+```bash
+git status --ignored  # Check for accidentally staged sensitive files
+```
+
 ## Disclosure Policy
 
 When we receive a security report:
