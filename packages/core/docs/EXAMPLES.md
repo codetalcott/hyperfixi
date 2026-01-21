@@ -1,6 +1,8 @@
 # Examples
 
-Real-world usage patterns and examples for LokaScript.
+Real-world HTML-first examples showcasing declarative LokaScript patterns.
+
+> **For JavaScript API usage**, see the [API Reference](../../apps/docs-site/en/api/) documentation.
 
 ## Table of Contents
 
@@ -10,709 +12,1270 @@ Real-world usage patterns and examples for LokaScript.
 - [Animation and Timing](#animation-and-timing)
 - [Modal Dialogs](#modal-dialogs)
 - [Dynamic Lists](#dynamic-lists)
-- [State Management](#state-management)
-- [Error Handling](#error-handling)
-- [Performance Patterns](#performance-patterns)
+- [Multi-Element Coordination](#multi-element-coordination)
+- [Conditional Logic](#conditional-logic)
+- [Fetch and AJAX](#fetch-and-ajax)
+- [Common UI Patterns](#common-ui-patterns)
+- [Multilingual Examples](#multilingual-examples)
 
 ## Basic DOM Manipulation
 
-### Show/Hide Elements
+### Toggle Classes
 
-```typescript
-import { hyperscript } from 'lokascript';
+Toggle a CSS class on click:
 
-const button = document.getElementById('toggleButton');
-const panel = document.getElementById('panel');
-
-button?.addEventListener('click', async () => {
-  const context = hyperscript.createContext(panel);
-
-  // Simple toggle logic
-  if (panel?.style.display === 'none') {
-    await hyperscript.eval('show me', context);
-  } else {
-    await hyperscript.eval('hide me', context);
-  }
-});
+```html
+<button _="on click toggle .active on me">Toggle Active</button>
 ```
 
-### Class Management
+**How it works:**
 
-```typescript
-const tabs = document.querySelectorAll('.tab');
-const contents = document.querySelectorAll('.tab-content');
+- `on click` - Listens for click events
+- `toggle .active` - Toggles the "active" class
+- `on me` - Targets the button itself
 
-tabs.forEach((tab, index) => {
-  tab.addEventListener('click', async () => {
-    // Remove active class from all tabs
-    for (const t of tabs) {
-      const context = hyperscript.createContext(t);
-      await hyperscript.eval('remove ".active"', context);
-    }
+**See also:** [Live Demo](../../examples/basics/02-toggle-class.html)
 
-    // Add active class to clicked tab
-    const activeContext = hyperscript.createContext(tab);
-    await hyperscript.eval('add ".active"', activeContext);
+**Variations:**
 
-    // Show corresponding content
-    const contentContext = hyperscript.createContext(contents[index]);
-    await hyperscript.eval('show me', contentContext);
-  });
-});
+Target another element:
+
+```html
+<button _="on click toggle .visible on #panel">Show/Hide</button>
+<div id="panel" class="visible">Content to toggle</div>
 ```
 
-### Content Updates
+Toggle multiple classes:
 
-```typescript
-const counter = { value: 0 };
-const display = document.getElementById('counter-display');
+```html
+<button _="on click toggle .active then toggle .highlighted on me">Multi-Toggle</button>
+```
 
-function updateCounter() {
-  const context = hyperscript.createContext(display);
-  context.variables?.set('count', counter.value);
+Toggle class on multiple elements:
 
-  hyperscript.eval('put count into me', context);
+```html
+<button _="on click toggle .selected on .card">Toggle All Cards</button>
+<div class="card">Card 1</div>
+<div class="card">Card 2</div>
+<div class="card">Card 3</div>
+```
+
+### Add and Remove Classes
+
+Add a class on hover:
+
+```html
+<div _="on mouseenter add .hover then on mouseleave remove .hover">Hover over me</div>
+```
+
+Add class to one element, remove from others:
+
+```html
+<button
+  _="on click
+     remove .active from .tab-button
+     then add .active to me"
+>
+  Tab Button
+</button>
+```
+
+### Show and Hide Elements
+
+Show an element on click:
+
+```html
+<button _="on click show #panel">Show Panel</button>
+<div id="panel" style="display: none;">Hidden content</div>
+```
+
+Toggle visibility:
+
+```html
+<button _="on click toggle .hidden on #content">Toggle Content</button>
+<div id="content" class="hidden">Content that can be toggled</div>
+```
+
+**CSS for .hidden class:**
+
+```css
+.hidden {
+  display: none;
 }
-
-document.getElementById('increment')?.addEventListener('click', () => {
-  counter.value++;
-  updateCounter();
-});
 ```
+
+Show one panel, hide others:
+
+```html
+<button _="on click hide .panel then show #panel1">Show Panel 1</button>
+<button _="on click hide .panel then show #panel2">Show Panel 2</button>
+
+<div id="panel1" class="panel">Panel 1 content</div>
+<div id="panel2" class="panel" style="display: none;">Panel 2 content</div>
+```
+
+### Update Text Content
+
+Put text into an element:
+
+```html
+<button _="on click put 'Button clicked!' into #output">Click me</button>
+<div id="output">Output will appear here</div>
+```
+
+Update a counter:
+
+```html
+<button
+  _="on click
+     increment #count's textContent
+     then put it into #count"
+>
+  Increment
+</button>
+<span id="count">0</span>
+```
+
+### Attribute Manipulation
+
+Toggle an attribute:
+
+```html
+<button _="on click toggle [disabled] on #submit-btn">Toggle Submit Button</button>
+<button id="submit-btn">Submit</button>
+```
+
+Set an attribute:
+
+```html
+<button _="on click set @aria-expanded to 'true' on #menu">Open Menu</button>
+<div id="menu" aria-expanded="false">Menu items</div>
+```
+
+---
 
 ## Event Handling
 
-### Click Handlers with State
+### Event Modifiers
 
-```typescript
-const loadingButton = document.getElementById('loadButton');
+#### Once Modifier
 
-loadingButton?.addEventListener('click', async () => {
-  const context = hyperscript.createContext(loadingButton);
+Execute an event handler only once:
 
-  try {
-    // Show loading state
-    await hyperscript.eval('add ".loading"', context);
-    await hyperscript.eval('put "Loading..." into me', context);
-
-    // Simulate async operation
-    await hyperscript.eval('wait 2s', context);
-
-    // Show success state
-    await hyperscript.eval('remove ".loading"', context);
-    await hyperscript.eval('add ".success"', context);
-    await hyperscript.eval('put "Success!" into me', context);
-
-    // Reset after delay
-    await hyperscript.eval('wait 1s', context);
-    await hyperscript.eval('remove ".success"', context);
-    await hyperscript.eval('put "Load Data" into me', context);
-  } catch (error) {
-    // Handle error state
-    await hyperscript.eval('remove ".loading"', context);
-    await hyperscript.eval('add ".error"', context);
-    await hyperscript.eval('put "Error!" into me', context);
-  }
-});
+```html
+<button _="on click.once add .clicked to me then put 'Clicked once!' into me">
+  Click me (works only once)
+</button>
 ```
 
-### Keyboard Event Handling
+#### Prevent Default
 
-```typescript
-const searchInput = document.getElementById('search') as HTMLInputElement;
-const resultsPanel = document.getElementById('results');
+Prevent form submission:
 
-searchInput?.addEventListener('keydown', async event => {
-  const context = hyperscript.createContext(searchInput);
-
-  if (event.key === 'Enter') {
-    await hyperscript.eval('add ".searching"', context);
-
-    // Perform search
-    const query = searchInput.value;
-    const results = await performSearch(query);
-
-    // Update results
-    if (resultsPanel) {
-      const resultsContext = hyperscript.createContext(resultsPanel);
-      resultsContext.variables?.set('resultCount', results.length);
-      await hyperscript.eval('show me', resultsContext);
-    }
-
-    await hyperscript.eval('remove ".searching"', context);
-  }
-
-  if (event.key === 'Escape') {
-    await hyperscript.eval('put "" into me', context);
-    if (resultsPanel) {
-      const resultsContext = hyperscript.createContext(resultsPanel);
-      await hyperscript.eval('hide me', resultsContext);
-    }
-  }
-});
+```html
+<form _="on submit.prevent log 'Form submission prevented'">
+  <input type="text" name="username" />
+  <button type="submit">Submit</button>
+</form>
 ```
+
+Prevent link navigation:
+
+```html
+<a href="/page" _="on click.prevent toggle .expanded on #details"> Toggle Details </a>
+<div id="details" style="display: none;">Additional details</div>
+```
+
+#### Stop Propagation
+
+Stop event bubbling:
+
+```html
+<div _="on click add .parent-clicked to me">
+  Parent div
+  <button _="on click.stop add .button-clicked to me">Click me (won't trigger parent)</button>
+</div>
+```
+
+#### Debounce
+
+Debounce input events (wait 300ms after typing stops):
+
+```html
+<input
+  _="on input.debounce(300)
+     put my value into #output"
+  placeholder="Type something..."
+/>
+<div id="output">You typed:</div>
+```
+
+Search with debounce:
+
+```html
+<input
+  _="on input.debounce(500)
+     if my value's length > 2
+       add .searching to me
+       fetch `/api/search?q=${my value}` as json
+       put result into #results
+       remove .searching from me
+     end"
+  placeholder="Search..."
+/>
+<div id="results"></div>
+```
+
+#### Throttle
+
+Throttle scroll events (max once per 100ms):
+
+```html
+<div
+  _="on scroll.throttle(100)
+     if my scrollTop > 100
+       add .scrolled to <body/>
+     else
+       remove .scrolled from <body/>
+     end"
+  style="height: 2000px; overflow-y: scroll;"
+>
+  Scroll content
+</div>
+```
+
+### Multiple Events
+
+Handle multiple events:
+
+```html
+<input
+  _="on focus add .focused to me
+     on blur remove .focused from me
+     on input put my value into #mirror"
+/>
+<div id="mirror"></div>
+```
+
+### Keyboard Events
+
+Handle Enter key:
+
+```html
+<input
+  _="on keydown[key is 'Enter']
+     put my value into #output
+     then put '' into me"
+  placeholder="Press Enter to submit"
+/>
+<div id="output"></div>
+```
+
+Handle Escape key:
+
+```html
+<div
+  id="modal"
+  _="on keydown[key is 'Escape']
+     hide me"
+>
+  <p>Press Escape to close</p>
+</div>
+```
+
+Keyboard shortcuts:
+
+```html
+<body
+  _="on keydown[key is 's' and ctrlKey]
+          .prevent
+          log 'Save shortcut triggered'"
+>
+  Press Ctrl+S to save
+</body>
+```
+
+---
 
 ## Form Processing
 
+### Input Mirroring
+
+Mirror input value in real-time:
+
+```html
+<input _="on input put my value into #mirror" placeholder="Type something..." />
+<div id="mirror">You typed:</div>
+```
+
+**See also:** [Live Demo](../../examples/basics/04-input-mirror.html)
+
 ### Form Validation
 
-```typescript
-const form = document.getElementById('signupForm') as HTMLFormElement;
-const emailInput = document.getElementById('email') as HTMLInputElement;
-const submitButton = document.getElementById('submit') as HTMLButtonElement;
+Validate email on blur:
 
-emailInput?.addEventListener('blur', async () => {
-  const context = hyperscript.createContext(emailInput);
-  const email = emailInput.value;
+```html
+<input
+  type="email"
+  _="on blur
+     if my value contains '@'
+       add .valid to me
+       remove .error from me
+     else
+       add .error to me
+       remove .valid from me
+     end"
+/>
 
-  if (!email.includes('@')) {
-    await hyperscript.eval('add ".error"', context);
-
-    // Show error message
-    const errorDiv = document.getElementById('email-error');
-    if (errorDiv) {
-      const errorContext = hyperscript.createContext(errorDiv);
-      await hyperscript.eval('put "Please enter a valid email" into me', errorContext);
-      await hyperscript.eval('show me', errorContext);
-    }
-  } else {
-    await hyperscript.eval('remove ".error"', context);
-    await hyperscript.eval('add ".valid"', context);
-
-    // Hide error message
-    const errorDiv = document.getElementById('email-error');
-    if (errorDiv) {
-      const errorContext = hyperscript.createContext(errorDiv);
-      await hyperscript.eval('hide me', errorContext);
-    }
+<style>
+  .valid {
+    border-color: green;
   }
-});
-
-form?.addEventListener('submit', async event => {
-  event.preventDefault();
-
-  const context = hyperscript.createContext(submitButton);
-
-  // Disable button and show loading
-  await hyperscript.eval('add ".loading"', context);
-  await hyperscript.eval('put "Submitting..." into me', context);
-
-  try {
-    // Collect form data using hyperscript
-    const formContext = hyperscript.createContext(form);
-    const formData = await hyperscript.eval('me as Values', formContext);
-
-    // Submit data
-    const response = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-
-    if (response.ok) {
-      await hyperscript.eval('remove ".loading"', context);
-      await hyperscript.eval('add ".success"', context);
-      await hyperscript.eval('put "Success!" into me', context);
-    } else {
-      throw new Error('Submission failed');
-    }
-  } catch (error) {
-    await hyperscript.eval('remove ".loading"', context);
-    await hyperscript.eval('add ".error"', context);
-    await hyperscript.eval('put "Error occurred" into me', context);
+  .error {
+    border-color: red;
   }
-});
+</style>
 ```
+
+**See also:** [Live Demo](../../examples/intermediate/01-form-validation.html)
+
+Required field validation:
+
+```html
+<input
+  required
+  _="on blur
+     if my value's length is 0
+       add .error to me
+       show #error-message
+     else
+       remove .error from me
+       hide #error-message
+     end"
+/>
+<span id="error-message" style="display: none; color: red;"> This field is required </span>
+```
+
+Password strength indicator:
+
+```html
+<input
+  type="password"
+  _="on input
+     set :length to my value's length
+     if :length < 6
+       put 'Weak' into #strength
+       set #strength's @class to 'weak'
+     else if :length < 10
+       put 'Medium' into #strength
+       set #strength's @class to 'medium'
+     else
+       put 'Strong' into #strength
+       set #strength's @class to 'strong'
+     end"
+/>
+<div id="strength"></div>
+
+<style>
+  .weak {
+    color: red;
+  }
+  .medium {
+    color: orange;
+  }
+  .strong {
+    color: green;
+  }
+</style>
+```
+
+### Form Submission
+
+Prevent default and handle with hyperscript:
+
+```html
+<form
+  _="on submit.prevent
+     add .loading to #submit-btn
+     put 'Submitting...' into #submit-btn
+     wait 2s
+     put 'Success!' into #result
+     remove .loading from #submit-btn
+     put 'Submit' into #submit-btn"
+>
+  <input name="username" required />
+  <button id="submit-btn" type="submit">Submit</button>
+</form>
+<div id="result"></div>
+```
+
+Form with validation before submit:
+
+```html
+<form
+  _="on submit.prevent
+     if #email's value contains '@'
+       add .valid to #email
+       log 'Form is valid, submitting...'
+     else
+       add .error to #email
+       put 'Invalid email' into #error-msg
+     end"
+>
+  <input id="email" type="email" />
+  <span id="error-msg" style="color: red;"></span>
+  <button type="submit">Submit</button>
+</form>
+```
+
+---
 
 ## Animation and Timing
 
-### Fade In/Out Animation
+### Wait Command
 
-```typescript
-async function fadeIn(element: HTMLElement) {
-  const context = hyperscript.createContext(element);
+Delay before action:
 
-  // Start invisible
-  element.style.opacity = '0';
-  await hyperscript.eval('show me', context);
-
-  // Animate opacity
-  for (let opacity = 0; opacity <= 1; opacity += 0.1) {
-    element.style.opacity = opacity.toString();
-    await hyperscript.eval('wait 50ms', context);
-  }
-}
-
-async function fadeOut(element: HTMLElement) {
-  const context = hyperscript.createContext(element);
-
-  // Animate opacity down
-  for (let opacity = 1; opacity >= 0; opacity -= 0.1) {
-    element.style.opacity = opacity.toString();
-    await hyperscript.eval('wait 50ms', context);
-  }
-
-  // Hide element
-  await hyperscript.eval('hide me', context);
-}
+```html
+<button
+  _="on click
+     add .loading to me
+     wait 2s
+     remove .loading from me
+     add .complete to me"
+>
+  Click to Load
+</button>
 ```
 
-### Staggered Animations
+### Fade Effects
 
-```typescript
-const items = document.querySelectorAll('.animate-item');
+Fade out and remove:
 
-async function staggerIn() {
-  for (const [index, item] of items.entries()) {
-    const context = hyperscript.createContext(item);
+```html
+<button
+  _="on click
+     add .fade-out to #notification
+     wait 500ms
+     remove #notification"
+>
+  Dismiss Notification
+</button>
+<div id="notification">This notification will fade out</div>
 
-    // Wait based on index for stagger effect
-    context.variables?.set('delay', index * 100);
-    await hyperscript.eval('wait delay', context);
-
-    // Animate in
-    await hyperscript.eval('add ".visible"', context);
+<style>
+  .fade-out {
+    opacity: 0;
+    transition: opacity 500ms;
   }
-}
+</style>
 ```
 
-### Typing Effect
+**See also:** [Live Demo](../../examples/intermediate/03-fade-effects.html)
 
-```typescript
-async function typeText(element: HTMLElement, text: string) {
-  const context = hyperscript.createContext(element);
+Fade in on page load:
 
-  // Clear existing text
-  await hyperscript.eval('put "" into me', context);
+```html
+<div class="fade-in-element" _="on load wait 100ms then add .visible to me">
+  Content that fades in
+</div>
 
-  // Type each character
-  for (let i = 0; i <= text.length; i++) {
-    const partial = text.substring(0, i);
-    context.variables?.set('text', partial);
-    await hyperscript.eval('put text into me', context);
-    await hyperscript.eval('wait 100ms', context);
+<style>
+  .fade-in-element {
+    opacity: 0;
+    transition: opacity 500ms;
   }
-}
+  .fade-in-element.visible {
+    opacity: 1;
+  }
+</style>
 ```
+
+### Transition Effects
+
+Slide in/out panel:
+
+```html
+<button _="on click toggle .slide-out on #panel">Toggle Panel</button>
+
+<div id="panel" class="slide-panel">Panel content</div>
+
+<style>
+  .slide-panel {
+    transform: translateX(0);
+    transition: transform 300ms;
+  }
+  .slide-panel.slide-out {
+    transform: translateX(-100%);
+  }
+</style>
+```
+
+### Settle Command
+
+Wait for transitions to complete:
+
+```html
+<button
+  _="on click
+     add .fade-out to #element
+     settle
+     hide #element"
+>
+  Fade Out and Hide
+</button>
+
+<div id="element" style="transition: opacity 300ms;">
+  This will fade out completely before hiding
+</div>
+```
+
+---
 
 ## Modal Dialogs
 
 ### Simple Modal
 
-```typescript
-class Modal {
-  private modal: HTMLElement;
-  private overlay: HTMLElement;
+Show/hide modal:
 
-  constructor(modalId: string) {
-    this.modal = document.getElementById(modalId)!;
-    this.overlay = document.getElementById('modal-overlay')!;
+```html
+<button _="on click show #modal then add .visible to #modal">Open Modal</button>
 
-    this.setupEventHandlers();
+<div id="modal" style="display: none;">
+  <div class="modal-content">
+    <button _="on click hide #modal then remove .visible from #modal">Close</button>
+    <p>Modal content here</p>
+  </div>
+</div>
+
+<style>
+  #modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  async show() {
-    const modalContext = hyperscript.createContext(this.modal);
-    const overlayContext = hyperscript.createContext(this.overlay);
-
-    await hyperscript.eval('show me', overlayContext);
-    await hyperscript.eval('wait 10ms', modalContext); // Allow overlay to render
-    await hyperscript.eval('show me', modalContext);
-    await hyperscript.eval('add ".visible"', modalContext);
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
   }
-
-  async hide() {
-    const modalContext = hyperscript.createContext(this.modal);
-    const overlayContext = hyperscript.createContext(this.overlay);
-
-    await hyperscript.eval('remove ".visible"', modalContext);
-    await hyperscript.eval('wait 300ms', modalContext); // Wait for animation
-    await hyperscript.eval('hide me', modalContext);
-    await hyperscript.eval('hide me', overlayContext);
-  }
-
-  private setupEventHandlers() {
-    // Close on overlay click
-    this.overlay.addEventListener('click', event => {
-      if (event.target === this.overlay) {
-        this.hide();
-      }
-    });
-
-    // Close on escape key
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') {
-        this.hide();
-      }
-    });
-
-    // Close button
-    const closeButton = this.modal.querySelector('.close-button');
-    closeButton?.addEventListener('click', () => this.hide());
-  }
-}
-
-// Usage
-const confirmModal = new Modal('confirm-modal');
-
-document.getElementById('show-modal')?.addEventListener('click', () => {
-  confirmModal.show();
-});
+</style>
 ```
+
+**See also:** [Live Demo](../../examples/intermediate/05-modal.html)
+
+### Modal with Escape Key
+
+Close modal on Escape:
+
+```html
+<div id="modal" _="on keydown[key is 'Escape'] hide me" style="display: none;">
+  <div class="modal-content">
+    <p>Press Escape to close</p>
+  </div>
+</div>
+```
+
+### Native Dialog Element
+
+Use HTML5 `<dialog>` element:
+
+```html
+<button _="on click call #myDialog.showModal()">Open Dialog</button>
+
+<dialog id="myDialog" _="on click[target is me] call my close()">
+  <div class="dialog-content">
+    <p>Dialog content</p>
+    <button _="on click call #myDialog.close()">Close</button>
+  </div>
+</dialog>
+
+<style>
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+</style>
+```
+
+**See also:** [Live Demo](../../examples/intermediate/06-native-dialog.html)
+
+---
 
 ## Dynamic Lists
 
-### Todo List
+### Add Items
 
-```typescript
-class TodoList {
-  private list: HTMLElement;
-  private input: HTMLInputElement;
-  private todos: Array<{ id: number; text: string; completed: boolean }> = [];
-  private nextId = 1;
+Add items to a list:
 
-  constructor() {
-    this.list = document.getElementById('todo-list')!;
-    this.input = document.getElementById('todo-input') as HTMLInputElement;
+```html
+<input id="item-input" placeholder="Enter item" />
+<button
+  _="on click
+     set :value to #item-input's value
+     if :value is not ''
+       make <li/> called :li
+       put :value into :li
+       append :li to #list
+       put '' into #item-input
+     end"
+>
+  Add Item
+</button>
 
-    this.setupEventHandlers();
-  }
-
-  private setupEventHandlers() {
-    document.getElementById('add-todo')?.addEventListener('click', () => {
-      this.addTodo();
-    });
-
-    this.input.addEventListener('keydown', event => {
-      if (event.key === 'Enter') {
-        this.addTodo();
-      }
-    });
-  }
-
-  async addTodo() {
-    const text = this.input.value.trim();
-    if (!text) return;
-
-    const todo = { id: this.nextId++, text, completed: false };
-    this.todos.push(todo);
-
-    await this.renderTodo(todo);
-
-    // Clear input
-    const inputContext = hyperscript.createContext(this.input);
-    await hyperscript.eval('put "" into me', inputContext);
-  }
-
-  async renderTodo(todo: { id: number; text: string; completed: boolean }) {
-    const li = document.createElement('li');
-    li.className = 'todo-item';
-    li.dataset.id = todo.id.toString();
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = todo.completed;
-
-    const span = document.createElement('span');
-    span.textContent = todo.text;
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.className = 'delete-btn';
-
-    li.appendChild(checkbox);
-    li.appendChild(span);
-    li.appendChild(deleteBtn);
-
-    // Add event handlers with hyperscript
-    checkbox.addEventListener('change', async () => {
-      const context = hyperscript.createContext(li);
-
-      if (checkbox.checked) {
-        await hyperscript.eval('add ".completed"', context);
-      } else {
-        await hyperscript.eval('remove ".completed"', context);
-      }
-    });
-
-    deleteBtn.addEventListener('click', async () => {
-      const context = hyperscript.createContext(li);
-
-      // Animate out
-      await hyperscript.eval('add ".removing"', context);
-      await hyperscript.eval('wait 300ms', context);
-
-      // Remove from DOM and data
-      li.remove();
-      this.todos = this.todos.filter(t => t.id !== todo.id);
-    });
-
-    // Add to list with animation
-    const listContext = hyperscript.createContext(this.list);
-    this.list.appendChild(li);
-
-    const itemContext = hyperscript.createContext(li);
-    await hyperscript.eval('add ".new"', itemContext);
-    await hyperscript.eval('wait 10ms', itemContext); // Allow DOM update
-    await hyperscript.eval('add ".visible"', itemContext);
-  }
-}
-
-// Initialize
-new TodoList();
+<ul id="list"></ul>
 ```
 
-## State Management
+### Remove Items
 
-### Simple State Store
+Remove items with delete button:
 
-```typescript
-class StateStore {
-  private state: Record<string, any> = {};
-  private subscribers: Array<(state: any) => void> = [];
-
-  setState(updates: Record<string, any>) {
-    this.state = { ...this.state, ...updates };
-    this.notifySubscribers();
-  }
-
-  getState() {
-    return { ...this.state };
-  }
-
-  subscribe(callback: (state: any) => void) {
-    this.subscribers.push(callback);
-    return () => {
-      this.subscribers = this.subscribers.filter(sub => sub !== callback);
-    };
-  }
-
-  private notifySubscribers() {
-    this.subscribers.forEach(callback => callback(this.getState()));
-  }
-}
-
-// Usage with LokaScript
-const store = new StateStore();
-
-// Counter component
-const counterDisplay = document.getElementById('counter');
-const incrementBtn = document.getElementById('increment');
-
-store.subscribe(async state => {
-  if (counterDisplay) {
-    const context = hyperscript.createContext(counterDisplay);
-    context.variables?.set('count', state.count || 0);
-    await hyperscript.eval('put count into me', context);
-  }
-});
-
-incrementBtn?.addEventListener('click', () => {
-  const currentState = store.getState();
-  store.setState({ count: (currentState.count || 0) + 1 });
-});
-
-// Theme component
-const themeToggle = document.getElementById('theme-toggle');
-
-store.subscribe(async state => {
-  const body = document.body;
-  const context = hyperscript.createContext(body);
-
-  if (state.theme === 'dark') {
-    await hyperscript.eval('add ".dark-theme"', context);
-    await hyperscript.eval('remove ".light-theme"', context);
-  } else {
-    await hyperscript.eval('add ".light-theme"', context);
-    await hyperscript.eval('remove ".dark-theme"', context);
-  }
-});
-
-themeToggle?.addEventListener('click', () => {
-  const currentState = store.getState();
-  const newTheme = currentState.theme === 'dark' ? 'light' : 'dark';
-  store.setState({ theme: newTheme });
-});
+```html
+<ul id="list">
+  <li>
+    Item 1
+    <button _="on click remove closest <li/>">Delete</button>
+  </li>
+  <li>
+    Item 2
+    <button _="on click remove closest <li/>">Delete</button>
+  </li>
+</ul>
 ```
 
-## Error Handling
+### Fade and Remove
 
-### Graceful Error Recovery
+Animate item removal:
 
-```typescript
-async function safeExecute(code: string, context: any, fallbackAction?: () => void) {
-  try {
-    return await hyperscript.eval(code, context);
-  } catch (error) {
-    console.error('LokaScript execution failed:', error);
+```html
+<ul id="list">
+  <li>
+    Item 1
+    <button
+      _="on click
+         add .removing to closest <li/>
+         wait 300ms
+         remove closest <li/>"
+    >
+      Delete
+    </button>
+  </li>
+</ul>
 
-    // Show error state
-    const errorContext = hyperscript.createContext(context.me);
-    await hyperscript.eval('add ".error"', errorContext);
-
-    // Execute fallback if provided
-    if (fallbackAction) {
-      fallbackAction();
-    }
-
-    // Auto-recover after delay
-    setTimeout(async () => {
-      await hyperscript.eval('remove ".error"', errorContext);
-    }, 3000);
+<style>
+  li {
+    transition: opacity 300ms;
   }
-}
-
-// Usage
-const button = document.getElementById('risky-button');
-button?.addEventListener('click', async () => {
-  const context = hyperscript.createContext(button);
-
-  await safeExecute('add ".processing"', context, () => console.log('Fallback: Processing failed'));
-});
-```
-
-### Validation with Error Messages
-
-```typescript
-async function validateAndShow(element: HTMLElement, condition: boolean, errorMessage: string) {
-  const context = hyperscript.createContext(element);
-
-  if (!condition) {
-    await hyperscript.eval('add ".invalid"', context);
-
-    // Show error message
-    const errorDiv = element.nextElementSibling as HTMLElement;
-    if (errorDiv?.classList.contains('error-message')) {
-      const errorContext = hyperscript.createContext(errorDiv);
-      errorContext.variables?.set('message', errorMessage);
-      await hyperscript.eval('put message into me', errorContext);
-      await hyperscript.eval('show me', errorContext);
-    }
-
-    return false;
-  } else {
-    await hyperscript.eval('remove ".invalid"', context);
-    await hyperscript.eval('add ".valid"', context);
-
-    // Hide error message
-    const errorDiv = element.nextElementSibling as HTMLElement;
-    if (errorDiv?.classList.contains('error-message')) {
-      const errorContext = hyperscript.createContext(errorDiv);
-      await hyperscript.eval('hide me', errorContext);
-    }
-
-    return true;
+  li.removing {
+    opacity: 0;
   }
-}
-```
-
-## Performance Patterns
-
-### Compilation Caching
-
-```typescript
-class HyperscriptCache {
-  private cache = new Map<string, any>();
-
-  async run(code: string, context: any) {
-    let compiled = this.cache.get(code);
-
-    if (!compiled) {
-      compiled = hyperscript.compileSync(code);
-      if (compiled.success) {
-        this.cache.set(code, compiled);
-      }
-    }
-
-    if (compiled.success) {
-      return await hyperscript.execute(compiled.ast, context);
-    } else {
-      throw new Error('Compilation failed: ' + compiled.errors[0]?.message);
-    }
-  }
-
-  clear() {
-    this.cache.clear();
-  }
-}
-
-// Usage
-const cache = new HyperscriptCache();
-
-// Repeated executions will use cached compilation
-await cache.run('hide me', context1);
-await cache.run('hide me', context2);
-await cache.run('hide me', context3);
-```
-
-### Batch Operations
-
-```typescript
-async function batchUpdate(elements: HTMLElement[], operation: string) {
-  const promises = elements.map(async element => {
-    const context = hyperscript.createContext(element);
-    return hyperscript.eval(operation, context);
-  });
-
-  await Promise.all(promises);
-}
-
-// Usage
-const cards = Array.from(document.querySelectorAll('.card')) as HTMLElement[];
-await batchUpdate(cards, 'add ".loading"');
-
-// Simulate async work
-await new Promise(resolve => setTimeout(resolve, 2000));
-
-await batchUpdate(cards, 'remove ".loading"');
-await batchUpdate(cards, 'add ".loaded"');
-```
-
-### Debounced Execution
-
-```typescript
-function debounce(func: Function, wait: number) {
-  let timeout: NodeJS.Timeout;
-  return function executedFunction(...args: any[]) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-// Debounced search
-const searchInput = document.getElementById('search') as HTMLInputElement;
-const searchResults = document.getElementById('search-results');
-
-const debouncedSearch = debounce(async (query: string) => {
-  if (searchResults) {
-    const context = hyperscript.createContext(searchResults);
-
-    if (query.length > 2) {
-      context.variables?.set('query', query);
-      await hyperscript.eval('add ".searching"', context);
-
-      // Perform search
-      const results = await performSearch(query);
-
-      context.variables?.set('count', results.length);
-      await hyperscript.eval('remove ".searching"', context);
-      await hyperscript.eval('add ".has-results"', context);
-    } else {
-      await hyperscript.eval('remove ".searching"', context);
-      await hyperscript.eval('remove ".has-results"', context);
-    }
-  }
-}, 300);
-
-searchInput?.addEventListener('input', event => {
-  debouncedSearch((event.target as HTMLInputElement).value);
-});
+</style>
 ```
 
 ---
 
-These examples demonstrate real-world usage patterns for LokaScript. For more advanced scenarios and integration patterns, see the [Advanced Guide](./ADVANCED.md).
+## Multi-Element Coordination
+
+### Tabs
+
+Tab navigation pattern:
+
+```html
+<div class="tabs">
+  <button
+    class="tab-button active"
+    _="on click
+       remove .active from .tab-button
+       then add .active to me
+       then hide .tab-content
+       then show #tab1"
+  >
+    Tab 1
+  </button>
+  <button
+    class="tab-button"
+    _="on click
+       remove .active from .tab-button
+       then add .active to me
+       then hide .tab-content
+       then show #tab2"
+  >
+    Tab 2
+  </button>
+  <button
+    class="tab-button"
+    _="on click
+       remove .active from .tab-button
+       then add .active to me
+       then hide .tab-content
+       then show #tab3"
+  >
+    Tab 3
+  </button>
+</div>
+
+<div id="tab1" class="tab-content">Content for Tab 1</div>
+<div id="tab2" class="tab-content" style="display: none;">Content for Tab 2</div>
+<div id="tab3" class="tab-content" style="display: none;">Content for Tab 3</div>
+
+<style>
+  .tab-button.active {
+    background: #007bff;
+    color: white;
+  }
+</style>
+```
+
+**See also:** [Live Demo](../../examples/intermediate/04-tabs.html)
+
+### Accordion
+
+Accordion collapse/expand:
+
+```html
+<div class="accordion-item">
+  <button
+    class="accordion-header"
+    _="on click
+       toggle .open on closest .accordion-item"
+  >
+    Section 1
+  </button>
+  <div class="accordion-content">Content for section 1</div>
+</div>
+
+<div class="accordion-item">
+  <button
+    class="accordion-header"
+    _="on click
+       toggle .open on closest .accordion-item"
+  >
+    Section 2
+  </button>
+  <div class="accordion-content">Content for section 2</div>
+</div>
+
+<style>
+  .accordion-content {
+    display: none;
+    padding: 10px;
+  }
+  .accordion-item.open .accordion-content {
+    display: block;
+  }
+</style>
+```
+
+Single-open accordion (close others):
+
+```html
+<button
+  class="accordion-header"
+  _="on click
+     remove .open from .accordion-item
+     then add .open to closest .accordion-item"
+>
+  Section (closes others when opened)
+</button>
+```
+
+---
+
+## Conditional Logic
+
+### If/Else
+
+Simple conditional:
+
+```html
+<button
+  _="on click
+     if I match .active
+       remove .active from me
+       put 'Activate' into me
+     else
+       add .active to me
+       put 'Deactivate' into me
+     end"
+>
+  Activate
+</button>
+```
+
+Check input length:
+
+```html
+<input
+  _="on input
+     if my value's length > 10
+       put 'Too long!' into #feedback
+     else if my value's length > 0
+       put 'Good length' into #feedback
+     else
+       put 'Too short!' into #feedback
+     end"
+/>
+<div id="feedback"></div>
+```
+
+### Unless
+
+Execute unless condition is true:
+
+```html
+<button
+  _="on click
+     unless me has .disabled
+       log 'Button clicked!'
+     end"
+>
+  Click me
+</button>
+```
+
+### Matching Selectors
+
+Check if element matches selector:
+
+```html
+<button
+  _="on click
+     if #panel matches .hidden
+       show #panel
+       put 'Hide' into me
+     else
+       hide #panel
+       put 'Show' into me
+     end"
+>
+  Show
+</button>
+```
+
+---
+
+## Fetch and AJAX
+
+### Basic Fetch
+
+Load data from API:
+
+```html
+<button
+  _="on click
+     fetch /api/data as json
+     put result.message into #output"
+>
+  Load Data
+</button>
+<div id="output"></div>
+```
+
+**See also:** [Live Demo](../../examples/intermediate/02-fetch-data.html)
+
+### Fetch with Loading State
+
+Show loading indicator:
+
+```html
+<button
+  _="on click
+     add .loading to me
+     put 'Loading...' into me
+     fetch /api/data as json
+     put result.message into #output
+     remove .loading from me
+     put 'Load Data' into me"
+>
+  Load Data
+</button>
+<div id="output"></div>
+```
+
+### Fetch with Error Handling
+
+Handle errors gracefully:
+
+```html
+<button
+  _="on click
+     add .loading to me
+     try
+       fetch /api/data as json
+       put result.message into #output
+       remove .loading from me
+       add .success to #output
+     catch error
+       put 'Error loading data' into #output
+       remove .loading from me
+       add .error to #output
+     end"
+>
+  Load Data
+</button>
+<div id="output"></div>
+```
+
+### POST Request
+
+Submit data to API:
+
+```html
+<button
+  _="on click
+     set :data to { name: 'Alice', age: 30 }
+     fetch /api/users with method: 'POST', body: :data
+     put result.id into #user-id"
+>
+  Create User
+</button>
+<div id="user-id"></div>
+```
+
+### Fetch with Headers
+
+Add custom headers:
+
+```html
+<button
+  _="on click
+     fetch /api/protected
+       with headers: { 'Authorization': 'Bearer token123' }
+       as json
+     put result into #protected-data"
+>
+  Load Protected Data
+</button>
+<div id="protected-data"></div>
+```
+
+---
+
+## Common UI Patterns
+
+### Dropdown Menu
+
+Toggle dropdown on click:
+
+```html
+<div class="dropdown">
+  <button _="on click toggle .open on closest .dropdown">Menu ▼</button>
+  <ul class="dropdown-menu">
+    <li>Option 1</li>
+    <li>Option 2</li>
+    <li>Option 3</li>
+  </ul>
+</div>
+
+<style>
+  .dropdown-menu {
+    display: none;
+  }
+  .dropdown.open .dropdown-menu {
+    display: block;
+  }
+</style>
+```
+
+Close dropdown when clicking outside:
+
+```html
+<div
+  class="dropdown"
+  _="on click toggle .open on me
+     on click from <body/>
+       if target is not in me
+         remove .open from me
+       end"
+>
+  <button>Menu ▼</button>
+  <ul class="dropdown-menu">
+    <li>Option 1</li>
+  </ul>
+</div>
+```
+
+### Tooltip
+
+Show tooltip on hover:
+
+```html
+<button
+  _="on mouseenter show #tooltip then add .visible to #tooltip
+     on mouseleave hide #tooltip then remove .visible from #tooltip"
+>
+  Hover for tooltip
+</button>
+<div id="tooltip" style="display: none;">This is a tooltip</div>
+
+<style>
+  #tooltip {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 200ms;
+  }
+  #tooltip.visible {
+    opacity: 1;
+  }
+</style>
+```
+
+### Notification/Toast
+
+Show and auto-dismiss notification:
+
+```html
+<button
+  _="on click
+     show #notification
+     add .visible to #notification
+     wait 3s
+     remove .visible from #notification
+     settle
+     hide #notification"
+>
+  Show Notification
+</button>
+
+<div id="notification" style="display: none;">Operation successful!</div>
+
+<style>
+  #notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 15px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 300ms;
+  }
+  #notification.visible {
+    opacity: 1;
+  }
+</style>
+```
+
+### Infinite Scroll
+
+Load more content on scroll:
+
+```html
+<div
+  id="content-container"
+  _="on scroll
+     if my scrollTop + my clientHeight >= my scrollHeight - 100
+       unless I match .loading
+         add .loading to me
+         fetch /api/more-content as json
+         append result.html to me
+         remove .loading from me
+       end
+     end"
+  style="height: 400px; overflow-y: scroll;"
+>
+  Initial content...
+</div>
+```
+
+**See also:** [Live Demo](../../examples/advanced/04-infinite-scroll.html)
+
+### Copy to Clipboard
+
+Copy text to clipboard:
+
+```html
+<button
+  _="on click
+     set navigator.clipboard.text to 'Text to copy'
+     put 'Copied!' into me
+     wait 2s
+     put 'Copy to Clipboard' into me"
+>
+  Copy to Clipboard
+</button>
+```
+
+---
+
+## Multilingual Examples
+
+LokaScript supports writing hyperscript in 23 languages. Here are common patterns in different languages:
+
+### Toggle Button
+
+**English:**
+
+```html
+<button _="on click toggle .active on me">Toggle</button>
+```
+
+**Spanish:**
+
+```html
+<button _="en clic alternar .active en yo">Alternar</button>
+```
+
+**Japanese:**
+
+```html
+<button _="クリック で 切り替え .active を 私">切り替え</button>
+```
+
+**Arabic (RTL):**
+
+```html
+<button _="عند النقر بدّل .active على أنا">تبديل</button>
+```
+
+### Show/Hide Content
+
+**English:**
+
+```html
+<button _="on click toggle .hidden on #panel">Toggle Panel</button>
+<div id="panel">Content</div>
+```
+
+**Spanish:**
+
+```html
+<button _="en clic alternar .hidden en #panel">Alternar Panel</button>
+<div id="panel">Contenido</div>
+```
+
+**Japanese:**
+
+```html
+<button _="#panel の .hidden を クリック で 切り替え">パネルを切り替え</button>
+<div id="panel">コンテンツ</div>
+```
+
+**Korean:**
+
+```html
+<button _="클릭 시 #panel 의 .hidden 을 토글">패널 토글</button>
+<div id="panel">내용</div>
+```
+
+### Fetch Data
+
+**English:**
+
+```html
+<button _="on click fetch /api/data then put result into #output">Load Data</button>
+```
+
+**Spanish:**
+
+```html
+<button _="en clic traer /api/data entonces poner result en #output">Cargar Datos</button>
+```
+
+**French:**
+
+```html
+<button _="sur clic récupérer /api/data puis mettre result dans #output">Charger Données</button>
+```
+
+**German:**
+
+```html
+<button _="bei klick hole /api/data dann setze result in #output">Daten Laden</button>
+```
+
+### Form Validation
+
+**English:**
+
+```html
+<input
+  _="on blur
+     if my value contains '@'
+       add .valid to me
+     else
+       add .error to me
+     end"
+/>
+```
+
+**Spanish:**
+
+```html
+<input
+  _="en desenfoque
+     si mi value contiene '@'
+       añadir .valid a yo
+     sino
+       añadir .error a yo
+     fin"
+/>
+```
+
+**Portuguese:**
+
+```html
+<input
+  _="em blur
+     se meu value contém '@'
+       adicionar .valid a mim
+     senão
+       adicionar .error a mim
+     fim"
+/>
+```
+
+### Language Support
+
+LokaScript supports these languages with full grammar transformation:
+
+- **English** (en) - SVO
+- **Spanish** (es) - SVO
+- **Japanese** (ja) - SOV
+- **Korean** (ko) - SOV
+- **Arabic** (ar) - VSO
+- **Chinese** (zh) - SVO
+- **French** (fr) - SVO
+- **German** (de) - SOV
+- **Portuguese** (pt) - SVO
+- **Turkish** (tr) - SOV
+- **Indonesian** (id) - SVO
+- **Swahili** (sw) - SVO
+- **Quechua** (qu) - SOV
+
+For complete multilingual documentation, see:
+
+- [Multilingual Guide](../../apps/docs-site/en/guide/multilingual.md)
+- [Grammar Transformation](../../apps/docs-site/en/guide/grammar.md)
+- [Semantic Parser](../../apps/docs-site/en/guide/semantic-parser.md)
+
+---
+
+## Advanced Patterns
+
+For more advanced patterns, see:
+
+- [Advanced Examples](./ADVANCED.md) - Complex state machines, draggable elements, sortable lists
+- [Cookbook](../../apps/docs-site/en/cookbook/) - Step-by-step recipes with explanations
+- [Live Examples](../../examples/) - Interactive HTML examples you can try
+
+---
+
+## Need JavaScript API?
+
+These examples focus on HTML-first declarative patterns using `_` attributes. If you need to use the JavaScript API programmatically (for framework integrations, build tools, or dynamic compilation), see:
+
+- [API Reference](../../apps/docs-site/en/api/) - Complete JavaScript API documentation
+- [hyperscript Object](../../apps/docs-site/en/api/hyperscript.md) - Main API methods
+- [compile()](../../apps/docs-site/en/api/compile.md) - Compilation API
+- [execute()](../../apps/docs-site/en/api/execute.md) - Execution API

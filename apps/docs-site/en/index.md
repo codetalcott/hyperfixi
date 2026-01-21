@@ -34,9 +34,37 @@ import HyperscriptPlayground from '../.vitepress/theme/components/HyperscriptPla
 
 ## Try It Now
 
+Experience hyperscript in your native language:
+
+### English
+
 <HyperscriptPlayground
   initial-code="on click toggle .active on me"
   initial-html='<button class="demo-button">Toggle Active</button>'
+/>
+
+### Spanish
+
+<HyperscriptPlayground
+  initial-code="en clic alternar .active en yo"
+  initial-html='<button class="demo-button">Alternar Activo</button>'
+  initial-language="es"
+/>
+
+### Japanese
+
+<HyperscriptPlayground
+  initial-code="クリック で 切り替え .active を 私"
+  initial-html='<button class="demo-button">アクティブを切り替え</button>'
+  initial-language="ja"
+/>
+
+### Arabic (RTL)
+
+<HyperscriptPlayground
+  initial-code="عند النقر بدّل .active على أنا"
+  initial-html='<button class="demo-button" dir="rtl">تبديل النشط</button>'
+  initial-language="ar"
 />
 
 ## Quick Start

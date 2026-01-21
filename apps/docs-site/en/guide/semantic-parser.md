@@ -2,6 +2,38 @@
 
 The semantic parser understands hyperscript in 23 languages without translating to English first.
 
+## Using Multiple Languages in HTML
+
+The semantic parser works automatically when you use hyperscript in different languages:
+
+**English:**
+
+```html
+<button _="on click toggle .active on me">Toggle</button>
+```
+
+**Japanese:**
+
+```html
+<button _="クリック で 切り替え .active を 私">トグル</button>
+```
+
+**Spanish:**
+
+```html
+<button _="en clic alternar .active en yo">Alternar</button>
+```
+
+**Arabic (RTL):**
+
+```html
+<button _="عند النقر بدّل .active على أنا" dir="rtl">تبديل</button>
+```
+
+All of these work identically - the parser understands the semantic meaning regardless of language or word order.
+
+**See also:** [Interactive Examples](/en/cookbook/) | [Multilingual Guide](/en/guide/multilingual)
+
 ## How It Works
 
 Traditional approach:
