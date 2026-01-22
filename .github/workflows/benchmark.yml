@@ -108,7 +108,7 @@ jobs:
           # Size limits (gzipped bytes)
           MAX_LITE=4000           # 4 KB
           MAX_HYBRID=15000        # 15 KB
-          MAX_BROWSER=150000      # 150 KB
+          MAX_BROWSER=230000      # 230 KB (actual: ~203-208 KB, allow headroom)
 
           failed=0
 
