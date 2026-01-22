@@ -15,7 +15,7 @@ const BASE_URL = 'http://127.0.0.1:3000';
 
 test.describe('Cross-Package Integration @comprehensive', () => {
   test.describe('Browser Bundle htmx Exports', () => {
-    test('hyperfixi-browser.js exports htmx functionality', async ({ page }) => {
+    test('lokascript-browser.js exports htmx functionality', async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
 

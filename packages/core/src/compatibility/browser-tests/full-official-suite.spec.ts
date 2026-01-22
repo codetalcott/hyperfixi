@@ -290,7 +290,7 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
 
     // Verify both HyperFixi and evalHyperScript are loaded
     await page.evaluate(() => {
-      if (typeof window.hyperfixi === 'undefined') {
+      if (typeof window.lokascript === 'undefined') {
         throw new Error('HyperFixi browser bundle not loaded properly');
       }
       if (typeof window.evalHyperScript === 'undefined') {

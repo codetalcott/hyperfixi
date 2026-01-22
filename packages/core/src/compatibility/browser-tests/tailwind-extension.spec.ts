@@ -19,7 +19,7 @@ test.describe('Tailwind Extension Compatibility Tests @comprehensive', () => {
       <html>
       <head>
         <script src="https://unpkg.com/_hyperscript@0.9.12"></script>
-        <script src="http://localhost:8080/dist/hyperfixi-browser.js"></script>
+        <script src="http://localhost:8080/dist/lokascript-browser.js"></script>
         <style>
           .test-area { margin: 20px; padding: 10px; border: 1px solid #ccc; }
           .hidden { display: none !important; }

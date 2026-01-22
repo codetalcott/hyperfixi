@@ -19,7 +19,7 @@ test.describe('Multi-Word Command Parser (Session 32)', () => {
 <head>
   <meta charset="UTF-8">
   <title>Multi-Word Command Test</title>
-  <script src="/dist/hyperfixi-browser.js"></script>
+  <script src="/dist/lokascript-browser.js"></script>
 </head>
 <body>
   <div id="results"></div>
