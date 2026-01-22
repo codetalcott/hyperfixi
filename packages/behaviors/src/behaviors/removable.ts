@@ -31,7 +31,7 @@ export async function registerRemovable(hyperfixi?: LokaScriptInstance): Promise
     );
   }
 
-  const result = hf.compile(removableSchema.source, { traditional: true });
+  const result = hf.compileSync(removableSchema.source, { traditional: true });
 
   if (!result.ok) {
     throw new Error(`Failed to compile Removable behavior: ${JSON.stringify(result.errors)}`);

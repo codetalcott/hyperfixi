@@ -31,7 +31,7 @@ export async function registerToggleable(hyperfixi?: LokaScriptInstance): Promis
     );
   }
 
-  const result = hf.compile(toggleableSchema.source, { traditional: true });
+  const result = hf.compileSync(toggleableSchema.source, { traditional: true });
 
   if (!result.ok) {
     throw new Error(`Failed to compile Toggleable behavior: ${JSON.stringify(result.errors)}`);

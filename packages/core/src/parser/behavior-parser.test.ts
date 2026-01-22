@@ -466,3 +466,50 @@ describe('Behavior Parser', () => {
     });
   });
 });
+
+describe('parameter as from target', () => {
+  it('should parse behavior with parameter used in from clause', () => {
+    const input = `
+        behavior Test(trigger)
+          on click from trigger
+            toggle .active
+          end
+        end
+      `;
+
+    const result = parse(input);
+
+    if (!result.success) {
+      console.error('Parse failed with error:', result.error?.message);
+      console.error('Node:', JSON.stringify(result.node, null, 2));
+    }
+
+    expect(result.success).toBe(true);
+    expect(result.node!.type).toBe('behavior');
+
+    const behavior = result.node as BehaviorNode;
+    expect(behavior.name).toBe('Test');
+    expect(behavior.parameters).toEqual(['trigger']);
+    expect(behavior.eventHandlers).toHaveLength(1);
+    expect(behavior.eventHandlers[0].event).toBe('click');
+    expect(behavior.eventHandlers[0].target).toBe('trigger');
+  });
+
+  it('should parse behavior with trigger parameter and trigger command', () => {
+    const input = `
+        behavior Test(trigger)
+          on click from trigger
+            trigger myevent
+          end
+        end
+      `;
+
+    const result = parse(input);
+
+    if (!result.success) {
+      console.error('Parse failed with error:', result.error?.message);
+    }
+
+    expect(result.success).toBe(true);
+  });
+});

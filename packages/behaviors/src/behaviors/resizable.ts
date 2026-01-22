@@ -31,7 +31,7 @@ export async function registerResizable(hyperfixi?: LokaScriptInstance): Promise
     );
   }
 
-  const result = hf.compile(resizableSchema.source, { traditional: true });
+  const result = hf.compileSync(resizableSchema.source, { traditional: true });
 
   if (!result.ok) {
     throw new Error(`Failed to compile Resizable behavior: ${JSON.stringify(result.errors)}`);

@@ -36,7 +36,7 @@ export async function registerDraggable(hyperfixi?: LokaScriptInstance): Promise
     );
   }
 
-  const result = hf.compile(draggableSchema.source, { traditional: true });
+  const result = hf.compileSync(draggableSchema.source, { traditional: true });
 
   if (!result.ok) {
     throw new Error(`Failed to compile Draggable behavior: ${JSON.stringify(result.errors)}`);

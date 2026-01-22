@@ -48,7 +48,7 @@ import {
 } from '@lokascript/semantic';
 
 // Import CompileResult type for browser bundle
-import type { CompileResult } from '../api/hyperscript-api';
+import type { CompileResult, NewCompileOptions } from '../api/hyperscript-api';
 
 // LokaScript Browser API Type
 interface LokaScriptBrowserAPI {
@@ -56,7 +56,8 @@ interface LokaScriptBrowserAPI {
   evalHyperScriptAsync: typeof evalHyperScriptAsync;
   evalHyperScriptSmart: typeof evalHyperScriptSmart;
   tailwindExtension: typeof tailwindExtension;
-  compile: (code: string) => CompileResult;
+  compile: (code: string, options?: NewCompileOptions) => CompileResult;
+  compileSync: (code: string, options?: NewCompileOptions) => CompileResult;
   compileMultilingual: (code: string, language: string) => Promise<CompileResult>;
   execute: typeof hyperscript.execute;
   run: (code: string, context?: any) => Promise<unknown>;
@@ -125,9 +126,9 @@ const lokascriptAPI = {
   evaluate: evalHyperScript,
 
   // Full hyperscript API for advanced usage
-  compile: (code: string) => {
-    debug.parse('BROWSER-BUNDLE: lokascript.compile() called', { code });
-    const result = hyperscript.compileSync(code);
+  compile: (code: string, options?: NewCompileOptions) => {
+    debug.parse('BROWSER-BUNDLE: lokascript.compile() called', { code, options });
+    const result = hyperscript.compileSync(code, options);
     debug.parse('BROWSER-BUNDLE: hyperscript.compileSync() returned', { result });
 
     // For compatibility with _hyperscript, throw an error if compilation fails
@@ -138,6 +139,10 @@ const lokascriptAPI = {
     }
 
     return result;
+  },
+  // Direct access to compileSync for behaviors and advanced usage
+  compileSync: (code: string, options?: NewCompileOptions) => {
+    return hyperscript.compileSync(code, options);
   },
   // Compatibility wrappers for deprecated v1 API
   compileMultilingual: async (code: string, language: string) => {

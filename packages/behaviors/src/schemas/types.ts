@@ -80,16 +80,16 @@ export interface BehaviorModule {
 }
 
 /**
- * Minimal HyperFixi instance interface for behavior registration.
+ * Minimal LokaScript instance interface for behavior registration.
  */
 export interface LokaScriptInstance {
-  compile: (
+  compileSync: (
     code: string,
-    options?: { disableSemanticParsing?: boolean }
+    options?: { traditional?: boolean; language?: string }
   ) => {
-    success: boolean;
+    ok: boolean;
     ast?: unknown;
-    errors?: unknown[];
+    errors?: Array<{ message: string; line?: number; column?: number }>;
   };
   execute: (ast: unknown, ctx: unknown) => Promise<unknown>;
   createContext?: () => { locals: Map<string, unknown>; globals: Map<string, unknown> };

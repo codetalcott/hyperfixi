@@ -2521,6 +2521,9 @@ export class Parser {
       this.consume(')', "Expected ')' after behavior parameters");
     }
 
+    // Create parameter set for checking in event handler parsing
+    const parameterSet = new Set(parameters);
+
     // Parse behavior body: event handlers and optional init block
     const eventHandlers: EventHandlerNode[] = [];
     let initBlock: ASTNode | undefined;
@@ -2575,11 +2578,17 @@ export class Parser {
           }
 
           // Capture the target identifier/selector
-          if (!this.isAtEnd() && !this.checkIsCommand()) {
+          // Allow behavior parameters even if they match command names
+          if (!this.isAtEnd()) {
             const targetToken = this.peek();
-            targetTokens.push(targetToken.value);
-            eventSource = targetToken.value;
-            this.advance();
+            const isParameter = parameterSet.has(targetToken.value);
+            const isCommand = this.checkIsCommand();
+
+            if (!isCommand || isParameter) {
+              targetTokens.push(targetToken.value);
+              eventSource = targetToken.value;
+              this.advance();
+            }
           }
         }
 

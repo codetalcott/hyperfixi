@@ -32,7 +32,7 @@ export async function registerSortable(hyperfixi?: LokaScriptInstance): Promise<
     );
   }
 
-  const result = hf.compile(sortableSchema.source, { traditional: true });
+  const result = hf.compileSync(sortableSchema.source, { traditional: true });
 
   if (!result.ok) {
     throw new Error(`Failed to compile Sortable behavior: ${JSON.stringify(result.errors)}`);
