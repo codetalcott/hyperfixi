@@ -36,18 +36,18 @@
       "import": "./dist/generator.mjs",
       "require": "./dist/generator.js"
     },
-    "./prism-hyperfixi": {
-      "types": "./dist/prism-hyperfixi/index.d.ts",
-      "import": "./dist/prism-hyperfixi/index.mjs",
-      "require": "./dist/prism-hyperfixi/index.js"
+    "./prism-hyperscript-i18n": {
+      "types": "./dist/prism-hyperscript-i18n/index.d.ts",
+      "import": "./dist/prism-hyperscript-i18n/index.mjs",
+      "require": "./dist/prism-hyperscript-i18n/index.js"
     },
-    "./prism-hyperfixi/browser": {
-      "types": "./dist/prism-hyperfixi/browser.d.ts",
-      "import": "./dist/prism-hyperfixi/browser.mjs",
-      "require": "./dist/prism-hyperfixi/browser.js"
+    "./prism-hyperscript-i18n/browser": {
+      "types": "./dist/prism-hyperscript-i18n/browser.d.ts",
+      "import": "./dist/prism-hyperscript-i18n/browser.mjs",
+      "require": "./dist/prism-hyperscript-i18n/browser.js"
     },
-    "./prism-hyperfixi/themes/light.css": "./src/prism-hyperfixi/themes/light.css",
-    "./prism-hyperfixi/themes/dark.css": "./src/prism-hyperfixi/themes/dark.css"
+    "./prism-hyperscript-i18n/themes/light.css": "./src/prism-hyperscript-i18n/themes/light.css",
+    "./prism-hyperscript-i18n/themes/dark.css": "./src/prism-hyperscript-i18n/themes/dark.css"
   },
   "scripts": {
     "build": "tsup",

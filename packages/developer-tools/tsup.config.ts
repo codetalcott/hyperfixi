@@ -34,7 +34,7 @@ export default defineConfig([
       generator: 'src/generator.ts',
       'dev-server': 'src/dev-server.ts',
       cli: 'src/cli.ts',
-      'prism-hyperfixi/index': 'src/prism-hyperfixi/index.ts',
+      'prism-hyperscript-i18n/index': 'src/prism-hyperscript-i18n/index.ts',
     },
     format: ['cjs', 'esm'],
     dts: true,
@@ -73,7 +73,7 @@ export default defineConfig([
   // Browser build - bundle @lokascript/i18n inline
   {
     entry: {
-      'prism-hyperfixi/browser': 'src/prism-hyperfixi/browser.ts',
+      'prism-hyperscript-i18n/browser': 'src/prism-hyperscript-i18n/browser.ts',
     },
     format: ['cjs', 'esm'],
     dts: false, // Skip dts for browser build since it will be bundled differently
