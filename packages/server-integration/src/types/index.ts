@@ -1,7 +1,7 @@
 /**
  * Server Integration Types
  *
- * Exports all server-specific types for HyperFixi server-side integration.
+ * Exports all server-specific types for LokaScript server-side integration.
  */
 
 export type {

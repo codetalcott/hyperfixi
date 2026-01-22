@@ -1,7 +1,7 @@
--- HyperFixi API Database Schema
+-- LokaScript API Database Schema
 -- PostgreSQL 14+
 --
--- This schema supports the HyperFixi compilation service with:
+-- This schema supports the LokaScript compilation service with:
 -- - API key authentication with tiered access (free/pro/team)
 -- - Usage tracking and monthly aggregates for billing
 -- - Rate limiting event logging

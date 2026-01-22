@@ -58,7 +58,7 @@ export class StripeClient {
 
     // Create new meter
     const meter = await this.stripe.billing.meters.create({
-      display_name: 'HyperFixi Compilations',
+      display_name: 'LokaScript Compilations',
       event_name: METER_EVENT_NAME,
       default_aggregation: { formula: 'sum' },
     });
@@ -97,7 +97,7 @@ export class StripeClient {
       email,
       name,
       metadata: {
-        source: 'hyperfixi_api',
+        source: 'lokascript_api',
       },
     });
   }

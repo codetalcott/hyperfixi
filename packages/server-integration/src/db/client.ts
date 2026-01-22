@@ -1,7 +1,7 @@
 /**
  * PostgreSQL Database Client
  *
- * Provides typed database operations for the HyperFixi API.
+ * Provides typed database operations for the LokaScript API.
  * Uses pg (node-postgres) for connection management.
  */
 

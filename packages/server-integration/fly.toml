@@ -1,7 +1,7 @@
-# HyperFixi API - Fly.io Configuration
+# LokaScript API - Fly.io Configuration
 # Deploy with: fly deploy
 
-app = "hyperfixi-api"
+app = "lokascript-api"
 primary_region = "iad"
 
 [build]

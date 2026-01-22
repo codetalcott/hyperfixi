@@ -1,4 +1,4 @@
-# HyperFixi API Server Dockerfile
+# LokaScript API Server Dockerfile
 # Multi-stage build for minimal production image
 
 # Build stage

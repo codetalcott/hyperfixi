@@ -1,5 +1,5 @@
 /**
- * HyperFixi API Server Entry Point
+ * LokaScript API Server Entry Point
  *
  * Production-ready server with:
  * - API key authentication
@@ -52,7 +52,7 @@ function loadConfig(): ServiceConfig & {
 async function main() {
   const config = loadConfig();
 
-  console.log('Starting HyperFixi API Server...');
+  console.log('Starting LokaScript API Server...');
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
   // Initialize database (optional in dev mode)

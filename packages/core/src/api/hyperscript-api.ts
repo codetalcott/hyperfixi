@@ -1,6 +1,26 @@
 /**
- * Main Hyperscript API
- * Provides a clean, type-safe public interface for hyperscript compilation and execution
+ * LokaScript Hyperscript API Implementation
+ *
+ * NAMING CLARIFICATION:
+ * This file is named "hyperscript-api.ts" because it implements the hyperscript
+ * language specification and maintains compatibility with the _hyperscript ecosystem.
+ * However, this is NOT the original _hyperscript implementation from BigSky Software.
+ *
+ * This is LokaScript's own modular, typed implementation that extends hyperscript with:
+ * - Multilingual support (23 languages with SOV/VSO/SVO grammar transformation)
+ * - Semantic-first parsing with confidence scoring
+ * - Type-safe API with modern TypeScript patterns
+ * - Modular architecture with tree-shakeable bundles
+ * - ~85% compatibility with official _hyperscript syntax
+ *
+ * The name "hyperscript" refers to the LANGUAGE being implemented, not the original
+ * library. Think of it like "javascript-api.ts" for a JS engine - the name describes
+ * what it parses/executes, not which implementation it is.
+ *
+ * For external facing APIs, we use "lokascript" (see lokascript-api.ts).
+ * For internal implementation, we use "hyperscript" to denote the language spec.
+ *
+ * Provides a clean, type-safe public interface for hyperscript compilation and execution.
  */
 
 import { parse as parseToResult } from '../parser/parser';

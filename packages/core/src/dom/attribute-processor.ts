@@ -149,7 +149,7 @@ export class AttributeProcessor {
     const targets = document.querySelectorAll(selector);
 
     if (targets.length === 0) {
-      console.warn(`[HyperFixi] Script with for="${selector}" found no matching elements`);
+      console.warn(`[LokaScript] Script with for="${selector}" found no matching elements`);
       return;
     }
 
@@ -165,7 +165,7 @@ export class AttributeProcessor {
       if (!compilationResult.ok) {
         debug.parse(`ATTR: Script for="${selector}" compilation failed:`, compilationResult.errors);
         console.error(
-          `[HyperFixi] Script for="${selector}" compilation failed:`,
+          `[LokaScript] Script for="${selector}" compilation failed:`,
           compilationResult.errors
         );
         return;
@@ -181,7 +181,7 @@ export class AttributeProcessor {
 
       debug.parse(`SCRIPT: Executed for="${selector}" on ${targets.length} element(s)`);
     } catch (error) {
-      console.error(`[HyperFixi] Error processing script for="${selector}":`, error);
+      console.error(`[LokaScript] Error processing script for="${selector}":`, error);
     }
   }
 
