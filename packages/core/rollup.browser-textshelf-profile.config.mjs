@@ -3,7 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
 /**
- * HyperFixi TextShelf Profile Bundle
+ * LokaScript TextShelf Profile Bundle
  *
  * Custom tree-shaken bundle for projects/textshelf.
  * Uses the new createRuntime() tree-shaking architecture.
@@ -32,9 +32,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-textshelf-profile.ts',
   output: {
-    file: 'dist/hyperfixi-textshelf.js',
+    file: 'dist/lokascript-textshelf.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: false
   },
   plugins: [

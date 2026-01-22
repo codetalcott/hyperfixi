@@ -32,7 +32,7 @@ export default [
       {
         file: 'dist/index.min.js', // Minified UMD for browser
         format: 'umd',
-        name: 'HyperFixiCore',
+        name: 'LokaScriptCore',
         plugins: [terser()],
         sourcemap: true,
         inlineDynamicImports: true,
@@ -75,6 +75,6 @@ export default [
       },
     ],
     plugins: commonPlugins,
-    external: ['@hyperfixi/semantic'],
+    external: ['@lokascript/semantic'],
   },
 ];

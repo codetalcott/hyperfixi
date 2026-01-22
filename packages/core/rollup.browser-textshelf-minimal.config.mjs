@@ -3,7 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
 /**
- * HyperFixi TextShelf Minimal Bundle
+ * LokaScript TextShelf Minimal Bundle
  *
  * Ultra-lightweight bundle following the hybrid-complete pattern.
  * Only includes 10 commands TextShelf actually uses.
@@ -13,9 +13,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-textshelf-minimal.ts',
   output: {
-    file: 'dist/hyperfixi-textshelf-minimal.js',
+    file: 'dist/lokascript-textshelf-minimal.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: false
   },
   plugins: [

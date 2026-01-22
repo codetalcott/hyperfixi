@@ -3,7 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
 /**
- * HyperFixi Hybrid Complete Bundle
+ * LokaScript Hybrid Complete Bundle
  *
  * Combines the best of hybrid and hybrid-lite:
  * - Full recursive descent parser with operator precedence (from hybrid)
@@ -47,9 +47,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-hybrid-complete.ts',
   output: {
-    file: 'dist/hyperfixi-hybrid-complete.js',
+    file: 'dist/lokascript-hybrid-complete.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: false
   },
   plugins: [

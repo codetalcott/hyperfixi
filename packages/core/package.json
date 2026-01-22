@@ -14,7 +14,7 @@
     },
     "./browser": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/hyperfixi-browser.js"
+      "default": "./dist/lokascript-browser.js"
     },
     "./browser/multilingual": {
       "types": "./dist/index.d.ts",
@@ -22,23 +22,23 @@
     },
     "./browser/minimal": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/hyperfixi-browser-minimal.js"
+      "default": "./dist/lokascript-browser-minimal.js"
     },
     "./browser/standard": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/hyperfixi-browser-standard.js"
+      "default": "./dist/lokascript-browser-standard.js"
     },
     "./browser/lite": {
-      "default": "./dist/hyperfixi-lite.js"
+      "default": "./dist/lokascript-lite.js"
     },
     "./browser/lite-plus": {
-      "default": "./dist/hyperfixi-lite-plus.js"
+      "default": "./dist/lokascript-lite-plus.js"
     },
     "./browser/hybrid-complete": {
-      "default": "./dist/hyperfixi-hybrid-complete.js"
+      "default": "./dist/lokascript-hybrid-complete.js"
     },
     "./browser/hybrid-hx": {
-      "default": "./dist/hyperfixi-hybrid-hx.js"
+      "default": "./dist/lokascript-hybrid-hx.js"
     },
     "./commands": {
       "types": "./dist/commands/index.d.ts",
@@ -86,7 +86,7 @@
       "require": "./dist/parser/regex-parser.js"
     },
     "./browser/modular": {
-      "default": "./dist/hyperfixi-modular.js"
+      "default": "./dist/lokascript-modular.js"
     },
     "./behaviors": {
       "types": "./dist/behaviors/index.d.ts",
@@ -136,6 +136,7 @@
     "build": "rollup -c && rollup -c rollup.parser-modules.config.mjs && tsc -p tsconfig.build.json",
     "build:types": "tsc -p tsconfig.build.json",
     "build:browser": "rollup -c rollup.browser.config.mjs",
+    "postbuild:browser": "node scripts/create-bundle-aliases.mjs",
     "build:browser:dev": "rollup -c rollup.browser.dev.config.mjs",
     "build:browser:prod": "rollup -c rollup.browser.prod.config.mjs",
     "build:browser:llm": "rollup -c rollup.browser.llm.config.mjs",
@@ -228,7 +229,7 @@
     "typescript",
     "ast"
   ],
-  "author": "HyperFixi Contributors",
+  "author": "LokaScript Contributors",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -5,14 +5,14 @@ import commonjs from '@rollup/plugin-commonjs';
 /**
  * Development browser bundle - no minification for easier debugging
  * Use: npx rollup -c rollup.browser-dev.config.mjs
- * Output: dist/hyperfixi-browser-dev.js
+ * Output: dist/lokascript-browser-dev.js
  */
 export default {
   input: 'src/compatibility/browser-bundle.ts',
   output: {
-    file: 'dist/hyperfixi-browser-dev.js',
+    file: 'dist/lokascript-browser-dev.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: true,
     inlineDynamicImports: true
   },

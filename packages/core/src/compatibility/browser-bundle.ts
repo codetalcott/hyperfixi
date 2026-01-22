@@ -247,8 +247,22 @@ if (typeof window !== 'undefined') {
 
   // Primary: lokascript (new name reflecting multilingual world/realm scope)
   window.lokascript = lokascriptAPI;
-  // Compatibility: hyperfixi (deprecated, use lokascript)
-  window.hyperfixi = lokascriptAPI;
+
+  // Deprecated alias with warning (remove in v2.0.0)
+  if (typeof window.hyperfixi === 'undefined') {
+    Object.defineProperty(window, 'hyperfixi', {
+      get() {
+        console.warn(
+          '[DEPRECATED] window.hyperfixi is deprecated and will be removed in v2.0.0. ' +
+            'Please use window.lokascript instead. ' +
+            'See https://github.com/lokascript/lokascript/blob/main/MIGRATION.md'
+        );
+        return window.lokascript;
+      },
+      enumerable: true,
+      configurable: true,
+    });
+  }
 
   // Also expose functions as direct globals for test compatibility
   // This allows tests to use `evalHyperScript()` directly instead of `hyperfixi.evalHyperScript()`

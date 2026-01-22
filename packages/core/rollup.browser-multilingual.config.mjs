@@ -22,8 +22,8 @@ export default {
     sourcemap: true,
     inlineDynamicImports: true,
   },
-  // Mark @hyperfixi/semantic as external - it's loaded separately
-  external: ['@hyperfixi/semantic'],
+  // Mark @lokascript/semantic as external - it's loaded separately
+  external: ['@lokascript/semantic'],
   plugins: [
     nodeResolve({
       browser: true,

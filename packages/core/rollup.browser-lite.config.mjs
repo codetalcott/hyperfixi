@@ -3,7 +3,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
 /**
- * HyperFixi Lite Bundle
+ * LokaScript Lite Bundle
  *
  * Ultra-minimal bundle using regex-based parser instead of full AST.
  * Target: ~20-25 KB gzipped (matching original hyperscript's ~18 KB)
@@ -16,9 +16,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-lite.ts',
   output: {
-    file: 'dist/hyperfixi-lite.js',
+    file: 'dist/lokascript-lite.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: false
   },
   plugins: [

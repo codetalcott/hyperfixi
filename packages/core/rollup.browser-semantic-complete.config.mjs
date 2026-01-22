@@ -6,7 +6,7 @@ import terser from '@rollup/plugin-terser';
 /**
  * Rollup config for semantic-complete bundle
  *
- * This bundle INLINES @hyperfixi/semantic (unlike the multilingual bundle).
+ * This bundle INLINES @lokascript/semantic (unlike the multilingual bundle).
  * Provides single-script deployment for multilingual support.
  *
  * Expected size: ~450-500 KB (runtime + semantic parser combined)
@@ -18,11 +18,11 @@ export default {
   output: {
     file: 'dist/hyperfixi-semantic-complete.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: true,
     inlineDynamicImports: true,
   },
-  // NO EXTERNALS - @hyperfixi/semantic is bundled inline
+  // NO EXTERNALS - @lokascript/semantic is bundled inline
   plugins: [
     nodeResolve({
       browser: true,

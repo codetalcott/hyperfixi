@@ -12,14 +12,14 @@ import terser from '@rollup/plugin-terser';
  * - Formatted for better code comprehension by AI agents
  *
  * Use this bundle when providing context to LLM agents or for IDE tooling.
- * For production web apps, use hyperfixi-browser.prod.js instead.
+ * For production web apps, use lokascript-browser.prod.js instead.
  */
 export default {
   input: 'src/compatibility/browser-bundle.ts',
   output: {
-    file: 'dist/hyperfixi-browser.llm.js',
+    file: 'dist/lokascript-browser.llm.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: true,
     inlineDynamicImports: true,
   },

@@ -12,9 +12,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-minimal-v2.ts',
   output: {
-    file: 'dist/hyperfixi-browser-minimal.js',
+    file: 'dist/lokascript-browser-minimal.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: false,  // Disable sourcemap for production
     inlineDynamicImports: true
   },

@@ -5,7 +5,7 @@ import terser from '@rollup/plugin-terser';
 const noTerser = process.env.NO_TERSER === '1';
 
 /**
- * HyperFixi Hybrid-HX Bundle
+ * LokaScript Hybrid-HX Bundle
  *
  * Extends hybrid-complete with htmx attribute compatibility (hx-*).
  * Supports both `_="..."` hyperscript syntax AND htmx-style attributes.
@@ -28,9 +28,9 @@ const noTerser = process.env.NO_TERSER === '1';
 export default {
   input: 'src/compatibility/browser-bundle-hybrid-hx.ts',
   output: {
-    file: 'dist/hyperfixi-hybrid-hx.js',
+    file: 'dist/lokascript-hybrid-hx.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: false
   },
   plugins: [

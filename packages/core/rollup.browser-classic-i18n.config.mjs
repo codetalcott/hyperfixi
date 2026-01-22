@@ -1,11 +1,11 @@
 /**
- * Rollup config for HyperFixi Classic + i18n combined bundle
+ * Rollup config for LokaScript Classic + i18n combined bundle
  *
  * This bundle includes:
  * - Classic _hyperscript runtime (37 commands)
  * - Full i18n support (12 locales + grammar transformation)
  *
- * Output: hyperfixi-browser-classic-i18n.js (~400 KB, ~105 KB gzipped)
+ * Output: lokascript-browser-classic-i18n.js (~400 KB, ~105 KB gzipped)
  */
 
 import typescript from '@rollup/plugin-typescript';
@@ -21,9 +21,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default {
   input: 'src/compatibility/browser-bundle-classic-i18n.ts',
   output: {
-    file: 'dist/hyperfixi-browser-classic-i18n.js',
+    file: 'dist/lokascript-browser-classic-i18n.js',
     format: 'iife',
-    name: 'hyperfixi',
+    name: 'lokascript',
     sourcemap: true,
     inlineDynamicImports: true,
   },
