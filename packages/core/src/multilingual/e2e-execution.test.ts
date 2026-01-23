@@ -87,7 +87,7 @@ describe('Toggle Command E2E', () => {
   const sovTestCases = [
     { lang: 'ja', code: '.active を トグル' },
     { lang: 'ko', code: '.active 를 토글' },
-    { lang: 'tr', code: '.active değiştir' },
+    { lang: 'tr', code: '.active i değiştir' }, // Accusative marker 'i' required
   ];
 
   // V2 languages
