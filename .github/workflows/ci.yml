@@ -104,6 +104,9 @@ jobs:
           name: build-artifacts
           path: packages/
 
+      - name: Rebuild workspace links
+        run: npm install --workspace-concurrency=1
+
       - name: Run ESLint (public packages)
         run: |
           npm run lint --prefix packages/core --if-present
@@ -152,6 +155,9 @@ jobs:
           name: build-artifacts
           path: packages/
 
+      - name: Rebuild workspace links
+        run: npm install --workspace-concurrency=1
+
       - name: Test core
         run: npm test --prefix packages/core -- --run
 
@@ -194,6 +200,9 @@ jobs:
         with:
           name: build-artifacts
           path: packages/
+
+      - name: Rebuild workspace links
+        run: npm install --workspace-concurrency=1
 
       - name: Generate coverage - core
         run: npm run test:coverage --prefix packages/core
@@ -262,6 +271,9 @@ jobs:
           name: build-artifacts
           path: packages/
 
+      - name: Rebuild workspace links
+        run: npm install --workspace-concurrency=1
+
       - name: Run Playwright tests
         run: npx playwright test --project=quick
         working-directory: packages/core
@@ -302,6 +314,9 @@ jobs:
         with:
           name: build-artifacts
           path: packages/
+
+      - name: Rebuild workspace links
+        run: npm install --workspace-concurrency=1
 
       - name: Populate patterns database
         run: npm run populate --prefix packages/patterns-reference
@@ -355,6 +370,9 @@ jobs:
         with:
           name: build-artifacts
           path: packages/
+
+      - name: Rebuild workspace links
+        run: npm install --workspace-concurrency=1
 
       - name: Analyze bundle sizes
         run: |
@@ -452,6 +470,9 @@ jobs:
         with:
           name: build-artifacts
           path: packages/
+
+      - name: Rebuild workspace links
+        run: npm install --workspace-concurrency=1
 
       - name: Run benchmarks
         run: npm run bench:run --prefix packages/core
