@@ -123,6 +123,50 @@ npx http-server . -p 3000 -c-1
 # http://127.0.0.1:3000/packages/core/compatibility-test.html   # Side-by-side comparison
 ```
 
+## CI/CD Workflows
+
+### Consolidated CI Workflow
+
+As of 2026-01-23, all CI testing has been consolidated into a single `.github/workflows/ci.yml` workflow for efficiency.
+
+**Key features:**
+
+- **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
+- **Parallel execution**: 8 jobs run in parallel after build completes
+- **Matrix testing**: Node 18, 20, 22
+- **Smart failure handling**: Known failures (behaviors, SOV/VSO languages) marked with `continue-on-error`
+
+**Jobs:**
+
+1. `build` - Build all packages once, upload artifacts
+2. `lint-typecheck` - ESLint + TypeScript checks
+3. `unit-tests` - Vitest tests across Node matrix
+4. `coverage` - Code coverage reports (Codecov)
+5. `browser-tests` - Playwright browser tests
+6. `multilingual-validation` - Test 20 languages (23 total, 3 experimental)
+7. `bundle-size` - Analyze and check bundle size limits
+8. `benchmarks` - Performance benchmarks (main branch only)
+
+**Triggers:**
+
+- Push to `main` or `develop`
+- Pull requests to `main` or `develop`
+- Concurrency: Cancels in-progress runs on new push
+
+**Known Issues:**
+
+- Behavior tests: Draggable, Sortable, Resizable not fully implemented (continue-on-error)
+- SOV/VSO languages: Japanese (11%), Korean (7%), Turkish (2%) have low pass rates (continue-on-error)
+
+**Other Workflows:**
+
+- `.github/workflows/publish.yml` - Manual npm publishing (workflow_dispatch)
+- `.github/workflows/pre-publish-check.yml` - Pre-publish validation (workflow_dispatch)
+
+**Archived Workflows:**
+
+- See `.github/workflows/archive/README.md` for previously consolidated workflows
+
 ## Architecture
 
 ### Command Pattern
