@@ -83,6 +83,12 @@ export const thaiProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'โฟกัส', alternatives: [], normalized: 'focus' },
     blur: { primary: 'เบลอ', alternatives: [], normalized: 'blur' },
+    // Common event names (for event handler patterns)
+    click: { primary: 'คลิก', normalized: 'click' },
+    hover: { primary: 'โฮเวอร์', alternatives: ['วางเมาส์'], normalized: 'hover' },
+    submit: { primary: 'ส่ง', alternatives: ['ส่งข้อมูล'], normalized: 'submit' },
+    input: { primary: 'ป้อน', alternatives: ['กรอก'], normalized: 'input' },
+    change: { primary: 'เปลี่ยน', alternatives: ['เปลี่ยนแปลง'], normalized: 'change' },
     // Navigation
     go: { primary: 'ไป', alternatives: ['ไปที่'], normalized: 'go' },
     // Async
@@ -128,5 +134,10 @@ export const thaiProfile: LanguageProfile = {
   eventHandler: {
     keyword: { primary: 'เมื่อ', alternatives: ['ตอน'], normalized: 'on' },
     sourceMarker: { primary: 'จาก', position: 'before' },
+    // Event marker: เมื่อ (when), used in SVO pattern
+    // Pattern: เมื่อ [event] [verb] [patient] ใน [destination?]
+    // Example: เมื่อ คลิก สลับ .active ใน #button
+    eventMarker: { primary: 'เมื่อ', alternatives: ['ตอน'], position: 'before' },
+    temporalMarkers: ['เมื่อ', 'ตอน'], // temporal conjunctions (when)
   },
 };
