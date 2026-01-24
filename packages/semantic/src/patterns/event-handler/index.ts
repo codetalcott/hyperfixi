@@ -14,6 +14,7 @@ import { getEventHandlerPatternsDe } from './de';
 import { getEventHandlerPatternsEn } from './en';
 import { getEventHandlerPatternsEs } from './es';
 import { getEventHandlerPatternsFr } from './fr';
+import { getEventHandlerPatternsHe } from './he';
 import { getEventHandlerPatternsHi } from './hi';
 import { getEventHandlerPatternsId } from './id';
 import { getEventHandlerPatternsIt } from './it';
@@ -49,6 +50,8 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
       return getEventHandlerPatternsEs();
     case 'fr':
       return getEventHandlerPatternsFr();
+    case 'he':
+      return getEventHandlerPatternsHe();
     case 'hi':
       return getEventHandlerPatternsHi();
     case 'id':
@@ -95,6 +98,7 @@ export { getEventHandlerPatternsDe } from './de';
 export { getEventHandlerPatternsEn } from './en';
 export { getEventHandlerPatternsEs } from './es';
 export { getEventHandlerPatternsFr } from './fr';
+export { getEventHandlerPatternsHe } from './he';
 export { getEventHandlerPatternsHi } from './hi';
 export { getEventHandlerPatternsId } from './id';
 export { getEventHandlerPatternsIt } from './it';
@@ -123,6 +127,7 @@ export const eventhandlerPatternLanguages = [
   'en',
   'es',
   'fr',
+  'he',
   'hi',
   'id',
   'it',

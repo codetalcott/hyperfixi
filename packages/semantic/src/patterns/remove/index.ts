@@ -16,6 +16,7 @@ import { getRemovePatternsJa } from './ja';
 import { getRemovePatternsKo } from './ko';
 import { getRemovePatternsMs } from './ms';
 import { getRemovePatternsPl } from './pl';
+import { getRemovePatternsQu } from './qu';
 import { getRemovePatternsRu } from './ru';
 import { getRemovePatternsTh } from './th';
 import { getRemovePatternsTl } from './tl';
@@ -45,6 +46,8 @@ export function getRemovePatternsForLanguage(language: string): LanguagePattern[
       return getRemovePatternsMs();
     case 'pl':
       return getRemovePatternsPl();
+    case 'qu':
+      return getRemovePatternsQu();
     case 'ru':
       return getRemovePatternsRu();
     case 'th':
@@ -73,6 +76,7 @@ export { getRemovePatternsJa } from './ja';
 export { getRemovePatternsKo } from './ko';
 export { getRemovePatternsMs } from './ms';
 export { getRemovePatternsPl } from './pl';
+export { getRemovePatternsQu } from './qu';
 export { getRemovePatternsRu } from './ru';
 export { getRemovePatternsTh } from './th';
 export { getRemovePatternsTl } from './tl';
@@ -93,6 +97,7 @@ export const removePatternLanguages = [
   'ko',
   'ms',
   'pl',
+  'qu',
   'ru',
   'th',
   'tl',

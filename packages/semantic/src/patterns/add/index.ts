@@ -16,6 +16,7 @@ import { getAddPatternsJa } from './ja';
 import { getAddPatternsKo } from './ko';
 import { getAddPatternsMs } from './ms';
 import { getAddPatternsPl } from './pl';
+import { getAddPatternsQu } from './qu';
 import { getAddPatternsRu } from './ru';
 import { getAddPatternsTh } from './th';
 import { getAddPatternsTl } from './tl';
@@ -45,6 +46,8 @@ export function getAddPatternsForLanguage(language: string): LanguagePattern[] {
       return getAddPatternsMs();
     case 'pl':
       return getAddPatternsPl();
+    case 'qu':
+      return getAddPatternsQu();
     case 'ru':
       return getAddPatternsRu();
     case 'th':
@@ -73,6 +76,7 @@ export { getAddPatternsJa } from './ja';
 export { getAddPatternsKo } from './ko';
 export { getAddPatternsMs } from './ms';
 export { getAddPatternsPl } from './pl';
+export { getAddPatternsQu } from './qu';
 export { getAddPatternsRu } from './ru';
 export { getAddPatternsTh } from './th';
 export { getAddPatternsTl } from './tl';
@@ -93,6 +97,7 @@ export const addPatternLanguages = [
   'ko',
   'ms',
   'pl',
+  'qu',
   'ru',
   'th',
   'tl',
