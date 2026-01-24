@@ -153,7 +153,7 @@ export const turkishProfile: LanguageProfile = {
     // Event modifiers (for repeat until event)
     until: { primary: 'kadar', normalized: 'until' },
     event: { primary: 'olay', normalized: 'event' },
-    from: { primary: '-den', alternatives: ['-dan'], normalized: 'from' },
+    from: { primary: 'den', alternatives: ['dan'], normalized: 'from' },
   },
   eventHandler: {
     // Event marker: da/de/ta/te (locative case suffix with vowel harmony), used in SOV pattern

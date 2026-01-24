@@ -726,29 +726,30 @@ describe('Word Order Integration Tests', () => {
       expect(result).toContain('.active を'); // Space before particle
     });
 
-    it('should attach Turkish suffixes correctly', () => {
+    it('should produce spaced Turkish suffixes for tokenization', () => {
       const transformer = new GrammarTransformer('en', 'tr');
       const result = transformer.transform('on click toggle .active');
-      // Turkish uses case suffixes - should be attached without spaces
+      // Turkish uses case suffixes - now with spaces for tokenization
       expect(result).toContain('.active');
-      // Verify suffixes are attached (no space before suffix)
-      expect(result).not.toMatch(/\s-[iae]/); // No space before -i, -a, -e suffixes
+      // Verify suffixes have spaces before them (for tokenization)
+      expect(result).not.toContain('-i'); // No hyphenated suffixes in output
+      expect(result).not.toContain('-e');
     });
 
-    it('should attach Turkish accusative suffix -i to patient', () => {
+    it('should produce spaced Turkish accusative suffix for tokenization', () => {
       const transformer = new GrammarTransformer('en', 'tr');
       const result = transformer.transform('on click toggle .active');
-      // Should be ".activei" not ".active -i"
-      expect(result).toMatch(/\.active[iıuü]/); // Vowel harmony variants
-      expect(result).not.toContain('.active -i');
-      expect(result).not.toContain('.active -ı');
+      // Should have space between patient and accusative marker for tokenization
+      // Output: ".active i" (spaced) so semantic tokenizer can parse it
+      expect(result).toMatch(/\.active [iıuü]/);
     });
 
-    it('should attach Turkish locative suffix -de to event', () => {
+    it('should produce spaced Turkish locative suffix for tokenization', () => {
       const transformer = new GrammarTransformer('en', 'tr');
       const result = transformer.transform('on click toggle .active');
-      // Event "tıklama" should have locative attached: "tıklamade" or "tıklamada"
-      expect(result).toMatch(/tıklama[dD][aAeE]/);
+      // Event should have space before locative marker for tokenization
+      // Output: "tıklama de" (spaced) so semantic tokenizer can parse it
+      expect(result).toMatch(/tıklama [dD][aAeE]/);
     });
   });
 

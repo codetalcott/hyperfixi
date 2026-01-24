@@ -296,29 +296,31 @@ export const turkishProfile: LanguageProfile = {
   canonicalOrder: ['patient', 'event', 'action'],
 
   markers: [
-    // Turkish case suffixes (simplified - real Turkish has vowel harmony)
+    // Turkish case suffixes - using spaced form for tokenization
+    // Note: Real Turkish attaches these as suffixes, but we use spaces
+    // so the semantic tokenizer can properly parse them
     {
-      form: '-i',
+      form: 'i',
       role: 'patient',
       position: 'postposition',
       required: true,
-      alternatives: ['-ı', '-u', '-ü'],
+      alternatives: ['ı', 'u', 'ü'],
     },
     {
-      form: '-e',
+      form: 'e',
       role: 'destination',
       position: 'postposition',
       required: true,
-      alternatives: ['-a'],
+      alternatives: ['a'],
     },
     {
-      form: '-den',
+      form: 'den',
       role: 'source',
       position: 'postposition',
       required: true,
-      alternatives: ['-dan'],
+      alternatives: ['dan'],
     },
-    { form: '-de', role: 'event', position: 'postposition', required: true, alternatives: ['-da'] },
+    { form: 'de', role: 'event', position: 'postposition', required: true, alternatives: ['da'] },
     { form: 'ile', role: 'style', position: 'postposition', required: false },
     { form: 'olarak', role: 'method', position: 'postposition', required: false },
   ],
@@ -487,11 +489,14 @@ export const quechuaProfile: LanguageProfile = {
   canonicalOrder: ['patient', 'source', 'destination', 'event', 'action'],
 
   markers: [
-    { form: '-ta', role: 'patient', position: 'postposition', required: true },
-    { form: '-man', role: 'destination', position: 'postposition', required: true },
-    { form: '-manta', role: 'source', position: 'postposition', required: true },
-    { form: '-pi', role: 'event', position: 'postposition', required: true },
-    { form: '-wan', role: 'style', position: 'postposition', required: false },
+    // Quechua case suffixes - using spaced form for tokenization
+    // Note: Real Quechua attaches these as suffixes, but we use spaces
+    // so the semantic tokenizer can properly parse them
+    { form: 'ta', role: 'patient', position: 'postposition', required: true },
+    { form: 'man', role: 'destination', position: 'postposition', required: true },
+    { form: 'manta', role: 'source', position: 'postposition', required: true },
+    { form: 'pi', role: 'event', position: 'postposition', required: true },
+    { form: 'wan', role: 'style', position: 'postposition', required: false },
     { form: 'hina', role: 'method', position: 'postposition', required: false }, // "as/like"
   ],
 };
