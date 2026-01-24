@@ -77,11 +77,11 @@ describe('Event Handler Patterns', () => {
               expect(node).toBeDefined();
               expect(node.action).toBeDefined();
 
-              // Log success with confidence if available
-              const confidence = (node as any).confidence;
+              // Log success with confidence if available (stored in metadata)
+              const confidence = node.metadata?.confidence;
               console.log(
                 `  ✅ Parsed ${lang} "${testName}": action="${node.action}"` +
-                (confidence ? `, confidence=${confidence.toFixed(2)}` : '')
+                (confidence !== undefined ? `, confidence=${confidence.toFixed(2)}` : '')
               );
             } else {
               console.log(`  ❌ Parse returned null for ${lang}: "${testCode}"`);
@@ -260,7 +260,8 @@ describe('Baseline Metrics (Phase 1.1)', () => {
         try {
           const node = parse(testCode, lang);
           if (node) {
-            const confidence = (node as any).confidence;
+            // Confidence is stored in metadata
+            const confidence = node.metadata?.confidence;
             if (typeof confidence === 'number') {
               confidenceStats[lang].push(confidence);
             }

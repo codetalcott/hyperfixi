@@ -157,6 +157,15 @@ export interface SemanticMetadata {
   readonly sourceText?: string;
   readonly sourcePosition?: SourcePosition;
   readonly patternId?: string;
+  /**
+   * Confidence score for the parse (0-1).
+   * Higher values indicate more certain matches.
+   * - 1.0: Exact match with all roles captured
+   * - 0.8-0.99: High confidence with minor uncertainty (stem matching, optional roles)
+   * - 0.6-0.8: Medium confidence (morphological normalization, defaults applied)
+   * - <0.6: Low confidence (may need fallback to traditional parser)
+   */
+  readonly confidence?: number;
 }
 
 export interface SourcePosition {

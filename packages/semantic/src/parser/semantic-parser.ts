@@ -106,6 +106,7 @@ export class SemanticParserImpl implements ISemanticParser {
     return createCommandNode(match.pattern.command, roles, {
       sourceLanguage: language,
       patternId: match.pattern.id,
+      confidence: match.confidence,
     });
   }
 
@@ -150,6 +151,7 @@ export class SemanticParserImpl implements ISemanticParser {
       const commandNode = createCommandNode(actionName as ActionType, roles, {
         sourceLanguage: language,
         patternId: match.pattern.id,
+        confidence: match.confidence,
       });
 
       // Check if pattern has continuation marker (then-chains)
@@ -195,6 +197,7 @@ export class SemanticParserImpl implements ISemanticParser {
     return createEventHandler(eventValue, body, eventModifiers, {
       sourceLanguage: language,
       patternId: match.pattern.id,
+      confidence: match.confidence,
     });
   }
 

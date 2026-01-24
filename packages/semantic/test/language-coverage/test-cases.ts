@@ -57,11 +57,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'بدّل .active',
     tr: '.active i değiştir',  // Accusative marker required
     id: 'alihkan .active',
-    bn: 'toggle .active',  // Bengali - placeholder
+    bn: '.active কে টগল',  // Bengali SOV: patient marker + action
     he: 'החלף .active',  // Hebrew
-    hi: 'toggle .active',  // Hindi - placeholder
-    ms: 'toggle .active',  // Malay - placeholder
-    qu: 'toggle .active',  // Quechua - placeholder
+    hi: '.active को टॉगल',  // Hindi SOV: patient marker + action
+    ms: 'togol .active',  // Malay SVO: action + patient
+    qu: '.active ta t\'ikray',  // Quechua SOV: patient marker + action
     ru: 'переключить .active',  // Russian
     sw: 'toggle .active',  // Swahili - placeholder
     th: 'toggle .active',  // Thai - placeholder
@@ -83,11 +83,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'أضف .highlight',
     tr: '.highlight i ekle',  // Accusative marker required
     id: 'tambah .highlight',
-    bn: 'add .highlight',
+    bn: '.highlight কে যোগ',  // Bengali SOV
     he: 'הוסף .highlight',  // Hebrew
-    hi: 'add .highlight',
-    ms: 'tambah .highlight',
-    qu: 'add .highlight',
+    hi: '.highlight को जोड़ें',  // Hindi SOV
+    ms: 'tambah .highlight',  // Malay SVO
+    qu: '.highlight ta yapay',  // Quechua SOV
     ru: 'добавить .highlight',
     sw: 'add .highlight',
     th: 'add .highlight',
@@ -109,11 +109,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'احذف .highlight',
     tr: '.highlight i kaldır',  // Accusative marker required
     id: 'hapus .highlight',
-    bn: 'remove .highlight',
+    bn: '.highlight কে সরান',  // Bengali SOV
     he: 'הסר .highlight',  // Hebrew
-    hi: 'remove .highlight',
-    ms: 'buang .highlight',
-    qu: 'remove .highlight',
+    hi: '.highlight को हटाएं',  // Hindi SOV
+    ms: 'buang .highlight',  // Malay SVO
+    qu: '.highlight ta qichuy',  // Quechua SOV
     ru: 'удалить .highlight',
     sw: 'remove .highlight',
     th: 'remove .highlight',
@@ -135,11 +135,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'ضع "مرحبا" في #output',
     tr: '"merhaba" yi #output a koy',
     id: 'taruh "halo" ke dalam #output',
-    bn: 'put "hello" into #output',
+    bn: '"হ্যালো" কে #output তে রাখুন',  // Bengali SOV
     he: 'שים "שלום" לתוך #output',  // Hebrew
-    hi: 'put "hello" into #output',
-    ms: 'letak "hello" ke #output',
-    qu: 'put "hello" into #output',
+    hi: '"नमस्ते" को #output में रखो',  // Hindi SOV
+    ms: 'letak "hello" ke #output',  // Malay SVO
+    qu: '"napaykullayki" ta #output man churay',  // Quechua SOV
     ru: 'поместить "привет" в #output',
     sw: 'put "hello" into #output',
     th: 'put "hello" into #output',
@@ -161,11 +161,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'عيّن x إلى 10',
     tr: 'x i 10 e ayarla',  // Use primary keyword + proper markers
     id: 'atur x ke 10',
-    bn: 'set x to 10',
+    bn: 'x কে 10 তে সেট',  // Bengali SOV
     he: 'קבע x ל 10',  // Hebrew
-    hi: 'set x to 10',
-    ms: 'set x ke 10',
-    qu: 'set x to 10',
+    hi: 'x को 10 पर सेट करो',  // Hindi SOV
+    ms: 'tetapkan x ke 10',  // Malay SVO
+    qu: 'x ta 10 man churay',  // Quechua SOV
     ru: 'установить x в 10',
     sw: 'set x to 10',
     th: 'set x to 10',
@@ -187,11 +187,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'احصل على #element',
     tr: '#element i al',  // Accusative marker required
     id: 'dapatkan #element',
-    bn: 'get #element',
+    bn: '#element কে পান',  // Bengali SOV
     he: 'קבל #element',  // Hebrew
-    hi: 'get #element',
-    ms: 'dapatkan #element',
-    qu: 'get #element',
+    hi: '#element को प्राप्त करो',  // Hindi SOV
+    ms: 'dapatkan #element',  // Malay SVO
+    qu: '#element ta taripay',  // Quechua SOV
     ru: 'получить #element',
     sw: 'get #element',
     th: 'get #element',
@@ -213,11 +213,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'أظهر #modal',
     tr: '#modal i göster',  // Accusative marker required
     id: 'tampilkan #modal',
-    bn: 'show #modal',
+    bn: '#modal কে দেখান',  // Bengali SOV
     he: 'הראה #modal',  // Hebrew
-    hi: 'show #modal',
-    ms: 'tunjuk #modal',
-    qu: 'show #modal',
+    hi: '#modal को दिखाओ',  // Hindi SOV
+    ms: 'tunjuk #modal',  // Malay SVO
+    qu: '#modal ta rikuchiy',  // Quechua SOV
     ru: 'показать #modal',
     sw: 'show #modal',
     th: 'show #modal',
@@ -239,11 +239,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'أخف #modal',
     tr: '#modal i gizle',  // Accusative marker required
     id: 'sembunyikan #modal',
-    bn: 'hide #modal',
+    bn: '#modal কে লুকান',  // Bengali SOV
     he: 'הסתר #modal',  // Hebrew
-    hi: 'hide #modal',
-    ms: 'sembunyi #modal',
-    qu: 'hide #modal',
+    hi: '#modal को छुपाओ',  // Hindi SOV
+    ms: 'sembunyi #modal',  // Malay SVO
+    qu: '#modal ta pakay',  // Quechua SOV
     ru: 'скрыть #modal',
     sw: 'hide #modal',
     th: 'hide #modal',
@@ -265,11 +265,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'زِد counter',
     tr: 'counter i artır',  // Accusative marker required
     id: 'tingkatkan counter',
-    bn: 'increment counter',
+    bn: 'counter কে বৃদ্ধি',  // Bengali SOV
     he: 'הגדל counter',  // Hebrew
-    hi: 'increment counter',
-    ms: 'tambah counter',
-    qu: 'increment counter',
+    hi: 'counter को बढ़ाओ',  // Hindi SOV
+    ms: 'tambah_satu counter',  // Malay SVO
+    qu: 'counter ta yapachiy',  // Quechua SOV
     ru: 'увеличить counter',
     sw: 'increment counter',
     th: 'increment counter',
@@ -291,11 +291,11 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ar: 'أنقص counter',
     tr: 'counter i azalt',  // Accusative marker required
     id: 'turunkan counter',
-    bn: 'decrement counter',
+    bn: 'counter কে হ্রাস',  // Bengali SOV
     he: 'הקטן counter',  // Hebrew
-    hi: 'decrement counter',
-    ms: 'kurang counter',
-    qu: 'decrement counter',
+    hi: 'counter को घटाओ',  // Hindi SOV
+    ms: 'kurang_satu counter',  // Malay SVO
+    qu: 'counter ta pisiyachiy',  // Quechua SOV
     ru: 'уменьшить counter',
     sw: 'decrement counter',
     th: 'decrement counter',
@@ -343,6 +343,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao clique alternar .active em #button',
     pl: 'przy kliknięciu przełącz .active na #button',
     he: 'בלחיצה החלף .active על #button',  // Hebrew
+    ms: 'apabila klik togol .active pada #button',  // Malay SVO
+    qu: 'ñit\'iy pi #button pa .active ta t\'ikray',  // Quechua SOV
     en: 'on click toggle .active on #button',
   },
 
@@ -366,6 +368,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao envio alternar .loading',
     pl: 'przy wysłaniu przełącz .loading',
     he: 'בשליחה החלף .loading',  // Hebrew
+    ms: 'apabila hantar togol .loading',  // Malay SVO
+    qu: 'kachay pi .loading ta t\'ikray',  // Quechua SOV
     en: 'on submit toggle .loading',
   },
 
@@ -390,6 +394,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao sobrevoar adicionar .highlight',
     pl: 'przy najechaniu dodaj .highlight',
     he: 'בריחוף הוסף .highlight',  // Hebrew
+    ms: 'apabila hover tambah .highlight',  // Malay SVO
+    qu: 'hawiri pi .highlight ta yapay',  // Quechua SOV (hover ~ hawiri)
     en: 'on hover add .highlight',
   },
 
@@ -413,6 +419,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao clique remover .error',
     pl: 'przy kliknięciu usuń .error',
     he: 'בלחיצה הסר .error',  // Hebrew
+    ms: 'apabila klik buang .error',  // Malay SVO
+    qu: 'ñit\'iy pi .error ta qichuy',  // Quechua SOV
     en: 'on click remove .error',
   },
 
@@ -437,6 +445,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao focus mostrar #tooltip',
     pl: 'przy skupieniu pokaż #tooltip',
     he: 'במיקוד הראה #tooltip',  // Hebrew
+    ms: 'apabila fokus tunjuk #tooltip',  // Malay SVO
+    qu: 'qhawachiy pi #tooltip ta rikuchiy',  // Quechua SOV
     en: 'on focus show #tooltip',
   },
 
@@ -460,6 +470,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao blur ocultar #tooltip',
     pl: 'przy rozmyciu ukryj #tooltip',
     he: 'בטשטוש הסתר #tooltip',  // Hebrew
+    ms: 'apabila kabur sembunyi #tooltip',  // Malay SVO
+    qu: 'mana qhawachiy pi #tooltip ta pakay',  // Quechua SOV
     en: 'on blur hide #tooltip',
   },
 
@@ -484,6 +496,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao clique incrementar #counter',
     pl: 'przy kliknięciu zwiększ #counter',
     he: 'בלחיצה הגדל #counter',  // Hebrew
+    ms: 'apabila klik tambah_satu #counter',  // Malay SVO
+    qu: 'ñit\'iy pi #counter ta yapachiy',  // Quechua SOV
     en: 'on click increment #counter',
   },
 
@@ -507,6 +521,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao clique decrementar #counter',
     pl: 'przy kliknięciu zmniejsz #counter',
     he: 'בלחיצה הקטן #counter',  // Hebrew
+    ms: 'apabila klik kurang_satu #counter',  // Malay SVO
+    qu: 'ñit\'iy pi #counter ta pisiyachiy',  // Quechua SOV
     en: 'on click decrement #counter',
   },
 
@@ -531,6 +547,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao entrada colocar "test" em #output',
     pl: 'przy wprowadzeniu umieść "test" do #output',
     he: 'בהזנה שים "test" לתוך #output',  // Hebrew
+    ms: 'apabila masuk letak "test" ke #output',  // Malay SVO
+    qu: 'yaykuy pi "test" ta #output man churay',  // Quechua SOV
     en: 'on input put "test" into #output',
   },
 
@@ -554,6 +572,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao alteração definir x para 10',
     pl: 'przy zmianie ustaw x na 10',
     he: 'בשינוי קבע x ל 10',  // Hebrew
+    ms: 'apabila ubah tetapkan x ke 10',  // Malay SVO
+    qu: 'tikray pi x ta 10 man churay',  // Quechua SOV
     en: 'on change set x to 10',
   },
 
@@ -578,6 +598,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao clique alternar .active em #button',
     pl: 'przy kliknięciu przełącz .active na #button',
     he: 'בלחיצה החלף .active על #button',  // Hebrew
+    ms: 'apabila klik togol .active pada #button',  // Malay SVO
+    qu: 'ñit\'iy pi #button pa .active ta t\'ikray',  // Quechua SOV
     en: 'on click toggle .active on #button',
   },
 
@@ -601,6 +623,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pt: 'ao sobrevoar adicionar .hover em #element',
     pl: 'przy najechaniu dodaj .hover na #element',
     he: 'בריחוף הוסף .hover אל #element',  // Hebrew
+    ms: 'apabila hover tambah .hover pada #element',  // Malay SVO
+    qu: 'hawiri pi #element man .hover ta yapay',  // Quechua SOV
     en: 'on hover add .hover to #element',
   },
 
@@ -645,7 +669,7 @@ export type EventHandlerTestCase = keyof typeof EVENT_HANDLER_TEST_CASES;
  */
 export function getEventHandlerTestCase(
   testCase: EventHandlerTestCase,
-  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'en'
+  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'ms' | 'qu' | 'en'
 ): string | undefined {
   return EVENT_HANDLER_TEST_CASES[testCase][language];
 }
@@ -654,7 +678,7 @@ export function getEventHandlerTestCase(
  * Get all event handler test cases for a language.
  */
 export function getEventHandlerTestCasesForLanguage(
-  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'en'
+  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'ms' | 'qu' | 'en'
 ): Record<string, string> {
   const cases: Record<string, string> = {};
   for (const [testName, testValues] of Object.entries(EVENT_HANDLER_TEST_CASES)) {
