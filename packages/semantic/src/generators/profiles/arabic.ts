@@ -134,5 +134,9 @@ export const arabicProfile: LanguageProfile = {
     // Example: عند النقر بدّل .active على #button
     eventMarker: { primary: 'عند', alternatives: ['في', 'لدى'], position: 'before' },
     temporalMarkers: ['عندما', 'حين', 'لمّا'], // temporal conjunctions (when)
+    // Negation marker: عدم (not/lack of), used for negated events
+    // Pattern: عند عدم [event] [action] [patient]
+    // Example: عند عدم التركيز أخف #tooltip = "on blur hide #tooltip"
+    negationMarker: { primary: 'عدم', alternatives: ['عدم'], position: 'before' },
   },
 };

@@ -134,7 +134,8 @@ export const koreanProfile: LanguageProfile = {
     // Event marker: 할 때 (when/at the time of), used in SOV pattern
     // Pattern: [event] 할 때 [destination] 의 [patient] 를 [action]
     // Example: 클릭 할 때 #button 의 .active 를 토글
-    eventMarker: { primary: '할 때', alternatives: ['때', '에'], position: 'after' },
-    temporalMarkers: ['할 때', '때'], // temporal markers
+    // Compact forms (no space): 클릭할때 .active를토글
+    eventMarker: { primary: '할 때', alternatives: ['할때', '때', '에'], position: 'after' },
+    temporalMarkers: ['할 때', '할때', '때'], // temporal markers (with and without space)
   },
 };

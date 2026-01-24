@@ -336,6 +336,10 @@ export interface ExtractionRule {
   readonly transform?: (raw: string) => SemanticValue;
   /** Default value if not found (for optional roles) */
   readonly default?: SemanticValue;
+  /** Static value extraction (for event handler wrapped commands) */
+  readonly value?: string;
+  /** Extract value from a pattern role by name */
+  readonly fromRole?: string;
 }
 
 /**

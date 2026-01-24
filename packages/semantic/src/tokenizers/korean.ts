@@ -105,6 +105,17 @@ const SINGLE_CHAR_PARTICLES = new Set([
 const MULTI_CHAR_PARTICLES = ['에서', '으로', '부터', '까지', '처럼', '보다'];
 
 /**
+ * Temporal event suffixes that should be split from compound words.
+ * These are verb endings that indicate "when" something happens.
+ * Sorted by length (longest first) to ensure greedy matching.
+ *
+ * Examples:
+ * - 클릭할때 → 클릭 + 할때 (click + when)
+ * - 입력할때 → 입력 + 할때 (input + when)
+ */
+const TEMPORAL_EVENT_SUFFIXES = ['할때', '하면', '하니까', '할 때'];
+
+/**
  * Particle metadata mapping particles to semantic roles, confidence scores,
  * and vowel harmony variants. Korean particles change based on whether the
  * preceding syllable ends in a consonant or vowel.
@@ -399,7 +410,14 @@ export class KoreanTokenizer extends BaseTokenizer {
       if (isKorean(input[pos])) {
         const wordToken = this.extractKoreanWord(input, pos);
         if (wordToken) {
-          tokens.push(wordToken);
+          // Check if the word ends with a temporal event suffix (e.g., 클릭할때 → 클릭 + 할때)
+          const splitResult = this.trySplitTemporalSuffix(wordToken);
+          if (splitResult) {
+            tokens.push(splitResult.stemToken);
+            tokens.push(splitResult.suffixToken);
+          } else {
+            tokens.push(wordToken);
+          }
           pos = wordToken.position.end;
           continue;
         }
@@ -626,6 +644,51 @@ export class KoreanTokenizer extends BaseTokenizer {
       allowSign: false,
       skipWhitespace: false,
     });
+  }
+
+  /**
+   * Try to split a temporal event suffix from a word token.
+   * This handles compact forms like 클릭할때 → 클릭 + 할때
+   *
+   * @returns Split tokens if a suffix is found, null otherwise
+   */
+  private trySplitTemporalSuffix(
+    wordToken: LanguageToken
+  ): { stemToken: LanguageToken; suffixToken: LanguageToken } | null {
+    const word = wordToken.value;
+
+    // Check for temporal suffixes (longest first)
+    for (const suffix of TEMPORAL_EVENT_SUFFIXES) {
+      if (word.endsWith(suffix) && word.length > suffix.length) {
+        const stem = word.slice(0, -suffix.length);
+
+        // Only split if the stem is a known keyword
+        const stemLower = stem.toLowerCase();
+        const keywordEntry = this.lookupKeyword(stemLower);
+        if (!keywordEntry) continue;
+
+        const stemEnd = wordToken.position.start + stem.length;
+
+        const stemToken = createToken(
+          stem,
+          'keyword',
+          createPosition(wordToken.position.start, stemEnd),
+          keywordEntry.normalized
+        );
+
+        // Create suffix token as a keyword (event marker)
+        const suffixToken = createToken(
+          suffix,
+          'keyword',
+          createPosition(stemEnd, wordToken.position.end),
+          'when' // Normalize temporal suffixes to 'when'
+        );
+
+        return { stemToken, suffixToken };
+      }
+    }
+
+    return null;
   }
 }
 

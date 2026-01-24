@@ -150,7 +150,9 @@ export const japaneseProfile: LanguageProfile = {
     // Event marker: で (at/on/when), used in SOV pattern
     // Pattern: [event] で [destination] の [patient] を [action]
     // Example: クリック で #button の .active を 切り替え
-    eventMarker: { primary: 'で', alternatives: ['に'], position: 'after' },
+    // Note: に is NOT an event marker - it marks direction/destination
+    // で specifically marks the means/method of action (by/via)
+    eventMarker: { primary: 'で', position: 'after' },
     temporalMarkers: ['時', 'とき'], // temporal markers that can optionally appear
   },
 };

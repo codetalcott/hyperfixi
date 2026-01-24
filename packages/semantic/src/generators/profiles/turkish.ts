@@ -52,9 +52,29 @@ export const turkishProfile: LanguageProfile = {
     }, // Accusative (with buffer consonants y/n)
     destination: {
       primary: 'e',
-      alternatives: ['a', 'ye', 'ya', 'ne', 'na', 'de', 'da', 'te', 'ta'],
+      // Include both dative (e/a) and genitive (ın/in/un/ün) for possessive patterns
+      // Genitive is used in "X's Y" patterns: #button ın .active = "#button's .active"
+      alternatives: [
+        'a',
+        'ye',
+        'ya',
+        'ne',
+        'na',
+        'de',
+        'da',
+        'te',
+        'ta',
+        'ın',
+        'in',
+        'un',
+        'ün',
+        'nın',
+        'nin',
+        'nun',
+        'nün',
+      ],
       position: 'after',
-    }, // Dative/Locative (with buffer consonants)
+    }, // Dative/Locative + Genitive (with buffer consonants)
     source: { primary: 'den', alternatives: ['dan', 'ten', 'tan'], position: 'after' }, // Ablative
     style: { primary: 'le', alternatives: ['la', 'yle', 'yla'], position: 'after' }, // Instrumental
     event: { primary: 'i', alternatives: ['ı', 'u', 'ü'], position: 'after' }, // Event as accusative

@@ -285,6 +285,25 @@ export function generateEventHandlerPatterns(
       patterns.push(
         generateSOVEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
       );
+
+      // For multi-word event markers with no-space alternatives (Korean compact forms),
+      // also generate a pattern that accepts the compact form
+      // Example: 클릭할때 .active를토글 (할때 as single token)
+      const markerWords = eventMarker.primary.split(/\s+/);
+      const hasNoSpaceAlternative = eventMarker.alternatives?.some(
+        alt => !alt.includes(' ') && alt.length > 1
+      );
+      if (markerWords.length > 1 && hasNoSpaceAlternative) {
+        patterns.push(
+          generateSOVCompactEventHandlerPattern(
+            commandSchema,
+            profile,
+            keyword,
+            eventMarker,
+            config
+          )
+        );
+      }
     }
   } else if (profile.wordOrder === 'VSO') {
     if (hasTwoRequiredRoles) {
@@ -299,6 +318,21 @@ export function generateEventHandlerPatterns(
       patterns.push(
         generateVSOEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
       );
+
+      // Add negated event pattern variant for languages with negation markers
+      // Pattern: [eventMarker] [negation] [event] [verb] [patient]
+      // Example: عند عدم التركيز أخف #tooltip = "on blur hide #tooltip"
+      if (profile.eventHandler?.negationMarker) {
+        patterns.push(
+          generateVSONegatedEventHandlerPattern(
+            commandSchema,
+            profile,
+            keyword,
+            eventMarker,
+            config
+          )
+        );
+      }
 
       // Add proclitic-prefixed pattern variant for Arabic
       // Pattern: [proclitic]? [event] [verb] [patient]
@@ -398,6 +432,91 @@ function generateSOVEventHandlerPattern(
     priority: (config.basePriority ?? 100) + 50, // Higher priority than simple commands
     template: {
       format: `{event} ${eventMarker.primary} {destination?} {patient} ${patientMarker?.primary || ''} ${keyword.primary}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action }, // Extract the wrapped command
+      event: { fromRole: 'event' },
+      patient: { fromRole: 'patient' },
+      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+    },
+  };
+}
+
+/**
+ * Generate SOV compact event handler pattern for languages with no-space forms.
+ *
+ * This handles Korean compact forms where the event marker is attached directly
+ * to the event word without a space:
+ * - 클릭할때 .active를토글 (click+when toggle .active)
+ *
+ * The pattern uses a single token for the no-space marker alternatives.
+ */
+function generateSOVCompactEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  // Event role
+  tokens.push({ type: 'role', role: 'event', optional: false });
+
+  // Event marker as single token (using no-space alternatives)
+  // Filter alternatives to only include no-space versions
+  const noSpaceAlternatives =
+    eventMarker.alternatives?.filter(alt => !alt.includes(' ') && alt.length > 1) || [];
+
+  if (noSpaceAlternatives.length > 0) {
+    tokens.push({
+      type: 'literal',
+      value: noSpaceAlternatives[0],
+      alternatives: noSpaceAlternatives.slice(1),
+    });
+  }
+
+  // Optional destination with its marker
+  const destMarker = profile.roleMarkers.destination;
+  if (destMarker) {
+    tokens.push({
+      type: 'group',
+      optional: true,
+      tokens: [
+        { type: 'role', role: 'destination', optional: true },
+        destMarker.alternatives
+          ? { type: 'literal', value: destMarker.primary, alternatives: destMarker.alternatives }
+          : { type: 'literal', value: destMarker.primary },
+      ],
+    });
+  }
+
+  // Patient role
+  tokens.push({ type: 'role', role: 'patient', optional: false });
+
+  // Patient marker (postposition/particle after patient)
+  const patientMarker = profile.roleMarkers.patient;
+  if (patientMarker) {
+    const patMarkerToken: PatternToken = patientMarker.alternatives
+      ? { type: 'literal', value: patientMarker.primary, alternatives: patientMarker.alternatives }
+      : { type: 'literal', value: patientMarker.primary };
+    tokens.push(patMarkerToken);
+  }
+
+  // Command verb at end (SOV)
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+  tokens.push(verbToken);
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-compact`,
+    language: profile.code,
+    command: 'on', // This is an event handler pattern
+    priority: (config.basePriority ?? 100) + 52, // Slightly higher priority for compact forms
+    template: {
+      format: `{event}${noSpaceAlternatives[0] || ''} {patient} ${keyword.primary}`,
       tokens,
     },
     extraction: {
@@ -674,6 +793,91 @@ function generateVSOTwoRoleEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       destination: { fromRole: 'destination' },
+    },
+  };
+}
+
+/**
+ * Generate VSO negated event handler pattern.
+ *
+ * Patterns:
+ * - Arabic: عند عدم التركيز أخف #tooltip
+ *   [eventMarker] [negation] [event] [verb] [patient]
+ *
+ * Used for events expressed as negation + opposite action:
+ * - عدم التركيز = "not focusing" = blur
+ */
+function generateVSONegatedEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+  const negationMarker = profile.eventHandler?.negationMarker;
+
+  // Event marker (before event in VSO)
+  if (eventMarker.position === 'before') {
+    const markerToken: PatternToken = eventMarker.alternatives
+      ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+      : { type: 'literal', value: eventMarker.primary };
+    tokens.push(markerToken);
+  }
+
+  // Negation marker (e.g., عدم = "not/lack of")
+  if (negationMarker) {
+    const negToken: PatternToken = negationMarker.alternatives
+      ? {
+          type: 'literal',
+          value: negationMarker.primary,
+          alternatives: negationMarker.alternatives,
+        }
+      : { type: 'literal', value: negationMarker.primary };
+    tokens.push(negToken);
+  }
+
+  // Event role (the action being negated, e.g., التركيز = "the focusing")
+  tokens.push({ type: 'role', role: 'event', optional: false });
+
+  // Command verb (verb comes early in VSO)
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+  tokens.push(verbToken);
+
+  // Patient role
+  tokens.push({ type: 'role', role: 'patient', optional: false });
+
+  // Optional destination with preposition
+  const destMarker = profile.roleMarkers.destination;
+  if (destMarker) {
+    tokens.push({
+      type: 'group',
+      optional: true,
+      tokens: [
+        destMarker.alternatives
+          ? { type: 'literal', value: destMarker.primary, alternatives: destMarker.alternatives }
+          : { type: 'literal', value: destMarker.primary },
+        { type: 'role', role: 'destination', optional: true },
+      ],
+    });
+  }
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-vso-negated`,
+    language: profile.code,
+    command: 'on', // This is an event handler pattern
+    priority: (config.basePriority ?? 100) + 48, // Slightly lower priority than standard patterns
+    template: {
+      format: `${eventMarker.primary} ${negationMarker?.primary || ''} {event} ${keyword.primary} {patient} ${destMarker?.primary || ''} {destination?}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action }, // Extract the wrapped command
+      event: { fromRole: 'event' },
+      patient: { fromRole: 'patient' },
+      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
     },
   };
 }

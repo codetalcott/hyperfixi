@@ -122,6 +122,11 @@ export interface EventHandlerConfig {
   readonly eventMarker?: RoleMarker;
   /** Temporal/conditional markers that can optionally appear with events */
   readonly temporalMarkers?: string[];
+  /**
+   * Negation marker for expressing negated events (e.g., Arabic عدم = "not/lack of").
+   * Used in patterns like: عند عدم التركيز = "when not focusing" = "on blur"
+   */
+  readonly negationMarker?: RoleMarker;
 }
 
 /**
