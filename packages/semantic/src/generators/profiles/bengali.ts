@@ -81,7 +81,13 @@ export const bengaliProfile: LanguageProfile = {
     send: { primary: 'পাঠান', alternatives: ['পাঠাও'], normalized: 'send' },
     // DOM focus
     focus: { primary: 'ফোকাস', alternatives: ['মনোযোগ'], normalized: 'focus' },
-    blur: { primary: 'ঝাপসা', alternatives: [], normalized: 'blur' },
+    blur: { primary: 'ঝাপসা', alternatives: ['ফোকাস_সরান'], normalized: 'blur' },
+    // Common event names (for event handler patterns)
+    click: { primary: 'ক্লিক', normalized: 'click' },
+    hover: { primary: 'হোভার', alternatives: ['উপরে_রাখুন'], normalized: 'hover' },
+    submit: { primary: 'সাবমিট', alternatives: ['জমা'], normalized: 'submit' },
+    input: { primary: 'ইনপুট', alternatives: ['প্রবেশ'], normalized: 'input' },
+    change: { primary: 'পরিবর্তন', normalized: 'change' },
     // Navigation
     go: { primary: 'যান', alternatives: ['যাও'], normalized: 'go' },
     // Async
@@ -128,5 +134,10 @@ export const bengaliProfile: LanguageProfile = {
   eventHandler: {
     keyword: { primary: 'তে', alternatives: ['এ', 'যখন'], normalized: 'on' },
     sourceMarker: { primary: 'থেকে', position: 'after' },
+    // Event marker: তে (at/on), used in SOV pattern
+    // Pattern: [event] তে [destination র?] [patient] কে [action]
+    // Example: ক্লিক তে #button র .active কে টগল
+    eventMarker: { primary: 'তে', alternatives: ['এ'], position: 'after' },
+    temporalMarkers: ['যখন', 'যখনই'], // temporal conjunctions (when, whenever)
   },
 };

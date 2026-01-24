@@ -304,6 +304,7 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
  * - Turkish (tr): SOV, vowel harmony, case suffixes
  * - Arabic (ar): VSO, RTL, proclitics
  * - Hindi (hi): SOV, postpositions, Devanagari script
+ * - Bengali (bn): SOV, postpositions, Bengali script
  */
 export const EVENT_HANDLER_TEST_CASES = {
   // Toggle with event handlers
@@ -313,6 +314,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'tıklama da #button ın .active i değiştir',
     ar: 'عند النقر على #button بدّل .active',
     hi: 'क्लिक पर #button का .active को टॉगल',
+    bn: 'ক্লিক তে #button র .active কে টগল',
     en: 'on click toggle .active on #button',
   },
 
@@ -322,6 +324,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'gönderme de .loading i değiştir',
     ar: 'عند الإرسال بدّل .loading',
     hi: 'सबमिट पर .loading को टॉगल',
+    bn: 'সাবমিট তে .loading কে টগল',
     en: 'on submit toggle .loading',
   },
 
@@ -332,6 +335,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'üzerine gelme de .highlight i ekle',
     ar: 'عند التحويم أضف .highlight',
     hi: 'होवर पर .highlight को जोड़ें',
+    bn: 'হোভার তে .highlight কে যোগ',
     en: 'on hover add .highlight',
   },
 
@@ -341,6 +345,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'tıklama da .error i kaldır',
     ar: 'عند النقر احذف .error',
     hi: 'क्लिक पर .error को हटाएं',
+    bn: 'ক্লিক তে .error কে সরান',
     en: 'on click remove .error',
   },
 
@@ -351,6 +356,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'odaklanma da #tooltip i göster',
     ar: 'عند التركيز أظهر #tooltip',
     hi: 'फोकस पर #tooltip को दिखाएं',
+    bn: 'ফোকাস তে #tooltip কে দেখান',
     en: 'on focus show #tooltip',
   },
 
@@ -360,6 +366,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'bulanıklık da #tooltip i gizle',
     ar: 'عند عدم التركيز أخف #tooltip',
     hi: 'धुंधला पर #tooltip को छिपाएं',
+    bn: 'ঝাপসা তে #tooltip কে লুকান',
     en: 'on blur hide #tooltip',
   },
 
@@ -370,6 +377,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'tıklama da #counter i artır',
     ar: 'عند النقر زِد #counter',
     hi: 'क्लिक पर #counter को बढ़ाएं',
+    bn: 'ক্লিক তে #counter কে বৃদ্ধি',
     en: 'on click increment #counter',
   },
 
@@ -379,6 +387,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'tıklama da #counter i azalt',
     ar: 'عند النقر أنقص #counter',
     hi: 'क्लिक पर #counter को घटाएं',
+    bn: 'ক্লিক তে #counter কে হ্রাস',
     en: 'on click decrement #counter',
   },
 
@@ -389,6 +398,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'giriş de "test" i #output a koy',
     ar: 'عند الإدخال ضع "test" في #output',
     hi: 'इनपुट पर "test" को #output में रखें',
+    bn: 'ইনপুট তে "test" কে #output তে রাখুন',
     en: 'on input put "test" into #output',
   },
 
@@ -398,6 +408,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'değişiklik de x i 10 e ayarla',
     ar: 'عند التغيير عيّن x إلى 10',
     hi: 'बदलाव पर x को 10 में सेट',
+    bn: 'পরিবর্তন তে x কে 10 তে সেট',
     en: 'on change set x to 10',
   },
 
@@ -408,6 +419,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'tıklama da #button e .active i değiştir',
     ar: 'عند النقر بدّل .active على #button',
     hi: 'क्लिक पर #button में .active को टॉगल',
+    bn: 'ক্লিক তে #button তে .active কে টগল',
     en: 'on click toggle .active on #button',
   },
 
@@ -417,6 +429,7 @@ export const EVENT_HANDLER_TEST_CASES = {
     tr: 'üzerine gelme de #element e .hover i ekle',
     ar: 'عند التحويم أضف .hover إلى #element',
     hi: 'होवर पर #element में .hover को जोड़ें',
+    bn: 'হোভার তে #element তে .hover কে যোগ',
     en: 'on hover add .hover to #element',
   },
 
@@ -461,7 +474,7 @@ export type EventHandlerTestCase = keyof typeof EVENT_HANDLER_TEST_CASES;
  */
 export function getEventHandlerTestCase(
   testCase: EventHandlerTestCase,
-  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'en'
+  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'en'
 ): string | undefined {
   return EVENT_HANDLER_TEST_CASES[testCase][language];
 }
@@ -470,7 +483,7 @@ export function getEventHandlerTestCase(
  * Get all event handler test cases for a language.
  */
 export function getEventHandlerTestCasesForLanguage(
-  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'en'
+  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'en'
 ): Record<string, string> {
   const cases: Record<string, string> = {};
   for (const [testName, testValues] of Object.entries(EVENT_HANDLER_TEST_CASES)) {

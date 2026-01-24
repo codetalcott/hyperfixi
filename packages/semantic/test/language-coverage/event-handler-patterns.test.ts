@@ -1,12 +1,13 @@
 /**
  * Event Handler Pattern Tests
  *
- * Tests full-form patterns with event handlers for the 5 languages with SOV/VSO word order:
+ * Tests full-form patterns with event handlers for the 6 languages with SOV/VSO word order:
  * - Japanese (ja): SOV, particles, no spaces
  * - Korean (ko): SOV, agglutinative, vowel harmony
  * - Turkish (tr): SOV, vowel harmony, case suffixes
  * - Arabic (ar): VSO, RTL, proclitics
  * - Hindi (hi): SOV, postpositions, Devanagari script
+ * - Bengali (bn): SOV, postpositions, Bengali script
  *
  * These tests verify that the parser can handle complete real-world patterns,
  * not just abbreviated command-only forms.
@@ -21,7 +22,7 @@ import {
   type EventHandlerTestCase,
 } from './test-cases';
 
-const TARGET_LANGUAGES = ['ja', 'ko', 'tr', 'ar', 'hi'] as const;
+const TARGET_LANGUAGES = ['ja', 'ko', 'tr', 'ar', 'hi', 'bn'] as const;
 type TargetLanguage = typeof TARGET_LANGUAGES[number];
 
 // =============================================================================
@@ -170,6 +171,7 @@ describe('Baseline Metrics (Phase 1.1)', () => {
       tr: { total: 0, passed: 0, failed: 0 },
       ar: { total: 0, passed: 0, failed: 0 },
       hi: { total: 0, passed: 0, failed: 0 },
+      bn: { total: 0, passed: 0, failed: 0 },
     };
 
     for (const lang of TARGET_LANGUAGES) {
@@ -216,6 +218,7 @@ describe('Baseline Metrics (Phase 1.1)', () => {
       tr: [],
       ar: [],
       hi: [],
+      bn: [],
     };
 
     for (const lang of TARGET_LANGUAGES) {
