@@ -87,6 +87,12 @@ export const spanishProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'enfocar', normalized: 'focus' },
     blur: { primary: 'desenfocar', normalized: 'blur' },
+    // Common event names (for event handler patterns)
+    click: { primary: 'clic', alternatives: ['hacer clic'], normalized: 'click' },
+    hover: { primary: 'sobrevolar', alternatives: ['pasar por encima'], normalized: 'hover' },
+    submit: { primary: 'envío', alternatives: ['enviar'], normalized: 'submit' },
+    input: { primary: 'entrada', alternatives: ['introducir'], normalized: 'input' },
+    change: { primary: 'cambio', alternatives: ['cambiar'], normalized: 'change' },
     // Navigation
     go: { primary: 'ir', alternatives: ['navegar'], normalized: 'go' },
     // Async
@@ -126,5 +132,14 @@ export const spanishProfile: LanguageProfile = {
     until: { primary: 'hasta', normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },
     from: { primary: 'de', alternatives: ['desde'], normalized: 'from' },
+  },
+  eventHandler: {
+    keyword: { primary: 'al', alternatives: ['cuando', 'en'], normalized: 'on' },
+    sourceMarker: { primary: 'de', alternatives: ['desde'], position: 'before' },
+    // Event marker: al (when), used in SVO pattern
+    // Pattern: al [event] [verb] [patient] en [destination?]
+    // Example: al clic alternar .active en #button
+    eventMarker: { primary: 'al', alternatives: ['cuando'], position: 'before' },
+    temporalMarkers: ['cuando', 'al'], // temporal conjunctions (when)
   },
 };
