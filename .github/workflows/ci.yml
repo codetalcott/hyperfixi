@@ -59,8 +59,8 @@ jobs:
       - name: Build all browser bundles
         run: npm run build:browser --prefix packages/core
 
-      - name: Build semantic browser bundles
-        run: npm run build:browser --prefix packages/semantic
+      # Note: Semantic browser bundles are already built by "npm run build" via tsup.config.ts
+      # Running build:browser separately would wipe the dist folder and delete index.d.ts
 
       - name: Verify build output before upload
         run: |
