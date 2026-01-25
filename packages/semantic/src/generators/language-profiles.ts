@@ -48,6 +48,7 @@ export { portugueseProfile } from './profiles/portuguese';
 export { quechuaProfile } from './profiles/quechua';
 export { russianProfile } from './profiles/russian';
 export { spanishProfile } from './profiles/spanish';
+export { spanishMexicoProfile } from './profiles/spanishMexico';
 export { swahiliProfile } from './profiles/swahili';
 export { thaiProfile } from './profiles/thai';
 export { tagalogProfile } from './profiles/tl';
@@ -74,6 +75,7 @@ import { portugueseProfile } from './profiles/portuguese';
 import { quechuaProfile } from './profiles/quechua';
 import { russianProfile } from './profiles/russian';
 import { spanishProfile } from './profiles/spanish';
+import { spanishMexicoProfile } from './profiles/spanishMexico';
 import { swahiliProfile } from './profiles/swahili';
 import { thaiProfile } from './profiles/thai';
 import { tagalogProfile } from './profiles/tl';
@@ -109,6 +111,7 @@ export const languageProfiles: Record<string, LanguageProfile> = {
   qu: quechuaProfile,
   ru: russianProfile,
   es: spanishProfile,
+  'es-MX': spanishMexicoProfile,
   sw: swahiliProfile,
   th: thaiProfile,
   tl: tagalogProfile,

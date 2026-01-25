@@ -1161,6 +1161,74 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
     potentialConflicts: [],
   },
   {
+    code: 'es-MX',
+    name: 'Spanish (Mexico)',
+    wordOrder: 'SVO',
+    direction: 'ltr',
+    files: {
+      languageProfile: true,
+      tokenizer: true, // Uses Spanish tokenizer via inheritance
+      tokenizerRegistered: true,
+      morphologicalNormalizer: true, // Uses Spanish normalizer
+      eventHandlerPatterns: true, // Uses Spanish patterns
+      tests: true,
+      morphologyTests: false,
+    },
+    morphology: {
+      needed: true,
+      reason: 'Uses Spanish morphology with Mexican-specific vocabulary',
+      inflectionTypes: ['inherits from Spanish'],
+      integratedWithTokenizer: true,
+      confidenceThreshold: 0.7,
+    },
+    profileKeywords: [
+      'alternar',
+      'añadir',
+      'quitar',
+      'poner',
+      'establecer',
+      'mostrar',
+      'ocultar',
+      'añadir',
+      'anteponer',
+      'incrementar',
+      'decrementar',
+      'esperar',
+      'ahorita', // Mexican alternative for wait
+      'obtener',
+      'jalar', // Mexican alternative for fetch
+      'ir',
+      'disparar',
+      'enviar',
+      'registrar',
+      'tomar',
+      'hacer',
+      'clonar',
+      'enfocar',
+      'desenfocar',
+      'transición',
+      'estabilizar',
+      'llamar',
+      'devolver',
+      'aventar', // Mexican alternative for throw
+      'js',
+      'asíncrono',
+      'decir',
+      'predeterminar',
+      'iniciar',
+      'comportamiento',
+      'dentro de',
+      'antes',
+      'después',
+    ],
+    tokenizerKeywords: [
+      // Inherits Spanish tokenizer keywords
+      // Mexican-specific alternatives are in profile
+    ],
+    missingFromTokenizer: [],
+    potentialConflicts: [],
+  },
+  {
     code: 'tr',
     name: 'Turkish',
     wordOrder: 'SOV',

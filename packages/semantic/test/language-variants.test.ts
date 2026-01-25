@@ -197,8 +197,8 @@ describe('Registry Fallback', () => {
 
   describe('getProfile fallback', () => {
     it('returns base profile for unregistered variant', () => {
-      // es-MX is not registered, should fall back to es
-      const profile = getProfile('es-MX');
+      // es-AR is not registered, should fall back to es
+      const profile = getProfile('es-AR');
       expect(profile).toBeDefined();
       expect(profile.code).toBe('es'); // Falls back to base
       expect(profile.name).toBe('Spanish');
@@ -226,7 +226,8 @@ describe('Registry Fallback', () => {
 
   describe('getTokenizer fallback', () => {
     it('returns base tokenizer for unregistered variant', () => {
-      const tokenizer = getTokenizer('es-MX');
+      // es-AR is not registered, should fall back to es tokenizer
+      const tokenizer = getTokenizer('es-AR');
       expect(tokenizer).toBeDefined();
       expect(tokenizer.language).toBe('es');
     });

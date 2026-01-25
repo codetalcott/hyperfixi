@@ -35,6 +35,7 @@ const SEMANTIC_SRC = path.resolve(__dirname, '../src');
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'english',
   es: 'spanish',
+  'es-MX': 'spanishMexico', // Mexican Spanish variant
   ja: 'japanese',
   ar: 'arabic',
   ko: 'korean',
@@ -253,9 +254,11 @@ function generateLanguageProfiles(): void {
     `import { ${l.profileName} } from './profiles/${l.file}';`
   ).join('\n');
 
-  const objectEntries = languages.map(l =>
-    `  ${l.code}: ${l.profileName},`
-  ).join('\n');
+  const objectEntries = languages.map(l => {
+    // Quote keys that contain special characters (like hyphens in BCP 47 codes)
+    const key = l.code.includes('-') ? `'${l.code}'` : l.code;
+    return `  ${key}: ${l.profileName},`;
+  }).join('\n');
 
   const content = `/**
  * Language Profiles
