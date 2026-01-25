@@ -62,6 +62,15 @@ jobs:
       - name: Build semantic browser bundles
         run: npm run build:browser --prefix packages/semantic
 
+      - name: Verify build output before upload
+        run: |
+          echo "=== Semantic dist files before upload ==="
+          ls -la packages/semantic/dist/ | head -30
+          echo "=== Checking for index.d.ts ==="
+          ls -la packages/semantic/dist/index* || echo "No index files!"
+          echo "=== File count ==="
+          find packages/semantic/dist -type f | wc -l
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
