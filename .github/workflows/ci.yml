@@ -104,6 +104,17 @@ jobs:
           name: build-artifacts
           path: packages
 
+      - name: Debug - verify artifact extraction
+        run: |
+          echo "=== packages/ contents ==="
+          ls -la packages/ | head -15
+          echo "=== packages/semantic/ contents ==="
+          ls -la packages/semantic/ 2>/dev/null | head -10 || echo "packages/semantic/ not found"
+          echo "=== packages/semantic/dist/ ==="
+          ls -la packages/semantic/dist/ 2>/dev/null | head -5 || echo "packages/semantic/dist/ not found"
+          echo "=== semantic/ at root? ==="
+          ls -la semantic/ 2>/dev/null | head -5 || echo "semantic/ not found at root"
+
       - name: Rebuild workspace links
         run: |
           # Remove stale workspace symlinks and reinstall
