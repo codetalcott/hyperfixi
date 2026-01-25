@@ -89,6 +89,35 @@ jobs:
             fi
           done
 
+      - name: Build dependencies first
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Building core packages (required for typecheck)..." >> $GITHUB_STEP_SUMMARY
+
+          # Build in dependency order: semantic → core → vite-plugin
+          # semantic is a dependency of core
+          if [ -d "packages/semantic" ]; then
+            echo "Building @lokascript/semantic..."
+            npm run build --prefix packages/semantic 2>&1 || true
+          fi
+
+          # core is needed by vite-plugin and mcp-server
+          if [ -d "packages/core" ]; then
+            echo "Building @lokascript/core..."
+            npm run build --prefix packages/core 2>&1 || true
+            npm run build:parser-modules --prefix packages/core 2>&1 || true
+          fi
+
+          # i18n may be needed by other packages
+          if [ -d "packages/i18n" ]; then
+            echo "Building @lokascript/i18n..."
+            npm run build --prefix packages/i18n 2>&1 || true
+          fi
+
+          echo "✅ Dependency builds complete" >> $GITHUB_STEP_SUMMARY
+
       - name: TypeCheck
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
