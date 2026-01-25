@@ -122,18 +122,20 @@ describe('Command Building Validation', () => {
 // =============================================================================
 
 describe('Cross-Validation', () => {
-  it('all profile codes are valid ISO 639-1 (2 lowercase letters)', () => {
+  it('all profile codes are valid language codes (ISO 639-1 or BCP 47)', () => {
     // This catches when a profile file is added but LANGUAGE_NAMES mapping is missing
     // in generate-indexes.ts, which would cause incorrect keys like 'hebrew' instead of 'he'
+    // Valid formats: 'xx' (ISO 639-1) or 'xx-YY' (BCP 47 with region, e.g., es-MX, pt-BR)
+    const validCodePattern = /^[a-z]{2}(-[A-Z]{2})?$/;
     const profileCodes = Object.keys(languageProfiles);
-    const invalidCodes = profileCodes.filter(code => !/^[a-z]{2}$/.test(code));
+    const invalidCodes = profileCodes.filter(code => !validCodePattern.test(code));
 
     if (invalidCodes.length > 0) {
       console.error('\n❌ Invalid profile codes detected:');
       for (const code of invalidCodes) {
-        console.error(`   - "${code}" is not a valid ISO 639-1 code`);
+        console.error(`   - "${code}" is not a valid language code`);
         console.error(`     Fix: Add mapping to LANGUAGE_NAMES in scripts/generate-indexes.ts`);
-        console.error(`     Example: { xx: '${code}' } where xx is the ISO 639-1 code\n`);
+        console.error(`     Valid formats: 'xx' (ISO 639-1) or 'xx-YY' (BCP 47 with region)\n`);
       }
     }
 

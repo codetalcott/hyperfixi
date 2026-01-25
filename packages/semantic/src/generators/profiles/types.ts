@@ -65,7 +65,7 @@ export interface PossessiveConfig {
  * Complete language profile for pattern generation.
  */
 export interface LanguageProfile {
-  /** ISO 639-1 language code */
+  /** ISO 639-1 or BCP 47 language code (e.g., 'es' or 'es-MX') */
   readonly code: string;
   /** Human-readable language name */
   readonly name: string;
@@ -104,6 +104,12 @@ export interface LanguageProfile {
    * Individual keywords can override this via KeywordTranslation.form
    */
   readonly defaultVerbForm?: VerbForm;
+  /**
+   * Base language code to extend (for regional variants).
+   * When set, this profile inherits from the base and overrides specific fields.
+   * Example: 'es-MX' profile with extends: 'es' inherits from Spanish base.
+   */
+  readonly extends?: string;
 }
 
 /**

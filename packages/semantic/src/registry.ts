@@ -87,12 +87,101 @@ const externalSources = new Map<string, ExternalPatternsSource>();
 let patternGenerator: ((profile: LanguageProfile) => LanguagePattern[]) | null = null;
 
 // =============================================================================
+// Profile Inheritance
+// =============================================================================
+
+/**
+ * Deep merge two objects, with variant values overriding base values.
+ * Arrays are replaced, not merged.
+ */
+function deepMerge<T extends Record<string, unknown>>(base: T, variant: Partial<T>): T {
+  const result = { ...base } as T;
+
+  for (const key of Object.keys(variant) as (keyof T)[]) {
+    const variantValue = variant[key];
+    const baseValue = base[key];
+
+    if (variantValue === undefined) {
+      continue;
+    }
+
+    // If both are objects (but not arrays), merge recursively
+    if (
+      typeof variantValue === 'object' &&
+      variantValue !== null &&
+      !Array.isArray(variantValue) &&
+      typeof baseValue === 'object' &&
+      baseValue !== null &&
+      !Array.isArray(baseValue)
+    ) {
+      result[key] = deepMerge(
+        baseValue as Record<string, unknown>,
+        variantValue as Record<string, unknown>
+      ) as T[keyof T];
+    } else {
+      // Replace value (including arrays)
+      result[key] = variantValue as T[keyof T];
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Merge a variant profile with its base profile.
+ * The variant's fields override the base, with deep merging for nested objects.
+ *
+ * @example
+ * ```typescript
+ * const esMX = mergeProfiles(spanishProfile, {
+ *   code: 'es-MX',
+ *   name: 'Spanish (Mexico)',
+ *   keywords: {
+ *     toggle: { primary: 'alternar', alternatives: ['dale', 'cambiar'] },
+ *   },
+ * });
+ * ```
+ */
+export function mergeProfiles(
+  base: LanguageProfile,
+  variant: Partial<LanguageProfile>
+): LanguageProfile {
+  return deepMerge(base, variant);
+}
+
+/**
+ * Resolve a profile, applying inheritance if the profile has an `extends` field.
+ * Returns the merged profile with base language properties inherited.
+ */
+export function resolveProfile(profile: LanguageProfile): LanguageProfile {
+  if (!profile.extends) {
+    return profile;
+  }
+
+  const baseProfile = profiles.get(profile.extends);
+  if (!baseProfile) {
+    console.warn(
+      `[Registry] Profile '${profile.code}' extends '${profile.extends}' but base is not registered. ` +
+        `Make sure to import the base language before the variant.`
+    );
+    return profile;
+  }
+
+  // Recursively resolve base profile (in case it also extends something)
+  const resolvedBase = resolveProfile(baseProfile);
+
+  // Merge, with variant overriding base
+  return mergeProfiles(resolvedBase, profile);
+}
+
+// =============================================================================
 // Registration Functions
 // =============================================================================
 
 /**
  * Register a language with its tokenizer and profile.
  * Called automatically by language modules when imported.
+ * If the profile has an `extends` field, it will inherit from the base profile.
  */
 export function registerLanguage(
   code: string,
@@ -100,6 +189,7 @@ export function registerLanguage(
   profile: LanguageProfile
 ): void {
   tokenizers.set(code, tokenizer);
+  // Store the original profile (inheritance is resolved at query time)
   profiles.set(code, profile);
   // Clear pattern cache for this language if it was previously cached
   patternCache.delete(code);
@@ -264,15 +354,44 @@ export async function queryExternalPatternsForCommand(
 }
 
 // =============================================================================
+// Language Code Utilities
+// =============================================================================
+
+/**
+ * Extract the base language code from a BCP 47 tag.
+ * Examples: 'es-MX' → 'es', 'pt-BR' → 'pt', 'en' → 'en'
+ */
+export function getBaseLanguageCode(code: string): string {
+  return code.split('-')[0];
+}
+
+/**
+ * Check if a code is a language variant (has region subtag).
+ * Examples: 'es-MX' → true, 'pt' → false
+ */
+export function isLanguageVariant(code: string): boolean {
+  return code.includes('-');
+}
+
+// =============================================================================
 // Query Functions
 // =============================================================================
 
 /**
  * Get a tokenizer for the specified language.
- * @throws Error if language is not registered
+ * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
+ * @throws Error if neither the variant nor base language is registered
  */
 export function getTokenizer(code: string): LanguageTokenizer {
-  const tokenizer = tokenizers.get(code);
+  // Try exact match first
+  let tokenizer = tokenizers.get(code);
+
+  // Fallback: es-MX → es
+  if (!tokenizer && isLanguageVariant(code)) {
+    const baseCode = getBaseLanguageCode(code);
+    tokenizer = tokenizers.get(baseCode);
+  }
+
   if (!tokenizer) {
     const registered = Array.from(tokenizers.keys()).join(', ');
     throw new Error(
@@ -286,10 +405,19 @@ export function getTokenizer(code: string): LanguageTokenizer {
 
 /**
  * Get a profile for the specified language.
- * @throws Error if language is not registered
+ * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
+ * @throws Error if neither the variant nor base language is registered
  */
 export function getProfile(code: string): LanguageProfile {
-  const profile = profiles.get(code);
+  // Try exact match first
+  let profile = profiles.get(code);
+
+  // Fallback: es-MX → es
+  if (!profile && isLanguageVariant(code)) {
+    const baseCode = getBaseLanguageCode(code);
+    profile = profiles.get(baseCode);
+  }
+
   if (!profile) {
     const registered = Array.from(profiles.keys()).join(', ');
     throw new Error(
@@ -298,21 +426,34 @@ export function getProfile(code: string): LanguageProfile {
         `Import the language module first: import '@lokascript/semantic/languages/${code}';`
     );
   }
-  return profile;
+
+  // Resolve inheritance if profile extends another
+  return resolveProfile(profile);
 }
 
 /**
  * Try to get a tokenizer, returning undefined if not registered.
+ * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
  */
 export function tryGetTokenizer(code: string): LanguageTokenizer | undefined {
-  return tokenizers.get(code);
+  let tokenizer = tokenizers.get(code);
+  if (!tokenizer && isLanguageVariant(code)) {
+    tokenizer = tokenizers.get(getBaseLanguageCode(code));
+  }
+  return tokenizer;
 }
 
 /**
  * Try to get a profile, returning undefined if not registered.
+ * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
  */
 export function tryGetProfile(code: string): LanguageProfile | undefined {
-  return profiles.get(code);
+  let profile = profiles.get(code);
+  if (!profile && isLanguageVariant(code)) {
+    profile = profiles.get(getBaseLanguageCode(code));
+  }
+  // Resolve inheritance if profile extends another
+  return profile ? resolveProfile(profile) : undefined;
 }
 
 /**
@@ -323,18 +464,33 @@ export function getRegisteredLanguages(): string[] {
 }
 
 /**
- * Check if a language is registered.
+ * Check if a language is registered (exact match or base language fallback).
  */
 export function isLanguageRegistered(code: string): boolean {
-  return tokenizers.has(code) && profiles.has(code);
+  if (tokenizers.has(code) && profiles.has(code)) {
+    return true;
+  }
+  // Check fallback for variants
+  if (isLanguageVariant(code)) {
+    const baseCode = getBaseLanguageCode(code);
+    return tokenizers.has(baseCode) && profiles.has(baseCode);
+  }
+  return false;
 }
 
 /**
- * Check if a language is supported (alias for isLanguageRegistered).
+ * Check if a language is supported (exact match or base language fallback).
  * For backwards compatibility with tokenizers API.
  */
 export function isLanguageSupported(code: string): boolean {
-  return tokenizers.has(code);
+  if (tokenizers.has(code)) {
+    return true;
+  }
+  // Check fallback for variants
+  if (isLanguageVariant(code)) {
+    return tokenizers.has(getBaseLanguageCode(code));
+  }
+  return false;
 }
 
 // =============================================================================
@@ -358,17 +514,25 @@ export function tokenize(input: string, language: string): TokenStream {
  * Get patterns for a specific language.
  * First checks for directly registered patterns (for tree-shaking),
  * then falls back to pattern generator.
+ * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
  * @throws Error if language is not registered
  */
 export function getPatternsForLanguage(code: string): LanguagePattern[] {
-  // Check cache first
-  const cached = patternCache.get(code);
+  // Check cache first (try exact, then base language)
+  let cached = patternCache.get(code);
+  if (!cached && isLanguageVariant(code)) {
+    cached = patternCache.get(getBaseLanguageCode(code));
+  }
   if (cached) {
     return cached;
   }
 
   // Check for directly registered patterns (tree-shakeable path)
-  const registered = registeredPatterns.get(code);
+  // Try exact match, then base language fallback
+  let registered = registeredPatterns.get(code);
+  if (!registered && isLanguageVariant(code)) {
+    registered = registeredPatterns.get(getBaseLanguageCode(code));
+  }
   if (registered) {
     patternCache.set(code, registered);
     return registered;
@@ -382,7 +546,7 @@ export function getPatternsForLanguage(code: string): LanguagePattern[] {
     );
   }
 
-  // Get profile (throws if not registered)
+  // Get profile (throws if not registered) - has built-in fallback
   const profile = getProfile(code);
   const patterns = patternGenerator(profile);
   patternCache.set(code, patterns);
