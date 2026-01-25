@@ -14,7 +14,7 @@
       "require": "./dist/index.cjs"
     },
     "./browser": {
-      "types": "./dist/browser.d.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/browser.global.js"
     },
     "./browser/en": {
@@ -41,66 +41,57 @@
     "./browser/lazy": {
       "default": "./dist/browser-lazy.lazy.global.js"
     },
-    "./languages": {
-      "types": "./dist/languages/index.d.ts",
-      "import": "./dist/languages/index.mjs"
-    },
     "./languages/en": {
       "types": "./dist/languages/en.d.ts",
-      "import": "./dist/languages/en.mjs"
+      "import": "./dist/languages/en.js"
     },
     "./languages/es": {
       "types": "./dist/languages/es.d.ts",
-      "import": "./dist/languages/es.mjs"
+      "import": "./dist/languages/es.js"
     },
     "./languages/ja": {
       "types": "./dist/languages/ja.d.ts",
-      "import": "./dist/languages/ja.mjs"
+      "import": "./dist/languages/ja.js"
     },
     "./languages/ar": {
       "types": "./dist/languages/ar.d.ts",
-      "import": "./dist/languages/ar.mjs"
+      "import": "./dist/languages/ar.js"
     },
     "./languages/ko": {
       "types": "./dist/languages/ko.d.ts",
-      "import": "./dist/languages/ko.mjs"
+      "import": "./dist/languages/ko.js"
     },
     "./languages/zh": {
       "types": "./dist/languages/zh.d.ts",
-      "import": "./dist/languages/zh.mjs"
+      "import": "./dist/languages/zh.js"
     },
     "./languages/tr": {
       "types": "./dist/languages/tr.d.ts",
-      "import": "./dist/languages/tr.mjs"
+      "import": "./dist/languages/tr.js"
     },
     "./languages/pt": {
       "types": "./dist/languages/pt.d.ts",
-      "import": "./dist/languages/pt.mjs"
+      "import": "./dist/languages/pt.js"
     },
     "./languages/fr": {
       "types": "./dist/languages/fr.d.ts",
-      "import": "./dist/languages/fr.mjs"
+      "import": "./dist/languages/fr.js"
     },
     "./languages/de": {
       "types": "./dist/languages/de.d.ts",
-      "import": "./dist/languages/de.mjs"
+      "import": "./dist/languages/de.js"
     },
     "./languages/id": {
       "types": "./dist/languages/id.d.ts",
-      "import": "./dist/languages/id.mjs"
+      "import": "./dist/languages/id.js"
     },
     "./languages/qu": {
       "types": "./dist/languages/qu.d.ts",
-      "import": "./dist/languages/qu.mjs"
+      "import": "./dist/languages/qu.js"
     },
     "./languages/sw": {
       "types": "./dist/languages/sw.d.ts",
-      "import": "./dist/languages/sw.mjs"
-    },
-    "./explicit": {
-      "types": "./dist/explicit/index.d.ts",
-      "import": "./dist/explicit/index.mjs",
-      "require": "./dist/explicit/index.js"
+      "import": "./dist/languages/sw.js"
     },
     "./browser/ja": {
       "default": "./dist/browser-ja.ja.global.js"
@@ -159,7 +150,7 @@
   },
   "sideEffects": [
     "./src/languages/*.ts",
-    "./dist/languages/*.mjs",
+    "./dist/languages/*.js",
     "./src/patterns/index.ts"
   ],
   "keywords": [
