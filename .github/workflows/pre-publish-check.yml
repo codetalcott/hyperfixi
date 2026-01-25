@@ -96,21 +96,34 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Building core packages (required for typecheck)..." >> $GITHUB_STEP_SUMMARY
 
-          # Build in dependency order: semantic → core → vite-plugin
-          # semantic is a dependency of core
+          # Build in dependency order:
+          # 1. patterns-reference (no deps)
+          # 2. ast-toolkit (depends on patterns-reference)
+          # 3. semantic (no lokascript deps)
+          # 4. core (depends on semantic, patterns-reference)
+          # 5. i18n (depends on ast-toolkit)
+
+          if [ -d "packages/patterns-reference" ]; then
+            echo "Building @lokascript/patterns-reference..."
+            npm run build --prefix packages/patterns-reference 2>&1 || true
+          fi
+
+          if [ -d "packages/ast-toolkit" ]; then
+            echo "Building @lokascript/ast-toolkit..."
+            npm run build --prefix packages/ast-toolkit 2>&1 || true
+          fi
+
           if [ -d "packages/semantic" ]; then
             echo "Building @lokascript/semantic..."
             npm run build --prefix packages/semantic 2>&1 || true
           fi
 
-          # core is needed by vite-plugin and mcp-server
           if [ -d "packages/core" ]; then
             echo "Building @lokascript/core..."
             npm run build --prefix packages/core 2>&1 || true
             npm run build:parser-modules --prefix packages/core 2>&1 || true
           fi
 
-          # i18n may be needed by other packages
           if [ -d "packages/i18n" ]; then
             echo "Building @lokascript/i18n..."
             npm run build --prefix packages/i18n 2>&1 || true
