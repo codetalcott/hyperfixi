@@ -231,6 +231,18 @@ function generateLanguageProfiles(): void {
     return { code, file: f, profileName };
   });
 
+  // Validate: warn if any profile file is missing from LANGUAGE_NAMES
+  // ISO 639-1 codes are exactly 2 lowercase letters
+  const missingMappings = languages.filter(l => !/^[a-z]{2}$/.test(l.code));
+  if (missingMappings.length > 0) {
+    console.warn('\n⚠️  WARNING: Profile files missing from LANGUAGE_NAMES mapping:');
+    for (const m of missingMappings) {
+      console.warn(`   - ${m.file}.ts → code "${m.code}" is not a valid ISO 639-1 code`);
+      console.warn(`     Add the mapping to LANGUAGE_NAMES: { xx: '${m.file}' }`);
+    }
+    console.warn('   This will cause incorrect keys in language-profiles.ts\n');
+  }
+
   const reExports = languages.map(l =>
     `export { ${l.profileName} } from './profiles/${l.file}';`
   ).join('\n');

@@ -122,6 +122,24 @@ describe('Command Building Validation', () => {
 // =============================================================================
 
 describe('Cross-Validation', () => {
+  it('all profile codes are valid ISO 639-1 (2 lowercase letters)', () => {
+    // This catches when a profile file is added but LANGUAGE_NAMES mapping is missing
+    // in generate-indexes.ts, which would cause incorrect keys like 'hebrew' instead of 'he'
+    const profileCodes = Object.keys(languageProfiles);
+    const invalidCodes = profileCodes.filter(code => !/^[a-z]{2}$/.test(code));
+
+    if (invalidCodes.length > 0) {
+      console.error('\n❌ Invalid profile codes detected:');
+      for (const code of invalidCodes) {
+        console.error(`   - "${code}" is not a valid ISO 639-1 code`);
+        console.error(`     Fix: Add mapping to LANGUAGE_NAMES in scripts/generate-indexes.ts`);
+        console.error(`     Example: { xx: '${code}' } where xx is the ISO 639-1 code\n`);
+      }
+    }
+
+    expect(invalidCodes).toHaveLength(0);
+  });
+
   it('all tokenizer languages have profiles', () => {
     const tokenizerLangs = getTokenizerLanguages();
     for (const lang of tokenizerLangs) {
