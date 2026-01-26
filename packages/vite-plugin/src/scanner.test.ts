@@ -411,4 +411,170 @@ describe('Scanner', () => {
       expect(usage.detectedLanguages.size).toBe(0);
     });
   });
+
+  describe('htmx/fixi attribute detection', () => {
+    it('detects hx-get and infers fetch block', () => {
+      const usage = scanner.scan('<button hx-get="/api">Load</button>', 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.httpMethods.has('GET')).toBe(true);
+      expect(usage.blocks.has('fetch')).toBe(true);
+      expect(usage.commands.has('put')).toBe(true);
+    });
+
+    it('detects hx-post and infers fetch block', () => {
+      const usage = scanner.scan('<button hx-post="/api">Submit</button>', 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.httpMethods.has('POST')).toBe(true);
+      expect(usage.blocks.has('fetch')).toBe(true);
+    });
+
+    it('detects multiple HTTP methods', () => {
+      const code = `
+        <button hx-get="/api/users">Load</button>
+        <button hx-post="/api/users">Create</button>
+        <button hx-delete="/api/users/1">Delete</button>
+      `;
+      const usage = scanner.scan(code, 'test.html');
+      expect(usage.htmx?.httpMethods.has('GET')).toBe(true);
+      expect(usage.htmx?.httpMethods.has('POST')).toBe(true);
+      expect(usage.htmx?.httpMethods.has('DELETE')).toBe(true);
+    });
+
+    it('detects fx-action as fixi', () => {
+      const usage = scanner.scan('<button fx-action="/api">Load</button>', 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.hasFixiAttributes).toBe(true);
+    });
+
+    it('detects fx-method', () => {
+      const usage = scanner.scan(
+        '<button fx-action="/api" fx-method="POST">Submit</button>',
+        'test.html'
+      );
+      expect(usage.htmx?.hasFixiAttributes).toBe(true);
+      expect(usage.htmx?.httpMethods.has('POST')).toBe(true);
+    });
+
+    it('detects morph swap and adds morph command', () => {
+      const usage = scanner.scan('<div hx-get="/api" hx-swap="morph">', 'test.html');
+      expect(usage.htmx?.swapStrategies.has('morph')).toBe(true);
+      expect(usage.commands.has('morph')).toBe(true);
+    });
+
+    it('detects delete swap and adds remove command', () => {
+      const usage = scanner.scan('<button hx-delete="/item" hx-swap="delete">', 'test.html');
+      expect(usage.htmx?.swapStrategies.has('delete')).toBe(true);
+      expect(usage.commands.has('remove')).toBe(true);
+    });
+
+    it('detects innerHTML swap and adds put command', () => {
+      const usage = scanner.scan('<div hx-get="/api" hx-swap="innerHTML">', 'test.html');
+      expect(usage.htmx?.swapStrategies.has('innerHTML')).toBe(true);
+      expect(usage.commands.has('put')).toBe(true);
+    });
+
+    it('scans hx-on:click as hyperscript', () => {
+      const usage = scanner.scan('<button hx-on:click="toggle .active">', 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.onHandlers).toContain('toggle .active');
+      expect(usage.commands.has('toggle')).toBe(true);
+    });
+
+    it('scans multiple hx-on handlers', () => {
+      const code = `
+        <button hx-on:click="toggle .a">A</button>
+        <button hx-on:mouseover="add .hover">B</button>
+      `;
+      const usage = scanner.scan(code, 'test.html');
+      expect(usage.htmx?.onHandlers).toHaveLength(2);
+      expect(usage.commands.has('toggle')).toBe(true);
+      expect(usage.commands.has('add')).toBe(true);
+    });
+
+    it('detects hx-confirm and adds if block', () => {
+      const usage = scanner.scan('<button hx-delete="/x" hx-confirm="Sure?">', 'test.html');
+      expect(usage.htmx?.usesConfirm).toBe(true);
+      expect(usage.blocks.has('if')).toBe(true);
+    });
+
+    it('detects positional in hx-target', () => {
+      const usage = scanner.scan('<button hx-get="/x" hx-target="closest .card">', 'test.html');
+      expect(usage.positional).toBe(true);
+    });
+
+    it('detects positional next in hx-target', () => {
+      const usage = scanner.scan('<button hx-get="/x" hx-target="next .item">', 'test.html');
+      expect(usage.positional).toBe(true);
+    });
+
+    it('detects trigger modifiers - delay (debounce)', () => {
+      const usage = scanner.scan(
+        '<input hx-get="/search" hx-trigger="keyup delay:500ms">',
+        'test.html'
+      );
+      expect(usage.htmx?.triggerModifiers.has('debounce')).toBe(true);
+    });
+
+    it('detects trigger modifiers - throttle', () => {
+      const usage = scanner.scan(
+        '<div hx-get="/updates" hx-trigger="scroll throttle:1s">',
+        'test.html'
+      );
+      expect(usage.htmx?.triggerModifiers.has('throttle')).toBe(true);
+    });
+
+    it('detects trigger modifiers - once', () => {
+      const usage = scanner.scan('<button hx-get="/api" hx-trigger="click once">', 'test.html');
+      expect(usage.htmx?.triggerModifiers.has('once')).toBe(true);
+    });
+
+    it('detects hx-push-url', () => {
+      const usage = scanner.scan('<a hx-get="/page" hx-push-url="true">', 'test.html');
+      expect(usage.htmx?.urlManagement.has('push-url')).toBe(true);
+    });
+
+    it('detects hx-replace-url', () => {
+      const usage = scanner.scan('<form hx-post="/submit" hx-replace-url="true">', 'test.html');
+      expect(usage.htmx?.urlManagement.has('replace-url')).toBe(true);
+    });
+
+    it('detects fx-target', () => {
+      const usage = scanner.scan('<button fx-action="/api" fx-target="#result">', 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.hasFixiAttributes).toBe(true);
+    });
+
+    it('detects fx-swap', () => {
+      const usage = scanner.scan('<button fx-action="/api" fx-swap="innerHTML">', 'test.html');
+      expect(usage.htmx?.hasFixiAttributes).toBe(true);
+      expect(usage.htmx?.swapStrategies.has('innerHTML')).toBe(true);
+    });
+
+    it('does not detect htmx when no attributes present', () => {
+      const usage = scanner.scan('<button onclick="alert(1)">Click</button>', 'test.html');
+      expect(usage.htmx).toBeUndefined();
+    });
+
+    it('handles complex htmx example', () => {
+      const code = `
+        <div hx-get="/api/users"
+             hx-trigger="load, click from:#reload delay:300ms"
+             hx-target="#users-list"
+             hx-swap="morph"
+             hx-push-url="true"
+             hx-confirm="Load users?">
+        </div>
+      `;
+      const usage = scanner.scan(code, 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.httpMethods.has('GET')).toBe(true);
+      expect(usage.htmx?.swapStrategies.has('morph')).toBe(true);
+      expect(usage.htmx?.triggerModifiers.has('debounce')).toBe(true);
+      expect(usage.htmx?.urlManagement.has('push-url')).toBe(true);
+      expect(usage.htmx?.usesConfirm).toBe(true);
+      expect(usage.blocks.has('fetch')).toBe(true);
+      expect(usage.blocks.has('if')).toBe(true);
+      expect(usage.commands.has('morph')).toBe(true);
+    });
+  });
 });

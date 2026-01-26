@@ -550,7 +550,7 @@ export class Generator {
       commands,
       blocks,
       positionalExpressions: positional,
-      htmxIntegration: options.htmx ?? false,
+      htmxIntegration: options.htmx ?? usage.htmx?.hasHtmxAttributes ?? false,
       globalName: options.globalName ?? 'hyperfixi',
       // Use @lokascript/core package path for virtual module
       parserImportPath: '@lokascript/core/parser/hybrid',

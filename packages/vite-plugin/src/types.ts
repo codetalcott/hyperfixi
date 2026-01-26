@@ -176,6 +176,35 @@ export interface CustomLanguageKeywords {
 }
 
 /**
+ * HTMX/Fixi attribute usage information
+ */
+export interface HtmxUsage {
+  /** Whether any htmx attributes were found */
+  hasHtmxAttributes: boolean;
+
+  /** Whether any fixi-specific attributes were found (fx-action, etc.) */
+  hasFixiAttributes: boolean;
+
+  /** HTTP methods used (GET, POST, PUT, PATCH, DELETE) */
+  httpMethods: Set<string>;
+
+  /** Swap strategies used (innerHTML, morph, delete, beforeend, etc.) */
+  swapStrategies: Set<string>;
+
+  /** hx-on:* handler values (raw hyperscript) */
+  onHandlers: string[];
+
+  /** Trigger modifiers detected (debounce, throttle, once) */
+  triggerModifiers: Set<string>;
+
+  /** URL management strategies (push-url, replace-url) */
+  urlManagement: Set<string>;
+
+  /** Whether hx-confirm is used */
+  usesConfirm: boolean;
+}
+
+/**
  * Usage information detected from a single file
  */
 export interface FileUsage {
@@ -190,6 +219,9 @@ export interface FileUsage {
 
   /** Non-English languages detected in hyperscript (ISO 639-1 codes) */
   detectedLanguages: Set<string>;
+
+  /** HTMX/Fixi attribute usage (if detected) */
+  htmx?: HtmxUsage;
 }
 
 /**
@@ -207,6 +239,9 @@ export interface AggregatedUsage {
 
   /** All non-English languages detected across all files */
   detectedLanguages: Set<string>;
+
+  /** Aggregated HTMX/Fixi usage across all files */
+  htmx: HtmxUsage;
 
   /** Map of file paths to their usage */
   fileUsage: Map<string, FileUsage>;

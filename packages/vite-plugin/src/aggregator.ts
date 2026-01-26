@@ -4,7 +4,7 @@
  * Collects and aggregates hyperscript usage across all scanned files.
  */
 
-import type { FileUsage, AggregatedUsage } from './types';
+import type { FileUsage, AggregatedUsage, HtmxUsage } from './types';
 
 /**
  * Aggregator class for collecting usage across files
@@ -26,8 +26,9 @@ export class Aggregator {
       const blocksEqual = this.setsEqual(existing.blocks, usage.blocks);
       const positionalEqual = existing.positional === usage.positional;
       const languagesEqual = this.setsEqual(existing.detectedLanguages, usage.detectedLanguages);
+      const htmxEqual = this.htmxUsageEqual(existing.htmx, usage.htmx);
 
-      if (commandsEqual && blocksEqual && positionalEqual && languagesEqual) {
+      if (commandsEqual && blocksEqual && positionalEqual && languagesEqual && htmxEqual) {
         return false; // No change
       }
     }
@@ -64,11 +65,35 @@ export class Aggregator {
     const detectedLanguages = new Set<string>();
     let positional = false;
 
+    // Aggregate htmx usage
+    const htmx: HtmxUsage = {
+      hasHtmxAttributes: false,
+      hasFixiAttributes: false,
+      httpMethods: new Set(),
+      swapStrategies: new Set(),
+      onHandlers: [],
+      triggerModifiers: new Set(),
+      urlManagement: new Set(),
+      usesConfirm: false,
+    };
+
     for (const usage of this.fileUsage.values()) {
       for (const cmd of usage.commands) commands.add(cmd);
       for (const block of usage.blocks) blocks.add(block);
       for (const lang of usage.detectedLanguages) detectedLanguages.add(lang);
       if (usage.positional) positional = true;
+
+      // Aggregate htmx usage
+      if (usage.htmx) {
+        if (usage.htmx.hasHtmxAttributes) htmx.hasHtmxAttributes = true;
+        if (usage.htmx.hasFixiAttributes) htmx.hasFixiAttributes = true;
+        for (const method of usage.htmx.httpMethods) htmx.httpMethods.add(method);
+        for (const swap of usage.htmx.swapStrategies) htmx.swapStrategies.add(swap);
+        htmx.onHandlers.push(...usage.htmx.onHandlers);
+        for (const modifier of usage.htmx.triggerModifiers) htmx.triggerModifiers.add(modifier);
+        for (const url of usage.htmx.urlManagement) htmx.urlManagement.add(url);
+        if (usage.htmx.usesConfirm) htmx.usesConfirm = true;
+      }
     }
 
     this.cachedUsage = {
@@ -76,6 +101,7 @@ export class Aggregator {
       blocks,
       positional,
       detectedLanguages,
+      htmx,
       fileUsage: new Map(this.fileUsage),
     };
 
@@ -140,5 +166,22 @@ export class Aggregator {
       if (!b.has(item)) return false;
     }
     return true;
+  }
+
+  /**
+   * Compare two HtmxUsage objects for equality
+   */
+  private htmxUsageEqual(a?: HtmxUsage, b?: HtmxUsage): boolean {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    return (
+      a.hasHtmxAttributes === b.hasHtmxAttributes &&
+      a.hasFixiAttributes === b.hasFixiAttributes &&
+      this.setsEqual(a.httpMethods, b.httpMethods) &&
+      this.setsEqual(a.swapStrategies, b.swapStrategies) &&
+      this.setsEqual(a.triggerModifiers, b.triggerModifiers) &&
+      this.setsEqual(a.urlManagement, b.urlManagement) &&
+      a.usesConfirm === b.usesConfirm
+    );
   }
 }
