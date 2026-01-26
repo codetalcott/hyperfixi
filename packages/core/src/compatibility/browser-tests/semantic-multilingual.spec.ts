@@ -165,15 +165,18 @@ test.describe('Semantic Multilingual Parser', () => {
   });
 
   test.describe('Turkish Parsing (SOV)', () => {
-    test('parses "değiştir .active" @quick', async ({ page }) => {
+    // Note: Turkish uses SOV word order with case suffixes
+    // ".active i değiştir" = "toggle .active" (Object-accusative Verb)
+    // Accusative marker 'i' is required for definite direct objects
+    test('parses ".active i değiştir" (SOV with accusative marker) @quick', async ({ page }) => {
       const result = await page.evaluate(() => {
         const S = (window as any).LokaScriptSemantic;
-        return S.canParse('değiştir .active', 'tr');
+        return S.canParse('.active i değiştir', 'tr');
       });
       expect(result).toBe(true);
     });
 
-    test('parses ".active değiştir"', async ({ page }) => {
+    test('parses ".active değiştir" (SOV without marker - colloquial)', async ({ page }) => {
       const result = await page.evaluate(() => {
         const S = (window as any).LokaScriptSemantic;
         return S.canParse('.active değiştir', 'tr');
