@@ -51,6 +51,15 @@
   ],
   "author": "Hyperfixi Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/lokascript.git",
+    "directory": "packages/patterns-reference"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/lokascript/issues"
+  },
+  "homepage": "https://github.com/codetalcott/lokascript/tree/main/packages/patterns-reference#readme",
   "dependencies": {
     "@lokascript/semantic": "*",
     "better-sqlite3": "^12.6.2"

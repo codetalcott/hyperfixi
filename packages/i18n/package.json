@@ -54,6 +54,15 @@
   ],
   "author": "Hyperfixi Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/lokascript.git",
+    "directory": "packages/i18n"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/lokascript/issues"
+  },
+  "homepage": "https://github.com/codetalcott/lokascript/tree/main/packages/i18n#readme",
   "dependencies": {
     "@lokascript/core": "*",
     "@lokascript/semantic": "*",
