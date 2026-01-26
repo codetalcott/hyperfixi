@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/semantic",
-  "version": "1.0.0-rc.1",
+  "version": "1.1.0",
   "description": "Semantic multilingual parser for hyperscript (23 languages)",
   "type": "module",
   "main": "dist/index.cjs",
