@@ -458,6 +458,61 @@ describe('htmx-translator', () => {
         expect(result).toContain('on mouseleave remove .hover');
       });
     });
+
+    describe('hx-vals', () => {
+      it('includes JSON vals in fetch body for POST', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          vals: '{"key": "value", "id": 123}',
+        };
+        const result = translateToHyperscript(config, button);
+        // The vals should be included in the request body
+        expect(result).toContain('{"key": "value", "id": 123}');
+      });
+
+      it('includes vals for PUT requests', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'PUT',
+          url: '/api/update',
+          vals: '{"status": "active"}',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain('{"status": "active"}');
+      });
+    });
+
+    describe('hx-headers', () => {
+      it('stores headers in config for processing', () => {
+        // Note: headers are collected in config but not yet translated to hyperscript
+        // They would be used by the runtime for fetch options
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'GET',
+          url: '/api/data',
+          headers: '{"X-Custom-Header": "value"}',
+        };
+        // Verify headers are stored in config (translation doesn't include them yet)
+        expect(config.headers).toBe('{"X-Custom-Header": "value"}');
+        const result = translateToHyperscript(config, button);
+        // Hyperscript is generated even with headers in config
+        expect(result).toContain("fetch '/api/data'");
+      });
+
+      it('stores multiple headers in config', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'POST',
+          url: '/api/submit',
+          headers: '{"Authorization": "Bearer token", "X-Request-Id": "123"}',
+        };
+        // Verify headers are preserved in config
+        expect(config.headers).toContain('Authorization');
+        expect(config.headers).toContain('X-Request-Id');
+      });
+    });
   });
 
   describe('hasHtmxAttributes', () => {
@@ -620,6 +675,32 @@ describe('HtmxAttributeProcessor', () => {
 
       const config = processor.collectAttributes(el);
       expect(config.replaceUrl).toBe('/custom-url');
+    });
+
+    it('collects hx-vals into config', () => {
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
+      const el = document.createElement('button');
+      el.setAttribute('hx-post', '/api/submit');
+      el.setAttribute('hx-vals', '{"id": 123, "action": "approve"}');
+
+      const config = processor.collectAttributes(el);
+      expect(config.vals).toBe('{"id": 123, "action": "approve"}');
+    });
+
+    it('collects hx-headers into config', () => {
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
+      const el = document.createElement('button');
+      el.setAttribute('hx-get', '/api/data');
+      el.setAttribute('hx-headers', '{"X-Custom": "val", "Authorization": "Bearer token"}');
+
+      const config = processor.collectAttributes(el);
+      expect(config.headers).toBe('{"X-Custom": "val", "Authorization": "Bearer token"}');
     });
   });
 

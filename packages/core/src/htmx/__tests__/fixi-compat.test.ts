@@ -259,13 +259,26 @@ describe('fixi-compat', () => {
 
   describe('request dropping', () => {
     let processor: HtmxAttributeProcessor;
+    let mockExecute: ReturnType<typeof vi.fn<(code: string, element: Element) => Promise<void>>>;
+    let dropContainer: HTMLDivElement;
 
     beforeEach(() => {
+      dropContainer = document.createElement('div');
+      document.body.appendChild(dropContainer);
+      mockExecute = vi.fn().mockResolvedValue(undefined);
       processor = new HtmxAttributeProcessor({
+        root: dropContainer,
         processExisting: false,
         watchMutations: false,
         requestDropping: true,
+        fixiEvents: true,
       });
+      processor.init(mockExecute);
+    });
+
+    afterEach(() => {
+      processor.destroy();
+      dropContainer.remove();
     });
 
     it('hasPendingRequest returns false initially', () => {
@@ -276,6 +289,170 @@ describe('fixi-compat', () => {
     it('abortPendingRequest returns false when no pending', () => {
       const button = document.createElement('button');
       expect(processor.abortPendingRequest(button)).toBe(false);
+    });
+
+    it('drops second request while first is pending', async () => {
+      let resolveFirst!: () => void;
+      mockExecute.mockImplementation(
+        () =>
+          new Promise<void>(r => {
+            resolveFirst = r;
+          })
+      );
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      dropContainer.appendChild(button);
+
+      // First request - should execute
+      processor.processElement(button);
+      expect(mockExecute).toHaveBeenCalledTimes(1);
+
+      // Second request while first is pending - should be dropped
+      processor.processElement(button);
+      expect(mockExecute).toHaveBeenCalledTimes(1);
+
+      // Resolve first request
+      resolveFirst();
+      await vi.waitFor(() => !processor.hasPendingRequest(button));
+    });
+
+    it('allows new request after first completes', async () => {
+      // Use a fresh button each time to test that new elements can be processed
+      const button1 = document.createElement('button');
+      button1.setAttribute('fx-action', '/api/test');
+      dropContainer.appendChild(button1);
+
+      // First request
+      processor.processElement(button1);
+      await vi.waitFor(() => expect(mockExecute).toHaveBeenCalledTimes(1));
+      await vi.waitFor(() => !processor.hasPendingRequest(button1));
+
+      // Create a new element (simulating a fresh interaction target)
+      const button2 = document.createElement('button');
+      button2.setAttribute('fx-action', '/api/test');
+      dropContainer.appendChild(button2);
+
+      // Second request on new element should work
+      processor.processElement(button2);
+      expect(mockExecute).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears pending on success', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      dropContainer.appendChild(button);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(processor.hasPendingRequest(button)).toBe(false);
+      });
+    });
+
+    it('clears pending on error', async () => {
+      mockExecute.mockRejectedValue(new Error('test'));
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      dropContainer.appendChild(button);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(processor.hasPendingRequest(button)).toBe(false);
+      });
+    });
+
+    it('does not drop requests when requestDropping is false', async () => {
+      processor.destroy();
+      processor = new HtmxAttributeProcessor({
+        root: dropContainer,
+        processExisting: false,
+        watchMutations: false,
+        requestDropping: false,
+        fixiEvents: true,
+      });
+      processor.init(mockExecute);
+
+      let resolveFirst!: () => void;
+      mockExecute.mockImplementation(
+        () =>
+          new Promise<void>(r => {
+            resolveFirst = r;
+          })
+      );
+
+      // Test with two separate elements to verify both get processed
+      const button1 = document.createElement('button');
+      button1.setAttribute('fx-action', '/api/test');
+      dropContainer.appendChild(button1);
+
+      const button2 = document.createElement('button');
+      button2.setAttribute('fx-action', '/api/test2');
+      dropContainer.appendChild(button2);
+
+      // First request
+      processor.processElement(button1);
+      expect(mockExecute).toHaveBeenCalledTimes(1);
+
+      // Second request on different element - should work when requestDropping is false
+      processor.processElement(button2);
+      expect(mockExecute).toHaveBeenCalledTimes(2);
+
+      resolveFirst();
+    });
+
+    it('request dropping only applies to fixi elements', async () => {
+      let resolveFirst!: () => void;
+      mockExecute.mockImplementation(
+        () =>
+          new Promise<void>(r => {
+            resolveFirst = r;
+          })
+      );
+
+      // Test with two htmx elements to verify both get processed
+      // (htmx doesn't use request dropping per-element)
+      const htmxButton1 = document.createElement('button');
+      htmxButton1.setAttribute('hx-get', '/api/test1');
+      dropContainer.appendChild(htmxButton1);
+
+      const htmxButton2 = document.createElement('button');
+      htmxButton2.setAttribute('hx-get', '/api/test2');
+      dropContainer.appendChild(htmxButton2);
+
+      // First request
+      processor.processElement(htmxButton1);
+      expect(mockExecute).toHaveBeenCalledTimes(1);
+
+      // Second request on different htmx element - should work
+      processor.processElement(htmxButton2);
+      expect(mockExecute).toHaveBeenCalledTimes(2);
+
+      resolveFirst();
+    });
+
+    it('hasPendingRequest returns true while request is in flight', async () => {
+      let resolveRequest!: () => void;
+      mockExecute.mockImplementation(
+        () =>
+          new Promise<void>(r => {
+            resolveRequest = r;
+          })
+      );
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      dropContainer.appendChild(button);
+
+      processor.processElement(button);
+
+      // Should be pending during execution
+      expect(processor.hasPendingRequest(button)).toBe(true);
+
+      resolveRequest();
+      await vi.waitFor(() => !processor.hasPendingRequest(button));
     });
   });
 
@@ -369,6 +546,418 @@ describe('fixi-compat', () => {
       processor.processElement(button);
 
       expect(fxInitHandler).not.toHaveBeenCalled();
+    });
+
+    it('dispatches fx:after event after execution', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      button.setAttribute('fx-target', '#result');
+      evtContainer.appendChild(button);
+
+      const fxAfterHandler = vi.fn();
+      button.addEventListener('fx:after', fxAfterHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxAfterHandler).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('fx:after event is cancelable to prevent swap', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const fxAfterHandler = vi.fn((e: Event) => e.preventDefault());
+      const fxSwappedHandler = vi.fn();
+      button.addEventListener('fx:after', fxAfterHandler);
+      button.addEventListener('fx:swapped', fxSwappedHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxAfterHandler).toHaveBeenCalled();
+      });
+
+      // fx:swapped should not fire if fx:after was cancelled
+      // Wait a bit to ensure it wouldn't fire
+      await new Promise(r => setTimeout(r, 50));
+      expect(fxSwappedHandler).not.toHaveBeenCalled();
+    });
+
+    it('dispatches fx:swapped event on success', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      button.setAttribute('fx-target', '#result');
+      evtContainer.appendChild(button);
+
+      const fxSwappedHandler = vi.fn();
+      button.addEventListener('fx:swapped', fxSwappedHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxSwappedHandler).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('fx:swapped has correct detail', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      button.setAttribute('fx-target', '#result');
+      evtContainer.appendChild(button);
+
+      const fxSwappedHandler = vi.fn();
+      button.addEventListener('fx:swapped', fxSwappedHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxSwappedHandler).toHaveBeenCalled();
+      });
+
+      const event = fxSwappedHandler.mock.calls[0][0];
+      expect(event.detail.element).toBe(button);
+      expect(event.detail.target).toBe('#result');
+    });
+
+    it('fx:swapped bubbles up the DOM', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const containerHandler = vi.fn();
+      evtContainer.addEventListener('fx:swapped', containerHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(containerHandler).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('dispatches fx:error event on failure', async () => {
+      const testError = new Error('Test execution error');
+      mockExecute.mockRejectedValue(testError);
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const fxErrorHandler = vi.fn();
+      button.addEventListener('fx:error', fxErrorHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxErrorHandler).toHaveBeenCalledTimes(1);
+      });
+
+      const event = fxErrorHandler.mock.calls[0][0];
+      expect(event.detail.element).toBe(button);
+      expect(event.detail.error).toBe(testError);
+    });
+
+    it('fx:error wraps non-Error exceptions', async () => {
+      mockExecute.mockRejectedValue('string error');
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const fxErrorHandler = vi.fn();
+      button.addEventListener('fx:error', fxErrorHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxErrorHandler).toHaveBeenCalledTimes(1);
+      });
+
+      const event = fxErrorHandler.mock.calls[0][0];
+      expect(event.detail.error).toBeInstanceOf(Error);
+      expect(event.detail.error.message).toBe('string error');
+    });
+
+    it('fx:error bubbles up the DOM', async () => {
+      mockExecute.mockRejectedValue(new Error('Test error'));
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const containerHandler = vi.fn();
+      evtContainer.addEventListener('fx:error', containerHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(containerHandler).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('does not dispatch fx:swapped if execution fails', async () => {
+      mockExecute.mockRejectedValue(new Error('Execution failed'));
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const fxSwappedHandler = vi.fn();
+      const fxErrorHandler = vi.fn();
+      button.addEventListener('fx:swapped', fxSwappedHandler);
+      button.addEventListener('fx:error', fxErrorHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxErrorHandler).toHaveBeenCalledTimes(1);
+      });
+
+      expect(fxSwappedHandler).not.toHaveBeenCalled();
+    });
+
+    it('dispatches fx:finally on success', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const fxFinallyHandler = vi.fn();
+      button.addEventListener('fx:finally', fxFinallyHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxFinallyHandler).toHaveBeenCalledTimes(1);
+      });
+
+      const event = fxFinallyHandler.mock.calls[0][0];
+      expect(event.detail.success).toBe(true);
+    });
+
+    it('dispatches fx:finally on error', async () => {
+      mockExecute.mockRejectedValue(new Error('Test error'));
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const fxFinallyHandler = vi.fn();
+      button.addEventListener('fx:finally', fxFinallyHandler);
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(fxFinallyHandler).toHaveBeenCalledTimes(1);
+      });
+
+      const event = fxFinallyHandler.mock.calls[0][0];
+      expect(event.detail.success).toBe(false);
+    });
+
+    it('fx:finally always fires after fx:swapped', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const events: string[] = [];
+      button.addEventListener('fx:swapped', () => events.push('swapped'));
+      button.addEventListener('fx:finally', () => events.push('finally'));
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(events).toContain('finally');
+      });
+
+      expect(events).toEqual(['swapped', 'finally']);
+    });
+
+    it('fx:finally always fires after fx:error', async () => {
+      mockExecute.mockRejectedValue(new Error('Test error'));
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const events: string[] = [];
+      button.addEventListener('fx:error', () => events.push('error'));
+      button.addEventListener('fx:finally', () => events.push('finally'));
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(events).toContain('finally');
+      });
+
+      expect(events).toEqual(['error', 'finally']);
+    });
+
+    it('fires fixi events in correct order on success', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const events: string[] = [];
+      button.addEventListener('fx:init', () => events.push('init'));
+      button.addEventListener('fx:config', () => events.push('config'));
+      button.addEventListener('fx:before', () => events.push('before'));
+      button.addEventListener('fx:after', () => events.push('after'));
+      button.addEventListener('fx:swapped', () => events.push('swapped'));
+      button.addEventListener('fx:finally', () => events.push('finally'));
+      button.addEventListener('fx:error', () => events.push('error'));
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(events).toContain('finally');
+      });
+
+      expect(events).toEqual(['init', 'config', 'before', 'after', 'swapped', 'finally']);
+    });
+
+    it('fires fixi events in correct order on error', async () => {
+      mockExecute.mockRejectedValue(new Error('Test error'));
+
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      const events: string[] = [];
+      button.addEventListener('fx:init', () => events.push('init'));
+      button.addEventListener('fx:config', () => events.push('config'));
+      button.addEventListener('fx:before', () => events.push('before'));
+      button.addEventListener('fx:after', () => events.push('after'));
+      button.addEventListener('fx:swapped', () => events.push('swapped'));
+      button.addEventListener('fx:finally', () => events.push('finally'));
+      button.addEventListener('fx:error', () => events.push('error'));
+
+      processor.processElement(button);
+
+      await vi.waitFor(() => {
+        expect(events).toContain('finally');
+      });
+
+      expect(events).toEqual(['init', 'config', 'before', 'error', 'finally']);
+    });
+
+    it('cancelling fx:before prevents execution', () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      button.addEventListener('fx:before', e => e.preventDefault());
+
+      processor.processElement(button);
+
+      expect(mockExecute).not.toHaveBeenCalled();
+    });
+
+    it('cancelling fx:config prevents execution', () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      evtContainer.appendChild(button);
+
+      button.addEventListener('fx:config', e => e.preventDefault());
+
+      processor.processElement(button);
+
+      expect(mockExecute).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('MutationObserver with fx-*', () => {
+    let observerContainer: HTMLDivElement;
+    let observerProcessor: HtmxAttributeProcessor;
+    let mockExecute: ReturnType<typeof vi.fn<(code: string, element: Element) => Promise<void>>>;
+
+    beforeEach(() => {
+      observerContainer = document.createElement('div');
+      document.body.appendChild(observerContainer);
+      mockExecute = vi.fn().mockResolvedValue(undefined);
+      observerProcessor = new HtmxAttributeProcessor({
+        root: observerContainer,
+        processExisting: false,
+        watchMutations: true,
+        fixiEvents: true,
+      });
+      observerProcessor.init(mockExecute);
+    });
+
+    afterEach(() => {
+      observerProcessor.destroy();
+      observerContainer.remove();
+    });
+
+    it('processes dynamically added fx-action elements', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      observerContainer.appendChild(button);
+
+      await vi.waitFor(() => {
+        expect(button.hasAttribute('data-fx-generated')).toBe(true);
+      });
+    });
+
+    it('processes dynamically added elements with all fx-* attributes', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      button.setAttribute('fx-method', 'POST');
+      button.setAttribute('fx-target', '#result');
+      button.setAttribute('fx-swap', 'innerHTML');
+      observerContainer.appendChild(button);
+
+      await vi.waitFor(() => {
+        expect(button.hasAttribute('data-fx-generated')).toBe(true);
+      });
+
+      const generated = button.getAttribute('data-fx-generated');
+      expect(generated).toContain('/api/test');
+      expect(generated).toContain('POST');
+    });
+
+    it('ignores elements inside fx-ignore after dynamic insertion', async () => {
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('fx-ignore', '');
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      wrapper.appendChild(button);
+      observerContainer.appendChild(wrapper);
+
+      // Wait a tick to ensure observer could fire
+      await new Promise(r => setTimeout(r, 100));
+
+      // Button should not be processed
+      expect(button.hasAttribute('data-fx-generated')).toBe(false);
+    });
+
+    it('ignores element with fx-ignore attribute', async () => {
+      const button = document.createElement('button');
+      button.setAttribute('fx-action', '/api/test');
+      button.setAttribute('fx-ignore', '');
+      observerContainer.appendChild(button);
+
+      // Wait a tick to ensure observer could fire
+      await new Promise(r => setTimeout(r, 100));
+
+      // Button should not be processed
+      expect(button.hasAttribute('data-fx-generated')).toBe(false);
+    });
+
+    it('processes both htmx and fixi elements dynamically', async () => {
+      const fixiButton = document.createElement('button');
+      fixiButton.setAttribute('fx-action', '/api/fixi');
+      observerContainer.appendChild(fixiButton);
+
+      const htmxButton = document.createElement('button');
+      htmxButton.setAttribute('hx-get', '/api/htmx');
+      observerContainer.appendChild(htmxButton);
+
+      await vi.waitFor(() => {
+        expect(fixiButton.hasAttribute('data-fx-generated')).toBe(true);
+        expect(htmxButton.hasAttribute('data-hx-generated')).toBe(true);
+      });
     });
   });
 

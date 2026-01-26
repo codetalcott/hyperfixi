@@ -513,8 +513,43 @@ export class HtmxAttributeProcessor {
         }
       }
 
+      // Track success for fx:finally
+      let wasSuccessful = true;
+
       this.executeCallback(hyperscript, element)
         .then(() => {
+          // Dispatch fx:after for fixi elements (cancelable, before swap)
+          if (isFx && this.options.fixiEvents) {
+            const fxAfterEvent = new CustomEvent<FxAfterEventDetail>('fx:after', {
+              detail: {
+                cfg: {
+                  trigger: config.trigger || 'click',
+                  method: config.method || 'GET',
+                  action: config.url,
+                  headers: {},
+                  target: config.target,
+                  swap: config.swap || 'outerHTML',
+                  body: null,
+                  drop: 0,
+                  transition: true,
+                  preventTrigger: true,
+                  signal: controller.signal,
+                  response: null,
+                  text: '',
+                },
+                element,
+              },
+              bubbles: true,
+              cancelable: true,
+            });
+            if (!element.dispatchEvent(fxAfterEvent)) {
+              if (this.options.debug) {
+                console.log('[fx-compat] Swap cancelled by fx:after handler');
+              }
+              return; // Skip swap if cancelled
+            }
+          }
+
           // Dispatch htmx:afterSettle / fx:swapped event
           element.dispatchEvent(
             new CustomEvent<HtmxAfterSettleEventDetail>('htmx:afterSettle', {
@@ -534,6 +569,7 @@ export class HtmxAttributeProcessor {
           }
         })
         .catch(error => {
+          wasSuccessful = false;
           console.error(`[${prefix}-compat] Execution error:`, error);
 
           // Dispatch htmx:error / fx:error event
@@ -563,7 +599,7 @@ export class HtmxAttributeProcessor {
           if (isFx && this.options.fixiEvents) {
             element.dispatchEvent(
               new CustomEvent<FxFinallyEventDetail>('fx:finally', {
-                detail: { element, success: true }, // TODO: track actual success
+                detail: { element, success: wasSuccessful },
                 bubbles: true,
               })
             );
