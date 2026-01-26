@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 /**
- * Convert all internal @lokascript/* dependencies to workspace protocol
- * This enables automatic version resolution during development
+ * Standardize all internal @lokascript/* dependencies
+ *
+ * For npm workspaces, using "*" as the version allows npm to automatically
+ * resolve to local packages. This script converts:
+ * - "file:../xxx" paths → "*"
+ * - "workspace:*" (pnpm/yarn syntax) → "*"
+ * - Version numbers → "*"
+ *
+ * Note: workspace:* is pnpm/yarn syntax and doesn't work with npm.
+ * npm workspaces use "*" and resolve based on the workspaces field in root package.json.
  */
 
 const fs = require('fs');
@@ -15,8 +23,9 @@ const packages = fs.readdirSync(packagesDir).filter(dir => {
 
 let updated = 0;
 let total = 0;
+let fileRefsConverted = 0;
 
-console.log('Converting internal dependencies to workspace protocol...\n');
+console.log('Standardizing internal dependencies to "*" for npm workspaces...\n');
 
 packages.forEach(dir => {
   const pkgPath = path.join(packagesDir, dir, 'package.json');
@@ -29,13 +38,15 @@ packages.forEach(dir => {
       Object.keys(pkg[depType]).forEach(depName => {
         if (depName.startsWith('@lokascript/')) {
           const currentValue = pkg[depType][depName];
-          // Only update if not already using workspace protocol
-          if (!currentValue.startsWith('workspace:') && !currentValue.startsWith('file:')) {
-            pkg[depType][depName] = 'workspace:*';
+          // Update if not already using "*"
+          if (currentValue !== '*') {
+            const wasFileRef = currentValue.startsWith('file:');
+            pkg[depType][depName] = '*';
             console.log(`  ${pkg.name}`);
-            console.log(`    ${depName}: ${currentValue} → workspace:*`);
+            console.log(`    ${depName}: ${currentValue} → *`);
             changed = true;
             total++;
+            if (wasFileRef) fileRefsConverted++;
           }
         }
       });
@@ -51,10 +62,12 @@ packages.forEach(dir => {
 console.log(`\n📊 Summary:`);
 console.log(`   Packages updated: ${updated}`);
 console.log(`   Dependencies converted: ${total}`);
+if (fileRefsConverted > 0) {
+  console.log(`   File references converted: ${fileRefsConverted}`);
+}
 
 if (total > 0) {
   console.log('\n💡 Next steps:');
   console.log('   1. Run: npm install');
   console.log('   2. Commit changes');
-  console.log('\n⚠️  Note: workspace:* will be converted to exact versions during publish');
 }

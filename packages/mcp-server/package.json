@@ -35,8 +35,8 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.0",
-    "@lokascript/semantic": "file:../semantic",
-    "@lokascript/patterns-reference": "file:../patterns-reference"
+    "@lokascript/semantic": "*",
+    "@lokascript/patterns-reference": "*"
   },
   "peerDependencies": {
     "@lokascript/ast-toolkit": "*",
@@ -55,9 +55,9 @@
     }
   },
   "devDependencies": {
-    "@lokascript/ast-toolkit": "file:../ast-toolkit",
-    "@lokascript/patterns-reference": "file:../patterns-reference",
-    "@lokascript/semantic": "file:../semantic",
+    "@lokascript/ast-toolkit": "*",
+    "@lokascript/patterns-reference": "*",
+    "@lokascript/semantic": "*",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",

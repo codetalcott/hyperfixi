@@ -147,6 +147,9 @@ jobs:
           npm run typecheck --prefix packages/vite-plugin
           npm run typecheck --prefix packages/patterns-reference
 
+      - name: Verify reference data
+        run: npm run verify:reference --prefix packages/core
+
   # ============================================
   # Job 3: Unit Tests
   # ============================================

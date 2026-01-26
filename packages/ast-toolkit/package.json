@@ -63,8 +63,8 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/core": "file:../core",
-    "@lokascript/patterns-reference": "file:../patterns-reference",
+    "@lokascript/core": "*",
+    "@lokascript/patterns-reference": "*",
     "esbuild": "0.25.11",
     "vite": "^7.1.12"
   },

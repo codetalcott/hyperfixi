@@ -123,7 +123,17 @@
       "import": "./dist/registry/environment.mjs",
       "require": "./dist/registry/environment.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./reference": {
+      "types": "./dist/reference/index.d.ts",
+      "import": "./dist/reference/index.mjs",
+      "require": "./dist/reference/index.js"
+    },
+    "./metadata": {
+      "types": "./dist/metadata.d.ts",
+      "import": "./dist/metadata.mjs",
+      "require": "./dist/metadata.js"
+    }
   },
   "files": [
     "dist/",
@@ -190,7 +200,10 @@
     "clean": "rm -rf dist",
     "analyze:usage": "node scripts/analyze-usage.mjs",
     "size": "npm run size:analysis",
-    "size:analysis": "echo 'Size Analysis:' && echo 'ES Module: '$(wc -c < dist/index.mjs)' bytes' && echo 'CJS Module: '$(wc -c < dist/index.js)' bytes' && echo 'Gzipped: '$(gzip -c dist/index.mjs | wc -c)' bytes'"
+    "size:analysis": "echo 'Size Analysis:' && echo 'ES Module: '$(wc -c < dist/index.mjs)' bytes' && echo 'CJS Module: '$(wc -c < dist/index.js)' bytes' && echo 'Gzipped: '$(gzip -c dist/index.mjs | wc -c)' bytes'",
+    "verify:reference": "tsx scripts/verify-reference-data.ts",
+    "update:sizes": "tsx scripts/update-bundle-sizes.ts",
+    "update:sizes:auto": "tsx scripts/update-bundle-sizes.ts --update"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",

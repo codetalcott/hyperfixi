@@ -55,7 +55,6 @@
   "author": "Hyperfixi Team",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/ast-toolkit": "*",
     "@lokascript/core": "*",
     "@lokascript/semantic": "*",
     "esbuild": "0.25.11",

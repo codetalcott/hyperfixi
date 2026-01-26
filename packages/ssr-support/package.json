@@ -38,8 +38,8 @@
     "directory": "packages/ssr-support"
   },
   "dependencies": {
-    "@lokascript/component-schema": "file:../component-schema",
-    "@lokascript/template-integration": "file:../template-integration",
+    "@lokascript/component-schema": "*",
+    "@lokascript/template-integration": "*",
     "esbuild": "0.25.11",
     "jsdom": "^23.0.1",
     "vite": "^7.1.12"

@@ -16,8 +16,8 @@
     "start": "node dist/server/index.js"
   },
   "dependencies": {
-    "@lokascript/ast-toolkit": "file:../ast-toolkit",
-    "@lokascript/core": "file:../core",
+    "@lokascript/ast-toolkit": "*",
+    "@lokascript/core": "*",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "esbuild": "0.25.11",
