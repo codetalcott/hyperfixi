@@ -146,10 +146,13 @@ jobs:
             fi
           done
 
-      # Uses OIDC trusted publishing - no NPM_TOKEN needed
+      # Uses OIDC trusted publishing by default - no NPM_TOKEN needed
       # Requires trusted publisher configured on npmjs.com for each package
+      # Falls back to NPM_TOKEN if provided (useful for transitioning repos)
       - name: Publish to npm
         if: ${{ github.event.inputs.dry-run == 'false' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           IFS=',' read -ra PKG_ARRAY <<< "${{ steps.packages.outputs.packages }}"
           for pkg in "${PKG_ARRAY[@]}"; do
@@ -157,7 +160,16 @@ jobs:
             if [ -d "packages/$pkg" ]; then
               echo "Publishing @lokascript/$pkg with tag ${{ github.event.inputs.npm-tag }}"
               cd "packages/$pkg"
-              npm publish --tag ${{ github.event.inputs.npm-tag }} --access public --provenance
+
+              # Use provenance if OIDC is available and no token is set
+              if [ -z "$NODE_AUTH_TOKEN" ]; then
+                echo "Using OIDC trusted publishing"
+                npm publish --tag ${{ github.event.inputs.npm-tag }} --access public --provenance
+              else
+                echo "Using NPM_TOKEN (remove secret to use OIDC)"
+                npm publish --tag ${{ github.event.inputs.npm-tag }} --access public
+              fi
+
               cd ../..
             fi
           done
