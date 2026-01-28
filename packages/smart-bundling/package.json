@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/smart-bundling",
-  "version": "1.0.0-rc.1",
+  "version": "1.1.1",
   "private": true,
   "description": "Intelligent bundling system for HyperFixi applications based on usage patterns",
   "main": "dist/index.js",

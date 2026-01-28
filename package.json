@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/monorepo",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "HyperFixi monorepo - modular hyperscript expression engine with fixi.js integration",
   "private": true,
   "type": "module",
@@ -75,7 +75,8 @@
   },
   "overrides": {
     "tar": "^7.5.6",
-    "esbuild": "^0.25.11"
+    "esbuild": "^0.25.11",
+    "hono": "^4.11.7"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
