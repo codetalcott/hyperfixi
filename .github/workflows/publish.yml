@@ -65,7 +65,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Install dependencies
-        run: npm ci
+        # Use npm install instead of npm ci to handle cross-platform optional deps
+        # (lock file generated on macOS won't have linux esbuild platform packages)
+        run: npm install --prefer-offline
 
       - name: Build packages (must build before tests due to workspace imports)
         run: |
