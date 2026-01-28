@@ -81,6 +81,7 @@ jobs:
           # 7. vite-plugin (depends on core)
           npm run build --prefix packages/semantic
           npm run build --prefix packages/core
+          npm run build:browser --prefix packages/core
           npm run build --prefix packages/patterns-reference
           npm run build --prefix packages/i18n
           npm run build --prefix packages/ast-toolkit
