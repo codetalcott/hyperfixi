@@ -10,21 +10,15 @@ npm install @lokascript/patterns-reference
 
 ## Quick Start
 
-### 1. Initialize the Database
-
-Before using the package, populate the SQLite database with patterns and translations:
-
-```bash
-npm run populate
-```
-
-This creates a database at `data/patterns.db` with:
+The package ships with a **pre-populated SQLite database** containing:
 
 - 106 code examples covering hyperscript commands and real-world UI patterns
 - 1,378 translations (106 patterns × 13 languages)
 - 414 LLM few-shot examples for code generation
 
-### 2. Use the API
+No setup required - just install and use:
+
+### Use the API
 
 ```typescript
 import { createPatternsReference } from '@lokascript/patterns-reference';
@@ -122,13 +116,16 @@ The database path can be configured via:
    ```
 
 2. **Environment variables:**
+
    ```bash
    export LSP_DB_PATH="/path/to/db.sqlite"
    # or
    export HYPERSCRIPT_LSP_DB="/path/to/db.sqlite"
    ```
 
-### Scripts
+### Scripts (Development Only)
+
+These scripts are for contributors regenerating the database. **End users don't need these** - the database ships pre-populated.
 
 | Script                      | Description                                              |
 | --------------------------- | -------------------------------------------------------- |
@@ -262,6 +259,51 @@ npm run validate
 
 # Build
 npm run build
+```
+
+## Troubleshooting
+
+### Native Module Installation
+
+This package uses `better-sqlite3`, a native Node.js module. If you encounter installation errors:
+
+**macOS:**
+
+```bash
+xcode-select --install  # Install Xcode command line tools
+```
+
+**Linux (Debian/Ubuntu):**
+
+```bash
+sudo apt-get install build-essential python3
+```
+
+**Windows:**
+
+```bash
+npm install --global windows-build-tools
+```
+
+`better-sqlite3` ships with prebuilt binaries for most platforms, so compilation is usually not required. If you encounter issues, ensure you're using a supported Node.js version (18, 20, or 22 LTS).
+
+### Database Not Found
+
+If you get "database not found" errors, the database path may not be resolving correctly. Set it explicitly:
+
+```typescript
+import { createPatternsReference } from '@lokascript/patterns-reference';
+import { join } from 'path';
+
+const ref = createPatternsReference({
+  dbPath: join(__dirname, 'node_modules/@lokascript/patterns-reference/data/patterns.db'),
+});
+```
+
+Or use environment variables:
+
+```bash
+export LSP_DB_PATH="/absolute/path/to/patterns.db"
 ```
 
 ## License

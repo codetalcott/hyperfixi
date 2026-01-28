@@ -1,0 +1,16 @@
+# Development scripts (database ships pre-populated)
+scripts/
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+
+# Development config
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+
+# Source maps (if any)
+**/*.map

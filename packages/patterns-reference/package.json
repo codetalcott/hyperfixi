@@ -51,6 +51,9 @@
   ],
   "author": "Hyperfixi Team",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/codetalcott/lokascript.git",
@@ -74,9 +77,10 @@
   },
   "files": [
     "dist",
-    "src",
     "data",
-    "scripts"
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.spec.ts"
   ],
   "sideEffects": false,
   "publishConfig": {
