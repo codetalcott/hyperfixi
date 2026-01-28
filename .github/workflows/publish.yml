@@ -74,16 +74,17 @@ jobs:
           # Build order based on dependency graph:
           # 1. semantic (no lokascript deps)
           # 2. core (depends on semantic)
-          # 3. patterns-reference (depends on semantic)
-          # 4. i18n (depends on core, semantic)
-          # 5. ast-toolkit (optional dep for mcp-server, build even though private)
-          # 6. mcp-server (depends on semantic, patterns-reference, ast-toolkit optional)
-          # 7. vite-plugin (depends on core)
+          # 3. i18n (depends on core, semantic) - must build before core:browser
+          # 4. core:browser (classic-i18n bundle depends on i18n/dist/browser.js)
+          # 5. patterns-reference (depends on semantic)
+          # 6. ast-toolkit (optional dep for mcp-server, build even though private)
+          # 7. mcp-server (depends on semantic, patterns-reference, ast-toolkit optional)
+          # 8. vite-plugin (depends on core)
           npm run build --prefix packages/semantic
           npm run build --prefix packages/core
+          npm run build --prefix packages/i18n
           npm run build:browser --prefix packages/core
           npm run build --prefix packages/patterns-reference
-          npm run build --prefix packages/i18n
           npm run build --prefix packages/ast-toolkit
           npm run build --prefix packages/mcp-server
           npm run build --prefix packages/vite-plugin
