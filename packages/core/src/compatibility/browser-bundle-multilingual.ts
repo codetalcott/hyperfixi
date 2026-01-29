@@ -108,6 +108,8 @@ import { createRenderCommand } from '../commands/templates/render';
 
 // NO PARSER IMPORT - uses @lokascript/semantic package instead
 
+import { debug } from '../utils/debug';
+
 // =============================================================================
 // Semantic Module Access (from browser global)
 // =============================================================================
@@ -392,14 +394,188 @@ const api = {
    * Bundle type identifier
    */
   bundleType: 'multilingual' as const,
+
+  /**
+   * Manually process a DOM element or the entire document.
+   * Uses the semantic parser to compile _ attributes.
+   */
+  processNode: async (element: Element | Document): Promise<void> => {
+    if (element === document || element === document.documentElement) {
+      await scanAndProcessAll();
+    } else if (element instanceof HTMLElement) {
+      await processElementSemantic(element);
+    }
+  },
+
+  /**
+   * Alias for processNode.
+   */
+  process: async (element: Element | Document): Promise<void> => {
+    return api.processNode(element);
+  },
 };
+
+// =============================================================================
+// DOM Attribute Auto-Processing (using semantic parser path)
+// =============================================================================
+
+const processedElements = new WeakSet<HTMLElement>();
+let domObserver: MutationObserver | null = null;
+
+/**
+ * Detect language for an element by checking data-lang, lang attributes,
+ * or walking up the DOM tree. Falls back to 'en'.
+ */
+function detectLanguage(element: HTMLElement): string {
+  // Check data-lang first (explicit lokascript language override)
+  const dataLang = element.getAttribute('data-lang');
+  if (dataLang && SUPPORTED_LANGUAGES.includes(dataLang as any)) {
+    return dataLang;
+  }
+
+  // Walk up the DOM checking lang attributes
+  let current: HTMLElement | null = element;
+  while (current) {
+    const lang = current.getAttribute('lang');
+    if (lang) {
+      // Normalize lang attribute (e.g., "ja-JP" → "ja")
+      const code = lang.split('-')[0].toLowerCase();
+      if (SUPPORTED_LANGUAGES.includes(code as any)) {
+        return code;
+      }
+    }
+    current = current.parentElement;
+  }
+
+  return 'en';
+}
+
+/**
+ * Process a single element's _ attribute using the semantic parser.
+ */
+async function processElementSemantic(element: HTMLElement): Promise<void> {
+  if (processedElements.has(element)) return;
+
+  const code = element.getAttribute('_');
+  if (!code) return;
+
+  try {
+    const lang = detectLanguage(element);
+    debug.parse(`ATTR-ML: Processing element with lang="${lang}":`, code.substring(0, 60));
+
+    const semantic = getSemanticModule();
+    const analyzer = semantic.createSemanticAnalyzer();
+    const result = analyzer.analyze(code, lang);
+
+    if (result.confidence < 0.5 || !result.node) {
+      debug.parse(`ATTR-ML: Low confidence (${result.confidence.toFixed(2)}) for: ${code}`);
+      return;
+    }
+
+    const buildResult = semantic.buildAST(result.node);
+    const ctx = ensureContext(element);
+    await runtime.execute(buildResult.ast as unknown as ASTNode, ctx);
+
+    processedElements.add(element);
+    debug.parse(`ATTR-ML: Successfully processed element`);
+  } catch (error) {
+    debug.parse('ATTR-ML: Error processing element:', (error as Error).message);
+  }
+}
+
+/**
+ * Scan and process all elements with _ attributes.
+ */
+async function scanAndProcessAll(): Promise<void> {
+  const elements = document.querySelectorAll('[_]');
+  debug.parse(`ATTR-ML: Found ${elements.length} elements with _ attributes`);
+
+  const promises: Promise<void>[] = [];
+  elements.forEach(el => {
+    if (el instanceof HTMLElement) {
+      promises.push(processElementSemantic(el));
+    }
+  });
+  await Promise.all(promises);
+
+  debug.parse('ATTR-ML: All elements processed');
+
+  // Dispatch ready event
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('lokascript:initialized', {
+        detail: { elementsProcessed: elements.length },
+      })
+    );
+  }
+}
+
+/**
+ * Set up MutationObserver to process dynamically added elements.
+ */
+function setupMutationObserver(): void {
+  if (typeof MutationObserver === 'undefined') return;
+
+  domObserver = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        const element = node as HTMLElement;
+
+        // Process the element itself
+        if (element.getAttribute?.('_')) {
+          processElementSemantic(element).catch(err => {
+            debug.parse('ATTR-ML: Error processing dynamic element:', err);
+          });
+        }
+
+        // Process descendants with _ attributes
+        const descendants = element.querySelectorAll?.('[_]');
+        descendants?.forEach(desc => {
+          if (desc instanceof HTMLElement) {
+            processElementSemantic(desc).catch(err => {
+              debug.parse('ATTR-ML: Error processing dynamic descendant:', err);
+            });
+          }
+        });
+      });
+    }
+  });
+
+  domObserver.observe(document.body, { childList: true, subtree: true });
+}
 
 // =============================================================================
 // Global Export
 // =============================================================================
 
 if (typeof window !== 'undefined') {
-  (window as any).hyperfixi = api;
+  // Primary: lokascript (new name)
+  (window as any).lokascript = api;
+
+  // Compatibility: hyperfixi (deprecated alias)
+  if (typeof (window as any).hyperfixi === 'undefined') {
+    Object.defineProperty(window, 'hyperfixi', {
+      get() {
+        console.warn(
+          '[DEPRECATED] window.hyperfixi is deprecated and will be removed in v2.0.0. ' +
+            'Please use window.lokascript instead.'
+        );
+        return (window as any).lokascript;
+      },
+      enumerable: true,
+      configurable: true,
+    });
+  }
+
+  // Auto-process _ attributes when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      scanAndProcessAll().then(() => setupMutationObserver());
+    });
+  } else {
+    scanAndProcessAll().then(() => setupMutationObserver());
+  }
 }
 
 export default api;

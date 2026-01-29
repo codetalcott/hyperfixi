@@ -97,6 +97,54 @@
       "types": "./dist/languages/sw.d.ts",
       "import": "./dist/languages/sw.js"
     },
+    "./languages/bn": {
+      "types": "./dist/languages/bn.d.ts",
+      "import": "./dist/languages/bn.js"
+    },
+    "./languages/he": {
+      "types": "./dist/languages/he.d.ts",
+      "import": "./dist/languages/he.js"
+    },
+    "./languages/hi": {
+      "types": "./dist/languages/hi.d.ts",
+      "import": "./dist/languages/hi.js"
+    },
+    "./languages/it": {
+      "types": "./dist/languages/it.d.ts",
+      "import": "./dist/languages/it.js"
+    },
+    "./languages/ms": {
+      "types": "./dist/languages/ms.d.ts",
+      "import": "./dist/languages/ms.js"
+    },
+    "./languages/pl": {
+      "types": "./dist/languages/pl.d.ts",
+      "import": "./dist/languages/pl.js"
+    },
+    "./languages/ru": {
+      "types": "./dist/languages/ru.d.ts",
+      "import": "./dist/languages/ru.js"
+    },
+    "./languages/th": {
+      "types": "./dist/languages/th.d.ts",
+      "import": "./dist/languages/th.js"
+    },
+    "./languages/tl": {
+      "types": "./dist/languages/tl.d.ts",
+      "import": "./dist/languages/tl.js"
+    },
+    "./languages/uk": {
+      "types": "./dist/languages/uk.d.ts",
+      "import": "./dist/languages/uk.js"
+    },
+    "./languages/vi": {
+      "types": "./dist/languages/vi.d.ts",
+      "import": "./dist/languages/vi.js"
+    },
+    "./languages/es-MX": {
+      "types": "./dist/languages/es-MX.d.ts",
+      "import": "./dist/languages/es-MX.js"
+    },
     "./browser/ja": {
       "default": "./dist/browser-ja.ja.global.js"
     },

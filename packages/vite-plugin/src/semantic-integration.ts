@@ -255,23 +255,35 @@ function preprocessMultilingual(code) {
 
 /**
  * Semantic bundle types available.
- * Single-language bundles are available for all 13 supported languages.
+ * Single-language bundles are available for all 25 languages with semantic tokenizers.
  */
 export type SemanticBundleType =
-  // Single-language bundles (all 13 languages)
+  // Single-language bundles (all 25 languages)
+  | 'ar'
+  | 'bn'
+  | 'de'
   | 'en'
   | 'es'
-  | 'ja'
-  | 'ar'
-  | 'ko'
-  | 'zh'
-  | 'tr'
-  | 'pt'
+  | 'es-MX'
   | 'fr'
-  | 'de'
+  | 'he'
+  | 'hi'
   | 'id'
+  | 'it'
+  | 'ja'
+  | 'ko'
+  | 'ms'
+  | 'pl'
+  | 'pt'
   | 'qu'
+  | 'ru'
   | 'sw'
+  | 'th'
+  | 'tl'
+  | 'tr'
+  | 'uk'
+  | 'vi'
+  | 'zh'
   // Regional bundles
   | 'es-en'
   | 'western'
@@ -391,22 +403,35 @@ function selectBundleType(
 }
 
 /**
- * All languages that have single-language bundles available.
+ * All languages that have single-language ESM modules available.
+ * These can be selected as individual bundle types for optimal tree-shaking.
  */
-const SINGLE_LANGUAGE_BUNDLES: readonly SupportedLanguage[] = [
+const SINGLE_LANGUAGE_BUNDLES: readonly string[] = [
+  'ar',
+  'bn',
+  'de',
   'en',
   'es',
-  'ja',
-  'ar',
-  'ko',
-  'zh',
-  'tr',
-  'pt',
+  'es-MX',
   'fr',
-  'de',
+  'he',
+  'hi',
   'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
   'qu',
+  'ru',
   'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
 ] as const;
 
 /**
@@ -457,20 +482,32 @@ export function selectOptimalBundle(languages: Set<SupportedLanguage>): Semantic
  * Sizes measured from minified bundles (January 2025).
  */
 export const SEMANTIC_BUNDLE_SIZES: Record<SemanticBundleType, { raw: string; gzip: string }> = {
-  // Single-language bundles (all 13 languages)
+  // Single-language bundles (all 25 languages)
+  ar: { raw: '66 KB', gzip: '~17 KB' },
+  bn: { raw: '56 KB', gzip: '~14 KB' },
+  de: { raw: '57 KB', gzip: '~14 KB' },
   en: { raw: '82 KB', gzip: '~20 KB' },
   es: { raw: '64 KB', gzip: '~16 KB' },
-  ja: { raw: '67 KB', gzip: '~17 KB' },
-  ar: { raw: '66 KB', gzip: '~17 KB' },
-  ko: { raw: '69 KB', gzip: '~18 KB' },
-  zh: { raw: '58 KB', gzip: '~15 KB' },
-  tr: { raw: '73 KB', gzip: '~18 KB' },
-  pt: { raw: '56 KB', gzip: '~14 KB' },
+  'es-MX': { raw: '64 KB', gzip: '~16 KB' },
   fr: { raw: '57 KB', gzip: '~14 KB' },
-  de: { raw: '57 KB', gzip: '~14 KB' },
+  he: { raw: '56 KB', gzip: '~14 KB' },
+  hi: { raw: '56 KB', gzip: '~14 KB' },
   id: { raw: '57 KB', gzip: '~14 KB' },
+  it: { raw: '57 KB', gzip: '~14 KB' },
+  ja: { raw: '67 KB', gzip: '~17 KB' },
+  ko: { raw: '69 KB', gzip: '~18 KB' },
+  ms: { raw: '56 KB', gzip: '~14 KB' },
+  pl: { raw: '56 KB', gzip: '~14 KB' },
+  pt: { raw: '56 KB', gzip: '~14 KB' },
   qu: { raw: '56 KB', gzip: '~14 KB' },
+  ru: { raw: '56 KB', gzip: '~14 KB' },
   sw: { raw: '56 KB', gzip: '~14 KB' },
+  th: { raw: '56 KB', gzip: '~14 KB' },
+  tl: { raw: '56 KB', gzip: '~14 KB' },
+  tr: { raw: '73 KB', gzip: '~18 KB' },
+  uk: { raw: '56 KB', gzip: '~14 KB' },
+  vi: { raw: '56 KB', gzip: '~14 KB' },
+  zh: { raw: '58 KB', gzip: '~15 KB' },
   // Regional bundles
   'es-en': { raw: '99 KB', gzip: '~25 KB' },
   western: { raw: '127 KB', gzip: '~30 KB' },
@@ -492,21 +529,35 @@ export function getSemanticBundleSize(bundleType: SemanticBundleType): {
 /**
  * Languages that have per-language ESM subpath exports in @lokascript/semantic.
  * These can be imported individually: `import '@lokascript/semantic/languages/en'`
+ *
+ * All 25 languages with semantic tokenizers now have individual ESM modules.
  */
 const LANGUAGES_WITH_ESM_EXPORTS = new Set([
+  'ar',
+  'bn',
+  'de',
   'en',
   'es',
-  'ja',
-  'ar',
-  'ko',
-  'zh',
-  'tr',
-  'pt',
+  'es-MX',
   'fr',
-  'de',
+  'he',
+  'hi',
   'id',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'pl',
+  'pt',
   'qu',
+  'ru',
   'sw',
+  'th',
+  'tl',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
 ]);
 
 /**
@@ -569,7 +620,10 @@ export function getLanguagesForBundleType(
 
 /**
  * Check if all languages in the set have ESM subpath exports available.
- * If not, we must fall back to importing from the full '@lokascript/semantic' entry.
+ * @deprecated Use filterToAvailableLanguages() instead. This function used an
+ * all-or-nothing approach that caused fallback to the full bundle when any
+ * language lacked ESM exports. The new approach imports available languages
+ * individually and skips unavailable ones.
  */
 export function canUseCorePlusLanguages(languages: Set<string>): boolean {
   for (const lang of languages) {
@@ -581,16 +635,33 @@ export function canUseCorePlusLanguages(languages: Set<string>): boolean {
 }
 
 /**
+ * Filter a set of languages to only those with ESM subpath exports.
+ * Languages without exports (e.g., 'it', 'ru', 'hi') are excluded since
+ * they don't have semantic parser modules in @lokascript/semantic.
+ *
+ * Always ensures 'en' is included as a fallback.
+ */
+export function filterToAvailableLanguages(languages: Set<string>): Set<string> {
+  const available = new Set<string>();
+  for (const lang of languages) {
+    if (LANGUAGES_WITH_ESM_EXPORTS.has(lang)) {
+      available.add(lang);
+    }
+  }
+  // Always ensure English is included
+  available.add('en');
+  return available;
+}
+
+/**
  * Generate the semantic integration layer code.
  * This is injected into the generated bundle when semantic is enabled.
  *
- * Uses '@lokascript/semantic/core' for the analyzer infrastructure and
+ * Always uses '@lokascript/semantic/core' for the analyzer infrastructure and
  * individual '@lokascript/semantic/languages/<lang>' imports for each
- * required language. This avoids pulling in all 25 languages when only
- * a few are needed (e.g., 25 KB for core+en vs 102 KB for all languages).
- *
- * Falls back to '@lokascript/semantic' (full bundle) when required languages
- * lack ESM subpath exports.
+ * required language. Languages without ESM exports are skipped (they don't
+ * have semantic parser modules). This avoids importing the full
+ * '@lokascript/semantic' index (1 MB source) for multi-language scenarios.
  */
 export function generateSemanticIntegrationCode(config: SemanticConfig): string {
   if (!config.enabled || !config.bundleType) {
@@ -599,7 +670,12 @@ export function generateSemanticIntegrationCode(config: SemanticConfig): string 
 
   // Resolve all languages needed for this bundle type
   const resolvedLanguages = getLanguagesForBundleType(config.bundleType, config.languages);
-  const useCorePlusLanguages = canUseCorePlusLanguages(resolvedLanguages);
+
+  // Filter to only languages with ESM subpath exports.
+  // Languages like 'it', 'ru', 'hi' don't have semantic parser modules
+  // and would previously cause fallback to the full @lokascript/semantic
+  // index (1 MB source). Now we always use core + per-language imports.
+  const availableLanguages = filterToAvailableLanguages(resolvedLanguages);
 
   const languages = [...config.languages].join("', '");
 
@@ -607,11 +683,7 @@ export function generateSemanticIntegrationCode(config: SemanticConfig): string 
 // =============================================================================
 // SEMANTIC PARSER INTEGRATION
 // =============================================================================
-`;
 
-  if (useCorePlusLanguages) {
-    // Optimal path: core infrastructure + per-language side-effect imports
-    code += `
 // Core infrastructure (no language data bundled)
 import {
   createSemanticAnalyzer,
@@ -621,20 +693,10 @@ import {
 
 // Register required languages (self-registering side-effect imports)
 `;
-    // Sort for deterministic output
-    const sortedLangs = [...resolvedLanguages].sort();
-    for (const lang of sortedLangs) {
-      code += `import '@lokascript/semantic/languages/${lang}';\n`;
-    }
-  } else {
-    // Fallback: full import (some languages lack ESM subpath exports)
-    code += `
-import {
-  createSemanticAnalyzer,
-  buildAST,
-  isLanguageSupported,
-} from '@lokascript/semantic';
-`;
+  // Sort for deterministic output
+  const sortedLangs = [...availableLanguages].sort();
+  for (const lang of sortedLangs) {
+    code += `import '@lokascript/semantic/languages/${lang}';\n`;
   }
 
   if (config.grammarEnabled) {

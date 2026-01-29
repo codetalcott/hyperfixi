@@ -6,6 +6,7 @@ import {
   getSemanticExports,
   getLanguagesForBundleType,
   canUseCorePlusLanguages,
+  filterToAvailableLanguages,
   generateSemanticIntegrationCode,
   type SemanticBundleType,
   type SemanticConfig,
@@ -137,17 +138,64 @@ describe('canUseCorePlusLanguages', () => {
     expect(canUseCorePlusLanguages(new Set(['en']))).toBe(true);
     expect(canUseCorePlusLanguages(new Set(['en', 'es', 'ja']))).toBe(true);
     expect(canUseCorePlusLanguages(new Set(['en', 'ko', 'zh', 'tr', 'pt', 'fr', 'de']))).toBe(true);
+    // All 25 languages now have ESM exports
+    expect(canUseCorePlusLanguages(new Set(['en', 'it']))).toBe(true);
+    expect(canUseCorePlusLanguages(new Set(['en', 'ru']))).toBe(true);
+    expect(canUseCorePlusLanguages(new Set(['en', 'hi']))).toBe(true);
   });
 
-  it('returns false when a language lacks ESM exports', () => {
-    // 'it' (Italian) and 'ru' (Russian) don't have per-language ESM subpath exports
-    expect(canUseCorePlusLanguages(new Set(['en', 'it']))).toBe(false);
-    expect(canUseCorePlusLanguages(new Set(['en', 'ru']))).toBe(false);
-    expect(canUseCorePlusLanguages(new Set(['en', 'hi']))).toBe(false);
+  it('returns false for unknown language codes', () => {
+    expect(canUseCorePlusLanguages(new Set(['en', 'xx']))).toBe(false);
+    expect(canUseCorePlusLanguages(new Set(['zz']))).toBe(false);
   });
 
   it('returns true for empty set', () => {
     expect(canUseCorePlusLanguages(new Set())).toBe(true);
+  });
+});
+
+describe('filterToAvailableLanguages', () => {
+  it('keeps languages with ESM exports', () => {
+    const result = filterToAvailableLanguages(new Set(['en', 'es', 'ja']));
+    expect(result).toEqual(new Set(['en', 'es', 'ja']));
+  });
+
+  it('keeps all 25 languages that have ESM exports', () => {
+    const result = filterToAvailableLanguages(new Set(['en', 'it', 'ru', 'hi']));
+    expect(result).toEqual(new Set(['en', 'it', 'ru', 'hi']));
+  });
+
+  it('filters out unknown language codes', () => {
+    const result = filterToAvailableLanguages(new Set(['en', 'xx', 'zz']));
+    expect(result).toEqual(new Set(['en']));
+    expect(result.has('xx')).toBe(false);
+  });
+
+  it('always includes English', () => {
+    const result = filterToAvailableLanguages(new Set(['xx']));
+    expect(result).toEqual(new Set(['en']));
+  });
+
+  it('handles empty set', () => {
+    const result = filterToAvailableLanguages(new Set());
+    expect(result).toEqual(new Set(['en']));
+  });
+
+  it('keeps all western region languages', () => {
+    // western = en, es, pt, fr, de, it — all now have ESM exports
+    const result = filterToAvailableLanguages(new Set(['en', 'es', 'pt', 'fr', 'de', 'it']));
+    expect(result).toEqual(new Set(['en', 'es', 'pt', 'fr', 'de', 'it']));
+  });
+
+  it('keeps all priority region languages', () => {
+    // All priority languages now have ESM exports
+    const result = filterToAvailableLanguages(
+      new Set(['en', 'es', 'pt', 'fr', 'de', 'it', 'ja', 'zh', 'ko', 'ar', 'tr', 'ru', 'hi'])
+    );
+    expect(result.has('it')).toBe(true);
+    expect(result.has('ru')).toBe(true);
+    expect(result.has('hi')).toBe(true);
+    expect(result.size).toBe(13);
   });
 });
 
@@ -200,7 +248,7 @@ describe('generateSemanticIntegrationCode', () => {
     expect(code).toContain("import '@lokascript/semantic/languages/ja'");
   });
 
-  it('falls back to full import when languages lack ESM exports', () => {
+  it('generates core + all priority language imports including it/ru/hi', () => {
     const config: SemanticConfig = {
       enabled: true,
       bundleType: 'priority',
@@ -208,9 +256,83 @@ describe('generateSemanticIntegrationCode', () => {
       grammarEnabled: false,
     };
     const code = generateSemanticIntegrationCode(config);
-    // 'it' and 'ru' are in the priority region but lack ESM exports
-    expect(code).toContain("from '@lokascript/semantic'");
-    expect(code).not.toContain("from '@lokascript/semantic/core'");
+    // Always uses core + per-language imports
+    expect(code).toContain("from '@lokascript/semantic/core'");
+    expect(code).not.toContain("from '@lokascript/semantic';");
+    // All priority languages are imported individually (including it, ru, hi)
+    expect(code).toContain("import '@lokascript/semantic/languages/en'");
+    expect(code).toContain("import '@lokascript/semantic/languages/es'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ja'");
+    expect(code).toContain("import '@lokascript/semantic/languages/it'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ru'");
+    expect(code).toContain("import '@lokascript/semantic/languages/hi'");
+  });
+
+  it('generates core + per-language imports for western region', () => {
+    const config: SemanticConfig = {
+      enabled: true,
+      bundleType: 'western',
+      languages: new Set(['en', 'fr'] as SupportedLanguage[]),
+      grammarEnabled: false,
+    };
+    const code = generateSemanticIntegrationCode(config);
+    // Uses core, not full bundle
+    expect(code).toContain("from '@lokascript/semantic/core'");
+    expect(code).not.toContain("from '@lokascript/semantic';");
+    // Imports all western languages individually (including Italian)
+    expect(code).toContain("import '@lokascript/semantic/languages/en'");
+    expect(code).toContain("import '@lokascript/semantic/languages/es'");
+    expect(code).toContain("import '@lokascript/semantic/languages/pt'");
+    expect(code).toContain("import '@lokascript/semantic/languages/fr'");
+    expect(code).toContain("import '@lokascript/semantic/languages/de'");
+    expect(code).toContain("import '@lokascript/semantic/languages/it'");
+  });
+
+  it('generates core + per-language imports for east-asian region', () => {
+    const config: SemanticConfig = {
+      enabled: true,
+      bundleType: 'east-asian',
+      languages: new Set(['ja', 'zh'] as SupportedLanguage[]),
+      grammarEnabled: false,
+    };
+    const code = generateSemanticIntegrationCode(config);
+    expect(code).toContain("from '@lokascript/semantic/core'");
+    expect(code).not.toContain("from '@lokascript/semantic';");
+    expect(code).toContain("import '@lokascript/semantic/languages/en'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ja'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ko'");
+    expect(code).toContain("import '@lokascript/semantic/languages/zh'");
+  });
+
+  it('generates core + per-language imports for all region', () => {
+    const config: SemanticConfig = {
+      enabled: true,
+      bundleType: 'all',
+      languages: new Set(['en'] as SupportedLanguage[]),
+      grammarEnabled: false,
+    };
+    const code = generateSemanticIntegrationCode(config);
+    // Uses core, never falls back to full bundle
+    expect(code).toContain("from '@lokascript/semantic/core'");
+    expect(code).not.toContain("from '@lokascript/semantic';");
+    // Imports all languages that are in SUPPORTED_LANGUAGES and have ESM exports
+    // The 'all' region expands to the vite-plugin's SUPPORTED_LANGUAGES (22 languages)
+    expect(code).toContain("import '@lokascript/semantic/languages/en'");
+    expect(code).toContain("import '@lokascript/semantic/languages/es'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ja'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ar'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ko'");
+    expect(code).toContain("import '@lokascript/semantic/languages/zh'");
+    expect(code).toContain("import '@lokascript/semantic/languages/tr'");
+    expect(code).toContain("import '@lokascript/semantic/languages/pt'");
+    expect(code).toContain("import '@lokascript/semantic/languages/fr'");
+    expect(code).toContain("import '@lokascript/semantic/languages/de'");
+    expect(code).toContain("import '@lokascript/semantic/languages/id'");
+    expect(code).toContain("import '@lokascript/semantic/languages/qu'");
+    expect(code).toContain("import '@lokascript/semantic/languages/sw'");
+    expect(code).toContain("import '@lokascript/semantic/languages/it'");
+    expect(code).toContain("import '@lokascript/semantic/languages/ru'");
+    expect(code).toContain("import '@lokascript/semantic/languages/hi'");
   });
 
   it('includes grammar imports when grammar is enabled', () => {
