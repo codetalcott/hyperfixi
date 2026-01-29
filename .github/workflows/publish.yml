@@ -88,7 +88,8 @@ jobs:
 
           # Calculate new version
           cd packages/core
-          NEW=$(npm version ${{ github.event.inputs.version-type }} --no-git-tag-version | tr -d 'v')
+          npm version ${{ github.event.inputs.version-type }} --no-git-tag-version > /dev/null 2>&1
+          NEW=$(node -p "require('./package.json').version")
           cd ../..
 
           # Reset core's package.json (we'll set all at once below)
