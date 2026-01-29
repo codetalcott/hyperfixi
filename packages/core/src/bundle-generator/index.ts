@@ -54,12 +54,22 @@ export {
   BLOCK_IMPLEMENTATIONS,
   STYLE_COMMANDS,
   ELEMENT_ARRAY_COMMANDS,
+  MORPH_COMMANDS,
   getAvailableCommands,
   getAvailableBlocks,
   getCommandImplementations,
   getBlockImplementations,
   type CodeFormat,
 } from './templates';
+
+// Parser templates (for tree-shakeable bundle generation)
+export {
+  LITE_PARSER_TEMPLATE,
+  HYBRID_PARSER_TEMPLATE,
+  getParserTemplate,
+  canUseLiteParser,
+  LITE_PARSER_COMMANDS,
+} from './parser-templates';
 
 // Template capabilities (what's available in lite vs full runtime)
 export {

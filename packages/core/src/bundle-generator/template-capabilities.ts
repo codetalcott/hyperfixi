@@ -34,8 +34,14 @@ export const AVAILABLE_COMMANDS = [
   // Utility
   'log',
   'call',
+  'copy',
+  'beep',
   // Navigation
   'go',
+  'push',
+  'push-url',
+  'replace',
+  'replace-url',
   // Focus
   'focus',
   'blur',
@@ -43,6 +49,13 @@ export const AVAILABLE_COMMANDS = [
   'return',
   'break',
   'continue',
+  'halt',
+  'exit',
+  'throw',
+  // Advanced execution
+  'js',
+  // DOM morphing (requires morphlex import)
+  'morph',
 ] as const;
 
 /**
@@ -58,33 +71,23 @@ export const AVAILABLE_BLOCKS = ['if', 'repeat', 'for', 'while', 'fetch'] as con
 export const FULL_RUNTIME_ONLY_COMMANDS = [
   // Advanced execution
   'async',
-  'js',
   // DOM operations (complex)
   'make',
   'swap',
-  'morph',
   'process-partials',
   // Data binding
   'bind',
   'persist',
   'default',
-  // Utility (complex)
-  'beep',
+  // Utility (complex - need runtime integration)
   'tell',
-  'copy',
   'pick',
-  // Navigation (complex)
-  'push-url',
-  'replace-url',
-  // Control flow (advanced)
-  'halt',
-  'exit',
-  'throw',
+  // Conditional (already have 'if' block)
   'unless',
-  // Animation (advanced)
+  // Animation (advanced - needs helpers)
   'settle',
   'measure',
-  // Behaviors
+  // Behaviors (requires registry)
   'install',
 ] as const;
 

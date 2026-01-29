@@ -105,7 +105,19 @@ describe('Bundle Generator Validation', () => {
       expect(AVAILABLE_COMMANDS).toContain('remove');
       expect(AVAILABLE_COMMANDS).toContain('break');
       expect(AVAILABLE_COMMANDS).toContain('continue');
-      expect(AVAILABLE_COMMANDS.length).toBeGreaterThan(20);
+      // New commands added for hybrid-plus
+      expect(AVAILABLE_COMMANDS).toContain('js');
+      expect(AVAILABLE_COMMANDS).toContain('copy');
+      expect(AVAILABLE_COMMANDS).toContain('beep');
+      expect(AVAILABLE_COMMANDS).toContain('halt');
+      expect(AVAILABLE_COMMANDS).toContain('exit');
+      expect(AVAILABLE_COMMANDS).toContain('throw');
+      expect(AVAILABLE_COMMANDS).toContain('push');
+      expect(AVAILABLE_COMMANDS).toContain('push-url');
+      expect(AVAILABLE_COMMANDS).toContain('replace');
+      expect(AVAILABLE_COMMANDS).toContain('replace-url');
+      expect(AVAILABLE_COMMANDS).toContain('morph');
+      expect(AVAILABLE_COMMANDS.length).toBeGreaterThan(30);
     });
 
     it('should list all available blocks', () => {
@@ -115,10 +127,20 @@ describe('Bundle Generator Validation', () => {
     it('should list full runtime only commands', () => {
       expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('async');
       expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('swap');
-      expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('morph');
-      // break and continue are now available in lite bundles
+      expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('tell');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).toContain('install');
+      // These are now available in lite bundles (with morphlex/native support)
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('morph');
       expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('break');
       expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('continue');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('js');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('copy');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('beep');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('halt');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('exit');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('throw');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('push');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('replace');
     });
 
     it('isAvailableCommand should return true for valid commands', () => {

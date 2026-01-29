@@ -259,6 +259,34 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return content;
     }`,
 
+  morph: `
+    case 'morph': {
+      const targets = await getTarget();
+      const content = await evaluate(cmd.args[0], ctx);
+      const contentStr = String(content);
+      const isOuter = cmd.modifier === 'over';
+
+      for (const target of targets) {
+        try {
+          if (isOuter) {
+            morphlexMorph(target, contentStr);
+          } else {
+            morphlexMorphInner(target, contentStr);
+          }
+        } catch (error) {
+          // Fallback to innerHTML/outerHTML if morph fails
+          console.warn('[LokaScript] Morph failed, falling back:', error);
+          if (isOuter) {
+            target.outerHTML = contentStr;
+          } else {
+            target.innerHTML = contentStr;
+          }
+        }
+      }
+      ctx.it = targets.length === 1 ? targets[0] : targets;
+      return ctx.it;
+    }`,
+
   take: `
     case 'take': {
       const className = getClassName(await evaluate(cmd.args[0], ctx));
@@ -349,6 +377,201 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
   continue: `
     case 'continue': {
       throw { type: 'continue' };
+    }`,
+
+  // === Control Flow Commands ===
+  halt: `
+    case 'halt': {
+      // Check for "halt the event" pattern
+      const firstArg = cmd.args[0];
+      let targetEvent = ctx.event;
+      if (firstArg?.type === 'identifier' && firstArg.name === 'the' && cmd.args[1]?.name === 'event') {
+        targetEvent = ctx.event;
+      } else if (firstArg) {
+        const evaluated = await evaluate(firstArg, ctx);
+        if (evaluated?.preventDefault) targetEvent = evaluated;
+      }
+
+      if (targetEvent && typeof targetEvent.preventDefault === 'function') {
+        targetEvent.preventDefault();
+        targetEvent.stopPropagation();
+        return { halted: true, eventHalted: true };
+      }
+
+      // Regular halt - stop execution
+      const haltError = new Error('HALT_EXECUTION');
+      (haltError as any).isHalt = true;
+      throw haltError;
+    }`,
+
+  exit: `
+    case 'exit': {
+      const exitError = new Error('EXIT_COMMAND');
+      (exitError as any).isExit = true;
+      throw exitError;
+    }`,
+
+  throw: `
+    case 'throw': {
+      const message = cmd.args[0] ? await evaluate(cmd.args[0], ctx) : 'Error';
+      const errorToThrow = message instanceof Error ? message : new Error(String(message));
+      throw errorToThrow;
+    }`,
+
+  // === Debug Commands ===
+  beep: `
+    case 'beep': {
+      const values = await Promise.all(cmd.args.map((a: any) => evaluate(a, ctx)));
+      const displayValues = values.length > 0 ? values : [ctx.it];
+
+      for (const val of displayValues) {
+        const typeInfo = val === null ? 'null' :
+                        val === undefined ? 'undefined' :
+                        Array.isArray(val) ? \`Array[\${val.length}]\` :
+                        val instanceof Element ? \`Element<\${val.tagName.toLowerCase()}>\` :
+                        typeof val;
+        console.log('[beep]', typeInfo + ':', val);
+      }
+      return displayValues[0];
+    }`,
+
+  // === JavaScript Execution ===
+  js: `
+    case 'js': {
+      const codeArg = cmd.args[0];
+      let jsCode = '';
+
+      if (codeArg.type === 'string') {
+        jsCode = codeArg.value;
+      } else if (codeArg.type === 'template') {
+        jsCode = await evaluate(codeArg, ctx);
+      } else {
+        jsCode = String(await evaluate(codeArg, ctx));
+      }
+
+      // Build context object for the Function
+      const jsContext = {
+        me: ctx.me,
+        it: ctx.it,
+        event: ctx.event,
+        target: ctx.target || ctx.me,
+        locals: Object.fromEntries(ctx.locals),
+        globals: Object.fromEntries(globalVars),
+        document: typeof document !== 'undefined' ? document : undefined,
+        window: typeof window !== 'undefined' ? window : undefined,
+      };
+
+      try {
+        const fn = new Function('ctx', \`with(ctx) { return (async () => { \${jsCode} })(); }\`);
+        const result = await fn(jsContext);
+        ctx.it = result;
+        return result;
+      } catch (error) {
+        console.error('[js] Execution error:', error);
+        throw error;
+      }
+    }`,
+
+  // === Clipboard Commands ===
+  copy: `
+    case 'copy': {
+      const source = await evaluate(cmd.args[0], ctx);
+      let textToCopy = '';
+
+      if (typeof source === 'string') {
+        textToCopy = source;
+      } else if (source instanceof Element) {
+        textToCopy = source.textContent || '';
+      } else {
+        textToCopy = String(source);
+      }
+
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(textToCopy);
+        } else {
+          // Fallback for older browsers
+          const textarea = document.createElement('textarea');
+          textarea.value = textToCopy;
+          textarea.style.cssText = 'position:fixed;top:0;left:-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+        }
+
+        if (ctx.me instanceof Element) {
+          ctx.me.dispatchEvent(new CustomEvent('copy:success', {
+            bubbles: true,
+            detail: { text: textToCopy }
+          }));
+        }
+        ctx.it = textToCopy;
+        return textToCopy;
+      } catch (error) {
+        if (ctx.me instanceof Element) {
+          ctx.me.dispatchEvent(new CustomEvent('copy:error', {
+            bubbles: true,
+            detail: { error }
+          }));
+        }
+        throw error;
+      }
+    }`,
+
+  // === URL Navigation Commands ===
+  push: `
+    case 'push':
+    case 'push-url': {
+      // Handle "push url '/path'" pattern
+      let urlArg = cmd.args[0];
+      if (urlArg?.type === 'identifier' && urlArg.name === 'url') {
+        urlArg = cmd.args[1];
+      }
+
+      const url = String(await evaluate(urlArg, ctx));
+      let title = '';
+
+      // Check for "with title" modifier
+      if (cmd.modifiers?.title) {
+        title = String(await evaluate(cmd.modifiers.title, ctx));
+      }
+
+      window.history.pushState(null, '', url);
+      if (title) document.title = title;
+
+      window.dispatchEvent(new CustomEvent('lokascript:pushurl', {
+        detail: { url, title }
+      }));
+
+      return { url, title, mode: 'push' };
+    }`,
+
+  replace: `
+    case 'replace':
+    case 'replace-url': {
+      // Handle "replace url '/path'" pattern
+      let urlArg = cmd.args[0];
+      if (urlArg?.type === 'identifier' && urlArg.name === 'url') {
+        urlArg = cmd.args[1];
+      }
+
+      const url = String(await evaluate(urlArg, ctx));
+      let title = '';
+
+      // Check for "with title" modifier
+      if (cmd.modifiers?.title) {
+        title = String(await evaluate(cmd.modifiers.title, ctx));
+      }
+
+      window.history.replaceState(null, '', url);
+      if (title) document.title = title;
+
+      window.dispatchEvent(new CustomEvent('lokascript:replaceurl', {
+        detail: { url, title }
+      }));
+
+      return { url, title, mode: 'replace' };
     }`,
 };
 
@@ -465,6 +688,11 @@ export const STYLE_COMMANDS = ['set', 'put', 'increment', 'decrement'];
  * Commands that require toElementArray helper
  */
 export const ELEMENT_ARRAY_COMMANDS = ['put', 'increment', 'decrement'];
+
+/**
+ * Commands that require morphlex import for DOM morphing
+ */
+export const MORPH_COMMANDS = ['morph'];
 
 /**
  * Get command implementations for the specified format.
