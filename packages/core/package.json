@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/core",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Multilingual, tree-shakeable hyperscript",
   "type": "module",
   "main": "dist/index.js",
