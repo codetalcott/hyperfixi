@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/developer-tools",
-  "version": "1.2.0",
+  "version": "1.1.1",
   "private": true,
   "description": "CLI tools and visual builder API for HyperFixi development",
   "main": "dist/index.js",
