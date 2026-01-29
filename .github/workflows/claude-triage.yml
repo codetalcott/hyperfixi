@@ -1,0 +1,41 @@
+name: Issue Triage
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-20250514
+          prompt: |
+            Analyze issue #${{ github.event.issue.number }} for the LokaScript monorepo.
+
+            Title: ${{ github.event.issue.title }}
+            Body: ${{ github.event.issue.body }}
+
+            Perform the following:
+
+            1. **Classify** the issue as one of: bug, feature-request, question, documentation
+            2. **Assess priority**: critical (breaks core functionality), high (significant impact), medium (moderate impact), low (minor/cosmetic)
+            3. **Identify affected package(s)**: core, semantic, i18n, vite-plugin, mcp-server, patterns-reference, or other
+            4. **Check for duplicates** by searching existing issues with similar keywords
+            5. **Apply labels** using: gh issue edit ${{ github.event.issue.number }} --add-label "type,priority,package"
+            6. **Post a brief analysis comment** summarizing your assessment and any relevant code references
+
+            Use labels from these sets:
+            - Type: bug, feature-request, question, documentation
+            - Priority: priority:critical, priority:high, priority:medium, priority:low
+            - Package: pkg:core, pkg:semantic, pkg:i18n, pkg:vite-plugin, pkg:other
+          allowed_tools: |
+            Bash(gh issue:*),Bash(gh search:*),Read,Grep,Glob
