@@ -1,0 +1,75 @@
+name: Weekly Maintenance
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Monday 9 AM UTC
+  workflow_dispatch:
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-20250514
+          prompt: |
+            Perform a weekly maintenance audit of the LokaScript monorepo.
+
+            ## Checks to Run
+
+            1. **Security**: Run `npm audit` and report vulnerabilities by severity
+            2. **Dependencies**: Run `npm outdated` and list stale packages
+            3. **Bundle sizes**: Run `npm run build:browser --prefix packages/core` then check sizes
+            4. **Type safety**: Run `npm run typecheck --workspaces` and report errors
+            5. **Recent issues**: `gh issue list --state open --sort created --limit 15`
+            6. **Open PRs**: `gh pr list --state open`
+            7. **CI health**: `gh run list --limit 5` and check for failures on main
+            8. **Recent activity**: `git log --oneline --since="7 days ago"` for commit summary
+
+            ## Create Report
+
+            Create a GitHub issue titled "Weekly Maintenance Report - $(date +%Y-%m-%d)" with:
+
+            ### Summary
+            - Overall health: HEALTHY / NEEDS ATTENTION / CRITICAL
+            - Key metrics in a table
+
+            ### Security
+            - Vulnerability count by severity
+            - Recommended fixes
+
+            ### Dependencies
+            - Number of outdated packages
+            - Priority updates (major versions, security-related)
+
+            ### Build & Types
+            - Bundle size report
+            - TypeScript error count
+
+            ### Activity
+            - Commits this week
+            - Issues opened/closed
+            - PRs opened/merged
+
+            ### Action Items
+            - Prioritized list of things to address this week
+
+            Use labels: `maintenance`, `automated`
+          allowed_tools: |
+            Bash(npm:*),Bash(gh issue:*),Bash(gh run:*),Bash(gh pr:*),Bash(git log:*),Bash(date:*),Read,Grep,Glob

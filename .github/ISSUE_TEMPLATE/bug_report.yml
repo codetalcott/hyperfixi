@@ -1,0 +1,97 @@
+name: Bug Report
+description: Report a bug in LokaScript
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill out the information below to help us investigate.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the bug.
+      placeholder: What happened? What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Write this hyperscript: `on click toggle .active`
+        2. Click the element
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected Package
+      description: Which package is affected?
+      options:
+        - '@lokascript/core'
+        - '@lokascript/semantic'
+        - '@lokascript/i18n'
+        - '@lokascript/vite-plugin'
+        - '@lokascript/mcp-server'
+        - '@lokascript/patterns-reference'
+        - 'Other / Multiple'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bundle
+    attributes:
+      label: Bundle Type
+      description: Which bundle are you using?
+      options:
+        - 'lokascript-browser.js (full)'
+        - 'lokascript-hybrid-complete.js'
+        - 'lokascript-hybrid-hx.js'
+        - 'lokascript-lite-plus.js'
+        - 'lokascript-lite.js'
+        - 'lokascript-multilingual.js'
+        - 'Vite plugin (auto-generated)'
+        - 'Node.js / Server'
+        - 'Not sure'
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of LokaScript are you using?
+      placeholder: 'e.g., 1.3.0'
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      description: Which browser(s) are affected?
+      multiple: true
+      options:
+        - 'Chrome'
+        - 'Firefox'
+        - 'Safari'
+        - 'Edge'
+        - 'Node.js'
+        - 'Other'
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or error messages.

@@ -1,0 +1,44 @@
+version: 2
+
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 10
+    groups:
+      typescript:
+        patterns:
+          - 'typescript'
+          - '@typescript-eslint/*'
+      testing:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - 'playwright'
+          - '@playwright/*'
+      build-tools:
+        patterns:
+          - 'rollup'
+          - 'rollup-*'
+          - 'tsup'
+          - 'esbuild'
+      linting:
+        patterns:
+          - 'eslint'
+          - 'eslint-*'
+          - 'prettier'
+    labels:
+      - 'dependencies'
+    reviewers:
+      - 'codetalcott'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'ci'
+    reviewers:
+      - 'codetalcott'
