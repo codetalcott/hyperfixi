@@ -27,7 +27,6 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-sonnet-4-20250514
           prompt: |
             Perform a weekly maintenance audit of the LokaScript monorepo.
 
@@ -71,5 +70,6 @@ jobs:
             - Prioritized list of things to address this week
 
             Use labels: `maintenance`, `automated`
-          allowed_tools: |
-            Bash(npm:*),Bash(gh issue:*),Bash(gh run:*),Bash(gh pr:*),Bash(git log:*),Bash(date:*),Read,Grep,Glob
+          claude_args: |
+            --model claude-sonnet-4-20250514
+            --allowedTools "Bash(npm:*),Bash(gh issue:*),Bash(gh run:*),Bash(gh pr:*),Bash(git log:*),Bash(date:*),Read,Grep,Glob"

@@ -17,7 +17,6 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-sonnet-4-20250514
           prompt: |
             Analyze issue #${{ github.event.issue.number }} for the LokaScript monorepo.
 
@@ -37,5 +36,6 @@ jobs:
             - Type: bug, feature-request, question, documentation
             - Priority: priority:critical, priority:high, priority:medium, priority:low
             - Package: pkg:core, pkg:semantic, pkg:i18n, pkg:vite-plugin, pkg:other
-          allowed_tools: |
-            Bash(gh issue:*),Bash(gh search:*),Read,Grep,Glob
+          claude_args: |
+            --model claude-sonnet-4-20250514
+            --allowedTools "Bash(gh issue:*),Bash(gh search:*),Read,Grep,Glob"

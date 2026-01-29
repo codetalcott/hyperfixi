@@ -11,7 +11,7 @@ concurrency:
 jobs:
   review:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && github.actor != 'dependabot[bot]'
     permissions:
       contents: read
       pull-requests: write
@@ -25,7 +25,6 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-sonnet-4-20250514
           prompt: |
             Review this pull request for the LokaScript monorepo. Focus on:
 
@@ -39,5 +38,6 @@ jobs:
 
             Provide structured feedback with inline comments on specific lines where issues are found.
             Categorize findings as: Critical (must fix), Warning (should fix), Suggestion (nice to have).
-          allowed_tools: |
-            Bash(npm run typecheck:*),Bash(npm test:*),Read,Grep,Glob
+          claude_args: |
+            --model claude-sonnet-4-20250514
+            --allowedTools "Bash(npm run typecheck:*),Bash(npm test:*),Read,Grep,Glob"
