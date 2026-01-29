@@ -236,17 +236,27 @@ describe('Generator', () => {
     });
 
     it('should identify full-runtime-only commands', () => {
-      // These commands require full runtime (morph is no longer in this list)
-      const fullRuntimeCommands = ['async', 'js', 'make', 'swap'];
+      // These commands require full runtime
+      const fullRuntimeCommands = ['async', 'make', 'swap'];
 
       for (const cmd of fullRuntimeCommands) {
         expect(FULL_RUNTIME_ONLY_COMMANDS).toContain(cmd);
         expect(isAvailableCommand(cmd)).toBe(false);
       }
 
-      // morph is now available (uses morphlex)
+      // These are now available in tree-shaken bundles
       expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('morph');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('js');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('copy');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('beep');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('halt');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('exit');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('throw');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('push');
+      expect(FULL_RUNTIME_ONLY_COMMANDS).not.toContain('replace');
       expect(isAvailableCommand('morph')).toBe(true);
+      expect(isAvailableCommand('js')).toBe(true);
+      expect(isAvailableCommand('copy')).toBe(true);
     });
 
     it('should use requiresFullRuntime method correctly', () => {
