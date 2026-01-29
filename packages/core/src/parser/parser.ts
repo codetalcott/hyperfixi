@@ -2946,6 +2946,10 @@ export class Parser {
       'set',
       // - 'put' has complex positioning (at start/end of, before, after, into)
       'put',
+      // - 'increment' has 'by' keyword syntax not yet in semantic quantity role markers
+      'increment',
+      // - 'decrement' has 'by' keyword syntax not yet in semantic quantity role markers
+      'decrement',
       // - 'add' can have CSS object literals with special syntax
       'add',
       // Control flow commands:
