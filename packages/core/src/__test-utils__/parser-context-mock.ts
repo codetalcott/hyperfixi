@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { ParserContext, IdentifierNode, Position } from '../parser/parser-types';
-import type { Token, ASTNode } from '../types/core';
+import type { Token, ASTNode, CommandNode } from '../types/core';
 
 /**
  * Creates a comprehensive mock ParserContext for testing parser functions.
@@ -37,7 +37,6 @@ export function createMockParserContext(
     peek: vi.fn(() => tokens[currentPosition]),
     previous: vi.fn(() => tokens[currentPosition - 1]),
     check: vi.fn((value: string) => tokens[currentPosition]?.value === value),
-    checkAny: vi.fn((values: string[]) => values.includes(tokens[currentPosition]?.value)),
     match: vi.fn((...values: string[]) => {
       if (values.includes(tokens[currentPosition]?.value)) {
         currentPosition++;
@@ -98,7 +97,8 @@ export function createMockParserContext(
         typeof value === 'string' && ['click', 'submit', 'load', 'change', 'input'].includes(value)
       );
     }),
-    checkIsCommand: vi.fn((name: string) => {
+    checkIsCommand: vi.fn(() => {
+      const value = tokens[currentPosition]?.value;
       const commandNames = [
         'toggle',
         'add',
@@ -110,20 +110,20 @@ export function createMockParserContext(
         'increment',
         'decrement',
       ];
-      return commandNames.includes(name);
+      return typeof value === 'string' && commandNames.includes(value);
     }),
     checkContextVar: vi.fn(() => {
       const value = tokens[currentPosition]?.value;
       return typeof value === 'string' && value.startsWith(':');
     }),
-    matchOperator: vi.fn((ops: string[]) => {
+    matchOperator: vi.fn((operator: string) => {
       const value = tokens[currentPosition]?.value;
-      if (ops.includes(value)) {
+      if (value === operator) {
         currentPosition++;
         baseContext.current = currentPosition;
-        return value;
+        return true;
       }
-      return null;
+      return false;
     }),
 
     // AST creation
@@ -223,15 +223,18 @@ export function createMockParserContext(
       line: 1,
       column: 0,
     })),
-    createCommandFromIdentifier: vi.fn((identifier: IdentifierNode) => ({
-      type: 'Command',
-      name: identifier.name,
-      arguments: [],
-      start: identifier.start,
-      end: identifier.end,
-      line: identifier.line,
-      column: identifier.column,
-    })),
+    createCommandFromIdentifier: vi.fn(
+      (identifier: IdentifierNode): CommandNode =>
+        ({
+          type: 'Command',
+          name: identifier.name,
+          arguments: [],
+          start: identifier.start ?? 0,
+          end: identifier.end ?? 0,
+          line: identifier.line ?? 1,
+          column: identifier.column ?? 1,
+        }) as unknown as CommandNode
+    ),
 
     // Expression parsing (minimal defaults)
     parseExpression: vi.fn(() => ({
@@ -415,15 +418,18 @@ export function createMockParserContext(
     })),
 
     // Command parsing
-    parseCommand: vi.fn(() => ({
-      type: 'Command',
-      name: 'mock-command',
-      arguments: [],
-      start: currentPosition,
-      end: currentPosition,
-      line: 1,
-      column: currentPosition,
-    })),
+    parseCommand: vi.fn(
+      (): CommandNode =>
+        ({
+          type: 'Command',
+          name: 'mock-command',
+          arguments: [],
+          start: currentPosition,
+          end: currentPosition,
+          line: 1,
+          column: currentPosition,
+        }) as unknown as CommandNode
+    ),
     parseCommandSequence: vi.fn(() => ({
       type: 'commandSequence',
       commands: [],
@@ -450,7 +456,7 @@ export function createMockParserContext(
     ...overrides,
   };
 
-  return baseContext;
+  return baseContext as unknown as ParserContext;
 }
 
 /**
