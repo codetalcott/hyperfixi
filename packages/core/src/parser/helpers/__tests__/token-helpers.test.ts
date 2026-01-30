@@ -64,21 +64,21 @@ describe('token-helpers', () => {
       const tokens = createTokenStream(['toggle'], ['keyword']);
       const ctx = createMockParserContext(tokens);
 
-      expect(peekMatchesKind(tokens, ctx.current, 'keyword')).toBe(true);
+      expect(peekMatchesKind(tokens, ctx.current, 'keyword' as any)).toBe(true);
     });
 
     it('should return false when current token has different kind', () => {
       const tokens = createTokenStream(['toggle'], ['identifier']);
       const ctx = createMockParserContext(tokens);
 
-      expect(peekMatchesKind(tokens, ctx.current, 'keyword')).toBe(false);
+      expect(peekMatchesKind(tokens, ctx.current, 'keyword' as any)).toBe(false);
     });
 
     it('should return false at end of tokens', () => {
       const tokens: any[] = [];
       const ctx = createMockParserContext(tokens);
 
-      expect(peekMatchesKind(tokens, ctx.current, 'identifier')).toBe(false);
+      expect(peekMatchesKind(tokens, ctx.current, 'identifier' as any)).toBe(false);
     });
 
     it('should not advance parser position', () => {
@@ -86,7 +86,7 @@ describe('token-helpers', () => {
       const ctx = createMockParserContext(tokens);
       const initialPos = ctx.current;
 
-      peekMatchesKind(tokens, ctx.current, 'identifier');
+      peekMatchesKind(tokens, ctx.current, 'identifier' as any);
 
       expect(ctx.current).toBe(initialPos);
     });
@@ -332,7 +332,7 @@ describe('token-helpers', () => {
       );
       const ctx = createMockParserContext(tokens);
 
-      const index = findNextTokenKind(tokens, ctx.current, 'number');
+      const index = findNextTokenKind(tokens, ctx.current, 'number' as any);
 
       expect(index).toBe(1);
     });
@@ -341,7 +341,7 @@ describe('token-helpers', () => {
       const tokens = createTokenStream(['toggle', 'add'], ['identifier', 'identifier']);
       const ctx = createMockParserContext(tokens);
 
-      const index = findNextTokenKind(tokens, ctx.current, 'number');
+      const index = findNextTokenKind(tokens, ctx.current, 'number' as any);
 
       expect(index).toBe(-1);
     });
@@ -351,7 +351,7 @@ describe('token-helpers', () => {
       const ctx = createMockParserContext(tokens);
       ctx.advance(); // Skip first number
 
-      const index = findNextTokenKind(tokens, ctx.current, 'number');
+      const index = findNextTokenKind(tokens, ctx.current, 'number' as any);
 
       expect(index).toBe(2);
     });

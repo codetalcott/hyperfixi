@@ -183,7 +183,7 @@ describe('CallCommand', () => {
       const fn = vi.fn(() => 'function-result');
 
       // Override __evaluator to return a function
-      const mockEvaluator = context.locals.get('__evaluator');
+      const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => fn);
 
       const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
@@ -198,7 +198,7 @@ describe('CallCommand', () => {
     it('should set context.it to function return value', async () => {
       const fn = () => 'fn-value';
 
-      const mockEvaluator = context.locals.get('__evaluator');
+      const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => fn);
 
       const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
@@ -212,7 +212,7 @@ describe('CallCommand', () => {
     it('should return expressionType function for function results', async () => {
       const fn = () => 123;
 
-      const mockEvaluator = context.locals.get('__evaluator');
+      const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => fn);
 
       const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
@@ -232,7 +232,7 @@ describe('CallCommand', () => {
     it('should handle evaluator returning async result', async () => {
       // Since execute() awaits evaluator.evaluate(), a Promise result from the
       // evaluator gets fully resolved. The resolved value is treated as a plain value.
-      const mockEvaluator = context.locals.get('__evaluator');
+      const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => 'async-value');
 
       const input = { expression: { type: 'promiseExpr' }, alias: 'call' as const };
@@ -247,7 +247,7 @@ describe('CallCommand', () => {
     it('should handle function returning Promise', async () => {
       const asyncFn = vi.fn(() => Promise.resolve('async-fn-result'));
 
-      const mockEvaluator = context.locals.get('__evaluator');
+      const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => asyncFn);
 
       const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
@@ -263,7 +263,7 @@ describe('CallCommand', () => {
     it('should set wasAsync true when function returns Promise', async () => {
       const asyncFn = vi.fn(() => Promise.resolve(99));
 
-      const mockEvaluator = context.locals.get('__evaluator');
+      const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => asyncFn);
 
       const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
@@ -285,7 +285,7 @@ describe('CallCommand', () => {
     it('should throw when __evaluator is not in context.locals', async () => {
       // Create context without __evaluator
       const contextWithoutEvaluator = createMockContext();
-      contextWithoutEvaluator.locals = new Map();
+      (contextWithoutEvaluator as any).locals = new Map();
 
       const input = { expression: { type: 'literal', value: 42 }, alias: 'call' as const };
 
@@ -328,7 +328,7 @@ describe('CallCommand', () => {
       const astNode = { type: 'functionCall', value: fn } as any;
 
       // Override __evaluator to return the function from the AST node
-      const mockEvaluator = context.locals.get('__evaluator');
+      const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async (node: any) => {
         if (typeof node === 'object' && node !== null && 'value' in node) {
           return node.value;

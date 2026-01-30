@@ -18,7 +18,7 @@ describe('url-argument-parser', () => {
         }
         return node;
       },
-    } as ExpressionEvaluator;
+    } as unknown as ExpressionEvaluator;
   };
 
   describe('parseUrlArguments', () => {

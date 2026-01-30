@@ -295,7 +295,7 @@ describe('Smart Element Helpers', () => {
       const dialog = document.createElement('dialog');
       document.body.appendChild(dialog);
 
-      const result = toggleSmartElement(dialog, 'dialog', { mode: 'modal' });
+      const result = toggleSmartElement(dialog, 'dialog', { dialogMode: 'modal' });
       expect(dialog.open).toBe(true);
     });
 
@@ -333,7 +333,7 @@ describe('Smart Element Helpers', () => {
 
       const showSpy = vi.spyOn(dialog, 'show');
 
-      toggleSmartElement(dialog, 'dialog', { mode: 'non-modal' });
+      toggleSmartElement(dialog, 'dialog', { dialogMode: 'non-modal' });
       expect(showSpy).toHaveBeenCalled();
     });
   });

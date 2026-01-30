@@ -22,7 +22,7 @@ export function createMockParserContext(
 ): ParserContext {
   let currentPosition = 0;
 
-  const baseContext: ParserContext = {
+  const baseContext: Record<string, any> = {
     tokens,
     current: currentPosition,
 
@@ -452,6 +452,7 @@ export function createMockParserContext(
 
     // Error handling
     addError: vi.fn(),
+    addWarning: vi.fn(),
 
     ...overrides,
   };

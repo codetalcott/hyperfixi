@@ -142,7 +142,7 @@ describe('CopyCommand', () => {
       const input = await command.parseInput(
         {
           args: [{ type: 'literal', value: '<p>HTML</p>' }],
-          modifiers: { format: { type: 'literal', value: 'html' } as ASTNode },
+          modifiers: { format: { type: 'literal', value: 'html' } as any },
         },
         evaluator,
         context

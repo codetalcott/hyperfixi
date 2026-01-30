@@ -7,7 +7,7 @@ import {
   normalizeClassName,
   resolveDynamicClasses,
 } from '../class-manipulation';
-import type { TypedExecutionContext } from '../../../registry/execution-context';
+import type { TypedExecutionContext } from '../../../types/core';
 
 describe('Class Manipulation Helpers', () => {
   describe('parseClasses', () => {

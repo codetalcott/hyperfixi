@@ -235,7 +235,7 @@ describe('JsCommand (Standalone V2)', () => {
       const output = await command.execute({ code: 'return 42' }, context);
 
       expect(output.result).toBe(42);
-      expect((context as Record<string, unknown>).it).toBe(42);
+      expect((context as unknown as Record<string, unknown>).it).toBe(42);
     });
 
     it('should NOT set context.it when result is undefined', async () => {
@@ -246,7 +246,7 @@ describe('JsCommand (Standalone V2)', () => {
       await command.execute({ code: 'var x = 1' }, context);
 
       // context.it should remain the sentinel value
-      expect((context as Record<string, unknown>).it).toBe(sentinel);
+      expect((context as unknown as Record<string, unknown>).it).toBe(sentinel);
     });
   });
 
@@ -360,7 +360,7 @@ describe('JsCommand (Standalone V2)', () => {
       );
 
       expect(output.result).toBe('async-value');
-      expect((context as Record<string, unknown>).it).toBe('async-value');
+      expect((context as unknown as Record<string, unknown>).it).toBe('async-value');
     });
   });
 
@@ -411,7 +411,7 @@ describe('JsCommand (Standalone V2)', () => {
       expect(output.result).toBe(30);
       expect(output.executed).toBe(true);
       expect(output.parameters).toEqual(['x', 'y']);
-      expect((context as Record<string, unknown>).it).toBe(30);
+      expect((context as unknown as Record<string, unknown>).it).toBe(30);
     });
   });
 });

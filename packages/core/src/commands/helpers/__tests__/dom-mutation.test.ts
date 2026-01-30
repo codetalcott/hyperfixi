@@ -45,10 +45,10 @@ describe('DOM Mutation Helpers', () => {
   describe('toInsertPosition', () => {
     it('should map semantic positions to InsertPosition values', () => {
       expect(toInsertPosition('before')).toBe('beforebegin');
-      expect(toInsertPosition('start')).toBe('afterbegin');
-      expect(toInsertPosition('end')).toBe('beforeend');
+      expect(toInsertPosition('start' as any)).toBe('afterbegin');
+      expect(toInsertPosition('end' as any)).toBe('beforeend');
       expect(toInsertPosition('after')).toBe('afterend');
-      expect(toInsertPosition('replace')).toBe('replace');
+      expect(toInsertPosition('replace' as any)).toBe('replace');
     });
   });
 

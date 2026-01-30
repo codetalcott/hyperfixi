@@ -7,7 +7,7 @@ import type { ExecutionContext } from '../../../types/base-types';
 describe('numeric-target-parser', () => {
   const mockEvaluator = {
     evaluate: async (node: any) => node.value || node.name || node,
-  } as ExpressionEvaluator;
+  } as unknown as ExpressionEvaluator;
 
   const mockContext = {} as ExecutionContext;
 
@@ -81,7 +81,7 @@ describe('numeric-target-parser', () => {
     it('should unwrap array from evaluation', async () => {
       const evaluator = {
         evaluate: async () => ['counter'],
-      } as ExpressionEvaluator;
+      } as unknown as ExpressionEvaluator;
 
       const raw: NumericTargetRawInput = {
         args: [{ type: 'other' } as any],

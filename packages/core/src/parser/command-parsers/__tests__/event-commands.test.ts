@@ -78,7 +78,7 @@ describe('Event Command Parsers', () => {
       })),
 
       createIdentifier: vi.fn((name: string) => ({
-        type: 'identifier',
+        type: 'identifier' as const,
         name,
         start: 0,
         end: name.length,
@@ -283,7 +283,7 @@ describe('Event Command Parsers', () => {
             column: 0,
           })),
           createIdentifier: vi.fn((name: string) => ({
-            type: 'identifier',
+            type: 'identifier' as const,
             name,
             start: 0,
             end: name.length,
@@ -354,7 +354,7 @@ describe('Event Command Parsers', () => {
             column: 0,
           })),
           createIdentifier: vi.fn((name: string) => ({
-            type: 'identifier',
+            type: 'identifier' as const,
             name,
             start: 0,
             end: name.length,
@@ -421,7 +421,7 @@ describe('Event Command Parsers', () => {
             column: 0,
           })),
           createIdentifier: vi.fn((name: string) => ({
-            type: 'identifier',
+            type: 'identifier' as const,
             name,
             start: 0,
             end: name.length,

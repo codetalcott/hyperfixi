@@ -86,9 +86,10 @@ describe('ReplaceUrlCommand (replace-url)', () => {
 
     it('should have syntax examples including replace variants', () => {
       expect(command.metadata.syntax).toBeInstanceOf(Array);
-      const hasReplaceSyntax = command.metadata.syntax.some((s: string) =>
-        s.toLowerCase().includes('replace')
-      );
+      const syntaxArr = Array.isArray(command.metadata.syntax)
+        ? command.metadata.syntax
+        : [command.metadata.syntax];
+      const hasReplaceSyntax = syntaxArr.some((s: string) => s.toLowerCase().includes('replace'));
       expect(hasReplaceSyntax).toBe(true);
     });
   });

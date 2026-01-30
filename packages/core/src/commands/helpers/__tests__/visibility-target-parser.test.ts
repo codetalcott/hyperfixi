@@ -17,7 +17,7 @@ vi.mock('../element-resolution', () => ({
 describe('visibility-target-parser', () => {
   const mockEvaluator = {
     evaluate: async (node: any) => node,
-  } as ExpressionEvaluator;
+  } as unknown as ExpressionEvaluator;
 
   const mockContext = {} as ExecutionContext;
 

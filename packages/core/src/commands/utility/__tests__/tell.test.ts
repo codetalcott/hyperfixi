@@ -46,7 +46,7 @@ function createMockEvaluator(
       evaluateFn ??
       (async (node: ASTNode) => {
         if (typeof node === 'object' && node !== null && 'value' in node) {
-          return (node as { value: unknown }).value;
+          return (node as unknown as { value: unknown }).value;
         }
         return node;
       }),
@@ -217,7 +217,7 @@ describe('TellCommand', () => {
   describe('execute - command types', () => {
     it('should execute AST command nodes via _runtimeExecute', async () => {
       const targetEl = document.createElement('div');
-      const runtimeExecute = vi.fn(async () => 'runtime-result');
+      const runtimeExecute = vi.fn(async (_cmd: unknown, _ctx: unknown) => 'runtime-result');
 
       const locals = new Map<string, unknown>();
       locals.set('_runtimeExecute', runtimeExecute);
