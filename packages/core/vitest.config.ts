@@ -70,8 +70,9 @@ export default defineConfig({
     // Use VITEST_HTML=1 environment variable to enable HTML reports when needed
     reporters: process.env.VITEST_HTML ? ['verbose', 'html'] : ['verbose'],
     
-    // Parallel test execution
-    pool: 'threads',
+    // Use forks pool for reliable process cleanup (threads pool keeps esbuild
+    // daemon alive after tests complete, causing CI hangs)
+    pool: 'forks',
   },
   
   // Resolve aliases for imports
