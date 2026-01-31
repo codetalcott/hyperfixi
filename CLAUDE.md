@@ -61,7 +61,7 @@ npm run test:quick --prefix packages/core           # Build + test (<10 sec)
 npm run test:comprehensive --prefix packages/core   # Full browser suite
 
 # Unit tests
-npm test --prefix packages/core                     # Run vitest (4500+ tests)
+npm test --prefix packages/core                     # Run vitest (5700+ tests)
 npm test --prefix packages/core -- --run src/expressions/  # Test specific module
 
 # Build
@@ -71,6 +71,12 @@ npm run typecheck --prefix packages/core            # TypeScript validation
 # Browser testing (Playwright) - MUST run from packages/core directory
 cd packages/core && npx playwright test src/compatibility/
 ```
+
+> **Known issue: esbuild daemon hang.** Core vitest tests complete successfully but the
+> Node process hangs indefinitely because esbuild's daemon keeps the event loop alive.
+> The `test` and `test:quick` scripts wrap vitest with `timeout` and treat exit code 124
+> (killed by timeout) as success. CI uses the same pattern. If running vitest directly,
+> use: `timeout 120 vitest run || [ $? -eq 124 ]`
 
 ### i18n Package
 
