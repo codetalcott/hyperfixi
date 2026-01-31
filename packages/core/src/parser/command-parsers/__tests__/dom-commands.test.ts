@@ -220,7 +220,7 @@ describe('DOM Command Parsers', () => {
       const result = parseRemoveCommand(ctx, createIdentifierNode('remove'));
 
       expect(result.name).toBe('remove');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(2);
+      expect(result.args.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should parse remove with string class', () => {
@@ -233,7 +233,7 @@ describe('DOM Command Parsers', () => {
       const result = parseRemoveCommand(ctx, createIdentifierNode('remove'));
 
       expect(result.name).toBe('remove');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(2);
+      expect(result.args.length).toBeGreaterThanOrEqual(2);
     });
   });
 
@@ -248,7 +248,7 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(2);
+      expect(result.args.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should parse toggle with "on" keyword (hyperscript compatibility)', () => {
@@ -261,7 +261,7 @@ describe('DOM Command Parsers', () => {
       const result = parseToggleCommand(ctx, createIdentifierNode('toggle'));
 
       expect(result.name).toBe('toggle');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(2);
+      expect(result.args.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should parse toggle between syntax', () => {
@@ -275,7 +275,7 @@ describe('DOM Command Parsers', () => {
 
       expect(result.name).toBe('toggle');
       // Should have: 'between' keyword, classA, 'and' keyword, classB, 'on' keyword, target
-      expect(result.arguments.length).toBeGreaterThanOrEqual(4);
+      expect(result.args.length).toBeGreaterThanOrEqual(4);
     });
   });
 
@@ -290,7 +290,7 @@ describe('DOM Command Parsers', () => {
       const result = parseAddCommand(ctx, createToken('add'));
 
       expect(result.name).toBe('add');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(2);
+      expect(result.args.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should parse add with CSS object literal', () => {
@@ -338,8 +338,8 @@ describe('DOM Command Parsers', () => {
       const result = parseAddCommand(ctx, createToken('add'));
 
       expect(result.name).toBe('add');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(1);
-      expect(result.arguments[0].type).toBe('object');
+      expect(result.args.length).toBeGreaterThanOrEqual(1);
+      expect(result.args[0].type).toBe('object');
     });
   });
 
@@ -354,9 +354,9 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.arguments).toHaveLength(3);
+      expect(result?.args).toHaveLength(3);
       // Args: content, operation keyword, target
-      expect(result?.arguments[1]).toMatchObject({
+      expect(result?.args[1]).toMatchObject({
         type: 'identifier',
         name: 'into',
       });
@@ -372,7 +372,7 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.arguments[1]).toMatchObject({
+      expect(result?.args[1]).toMatchObject({
         type: 'identifier',
         name: 'before',
       });
@@ -388,7 +388,7 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.arguments[1]).toMatchObject({
+      expect(result?.args[1]).toMatchObject({
         type: 'identifier',
         name: 'after',
       });
@@ -434,7 +434,7 @@ describe('DOM Command Parsers', () => {
       const result = parsePutCommand(ctx, createIdentifierNode('put'));
 
       expect(result?.name).toBe('put');
-      expect(result?.arguments[1].name).toBe('at start of');
+      expect(result?.args[1].name).toBe('at start of');
     });
 
     it('should return null if content expression is missing', () => {
@@ -513,7 +513,7 @@ describe('DOM Command Parsers', () => {
       const result = parseSwapCommand(ctx, createIdentifierNode('swap'));
 
       expect(result.name).toBe('swap');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(2);
+      expect(result.args.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should parse swap with innerHTML strategy', () => {
@@ -555,7 +555,7 @@ describe('DOM Command Parsers', () => {
 
       expect(result.name).toBe('swap');
       // Should include strategy keyword in arguments
-      expect(result.arguments.length).toBeGreaterThanOrEqual(1);
+      expect(result.args.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should parse swap delete syntax', () => {
@@ -593,7 +593,7 @@ describe('DOM Command Parsers', () => {
       const result = parseSwapCommand(ctx, createIdentifierNode('swap'));
 
       expect(result.name).toBe('swap');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(1);
+      expect(result.args.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

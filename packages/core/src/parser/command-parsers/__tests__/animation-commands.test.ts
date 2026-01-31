@@ -158,8 +158,8 @@ describe('Animation Command Parsers', () => {
       const result = parseMeasureCommand(ctx, createIdentifierNode('measure'));
 
       expect(result.name).toBe('measure');
-      expect(result.arguments).toHaveLength(1);
-      expect(result.arguments[0]).toMatchObject({
+      expect(result.args).toHaveLength(1);
+      expect(result.args[0]).toMatchObject({
         type: 'identifier',
         name: 'width',
       });
@@ -171,12 +171,12 @@ describe('Animation Command Parsers', () => {
 
       const result = parseMeasureCommand(ctx, createIdentifierNode('measure'));
 
-      expect(result.arguments).toHaveLength(2);
-      expect(result.arguments[0]).toMatchObject({
+      expect(result.args).toHaveLength(2);
+      expect(result.args[0]).toMatchObject({
         type: 'selector',
         value: '#el',
       });
-      expect(result.arguments[1]).toMatchObject({
+      expect(result.args[1]).toMatchObject({
         type: 'identifier',
         name: 'width',
       });
@@ -211,9 +211,9 @@ describe('Animation Command Parsers', () => {
 
       const result = parseMeasureCommand(ctx, createIdentifierNode('measure'));
 
-      expect(result.arguments).toHaveLength(2);
+      expect(result.args).toHaveLength(2);
       // Second arg should be CSS property with *
-      const cssArg = result.arguments[1] as any;
+      const cssArg = result.args[1] as any;
       expect(cssArg.name).toContain('*');
     });
 
@@ -243,7 +243,7 @@ describe('Animation Command Parsers', () => {
       const result = parseTransitionCommand(ctx, createToken('transition'));
 
       expect(result.name).toBe('transition');
-      expect(result.arguments).toHaveLength(1);
+      expect(result.args).toHaveLength(1);
       expect(result.modifiers).toBeDefined();
       expect(result.modifiers!.to).toBeDefined();
     });
@@ -269,7 +269,7 @@ describe('Animation Command Parsers', () => {
 
       const result = parseTransitionCommand(ctx, createToken('transition'));
 
-      const prop = result.arguments[0] as any;
+      const prop = result.args[0] as any;
       expect(prop.value).toContain('*');
     });
 
@@ -294,7 +294,7 @@ describe('Animation Command Parsers', () => {
 
       const result = parseTransitionCommand(ctx, createToken('transition'));
 
-      const prop = result.arguments[0] as any;
+      const prop = result.args[0] as any;
       expect(prop.value).toBe('background-color');
     });
 

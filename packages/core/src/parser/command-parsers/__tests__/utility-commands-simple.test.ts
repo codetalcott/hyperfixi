@@ -49,7 +49,7 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
 
       const result = parseRegularCommand(ctx, createIdentifierNode('myCommand'));
 
-      expect(result.arguments).toHaveLength(2);
+      expect(result.args).toHaveLength(2);
       expect(result.name).toBe('myCommand');
     });
 
@@ -58,7 +58,8 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
       const ctx = createMockParserContext(tokens, {
         checkIdentifierLike: vi.fn(() => false),
         checkSelector: vi
-          .fn(() => true)
+          .fn()
+          .mockReturnValueOnce(true)
           .mockReturnValueOnce(true)
           .mockReturnValue(false),
         parsePrimary: vi
@@ -70,7 +71,7 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
 
       const result = parseRegularCommand(ctx, createIdentifierNode('myCommand'));
 
-      expect(result.arguments).toHaveLength(2);
+      expect(result.args).toHaveLength(2);
     });
 
     it('should stop at command boundaries', () => {
@@ -86,7 +87,7 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
 
       const result = parseRegularCommand(ctx, createIdentifierNode('myCommand'));
 
-      expect(result.arguments).toHaveLength(1);
+      expect(result.args).toHaveLength(1);
     });
   });
 
@@ -121,7 +122,7 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
       const result = parseJsCommand(ctx, createIdentifierNode('js'));
 
       expect(result.name).toBe('js');
-      expect(result.arguments).toHaveLength(2);
+      expect(result.args).toHaveLength(2);
     });
 
     it('should parse js command with parameters', () => {
@@ -147,8 +148,8 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
 
       const result = parseJsCommand(ctx, createIdentifierNode('js'));
 
-      expect(result.arguments).toHaveLength(2);
-      const params = (result.arguments[1] as any).elements;
+      expect(result.args).toHaveLength(2);
+      const params = (result.args[1] as any).elements;
       expect(params).toHaveLength(2);
     });
   });
@@ -176,7 +177,7 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
       const result = parseTellCommand(ctx, createIdentifierNode('tell'));
 
       expect(result.name).toBe('tell');
-      expect(result.arguments.length).toBeGreaterThanOrEqual(2);
+      expect(result.args.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should throw if target is missing', () => {
