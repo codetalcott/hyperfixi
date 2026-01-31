@@ -31,6 +31,8 @@ import { isCommandBoundary } from '../helpers/parsing-helpers';
  *   - trigger customEvent on #myElement
  *   - send hello to #target-form
  *   - send customEvent to <form/>
+ *   - send filterByCategory(category: someValue) to me
+ *   - trigger update(count: 42, label: "test") on #target
  *
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'trigger' or 'send' identifier node
@@ -68,15 +70,84 @@ export function parseTriggerCommand(
       }
     }
 
-    // Create a string literal node for the combined event name
-    allArgs.push({
-      type: 'string',
-      value: eventName,
-      start: eventStart,
-      end: ctx.getPosition().end,
-      line: eventLine,
-      column: eventColumn,
-    } as ASTNode);
+    // Check for event detail parameters: eventName(key: value, ...)
+    if (ctx.check('(')) {
+      ctx.advance(); // consume '('
+
+      const detailArgs: ASTNode[] = [];
+
+      while (!ctx.isAtEnd() && !ctx.check(')')) {
+        // Check if this is a named parameter (identifier followed by ':')
+        const checkpoint = ctx.current;
+        let paramName: string | undefined;
+
+        if (ctx.checkIdentifierLike()) {
+          const possibleName = ctx.peek().value;
+          ctx.advance(); // consume identifier
+
+          if (ctx.check(':')) {
+            ctx.advance(); // consume ':'
+            paramName = possibleName;
+          } else {
+            // Not a named parameter, rewind
+            ctx.current = checkpoint;
+          }
+        }
+
+        const value = ctx.parseExpression();
+
+        if (paramName !== undefined) {
+          // Named param: wrap as objectLiteral so evaluator produces {name: value}
+          detailArgs.push({
+            type: 'objectLiteral',
+            properties: [
+              {
+                key: { type: 'identifier', name: paramName } as ASTNode,
+                value: value,
+              },
+            ],
+            start: value.start,
+            end: value.end,
+            line: value.line,
+            column: value.column,
+          } as ASTNode);
+        } else {
+          detailArgs.push(value);
+        }
+
+        if (ctx.check(',')) {
+          ctx.advance();
+        } else if (!ctx.check(')')) {
+          break;
+        }
+      }
+
+      // Consume closing parenthesis
+      if (ctx.check(')')) {
+        ctx.advance();
+      }
+
+      // Create a functionCall node instead of a plain string
+      allArgs.push({
+        type: 'functionCall',
+        name: eventName,
+        args: detailArgs,
+        start: eventStart,
+        end: ctx.getPosition().end,
+        line: eventLine,
+        column: eventColumn,
+      } as ASTNode);
+    } else {
+      // No parameters - create a string literal node for the event name
+      allArgs.push({
+        type: 'string',
+        value: eventName,
+        start: eventStart,
+        end: ctx.getPosition().end,
+        line: eventLine,
+        column: eventColumn,
+      } as ASTNode);
+    }
   }
 
   // Continue parsing remaining args (on, target, etc.)

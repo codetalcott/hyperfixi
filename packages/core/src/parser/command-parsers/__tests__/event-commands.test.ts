@@ -632,6 +632,215 @@ describe('Event Command Parsers', () => {
       });
     });
 
+    describe('Parenthesized event detail parameters', () => {
+      /**
+       * Helper that creates a context supporting parseExpression for named param tests.
+       * parseExpression consumes the current token and returns it as an identifier/literal.
+       */
+      function createContextWithExpressionSupport(tokens: Token[]): ParserContext {
+        let position = 0;
+
+        const ctx = createMockParserContext(tokens, {
+          current: position,
+          isAtEnd: vi.fn(() => position >= tokens.length),
+          peek: vi.fn(
+            () =>
+              tokens[position] || { kind: 'eof', value: '', start: 0, end: 0, line: 1, column: 0 }
+          ),
+          check: vi.fn((value: string) => {
+            const token = tokens[position];
+            return token && token.value === value;
+          }),
+          checkIdentifierLike: vi.fn(() => {
+            const token = tokens[position];
+            return token && (token.kind === 'identifier' || token.kind === 'keyword');
+          }),
+          advance: vi.fn(() => {
+            const token = tokens[position];
+            position++;
+            ctx.current = position;
+            return token || { kind: 'eof', value: '', start: 0, end: 0, line: 1, column: 0 };
+          }),
+          getPosition: vi.fn(() => ({
+            start: 0,
+            end: position > 0 && tokens[position - 1] ? tokens[position - 1].end : 0,
+            line: 1,
+            column: 0,
+          })),
+          createIdentifier: vi.fn((name: string) => ({
+            type: 'identifier' as const,
+            name,
+            start: 0,
+            end: name.length,
+            line: 1,
+            column: 0,
+          })),
+          parseExpression: vi.fn(() => {
+            const token = tokens[position];
+            position++;
+            ctx.current = position;
+            if (token.kind === 'number') {
+              return {
+                type: 'literal',
+                value: Number(token.value),
+                raw: token.value,
+                start: token.start,
+                end: token.end,
+                line: token.line,
+                column: token.column,
+              } as ASTNode;
+            }
+            if (token.kind === 'string') {
+              return {
+                type: 'literal',
+                value: token.value,
+                raw: token.value,
+                start: token.start,
+                end: token.end,
+                line: token.line,
+                column: token.column,
+              } as ASTNode;
+            }
+            return {
+              type: 'identifier',
+              name: token.value,
+              start: token.start,
+              end: token.end,
+              line: token.line,
+              column: token.column,
+            } as ASTNode;
+          }),
+          parsePrimary: vi.fn(() => {
+            const token = tokens[position];
+            position++;
+            ctx.current = position;
+            return {
+              type:
+                token.value.startsWith('.') || token.value.startsWith('#')
+                  ? 'selector'
+                  : 'identifier',
+              [token.value.startsWith('.') || token.value.startsWith('#') ? 'value' : 'name']:
+                token.value,
+              start: token.start,
+              end: token.end,
+              line: token.line,
+              column: token.column,
+            } as ASTNode;
+          }),
+          checkIsCommand: vi.fn(() => false),
+        });
+
+        return ctx;
+      }
+
+      it('should parse "send event(key: value) to target" with single named param', () => {
+        const tokens = [
+          createToken('filterByCategory', 'identifier', 0),
+          createToken('(', 'operator', 17),
+          createToken('category', 'identifier', 18),
+          createToken(':', 'operator', 26),
+          createToken('someValue', 'identifier', 28),
+          createToken(')', 'operator', 37),
+          createToken('to', 'keyword', 39),
+          createToken('#target', 'selector', 42),
+        ];
+
+        const ctx = createContextWithExpressionSupport(tokens);
+        const result = parseTriggerCommand(ctx, createIdentifierNode('send'));
+
+        expect(result).toBeTruthy();
+        expect(result?.name).toBe('send');
+
+        // First arg should be a functionCall node
+        const firstArg = result?.args[0] as any;
+        expect(firstArg.type).toBe('functionCall');
+        expect(firstArg.name).toBe('filterByCategory');
+        expect(firstArg.args).toHaveLength(1);
+
+        // The single arg should be an objectLiteral (named param)
+        const detailArg = firstArg.args[0];
+        expect(detailArg.type).toBe('objectLiteral');
+        expect(detailArg.properties).toHaveLength(1);
+        expect(detailArg.properties[0].key).toMatchObject({
+          type: 'identifier',
+          name: 'category',
+        });
+      });
+
+      it('should parse "send event(value) to target" with single positional param', () => {
+        const tokens = [
+          createToken('myEvent', 'identifier', 0),
+          createToken('(', 'operator', 7),
+          createToken('42', 'number', 8),
+          createToken(')', 'operator', 10),
+          createToken('to', 'keyword', 12),
+          createToken('#target', 'selector', 15),
+        ];
+
+        const ctx = createContextWithExpressionSupport(tokens);
+        const result = parseTriggerCommand(ctx, createIdentifierNode('send'));
+
+        expect(result).toBeTruthy();
+        const firstArg = result?.args[0] as any;
+        expect(firstArg.type).toBe('functionCall');
+        expect(firstArg.name).toBe('myEvent');
+        expect(firstArg.args).toHaveLength(1);
+
+        // Positional param should be a literal, NOT an objectLiteral
+        const detailArg = firstArg.args[0];
+        expect(detailArg.type).toBe('literal');
+        expect(detailArg.value).toBe(42);
+      });
+
+      it('should parse multiple named params "trigger event(a: x, b: y) on target"', () => {
+        const tokens = [
+          createToken('update', 'identifier', 0),
+          createToken('(', 'operator', 7),
+          createToken('count', 'identifier', 8),
+          createToken(':', 'operator', 13),
+          createToken('42', 'number', 15),
+          createToken(',', 'operator', 17),
+          createToken('label', 'identifier', 19),
+          createToken(':', 'operator', 24),
+          createToken('test', 'identifier', 26),
+          createToken(')', 'operator', 30),
+          createToken('on', 'keyword', 32),
+          createToken('#el', 'selector', 35),
+        ];
+
+        const ctx = createContextWithExpressionSupport(tokens);
+        const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
+
+        expect(result).toBeTruthy();
+        const firstArg = result?.args[0] as any;
+        expect(firstArg.type).toBe('functionCall');
+        expect(firstArg.name).toBe('update');
+        expect(firstArg.args).toHaveLength(2);
+
+        // Both args should be objectLiteral nodes
+        expect(firstArg.args[0].type).toBe('objectLiteral');
+        expect(firstArg.args[0].properties[0].key).toMatchObject({ name: 'count' });
+        expect(firstArg.args[1].type).toBe('objectLiteral');
+        expect(firstArg.args[1].properties[0].key).toMatchObject({ name: 'label' });
+      });
+
+      it('should still parse simple event name without parens', () => {
+        const tokens = createTokenStream(
+          ['click', 'on', '#button'],
+          ['identifier', 'keyword', 'selector']
+        );
+        const ctx = createParserContextForEventCommand(tokens);
+
+        const result = parseTriggerCommand(ctx, createIdentifierNode('trigger'));
+
+        // Should produce a string node, not a functionCall node
+        expect(result?.args[0]).toMatchObject({
+          type: 'string',
+          value: 'click',
+        });
+      });
+    });
+
     describe('Integration tests', () => {
       it('should parse complete trigger command end-to-end', () => {
         const tokens = createTokenStream(

@@ -1081,7 +1081,7 @@ export class RuntimeBase {
       // Arg Destructuring (e.g. on pointerdown(x, y))
       if (args && args.length > 0) {
         for (const argName of args) {
-          const value = (domEvent as any)[argName] || (domEvent as any).detail?.[argName] || null;
+          const value = (domEvent as any)[argName] ?? (domEvent as any).detail?.[argName] ?? null;
           eventContext.locals.set(argName, value);
         }
       }

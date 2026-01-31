@@ -91,10 +91,13 @@ export class EventDispatchCommand implements DecoratedCommand {
     let eventName: string;
     let detail: any;
 
-    if (nodeType(firstArg) === 'functionCall') {
-      eventName = (firstArg as any).name;
-      if ((firstArg as any).args?.length) {
-        detail = await this.parseEventDetail((firstArg as any).args, evaluator, context);
+    if (nodeType(firstArg) === 'functionCall' || nodeType(firstArg) === 'callExpression') {
+      // functionCall: { name, args } (from parseTriggerCommand)
+      // callExpression: { callee: { name }, arguments } (from main parser)
+      eventName = (firstArg as any).name || (firstArg as any).callee?.name;
+      const detailArgs = (firstArg as any).args || (firstArg as any).arguments;
+      if (detailArgs?.length) {
+        detail = await this.parseEventDetail(detailArgs, evaluator, context);
       }
     } else if (nodeType(firstArg) === 'identifier' || nodeType(firstArg) === 'keyword') {
       eventName = (firstArg as any).name;
@@ -205,7 +208,13 @@ export class EventDispatchCommand implements DecoratedCommand {
     context: ExecutionContext
   ): Promise<any> {
     if (!args?.length) return undefined;
-    if (args.length === 1) return await evaluator.evaluate(args[0], context);
+    if (args.length === 1) {
+      const singleArg = args[0] as any;
+      // Named param (objectLiteral) should fall through to the detail-building loop
+      if (singleArg?.type !== 'objectLiteral') {
+        return await evaluator.evaluate(singleArg, context);
+      }
+    }
     const detail: Record<string, any> = {};
     for (const arg of args) {
       const ev = await evaluator.evaluate(arg, context);

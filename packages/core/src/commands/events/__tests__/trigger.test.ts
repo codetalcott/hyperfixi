@@ -244,6 +244,139 @@ describe('EventDispatchCommand (trigger)', () => {
     });
   });
 
+  describe('named parameter handling', () => {
+    it('should produce object detail for single named parameter', async () => {
+      const context = createMockContext();
+      // The evaluator returns {category: 'ui-components'} for the objectLiteral arg
+      const evaluator = createMockEvaluator([{ category: 'ui-components' }, context.me]);
+
+      const input = await command.parseInput(
+        {
+          args: [
+            {
+              type: 'functionCall',
+              name: 'filterByCategory',
+              args: [
+                {
+                  type: 'objectLiteral',
+                  properties: [
+                    {
+                      key: { type: 'identifier', name: 'category' },
+                      value: { type: 'string', value: 'ui-components' },
+                    },
+                  ],
+                },
+              ],
+            } as any,
+            { type: 'keyword', name: 'on' } as any,
+            { type: 'identifier', name: 'me' } as any,
+          ],
+          modifiers: {},
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.eventName).toBe('filterByCategory');
+      expect(input.detail).toEqual({ category: 'ui-components' });
+    });
+
+    it('should still return raw value for single positional parameter', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator(['some-value', context.me]);
+
+      const input = await command.parseInput(
+        {
+          args: [
+            {
+              type: 'functionCall',
+              name: 'myEvent',
+              args: [{ type: 'string', value: 'some-value' }],
+            } as any,
+            { type: 'keyword', name: 'on' } as any,
+            { type: 'identifier', name: 'me' } as any,
+          ],
+          modifiers: {},
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.eventName).toBe('myEvent');
+      expect(input.detail).toBe('some-value');
+    });
+
+    it('should handle callExpression node type from main parser', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator([{ count: 42 }, context.me]);
+
+      const input = await command.parseInput(
+        {
+          args: [
+            {
+              type: 'callExpression',
+              callee: { type: 'identifier', name: 'dataEvent' },
+              arguments: [{ type: 'object', value: { count: 42 } }],
+            } as any,
+            { type: 'keyword', name: 'on' } as any,
+            { type: 'identifier', name: 'me' } as any,
+          ],
+          modifiers: {},
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.eventName).toBe('dataEvent');
+      expect(input.detail).toEqual({ count: 42 });
+    });
+
+    it('should merge multiple named parameters into detail object', async () => {
+      const context = createMockContext();
+      // Two objectLiteral args evaluate to individual objects, then merged
+      const evaluator = createMockEvaluator([{ category: 'ui' }, { priority: 'high' }, context.me]);
+
+      const input = await command.parseInput(
+        {
+          args: [
+            {
+              type: 'functionCall',
+              name: 'filterEvent',
+              args: [
+                {
+                  type: 'objectLiteral',
+                  properties: [
+                    {
+                      key: { type: 'identifier', name: 'category' },
+                      value: { type: 'string', value: 'ui' },
+                    },
+                  ],
+                },
+                {
+                  type: 'objectLiteral',
+                  properties: [
+                    {
+                      key: { type: 'identifier', name: 'priority' },
+                      value: { type: 'string', value: 'high' },
+                    },
+                  ],
+                },
+              ],
+            } as any,
+            { type: 'keyword', name: 'on' } as any,
+            { type: 'identifier', name: 'me' } as any,
+          ],
+          modifiers: {},
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.eventName).toBe('filterEvent');
+      expect(input.detail).toEqual({ category: 'ui', priority: 'high' });
+    });
+  });
+
   describe('integration', () => {
     it('should parse and execute end-to-end', async () => {
       const context = createMockContext();
