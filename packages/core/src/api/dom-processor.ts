@@ -3,11 +3,10 @@
  * Handles attribute processing and event handler setup for hyperscript
  */
 
-import type { ASTNode, ExecutionContext, Token } from '../types/core';
+import type { ASTNode, ExecutionContext } from '../types/core';
 import type { CompileResult } from './hyperscript-api';
 import { createContext } from '../core/context';
 import { debug } from '../utils/debug';
-import { tokenize } from '../parser/tokenizer';
 
 // =============================================================================
 // Constants

@@ -3,7 +3,7 @@
  * Validates the public interface for compilation, execution, and utilities
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { hyperscript } from './hyperscript-api';
 
 describe('Hyperscript Public API', () => {

@@ -320,7 +320,7 @@ describe('API v2 Edge Cases', () => {
         promises.push(hyperscript.compile(`toggle .class${i}`));
       }
       const results = await Promise.all(promises);
-      results.forEach((result, i) => {
+      results.forEach((result, _i) => {
         expect(result.ok).toBe(true);
       });
     });

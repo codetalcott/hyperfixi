@@ -24,35 +24,23 @@
  */
 
 import { parse as parseToResult } from '../parser/parser';
-import { tokenize } from '../parser/tokenizer';
 import { Runtime, type RuntimeOptions } from '../runtime/runtime';
 import { createContext, createChildContext } from '../core/context';
 import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types';
 import type { RuntimeHooks } from '../types/hooks';
 import type { SemanticAnalyzerInterface } from '../parser/types';
-import type { Token } from '../types/core';
-import { debug } from '../utils/debug';
 import {
   createSemanticAnalyzer,
   DEFAULT_CONFIDENCE_THRESHOLD,
   type SemanticAnalyzer,
 } from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
-import {
-  process as processDOMElements,
-  processHyperscriptAttribute,
-  setupEventHandler,
-  createHyperscriptContext,
-  extractEventInfo,
-  detectLanguage,
-  initializeDOMProcessor,
-} from './dom-processor';
+import { process as processDOMElements, initializeDOMProcessor } from './dom-processor';
 
 // =============================================================================
 // Constants
 // =============================================================================
 
-const DEFAULT_EVENT_TYPE = 'click';
 const DEFAULT_LANGUAGE = 'en';
 
 // =============================================================================

@@ -3,7 +3,6 @@
  * Provides fluent builders to create typed execution contexts
  */
 
-import type { TypedExecutionContext } from '../types/base-types';
 import type { TestExpressionContext } from '../test-utilities';
 
 /**
