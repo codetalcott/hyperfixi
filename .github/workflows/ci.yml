@@ -261,7 +261,7 @@ jobs:
       # as success, since the tests themselves completed.
       - name: Test core
         run: |
-          timeout 300 npm test --prefix packages/core -- --run || {
+          timeout 300 npm test --prefix packages/core || {
             EXIT=$?
             if [ $EXIT -eq 124 ]; then
               echo "::notice::Process killed by timeout (esbuild daemon hang - known issue)"
@@ -271,22 +271,22 @@ jobs:
           }
 
       - name: Test semantic
-        run: npm test --prefix packages/semantic -- --run
+        run: npm test --prefix packages/semantic
 
       - name: Test i18n
-        run: npm test --prefix packages/i18n -- --run
+        run: npm test --prefix packages/i18n
 
       - name: Test vite-plugin
-        run: npm test --prefix packages/vite-plugin -- --run
+        run: npm test --prefix packages/vite-plugin
 
       - name: Initialize patterns-reference database
         run: npm run db:init --prefix packages/patterns-reference
 
       - name: Test patterns-reference
-        run: npm test --prefix packages/patterns-reference -- --run
+        run: npm test --prefix packages/patterns-reference
 
       - name: Test mcp-server
-        run: npm test --prefix packages/mcp-server -- --run
+        run: npm test --prefix packages/mcp-server
 
   # ============================================
   # Job 5: Coverage Report
@@ -334,7 +334,7 @@ jobs:
           }
 
       - name: Generate coverage - semantic
-        run: npm test --prefix packages/semantic -- --run --coverage
+        run: npm test --prefix packages/semantic -- --coverage
 
       - name: Generate coverage - i18n
         run: npm run test:coverage --prefix packages/i18n
