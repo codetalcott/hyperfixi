@@ -62,8 +62,13 @@ const conversionExpressions = legacyConversionExpressions; // Use legacy system 
 function toTypedContext(context: ExecutionContext): any {
   return {
     ...context,
-    evaluationHistory: (context as any).evaluationHistory || [],
+    evaluationHistory: (context as unknown as Record<string, unknown>).evaluationHistory || [],
   };
+}
+
+/** Access string property from an ASTNode via index signature (avoids `as any`) */
+function nodeStr(node: ASTNode, key: string): string | undefined {
+  return (node as Record<string, unknown>)[key] as string | undefined;
 }
 
 // Helper function to process escape sequences in strings
@@ -192,9 +197,9 @@ function isEmpty(value: unknown): boolean {
     value &&
     typeof value === 'object' &&
     'length' in value &&
-    typeof (value as any).length === 'number'
+    typeof (value as { length: number }).length === 'number'
   ) {
-    return (value as any).length === 0;
+    return (value as { length: number }).length === 0;
   }
   if (typeof value === 'object' && value !== null) return Object.keys(value).length === 0;
   // For booleans and numbers, they are NOT empty - they have a value
@@ -555,7 +560,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
 
         // Create identifier with * prefix
         property = createIdentifierNode(
-          '*' + ((propertyName as any).name || (propertyName as any).value),
+          '*' + (nodeStr(propertyName, 'name') || nodeStr(propertyName, 'value')),
           { start: cssPropertyStart, end: propertyName.end }
         );
       } else {
@@ -576,14 +581,14 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
     // Handle context possessive syntax (my property, its property, your property)
     else if (
       left.type === 'identifier' &&
-      ['my', 'its', 'your'].includes((left as any).name) &&
+      ['my', 'its', 'your'].includes(nodeStr(left, 'name') ?? '') &&
       (isIdentifier(token) || isContextVar(token))
     ) {
       const property = parsePrimaryExpression(state);
 
       left = {
         type: 'contextPossessive',
-        contextType: (left as any).name,
+        contextType: nodeStr(left, 'name'),
         property,
         ...(left.start !== undefined && { start: left.start }),
         ...(property.end !== undefined && { end: property.end }),
@@ -592,7 +597,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       continue;
     }
     // Handle "the X of Y" pattern (the property of element)
-    else if (left.type === 'identifier' && (left as any).name === 'the' && isIdentifier(token)) {
+    else if (left.type === 'identifier' && nodeStr(left, 'name') === 'the' && isIdentifier(token)) {
       // Lookahead to check if this is actually a "the X of Y" pattern
       // before consuming the property token
       const nextToken = peek(state);
@@ -641,7 +646,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       // me.textContent, it.value, you.name
       let object = left;
       if (left.type === 'identifier') {
-        const name = (left as any).name;
+        const name = nodeStr(left, 'name');
         if (name === 'my' || name === 'its' || name === 'your') {
           const mappedName = name === 'my' ? 'me' : name === 'its' ? 'it' : 'you';
           object = createIdentifierNode(mappedName, left);
@@ -673,7 +678,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       // This enables my?.value, its?.value, your?.value
       let object = left;
       if (left.type === 'identifier') {
-        const name = (left as any).name;
+        const name = nodeStr(left, 'name');
         if (name === 'my' || name === 'its' || name === 'your') {
           const mappedName = name === 'my' ? 'me' : name === 'its' ? 'it' : 'you';
           object = createIdentifierNode(mappedName, left);
@@ -1457,7 +1462,7 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
       return evaluateGlobalVariable(node, context);
 
     default:
-      throw new ExpressionParseError(`Unknown AST node type: ${(node as any).type}`);
+      throw new ExpressionParseError(`Unknown AST node type: ${(node as { type: string }).type}`);
   }
 }
 
@@ -1470,7 +1475,7 @@ function resolveIdentifier(name: string, context: ExecutionContext): any {
   // 1. Meta scope - template variables and internal hyperscript state
   if (context.meta && typeof context.meta === 'object') {
     if (context.meta.hasOwnProperty(name)) {
-      return (context.meta as any)[name];
+      return context.meta[name];
     }
   }
 
@@ -1493,7 +1498,7 @@ function resolveIdentifier(name: string, context: ExecutionContext): any {
 
   // 5. JavaScript global objects (Date, Math, Object, Array, etc.)
   if (typeof globalThis !== 'undefined' && name in globalThis) {
-    return (globalThis as any)[name];
+    return (globalThis as Record<string, unknown>)[name];
   }
 
   // Return undefined for unknown identifiers
@@ -2010,7 +2015,7 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
       if (operand === false) return true;
       if (Array.isArray(operand)) return operand.length === 0;
       if (operand && typeof operand === 'object' && 'length' in operand) {
-        return (operand as any).length === 0; // NodeList/HTMLCollection
+        return (operand as { length: number }).length === 0; // NodeList/HTMLCollection
       }
       return false;
     case 'exists':
@@ -2075,16 +2080,16 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
       const args = await Promise.all(
         node.arguments.map(async (arg: ASTNode) => {
           // If arg is an identifier, use the name as a tag selector
-          if (arg.type === 'identifier' && (arg as any).name) {
-            return (arg as any).name;
+          if (arg.type === 'identifier' && nodeStr(arg, 'name')) {
+            return nodeStr(arg, 'name');
           }
           // If arg is a selector, use the value
-          if (arg.type === 'selector' && (arg as any).value) {
-            return (arg as any).value;
+          if (arg.type === 'selector' && nodeStr(arg, 'value')) {
+            return nodeStr(arg, 'value');
           }
           // If arg is a queryReference like <form/>, extract the selector
-          if (arg.type === 'queryReference' && (arg as any).selector) {
-            let selector = (arg as any).selector;
+          if (arg.type === 'queryReference' && nodeStr(arg, 'selector')) {
+            let selector = nodeStr(arg, 'selector')!;
             if (selector.startsWith('<') && selector.endsWith('/>')) {
               selector = selector.slice(1, -2).trim();
             }
@@ -2167,17 +2172,17 @@ function evaluateGlobalVariable(node: any, context: ExecutionContext): any {
     // Handle plain object globals
     else if (typeof context.globals === 'object') {
       if (name in context.globals) {
-        return (context.globals as Record<string, any>)[name];
+        return (context.globals as Record<string, unknown>)[name];
       }
       if (varName in context.globals) {
-        return (context.globals as Record<string, any>)[varName];
+        return (context.globals as Record<string, unknown>)[varName];
       }
     }
   }
 
   // Also check window/global scope for compatibility
   if (typeof globalThis !== 'undefined' && varName in globalThis) {
-    return (globalThis as any)[varName];
+    return (globalThis as Record<string, unknown>)[varName];
   }
 
   return undefined;
@@ -2527,9 +2532,9 @@ async function evaluatePositionalExpression(node: any, context: ExecutionContext
 
   // Get the appropriate positional expression implementation
   if (operator === 'first') {
-    return positionalExpressions.first.evaluate(context as any, collection);
+    return positionalExpressions.first.evaluate(toTypedContext(context), collection);
   } else if (operator === 'last') {
-    return positionalExpressions.last.evaluate(context as any, collection);
+    return positionalExpressions.last.evaluate(toTypedContext(context), collection);
   } else {
     throw new ExpressionParseError(`Unknown positional operator: ${operator}`);
   }
@@ -2608,10 +2613,10 @@ async function evaluateConstructorCall(node: any, _context: ExecutionContext): P
           ? window
           : global;
 
-    const Constructor = (globalObj as any)[constructorName];
+    const Constructor = (globalObj as Record<string, unknown>)[constructorName];
     if (typeof Constructor === 'function') {
       // For now, only support constructors with no arguments
-      const result = new Constructor();
+      const result = new (Constructor as new () => unknown)();
       return result;
     } else {
       throw new ExpressionParseError(

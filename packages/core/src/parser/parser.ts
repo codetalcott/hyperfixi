@@ -333,7 +333,7 @@ export class Parser {
               debug.parse(
                 `✅ PARSER: parseEventHandler returned:`,
                 eventHandler
-                  ? `type=${eventHandler.type}, event=${(eventHandler as any).event}`
+                  ? `type=${eventHandler.type}, event=${(eventHandler as Record<string, unknown>).event}`
                   : 'null'
               );
               if (eventHandler) {
@@ -1300,7 +1300,7 @@ export class Parser {
           end: varToken.end,
           line: varToken.line,
           column: varToken.column,
-        } as any;
+        } as ASTNode;
       } else {
         // This is `:variable` (local scope)
         const varToken = this.advance(); // get variable name
@@ -1312,7 +1312,7 @@ export class Parser {
           end: varToken.end,
           line: varToken.line,
           column: varToken.column,
-        } as any;
+        } as ASTNode;
       }
     }
 
@@ -1473,7 +1473,7 @@ export class Parser {
       return {
         type: 'dollarExpression',
         expression,
-        raw: `$${identifierToken.value}${(this.previous() as any).raw || this.previous().value || ''}`,
+        raw: `$${identifierToken.value}${this.previous().value || ''}`,
         line: identifierToken.line,
         column: identifierToken.column - 1, // Include the $ symbol
       };
@@ -2170,7 +2170,7 @@ export class Parser {
                         value: targetExpr,
                       },
                     ],
-                  } as any,
+                  } as ASTNode,
                 ] as ExpressionNode[],
                 isBlocking: false,
                 ...(expr.start !== undefined && { start: expr.start }),
@@ -2374,7 +2374,7 @@ export class Parser {
                         value: targetExpr,
                       },
                     ],
-                  } as any,
+                  } as ASTNode,
                 ] as ExpressionNode[],
                 isBlocking: false,
                 ...(expr.start !== undefined && { start: expr.start }),
@@ -2407,11 +2407,11 @@ export class Parser {
             if (
               binExpr.left &&
               binExpr.left.type === 'identifier' &&
-              this.isCommand((binExpr.left as any).name)
+              this.isCommand(binExpr.left.name as string)
             ) {
               const commandNode: CommandNode = {
                 type: 'command',
-                name: (binExpr.left as any).name,
+                name: binExpr.left.name as string,
                 args: [binExpr.right as ExpressionNode],
                 isBlocking: false,
                 ...(expr.start !== undefined && { start: expr.start }),
@@ -3093,7 +3093,7 @@ export class Parser {
       if (
         lastArg &&
         (lastArg.type === 'identifier' || lastArg.type === 'keyword') &&
-        continuationKeywords.includes((lastArg as any).name || (lastArg as any).value)
+        continuationKeywords.includes((lastArg.name ?? lastArg.value) as string)
       ) {
         // The previous argument was a continuation keyword, so continue parsing
         continue;

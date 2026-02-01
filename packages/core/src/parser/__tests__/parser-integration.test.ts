@@ -123,8 +123,9 @@ describe('Parser Integration Tests', () => {
       expect(node.type).toBe('eventHandler');
       expect(node.event).toBe('keydown');
       expect(node.condition).toBeDefined();
-      expect(node.condition.type).toBe('identifier');
-      expect(node.condition.name).toBe('shiftKey');
+      const cond = node.condition as Record<string, unknown>;
+      expect(cond.type).toBe('identifier');
+      expect(cond.name).toBe('shiftKey');
     });
 
     it('should parse event handler with complex condition', () => {
@@ -132,8 +133,9 @@ describe('Parser Integration Tests', () => {
       expect(node.type).toBe('eventHandler');
       expect(node.event).toBe('keydown');
       expect(node.condition).toBeDefined();
-      expect(node.condition.type).toBe('binaryExpression');
-      expect(node.condition.operator).toBe('and');
+      const cond = node.condition as Record<string, unknown>;
+      expect(cond.type).toBe('binaryExpression');
+      expect(cond.operator).toBe('and');
     });
 
     it('should parse mouseenter/mouseleave events', () => {
@@ -541,8 +543,10 @@ describe('Parser Integration Tests', () => {
     it('should parse angle-bracket selector', () => {
       const node = parseOk('closest <form/>');
       expect(node.type).toBe('callExpression');
-      expect(node.callee.name).toBe('closest');
-      expect(node.arguments[0]).toMatchObject({
+      const callee = node.callee as Record<string, unknown>;
+      const args = node.arguments as unknown[];
+      expect(callee.name).toBe('closest');
+      expect(args[0]).toMatchObject({
         type: 'selector',
         value: 'form',
       });
@@ -603,6 +607,181 @@ describe('Parser Integration Tests', () => {
         type: 'binaryExpression',
         operator: 'as',
       });
+    });
+  });
+
+  // ─── Compound Command Routing ───────────────────────────────────────
+
+  describe('Compound Command Routing (parseCompoundCommand)', () => {
+    it('should route put command to parsePutCommand', () => {
+      const node = parseOk('put "hello" into #target');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('put');
+      const args = getArgs(node);
+      expect(args.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should route trigger command to parseTriggerCommand', () => {
+      const node = parseOk('on click trigger reset on #form');
+      expect(node.type).toBe('eventHandler');
+      const commands = getCommands(node);
+      expect(commands[0].name).toBe('trigger');
+    });
+
+    it('should route send command to parseTriggerCommand', () => {
+      const node = parseOk('on click send reset to #form');
+      expect(node.type).toBe('eventHandler');
+      const commands = getCommands(node);
+      // 'send' is an alias for trigger but keeps the original name
+      expect(['send', 'trigger']).toContain(commands[0].name);
+    });
+
+    it('should route remove command to parseRemoveCommand', () => {
+      const node = parseOk('remove .active from #target');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('remove');
+    });
+
+    it('should route toggle command to parseToggleCommand', () => {
+      const node = parseOk('toggle .visible on #target');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('toggle');
+    });
+
+    it('should route set command to parseSetCommand', () => {
+      const node = parseOk('set :count to 0');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      // [target, 'to', value]
+      expect(args).toHaveLength(3);
+    });
+
+    it('should route halt command to parseHaltCommand', () => {
+      const node = parseOk('on click halt');
+      expect(node.type).toBe('eventHandler');
+      const commands = getCommands(node);
+      expect(commands[0].name).toBe('halt');
+    });
+
+    it('should route js command to parseJsCommand', () => {
+      const node = parseOk('on click js console.log("hi") end');
+      expect(node.type).toBe('eventHandler');
+      const commands = getCommands(node);
+      expect(commands[0].name).toBe('js');
+    });
+
+    it('should route tell command to parseTellCommand', () => {
+      const node = parseOk('on click tell #target add .active');
+      expect(node.type).toBe('eventHandler');
+      const commands = getCommands(node);
+      expect(commands[0].name).toBe('tell');
+    });
+
+    it('should fall back to parseRegularCommand for unknown commands', () => {
+      const node = parseOk('log "message"');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('log');
+    });
+  });
+
+  // ─── Tell Command Integration ──────────────────────────────────────
+
+  describe('Tell Command Integration', () => {
+    it('should parse tell with add command', () => {
+      const node = parseOk('tell #target add .highlight');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('tell');
+      const args = getArgs(node);
+      // args[0] = target, args[1+] = commands
+      expect(args.length).toBeGreaterThanOrEqual(2);
+      // Target is a selector (parser may use 'selector' or 'idSelector')
+      expect(['selector', 'idSelector']).toContain(args[0].type);
+    });
+
+    it('should parse tell with element selector target', () => {
+      const node = parseOk('on click tell .items add .selected');
+      expect(node.type).toBe('eventHandler');
+      const commands = getCommands(node);
+      expect(commands[0].name).toBe('tell');
+    });
+  });
+
+  // ─── JS Command Integration ────────────────────────────────────────
+
+  describe('JS Command Integration', () => {
+    it('should parse js with code body', () => {
+      const node = parseOk('js console.log("hello") end');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      expect(args.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should parse js with parameters', () => {
+      const node = parseOk('js(x, y) return x + y end');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      // args[0] = code literal, args[1] = params array
+      expect(args).toHaveLength(2);
+      const params = args[1];
+      expect(params.type).toBe('arrayLiteral');
+      expect((params as Record<string, unknown>).elements).toHaveLength(2);
+    });
+  });
+
+  // ─── Increment/Decrement Sugar ──────────────────────────────────────
+
+  describe('Increment/Decrement Sugar', () => {
+    it('should desugar increment to set command', () => {
+      const node = parseOk('increment count');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      expect((node as Record<string, unknown>).originalCommand).toBe('increment');
+    });
+
+    it('should desugar decrement to set command', () => {
+      const node = parseOk('decrement count');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      expect((node as Record<string, unknown>).originalCommand).toBe('decrement');
+    });
+
+    it('should desugar increment by N', () => {
+      const node = parseOk('increment count by 5');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      // set count to (count + 5)
+      expect(args).toHaveLength(3);
+      const binaryExpr = args[2]; // the value expression
+      expect(binaryExpr).toMatchObject({
+        type: 'binaryExpression',
+        operator: '+',
+      });
+    });
+
+    it('should desugar increment global variable', () => {
+      const node = parseOk('increment global counter');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+    });
+  });
+
+  // ─── Swap/Morph Command ─────────────────────────────────────────────
+
+  describe('Swap/Morph Command', () => {
+    it('should parse swap command', () => {
+      const node = parseOk('swap #target with "<div>new</div>"');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('swap');
+    });
+
+    it('should parse morph as alias for swap', () => {
+      const node = parseOk('morph #target with "<div>new</div>"');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('morph');
     });
   });
 });
