@@ -296,11 +296,11 @@ export const CommandClassification = {
   },
 
   isTerminator(keyword: string): boolean {
-    return COMMAND_TERMINATORS.includes(keyword as any);
+    return (COMMAND_TERMINATORS as readonly string[]).includes(keyword);
   },
 
   isPutOperation(keyword: string): boolean {
-    return PUT_OPERATION_KEYWORDS.includes(keyword as any);
+    return (PUT_OPERATION_KEYWORDS as readonly string[]).includes(keyword);
   },
 
   /**

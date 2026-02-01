@@ -157,7 +157,7 @@ function createControlFlowContext(tokens: Token[], overrides: Record<string, any
   });
 
   // Ensure tokens array is accessible for lookahead
-  ctx.tokens = tokens;
+  (ctx as any).tokens = tokens;
   ctx.current = 0;
 
   return ctx;
@@ -580,7 +580,7 @@ describe('Control Flow Command Parsers', () => {
       };
 
       const rawCtx = createMockParserContext(tokens, baseOverrides);
-      rawCtx.tokens = tokens;
+      (rawCtx as any).tokens = tokens;
 
       // Use a Proxy to intercept get/set on 'current' so that the source code's
       // direct reads (ctx.current) and writes (ctx.current = savedPos) are
@@ -671,7 +671,7 @@ describe('Control Flow Command Parsers', () => {
         getPosition: vi.fn(() => ({ start: 0, end: state.pos, line: 1, column: state.pos })),
         addError: vi.fn(),
       });
-      rawCtx.tokens = tokens;
+      (rawCtx as any).tokens = tokens;
 
       const ctx = new Proxy(rawCtx, {
         get(target, prop) {
@@ -871,7 +871,7 @@ describe('Control Flow Command Parsers', () => {
         getPosition: vi.fn(() => ({ start: 0, end: state.pos, line: 1, column: state.pos })),
         addError: vi.fn(),
       });
-      rawCtx.tokens = tokens;
+      (rawCtx as any).tokens = tokens;
 
       const ctx = new Proxy(rawCtx, {
         get(target, prop) {

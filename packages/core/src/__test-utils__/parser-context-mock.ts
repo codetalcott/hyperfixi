@@ -18,7 +18,7 @@ import type { Token, ASTNode, CommandNode } from '../types/core';
  */
 export function createMockParserContext(
   tokens: Token[] = [],
-  overrides: Partial<ParserContext> = {}
+  overrides: Record<string, any> = {}
 ): ParserContext {
   let currentPosition = 0;
 
@@ -522,7 +522,7 @@ export function createTokenStream(values: string[], kinds?: string[]): Token[] {
 export function createMockParserContextAt(
   tokens: Token[],
   position: number,
-  overrides: Partial<ParserContext> = {}
+  overrides: Record<string, any> = {}
 ): ParserContext {
   const ctx = createMockParserContext(tokens, overrides);
   ctx.current = position;

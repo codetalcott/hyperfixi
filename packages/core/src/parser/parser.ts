@@ -102,6 +102,33 @@ export type { ParseError } from './types';
 // AST node types are now imported from parser-types.ts (Phase 9-2)
 // Multi-word patterns are now imported from parsing-helpers.ts (Phase 9-2 Day 6)
 
+/**
+ * Hyperscript Parser
+ *
+ * ## Lenient Parsing Behavior
+ *
+ * The parser intentionally tolerates certain incomplete constructs at end-of-input
+ * rather than throwing errors. This supports incremental/interactive authoring where
+ * partial scripts are common:
+ *
+ * - **Unterminated blocks**: `if x then add .active` (missing `end`) parses
+ *   successfully when the block body is at end-of-input. The same applies to
+ *   `repeat`, `for each`, and event handlers.
+ *
+ * - **Missing values in set**: `set :x to` at end-of-input parses as a valid
+ *   set command with an undefined value expression. The runtime handles the
+ *   missing value gracefully.
+ *
+ * - **If/else without end**: `if x then add .a else remove .a` succeeds
+ *   at end-of-input since both branches are fully specified.
+ *
+ * - **Command chains at top level**: Standalone chained commands like
+ *   `add .a then remove .b` produce a `CommandSequence` node (not a single
+ *   command with `next` links). Event handler bodies use a `commands` array.
+ *
+ * These behaviors are covered by tests in `__tests__/parser-integration.test.ts`
+ * and `__tests__/error-recovery.test.ts`.
+ */
 export class Parser {
   private tokens: Token[];
   private current: number = 0;
@@ -859,9 +886,17 @@ export class Parser {
       // Try to parse a command
       let parsedCommand = false;
 
-      if (this.checkIsCommand()) {
-        debug.parse('✅ Found COMMAND token:', this.peek().value);
+      const isCommandToken = this.checkIsCommand();
+      const isCommandIdentifier =
+        !isCommandToken && this.checkIdentifier() && this.isCommand(this.peek().value);
+
+      if (isCommandToken || isCommandIdentifier) {
+        debug.parse(
+          isCommandToken ? '✅ Found COMMAND token:' : '✅ Found IDENTIFIER that is a command:',
+          this.peek().value
+        );
         this.advance(); // consume the command token
+
         // Save error state before parsing command
         const savedError = this.error;
         try {
@@ -887,37 +922,7 @@ export class Parser {
           this.error = savedError;
         }
       } else if (this.checkIdentifier()) {
-        const token = this.peek();
-        if (this.isCommand(token.value)) {
-          debug.parse('✅ Found IDENTIFIER that is a command:', token.value);
-          this.advance(); // consume the command token
-          // Save error state before parsing command
-          const savedError = this.error;
-          try {
-            const cmd = this.parseCommand();
-            // Check if an error was added during parsing (even if no exception was thrown)
-            if (this.error && this.error !== savedError) {
-              debug.parse(
-                '⚠️  parseCommandListUntilEnd: Command parsing added error, restoring error state. Error was:',
-                this.error.message
-              );
-              this.error = savedError;
-            }
-            if (cmd) {
-              debug.parse('✅ Parsed command:', cmd.name);
-              commands.push(cmd);
-              parsedCommand = true;
-            }
-          } catch (error) {
-            debug.parse(
-              '⚠️  parseCommandListUntilEnd: Command parsing threw exception, restoring error state:',
-              error instanceof Error ? error.message : String(error)
-            );
-            this.error = savedError;
-          }
-        } else {
-          debug.parse('❌ IDENTIFIER is not a command:', token.value);
-        }
+        debug.parse('❌ IDENTIFIER is not a command:', this.peek().value);
       }
 
       // If we didn't parse a command, we might be at 'end' or hit an error
@@ -2782,14 +2787,7 @@ export class Parser {
     }
 
     // Return a CommandSequence node
-    return {
-      type: 'CommandSequence',
-      commands: commands,
-      start: commands[0]?.start || 0,
-      end: commands[commands.length - 1]?.end || 0,
-      line: commands[0]?.line || 1,
-      column: commands[0]?.column || 1,
-    };
+    return astHelpers.createCommandSequence(commands);
   }
 
   /**

@@ -244,7 +244,10 @@ export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNo
   // Look for operation keyword (into, before, after, at)
   const currentToken = ctx.peek();
 
-  if (!currentToken || !PUT_OPERATION_KEYWORDS.includes(currentToken.value as any)) {
+  if (
+    !currentToken ||
+    !(PUT_OPERATION_KEYWORDS as readonly string[]).includes(currentToken.value)
+  ) {
     ctx.addError(
       `Expected operation keyword (${PUT_OPERATION_KEYWORDS.join(', ')}) after put expression, got: ${currentToken?.value}`
     );

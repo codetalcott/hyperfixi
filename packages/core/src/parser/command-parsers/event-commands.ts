@@ -160,7 +160,8 @@ export function parseTriggerCommand(
   let operationKeyword = 'on';
   for (let i = 0; i < allArgs.length; i++) {
     const arg = allArgs[i];
-    const argValue = (arg as any).name || (arg as any).value;
+    const argRecord = arg as Record<string, unknown>;
+    const argValue = (argRecord.name as string) || (argRecord.value as string);
     if (
       (arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
       (argValue === 'on' || argValue === 'to')

@@ -9,10 +9,16 @@
  * @module parser/command-parsers/async-commands
  */
 
-import type { ParserContext, IdentifierNode, LiteralNode } from '../parser-types';
-import type { ASTNode, ExpressionNode, Token } from '../../types/core';
+import type { ParserContext } from '../parser-types';
+import type { ASTNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
+import {
+  createArrayLiteral,
+  createObjectLiteral,
+  createIdentifier,
+  createLiteral,
+} from '../helpers/ast-helpers';
 // Phase 4: Import token predicates for direct token checks
 import { isIdentifierLike } from '../token-predicates';
 
@@ -130,43 +136,35 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
 
     // Build args array
     // Format: [eventList, target?]
-    args.push({
-      type: 'arrayLiteral',
-      elements: events.map(
-        event =>
-          ({
-            type: 'objectLiteral',
-            properties: [
-              {
-                key: { type: 'identifier', name: 'name' } as IdentifierNode,
-                value: {
-                  type: 'literal',
-                  value: event.name,
-                  raw: `"${event.name}"`,
-                } as LiteralNode,
-              },
-              {
-                key: { type: 'identifier', name: 'args' } as IdentifierNode,
-                value: {
-                  type: 'arrayLiteral',
-                  elements: event.params.map(
-                    param =>
-                      ({
-                        type: 'literal',
-                        value: param,
-                        raw: `"${param}"`,
-                      }) as LiteralNode
-                  ),
-                } as any,
-              },
-            ],
-          }) as any
-      ),
+    const eventPos = {
       start: commandToken.start,
       end: ctx.getPosition().end,
       line: commandToken.line,
       column: commandToken.column,
-    } as any);
+    };
+    args.push(
+      createArrayLiteral(
+        events.map(event =>
+          createObjectLiteral(
+            [
+              {
+                key: createIdentifier('name', eventPos),
+                value: createLiteral(event.name, `"${event.name}"`, eventPos),
+              },
+              {
+                key: createIdentifier('args', eventPos),
+                value: createArrayLiteral(
+                  event.params.map(param => createLiteral(param, `"${param}"`, eventPos)),
+                  eventPos
+                ),
+              },
+            ],
+            eventPos
+          )
+        ),
+        eventPos
+      )
+    );
 
     if (eventTarget) {
       args.push(eventTarget);
@@ -211,14 +209,14 @@ export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
 
   const behaviorName = ctx.advance().value;
   const prevToken = ctx.previous();
-  args.push({
-    type: 'identifier',
-    name: behaviorName,
-    start: prevToken.start,
-    end: prevToken.end,
-    line: prevToken.line,
-    column: prevToken.column,
-  } as IdentifierNode);
+  args.push(
+    createIdentifier(behaviorName, {
+      start: prevToken.start,
+      end: prevToken.end,
+      line: prevToken.line,
+      column: prevToken.column,
+    })
+  );
 
   // Check for parameter list
   if (ctx.check('(')) {
@@ -268,19 +266,23 @@ export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
 
     // Add parameters as an object literal node
     if (params.length > 0) {
-      args.push({
-        type: 'objectLiteral',
-        properties: params.map(param => ({
-          key: param.name
-            ? ({ type: 'identifier', name: param.name } as IdentifierNode)
-            : ({ type: 'literal', value: '_positional' } as LiteralNode),
-          value: param.value,
-        })),
+      const paramPos = {
         start: commandToken.start,
         end: ctx.getPosition().end,
         line: commandToken.line,
         column: commandToken.column,
-      } as any);
+      };
+      args.push(
+        createObjectLiteral(
+          params.map(param => ({
+            key: param.name
+              ? createIdentifier(param.name, paramPos)
+              : createLiteral('_positional', '_positional', paramPos),
+            value: param.value,
+          })),
+          paramPos
+        )
+      );
     }
   }
 

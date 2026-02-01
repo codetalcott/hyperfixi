@@ -13,7 +13,12 @@ import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, ExpressionNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
-import { createBinaryExpression, createLiteral, createIdentifier } from '../helpers/ast-helpers';
+import {
+  createBinaryExpression,
+  createLiteral,
+  createIdentifier,
+  createPropertyOfExpression,
+} from '../helpers/ast-helpers';
 // Phase 4: TokenType import removed - using value-based checks instead
 
 /**
@@ -49,7 +54,7 @@ import { createBinaryExpression, createLiteral, createIdentifier } from '../help
  * Parse colon-prefixed variable target: `:localVar` or `::globalVar`
  * @returns Scoped identifier node, or null if current token isn't ':'
  */
-export function parseColonVariable(ctx: ParserContext): ASTNode | null {
+export function parseColonVariable(ctx: ParserContext): IdentifierNode | null {
   if (!ctx.check(':')) return null;
 
   ctx.advance(); // consume first ':'
@@ -64,7 +69,7 @@ export function parseColonVariable(ctx: ParserContext): ASTNode | null {
       scope: 'global',
       start: varToken.start - 2,
       end: varToken.end,
-    } as any;
+    };
   }
 
   // Single colon: local scope (:localVar)
@@ -75,14 +80,14 @@ export function parseColonVariable(ctx: ParserContext): ASTNode | null {
     scope: 'local',
     start: varToken.start - 1,
     end: varToken.end,
-  } as any;
+  };
 }
 
 /**
  * Parse scope-modified variable target: `global <var>` or `local <var>`
  * @returns Scoped identifier node, or null if current token isn't global/local
  */
-export function parseScopedVariable(ctx: ParserContext): ASTNode | null {
+export function parseScopedVariable(ctx: ParserContext): IdentifierNode | null {
   if (!ctx.check(KEYWORDS.GLOBAL) && !ctx.check(KEYWORDS.LOCAL)) return null;
 
   const scopeToken = ctx.advance();
@@ -90,10 +95,10 @@ export function parseScopedVariable(ctx: ParserContext): ASTNode | null {
   return {
     type: 'identifier',
     name: variableToken.value,
-    scope: scopeToken.value,
+    scope: scopeToken.value as 'global' | 'local',
     start: scopeToken.start,
     end: variableToken.end,
-  } as any;
+  };
 }
 
 /**
@@ -135,7 +140,7 @@ export function parsePropertyOfTarget(ctx: ParserContext, startPosition: number)
           end: targetToken.end,
         },
         start: startPosition,
-        end: ctx.current,
+        end: ctx.savePosition(),
       };
     }
 
@@ -152,7 +157,7 @@ export function parsePropertyOfTarget(ctx: ParserContext, startPosition: number)
       name: variableToken.value,
       start: variableToken.start,
       end: variableToken.end,
-    } as any;
+    };
   }
 
   // No recognized pattern after 'the' - rollback
@@ -180,7 +185,7 @@ export function parseTargetFallback(ctx: ParserContext): {
         scope: 'local',
         start: varToken.start,
         end: varToken.end,
-      } as any,
+      },
       tokens: [],
     };
   }
@@ -203,31 +208,44 @@ export function parseTargetFallback(ctx: ParserContext): {
   }
 
   // Try to reconstruct "the X of Y" from collected tokens
-  if (
-    targetTokens.length >= 4 &&
-    (targetTokens[0] as any).value === KEYWORDS.THE &&
-    (targetTokens[2] as any).value === KEYWORDS.OF
-  ) {
-    return {
-      expression: {
-        type: 'propertyOfExpression',
-        property: {
-          type: 'identifier',
-          name: (targetTokens[1] as any).value || (targetTokens[1] as any).name,
-          start: (targetTokens[1] as any).start,
-          end: (targetTokens[1] as any).end,
-        },
-        target: {
-          type: (targetTokens[3] as any).type === 'idSelector' ? 'idSelector' : 'cssSelector',
-          value: (targetTokens[3] as any).value || (targetTokens[3] as any).name,
-          start: (targetTokens[3] as any).start,
-          end: (targetTokens[3] as any).end,
-        },
-        start: (targetTokens[0] as any).start,
-        end: (targetTokens[3] as any).end,
-      },
-      tokens: [],
-    };
+  if (targetTokens.length >= 4) {
+    // Access .value and .name through index signature (not declared on ASTNode)
+    const nodeStr = (node: ASTNode, key: string) =>
+      (node as Record<string, unknown>)[key] as string | undefined;
+
+    if (
+      nodeStr(targetTokens[0], 'value') === KEYWORDS.THE &&
+      nodeStr(targetTokens[2], 'value') === KEYWORDS.OF
+    ) {
+      const propToken = targetTokens[1];
+      const targetToken = targetTokens[3];
+
+      return {
+        expression: createPropertyOfExpression(
+          createIdentifier(nodeStr(propToken, 'value') || nodeStr(propToken, 'name') || '', {
+            start: propToken.start ?? 0,
+            end: propToken.end ?? 0,
+            line: propToken.line ?? 1,
+            column: propToken.column ?? 1,
+          }),
+          {
+            type: targetToken.type === 'idSelector' ? 'idSelector' : 'cssSelector',
+            value: nodeStr(targetToken, 'value') || nodeStr(targetToken, 'name') || '',
+            start: targetToken.start ?? 0,
+            end: targetToken.end ?? 0,
+            line: targetToken.line,
+            column: targetToken.column,
+          },
+          {
+            start: targetTokens[0].start ?? 0,
+            end: targetToken.end ?? 0,
+            line: targetTokens[0].line ?? 1,
+            column: targetTokens[0].column ?? 1,
+          }
+        ),
+        tokens: [],
+      };
+    }
   }
 
   if (targetTokens.length === 1) {

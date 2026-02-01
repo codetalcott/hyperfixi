@@ -100,6 +100,67 @@ export interface PossessiveExpressionNode extends ASTNode {
 }
 
 /**
+ * BlockNode - AST node representing a block of commands (then/else bodies, loop bodies)
+ */
+export interface BlockNode extends ASTNode {
+  type: 'block';
+  commands: ASTNode[];
+}
+
+/**
+ * StringLiteralNode - AST node representing a raw string value (loop variables, event names)
+ * Distinct from LiteralNode which has type: 'literal' and a raw field.
+ */
+export interface StringLiteralNode extends ASTNode {
+  type: 'string';
+  value: string;
+}
+
+/**
+ * ObjectLiteralNode - AST node representing an object literal
+ */
+export interface ObjectLiteralNode extends ASTNode {
+  type: 'objectLiteral';
+  properties: Array<{
+    key: ASTNode;
+    value: ASTNode;
+  }>;
+}
+
+/**
+ * ArrayLiteralNode - AST node representing an array literal
+ */
+export interface ArrayLiteralNode extends ASTNode {
+  type: 'arrayLiteral';
+  elements: ASTNode[];
+}
+
+/**
+ * PropertyOfExpressionNode - AST node for "the X of Y" syntax
+ */
+export interface PropertyOfExpressionNode extends ASTNode {
+  type: 'propertyOfExpression';
+  property: ASTNode;
+  target: ASTNode;
+}
+
+/**
+ * CommandSequenceNode - AST node wrapping multiple chained commands
+ */
+export interface CommandSequenceNode extends ASTNode {
+  type: 'CommandSequence';
+  commands: ASTNode[];
+}
+
+/**
+ * ProgramNode - AST node containing multiple top-level statements
+ */
+export interface ProgramNode extends ASTNode {
+  type: 'Program';
+  statements: ASTNode[];
+}
+
+/**
  * MultiWordPattern - Defines structure for multi-word commands
  *
  * Example: "fetch URL as json" has keywords ["as"]

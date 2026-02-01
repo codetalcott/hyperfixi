@@ -19,6 +19,13 @@ import type {
   MemberExpressionNode,
   SelectorNode,
   PossessiveExpressionNode,
+  BlockNode,
+  StringLiteralNode,
+  ObjectLiteralNode,
+  ArrayLiteralNode,
+  PropertyOfExpressionNode,
+  CommandSequenceNode,
+  ProgramNode,
 } from '../parser-types';
 import { debug } from '../../utils/debug';
 
@@ -212,6 +219,127 @@ export function createPossessiveExpression(
 }
 
 /**
+ * Create a block node containing a list of commands
+ *
+ * Used by control flow (if/else, repeat, for) to wrap command bodies.
+ *
+ * @param commands - Array of command nodes
+ * @param pos - Position information
+ * @returns BlockNode
+ */
+export function createBlock(commands: ASTNode[], pos: Position): BlockNode {
+  return {
+    type: 'block',
+    commands,
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
+ * Create a string literal node (raw string value for loop variables, event names)
+ *
+ * Distinct from createLiteral which produces type: 'literal' with a raw field.
+ * This produces type: 'string' used by repeat/for loop variables and event names.
+ *
+ * @param value - The string value
+ * @param pos - Position information
+ * @returns StringLiteralNode
+ */
+export function createStringLiteral(value: string, pos: Position): StringLiteralNode {
+  return {
+    type: 'string',
+    value,
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
+ * Create an object literal node
+ *
+ * @param properties - Array of key-value pairs
+ * @param pos - Position information
+ * @returns ObjectLiteralNode
+ */
+export function createObjectLiteral(
+  properties: Array<{ key: ASTNode; value: ASTNode }>,
+  pos: Position
+): ObjectLiteralNode {
+  return {
+    type: 'objectLiteral',
+    properties,
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
+ * Create an array literal node
+ *
+ * @param elements - Array of element nodes
+ * @param pos - Position information
+ * @returns ArrayLiteralNode
+ */
+export function createArrayLiteral(elements: ASTNode[], pos: Position): ArrayLiteralNode {
+  return {
+    type: 'arrayLiteral',
+    elements,
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
+ * Create a "the X of Y" property-of-expression node
+ *
+ * @param property - The property being accessed
+ * @param target - The target element
+ * @param pos - Position information
+ * @returns PropertyOfExpressionNode
+ */
+export function createPropertyOfExpression(
+  property: ASTNode,
+  target: ASTNode,
+  pos: Position
+): PropertyOfExpressionNode {
+  return {
+    type: 'propertyOfExpression',
+    property,
+    target,
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
+ * Create a command sequence node wrapping multiple chained commands
+ *
+ * @param commands - Array of command nodes
+ * @returns CommandSequenceNode
+ */
+export function createCommandSequence(commands: ASTNode[]): CommandSequenceNode {
+  return {
+    type: 'CommandSequence',
+    commands,
+    start: commands[0]?.start || 0,
+    end: commands[commands.length - 1]?.end || 0,
+    line: commands[0]?.line || 1,
+    column: commands[0]?.column || 1,
+  };
+}
+
+/**
  * Create an error node
  *
  * This is a special identifier node used to represent parse errors
@@ -257,14 +385,14 @@ export function createProgramNode(statements: ASTNode[]): ASTNode {
     return statements[0];
   }
 
-  const programNode = {
+  const programNode: ProgramNode = {
     type: 'Program',
     statements,
     start: statements[0]?.start || 0,
     end: statements[statements.length - 1]?.end || 0,
     line: statements[0]?.line || 1,
     column: statements[0]?.column || 1,
-  } as any;
+  };
 
   debug.parse(
     `✅ createProgramNode: Returning Program node with ${statements.length} statements, type=${programNode.type}`

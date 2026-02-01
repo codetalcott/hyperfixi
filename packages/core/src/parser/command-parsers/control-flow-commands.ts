@@ -12,6 +12,7 @@
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, CommandNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
+import { createBlock, createStringLiteral } from '../helpers/ast-helpers';
 import { debug } from '../../utils/debug';
 import { KEYWORDS } from '../parser-constants';
 // Phase 4: Import token predicates for direct token checks
@@ -249,15 +250,15 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
     column: commandToken.column,
   } as IdentifierNode);
 
+  const pos = {
+    start: commandToken.start,
+    end: commandToken.end,
+    line: commandToken.line,
+    column: commandToken.column,
+  };
+
   if (variable) {
-    args.push({
-      type: 'string',
-      value: variable,
-      start: commandToken.start,
-      end: commandToken.end,
-      line: commandToken.line,
-      column: commandToken.column,
-    } as any);
+    args.push(createStringLiteral(variable, pos));
   }
 
   if (collection) args.push(collection);
@@ -265,38 +266,17 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
   if (times) args.push(times);
 
   if (eventName) {
-    args.push({
-      type: 'string',
-      value: eventName,
-      start: commandToken.start,
-      end: commandToken.end,
-      line: commandToken.line,
-      column: commandToken.column,
-    } as any);
+    args.push(createStringLiteral(eventName, pos));
   }
 
   if (eventTarget) args.push(eventTarget);
 
   if (indexVariable) {
-    args.push({
-      type: 'string',
-      value: indexVariable,
-      start: commandToken.start,
-      end: commandToken.end,
-      line: commandToken.line,
-      column: commandToken.column,
-    } as any);
+    args.push(createStringLiteral(indexVariable, pos));
   }
 
   // Add commands as a block
-  args.push({
-    type: 'block',
-    commands: commands,
-    start: commandToken.start,
-    end: commandToken.end || 0,
-    line: commandToken.line,
-    column: commandToken.column,
-  } as any);
+  args.push(createBlock(commands, { ...pos, end: pos.end || 0 }));
 
   // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   return CommandNodeBuilder.from(commandToken)
@@ -503,14 +483,14 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     }
 
     // Add then block
-    args.push({
-      type: 'block',
-      commands: thenCommands,
-      start: commandToken.start,
-      end: ctx.getPosition().end,
-      line: commandToken.line,
-      column: commandToken.column,
-    } as any);
+    args.push(
+      createBlock(thenCommands, {
+        start: commandToken.start,
+        end: ctx.getPosition().end,
+        line: commandToken.line,
+        column: commandToken.column,
+      })
+    );
 
     // Check for optional 'else' clause
     // Track if we consumed 'else if' (nested if handles its own 'end')
@@ -529,14 +509,14 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
         const elseIfCommand = parseIfCommand(ctx, ifToken);
 
         // Add the else-if as the else block (it's a nested if that shares our 'end')
-        args.push({
-          type: 'block',
-          commands: [elseIfCommand],
-          start: ifToken.start,
-          end: ctx.getPosition().end,
-          line: ifToken.line,
-          column: ifToken.column,
-        } as any);
+        args.push(
+          createBlock([elseIfCommand], {
+            start: ifToken.start,
+            end: ctx.getPosition().end,
+            line: ifToken.line,
+            column: ifToken.column,
+          })
+        );
 
         consumedElseIf = true;
       } else {
@@ -556,14 +536,14 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
         }
 
         // Add else block
-        args.push({
-          type: 'block',
-          commands: elseCommands,
-          start: commandToken.start,
-          end: ctx.getPosition().end,
-          line: commandToken.line,
-          column: commandToken.column,
-        } as any);
+        args.push(
+          createBlock(elseCommands, {
+            start: commandToken.start,
+            end: ctx.getPosition().end,
+            line: commandToken.line,
+            column: commandToken.column,
+          })
+        );
       }
     }
 
@@ -581,14 +561,14 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       const singleCommand = ctx.parseCommand();
 
       // Wrap single command in a block for consistency
-      args.push({
-        type: 'block',
-        commands: [singleCommand],
-        start: commandToken.start,
-        end: ctx.getPosition().end,
-        line: commandToken.line,
-        column: commandToken.column,
-      } as any);
+      args.push(
+        createBlock([singleCommand], {
+          start: commandToken.start,
+          end: ctx.getPosition().end,
+          line: commandToken.line,
+          column: commandToken.column,
+        })
+      );
     } else {
       throw new Error('Expected command after if condition in single-line form');
     }
@@ -696,37 +676,23 @@ export function parseForCommand(ctx: ParserContext, commandToken: Token): Comman
     column: commandToken.column,
   } as IdentifierNode);
 
-  args.push({
-    type: 'string',
-    value: variable,
+  const forPos = {
     start: commandToken.start,
     end: commandToken.end,
     line: commandToken.line,
     column: commandToken.column,
-  } as any);
+  };
+
+  args.push(createStringLiteral(variable, forPos));
 
   args.push(collection);
 
   if (indexVariable) {
-    args.push({
-      type: 'string',
-      value: indexVariable,
-      start: commandToken.start,
-      end: commandToken.end,
-      line: commandToken.line,
-      column: commandToken.column,
-    } as any);
+    args.push(createStringLiteral(indexVariable, forPos));
   }
 
   // Add commands as a block
-  args.push({
-    type: 'block',
-    commands: commands,
-    start: commandToken.start,
-    end: commandToken.end || 0,
-    line: commandToken.line,
-    column: commandToken.column,
-  } as any);
+  args.push(createBlock(commands, { ...forPos, end: forPos.end || 0 }));
 
   // Create command node with 'repeat' as the command name
   // This allows reuse of the existing RepeatCommand implementation
