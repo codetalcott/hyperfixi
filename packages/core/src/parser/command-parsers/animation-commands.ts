@@ -13,6 +13,7 @@ import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, ExpressionNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
+import { parseHyphenatedName } from '../helpers/parsing-helpers';
 // Phase 4: Import token predicates for direct token checks
 import { isIdentifierLike } from '../token-predicates';
 
@@ -165,21 +166,10 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
       ctx.advance();
     }
 
-    // Get property name
-    // Phase 4: Using predicate method for property name checks
-    if (ctx.checkIdentifierLike()) {
-      propertyValue += ctx.peek().value;
-      ctx.advance();
-
-      // Handle hyphenated properties (background-color)
-      while (ctx.check('-') && !ctx.isAtEnd()) {
-        propertyValue += '-';
-        ctx.advance();
-        if (ctx.checkIdentifierLike()) {
-          propertyValue += ctx.peek().value;
-          ctx.advance();
-        }
-      }
+    // Get property name (supports hyphenated names like background-color)
+    const hyphenatedName = parseHyphenatedName(ctx);
+    if (hyphenatedName) {
+      propertyValue += hyphenatedName;
 
       property = {
         type: 'string',

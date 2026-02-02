@@ -162,17 +162,9 @@ export function getTokenAt(tokens: Token[], index: number): Token {
   return tokens[index];
 }
 
-/**
- * Check if current token is a keyword from a specific set
- *
- * @param token - Token to check
- * @param keywords - Array of keyword strings to match against
- * @returns True if token value matches any keyword
- */
-export function isKeyword(token: Token | undefined, keywords: string[]): boolean {
-  if (!token) return false;
-  return keywords.some(kw => token.value === kw || token.value.toLowerCase() === kw);
-}
+// isKeyword moved to parsing-helpers.ts to eliminate duplication.
+// Re-export for backward compatibility with existing consumers.
+export { isKeyword } from './parsing-helpers';
 
 /**
  * Find next occurrence of token with specific value

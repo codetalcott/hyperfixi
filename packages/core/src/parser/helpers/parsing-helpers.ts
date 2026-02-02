@@ -291,3 +291,55 @@ export function consumeOneOfKeywordsToArgs(
   }
   return null;
 }
+
+// ============================================================================
+// CSS Property Parsing Helpers
+// ============================================================================
+
+/**
+ * Parse a hyphenated identifier (e.g., "background-color", "border-width").
+ *
+ * Assumes the first identifier token has NOT yet been consumed.
+ * Consumes the initial identifier and all subsequent `-identifier` continuations.
+ *
+ * @param ctx - Parser context
+ * @returns The assembled hyphenated name, or empty string if no identifier found
+ *
+ * @example
+ * // Parses: background-color → "background-color"
+ * // Parses: opacity → "opacity"
+ * const name = parseHyphenatedName(ctx);
+ */
+export function parseHyphenatedName(ctx: ParserContext): string {
+  if (!ctx.checkIdentifierLike()) return '';
+
+  let name = ctx.advance().value;
+
+  while (ctx.check('-') && !ctx.isAtEnd()) {
+    name += '-';
+    ctx.advance(); // consume '-'
+    if (ctx.checkIdentifierLike()) {
+      name += ctx.advance().value;
+    }
+  }
+
+  return name;
+}
+
+/**
+ * Consume an optional keyword if present.
+ *
+ * @param ctx - Parser context
+ * @param keyword - The keyword to optionally consume (e.g., 'the', 'a', 'an')
+ * @returns True if the keyword was consumed
+ *
+ * @example
+ * consumeOptionalKeyword(ctx, 'the'); // skips 'the' if present
+ */
+export function consumeOptionalKeyword(ctx: ParserContext, keyword: string): boolean {
+  if (ctx.check(keyword)) {
+    ctx.advance();
+    return true;
+  }
+  return false;
+}

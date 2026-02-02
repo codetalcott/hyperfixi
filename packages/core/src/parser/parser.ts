@@ -1902,6 +1902,196 @@ export class Parser {
     return event;
   }
 
+  // ============================================================================
+  // Pseudo-command and error recovery helpers (extracted from parseEventHandler)
+  // ============================================================================
+
+  /**
+   * Prepositions that indicate a pseudo-command pattern: methodName(args) <prep> target
+   */
+  private static readonly PSEUDO_COMMAND_PREPOSITIONS = ['from', 'on', 'with', 'into', 'at', 'to'];
+
+  /**
+   * Convert a CallExpressionNode into a regular CommandNode.
+   * Used when a function call like add(5, 10) should be treated as a command.
+   */
+  private callExprToCommandNode(callExpr: CallExpressionNode, sourceExpr: ASTNode): CommandNode {
+    return {
+      type: 'command',
+      name: (callExpr.callee as IdentifierNode).name,
+      args: callExpr.arguments as ExpressionNode[],
+      isBlocking: false,
+      ...(sourceExpr.start !== undefined && { start: sourceExpr.start }),
+      ...(sourceExpr.end !== undefined && { end: sourceExpr.end }),
+      ...(sourceExpr.line !== undefined && { line: sourceExpr.line }),
+      ...(sourceExpr.column !== undefined && { column: sourceExpr.column }),
+    };
+  }
+
+  /**
+   * Create a pseudo-command node from a parsed call expression with preposition and target.
+   * Encodes method name, args, optional preposition, and target as a structured object literal.
+   */
+  private createPseudoCommandNode(
+    methodName: string,
+    callExpr: CallExpressionNode,
+    preposition: string | undefined,
+    targetExpr: ASTNode,
+    sourceExpr: ASTNode
+  ): CommandNode {
+    return {
+      type: 'command',
+      name: 'pseudo-command',
+      args: [
+        {
+          type: 'objectLiteral',
+          properties: [
+            {
+              key: { type: 'identifier', name: 'methodName' } as IdentifierNode,
+              value: {
+                type: 'literal',
+                value: methodName,
+                raw: `"${methodName}"`,
+              } as LiteralNode,
+            },
+            {
+              key: { type: 'identifier', name: 'methodArgs' } as IdentifierNode,
+              value: {
+                type: 'literal',
+                value: callExpr.arguments,
+                raw: JSON.stringify(callExpr.arguments),
+              } as LiteralNode,
+            },
+            ...(preposition
+              ? [
+                  {
+                    key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
+                    value: {
+                      type: 'literal',
+                      value: preposition,
+                      raw: `"${preposition}"`,
+                    } as LiteralNode,
+                  },
+                ]
+              : []),
+            {
+              key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
+              value: targetExpr,
+            },
+          ],
+        } as ASTNode,
+      ] as ExpressionNode[],
+      isBlocking: false,
+      ...(sourceExpr.start !== undefined && { start: sourceExpr.start }),
+      ...(sourceExpr.end !== undefined && { end: sourceExpr.end }),
+      ...(sourceExpr.line !== undefined && { line: sourceExpr.line }),
+      ...(sourceExpr.column !== undefined && { column: sourceExpr.column }),
+    };
+  }
+
+  /**
+   * Try to parse a call expression as a pseudo-command.
+   * Checks if the next tokens indicate a pseudo-command pattern (preposition/target after call).
+   *
+   * Returns:
+   * - node: the CommandNode (either pseudo-command or regular command)
+   * - isPseudo: true if a pseudo-command was successfully parsed
+   * - targetFailed: true if this was a pseudo-command but target parsing failed (fallback to regular)
+   */
+  private tryParsePseudoCommand(
+    callExpr: CallExpressionNode,
+    sourceExpr: ASTNode
+  ): { node: CommandNode; isPseudo: boolean; targetFailed: boolean } {
+    const methodName = (callExpr.callee as IdentifierNode).name;
+    const nextToken = this.peek();
+
+    // Check if this looks like a pseudo-command pattern
+    const hasPseudoCommandPattern =
+      Parser.PSEUDO_COMMAND_PREPOSITIONS.includes(nextToken.value.toLowerCase()) ||
+      (isIdentifier(nextToken) && !this.isCommand(nextToken.value)) ||
+      isContextVar(nextToken);
+
+    if (!hasPseudoCommandPattern) {
+      return {
+        node: this.callExprToCommandNode(callExpr, sourceExpr),
+        isPseudo: false,
+        targetFailed: false,
+      };
+    }
+
+    // Emit warning if using a known command name as pseudo-command
+    if (this.isCommand(methodName)) {
+      this.addWarning({
+        type: 'command-shadow',
+        message: `Method '${methodName}' shadows hyperscript command`,
+        suggestions: [
+          `Rename method to avoid confusion (e.g., '${methodName}Fn', 'my${methodName.charAt(0).toUpperCase() + methodName.slice(1)}')`,
+          `Use 'call' command instead: call ${methodName}(...)`,
+          'This works but may cause ambiguity',
+        ],
+        severity: 'warning',
+        code: 'PSEUDO_CMD_SHADOW',
+        ...(sourceExpr.line !== undefined && { line: sourceExpr.line }),
+        ...(sourceExpr.column !== undefined && { column: sourceExpr.column }),
+      });
+    }
+
+    // Parse optional preposition
+    let preposition: string | undefined;
+    if (Parser.PSEUDO_COMMAND_PREPOSITIONS.includes(this.peek().value.toLowerCase())) {
+      preposition = this.advance().value.toLowerCase();
+    }
+
+    // Parse target expression
+    let targetExpr: ASTNode;
+    try {
+      targetExpr = this.parseExpression();
+    } catch {
+      // Target parsing failed - fall back to regular command
+      return {
+        node: this.callExprToCommandNode(callExpr, sourceExpr),
+        isPseudo: false,
+        targetFailed: true,
+      };
+    }
+
+    return {
+      node: this.createPseudoCommandNode(methodName, callExpr, preposition, targetExpr, sourceExpr),
+      isPseudo: true,
+      targetFailed: false,
+    };
+  }
+
+  /**
+   * Advance past the current command token, parse a command, and recover from errors.
+   * Saves/restores error state to prevent command parse failures from propagating.
+   * Returns the parsed CommandNode or null if parsing failed.
+   */
+  private parseCommandWithErrorRecovery(): CommandNode | null {
+    this.advance(); // consume the command token - parseCommand expects this as previous()
+    const savedError = this.error;
+    try {
+      const cmd = this.parseCommand();
+      // Check if an error was added during parsing (even if no exception was thrown)
+      if (this.error && this.error !== savedError) {
+        debug.parse(
+          '⚠️ Command parsing added error, restoring error state. Error was:',
+          this.error.message
+        );
+        this.error = savedError;
+      }
+      return cmd;
+    } catch (error) {
+      // If command parsing fails, restore error state and skip to next command
+      debug.parse(
+        '⚠️ Command parsing threw exception, restoring error state:',
+        error instanceof Error ? error.message : String(error)
+      );
+      this.error = savedError;
+      return null;
+    }
+  }
+
   private parseEventHandler(): EventHandlerNode {
     debug.parse(`🔧 parseEventHandler: ENTRY - parsing event handler`);
 
@@ -2142,156 +2332,19 @@ export class Parser {
 
           // Check if it's a call expression followed by pseudo-command pattern
           if (expr && expr.type === 'callExpression') {
-            const callExpr = expr as CallExpressionNode;
-            const methodName = (callExpr.callee as IdentifierNode).name;
-            const pseudoCommandPrepositions = ['from', 'on', 'with', 'into', 'at', 'to'];
-            const nextToken = this.peek();
-
-            // Check if this looks like a pseudo-command pattern
-            const hasPseudoCommandPattern =
-              pseudoCommandPrepositions.includes(nextToken.value.toLowerCase()) ||
-              (isIdentifier(nextToken) && !this.isCommand(nextToken.value)) ||
-              isContextVar(nextToken);
-
-            const isPseudoCommand = hasPseudoCommandPattern;
-
-            if (isPseudoCommand) {
-              // Emit warning if using a known command name as pseudo-command
-              if (this.isCommand(methodName)) {
-                this.addWarning({
-                  type: 'command-shadow',
-                  message: `Method '${methodName}' shadows hyperscript command`,
-                  suggestions: [
-                    `Rename method to avoid confusion (e.g., '${methodName}Fn', 'my${methodName.charAt(0).toUpperCase() + methodName.slice(1)}')`,
-                    `Use 'call' command instead: call ${methodName}(...)`,
-                    'This works but may cause ambiguity',
-                  ],
-                  severity: 'warning',
-                  code: 'PSEUDO_CMD_SHADOW',
-                  ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column }),
-                });
-              }
-              // Parse as pseudo-command
-              let preposition: string | undefined;
-              if (pseudoCommandPrepositions.includes(this.peek().value.toLowerCase())) {
-                preposition = this.advance().value.toLowerCase();
-              }
-
-              let targetExpr: ASTNode;
-              try {
-                targetExpr = this.parseExpression();
-              } catch (error) {
-                // Fall back to regular command
-                const commandNode: CommandNode = {
-                  type: 'command',
-                  name: methodName,
-                  args: callExpr.arguments as ExpressionNode[],
-                  isBlocking: false,
-                  ...(expr.start !== undefined && { start: expr.start }),
-                  ...(expr.end !== undefined && { end: expr.end }),
-                  ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column }),
-                };
-                commands.push(commandNode);
-                continue;
-              }
-
-              // Create pseudo-command node
-              const pseudoCommandNode: CommandNode = {
-                type: 'command',
-                name: 'pseudo-command',
-                args: [
-                  {
-                    type: 'objectLiteral',
-                    properties: [
-                      {
-                        key: { type: 'identifier', name: 'methodName' } as IdentifierNode,
-                        value: {
-                          type: 'literal',
-                          value: methodName,
-                          raw: `"${methodName}"`,
-                        } as LiteralNode,
-                      },
-                      {
-                        key: { type: 'identifier', name: 'methodArgs' } as IdentifierNode,
-                        value: {
-                          type: 'literal',
-                          value: callExpr.arguments,
-                          raw: JSON.stringify(callExpr.arguments),
-                        } as LiteralNode,
-                      },
-                      ...(preposition
-                        ? [
-                            {
-                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                              value: {
-                                type: 'literal',
-                                value: preposition,
-                                raw: `"${preposition}"`,
-                              } as LiteralNode,
-                            },
-                          ]
-                        : []),
-                      {
-                        key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
-                        value: targetExpr,
-                      },
-                    ],
-                  } as ASTNode,
-                ] as ExpressionNode[],
-                isBlocking: false,
-                ...(expr.start !== undefined && { start: expr.start }),
-                ...(expr.end !== undefined && { end: expr.end }),
-                ...(expr.line !== undefined && { line: expr.line }),
-                ...(expr.column !== undefined && { column: expr.column }),
-              };
-              commands.push(pseudoCommandNode);
-              continue;
-            }
-          }
-
-          // Not a pseudo-command, treat as regular expression/command
-          if (expr && expr.type === 'callExpression') {
-            const callExpr = expr as CallExpressionNode;
-            const commandNode: CommandNode = {
-              type: 'command',
-              name: (callExpr.callee as IdentifierNode).name,
-              args: callExpr.arguments as ExpressionNode[],
-              isBlocking: false,
-              ...(expr.start !== undefined && { start: expr.start }),
-              ...(expr.end !== undefined && { end: expr.end }),
-              ...(expr.line !== undefined && { line: expr.line }),
-              ...(expr.column !== undefined && { column: expr.column }),
-            };
-            commands.push(commandNode);
+            const result = this.tryParsePseudoCommand(expr as CallExpressionNode, expr);
+            commands.push(result.node);
+            // Skip separator handling for pseudo-commands and target parse failures
+            if (result.isPseudo || result.targetFailed) continue;
           }
         } else {
           // No parentheses, parse as regular command
-          this.advance(); // consume the command token - parseCommand expects this as previous()
-          // Save error state before parsing
-          const savedError = this.error;
-          try {
-            const cmd = this.parseCommand();
-            // Check if an error was added during parsing (even if no exception was thrown)
-            if (this.error && this.error !== savedError) {
-              debug.parse(
-                '⚠️ Command parsing added error, restoring error state. Error was:',
-                this.error.message
-              );
-              this.error = savedError;
-            }
+          const cmd = this.parseCommandWithErrorRecovery();
+          if (cmd) {
             commands.push(cmd);
             debug.parse(
               `✅ parseEventHandler: Parsed command, next token: ${this.isAtEnd() ? 'END' : this.peek().value}`
             );
-          } catch (error) {
-            // If command parsing fails, restore error state and skip to next command
-            debug.parse(
-              '⚠️ Command parsing threw exception, restoring error state:',
-              error instanceof Error ? error.message : String(error)
-            );
-            this.error = savedError;
           }
         }
       } else if (this.checkIdentifier()) {
@@ -2299,28 +2352,8 @@ export class Parser {
         const token = this.peek();
         if (this.isCommand(token.value)) {
           // It's a command - parse as command
-          this.advance(); // consume the command token - parseCommand expects this as previous()
-          // Save error state before parsing
-          const savedError = this.error;
-          try {
-            const cmd = this.parseCommand();
-            // Check if an error was added during parsing (even if no exception was thrown)
-            if (this.error && this.error !== savedError) {
-              debug.parse(
-                '⚠️ Command parsing added error, restoring error state. Error was:',
-                this.error.message
-              );
-              this.error = savedError;
-            }
-            commands.push(cmd);
-          } catch (error) {
-            // If command parsing fails, restore error state and skip to next command
-            debug.parse(
-              '⚠️ Command parsing threw exception, restoring error state:',
-              error instanceof Error ? error.message : String(error)
-            );
-            this.error = savedError;
-          }
+          const cmd = this.parseCommandWithErrorRecovery();
+          if (cmd) commands.push(cmd);
         } else {
           // Parse as expression (could be function call like focus())
           let expr;
@@ -2340,131 +2373,9 @@ export class Parser {
 
           // Convert call expressions to commands
           if (expr && expr.type === 'callExpression') {
-            const callExpr = expr as CallExpressionNode;
-            const methodName = (callExpr.callee as IdentifierNode).name;
-
-            // Check if this is a pseudo-command (function call followed by preposition/target)
-            const pseudoCommandPrepositions = ['from', 'on', 'with', 'into', 'at', 'to'];
-            const nextToken = this.peek();
-
-            // Check if this looks like a pseudo-command pattern
-            const hasPseudoCommandPattern =
-              pseudoCommandPrepositions.includes(nextToken.value.toLowerCase()) ||
-              (isIdentifier(nextToken) && !this.isCommand(nextToken.value)) ||
-              isContextVar(nextToken);
-
-            const isPseudoCommand = hasPseudoCommandPattern;
-
-            if (isPseudoCommand) {
-              // Emit warning if using a known command name as pseudo-command
-              if (this.isCommand(methodName)) {
-                this.addWarning({
-                  type: 'command-shadow',
-                  message: `Method '${methodName}' shadows hyperscript command`,
-                  suggestions: [
-                    `Rename method to avoid confusion (e.g., '${methodName}Fn', 'my${methodName.charAt(0).toUpperCase() + methodName.slice(1)}')`,
-                    `Use 'call' command instead: call ${methodName}(...)`,
-                    'This works but may cause ambiguity',
-                  ],
-                  severity: 'warning',
-                  code: 'PSEUDO_CMD_SHADOW',
-                  ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column }),
-                });
-              }
-              // Parse pseudo-command: methodName(args) [preposition] target
-              let preposition: string | undefined;
-
-              // Check for optional preposition
-              if (pseudoCommandPrepositions.includes(this.peek().value.toLowerCase())) {
-                preposition = this.advance().value.toLowerCase();
-              }
-
-              // Parse target expression
-              let targetExpr: ASTNode;
-              try {
-                targetExpr = this.parseExpression();
-              } catch (error) {
-                // If target parsing fails, treat as regular command
-                const commandNode: CommandNode = {
-                  type: 'command',
-                  name: methodName,
-                  args: callExpr.arguments as ExpressionNode[],
-                  isBlocking: false,
-                  ...(expr.start !== undefined && { start: expr.start }),
-                  ...(expr.end !== undefined && { end: expr.end }),
-                  ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column }),
-                };
-                commands.push(commandNode);
-                continue;
-              }
-
-              // Create pseudo-command node
-              const pseudoCommandNode: CommandNode = {
-                type: 'command',
-                name: 'pseudo-command',
-                args: [
-                  // Encode pseudo-command data as a structured argument
-                  {
-                    type: 'objectLiteral',
-                    properties: [
-                      {
-                        key: { type: 'identifier', name: 'methodName' } as IdentifierNode,
-                        value: {
-                          type: 'literal',
-                          value: methodName,
-                          raw: `"${methodName}"`,
-                        } as LiteralNode,
-                      },
-                      {
-                        key: { type: 'identifier', name: 'methodArgs' } as IdentifierNode,
-                        value: {
-                          type: 'literal',
-                          value: callExpr.arguments,
-                          raw: JSON.stringify(callExpr.arguments),
-                        } as LiteralNode,
-                      },
-                      ...(preposition
-                        ? [
-                            {
-                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                              value: {
-                                type: 'literal',
-                                value: preposition,
-                                raw: `"${preposition}"`,
-                              } as LiteralNode,
-                            },
-                          ]
-                        : []),
-                      {
-                        key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
-                        value: targetExpr,
-                      },
-                    ],
-                  } as ASTNode,
-                ] as ExpressionNode[],
-                isBlocking: false,
-                ...(expr.start !== undefined && { start: expr.start }),
-                ...(expr.end !== undefined && { end: expr.end }),
-                ...(expr.line !== undefined && { line: expr.line }),
-                ...(expr.column !== undefined && { column: expr.column }),
-              };
-              commands.push(pseudoCommandNode);
-            } else {
-              // Regular command
-              const commandNode: CommandNode = {
-                type: 'command',
-                name: methodName,
-                args: callExpr.arguments as ExpressionNode[],
-                isBlocking: false,
-                ...(expr.start !== undefined && { start: expr.start }),
-                ...(expr.end !== undefined && { end: expr.end }),
-                ...(expr.line !== undefined && { line: expr.line }),
-                ...(expr.column !== undefined && { column: expr.column }),
-              };
-              commands.push(commandNode);
-            }
+            const result = this.tryParsePseudoCommand(expr as CallExpressionNode, expr);
+            commands.push(result.node);
+            if (result.targetFailed) continue;
           } else if (
             expr &&
             expr.type === 'binaryExpression' &&
