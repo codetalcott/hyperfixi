@@ -434,49 +434,7 @@ export const HYPERSCRIPT_KEYWORDS = new Set([
   'undefined',
 ]);
 
-// ============================================================================
-// Operator Precedence
-// ============================================================================
-
-export const OPERATOR_PRECEDENCE: Record<string, number> = {
-  // Logical operators (lowest precedence)
-  or: 1,
-  and: 2,
-
-  // Equality and comparison
-  '==': 3,
-  '!=': 3,
-  '===': 3,
-  '!==': 3,
-  is: 3,
-  matches: 3,
-  contains: 3,
-  in: 3,
-
-  // Relational
-  '<': 4,
-  '>': 4,
-  '<=': 4,
-  '>=': 4,
-
-  // Additive
-  '+': 5,
-  '-': 5,
-
-  // Multiplicative
-  '*': 6,
-  '/': 6,
-  mod: 6,
-  '%': 6,
-
-  // Exponentiation
-  '^': 7,
-  '**': 7,
-
-  // Unary (highest precedence)
-  not: 8,
-  'unary-': 9,
-  'unary+': 9,
-};
-
-export const RIGHT_ASSOCIATIVE = new Set(['^', '**', 'not', 'unary-', 'unary+']);
+// Note: Operator precedence is defined in expression-parser.ts via
+// getLogicalOperatorPrecedence() and getArithmeticOperatorPrecedence().
+// Expression metadata objects also carry precedence values for tooling.
+// See packages/core/src/parser/expression-parser.ts for the authoritative source.

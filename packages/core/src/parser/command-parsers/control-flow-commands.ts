@@ -15,6 +15,7 @@ import { CommandNodeBuilder } from '../command-node-builder';
 import { createBlock, createStringLiteral } from '../helpers/ast-helpers';
 import { debug } from '../../utils/debug';
 import { KEYWORDS } from '../parser-constants';
+import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
 // Phase 4: Import token predicates for direct token checks
 import { isIdentifierLike, isEvent } from '../token-predicates';
 
@@ -180,9 +181,8 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
         debug.parse('📍 After consuming "from", current token:', ctx.peek().value);
         // Parse the target - use parsePrimary to avoid consuming too much
         // This handles "from document" or "from the document" or "from #element"
-        if (ctx.check(KEYWORDS.THE)) {
+        if (consumeOptionalKeyword(ctx, KEYWORDS.THE)) {
           debug.parse('✅ Found "the", advancing...');
-          ctx.advance(); // consume 'the'
         }
         // Debug: log current token before calling parsePrimary
         const beforePrimary = ctx.peek();

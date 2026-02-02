@@ -201,6 +201,23 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
   }
 
   /**
+   * Infer EvaluationType (capitalized) from runtime value
+   * Previously duplicated as inferResultTypeLocal in First, Last, At, Random expressions
+   *
+   * Uses duck-typed isElement() for cross-realm compatibility (JSDOM vs native)
+   */
+  protected inferEvaluationType(value: unknown): EvaluationType {
+    if (value === undefined) return 'Undefined';
+    if (value === null) return 'Null';
+    if (isString(value)) return 'String';
+    if (isNumber(value)) return 'Number';
+    if (isBoolean(value)) return 'Boolean';
+    if (Array.isArray(value)) return 'Array';
+    if (this.isElement(value)) return 'Element';
+    return 'Object';
+  }
+
+  /**
    * Normalize various collection types to array
    * Previously duplicated in FirstExpression, LastExpression, AtExpression, RandomExpression
    *

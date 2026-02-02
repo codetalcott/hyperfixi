@@ -20,7 +20,6 @@ import type {
   ExpressionCategory,
 } from '../../../types/expression-types';
 import { BaseExpressionImpl } from '../../base-expression';
-import { isString, isNumber, isBoolean } from '../../type-helpers';
 
 // ============================================================================
 // Input Schemas
@@ -89,7 +88,7 @@ export class FirstExpression
       const result: EvaluationResult<unknown> = {
         success: true,
         value,
-        type: evaluationToHyperScriptType[this.inferResultTypeLocal(value)],
+        type: evaluationToHyperScriptType[this.inferEvaluationType(value)],
       };
 
       this.trackPerformance(context, input, result, startTime);
@@ -133,19 +132,6 @@ export class FirstExpression
       ]);
     }
   }
-
-  // Uses inherited normalizeCollection() and inferType() from BaseExpressionImpl
-
-  private inferResultTypeLocal(value: unknown): EvaluationType {
-    if (value === undefined) return 'Undefined';
-    if (value === null) return 'Null';
-    if (isString(value)) return 'String';
-    if (isNumber(value)) return 'Number';
-    if (isBoolean(value)) return 'Boolean';
-    if (Array.isArray(value)) return 'Array';
-    if (value instanceof HTMLElement) return 'Element';
-    return 'Object';
-  }
 }
 
 // ============================================================================
@@ -188,7 +174,7 @@ export class LastExpression
       const result: EvaluationResult<unknown> = {
         success: true,
         value,
-        type: evaluationToHyperScriptType[this.inferResultTypeLocal(value)],
+        type: evaluationToHyperScriptType[this.inferEvaluationType(value)],
       };
 
       this.trackPerformance(context, input, result, startTime);
@@ -231,19 +217,6 @@ export class LastExpression
         'Check input structure and types',
       ]);
     }
-  }
-
-  // Uses inherited normalizeCollection() from BaseExpressionImpl
-
-  private inferResultTypeLocal(value: unknown): EvaluationType {
-    if (value === undefined) return 'Undefined';
-    if (value === null) return 'Null';
-    if (isString(value)) return 'String';
-    if (isNumber(value)) return 'Number';
-    if (isBoolean(value)) return 'Boolean';
-    if (Array.isArray(value)) return 'Array';
-    if (value instanceof HTMLElement) return 'Element';
-    return 'Object';
   }
 }
 
@@ -289,7 +262,7 @@ export class AtExpression
       const result: EvaluationResult<unknown> = {
         success: true,
         value,
-        type: evaluationToHyperScriptType[this.inferResultTypeLocal(value)],
+        type: evaluationToHyperScriptType[this.inferEvaluationType(value)],
       };
 
       this.trackPerformance(context, input, result, startTime);
@@ -331,25 +304,12 @@ export class AtExpression
     }
   }
 
-  // Uses inherited normalizeCollection() from BaseExpressionImpl
-
   private normalizeIndex(index: number, length: number): number {
     // Handle negative indices
     if (index < 0) {
       return length + index;
     }
     return index;
-  }
-
-  private inferResultTypeLocal(value: unknown): EvaluationType {
-    if (value === undefined) return 'Undefined';
-    if (value === null) return 'Null';
-    if (isString(value)) return 'String';
-    if (isNumber(value)) return 'Number';
-    if (isBoolean(value)) return 'Boolean';
-    if (Array.isArray(value)) return 'Array';
-    if (value instanceof HTMLElement) return 'Element';
-    return 'Object';
   }
 }
 
@@ -405,7 +365,7 @@ export class RandomExpression
       const result: EvaluationResult<unknown> = {
         success: true,
         value,
-        type: evaluationToHyperScriptType[this.inferResultTypeLocal(value)],
+        type: evaluationToHyperScriptType[this.inferEvaluationType(value)],
       };
 
       this.trackPerformance(context, input, result, startTime);
@@ -450,8 +410,6 @@ export class RandomExpression
     }
   }
 
-  // Uses inherited normalizeCollection() from BaseExpressionImpl
-
   private getSecureRandomIndex(length: number): number {
     // Use crypto.getRandomValues if available for better randomness
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
@@ -462,17 +420,6 @@ export class RandomExpression
 
     // Fallback to Math.random
     return Math.floor(Math.random() * length);
-  }
-
-  private inferResultTypeLocal(value: unknown): EvaluationType {
-    if (value === undefined) return 'Undefined';
-    if (value === null) return 'Null';
-    if (isString(value)) return 'String';
-    if (isNumber(value)) return 'Number';
-    if (isBoolean(value)) return 'Boolean';
-    if (Array.isArray(value)) return 'Array';
-    if (value instanceof HTMLElement) return 'Element';
-    return 'Object';
   }
 }
 

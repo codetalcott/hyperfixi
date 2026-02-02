@@ -13,6 +13,7 @@ import type { ParserContext } from '../parser-types';
 import type { ASTNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
+import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
 import {
   createArrayLiteral,
   createObjectLiteral,
@@ -126,9 +127,7 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
       ctx.advance(); // consume 'from'
 
       // Optional 'the' before target
-      if (ctx.check(KEYWORDS.THE)) {
-        ctx.advance();
-      }
+      consumeOptionalKeyword(ctx, KEYWORDS.THE);
 
       // Parse the target expression
       eventTarget = ctx.parsePrimary();

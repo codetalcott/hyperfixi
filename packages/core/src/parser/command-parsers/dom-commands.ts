@@ -18,6 +18,7 @@ import {
   parseOneArgument,
   consumeKeywordToArgs,
   consumeOneOfKeywordsToArgs,
+  consumeOptionalKeyword,
 } from '../helpers/parsing-helpers';
 
 /**
@@ -267,9 +268,7 @@ export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNo
     // Fallback: Handle separate tokens for backwards compatibility
     // This handles cases where tokenizer produces individual tokens
     if (ctx.check(KEYWORDS.START) || ctx.check(KEYWORDS.THE)) {
-      if (ctx.check(KEYWORDS.THE)) {
-        ctx.advance(); // consume 'the'
-      }
+      consumeOptionalKeyword(ctx, KEYWORDS.THE);
       if (ctx.check(KEYWORDS.START)) {
         ctx.advance(); // consume 'start'
         if (ctx.check(KEYWORDS.OF)) {

@@ -14,6 +14,7 @@ import { matchesWithCache } from '../../performance/integration';
 import { validateArgCount, validateTwoArgs } from '../validation-helpers';
 import { isString, isObject } from '../type-helpers';
 import { trackEvaluation } from '../shared';
+import { compareValues } from '../shared/comparison-utils';
 
 // ============================================================================
 // Enhanced Expression Interface
@@ -207,7 +208,7 @@ export const lessThanExpression: ExpressionImplementation = {
   operators: ['<', 'is less than'],
 
   async evaluate(_context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    return (left as any) < (right as any);
+    return compareValues(left, right, '<');
   },
 
   validate(args: unknown[]): string | null {
@@ -224,7 +225,7 @@ export const lessThanOrEqualExpression: ExpressionImplementation = {
   operators: ['<=', 'is less than or equal to'],
 
   async evaluate(_context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    return (left as any) <= (right as any);
+    return compareValues(left, right, '<=');
   },
 
   validate(args: unknown[]): string | null {
@@ -241,7 +242,7 @@ export const greaterThanExpression: ExpressionImplementation = {
   operators: ['>', 'is greater than'],
 
   async evaluate(_context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    return (left as any) > (right as any);
+    return compareValues(left, right, '>');
   },
 
   validate(args: unknown[]): string | null {
@@ -258,7 +259,7 @@ export const greaterThanOrEqualExpression: ExpressionImplementation = {
   operators: ['>=', 'is greater than or equal to'],
 
   async evaluate(_context: ExecutionContext, left: unknown, right: unknown): Promise<boolean> {
-    return (left as any) >= (right as any);
+    return compareValues(left, right, '>=');
   },
 
   validate(args: unknown[]): string | null {

@@ -12,7 +12,7 @@
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, Token, ExpressionNode, CommandNode } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
-import { isKeyword, isCommandBoundary } from '../helpers/parsing-helpers';
+import { isKeyword, isCommandBoundary, consumeOptionalKeyword } from '../helpers/parsing-helpers';
 import { KEYWORDS } from '../parser-constants';
 // Phase 4: TokenType import removed - using predicate methods instead
 
@@ -274,8 +274,8 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
     if (ctx.check('as') && !modifiers['as']) {
       ctx.advance(); // consume 'as'
       // Skip optional articles: 'a' or 'an' (e.g., "as a Object", "as an Object")
-      if (!ctx.isAtEnd() && (ctx.check('a') || ctx.check('an'))) {
-        ctx.advance();
+      if (!ctx.isAtEnd()) {
+        consumeOptionalKeyword(ctx, 'a') || consumeOptionalKeyword(ctx, 'an');
       }
       modifiers['as'] = ctx.parsePrimary() as ExpressionNode;
       continue;
