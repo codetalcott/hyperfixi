@@ -45,7 +45,6 @@ describe('AttributeProcessor System Events', () => {
       `;
 
       let eventFired = false;
-      let processedCount = 0;
 
       const readyPromise = new Promise<void>(resolve => {
         document.addEventListener(
@@ -53,7 +52,6 @@ describe('AttributeProcessor System Events', () => {
           (event: Event) => {
             eventFired = true;
             const customEvent = event as CustomEvent;
-            processedCount = customEvent.detail.processedElements;
 
             // Verify event properties
             expect(customEvent.bubbles).toBe(true);
