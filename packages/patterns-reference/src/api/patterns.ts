@@ -5,7 +5,13 @@
  */
 
 import { getDatabase } from '../database/connection';
-import type { Pattern, SearchOptions, PatternStats, ConnectionOptions } from '../types';
+import type {
+  Pattern,
+  SearchOptions,
+  PatternStats,
+  ConnectionOptions,
+  EngineCompat,
+} from '../types';
 
 // =============================================================================
 // Database Row Types
@@ -17,6 +23,7 @@ interface CodeExampleRow {
   raw_code: string;
   description: string | null;
   feature: string | null;
+  engine: string | null;
   source_url: string | null;
   created_at: string;
 }
@@ -36,7 +43,7 @@ export async function getPatternById(
   const row = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, created_at
+    SELECT id, title, raw_code, description, feature, engine, created_at
     FROM code_examples
     WHERE id = ?
   `
@@ -57,7 +64,7 @@ export async function getPatternsByCategory(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, created_at
+    SELECT id, title, raw_code, description, feature, engine, created_at
     FROM code_examples
     WHERE feature = ?
     ORDER BY title
@@ -80,7 +87,7 @@ export async function getPatternsByCommand(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, created_at
+    SELECT id, title, raw_code, description, feature, engine, created_at
     FROM code_examples
     WHERE raw_code LIKE ?
     ORDER BY title
@@ -108,7 +115,7 @@ export async function searchPatterns(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, created_at
+    SELECT id, title, raw_code, description, feature, engine, created_at
     FROM code_examples
     WHERE title LIKE ? OR raw_code LIKE ? OR description LIKE ?
     ORDER BY title
@@ -133,7 +140,7 @@ export async function getAllPatterns(
   const rows = db
     .prepare(
       `
-    SELECT id, title, raw_code, description, feature, created_at
+    SELECT id, title, raw_code, description, feature, engine, created_at
     FROM code_examples
     ORDER BY title
     LIMIT ? OFFSET ?
@@ -232,6 +239,7 @@ function mapRowToPattern(row: CodeExampleRow): Pattern {
     primaryCommand: extractPrimaryCommand(row.raw_code),
     tags: extractTags(row.raw_code),
     difficulty: inferDifficulty(row.raw_code),
+    engine: (row.engine as EngineCompat) || null,
     createdAt: new Date(row.created_at),
   };
 }

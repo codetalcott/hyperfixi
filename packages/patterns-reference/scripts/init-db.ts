@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS code_examples (
   raw_code TEXT NOT NULL,
   description TEXT,
   feature TEXT,
+  engine TEXT DEFAULT NULL,
   source_url TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -181,6 +182,7 @@ CREATE INDEX IF NOT EXISTS idx_examples_feature ON code_examples(feature);
 CREATE INDEX IF NOT EXISTS idx_pattern_roles_role ON pattern_roles(role);
 CREATE INDEX IF NOT EXISTS idx_pattern_roles_example ON pattern_roles(code_example_id);
 CREATE INDEX IF NOT EXISTS idx_pattern_tests_example_lang ON pattern_tests(code_example_id, language);
+CREATE INDEX IF NOT EXISTS idx_examples_engine ON code_examples(engine);
 
 -- Language docs indexes
 CREATE INDEX IF NOT EXISTS idx_commands_name ON commands(name);
@@ -202,6 +204,7 @@ interface SeedExample {
   raw_code: string;
   description: string;
   feature: string;
+  engine?: string | null;
 }
 
 const SEED_EXAMPLES: SeedExample[] = [
@@ -1077,6 +1080,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click set my.textContent to "Done!"',
     description: 'Set text content using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
   {
     id: 'set-inner-html-possessive-dot',
@@ -1084,6 +1088,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click set my.innerHTML to "<strong>Updated!</strong>"',
     description: 'Set innerHTML using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
   {
     id: 'get-value-possessive-dot',
@@ -1091,6 +1096,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on input put my.value into #preview',
     description: 'Mirror input value using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
   {
     id: 'method-call-possessive-dot',
@@ -1098,6 +1104,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on input put my.value.toUpperCase() into #preview',
     description: 'Call method on property using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
   {
     id: 'chained-access-possessive-dot',
@@ -1105,6 +1112,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click set my.parentElement.style.display to "none"',
     description: 'Chained property access using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
   {
     id: 'optional-chaining-possessive',
@@ -1112,6 +1120,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click log my?.dataset?.customValue',
     description: 'Safe property access using optional chaining (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
   {
     id: 'get-attribute-possessive-dot',
@@ -1119,6 +1128,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click put my.getAttribute("data-id") into #output',
     description: 'Call getAttribute using possessive dot notation (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
   {
     id: 'its-value-possessive-dot',
@@ -1126,6 +1136,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     raw_code: 'on click fetch /api/data then put its.name into #result',
     description: 'Access result property using its.property syntax (HyperFixi extension)',
     feature: 'hyperfixi-extensions',
+    engine: 'lokascript',
   },
 ];
 
@@ -1318,12 +1329,12 @@ function initDatabase() {
     // Insert code examples
     console.log(`Inserting ${SEED_EXAMPLES.length} code examples...`);
     const insertExample = db.prepare(`
-      INSERT INTO code_examples (id, title, raw_code, description, feature)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO code_examples (id, title, raw_code, description, feature, engine)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     for (const ex of SEED_EXAMPLES) {
-      insertExample.run(ex.id, ex.title, ex.raw_code, ex.description, ex.feature);
+      insertExample.run(ex.id, ex.title, ex.raw_code, ex.description, ex.feature, ex.engine ?? null);
     }
 
     // Insert translations

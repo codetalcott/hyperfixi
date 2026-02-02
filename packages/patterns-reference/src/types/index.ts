@@ -7,6 +7,15 @@
 // =============================================================================
 
 /**
+ * Engine compatibility for a pattern.
+ * - 'hyperscript': only verified for official _hyperscript
+ * - 'lokascript': only verified for lokascript (not backward compatible)
+ * - 'both': verified for both engines
+ * - null: unverified
+ */
+export type EngineCompat = 'hyperscript' | 'lokascript' | 'both';
+
+/**
  * A pattern from the database (code_examples table).
  */
 export interface Pattern {
@@ -18,6 +27,7 @@ export interface Pattern {
   primaryCommand: string | null;
   tags: string[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  engine: EngineCompat | null;
   createdAt: Date;
 }
 
@@ -204,6 +214,7 @@ export interface SearchOptions {
   language?: string;
   category?: string;
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  engine?: EngineCompat | null;
   limit?: number;
   offset?: number;
 }

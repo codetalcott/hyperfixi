@@ -38,7 +38,10 @@
     "validate": "tsx scripts/validate-all.ts",
     "validate:fix": "tsx scripts/validate-all.ts --fix",
     "verify": "tsx scripts/verify-translations.ts",
-    "verify:verbose": "tsx scripts/verify-translations.ts --verbose"
+    "verify:verbose": "tsx scripts/verify-translations.ts --verbose",
+    "verify:engine": "tsx scripts/verify-engine-compat.ts",
+    "verify:engine:verbose": "tsx scripts/verify-engine-compat.ts --verbose",
+    "verify:engine:dry-run": "tsx scripts/verify-engine-compat.ts --dry-run --verbose"
   },
   "keywords": [
     "hyperscript",

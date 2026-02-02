@@ -948,10 +948,77 @@ function translatePossessive(token: string, sourceLocale: string, targetLocale: 
   }
 }
 
+// =============================================================================
+// Possessive Dot Notation
+// =============================================================================
+
+/**
+ * Regex to match possessive dot notation patterns.
+ * Matches: my.prop, its.prop, your.prop, me.prop, it.prop, you.prop
+ * Also matches optional chaining: my?.prop, me?.prop, etc.
+ */
+const POSSESSIVE_DOT_REGEX = /^(my|its|your|me|it|you)(\??\..+)$/i;
+
+/**
+ * Map pronoun forms to possessive adjective forms for dictionary lookup.
+ */
+const POSSESSIVE_DOT_PRONOUNS: Record<string, string> = {
+  me: 'my',
+  it: 'its',
+  you: 'your',
+  my: 'my',
+  its: 'its',
+  your: 'your',
+};
+
+/**
+ * Translate possessive dot notation like my.textContent → mi.textContent.
+ * Handles both possessive adjective forms (my, its, your) and pronoun forms (me, it, you).
+ * Also handles optional chaining (my?.prop).
+ * Returns null if the value doesn't match or no translation is available.
+ */
+function translatePossessiveDotNotation(
+  value: string,
+  sourceLocale: string,
+  targetLocale: string
+): string | null {
+  const match = value.match(POSSESSIVE_DOT_REGEX);
+  if (!match) return null;
+
+  const possessiveWord = match[1].toLowerCase();
+  const propertySuffix = match[2]; // ".textContent" or "?.textContent"
+
+  // Normalize to possessive adjective form for dictionary lookup
+  const possessiveKey = POSSESSIVE_DOT_PRONOUNS[possessiveWord] || possessiveWord;
+  const translated = translateWord(possessiveKey, sourceLocale, targetLocale);
+
+  // Skip if translation is multi-word (can't prefix dot notation)
+  if (translated.includes(' ')) return null;
+
+  if (translated !== possessiveKey) {
+    return translated + propertySuffix;
+  }
+
+  // Try original pronoun form if different from possessive key
+  if (possessiveWord !== possessiveKey) {
+    const alt = translateWord(possessiveWord, sourceLocale, targetLocale);
+    if (alt !== possessiveWord && !alt.includes(' ')) {
+      return alt + propertySuffix;
+    }
+  }
+
+  return null;
+}
+
+// =============================================================================
+// Multi-Word Value Translation
+// =============================================================================
+
 /**
  * Translate a multi-word value, translating each word individually.
  * Handles possessives like "my value" → "mi valor" in Spanish.
  * Also handles 's possessive syntax like "me's value" → "mi valor".
+ * Also handles possessive dot notation like "my.textContent" → "mi.textContent".
  */
 function translateMultiWordValue(
   value: string,
@@ -964,6 +1031,10 @@ function translateMultiWordValue(
     if (value.includes("'s")) {
       return translatePossessive(value, sourceLocale, targetLocale);
     }
+    // Check for possessive dot notation (my.prop, its.prop, me.prop, etc.)
+    const dotResult = translatePossessiveDotNotation(value, sourceLocale, targetLocale);
+    if (dotResult !== null) return dotResult;
+
     return translateWord(value, sourceLocale, targetLocale);
   }
 
@@ -1016,6 +1087,14 @@ function translateMultiWordValue(
     // Skip quoted strings
     if (/^["'].*["']$/.test(word)) {
       translated.push(word);
+      i++;
+      continue;
+    }
+
+    // Check for possessive dot notation (my.prop, its.prop, me.prop, etc.)
+    const dotResult = translatePossessiveDotNotation(word, sourceLocale, targetLocale);
+    if (dotResult !== null) {
+      translated.push(dotResult);
       i++;
       continue;
     }

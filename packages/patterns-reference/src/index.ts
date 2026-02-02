@@ -34,6 +34,7 @@ export type {
   Pattern,
   ClassifiedPattern,
   ComplexityLevel,
+  EngineCompat,
 
   // Translation types
   Translation,

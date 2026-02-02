@@ -1052,3 +1052,101 @@ describe('Has/Have Operator Translations', () => {
     }
   });
 });
+
+// =============================================================================
+// Possessive Dot Notation Translation Tests
+// =============================================================================
+
+describe('Possessive Dot Notation Translation', () => {
+  describe('my.property patterns across languages', () => {
+    it('should translate my.textContent to Spanish', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('set my.textContent to "Done!"');
+      expect(result).toContain('mi.textContent');
+      expect(result).not.toContain('my.textContent');
+    });
+
+    it('should translate my.textContent to Japanese', () => {
+      const transformer = new GrammarTransformer('en', 'ja');
+      const result = transformer.transform('set my.textContent to "Done!"');
+      expect(result).toContain('私の.textContent');
+    });
+
+    it('should translate my.textContent to German', () => {
+      const transformer = new GrammarTransformer('en', 'de');
+      const result = transformer.transform('set my.textContent to "Done!"');
+      expect(result).toContain('mein.textContent');
+    });
+
+    it('should translate my.textContent to Korean', () => {
+      const transformer = new GrammarTransformer('en', 'ko');
+      const result = transformer.transform('set my.textContent to "Done!"');
+      expect(result).toContain('내.textContent');
+    });
+
+    it('should translate my.textContent to Chinese', () => {
+      const transformer = new GrammarTransformer('en', 'zh');
+      const result = transformer.transform('set my.textContent to "Done!"');
+      expect(result).toContain('我的.textContent');
+    });
+
+    it('should translate my.textContent to Turkish', () => {
+      const transformer = new GrammarTransformer('en', 'tr');
+      const result = transformer.transform('set my.textContent to "Done!"');
+      expect(result).toContain('benim.textContent');
+    });
+
+    it('should translate my.textContent to Arabic', () => {
+      const transformer = new GrammarTransformer('en', 'ar');
+      const result = transformer.transform('set my.textContent to "Done!"');
+      expect(result).toContain('لي.textContent');
+    });
+  });
+
+  describe('its.property and your.property patterns', () => {
+    it('should translate its.value to Spanish', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('get its.value');
+      expect(result).toContain('su.value');
+    });
+
+    it('should translate your.name to Spanish', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('log your.name');
+      expect(result).toContain('tu.name');
+    });
+  });
+
+  describe('pronoun dot notation (me., it., you.)', () => {
+    it('should translate me.textContent to Spanish', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('set me.textContent to "Done!"');
+      expect(result).toContain('mi.textContent');
+    });
+  });
+
+  describe('optional chaining (?.)', () => {
+    it('should translate my?.textContent to Spanish', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('log my?.textContent');
+      expect(result).toContain('mi?.textContent');
+    });
+  });
+
+  describe('chained access', () => {
+    it('should only translate the possessive prefix in my.value.toUpperCase()', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('put my.value.toUpperCase() into #output');
+      expect(result).toContain('mi.value.toUpperCase()');
+    });
+  });
+
+  describe('backward compatibility', () => {
+    it('should still translate space-separated possessives', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('set my textContent to "Done!"');
+      expect(result).toContain('mi');
+      expect(result).not.toMatch(/\bmy\b/);
+    });
+  });
+});

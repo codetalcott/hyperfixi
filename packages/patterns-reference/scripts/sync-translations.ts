@@ -71,6 +71,32 @@ const KEYWORD_TRANSLATIONS: Record<string, Record<string, string>> = Object.from
       }
     }
 
+    // Extract possessive adjective translations (my, its, your)
+    // Needed for dot notation patterns like my.textContent → mi.textContent
+    const englishPossessives: Record<string, string> = {
+      me: 'my', it: 'its', you: 'your',
+    };
+
+    // specialForms maps ref → target possessive adj (e.g., Spanish: { me: 'mi' })
+    if ((profile as any).possessive?.specialForms) {
+      for (const [ref, targetPossessive] of Object.entries((profile as any).possessive.specialForms)) {
+        const enPoss = englishPossessives[ref];
+        if (enPoss && typeof targetPossessive === 'string' && !targetPossessive.includes(' ')) {
+          keywords[enPoss] = targetPossessive;
+        }
+      }
+    }
+
+    // For languages with only keywords (reversed map), e.g., Japanese: { 私の: 'me' }
+    if ((profile as any).possessive?.keywords && !(profile as any).possessive?.specialForms) {
+      for (const [targetWord, ref] of Object.entries((profile as any).possessive.keywords)) {
+        const enPoss = englishPossessives[ref as string];
+        if (enPoss && !targetWord.includes(' ')) {
+          keywords[enPoss] = targetWord;
+        }
+      }
+    }
+
     return [code, keywords];
   })
 );
