@@ -103,6 +103,20 @@ export type { ParseError } from './types';
 // Multi-word patterns are now imported from parsing-helpers.ts (Phase 9-2 Day 6)
 
 /**
+ * Parse a time expression string (e.g., "200ms", "1s", "2h") to milliseconds.
+ * The tokenizer already validates the format (TIME_UNITS: ms, s, seconds, minutes, hours, days).
+ */
+function parseTimeToMs(timeStr: string): number {
+  if (timeStr.endsWith('ms')) return parseInt(timeStr, 10);
+  if (timeStr.endsWith('seconds')) return parseFloat(timeStr) * 1000;
+  if (timeStr.endsWith('s')) return parseFloat(timeStr) * 1000;
+  if (timeStr.endsWith('minutes')) return parseFloat(timeStr) * 60000;
+  if (timeStr.endsWith('hours')) return parseFloat(timeStr) * 3600000;
+  if (timeStr.endsWith('days')) return parseFloat(timeStr) * 86400000;
+  return parseInt(timeStr, 10);
+}
+
+/**
  * Hyperscript Parser
  *
  * ## Lenient Parsing Behavior
@@ -1434,8 +1448,23 @@ export class Parser {
       return this.parseDollarExpression();
     }
 
+    // Handle standalone attribute reference syntax (@attribute)
+    if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
+      const attrToken = this.advance();
+      const attributeName = attrToken.value.substring(1); // Remove '@' prefix
+      return {
+        type: 'attributeAccess',
+        attributeName,
+        start: attrToken.start,
+        end: attrToken.end,
+        line: attrToken.line,
+        column: attrToken.column,
+      } as ASTNode;
+    }
+
     const token = this.peek();
     this.addError(`Unexpected token: ${token.value} at line ${token.line}, column ${token.column}`);
+    this.advance(); // Always advance past unparseable tokens to prevent infinite loops
     return this.createErrorNode();
   }
 
@@ -1850,6 +1879,12 @@ export class Parser {
       eventToken = this.advance();
     } else if (this.checkIdentifier()) {
       eventToken = this.advance();
+    } else if (this.checkIsCommand()) {
+      // Command names can be valid event names (e.g., "toggle" for <details> element)
+      eventToken = this.advance();
+    } else if (this.checkIdentifierLike()) {
+      // Catch-all: any identifier-like token (keywords, context vars, etc.)
+      eventToken = this.advance();
     } else {
       // Phase 8: Use predicate-based consume
       eventToken = this.consumeEvent(errorMessage);
@@ -1965,6 +2000,36 @@ export class Parser {
       } else {
         // Unknown modifier - log warning and continue
         debug.parse(`🔧 parseEventHandler: Warning - unknown modifier '.${modName}'`);
+      }
+    }
+
+    // Handle original _hyperscript keyword syntax: "debounced at Nms" / "throttled at Nms"
+    if (this.check('debounced') || this.check('throttled')) {
+      const modToken = this.advance();
+      const modName = modToken.value.toLowerCase();
+      const modifierKey: 'debounce' | 'throttle' =
+        modName === 'debounced' ? 'debounce' : 'throttle';
+
+      if (this.match('at')) {
+        if (this.checkTimeExpression()) {
+          const timeToken = this.advance();
+          const delayMs = parseTimeToMs(timeToken.value);
+          modifiers[modifierKey] = delayMs;
+          debug.parse(
+            `🔧 parseEventHandler: Parsed '${modName} at ${timeToken.value}' (${delayMs}ms)`
+          );
+        } else if (this.matchNumber()) {
+          // Bare number: "debounced at 200"
+          const delayMs = parseInt(this.previous().value, 10);
+          modifiers[modifierKey] = delayMs;
+          debug.parse(`🔧 parseEventHandler: Parsed '${modName} at ${delayMs}'`);
+        } else {
+          this.addError(
+            `Expected time expression after '${modName} at', got: ${this.peek().value}`
+          );
+        }
+      } else {
+        this.addError(`Expected 'at' after '${modName}'`);
       }
     }
 
@@ -3294,6 +3359,24 @@ export class Parser {
         false
       );
     } else {
+      // Check for attribute access syntax: my @attr, its @attr, your @attr
+      if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
+        const attrToken = this.advance();
+        const attributeName = attrToken.value.substring(1); // Remove '@' prefix
+        return this.createMemberExpression(
+          this.createIdentifier(contextVar),
+          {
+            type: 'attributeAccess',
+            attributeName,
+            start: attrToken.start,
+            end: attrToken.end,
+            line: attrToken.line,
+            column: attrToken.column,
+          } as ASTNode,
+          false
+        );
+      }
+
       // Standard JavaScript property access: my className, its value, your name
       // Phase 8: Use predicate-based consume
       const contextLabels = { me: 'my', it: 'its', you: 'your' };

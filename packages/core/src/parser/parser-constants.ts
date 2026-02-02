@@ -457,6 +457,7 @@ export const DOM_EVENTS = new Set([
   'cut',
   'copy',
   'paste',
+  'toggle',
 ]);
 
 /**
