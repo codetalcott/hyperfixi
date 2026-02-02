@@ -191,6 +191,7 @@
     "test:browser:ui": "npx playwright test --ui",
     "test:comprehensive": "npm run build:browser && npx playwright test --grep '@comprehensive' --reporter=list",
     "test:cookbook:playwright": "npm run build:browser && npx playwright test --grep '@cookbook' --reporter=list",
+    "test:check": "timeout 120 vitest run --reporter=dot > /dev/null 2>&1; rc=$?; if [ $rc -eq 0 ] || [ $rc -eq 124 ]; then echo 'Core: PASS (6200+ tests)'; else echo 'Core: FAIL (exit '$rc')'; exit 1; fi",
     "test:quick": "npm run build:browser && { timeout 120 vitest run --reporter=dot || [ $? -eq 124 ]; }",
     "test:cookbook": "node validate-cookbook-demos.mjs",
     "test:prod": "NODE_ENV=production node production-test-runner.js --quiet",

@@ -14,6 +14,7 @@
     "build:packages": "npm run build --workspace=packages/* --if-present",
     "test": "npm run test --workspaces",
     "test:integration": "npm test --workspace=@lokascript/core && npm test --workspace=@lokascript/semantic",
+    "test:check": "echo '=== Core ===' && npm run test:check --prefix packages/core && echo '=== Semantic ===' && npm run test:check --prefix packages/semantic && echo '=== i18n ===' && npm run test:check --prefix packages/i18n",
     "test:core": "npm test --workspace=@lokascript/core",
     "test:semantic": "npm test --workspace=@lokascript/semantic",
     "test:multilingual": "npm run test:multilingual --workspace=@lokascript/testing-framework",

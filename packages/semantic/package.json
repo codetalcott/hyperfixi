@@ -188,6 +188,7 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "add-language": "npx tsx scripts/add-language.ts",

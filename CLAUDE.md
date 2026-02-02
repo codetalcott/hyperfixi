@@ -117,6 +117,23 @@ npm run clean:test
 VITEST_HTML=1 npm test --prefix packages/core
 ```
 
+### Quick Test Validation (Compact Output)
+
+For agent/CI contexts where verbose output is too large, use `test:check` for summary-only output (~5 lines per package):
+
+```bash
+# All packages — summary only
+npm run test:check
+
+# Per-package compact output
+npm run test:check --prefix packages/core
+npm run test:check --prefix packages/semantic
+npm run test:check --prefix packages/i18n
+```
+
+> **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
+> Use `npm test` for full verbose output during debugging.
+
 ### Live Testing
 
 ```bash
