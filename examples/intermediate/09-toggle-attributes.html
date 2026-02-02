@@ -153,12 +153,12 @@
                 <button id="target-btn" class="demo-target">
                     Target Button
                 </button>
-                <button _="on click toggle @disabled on #target-btn">
+                <button id="toggle-disabled-btn" _="on click toggle @disabled on #target-btn">
                     Toggle Disabled
                 </button>
             </div>
             <div class="status">
-                Status: <span id="disabled-status" _="on click from #target-btn put (#target-btn's @disabled) ? 'disabled' : 'enabled' into me">enabled</span>
+                Status: <span id="disabled-status" _="on click from #toggle-disabled-btn wait 10ms then put (#target-btn's @disabled) ? 'disabled' : 'enabled' into me">enabled</span>
             </div>
 
             <div class="code">
@@ -181,13 +181,13 @@
                     class="demo-target"
                     placeholder="Enter email..."
                 />
-                <button _="on click toggle @required on #email-input">
+                <button id="toggle-required-btn" _="on click toggle @required on #email-input">
                     Toggle Required
                 </button>
             </div>
             <div class="status">
                 Required: <span id="required-status" _="on load put 'no' into me
-                    on click from previous <button/> wait 10ms then put (#email-input's @required) ? 'yes' : 'no' into me">no</span>
+                    on click from #toggle-required-btn wait 10ms then put (#email-input's @required) ? 'yes' : 'no' into me">no</span>
             </div>
 
             <div class="code">

@@ -88,13 +88,47 @@ export function accessStyleProperty(element: Element, styleProp: string): string
 // ============================================================================
 
 /**
+ * Boolean HTML attributes that should return true/false instead of string/null
+ * https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
+ */
+const BOOLEAN_ATTRIBUTES = new Set([
+  'disabled',
+  'readonly',
+  'required',
+  'checked',
+  'selected',
+  'hidden',
+  'open',
+  'autofocus',
+  'autoplay',
+  'controls',
+  'loop',
+  'muted',
+  'multiple',
+  'reversed',
+  'defer',
+  'async',
+  'novalidate',
+  'formnovalidate',
+  'ismap',
+]);
+
+/**
  * Access attribute from element
+ *
+ * For boolean attributes (disabled, required, checked, etc.), returns true/false
+ * based on presence. For all other attributes, returns the string value or null.
  *
  * @param element - DOM element to read attribute from
  * @param attrName - Attribute name
- * @returns Attribute value or null
+ * @returns Boolean for boolean attributes, string or null for others
  */
-export function accessAttribute(element: Element, attrName: string): string | null {
+export function accessAttribute(element: Element, attrName: string): boolean | string | null {
+  // For boolean attributes, return true if present, false if absent
+  if (BOOLEAN_ATTRIBUTES.has(attrName.toLowerCase())) {
+    return element.hasAttribute(attrName);
+  }
+  // For regular attributes, return the string value or null
   return element.getAttribute(attrName);
 }
 
