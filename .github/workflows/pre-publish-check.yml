@@ -13,7 +13,7 @@ jobs:
   pre-publish-check:
     name: Validate Publication Readiness
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -268,6 +268,152 @@ jobs:
               echo "| $pkg | $NAME | $VERSION | $MAIN | $TYPES | $LICENSE | $PUB_CONFIG |" >> $GITHUB_STEP_SUMMARY
             fi
           done
+
+      - name: Build browser bundles
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Browser Bundle Build" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d "packages/core" ]; then
+            echo "Building all browser bundles..."
+            if npm run build:browser --prefix packages/core 2>&1 | tee /tmp/bundle-build.log; then
+              echo "✅ All browser bundles built successfully" >> $GITHUB_STEP_SUMMARY
+
+              # List built bundles with sizes
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### Bundle Sizes" >> $GITHUB_STEP_SUMMARY
+              echo "| Bundle | Size | Gzipped |" >> $GITHUB_STEP_SUMMARY
+              echo "|--------|------|---------|" >> $GITHUB_STEP_SUMMARY
+
+              for file in packages/core/dist/lokascript-*.js packages/core/dist/hyperfixi-*.js; do
+                if [[ -f "$file" && ! "$file" == *.map ]]; then
+                  filename=$(basename "$file")
+                  size=$(wc -c < "$file" | tr -d ' ')
+                  gzip_size=$(gzip -c "$file" | wc -c | tr -d ' ')
+                  size_kb=$((size / 1024))
+                  gzip_kb=$((gzip_size / 1024))
+                  echo "| $filename | ${size_kb} KB | ${gzip_kb} KB |" >> $GITHUB_STEP_SUMMARY
+                fi
+              done
+            else
+              echo "❌ Bundle build failed" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          fi
+
+      - name: Bundle size limit checks
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Bundle Size Limit Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Size limits (gzipped bytes)
+          MAX_LITE=4000           # 4 KB
+          MAX_HYBRID=15000        # 15 KB
+          MAX_BROWSER=230000      # 230 KB
+
+          failed=0
+
+          # Check lite bundle
+          if [[ -f "packages/core/dist/lokascript-lite.js" ]]; then
+            size=$(gzip -c packages/core/dist/lokascript-lite.js | wc -c | tr -d ' ')
+            if [[ "$size" -gt "$MAX_LITE" ]]; then
+              echo "❌ lokascript-lite.js (${size} bytes gzip) exceeds limit (${MAX_LITE} bytes)" >> $GITHUB_STEP_SUMMARY
+              failed=1
+            else
+              echo "✅ lokascript-lite.js (${size} bytes gzip) within limit (${MAX_LITE} bytes)" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+          # Check hybrid bundles
+          for bundle in packages/core/dist/lokascript-hybrid-*.js; do
+            if [[ -f "$bundle" ]]; then
+              size=$(gzip -c "$bundle" | wc -c | tr -d ' ')
+              filename=$(basename "$bundle")
+              if [[ "$size" -gt "$MAX_HYBRID" ]]; then
+                echo "❌ $filename (${size} bytes gzip) exceeds limit (${MAX_HYBRID} bytes)" >> $GITHUB_STEP_SUMMARY
+                failed=1
+              else
+                echo "✅ $filename (${size} bytes gzip) within limit (${MAX_HYBRID} bytes)" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+          # Check full browser bundle
+          if [[ -f "packages/core/dist/lokascript-browser.js" ]]; then
+            size=$(gzip -c packages/core/dist/lokascript-browser.js | wc -c | tr -d ' ')
+            if [[ "$size" -gt "$MAX_BROWSER" ]]; then
+              echo "❌ lokascript-browser.js (${size} bytes gzip) exceeds limit (${MAX_BROWSER} bytes)" >> $GITHUB_STEP_SUMMARY
+              failed=1
+            else
+              echo "✅ lokascript-browser.js (${size} bytes gzip) within limit (${MAX_BROWSER} bytes)" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+          if [[ $failed -eq 1 ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Bundle size limit violations detected. Review bundle sizes before publishing.**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Start HTTP server
+        run: |
+          cd packages/core
+          npx http-server ../.. -p 3000 -c-1 &
+          echo $! > /tmp/http-server.pid
+          sleep 3
+          echo "HTTP server started on port 3000"
+
+      - name: Bundle Compatibility Matrix
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Bundle Compatibility Matrix" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          cd packages/core
+
+          if npx playwright test src/compatibility/browser-tests/bundle-compatibility.spec.ts --reporter=list 2>&1 | tee /tmp/bundle-compat.log; then
+            echo "✅ All bundle compatibility tests passed" >> $GITHUB_STEP_SUMMARY
+
+            # Extract and display the ASCII matrix from test output
+            if grep -A 30 "HYPERFIXI BUNDLE COMPATIBILITY MATRIX" /tmp/bundle-compat.log > /tmp/matrix.txt; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "<details><summary>Bundle Feature Matrix</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              cat /tmp/matrix.txt >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ Bundle compatibility tests failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<details><summary>Test Failures</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            tail -100 /tmp/bundle-compat.log >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Stop HTTP server
+        if: always()
+        run: |
+          if [ -f /tmp/http-server.pid ]; then
+            kill $(cat /tmp/http-server.pid) || true
+          fi
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bundle-compatibility-report
+          path: packages/core/playwright-report/
+          retention-days: 7
 
       - name: Final verdict
         run: |
