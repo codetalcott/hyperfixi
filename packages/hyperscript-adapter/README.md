@@ -109,14 +109,31 @@ English (`en`) and unresolved languages pass through without translation.
 
 ## Options
 
-| Option                | Type                             | Default       | Description                                                   |
-| --------------------- | -------------------------------- | ------------- | ------------------------------------------------------------- |
-| `defaultLanguage`     | `string`                         | —             | Default language for all elements                             |
-| `languageAttribute`   | `string`                         | `"data-lang"` | Custom attribute name for per-element language                |
-| `confidenceThreshold` | `number`                         | `0.5`         | Minimum confidence for semantic parsing (0–1)                 |
-| `strategy`            | `'semantic' \| 'i18n' \| 'auto'` | `'semantic'`  | Translation strategy                                          |
-| `debug`               | `boolean`                        | `false`       | Log translations to console                                   |
-| `i18nToEnglish`       | `function`                       | —             | Optional `@lokascript/i18n` `toEnglish` function for fallback |
+| Option                | Type                               | Default       | Description                                                   |
+| --------------------- | ---------------------------------- | ------------- | ------------------------------------------------------------- |
+| `defaultLanguage`     | `string`                           | —             | Default language for all elements                             |
+| `languageAttribute`   | `string`                           | `"data-lang"` | Custom attribute name for per-element language                |
+| `confidenceThreshold` | `number \| Record<string, number>` | `0.5`         | Min confidence (0–1). Per-language map supported (see below). |
+| `strategy`            | `'semantic' \| 'i18n' \| 'auto'`   | `'semantic'`  | Translation strategy                                          |
+| `debug`               | `boolean`                          | `false`       | Log translations to console                                   |
+| `i18nToEnglish`       | `function`                         | —             | Optional `@lokascript/i18n` `toEnglish` function for fallback |
+
+### Per-language confidence thresholds
+
+SOV languages (ja, ko, tr) produce inherently lower confidence scores than SVO languages (es, fr, de). Use a per-language map to tune thresholds:
+
+```javascript
+_hyperscript.use(
+  hyperscriptI18n({
+    confidenceThreshold: {
+      es: 0.7, // SVO — tighter gating
+      ja: 0.1, // SOV — more permissive
+      ko: 0.05,
+      '*': 0.5, // default for unlisted languages
+    },
+  })
+);
+```
 
 ## How It Works
 

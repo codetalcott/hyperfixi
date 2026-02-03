@@ -12,6 +12,7 @@
 import type {
   SemanticNode,
   SemanticValue,
+  SemanticRole,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
 } from '@lokascript/semantic/core';
@@ -145,6 +146,7 @@ const SYNTAX: Record<string, readonly [string, string][]> = {
   continue: [],
   if: [['condition', '']],
   unless: [['condition', '']],
+  else: [],
   repeat: [
     ['quantity', ''],
     ['condition', 'until'],
@@ -154,6 +156,13 @@ const SYNTAX: Record<string, readonly [string, string][]> = {
     ['source', 'in'],
   ],
   while: [['condition', '']],
+
+  // Structural / advanced
+  tell: [['patient', '']],
+  async: [],
+  js: [],
+  init: [],
+  behavior: [['patient', '']],
 };
 
 // ---------------------------------------------------------------------------
@@ -214,7 +223,7 @@ function renderCommand(node: SemanticNode): string {
   if (syntax) {
     const parts: string[] = [node.action];
     for (const [role, prep] of syntax) {
-      const value = node.roles.get(role);
+      const value = node.roles.get(role as SemanticRole);
       if (!value) continue;
       // Skip implicit "me" destination (default in _hyperscript)
       if (role === 'destination' && value.type === 'reference' && value.value === 'me') continue;

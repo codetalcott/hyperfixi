@@ -10,12 +10,26 @@ import {
   render,
   createSemanticAnalyzer,
   shouldUseSemanticResult,
+  tryGetProfile,
   type SemanticAnalyzer,
 } from '@lokascript/semantic';
 
 export interface PreprocessorConfig {
-  /** Minimum confidence threshold for semantic parsing (0-1). Default: 0.5 */
-  confidenceThreshold: number;
+  /**
+   * Minimum confidence threshold for semantic parsing (0-1). Default: 0.5.
+   * Can be a single number (applies to all languages) or a per-language map.
+   * Per-language thresholds are useful because SOV languages (ja, ko, tr) produce
+   * inherently lower confidence scores than SVO languages (es, fr, de).
+   *
+   * @example
+   * // Single threshold
+   * { confidenceThreshold: 0.5 }
+   *
+   * @example
+   * // Per-language thresholds
+   * { confidenceThreshold: { es: 0.7, ja: 0.1, ko: 0.05, '*': 0.5 } }
+   */
+  confidenceThreshold: number | Record<string, number>;
   /** Strategy: 'semantic' (default), 'i18n', or 'auto' (semantic then i18n) */
   strategy: 'semantic' | 'i18n' | 'auto';
   /** Whether to return original text on failure. Default: true */
@@ -24,11 +38,22 @@ export interface PreprocessorConfig {
   i18nToEnglish?: (input: string, locale: string) => string;
 }
 
+const DEFAULT_THRESHOLD = 0.5;
+
 const DEFAULT_CONFIG: PreprocessorConfig = {
-  confidenceThreshold: 0.5,
+  confidenceThreshold: DEFAULT_THRESHOLD,
   strategy: 'semantic',
   fallbackToOriginal: true,
 };
+
+/**
+ * Resolve the confidence threshold for a specific language.
+ * Supports both a single number and a per-language map with '*' as default.
+ */
+function resolveThreshold(threshold: number | Record<string, number>, lang: string): number {
+  if (typeof threshold === 'number') return threshold;
+  return threshold[lang] ?? threshold['*'] ?? DEFAULT_THRESHOLD;
+}
 
 let analyzer: SemanticAnalyzer | null = null;
 
@@ -54,7 +79,8 @@ export function preprocessToEnglish(
 
   // Strategy: semantic-only
   if (cfg.strategy === 'semantic' || cfg.strategy === 'auto') {
-    const result = trySemanticTranslation(src, lang, cfg.confidenceThreshold);
+    const threshold = resolveThreshold(cfg.confidenceThreshold, lang);
+    const result = trySemanticTranslation(src, lang, threshold);
     if (result !== null) return result;
   }
 
@@ -75,7 +101,7 @@ export function preprocessToEnglish(
 function trySemanticTranslation(src: string, lang: string, threshold: number): string | null {
   try {
     // Handle compound statements (split on "then" boundaries and newlines)
-    const statements = splitStatements(src);
+    const statements = splitStatements(src, lang);
     if (statements.length > 1) {
       return translateCompound(statements, lang, threshold);
     }
@@ -117,10 +143,34 @@ function tryI18nTranslation(
 }
 
 /**
- * Split a hyperscript source string into individual statements.
- * Splits on " then " boundaries and newlines.
+ * Get all "then" keyword forms for a language (primary + alternatives).
+ * Falls back to English "then" if profile is unavailable.
  */
-function splitStatements(src: string): string[] {
+function getThenKeywords(lang: string): string[] {
+  const keywords = ['then']; // Always include English
+  const profile = tryGetProfile(lang);
+  if (profile?.keywords?.then) {
+    const kw = profile.keywords.then;
+    if (kw.primary && kw.primary !== 'then') keywords.push(kw.primary);
+    if (kw.alternatives) {
+      for (const alt of kw.alternatives) {
+        if (!keywords.includes(alt)) keywords.push(alt);
+      }
+    }
+  }
+  return keywords;
+}
+
+/**
+ * Split a hyperscript source string into individual statements.
+ * Splits on language-specific "then" keywords and newlines.
+ */
+function splitStatements(src: string, lang: string): string[] {
+  const thenWords = getThenKeywords(lang);
+  // Escape regex special chars and build pattern
+  const escaped = thenWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`\\s+(?:${escaped.join('|')})\\s+`, 'i');
+
   // Split on newlines first
   const lines = src
     .split('\n')
@@ -128,8 +178,7 @@ function splitStatements(src: string): string[] {
     .filter(l => l.length > 0);
   const result: string[] = [];
   for (const line of lines) {
-    // Split each line on " then " (preserving it as a separator)
-    const parts = line.split(/\s+then\s+/i);
+    const parts = line.split(pattern);
     result.push(...parts);
   }
   return result;

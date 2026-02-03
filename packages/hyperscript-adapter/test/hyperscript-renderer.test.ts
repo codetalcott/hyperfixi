@@ -310,6 +310,60 @@ describe('renderToHyperscript', () => {
   });
 
   // -------------------------------------------------------------------------
+  // Newly added commands
+  // -------------------------------------------------------------------------
+
+  describe('newly added commands', () => {
+    it('renders tell with patient', () => {
+      expect(renderToHyperscript(cmd('tell', [['patient', sel('#dialog')]]))).toBe('tell #dialog');
+    });
+
+    it('renders else with no roles', () => {
+      expect(renderToHyperscript(cmd('else', []))).toBe('else');
+    });
+
+    it('renders async with no roles', () => {
+      expect(renderToHyperscript(cmd('async', []))).toBe('async');
+    });
+
+    it('renders behavior with patient', () => {
+      expect(renderToHyperscript(cmd('behavior', [['patient', expr('Draggable')]]))).toBe(
+        'behavior Draggable',
+      );
+    });
+
+    it('renders init with no roles', () => {
+      expect(renderToHyperscript(cmd('init', []))).toBe('init');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // SYNTAX table coverage validation
+  // -------------------------------------------------------------------------
+
+  describe('SYNTAX table coverage', () => {
+    // Commands that must have SYNTAX entries (from semantic command-schemas).
+    // 'on' is handled by renderEventHandler, 'compound' is handled by renderCompound.
+    const expectedCommands = [
+      'toggle', 'add', 'remove', 'put', 'set', 'show', 'hide',
+      'trigger', 'wait', 'fetch', 'increment', 'decrement',
+      'append', 'prepend', 'log', 'get', 'take', 'make', 'halt',
+      'settle', 'throw', 'send', 'if', 'unless', 'else', 'repeat',
+      'for', 'while', 'continue', 'go', 'transition', 'clone',
+      'focus', 'blur', 'call', 'return', 'js', 'async', 'tell',
+      'default', 'init', 'behavior', 'install', 'measure', 'swap', 'morph',
+    ];
+
+    for (const action of expectedCommands) {
+      it(`has SYNTAX entry for '${action}'`, () => {
+        // Rendering a command with no roles should produce the action name
+        const result = renderToHyperscript(cmd(action, []));
+        expect(result).toBe(action);
+      });
+    }
+  });
+
+  // -------------------------------------------------------------------------
   // Fallback for unknown commands
   // -------------------------------------------------------------------------
 

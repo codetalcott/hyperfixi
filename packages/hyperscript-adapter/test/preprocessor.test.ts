@@ -78,6 +78,28 @@ describe('preprocessToEnglish', () => {
     });
   });
 
+  describe('compound statements', () => {
+    it('splits and translates English then chains', () => {
+      const result = preprocessToEnglish('alternar .active then agregar .loaded', 'es');
+      // Both parts should be translated, rejoined with " then "
+      expect(result).toContain('toggle .active');
+      expect(result).toContain('then');
+    });
+
+    it('splits on localized then keyword (Spanish: entonces)', () => {
+      const result = preprocessToEnglish('alternar .active entonces poner "ok" en #msg', 'es');
+      // Should split on "entonces" and translate each part
+      expect(result).toContain('toggle .active');
+      expect(result).toContain('then');
+      expect(result).toContain('put');
+    });
+
+    it('handles newline-separated statements', () => {
+      const result = preprocessToEnglish('alternar .active\nagregar .loaded', 'es');
+      expect(result).toContain('toggle .active');
+    });
+  });
+
   describe('confidence fallback', () => {
     it('returns original when confidence threshold is very high and input is ambiguous', () => {
       // An intentionally garbled input that shouldn't match any pattern

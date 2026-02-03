@@ -115,7 +115,8 @@ export const validationTools: Tool[] = [
   },
   {
     name: 'get_bundle_config',
-    description: 'Get recommended vite-plugin configuration based on usage',
+    description:
+      'Get recommended bundle configuration based on usage. Supports both LokaScript and original _hyperscript (via the @lokascript/hyperscript-adapter plugin). Specify runtime="hyperscript" for original _hyperscript projects.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -137,6 +138,13 @@ export const validationTools: Tool[] = [
         positional: {
           type: 'boolean',
           description: 'Whether positional expressions are used (first, last, next, etc.)',
+        },
+        runtime: {
+          type: 'string',
+          enum: ['lokascript', 'hyperscript', 'auto'],
+          description:
+            'Target runtime: "lokascript" for LokaScript bundles, "hyperscript" for original _hyperscript with adapter plugin, "auto" to include both recommendations. Default: auto',
+          default: 'auto',
         },
       },
     },
@@ -271,7 +279,8 @@ export async function handleValidationTool(
         const blocks = (args.blocks as string[]) || [];
         const languages = (args.languages as string[]) || ['en'];
         const positional = (args.positional as boolean) || false;
-        return getBundleConfig(commands, blocks, languages, positional);
+        const runtime = (args.runtime as string) || 'auto';
+        return getBundleConfig(commands, blocks, languages, positional, runtime);
       }
 
       case 'parse_multilingual': {
@@ -899,13 +908,74 @@ function suggestCommand(
 // Bundle Configuration
 // =============================================================================
 
+// Adapter bundle metadata for original _hyperscript users
+const ADAPTER_BUNDLES: Record<string, { file: string; size: string; languages: string[] }> = {
+  es: { file: 'hyperscript-i18n-es.global.js', size: '94 KB', languages: ['es'] },
+  ja: { file: 'hyperscript-i18n-ja.global.js', size: '95 KB', languages: ['ja'] },
+  ko: { file: 'hyperscript-i18n-ko.global.js', size: '100 KB', languages: ['ko'] },
+  zh: { file: 'hyperscript-i18n-zh.global.js', size: '88 KB', languages: ['zh'] },
+  fr: { file: 'hyperscript-i18n-fr.global.js', size: '87 KB', languages: ['fr'] },
+  de: { file: 'hyperscript-i18n-de.global.js', size: '86 KB', languages: ['de'] },
+  pt: { file: 'hyperscript-i18n-pt.global.js', size: '86 KB', languages: ['pt'] },
+  ar: { file: 'hyperscript-i18n-ar.global.js', size: '95 KB', languages: ['ar'] },
+  tr: { file: 'hyperscript-i18n-tr.global.js', size: '101 KB', languages: ['tr'] },
+  id: { file: 'hyperscript-i18n-id.global.js', size: '85 KB', languages: ['id'] },
+  western: {
+    file: 'hyperscript-i18n-western.global.js',
+    size: '146 KB',
+    languages: ['es', 'pt', 'fr', 'de'],
+  },
+  'east-asian': {
+    file: 'hyperscript-i18n-east-asian.global.js',
+    size: '146 KB',
+    languages: ['ja', 'ko', 'zh'],
+  },
+};
+
+function getAdapterBundle(languages: string[]): {
+  bundle: string;
+  size: string;
+  note: string;
+} {
+  const nonEn = languages.filter(l => l !== 'en');
+  if (nonEn.length === 0) {
+    return { bundle: 'none', size: '0 KB', note: 'English only — no adapter needed' };
+  }
+
+  // Single language with a dedicated bundle
+  if (nonEn.length === 1 && ADAPTER_BUNDLES[nonEn[0]]) {
+    const b = ADAPTER_BUNDLES[nonEn[0]];
+    return { bundle: b.file, size: b.size, note: `Per-language bundle for ${nonEn[0]}` };
+  }
+
+  // Check regional bundles
+  if (nonEn.every(l => ['es', 'pt', 'fr', 'de'].includes(l))) {
+    const b = ADAPTER_BUNDLES['western'];
+    return { bundle: b.file, size: b.size, note: 'Western regional bundle (es, pt, fr, de)' };
+  }
+  if (nonEn.every(l => ['ja', 'ko', 'zh'].includes(l))) {
+    const b = ADAPTER_BUNDLES['east-asian'];
+    return { bundle: b.file, size: b.size, note: 'East Asian regional bundle (ja, ko, zh)' };
+  }
+
+  // Full bundle or lite + external semantic
+  return {
+    bundle: 'hyperscript-i18n.global.js',
+    size: '568 KB',
+    note: 'Full adapter bundle (all 24 languages). Consider lite adapter (~4 KB) + external semantic bundle for smaller total size.',
+  };
+}
+
 function getBundleConfig(
   commands: string[],
   blocks: string[],
   languages: string[],
-  positional: boolean
+  positional: boolean,
+  runtime: string = 'auto'
 ): { content: Array<{ type: string; text: string }> } {
-  // Determine recommended bundle
+  const needsMultilingual = languages.length > 1 || languages.some(l => l !== 'en');
+
+  // ---- LokaScript bundle recommendation ----
   let bundle = 'hyperfixi-lite.js'; // 1.9 KB
   let bundleSize = '1.9 KB';
 
@@ -914,7 +984,7 @@ function getBundleConfig(
     bundleSize = '6.7 KB';
   }
 
-  if (languages.length > 1 || languages.some(l => l !== 'en')) {
+  if (needsMultilingual) {
     bundle = 'hyperfixi-multilingual.js'; // 250 KB
     bundleSize = '250 KB';
   }
@@ -931,7 +1001,7 @@ function getBundleConfig(
     ],
   };
 
-  // Regional bundle suggestion
+  // Regional semantic bundle suggestion
   let regionalBundle = 'browser.global.js';
   if (languages.length === 1 && languages[0] === 'en') {
     regionalBundle = 'browser-en.global.js (20 KB)';
@@ -941,15 +1011,47 @@ function getBundleConfig(
     regionalBundle = 'browser-east-asian.global.js (24 KB)';
   }
 
-  return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify(
-          {
-            recommendedBundle: bundle,
-            estimatedSize: bundleSize,
-            viteConfig: `// vite.config.js
+  // ---- Adapter recommendation for original _hyperscript ----
+  const adapterRec = needsMultilingual ? getAdapterBundle(languages) : null;
+
+  // Build response based on runtime
+  if (runtime === 'hyperscript' && needsMultilingual) {
+    // User explicitly wants original _hyperscript advice
+    const adapter = getAdapterBundle(languages);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              runtime: 'hyperscript',
+              package: '@lokascript/hyperscript-adapter',
+              recommendedBundle: adapter.bundle,
+              estimatedSize: adapter.size,
+              note: adapter.note,
+              setup: `<script src="_hyperscript.js"></script>\n<script src="${adapter.bundle}"></script>\n<!-- Auto-registers on load. Use data-lang attribute per element. -->`,
+              programmaticSetup: `import { hyperscriptI18n } from '@lokascript/hyperscript-adapter';\n_hyperscript.use(hyperscriptI18n({ defaultLanguage: '${languages.find(l => l !== 'en') || languages[0]}' }));`,
+              availableBundles: Object.entries(ADAPTER_BUNDLES).map(([key, val]) => ({
+                key,
+                file: val.file,
+                size: val.size,
+                languages: val.languages,
+              })),
+              usage: { commands, blocks, languages, positional },
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  }
+
+  // Default: LokaScript recommendation with optional adapter alternative
+  const result: Record<string, unknown> = {
+    recommendedBundle: bundle,
+    estimatedSize: bundleSize,
+    viteConfig: `// vite.config.js
 import { hyperfixi } from '@lokascript/vite-plugin';
 
 export default {
@@ -957,17 +1059,31 @@ export default {
     ${viteConfig.plugins[0]}
   ]
 };`,
-            semanticBundle: regionalBundle,
-            usage: {
-              commands,
-              blocks,
-              languages,
-              positional,
-            },
-          },
-          null,
-          2
-        ),
+    semanticBundle: regionalBundle,
+    usage: {
+      commands,
+      blocks,
+      languages,
+      positional,
+    },
+  };
+
+  // Include adapter alternative when multilingual and runtime is 'auto'
+  if (adapterRec && runtime !== 'lokascript') {
+    result.adapterAlternative = {
+      note: 'If using original _hyperscript (not LokaScript), use the adapter plugin instead',
+      package: '@lokascript/hyperscript-adapter',
+      bundle: adapterRec.bundle,
+      size: adapterRec.size,
+      detail: adapterRec.note,
+    };
+  }
+
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(result, null, 2),
       },
     ],
   };

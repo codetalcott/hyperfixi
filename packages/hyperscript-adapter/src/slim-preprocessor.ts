@@ -15,17 +15,25 @@ import {
   createSemanticAnalyzer,
   shouldUseSemanticResult,
   parse,
+  tryGetProfile,
   type SemanticAnalyzer,
 } from '@lokascript/semantic/core';
 
 import { renderToHyperscript } from './hyperscript-renderer';
 import type { PreprocessorConfig } from './preprocessor';
 
+const DEFAULT_THRESHOLD = 0.5;
+
 const DEFAULT_CONFIG: PreprocessorConfig = {
-  confidenceThreshold: 0.5,
+  confidenceThreshold: DEFAULT_THRESHOLD,
   strategy: 'semantic',
   fallbackToOriginal: true,
 };
+
+function resolveThreshold(threshold: number | Record<string, number>, lang: string): number {
+  if (typeof threshold === 'number') return threshold;
+  return threshold[lang] ?? threshold['*'] ?? DEFAULT_THRESHOLD;
+}
 
 let analyzer: SemanticAnalyzer | null = null;
 
@@ -48,7 +56,8 @@ export function preprocessToEnglish(
   const cfg = { ...DEFAULT_CONFIG, ...config };
 
   if (cfg.strategy === 'semantic' || cfg.strategy === 'auto') {
-    const result = trySemanticTranslation(src, lang, cfg.confidenceThreshold);
+    const threshold = resolveThreshold(cfg.confidenceThreshold, lang);
+    const result = trySemanticTranslation(src, lang, threshold);
     if (result !== null) return result;
   }
 
@@ -62,7 +71,7 @@ export function preprocessToEnglish(
 
 function trySemanticTranslation(src: string, lang: string, threshold: number): string | null {
   try {
-    const statements = splitStatements(src);
+    const statements = splitStatements(src, lang);
     if (statements.length > 1) {
       return translateCompound(statements, lang, threshold);
     }
@@ -98,14 +107,38 @@ function tryI18nTranslation(
   }
 }
 
-function splitStatements(src: string): string[] {
+/**
+ * Get all "then" keyword forms for a language (primary + alternatives).
+ * Falls back to English "then" if profile is unavailable.
+ */
+function getThenKeywords(lang: string): string[] {
+  const keywords = ['then']; // Always include English
+  const profile = tryGetProfile(lang);
+  if (profile?.keywords?.then) {
+    const kw = profile.keywords.then;
+    if (kw.primary && kw.primary !== 'then') keywords.push(kw.primary);
+    if (kw.alternatives) {
+      for (const alt of kw.alternatives) {
+        if (!keywords.includes(alt)) keywords.push(alt);
+      }
+    }
+  }
+  return keywords;
+}
+
+function splitStatements(src: string, lang: string): string[] {
+  const thenWords = getThenKeywords(lang);
+  // Escape regex special chars and build pattern
+  const escaped = thenWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`\\s+(?:${escaped.join('|')})\\s+`, 'i');
+
   const lines = src
     .split('\n')
     .map(l => l.trim())
     .filter(l => l.length > 0);
   const result: string[] = [];
   for (const line of lines) {
-    const parts = line.split(/\s+then\s+/i);
+    const parts = line.split(pattern);
     result.push(...parts);
   }
   return result;

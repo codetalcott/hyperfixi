@@ -65,6 +65,22 @@ describe('slim-preprocessor (per-language bundle path)', () => {
     });
   });
 
+  describe('compound statements', () => {
+    it('splits on localized then keyword (Spanish: entonces)', () => {
+      const result = preprocessToEnglish('alternar .active entonces poner "ok" en #msg', 'es');
+      expect(result).toContain('toggle .active');
+      expect(result).toContain('then');
+      expect(result).toContain('put');
+    });
+
+    it('splits on English then even in non-English context', () => {
+      const result = preprocessToEnglish('alternar .active then mostrar #modal', 'es');
+      expect(result).toContain('toggle .active');
+      expect(result).toContain('then');
+      expect(result).toContain('show');
+    });
+  });
+
   describe('fallback behavior', () => {
     it('returns original for unsupported language', () => {
       const result = preprocessToEnglish('toggle .active', 'xx');

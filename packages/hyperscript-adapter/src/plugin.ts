@@ -65,8 +65,17 @@ export function hyperscriptI18n(options: PluginOptions = {}) {
       // Preprocess to English
       const english = preprocessToEnglish(src, lang, options);
 
-      if (options.debug && english !== src) {
-        console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
+      if (english !== src) {
+        if (options.debug) {
+          console.log(`[hyperscript-i18n] ${lang}: "${src}" → "${english}"`);
+        }
+      } else {
+        // Translation produced no change — likely a failure
+        console.warn(
+          `[hyperscript-i18n] Translation unchanged for lang="${lang}": "${src.length > 60 ? src.slice(0, 60) + '…' : src}". ` +
+            'The input may not match any known pattern, or the language may not be registered. ' +
+            'Original text will be passed to _hyperscript as-is.'
+        );
       }
 
       return english;

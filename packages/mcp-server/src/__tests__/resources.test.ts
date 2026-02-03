@@ -5,9 +5,9 @@ import { describe, it, expect } from 'vitest';
 import { listResources, readResource } from '../resources/index.js';
 
 describe('listResources', () => {
-  it('returns 5 resources', () => {
+  it('returns 8 resources', () => {
     const resources = listResources();
-    expect(resources).toHaveLength(5);
+    expect(resources).toHaveLength(8);
   });
 
   it('includes commands reference', () => {
@@ -187,6 +187,70 @@ describe('readResource - languages', () => {
     const data = JSON.parse(result.contents[0].text);
     const languages = data.supported || data;
     expect(languages.length).toBeGreaterThan(5);
+  });
+});
+
+describe('readResource - adapter guide', () => {
+  it('returns markdown content', () => {
+    const result = readResource('hyperscript://adapter');
+    expect(result.contents).toHaveLength(1);
+    expect(result.contents[0].mimeType).toBe('text/markdown');
+    expect(result.contents[0].text).toContain('hyperscript-adapter');
+  });
+
+  it('includes bundle selection guide', () => {
+    const result = readResource('hyperscript://adapter');
+    expect(result.contents[0].text).toContain('Bundle Selection');
+  });
+
+  it('includes setup examples', () => {
+    const result = readResource('hyperscript://adapter');
+    expect(result.contents[0].text).toContain('Quick Start');
+  });
+});
+
+describe('readResource - adapter compatibility', () => {
+  it('returns JSON content', () => {
+    const result = readResource('hyperscript://adapter/compatibility');
+    expect(result.contents[0].mimeType).toBe('application/json');
+    expect(() => JSON.parse(result.contents[0].text)).not.toThrow();
+  });
+
+  it('includes language tiers', () => {
+    const data = JSON.parse(readResource('hyperscript://adapter/compatibility').contents[0].text);
+    expect(data.tiers).toBeDefined();
+    expect(data.tiers['full-support']).toBeDefined();
+    expect(data.tiers['experimental']).toBeDefined();
+  });
+
+  it('includes Spanish as full-support', () => {
+    const data = JSON.parse(readResource('hyperscript://adapter/compatibility').contents[0].text);
+    expect(data.languages.es.tier).toBe('full-support');
+    expect(data.languages.es.hasDedicatedBundle).toBe(true);
+  });
+
+  it('includes Japanese as experimental', () => {
+    const data = JSON.parse(readResource('hyperscript://adapter/compatibility').contents[0].text);
+    expect(data.languages.ja.tier).toBe('experimental');
+  });
+});
+
+describe('readResource - setup guide', () => {
+  it('returns JSON content', () => {
+    const result = readResource('hyperscript://setup/guide');
+    expect(result.contents[0].mimeType).toBe('application/json');
+    expect(() => JSON.parse(result.contents[0].text)).not.toThrow();
+  });
+
+  it('includes decision steps', () => {
+    const data = JSON.parse(readResource('hyperscript://setup/guide').contents[0].text);
+    expect(data.steps).toBeDefined();
+    expect(data.steps.length).toBeGreaterThan(0);
+  });
+
+  it('first step asks about runtime', () => {
+    const data = JSON.parse(readResource('hyperscript://setup/guide').contents[0].text);
+    expect(data.steps[0].question).toContain('_hyperscript');
   });
 });
 
