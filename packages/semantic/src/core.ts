@@ -156,6 +156,12 @@ export { parse, canParse } from './parser';
 export { render, renderExplicit, translate, toExplicit, fromExplicit } from './explicit';
 
 // =============================================================================
+// Pattern Generation (for per-language bundles that need on-demand patterns)
+// =============================================================================
+
+export { generatePatternsForLanguage } from './generators/pattern-generator';
+
+// =============================================================================
 // Cache
 // =============================================================================
 

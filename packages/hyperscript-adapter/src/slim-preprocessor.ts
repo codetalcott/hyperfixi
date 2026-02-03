@@ -2,7 +2,10 @@
  * Slim Preprocessor
  *
  * Same logic as preprocessor.ts but imports from @lokascript/semantic/core
- * and deep source paths — does NOT trigger all-language registration.
+ * and uses a custom hyperscript renderer instead of the semantic package's
+ * render(). This avoids importing English language data (tokenizer, patterns,
+ * profile), saving ~35 KB per per-language bundle.
+ *
  * Used by per-language browser bundles for tree-shaking.
  */
 
@@ -11,11 +14,11 @@
 import {
   createSemanticAnalyzer,
   shouldUseSemanticResult,
-  translate,
-  render,
+  parse,
   type SemanticAnalyzer,
 } from '@lokascript/semantic/core';
 
+import { renderToHyperscript } from './hyperscript-renderer';
 import type { PreprocessorConfig } from './preprocessor';
 
 const DEFAULT_CONFIG: PreprocessorConfig = {
@@ -71,10 +74,12 @@ function trySemanticTranslation(src: string, lang: string, threshold: number): s
     if (!shouldUseSemanticResult(result, threshold)) return null;
 
     if (result.node) {
-      return render(result.node, 'en');
+      return renderToHyperscript(result.node);
     }
 
-    return translate(src, lang, 'en');
+    // Fallback: parse then render via custom renderer
+    const node = parse(src, lang);
+    return renderToHyperscript(node);
   } catch {
     return null;
   }

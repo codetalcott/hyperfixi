@@ -1,7 +1,6 @@
-/** Self-contained: English + Turkish */
-import '@lokascript/semantic/languages/en';
+/** Self-contained: Turkish (renders to English via custom renderer) */
 import '@lokascript/semantic/languages/tr';
 export { plugin, preprocess, resolveLanguage } from './shared';
-export const supportedLanguages = ['en', 'tr'];
+export const supportedLanguages = ['tr'];
 import { autoRegister } from './shared';
 autoRegister();

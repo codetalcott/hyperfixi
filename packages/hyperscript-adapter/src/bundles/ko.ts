@@ -1,7 +1,6 @@
-/** Self-contained: English + Korean */
-import '@lokascript/semantic/languages/en';
+/** Self-contained: Korean (renders to English via custom renderer) */
 import '@lokascript/semantic/languages/ko';
 export { plugin, preprocess, resolveLanguage } from './shared';
-export const supportedLanguages = ['en', 'ko'];
+export const supportedLanguages = ['ko'];
 import { autoRegister } from './shared';
 autoRegister();

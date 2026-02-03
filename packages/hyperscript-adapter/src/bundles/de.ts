@@ -1,7 +1,6 @@
-/** Self-contained: English + German */
-import '@lokascript/semantic/languages/en';
+/** Self-contained: German (renders to English via custom renderer) */
 import '@lokascript/semantic/languages/de';
 export { plugin, preprocess, resolveLanguage } from './shared';
-export const supportedLanguages = ['en', 'de'];
+export const supportedLanguages = ['de'];
 import { autoRegister } from './shared';
 autoRegister();

@@ -60,21 +60,21 @@ Pick the bundle that matches your use case. All bundles auto-register with `_hyp
 
 Each bundle includes the adapter + semantic parser for the specified languages.
 
-| Bundle                                  | Languages          | Size   |
-| --------------------------------------- | ------------------ | ------ |
-| `hyperscript-i18n.global.js`            | All 24             | 568 KB |
-| `hyperscript-i18n-western.global.js`    | en, es, pt, fr, de | 171 KB |
-| `hyperscript-i18n-east-asian.global.js` | en, ja, ko, zh     | 171 KB |
-| `hyperscript-i18n-tr.global.js`         | en, tr             | 127 KB |
-| `hyperscript-i18n-ko.global.js`         | en, ko             | 126 KB |
-| `hyperscript-i18n-ar.global.js`         | en, ar             | 121 KB |
-| `hyperscript-i18n-ja.global.js`         | en, ja             | 121 KB |
-| `hyperscript-i18n-es.global.js`         | en, es             | 119 KB |
-| `hyperscript-i18n-zh.global.js`         | en, zh             | 113 KB |
-| `hyperscript-i18n-fr.global.js`         | en, fr             | 112 KB |
-| `hyperscript-i18n-de.global.js`         | en, de             | 112 KB |
-| `hyperscript-i18n-pt.global.js`         | en, pt             | 111 KB |
-| `hyperscript-i18n-id.global.js`         | en, id             | 111 KB |
+| Bundle                                  | Languages      | Size   |
+| --------------------------------------- | -------------- | ------ |
+| `hyperscript-i18n.global.js`            | All 24         | 568 KB |
+| `hyperscript-i18n-western.global.js`    | es, pt, fr, de | 146 KB |
+| `hyperscript-i18n-east-asian.global.js` | ja, ko, zh     | 146 KB |
+| `hyperscript-i18n-tr.global.js`         | tr             | 101 KB |
+| `hyperscript-i18n-ko.global.js`         | ko             | 100 KB |
+| `hyperscript-i18n-ar.global.js`         | ar             | 95 KB  |
+| `hyperscript-i18n-ja.global.js`         | ja             | 95 KB  |
+| `hyperscript-i18n-es.global.js`         | es             | 94 KB  |
+| `hyperscript-i18n-zh.global.js`         | zh             | 88 KB  |
+| `hyperscript-i18n-fr.global.js`         | fr             | 87 KB  |
+| `hyperscript-i18n-de.global.js`         | de             | 86 KB  |
+| `hyperscript-i18n-pt.global.js`         | pt             | 86 KB  |
+| `hyperscript-i18n-id.global.js`         | id             | 85 KB  |
 
 ```html
 <!-- Django / Flask / FastAPI: just pick your language -->
