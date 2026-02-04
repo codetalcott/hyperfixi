@@ -7,17 +7,27 @@
  */
 export type LanguageCode =
   | 'ar' // Arabic (VSO)
+  | 'bn' // Bengali (SOV)
   | 'de' // German (V2)
   | 'en' // English (SVO)
   | 'es' // Spanish (SVO)
   | 'fr' // French (SVO)
+  | 'hi' // Hindi (SOV)
   | 'id' // Indonesian (SVO)
+  | 'it' // Italian (SVO)
   | 'ja' // Japanese (SOV)
   | 'ko' // Korean (SOV)
+  | 'ms' // Malay (SVO)
+  | 'pl' // Polish (SVO)
   | 'pt' // Portuguese (SVO)
   | 'qu' // Quechua (SOV)
+  | 'ru' // Russian (SVO)
   | 'sw' // Swahili (SVO)
+  | 'th' // Thai (SVO)
+  | 'tl' // Tagalog (VSO)
   | 'tr' // Turkish (SOV)
+  | 'uk' // Ukrainian (SVO)
+  | 'vi' // Vietnamese (SVO)
   | 'zh'; // Chinese (SVO)
 
 /**

@@ -180,6 +180,36 @@
     },
     "./browser/en-tr": {
       "default": "./dist/browser-en-tr.en-tr.global.js"
+    },
+    "./browser/bn": {
+      "default": "./dist/browser-bn.bn.global.js"
+    },
+    "./browser/hi": {
+      "default": "./dist/browser-hi.hi.global.js"
+    },
+    "./browser/it": {
+      "default": "./dist/browser-it.it.global.js"
+    },
+    "./browser/ms": {
+      "default": "./dist/browser-ms.ms.global.js"
+    },
+    "./browser/pl": {
+      "default": "./dist/browser-pl.pl.global.js"
+    },
+    "./browser/ru": {
+      "default": "./dist/browser-ru.ru.global.js"
+    },
+    "./browser/th": {
+      "default": "./dist/browser-th.th.global.js"
+    },
+    "./browser/tl": {
+      "default": "./dist/browser-tl.tl.global.js"
+    },
+    "./browser/uk": {
+      "default": "./dist/browser-uk.uk.global.js"
+    },
+    "./browser/vi": {
+      "default": "./dist/browser-vi.vi.global.js"
     }
   },
   "scripts": {

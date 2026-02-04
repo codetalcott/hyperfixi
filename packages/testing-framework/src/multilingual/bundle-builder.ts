@@ -17,23 +17,63 @@ const __dirname = dirname(__filename);
 
 // Predefined bundle mappings
 const PREDEFINED_BUNDLES = new Map<string, LanguageCode[]>([
-  ['browser', ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw']], // All languages
+  // All 23 languages
+  [
+    'browser',
+    [
+      'en',
+      'es',
+      'ja',
+      'ar',
+      'ko',
+      'zh',
+      'tr',
+      'pt',
+      'fr',
+      'de',
+      'id',
+      'qu',
+      'sw',
+      'bn',
+      'hi',
+      'it',
+      'ms',
+      'pl',
+      'ru',
+      'th',
+      'tl',
+      'uk',
+      'vi',
+    ],
+  ],
   ['browser-priority', ['en', 'es', 'pt', 'fr', 'de', 'ja', 'zh', 'ko', 'ar', 'tr', 'id']], // 11 priority
   ['browser-western', ['en', 'es', 'pt', 'fr', 'de']], // Western languages
   ['browser-east-asian', ['ja', 'zh', 'ko']], // East Asian languages
-  ['browser-en', ['en']], // English only
-  ['browser-es', ['es']], // Spanish only
-  ['browser-ja', ['ja']], // Japanese only
-  ['browser-ar', ['ar']], // Arabic only
-  ['browser-ko', ['ko']], // Korean only
-  ['browser-zh', ['zh']], // Chinese only
-  ['browser-qu', ['qu']], // Quechua only
-  ['browser-sw', ['sw']], // Swahili only
-  ['browser-tr', ['tr']], // Turkish only
-  ['browser-pt', ['pt']], // Portuguese only
-  ['browser-fr', ['fr']], // French only
-  ['browser-de', ['de']], // German only
-  ['browser-id', ['id']], // Indonesian only
+  // Individual language bundles
+  ['browser-ar', ['ar']],
+  ['browser-bn', ['bn']],
+  ['browser-de', ['de']],
+  ['browser-en', ['en']],
+  ['browser-es', ['es']],
+  ['browser-fr', ['fr']],
+  ['browser-hi', ['hi']],
+  ['browser-id', ['id']],
+  ['browser-it', ['it']],
+  ['browser-ja', ['ja']],
+  ['browser-ko', ['ko']],
+  ['browser-ms', ['ms']],
+  ['browser-pl', ['pl']],
+  ['browser-pt', ['pt']],
+  ['browser-qu', ['qu']],
+  ['browser-ru', ['ru']],
+  ['browser-sw', ['sw']],
+  ['browser-th', ['th']],
+  ['browser-tl', ['tl']],
+  ['browser-tr', ['tr']],
+  ['browser-uk', ['uk']],
+  ['browser-vi', ['vi']],
+  ['browser-zh', ['zh']],
+  // Utility bundles
   ['browser-core', []], // Core bundle (language-agnostic)
   ['browser-lazy', []], // Lazy-loading bundle
   ['browser-en-tr', ['en', 'tr']], // English + Turkish
@@ -278,6 +318,16 @@ export function estimateBundleSize(languages: LanguageCode[]): {
     id: 18,
     qu: 16,
     sw: 18,
+    bn: 20,
+    hi: 20,
+    it: 22,
+    ms: 18,
+    pl: 20,
+    ru: 22,
+    th: 20,
+    tl: 18,
+    uk: 22,
+    vi: 20,
     base: 45,
   };
 
