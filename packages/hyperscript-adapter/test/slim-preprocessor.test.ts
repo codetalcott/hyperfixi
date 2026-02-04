@@ -21,8 +21,11 @@ import {
   type LanguageProfile,
 } from '@lokascript/semantic/core';
 
-// Register Spanish (side-effect import, same as es.ts bundle entry)
+// Register languages (side-effect imports, same as per-language bundle entries)
+// Spanish (SVO), Japanese (SOV), Arabic (VSO) — one per word order type
 import '@lokascript/semantic/languages/es';
+import '@lokascript/semantic/languages/ja';
+import '@lokascript/semantic/languages/ar';
 
 // Import from the slim preprocessor — NOT the full preprocessor
 import { preprocessToEnglish } from '../src/slim-preprocessor';
@@ -61,6 +64,58 @@ describe('slim-preprocessor (per-language bundle path)', () => {
 
     it('translates hide command', () => {
       const result = preprocessToEnglish('ocultar #tooltip', 'es');
+      expect(result).toBe('hide #tooltip');
+    });
+  });
+
+  describe('Japanese translation (SOV word order)', () => {
+    it('translates toggle command', () => {
+      const result = preprocessToEnglish('.active を 切り替え', 'ja');
+      expect(result).toBe('toggle .active');
+    });
+
+    it('translates add command with destination', () => {
+      const result = preprocessToEnglish('#box に .highlight を 追加', 'ja');
+      expect(result).toContain('add');
+      expect(result).toContain('.highlight');
+    });
+
+    it('translates remove command', () => {
+      const result = preprocessToEnglish('自分 から .hidden を 削除', 'ja');
+      expect(result).toContain('remove');
+      expect(result).toContain('.hidden');
+    });
+
+    it('translates show command', () => {
+      const result = preprocessToEnglish('#modal を 表示', 'ja');
+      expect(result).toBe('show #modal');
+    });
+
+    it('translates hide command', () => {
+      const result = preprocessToEnglish('#tooltip を 非表示', 'ja');
+      expect(result).toBe('hide #tooltip');
+    });
+  });
+
+  describe('Arabic translation (VSO word order)', () => {
+    it('translates toggle command', () => {
+      const result = preprocessToEnglish('بدّل .active', 'ar');
+      expect(result).toBe('toggle .active');
+    });
+
+    it('translates add command', () => {
+      const result = preprocessToEnglish('أضف .highlight إلى #box', 'ar');
+      expect(result).toContain('add');
+      expect(result).toContain('.highlight');
+    });
+
+    it('translates show command', () => {
+      const result = preprocessToEnglish('أظهر #modal', 'ar');
+      expect(result).toBe('show #modal');
+    });
+
+    it('translates hide command', () => {
+      const result = preprocessToEnglish('أخفِ #tooltip', 'ar');
       expect(result).toBe('hide #tooltip');
     });
   });

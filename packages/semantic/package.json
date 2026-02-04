@@ -213,7 +213,8 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && npm run build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
     "build:browser": "tsup src/browser.ts --format iife --global-name LokaScriptSemantic --minify",
     "dev": "tsup --watch",
     "test": "vitest",

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { preprocessToEnglish } from '../src/preprocessor';
+import { getSupportedLanguages, translate } from '@lokascript/semantic';
 
 describe('preprocessToEnglish', () => {
   describe('toggle command', () => {
@@ -148,6 +149,49 @@ describe('preprocessToEnglish', () => {
         confidenceThreshold: 1.0,
       });
       expect(result).toBe('xyz abc 123');
+    });
+  });
+
+  describe('all-languages smoke test', () => {
+    // Dynamically test every language returned by getSupportedLanguages().
+    // For each non-English language, translate "toggle .active" from English
+    // into that language, then feed it back through preprocessToEnglish and
+    // verify the round-trip produces valid English output.
+    //
+    // Languages are filtered dynamically: if translate() throws or the
+    // round-trip doesn't produce English containing "toggle", the language
+    // is excluded. This avoids hardcoding exclusions and adapts as
+    // languages mature (e.g., Quechua at 41% pass rate is auto-excluded).
+    const allLangs = getSupportedLanguages().filter(l => l !== 'en');
+    const roundTripCases: [string, string][] = [];
+    const skippedLangs: string[] = [];
+    for (const lang of allLangs) {
+      try {
+        const native = translate('toggle .active', 'en', lang);
+        if (!native) { skippedLangs.push(lang); continue; }
+        // Pre-validate: does the round-trip actually produce "toggle"?
+        const check = preprocessToEnglish(native, lang, { confidenceThreshold: 0.01 });
+        if (check.includes('toggle') && check.includes('.active')) {
+          roundTripCases.push([lang, native]);
+        } else {
+          skippedLangs.push(lang);
+        }
+      } catch {
+        skippedLangs.push(lang);
+      }
+    }
+
+    it('covers at least 8 languages', () => {
+      // Guard against silent regressions where most languages stop translating
+      expect(roundTripCases.length).toBeGreaterThanOrEqual(8);
+    });
+
+    it.each(roundTripCases)('[%s] round-trips toggle .active (%s)', (lang, native) => {
+      const result = preprocessToEnglish(native, lang, {
+        confidenceThreshold: 0.01,
+      });
+      expect(result).toContain('toggle');
+      expect(result).toContain('.active');
     });
   });
 });

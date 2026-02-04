@@ -5,7 +5,6 @@ export default defineConfig([
   {
     entry: ['src/index.ts'],
     format: ['cjs', 'esm'],
-    dts: true,
     splitting: false,
     sourcemap: true,
     clean: true,
@@ -16,7 +15,6 @@ export default defineConfig([
   {
     entry: ['src/core.ts'],
     format: ['esm'],
-    dts: true,
     splitting: false,
     sourcemap: true,
   },
@@ -650,7 +648,6 @@ export default defineConfig([
       'languages/zh': 'src/languages/zh.ts',
     },
     format: ['esm'],
-    dts: true,
     splitting: false,
     sourcemap: true,
   },
