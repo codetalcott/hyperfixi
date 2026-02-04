@@ -474,6 +474,103 @@ describe('Logical Expressions', () => {
     });
   });
 
+  describe('Class/Attribute Presence Expressions', () => {
+    describe('has expression', () => {
+      it('should detect class presence on an element', async () => {
+        const el = document.createElement('div');
+        el.classList.add('active');
+        expect(await logicalExpressions.has.evaluate(context, el, '.active')).toBe(true);
+      });
+
+      it('should return false when class is absent', async () => {
+        const el = document.createElement('div');
+        expect(await logicalExpressions.has.evaluate(context, el, '.missing')).toBe(false);
+      });
+
+      it('should detect attribute presence on an element', async () => {
+        const el = document.createElement('input');
+        el.setAttribute('disabled', '');
+        expect(await logicalExpressions.has.evaluate(context, el, '[disabled]')).toBe(true);
+      });
+
+      it('should return false when attribute is absent', async () => {
+        const el = document.createElement('input');
+        expect(await logicalExpressions.has.evaluate(context, el, '[hidden]')).toBe(false);
+      });
+
+      it('should return false for non-Element left operand', async () => {
+        expect(await logicalExpressions.has.evaluate(context, 'not-an-element', '.active')).toBe(
+          false
+        );
+        expect(await logicalExpressions.has.evaluate(context, null, '.active')).toBe(false);
+        expect(await logicalExpressions.has.evaluate(context, 42, '.active')).toBe(false);
+      });
+
+      it('should return false for non-string right operand', async () => {
+        const el = document.createElement('div');
+        el.classList.add('active');
+        expect(await logicalExpressions.has.evaluate(context, el, 123)).toBe(false);
+        expect(await logicalExpressions.has.evaluate(context, el, null)).toBe(false);
+      });
+
+      it('should validate arguments', () => {
+        expect(logicalExpressions.has.validate!([1, 2])).toBeNull();
+        expect(logicalExpressions.has.validate!([1])).toContain('element, selector');
+        expect(logicalExpressions.has.validate!([1, 2, 3])).toContain('element, selector');
+      });
+
+      it('should have correct metadata', () => {
+        expect(logicalExpressions.has.category).toBe('Logical');
+        expect(logicalExpressions.has.evaluatesTo).toBe('Boolean');
+        expect(logicalExpressions.has.operators).toContain('has');
+        expect(logicalExpressions.has.operators).toContain('have');
+      });
+    });
+
+    describe('doesNotHave expression', () => {
+      it('should return false when class is present', async () => {
+        const el = document.createElement('div');
+        el.classList.add('active');
+        expect(await logicalExpressions.doesNotHave.evaluate(context, el, '.active')).toBe(false);
+      });
+
+      it('should return true when class is absent', async () => {
+        const el = document.createElement('div');
+        expect(await logicalExpressions.doesNotHave.evaluate(context, el, '.missing')).toBe(true);
+      });
+
+      it('should return false when attribute is present', async () => {
+        const el = document.createElement('input');
+        el.setAttribute('disabled', '');
+        expect(await logicalExpressions.doesNotHave.evaluate(context, el, '[disabled]')).toBe(
+          false
+        );
+      });
+
+      it('should return true when attribute is absent', async () => {
+        const el = document.createElement('input');
+        expect(await logicalExpressions.doesNotHave.evaluate(context, el, '[hidden]')).toBe(true);
+      });
+
+      it('should return true for non-Element left operand', async () => {
+        expect(
+          await logicalExpressions.doesNotHave.evaluate(context, 'not-an-element', '.active')
+        ).toBe(true);
+      });
+
+      it('should validate arguments', () => {
+        expect(logicalExpressions.doesNotHave.validate!([1, 2])).toBeNull();
+        expect(logicalExpressions.doesNotHave.validate!([1])).toContain('element, selector');
+      });
+
+      it('should have correct metadata', () => {
+        expect(logicalExpressions.doesNotHave.category).toBe('Logical');
+        expect(logicalExpressions.doesNotHave.evaluatesTo).toBe('Boolean');
+        expect(logicalExpressions.doesNotHave.operators).toContain('does not have');
+      });
+    });
+  });
+
   describe('Expression Metadata', () => {
     it('should have correct categories', () => {
       const comparisonOps = [

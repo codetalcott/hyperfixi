@@ -352,6 +352,7 @@ describe('renderToHyperscript', () => {
       'for', 'while', 'continue', 'go', 'transition', 'clone',
       'focus', 'blur', 'call', 'return', 'js', 'async', 'tell',
       'default', 'init', 'behavior', 'install', 'measure', 'swap', 'morph',
+      'beep', 'break', 'copy', 'exit', 'pick', 'render',
     ];
 
     for (const action of expectedCommands) {

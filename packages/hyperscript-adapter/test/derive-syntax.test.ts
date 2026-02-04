@@ -1,193 +1,20 @@
 /**
- * Tests for SYNTAX table derivation from command schemas.
+ * Tests for SYNTAX table derivation and generation.
  *
  * Verifies that:
- * 1. deriveEnglishSyntax() produces the expected output from schemas
- * 2. The renderer's SYNTAX table matches the derived output
- *
- * This ensures command schemas are the single source of truth for
- * English rendering — any schema change will fail this test until
- * the renderer's SYNTAX table is updated.
+ * 1. deriveEnglishSyntax() produces correct output from schemas
+ * 2. The generated syntax-table.ts is up to date
+ * 3. deriveSyntax() works for non-English languages
  */
 
 import { describe, it, expect } from 'vitest';
-import { deriveEnglishSyntax, type SyntaxTable } from '../src/derive-syntax';
-import { SYNTAX as RENDERER_SYNTAX } from '../src/hyperscript-renderer';
+import { deriveEnglishSyntax, deriveSyntax } from '../src/derive-syntax';
+import { SYNTAX as GENERATED_SYNTAX } from '../src/generated/syntax-table';
 import { commandSchemas, englishProfile } from '@lokascript/semantic';
 
-// The canonical SYNTAX expected from derivation.
-// This is what both the derivation and the renderer must match.
-const EXPECTED_SYNTAX: SyntaxTable = {
-  // Class/attribute
-  toggle: [
-    ['patient', ''],
-    ['destination', 'on'],
-  ],
-  add: [
-    ['patient', ''],
-    ['destination', 'to'],
-  ],
-  remove: [
-    ['patient', ''],
-    ['source', 'from'],
-  ],
-  take: [
-    ['patient', ''],
-    ['source', 'from'],
-  ],
-
-  // Content
-  put: [
-    ['patient', ''],
-    ['destination', 'into'],
-  ],
-  append: [
-    ['patient', ''],
-    ['destination', 'to'],
-  ],
-  prepend: [
-    ['patient', ''],
-    ['destination', 'to'],
-  ],
-  make: [['patient', '']],
-  clone: [
-    ['patient', ''],
-    ['destination', 'into'],
-  ],
-  swap: [
-    ['method', ''],
-    ['destination', 'of'],
-    ['patient', 'with'],
-  ],
-  morph: [
-    ['destination', ''],
-    ['patient', 'to'],
-  ],
-
-  // Variables
-  set: [
-    ['destination', ''],
-    ['patient', 'to'],
-  ],
-  get: [
-    ['source', ''],
-    ['destination', 'on'],
-  ],
-  increment: [
-    ['patient', ''],
-    ['quantity', 'by'],
-  ],
-  decrement: [
-    ['patient', ''],
-    ['quantity', 'by'],
-  ],
-  log: [['patient', '']],
-  default: [
-    ['destination', ''],
-    ['patient', 'to'],
-  ],
-
-  // Visibility
-  show: [
-    ['patient', ''],
-    ['style', 'with'],
-  ],
-  hide: [
-    ['patient', ''],
-    ['style', 'with'],
-  ],
-  transition: [
-    ['patient', ''],
-    ['goal', 'to'],
-    ['destination', 'on'],
-    ['duration', 'over'],
-    ['style', 'with'],
-  ],
-
-  // Events
-  on: [
-    ['event', ''],
-    ['source', 'from'],
-  ],
-  trigger: [
-    ['event', ''],
-    ['destination', 'on'],
-  ],
-  send: [
-    ['event', ''],
-    ['destination', 'to'],
-  ],
-
-  // Focus
-  focus: [['patient', '']],
-  blur: [['patient', '']],
-
-  // Navigation
-  go: [['destination', '']],
-
-  // Async
-  wait: [['patient', '']],
-  fetch: [
-    ['source', ''],
-    ['responseType', 'as'],
-    ['method', 'via'],
-    ['destination', 'on'],
-  ],
-  settle: [['patient', '']],
-
-  // Behavior
-  install: [
-    ['patient', ''],
-    ['destination', 'on'],
-  ],
-  measure: [
-    ['patient', ''],
-    ['source', 'of'],
-  ],
-
-  // Control flow
-  call: [['patient', '']],
-  return: [['patient', '']],
-  throw: [['patient', '']],
-  halt: [['patient', '']],
-  continue: [],
-  if: [['condition', '']],
-  unless: [['condition', '']],
-  else: [],
-  repeat: [
-    ['quantity', ''],
-    ['condition', 'until'],
-  ],
-  for: [
-    ['patient', ''],
-    ['source', 'in'],
-  ],
-  while: [['condition', '']],
-
-  // Structural / advanced
-  tell: [['destination', '']],
-  async: [],
-  js: [['patient', '']],
-  init: [],
-  behavior: [['patient', '']],
-
-  // Utility / misc
-  beep: [['patient', '']],
-  break: [],
-  copy: [['patient', '']],
-  exit: [],
-  pick: [
-    ['patient', ''],
-    ['source', 'from'],
-  ],
-  render: [
-    ['patient', ''],
-    ['style', 'with'],
-  ],
-
-  // Meta
-  compound: [],
-};
+// ---------------------------------------------------------------------------
+// English derivation
+// ---------------------------------------------------------------------------
 
 describe('deriveEnglishSyntax', () => {
   const derived = deriveEnglishSyntax(commandSchemas, englishProfile);
@@ -198,37 +25,142 @@ describe('deriveEnglishSyntax', () => {
     expect(derivedKeys).toEqual(schemaKeys);
   });
 
-  // Test each command individually for clear error messages
-  for (const action of Object.keys(commandSchemas)) {
-    it(`derives correct SYNTAX for "${action}"`, () => {
-      const expected = EXPECTED_SYNTAX[action];
-      expect(expected).toBeDefined();
-      expect(derived[action]).toEqual(expected);
-    });
-  }
-
   it('has no extra entries beyond schemas', () => {
     const schemaActions = new Set(Object.keys(commandSchemas));
     for (const action of Object.keys(derived)) {
       expect(schemaActions.has(action)).toBe(true);
     }
   });
+
+  // Spot-check representative commands from each category
+  it('derives class/attribute commands correctly', () => {
+    expect(derived.toggle).toEqual([
+      ['patient', ''],
+      ['destination', 'on'],
+    ]);
+    expect(derived.add).toEqual([
+      ['patient', ''],
+      ['destination', 'to'],
+    ]);
+    expect(derived.remove).toEqual([
+      ['patient', ''],
+      ['source', 'from'],
+    ]);
+  });
+
+  it('derives content commands correctly', () => {
+    expect(derived.put).toEqual([
+      ['patient', ''],
+      ['destination', 'into'],
+    ]);
+    expect(derived.swap).toEqual([
+      ['method', ''],
+      ['destination', 'of'],
+      ['patient', 'with'],
+    ]);
+  });
+
+  it('derives go with renderOverride (no preposition)', () => {
+    expect(derived.go).toEqual([['destination', '']]);
+  });
+
+  it('derives fetch with renderOverride on source (no preposition)', () => {
+    expect(derived.fetch).toEqual([
+      ['source', ''],
+      ['responseType', 'as'],
+      ['method', 'via'],
+      ['destination', 'on'],
+    ]);
+  });
+
+  it('uses RENDER_OVERRIDES for repeat', () => {
+    expect(derived.repeat).toEqual([
+      ['quantity', ''],
+      ['condition', 'until'],
+    ]);
+  });
+
+  it('derives zero-role commands as empty arrays', () => {
+    expect(derived.break).toEqual([]);
+    expect(derived.exit).toEqual([]);
+    expect(derived.continue).toEqual([]);
+    expect(derived.compound).toEqual([]);
+  });
 });
 
-describe('renderer SYNTAX matches derived', () => {
-  const derived = deriveEnglishSyntax(commandSchemas, englishProfile);
+// ---------------------------------------------------------------------------
+// Generated file validation
+// ---------------------------------------------------------------------------
 
-  for (const action of Object.keys(commandSchemas)) {
-    it(`renderer SYNTAX for "${action}" matches derived`, () => {
-      expect(RENDERER_SYNTAX[action]).toBeDefined();
-      expect(RENDERER_SYNTAX[action]).toEqual(derived[action]);
-    });
-  }
+describe('generated syntax-table.ts', () => {
+  const freshlyDerived = deriveEnglishSyntax(commandSchemas, englishProfile);
 
-  it('renderer has no stale entries beyond schemas', () => {
+  it('is up to date (run `npm run generate:syntax` if this fails)', () => {
+    for (const action of Object.keys(commandSchemas)) {
+      expect(GENERATED_SYNTAX[action]).toEqual(freshlyDerived[action]);
+    }
+  });
+
+  it('has no extra entries beyond schemas', () => {
     const schemaActions = new Set(Object.keys(commandSchemas));
-    for (const action of Object.keys(RENDERER_SYNTAX)) {
+    for (const action of Object.keys(GENERATED_SYNTAX)) {
       expect(schemaActions.has(action)).toBe(true);
     }
+  });
+
+  it('has entries for every schema', () => {
+    for (const action of Object.keys(commandSchemas)) {
+      expect(GENERATED_SYNTAX[action]).toBeDefined();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Multi-language derivation
+// ---------------------------------------------------------------------------
+
+describe('deriveSyntax (multi-language)', () => {
+  it('English deriveSyntax matches deriveEnglishSyntax', () => {
+    const viaGeneral = deriveSyntax(commandSchemas, englishProfile, 'en');
+    const viaEnglish = deriveEnglishSyntax(commandSchemas, englishProfile);
+    expect(viaGeneral).toEqual(viaEnglish);
+  });
+
+  it('produces entries for every schema regardless of language', () => {
+    // Use English profile with a non-English lang code to test fallback behavior
+    const result = deriveSyntax(commandSchemas, englishProfile, 'xx');
+    const schemaKeys = Object.keys(commandSchemas).sort();
+    const resultKeys = Object.keys(result).sort();
+    expect(resultKeys).toEqual(schemaKeys);
+  });
+
+  it('does not apply RENDER_OVERRIDES for non-English languages', () => {
+    // repeat gets RENDER_OVERRIDE for 'en', but should derive from schema for others
+    const result = deriveSyntax(commandSchemas, englishProfile, 'xx');
+    // repeat schema has loopType, quantity, event, source roles — not the override
+    expect(result.repeat).not.toEqual([
+      ['quantity', ''],
+      ['condition', 'until'],
+    ]);
+  });
+
+  it('sorts by sovPosition for SOV profile', () => {
+    // Create a minimal SOV profile to verify sorting
+    const sovProfile = {
+      ...englishProfile,
+      wordOrder: 'SOV' as const,
+    };
+    const result = deriveSyntax(commandSchemas, sovProfile, 'test');
+    // toggle: patient svoPosition=1/sovPosition=2, destination svoPosition=2/sovPosition=1
+    // SOV: destination (sovPosition=1) should come first
+    expect(result.toggle[0][0]).toBe('destination');
+    expect(result.toggle[1][0]).toBe('patient');
+  });
+
+  it('uses renderOverride over markerOverride', () => {
+    // go has markerOverride.en='to' and renderOverride.en=''
+    // For 'en', renderOverride should win
+    const result = deriveSyntax(commandSchemas, englishProfile, 'en');
+    expect(result.go).toEqual([['destination', '']]);
   });
 });

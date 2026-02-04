@@ -35,6 +35,13 @@ export interface RoleSpec {
    * If not specified, uses the language profile's default roleMarker.
    */
   readonly markerOverride?: Record<string, string>;
+  /**
+   * Override the rendering preposition for this role, separate from the parsing marker.
+   * Used when the parsing grammar differs from the rendered output
+   * (e.g., "go to /home" parses with 'to' but renders as "go /home").
+   * Maps language code to the rendering preposition.
+   */
+  readonly renderOverride?: Record<string, string>;
 }
 
 /**
@@ -555,7 +562,7 @@ export const fetchSchema: CommandSchema = {
       svoPosition: 1,
       sovPosition: 1,
       // No markerOverride — uses profile default 'from' for parsing.
-      // Adapter renders without preposition via RENDER_OVERRIDES.
+      renderOverride: { en: '' }, // "fetch /api" (rendering — no preposition)
     },
     {
       role: 'responseType',
@@ -1117,7 +1124,8 @@ export const goSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'],
       svoPosition: 1,
       sovPosition: 1,
-      markerOverride: { en: 'to' }, // "go to /page"
+      markerOverride: { en: 'to' }, // "go to /page" (parsing)
+      renderOverride: { en: '' }, // "go /page" (rendering — no preposition)
     },
   ],
 };

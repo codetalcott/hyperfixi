@@ -81,6 +81,8 @@ const MULTI_TYPE_PATIENT_COMMANDS = new Set([
   'return',
   'swap',
   'morph', // DOM manipulation commands that accept various content types
+  'beep', // Debug command — accepts any expression type
+  'copy', // Clipboard — accepts text literals, selectors, or references
 ]);
 
 // Commands that intentionally have no required roles
@@ -97,6 +99,9 @@ const NO_REQUIRED_ROLES_COMMANDS = new Set([
   'return',
   'js',
   'measure', // Commands with optional-only roles
+  'break', // Zero-arg control flow (exit loop)
+  'exit', // Zero-arg control flow (exit handler)
+  'beep', // Debug command — all roles optional
 ]);
 
 /**
