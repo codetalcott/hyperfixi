@@ -49,7 +49,11 @@ export const arabicProfile: LanguageProfile = {
     },
   },
   roleMarkers: {
-    destination: { primary: 'على', alternatives: ['في', 'إلى', 'ب'], position: 'before' },
+    destination: {
+      primary: 'على',
+      alternatives: ['في', 'إلى', 'ب', 'قبل', 'بعد'],
+      position: 'before',
+    },
     source: { primary: 'من', position: 'before' },
     patient: { primary: '', position: 'before' },
     style: { primary: 'بـ', alternatives: ['باستخدام'], position: 'before' },

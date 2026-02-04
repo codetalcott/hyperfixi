@@ -341,17 +341,51 @@ export class PatternMatcher {
       return null;
     }
 
-    // Property should be an identifier, keyword (not structural), or selector (for style props)
-    // Examples: "my value", "my innerHTML", "my *background", "my *opacity"
+    // Property should be an identifier, keyword (not structural), or selector (for style/dot/attr)
+    // Examples: "my value", "my innerHTML", "my *background", "my *opacity", "my @data-count"
+    // Also handles dot-property access: "my.textContent" tokenized as "my" + ".textContent"
     if (
       propertyToken.kind === 'identifier' ||
       (propertyToken.kind === 'keyword' && !this.isStructuralKeyword(propertyToken.value)) ||
-      (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*'))
+      (propertyToken.kind === 'selector' && propertyToken.value.startsWith('*')) ||
+      (propertyToken.kind === 'selector' && propertyToken.value.startsWith('@')) ||
+      (propertyToken.kind === 'selector' &&
+        propertyToken.value.startsWith('.') &&
+        /^\.[a-zA-Z_]\w*/.test(propertyToken.value))
     ) {
       tokens.advance();
 
+      // For dot-property selectors (.textContent), strip the leading dot
+      let propertyName = propertyToken.value;
+      if (
+        propertyToken.kind === 'selector' &&
+        propertyName.startsWith('.') &&
+        /^\.[a-zA-Z_]\w*/.test(propertyName)
+      ) {
+        propertyName = propertyName.substring(1);
+      }
+
+      // Consume chained dot-property access (.parentElement.style.display)
+      let chainedProps = propertyName;
+      while (
+        tokens.peek()?.kind === 'selector' &&
+        tokens.peek()!.value.startsWith('.') &&
+        /^\.[a-zA-Z_]\w*/.test(tokens.peek()!.value)
+      ) {
+        chainedProps += tokens.peek()!.value; // keep the dots for chaining
+        tokens.advance();
+      }
+
+      // Check for method call — next token is '(' in the value (e.g., .getAttribute("data-id"))
+      const nextPeek = tokens.peek();
+      if (nextPeek?.kind === 'literal' && nextPeek.value.startsWith('(')) {
+        // Consume method args
+        chainedProps += nextPeek.value;
+        tokens.advance();
+      }
+
       // Create property-path: my value -> { object: me, property: 'value' }
-      return createPropertyPath(createReference(baseRef as any), propertyToken.value);
+      return createPropertyPath(createReference(baseRef as any), chainedProps);
     }
 
     // Not a valid property, revert

@@ -63,9 +63,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'togol .active',  // Malay SVO: action + patient
     qu: '.active ta t\'ikray',  // Quechua SOV: patient marker + action
     ru: 'переключить .active',  // Russian
-    sw: 'toggle .active',  // Swahili - placeholder
+    sw: 'badilisha .active',  // Swahili SVO: action + patient
     th: 'toggle .active',  // Thai - placeholder
-    tl: 'toggle .active',  // Tagalog - placeholder
+    tl: 'palitan .active',  // Tagalog VSO: action + patient
     uk: 'перемикнути .active',  // Ukrainian
   },
   add: {
@@ -89,9 +89,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'tambah .highlight',  // Malay SVO
     qu: '.highlight ta yapay',  // Quechua SOV
     ru: 'добавить .highlight',
-    sw: 'add .highlight',
+    sw: 'ongeza .highlight',  // Swahili SVO
     th: 'add .highlight',
-    tl: 'add .highlight',
+    tl: 'idagdag .highlight',  // Tagalog VSO
     uk: 'додати .highlight',
   },
   remove: {
@@ -115,9 +115,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'buang .highlight',  // Malay SVO
     qu: '.highlight ta qichuy',  // Quechua SOV
     ru: 'удалить .highlight',
-    sw: 'remove .highlight',
+    sw: 'ondoa .highlight',  // Swahili SVO
     th: 'remove .highlight',
-    tl: 'remove .highlight',
+    tl: 'alisin .highlight',  // Tagalog VSO
     uk: 'видалити .highlight',
   },
   put: {
@@ -141,9 +141,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'letak "hello" ke #output',  // Malay SVO
     qu: '"napaykullayki" ta #output man churay',  // Quechua SOV
     ru: 'поместить "привет" в #output',
-    sw: 'put "hello" into #output',
+    sw: 'weka "habari" ndani #output',  // Swahili SVO: action patient into destination
     th: 'put "hello" into #output',
-    tl: 'put "hello" into #output',
+    tl: 'ilagay "hello" sa #output',  // Tagalog VSO: action patient dest-marker destination
     uk: 'помістити "привіт" в #output',
   },
   set: {
@@ -167,9 +167,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'tetapkan x ke 10',  // Malay SVO
     qu: 'x ta 10 man churay',  // Quechua SOV
     ru: 'установить x в 10',
-    sw: 'set x to 10',
+    sw: 'seti x kwenye 10',  // Swahili SVO: action variable dest-marker value
     th: 'set x to 10',
-    tl: 'set x to 10',
+    tl: 'itakda x sa 10',  // Tagalog VSO: action variable dest-marker value
     uk: 'встановити x в 10',
   },
   get: {
@@ -193,9 +193,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'dapatkan #element',  // Malay SVO
     qu: '#element ta taripay',  // Quechua SOV
     ru: 'получить #element',
-    sw: 'get #element',
+    sw: 'pata #element',  // Swahili SVO
     th: 'get #element',
-    tl: 'get #element',
+    tl: 'kunin #element',  // Tagalog VSO
     uk: 'отримати #element',
   },
   show: {
@@ -219,9 +219,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'tunjuk #modal',  // Malay SVO
     qu: '#modal ta rikuchiy',  // Quechua SOV
     ru: 'показать #modal',
-    sw: 'show #modal',
+    sw: 'onyesha #modal',  // Swahili SVO
     th: 'show #modal',
-    tl: 'show #modal',
+    tl: 'ipakita #modal',  // Tagalog VSO
     uk: 'показати #modal',
   },
   hide: {
@@ -245,9 +245,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'sembunyi #modal',  // Malay SVO
     qu: '#modal ta pakay',  // Quechua SOV
     ru: 'скрыть #modal',
-    sw: 'hide #modal',
+    sw: 'ficha #modal',  // Swahili SVO
     th: 'hide #modal',
-    tl: 'hide #modal',
+    tl: 'itago #modal',  // Tagalog VSO
     uk: 'сховати #modal',
   },
   increment: {
@@ -271,9 +271,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'tambah_satu counter',  // Malay SVO
     qu: 'counter ta yapachiy',  // Quechua SOV
     ru: 'увеличить counter',
-    sw: 'increment counter',
+    sw: 'ongezeko counter',  // Swahili SVO (unique keyword to avoid add collision)
     th: 'increment counter',
-    tl: 'increment counter',
+    tl: 'dagdagan counter',  // Tagalog VSO
     uk: 'збільшити counter',
   },
   decrement: {
@@ -297,9 +297,9 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     ms: 'kurang_satu counter',  // Malay SVO
     qu: 'counter ta pisiyachiy',  // Quechua SOV
     ru: 'уменьшить counter',
-    sw: 'decrement counter',
+    sw: 'punguza counter',  // Swahili SVO
     th: 'decrement counter',
-    tl: 'decrement counter',
+    tl: 'bawasan counter',  // Tagalog VSO
     uk: 'зменшити counter',
   },
 };
@@ -344,6 +344,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy kliknięciu przełącz .active na #button',
     he: 'בלחיצה החלף .active על #button',  // Hebrew
     ms: 'apabila klik togol .active pada #button',  // Malay SVO
+    sw: 'wakati bonyeza badilisha .active kwenye #button',  // Swahili SVO
+    tl: 'kapag pindot palitan .active sa #button',  // Tagalog VSO
     qu: 'ñit\'iy pi #button pa .active ta t\'ikray',  // Quechua SOV
     en: 'on click toggle .active on #button',
   },
@@ -369,6 +371,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy wysłaniu przełącz .loading',
     he: 'בשליחה החלף .loading',  // Hebrew
     ms: 'apabila hantar togol .loading',  // Malay SVO
+    sw: 'wakati wasilisha badilisha .loading',  // Swahili SVO
+    tl: 'kapag isumite palitan .loading',  // Tagalog VSO
     qu: 'kachay pi .loading ta t\'ikray',  // Quechua SOV
     en: 'on submit toggle .loading',
   },
@@ -395,6 +399,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy najechaniu dodaj .highlight',
     he: 'בריחוף הוסף .highlight',  // Hebrew
     ms: 'apabila hover tambah .highlight',  // Malay SVO
+    sw: 'wakati hover ongeza .highlight',  // Swahili SVO
+    tl: 'kapag hover idagdag .highlight',  // Tagalog VSO
     qu: 'hawiri pi .highlight ta yapay',  // Quechua SOV (hover ~ hawiri)
     en: 'on hover add .highlight',
   },
@@ -420,6 +426,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy kliknięciu usuń .error',
     he: 'בלחיצה הסר .error',  // Hebrew
     ms: 'apabila klik buang .error',  // Malay SVO
+    sw: 'wakati bonyeza ondoa .error',  // Swahili SVO
+    tl: 'kapag pindot alisin .error',  // Tagalog VSO
     qu: 'ñit\'iy pi .error ta qichuy',  // Quechua SOV
     en: 'on click remove .error',
   },
@@ -446,6 +454,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy skupieniu pokaż #tooltip',
     he: 'במיקוד הראה #tooltip',  // Hebrew
     ms: 'apabila fokus tunjuk #tooltip',  // Malay SVO
+    sw: 'wakati lenga onyesha #tooltip',  // Swahili SVO
+    tl: 'kapag ituon ipakita #tooltip',  // Tagalog VSO
     qu: 'qhawachiy pi #tooltip ta rikuchiy',  // Quechua SOV
     en: 'on focus show #tooltip',
   },
@@ -471,6 +481,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy rozmyciu ukryj #tooltip',
     he: 'בטשטוש הסתר #tooltip',  // Hebrew
     ms: 'apabila kabur sembunyi #tooltip',  // Malay SVO
+    sw: 'wakati blur ficha #tooltip',  // Swahili SVO
+    tl: 'kapag alisin_tuon itago #tooltip',  // Tagalog VSO
     qu: 'mana qhawachiy pi #tooltip ta pakay',  // Quechua SOV
     en: 'on blur hide #tooltip',
   },
@@ -497,6 +509,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy kliknięciu zwiększ #counter',
     he: 'בלחיצה הגדל #counter',  // Hebrew
     ms: 'apabila klik tambah_satu #counter',  // Malay SVO
+    sw: 'wakati bonyeza ongezeko #counter',  // Swahili SVO
+    tl: 'kapag pindot dagdagan #counter',  // Tagalog VSO
     qu: 'ñit\'iy pi #counter ta yapachiy',  // Quechua SOV
     en: 'on click increment #counter',
   },
@@ -522,6 +536,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy kliknięciu zmniejsz #counter',
     he: 'בלחיצה הקטן #counter',  // Hebrew
     ms: 'apabila klik kurang_satu #counter',  // Malay SVO
+    sw: 'wakati bonyeza punguza #counter',  // Swahili SVO
+    tl: 'kapag pindot bawasan #counter',  // Tagalog VSO
     qu: 'ñit\'iy pi #counter ta pisiyachiy',  // Quechua SOV
     en: 'on click decrement #counter',
   },
@@ -548,6 +564,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy wprowadzeniu umieść "test" do #output',
     he: 'בהזנה שים "test" לתוך #output',  // Hebrew
     ms: 'apabila masuk letak "test" ke #output',  // Malay SVO
+    sw: 'wakati ingiza weka "test" ndani #output',  // Swahili SVO
+    tl: 'kapag input ilagay "test" sa #output',  // Tagalog VSO
     qu: 'yaykuy pi "test" ta #output man churay',  // Quechua SOV
     en: 'on input put "test" into #output',
   },
@@ -573,6 +591,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy zmianie ustaw x na 10',
     he: 'בשינוי קבע x ל 10',  // Hebrew
     ms: 'apabila ubah tetapkan x ke 10',  // Malay SVO
+    sw: 'wakati badilisha seti x kwenye 10',  // Swahili SVO
+    tl: 'kapag pagbabago itakda x sa 10',  // Tagalog VSO
     qu: 'tikray pi x ta 10 man churay',  // Quechua SOV
     en: 'on change set x to 10',
   },
@@ -599,6 +619,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy kliknięciu przełącz .active na #button',
     he: 'בלחיצה החלף .active על #button',  // Hebrew
     ms: 'apabila klik togol .active pada #button',  // Malay SVO
+    sw: 'wakati bonyeza badilisha .active kwenye #button',  // Swahili SVO
+    tl: 'kapag pindot palitan .active sa #button',  // Tagalog VSO
     qu: 'ñit\'iy pi #button pa .active ta t\'ikray',  // Quechua SOV
     en: 'on click toggle .active on #button',
   },
@@ -624,6 +646,8 @@ export const EVENT_HANDLER_TEST_CASES = {
     pl: 'przy najechaniu dodaj .hover na #element',
     he: 'בריחוף הוסף .hover אל #element',  // Hebrew
     ms: 'apabila hover tambah .hover pada #element',  // Malay SVO
+    sw: 'wakati hover ongeza .hover kwenye #element',  // Swahili SVO
+    tl: 'kapag hover idagdag .hover sa #element',  // Tagalog VSO
     qu: 'hawiri pi #element man .hover ta yapay',  // Quechua SOV
     en: 'on hover add .hover to #element',
   },
@@ -669,7 +693,7 @@ export type EventHandlerTestCase = keyof typeof EVENT_HANDLER_TEST_CASES;
  */
 export function getEventHandlerTestCase(
   testCase: EventHandlerTestCase,
-  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'ms' | 'qu' | 'en'
+  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'ms' | 'qu' | 'sw' | 'tl' | 'en'
 ): string | undefined {
   return EVENT_HANDLER_TEST_CASES[testCase][language];
 }
@@ -678,7 +702,7 @@ export function getEventHandlerTestCase(
  * Get all event handler test cases for a language.
  */
 export function getEventHandlerTestCasesForLanguage(
-  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'ms' | 'qu' | 'en'
+  language: 'ja' | 'ko' | 'tr' | 'ar' | 'hi' | 'bn' | 'ru' | 'uk' | 'th' | 'zh' | 'es' | 'vi' | 'id' | 'de' | 'fr' | 'it' | 'pt' | 'pl' | 'he' | 'ms' | 'qu' | 'sw' | 'tl' | 'en'
 ): Record<string, string> {
   const cases: Record<string, string> = {};
   for (const [testName, testValues] of Object.entries(EVENT_HANDLER_TEST_CASES)) {

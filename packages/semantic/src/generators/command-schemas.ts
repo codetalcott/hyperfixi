@@ -336,6 +336,10 @@ export const setSchema: CommandSchema = {
         ko: '를', // "x 를 10 으로 설정" - variable gets object marker
         tr: 'i', // "x i 10 e ayarla" - variable gets accusative marker
         ar: '', // "عيّن x إلى 10" - no marker before variable
+        sw: '', // "seti x kwenye 10" - no marker before variable
+        tl: '', // "itakda x sa 10" - no marker before variable
+        bn: 'কে', // "x কে 10 তে সেট" - patient marker on variable
+        qu: 'ta', // "x ta 10 man churay" - patient marker on variable
       },
     },
     {
@@ -359,6 +363,10 @@ export const setSchema: CommandSchema = {
         ko: '으로', // "x 를 10 으로 설정" - value gets manner/instrument marker
         tr: 'e', // "x i 10 e ayarla" - value gets dative marker
         ar: 'إلى', // "عيّن x إلى 10" - value gets preposition "to"
+        sw: 'kwenye', // "seti x kwenye 10" - destination prep before value
+        tl: 'sa', // "itakda x sa 10" - destination prep before value
+        bn: 'তে', // "x কে 10 তে সেট" - destination marker on value
+        qu: 'man', // "x ta 10 man churay" - destination marker on value
       },
     },
   ],
@@ -740,6 +748,10 @@ export const getCommandSchema: CommandSchema = {
         ar: 'على', // Arabic preposition: احصل على #element
         tr: 'i', // Turkish accusative: #element i al
         id: '',
+        sw: '', // Swahili SVO: pata #element (no marker)
+        tl: '', // Tagalog VSO: kunin #element (no marker)
+        bn: 'কে', // Bengali SOV: #element কে পান (patient marker)
+        qu: 'ta', // Quechua SOV: #element ta taripay (patient marker)
       },
     },
     {
@@ -1337,6 +1349,15 @@ export const defaultSchema: CommandSchema = {
       expectedTypes: ['reference'],
       svoPosition: 1,
       sovPosition: 1,
+      // Same overrides as SET: no marker before variable in VSO/SVO
+      markerOverride: {
+        en: '',
+        ar: '',
+        tl: '',
+        sw: '',
+        bn: 'কে',
+        qu: 'ta',
+      },
     },
     {
       role: 'patient',
@@ -1345,6 +1366,15 @@ export const defaultSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'],
       svoPosition: 2,
       sovPosition: 2,
+      // Same overrides as SET: value gets destination preposition
+      markerOverride: {
+        en: 'to',
+        ar: 'إلى',
+        tl: 'sa',
+        sw: 'kwenye',
+        bn: 'তে',
+        qu: 'man',
+      },
     },
   ],
 };

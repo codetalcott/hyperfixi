@@ -44,11 +44,11 @@ export const quechuaProfile: LanguageProfile = {
     },
   },
   roleMarkers: {
-    patient: { primary: '-ta', position: 'after' },
-    destination: { primary: '-man', position: 'after' },
-    source: { primary: '-manta', position: 'after' },
-    style: { primary: '-wan', position: 'after' },
-    event: { primary: '-ta', position: 'after' }, // Event as accusative
+    patient: { primary: 'ta', position: 'after' },
+    destination: { primary: 'man', alternatives: ['pa'], position: 'after' },
+    source: { primary: 'manta', position: 'after' },
+    style: { primary: 'wan', position: 'after' },
+    event: { primary: 'ta', position: 'after' }, // Event as accusative
   },
   keywords: {
     toggle: { primary: "t'ikray", alternatives: ['tikray', 'kutichiy'], normalized: 'toggle' },
@@ -106,8 +106,20 @@ export const quechuaProfile: LanguageProfile = {
     before: { primary: 'ñawpaq', normalized: 'before' },
     after: { primary: 'qhipa', normalized: 'after' },
     // Event modifiers (for repeat until event)
-    until: { primary: '-kama', alternatives: ['kama'], normalized: 'until' },
+    until: { primary: 'kama', alternatives: ['-kama'], normalized: 'until' },
     event: { primary: 'ruwakuq', alternatives: ['imayna'], normalized: 'event' },
-    from: { primary: '-manta', normalized: 'from' },
+    from: { primary: 'manta', alternatives: ['-manta'], normalized: 'from' },
+    // Common event names (for event handler pattern matching)
+    click: { primary: 'ñitiy', normalized: 'click' },
+    load: { primary: 'apakuy', normalized: 'load' },
+    submit: { primary: 'kachay', normalized: 'submit' },
+    hover: { primary: 'hawachiy', normalized: 'hover' },
+    input: { primary: 'yaykuchiy', normalized: 'input' },
+    change: { primary: 'tikray', normalized: 'change' },
+  },
+  eventHandler: {
+    keyword: { primary: 'pi', alternatives: ['kaqtin'] },
+    sourceMarker: { primary: 'manta', position: 'after' },
+    eventMarker: { primary: 'pi', alternatives: ['kaqtin', 'kaqpi'], position: 'after' },
   },
 };

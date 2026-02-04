@@ -33,14 +33,16 @@ export const tagalogProfile: LanguageProfile = {
     markerPosition: 'between',
     keywords: {
       // Tagalog uses postposed possessive pronouns
-      // "my" - ko (clitic), akin (emphatic)
+      // "my" - ko (clitic), akin (emphatic), aking (adjectival genitive)
       ko: 'me',
       akin: 'me',
+      aking: 'me',
       // "your" - mo (clitic), iyo (emphatic)
       mo: 'you',
       iyo: 'you',
-      // "its/his/her" - niya (clitic), kaniya (emphatic)
+      // "its/his/her" - niya (clitic), kaniya (emphatic), nito (genitive proximal)
       niya: 'it',
+      nito: 'it',
       kaniya: 'it',
     },
   },
@@ -62,11 +64,11 @@ export const tagalogProfile: LanguageProfile = {
     take: { primary: 'kumuha', normalized: 'take' },
     make: { primary: 'gumawa', alternatives: ['lumikha'], normalized: 'make' },
     clone: { primary: 'kopyahin', normalized: 'clone' },
-    swap: { primary: 'magpalit', normalized: 'swap' },
+    swap: { primary: 'palitan_pwesto', alternatives: ['magpalit'], normalized: 'swap' },
     morph: { primary: 'baguhin', normalized: 'morph' },
     // Variable operations
     set: { primary: 'itakda', alternatives: ['magtakda'], normalized: 'set' },
-    get: { primary: 'kumuha', alternatives: ['kunin'], normalized: 'get' },
+    get: { primary: 'kunin', alternatives: ['kumuha'], normalized: 'get' },
     increment: { primary: 'dagdagan', alternatives: ['taasan'], normalized: 'increment' },
     decrement: { primary: 'bawasan', alternatives: ['ibaba'], normalized: 'decrement' },
     log: { primary: 'itala', normalized: 'log' },
@@ -76,7 +78,7 @@ export const tagalogProfile: LanguageProfile = {
     transition: { primary: 'lumipat', normalized: 'transition' },
     // Events
     on: { primary: 'kapag', alternatives: ['kung', 'sa'], normalized: 'on' },
-    trigger: { primary: 'magpatugtog', normalized: 'trigger' },
+    trigger: { primary: 'palitawin', alternatives: ['magpatugtog'], normalized: 'trigger' },
     send: { primary: 'ipadala', alternatives: ['magpadala'], normalized: 'send' },
     // DOM focus
     focus: { primary: 'ituon', normalized: 'focus' },
@@ -85,7 +87,7 @@ export const tagalogProfile: LanguageProfile = {
     go: { primary: 'pumunta', alternatives: ['punta'], normalized: 'go' },
     // Async
     wait: { primary: 'maghintay', alternatives: ['hintay'], normalized: 'wait' },
-    fetch: { primary: 'kunin', normalized: 'fetch' },
+    fetch: { primary: 'kuhanin_mula', alternatives: ['kunin_mula'], normalized: 'fetch' },
     settle: { primary: 'magpatahimik', normalized: 'settle' },
     // Control flow
     if: { primary: 'kung', alternatives: ['kapag'], normalized: 'if' },
@@ -98,7 +100,7 @@ export const tagalogProfile: LanguageProfile = {
     continue: { primary: 'magpatuloy', normalized: 'continue' },
     halt: { primary: 'itigil', alternatives: ['huminto'], normalized: 'halt' },
     throw: { primary: 'ihagis', alternatives: ['itapon'], normalized: 'throw' },
-    call: { primary: 'tawagan', alternatives: ['tumawag'], normalized: 'call' },
+    call: { primary: 'tawagin', alternatives: ['tawagan', 'tumawag'], normalized: 'call' },
     return: { primary: 'ibalik', alternatives: ['bumalik'], normalized: 'return' },
     then: { primary: 'pagkatapos', alternatives: ['saka'], normalized: 'then' },
     and: { primary: 'at', normalized: 'and' },
@@ -107,7 +109,11 @@ export const tagalogProfile: LanguageProfile = {
     js: { primary: 'js', normalized: 'js' },
     async: { primary: 'async', normalized: 'async' },
     tell: { primary: 'sabihin', alternatives: ['magsabi'], normalized: 'tell' },
-    default: { primary: 'default', alternatives: ['unang_halaga'], normalized: 'default' },
+    default: {
+      primary: 'pamantayan',
+      alternatives: ['default', 'unang_halaga'],
+      normalized: 'default',
+    },
     init: { primary: 'simulan', alternatives: ['magsimula'], normalized: 'init' },
     behavior: { primary: 'ugali', alternatives: ['kilos'], normalized: 'behavior' },
     install: { primary: 'ikabit', alternatives: ['mag-install'], normalized: 'install' },
@@ -124,5 +130,6 @@ export const tagalogProfile: LanguageProfile = {
   eventHandler: {
     keyword: { primary: 'kapag', normalized: 'on' },
     sourceMarker: { primary: 'mula_sa', alternatives: ['galing_sa'], position: 'before' },
+    eventMarker: { primary: 'kapag', alternatives: ['kung', 'sa'], position: 'before' },
   },
 };

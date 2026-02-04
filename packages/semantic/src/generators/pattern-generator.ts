@@ -271,11 +271,24 @@ export function generateEventHandlerPatterns(
   // Generate pattern based on word order
   if (profile.wordOrder === 'SOV') {
     if (hasTwoRequiredRoles) {
-      // Two-role SOV pattern for put/set commands
+      // Two-role SOV pattern for put/set commands (event-first)
       // Japanese put: 入力 で "test" を #output に 入れる
       // Korean set: 변경 할 때 x 를 10 으로 설정
       patterns.push(
         generateSOVTwoRoleEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
+      );
+
+      // Two-role SOV pattern (destination-first variant)
+      // Bengali set: @disabled কে ক্লিক এ সেট সত্য তে
+      // Quechua set: x ta ñitiy pi 10 man churay
+      patterns.push(
+        generateSOVTwoRoleDestFirstEventHandlerPattern(
+          commandSchema,
+          profile,
+          keyword,
+          eventMarker,
+          config
+        )
       );
     } else {
       // SOV: [event] [eventMarker] [destination? destMarker?] [patient] [patientMarker] [verb]
@@ -285,6 +298,37 @@ export function generateEventHandlerPatterns(
       patterns.push(
         generateSOVEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
       );
+
+      // Patient-first SOV variants: patient before event (common in Bengali, Quechua)
+      // Bengali: .active কে ক্লিক এ টগল  (patient + event + verb)
+      // Quechua: .highlight ta noqa man ñitiy pi yapay  (patient + dest + event + verb)
+      // Both orders are valid in SOV languages depending on topic/focus.
+
+      // Variant 1: Simple (no destination) — higher priority
+      patterns.push(
+        generateSOVPatientFirstEventHandlerPattern(
+          commandSchema,
+          profile,
+          keyword,
+          eventMarker,
+          config
+        )
+      );
+
+      // Variant 2: With destination (required, not optional) — lower priority
+      // Only add if destination marker differs from event marker to avoid collision
+      const destMarkerCheck = profile.roleMarkers.destination;
+      if (destMarkerCheck && destMarkerCheck.primary !== eventMarker.primary) {
+        patterns.push(
+          generateSOVPatientFirstWithDestEventHandlerPattern(
+            commandSchema,
+            profile,
+            keyword,
+            eventMarker,
+            config
+          )
+        );
+      }
 
       // For multi-word event markers with no-space alternatives (Korean compact forms),
       // also generate a pattern that accepts the compact form
@@ -325,16 +369,41 @@ export function generateEventHandlerPatterns(
     }
   } else if (profile.wordOrder === 'VSO') {
     if (hasTwoRequiredRoles) {
-      // Two-role VSO pattern for put/set commands
+      // Two-role VSO pattern for put/set commands (event-first)
       // Arabic put: عند الإدخال ضع "test" في #output
       patterns.push(
         generateVSOTwoRoleEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
+      );
+
+      // Two-role VSO verb-first variant (event handler at end)
+      // Tagalog: itakda aking *background sa "red" kapag click
+      patterns.push(
+        generateVSOVerbFirstTwoRoleEventHandlerPattern(
+          commandSchema,
+          profile,
+          keyword,
+          eventMarker,
+          config
+        )
       );
     } else {
       // VSO: [eventMarker] [event] [verb] [patient] [على destination?]
       // Arabic: عند النقر بدّل .active على #button
       patterns.push(
         generateVSOEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
+      );
+
+      // VSO verb-first variant: [verb] [patient] [eventMarker] [event]
+      // Tagalog: alisin ako kapag click (remove me on click)
+      // Tagalog: palitan .active kapag click (toggle .active on click)
+      patterns.push(
+        generateVSOVerbFirstEventHandlerPattern(
+          commandSchema,
+          profile,
+          keyword,
+          eventMarker,
+          config
+        )
       );
 
       // Add negated event pattern variant for languages with negation markers
@@ -457,6 +526,162 @@ function generateSOVEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+    },
+  };
+}
+
+/**
+ * Generate patient-first SOV event handler pattern (simple, no destination).
+ *
+ * Alternative SOV ordering where the patient precedes the event:
+ * - Bengali: .active কে ক্লিক এ টগল  (patient কে event এ verb)
+ * - Quechua: .active ta ñitiy pi tikray  (patient ta event pi verb)
+ *
+ * No optional destination group to avoid greedy match issues when
+ * destination and event markers collide (e.g., Bengali তে/এ).
+ */
+function generateSOVPatientFirstEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  // Patient role first
+  tokens.push({ type: 'role', role: 'patient', optional: false });
+
+  // Patient marker (postposition after patient)
+  const patientMarker = profile.roleMarkers.patient;
+  if (patientMarker) {
+    const patMarkerToken: PatternToken = patientMarker.alternatives
+      ? { type: 'literal', value: patientMarker.primary, alternatives: patientMarker.alternatives }
+      : { type: 'literal', value: patientMarker.primary };
+    tokens.push(patMarkerToken);
+  }
+
+  // Event role
+  tokens.push({ type: 'role', role: 'event', optional: false });
+
+  // Event marker (after event in SOV)
+  if (eventMarker.position === 'after') {
+    const markerWords = eventMarker.primary.split(/\s+/);
+    if (markerWords.length > 1) {
+      for (const word of markerWords) {
+        tokens.push({ type: 'literal', value: word });
+      }
+    } else {
+      const markerToken: PatternToken = eventMarker.alternatives
+        ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+        : { type: 'literal', value: eventMarker.primary };
+      tokens.push(markerToken);
+    }
+  }
+
+  // Command verb at end (SOV)
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+  tokens.push(verbToken);
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-patient-first`,
+    language: profile.code,
+    command: 'on',
+    priority: (config.basePriority ?? 100) + 45,
+    template: {
+      format: `{patient} ${patientMarker?.primary || ''} {event} ${eventMarker.primary} ${keyword.primary}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action },
+      event: { fromRole: 'event' },
+      patient: { fromRole: 'patient' },
+      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+    },
+  };
+}
+
+/**
+ * Generate patient-first SOV event handler pattern with required destination.
+ *
+ * For patterns like:
+ * - Quechua: .highlight ta noqa man ñitiy pi yapay  (patient ta dest man event pi verb)
+ *
+ * Destination is REQUIRED (not optional) to avoid greedy match ambiguity.
+ * Only generated when destination and event markers are different.
+ */
+function generateSOVPatientFirstWithDestEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  // Patient role first
+  tokens.push({ type: 'role', role: 'patient', optional: false });
+
+  // Patient marker
+  const patientMarker = profile.roleMarkers.patient;
+  if (patientMarker) {
+    const patMarkerToken: PatternToken = patientMarker.alternatives
+      ? { type: 'literal', value: patientMarker.primary, alternatives: patientMarker.alternatives }
+      : { type: 'literal', value: patientMarker.primary };
+    tokens.push(patMarkerToken);
+  }
+
+  // Required destination with its marker
+  const destMarker = profile.roleMarkers.destination;
+  if (destMarker) {
+    tokens.push({ type: 'role', role: 'destination', optional: false });
+    tokens.push(
+      destMarker.alternatives
+        ? { type: 'literal', value: destMarker.primary, alternatives: destMarker.alternatives }
+        : { type: 'literal', value: destMarker.primary }
+    );
+  }
+
+  // Event role
+  tokens.push({ type: 'role', role: 'event', optional: false });
+
+  // Event marker (after event in SOV)
+  if (eventMarker.position === 'after') {
+    const markerWords = eventMarker.primary.split(/\s+/);
+    if (markerWords.length > 1) {
+      for (const word of markerWords) {
+        tokens.push({ type: 'literal', value: word });
+      }
+    } else {
+      const markerToken: PatternToken = eventMarker.alternatives
+        ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+        : { type: 'literal', value: eventMarker.primary };
+      tokens.push(markerToken);
+    }
+  }
+
+  // Command verb at end (SOV)
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+  tokens.push(verbToken);
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-patient-first-dest`,
+    language: profile.code,
+    command: 'on',
+    priority: (config.basePriority ?? 100) + 40, // Lower than simple patient-first
+    template: {
+      format: `{patient} ${patientMarker?.primary || ''} {destination} ${destMarker?.primary || ''} {event} ${eventMarker.primary} ${keyword.primary}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action },
+      event: { fromRole: 'event' },
+      patient: { fromRole: 'patient' },
+      destination: { fromRole: 'destination' },
     },
   };
 }
@@ -747,6 +972,164 @@ function generateVSOEventHandlerPattern(
 }
 
 /**
+ * Generate VSO verb-first event handler pattern.
+ *
+ * For languages (like Tagalog) where the command comes before the event handler:
+ * - Tagalog: alisin ako kapag click  (remove me on click)
+ *   [verb] [patient] [eventMarker] [event]
+ * - Tagalog: palitan .active kapag click  (toggle .active on click)
+ *   [verb] [patient] [eventMarker] [event]
+ */
+function generateVSOVerbFirstEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  // Command verb first (VSO)
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+  tokens.push(verbToken);
+
+  // Patient role
+  tokens.push({ type: 'role', role: 'patient', optional: false });
+
+  // Optional destination with preposition
+  const destMarker = profile.roleMarkers.destination;
+  if (destMarker) {
+    tokens.push({
+      type: 'group',
+      optional: true,
+      tokens: [
+        destMarker.alternatives
+          ? { type: 'literal', value: destMarker.primary, alternatives: destMarker.alternatives }
+          : { type: 'literal', value: destMarker.primary },
+        { type: 'role', role: 'destination', optional: true },
+      ],
+    });
+  }
+
+  // Event marker at end
+  if (eventMarker.position === 'before') {
+    const markerToken: PatternToken = eventMarker.alternatives
+      ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+      : { type: 'literal', value: eventMarker.primary };
+    tokens.push(markerToken);
+  }
+
+  // Event role at end
+  tokens.push({ type: 'role', role: 'event', optional: false });
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-vso-verb-first`,
+    language: profile.code,
+    command: 'on',
+    priority: (config.basePriority ?? 100) + 45, // Slightly lower than event-first variant
+    template: {
+      format: `${keyword.primary} {patient} ${destMarker?.primary || ''} {destination?} ${eventMarker.primary} {event}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action },
+      event: { fromRole: 'event' },
+      patient: { fromRole: 'patient' },
+      destination: { fromRole: 'destination', default: { type: 'reference', value: 'me' } },
+    },
+  };
+}
+
+/**
+ * Generate VSO verb-first two-role event handler pattern.
+ *
+ * For two-role commands (put/set) in VSO languages with event handler at end:
+ * - Tagalog set: itakda aking *background sa "red" kapag click
+ *   [verb] [role1] [role1Marker] [role2] [eventMarker] [event]
+ */
+function generateVSOVerbFirstTwoRoleEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  // Command verb first
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+  tokens.push(verbToken);
+
+  // Get the two required roles from the schema
+  const requiredRoles = commandSchema.roles.filter(r => r.required);
+  const sortedRoles = [...requiredRoles].sort((a, b) => {
+    const aPos = a.svoPosition ?? 999;
+    const bPos = b.svoPosition ?? 999;
+    return aPos - bPos;
+  });
+
+  // Add each role with its marker (preposition before role for VSO)
+  for (const roleSpec of sortedRoles) {
+    let marker: string | undefined;
+    let markerAlternatives: string[] | undefined;
+
+    // Check for override — use !== undefined to allow empty string overrides
+    if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
+      marker = roleSpec.markerOverride[profile.code];
+    } else {
+      const roleMarker = profile.roleMarkers[roleSpec.role];
+      if (roleMarker) {
+        marker = roleMarker.primary;
+        markerAlternatives = roleMarker.alternatives;
+      }
+    }
+
+    // VSO languages use prepositions — marker comes BEFORE the role
+    if (marker) {
+      const markerToken: PatternToken = markerAlternatives
+        ? { type: 'literal', value: marker, alternatives: markerAlternatives }
+        : { type: 'literal', value: marker };
+      tokens.push(markerToken);
+    }
+
+    tokens.push({ type: 'role', role: roleSpec.role, optional: false });
+  }
+
+  // Event marker at end
+  if (eventMarker.position === 'before') {
+    const markerToken: PatternToken = eventMarker.alternatives
+      ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+      : { type: 'literal', value: eventMarker.primary };
+    tokens.push(markerToken);
+  }
+
+  // Event role at end
+  tokens.push({ type: 'role', role: 'event', optional: false });
+
+  const roleNames = sortedRoles.map(r => `{${r.role}}`).join(' ');
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-vso-verb-first-2role`,
+    language: profile.code,
+    command: 'on',
+    priority: (config.basePriority ?? 100) + 48,
+    template: {
+      format: `${keyword.primary} ${roleNames} ${eventMarker.primary} {event}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action },
+      event: { fromRole: 'event' },
+      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
+    },
+  };
+}
+
+/**
  * Generate SOV two-role event handler pattern (for put/set commands).
  *
  * Patterns:
@@ -806,7 +1189,7 @@ function generateSOVTwoRoleEventHandlerPattern(
     let marker: string | undefined;
     let markerAlternatives: string[] | undefined;
 
-    if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code]) {
+    if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
       // Use the override marker
       marker = roleSpec.markerOverride[profile.code];
     } else {
@@ -850,6 +1233,113 @@ function generateSOVTwoRoleEventHandlerPattern(
       event: { fromRole: 'event' },
       patient: { fromRole: 'patient' },
       destination: { fromRole: 'destination' },
+    },
+  };
+}
+
+/**
+ * Generate destination-first SOV two-role event handler pattern.
+ *
+ * For languages where the roles precede the event in SOV order:
+ * - Bengali: @disabled কে ক্লিক এ সেট সত্য তে
+ *   [destination] [destMarker] [event] [eventMarker] [verb] [patient] [patientMarker]
+ * - Bengali: "Hello" কে ক্লিক এ রাখুন #output তে
+ *   [patient] [patientMarker] [event] [eventMarker] [verb] [destination] [destMarker]
+ */
+function generateSOVTwoRoleDestFirstEventHandlerPattern(
+  commandSchema: CommandSchema,
+  profile: LanguageProfile,
+  keyword: KeywordTranslation,
+  eventMarker: RoleMarker,
+  config: GeneratorConfig
+): LanguagePattern {
+  const tokens: PatternToken[] = [];
+
+  // Get the two required roles from the schema
+  const requiredRoles = commandSchema.roles.filter(r => r.required);
+  const sortedRoles = [...requiredRoles].sort((a, b) => {
+    const aPos = a.sovPosition ?? 999;
+    const bPos = b.sovPosition ?? 999;
+    return aPos - bPos;
+  });
+
+  // First role before event
+  const firstRole = sortedRoles[0];
+  tokens.push({ type: 'role', role: firstRole.role, optional: false });
+
+  // First role marker
+  let firstMarker: string | undefined;
+  if (firstRole.markerOverride && firstRole.markerOverride[profile.code] !== undefined) {
+    firstMarker = firstRole.markerOverride[profile.code];
+  } else {
+    const roleMarker = profile.roleMarkers[firstRole.role];
+    if (roleMarker) firstMarker = roleMarker.primary;
+  }
+  if (firstMarker) {
+    tokens.push({ type: 'literal', value: firstMarker });
+  }
+
+  // Event role
+  tokens.push({ type: 'role', role: 'event', optional: false });
+
+  // Event marker
+  if (eventMarker.position === 'after') {
+    const markerWords = eventMarker.primary.split(/\s+/);
+    if (markerWords.length > 1) {
+      for (const word of markerWords) {
+        tokens.push({ type: 'literal', value: word });
+      }
+    } else {
+      const markerToken: PatternToken = eventMarker.alternatives
+        ? { type: 'literal', value: eventMarker.primary, alternatives: eventMarker.alternatives }
+        : { type: 'literal', value: eventMarker.primary };
+      tokens.push(markerToken);
+    }
+  }
+
+  // Command verb (between event and second role in this variant)
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+  tokens.push(verbToken);
+
+  // Second role after verb
+  const secondRole = sortedRoles[1];
+  tokens.push({ type: 'role', role: secondRole.role, optional: false });
+
+  // Second role marker
+  let secondMarker: string | undefined;
+  let secondMarkerAlts: string[] | undefined;
+  if (secondRole.markerOverride && secondRole.markerOverride[profile.code] !== undefined) {
+    secondMarker = secondRole.markerOverride[profile.code];
+  } else {
+    const roleMarker = profile.roleMarkers[secondRole.role];
+    if (roleMarker) {
+      secondMarker = roleMarker.primary;
+      secondMarkerAlts = roleMarker.alternatives;
+    }
+  }
+  if (secondMarker) {
+    const markerToken: PatternToken = secondMarkerAlts
+      ? { type: 'literal', value: secondMarker, alternatives: secondMarkerAlts }
+      : { type: 'literal', value: secondMarker };
+    tokens.push(markerToken);
+  }
+
+  return {
+    id: `${commandSchema.action}-event-${profile.code}-sov-2role-dest-first`,
+    language: profile.code,
+    command: 'on',
+    priority: (config.basePriority ?? 100) + 48, // Slightly lower than event-first two-role
+    template: {
+      format: `{${firstRole.role}} {event} ${eventMarker.primary} ${keyword.primary} {${secondRole.role}}`,
+      tokens,
+    },
+    extraction: {
+      action: { value: commandSchema.action },
+      event: { fromRole: 'event' },
+      [firstRole.role]: { fromRole: firstRole.role },
+      [secondRole.role]: { fromRole: secondRole.role },
     },
   };
 }
@@ -905,7 +1395,7 @@ function generateVSOTwoRoleEventHandlerPattern(
     let marker: string | undefined;
     let markerAlternatives: string[] | undefined;
 
-    if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code]) {
+    if (roleSpec.markerOverride && roleSpec.markerOverride[profile.code] !== undefined) {
       // Use the override marker
       marker = roleSpec.markerOverride[profile.code];
     } else {
