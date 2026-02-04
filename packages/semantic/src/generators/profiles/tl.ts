@@ -75,7 +75,7 @@ export const tagalogProfile: LanguageProfile = {
     // Visibility
     show: { primary: 'ipakita', alternatives: ['magpakita'], normalized: 'show' },
     hide: { primary: 'itago', alternatives: ['magtago'], normalized: 'hide' },
-    transition: { primary: 'lumipat', normalized: 'transition' },
+    transition: { primary: 'baguhin', alternatives: ['lumipat'], normalized: 'transition' },
     // Events
     on: { primary: 'kapag', alternatives: ['kung', 'sa'], normalized: 'on' },
     trigger: { primary: 'palitawin', alternatives: ['magpatugtog'], normalized: 'trigger' },

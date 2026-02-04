@@ -44,8 +44,12 @@ export class SemanticParserImpl implements ISemanticParser {
    * Parse input in the specified language to a semantic node.
    */
   parse(input: string, language: string): SemanticNode {
+    // Extract standalone event modifiers (once, debounced, throttled) from input
+    const { modifiers, remainingInput } = this.extractStandaloneModifiers(input, language);
+    const parseInput = remainingInput || input;
+
     // Tokenize the input
-    const tokens = tokenizeInternal(input, language);
+    const tokens = tokenizeInternal(parseInput, language);
 
     // Get patterns for this language
     const patterns = getPatternsForLanguage(language);
@@ -62,7 +66,8 @@ export class SemanticParserImpl implements ISemanticParser {
     const eventMatch = patternMatcher.matchBest(tokens, eventPatterns);
 
     if (eventMatch) {
-      return this.buildEventHandler(eventMatch, tokens, language);
+      const handler = this.buildEventHandler(eventMatch, tokens, language);
+      return modifiers ? this.applyModifiers(handler, modifiers) : handler;
     }
 
     // Try command patterns
@@ -76,9 +81,11 @@ export class SemanticParserImpl implements ISemanticParser {
     // Try SOV event trigger extraction: detect embedded event keywords
     // (e.g., "クリック で" in JA, "클릭 에" in KO, "tıklama de" in TR)
     // and extract them to parse the remaining tokens as command body
-    const sovResult = this.trySOVEventExtraction(input, language, sortedPatterns);
+    const sovResult = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
     if (sovResult) {
-      return sovResult;
+      return modifiers
+        ? this.applyModifiers(sovResult as EventHandlerSemanticNode, modifiers)
+        : sovResult;
     }
 
     // Fallback: try parsing as multi-command compound (no event wrapper).
@@ -89,7 +96,7 @@ export class SemanticParserImpl implements ISemanticParser {
       return compoundResult;
     }
 
-    throw new Error(`Could not parse input in ${language}: ${input}`);
+    throw new Error(`Could not parse input in ${language}: ${parseInput}`);
   }
 
   /**
@@ -827,6 +834,8 @@ export class SemanticParserImpl implements ISemanticParser {
     ja: new Set(['で']),
     ko: new Set(), // Korean doesn't use event marker particles
     tr: new Set(['de', 'da', 'te', 'ta']),
+    bn: new Set(['এ']),
+    qu: new Set(['pi']),
   };
 
   /**
@@ -848,6 +857,14 @@ export class SemanticParserImpl implements ISemanticParser {
     tr: {
       markers: new Set(['den', 'dan', 'ten', 'tan']),
       windowTokens: new Set(['pencere', 'belge', 'window', 'document']),
+    },
+    bn: {
+      markers: new Set(['থেকে', 'মধ্যে']),
+      windowTokens: new Set(['উইন্ডো', 'ডকুমেন্ট', 'window', 'document']),
+    },
+    qu: {
+      markers: new Set(['manta']),
+      windowTokens: new Set(['k_iri', 'ventana', 'window', 'document']),
     },
   };
 
@@ -936,7 +953,7 @@ export class SemanticParserImpl implements ISemanticParser {
           const markerToken = allTokens[i + markerOffset];
           if (
             markerToken &&
-            markerToken.kind === 'particle' &&
+            (markerToken.kind === 'particle' || markerToken.kind === 'keyword') &&
             eventMarkers.has(markerToken.value)
           ) {
             eventIndex = i;
@@ -973,7 +990,10 @@ export class SemanticParserImpl implements ISemanticParser {
       // Check for source marker right after event+marker (e.g., "keydown で から")
       if (afterEventEnd < allTokens.length) {
         const afterToken = allTokens[afterEventEnd];
-        if (afterToken.kind === 'particle' && sourceMarkers.markers.has(afterToken.value)) {
+        if (
+          (afterToken.kind === 'particle' || afterToken.kind === 'keyword') &&
+          sourceMarkers.markers.has(afterToken.value)
+        ) {
           removeIndices.add(afterEventEnd);
         }
       }
@@ -1036,7 +1056,9 @@ export class SemanticParserImpl implements ISemanticParser {
       fr: new Set(['puis', 'ensuite', 'alors']),
       de: new Set(['dann', 'danach', 'anschließend']),
       id: new Set(['lalu', 'kemudian', 'setelah itu']),
-      qu: new Set(['chaymantataq', 'hinaspa', 'chaymanta']),
+      tl: new Set(['pagkatapos', 'tapos']),
+      bn: new Set(['তারপর', 'পরে']),
+      qu: new Set(['chaymantataq', 'hinaspa', 'chaymanta', 'chayqa']),
       sw: new Set(['kisha', 'halafu', 'baadaye']),
     };
     const keywords = thenKeywords[language] || thenKeywords.en;
@@ -1059,11 +1081,115 @@ export class SemanticParserImpl implements ISemanticParser {
       fr: new Set(['fin', 'terminer', 'finir']),
       de: new Set(['ende', 'beenden', 'fertig']),
       id: new Set(['selesai', 'akhir', 'tamat']),
+      tl: new Set(['wakas', 'tapos']),
+      bn: new Set(['সমাপ্ত']),
       qu: new Set(['tukukuy', 'tukuy', 'puchukay']),
       sw: new Set(['mwisho', 'maliza', 'tamati']),
     };
     const keywords = endKeywords[language] || endKeywords.en;
     return keywords.has(value.toLowerCase());
+  }
+
+  /**
+   * Standalone event modifier keywords (loanwords used across languages).
+   * Pattern: `[modifier] [preposition?] [duration?] [rest...]`
+   */
+  private static readonly STANDALONE_MODIFIERS: Record<string, 'once' | 'debounce' | 'throttle'> = {
+    once: 'once',
+    debounced: 'debounce',
+    debounce: 'debounce',
+    throttled: 'throttle',
+    throttle: 'throttle',
+  };
+
+  /**
+   * Extract standalone event modifiers from the beginning of input.
+   * Returns the modifiers (if any) and the remaining input string.
+   */
+  private extractStandaloneModifiers(
+    input: string,
+    _language: string
+  ): {
+    modifiers: { once?: boolean; debounce?: number; throttle?: number } | null;
+    remainingInput: string | null;
+  } {
+    const tokens = tokenizeInternal(input, _language);
+    const allTokens = tokens.tokens;
+
+    if (allTokens.length === 0) return { modifiers: null, remainingInput: null };
+
+    const firstToken = allTokens[0];
+    const firstLower = firstToken.value.toLowerCase();
+    const modType = SemanticParserImpl.STANDALONE_MODIFIERS[firstLower];
+
+    if (!modType) return { modifiers: null, remainingInput: null };
+
+    const modifiers: { once?: boolean; debounce?: number; throttle?: number } = {};
+    let tokensToSkip = 1; // At least the modifier keyword
+
+    if (modType === 'once') {
+      modifiers.once = true;
+    } else {
+      // debounce/throttle: look for optional preposition + duration
+      let nextIdx = 1;
+
+      // Skip preposition tokens (sa, عند, at, etc.)
+      if (nextIdx < allTokens.length) {
+        const nextToken = allTokens[nextIdx];
+        // Skip keyword/particle tokens that are prepositions (not selectors, literals, etc.)
+        if (nextToken.kind === 'keyword' || nextToken.kind === 'particle') {
+          nextIdx++;
+          tokensToSkip++;
+        }
+      }
+
+      // Look for duration (number with unit like "100ms", "300ms")
+      if (nextIdx < allTokens.length) {
+        const durToken = allTokens[nextIdx];
+        if (durToken.kind === 'literal') {
+          const match = durToken.value.match(/^(\d+)(ms|s|m)?$/);
+          if (match) {
+            let ms = parseInt(match[1], 10);
+            const unit = match[2] || 'ms';
+            if (unit === 's') ms *= 1000;
+            else if (unit === 'm') ms *= 60000;
+            modifiers[modType] = ms;
+            tokensToSkip = nextIdx + 1;
+          }
+        }
+      }
+
+      // If no duration found, use default
+      if (!modifiers[modType]) {
+        modifiers[modType] = modType === 'debounce' ? 300 : 100;
+      }
+    }
+
+    // Reconstruct remaining input from the tokens after the modifier
+    const remainingTokens = allTokens.slice(tokensToSkip);
+    if (remainingTokens.length === 0) return { modifiers: null, remainingInput: null };
+
+    // Use position data to extract the remaining input string
+    const startPos = remainingTokens[0].position.start;
+    const remainingInput = input.slice(startPos);
+
+    return { modifiers, remainingInput };
+  }
+
+  /**
+   * Apply standalone modifiers to an event handler node.
+   */
+  private applyModifiers(
+    node: EventHandlerSemanticNode,
+    modifiers: { once?: boolean; debounce?: number; throttle?: number }
+  ): EventHandlerSemanticNode {
+    return {
+      ...node,
+      modifiers: {
+        ...node.modifiers,
+        ...modifiers,
+      },
+    };
   }
 }
 

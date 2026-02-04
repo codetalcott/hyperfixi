@@ -47,6 +47,16 @@ const SUFFIXES = new Set([
   '-kama', // limitative (until, up to)
   '-rayku', // causative (because of)
   '-hina', // simulative (like, as)
+  // Standalone (unhyphenated) forms — used when written as separate words
+  'ta',
+  'man',
+  'manta',
+  'pi',
+  'wan',
+  'paq',
+  'kama',
+  'hina',
+  'pa',
 ]);
 
 // =============================================================================
@@ -77,6 +87,7 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   { native: 'qhipa', normalized: 'last' },
   { native: 'hamuq', normalized: 'next' },
   { native: 'ñawpaq kaq', normalized: 'previous' },
+  { native: 'ñawpaq_kaq', normalized: 'previous' },
   { native: 'aswan qayllaqa', normalized: 'closest' },
   { native: 'tayta', normalized: 'parent' },
 
@@ -382,6 +393,11 @@ export class QuechuaTokenizer extends BaseTokenizer {
     if (!word) return null;
 
     const lower = word.toLowerCase();
+
+    // Check standalone suffixes first — classify as particle
+    if (SUFFIXES.has(lower)) {
+      return createToken(word, 'particle', createPosition(startPos, pos));
+    }
 
     // O(1) Map lookup instead of O(n) array search
     const keywordEntry = this.lookupKeyword(lower);

@@ -1231,8 +1231,7 @@ function generateSOVTwoRoleEventHandlerPattern(
     extraction: {
       action: { value: commandSchema.action }, // Extract the wrapped command
       event: { fromRole: 'event' },
-      patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination' },
+      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
     },
   };
 }
@@ -1434,8 +1433,7 @@ function generateVSOTwoRoleEventHandlerPattern(
     extraction: {
       action: { value: commandSchema.action }, // Extract the wrapped command
       event: { fromRole: 'event' },
-      patient: { fromRole: 'patient' },
-      destination: { fromRole: 'destination' },
+      ...Object.fromEntries(sortedRoles.map(r => [r.role, { fromRole: r.role }])),
     },
   };
 }

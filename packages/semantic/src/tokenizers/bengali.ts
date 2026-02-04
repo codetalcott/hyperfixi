@@ -40,7 +40,18 @@ const isBengali = createUnicodeRangeClassifier([[0x0980, 0x09ff]]);
 /**
  * Single-word postpositions.
  */
-const SINGLE_POSTPOSITIONS = new Set(['কে', 'তে', 'থেকে', 'র', 'এর', 'দিয়ে', 'জন্য', 'পর্যন্ত']);
+const SINGLE_POSTPOSITIONS = new Set([
+  'কে',
+  'তে',
+  'থেকে',
+  'র',
+  'এর',
+  'দিয়ে',
+  'জন্য',
+  'পর্যন্ত',
+  'এ', // locative "at/on/in" — marks events (ক্লিক এ = "on click")
+  'মধ্যে', // "in/within"
+]);
 
 // =============================================================================
 // Bengali Extras (not in profile)
@@ -182,16 +193,19 @@ export class BengaliTokenizer extends BaseTokenizer {
           pos++;
         }
 
-        // Check if it's a keyword (O(1) Map lookup)
-        const keywordEntry = this.lookupKeyword(word);
-        if (keywordEntry) {
-          tokens.push(
-            createToken(word, 'keyword', createPosition(startPos, pos), keywordEntry.normalized)
-          );
-        } else if (SINGLE_POSTPOSITIONS.has(word)) {
+        // Postpositions take priority — they are grammatical particles, not keywords
+        if (SINGLE_POSTPOSITIONS.has(word)) {
           tokens.push(createToken(word, 'particle', createPosition(startPos, pos)));
         } else {
-          tokens.push(createToken(word, 'identifier', createPosition(startPos, pos)));
+          // Check if it's a keyword (O(1) Map lookup)
+          const keywordEntry = this.lookupKeyword(word);
+          if (keywordEntry) {
+            tokens.push(
+              createToken(word, 'keyword', createPosition(startPos, pos), keywordEntry.normalized)
+            );
+          } else {
+            tokens.push(createToken(word, 'identifier', createPosition(startPos, pos)));
+          }
         }
         continue;
       }

@@ -228,10 +228,24 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     gulir: 'scroll',
     menggulir: 'scroll',
   },
+  // Bengali event names → English
+  bn: {
+    ক্লিক: 'click',
+    ইনপুট: 'input',
+    জমা: 'submit',
+    লোড: 'load',
+    স্ক্রোল: 'scroll',
+    রিসাইজ: 'resize',
+    ঝাপসা: 'blur',
+    ফোকাস: 'focus',
+    পরিবর্তন: 'change',
+  },
   // Quechua event names → English (loanwords with native adaptations)
   qu: {
     click: 'click',
     "ñit'iy": 'click',
+    ñitiy: 'click',
+    yaykuchiy: 'input',
     yaykuy: 'input',
     tikray: 'change',
     "t'ikray": 'change',
@@ -240,10 +254,15 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     'llave uray': 'keydown',
     'llave hawa': 'keyup',
     "q'away": 'focus',
+    qhaway: 'focus',
+    paqariy: 'blur',
     "mana q'away": 'blur',
     cargay: 'load',
+    apakuy: 'load',
     apamuy: 'load',
+    kunray: 'scroll',
     muyuy: 'scroll',
+    hatun_kay: 'resize',
   },
   // Swahili event names → English
   sw: {

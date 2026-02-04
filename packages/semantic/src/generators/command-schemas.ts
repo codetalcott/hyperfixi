@@ -1128,6 +1128,9 @@ export const transitionSchema: CommandSchema = {
       expectedTypes: ['literal'], // Only literal - CSS properties are strings, not selectors
       svoPosition: 1,
       sovPosition: 2,
+      // No marker before the CSS property name (SVO/VSO languages)
+      // SOV languages (bn, qu) use their default patient marker from profile
+      markerOverride: { en: '', ar: '', tl: '', sw: '' },
     },
     {
       role: 'goal',
@@ -1136,6 +1139,23 @@ export const transitionSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'],
       svoPosition: 2,
       sovPosition: 3,
+      // "to" preposition before goal value (same as set's patient marker)
+      markerOverride: {
+        en: 'to',
+        ar: 'إلى',
+        tl: 'sa',
+        sw: 'kwenye',
+        bn: 'তে',
+        qu: 'man',
+        es: 'a',
+        pt: 'para',
+        fr: 'à',
+        de: 'auf',
+        ja: 'に',
+        ko: '으로',
+        tr: 'e',
+        id: 'ke',
+      },
     },
     {
       role: 'destination',
