@@ -777,6 +777,46 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   abstract classifyToken(token: string): TokenKind;
 
   /**
+   * Check if current position is a property access (obj.prop) vs CSS selector (.active).
+   * Property access: no whitespace before '.', previous token is identifier/keyword/selector.
+   * Also detects standalone method calls: .identifier( pattern.
+   *
+   * Returns true if '.' was emitted as an operator token and pos should advance by 1.
+   * Returns false if this is a CSS selector and should be handled by trySelector().
+   */
+  protected tryPropertyAccess(input: string, pos: number, tokens: LanguageToken[]): boolean {
+    if (input[pos] !== '.') return false;
+
+    const lastToken = tokens[tokens.length - 1];
+    // Property access requires NO whitespace between tokens (e.g., "obj.prop")
+    const hasWhitespaceBefore = lastToken && lastToken.position.end < pos;
+    const isPropertyAccess =
+      lastToken &&
+      !hasWhitespaceBefore &&
+      (lastToken.kind === 'identifier' ||
+        lastToken.kind === 'keyword' ||
+        lastToken.kind === 'selector');
+
+    if (isPropertyAccess) {
+      tokens.push(createToken('.', 'operator', createPosition(pos, pos + 1)));
+      return true;
+    }
+
+    // Check for method call pattern at start: .identifier(
+    const methodStart = pos + 1;
+    let methodEnd = methodStart;
+    while (methodEnd < input.length && isAsciiIdentifierChar(input[methodEnd])) {
+      methodEnd++;
+    }
+    if (methodEnd < input.length && input[methodEnd] === '(') {
+      tokens.push(createToken('.', 'operator', createPosition(pos, pos + 1)));
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Initialize keyword mappings from a language profile.
    * Builds a list of native→english mappings from:
    * - profile.keywords (primary + alternatives)

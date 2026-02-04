@@ -303,7 +303,14 @@ export class EnglishTokenizer extends BaseTokenizer {
   classifyToken(token: string): TokenKind {
     // O(1) Map lookup instead of O(n) array search
     if (this.isKeyword(token)) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
+    if (
+      token.startsWith('#') ||
+      token.startsWith('.') ||
+      token.startsWith('[') ||
+      token.startsWith('*') ||
+      token.startsWith('<')
+    )
+      return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
     if (['==', '!=', '<=', '>=', '<', '>', '&&', '||', '!'].includes(token)) return 'operator';

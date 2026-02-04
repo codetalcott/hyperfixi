@@ -123,6 +123,12 @@ export class BengaliTokenizer extends BaseTokenizer {
           continue;
         }
 
+        // Check for property access (obj.prop) vs CSS selector (.active)
+        if (this.tryPropertyAccess(input, pos, tokens)) {
+          pos++;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);
@@ -248,7 +254,14 @@ export class BengaliTokenizer extends BaseTokenizer {
       return 'keyword';
     }
     if (SINGLE_POSTPOSITIONS.has(value)) return 'particle';
-    if (value.startsWith('.') || value.startsWith('#') || value.startsWith('[')) return 'selector';
+    if (
+      value.startsWith('.') ||
+      value.startsWith('#') ||
+      value.startsWith('[') ||
+      value.startsWith('*') ||
+      value.startsWith('<')
+    )
+      return 'selector';
     if (value.startsWith(':')) return 'identifier';
     if (value.startsWith('"') || value.startsWith("'")) return 'literal';
     if (/^-?\d/.test(value)) return 'literal';

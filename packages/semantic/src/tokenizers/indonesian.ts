@@ -155,6 +155,12 @@ export class IndonesianTokenizer extends BaseTokenizer {
           continue;
         }
 
+        // Check for property access (obj.prop) vs CSS selector (.active)
+        if (this.tryPropertyAccess(input, pos, tokens)) {
+          pos++;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);
@@ -227,7 +233,14 @@ export class IndonesianTokenizer extends BaseTokenizer {
     if (PREPOSITIONS.has(lower)) return 'particle';
     // O(1) Map lookup instead of O(n) array search
     if (this.isKeyword(lower)) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
+    if (
+      token.startsWith('#') ||
+      token.startsWith('.') ||
+      token.startsWith('[') ||
+      token.startsWith('*') ||
+      token.startsWith('<')
+    )
+      return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
     return 'identifier';

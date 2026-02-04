@@ -232,6 +232,12 @@ export class ChineseTokenizer extends BaseTokenizer {
           continue;
         }
 
+        // Check for property access (obj.prop) vs CSS selector (.active)
+        if (this.tryPropertyAccess(input, pos, tokens)) {
+          pos++;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);
@@ -328,6 +334,7 @@ export class ChineseTokenizer extends BaseTokenizer {
       token.startsWith('#') ||
       token.startsWith('.') ||
       token.startsWith('[') ||
+      token.startsWith('*') ||
       token.startsWith('<')
     )
       return 'selector';

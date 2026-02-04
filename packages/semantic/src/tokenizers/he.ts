@@ -216,6 +216,12 @@ export class HebrewTokenizer extends BaseTokenizer {
           continue;
         }
 
+        // Check for property access (obj.prop) vs CSS selector (.active)
+        if (this.tryPropertyAccess(input, pos, tokens)) {
+          pos++;
+          continue;
+        }
+
         const selectorToken = this.trySelector(input, pos);
         if (selectorToken) {
           tokens.push(selectorToken);
@@ -318,7 +324,14 @@ export class HebrewTokenizer extends BaseTokenizer {
   classifyToken(token: string): TokenKind {
     if (PREPOSITIONS.has(token)) return 'particle';
     if (this.isKeyword(token)) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
+    if (
+      token.startsWith('#') ||
+      token.startsWith('.') ||
+      token.startsWith('[') ||
+      token.startsWith('*') ||
+      token.startsWith('<')
+    )
+      return 'selector';
     if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
 

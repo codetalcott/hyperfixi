@@ -162,6 +162,18 @@ export class SemanticParserImpl implements ISemanticParser {
     // Extract event modifiers (.once, .debounce(), .throttle(), etc.)
     const eventModifiers = patternMatcher.extractEventModifiers(tokens);
 
+    // Extract "or" conjunction events (e.g., "click or keydown")
+    // Combines into event value string for AST builder compatibility
+    const additionalEvents = this.extractOrConjunctionEvents(tokens, language);
+    let resolvedEventValue = eventValue;
+    if (additionalEvents.length > 0 && eventValue.type === 'literal') {
+      const allEvents = [
+        String(eventValue.value),
+        ...additionalEvents.map(e => String('value' in e ? e.value : '')),
+      ];
+      resolvedEventValue = { type: 'literal', value: allEvents.join(' or ') };
+    }
+
     let body: SemanticNode[];
 
     // Check if pattern captured an action (grammar-transformed patterns)
@@ -225,7 +237,7 @@ export class SemanticParserImpl implements ISemanticParser {
       body = this.parseBodyWithClauses(tokens, commandPatterns, language);
     }
 
-    return createEventHandler(eventValue, body, eventModifiers, {
+    return createEventHandler(resolvedEventValue, body, eventModifiers, {
       sourceLanguage: language,
       patternId: match.pattern.id,
       confidence: match.confidence,
@@ -1103,6 +1115,34 @@ export class SemanticParserImpl implements ISemanticParser {
   };
 
   /**
+   * "Or" conjunction keywords across languages for multiple events.
+   * Maps lowercase keyword → true. Used to detect "click or keydown" patterns.
+   */
+  private static readonly OR_KEYWORDS = new Set([
+    'or', // EN
+    'أو', // AR
+    'o', // ES, TL
+    'ou', // PT, FR
+    'oder', // DE
+    'atau', // ID
+    'atau', // MS (same as ID)
+    '或', // ZH
+    'または', // JA
+    '또는', // KO
+    'veya', // TR
+    'অথবা', // BN
+    'utaq', // QU
+    'au', // SW
+    'або', // UK
+    'или', // RU
+    'hoặc', // VI
+    'lub', // PL
+    'או', // HE
+    'หรือ', // TH
+    'o', // IT
+  ]);
+
+  /**
    * Extract standalone event modifiers from the beginning of input.
    * Returns the modifiers (if any) and the remaining input string.
    */
@@ -1185,11 +1225,57 @@ export class SemanticParserImpl implements ISemanticParser {
   ): EventHandlerSemanticNode {
     return {
       ...node,
-      modifiers: {
-        ...node.modifiers,
+      eventModifiers: {
+        ...node.eventModifiers,
         ...modifiers,
       },
     };
+  }
+
+  /**
+   * Extract "or" conjunction events from the token stream.
+   * If the next tokens follow the pattern "or EVENT [or EVENT ...]",
+   * consume them and return the additional event values.
+   *
+   * The token stream is advanced past any consumed "or EVENT" tokens.
+   */
+  private extractOrConjunctionEvents(
+    tokens: Pick<ReturnType<typeof tokenizeInternal>, 'peek' | 'advance' | 'mark' | 'reset'>,
+    _language: string
+  ): SemanticValue[] {
+    const additionalEvents: SemanticValue[] = [];
+
+    while (true) {
+      const mark = tokens.mark();
+      const orToken = tokens.peek();
+      if (!orToken) break;
+
+      const orLower = (orToken.normalized || orToken.value).toLowerCase();
+      if (!SemanticParserImpl.OR_KEYWORDS.has(orLower)) {
+        tokens.reset(mark);
+        break;
+      }
+
+      // Consume the "or" token
+      tokens.advance();
+
+      // Next token should be the event name
+      const eventToken = tokens.peek();
+      if (!eventToken) {
+        // "or" at end of input — revert
+        tokens.reset(mark);
+        break;
+      }
+
+      // Normalize event name using shared translations
+      const eventLower = (eventToken.normalized || eventToken.value).toLowerCase();
+
+      // Accept it as an event (could be native or English event name)
+      tokens.advance();
+      additionalEvents.push({ type: 'literal', value: eventLower });
+    }
+
+    return additionalEvents;
   }
 }
 

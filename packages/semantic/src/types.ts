@@ -191,6 +191,11 @@ export interface EventHandlerSemanticNode extends SemanticNode {
   readonly body: SemanticNode[];
   readonly eventModifiers?: EventModifiers;
   /**
+   * Additional events for multi-event handlers (e.g., "on click or keydown").
+   * The primary event is in the 'event' role; these are the additional "or" events.
+   */
+  readonly additionalEvents?: readonly SemanticValue[];
+  /**
    * Event parameter names for destructuring.
    * E.g., for "on click(clientX, clientY)", this would be ['clientX', 'clientY']
    */
@@ -588,7 +593,8 @@ export function createEventHandler(
   body: SemanticNode[],
   modifiers?: EventModifiers,
   metadata?: SemanticMetadata,
-  parameterNames?: string[]
+  parameterNames?: string[],
+  additionalEvents?: SemanticValue[]
 ): EventHandlerSemanticNode {
   const roles = new Map<SemanticRole, SemanticValue>();
   roles.set('event', event);
@@ -608,6 +614,9 @@ export function createEventHandler(
   }
   if (parameterNames !== undefined && parameterNames.length > 0) {
     (node as { parameterNames?: readonly string[] }).parameterNames = parameterNames;
+  }
+  if (additionalEvents !== undefined && additionalEvents.length > 0) {
+    (node as { additionalEvents?: readonly SemanticValue[] }).additionalEvents = additionalEvents;
   }
 
   return node;
