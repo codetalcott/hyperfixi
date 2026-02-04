@@ -18,8 +18,35 @@
     "./browser/lite": {
       "default": "./dist/hyperscript-i18n-lite.global.js"
     },
+    "./browser/ar": {
+      "default": "./dist/hyperscript-i18n-ar.global.js"
+    },
+    "./browser/bn": {
+      "default": "./dist/hyperscript-i18n-bn.global.js"
+    },
+    "./browser/de": {
+      "default": "./dist/hyperscript-i18n-de.global.js"
+    },
+    "./browser/en": {
+      "default": "./dist/hyperscript-i18n-en.global.js"
+    },
     "./browser/es": {
       "default": "./dist/hyperscript-i18n-es.global.js"
+    },
+    "./browser/fr": {
+      "default": "./dist/hyperscript-i18n-fr.global.js"
+    },
+    "./browser/he": {
+      "default": "./dist/hyperscript-i18n-he.global.js"
+    },
+    "./browser/hi": {
+      "default": "./dist/hyperscript-i18n-hi.global.js"
+    },
+    "./browser/id": {
+      "default": "./dist/hyperscript-i18n-id.global.js"
+    },
+    "./browser/it": {
+      "default": "./dist/hyperscript-i18n-it.global.js"
     },
     "./browser/ja": {
       "default": "./dist/hyperscript-i18n-ja.global.js"
@@ -27,32 +54,56 @@
     "./browser/ko": {
       "default": "./dist/hyperscript-i18n-ko.global.js"
     },
-    "./browser/zh": {
-      "default": "./dist/hyperscript-i18n-zh.global.js"
+    "./browser/ms": {
+      "default": "./dist/hyperscript-i18n-ms.global.js"
     },
-    "./browser/fr": {
-      "default": "./dist/hyperscript-i18n-fr.global.js"
-    },
-    "./browser/de": {
-      "default": "./dist/hyperscript-i18n-de.global.js"
+    "./browser/pl": {
+      "default": "./dist/hyperscript-i18n-pl.global.js"
     },
     "./browser/pt": {
       "default": "./dist/hyperscript-i18n-pt.global.js"
     },
-    "./browser/ar": {
-      "default": "./dist/hyperscript-i18n-ar.global.js"
+    "./browser/qu": {
+      "default": "./dist/hyperscript-i18n-qu.global.js"
+    },
+    "./browser/ru": {
+      "default": "./dist/hyperscript-i18n-ru.global.js"
+    },
+    "./browser/sw": {
+      "default": "./dist/hyperscript-i18n-sw.global.js"
+    },
+    "./browser/th": {
+      "default": "./dist/hyperscript-i18n-th.global.js"
+    },
+    "./browser/tl": {
+      "default": "./dist/hyperscript-i18n-tl.global.js"
     },
     "./browser/tr": {
       "default": "./dist/hyperscript-i18n-tr.global.js"
     },
-    "./browser/id": {
-      "default": "./dist/hyperscript-i18n-id.global.js"
+    "./browser/uk": {
+      "default": "./dist/hyperscript-i18n-uk.global.js"
+    },
+    "./browser/vi": {
+      "default": "./dist/hyperscript-i18n-vi.global.js"
+    },
+    "./browser/zh": {
+      "default": "./dist/hyperscript-i18n-zh.global.js"
     },
     "./browser/western": {
       "default": "./dist/hyperscript-i18n-western.global.js"
     },
     "./browser/east-asian": {
       "default": "./dist/hyperscript-i18n-east-asian.global.js"
+    },
+    "./browser/south-asian": {
+      "default": "./dist/hyperscript-i18n-south-asian.global.js"
+    },
+    "./browser/southeast-asian": {
+      "default": "./dist/hyperscript-i18n-southeast-asian.global.js"
+    },
+    "./browser/slavic": {
+      "default": "./dist/hyperscript-i18n-slavic.global.js"
     }
   },
   "scripts": {

@@ -1,0 +1,43 @@
+# Test files within source (src/ is published for TypeScript support)
+*.test.ts
+*.spec.ts
+*.test.js
+*.spec.js
+src/**/*.test.ts
+src/**/*.spec.ts
+__tests__/
+
+# Build artifacts
+tsconfig.tsbuildinfo
+tsconfig.*.tsbuildinfo
+
+# Development files
+.syncthing*
+*.tmp
+*.log
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Test outputs
+coverage/
+.vitest/
+
+# Documentation (kept in repo, not in package)
+docs/
+*.md
+!README.md
+
+# Config files
+.eslintrc*
+.prettierrc*
+vitest.config.*
+tsup.config.*
+
+# Scripts (build-time only)
+scripts/
