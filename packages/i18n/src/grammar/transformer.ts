@@ -693,7 +693,28 @@ function parseEventHandler(tokens: string[], profile: LanguageProfile): ParsedSt
     startIndex++;
   }
 
-  // Next token is typically the action
+  // Check for event source modifier before the action (e.g., "from #source" in "on input from #firstName set ...")
+  // Only handle 'from' (event source) — other modifiers like circumfix markers (Chinese 时) should not be consumed.
+  if (tokens[startIndex] && tokens[startIndex].toLowerCase() === 'from' && tokens[startIndex + 1]) {
+    startIndex++; // skip 'from'
+    // Collect source value tokens until a command keyword is found
+    const sourceValue: string[] = [];
+    while (tokens[startIndex]) {
+      if (COMMAND_KEYWORDS.has(tokens[startIndex].toLowerCase())) break;
+      sourceValue.push(tokens[startIndex]);
+      startIndex++;
+    }
+    if (sourceValue.length > 0) {
+      const value = sourceValue.join(' ');
+      roles.set('source', {
+        role: 'source',
+        value,
+        isSelector: /^[#.<@]/.test(value),
+      });
+    }
+  }
+
+  // Next token is the action (command verb)
   if (tokens[startIndex]) {
     roles.set('action', {
       role: 'action',
