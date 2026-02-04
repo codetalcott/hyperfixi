@@ -292,6 +292,17 @@ export {
   generateAllPatterns,
   getGeneratorSummary,
   validateLanguageKeywords,
+
+  // Schema validator
+  type SchemaValidationItem,
+  type SchemaValidationSeverity,
+  type SchemaValidation,
+  type SchemaValidationResult,
+  SchemaErrorCodes,
+  validateCommandSchema,
+  validateAllSchemas,
+  formatValidationResults,
+  getValidationStats,
 } from './generators';
 
 // =============================================================================
