@@ -45,6 +45,12 @@ npm run build --workspaces --if-present 2>&1 | grep -E "(✔|✓|Built|Error)" |
 echo "   ✅ Packages built"
 echo ""
 
+# Build browser bundles (not included in workspace build)
+echo "2b️⃣ Building browser bundles..."
+npm run build:browser --prefix packages/core 2>&1 | grep -E "(✓|✗|Success|Error|Summary)" || true
+echo "   ✅ Browser bundles built"
+echo ""
+
 # Type check
 echo "3️⃣  Type checking..."
 npm run typecheck
@@ -62,10 +68,12 @@ fi
 # Verify browser bundles exist
 echo "5️⃣  Verifying browser bundles..."
 BUNDLES=(
-  "packages/core/dist/hyperfixi-browser.js"
-  "packages/core/dist/hyperfixi-lite.js"
-  "packages/core/dist/hyperfixi-hybrid-complete.js"
-  "packages/i18n/dist/hyperfixi-i18n.min.js"
+  "packages/core/dist/lokascript-browser.js"
+  "packages/core/dist/lokascript-lite.js"
+  "packages/core/dist/lokascript-lite-plus.js"
+  "packages/core/dist/lokascript-hybrid-complete.js"
+  "packages/core/dist/lokascript-hybrid-hx.js"
+  "packages/i18n/dist/lokascript-i18n.min.js"
   "packages/semantic/dist/browser.global.js"
 )
 
