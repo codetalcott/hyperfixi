@@ -144,7 +144,7 @@ export const turkishProfile: LanguageProfile = {
     default: { primary: 'varsayılan', normalized: 'default' },
     init: { primary: 'başlat', normalized: 'init' },
     behavior: { primary: 'davranış', normalized: 'behavior' },
-    install: { primary: 'yükle', normalized: 'install' },
+    install: { primary: 'yükle', alternatives: ['kur', 'yüklemek'], normalized: 'install' },
     measure: { primary: 'ölç', normalized: 'measure' },
     // Modifiers
     into: { primary: 'içine', normalized: 'into' },
