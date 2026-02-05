@@ -1,40 +1,30 @@
 /**
- * LokaScript VS Code Extension
+ * Hyperscript Language Support
  *
- * Provides language support for hyperscript via the LokaScript Language Server.
+ * Provides language support for _hyperscript and LokaScript.
  */
 
-import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
-  TransportKind,
-} from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 let client: LanguageClient | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
-  // Path to the language server module
-  const serverModule = context.asAbsolutePath(
-    path.join('..', 'language-server', 'dist', 'server.js')
-  );
+  // Path to the language server module (bundled into extension's dist folder)
+  const serverModule = context.asAbsolutePath('dist/server.mjs');
 
-  // If the extension is launched in debug mode, use the development server
-  const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
-
-  // Server options - run the server as a module
+  // Use command transport (not module) because the server is ESM with top-level await.
+  // Spawning `node` directly supports ESM, while Electron's fork() may not.
+  // The .mjs extension ensures Node treats it as ESM regardless of package.json.
   const serverOptions: ServerOptions = {
     run: {
-      module: serverModule,
-      transport: TransportKind.stdio,
+      command: 'node',
+      args: [serverModule, '--stdio'],
     },
     debug: {
-      module: serverModule,
-      transport: TransportKind.stdio,
-      options: debugOptions,
+      command: 'node',
+      args: ['--nolazy', '--inspect=6009', serverModule, '--stdio'],
     },
   };
 
@@ -58,7 +48,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // Create the language client and start it
   client = new LanguageClient(
     'lokascript',
-    'LokaScript Language Server',
+    'Hyperscript Language Server',
     serverOptions,
     clientOptions
   );
@@ -72,7 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (client) {
         await client.stop();
         await client.start();
-        vscode.window.showInformationMessage('LokaScript Language Server restarted');
+        vscode.window.showInformationMessage('Hyperscript Language Server restarted');
       }
     })
   );
@@ -83,7 +73,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (e.affectsConfiguration('lokascript')) {
         // The server will pick up configuration changes via the standard LSP mechanism
         vscode.window.showInformationMessage(
-          'LokaScript configuration changed. Some settings may require a server restart.'
+          'Hyperscript configuration changed. Some settings may require a server restart.'
         );
       }
     })

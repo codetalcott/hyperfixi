@@ -1,0 +1,17 @@
+# Source files (we ship compiled dist/)
+src/**
+scripts/**
+test-files/**
+
+# TypeScript config
+tsconfig.json
+
+# Development files
+*.map
+.gitignore
+
+# Node modules - we bundle everything we need
+node_modules/**
+
+# npm workspace symlinks break vsce packaging
+../**

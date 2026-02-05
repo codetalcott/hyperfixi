@@ -1,7 +1,7 @@
 {
   "name": "lokascript-vscode",
-  "displayName": "LokaScript",
-  "description": "Language support for LokaScript/hyperscript with 21 language support",
+  "displayName": "Hyperscript Language Support",
+  "description": "Language support for _hyperscript and LokaScript — syntax highlighting, completions, hover docs, diagnostics, and 21 language i18n",
   "version": "1.0.0",
   "publisher": "lokascript",
   "engines": {
@@ -14,6 +14,7 @@
   ],
   "keywords": [
     "hyperscript",
+    "_hyperscript",
     "lokascript",
     "htmx",
     "html",
@@ -61,7 +62,7 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "LokaScript",
+      "title": "Hyperscript",
       "properties": {
         "lokascript.language": {
           "type": "string",
@@ -87,13 +88,14 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run generate:grammar && npm run compile",
-    "compile": "tsup src/extension.ts --format cjs --external vscode --dts",
-    "watch": "tsup src/extension.ts --format cjs --external vscode --watch",
+    "vscode:prepublish": "npm run generate:grammar && npm run compile && npm run bundle:server",
+    "compile": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode",
+    "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
     "generate:grammar": "npx tsx scripts/generate-grammar.ts",
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@lokascript/semantic --external:@lokascript/ast-toolkit --external:@lokascript/core --alias:@lokascript/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
