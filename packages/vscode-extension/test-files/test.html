@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LokaScript Extension Test</title>
+</head>
+<body>
+  <!-- Test completions: type "on " after the underscore and trigger completions -->
+  <button _="on click toggle .active">Toggle Active</button>
+
+  <!-- Test hover: hover over "toggle" to see documentation -->
+  <button _="on mouseenter add .highlight">Highlight on Hover</button>
+
+  <!-- Test diagnostics: this has an unclosed quote -->
+  <button _="put 'hello into #msg">Has Error</button>
+
+  <!-- Test multilingual -->
+  <button _="al hacer clic alternar .active">Spanish</button>
+
+  <!-- Test symbols: should appear in outline -->
+  <div _="
+    on click toggle .open
+    on mouseenter add .hover
+  ">Multiple Events</div>
+
+  <script type="text/hyperscript">
+    behavior Draggable
+      on mousedown
+        add .dragging to me
+      on mouseup
+        remove .dragging from me
+    end
+
+    def greet(name)
+      log 'Hello ' + name
+    end
+  </script>
+</body>
+</html>

@@ -44,6 +44,7 @@ jobs:
       # 6. mcp-server (depends on semantic, patterns-reference, ast-toolkit optional)
       # 7. developer-tools
       # 8. vite-plugin (depends on core)
+      # 9. language-server (depends on semantic, core, ast-toolkit - all optional)
       - name: Build semantic package
         run: npm run build --prefix packages/semantic
 
@@ -70,6 +71,9 @@ jobs:
 
       - name: Build vite-plugin package
         run: npm run build --prefix packages/vite-plugin
+
+      - name: Build language-server package
+        run: npm run build --prefix packages/language-server
 
       - name: Build all browser bundles
         run: npm run build:browser --prefix packages/core
@@ -99,6 +103,7 @@ jobs:
             packages/mcp-server/dist/
             packages/developer-tools/dist/
             packages/vite-plugin/dist/
+            packages/language-server/dist/
           retention-days: 1
 
   # ============================================
@@ -294,6 +299,9 @@ jobs:
 
       - name: Test mcp-server
         run: npm test --prefix packages/mcp-server
+
+      - name: Test language-server
+        run: npm test --prefix packages/language-server -- --run
 
   # ============================================
   # Job 5: Coverage Report
