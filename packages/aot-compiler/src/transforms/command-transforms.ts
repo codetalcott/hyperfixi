@@ -17,7 +17,12 @@ import type {
   ForEachNode,
   WhileNode,
 } from '../types/aot-types.js';
-import { ExpressionCodegen, sanitizeClassName, sanitizeSelector, sanitizeIdentifier } from './expression-transforms.js';
+import {
+  ExpressionCodegen,
+  sanitizeClassName,
+  sanitizeSelector,
+  sanitizeIdentifier,
+} from './expression-transforms.js';
 
 // =============================================================================
 // COMMAND CODEGEN INTERFACE
@@ -48,9 +53,7 @@ class ToggleCodegen implements CommandCodegen {
     const args = node.args ?? [];
     if (args.length === 0) return null;
 
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     const arg = args[0];
 
@@ -112,9 +115,7 @@ class AddCodegen implements CommandCodegen {
     const args = node.args ?? [];
     if (args.length === 0) return null;
 
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     const arg = args[0];
 
@@ -143,7 +144,12 @@ class AddCodegen implements CommandCodegen {
 
     // HTML element creation: <div.class/>
     if (arg.type === 'htmlLiteral' || (arg as { tag?: string }).tag) {
-      const tagNode = arg as { tag?: string; classes?: string[]; id?: string; attributes?: Record<string, string> };
+      const tagNode = arg as {
+        tag?: string;
+        classes?: string[];
+        id?: string;
+        attributes?: Record<string, string>;
+      };
       const tag = tagNode.tag ?? 'div';
       const classes = tagNode.classes ?? [];
       const id = tagNode.id;
@@ -181,9 +187,7 @@ class RemoveCodegen implements CommandCodegen {
 
     // No args = remove the element itself
     if (args.length === 0) {
-      const target = node.target
-        ? ctx.generateExpression(node.target)
-        : '_ctx.me';
+      const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
       return {
         code: `${target}.remove()`,
         async: false,
@@ -191,9 +195,7 @@ class RemoveCodegen implements CommandCodegen {
       };
     }
 
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     const arg = args[0];
 
@@ -260,8 +262,8 @@ class SetCodegen implements CommandCodegen {
 
     // Property assignment: element's property
     if (targetNode.type === 'possessive') {
-      const obj = ctx.generateExpression((targetNode as { object: ASTNode }).object);
-      const prop = (targetNode as { property: string }).property;
+      const obj = ctx.generateExpression((targetNode as unknown as { object: ASTNode }).object);
+      const prop = (targetNode as unknown as { property: string }).property;
 
       // Style property
       if (prop.startsWith('*')) {
@@ -315,9 +317,7 @@ class PutCodegen implements CommandCodegen {
     if (args.length === 0) return null;
 
     const content = ctx.generateExpression(args[0]);
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     const modifier = (node.modifiers as { position?: string })?.position ?? 'into';
 
@@ -371,9 +371,7 @@ class ShowCodegen implements CommandCodegen {
   readonly command = 'show';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     return {
       code: `${target}.style.display = ''`,
@@ -390,9 +388,7 @@ class HideCodegen implements CommandCodegen {
   readonly command = 'hide';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     return {
       code: `${target}.style.display = 'none'`,
@@ -409,9 +405,7 @@ class FocusCodegen implements CommandCodegen {
   readonly command = 'focus';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     return {
       code: `${target}.focus()`,
@@ -428,9 +422,7 @@ class BlurCodegen implements CommandCodegen {
   readonly command = 'blur';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
     return {
       code: `${target}.blur()`,
@@ -472,7 +464,7 @@ class WaitCodegen implements CommandCodegen {
 
     // Duration wait: wait 100ms
     if (arg.type === 'literal') {
-      const value = (arg as { value: unknown }).value;
+      const value = (arg as unknown as { value: unknown }).value;
       if (typeof value === 'number') {
         ctx.requireHelper('wait');
         return {
@@ -557,13 +549,9 @@ class SendCodegen implements CommandCodegen {
     if (args.length === 0) return null;
 
     const eventName = ctx.generateExpression(args[0]);
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
-    const detail = args.length > 1
-      ? ctx.generateExpression(args[1])
-      : 'undefined';
+    const detail = args.length > 1 ? ctx.generateExpression(args[1]) : 'undefined';
 
     ctx.requireHelper('send');
     return {
@@ -742,13 +730,9 @@ class ScrollCodegen implements CommandCodegen {
   readonly command = 'scroll';
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
-    const target = node.target
-      ? ctx.generateExpression(node.target)
-      : '_ctx.me';
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
 
-    const behavior = (node.modifiers as { smooth?: boolean })?.smooth
-      ? "'smooth'"
-      : "'auto'";
+    const behavior = (node.modifiers as { smooth?: boolean })?.smooth ? "'smooth'" : "'auto'";
 
     return {
       code: `${target}.scrollIntoView({ behavior: ${behavior} })`,
@@ -764,7 +748,7 @@ class ScrollCodegen implements CommandCodegen {
 class TakeCodegen implements CommandCodegen {
   readonly command = 'take';
 
-  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+  generate(node: CommandNode, _ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
     if (args.length === 0) return null;
 
@@ -793,7 +777,11 @@ class TakeCodegen implements CommandCodegen {
 /**
  * Generate code for if/else statements.
  */
-export function generateIf(node: IfNode, ctx: CodegenContext, generateBody: (nodes: ASTNode[]) => string): string {
+export function generateIf(
+  node: IfNode,
+  ctx: CodegenContext,
+  generateBody: (nodes: ASTNode[]) => string
+): string {
   const exprCodegen = new ExpressionCodegen(ctx);
   const condition = exprCodegen.generate(node.condition);
   const thenBody = generateBody(node.thenBranch);
@@ -821,15 +809,18 @@ export function generateIf(node: IfNode, ctx: CodegenContext, generateBody: (nod
 /**
  * Generate code for repeat loops.
  */
-export function generateRepeat(node: RepeatNode, ctx: CodegenContext, generateBody: (nodes: ASTNode[]) => string): string {
+export function generateRepeat(
+  node: RepeatNode,
+  ctx: CodegenContext,
+  generateBody: (nodes: ASTNode[]) => string
+): string {
   const exprCodegen = new ExpressionCodegen(ctx);
   const body = generateBody(node.body);
 
   // Fixed count: repeat 5 times
   if (node.count !== undefined) {
-    const count = typeof node.count === 'number'
-      ? String(node.count)
-      : exprCodegen.generate(node.count);
+    const count =
+      typeof node.count === 'number' ? String(node.count) : exprCodegen.generate(node.count);
 
     return `for (let _i = 0; _i < ${count}; _i++) {
   _ctx.locals.set('index', _i);
@@ -850,7 +841,11 @@ ${body}
 /**
  * Generate code for for-each loops.
  */
-export function generateForEach(node: ForEachNode, ctx: CodegenContext, generateBody: (nodes: ASTNode[]) => string): string {
+export function generateForEach(
+  node: ForEachNode,
+  ctx: CodegenContext,
+  generateBody: (nodes: ASTNode[]) => string
+): string {
   const exprCodegen = new ExpressionCodegen(ctx);
   const collection = exprCodegen.generate(node.collection);
   const itemName = sanitizeIdentifier(node.itemName);
@@ -871,7 +866,11 @@ ${body}
 /**
  * Generate code for while loops.
  */
-export function generateWhile(node: WhileNode, ctx: CodegenContext, generateBody: (nodes: ASTNode[]) => string): string {
+export function generateWhile(
+  node: WhileNode,
+  ctx: CodegenContext,
+  generateBody: (nodes: ASTNode[]) => string
+): string {
   const exprCodegen = new ExpressionCodegen(ctx);
   const condition = exprCodegen.generate(node.condition);
   const body = generateBody(node.body);
@@ -914,7 +913,10 @@ export const commandCodegens = new Map<string, CommandCodegen>([
 /**
  * Generate code for a command.
  */
-export function generateCommand(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+export function generateCommand(
+  node: CommandNode,
+  ctx: CodegenContext
+): GeneratedExpression | null {
   const codegen = commandCodegens.get(node.name);
   if (!codegen) {
     return null;

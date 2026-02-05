@@ -13,8 +13,8 @@ import type {
   EventSource,
   EventSourceSubscription,
   EventSourceSubscribeOptions,
+  ExecutionContext,
 } from '@lokascript/core/registry';
-import type { ExecutionContext } from '@lokascript/core';
 import type {
   ServerEventPayload,
   ServerRequest,
@@ -350,7 +350,7 @@ export function getDefaultRequestEventSource(): ReturnType<typeof createRequestE
  */
 export function resetDefaultRequestEventSource(): void {
   if (defaultSource) {
-    defaultSource.destroy();
+    defaultSource.destroy?.();
     defaultSource = null;
   }
 }

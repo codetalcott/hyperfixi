@@ -18,8 +18,14 @@ import type {
   ForEachNode,
   WhileNode,
 } from '../types/aot-types.js';
-import { ExpressionCodegen, sanitizeSelector } from './expression-transforms.js';
-import { generateCommand, generateIf, generateRepeat, generateForEach, generateWhile } from './command-transforms.js';
+import { sanitizeSelector } from './expression-transforms.js';
+import {
+  generateCommand,
+  generateIf,
+  generateRepeat,
+  generateForEach,
+  generateWhile,
+} from './command-transforms.js';
 
 // =============================================================================
 // EVENT HANDLER CODEGEN
@@ -56,19 +62,10 @@ export class EventHandlerCodegen {
     const modifierCode = this.generateModifierCode(modifiers);
 
     // Generate the complete handler function
-    const handlerCode = this.generateHandlerFunction(
-      eventName,
-      bodyCode,
-      modifierCode,
-      isAsync
-    );
+    const handlerCode = this.generateHandlerFunction(eventName, bodyCode, modifierCode, isAsync);
 
     // Generate binding code
-    const bindingCode = this.generateBindingCode(
-      eventName,
-      modifiers,
-      listenerOptions
-    );
+    const bindingCode = this.generateBindingCode(eventName, modifiers, listenerOptions);
 
     // Generate cleanup code
     const cleanup = this.generateCleanupCode(eventName, modifiers);
@@ -114,16 +111,16 @@ export class EventHandlerCodegen {
         return this.generateCommandCode(node as CommandNode);
 
       case 'if':
-        return generateIf(node as IfNode, this.ctx, (nodes) => this.generateBody(nodes));
+        return generateIf(node as IfNode, this.ctx, nodes => this.generateBody(nodes));
 
       case 'repeat':
-        return generateRepeat(node as RepeatNode, this.ctx, (nodes) => this.generateBody(nodes));
+        return generateRepeat(node as RepeatNode, this.ctx, nodes => this.generateBody(nodes));
 
       case 'foreach':
-        return generateForEach(node as ForEachNode, this.ctx, (nodes) => this.generateBody(nodes));
+        return generateForEach(node as ForEachNode, this.ctx, nodes => this.generateBody(nodes));
 
       case 'while':
-        return generateWhile(node as WhileNode, this.ctx, (nodes) => this.generateBody(nodes));
+        return generateWhile(node as WhileNode, this.ctx, nodes => this.generateBody(nodes));
 
       default:
         // Unknown node type
@@ -189,7 +186,7 @@ export class EventHandlerCodegen {
    * Generate the complete handler function.
    */
   private generateHandlerFunction(
-    eventName: string,
+    _eventName: string,
     bodyCode: string,
     modifierCode: string,
     isAsync: boolean
@@ -264,9 +261,8 @@ export class EventHandlerCodegen {
 
     // Build options argument
     const optionsKeys = Object.keys(options).filter(k => (options as Record<string, unknown>)[k]);
-    const optionsArg = optionsKeys.length > 0
-      ? `, { ${optionsKeys.map(k => `${k}: true`).join(', ')} }`
-      : '';
+    const optionsArg =
+      optionsKeys.length > 0 ? `, { ${optionsKeys.map(k => `${k}: true`).join(', ')} }` : '';
 
     // Event delegation
     if (modifiers.from) {
@@ -346,7 +342,12 @@ export function generateEventHandler(
  * Generate binding code for multiple handlers.
  */
 export function generateBindings(
-  handlers: Array<{ selector: string; eventName: string; handlerId: string; options?: AddEventListenerOptions }>
+  handlers: Array<{
+    selector: string;
+    eventName: string;
+    handlerId: string;
+    options?: AddEventListenerOptions;
+  }>
 ): string {
   const bindings: string[] = [];
 
@@ -357,9 +358,8 @@ export function generateBindings(
     const optionsKeys = options
       ? Object.keys(options).filter(k => (options as Record<string, unknown>)[k])
       : [];
-    const optionsArg = optionsKeys.length > 0
-      ? `, { ${optionsKeys.map(k => `${k}: true`).join(', ')} }`
-      : '';
+    const optionsArg =
+      optionsKeys.length > 0 ? `, { ${optionsKeys.map(k => `${k}: true`).join(', ')} }` : '';
 
     bindings.push(
       `document.querySelectorAll('${sanitized}').forEach(_el => _el.addEventListener(${event}, _handler_${handlerId}${optionsArg}));`
@@ -373,7 +373,12 @@ export function generateBindings(
  * Generate initialization code that runs when DOM is ready.
  */
 export function generateInitialization(
-  handlers: Array<{ selector: string; eventName: string; handlerId: string; options?: AddEventListenerOptions }>
+  handlers: Array<{
+    selector: string;
+    eventName: string;
+    handlerId: string;
+    options?: AddEventListenerOptions;
+  }>
 ): string {
   const bindings = generateBindings(handlers);
 

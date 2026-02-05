@@ -9,7 +9,7 @@ import { glob } from 'fast-glob';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { AOTCompiler } from '../compiler/aot-compiler.js';
-import type { ExtractedScript, AnalysisResult } from '../types/aot-types.js';
+import type { ExtractedScript } from '../types/aot-types.js';
 
 // =============================================================================
 // CLI SETUP
@@ -38,119 +38,126 @@ program
   .option('--optimization <level>', 'Optimization level (0|1|2)', '2')
   .option('--watch', 'Watch for changes')
   .option('--debug', 'Enable debug output')
-  .action(async (input: string, options: {
-    output: string;
-    format: 'esm' | 'cjs' | 'iife';
-    minify?: boolean;
-    sourcemap?: boolean;
-    language: string;
-    optimization: string;
-    watch?: boolean;
-    debug?: boolean;
-  }) => {
-    const compiler = new AOTCompiler();
-
-    const compileOptions = {
-      language: options.language,
-      debug: options.debug,
-      optimizationLevel: parseInt(options.optimization, 10) as 0 | 1 | 2,
-      codegen: {
-        mode: options.format,
-        minify: options.minify ?? false,
-        sourceMaps: options.sourcemap ?? false,
-      },
-    };
-
-    async function compileFiles(): Promise<void> {
-      const files = await glob(input, { absolute: true });
-
-      if (files.length === 0) {
-        console.log('No files matched the pattern:', input);
-        return;
+  .action(
+    async (
+      input: string,
+      options: {
+        output: string;
+        format: 'esm' | 'cjs' | 'iife';
+        minify?: boolean;
+        sourcemap?: boolean;
+        language: string;
+        optimization: string;
+        watch?: boolean;
+        debug?: boolean;
       }
+    ) => {
+      const compiler = new AOTCompiler();
 
-      console.log(`Compiling ${files.length} file(s)...`);
+      const compileOptions = {
+        language: options.language,
+        debug: options.debug,
+        optimizationLevel: parseInt(options.optimization, 10) as 0 | 1 | 2,
+        codegen: {
+          mode: options.format,
+          minify: options.minify ?? false,
+          sourceMaps: options.sourcemap ?? false,
+        },
+      };
 
-      let totalScripts = 0;
-      let totalCompiled = 0;
-      let totalFallbacks = 0;
+      async function compileFiles(): Promise<void> {
+        const files = await glob(input, { absolute: true });
 
-      for (const file of files) {
-        const source = await fs.readFile(file, 'utf-8');
-        const scripts = compiler.extract(source, file);
-
-        if (scripts.length === 0) {
-          if (options.debug) {
-            console.log(`  ${path.relative(process.cwd(), file)}: no hyperscript found`);
-          }
-          continue;
+        if (files.length === 0) {
+          console.log('No files matched the pattern:', input);
+          return;
         }
 
-        totalScripts += scripts.length;
+        console.log(`Compiling ${files.length} file(s)...`);
 
-        const result = compiler.compile(scripts, compileOptions);
+        let totalScripts = 0;
+        let totalCompiled = 0;
+        let totalFallbacks = 0;
 
-        totalCompiled += result.stats.compiled;
-        totalFallbacks += result.stats.fallbacks;
+        for (const file of files) {
+          const source = await fs.readFile(file, 'utf-8');
+          const scripts = compiler.extract(source, file);
 
-        // Determine output path
-        const relativePath = path.relative(process.cwd(), file);
-        const outPath = path.join(
-          options.output,
-          relativePath.replace(/\.(html|vue|svelte|jsx|tsx)$/, '.hs.js')
-        );
-
-        // Write output
-        await fs.mkdir(path.dirname(outPath), { recursive: true });
-        await fs.writeFile(outPath, result.code);
-
-        console.log(
-          `  ${relativePath} → ${path.relative(process.cwd(), outPath)} ` +
-          `(${result.stats.compiled}/${scripts.length} compiled, ${result.code.length} bytes)`
-        );
-
-        // Report fallbacks
-        if (result.fallbacks.length > 0 && options.debug) {
-          for (const fallback of result.fallbacks) {
-            console.log(`    ⚠ Fallback: "${fallback.script.slice(0, 40)}..." - ${fallback.reason}`);
+          if (scripts.length === 0) {
+            if (options.debug) {
+              console.log(`  ${path.relative(process.cwd(), file)}: no hyperscript found`);
+            }
+            continue;
           }
+
+          totalScripts += scripts.length;
+
+          const result = compiler.compile(scripts, compileOptions);
+
+          totalCompiled += result.stats.compiled;
+          totalFallbacks += result.stats.fallbacks;
+
+          // Determine output path
+          const relativePath = path.relative(process.cwd(), file);
+          const outPath = path.join(
+            options.output,
+            relativePath.replace(/\.(html|vue|svelte|jsx|tsx)$/, '.hs.js')
+          );
+
+          // Write output
+          await fs.mkdir(path.dirname(outPath), { recursive: true });
+          await fs.writeFile(outPath, result.code);
+
+          console.log(
+            `  ${relativePath} → ${path.relative(process.cwd(), outPath)} ` +
+              `(${result.stats.compiled}/${scripts.length} compiled, ${result.code.length} bytes)`
+          );
+
+          // Report fallbacks
+          if (result.fallbacks.length > 0 && options.debug) {
+            for (const fallback of result.fallbacks) {
+              console.log(
+                `    ⚠ Fallback: "${fallback.script.slice(0, 40)}..." - ${fallback.reason}`
+              );
+            }
+          }
+        }
+
+        console.log('');
+        console.log(`Summary: ${totalCompiled}/${totalScripts} scripts compiled`);
+        if (totalFallbacks > 0) {
+          console.log(`         ${totalFallbacks} scripts need runtime fallback`);
         }
       }
 
-      console.log('');
-      console.log(`Summary: ${totalCompiled}/${totalScripts} scripts compiled`);
-      if (totalFallbacks > 0) {
-        console.log(`         ${totalFallbacks} scripts need runtime fallback`);
+      await compileFiles();
+
+      // Watch mode
+      if (options.watch) {
+        console.log('\nWatching for changes...');
+        const chokidar = await import('chokidar').catch(() => null);
+
+        if (!chokidar) {
+          console.error('Watch mode requires chokidar. Install with: npm install chokidar');
+          process.exit(1);
+        }
+
+        const watcher = chokidar.watch(input, { ignoreInitial: true });
+
+        watcher.on('change', async (filePath: string) => {
+          console.log(`\nFile changed: ${filePath}`);
+          compiler.reset();
+          await compileFiles();
+        });
+
+        watcher.on('add', async (filePath: string) => {
+          console.log(`\nFile added: ${filePath}`);
+          compiler.reset();
+          await compileFiles();
+        });
       }
     }
-
-    await compileFiles();
-
-    // Watch mode
-    if (options.watch) {
-      console.log('\nWatching for changes...');
-      const chokidar = await import('chokidar').catch(() => null);
-
-      if (!chokidar) {
-        console.error('Watch mode requires chokidar. Install with: npm install chokidar');
-        process.exit(1);
-      }
-
-      const watcher = chokidar.watch(input, { ignoreInitial: true });
-
-      watcher.on('change', async (filePath: string) => {
-        console.log(`\nFile changed: ${filePath}`);
-        compiler.reset();
-        await compileFiles();
-      });
-
-      watcher.on('add', async (filePath: string) => {
-        console.log(`\nFile added: ${filePath}`);
-        compiler.reset();
-        await compileFiles();
-      });
-    }
-  });
+  );
 
 // =============================================================================
 // ANALYZE COMMAND
@@ -197,7 +204,10 @@ program
         for (const script of scripts) {
           const ast = compiler.parse(script.code);
           if (!ast) {
-            analysis.errors.push({ file, error: `Failed to parse: ${script.code.slice(0, 50)}...` });
+            analysis.errors.push({
+              file,
+              error: `Failed to parse: ${script.code.slice(0, 50)}...`,
+            });
             continue;
           }
 
@@ -229,16 +239,22 @@ program
     }
 
     if (options.json) {
-      console.log(JSON.stringify({
-        ...analysis,
-        commands: Array.from(analysis.commands),
-        events: Array.from(analysis.events),
-        selectors: Array.from(analysis.selectors),
-        variables: {
-          locals: Array.from(analysis.variables.locals),
-          globals: Array.from(analysis.variables.globals),
-        },
-      }, null, 2));
+      console.log(
+        JSON.stringify(
+          {
+            ...analysis,
+            commands: Array.from(analysis.commands),
+            events: Array.from(analysis.events),
+            selectors: Array.from(analysis.selectors),
+            variables: {
+              locals: Array.from(analysis.variables.locals),
+              globals: Array.from(analysis.variables.globals),
+            },
+          },
+          null,
+          2
+        )
+      );
     } else {
       console.log('\nAnalysis Results:');
       console.log(`  Files scanned: ${analysis.files}`);
@@ -249,9 +265,11 @@ program
       if (analysis.selectors.size > 0) {
         console.log(`  Selectors: ${analysis.selectors.size} unique`);
         if (options.verbose) {
-          Array.from(analysis.selectors).slice(0, 10).forEach(s => {
-            console.log(`    - ${s}`);
-          });
+          Array.from(analysis.selectors)
+            .slice(0, 10)
+            .forEach(s => {
+              console.log(`    - ${s}`);
+            });
           if (analysis.selectors.size > 10) {
             console.log(`    ... and ${analysis.selectors.size - 10} more`);
           }

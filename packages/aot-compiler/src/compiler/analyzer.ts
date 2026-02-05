@@ -206,7 +206,7 @@ class AnalysisVisitor {
       case 'call':
         // May need behavior lookup
         if (node.args?.[0]?.type === 'identifier') {
-          this.behaviors.push((node.args[0] as { value: string }).value);
+          this.behaviors.push((node.args[0] as unknown as { value: string }).value);
         }
         break;
     }
@@ -301,9 +301,8 @@ class AnalysisVisitor {
   }
 
   private visitVariable(node: VariableNode, access: 'read' | 'write'): void {
-    const name = node.name.startsWith(':') || node.name.startsWith('$')
-      ? node.name.slice(1)
-      : node.name;
+    const name =
+      node.name.startsWith(':') || node.name.startsWith('$') ? node.name.slice(1) : node.name;
 
     this.registerVariable(name, node.scope, access);
   }
@@ -323,7 +322,9 @@ class AnalysisVisitor {
       this.selectors.push(info);
     }
 
-    this.selectorMap.get(selector)!.usages.push(this.currentLocation ?? { file: '', line: 0, column: 0 });
+    this.selectorMap
+      .get(selector)!
+      .usages.push(this.currentLocation ?? { file: '', line: 0, column: 0 });
     this.domQueries.push(selector);
 
     // Pure if it's a simple selector without pseudo-elements
@@ -367,7 +368,8 @@ class AnalysisVisitor {
   }
 
   private visitIdentifier(node: ASTNode): void {
-    const value = (node as { value?: string; name?: string }).value ?? (node as { name?: string }).name;
+    const value =
+      (node as { value?: string; name?: string }).value ?? (node as { name?: string }).name;
 
     if (!value) return;
 
@@ -422,7 +424,11 @@ class AnalysisVisitor {
     }
   }
 
-  private registerVariable(name: string, scope: 'local' | 'global' | 'element', access: 'read' | 'write'): void {
+  private registerVariable(
+    name: string,
+    scope: 'local' | 'global' | 'element',
+    access: 'read' | 'write'
+  ): void {
     const map = scope === 'global' ? this.globalVars : this.localVars;
 
     if (!map.has(name)) {
@@ -457,7 +463,8 @@ class AnalysisVisitor {
   private canCacheSelector(selector: string): boolean {
     // Can cache simple selectors that don't change
     // Cannot cache if it uses :not(), :has(), or other dynamic pseudo-classes
-    const dynamicPseudo = /:(not|has|is|where|nth-|first-|last-|only-|empty|focus|hover|active|visited)/i;
+    const dynamicPseudo =
+      /:(not|has|is|where|nth-|first-|last-|only-|empty|focus|hover|active|visited)/i;
     return !dynamicPseudo.test(selector);
   }
 

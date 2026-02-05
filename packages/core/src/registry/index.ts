@@ -30,6 +30,9 @@
  *   // on request(GET, /api/users) respond with <json> users </json>
  */
 
+// Re-export core types needed by event sources
+export type { ExecutionContext, TypedExecutionContext } from '../types/core';
+
 // Re-export registries
 export {
   EventSourceRegistry,

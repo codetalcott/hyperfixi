@@ -18,8 +18,8 @@ import type {
   EventSourceHandler,
   EventSourceSubscription,
   EventSource,
+  ExecutionContext,
 } from '@lokascript/core/registry';
-import type { ExecutionContext } from '@lokascript/core';
 
 /**
  * HTTP Method type
@@ -225,7 +225,10 @@ export function isServerPayload(payload: EventSourcePayload): payload is ServerE
  *   }
  * }
  */
-export function isServerEventSource(source: EventSource): source is ServerEventSource {
+export function isServerEventSource(_source: EventSource): boolean {
+  // Note: This only checks the runtime environment, not the source type itself.
+  // ServerEventSource has a different subscribe signature than EventSource,
+  // so we can't use a type predicate here. Cast manually if needed.
   return (
     typeof process !== 'undefined' && process.versions != null && process.versions.node != null
   );

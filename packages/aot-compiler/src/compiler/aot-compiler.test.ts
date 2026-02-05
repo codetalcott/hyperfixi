@@ -66,7 +66,7 @@ describe('AOTCompiler', () => {
 
       expect(ast).toBeDefined();
       expect(ast?.type).toBe('event');
-      expect((ast as { event: string }).event).toBe('click');
+      expect((ast as unknown as { event: string }).event).toBe('click');
     });
 
     it('parses toggle command', () => {
@@ -76,10 +76,8 @@ describe('AOTCompiler', () => {
     });
 
     it('returns null for invalid code', () => {
-      const ast = compiler.parse('this is not valid hyperscript syntax xyz123');
-
-      // May return null or a parsed attempt
-      // The simple parser is lenient
+      // May return null or a parsed attempt - the simple parser is lenient
+      compiler.parse('this is not valid hyperscript syntax xyz123');
     });
   });
 
@@ -183,7 +181,10 @@ describe('AOTCompiler', () => {
     it('reports fallbacks for unparseable scripts', () => {
       const scripts = [
         { code: 'on click toggle .valid', location: { file: 'test.html', line: 1, column: 1 } },
-        { code: 'behavior ComplexPattern init on load end end', location: { file: 'test.html', line: 2, column: 1 } },
+        {
+          code: 'behavior ComplexPattern init on load end end',
+          location: { file: 'test.html', line: 2, column: 1 },
+        },
       ];
 
       const result = compiler.compile(scripts);

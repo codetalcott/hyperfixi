@@ -70,7 +70,10 @@ interface Parser {
  * Optional semantic parser integration.
  */
 interface SemanticParser {
-  analyze(code: string, language: string): { node?: unknown; confidence: number; errors?: string[] };
+  analyze(
+    code: string,
+    language: string
+  ): { node?: unknown; confidence: number; errors?: string[] };
   buildAST(node: unknown): { ast: ASTNode; warnings: string[] };
   supportsLanguage(language: string): boolean;
 }
@@ -88,7 +91,6 @@ export class AOTCompiler {
   private analyzer = new Analyzer();
   private optimizer = new OptimizationPipeline();
 
-  private handlerCounter = 0;
   private usedIds = new Set<string>();
 
   /**
@@ -109,7 +111,6 @@ export class AOTCompiler {
    * Reset compiler state between compilations.
    */
   reset(): void {
-    this.handlerCounter = 0;
     this.usedIds.clear();
   }
 
@@ -166,7 +167,9 @@ export class AOTCompiler {
       }
 
       if (debug) {
-        console.log(`[aot] Semantic parse failed for "${code}": ${result.errors?.join(', ') || 'low confidence'}`);
+        console.log(
+          `[aot] Semantic parse failed for "${code}": ${result.errors?.join(', ') || 'low confidence'}`
+        );
       }
     }
 
@@ -307,11 +310,7 @@ export class AOTCompiler {
     const analysis = this.analyze(ast);
 
     // Optimize
-    const optimized = this.optimizer.optimize(
-      ast,
-      analysis,
-      mergedOptions.optimizationLevel ?? 2
-    );
+    const optimized = this.optimizer.optimize(ast, analysis, mergedOptions.optimizationLevel ?? 2);
 
     // Generate handler ID
     const handlerId = this.generateHandlerId(ast, code);
@@ -467,7 +466,7 @@ export class AOTCompiler {
     for (const handler of handlers) {
       const selector = handler.binding.elementId
         ? `#${handler.binding.elementId}`
-        : handler.binding.elementSelector ?? '[_]';
+        : (handler.binding.elementSelector ?? '[_]');
 
       for (const event of handler.events) {
         lines.push(`  document.querySelectorAll('${selector}').forEach(_el => {`);
@@ -532,7 +531,8 @@ export class AOTCompiler {
     // Pre-populate selector cache
     for (const info of analysis.expressions.selectors) {
       if (info.canCache && info.usages.length > 1) {
-        const cacheKey = '_sel_' + sanitizeIdentifier(info.selector).slice(0, 20) + '_' + idCounter++;
+        const cacheKey =
+          '_sel_' + sanitizeIdentifier(info.selector).slice(0, 20) + '_' + idCounter++;
         selectorCache.set(info.selector, cacheKey);
       }
     }
@@ -551,8 +551,11 @@ export class AOTCompiler {
       implicitTarget: '_ctx.me',
       localVarDeclarations: '',
       canCacheSelector: (selector: string) => selectorCache.has(selector),
-      getCachedSelector: (selector: string) => selectorCache.get(selector) ?? `document.querySelector('${selector}')`,
-      requireHelper: (name: string) => { requiredHelpers.add(name); },
+      getCachedSelector: (selector: string) =>
+        selectorCache.get(selector) ?? `document.querySelector('${selector}')`,
+      requireHelper: (name: string) => {
+        requiredHelpers.add(name);
+      },
       requiredHelpers,
       analysis,
       options: { ...DEFAULT_CODEGEN_OPTIONS, ...options.codegen },
@@ -625,10 +628,7 @@ export function createCompiler(): AOTCompiler {
 /**
  * Compile hyperscript code to JavaScript (convenience function).
  */
-export async function compileHyperscript(
-  code: string,
-  options?: CompileOptions
-): Promise<string> {
+export async function compileHyperscript(code: string, options?: CompileOptions): Promise<string> {
   const compiler = new AOTCompiler();
   const result = compiler.compileScript(code, options);
 

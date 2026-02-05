@@ -60,9 +60,7 @@ export class ConstantFoldingPass implements OptimizationPass {
 
       if (Array.isArray(value)) {
         result[key] = value.map(item =>
-          item && typeof item === 'object' && 'type' in item
-            ? this.foldNode(item as ASTNode)
-            : item
+          item && typeof item === 'object' && 'type' in item ? this.foldNode(item as ASTNode) : item
         );
       } else if (value && typeof value === 'object' && 'type' in value) {
         result[key] = this.foldNode(value as ASTNode);
@@ -245,10 +243,13 @@ export class SelectorCachingPass implements OptimizationPass {
 
   private generateCacheKey(selector: string): string {
     // Generate a short cache key from the selector
-    return '_sel_' + selector
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .replace(/_+/g, '_')
-      .slice(0, 20);
+    return (
+      '_sel_' +
+      selector
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .replace(/_+/g, '_')
+        .slice(0, 20)
+    );
   }
 }
 
@@ -321,7 +322,7 @@ export class DeadCodeEliminationPass implements OptimizationPass {
 
   private isTerminator(node: ASTNode): boolean {
     if (node.type === 'command') {
-      const name = (node as { name: string }).name;
+      const name = (node as unknown as { name: string }).name;
       return ['halt', 'exit', 'return', 'throw'].includes(name);
     }
     return false;
@@ -442,8 +443,8 @@ export class LoopUnrollingPass implements OptimizationPass {
 
     // Check identifiers
     if (node.type === 'identifier' || node.type === 'variable') {
-      const name = (node as { value?: string; name?: string }).value ??
-                   (node as { name?: string }).name;
+      const name =
+        (node as { value?: string; name?: string }).value ?? (node as { name?: string }).name;
       if (name === 'index' || name === ':index') {
         return true;
       }
@@ -501,9 +502,10 @@ export class OptimizationPipeline {
     let current = ast;
     const appliedOptimizations: string[] = [];
 
-    const passesToRun = level === 1
-      ? this.passes.slice(0, 2) // Basic: constant folding and selector caching
-      : this.passes; // Full: all passes
+    const passesToRun =
+      level === 1
+        ? this.passes.slice(0, 2) // Basic: constant folding and selector caching
+        : this.passes; // Full: all passes
 
     for (const pass of passesToRun) {
       if (pass.shouldRun(analysis)) {
@@ -540,7 +542,11 @@ export function createOptimizer(): OptimizationPipeline {
 /**
  * Optimize an AST with default settings.
  */
-export function optimize(ast: ASTNode, analysis: AnalysisResult, level: 0 | 1 | 2 = 2): OptimizedAST {
+export function optimize(
+  ast: ASTNode,
+  analysis: AnalysisResult,
+  level: 0 | 1 | 2 = 2
+): OptimizedAST {
   const pipeline = new OptimizationPipeline();
   return pipeline.optimize(ast, analysis, level);
 }

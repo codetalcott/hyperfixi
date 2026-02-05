@@ -400,14 +400,39 @@ export class ExpressionCodegen {
 
     // Common DOM properties
     const domProps = [
-      'value', 'textContent', 'innerHTML', 'innerText', 'outerHTML',
-      'checked', 'disabled', 'selected', 'hidden',
-      'src', 'href', 'id', 'className', 'classList',
-      'parentElement', 'parentNode', 'children', 'firstChild', 'lastChild',
-      'nextSibling', 'previousSibling', 'nextElementSibling', 'previousElementSibling',
-      'offsetWidth', 'offsetHeight', 'offsetTop', 'offsetLeft',
-      'clientWidth', 'clientHeight', 'scrollWidth', 'scrollHeight',
-      'scrollTop', 'scrollLeft',
+      'value',
+      'textContent',
+      'innerHTML',
+      'innerText',
+      'outerHTML',
+      'checked',
+      'disabled',
+      'selected',
+      'hidden',
+      'src',
+      'href',
+      'id',
+      'className',
+      'classList',
+      'parentElement',
+      'parentNode',
+      'children',
+      'firstChild',
+      'lastChild',
+      'nextSibling',
+      'previousSibling',
+      'nextElementSibling',
+      'previousElementSibling',
+      'offsetWidth',
+      'offsetHeight',
+      'offsetTop',
+      'offsetLeft',
+      'clientWidth',
+      'clientHeight',
+      'scrollWidth',
+      'scrollHeight',
+      'scrollTop',
+      'scrollLeft',
     ];
 
     if (domProps.includes(property)) {
@@ -430,9 +455,10 @@ export class ExpressionCodegen {
     if (node.callee.type === 'member' || node.callee.type === 'possessive') {
       const memberNode = node.callee as MemberExpressionNode | PossessiveNode;
       const object = this.generate(memberNode.object);
-      const method = typeof memberNode.property === 'string'
-        ? memberNode.property
-        : this.generate(memberNode.property as ASTNode);
+      const method =
+        typeof memberNode.property === 'string'
+          ? memberNode.property
+          : this.generate(memberNode.property as ASTNode);
 
       if (typeof memberNode.property === 'string') {
         return `${object}.${sanitizeIdentifier(memberNode.property)}(${args})`;
@@ -524,14 +550,16 @@ export class ExpressionCodegen {
   // ===========================================================================
 
   private generateObject(node: ASTNode): string {
-    const properties = (node as { properties?: Array<{ key: string | ASTNode; value: ASTNode }> }).properties ?? [];
-    const pairs = properties.map(prop => {
-      const key = typeof prop.key === 'string'
-        ? JSON.stringify(prop.key)
-        : this.generate(prop.key);
-      const value = this.generate(prop.value);
-      return `${key}: ${value}`;
-    }).join(', ');
+    const properties =
+      (node as { properties?: Array<{ key: string | ASTNode; value: ASTNode }> }).properties ?? [];
+    const pairs = properties
+      .map(prop => {
+        const key =
+          typeof prop.key === 'string' ? JSON.stringify(prop.key) : this.generate(prop.key);
+        const value = this.generate(prop.value);
+        return `${key}: ${value}`;
+      })
+      .join(', ');
     return `{${pairs}}`;
   }
 
@@ -541,12 +569,14 @@ export class ExpressionCodegen {
 
   private generateTemplate(node: ASTNode): string {
     const parts = (node as { parts?: Array<string | ASTNode> }).parts ?? [];
-    const segments = parts.map(part => {
-      if (typeof part === 'string') {
-        return part.replace(/`/g, '\\`').replace(/\$/g, '\\$');
-      }
-      return '${' + this.generate(part) + '}';
-    }).join('');
+    const segments = parts
+      .map(part => {
+        if (typeof part === 'string') {
+          return part.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        }
+        return '${' + this.generate(part) + '}';
+      })
+      .join('');
     return '`' + segments + '`';
   }
 
@@ -555,8 +585,8 @@ export class ExpressionCodegen {
   // ===========================================================================
 
   private generateUnary(node: ASTNode): string {
-    const operator = (node as { operator: string }).operator;
-    const operand = this.generate((node as { operand: ASTNode }).operand);
+    const operator = (node as unknown as { operator: string }).operator;
+    const operand = this.generate((node as unknown as { operand: ASTNode }).operand);
 
     switch (operator) {
       case 'not':
@@ -578,9 +608,9 @@ export class ExpressionCodegen {
   // ===========================================================================
 
   private generateConditional(node: ASTNode): string {
-    const condition = this.generate((node as { condition: ASTNode }).condition);
-    const consequent = this.generate((node as { consequent: ASTNode }).consequent);
-    const alternate = this.generate((node as { alternate: ASTNode }).alternate);
+    const condition = this.generate((node as unknown as { condition: ASTNode }).condition);
+    const consequent = this.generate((node as unknown as { consequent: ASTNode }).consequent);
+    const alternate = this.generate((node as unknown as { alternate: ASTNode }).alternate);
     return `(${condition} ? ${consequent} : ${alternate})`;
   }
 }

@@ -57,7 +57,10 @@ async function tryLoadCore(): Promise<boolean> {
   if (hyperscriptCore !== null) return true;
   try {
     const module = await import('@lokascript/core');
-    hyperscriptCore = module.hyperscript;
+    // Cast to expected type - the HyperscriptAPI's compileSync return type is compatible
+    hyperscriptCore = module.hyperscript as unknown as {
+      compileSync: (code: string) => CoreCompileResult;
+    };
     return true;
   } catch {
     // Core not available, use fallback

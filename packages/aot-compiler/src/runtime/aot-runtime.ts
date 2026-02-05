@@ -58,7 +58,7 @@ export function resolve(target: unknown, property: string): unknown {
   if (target instanceof Element) {
     // Check as property first
     if (property in target) {
-      return (target as Record<string, unknown>)[property];
+      return (target as unknown as Record<string, unknown>)[property];
     }
     // Check as attribute
     return target.getAttribute(property);
@@ -123,7 +123,7 @@ export function removeClass(element: Element, className: string): void {
 export function getProp(element: Element, property: string): unknown {
   // Try as property first
   if (property in element) {
-    return (element as Record<string, unknown>)[property];
+    return (element as unknown as Record<string, unknown>)[property];
   }
   // Fall back to attribute
   return element.getAttribute(property);
@@ -134,7 +134,7 @@ export function getProp(element: Element, property: string): unknown {
  */
 export function setProp(element: Element, property: string, value: unknown): void {
   if (property in element) {
-    (element as Record<string, unknown>)[property] = value;
+    (element as unknown as Record<string, unknown>)[property] = value;
   } else {
     element.setAttribute(property, String(value));
   }
