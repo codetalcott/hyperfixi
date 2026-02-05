@@ -71,11 +71,18 @@ export function isPropertyOfExpressionNode(node: unknown): node is PropertyOfExp
   return n.type === 'propertyOfExpression' && typeof n.property === 'object' && n.property !== null;
 }
 
-/** Check if node is a propertyAccess AST node (semantic parser: "#element's X") */
+/** Check if node is a propertyAccess AST node (semantic parser: "#element's X", expression parser: "obj.prop") */
 export function isPropertyAccessNode(node: unknown): node is PropertyAccessNode {
   if (!node || typeof node !== 'object') return false;
   const n = node as Record<string, unknown>;
-  return n.type === 'propertyAccess' && typeof n.property === 'string';
+  if (n.type !== 'propertyAccess') return false;
+  // Accept both formats: string (semantic parser) or {name: string} (expression parser)
+  return (
+    typeof n.property === 'string' ||
+    (typeof n.property === 'object' &&
+      n.property !== null &&
+      typeof (n.property as Record<string, unknown>).name === 'string')
+  );
 }
 
 /** Check if value is a "the X of Y" string */
@@ -99,13 +106,17 @@ export async function resolvePropertyTargetFromNode(
   return { element: element as HTMLElement, property };
 }
 
-/** Resolve PropertyTarget from propertyAccess AST node (semantic parser) */
+/** Resolve PropertyTarget from propertyAccess AST node (semantic parser or expression parser) */
 export async function resolvePropertyTargetFromAccessNode(
   node: PropertyAccessNode,
   evaluator: ExpressionEvaluator,
   context: ExecutionContext
 ): Promise<PropertyTarget | null> {
-  const property = node.property;
+  // Extract property name from both formats: string or {name: string}
+  const property =
+    typeof node.property === 'string'
+      ? node.property
+      : (node.property as unknown as { name: string })?.name;
   if (!property) return null;
 
   let element = await evaluator.evaluate(node.object, context);

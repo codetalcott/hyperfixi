@@ -276,7 +276,20 @@ export class CommandAdapterV2 implements RuntimeCommand {
 
       return result;
     } catch (error) {
-      debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
+      // Don't log control flow signals — they're expected (exit, halt, break, etc.)
+      const isControlFlow =
+        error instanceof Error &&
+        ((error as any).isExit ||
+          (error as any).isHalt ||
+          (error as any).isBreak ||
+          (error as any).isContinue ||
+          (error as any).isReturn ||
+          error.message === 'EXIT_COMMAND' ||
+          error.message === 'HALT_EXECUTION' ||
+          error.message === 'EXIT_EXECUTION');
+      if (!isControlFlow) {
+        debug.command(`CommandAdapterV2: Error executing '${this.name}':`, error);
+      }
 
       // HOOK: onError - allow hooks to transform the error
       if (this.hookRegistry && error instanceof Error) {

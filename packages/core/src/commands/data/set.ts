@@ -80,6 +80,15 @@ export class SetCommand implements DecoratedCommand {
     const firstArg = raw.args[0] as Record<string, unknown>;
     const argName = (firstArg?.name || firstArg?.value) as string | undefined;
 
+    // DEBUG: Trace parseInput flow (temporary — remove after debugging)
+    console.log('[SET_DEBUG] parseInput entry:', {
+      argsLen: raw.args.length,
+      firstArgType: firstArg?.type,
+      argName,
+      modifierKeys: Object.keys(raw.modifiers || {}),
+      allArgTypes: raw.args.map((a: any) => `${a.type}:${a.name || a.value || '?'}`),
+    });
+
     // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
     const propertyTarget = await resolveAnyPropertyTarget(
       firstArg as import('../../types/base-types').ASTNode,
@@ -106,8 +115,8 @@ export class SetCommand implements DecoratedCommand {
       };
     }
 
-    // Handle memberExpression: "set my innerHTML to X"
-    if (firstArg?.type === 'memberExpression') {
+    // Handle memberExpression / propertyAccess: "set my innerHTML to X", "set event.dataTransfer.effectAllowed to X"
+    if (firstArg?.type === 'memberExpression' || firstArg?.type === 'propertyAccess') {
       const result = await this.tryParseMemberExpression(firstArg, raw, evaluator, context);
       if (result) return result;
     }

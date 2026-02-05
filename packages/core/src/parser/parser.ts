@@ -3231,9 +3231,11 @@ export class Parser {
     this.advance(); // consume property name
 
     if (!this.check('of')) {
-      // Not the "the X of Y" pattern - backtrack
-      this.current = savedPosition;
-      return this.createIdentifier('the');
+      // No "of" pattern — treat "the" as an article prefix (syntactic sugar).
+      // Don't backtrack: return the consumed property name as the expression.
+      // The caller (parseCall) will handle any subsequent dot notation,
+      // method calls, etc. This enables "the event.dataTransfer.effectAllowed".
+      return this.createIdentifier(propertyName);
     }
 
     this.advance(); // consume "of"

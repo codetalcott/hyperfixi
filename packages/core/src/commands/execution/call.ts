@@ -6,7 +6,6 @@
  *
  * Syntax:
  *   call <expression>
- *   get <expression>
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -25,7 +24,6 @@ import {
  */
 export interface CallCommandInput {
   expression: any;
-  alias?: 'call' | 'get';
 }
 
 /**
@@ -45,8 +43,8 @@ export interface CallCommandOutput {
  */
 @meta({
   description: 'Evaluate an expression and store the result in the it variable',
-  syntax: ['call <expression>', 'get <expression>'],
-  examples: ['call myFunction()', 'get user.name', 'call fetch("/api/data")'],
+  syntax: ['call <expression>'],
+  examples: ['call myFunction()', 'call fetch("/api/data")', 'call element.focus()'],
   sideEffects: ['function-execution', 'context-mutation'],
 })
 @command({ name: 'call', category: 'execution' })
@@ -62,8 +60,7 @@ export class CallCommand implements DecoratedCommand {
     if (!raw.args?.length) throw new Error('call command requires an expression');
     // Store the raw AST node, NOT the evaluated result
     // The expression will be evaluated during execute()
-    const alias = (raw as { alias?: 'call' | 'get' }).alias || 'call';
-    return Promise.resolve({ expression: raw.args[0], alias });
+    return Promise.resolve({ expression: raw.args[0] });
   }
 
   async execute(
@@ -106,18 +103,5 @@ export class CallCommand implements DecoratedCommand {
   }
 }
 
-/**
- * GetCommand - Alias for CallCommand
- */
-@meta({
-  description: 'Alias for call - evaluate an expression and store the result in the it variable',
-  syntax: ['get <expression>'],
-  examples: ['get user.profile', 'get document.title'],
-  sideEffects: ['function-execution', 'context-mutation'],
-})
-@command({ name: 'get', category: 'execution' })
-export class GetCommand extends CallCommand {}
-
 export const createCallCommand = createFactory(CallCommand);
-export const createGetCommand = createFactory(GetCommand);
 export default CallCommand;

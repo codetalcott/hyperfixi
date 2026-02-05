@@ -6,11 +6,10 @@
  * - Handles function results (calls them), Promise results (awaits them), plain values
  * - Uses __evaluator from context.locals during execute phase
  * - parseInput stores raw AST node (deferred evaluation)
- * - GetCommand extends CallCommand with name 'get'
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CallCommand, GetCommand } from '../call';
+import { CallCommand } from '../call';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 import type { ExpressionEvaluator } from '../../../core/expression-evaluator';
@@ -131,16 +130,6 @@ describe('CallCommand', () => {
       expect(input.expression).toBe(astNode);
       expect(input.expression).toEqual({ type: 'identifier', name: 'myFunction' });
     });
-
-    it('should default alias to call', async () => {
-      const input = await command.parseInput(
-        { args: [{ type: 'literal', value: 42 } as any], modifiers: {} },
-        evaluator,
-        context
-      );
-
-      expect(input.alias).toBe('call');
-    });
   });
 
   // ==========================================================================
@@ -149,7 +138,7 @@ describe('CallCommand', () => {
 
   describe('execute - value expressions', () => {
     it('should evaluate expression via __evaluator and return value', async () => {
-      const input = { expression: { type: 'literal', value: 'hello' }, alias: 'call' as const };
+      const input = { expression: { type: 'literal', value: 'hello' } };
 
       const output = await command.execute(input, context);
 
@@ -158,7 +147,7 @@ describe('CallCommand', () => {
     });
 
     it('should set context.it to the evaluated value', async () => {
-      const input = { expression: { type: 'literal', value: 42 }, alias: 'call' as const };
+      const input = { expression: { type: 'literal', value: 42 } };
 
       await command.execute(input, context);
 
@@ -166,7 +155,7 @@ describe('CallCommand', () => {
     });
 
     it('should set context.result to the evaluated value', async () => {
-      const input = { expression: { type: 'literal', value: 'data' }, alias: 'call' as const };
+      const input = { expression: { type: 'literal', value: 'data' } };
 
       await command.execute(input, context);
 
@@ -186,7 +175,7 @@ describe('CallCommand', () => {
       const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => fn);
 
-      const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
+      const input = { expression: { type: 'functionRef' } };
 
       const output = await command.execute(input, context);
 
@@ -201,7 +190,7 @@ describe('CallCommand', () => {
       const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => fn);
 
-      const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
+      const input = { expression: { type: 'functionRef' } };
 
       await command.execute(input, context);
 
@@ -215,7 +204,7 @@ describe('CallCommand', () => {
       const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => fn);
 
-      const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
+      const input = { expression: { type: 'functionRef' } };
 
       const output = await command.execute(input, context);
 
@@ -235,7 +224,7 @@ describe('CallCommand', () => {
       const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => 'async-value');
 
-      const input = { expression: { type: 'promiseExpr' }, alias: 'call' as const };
+      const input = { expression: { type: 'promiseExpr' } };
 
       const output = await command.execute(input, context);
 
@@ -250,7 +239,7 @@ describe('CallCommand', () => {
       const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => asyncFn);
 
-      const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
+      const input = { expression: { type: 'functionRef' } };
 
       const output = await command.execute(input, context);
 
@@ -266,7 +255,7 @@ describe('CallCommand', () => {
       const mockEvaluator = context.locals.get('__evaluator') as any;
       mockEvaluator.evaluate = vi.fn(async () => asyncFn);
 
-      const input = { expression: { type: 'functionRef' }, alias: 'call' as const };
+      const input = { expression: { type: 'functionRef' } };
 
       const output = await command.execute(input, context);
 
@@ -287,7 +276,7 @@ describe('CallCommand', () => {
       const contextWithoutEvaluator = createMockContext();
       (contextWithoutEvaluator as any).locals = new Map();
 
-      const input = { expression: { type: 'literal', value: 42 }, alias: 'call' as const };
+      const input = { expression: { type: 'literal', value: 42 } };
 
       await expect(command.execute(input, contextWithoutEvaluator)).rejects.toThrow(
         '[CALL.execute] No evaluator available in context'
@@ -311,7 +300,6 @@ describe('CallCommand', () => {
       );
 
       expect(input.expression).toBe(astNode);
-      expect(input.alias).toBe('call');
 
       // Execute phase: evaluator resolves the node
       const output = await command.execute(input, context);
@@ -354,36 +342,5 @@ describe('CallCommand', () => {
       expect(context.it).toBe('computed');
       expect(context.result).toBe('computed');
     });
-  });
-});
-
-// ==========================================================================
-// GetCommand (extends CallCommand)
-// ==========================================================================
-
-describe('GetCommand', () => {
-  let getCommand: GetCommand;
-
-  beforeEach(() => {
-    getCommand = new GetCommand();
-  });
-
-  it('should have name get', () => {
-    expect(getCommand.name).toBe('get');
-  });
-
-  it('should have metadata with description', () => {
-    expect(getCommand.metadata).toBeDefined();
-    expect(getCommand.metadata.description.toLowerCase()).toContain('evaluate');
-  });
-
-  it('should inherit parseInput from CallCommand', () => {
-    expect(getCommand.parseInput).toBeDefined();
-    expect(typeof getCommand.parseInput).toBe('function');
-  });
-
-  it('should inherit execute from CallCommand', () => {
-    expect(getCommand.execute).toBeDefined();
-    expect(typeof getCommand.execute).toBe('function');
   });
 });

@@ -630,9 +630,17 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
           // This shouldn't happen due to lookahead, but handle anyway
           throw new ExpressionParseError('Expected "of" after property in "the X of Y" pattern');
         }
+      } else {
+        // No "of" pattern — treat "the" as an article prefix (syntactic sugar).
+        // This handles "the event.dataTransfer.effectAllowed", "the event.target", etc.
+        const articleTarget = parsePrimaryExpression(state);
+        // Guard against "the the" infinite loop
+        if (nodeStr(articleTarget, 'name') !== 'the') {
+          left = articleTarget;
+          continue; // Continue loop so .Y can be parsed as property access
+        }
+        // else: double "the" — fall through to break
       }
-      // If lookahead fails, don't consume anything - left stays as "the" identifier
-      // and will be handled as a regular identifier
     }
     // Handle dot notation property access (obj.property)
     // Phase 6: Using predicate for dot operator check

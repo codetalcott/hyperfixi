@@ -213,15 +213,27 @@ export class RuntimeBase {
     }
 
     this.autoCleanupObserver = new MutationObserver(mutations => {
+      const removedElements: Element[] = [];
       for (const mutation of mutations) {
         for (const node of mutation.removedNodes) {
           if (node instanceof Element) {
-            const count = this.cleanupRegistry.cleanupElementTree(node);
-            if (count > 0) {
-              debug.runtime(`RuntimeBase: Auto-cleaned ${count} resources for removed element`);
-            }
+            removedElements.push(node);
           }
         }
+      }
+      if (removedElements.length > 0) {
+        // Defer cleanup to distinguish moves (insertBefore) from true removals.
+        // After a microtask, moved elements will be re-connected to the DOM.
+        queueMicrotask(() => {
+          for (const element of removedElements) {
+            if (!element.isConnected) {
+              const count = this.cleanupRegistry.cleanupElementTree(element);
+              if (count > 0) {
+                debug.runtime(`RuntimeBase: Auto-cleaned ${count} resources for removed element`);
+              }
+            }
+          }
+        });
       }
     });
 
@@ -462,11 +474,9 @@ export class RuntimeBase {
     const commandName = name.toLowerCase();
 
     debug.command(`RUNTIME BASE: Processing command '${commandName}'`);
-    console.log('[RUNTIME DEBUG] executeCommand called with:', commandName);
 
     // 1. check registry
     if (this.registry.has(commandName)) {
-      console.log('[RUNTIME DEBUG] Found command:', commandName);
       const adapter = await this.registry.getAdapter(commandName);
 
       if (!adapter) {

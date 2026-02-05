@@ -534,6 +534,9 @@ export class BaseExpressionEvaluator {
     if (name === 'result') {
       return context.result;
     }
+    if (name === 'event') {
+      return context.event;
+    }
 
     // Check if it's a built-in reference expression
     const expression = this.expressionRegistry.get(name);

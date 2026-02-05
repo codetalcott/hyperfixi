@@ -218,17 +218,17 @@
                      set item to target.closest('.sortable-item')
                      if item is not null then
                        add .dragging to item
-                       set the dataTransfer.effectAllowed to 'move'
                      end
+                     set the event.dataTransfer.effectAllowed to 'move'
 
                    on dragend
-                     get first .dragging in me
-                     if result is not null then remove .dragging from result end
+                     set dragged to me.querySelector('.dragging')
+                     if dragged is not null then remove .dragging from dragged end
                      add { opacity: 0; } to #insert-marker
 
                    on dragover
                      halt the event
-                     set the dataTransfer.dropEffect to 'move'
+                     set the event.dataTransfer.dropEffect to 'move'
 
                      -- Find the drop target
                      set dropTarget to target.closest('.sortable-item')
@@ -258,8 +258,7 @@
 
                      -- Find drop target and dragged item
                      set dropTarget to target.closest('.sortable-item')
-                     get first .dragging in me
-                     set draggedItem to result
+                     set draggedItem to me.querySelector('.dragging')
 
                      if dropTarget is null or draggedItem is null or dropTarget == draggedItem then exit end
 
@@ -376,12 +375,12 @@
          set item to target.closest('.sortable-item')
          if item is not null then
            add .dragging to item
-           set the dataTransfer.effectAllowed to 'move'
          end
+         set the event.dataTransfer.effectAllowed to 'move'
 
        on dragend
-         get first .dragging in me
-         if result is not null then remove .dragging from result end
+         set dragged to me.querySelector('.dragging')
+         if dragged is not null then remove .dragging from dragged end
          add { opacity: 0; } to #insert-marker
 
        on dragover
@@ -405,8 +404,7 @@
          halt the event
          add { opacity: 0; } to #insert-marker
          set dropTarget to target.closest('.sortable-item')
-         get first .dragging in me
-         set draggedItem to result
+         set draggedItem to me.querySelector('.dragging')
          if dropTarget is null or draggedItem is null then exit end
 
          set box to dropTarget.getBoundingClientRect()

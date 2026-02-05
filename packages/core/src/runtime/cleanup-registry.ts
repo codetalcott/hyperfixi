@@ -405,12 +405,24 @@ export function createAutoCleanupRegistry(options?: {
   const root = options?.root ?? document.body;
 
   const observer = new MutationObserver(mutations => {
+    const removedElements: Element[] = [];
     for (const mutation of mutations) {
       for (const node of mutation.removedNodes) {
         if (node instanceof Element) {
-          registry.cleanupElementTree(node);
+          removedElements.push(node);
         }
       }
+    }
+    if (removedElements.length > 0) {
+      // Defer cleanup to distinguish moves (insertBefore) from true removals.
+      // After a microtask, moved elements will be re-connected to the DOM.
+      queueMicrotask(() => {
+        for (const element of removedElements) {
+          if (!element.isConnected) {
+            registry.cleanupElementTree(element);
+          }
+        }
+      });
     }
   });
 
