@@ -27,6 +27,10 @@ import {
   DocumentSymbolParams,
   CodeActionParams,
   DidChangeConfigurationNotification,
+  Location,
+  Range,
+  TextEdit,
+  DocumentFormattingParams,
 } from 'vscode-languageserver/node.js';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -43,14 +47,14 @@ let parseFunction: any = null;
 try {
   semanticPackage = await import('@lokascript/semantic');
 } catch {
-  // semantic not available - will use English-only fallback
+  console.error('[lokascript-ls] @lokascript/semantic not available - using English-only fallback');
 }
 
 // Try to import ast-toolkit for enhanced analysis
 try {
   astToolkit = await import('@lokascript/ast-toolkit');
 } catch {
-  // ast-toolkit not available
+  console.error('[lokascript-ls] @lokascript/ast-toolkit not available');
 }
 
 // Try to import core package for parsing
@@ -58,7 +62,7 @@ try {
   const core = await import('@lokascript/core');
   parseFunction = core.parse;
 } catch {
-  // core not available
+  console.error('[lokascript-ls] @lokascript/core not available');
 }
 
 // =============================================================================
@@ -118,24 +122,44 @@ function isHtmlDocument(uri: string, content: string): boolean {
 
 /**
  * Extracts hyperscript regions from HTML content.
- * Returns regions for _="..." attributes and <script type="text/hyperscript"> tags.
+ * Returns regions for _="..." and _='...' attributes and <script type="text/hyperscript"> tags.
  */
 function extractHyperscriptRegions(content: string): HyperscriptRegion[] {
   const regions: HyperscriptRegion[] = [];
-  const lines = content.split('\n');
 
   // Track position for multiline matching
   let fullContent = content;
 
-  // Extract _="..." attributes (handles multiline)
-  // Match _=" followed by content until unescaped "
-  const attrRegex = /_="([^"\\]*(?:\\.[^"\\]*)*)"/g;
+  // Extract _="..." attributes (double quotes, handles multiline)
+  const doubleQuoteRegex = /_="([^"\\]*(?:\\.[^"\\]*)*)"/g;
   let match;
 
-  while ((match = attrRegex.exec(fullContent)) !== null) {
+  while ((match = doubleQuoteRegex.exec(fullContent)) !== null) {
     const code = match[1].replace(/\\"/g, '"'); // Unescape quotes
     const startOffset = match.index + 3; // After _="
     const endOffset = match.index + match[0].length - 1; // Before final "
+
+    // Convert offset to line/character
+    const startPos = offsetToPosition(content, startOffset);
+    const endPos = offsetToPosition(content, endOffset);
+
+    regions.push({
+      code,
+      startLine: startPos.line,
+      startChar: startPos.character,
+      endLine: endPos.line,
+      endChar: endPos.character,
+      type: 'attribute',
+    });
+  }
+
+  // Extract _='...' attributes (single quotes, handles multiline)
+  const singleQuoteRegex = /_='([^'\\]*(?:\\.[^'\\]*)*)'/g;
+
+  while ((match = singleQuoteRegex.exec(fullContent)) !== null) {
+    const code = match[1].replace(/\\'/g, "'"); // Unescape quotes
+    const startOffset = match.index + 3; // After _='
+    const endOffset = match.index + match[0].length - 1; // Before final '
 
     // Convert offset to line/character
     const startPos = offsetToPosition(content, startOffset);
@@ -176,14 +200,28 @@ function extractHyperscriptRegions(content: string): HyperscriptRegion[] {
 }
 
 /**
- * Converts a character offset to line/character position
+ * Converts a character offset to line/character position.
+ * Handles both Unix (LF) and Windows (CRLF) line endings.
  */
 function offsetToPosition(content: string, offset: number): { line: number; character: number } {
   let line = 0;
   let character = 0;
 
-  for (let i = 0; i < offset && i < content.length; i++) {
-    if (content[i] === '\n') {
+  // Clamp offset to valid range
+  const maxOffset = Math.min(offset, content.length);
+
+  for (let i = 0; i < maxOffset; i++) {
+    if (content[i] === '\r' && content[i + 1] === '\n') {
+      // CRLF: count as single newline, skip the \r
+      line++;
+      character = 0;
+      i++; // Skip the \n in next iteration
+    } else if (content[i] === '\n') {
+      // LF only
+      line++;
+      character = 0;
+    } else if (content[i] === '\r') {
+      // CR only (old Mac style, rare)
       line++;
       character = 0;
     } else {
@@ -245,6 +283,9 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
       codeActionProvider: {
         codeActionKinds: [CodeActionKind.QuickFix],
       },
+      definitionProvider: true,
+      referencesProvider: true,
+      documentFormattingProvider: true,
     },
   };
 });
@@ -340,8 +381,8 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
               usedLanguage = lang;
               if (result.confidence >= 0.7) break; // Good enough
             }
-          } catch {
-            // This language failed, try next
+          } catch (e) {
+            connection.console.log(`[lokascript-ls] Language detection failed for '${lang}': ${e}`);
           }
         }
       }
@@ -402,8 +443,8 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
           });
         }
       }
-    } catch {
-      // Semantic parsing failed - continue with other methods
+    } catch (e) {
+      connection.console.log(`[lokascript-ls] Semantic parsing failed, trying fallback: ${e}`);
     }
   }
 
@@ -555,7 +596,9 @@ function getContextualCompletions(context: string, language: string): Completion
       if (profile?.keywords?.[eng]?.primary) {
         return profile.keywords[eng].primary;
       }
-    } catch {}
+    } catch (e) {
+      connection.console.log(`[lokascript-ls] Keyword lookup failed for '${eng}': ${e}`);
+    }
     return eng;
   };
 
@@ -995,8 +1038,8 @@ function buildTranslationCache(): Map<string, string> {
             translations.push(`${langName}: \`${trans.primary}\``);
           }
         }
-      } catch {
-        // Skip failed profiles
+      } catch (e) {
+        connection.console.log(`[lokascript-ls] Translation cache: profile '${lang}' not found`);
       }
     }
 
@@ -1048,8 +1091,8 @@ function buildReverseKeywordCache(): Map<string, string> {
           }
         }
       }
-    } catch {
-      // This language profile failed, continue
+    } catch (e) {
+      connection.console.log(`[lokascript-ls] Reverse keyword cache: profile '${lang}' not found`);
     }
   }
 
@@ -1105,6 +1148,463 @@ function normalizeToEnglish(word: string, _language: string): string {
 
   // Look up in cache
   return reverseKeywordCache.get(word) || word;
+}
+
+// =============================================================================
+// Go to Definition
+// =============================================================================
+
+connection.onDefinition((params: TextDocumentPositionParams): Location | Location[] | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const text = document.getText();
+    const uri = document.uri;
+    const position = params.position;
+
+    // Get the word at the current position
+    let targetWord: string | null = null;
+    let searchText = text;
+    let baseLineOffset = 0;
+    let baseCharOffset = 0;
+
+    if (isHtmlDocument(uri, text)) {
+      // Find if cursor is inside a hyperscript region
+      const regions = extractHyperscriptRegions(text);
+      const found = findRegionAtPosition(regions, position.line, position.character);
+
+      if (!found) {
+        return null;
+      }
+
+      // Get the line within the region
+      const regionLines = found.region.code.split('\n');
+      const currentLine = regionLines[found.localLine];
+      if (!currentLine) return null;
+
+      const word = getWordAtPosition(currentLine, found.localChar);
+      if (!word) return null;
+
+      targetWord = word.text;
+      searchText = text; // Search entire document for definitions
+      baseLineOffset = 0;
+      baseCharOffset = 0;
+    } else {
+      // Pure hyperscript file
+      const lines = text.split('\n');
+      const currentLine = lines[position.line];
+      if (!currentLine) return null;
+
+      const word = getWordAtPosition(currentLine, position.character);
+      if (!word) return null;
+
+      targetWord = word.text;
+    }
+
+    if (!targetWord) return null;
+
+    // Normalize to English for pattern matching
+    const engWord = normalizeToEnglish(targetWord.toLowerCase(), globalSettings.language);
+
+    // Search for definitions in the document
+    const locations: Location[] = [];
+
+    // Get multilingual variants for behavior/def keywords
+    const behaviorVariants = getKeywordVariants('behavior');
+    const defVariants = getKeywordVariants('def');
+
+    // Pattern for behavior definitions: behavior Name
+    const behaviorPattern = new RegExp(
+      `\\b(${behaviorVariants.join('|')})\\s+(${escapeRegExp(targetWord)})\\b`,
+      'gi'
+    );
+
+    // Pattern for function definitions: def functionName
+    const defPattern = new RegExp(
+      `\\b(${defVariants.join('|')})\\s+(${escapeRegExp(targetWord)})\\b`,
+      'gi'
+    );
+
+    // Search in all hyperscript regions if HTML, or the entire file
+    if (isHtmlDocument(uri, text)) {
+      const regions = extractHyperscriptRegions(text);
+
+      for (const region of regions) {
+        // Search for behavior definitions
+        for (const match of region.code.matchAll(behaviorPattern)) {
+          const matchLine = findLineInRegion(region.code, match.index ?? 0);
+          const matchChar = findCharInLine(region.code, match.index ?? 0);
+
+          locations.push({
+            uri: params.textDocument.uri,
+            range: {
+              start: {
+                line: region.startLine + matchLine,
+                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
+              },
+              end: {
+                line: region.startLine + matchLine,
+                character:
+                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
+              },
+            },
+          });
+        }
+
+        // Search for function definitions
+        for (const match of region.code.matchAll(defPattern)) {
+          const matchLine = findLineInRegion(region.code, match.index ?? 0);
+          const matchChar = findCharInLine(region.code, match.index ?? 0);
+
+          locations.push({
+            uri: params.textDocument.uri,
+            range: {
+              start: {
+                line: region.startLine + matchLine,
+                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
+              },
+              end: {
+                line: region.startLine + matchLine,
+                character:
+                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
+              },
+            },
+          });
+        }
+      }
+    } else {
+      // Pure hyperscript file - search entire text
+      const lines = text.split('\n');
+
+      // Search for behavior definitions
+      for (const match of text.matchAll(behaviorPattern)) {
+        const pos = offsetToPosition(text, match.index ?? 0);
+        locations.push({
+          uri: params.textDocument.uri,
+          range: {
+            start: pos,
+            end: { line: pos.line, character: pos.character + match[0].length },
+          },
+        });
+      }
+
+      // Search for function definitions
+      for (const match of text.matchAll(defPattern)) {
+        const pos = offsetToPosition(text, match.index ?? 0);
+        locations.push({
+          uri: params.textDocument.uri,
+          range: {
+            start: pos,
+            end: { line: pos.line, character: pos.character + match[0].length },
+          },
+        });
+      }
+    }
+
+    if (locations.length === 0) return null;
+    if (locations.length === 1) return locations[0]!;
+    return locations;
+  } catch (error) {
+    connection.console.error(`Go to Definition error: ${error}`);
+    return null;
+  }
+});
+
+/**
+ * Helper: Get keyword variants for a given English keyword
+ */
+function getKeywordVariants(eng: string): string[] {
+  const variants = [eng];
+  if (!semanticPackage) return variants;
+
+  const languagesToTry = ['es', 'ja', 'ko', 'de', 'fr', 'pt', 'zh', 'ar', 'tr', 'id'];
+  for (const lang of languagesToTry) {
+    try {
+      const profile = semanticPackage.getProfile(lang);
+      if (profile?.keywords?.[eng]) {
+        const trans = profile.keywords[eng] as { primary?: string; alternatives?: string[] };
+        if (trans.primary && !variants.includes(trans.primary)) {
+          variants.push(trans.primary);
+        }
+        if (trans.alternatives) {
+          for (const alt of trans.alternatives) {
+            if (!variants.includes(alt)) {
+              variants.push(alt);
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignore missing profiles
+    }
+  }
+  return variants;
+}
+
+/**
+ * Helper: Escape special regex characters
+ */
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Helper: Find line number within a region given a character offset
+ */
+function findLineInRegion(code: string, offset: number): number {
+  let line = 0;
+  for (let i = 0; i < offset && i < code.length; i++) {
+    if (code[i] === '\n') line++;
+  }
+  return line;
+}
+
+/**
+ * Helper: Find character position in line given a character offset
+ */
+function findCharInLine(code: string, offset: number): number {
+  let lastNewline = -1;
+  for (let i = 0; i < offset && i < code.length; i++) {
+    if (code[i] === '\n') lastNewline = i;
+  }
+  return offset - lastNewline - 1;
+}
+
+// =============================================================================
+// Find References
+// =============================================================================
+
+connection.onReferences((params): Location[] | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const text = document.getText();
+    const uri = document.uri;
+    const position = params.position;
+
+    // Get the word at the current position
+    let targetWord: string | null = null;
+
+    if (isHtmlDocument(uri, text)) {
+      const regions = extractHyperscriptRegions(text);
+      const found = findRegionAtPosition(regions, position.line, position.character);
+
+      if (!found) return null;
+
+      const regionLines = found.region.code.split('\n');
+      const currentLine = regionLines[found.localLine];
+      if (!currentLine) return null;
+
+      const word = getWordAtPosition(currentLine, found.localChar);
+      if (!word) return null;
+
+      targetWord = word.text;
+    } else {
+      const lines = text.split('\n');
+      const currentLine = lines[position.line];
+      if (!currentLine) return null;
+
+      const word = getWordAtPosition(currentLine, position.character);
+      if (!word) return null;
+
+      targetWord = word.text;
+    }
+
+    if (!targetWord) return null;
+
+    // Search for all references (word boundaries)
+    const locations: Location[] = [];
+
+    // Pattern to find all occurrences of the word
+    const wordPattern = new RegExp(`\\b${escapeRegExp(targetWord)}\\b`, 'gi');
+
+    if (isHtmlDocument(uri, text)) {
+      const regions = extractHyperscriptRegions(text);
+
+      for (const region of regions) {
+        for (const match of region.code.matchAll(wordPattern)) {
+          const matchLine = findLineInRegion(region.code, match.index ?? 0);
+          const matchChar = findCharInLine(region.code, match.index ?? 0);
+
+          locations.push({
+            uri: params.textDocument.uri,
+            range: {
+              start: {
+                line: region.startLine + matchLine,
+                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
+              },
+              end: {
+                line: region.startLine + matchLine,
+                character:
+                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
+              },
+            },
+          });
+        }
+      }
+    } else {
+      for (const match of text.matchAll(wordPattern)) {
+        const pos = offsetToPosition(text, match.index ?? 0);
+        locations.push({
+          uri: params.textDocument.uri,
+          range: {
+            start: pos,
+            end: { line: pos.line, character: pos.character + match[0].length },
+          },
+        });
+      }
+    }
+
+    return locations.length > 0 ? locations : null;
+  } catch (error) {
+    connection.console.error(`Find References error: ${error}`);
+    return null;
+  }
+});
+
+// =============================================================================
+// Document Formatting
+// =============================================================================
+
+connection.onDocumentFormatting((params: DocumentFormattingParams): TextEdit[] | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const text = document.getText();
+    const uri = document.uri;
+    const options = params.options;
+
+    // Determine indent string based on options
+    const indentStr = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
+
+    // For HTML documents, we only format the hyperscript regions
+    // For now, only format pure hyperscript files
+    if (isHtmlDocument(uri, text)) {
+      // Don't format HTML documents - we'd need to preserve the HTML structure
+      // and only format the hyperscript regions
+      connection.console.log('[lokascript-ls] Formatting not supported for HTML documents');
+      return null;
+    }
+
+    // Try AST-based formatting first
+    if (parseFunction && astToolkit?.generate) {
+      try {
+        const ast = parseFunction(text);
+        if (ast) {
+          const formatted = astToolkit.generate(ast, { minify: false, indentation: indentStr });
+          if (formatted && formatted.trim()) {
+            return [
+              TextEdit.replace(
+                {
+                  start: { line: 0, character: 0 },
+                  end: { line: document.lineCount, character: 0 },
+                },
+                formatted
+              ),
+            ];
+          }
+        }
+      } catch (parseError) {
+        connection.console.log(
+          `[lokascript-ls] AST formatting failed, using fallback: ${parseError}`
+        );
+      }
+    }
+
+    // Fallback: Pattern-based formatting
+    const formatted = formatHyperscript(text, indentStr);
+    if (formatted !== text) {
+      return [
+        TextEdit.replace(
+          {
+            start: { line: 0, character: 0 },
+            end: { line: document.lineCount, character: 0 },
+          },
+          formatted
+        ),
+      ];
+    }
+
+    return null;
+  } catch (error) {
+    connection.console.error(`Document Formatting error: ${error}`);
+    return null;
+  }
+});
+
+/**
+ * Simple pattern-based hyperscript formatter.
+ * Handles indentation for blocks and normalizes whitespace.
+ */
+function formatHyperscript(code: string, indentStr: string = '  '): string {
+  const lines = code.split('\n');
+  const formattedLines: string[] = [];
+  let indentLevel = 0;
+
+  // Block-starting keywords that always increase indent (require matching 'end')
+  const blockKeywords = /^(behavior|def|if|repeat|for|while)\b/i;
+  // Keywords that decrease indent
+  const dedentKeywords = /^(end|else)\b/i;
+  // 'on' is special - only increases indent if it's a multiline declaration
+  const onKeyword = /^on\b/i;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Skip empty lines
+    if (!trimmed) {
+      formattedLines.push('');
+      continue;
+    }
+
+    // Decrease indent for dedent keywords (before adding line)
+    if (dedentKeywords.test(trimmed)) {
+      indentLevel = Math.max(0, indentLevel - 1);
+    }
+
+    // Add the formatted line
+    const indent = indentStr.repeat(indentLevel);
+    formattedLines.push(indent + trimmed);
+
+    // Increase indent for block keywords (after adding line)
+    // But not if the line also contains 'end' (single-line blocks)
+    if (blockKeywords.test(trimmed) && !/\bend\s*$/i.test(trimmed)) {
+      indentLevel++;
+    }
+
+    // 'on' keyword: increase indent unless next non-empty line is 'end' or another 'on'
+    // Single-line handlers like "on click toggle .active" followed by "end" or another handler
+    // don't need extra indentation
+    if (onKeyword.test(trimmed)) {
+      const nextLine = findNextNonEmptyLine(lines, i + 1);
+      // Only skip indent increase if next line is 'end' or another 'on' at same level
+      if (nextLine && !/^(end|on)\b/i.test(nextLine)) {
+        indentLevel++;
+      }
+    }
+
+    // Special case: "else" increases indent after itself
+    if (/^else\b/i.test(trimmed)) {
+      indentLevel++;
+    }
+  }
+
+  return formattedLines.join('\n');
+}
+
+/**
+ * Find the next non-empty line starting from index
+ */
+function findNextNonEmptyLine(lines: string[], startIndex: number): string | null {
+  for (let i = startIndex; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
 }
 
 // =============================================================================
@@ -1188,7 +1688,11 @@ function extractSymbols(code: string, language: string): DocumentSymbol[] {
         if (trans.primary) variants.push(trans.primary);
         if (trans.alternatives) variants.push(...trans.alternatives);
       }
-    } catch {}
+    } catch (e) {
+      connection.console.log(
+        `[lokascript-ls] Symbol extraction: variant lookup failed for '${eng}'`
+      );
+    }
     return variants;
   };
 

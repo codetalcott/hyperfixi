@@ -147,7 +147,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Run export validation for published packages
-          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference ast-toolkit --strict 2>&1 | tee /tmp/export-validation.log
+          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference ast-toolkit language-server --strict 2>&1 | tee /tmp/export-validation.log
 
           # Parse results for summary
           if grep -q "✅" /tmp/export-validation.log; then
@@ -226,6 +226,7 @@ jobs:
           npm run typecheck --prefix packages/vite-plugin
           npm run typecheck --prefix packages/patterns-reference
           npm run typecheck --prefix packages/mcp-server
+          npm run typecheck --prefix packages/language-server
 
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
@@ -378,6 +379,18 @@ jobs:
           files: packages/i18n/coverage/lcov.info
           flags: i18n
           name: i18n-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Generate coverage - language-server
+        run: npm test --prefix packages/language-server -- --coverage
+
+      - name: Upload language-server coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: packages/language-server/coverage/lcov.info
+          flags: language-server
+          name: language-server-coverage
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
