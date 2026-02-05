@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
- * LokaScript Language Server
+ * Hyperscript / LokaScript Language Server
  *
- * LSP implementation for hyperscript with 21 language support.
- * Reuses analysis infrastructure from @lokascript/semantic and @lokascript/ast-toolkit.
+ * LSP implementation supporting both original _hyperscript and LokaScript.
+ * LokaScript is a 100% compatible superset of _hyperscript with extensions.
+ *
+ * Modes:
+ * - 'hyperscript': Enforce _hyperscript-compatible syntax (for portability)
+ * - 'lokascript': Allow all LokaScript features including extensions
+ * - 'auto': Detect based on available packages
  */
 
 import {
@@ -35,8 +40,13 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 // Import modular components
-import type { ServerSettings } from './types.js';
+import type { ServerSettings, ServerMode } from './types.js';
 import { defaultSettings } from './types.js';
+import {
+  detectLokascriptFeatures,
+  getCommandsForMode,
+  HYPERSCRIPT_COMMANDS,
+} from './command-tiers.js';
 import {
   isHtmlDocument,
   extractHyperscriptRegions,
@@ -253,6 +263,56 @@ const FALLBACK_EVENT_NAMES = [
 ] as const;
 
 // =============================================================================
+// Mode Resolution
+// =============================================================================
+
+/**
+ * Resolved mode after applying 'auto' detection.
+ */
+type ResolvedMode = 'hyperscript' | 'hyperscript-i18n' | 'lokascript';
+
+/**
+ * Resolve the server mode, handling 'auto' detection.
+ *
+ * In 'auto' mode:
+ * - If @lokascript/semantic is available, use 'lokascript' mode
+ * - Otherwise, use 'hyperscript' mode
+ */
+function resolveMode(settings: ServerSettings): ResolvedMode {
+  if (settings.mode === 'hyperscript') return 'hyperscript';
+  if (settings.mode === 'hyperscript-i18n') return 'hyperscript-i18n';
+  if (settings.mode === 'lokascript') return 'lokascript';
+
+  // 'auto' mode: detect based on available packages
+  return semanticPackage ? 'lokascript' : 'hyperscript';
+}
+
+/**
+ * Get the branding name for messages based on mode.
+ */
+function getBranding(mode: ResolvedMode): string {
+  // hyperscript-i18n uses 'hyperscript' branding since it targets original _hyperscript
+  return mode === 'lokascript' ? 'lokascript' : 'hyperscript';
+}
+
+/**
+ * Check if multilingual features are enabled for the current mode.
+ */
+function isMultilingualEnabled(mode: ResolvedMode): boolean {
+  return mode === 'lokascript' || mode === 'hyperscript-i18n';
+}
+
+/**
+ * Check if the mode restricts to hyperscript-compatible commands only.
+ */
+function isHyperscriptCompatMode(mode: ResolvedMode): boolean {
+  return mode === 'hyperscript' || mode === 'hyperscript-i18n';
+}
+
+// Resolved mode (cached, updated on config change)
+let resolvedMode: ResolvedMode = 'hyperscript';
+
+// =============================================================================
 // Server Setup
 // =============================================================================
 
@@ -277,7 +337,10 @@ let globalSettings: ServerSettings = defaultSettings;
 // =============================================================================
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
-  connection.console.log('LokaScript Language Server initializing...');
+  // Resolve mode on initialization
+  resolvedMode = resolveMode(globalSettings);
+  const brand = getBranding(resolvedMode);
+  connection.console.log(`${brand} Language Server initializing (mode: ${resolvedMode})...`);
 
   return {
     capabilities: {
@@ -300,7 +363,8 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 
 connection.onInitialized(() => {
   connection.client.register(DidChangeConfigurationNotification.type, undefined);
-  connection.console.log('LokaScript Language Server initialized');
+  const brand = getBranding(resolvedMode);
+  connection.console.log(`${brand} Language Server initialized`);
 });
 
 // =============================================================================
@@ -308,7 +372,21 @@ connection.onInitialized(() => {
 // =============================================================================
 
 connection.onDidChangeConfiguration(change => {
-  globalSettings = (change.settings?.lokascript as ServerSettings) || defaultSettings;
+  // Accept settings from either 'lokascript' or 'hyperscript' namespace
+  globalSettings =
+    (change.settings?.lokascript as ServerSettings) ||
+    (change.settings?.hyperscript as ServerSettings) ||
+    defaultSettings;
+
+  // Re-resolve mode when settings change
+  const previousMode = resolvedMode;
+  resolvedMode = resolveMode(globalSettings);
+
+  if (previousMode !== resolvedMode) {
+    const brand = getBranding(resolvedMode);
+    connection.console.log(`Mode changed to '${resolvedMode}' (${brand})`);
+  }
+
   documents.all().forEach(validateDocument);
 });
 
@@ -365,9 +443,28 @@ async function validateDocument(document: TextDocument): Promise<void> {
 
 async function getDiagnostics(code: string, language: string): Promise<Diagnostic[]> {
   const diagnostics: Diagnostic[] = [];
+  const brand = getBranding(resolvedMode);
 
-  // Try semantic analysis first (works for all 21 supported languages)
-  const analyzer = getSemanticAnalyzer();
+  // In hyperscript-compat modes: check for LokaScript-only features first
+  if (isHyperscriptCompatMode(resolvedMode)) {
+    const lokascriptFeatures = detectLokascriptFeatures(code);
+    for (const feature of lokascriptFeatures) {
+      diagnostics.push({
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: code.split('\n')[0]?.length || code.length },
+        },
+        severity: DiagnosticSeverity.Error,
+        code: 'lokascript-only',
+        source: brand,
+        message: `${feature.description} (not compatible with _hyperscript)`,
+      });
+    }
+  }
+
+  // In multilingual modes: try semantic analysis (works for all 21 supported languages)
+  // In hyperscript mode (English-only): skip semantic analysis
+  const analyzer = isMultilingualEnabled(resolvedMode) ? getSemanticAnalyzer() : null;
   if (analyzer) {
     try {
       // First try with configured language
@@ -390,7 +487,7 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
               if (result.confidence >= 0.7) break; // Good enough
             }
           } catch (e) {
-            connection.console.log(`[lokascript-ls] Language detection failed for '${lang}': ${e}`);
+            connection.console.log(`[${brand}-ls] Language detection failed for '${lang}': ${e}`);
           }
         }
       }
@@ -405,7 +502,7 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
             },
             severity: DiagnosticSeverity.Error,
             code: 'semantic-error',
-            source: 'lokascript',
+            source: brand,
             message: err,
           });
         }
@@ -421,7 +518,7 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
           },
           severity: DiagnosticSeverity.Warning,
           code: 'low-confidence',
-          source: 'lokascript',
+          source: brand,
           message: `Code could not be fully parsed (${(result.confidence * 100).toFixed(0)}% confidence)`,
         });
       }
@@ -436,7 +533,7 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
             range: { start: { line: 0, character: 0 }, end: { line: 0, character: code.length } },
             severity: DiagnosticSeverity.Warning,
             code: 'missing-role',
-            source: 'lokascript',
+            source: brand,
             message: 'toggle command missing target (add .class, @attr, or selector)',
           });
         }
@@ -446,23 +543,24 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
             range: { start: { line: 0, character: 0 }, end: { line: 0, character: code.length } },
             severity: DiagnosticSeverity.Warning,
             code: 'missing-role',
-            source: 'lokascript',
+            source: brand,
             message: 'put command missing destination (add "into #element")',
           });
         }
       }
     } catch (e) {
-      connection.console.log(`[lokascript-ls] Semantic parsing failed, trying fallback: ${e}`);
+      connection.console.log(`[${brand}-ls] Semantic parsing failed, trying fallback: ${e}`);
     }
   }
 
-  // Try AST-based analysis
+  // Try AST-based analysis (works in both modes)
   if (diagnostics.length === 0 && astToolkit && parseFunction) {
     try {
       const ast = parseFunction(code);
       if (ast && astToolkit.astToLSPDiagnostics) {
         const astDiagnostics = astToolkit.astToLSPDiagnostics(ast);
-        diagnostics.push(...astDiagnostics);
+        // Update source to match current branding
+        diagnostics.push(...astDiagnostics.map((d: Diagnostic) => ({ ...d, source: brand })));
       }
     } catch (parseError: any) {
       diagnostics.push({
@@ -472,15 +570,17 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
         },
         severity: DiagnosticSeverity.Error,
         code: 'parse-error',
-        source: 'lokascript',
-        message: parseError.message || 'Failed to parse hyperscript',
+        source: brand,
+        message: parseError.message || 'Failed to parse',
       });
     }
   }
 
   // Fallback: simple pattern-based analysis
   if (diagnostics.length === 0) {
-    diagnostics.push(...runSimpleDiagnostics(code, language));
+    const simpleDiagnostics = runSimpleDiagnostics(code, language);
+    // Update source to match current branding
+    diagnostics.push(...simpleDiagnostics.map(d => ({ ...d, source: brand })));
   }
 
   return diagnostics.slice(0, globalSettings.maxDiagnostics);
@@ -596,19 +696,33 @@ function inferContext(beforeCursor: string): string {
 function getContextualCompletions(context: string, language: string): CompletionItem[] {
   const completions: CompletionItem[] = [];
 
-  // Helper for multilingual keyword lookup
+  // In hyperscript mode (English-only): always use English
+  // In multilingual modes: use configured language with multilingual lookup
+  const effectiveLanguage = isMultilingualEnabled(resolvedMode) ? language : 'en';
+
+  // Helper for multilingual keyword lookup (active in multilingual modes)
   const getKeyword = (eng: string): string => {
-    if (!semanticPackage || language === 'en') return eng;
+    if (!isMultilingualEnabled(resolvedMode) || !semanticPackage || effectiveLanguage === 'en') {
+      return eng;
+    }
     try {
-      const profile = semanticPackage.getProfile(language);
+      const profile = semanticPackage.getProfile(effectiveLanguage);
       if (profile?.keywords?.[eng]?.primary) {
         return profile.keywords[eng].primary;
       }
     } catch (e) {
-      connection.console.log(`[lokascript-ls] Keyword lookup failed for '${eng}': ${e}`);
+      const brand = getBranding(resolvedMode);
+      connection.console.log(`[${brand}-ls] Keyword lookup failed for '${eng}': ${e}`);
     }
     return eng;
   };
+
+  // Get available commands based on mode
+  // hyperscript-i18n uses hyperscript command set (multilingual but hyperscript-compatible)
+  const commandMode = isHyperscriptCompatMode(resolvedMode) ? 'hyperscript' : 'lokascript';
+  const availableCommands = getCommandsForMode(commandMode);
+  const isCommandAvailable = (cmd: string) =>
+    availableCommands.includes(cmd as (typeof availableCommands)[number]);
 
   switch (context) {
     case 'event':
@@ -624,6 +738,7 @@ function getContextualCompletions(context: string, language: string): Completion
       break;
 
     case 'command':
+      // Core commands (available in both modes)
       completions.push(
         {
           label: getKeyword('toggle'),
@@ -680,6 +795,46 @@ function getContextualCompletions(context: string, language: string): Completion
         { label: getKeyword('if'), kind: CompletionItemKind.Keyword, detail: 'Conditional' },
         { label: getKeyword('repeat'), kind: CompletionItemKind.Keyword, detail: 'Loop' }
       );
+
+      // LokaScript-only commands (only in lokascript mode, not in hyperscript-compat modes)
+      if (!isHyperscriptCompatMode(resolvedMode)) {
+        completions.push(
+          {
+            label: getKeyword('make'),
+            kind: CompletionItemKind.Method,
+            detail: 'Create element or instance',
+            insertText: `${getKeyword('make')} a \${1:div}`,
+          },
+          {
+            label: getKeyword('settle'),
+            kind: CompletionItemKind.Method,
+            detail: 'Wait for CSS transitions',
+          },
+          {
+            label: getKeyword('measure'),
+            kind: CompletionItemKind.Method,
+            detail: 'Get element dimensions',
+          },
+          {
+            label: getKeyword('morph'),
+            kind: CompletionItemKind.Method,
+            detail: 'DOM morph with state preservation',
+            insertText: `${getKeyword('morph')} \${1:target} to \${2:content}`,
+          },
+          {
+            label: getKeyword('persist'),
+            kind: CompletionItemKind.Method,
+            detail: 'Save to browser storage',
+            insertText: `${getKeyword('persist')} \${1:value} as \${2:key}`,
+          },
+          {
+            label: getKeyword('install'),
+            kind: CompletionItemKind.Method,
+            detail: 'Install behavior on element',
+            insertText: `${getKeyword('install')} \${1:Behavior}`,
+          }
+        );
+      }
       break;
 
     case 'expression':
@@ -810,8 +965,11 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
 function getHoverDocumentation(word: string, language: string): string | null {
   const wordLower = word.toLowerCase();
 
-  // Normalize to English for lookup
-  const engWord = normalizeToEnglish(wordLower, language);
+  // In multilingual modes: normalize to English for lookup
+  // In hyperscript mode (English-only): no translation lookup needed
+  const engWord = isMultilingualEnabled(resolvedMode)
+    ? normalizeToEnglish(wordLower, language)
+    : wordLower;
 
   // Use canonical hover docs from @lokascript/core/lsp-metadata, with fallback
   const docs = lspMetadata?.HOVER_DOCS ?? FALLBACK_HOVER_DOCS;
@@ -822,18 +980,20 @@ function getHoverDocumentation(word: string, language: string): string | null {
   // Build hover content
   let content = `**${doc.title}**`;
 
-  // If the word was translated, show the original word too
-  if (wordLower !== engWord) {
+  // Show translation mapping in multilingual modes
+  if (isMultilingualEnabled(resolvedMode) && wordLower !== engWord) {
     content = `**${word}** → *${engWord}*`;
   }
 
   content += `\n\n${doc.description}`;
   content += `\n\n\`\`\`hyperscript\n${doc.example}\n\`\`\``;
 
-  // Add translations from cache (built lazily)
-  const translations = getKeywordTranslations(engWord);
-  if (translations) {
-    content += `\n\n**Translations:** ${translations}`;
+  // Add translations in multilingual modes
+  if (isMultilingualEnabled(resolvedMode)) {
+    const translations = getKeywordTranslations(engWord);
+    if (translations) {
+      content += `\n\n**Translations:** ${translations}`;
+    }
   }
 
   return content;

@@ -1,6 +1,37 @@
 # @lokascript/language-server
 
-Language Server Protocol (LSP) implementation for LokaScript/hyperscript with support for 21 human languages.
+Language Server Protocol (LSP) implementation supporting both **original \_hyperscript** and **LokaScript** (a 100% compatible superset with extensions).
+
+## Multi-Mode Support
+
+The language server supports four operating modes:
+
+| Mode                 | Commands           | Multilingual | Use Case                                   |
+| -------------------- | ------------------ | ------------ | ------------------------------------------ |
+| **hyperscript**      | \_hyperscript only | English only | Original \_hyperscript users               |
+| **hyperscript-i18n** | \_hyperscript only | 24 languages | Users of `@lokascript/hyperscript-adapter` |
+| **lokascript**       | All (extended)     | 24 languages | Full LokaScript development                |
+| **auto**             | (detected)         | (detected)   | Most users - just works                    |
+
+### Mode Selection
+
+- **auto** (default): If `@lokascript/semantic` is available, uses `lokascript` mode; otherwise uses `hyperscript` mode
+- **hyperscript**: Enforces \_hyperscript-compatible syntax, English keywords only
+- **hyperscript-i18n**: Enforces \_hyperscript-compatible syntax with multilingual keyword support. Use this if you have original \_hyperscript with `@lokascript/hyperscript-adapter` for writing in non-English languages
+- **lokascript**: Enables all features including LokaScript extensions and multilingual support
+
+### LokaScript Extensions (flagged in hyperscript mode)
+
+When in `hyperscript` mode, the following LokaScript-only features are flagged as errors:
+
+| Feature                   | Example                            | Alternative for \_hyperscript |
+| ------------------------- | ---------------------------------- | ----------------------------- |
+| Dot notation              | `my.textContent`                   | `my textContent`              |
+| Extended commands         | `morph`, `settle`, `persist`       | N/A                           |
+| Extended `as` conversions | `as Int`, `as JSON`                | N/A                           |
+| Temporal modifiers        | `.debounce(300)`, `.throttle(100)` | N/A                           |
+
+This allows LokaScript users to maintain \_hyperscript compatibility by using `hyperscript` mode as a lint.
 
 ## Features
 
@@ -87,16 +118,103 @@ The server accepts configuration via the LSP `workspace/configuration` mechanism
 ```json
 {
   "lokascript": {
+    "mode": "auto",
     "language": "en",
     "maxDiagnostics": 100
   }
 }
 ```
 
-| Setting          | Default | Description                              |
-| ---------------- | ------- | ---------------------------------------- |
-| `language`       | `"en"`  | Primary language for keyword suggestions |
-| `maxDiagnostics` | `100`   | Maximum diagnostics per file             |
+| Setting          | Default  | Description                                                                            |
+| ---------------- | -------- | -------------------------------------------------------------------------------------- |
+| `mode`           | `"auto"` | Operating mode: `"auto"`, `"hyperscript"`, `"hyperscript-i18n"`, or `"lokascript"`     |
+| `language`       | `"en"`   | Primary language for keyword suggestions (used in `lokascript` and `hyperscript-i18n`) |
+| `maxDiagnostics` | `100`    | Maximum diagnostics per file                                                           |
+
+The server also accepts configuration under the `hyperscript` namespace for users of original \_hyperscript:
+
+```json
+{
+  "hyperscript": {
+    "mode": "hyperscript",
+    "maxDiagnostics": 100
+  }
+}
+```
+
+## VS Code Extension Settings Schema
+
+When building a VS Code extension that uses this language server, add the following to your extension's `package.json`:
+
+```json
+{
+  "contributes": {
+    "configuration": {
+      "title": "Hyperscript / LokaScript",
+      "properties": {
+        "lokascript.mode": {
+          "type": "string",
+          "enum": ["auto", "hyperscript", "hyperscript-i18n", "lokascript"],
+          "enumDescriptions": [
+            "Detect based on available packages",
+            "Restrict to _hyperscript-compatible syntax, English only",
+            "Restrict to _hyperscript-compatible syntax with multilingual support (for hyperscript-adapter users)",
+            "Allow all LokaScript features including extensions"
+          ],
+          "default": "auto",
+          "description": "Operating mode for syntax validation."
+        },
+        "lokascript.language": {
+          "type": "string",
+          "default": "en",
+          "description": "Primary language for multilingual keyword support (lokascript mode only)."
+        },
+        "lokascript.maxDiagnostics": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of diagnostics per file."
+        }
+      }
+    }
+  }
+}
+```
+
+For users who prefer the `hyperscript` namespace:
+
+```json
+{
+  "contributes": {
+    "configuration": {
+      "title": "Hyperscript",
+      "properties": {
+        "hyperscript.mode": {
+          "type": "string",
+          "enum": ["auto", "hyperscript", "hyperscript-i18n", "lokascript"],
+          "enumDescriptions": [
+            "Detect based on available packages",
+            "Restrict to _hyperscript-compatible syntax, English only",
+            "Restrict to _hyperscript-compatible syntax with multilingual support",
+            "Allow all LokaScript features"
+          ],
+          "default": "hyperscript",
+          "description": "Operating mode for syntax validation."
+        },
+        "hyperscript.language": {
+          "type": "string",
+          "default": "en",
+          "description": "Primary language for multilingual keyword support (hyperscript-i18n mode)."
+        },
+        "hyperscript.maxDiagnostics": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of diagnostics per file."
+        }
+      }
+    }
+  }
+}
+```
 
 ## Dependencies
 

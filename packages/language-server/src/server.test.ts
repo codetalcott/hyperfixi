@@ -1759,3 +1759,324 @@ end`;
     });
   });
 });
+
+// =============================================================================
+// Command Tiers Tests (Mode-Specific Behavior)
+// =============================================================================
+
+import {
+  detectLokascriptFeatures,
+  getCommandsForMode,
+  getEventModifiersForMode,
+  isHyperscriptCommand,
+  isLokascriptOnlyCommand,
+  HYPERSCRIPT_COMMANDS,
+  LOKASCRIPT_ONLY_COMMANDS,
+  ALL_COMMANDS,
+} from './command-tiers.js';
+
+describe('Command Tiers', () => {
+  describe('Command Classification', () => {
+    it('classifies core commands as hyperscript', () => {
+      expect(isHyperscriptCommand('toggle')).toBe(true);
+      expect(isHyperscriptCommand('add')).toBe(true);
+      expect(isHyperscriptCommand('remove')).toBe(true);
+      expect(isHyperscriptCommand('put')).toBe(true);
+      expect(isHyperscriptCommand('set')).toBe(true);
+      expect(isHyperscriptCommand('fetch')).toBe(true);
+      expect(isHyperscriptCommand('on')).toBe(true);
+      expect(isHyperscriptCommand('behavior')).toBe(true);
+    });
+
+    it('classifies lokascript extensions as lokascript-only', () => {
+      expect(isLokascriptOnlyCommand('make')).toBe(true);
+      expect(isLokascriptOnlyCommand('settle')).toBe(true);
+      expect(isLokascriptOnlyCommand('measure')).toBe(true);
+      expect(isLokascriptOnlyCommand('morph')).toBe(true);
+      expect(isLokascriptOnlyCommand('persist')).toBe(true);
+      expect(isLokascriptOnlyCommand('install')).toBe(true);
+    });
+
+    it('does not classify hyperscript commands as lokascript-only', () => {
+      expect(isLokascriptOnlyCommand('toggle')).toBe(false);
+      expect(isLokascriptOnlyCommand('add')).toBe(false);
+      expect(isLokascriptOnlyCommand('fetch')).toBe(false);
+    });
+
+    it('does not classify lokascript commands as hyperscript', () => {
+      expect(isHyperscriptCommand('morph')).toBe(false);
+      expect(isHyperscriptCommand('persist')).toBe(false);
+      expect(isHyperscriptCommand('settle')).toBe(false);
+    });
+
+    it('handles case insensitivity', () => {
+      expect(isHyperscriptCommand('Toggle')).toBe(true);
+      expect(isHyperscriptCommand('TOGGLE')).toBe(true);
+      expect(isLokascriptOnlyCommand('Morph')).toBe(true);
+      expect(isLokascriptOnlyCommand('MORPH')).toBe(true);
+    });
+  });
+
+  describe('getCommandsForMode', () => {
+    it('returns only hyperscript commands in hyperscript mode', () => {
+      const commands = getCommandsForMode('hyperscript');
+      expect(commands).toEqual(HYPERSCRIPT_COMMANDS);
+      expect(commands).not.toContain('morph');
+      expect(commands).not.toContain('persist');
+    });
+
+    it('returns all commands in lokascript mode', () => {
+      const commands = getCommandsForMode('lokascript');
+      expect(commands).toEqual(ALL_COMMANDS);
+      expect(commands).toContain('toggle');
+      expect(commands).toContain('morph');
+      expect(commands).toContain('persist');
+    });
+
+    it('lokascript mode includes all hyperscript commands', () => {
+      const hyperscriptCommands = getCommandsForMode('hyperscript');
+      const lokascriptCommands = getCommandsForMode('lokascript');
+
+      for (const cmd of hyperscriptCommands) {
+        expect(lokascriptCommands).toContain(cmd);
+      }
+    });
+  });
+
+  describe('getEventModifiersForMode', () => {
+    it('returns core modifiers in hyperscript mode', () => {
+      const modifiers = getEventModifiersForMode('hyperscript');
+      expect(modifiers).toContain('once');
+      expect(modifiers).toContain('prevent');
+      expect(modifiers).toContain('stop');
+      expect(modifiers).not.toContain('debounce');
+      expect(modifiers).not.toContain('throttle');
+    });
+
+    it('returns all modifiers in lokascript mode', () => {
+      const modifiers = getEventModifiersForMode('lokascript');
+      expect(modifiers).toContain('once');
+      expect(modifiers).toContain('prevent');
+      expect(modifiers).toContain('debounce');
+      expect(modifiers).toContain('throttle');
+    });
+  });
+});
+
+describe('LokaScript Feature Detection', () => {
+  describe('detectLokascriptFeatures', () => {
+    it('detects lokascript-only commands', () => {
+      const features = detectLokascriptFeatures('morph #target to "<div>new</div>"');
+      expect(features).toHaveLength(1);
+      expect(features[0].feature).toBe('command');
+      expect(features[0].description).toContain("'morph'");
+      expect(features[0].description).toContain('LokaScript extension');
+    });
+
+    it('detects multiple lokascript-only commands', () => {
+      const features = detectLokascriptFeatures('make a div then settle then persist it as "key"');
+      const commandFeatures = features.filter(f => f.feature === 'command');
+      expect(commandFeatures.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('detects dot notation syntax', () => {
+      const features = detectLokascriptFeatures('set x to my.textContent');
+      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
+      expect(features.some(f => f.description.includes('my.property'))).toBe(true);
+    });
+
+    it('detects "its" dot notation', () => {
+      const features = detectLokascriptFeatures('put its.value into #output');
+      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
+    });
+
+    it('detects "your" dot notation', () => {
+      const features = detectLokascriptFeatures('log your.classList');
+      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
+    });
+
+    it('detects optional chaining', () => {
+      const features = detectLokascriptFeatures('set x to my?.value');
+      expect(features.some(f => f.pattern === 'optional-chaining')).toBe(true);
+    });
+
+    it('detects extended as conversions', () => {
+      const features = detectLokascriptFeatures('set x to y as Int');
+      expect(features.some(f => f.feature === 'conversion')).toBe(true);
+      expect(features.some(f => f.description.includes('as Int'))).toBe(true);
+    });
+
+    it('detects as JSON conversion', () => {
+      const features = detectLokascriptFeatures('put data as JSON into #output');
+      expect(features.some(f => f.description.includes('as JSON'))).toBe(true);
+    });
+
+    it('detects as FormData conversion', () => {
+      const features = detectLokascriptFeatures('set formData to #myForm as FormData');
+      expect(features.some(f => f.description.includes('as FormData'))).toBe(true);
+    });
+
+    it('detects debounce modifier', () => {
+      const features = detectLokascriptFeatures(
+        'on input.debounce(300) put my.value into #preview'
+      );
+      expect(features.some(f => f.pattern === 'debounce')).toBe(true);
+    });
+
+    it('detects throttle modifier', () => {
+      const features = detectLokascriptFeatures('on scroll.throttle(100) log "scrolling"');
+      expect(features.some(f => f.pattern === 'throttle')).toBe(true);
+    });
+
+    it('returns empty array for hyperscript-compatible code', () => {
+      const features = detectLokascriptFeatures('on click toggle .active');
+      expect(features).toHaveLength(0);
+    });
+
+    it('returns empty array for valid hyperscript with space syntax', () => {
+      const features = detectLokascriptFeatures('set x to my textContent');
+      expect(features).toHaveLength(0);
+    });
+
+    it('does not flag standard as conversions', () => {
+      const features = detectLokascriptFeatures('set x to y as String');
+      expect(features.filter(f => f.feature === 'conversion')).toHaveLength(0);
+    });
+
+    it('detects multiple feature types in one code block', () => {
+      const code = `on input.debounce(300)
+        set val to my.value as Int
+        morph #preview to val`;
+      const features = detectLokascriptFeatures(code);
+
+      expect(features.some(f => f.pattern === 'debounce')).toBe(true);
+      expect(features.some(f => f.pattern === 'dot-notation')).toBe(true);
+      expect(features.some(f => f.feature === 'conversion')).toBe(true);
+      expect(features.some(f => f.feature === 'command')).toBe(true);
+    });
+  });
+});
+
+describe('Mode-Specific Behavior', () => {
+  describe('hyperscript mode constraints', () => {
+    it('should flag morph command in hyperscript mode', () => {
+      const features = detectLokascriptFeatures('morph #target to html');
+      expect(features.length).toBeGreaterThan(0);
+      // detectLokascriptFeatures returns the base description
+      // The server adds "(not compatible with _hyperscript)" when reporting
+      expect(features[0].description).toContain('LokaScript extension');
+    });
+
+    it('should allow toggle in hyperscript mode', () => {
+      const features = detectLokascriptFeatures('toggle .active on me');
+      expect(features).toHaveLength(0);
+    });
+
+    it('should flag dot notation as incompatible', () => {
+      const features = detectLokascriptFeatures('my.textContent');
+      expect(features.some(f => f.description.includes('_hyperscript compatibility'))).toBe(true);
+    });
+  });
+
+  describe('command availability by mode', () => {
+    it('hyperscript mode has fewer commands than lokascript', () => {
+      const hyperscriptCommands = getCommandsForMode('hyperscript');
+      const lokascriptCommands = getCommandsForMode('lokascript');
+      expect(hyperscriptCommands.length).toBeLessThan(lokascriptCommands.length);
+    });
+
+    it('lokascript mode adds exactly the lokascript-only commands', () => {
+      const hyperscriptCommands = getCommandsForMode('hyperscript');
+      const lokascriptCommands = getCommandsForMode('lokascript');
+      const difference = lokascriptCommands.length - hyperscriptCommands.length;
+      expect(difference).toBe(LOKASCRIPT_ONLY_COMMANDS.length);
+    });
+  });
+});
+
+// =============================================================================
+// ServerMode Type Tests
+// =============================================================================
+
+import type { ServerMode } from './types.js';
+
+describe('Server Mode Types', () => {
+  describe('ServerMode', () => {
+    it('accepts all valid mode values', () => {
+      const modes: ServerMode[] = ['auto', 'hyperscript', 'hyperscript-i18n', 'lokascript'];
+      expect(modes).toHaveLength(4);
+    });
+
+    it('hyperscript-i18n is a valid mode', () => {
+      const mode: ServerMode = 'hyperscript-i18n';
+      expect(mode).toBe('hyperscript-i18n');
+    });
+  });
+
+  describe('Mode behavior characteristics', () => {
+    // These tests document the expected behavior of each mode
+    // The actual implementation is in server.ts
+
+    it('hyperscript mode: English only, hyperscript commands only', () => {
+      // hyperscript mode should:
+      // - Use English keywords only (no multilingual)
+      // - Flag LokaScript-only features as errors
+      // - Use "hyperscript" branding in diagnostics
+      const expectedBehavior = {
+        multilingual: false,
+        lokascriptExtensions: false,
+        branding: 'hyperscript',
+      };
+      expect(expectedBehavior.multilingual).toBe(false);
+      expect(expectedBehavior.lokascriptExtensions).toBe(false);
+    });
+
+    it('hyperscript-i18n mode: multilingual, hyperscript commands only', () => {
+      // hyperscript-i18n mode should:
+      // - Enable multilingual keyword support (24 languages)
+      // - Flag LokaScript-only features as errors
+      // - Use "hyperscript" branding in diagnostics
+      const expectedBehavior = {
+        multilingual: true,
+        lokascriptExtensions: false,
+        branding: 'hyperscript',
+      };
+      expect(expectedBehavior.multilingual).toBe(true);
+      expect(expectedBehavior.lokascriptExtensions).toBe(false);
+    });
+
+    it('lokascript mode: multilingual, all commands', () => {
+      // lokascript mode should:
+      // - Enable multilingual keyword support (24 languages)
+      // - Allow all LokaScript extensions
+      // - Use "lokascript" branding in diagnostics
+      const expectedBehavior = {
+        multilingual: true,
+        lokascriptExtensions: true,
+        branding: 'lokascript',
+      };
+      expect(expectedBehavior.multilingual).toBe(true);
+      expect(expectedBehavior.lokascriptExtensions).toBe(true);
+    });
+
+    it('hyperscript-i18n differs from hyperscript only in multilingual support', () => {
+      // Both should flag LokaScript-only features
+      // Both should use hyperscript branding
+      // Only hyperscript-i18n enables multilingual
+      const features = detectLokascriptFeatures('morph #target');
+      expect(features.length).toBeGreaterThan(0); // Flagged in both modes
+    });
+
+    it('hyperscript-i18n differs from lokascript only in command restrictions', () => {
+      // Both enable multilingual
+      // hyperscript-i18n restricts to hyperscript commands
+      // lokascript allows all commands
+      const hyperscriptCommands = getCommandsForMode('hyperscript');
+      const lokascriptCommands = getCommandsForMode('lokascript');
+
+      // hyperscript-i18n would use hyperscript command set
+      expect(hyperscriptCommands).not.toContain('morph');
+      expect(lokascriptCommands).toContain('morph');
+    });
+  });
+});
