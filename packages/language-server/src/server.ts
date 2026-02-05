@@ -28,12 +28,25 @@ import {
   CodeActionParams,
   DidChangeConfigurationNotification,
   Location,
-  Range,
   TextEdit,
   DocumentFormattingParams,
 } from 'vscode-languageserver/node.js';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
+
+// Import modular components
+import type { ServerSettings } from './types.js';
+import { defaultSettings } from './types.js';
+import {
+  isHtmlDocument,
+  extractHyperscriptRegions,
+  offsetToPosition,
+  findRegionAtPosition,
+  findLineInRegion,
+  findCharInLine,
+} from './extraction.js';
+import { getWordAtPosition, escapeRegExp, findNextNonEmptyLine } from './utils.js';
+import { formatHyperscript } from './formatting.js';
 
 // =============================================================================
 // Optional Package Imports
@@ -83,186 +96,7 @@ function getSemanticAnalyzer(): any {
   return cachedAnalyzer;
 }
 
-// Server configuration
-interface ServerSettings {
-  language: string;
-  maxDiagnostics: number;
-}
-
-const defaultSettings: ServerSettings = {
-  language: 'en',
-  maxDiagnostics: 100,
-};
-
 let globalSettings: ServerSettings = defaultSettings;
-
-// =============================================================================
-// HTML Hyperscript Extraction
-// =============================================================================
-
-interface HyperscriptRegion {
-  code: string;
-  startLine: number;
-  startChar: number;
-  endLine: number;
-  endChar: number;
-  type: 'attribute' | 'script';
-}
-
-/**
- * Checks if a document is HTML based on URI or content
- */
-function isHtmlDocument(uri: string, content: string): boolean {
-  if (uri.endsWith('.html') || uri.endsWith('.htm')) return true;
-  if (content.trim().startsWith('<!DOCTYPE') || content.trim().startsWith('<html')) return true;
-  // Check for HTML tags
-  if (/<\w+[^>]*>/.test(content) && !content.trim().startsWith('on ')) return true;
-  return false;
-}
-
-/**
- * Extracts hyperscript regions from HTML content.
- * Returns regions for _="..." and _='...' attributes and <script type="text/hyperscript"> tags.
- */
-function extractHyperscriptRegions(content: string): HyperscriptRegion[] {
-  const regions: HyperscriptRegion[] = [];
-
-  // Track position for multiline matching
-  let fullContent = content;
-
-  // Extract _="..." attributes (double quotes, handles multiline)
-  const doubleQuoteRegex = /_="([^"\\]*(?:\\.[^"\\]*)*)"/g;
-  let match;
-
-  while ((match = doubleQuoteRegex.exec(fullContent)) !== null) {
-    const code = match[1].replace(/\\"/g, '"'); // Unescape quotes
-    const startOffset = match.index + 3; // After _="
-    const endOffset = match.index + match[0].length - 1; // Before final "
-
-    // Convert offset to line/character
-    const startPos = offsetToPosition(content, startOffset);
-    const endPos = offsetToPosition(content, endOffset);
-
-    regions.push({
-      code,
-      startLine: startPos.line,
-      startChar: startPos.character,
-      endLine: endPos.line,
-      endChar: endPos.character,
-      type: 'attribute',
-    });
-  }
-
-  // Extract _='...' attributes (single quotes, handles multiline)
-  const singleQuoteRegex = /_='([^'\\]*(?:\\.[^'\\]*)*)'/g;
-
-  while ((match = singleQuoteRegex.exec(fullContent)) !== null) {
-    const code = match[1].replace(/\\'/g, "'"); // Unescape quotes
-    const startOffset = match.index + 3; // After _='
-    const endOffset = match.index + match[0].length - 1; // Before final '
-
-    // Convert offset to line/character
-    const startPos = offsetToPosition(content, startOffset);
-    const endPos = offsetToPosition(content, endOffset);
-
-    regions.push({
-      code,
-      startLine: startPos.line,
-      startChar: startPos.character,
-      endLine: endPos.line,
-      endChar: endPos.character,
-      type: 'attribute',
-    });
-  }
-
-  // Extract <script type="text/hyperscript">...</script>
-  const scriptRegex = /<script\s+type=["']text\/hyperscript["'][^>]*>([\s\S]*?)<\/script>/gi;
-
-  while ((match = scriptRegex.exec(fullContent)) !== null) {
-    const code = match[1];
-    const startOffset = match.index + match[0].indexOf('>') + 1;
-    const endOffset = match.index + match[0].lastIndexOf('</script>');
-
-    const startPos = offsetToPosition(content, startOffset);
-    const endPos = offsetToPosition(content, endOffset);
-
-    regions.push({
-      code,
-      startLine: startPos.line,
-      startChar: startPos.character,
-      endLine: endPos.line,
-      endChar: endPos.character,
-      type: 'script',
-    });
-  }
-
-  return regions;
-}
-
-/**
- * Converts a character offset to line/character position.
- * Handles both Unix (LF) and Windows (CRLF) line endings.
- */
-function offsetToPosition(content: string, offset: number): { line: number; character: number } {
-  let line = 0;
-  let character = 0;
-
-  // Clamp offset to valid range
-  const maxOffset = Math.min(offset, content.length);
-
-  for (let i = 0; i < maxOffset; i++) {
-    if (content[i] === '\r' && content[i + 1] === '\n') {
-      // CRLF: count as single newline, skip the \r
-      line++;
-      character = 0;
-      i++; // Skip the \n in next iteration
-    } else if (content[i] === '\n') {
-      // LF only
-      line++;
-      character = 0;
-    } else if (content[i] === '\r') {
-      // CR only (old Mac style, rare)
-      line++;
-      character = 0;
-    } else {
-      character++;
-    }
-  }
-
-  return { line, character };
-}
-
-/**
- * Finds which hyperscript region (if any) contains the given position
- */
-function findRegionAtPosition(
-  regions: HyperscriptRegion[],
-  line: number,
-  character: number
-): { region: HyperscriptRegion; localLine: number; localChar: number } | null {
-  for (const region of regions) {
-    // Check if position is within region bounds
-    const afterStart =
-      line > region.startLine || (line === region.startLine && character >= region.startChar);
-    const beforeEnd =
-      line < region.endLine || (line === region.endLine && character <= region.endChar);
-
-    if (afterStart && beforeEnd) {
-      // Calculate local position within the region
-      let localLine = line - region.startLine;
-      let localChar: number;
-
-      if (line === region.startLine) {
-        localChar = character - region.startChar;
-      } else {
-        localChar = character;
-      }
-
-      return { region, localLine, localChar };
-    }
-  }
-  return null;
-}
 
 // =============================================================================
 // Initialization
@@ -804,36 +638,6 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
   }
 });
 
-function getWordAtPosition(
-  line: string,
-  character: number
-): { text: string; start: number; end: number } | null {
-  let start = character;
-  let end = character;
-
-  // Extended regex to handle:
-  // - Latin characters with diacritics (á, ñ, ü, etc.)
-  // - CJK characters (Japanese, Korean, Chinese)
-  // - Arabic, Hebrew, Cyrillic, etc.
-  // Using Unicode property escapes for proper multilingual support
-  const isWordChar = (char: string): boolean => {
-    if (!char) return false;
-    // Match: letters, marks, numbers, hyphen, dot, underscore
-    // This covers Latin, CJK, Arabic, Hebrew, Cyrillic, etc.
-    return /[\p{L}\p{M}\p{N}_.-]/u.test(char);
-  };
-
-  while (start > 0 && isWordChar(line[start - 1])) {
-    start--;
-  }
-  while (end < line.length && isWordChar(line[end])) {
-    end++;
-  }
-
-  if (start === end) return null;
-  return { text: line.slice(start, end), start, end };
-}
-
 function getHoverDocumentation(word: string, language: string): string | null {
   const wordLower = word.toLowerCase();
 
@@ -1165,9 +969,6 @@ connection.onDefinition((params: TextDocumentPositionParams): Location | Locatio
 
     // Get the word at the current position
     let targetWord: string | null = null;
-    let searchText = text;
-    let baseLineOffset = 0;
-    let baseCharOffset = 0;
 
     if (isHtmlDocument(uri, text)) {
       // Find if cursor is inside a hyperscript region
@@ -1187,9 +988,6 @@ connection.onDefinition((params: TextDocumentPositionParams): Location | Locatio
       if (!word) return null;
 
       targetWord = word.text;
-      searchText = text; // Search entire document for definitions
-      baseLineOffset = 0;
-      baseCharOffset = 0;
     } else {
       // Pure hyperscript file
       const lines = text.split('\n');
@@ -1203,9 +1001,6 @@ connection.onDefinition((params: TextDocumentPositionParams): Location | Locatio
     }
 
     if (!targetWord) return null;
-
-    // Normalize to English for pattern matching
-    const engWord = normalizeToEnglish(targetWord.toLowerCase(), globalSettings.language);
 
     // Search for definitions in the document
     const locations: Location[] = [];
@@ -1275,8 +1070,6 @@ connection.onDefinition((params: TextDocumentPositionParams): Location | Locatio
       }
     } else {
       // Pure hyperscript file - search entire text
-      const lines = text.split('\n');
-
       // Search for behavior definitions
       for (const match of text.matchAll(behaviorPattern)) {
         const pos = offsetToPosition(text, match.index ?? 0);
@@ -1340,35 +1133,6 @@ function getKeywordVariants(eng: string): string[] {
     }
   }
   return variants;
-}
-
-/**
- * Helper: Escape special regex characters
- */
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * Helper: Find line number within a region given a character offset
- */
-function findLineInRegion(code: string, offset: number): number {
-  let line = 0;
-  for (let i = 0; i < offset && i < code.length; i++) {
-    if (code[i] === '\n') line++;
-  }
-  return line;
-}
-
-/**
- * Helper: Find character position in line given a character offset
- */
-function findCharInLine(code: string, offset: number): number {
-  let lastNewline = -1;
-  for (let i = 0; i < offset && i < code.length; i++) {
-    if (code[i] === '\n') lastNewline = i;
-  }
-  return offset - lastNewline - 1;
 }
 
 // =============================================================================
@@ -1534,78 +1298,6 @@ connection.onDocumentFormatting((params: DocumentFormattingParams): TextEdit[] |
     return null;
   }
 });
-
-/**
- * Simple pattern-based hyperscript formatter.
- * Handles indentation for blocks and normalizes whitespace.
- */
-function formatHyperscript(code: string, indentStr: string = '  '): string {
-  const lines = code.split('\n');
-  const formattedLines: string[] = [];
-  let indentLevel = 0;
-
-  // Block-starting keywords that always increase indent (require matching 'end')
-  const blockKeywords = /^(behavior|def|if|repeat|for|while)\b/i;
-  // Keywords that decrease indent
-  const dedentKeywords = /^(end|else)\b/i;
-  // 'on' is special - only increases indent if it's a multiline declaration
-  const onKeyword = /^on\b/i;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    // Skip empty lines
-    if (!trimmed) {
-      formattedLines.push('');
-      continue;
-    }
-
-    // Decrease indent for dedent keywords (before adding line)
-    if (dedentKeywords.test(trimmed)) {
-      indentLevel = Math.max(0, indentLevel - 1);
-    }
-
-    // Add the formatted line
-    const indent = indentStr.repeat(indentLevel);
-    formattedLines.push(indent + trimmed);
-
-    // Increase indent for block keywords (after adding line)
-    // But not if the line also contains 'end' (single-line blocks)
-    if (blockKeywords.test(trimmed) && !/\bend\s*$/i.test(trimmed)) {
-      indentLevel++;
-    }
-
-    // 'on' keyword: increase indent unless next non-empty line is 'end' or another 'on'
-    // Single-line handlers like "on click toggle .active" followed by "end" or another handler
-    // don't need extra indentation
-    if (onKeyword.test(trimmed)) {
-      const nextLine = findNextNonEmptyLine(lines, i + 1);
-      // Only skip indent increase if next line is 'end' or another 'on' at same level
-      if (nextLine && !/^(end|on)\b/i.test(nextLine)) {
-        indentLevel++;
-      }
-    }
-
-    // Special case: "else" increases indent after itself
-    if (/^else\b/i.test(trimmed)) {
-      indentLevel++;
-    }
-  }
-
-  return formattedLines.join('\n');
-}
-
-/**
- * Find the next non-empty line starting from index
- */
-function findNextNonEmptyLine(lines: string[], startIndex: number): string | null {
-  for (let i = startIndex; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if (trimmed) return trimmed;
-  }
-  return null;
-}
 
 // =============================================================================
 // Document Symbols
