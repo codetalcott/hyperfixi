@@ -182,10 +182,21 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
 
   /**
    * Check if a value is a DOM element using duck typing
-   * Works across realms (JSDOM vs native HTMLElement)
+   * Works across realms (JSDOM, happy-dom vs native HTMLElement)
+   *
+   * Note: We don't use isObject() here because the type registry's Object
+   * type explicitly excludes Elements (which is correct), so isObject()
+   * returns false for Elements. Instead, we use direct duck-typing.
    */
   protected isElement(value: unknown): value is Element {
-    return value != null && isObject(value) && (value as any).nodeType === 1;
+    return (
+      value !== null &&
+      typeof value === 'object' &&
+      'nodeType' in value &&
+      (value as any).nodeType === 1 &&
+      'tagName' in value &&
+      typeof (value as any).tagName === 'string'
+    );
   }
 
   /**
