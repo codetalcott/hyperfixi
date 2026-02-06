@@ -76,21 +76,18 @@ function getOtherLanguages(): string[] {
   return semanticPackage.getRegisteredLanguages().filter((l: string) => l !== 'en');
 }
 
-let astToolkit: any = null;
+let interchangeLSP: any = null;
+let fromCoreASTFn: any = null;
 let parseFunction: any = null;
 let lspMetadata: any = null;
 
-// Try to import ast-toolkit for enhanced analysis
-try {
-  astToolkit = await import('@lokascript/ast-toolkit');
-} catch {
-  console.error('[lokascript-ls] @lokascript/ast-toolkit not available');
-}
-
-// Try to import core package for parsing
+// Try to import core package for parsing and interchange-based LSP
 try {
   const core = await import('@lokascript/core');
   parseFunction = core.parse;
+  fromCoreASTFn = core.fromCoreAST;
+  // Interchange-aware LSP module (replaces deprecated @lokascript/ast-toolkit)
+  interchangeLSP = await import('@lokascript/core/ast-utils');
 } catch {
   console.error('[lokascript-ls] @lokascript/core not available');
 }
@@ -563,14 +560,15 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     }
   }
 
-  // Try AST-based analysis (works in both modes)
-  if (diagnostics.length === 0 && astToolkit && parseFunction) {
+  // Try AST-based analysis via interchange format (works in both modes)
+  if (diagnostics.length === 0 && interchangeLSP && parseFunction && fromCoreASTFn) {
     try {
       const ast = parseFunction(code);
-      if (ast && astToolkit.astToLSPDiagnostics) {
-        const astDiagnostics = astToolkit.astToLSPDiagnostics(ast);
-        // Update source to match current branding
-        diagnostics.push(...astDiagnostics.map((d: Diagnostic) => ({ ...d, source: brand })));
+      if (ast) {
+        const interchange = fromCoreASTFn(ast);
+        const nodes = interchange.type === 'event' ? [interchange] : [interchange];
+        const astDiagnostics = interchangeLSP.interchangeToLSPDiagnostics(nodes, { source: brand });
+        diagnostics.push(...astDiagnostics);
       }
     } catch (parseError: any) {
       diagnostics.push({
@@ -1439,32 +1437,7 @@ connection.onDocumentFormatting((params: DocumentFormattingParams): TextEdit[] |
       return null;
     }
 
-    // Try AST-based formatting first
-    if (parseFunction && astToolkit?.generate) {
-      try {
-        const ast = parseFunction(text);
-        if (ast) {
-          const formatted = astToolkit.generate(ast, { minify: false, indentation: indentStr });
-          if (formatted && formatted.trim()) {
-            return [
-              TextEdit.replace(
-                {
-                  start: { line: 0, character: 0 },
-                  end: { line: document.lineCount, character: 0 },
-                },
-                formatted
-              ),
-            ];
-          }
-        }
-      } catch (parseError) {
-        connection.console.log(
-          `[lokascript-ls] AST formatting failed, using fallback: ${parseError}`
-        );
-      }
-    }
-
-    // Fallback: Pattern-based formatting
+    // Pattern-based formatting
     const formatted = formatHyperscript(text, indentStr);
     if (formatted !== text) {
       return [

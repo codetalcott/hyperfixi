@@ -31,8 +31,20 @@ export type InterchangeNode =
   | WhileNode
   | PositionalNode;
 
+/**
+ * Position fields are optional — present when the source parser provides them,
+ * absent for synthetically constructed nodes.
+ */
 export interface BaseNode {
   readonly type: string;
+  /** Byte offset of node start in source (0-indexed). */
+  readonly start?: number;
+  /** Byte offset of node end in source (0-indexed, exclusive). */
+  readonly end?: number;
+  /** Source line number (1-indexed). */
+  readonly line?: number;
+  /** Column offset within line (0-indexed). */
+  readonly column?: number;
 }
 
 // =============================================================================

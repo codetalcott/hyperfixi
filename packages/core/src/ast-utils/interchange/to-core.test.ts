@@ -558,4 +558,137 @@ describe('toCoreAST', () => {
       expect(roundtripped.arguments as any[]).toHaveLength(1);
     });
   });
+
+  // =============================================================================
+  // E. POSITION HANDLING
+  // =============================================================================
+
+  describe('position handling', () => {
+    it('uses real positions from interchange nodes when available', () => {
+      const node: InterchangeNode = {
+        type: 'literal',
+        value: 42,
+        start: 10,
+        end: 12,
+        line: 3,
+        column: 5,
+      };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(10);
+      expect(result.end).toBe(12);
+      expect(result.line).toBe(3);
+      expect(result.column).toBe(5);
+    });
+
+    it('uses synthetic POS when interchange nodes lack positions', () => {
+      const node: InterchangeNode = { type: 'literal', value: 42 };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(0);
+      expect(result.line).toBe(1);
+      expect(result.column).toBe(0);
+    });
+
+    it('uses real positions on identifier nodes', () => {
+      const node: InterchangeNode = {
+        type: 'identifier',
+        value: 'x',
+        start: 5,
+        end: 6,
+        line: 2,
+        column: 3,
+      };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(5);
+      expect(result.end).toBe(6);
+      expect(result.line).toBe(2);
+    });
+
+    it('uses real positions on event nodes', () => {
+      const node: InterchangeNode = {
+        type: 'event',
+        event: 'click',
+        body: [],
+        start: 0,
+        end: 30,
+        line: 1,
+        column: 0,
+      };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(30);
+    });
+
+    it('uses real positions on command nodes', () => {
+      const node: InterchangeNode = {
+        type: 'command',
+        name: 'toggle',
+        args: [],
+        start: 9,
+        end: 24,
+        line: 2,
+        column: 2,
+      };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(9);
+      expect(result.end).toBe(24);
+    });
+
+    it('uses real positions on binary nodes', () => {
+      const node: InterchangeNode = {
+        type: 'binary',
+        operator: '+',
+        left: { type: 'literal', value: 1 },
+        right: { type: 'literal', value: 2 },
+        start: 0,
+        end: 5,
+        line: 1,
+        column: 0,
+      };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(5);
+    });
+
+    it('uses real positions on if nodes', () => {
+      const node: InterchangeNode = {
+        type: 'if',
+        condition: { type: 'literal', value: true },
+        thenBranch: [],
+        start: 0,
+        end: 20,
+        line: 1,
+        column: 0,
+      };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(20);
+    });
+
+    it('roundtrip preserves positions from core AST with positions', () => {
+      const core = {
+        type: 'literal',
+        value: 42,
+        start: 10,
+        end: 12,
+        line: 3,
+        column: 5,
+      };
+      const interchange = fromCoreAST(core);
+      const roundtripped = toCoreAST(interchange);
+      expect(roundtripped.start).toBe(10);
+      expect(roundtripped.end).toBe(12);
+      expect(roundtripped.line).toBe(3);
+      expect(roundtripped.column).toBe(5);
+    });
+
+    it('handles partial positions (only start/end)', () => {
+      const node: InterchangeNode = { type: 'literal', value: 42, start: 10, end: 12 };
+      const result = toCoreAST(node);
+      expect(result.start).toBe(10);
+      expect(result.end).toBe(12);
+      expect(result.line).toBe(1); // falls back to POS.line
+      expect(result.column).toBe(0); // falls back to POS.column
+    });
+  });
 });

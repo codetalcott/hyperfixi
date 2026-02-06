@@ -14,23 +14,16 @@
  * ## Current consumers
  * - **AOT compiler**: uses `fromCoreAST` / `fromSemanticAST` to normalize
  *   both parser outputs before code generation.
+ * - **Language server**: uses `interchangeToLSPDiagnostics` (from `lsp.ts`)
+ *   for structural diagnostics (complexity, code smells) on interchange nodes.
  * - **Roundtrip**: `toCoreAST` converts interchange back to core AST format
  *   for runtime fallback execution.
  *
- * ## Future: Language Server / AST Toolkit
- * The language server's `ast-toolkit/src/lsp/index.ts` currently uses hardcoded
- * core AST types (`node.type === 'eventHandler'`) and depends on position info
- * (`node.line`, `node.column`, `node.start`, `node.end`). Interchange nodes
- * intentionally omit positions to keep the format structural.
- *
- * To integrate with the language server, two design options exist:
- * 1. **Optional position fields**: Add `readonly start?: number` etc. to BaseNode.
- *    Pro: simple. Con: every consumer must handle missing positions.
- * 2. **Source map companion**: Keep interchange structural; pair with a separate
- *    `SourceMap` that maps node paths to source positions. Pro: clean separation.
- *    Con: more complex API.
- *
- * This decision is deferred until the language server has a concrete need.
+ * ## Position Info
+ * BaseNode includes optional position fields (`start`, `end`, `line`, `column`).
+ * Converters (`fromCoreAST`, `fromSemanticAST`) preserve positions from source
+ * nodes when available. Consumers that don't need positions simply ignore them.
+ * The AOT compiler ignores positions; the language server uses them for LSP ranges.
  */
 
 // =============================================================================
@@ -60,9 +53,20 @@ export type InterchangeNode =
 
 /**
  * Base fields shared by all nodes. Not used directly — use InterchangeNode.
+ *
+ * Position fields are optional — present when the source parser provides them,
+ * absent for synthetically constructed nodes (e.g. from tests or transformations).
  */
 export interface BaseNode {
   readonly type: string;
+  /** Byte offset of node start in source (0-indexed). */
+  readonly start?: number;
+  /** Byte offset of node end in source (0-indexed, exclusive). */
+  readonly end?: number;
+  /** Source line number (1-indexed). */
+  readonly line?: number;
+  /** Column offset within line (0-indexed). */
+  readonly column?: number;
 }
 
 // =============================================================================

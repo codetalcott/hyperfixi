@@ -5,10 +5,11 @@
  * enabling an "AOT compile → runtime fallback" pattern where interchange ASTs
  * can be fed directly to the core runtime for execution.
  *
- * Position handling: Interchange nodes don't carry source positions.
- * All output nodes receive synthetic positions (start: 0, end: 0, line: 1, column: 0).
- * The runtime executes based on node structure, not positions — positions are only
- * used for error messages, so synthetic positions are acceptable.
+ * Position handling: When interchange nodes carry source positions (from
+ * `fromCoreAST`/`fromSemanticAST`), those are preserved in the output.
+ * When positions are absent, synthetic positions (start: 0, end: 0, line: 1,
+ * column: 0) are used. The runtime executes based on node structure, not
+ * positions — positions are only used for error messages.
  */
 
 import type { InterchangeNode, EventModifiers } from './types';
@@ -19,8 +20,25 @@ interface CoreNode {
   [key: string]: unknown;
 }
 
-/** Synthetic position for all generated nodes. */
+/** Synthetic position for nodes without source positions. */
 const POS = { start: 0, end: 0, line: 1, column: 0 } as const;
+
+/**
+ * Get position fields from an interchange node, falling back to synthetic POS.
+ */
+function nodePos(node: InterchangeNode): {
+  start: number;
+  end: number;
+  line: number;
+  column: number;
+} {
+  return {
+    start: node.start ?? POS.start,
+    end: node.end ?? POS.end,
+    line: node.line ?? POS.line,
+    column: node.column ?? POS.column,
+  };
+}
 
 /**
  * Convert an interchange node to a core parser AST node.
@@ -48,21 +66,21 @@ export function toCoreAST(node: InterchangeNode): CoreNode {
         type: 'literal',
         value: node.value,
         raw: node.value === null ? 'null' : node.value === undefined ? '' : String(node.value),
-        ...POS,
+        ...nodePos(node),
       };
     case 'identifier':
-      return { type: 'identifier', name: node.name ?? node.value, ...POS };
+      return { type: 'identifier', name: node.name ?? node.value, ...nodePos(node) };
     case 'selector':
-      return { type: 'selector', value: node.value, ...POS };
+      return { type: 'selector', value: node.value, ...nodePos(node) };
     case 'variable':
-      return { type: 'identifier', name: node.name, scope: node.scope, ...POS };
+      return { type: 'identifier', name: node.name, scope: node.scope, ...nodePos(node) };
     case 'binary':
       return {
         type: 'binaryExpression',
         operator: node.operator,
         left: toCoreAST(node.left),
         right: toCoreAST(node.right),
-        ...POS,
+        ...nodePos(node),
       };
     case 'unary':
       return {
@@ -70,7 +88,7 @@ export function toCoreAST(node: InterchangeNode): CoreNode {
         operator: node.operator,
         argument: toCoreAST(node.operand),
         prefix: true,
-        ...POS,
+        ...nodePos(node),
       };
     case 'member':
       return {
@@ -81,21 +99,21 @@ export function toCoreAST(node: InterchangeNode): CoreNode {
             ? { type: 'identifier', name: node.property, ...POS }
             : toCoreAST(node.property),
         computed: node.computed ?? false,
-        ...POS,
+        ...nodePos(node),
       };
     case 'possessive':
       return {
         type: 'possessiveExpression',
         object: toCoreAST(node.object),
         property: { type: 'identifier', name: node.property, ...POS },
-        ...POS,
+        ...nodePos(node),
       };
     case 'call':
       return {
         type: 'callExpression',
         callee: toCoreAST(node.callee),
         arguments: (node.args ?? []).map(a => toCoreAST(a)),
-        ...POS,
+        ...nodePos(node),
       };
     case 'positional':
       // Wrap as a call to a positional function (e.g., first(.items))
@@ -103,7 +121,7 @@ export function toCoreAST(node: InterchangeNode): CoreNode {
         type: 'callExpression',
         callee: { type: 'identifier', name: node.position, ...POS },
         arguments: node.target ? [toCoreAST(node.target)] : [],
-        ...POS,
+        ...nodePos(node),
       };
 
     default: {
@@ -127,7 +145,7 @@ function convertEvent(node: InterchangeNode & { type: 'event' }): CoreNode {
     event: node.event,
     commands,
     ...modifiers,
-    ...POS,
+    ...nodePos(node),
   };
 }
 
@@ -137,7 +155,7 @@ function convertCommand(node: InterchangeNode & { type: 'command' }): CoreNode {
     name: node.name,
     args: (node.args ?? []).map(a => toCoreAST(a)),
     isBlocking: false,
-    ...POS,
+    ...nodePos(node),
   };
 
   if (node.target) {
@@ -166,7 +184,7 @@ function convertIf(node: InterchangeNode & { type: 'if' }): CoreNode {
     condition: toCoreAST(node.condition),
     thenBranch: node.thenBranch.map(n => toCoreAST(n)),
     args: [],
-    ...POS,
+    ...nodePos(node),
   };
 
   if (node.elseBranch) {
@@ -183,7 +201,7 @@ function convertRepeat(node: InterchangeNode & { type: 'repeat' }): CoreNode {
     isBlocking: true,
     body: node.body.map(n => toCoreAST(n)),
     args: [],
-    ...POS,
+    ...nodePos(node),
   };
 
   if (node.count !== undefined) {
@@ -208,7 +226,7 @@ function convertForEach(node: InterchangeNode & { type: 'foreach' }): CoreNode {
     collection: toCoreAST(node.collection),
     body: node.body.map(n => toCoreAST(n)),
     args: [],
-    ...POS,
+    ...nodePos(node),
   };
 }
 
@@ -221,7 +239,7 @@ function convertWhile(node: InterchangeNode & { type: 'while' }): CoreNode {
     condition: toCoreAST(node.condition),
     body: node.body.map(n => toCoreAST(n)),
     args: [],
-    ...POS,
+    ...nodePos(node),
   };
 }
 

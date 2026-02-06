@@ -1,6 +1,12 @@
 /**
  * LSP Integration Module for AST Toolkit
  * Provides LSP server integration using existing reference data and infrastructure
+ *
+ * @deprecated Use `@lokascript/core/ast-utils` interchange-based LSP module instead.
+ * The interchange module (`interchangeToLSPDiagnostics`, `interchangeToLSPSymbols`,
+ * `interchangeToLSPHover`, `interchangeToLSPCompletions`) works with both core and
+ * semantic parser output through the shared InterchangeNode format.
+ * See: packages/core/src/ast-utils/interchange/lsp.ts
  */
 
 import { findNodes, calculateComplexity, analyzeMetrics, detectCodeSmells } from '../index.js';

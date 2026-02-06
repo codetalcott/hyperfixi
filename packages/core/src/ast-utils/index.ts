@@ -111,3 +111,25 @@ export type {
 } from './interchange/index.js';
 
 export { fromCoreAST, toCoreAST } from './interchange/index.js';
+
+// Interchange LSP integration
+export {
+  interchangeToLSPDiagnostics,
+  interchangeToLSPSymbols,
+  interchangeToLSPHover,
+  interchangeToLSPCompletions,
+  calculateCyclomatic,
+  calculateCognitive,
+} from './interchange/index.js';
+
+export type {
+  LSPPosition,
+  LSPRange,
+  LSPDiagnostic,
+  LSPDiagnosticSeverity,
+  LSPDocumentSymbol,
+  LSPSymbolKind,
+  LSPCompletionItem,
+  LSPCompletionItemKind,
+  LSPHoverInfo,
+} from './interchange/index.js';

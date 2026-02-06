@@ -27,6 +27,19 @@ interface CoreNode {
 }
 
 /**
+ * Extract position fields from a source node. Returns only fields that exist,
+ * so spreading the result adds nothing when positions are absent.
+ */
+function pos(node: CoreNode): Record<string, number> {
+  const p: Record<string, number> = {};
+  if (typeof node.start === 'number') p.start = node.start;
+  if (typeof node.end === 'number') p.end = node.end;
+  if (typeof node.line === 'number') p.line = node.line;
+  if (typeof node.column === 'number') p.column = node.column;
+  return p;
+}
+
+/**
  * Convert a core parser AST node to an interchange node.
  */
 export function fromCoreAST(node: CoreNode): InterchangeNode {
@@ -44,18 +57,31 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
 
     // Expression types
     case 'literal':
-      return { type: 'literal', value: node.value as string | number | boolean | null };
+      return {
+        type: 'literal',
+        value: node.value as string | number | boolean | null,
+        ...pos(node),
+      };
     case 'string':
-      return { type: 'literal', value: node.value as string };
+      return { type: 'literal', value: node.value as string, ...pos(node) };
     case 'selector':
-      return { type: 'selector', value: (node.value ?? node.selector ?? '') as string };
+      return {
+        type: 'selector',
+        value: (node.value ?? node.selector ?? '') as string,
+        ...pos(node),
+      };
     case 'contextReference':
-      return { type: 'identifier', value: (node.name ?? node.contextType ?? '') as string };
+      return {
+        type: 'identifier',
+        value: (node.name ?? node.contextType ?? '') as string,
+        ...pos(node),
+      };
     case 'identifier':
       return {
         type: 'identifier',
         value: (node.name ?? node.value ?? '') as string,
         name: (node.name ?? '') as string,
+        ...pos(node),
       };
     case 'propertyAccess':
     case 'possessiveExpression':
@@ -71,22 +97,32 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
         type: 'unary',
         operator: node.operator as string,
         operand: fromCoreAST((node.argument as CoreNode) ?? (node.operand as CoreNode)),
+        ...pos(node),
       };
     case 'timeExpression':
-      return { type: 'literal', value: node.value as number };
+      return { type: 'literal', value: node.value as number, ...pos(node) };
     case 'templateLiteral':
-      return { type: 'literal', value: (node.raw ?? '') as string };
+      return { type: 'literal', value: (node.raw ?? '') as string, ...pos(node) };
     case 'variable':
       return {
         type: 'variable',
         name: (node.name ?? '') as string,
         scope: (node.scope ?? 'local') as 'local' | 'global' | 'element',
+        ...pos(node),
       };
     case 'htmlSelector':
-      return { type: 'selector', value: (node.value ?? node.selector ?? '') as string };
+      return {
+        type: 'selector',
+        value: (node.value ?? node.selector ?? '') as string,
+        ...pos(node),
+      };
 
     default:
-      return { type: 'literal', value: (node.value as string | number | boolean | null) ?? null };
+      return {
+        type: 'literal',
+        value: (node.value as string | number | boolean | null) ?? null,
+        ...pos(node),
+      };
   }
 }
 
@@ -101,7 +137,7 @@ function convertEventHandler(node: CoreNode): EventNode {
 
   const modifiers = buildEventModifiers(node);
 
-  return { type: 'event', event, modifiers, body };
+  return { type: 'event', event, modifiers, body, ...pos(node) };
 }
 
 function convertCommand(node: CoreNode): InterchangeNode {
@@ -126,6 +162,7 @@ function convertCommand(node: CoreNode): InterchangeNode {
     args,
     ...(target ? { target } : {}),
     ...(modifiers && Object.keys(modifiers).length > 0 ? { modifiers } : {}),
+    ...pos(node),
   } as CommandNode;
 }
 
@@ -159,13 +196,14 @@ function convertIfCommand(node: CoreNode): IfNode {
     condition,
     thenBranch,
     ...(elseBranch ? { elseBranch } : {}),
+    ...pos(node),
   } as IfNode;
 }
 
 function convertRepeatCommand(node: CoreNode): InterchangeNode {
   const args = (node.args ?? []) as CoreNode[];
   if (args.length === 0) {
-    return { type: 'repeat', body: [] } as RepeatNode;
+    return { type: 'repeat', body: [], ...pos(node) } as RepeatNode;
   }
 
   const loopTypeNode = args[0];
@@ -175,7 +213,12 @@ function convertRepeatCommand(node: CoreNode): InterchangeNode {
   switch (loopType) {
     case 'times': {
       const count = args[1] ? fromCoreAST(args[1]) : undefined;
-      return { type: 'repeat', count, body: extractBlockCommands(bodyBlock) } as RepeatNode;
+      return {
+        type: 'repeat',
+        count,
+        body: extractBlockCommands(bodyBlock),
+        ...pos(node),
+      } as RepeatNode;
     }
     case 'for': {
       const itemName = (args[1]?.value ?? 'item') as string;
@@ -187,16 +230,22 @@ function convertRepeatCommand(node: CoreNode): InterchangeNode {
         itemName,
         collection,
         body: extractBlockCommands(bodyBlock),
+        ...pos(node),
       } as ForEachNode;
     }
     case 'while': {
       const condition = args[1]
         ? fromCoreAST(args[1])
         : ({ type: 'literal', value: true } as const);
-      return { type: 'while', condition, body: extractBlockCommands(bodyBlock) } as WhileNode;
+      return {
+        type: 'while',
+        condition,
+        body: extractBlockCommands(bodyBlock),
+        ...pos(node),
+      } as WhileNode;
     }
     default:
-      return { type: 'repeat', body: extractBlockCommands(bodyBlock) } as RepeatNode;
+      return { type: 'repeat', body: extractBlockCommands(bodyBlock), ...pos(node) } as RepeatNode;
   }
 }
 
@@ -209,6 +258,7 @@ function convertCommandSequence(node: CoreNode): InterchangeNode {
     type: 'event',
     event: 'click',
     body: commands.map(cmd => fromCoreAST(cmd)),
+    ...pos(node),
   } as EventNode;
 }
 
@@ -221,6 +271,7 @@ function convertBlock(node: CoreNode): InterchangeNode {
     type: 'event',
     event: 'click',
     body: commands.map(cmd => fromCoreAST(cmd)),
+    ...pos(node),
   } as EventNode;
 }
 
@@ -233,7 +284,7 @@ function convertPossessive(node: CoreNode): InterchangeNode {
       ? node.property
       : (((node.property as CoreNode)?.name ?? (node.property as CoreNode)?.value ?? '') as string);
 
-  return { type: 'possessive', object, property };
+  return { type: 'possessive', object, property, ...pos(node) };
 }
 
 function convertMember(node: CoreNode): InterchangeNode {
@@ -252,6 +303,7 @@ function convertMember(node: CoreNode): InterchangeNode {
     object,
     property,
     computed: (node.computed ?? false) as boolean,
+    ...pos(node),
   };
 }
 
@@ -261,6 +313,7 @@ function convertBinary(node: CoreNode): InterchangeNode {
     operator: (node.operator ?? '') as string,
     left: fromCoreAST(node.left as CoreNode),
     right: fromCoreAST(node.right as CoreNode),
+    ...pos(node),
   };
 }
 
@@ -271,7 +324,7 @@ function convertCall(node: CoreNode): InterchangeNode {
       : fromCoreAST(node.callee as CoreNode);
   const args = ((node.arguments ?? node.args ?? []) as CoreNode[]).map(a => fromCoreAST(a));
 
-  return { type: 'call', callee, args };
+  return { type: 'call', callee, args, ...pos(node) };
 }
 
 function convertModifiers(modifiers: Record<string, CoreNode>): Record<string, unknown> {

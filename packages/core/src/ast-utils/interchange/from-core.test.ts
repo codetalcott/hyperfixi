@@ -852,4 +852,155 @@ describe('fromCoreAST', () => {
       expect(r.args[0].type).toBe('binary');
     });
   });
+
+  // =============================================================================
+  // D. POSITION PRESERVATION
+  // =============================================================================
+
+  describe('position preservation', () => {
+    it('preserves position fields on literal nodes', () => {
+      const result = fromCoreAST(
+        coreNode('literal', { value: 42, start: 10, end: 12, line: 3, column: 5 })
+      );
+      expect(result).toEqual({
+        type: 'literal',
+        value: 42,
+        start: 10,
+        end: 12,
+        line: 3,
+        column: 5,
+      });
+    });
+
+    it('preserves position fields on identifier nodes', () => {
+      const result = fromCoreAST(
+        coreNode('identifier', { name: 'foo', start: 0, end: 3, line: 1, column: 0 })
+      );
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(3);
+      expect(result.line).toBe(1);
+      expect(result.column).toBe(0);
+    });
+
+    it('preserves position fields on selector nodes', () => {
+      const result = fromCoreAST(
+        coreNode('selector', { value: '.btn', start: 5, end: 9, line: 1, column: 5 })
+      );
+      expect(result).toEqual({
+        type: 'selector',
+        value: '.btn',
+        start: 5,
+        end: 9,
+        line: 1,
+        column: 5,
+      });
+    });
+
+    it('preserves position fields on event handler nodes', () => {
+      const result = fromCoreAST(
+        coreNode('eventHandler', {
+          event: 'click',
+          commands: [],
+          start: 0,
+          end: 30,
+          line: 1,
+          column: 0,
+        })
+      );
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(30);
+      expect(result.line).toBe(1);
+    });
+
+    it('preserves position fields on command nodes', () => {
+      const result = fromCoreAST(
+        coreNode('command', { name: 'toggle', args: [], start: 9, end: 24, line: 2, column: 2 })
+      );
+      expect(result.start).toBe(9);
+      expect(result.end).toBe(24);
+    });
+
+    it('preserves position fields on binary expression nodes', () => {
+      const result = fromCoreAST(
+        coreNode('binaryExpression', {
+          operator: '+',
+          left: coreNode('literal', { value: 1 }),
+          right: coreNode('literal', { value: 2 }),
+          start: 0,
+          end: 5,
+          line: 1,
+          column: 0,
+        })
+      );
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(5);
+    });
+
+    it('preserves position fields on nested children', () => {
+      const result = fromCoreAST(
+        coreNode('binaryExpression', {
+          operator: '+',
+          left: coreNode('literal', { value: 1, start: 0, end: 1, line: 1, column: 0 }),
+          right: coreNode('literal', { value: 2, start: 4, end: 5, line: 1, column: 4 }),
+          start: 0,
+          end: 5,
+          line: 1,
+          column: 0,
+        })
+      );
+      const r = result as any;
+      expect(r.left.start).toBe(0);
+      expect(r.left.end).toBe(1);
+      expect(r.right.start).toBe(4);
+      expect(r.right.end).toBe(5);
+    });
+
+    it('omits position fields when source node lacks them', () => {
+      const result = fromCoreAST(coreNode('literal', { value: 42 }));
+      expect(result.start).toBeUndefined();
+      expect(result.end).toBeUndefined();
+      expect(result.line).toBeUndefined();
+      expect(result.column).toBeUndefined();
+    });
+
+    it('preserves partial position fields (only start/end, no line/column)', () => {
+      const result = fromCoreAST(coreNode('literal', { value: 42, start: 10, end: 12 }));
+      expect(result.start).toBe(10);
+      expect(result.end).toBe(12);
+      expect(result.line).toBeUndefined();
+      expect(result.column).toBeUndefined();
+    });
+
+    it('preserves positions on if command nodes', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'if',
+          args: [coreNode('literal', { value: true })],
+          start: 0,
+          end: 20,
+          line: 1,
+          column: 0,
+        })
+      );
+      expect(result.type).toBe('if');
+      expect(result.start).toBe(0);
+      expect(result.end).toBe(20);
+    });
+
+    it('preserves positions on repeat command nodes', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'repeat',
+          args: [],
+          start: 5,
+          end: 25,
+          line: 2,
+          column: 4,
+        })
+      );
+      expect(result.type).toBe('repeat');
+      expect(result.start).toBe(5);
+      expect(result.end).toBe(25);
+    });
+  });
 });

@@ -35,6 +35,19 @@ interface SemanticASTNode {
 }
 
 /**
+ * Extract position fields from a source node. Returns only fields that exist,
+ * so spreading the result adds nothing when positions are absent.
+ */
+function pos(node: SemanticASTNode): Record<string, number> {
+  const p: Record<string, number> = {};
+  if (typeof node.start === 'number') p.start = node.start;
+  if (typeof node.end === 'number') p.end = node.end;
+  if (typeof node.line === 'number') p.line = node.line;
+  if (typeof node.column === 'number') p.column = node.column;
+  return p;
+}
+
+/**
  * Convert a semantic AST builder node to an interchange node.
  */
 export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
@@ -54,18 +67,31 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
 
     // Expression types
     case 'literal':
-      return { type: 'literal', value: node.value as string | number | boolean | null };
+      return {
+        type: 'literal',
+        value: node.value as string | number | boolean | null,
+        ...pos(node),
+      };
     case 'string':
-      return { type: 'literal', value: node.value as string };
+      return { type: 'literal', value: node.value as string, ...pos(node) };
     case 'selector':
-      return { type: 'selector', value: (node.value ?? node.selector ?? '') as string };
+      return {
+        type: 'selector',
+        value: (node.value ?? node.selector ?? '') as string,
+        ...pos(node),
+      };
     case 'contextReference':
-      return { type: 'identifier', value: (node.name ?? node.contextType ?? '') as string };
+      return {
+        type: 'identifier',
+        value: (node.name ?? node.contextType ?? '') as string,
+        ...pos(node),
+      };
     case 'identifier':
       return {
         type: 'identifier',
         value: (node.name ?? node.value ?? '') as string,
         name: (node.name ?? '') as string,
+        ...pos(node),
       };
     case 'propertyAccess':
       return convertPropertyAccess(node);
@@ -82,22 +108,32 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
         type: 'unary',
         operator: node.operator as string,
         operand: fromSemanticAST(node.operand as SemanticASTNode),
+        ...pos(node),
       };
     case 'timeExpression':
-      return { type: 'literal', value: node.value as number };
+      return { type: 'literal', value: node.value as number, ...pos(node) };
     case 'templateLiteral':
-      return { type: 'literal', value: (node.raw ?? '') as string };
+      return { type: 'literal', value: (node.raw ?? '') as string, ...pos(node) };
     case 'variable':
       return {
         type: 'variable',
         name: (node.name ?? '') as string,
         scope: (node.scope ?? 'local') as 'local' | 'global' | 'element',
+        ...pos(node),
       };
     case 'htmlSelector':
-      return { type: 'selector', value: (node.value ?? node.selector ?? '') as string };
+      return {
+        type: 'selector',
+        value: (node.value ?? node.selector ?? '') as string,
+        ...pos(node),
+      };
 
     default:
-      return { type: 'literal', value: (node.value as string | number | boolean | null) ?? null };
+      return {
+        type: 'literal',
+        value: (node.value as string | number | boolean | null) ?? null,
+        ...pos(node),
+      };
   }
 }
 
@@ -112,7 +148,7 @@ function convertEventHandler(node: SemanticASTNode): EventNode {
 
   const modifiers = buildEventModifiers(node);
 
-  return { type: 'event', event, modifiers, body };
+  return { type: 'event', event, modifiers, body, ...pos(node) };
 }
 
 function convertCommand(node: SemanticASTNode): InterchangeNode {
@@ -133,6 +169,7 @@ function convertCommand(node: SemanticASTNode): InterchangeNode {
     args,
     ...(target ? { target } : {}),
     ...(modifiers && Object.keys(modifiers).length > 0 ? { modifiers } : {}),
+    ...pos(node),
   } as CommandNode;
 }
 
@@ -153,13 +190,14 @@ function convertIfCommand(node: SemanticASTNode): IfNode {
     condition,
     thenBranch,
     ...(elseBranch ? { elseBranch } : {}),
+    ...pos(node),
   } as IfNode;
 }
 
 function convertRepeatCommand(node: SemanticASTNode): InterchangeNode {
   const args = (node.args ?? []) as SemanticASTNode[];
   if (args.length === 0) {
-    return { type: 'repeat', body: [] } as RepeatNode;
+    return { type: 'repeat', body: [], ...pos(node) } as RepeatNode;
   }
 
   const loopTypeNode = args[0];
@@ -169,7 +207,12 @@ function convertRepeatCommand(node: SemanticASTNode): InterchangeNode {
   switch (loopType) {
     case 'times': {
       const count = args[1] ? fromSemanticAST(args[1]) : undefined;
-      return { type: 'repeat', count, body: extractBlockCommands(bodyBlock) } as RepeatNode;
+      return {
+        type: 'repeat',
+        count,
+        body: extractBlockCommands(bodyBlock),
+        ...pos(node),
+      } as RepeatNode;
     }
     case 'for': {
       const itemName = (args[1]?.value ?? 'item') as string;
@@ -181,13 +224,19 @@ function convertRepeatCommand(node: SemanticASTNode): InterchangeNode {
         itemName,
         collection,
         body: extractBlockCommands(bodyBlock),
+        ...pos(node),
       } as ForEachNode;
     }
     case 'while': {
       const condition = args[1]
         ? fromSemanticAST(args[1])
         : ({ type: 'literal', value: true } as const);
-      return { type: 'while', condition, body: extractBlockCommands(bodyBlock) } as WhileNode;
+      return {
+        type: 'while',
+        condition,
+        body: extractBlockCommands(bodyBlock),
+        ...pos(node),
+      } as WhileNode;
     }
     case 'until': {
       const condition = args[1]
@@ -197,10 +246,11 @@ function convertRepeatCommand(node: SemanticASTNode): InterchangeNode {
         type: 'while',
         condition: { type: 'unary', operator: 'not', operand: condition },
         body: extractBlockCommands(bodyBlock),
+        ...pos(node),
       } as WhileNode;
     }
     default:
-      return { type: 'repeat', body: extractBlockCommands(bodyBlock) } as RepeatNode;
+      return { type: 'repeat', body: extractBlockCommands(bodyBlock), ...pos(node) } as RepeatNode;
   }
 }
 
@@ -211,6 +261,7 @@ function convertCommandSequence(node: SemanticASTNode): InterchangeNode {
     type: 'event',
     event: 'click',
     body: commands.map(cmd => fromSemanticAST(cmd)),
+    ...pos(node),
   } as EventNode;
 }
 
@@ -221,6 +272,7 @@ function convertBlock(node: SemanticASTNode): InterchangeNode {
     type: 'event',
     event: 'click',
     body: commands.map(cmd => fromSemanticAST(cmd)),
+    ...pos(node),
   } as EventNode;
 }
 
@@ -238,6 +290,7 @@ function convertIfNode(node: SemanticASTNode): IfNode {
     condition,
     thenBranch,
     ...(elseBranch ? { elseBranch } : {}),
+    ...pos(node),
   } as IfNode;
 }
 
@@ -245,7 +298,7 @@ function convertPropertyAccess(node: SemanticASTNode): InterchangeNode {
   const object = node.object
     ? fromSemanticAST(node.object as SemanticASTNode)
     : ({ type: 'identifier', value: 'me' } as const);
-  return { type: 'possessive', object, property: (node.property ?? '') as string };
+  return { type: 'possessive', object, property: (node.property ?? '') as string, ...pos(node) };
 }
 
 function convertPossessive(node: SemanticASTNode): InterchangeNode {
@@ -259,7 +312,7 @@ function convertPossessive(node: SemanticASTNode): InterchangeNode {
           (node.property as SemanticASTNode)?.value ??
           '') as string);
 
-  return { type: 'possessive', object, property };
+  return { type: 'possessive', object, property, ...pos(node) };
 }
 
 function convertMember(node: SemanticASTNode): InterchangeNode {
@@ -273,7 +326,13 @@ function convertMember(node: SemanticASTNode): InterchangeNode {
         ? fromSemanticAST(node.property as SemanticASTNode)
         : ({ type: 'literal', value: '' } as const);
 
-  return { type: 'member', object, property, computed: (node.computed ?? false) as boolean };
+  return {
+    type: 'member',
+    object,
+    property,
+    computed: (node.computed ?? false) as boolean,
+    ...pos(node),
+  };
 }
 
 function convertBinary(node: SemanticASTNode): InterchangeNode {
@@ -282,6 +341,7 @@ function convertBinary(node: SemanticASTNode): InterchangeNode {
     operator: (node.operator ?? '') as string,
     left: fromSemanticAST(node.left as SemanticASTNode),
     right: fromSemanticAST(node.right as SemanticASTNode),
+    ...pos(node),
   };
 }
 
@@ -294,7 +354,7 @@ function convertCall(node: SemanticASTNode): InterchangeNode {
     fromSemanticAST(a)
   );
 
-  return { type: 'call', callee, args };
+  return { type: 'call', callee, args, ...pos(node) };
 }
 
 function convertModifiers(modifiers: Record<string, SemanticASTNode>): Record<string, unknown> {

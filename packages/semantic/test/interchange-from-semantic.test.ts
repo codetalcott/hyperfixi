@@ -2,7 +2,7 @@
  * Unit tests for fromSemanticAST — Semantic AST → Interchange Format Converter
  */
 import { describe, it, expect } from 'vitest';
-import { fromSemanticAST } from './from-semantic';
+import { fromSemanticAST } from '../src/interchange/from-semantic';
 
 // Helper: create a minimal semantic AST node
 function semNode(
@@ -777,6 +777,141 @@ describe('fromSemanticAST', () => {
       );
       // All fields are conditional spreads, so empty modifiers = {}
       expect((result as any).modifiers).toEqual({});
+    });
+  });
+
+  // ===========================================================================
+  // F. POSITION PRESERVATION
+  // ===========================================================================
+
+  describe('position preservation', () => {
+    const POS = { start: 10, end: 25, line: 3, column: 5 };
+
+    it('preserves positions on literal', () => {
+      const result = fromSemanticAST(semNode('literal', { value: 42, ...POS }));
+      expect(result).toEqual({ type: 'literal', value: 42, ...POS });
+    });
+
+    it('preserves positions on string', () => {
+      const result = fromSemanticAST(semNode('string', { value: 'hi', ...POS }));
+      expect(result).toEqual({ type: 'literal', value: 'hi', ...POS });
+    });
+
+    it('preserves positions on identifier', () => {
+      const result = fromSemanticAST(semNode('identifier', { name: 'x', ...POS }));
+      expect(result).toEqual({ type: 'identifier', value: 'x', name: 'x', ...POS });
+    });
+
+    it('preserves positions on selector', () => {
+      const result = fromSemanticAST(semNode('selector', { value: '.foo', ...POS }));
+      expect(result).toEqual({ type: 'selector', value: '.foo', ...POS });
+    });
+
+    it('preserves positions on eventHandler', () => {
+      const result = fromSemanticAST(
+        semNode('eventHandler', { event: 'click', commands: [], ...POS })
+      );
+      expect(result.type).toBe('event');
+      expect((result as any).start).toBe(10);
+      expect((result as any).end).toBe(25);
+      expect((result as any).line).toBe(3);
+      expect((result as any).column).toBe(5);
+    });
+
+    it('preserves positions on command', () => {
+      const result = fromSemanticAST(
+        semNode('command', { name: 'add', args: [], ...POS })
+      );
+      expect(result.type).toBe('command');
+      expect((result as any).start).toBe(10);
+      expect((result as any).end).toBe(25);
+    });
+
+    it('preserves positions on binaryExpression', () => {
+      const result = fromSemanticAST(
+        semNode('binaryExpression', {
+          operator: '+',
+          left: semNode('literal', { value: 1 }),
+          right: semNode('literal', { value: 2 }),
+          ...POS,
+        })
+      );
+      expect(result.type).toBe('binary');
+      expect((result as any).start).toBe(10);
+      expect((result as any).line).toBe(3);
+    });
+
+    it('preserves positions on unaryExpression', () => {
+      const result = fromSemanticAST(
+        semNode('unaryExpression', {
+          operator: 'not',
+          operand: semNode('literal', { value: true }),
+          ...POS,
+        })
+      );
+      expect(result.type).toBe('unary');
+      expect((result as any).start).toBe(10);
+      expect((result as any).end).toBe(25);
+    });
+
+    it('preserves positions on nested children independently', () => {
+      const childPos = { start: 15, end: 20, line: 3, column: 10 };
+      const result = fromSemanticAST(
+        semNode('binaryExpression', {
+          operator: '==',
+          left: semNode('literal', { value: 1, ...childPos }),
+          right: semNode('literal', { value: 2 }),
+          ...POS,
+        })
+      );
+      expect((result as any).start).toBe(10);
+      expect((result as any).left.start).toBe(15);
+      expect((result as any).left.end).toBe(20);
+      // right has no positions
+      expect((result as any).right.start).toBeUndefined();
+    });
+
+    it('omits position fields when absent', () => {
+      const result = fromSemanticAST(semNode('literal', { value: 99 }));
+      expect(result).toEqual({ type: 'literal', value: 99 });
+      expect('start' in result).toBe(false);
+      expect('line' in result).toBe(false);
+    });
+
+    it('handles partial positions', () => {
+      const result = fromSemanticAST(
+        semNode('literal', { value: 'x', start: 5, line: 2 })
+      );
+      expect((result as any).start).toBe(5);
+      expect((result as any).line).toBe(2);
+      expect('end' in result).toBe(false);
+      expect('column' in result).toBe(false);
+    });
+
+    it('preserves positions on possessiveExpression', () => {
+      const result = fromSemanticAST(
+        semNode('possessiveExpression', {
+          object: semNode('identifier', { name: 'me' }),
+          property: 'color',
+          ...POS,
+        })
+      );
+      expect(result.type).toBe('possessive');
+      expect((result as any).start).toBe(10);
+      expect((result as any).end).toBe(25);
+    });
+
+    it('preserves positions on if command', () => {
+      const result = fromSemanticAST(
+        semNode('command', {
+          name: 'if',
+          args: [semNode('literal', { value: true }), semNode('block', { commands: [] })],
+          ...POS,
+        })
+      );
+      expect(result.type).toBe('if');
+      expect((result as any).start).toBe(10);
+      expect((result as any).line).toBe(3);
     });
   });
 });
