@@ -583,16 +583,20 @@ export class AOTCompiler {
     // Ensure 'ready' is always included (binding code requires it)
     const allImports = [...new Set([...imports, 'ready'])];
 
-    // Import statement
+    // Import statement and runtime alias
     const importList = allImports.join(', ');
-    if (codegenOptions.mode === 'esm') {
-      lines.push(`import { ${importList} } from '${codegenOptions.runtimeImport}';`);
-    } else if (codegenOptions.mode === 'cjs') {
-      lines.push(`const { ${importList} } = require('${codegenOptions.runtimeImport}');`);
+    if (codegenOptions.mode === 'iife') {
+      lines.push('(function() {');
+      lines.push("var _ls = typeof lokascriptRuntime !== 'undefined' ? lokascriptRuntime : {};");
+      lines.push('var _rt = { ' + allImports.map(i => `${i}: _ls.${i}`).join(', ') + ' };');
+    } else {
+      if (codegenOptions.mode === 'esm') {
+        lines.push(`import { ${importList} } from '${codegenOptions.runtimeImport}';`);
+      } else if (codegenOptions.mode === 'cjs') {
+        lines.push(`const { ${importList} } = require('${codegenOptions.runtimeImport}');`);
+      }
+      lines.push('const _rt = { ' + allImports.map(i => `${i}: ${i}`).join(', ') + ' };');
     }
-
-    // Runtime alias
-    lines.push('const _rt = { ' + allImports.map(i => `${i}: ${i}`).join(', ') + ' };');
     lines.push('');
 
     // Handler functions
@@ -621,6 +625,11 @@ export class AOTCompiler {
     }
 
     lines.push('});');
+
+    // Close IIFE wrapper
+    if (codegenOptions.mode === 'iife') {
+      lines.push('})();');
+    }
 
     return lines.join('\n');
   }

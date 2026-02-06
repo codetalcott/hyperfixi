@@ -195,6 +195,62 @@ describe('AOTCompiler', () => {
   });
 });
 
+describe('output modes', () => {
+  let compiler: AOTCompiler;
+  const scripts = [
+    { code: 'on click toggle .active', location: { file: 'test.html', line: 1, column: 1 } },
+  ];
+
+  beforeEach(() => {
+    compiler = new AOTCompiler();
+    compiler.reset();
+  });
+
+  it('ESM mode uses import statement', () => {
+    const result = compiler.compile(scripts, { codegen: { mode: 'esm' } });
+
+    expect(result.code).toContain('import {');
+    expect(result.code).toContain("from '@lokascript/aot-compiler/runtime'");
+    expect(result.code).not.toContain('require(');
+    expect(result.code).not.toContain('(function()');
+  });
+
+  it('CJS mode uses require()', () => {
+    const result = compiler.compile(scripts, { codegen: { mode: 'cjs' } });
+
+    expect(result.code).toContain('require(');
+    expect(result.code).not.toContain('import {');
+    expect(result.code).not.toContain('(function()');
+  });
+
+  it('IIFE mode wraps in self-executing function', () => {
+    const result = compiler.compile(scripts, { codegen: { mode: 'iife' } });
+
+    expect(result.code).toMatch(/^\(function\(\)/);
+    expect(result.code).toMatch(/\}\)\(\);\s*$/);
+    expect(result.code).not.toContain('import {');
+    expect(result.code).not.toContain('require(');
+  });
+
+  it('IIFE mode accesses global runtime', () => {
+    const result = compiler.compile(scripts, { codegen: { mode: 'iife' } });
+
+    expect(result.code).toContain('lokascriptRuntime');
+    expect(result.code).toContain('var _ls');
+    expect(result.code).toContain('var _rt');
+  });
+
+  it('all modes include handler and binding code', () => {
+    for (const mode of ['esm', 'cjs', 'iife'] as const) {
+      const result = compiler.compile(scripts, { codegen: { mode } });
+
+      expect(result.code).toContain('_handler_');
+      expect(result.code).toContain('_rt.ready');
+      expect(result.code).toContain('addEventListener');
+    }
+  });
+});
+
 describe('compileHyperscript()', () => {
   it('compiles hyperscript string to JavaScript', async () => {
     const js = await compileHyperscript('on click toggle .active');

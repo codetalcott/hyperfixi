@@ -97,11 +97,7 @@ document.getElementById('btn').addEventListener('click', _handler_click_toggle_a
 
 ## Current Status
 
-The compiler is functional for class-manipulation commands across all 24 languages (standalone) and for English event handlers via the core parser adapter. Key gaps:
-
-- **Non-English event handler bodies** compile to empty functions (semantic adapter issue)
-- **Data commands** (`set`, `put`, `increment`) parse but have no codegen yet
-- See [aot-compiler-design.md](../../docs-internal/proposals/aot-compiler-design.md#11-implementation-status-2026-02-05) for full reliability assessment
+The compiler supports 21 command codegens, full expression codegen, control flow (if/else, repeat, for-each, while), and 24-language multilingual compilation via the semantic parser adapter. See [aot-compiler-design.md](../../docs-internal/proposals/aot-compiler-design.md#11-implementation-status-2026-02-05) for full reliability assessment.
 
 ## Supported Features
 
@@ -122,11 +118,14 @@ The compiler is functional for class-manipulation commands across all 24 languag
 | repeat              | Yes     | For loops                 |
 | for each            | Yes     | Iteration                 |
 | while               | Yes     | While loops               |
-| set                 | Planned | Parses, no codegen        |
-| put                 | Planned | Parses, no codegen        |
-| wait                | Planned | Parses, no codegen        |
-| fetch               | Planned | Parses, no codegen        |
-| increment/decrement | Planned | Parses, no codegen        |
+| set                 | Yes     | Vars, properties, attrs   |
+| put                 | Yes     | into/before/after         |
+| wait                | Yes     | Duration (ms, s, m, h)    |
+| fetch               | Yes     | JSON, text, HTML          |
+| increment/decrement | Yes     | Vars and elements         |
+| call                | Yes     | Function/method calls     |
+| scroll              | Yes     | scrollIntoView            |
+| take                | Yes     | Class from siblings       |
 
 ### Expressions
 
