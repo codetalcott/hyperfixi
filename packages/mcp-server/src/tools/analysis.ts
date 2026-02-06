@@ -1,7 +1,7 @@
 /**
  * Analysis Tools
  *
- * Code analysis capabilities from @lokascript/ast-toolkit.
+ * Code analysis capabilities using @lokascript/core/ast-utils.
  * These tools help LLMs understand hyperscript code structure and quality.
  */
 
@@ -111,18 +111,18 @@ export async function handleAnalysisTool(
     };
   }
 
-  // Phase 7: Try to import ast-toolkit, but don't fail if unavailable
+  // Try to import ast-utils from core, but don't fail if unavailable
   let astToolkit: any = null;
   try {
-    astToolkit = await import('@lokascript/ast-toolkit');
+    astToolkit = await import('@lokascript/core/ast-utils');
   } catch {
-    // ast-toolkit not available - will use fallback functions
+    // core/ast-utils not available - will use fallback functions
   }
 
   try {
     switch (name) {
       case 'analyze_complexity': {
-        // Use fallback if ast-toolkit unavailable
+        // Use fallback if core/ast-utils unavailable
         if (!astToolkit) {
           return simpleAnalysis(code, 'complexity');
         }
@@ -152,7 +152,7 @@ export async function handleAnalysisTool(
       }
 
       case 'analyze_metrics': {
-        // Use fallback if ast-toolkit unavailable
+        // Use fallback if core/ast-utils unavailable
         if (!astToolkit) {
           return simpleAnalysis(code, 'metrics');
         }
@@ -183,7 +183,7 @@ export async function handleAnalysisTool(
       case 'explain_code': {
         const audience = (args.audience as string) || 'intermediate';
         const detail = (args.detail as string) || 'detailed';
-        // Use fallback if ast-toolkit unavailable
+        // Use fallback if core/ast-utils unavailable
         if (!astToolkit) {
           return simpleExplanation(code, audience, detail);
         }
@@ -198,7 +198,7 @@ export async function handleAnalysisTool(
       }
 
       case 'recognize_intent': {
-        // Phase 7: Use fallback if ast-toolkit unavailable
+        // Use fallback if core/ast-utils unavailable
         if (!astToolkit) {
           return simpleIntentRecognition(code);
         }
@@ -255,7 +255,7 @@ function simpleAnalysis(
   code: string,
   type: 'complexity' | 'metrics'
 ): { content: Array<{ type: string; text: string }> } {
-  // Simple regex-based analysis when ast-toolkit isn't available
+  // Simple regex-based analysis when core/ast-utils isn't available
   const lines = code.split('\n').length;
   const commands = code.match(/\b(toggle|add|remove|show|hide|set|put|fetch|wait|send)\b/gi) || [];
   const conditionals = code.match(/\b(if|else|unless)\b/gi) || [];
@@ -268,7 +268,7 @@ function simpleAnalysis(
     conditionalCount: conditionals.length,
     loopCount: loops.length,
     estimatedComplexity: 1 + conditionals.length + loops.length,
-    note: 'Simple analysis (full AST analysis requires @lokascript/ast-toolkit)',
+    note: 'Simple analysis (full AST analysis requires @lokascript/core)',
   };
 
   return {
@@ -444,7 +444,7 @@ function simpleIntentRecognition(code: string): { content: Array<{ type: string;
             allIntents: intents,
             confidence,
             code,
-            note: 'Pattern-based analysis (full intent recognition requires @lokascript/ast-toolkit)',
+            note: 'Pattern-based analysis (full intent recognition requires @lokascript/core)',
           },
           null,
           2

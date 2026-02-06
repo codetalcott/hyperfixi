@@ -25,7 +25,7 @@ import {
   generateMarkdown,
   generateHTML,
   analyzeMetrics,
-} from '@lokascript/ast-toolkit';
+} from '@lokascript/core/ast-utils';
 
 export class HyperfixiService {
   private app: Application;

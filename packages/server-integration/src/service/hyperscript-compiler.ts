@@ -16,8 +16,8 @@ import type {
   CompilationWarning,
   ScriptMetadata,
 } from '../types.js';
-import { ASTVisitor, visit, findNodes, calculateComplexity } from '@lokascript/ast-toolkit';
-import type { ASTNode } from '@lokascript/ast-toolkit';
+import { ASTVisitor, visit, findNodes, calculateComplexity } from '@lokascript/core/ast-utils';
+import type { ASTUtilNode as ASTNode } from '@lokascript/core/ast-utils';
 
 // Core compilation result interface (matches @lokascript/core API v2)
 interface CoreCompileResult {

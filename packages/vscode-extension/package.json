@@ -93,7 +93,7 @@
     "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
     "generate:grammar": "npx tsx scripts/generate-grammar.ts",
-    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@lokascript/ast-toolkit --external:@lokascript/core --alias:@lokascript/semantic=../../packages/semantic/src/index.ts --alias:@lokascript/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
+    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@lokascript/core --alias:@lokascript/semantic=../../packages/semantic/src/index.ts --alias:@lokascript/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
     "package": "vsce package --no-dependencies",
     "publish": "vsce publish --no-dependencies"
   },

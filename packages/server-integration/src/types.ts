@@ -2,8 +2,8 @@
  * Type definitions for server-integration package
  */
 
-// Base types from ast-toolkit
-export type { ASTNode } from '@lokascript/ast-toolkit';
+// Base AST node type (from core ast-utils, consolidated from ast-toolkit)
+export type { ASTUtilNode as ASTNode } from '@lokascript/core/ast-utils';
 
 // ============================================================================
 // Parser Types

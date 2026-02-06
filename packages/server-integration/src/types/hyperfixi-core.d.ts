@@ -6,7 +6,7 @@
  */
 
 declare module '@lokascript/core' {
-  import type { ASTNode } from '@lokascript/ast-toolkit';
+  import type { ASTUtilNode as ASTNode } from '@lokascript/core/ast-utils';
 
   export interface CompilationResult {
     success: boolean;

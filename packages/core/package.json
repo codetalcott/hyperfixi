@@ -138,6 +138,11 @@
       "types": "./dist/lsp-metadata.d.ts",
       "import": "./dist/lsp-metadata.mjs",
       "require": "./dist/lsp-metadata.js"
+    },
+    "./ast-utils": {
+      "types": "./dist/ast-utils/index.d.ts",
+      "import": "./dist/ast-utils/index.mjs",
+      "require": "./dist/ast-utils/index.js"
     }
   },
   "files": [

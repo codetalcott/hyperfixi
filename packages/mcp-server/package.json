@@ -39,12 +39,12 @@
     "@lokascript/patterns-reference": "*"
   },
   "peerDependencies": {
-    "@lokascript/ast-toolkit": "*",
+    "@lokascript/core": "*",
     "@lokascript/patterns-reference": "*",
     "@lokascript/semantic": "*"
   },
   "peerDependenciesMeta": {
-    "@lokascript/ast-toolkit": {
+    "@lokascript/core": {
       "optional": true
     },
     "@lokascript/patterns-reference": {
@@ -55,7 +55,7 @@
     }
   },
   "devDependencies": {
-    "@lokascript/ast-toolkit": "*",
+    "@lokascript/core": "*",
     "@lokascript/patterns-reference": "*",
     "@lokascript/semantic": "*",
     "@types/node": "^20.0.0",

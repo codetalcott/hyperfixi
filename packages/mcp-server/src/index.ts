@@ -3,7 +3,7 @@
  * HyperFixi MCP Server
  *
  * Model Context Protocol server providing hyperscript development assistance.
- * Consolidates capabilities from ast-toolkit and patterns-reference packages.
+ * Consolidates capabilities from core/ast-utils and patterns-reference packages.
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -63,7 +63,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async request => {
   const { name, arguments: args } = request.params;
 
-  // Analysis tools (from ast-toolkit)
+  // Analysis tools (from core/ast-utils)
   if (name.startsWith('analyze_') || name === 'explain_code' || name === 'recognize_intent') {
     return handleAnalysisTool(name, args as Record<string, unknown>);
   }

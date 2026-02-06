@@ -2,7 +2,6 @@ import { defineConfig } from 'tsup';
 
 const EXTERNAL_DEPS = [
   '@lokascript/core',
-  '@lokascript/ast-toolkit',
   '@lokascript/template-integration',
   'prismjs',
   'commander',

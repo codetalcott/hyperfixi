@@ -75,7 +75,6 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/ast-toolkit": "*",
     "@lokascript/core": "*",
     "@lokascript/i18n": "*",
     "@lokascript/template-integration": "*",

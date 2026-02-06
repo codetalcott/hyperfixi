@@ -7,12 +7,12 @@
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
-// Try to import from ast-toolkit
+// Try to import ast-utils from core
 let astToolkit: any = null;
 try {
-  astToolkit = await import('@lokascript/ast-toolkit');
+  astToolkit = await import('@lokascript/core/ast-utils');
 } catch {
-  // ast-toolkit not available
+  // core/ast-utils not available
 }
 
 // Try to import parse function from core

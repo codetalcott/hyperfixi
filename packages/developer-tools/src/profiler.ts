@@ -1,15 +1,13 @@
 /**
  * HyperScript Profiler - Performance analysis for hyperscript code
  *
- * Leverages @lokascript/ast-toolkit for static analysis and provides
+ * Leverages @lokascript/core/ast-utils for static analysis and provides
  * runtime profiling capabilities for hyperscript execution.
  */
 
 import type { ProfileResult, ProfileOperation, ProfileHotSpot } from './types';
 
-// Import ast-toolkit analysis functions when available
-// We use 'any' types here to avoid coupling to specific ast-toolkit type definitions
-// since this is an optional dependency
+// Import ast-utils analysis functions when available
 interface AstToolkitFunctions {
   calculateComplexity?: (ast: any) => any;
   detectCodeSmells?: (ast: any) => any[];
@@ -23,8 +21,7 @@ let astToolkit: AstToolkitFunctions | null = null;
 async function loadAstToolkit(): Promise<AstToolkitFunctions> {
   if (astToolkit === null) {
     try {
-      const toolkit = await import('@lokascript/ast-toolkit');
-      // Extract only the functions we need, using function binding
+      const toolkit = await import('@lokascript/core/ast-utils');
       astToolkit = {
         calculateComplexity: (ast: any) => toolkit.calculateComplexity?.(ast),
         detectCodeSmells: (ast: any) => toolkit.detectCodeSmells?.(ast),
@@ -195,7 +192,7 @@ export class HyperScriptProfiler {
   }
 
   /**
-   * Run static analysis using ast-toolkit
+   * Run static analysis using core/ast-utils
    */
   private async runStaticAnalysis(code: string): Promise<{
     operations: ProfileOperation[];
@@ -239,7 +236,7 @@ export class HyperScriptProfiler {
       });
     }
 
-    // Use ast-toolkit if available
+    // Use core/ast-utils if available
     if (toolkit?.suggestOptimizations) {
       try {
         // Would need actual AST, using code analysis fallback

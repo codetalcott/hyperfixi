@@ -31,8 +31,7 @@
   },
   "peerDependencies": {
     "@lokascript/semantic": "*",
-    "@lokascript/core": "*",
-    "@lokascript/ast-toolkit": "*"
+    "@lokascript/core": "*"
   },
   "peerDependenciesMeta": {
     "@lokascript/semantic": {
@@ -40,15 +39,11 @@
     },
     "@lokascript/core": {
       "optional": true
-    },
-    "@lokascript/ast-toolkit": {
-      "optional": true
     }
   },
   "devDependencies": {
     "@lokascript/semantic": "*",
     "@lokascript/core": "*",
-    "@lokascript/ast-toolkit": "*",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
