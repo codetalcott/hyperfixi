@@ -127,6 +127,34 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
         value: (node.value ?? node.selector ?? '') as string,
         ...pos(node),
       };
+    case 'positional':
+      return {
+        type: 'positional',
+        position: node.position as
+          | 'first'
+          | 'last'
+          | 'next'
+          | 'previous'
+          | 'closest'
+          | 'parent'
+          | 'random',
+        ...(node.target ? { target: fromSemanticAST(node.target as SemanticASTNode) } : {}),
+        ...pos(node),
+      };
+    case 'positionalExpression':
+      return {
+        type: 'positional',
+        position: node.operator as
+          | 'first'
+          | 'last'
+          | 'next'
+          | 'previous'
+          | 'closest'
+          | 'parent'
+          | 'random',
+        ...(node.argument ? { target: fromSemanticAST(node.argument as SemanticASTNode) } : {}),
+        ...pos(node),
+      };
 
     default:
       return {
@@ -163,12 +191,17 @@ function convertCommand(node: SemanticASTNode): InterchangeNode {
     ? convertModifiers(node.modifiers as Record<string, SemanticASTNode>)
     : undefined;
 
+  // Preserve semantic roles from AST builder (if present)
+  const semanticRoles = node.semanticRoles as Record<string, SemanticASTNode> | undefined;
+  const roles = semanticRoles ? convertSemanticRoles(semanticRoles) : undefined;
+
   return {
     type: 'command',
     name,
     args,
     ...(target ? { target } : {}),
     ...(modifiers && Object.keys(modifiers).length > 0 ? { modifiers } : {}),
+    ...(roles && Object.keys(roles).length > 0 ? { roles } : {}),
     ...pos(node),
   } as CommandNode;
 }
@@ -355,6 +388,16 @@ function convertCall(node: SemanticASTNode): InterchangeNode {
   );
 
   return { type: 'call', callee, args, ...pos(node) };
+}
+
+function convertSemanticRoles(
+  roles: Record<string, SemanticASTNode>
+): Record<string, InterchangeNode> {
+  const result: Record<string, InterchangeNode> = {};
+  for (const [key, value] of Object.entries(roles)) {
+    result[key] = fromSemanticAST(value);
+  }
+  return result;
 }
 
 function convertModifiers(modifiers: Record<string, SemanticASTNode>): Record<string, unknown> {

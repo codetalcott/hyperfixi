@@ -164,6 +164,7 @@ export class ASTBuilder {
    */
   private buildCommand(node: CommandSemanticNode): CommandNode {
     const mapper = getCommandMapper(node.action);
+    let cmd: CommandNode;
 
     if (mapper) {
       // Use command-specific mapper
@@ -174,15 +175,28 @@ export class ASTBuilder {
         // New format with warnings
         const mapperResult = result as CommandMapperResult;
         this.warnings.push(...mapperResult.warnings);
-        return mapperResult.ast;
+        cmd = mapperResult.ast;
       } else {
         // Legacy format (just CommandNode)
-        return result as CommandNode;
+        cmd = result as CommandNode;
+      }
+    } else {
+      // Fallback: generic command mapping
+      cmd = this.buildGenericCommand(node);
+    }
+
+    // Attach semantic roles for downstream consumers (interchange format, AOT compiler)
+    if (node.roles && node.roles.size > 0) {
+      const roles: Record<string, ReturnType<typeof convertValue>> = {};
+      for (const [role, value] of node.roles) {
+        roles[role] = convertValue(value);
+      }
+      if (Object.keys(roles).length > 0) {
+        (cmd as unknown as Record<string, unknown>)['semanticRoles'] = roles;
       }
     }
 
-    // Fallback: generic command mapping
-    return this.buildGenericCommand(node);
+    return cmd;
   }
 
   /**

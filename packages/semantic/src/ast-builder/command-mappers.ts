@@ -76,7 +76,11 @@ function createCommandNode(
   name: string,
   args: ExpressionNode[] = [],
   modifiers?: Record<string, ExpressionNode>,
-  options: { isBlocking?: boolean; implicitTarget?: ExpressionNode } = {}
+  options: {
+    isBlocking?: boolean;
+    implicitTarget?: ExpressionNode;
+    semanticRoles?: Record<string, ExpressionNode>;
+  } = {}
 ): CommandNode {
   const result: CommandNode = {
     type: 'command',
@@ -95,6 +99,10 @@ function createCommandNode(
 
   if (options.implicitTarget) {
     (result as { implicitTarget: ExpressionNode }).implicitTarget = options.implicitTarget;
+  }
+
+  if (options.semanticRoles && Object.keys(options.semanticRoles).length > 0) {
+    (result as unknown as Record<string, unknown>)['semanticRoles'] = options.semanticRoles;
   }
 
   return result;

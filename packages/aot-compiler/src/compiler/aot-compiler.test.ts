@@ -208,3 +208,82 @@ describe('compileHyperscript()', () => {
     // depending on how the input is interpreted
   });
 });
+
+describe('data/async command compilation', () => {
+  let compiler: AOTCompiler;
+
+  beforeEach(() => {
+    compiler = new AOTCompiler();
+    compiler.reset();
+  });
+
+  it('compiles set with local variable', () => {
+    const result = compiler.compileScript('on click set :count to 5');
+
+    expect(result.success).toBe(true);
+    expect(result.code).toBeDefined();
+    // Should contain a locals.set call or setProp helper
+    expect(result.metadata.commandsUsed).toContain('set');
+  });
+
+  it('compiles increment command', () => {
+    const result = compiler.compileScript('on click increment :count');
+
+    expect(result.success).toBe(true);
+    expect(result.code).toBeDefined();
+    expect(result.metadata.commandsUsed).toContain('increment');
+  });
+
+  it('compiles decrement command', () => {
+    const result = compiler.compileScript('on click decrement :count');
+
+    expect(result.success).toBe(true);
+    expect(result.code).toBeDefined();
+    expect(result.metadata.commandsUsed).toContain('decrement');
+  });
+
+  it('compiles wait command', () => {
+    const result = compiler.compileScript('on click wait 100ms');
+
+    expect(result.success).toBe(true);
+    expect(result.code).toBeDefined();
+    expect(result.metadata.commandsUsed).toContain('wait');
+  });
+
+  it('compiles log command', () => {
+    const result = compiler.compileScript('on click log "hello"');
+
+    expect(result.success).toBe(true);
+    expect(result.code).toBeDefined();
+    expect(result.code).toContain('console.log');
+    expect(result.metadata.commandsUsed).toContain('log');
+  });
+
+  it('compiles send command', () => {
+    const result = compiler.compileScript('on click send "myEvent" to me');
+
+    expect(result.success).toBe(true);
+    expect(result.code).toBeDefined();
+    expect(result.metadata.commandsUsed).toContain('send');
+  });
+
+  it('compiles show/hide commands', () => {
+    const showResult = compiler.compileScript('on click show');
+    expect(showResult.success).toBe(true);
+    expect(showResult.code).toContain("style.display = ''");
+
+    const hideResult = compiler.compileScript('on mouseleave hide');
+    expect(hideResult.success).toBe(true);
+    expect(hideResult.code).toContain("style.display = 'none'");
+  });
+
+  it('compiles focus/blur commands', () => {
+    const focusResult = compiler.compileScript('on click focus');
+    expect(focusResult.success).toBe(true);
+    expect(focusResult.code).toContain('.focus()');
+
+    const blurResult = compiler.compileScript('on click blur');
+    expect(blurResult.success).toBe(true);
+    expect(blurResult.code).toContain('.blur()');
+  });
+});

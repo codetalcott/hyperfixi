@@ -470,11 +470,9 @@ describe('fromCoreAST', () => {
           args: [coreNode('selector', { value: '.highlight' })],
         })
       );
-      expect(result).toEqual({
-        type: 'command',
-        name: 'add',
-        args: [{ type: 'selector', value: '.highlight' }],
-      });
+      expect(result.type).toBe('command');
+      expect((result as any).name).toBe('add');
+      expect((result as any).args).toEqual([{ type: 'selector', value: '.highlight' }]);
     });
 
     it('includes target when present', () => {
@@ -512,6 +510,36 @@ describe('fromCoreAST', () => {
         })
       );
       expect((result as any).modifiers).toBeUndefined();
+    });
+
+    it('infers roles for known commands', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'set',
+          args: [coreNode('variable', { name: 'count', scope: 'local' })],
+          modifiers: { to: coreNode('literal', { value: 5 }) },
+        })
+      );
+      expect((result as any).roles).toBeDefined();
+      expect((result as any).roles.destination).toEqual({
+        type: 'variable',
+        name: 'count',
+        scope: 'local',
+      });
+      expect((result as any).roles.patient).toEqual({
+        type: 'literal',
+        value: 5,
+      });
+    });
+
+    it('does not infer roles for unknown commands', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'customBehavior',
+          args: [coreNode('literal', { value: 'x' })],
+        })
+      );
+      expect((result as any).roles).toBeUndefined();
     });
   });
 
@@ -755,15 +783,294 @@ describe('fromCoreAST', () => {
       expect((result as any).body).toHaveLength(2);
     });
 
-    it('positional type is not handled — falls to default', () => {
+    it('converts positional node with target', () => {
       const result = fromCoreAST(
         coreNode('positional', {
           position: 'first',
           target: coreNode('selector', { value: '.item' }),
         })
       );
-      // Falls to default: literal with null (no value field)
-      expect(result.type).toBe('literal');
+      expect(result).toEqual({
+        type: 'positional',
+        position: 'first',
+        target: { type: 'selector', value: '.item' },
+      });
+    });
+
+    it('converts positional node without target', () => {
+      const result = fromCoreAST(coreNode('positional', { position: 'next' }));
+      expect(result).toEqual({ type: 'positional', position: 'next' });
+    });
+
+    it('converts positionalExpression to positional', () => {
+      const result = fromCoreAST(
+        coreNode('positionalExpression', {
+          operator: 'last',
+          argument: coreNode('selector', { value: '.item' }),
+        })
+      );
+      expect(result).toEqual({
+        type: 'positional',
+        position: 'last',
+        target: { type: 'selector', value: '.item' },
+      });
+    });
+
+    it('converts positionalExpression without argument', () => {
+      const result = fromCoreAST(coreNode('positionalExpression', { operator: 'parent' }));
+      expect(result).toEqual({ type: 'positional', position: 'parent' });
+    });
+
+    it('preserves positions on positional nodes', () => {
+      const result = fromCoreAST(
+        coreNode('positional', {
+          position: 'closest',
+          target: coreNode('selector', { value: '.container' }),
+          start: 10,
+          end: 30,
+          line: 2,
+          column: 5,
+        })
+      );
+      expect(result).toEqual({
+        type: 'positional',
+        position: 'closest',
+        target: { type: 'selector', value: '.container' },
+        start: 10,
+        end: 30,
+        line: 2,
+        column: 5,
+      });
+    });
+  });
+
+  // =============================================================================
+  // B2. INFERRED ROLES
+  // =============================================================================
+
+  describe('inferred roles', () => {
+    it('infers set roles: destination + patient from modifiers.to', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'set',
+          args: [coreNode('variable', { name: ':count', scope: 'local' })],
+          modifiers: { to: coreNode('literal', { value: 10 }) },
+        })
+      ) as any;
+
+      expect(result.roles.destination).toEqual({
+        type: 'variable',
+        name: ':count',
+        scope: 'local',
+      });
+      expect(result.roles.patient).toEqual({ type: 'literal', value: 10 });
+    });
+
+    it('infers set roles: patient from args[1] when no modifiers.to', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'set',
+          args: [
+            coreNode('variable', { name: 'x', scope: 'local' }),
+            coreNode('literal', { value: 42 }),
+          ],
+        })
+      ) as any;
+
+      expect(result.roles.destination).toEqual({ type: 'variable', name: 'x', scope: 'local' });
+      expect(result.roles.patient).toEqual({ type: 'literal', value: 42 });
+    });
+
+    it('infers put roles: patient + destination + method', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'put',
+          args: [coreNode('literal', { value: 'hello' })],
+          modifiers: {
+            into: coreNode('selector', { value: '#output' }),
+          },
+        })
+      ) as any;
+
+      expect(result.roles.patient).toEqual({ type: 'literal', value: 'hello' });
+      expect(result.roles.destination).toEqual({ type: 'selector', value: '#output' });
+      expect(result.roles.method).toEqual({ type: 'literal', value: 'into' });
+    });
+
+    it('infers put with before modifier', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'put',
+          args: [coreNode('literal', { value: '<li>new</li>' })],
+          modifiers: {
+            before: coreNode('selector', { value: '#first' }),
+          },
+        })
+      ) as any;
+
+      expect(result.roles.method).toEqual({ type: 'literal', value: 'before' });
+      expect(result.roles.destination).toEqual({ type: 'selector', value: '#first' });
+    });
+
+    it('infers put destination from target when no modifiers', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'put',
+          args: [coreNode('literal', { value: 'content' })],
+          target: coreNode('selector', { value: '#box' }),
+        })
+      ) as any;
+
+      expect(result.roles.destination).toEqual({ type: 'selector', value: '#box' });
+    });
+
+    it('infers increment roles: destination + quantity', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'increment',
+          args: [coreNode('variable', { name: ':count', scope: 'local' })],
+          modifiers: { by: coreNode('literal', { value: 5 }) },
+        })
+      ) as any;
+
+      expect(result.roles.destination).toEqual({
+        type: 'variable',
+        name: ':count',
+        scope: 'local',
+      });
+      expect(result.roles.quantity).toEqual({ type: 'literal', value: 5 });
+    });
+
+    it('infers decrement roles', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'decrement',
+          args: [coreNode('variable', { name: ':hp', scope: 'local' })],
+        })
+      ) as any;
+
+      expect(result.roles.destination).toEqual({ type: 'variable', name: ':hp', scope: 'local' });
+      expect(result.roles.quantity).toBeUndefined();
+    });
+
+    it('infers fetch roles: source + responseType from modifier node', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'fetch',
+          args: [coreNode('literal', { value: '/api/data' })],
+          modifiers: { as: coreNode('identifier', { name: 'json' }) },
+        })
+      ) as any;
+
+      expect(result.roles.source).toEqual({ type: 'literal', value: '/api/data' });
+      expect(result.roles.responseType).toEqual({
+        type: 'identifier',
+        value: 'json',
+        name: 'json',
+      });
+    });
+
+    it('infers fetch roles: responseType from identifier modifier', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'fetch',
+          args: [coreNode('literal', { value: '/api/users' })],
+          modifiers: { as: coreNode('identifier', { name: 'html' }) },
+        })
+      ) as any;
+
+      expect(result.roles.source).toEqual({ type: 'literal', value: '/api/users' });
+      expect(result.roles.responseType).toEqual({
+        type: 'identifier',
+        value: 'html',
+        name: 'html',
+      });
+    });
+
+    it('infers wait roles: duration', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'wait',
+          args: [coreNode('literal', { value: 500 })],
+        })
+      ) as any;
+
+      expect(result.roles.duration).toEqual({ type: 'literal', value: 500 });
+    });
+
+    it('infers toggle roles: patient + destination', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'toggle',
+          args: [coreNode('selector', { value: '.active' })],
+          target: coreNode('selector', { value: '#panel' }),
+        })
+      ) as any;
+
+      expect(result.roles.patient).toEqual({ type: 'selector', value: '.active' });
+      expect(result.roles.destination).toEqual({ type: 'selector', value: '#panel' });
+    });
+
+    it('infers add roles: patient + destination', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'add',
+          args: [coreNode('selector', { value: '.highlight' })],
+          target: coreNode('selector', { value: '#item' }),
+        })
+      ) as any;
+
+      expect(result.roles.patient).toEqual({ type: 'selector', value: '.highlight' });
+      expect(result.roles.destination).toEqual({ type: 'selector', value: '#item' });
+    });
+
+    it('infers remove roles: patient + source', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'remove',
+          args: [coreNode('selector', { value: '.hidden' })],
+          target: coreNode('selector', { value: '#box' }),
+        })
+      ) as any;
+
+      expect(result.roles.patient).toEqual({ type: 'selector', value: '.hidden' });
+      expect(result.roles.source).toEqual({ type: 'selector', value: '#box' });
+    });
+
+    it('infers send roles: patient + destination', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'send',
+          args: [coreNode('literal', { value: 'myEvent' })],
+          target: coreNode('selector', { value: '#other' }),
+        })
+      ) as any;
+
+      expect(result.roles.patient).toEqual({ type: 'literal', value: 'myEvent' });
+      expect(result.roles.destination).toEqual({ type: 'selector', value: '#other' });
+    });
+
+    it('omits roles when no args (e.g., toggle with no args)', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'toggle',
+          args: [],
+        })
+      ) as any;
+
+      expect(result.roles).toBeUndefined();
+    });
+
+    it('infers toggle roles without target', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'toggle',
+          args: [coreNode('selector', { value: '.active' })],
+        })
+      ) as any;
+
+      expect(result.roles.patient).toEqual({ type: 'selector', value: '.active' });
+      expect(result.roles.destination).toBeUndefined();
     });
   });
 

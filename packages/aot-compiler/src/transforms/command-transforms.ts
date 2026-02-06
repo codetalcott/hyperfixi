@@ -231,9 +231,15 @@ class SetCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
-    if (args.length < 2) return null;
+    const modifiers = node.modifiers as Record<string, ASTNode> | undefined;
+    const roles = node.roles;
 
-    const [targetNode, valueNode] = args;
+    // Resolve target and value from roles, modifiers, or args
+    const targetNode = roles?.destination ?? args[0];
+    const valueNode = roles?.patient ?? (modifiers?.to as ASTNode) ?? args[1];
+
+    if (!targetNode || !valueNode) return null;
+
     const value = ctx.generateExpression(valueNode);
 
     // Local variable: :varName
@@ -314,12 +320,41 @@ class PutCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
-    if (args.length === 0) return null;
+    const roles = node.roles;
+    const modifiers = node.modifiers as Record<string, unknown> | undefined;
 
-    const content = ctx.generateExpression(args[0]);
-    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    // Resolve content from roles or args
+    const contentNode = roles?.patient ?? args[0];
+    if (!contentNode) return null;
 
-    const modifier = (node.modifiers as { position?: string })?.position ?? 'into';
+    const content = ctx.generateExpression(contentNode as ASTNode);
+
+    // Resolve target: from roles, or from the modifier value, or from node.target
+    let target = '_ctx.me';
+    if (roles?.destination) {
+      target = ctx.generateExpression(roles.destination);
+    } else if (modifiers) {
+      // Semantic parser uses modifier keys as position: modifiers.into = target, modifiers.before = target
+      for (const key of ['into', 'before', 'after']) {
+        if (modifiers[key] && typeof modifiers[key] === 'object') {
+          target = ctx.generateExpression(modifiers[key] as ASTNode);
+          break;
+        }
+      }
+    }
+    if (target === '_ctx.me' && node.target) {
+      target = ctx.generateExpression(node.target);
+    }
+
+    // Detect position: from roles.method, modifier keys, or modifiers.position
+    let modifier = 'into';
+    if (roles?.method && (roles.method as { value?: unknown }).value) {
+      modifier = String((roles.method as { value?: unknown }).value);
+    } else if (modifiers) {
+      if (modifiers.before) modifier = 'before';
+      else if (modifiers.after) modifier = 'after';
+      else if (typeof modifiers.position === 'string') modifier = modifiers.position;
+    }
 
     switch (modifier) {
       case 'into':
@@ -458,9 +493,10 @@ class WaitCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
-    if (args.length === 0) return null;
+    const roles = node.roles;
 
-    const arg = args[0];
+    const arg = (roles?.duration ?? args[0]) as ASTNode | undefined;
+    if (!arg) return null;
 
     // Duration wait: wait 100ms
     if (arg.type === 'literal') {
@@ -506,10 +542,32 @@ class FetchCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
-    if (args.length === 0) return null;
+    const roles = node.roles;
+    const modifiers = node.modifiers as Record<string, unknown> | undefined;
 
-    const url = ctx.generateExpression(args[0]);
-    const format = (node.modifiers as { as?: string })?.as ?? 'text';
+    // Resolve URL from roles or args
+    const urlNode = roles?.source ?? args[0];
+    if (!urlNode) return null;
+
+    const url = ctx.generateExpression(urlNode as ASTNode);
+
+    // Resolve response format from roles, modifiers (node or string)
+    let format = 'text';
+    if (roles?.responseType) {
+      const rt = roles.responseType as { value?: unknown; name?: string };
+      format = String(rt.name ?? rt.value ?? 'text');
+    } else if (modifiers?.as) {
+      const asVal = modifiers.as;
+      if (typeof asVal === 'string') {
+        format = asVal;
+      } else if (typeof asVal === 'object' && asVal !== null) {
+        format = String(
+          (asVal as { name?: string; value?: unknown }).name ??
+            (asVal as { value?: unknown }).value ??
+            'text'
+        );
+      }
+    }
 
     switch (format) {
       case 'json':
@@ -570,10 +628,15 @@ class IncrementCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
-    if (args.length === 0) return null;
+    const roles = node.roles;
+    const modifiers = node.modifiers as Record<string, unknown> | undefined;
 
-    const target = args[0];
-    const amount = args.length > 1 ? ctx.generateExpression(args[1]) : '1';
+    const target = roles?.destination ?? roles?.patient ?? args[0];
+    if (!target) return null;
+
+    // Resolve amount from roles.quantity, modifiers.by, or args[1]
+    const amountNode = roles?.quantity ?? (modifiers?.by as ASTNode) ?? args[1];
+    const amount = amountNode ? ctx.generateExpression(amountNode as ASTNode) : '1';
 
     if (target.type === 'variable') {
       const varNode = target as VariableNode;
@@ -616,10 +679,15 @@ class DecrementCodegen implements CommandCodegen {
 
   generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
     const args = node.args ?? [];
-    if (args.length === 0) return null;
+    const roles = node.roles;
+    const modifiers = node.modifiers as Record<string, unknown> | undefined;
 
-    const target = args[0];
-    const amount = args.length > 1 ? ctx.generateExpression(args[1]) : '1';
+    const target = roles?.destination ?? roles?.patient ?? args[0];
+    if (!target) return null;
+
+    // Resolve amount from roles.quantity, modifiers.by, or args[1]
+    const amountNode = roles?.quantity ?? (modifiers?.by as ASTNode) ?? args[1];
+    const amount = amountNode ? ctx.generateExpression(amountNode as ASTNode) : '1';
 
     if (target.type === 'variable') {
       const varNode = target as VariableNode;

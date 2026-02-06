@@ -121,6 +121,8 @@ export interface CommandNode extends BaseNode {
   readonly args?: InterchangeNode[];
   readonly target?: InterchangeNode;
   readonly modifiers?: Record<string, unknown>;
+  /** Semantic roles from the semantic parser (patient, destination, source, etc.). */
+  readonly roles?: Readonly<Record<string, InterchangeNode>>;
 }
 
 export interface EventNode extends BaseNode {

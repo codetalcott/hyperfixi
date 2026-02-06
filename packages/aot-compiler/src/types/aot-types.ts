@@ -74,6 +74,8 @@ export interface CommandNode extends ASTNode {
   args?: ASTNode[];
   target?: ASTNode;
   modifiers?: Record<string, unknown>;
+  /** Semantic roles from the semantic parser (patient, destination, source, etc.). */
+  roles?: Readonly<Record<string, ASTNode>>;
 }
 
 /**

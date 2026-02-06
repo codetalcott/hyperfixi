@@ -269,15 +269,143 @@ export class AOTCompiler {
       };
     }
 
-    // show/hide
+    // show/hide/focus/blur
     if (/^show$/i.test(trimmed)) {
       return { type: 'command', name: 'show', args: [] };
     }
     if (/^hide$/i.test(trimmed)) {
       return { type: 'command', name: 'hide', args: [] };
     }
+    if (/^focus$/i.test(trimmed)) {
+      return { type: 'command', name: 'focus', args: [] };
+    }
+    if (/^blur$/i.test(trimmed)) {
+      return { type: 'command', name: 'blur', args: [] };
+    }
+
+    // set :var to value
+    const setMatch = /^set\s+:(\w+)\s+to\s+(.+)$/i.exec(trimmed);
+    if (setMatch) {
+      const [, varName, valueStr] = setMatch;
+      return {
+        type: 'command',
+        name: 'set',
+        args: [{ type: 'variable', name: ':' + varName, scope: 'local' }],
+        modifiers: { to: this.parseSimpleValue(valueStr) },
+      };
+    }
+
+    // increment/decrement :var
+    const incrMatch = /^(increment|decrement)\s+:(\w+)$/i.exec(trimmed);
+    if (incrMatch) {
+      const [, cmd, varName] = incrMatch;
+      return {
+        type: 'command',
+        name: cmd.toLowerCase(),
+        args: [{ type: 'variable', name: ':' + varName, scope: 'local' }],
+      };
+    }
+
+    // wait Nms / wait Ns
+    const waitMatch = /^wait\s+(\d+(?:\.\d+)?)(ms|s)$/i.exec(trimmed);
+    if (waitMatch) {
+      const [, value, unit] = waitMatch;
+      const ms = unit.toLowerCase() === 's' ? parseFloat(value) * 1000 : parseFloat(value);
+      return {
+        type: 'command',
+        name: 'wait',
+        args: [{ type: 'literal', value: ms }],
+      };
+    }
+
+    // log "string" or log value
+    const logMatch = /^log\s+(.+)$/i.exec(trimmed);
+    if (logMatch) {
+      return {
+        type: 'command',
+        name: 'log',
+        args: [this.parseSimpleValue(logMatch[1])],
+      };
+    }
+
+    // send "event" [to target]
+    const sendMatch = /^send\s+"([^"]+)"(?:\s+to\s+(\w+))?$/i.exec(trimmed);
+    if (sendMatch) {
+      const [, eventName, target] = sendMatch;
+      const node: ASTNode = {
+        type: 'command',
+        name: 'send',
+        args: [{ type: 'literal', value: eventName }],
+      };
+      if (target) {
+        (node as Record<string, unknown>).target = { type: 'identifier', value: target };
+      }
+      return node;
+    }
+
+    // fetch url [as json/text/html]
+    const fetchMatch = /^fetch\s+(\S+)(?:\s+as\s+(\w+))?$/i.exec(trimmed);
+    if (fetchMatch) {
+      const [, url, format] = fetchMatch;
+      const node: ASTNode = {
+        type: 'command',
+        name: 'fetch',
+        args: [{ type: 'literal', value: url }],
+      };
+      if (format) {
+        (node as Record<string, unknown>).modifiers = { as: format };
+      }
+      return node;
+    }
+
+    // put value into target
+    const putMatch = /^put\s+"([^"]+)"\s+(into|before|after)\s+(\S+)$/i.exec(trimmed);
+    if (putMatch) {
+      const [, content, position, target] = putMatch;
+      return {
+        type: 'command',
+        name: 'put',
+        args: [{ type: 'literal', value: content }],
+        modifiers: { position, [position]: this.parseSimpleValue(target) },
+      };
+    }
 
     return null;
+  }
+
+  /**
+   * Parse a simple value string to an AST node.
+   */
+  private parseSimpleValue(valueStr: string): ASTNode {
+    const trimmed = valueStr.trim();
+
+    // Quoted string
+    const strMatch = /^"([^"]*)"$/.exec(trimmed) ?? /^'([^']*)'$/.exec(trimmed);
+    if (strMatch) {
+      return { type: 'literal', value: strMatch[1] };
+    }
+
+    // Number
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return { type: 'literal', value: parseFloat(trimmed) };
+    }
+
+    // Boolean
+    if (trimmed === 'true') return { type: 'literal', value: true };
+    if (trimmed === 'false') return { type: 'literal', value: false };
+
+    // Selector (#id or .class)
+    if (/^[#.][a-zA-Z_]/.test(trimmed)) {
+      return { type: 'selector', value: trimmed };
+    }
+
+    // Local variable
+    if (trimmed.startsWith(':')) {
+      return { type: 'variable', name: trimmed, scope: 'local' };
+    }
+
+    // Identifier
+    return { type: 'identifier', value: trimmed };
   }
 
   // ===========================================================================

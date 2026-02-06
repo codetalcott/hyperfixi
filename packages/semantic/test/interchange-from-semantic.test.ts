@@ -366,6 +366,99 @@ describe('fromSemanticAST', () => {
       );
       expect((result as any).modifiers).toBeUndefined();
     });
+
+    it('preserves semantic roles when present', () => {
+      const result = fromSemanticAST(
+        semNode('command', {
+          name: 'toggle',
+          args: [semNode('selector', { value: '.active' })],
+          semanticRoles: {
+            patient: semNode('selector', { value: '.active' }),
+            destination: semNode('selector', { value: '#button' }),
+          },
+        })
+      );
+      expect((result as any).roles).toEqual({
+        patient: { type: 'selector', value: '.active' },
+        destination: { type: 'selector', value: '#button' },
+      });
+    });
+
+    it('preserves roles for set command', () => {
+      const result = fromSemanticAST(
+        semNode('command', {
+          name: 'set',
+          args: [semNode('variable', { name: 'count', scope: 'local' })],
+          modifiers: { to: semNode('literal', { value: 5 }) },
+          semanticRoles: {
+            destination: semNode('variable', { name: 'count', scope: 'local' }),
+            patient: semNode('literal', { value: 5 }),
+          },
+        })
+      );
+      expect((result as any).roles).toEqual({
+        destination: { type: 'variable', name: 'count', scope: 'local' },
+        patient: { type: 'literal', value: 5 },
+      });
+    });
+
+    it('preserves roles for put command with method', () => {
+      const result = fromSemanticAST(
+        semNode('command', {
+          name: 'put',
+          args: [semNode('literal', { value: 'hello' })],
+          modifiers: { into: semNode('selector', { value: '#output' }) },
+          semanticRoles: {
+            patient: semNode('literal', { value: 'hello' }),
+            destination: semNode('selector', { value: '#output' }),
+            method: semNode('literal', { value: 'into' }),
+          },
+        })
+      );
+      expect((result as any).roles.patient).toEqual({ type: 'literal', value: 'hello' });
+      expect((result as any).roles.destination).toEqual({ type: 'selector', value: '#output' });
+      expect((result as any).roles.method).toEqual({ type: 'literal', value: 'into' });
+    });
+
+    it('preserves roles for fetch command', () => {
+      const result = fromSemanticAST(
+        semNode('command', {
+          name: 'fetch',
+          args: [semNode('literal', { value: '/api/data' })],
+          semanticRoles: {
+            source: semNode('literal', { value: '/api/data' }),
+            responseType: semNode('identifier', { name: 'json', value: 'json' }),
+          },
+        })
+      );
+      expect((result as any).roles.source).toEqual({ type: 'literal', value: '/api/data' });
+      expect((result as any).roles.responseType).toEqual({
+        type: 'identifier',
+        value: 'json',
+        name: 'json',
+      });
+    });
+
+    it('omits roles when not present', () => {
+      const result = fromSemanticAST(
+        semNode('command', {
+          name: 'log',
+          args: [semNode('literal', { value: 'hi' })],
+        })
+      );
+      expect((result as any).roles).toBeUndefined();
+    });
+
+    it('omits roles when empty object', () => {
+      const result = fromSemanticAST(
+        semNode('command', {
+          name: 'log',
+          args: [],
+          semanticRoles: {},
+        })
+      );
+      expect((result as any).roles).toBeUndefined();
+    });
   });
 
   describe('if nodes', () => {
@@ -490,6 +583,74 @@ describe('fromSemanticAST', () => {
       expect(result.type).toBe('while');
       expect((result as any).condition.type).toBe('unary');
       expect((result as any).condition.operator).toBe('not');
+    });
+  });
+
+  // =============================================================================
+  // B1. POSITIONAL EXPRESSIONS
+  // =============================================================================
+
+  describe('positional expressions', () => {
+    it('converts positional node with target', () => {
+      const result = fromSemanticAST(
+        semNode('positional', {
+          position: 'first',
+          target: semNode('selector', { value: '.item' }),
+        })
+      );
+      expect(result).toEqual({
+        type: 'positional',
+        position: 'first',
+        target: { type: 'selector', value: '.item' },
+      });
+    });
+
+    it('converts positional node without target', () => {
+      const result = fromSemanticAST(semNode('positional', { position: 'next' }));
+      expect(result).toEqual({ type: 'positional', position: 'next' });
+    });
+
+    it('converts positionalExpression to positional', () => {
+      const result = fromSemanticAST(
+        semNode('positionalExpression', {
+          operator: 'last',
+          argument: semNode('selector', { value: '.item' }),
+        })
+      );
+      expect(result).toEqual({
+        type: 'positional',
+        position: 'last',
+        target: { type: 'selector', value: '.item' },
+      });
+    });
+
+    it('converts positionalExpression without argument', () => {
+      const result = fromSemanticAST(
+        semNode('positionalExpression', { operator: 'parent' })
+      );
+      expect(result).toEqual({ type: 'positional', position: 'parent' });
+    });
+
+    it('preserves positions on positional nodes', () => {
+      const result = fromSemanticAST(
+        semNode('positional', {
+          position: 'closest',
+          target: semNode('selector', { value: '.container' }),
+          start: 10,
+          end: 30,
+          line: 2,
+          column: 5,
+        })
+      );
+      expect(result).toEqual({
+        type: 'positional',
+        position: 'closest',
+        target: { type: 'selector', value: '.container' },
+        start: 10,
+        end: 30,
+        line: 2,
+        column: 5,
+      });
     });
   });
 

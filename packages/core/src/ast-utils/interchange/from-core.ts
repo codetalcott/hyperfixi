@@ -116,6 +116,34 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
         value: (node.value ?? node.selector ?? '') as string,
         ...pos(node),
       };
+    case 'positional':
+      return {
+        type: 'positional',
+        position: node.position as
+          | 'first'
+          | 'last'
+          | 'next'
+          | 'previous'
+          | 'closest'
+          | 'parent'
+          | 'random',
+        ...(node.target ? { target: fromCoreAST(node.target as CoreNode) } : {}),
+        ...pos(node),
+      };
+    case 'positionalExpression':
+      return {
+        type: 'positional',
+        position: node.operator as
+          | 'first'
+          | 'last'
+          | 'next'
+          | 'previous'
+          | 'closest'
+          | 'parent'
+          | 'random',
+        ...(node.argument ? { target: fromCoreAST(node.argument as CoreNode) } : {}),
+        ...pos(node),
+      };
 
     default:
       return {
@@ -156,12 +184,15 @@ function convertCommand(node: CoreNode): InterchangeNode {
     ? convertModifiers(node.modifiers as Record<string, CoreNode>)
     : undefined;
 
+  const roles = inferRoles(name, args, modifiers, target);
+
   return {
     type: 'command',
     name,
     args,
     ...(target ? { target } : {}),
     ...(modifiers && Object.keys(modifiers).length > 0 ? { modifiers } : {}),
+    ...(roles ? { roles } : {}),
     ...pos(node),
   } as CommandNode;
 }
@@ -355,4 +386,128 @@ function extractBlockCommands(block: CoreNode | undefined): InterchangeNode[] {
     return ((block.commands ?? []) as CoreNode[]).map(cmd => fromCoreAST(cmd));
   }
   return [fromCoreAST(block)];
+}
+
+// =============================================================================
+// ROLE INFERENCE
+// =============================================================================
+
+/**
+ * Infer semantic roles from the core parser's positional args and modifiers.
+ *
+ * The core parser produces commands with positional args and modifier objects
+ * but no named roles. This heuristic maps them based on command name conventions.
+ *
+ * Returns null if no roles can be inferred (unknown command or insufficient args).
+ */
+function inferRoles(
+  name: string,
+  args: InterchangeNode[],
+  modifiers: Record<string, unknown> | undefined,
+  target: InterchangeNode | undefined
+): Readonly<Record<string, InterchangeNode>> | null {
+  const roles: Record<string, InterchangeNode> = {};
+
+  switch (name) {
+    // set :var to value  →  destination=:var, patient=value
+    case 'set': {
+      if (args[0]) roles.destination = args[0];
+      const toVal = modifiers?.to;
+      if (toVal && typeof toVal === 'object' && 'type' in (toVal as object)) {
+        roles.patient = toVal as InterchangeNode;
+      } else if (args[1]) {
+        roles.patient = args[1];
+      }
+      break;
+    }
+
+    // put value into/before/after target  →  patient=value, destination=target
+    case 'put': {
+      if (args[0]) roles.patient = args[0];
+      // Find the modifier that indicates position (into, before, after)
+      if (modifiers) {
+        for (const key of ['into', 'before', 'after'] as const) {
+          const val = modifiers[key];
+          if (val && typeof val === 'object' && 'type' in (val as object)) {
+            roles.destination = val as InterchangeNode;
+            roles.method = { type: 'literal', value: key };
+            break;
+          }
+        }
+        if (typeof modifiers.position === 'string') {
+          roles.method = { type: 'literal', value: modifiers.position };
+        }
+      }
+      if (!roles.destination && target) {
+        roles.destination = target;
+      }
+      break;
+    }
+
+    // increment/decrement :var [by amount]  →  destination=:var, quantity=amount
+    case 'increment':
+    case 'decrement': {
+      if (args[0]) roles.destination = args[0];
+      const byVal = modifiers?.by;
+      if (byVal && typeof byVal === 'object' && 'type' in (byVal as object)) {
+        roles.quantity = byVal as InterchangeNode;
+      } else if (args[1]) {
+        roles.quantity = args[1];
+      }
+      break;
+    }
+
+    // fetch url [as format]  →  source=url, responseType=format
+    case 'fetch': {
+      if (args[0]) roles.source = args[0];
+      const asVal = modifiers?.as;
+      if (asVal && typeof asVal === 'object' && 'type' in (asVal as object)) {
+        roles.responseType = asVal as InterchangeNode;
+      } else if (typeof asVal === 'string') {
+        roles.responseType = { type: 'identifier', value: asVal, name: asVal };
+      }
+      break;
+    }
+
+    // wait duration  →  duration=arg
+    case 'wait':
+    case 'settle': {
+      if (args[0]) roles.duration = args[0];
+      break;
+    }
+
+    // toggle .class [on target]  →  patient=.class, destination=target
+    case 'toggle': {
+      if (args[0]) roles.patient = args[0];
+      if (target) roles.destination = target;
+      break;
+    }
+
+    // add .class [to target]  →  patient=.class, destination=target
+    case 'add': {
+      if (args[0]) roles.patient = args[0];
+      if (target) roles.destination = target;
+      break;
+    }
+
+    // remove .class [from target]  →  patient=.class, source=target
+    case 'remove': {
+      if (args[0]) roles.patient = args[0];
+      if (target) roles.source = target;
+      break;
+    }
+
+    // send eventName [to target]  →  patient=eventName, destination=target
+    case 'send':
+    case 'trigger': {
+      if (args[0]) roles.patient = args[0];
+      if (target) roles.destination = target;
+      break;
+    }
+
+    default:
+      return null;
+  }
+
+  return Object.keys(roles).length > 0 ? roles : null;
 }

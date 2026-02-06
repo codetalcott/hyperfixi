@@ -192,6 +192,16 @@ class AnalysisVisitor {
       case 'toggle':
         this.runtimeHelpers.add('toggle');
         break;
+      case 'set':
+        this.runtimeHelpers.add('setProp');
+        break;
+      case 'put':
+        this.runtimeHelpers.add('put');
+        break;
+      case 'increment':
+      case 'decrement':
+        this.runtimeHelpers.add('setProp');
+        break;
       case 'send':
       case 'trigger':
         this.runtimeHelpers.add('send');
