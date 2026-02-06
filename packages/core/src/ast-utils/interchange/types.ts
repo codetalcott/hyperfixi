@@ -10,6 +10,27 @@
  *
  * All node interfaces use a discriminated union on the `type` field,
  * enabling exhaustive `switch` checking in TypeScript.
+ *
+ * ## Current consumers
+ * - **AOT compiler**: uses `fromCoreAST` / `fromSemanticAST` to normalize
+ *   both parser outputs before code generation.
+ * - **Roundtrip**: `toCoreAST` converts interchange back to core AST format
+ *   for runtime fallback execution.
+ *
+ * ## Future: Language Server / AST Toolkit
+ * The language server's `ast-toolkit/src/lsp/index.ts` currently uses hardcoded
+ * core AST types (`node.type === 'eventHandler'`) and depends on position info
+ * (`node.line`, `node.column`, `node.start`, `node.end`). Interchange nodes
+ * intentionally omit positions to keep the format structural.
+ *
+ * To integrate with the language server, two design options exist:
+ * 1. **Optional position fields**: Add `readonly start?: number` etc. to BaseNode.
+ *    Pro: simple. Con: every consumer must handle missing positions.
+ * 2. **Source map companion**: Keep interchange structural; pair with a separate
+ *    `SourceMap` that maps node paths to source positions. Pro: clean separation.
+ *    Con: more complex API.
+ *
+ * This decision is deferred until the language server has a concrete need.
  */
 
 // =============================================================================

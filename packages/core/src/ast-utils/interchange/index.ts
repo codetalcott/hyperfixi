@@ -27,3 +27,4 @@ export type {
 } from './types';
 
 export { fromCoreAST } from './from-core';
+export { toCoreAST } from './to-core';

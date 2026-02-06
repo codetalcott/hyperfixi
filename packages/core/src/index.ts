@@ -146,7 +146,7 @@ export type {
 } from './validation/partial-validation-types';
 
 // AST Interchange Format (for downstream tools like AOT compiler, language server)
-export { fromCoreAST } from './ast-utils/interchange/index';
+export { fromCoreAST, toCoreAST } from './ast-utils/interchange/index';
 export type {
   InterchangeNode,
   EventModifiers as InterchangeEventModifiers,

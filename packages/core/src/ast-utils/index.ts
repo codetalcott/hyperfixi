@@ -110,4 +110,4 @@ export type {
   EventModifiers as InterchangeEventModifiers,
 } from './interchange/index.js';
 
-export { fromCoreAST } from './interchange/index.js';
+export { fromCoreAST, toCoreAST } from './interchange/index.js';
