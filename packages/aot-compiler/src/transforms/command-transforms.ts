@@ -10,8 +10,12 @@ import type {
   CommandNode,
   CodegenContext,
   GeneratedExpression,
+  HtmlLiteralNode,
+  IdentifierNode,
+  LiteralNode,
   SelectorNode,
   VariableNode,
+  PossessiveNode,
   IfNode,
   RepeatNode,
   ForEachNode,
@@ -143,13 +147,8 @@ class AddCodegen implements CommandCodegen {
     }
 
     // HTML element creation: <div.class/>
-    if (arg.type === 'htmlLiteral' || (arg as { tag?: string }).tag) {
-      const tagNode = arg as {
-        tag?: string;
-        classes?: string[];
-        id?: string;
-        attributes?: Record<string, string>;
-      };
+    if (arg.type === 'htmlLiteral') {
+      const tagNode = arg as HtmlLiteralNode;
       const tag = tagNode.tag ?? 'div';
       const classes = tagNode.classes ?? [];
       const id = tagNode.id;
@@ -268,8 +267,9 @@ class SetCodegen implements CommandCodegen {
 
     // Property assignment: element's property
     if (targetNode.type === 'possessive') {
-      const obj = ctx.generateExpression((targetNode as unknown as { object: ASTNode }).object);
-      const prop = (targetNode as unknown as { property: string }).property;
+      const possessive = targetNode as PossessiveNode;
+      const obj = ctx.generateExpression(possessive.object);
+      const prop = possessive.property;
 
       // Style property
       if (prop.startsWith('*')) {
@@ -500,7 +500,7 @@ class WaitCodegen implements CommandCodegen {
 
     // Duration wait: wait 100ms
     if (arg.type === 'literal') {
-      const value = (arg as unknown as { value: unknown }).value;
+      const value = (arg as LiteralNode).value;
       if (typeof value === 'number') {
         ctx.requireHelper('wait');
         return {
@@ -947,6 +947,216 @@ export function generateWhile(
 }
 
 // =============================================================================
+// ADDITIONAL COMMAND IMPLEMENTATIONS
+// =============================================================================
+
+/**
+ * Unless command: unless condition (negated if — generates guard check)
+ */
+class UnlessCodegen implements CommandCodegen {
+  readonly command = 'unless';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    if (args.length === 0) return null;
+
+    const condition = ctx.generateExpression(args[0]);
+    return {
+      code: `if (!(${condition}))`,
+      async: false,
+      sideEffects: false,
+    };
+  }
+}
+
+/**
+ * Throw command: throw "message" or throw expression
+ */
+class ThrowCodegen implements CommandCodegen {
+  readonly command = 'throw';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
+    const args = node.args ?? [];
+    const value = args.length > 0 ? ctx.generateExpression(args[0]) : "'Error'";
+
+    return {
+      code: `throw new Error(${value})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Default command: default :var to value (set if undefined/null)
+ */
+class DefaultCodegen implements CommandCodegen {
+  readonly command = 'default';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+    const modifiers = node.modifiers as Record<string, ASTNode> | undefined;
+
+    const targetNode = roles?.destination ?? args[0];
+    const valueNode = roles?.patient ?? (modifiers?.to as ASTNode) ?? args[1];
+
+    if (!targetNode || !valueNode) return null;
+
+    const value = ctx.generateExpression(valueNode);
+
+    if (targetNode.type === 'variable') {
+      const varNode = targetNode as VariableNode;
+      const name = varNode.name.startsWith(':') ? varNode.name.slice(1) : varNode.name;
+      const safeName = sanitizeIdentifier(name);
+
+      if (varNode.scope === 'local') {
+        return {
+          code: `if (_ctx.locals.get('${safeName}') == null) _ctx.locals.set('${safeName}', ${value})`,
+          async: false,
+          sideEffects: true,
+        };
+      }
+
+      if (varNode.scope === 'global') {
+        ctx.requireHelper('globals');
+        return {
+          code: `if (_rt.globals.get('${safeName}') == null) _rt.globals.set('${safeName}', ${value})`,
+          async: false,
+          sideEffects: true,
+        };
+      }
+    }
+
+    return null;
+  }
+}
+
+/**
+ * Go command: go to url, go back, go forward
+ */
+class GoCodegen implements CommandCodegen {
+  readonly command = 'go';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const target = roles?.destination ?? args[0];
+    if (!target) return null;
+
+    // go back / go forward
+    if (target.type === 'identifier') {
+      const name = (target as IdentifierNode).value;
+      if (name === 'back') {
+        return { code: 'history.back()', async: false, sideEffects: true };
+      }
+      if (name === 'forward') {
+        return { code: 'history.forward()', async: false, sideEffects: true };
+      }
+    }
+
+    // go to url
+    const url = ctx.generateExpression(target);
+    return {
+      code: `window.location.href = ${url}`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Append command: append content to target
+ */
+class AppendCodegen implements CommandCodegen {
+  readonly command = 'append';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const contentNode = roles?.patient ?? args[0];
+    if (!contentNode) return null;
+
+    const content = ctx.generateExpression(contentNode);
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+
+    return {
+      code: `${target}.insertAdjacentHTML('beforeend', ${content})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Pick command: pick random item from collection
+ */
+class PickCodegen implements CommandCodegen {
+  readonly command = 'pick';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const collection = roles?.source ?? args[0];
+    if (!collection) return null;
+
+    const arr = ctx.generateExpression(collection);
+    return {
+      code: `_ctx.it = (() => { const _a = ${arr}; return _a[Math.floor(Math.random() * _a.length)]; })()`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Push URL command: push url to browser history
+ */
+class PushUrlCodegen implements CommandCodegen {
+  readonly command = 'push-url';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const urlNode = roles?.destination ?? args[0];
+    if (!urlNode) return null;
+
+    const url = ctx.generateExpression(urlNode);
+    return {
+      code: `history.pushState({}, '', ${url})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Replace URL command: replace url in browser history
+ */
+class ReplaceUrlCodegen implements CommandCodegen {
+  readonly command = 'replace-url';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const urlNode = roles?.destination ?? args[0];
+    if (!urlNode) return null;
+
+    const url = ctx.generateExpression(urlNode);
+    return {
+      code: `history.replaceState({}, '', ${url})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+// =============================================================================
 // COMMAND REGISTRY
 // =============================================================================
 
@@ -976,6 +1186,14 @@ export const commandCodegens = new Map<string, CommandCodegen>([
   ['call', new CallCodegen()],
   ['scroll', new ScrollCodegen()],
   ['take', new TakeCodegen()],
+  ['unless', new UnlessCodegen()],
+  ['throw', new ThrowCodegen()],
+  ['default', new DefaultCodegen()],
+  ['go', new GoCodegen()],
+  ['append', new AppendCodegen()],
+  ['pick', new PickCodegen()],
+  ['push-url', new PushUrlCodegen()],
+  ['replace-url', new ReplaceUrlCodegen()],
 ]);
 
 /**

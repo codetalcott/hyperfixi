@@ -376,6 +376,7 @@ describe('SelectorCachingPass', () => {
 
       const ast: ASTNode = {
         type: 'event',
+        event: 'click',
         body: [{ type: 'command', name: 'add', args: [selector('#btn')] }],
       };
 
@@ -403,6 +404,7 @@ describe('SelectorCachingPass', () => {
 
       const ast: ASTNode = {
         type: 'event',
+        event: 'click',
         body: [{ type: 'command', name: 'add', args: [selector('.my-awesome--component')] }],
       };
 
@@ -457,6 +459,7 @@ describe('DeadCodeEliminationPass', () => {
     it('removes nodes after exit', () => {
       const ast: ASTNode = {
         type: 'event',
+        event: 'click',
         body: [command('exit'), command('log')],
       };
 
@@ -467,6 +470,7 @@ describe('DeadCodeEliminationPass', () => {
     it('removes nodes after return', () => {
       const ast: ASTNode = {
         type: 'event',
+        event: 'click',
         body: [command('return'), command('toggle')],
       };
 
@@ -477,6 +481,7 @@ describe('DeadCodeEliminationPass', () => {
     it('preserves all nodes when no terminator present', () => {
       const ast: ASTNode = {
         type: 'event',
+        event: 'click',
         body: [command('toggle'), command('add'), command('log')],
       };
 
@@ -633,6 +638,7 @@ describe('OptimizationPipeline', () => {
     const pipeline = new OptimizationPipeline();
     const ast: ASTNode = {
       type: 'event',
+      event: 'click',
       body: [binary('+', literal(1), literal(2)), command('halt'), command('log')],
     };
     const analysis = createAnalysis({

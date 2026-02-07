@@ -1019,6 +1019,14 @@ describe('Command Registry', () => {
       'call',
       'scroll',
       'take',
+      'unless',
+      'throw',
+      'default',
+      'go',
+      'append',
+      'pick',
+      'push-url',
+      'replace-url',
     ];
 
     for (const cmd of expected) {
@@ -1029,5 +1037,236 @@ describe('Command Registry', () => {
   it('returns null for unknown commands', () => {
     const result = generateCommand({ type: 'command', name: 'unknownCmd42' }, createMockContext());
     expect(result).toBeNull();
+  });
+});
+
+// =============================================================================
+// UNLESS COMMAND
+// =============================================================================
+
+describe('UnlessCodegen', () => {
+  it('generates negated if', () => {
+    const result = gen({
+      type: 'command',
+      name: 'unless',
+      args: [{ type: 'identifier', value: 'loading' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('if (!(loading))');
+    expect(result!.async).toBe(false);
+  });
+
+  it('returns null without condition', () => {
+    const result = gen({ type: 'command', name: 'unless' });
+    expect(result).toBeNull();
+  });
+});
+
+// =============================================================================
+// THROW COMMAND
+// =============================================================================
+
+describe('ThrowCodegen', () => {
+  it('throws with message', () => {
+    const result = gen({
+      type: 'command',
+      name: 'throw',
+      args: [{ type: 'literal', value: 'Something went wrong' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('throw new Error("Something went wrong")');
+    expect(result!.sideEffects).toBe(true);
+  });
+
+  it('throws default error without args', () => {
+    const result = gen({ type: 'command', name: 'throw' });
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe("throw new Error('Error')");
+  });
+});
+
+// =============================================================================
+// DEFAULT COMMAND
+// =============================================================================
+
+describe('DefaultCodegen', () => {
+  it('defaults local variable', () => {
+    const result = gen({
+      type: 'command',
+      name: 'default',
+      args: [
+        { type: 'variable', name: ':count', scope: 'local' },
+        { type: 'literal', value: 0 },
+      ],
+      modifiers: { to: { type: 'literal', value: 0 } },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe("if (_ctx.locals.get('count') == null) _ctx.locals.set('count', 0)");
+  });
+
+  it('defaults global variable', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'default',
+        args: [{ type: 'variable', name: '$theme', scope: 'global' }],
+        modifiers: { to: { type: 'literal', value: 'light' } },
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.globals.get');
+    expect(result!.code).toContain('_rt.globals.set');
+    expect(ctx.requiredHelpers.has('globals')).toBe(true);
+  });
+
+  it('returns null without target or value', () => {
+    expect(gen({ type: 'command', name: 'default' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// GO COMMAND
+// =============================================================================
+
+describe('GoCodegen', () => {
+  it('navigates to URL', () => {
+    const result = gen({
+      type: 'command',
+      name: 'go',
+      args: [{ type: 'literal', value: '/home' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('window.location.href = "/home"');
+  });
+
+  it('goes back', () => {
+    const result = gen({
+      type: 'command',
+      name: 'go',
+      args: [{ type: 'identifier', value: 'back' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('history.back()');
+  });
+
+  it('goes forward', () => {
+    const result = gen({
+      type: 'command',
+      name: 'go',
+      args: [{ type: 'identifier', value: 'forward' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('history.forward()');
+  });
+
+  it('returns null without args', () => {
+    expect(gen({ type: 'command', name: 'go' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// APPEND COMMAND
+// =============================================================================
+
+describe('AppendCodegen', () => {
+  it('appends content to self', () => {
+    const result = gen({
+      type: 'command',
+      name: 'append',
+      args: [{ type: 'literal', value: '<li>new</li>' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe(`_ctx.me.insertAdjacentHTML('beforeend', "<li>new</li>")`);
+  });
+
+  it('appends content to target', () => {
+    const result = gen({
+      type: 'command',
+      name: 'append',
+      args: [{ type: 'literal', value: 'text' }],
+      target: { type: 'selector', value: '#list' },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("getElementById('list')");
+    expect(result!.code).toContain("insertAdjacentHTML('beforeend'");
+  });
+
+  it('returns null without content', () => {
+    expect(gen({ type: 'command', name: 'append' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// PICK COMMAND
+// =============================================================================
+
+describe('PickCodegen', () => {
+  it('picks random from collection', () => {
+    const result = gen({
+      type: 'command',
+      name: 'pick',
+      args: [{ type: 'identifier', value: 'items' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('Math.floor(Math.random()');
+    expect(result!.code).toContain('_ctx.it');
+  });
+
+  it('returns null without collection', () => {
+    expect(gen({ type: 'command', name: 'pick' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// PUSH-URL COMMAND
+// =============================================================================
+
+describe('PushUrlCodegen', () => {
+  it('pushes URL to history', () => {
+    const result = gen({
+      type: 'command',
+      name: 'push-url',
+      args: [{ type: 'literal', value: '/page/2' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe(`history.pushState({}, '', "/page/2")`);
+  });
+
+  it('returns null without URL', () => {
+    expect(gen({ type: 'command', name: 'push-url' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// REPLACE-URL COMMAND
+// =============================================================================
+
+describe('ReplaceUrlCodegen', () => {
+  it('replaces URL in history', () => {
+    const result = gen({
+      type: 'command',
+      name: 'replace-url',
+      args: [{ type: 'literal', value: '/new-path' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe(`history.replaceState({}, '', "/new-path")`);
+  });
+
+  it('returns null without URL', () => {
+    expect(gen({ type: 'command', name: 'replace-url' })).toBeNull();
   });
 });

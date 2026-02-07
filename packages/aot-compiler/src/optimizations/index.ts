@@ -6,12 +6,15 @@
 
 import type {
   ASTNode,
+  CommandNode,
   OptimizationPass,
   OptimizedAST,
   AnalysisResult,
   BinaryExpressionNode,
   LiteralNode,
+  RepeatNode,
   SelectorNode,
+  SequenceNode,
 } from '../types/aot-types.js';
 
 // =============================================================================
@@ -269,15 +272,15 @@ export class DeadCodeEliminationPass implements OptimizationPass {
   }
 
   transform(ast: ASTNode, _analysis: AnalysisResult): ASTNode {
-    return this.eliminateDeadCode(ast);
+    return this.eliminateDeadCode(ast) as ASTNode;
   }
 
-  private eliminateDeadCode(node: ASTNode): ASTNode {
+  private eliminateDeadCode(node: ASTNode | ASTNode[]): ASTNode | ASTNode[] {
     if (!node) return node;
 
     // Process arrays (command sequences)
     if (Array.isArray(node)) {
-      return this.eliminateFromArray(node as unknown as ASTNode[]) as unknown as ASTNode;
+      return this.eliminateFromArray(node);
     }
 
     // Process body arrays in nodes
@@ -308,7 +311,7 @@ export class DeadCodeEliminationPass implements OptimizationPass {
 
     for (const node of nodes) {
       const processed = this.eliminateDeadCode(node);
-      result.push(processed);
+      result.push(processed as ASTNode);
 
       // Check if this terminates execution
       if (this.isTerminator(node)) {
@@ -322,8 +325,7 @@ export class DeadCodeEliminationPass implements OptimizationPass {
 
   private isTerminator(node: ASTNode): boolean {
     if (node.type === 'command') {
-      const name = (node as unknown as { name: string }).name;
-      return ['halt', 'exit', 'return', 'throw'].includes(name);
+      return ['halt', 'exit', 'return', 'throw'].includes((node as CommandNode).name);
     }
     return false;
   }
@@ -388,10 +390,7 @@ export class LoopUnrollingPass implements OptimizationPass {
   }
 
   private tryUnroll(node: ASTNode): ASTNode | null {
-    const repeatNode = node as {
-      count?: number | ASTNode;
-      body?: ASTNode[];
-    };
+    const repeatNode = node as RepeatNode;
 
     // Must have a fixed numeric count
     if (typeof repeatNode.count !== 'number') {
@@ -426,7 +425,7 @@ export class LoopUnrollingPass implements OptimizationPass {
       type: 'sequence',
       commands: unrolled,
       _unrolled: true,
-    } as ASTNode;
+    } as SequenceNode;
   }
 
   private usesIndex(nodes: ASTNode[]): boolean {
@@ -442,10 +441,13 @@ export class LoopUnrollingPass implements OptimizationPass {
     if (!node) return false;
 
     // Check identifiers
-    if (node.type === 'identifier' || node.type === 'variable') {
-      const name =
-        (node as { value?: string; name?: string }).value ?? (node as { name?: string }).name;
-      if (name === 'index' || name === ':index') {
+    if (node.type === 'identifier') {
+      if (node.value === 'index' || node.value === ':index') {
+        return true;
+      }
+    }
+    if (node.type === 'variable') {
+      if (node.name === 'index' || node.name === ':index') {
         return true;
       }
     }

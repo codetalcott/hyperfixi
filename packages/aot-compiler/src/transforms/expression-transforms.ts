@@ -12,10 +12,15 @@ import type {
   SelectorNode,
   VariableNode,
   BinaryExpressionNode,
+  UnaryExpressionNode,
   MemberExpressionNode,
   PossessiveNode,
   CallExpressionNode,
   PositionalNode,
+  ConditionalNode,
+  ArrayExpressionNode,
+  ObjectExpressionNode,
+  TemplateNode,
 } from '../types/aot-types.js';
 
 // =============================================================================
@@ -119,6 +124,9 @@ export class ExpressionCodegen {
 
       case 'conditional':
         return this.generateConditional(node);
+
+      case 'sequence':
+        return 'undefined';
 
       default:
         // Unknown node type - return as-is if it has a value
@@ -539,8 +547,8 @@ export class ExpressionCodegen {
   // ARRAY EXPRESSIONS
   // ===========================================================================
 
-  private generateArray(node: ASTNode): string {
-    const elements = (node as { elements?: ASTNode[] }).elements ?? [];
+  private generateArray(node: ArrayExpressionNode): string {
+    const elements = node.elements ?? [];
     const items = elements.map(el => this.generate(el)).join(', ');
     return `[${items}]`;
   }
@@ -549,9 +557,8 @@ export class ExpressionCodegen {
   // OBJECT EXPRESSIONS
   // ===========================================================================
 
-  private generateObject(node: ASTNode): string {
-    const properties =
-      (node as { properties?: Array<{ key: string | ASTNode; value: ASTNode }> }).properties ?? [];
+  private generateObject(node: ObjectExpressionNode): string {
+    const properties = node.properties ?? [];
     const pairs = properties
       .map(prop => {
         const key =
@@ -567,8 +574,8 @@ export class ExpressionCodegen {
   // TEMPLATE EXPRESSIONS
   // ===========================================================================
 
-  private generateTemplate(node: ASTNode): string {
-    const parts = (node as { parts?: Array<string | ASTNode> }).parts ?? [];
+  private generateTemplate(node: TemplateNode): string {
+    const parts = node.parts ?? [];
     const segments = parts
       .map(part => {
         if (typeof part === 'string') {
@@ -584,11 +591,10 @@ export class ExpressionCodegen {
   // UNARY EXPRESSIONS
   // ===========================================================================
 
-  private generateUnary(node: ASTNode): string {
-    const operator = (node as unknown as { operator: string }).operator;
-    const operand = this.generate((node as unknown as { operand: ASTNode }).operand);
+  private generateUnary(node: UnaryExpressionNode): string {
+    const operand = this.generate(node.operand);
 
-    switch (operator) {
+    switch (node.operator) {
       case 'not':
       case '!':
         return `!${operand}`;
@@ -599,7 +605,7 @@ export class ExpressionCodegen {
       case 'no':
         return `!${operand}`;
       default:
-        return `${operator}${operand}`;
+        return `${node.operator}${operand}`;
     }
   }
 
@@ -607,10 +613,10 @@ export class ExpressionCodegen {
   // CONDITIONAL EXPRESSIONS
   // ===========================================================================
 
-  private generateConditional(node: ASTNode): string {
-    const condition = this.generate((node as unknown as { condition: ASTNode }).condition);
-    const consequent = this.generate((node as unknown as { consequent: ASTNode }).consequent);
-    const alternate = this.generate((node as unknown as { alternate: ASTNode }).alternate);
+  private generateConditional(node: ConditionalNode): string {
+    const condition = this.generate(node.condition);
+    const consequent = this.generate(node.consequent);
+    const alternate = this.generate(node.alternate);
     return `(${condition} ? ${consequent} : ${alternate})`;
   }
 }

@@ -13,6 +13,7 @@ import type {
   SourceLocation,
   CommandNode,
   EventHandlerNode,
+  IdentifierNode,
   IfNode,
   RepeatNode,
   ForEachNode,
@@ -110,7 +111,7 @@ class AnalysisVisitor {
         this.visitCall(node as CallExpressionNode);
         break;
       case 'identifier':
-        this.visitIdentifier(node);
+        this.visitIdentifier(node as IdentifierNode);
         break;
       default:
         // Visit children for other node types
@@ -216,7 +217,7 @@ class AnalysisVisitor {
       case 'call':
         // May need behavior lookup
         if (node.args?.[0]?.type === 'identifier') {
-          this.behaviors.push((node.args[0] as unknown as { value: string }).value);
+          this.behaviors.push((node.args[0] as IdentifierNode).value);
         }
         break;
     }
@@ -377,9 +378,8 @@ class AnalysisVisitor {
     this.dynamicExpressions.push(node);
   }
 
-  private visitIdentifier(node: ASTNode): void {
-    const value =
-      (node as { value?: string; name?: string }).value ?? (node as { name?: string }).name;
+  private visitIdentifier(node: IdentifierNode): void {
+    const value = node.value ?? node.name;
 
     if (!value) return;
 
@@ -490,7 +490,7 @@ class AnalysisVisitor {
       case 'literal':
         return true;
       case 'identifier': {
-        const value = (node as { value?: string }).value;
+        const value = (node as IdentifierNode).value;
         // Context variables are not pure (they change per invocation)
         return !['me', 'you', 'it', 'result', 'event'].includes(value ?? '');
       }

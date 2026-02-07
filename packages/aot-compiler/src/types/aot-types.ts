@@ -47,17 +47,51 @@ export interface ExtractedScript {
 // =============================================================================
 
 /**
- * Base AST node type.
+ * Base AST node interface.
+ *
+ * The index signature enables generic tree walking in optimization passes
+ * (Object.keys + node[key]). Specific node interfaces extend this and add
+ * typed fields. Use the discriminated union `ASTNode` for type-safe codegen.
  */
-export interface ASTNode {
+export interface BaseASTNode {
   type: string;
   [key: string]: unknown;
 }
 
 /**
+ * Discriminated union of all AOT AST node types.
+ *
+ * Enables exhaustive `switch` narrowing in TypeScript — no `as unknown as`
+ * casts needed in codegen. Mirrors the interchange format's `InterchangeNode`.
+ */
+export type ASTNode =
+  | EventHandlerNode
+  | CommandNode
+  | LiteralNode
+  | IdentifierNode
+  | SelectorNode
+  | VariableNode
+  | BinaryExpressionNode
+  | UnaryExpressionNode
+  | MemberExpressionNode
+  | PossessiveNode
+  | CallExpressionNode
+  | PositionalNode
+  | ConditionalNode
+  | ArrayExpressionNode
+  | ObjectExpressionNode
+  | TemplateNode
+  | HtmlLiteralNode
+  | IfNode
+  | RepeatNode
+  | ForEachNode
+  | WhileNode
+  | SequenceNode;
+
+/**
  * Event handler node.
  */
-export interface EventHandlerNode extends ASTNode {
+export interface EventHandlerNode extends BaseASTNode {
   type: 'event';
   event: string;
   modifiers?: EventModifiers;
@@ -68,7 +102,7 @@ export interface EventHandlerNode extends ASTNode {
 /**
  * Command node.
  */
-export interface CommandNode extends ASTNode {
+export interface CommandNode extends BaseASTNode {
   type: 'command';
   name: string;
   args?: ASTNode[];
@@ -81,70 +115,112 @@ export interface CommandNode extends ASTNode {
 /**
  * Expression node types.
  */
-export interface LiteralNode extends ASTNode {
+export interface LiteralNode extends BaseASTNode {
   type: 'literal';
   value: string | number | boolean | null;
 }
 
-export interface IdentifierNode extends ASTNode {
+export interface IdentifierNode extends BaseASTNode {
   type: 'identifier';
   value: string;
   name?: string;
 }
 
-export interface SelectorNode extends ASTNode {
+export interface SelectorNode extends BaseASTNode {
   type: 'selector';
   value: string;
 }
 
-export interface VariableNode extends ASTNode {
+export interface VariableNode extends BaseASTNode {
   type: 'variable';
   name: string;
   scope: 'local' | 'global' | 'element';
 }
 
-export interface BinaryExpressionNode extends ASTNode {
+export interface BinaryExpressionNode extends BaseASTNode {
   type: 'binary';
   operator: string;
   left: ASTNode;
   right: ASTNode;
 }
 
-export interface UnaryExpressionNode extends ASTNode {
+export interface UnaryExpressionNode extends BaseASTNode {
   type: 'unary';
   operator: string;
   operand: ASTNode;
 }
 
-export interface MemberExpressionNode extends ASTNode {
+export interface MemberExpressionNode extends BaseASTNode {
   type: 'member';
   object: ASTNode;
   property: string | ASTNode;
   computed?: boolean;
 }
 
-export interface PossessiveNode extends ASTNode {
+export interface PossessiveNode extends BaseASTNode {
   type: 'possessive';
   object: ASTNode;
   property: string;
 }
 
-export interface CallExpressionNode extends ASTNode {
+export interface CallExpressionNode extends BaseASTNode {
   type: 'call';
   callee: ASTNode;
   args?: ASTNode[];
 }
 
-export interface PositionalNode extends ASTNode {
+export interface PositionalNode extends BaseASTNode {
   type: 'positional';
   position: 'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random';
   target?: ASTNode;
 }
 
+export interface ConditionalNode extends BaseASTNode {
+  type: 'conditional';
+  condition: ASTNode;
+  consequent: ASTNode;
+  alternate: ASTNode;
+}
+
+export interface ArrayExpressionNode extends BaseASTNode {
+  type: 'array';
+  elements: ASTNode[];
+}
+
+export interface ObjectExpressionNode extends BaseASTNode {
+  type: 'object';
+  properties: Array<{ key: string | ASTNode; value: ASTNode }>;
+}
+
+export interface TemplateNode extends BaseASTNode {
+  type: 'template';
+  parts: Array<string | ASTNode>;
+}
+
+/**
+ * HTML literal node (e.g. `<div.class#id/>`).
+ */
+export interface HtmlLiteralNode extends BaseASTNode {
+  type: 'htmlLiteral';
+  tag: string;
+  classes?: string[];
+  id?: string;
+  attributes?: Record<string, string>;
+}
+
+/**
+ * Sequence node (produced by loop unrolling optimization).
+ */
+export interface SequenceNode extends BaseASTNode {
+  type: 'sequence';
+  commands: ASTNode[];
+  _unrolled?: boolean;
+}
+
 /**
  * Control flow nodes.
  */
-export interface IfNode extends ASTNode {
+export interface IfNode extends BaseASTNode {
   type: 'if';
   condition: ASTNode;
   thenBranch: ASTNode[];
@@ -152,7 +228,7 @@ export interface IfNode extends ASTNode {
   elseIfBranches?: Array<{ condition: ASTNode; body: ASTNode[] }>;
 }
 
-export interface RepeatNode extends ASTNode {
+export interface RepeatNode extends BaseASTNode {
   type: 'repeat';
   count?: number | ASTNode;
   whileCondition?: ASTNode;
@@ -160,7 +236,7 @@ export interface RepeatNode extends ASTNode {
   body: ASTNode[];
 }
 
-export interface ForEachNode extends ASTNode {
+export interface ForEachNode extends BaseASTNode {
   type: 'foreach';
   itemName: string;
   indexName?: string;
@@ -168,7 +244,7 @@ export interface ForEachNode extends ASTNode {
   body: ASTNode[];
 }
 
-export interface WhileNode extends ASTNode {
+export interface WhileNode extends BaseASTNode {
   type: 'while';
   condition: ASTNode;
   body: ASTNode[];
@@ -425,9 +501,7 @@ export interface OptimizationPass {
 /**
  * Optimized AST with metadata.
  */
-export interface OptimizedAST extends ASTNode {
-  _optimizations?: string[];
-}
+export type OptimizedAST = ASTNode & { _optimizations?: string[] };
 
 // =============================================================================
 // COMPILER TYPES
