@@ -96,4 +96,10 @@ export default [
 
   // Metadata
   createSubpathEntry('src/metadata.ts', 'dist/metadata'),
+
+  // LSP metadata
+  createSubpathEntry('src/lsp-metadata.ts', 'dist/lsp-metadata'),
+
+  // AST utilities (interchange format, analysis, visitor)
+  createSubpathEntry('src/ast-utils/index.ts', 'dist/ast-utils/index'),
 ];

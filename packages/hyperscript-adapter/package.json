@@ -114,6 +114,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "test:browser": "npx playwright test",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

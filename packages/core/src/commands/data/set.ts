@@ -80,15 +80,6 @@ export class SetCommand implements DecoratedCommand {
     const firstArg = raw.args[0] as Record<string, unknown>;
     const argName = (firstArg?.name || firstArg?.value) as string | undefined;
 
-    // DEBUG: Trace parseInput flow (temporary — remove after debugging)
-    console.log('[SET_DEBUG] parseInput entry:', {
-      argsLen: raw.args.length,
-      firstArgType: firstArg?.type,
-      argName,
-      modifierKeys: Object.keys(raw.modifiers || {}),
-      allArgTypes: raw.args.map((a: any) => `${a.type}:${a.name || a.value || '?'}`),
-    });
-
     // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
     const propertyTarget = await resolveAnyPropertyTarget(
       firstArg as import('../../types/base-types').ASTNode,

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hyperscript Adapter - Browser Tests</title>
+  <style>
+    .active { background: #2196f3; color: white; }
+    .highlight { background: #ff9800; color: white; }
+    .hidden { display: none !important; }
+    .box { display: inline-block; width: 50px; height: 50px; border: 1px solid #333; }
+  </style>
+</head>
+<body>
+
+<!-- Spanish: toggle -->
+<section id="test-es-toggle">
+  <button id="btn-es-toggle" _="on click alternar .active" data-lang="es">Toggle ES</button>
+</section>
+
+<!-- Japanese: toggle (SOV word order) -->
+<section id="test-ja-toggle">
+  <button id="btn-ja-toggle" _="on click .active を 切り替え" data-lang="ja">Toggle JA</button>
+</section>
+
+<!-- Korean: toggle (SOV word order) -->
+<section id="test-ko-toggle">
+  <button id="btn-ko-toggle" _="on click .active 을 토글" data-lang="ko">Toggle KO</button>
+</section>
+
+<!-- Chinese: toggle (SVO) -->
+<section id="test-zh-toggle">
+  <button id="btn-zh-toggle" _="on click 切换 .active" data-lang="zh">Toggle ZH</button>
+</section>
+
+<!-- French: add class to target -->
+<section id="test-fr-add">
+  <button id="btn-fr-add" _="on click ajouter .highlight sur #box-fr" data-lang="fr">Add FR</button>
+  <div id="box-fr" class="box">Box</div>
+</section>
+
+<!-- Spanish: put text -->
+<section id="test-es-put">
+  <button id="btn-es-put" _='on click poner "Hola!" en #msg-es' data-lang="es">Put ES</button>
+  <div id="msg-es"></div>
+</section>
+
+<!-- English: control (passthrough, no translation) -->
+<section id="test-en-toggle">
+  <button id="btn-en-toggle" _="on click toggle .active on me">Toggle EN</button>
+</section>
+
+<!-- Inherited language: parent has data-hyperscript-lang="es" -->
+<section id="test-inherited" data-hyperscript-lang="es">
+  <button id="btn-inherited" _="on click alternar .highlight">Inherited ES</button>
+</section>
+
+<!-- Spanish: remove class -->
+<section id="test-es-remove">
+  <div id="box-es-remove" class="box highlight">Box</div>
+  <button id="btn-es-remove" _="on click quitar .highlight de #box-es-remove" data-lang="es">Remove ES</button>
+</section>
+
+<!-- German: toggle -->
+<section id="test-de-toggle">
+  <button id="btn-de-toggle" _="on click umschalten .active" data-lang="de">Toggle DE</button>
+</section>
+
+<!-- Portuguese: toggle -->
+<section id="test-pt-toggle">
+  <button id="btn-pt-toggle" _="on click alternar .active" data-lang="pt">Toggle PT</button>
+</section>
+
+<!-- Arabic: toggle (VSO word order) -->
+<section id="test-ar-toggle">
+  <button id="btn-ar-toggle" _="on click بدّل .active" data-lang="ar">Toggle AR</button>
+</section>
+
+<!-- Load scripts -->
+<!-- 1. Original _hyperscript runtime -->
+<script src="https://unpkg.com/hyperscript.org@0.9.14"></script>
+
+<!-- 2. Adapter plugin (full bundle with all 24 languages) -->
+<script src="../../dist/hyperscript-i18n.global.js"></script>
+
+<script>
+  // Expose test helpers
+  window.__testReady = typeof HyperscriptI18n !== 'undefined' && typeof _hyperscript !== 'undefined';
+  window.__adapterGlobal = typeof HyperscriptI18n !== 'undefined' ? HyperscriptI18n : null;
+</script>
+
+</body>
+</html>
