@@ -506,6 +506,88 @@ export class AOTCompiler {
   }
 
   /**
+   * Compile a pre-parsed AST to JavaScript.
+   * Skips parsing entirely — accepts an interchange-format ASTNode directly.
+   * Use this when the AST has already been produced by a semantic parser,
+   * explicit syntax parser, or other external source.
+   */
+  compileAST(ast: ASTNode, options: CompileOptions = {}): CompilationResult {
+    const mergedOptions = { ...DEFAULT_COMPILE_OPTIONS, ...options };
+
+    // Normalize: ensure top-level node is an event handler
+    let normalized = ast;
+    if (normalized.type !== 'event') {
+      normalized = {
+        type: 'event',
+        event: 'click',
+        modifiers: {},
+        body: [normalized],
+      } as EventHandlerNode;
+    }
+
+    // Analyze
+    const analysis = this.analyze(normalized);
+
+    // Optimize
+    const optimized = this.optimizer.optimize(
+      normalized,
+      analysis,
+      mergedOptions.optimizationLevel ?? 2
+    );
+
+    // Generate handler ID (use JSON hash since we have no source string)
+    const sourceHint = JSON.stringify(ast).slice(0, 200);
+    const handlerId = this.generateHandlerId(optimized, sourceHint);
+
+    // Create codegen context
+    const ctx = this.createCodegenContext(handlerId, analysis, mergedOptions);
+
+    // Generate code
+    const generated = this.generateCode(optimized, ctx, analysis);
+
+    // Merge helpers
+    const allHelpers = new Set([...ctx.requiredHelpers, ...generated.imports]);
+
+    // Silent-failure detection
+    if (optimized.type === 'event') {
+      const eventNode = optimized as EventHandlerNode;
+      const bodyLen = eventNode.body?.length ?? 0;
+      if (bodyLen > 0 && generated.code) {
+        const handlerMatch = /function\s+_handler_\w+\(_event\)\s*\{([\s\S]*)\}\s*$/.exec(
+          generated.code
+        );
+        if (handlerMatch) {
+          const bodyContent = handlerMatch[1]
+            .replace(/const _ctx\s*=\s*[^;]*;/g, '')
+            .replace(/const _el\s*=\s*[^;]*;/g, '')
+            .trim();
+          if (!bodyContent) {
+            analysis.warnings.push(
+              `Event handler body appears empty despite ${bodyLen} parsed command(s). ` +
+                `This may indicate a code generation failure for pre-parsed AST.`
+            );
+          }
+        }
+      }
+    }
+
+    return {
+      success: true,
+      code: generated.code,
+      warnings: analysis.warnings,
+      metadata: {
+        handlerId,
+        parserUsed: 'traditional', // pre-parsed, no parser involved
+        language: mergedOptions.language,
+        commandsUsed: Array.from(analysis.commandsUsed),
+        optimizationsApplied: (optimized as { _optimizations?: string[] })._optimizations ?? [],
+        needsRuntime: allHelpers.size > 0,
+        runtimeHelpers: Array.from(allHelpers),
+      },
+    };
+  }
+
+  /**
    * Compile multiple extracted scripts.
    */
   compile(scripts: ExtractedScript[], options: CompileOptions = {}): BatchCompilationResult {

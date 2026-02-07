@@ -18,22 +18,7 @@
 
 import type { SemanticParseResult, SemanticValue, SemanticRole, ActionType } from '../types';
 import type { CommandSchema } from '../generators/command-schemas';
-import {
-  toggleSchema,
-  addSchema,
-  removeSchema,
-  putSchema,
-  setSchema,
-  showSchema,
-  hideSchema,
-  onSchema,
-  triggerSchema,
-  waitSchema,
-  fetchSchema,
-  incrementSchema,
-  decrementSchema,
-  appendSchema,
-} from '../generators/command-schemas';
+import { commandSchemas } from '../generators/command-schemas';
 
 // =============================================================================
 // Types
@@ -79,23 +64,12 @@ export interface ValidationResult {
 
 /**
  * Maps action types to their schemas.
+ * Initialized from the full commandSchemas record (54 schemas).
+ * Custom schemas can be added via registerSchema().
  */
-const schemaRegistry = new Map<ActionType, CommandSchema>([
-  ['toggle', toggleSchema],
-  ['add', addSchema],
-  ['remove', removeSchema],
-  ['put', putSchema],
-  ['set', setSchema],
-  ['show', showSchema],
-  ['hide', hideSchema],
-  ['on', onSchema],
-  ['trigger', triggerSchema],
-  ['wait', waitSchema],
-  ['fetch', fetchSchema],
-  ['increment', incrementSchema],
-  ['decrement', decrementSchema],
-  ['append', appendSchema],
-]);
+const schemaRegistry = new Map<ActionType, CommandSchema>(
+  Object.entries(commandSchemas) as [ActionType, CommandSchema][]
+);
 
 /**
  * Get schema for an action type.
