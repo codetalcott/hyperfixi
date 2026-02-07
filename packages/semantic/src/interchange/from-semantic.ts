@@ -171,7 +171,7 @@ export function fromSemanticAST(node: SemanticASTNode): InterchangeNode {
 
 function convertEventHandler(node: SemanticASTNode): EventNode {
   const event = (node.event ?? 'click') as string;
-  const commands = (node.commands ?? []) as SemanticASTNode[];
+  const commands = (node.commands ?? node.body ?? []) as SemanticASTNode[];
   const body = commands.map(cmd => fromSemanticAST(cmd));
 
   const modifiers = buildEventModifiers(node);

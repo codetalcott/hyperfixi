@@ -465,6 +465,30 @@ export class AOTCompiler {
     // Merge codegen-reported imports with context-required helpers
     const allHelpers = new Set([...ctx.requiredHelpers, ...generated.imports]);
 
+    // Silent-failure detection: warn if event handler has body commands
+    // but generated code has no actual command output
+    if (optimized.type === 'event') {
+      const eventNode = optimized as EventHandlerNode;
+      const bodyLen = eventNode.body?.length ?? 0;
+      if (bodyLen > 0 && generated.code) {
+        const handlerMatch = /function\s+_handler_\w+\(_event\)\s*\{([\s\S]*)\}\s*$/.exec(
+          generated.code
+        );
+        if (handlerMatch) {
+          const bodyContent = handlerMatch[1]
+            .replace(/const _ctx\s*=\s*[^;]*;/g, '')
+            .replace(/const _el\s*=\s*[^;]*;/g, '')
+            .trim();
+          if (!bodyContent) {
+            analysis.warnings.push(
+              `Event handler body appears empty despite ${bodyLen} parsed command(s). ` +
+                `This may indicate a code generation failure for: "${code}"`
+            );
+          }
+        }
+      }
+    }
+
     return {
       success: true,
       code: generated.code,

@@ -1576,24 +1576,22 @@ Tested actual JS output (not just `success: true`) across 9 languages via both p
 
 These pass through the semantic adapter → AOT AST → `CommandCodegen` cleanly. The semantic parser correctly identifies the command and class operand regardless of language.
 
-#### What's Broken (Needs Work)
+#### Previously Broken (Now Fixed)
 
-1. **Non-English event handlers produce empty function bodies**
+1. **~~Non-English event handlers produce empty function bodies~~ FIXED**
    - Input: `クリック で .active を 切り替え` (Japanese: "on click toggle .active")
-   - Output: `function(event) { }` — the event is wired but the body is empty
-   - Root cause: The semantic adapter's `convertEventHandler()` receives the event handler node but the body commands aren't being recursively converted from the semantic AST
-   - The compiler reports `success: true` for these — **silent failure**
+   - Previously: `function(event) { }` — the event was wired but the body was empty
+   - Root cause: `applyExtractionRules()` in `pattern-matcher.ts` only handled `rule.default` but not `rule.value`. Grammar-transformed event patterns (e.g., `toggle-event-ja-sov`) captured the event and roles but the static `action: { value: "toggle" }` was never placed into the captured map. `buildEventHandler()` couldn't find the action, fell through to `parseBodyWithClauses()` which had no tokens left (pattern consumed all tokens), and returned `body: []`.
+   - Fix: `applyExtractionRules()` now also applies `rule.value` as a `{ type: 'literal', value }` entry. Verified with body-content tests for JA, KO, ES, AR, ZH.
+   - Also added: `node.body` fallback in `fromSemanticAST.convertEventHandler()`, nested `EventNode` handling in `EventHandlerCodegen.generateNode()`, and silent-failure detection in `compileScript()`.
 
 2. **Japanese `add` (`追加 .clicked`) fails entirely**
    - The semantic parser returns a structure the adapter doesn't recognize for this command in Japanese
    - Other languages (Korean `추가`, Arabic `أضف`, etc.) work fine
 
-3. **`set` command has no codegen**
-   - `set :count to 0` parses successfully through the core adapter
-   - But `CommandCodegen` has no `set` case — falls through to generic/unsupported
-   - Same for `put`, `increment`, `decrement`, and other data commands
+#### Remaining Items
 
-4. **`addEventListener` is in a separate binding step (by design)**
+1. **`addEventListener` is in a separate binding step (by design)**
    - `compileScript()` generates the handler function body only
    - Event binding (`el.addEventListener(...)`) is produced by `generateCombinedCode()` which wraps all handlers
    - This is correct architecture but means individual `compileScript()` results don't show the full picture
@@ -1603,20 +1601,18 @@ These pass through the semantic adapter → AOT AST → `CommandCodegen` cleanly
 | Category                      | English (core)      | English (semantic) | Non-English (semantic) |
 | ----------------------------- | ------------------- | ------------------ | ---------------------- |
 | Standalone class ops          | Works               | Works              | Works                  |
-| Event handler + class ops     | Works               | Works              | **Empty body**         |
-| `set` / `put` / data commands | Parses, no codegen  | Parses, no codegen | Parses, no codegen     |
+| Event handler + class ops     | Works               | Works              | **Works** (fixed)      |
+| `set` / `put` / data commands | Works               | Works              | Works                  |
 | Control flow (`if`/`repeat`)  | Works (core parser) | Untested           | Untested               |
-| `fetch` / async               | Untested            | Untested           | Untested               |
+| `fetch` / async               | Works               | Untested           | Untested               |
 
 ### Recommended Next Steps
 
-1. **Fix non-English event handler body conversion** — highest impact bug. The semantic adapter receives body nodes but doesn't convert them. This likely requires tracing how `parseWithConfidence()` structures event handler bodies vs. how `convertEventHandler()` expects them.
+1. **Expand command codegen coverage** — remaining ~9 commands without AOT codegens: `swap`, `morph`, `transition`, `measure`, `settle`, `tell`, `async`, `install`, `render`.
 
-2. **Add `set` command codegen** — `CommandCodegen` needs a `set` case that generates `_ctx.locals.set('name', value)` for local variables and property assignment for DOM targets.
+2. **Fix Japanese `add` command** — `追加 .clicked` fails in the semantic parser while other languages work fine.
 
-3. **Add silent-failure detection** — `compileScript()` should warn or fail when an event handler has a parsed body but the converted AST body is empty.
-
-4. **Expand command codegen coverage** — `put`, `increment`, `decrement`, `log`, `wait`, `fetch` are all specified in this design doc's appendices but not yet implemented in `CommandCodegen`.
+3. **Test non-English control flow and async** — `if`/`repeat`/`fetch` in JA/KO/ES/AR are untested through the AOT pipeline.
 
 ---
 

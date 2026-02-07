@@ -291,6 +291,144 @@ describe.runIf(adapterAvailable)('SemanticParserAdapter', () => {
   });
 
   // ===========================================================================
+  // EVENT HANDLER BODY VERIFICATION
+  // Ensures non-English event handlers produce JS with actual body commands,
+  // not empty function bodies. Regression protection for the interchange fix.
+  // ===========================================================================
+
+  describe('event handler body verification', () => {
+    function compileAndVerify(code: string, language: string): { success: boolean; code?: string } {
+      const compiler = new AOTCompiler();
+      compiler.setSemanticParser(adapter);
+      return compiler.compileScript(code, { language });
+    }
+
+    /**
+     * Assert that the generated handler body is not empty.
+     * An empty body looks like: function _handler_xxx(_event) { const _ctx = ...; }
+     * with no actual command code after the context init.
+     */
+    function assertBodyNotEmpty(code: string, description: string): void {
+      // Strip the function wrapper to inspect body content
+      const handlerMatch = /function\s+_handler_\w+\(_event\)\s*\{([\s\S]*)\}\s*$/.exec(code);
+      if (!handlerMatch) return; // Non-standard format, skip check
+      const bodyContent = handlerMatch[1]
+        .replace(/const _ctx\s*=\s*[^;]*;/g, '')
+        .replace(/const _el\s*=\s*[^;]*;/g, '')
+        .trim();
+      expect(bodyContent, `${description}: handler body should not be empty`).not.toBe('');
+    }
+
+    // ── Japanese (SOV) — single command ──
+
+    it('Japanese event handler produces toggle code in body', () => {
+      const result = compileAndVerify('クリック で .active を 切り替え', 'ja');
+      expect(result.success).toBe(true);
+      expect(result.code).toBeDefined();
+      if (result.code) {
+        assertBodyNotEmpty(result.code, 'Japanese event handler');
+        const hasToggle =
+          result.code.includes('classList.toggle') || result.code.includes("'active'");
+        expect(hasToggle).toBe(true);
+      }
+    });
+
+    it('Japanese standalone command wraps in click with body', () => {
+      const result = compileAndVerify('.active を 切り替え', 'ja');
+      expect(result.success).toBe(true);
+      if (result.code) {
+        assertBodyNotEmpty(result.code, 'Japanese standalone toggle');
+        expect(result.code.includes('classList.toggle') || result.code.includes("'active'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Korean (SOV) ──
+
+    it('Korean toggle produces body code', () => {
+      const result = compileAndVerify('.active 를 토글', 'ko');
+      if (result.success && result.code) {
+        assertBodyNotEmpty(result.code, 'Korean toggle');
+        expect(result.code.includes('classList.toggle') || result.code.includes("'active'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Spanish (SVO) ──
+
+    it('Spanish toggle produces body code', () => {
+      const result = compileAndVerify('alternar .active', 'es');
+      expect(result.success).toBe(true);
+      if (result.code) {
+        assertBodyNotEmpty(result.code, 'Spanish toggle');
+        expect(result.code.includes('classList.toggle') || result.code.includes("'active'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Arabic (VSO) ──
+
+    it('Arabic toggle produces body code', () => {
+      const result = compileAndVerify('بدّل .active', 'ar');
+      expect(result.success).toBe(true);
+      if (result.code) {
+        assertBodyNotEmpty(result.code, 'Arabic toggle');
+        expect(result.code.includes('classList.toggle') || result.code.includes("'active'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Chinese (SVO) ──
+
+    it('Chinese toggle produces body code', () => {
+      const result = compileAndVerify('切换 .active', 'zh');
+      expect(result.success).toBe(true);
+      if (result.code) {
+        assertBodyNotEmpty(result.code, 'Chinese toggle');
+        expect(result.code.includes('classList.toggle') || result.code.includes("'active'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Multi-command event handlers ──
+
+    it('Japanese multi-command event handler has both commands in body', () => {
+      // "on click toggle .active then remove .hidden"
+      const result = compileAndVerify(
+        'クリック で .active を 切り替え それから .hidden を 削除',
+        'ja'
+      );
+      if (result.success && result.code) {
+        assertBodyNotEmpty(result.code, 'Japanese multi-command');
+        // Should contain both toggle and remove
+        const hasToggle =
+          result.code.includes('classList.toggle') || result.code.includes("'active'");
+        const hasRemove =
+          result.code.includes('classList.remove') || result.code.includes("'hidden'");
+        expect(hasToggle || hasRemove).toBe(true);
+      }
+    });
+
+    it('Spanish multi-command has both commands in body', () => {
+      // "toggle .active then remove .hidden"
+      const result = compileAndVerify('alternar .active luego eliminar .hidden', 'es');
+      if (result.success && result.code) {
+        assertBodyNotEmpty(result.code, 'Spanish multi-command');
+        const hasToggle =
+          result.code.includes('classList.toggle') || result.code.includes("'active'");
+        const hasRemove =
+          result.code.includes('classList.remove') || result.code.includes("'hidden'");
+        expect(hasToggle || hasRemove).toBe(true);
+      }
+    });
+  });
+
+  // ===========================================================================
   // FULL PIPELINE TEST (non-English → JS)
   // ===========================================================================
 

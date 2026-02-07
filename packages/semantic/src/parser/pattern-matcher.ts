@@ -850,15 +850,20 @@ export class PatternMatcher {
   }
 
   /**
-   * Apply extraction rules to fill in default values for missing roles.
+   * Apply extraction rules to fill in static values and defaults for missing roles.
    */
   private applyExtractionRules(
     pattern: LanguagePattern,
     captured: Map<SemanticRole, SemanticValue>
   ): void {
     for (const [role, rule] of Object.entries(pattern.extraction)) {
-      if (!captured.has(role as SemanticRole) && rule.default) {
-        captured.set(role as SemanticRole, rule.default);
+      if (!captured.has(role as SemanticRole)) {
+        if (rule.value !== undefined) {
+          // Static value extraction (e.g., action: { value: "toggle" })
+          captured.set(role as SemanticRole, { type: 'literal', value: rule.value });
+        } else if (rule.default) {
+          captured.set(role as SemanticRole, rule.default);
+        }
       }
     }
   }

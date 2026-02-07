@@ -122,6 +122,12 @@ export class EventHandlerCodegen {
       case 'while':
         return generateWhile(node as WhileNode, this.ctx, nodes => this.generateBody(nodes));
 
+      case 'event': {
+        // Nested event node (from CommandSequence conversion) — inline its body
+        const nested = node as EventHandlerNode;
+        return this.generateBody(nested.body ?? []);
+      }
+
       default:
         // Unknown node type
         return null;
