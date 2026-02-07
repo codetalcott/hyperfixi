@@ -1027,6 +1027,13 @@ describe('Command Registry', () => {
       'pick',
       'push-url',
       'replace-url',
+      'get',
+      'break',
+      'continue',
+      'beep',
+      'js',
+      'copy',
+      'make',
     ];
 
     for (const cmd of expected) {
@@ -1268,5 +1275,260 @@ describe('ReplaceUrlCodegen', () => {
 
   it('returns null without URL', () => {
     expect(gen({ type: 'command', name: 'replace-url' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// GET COMMAND
+// =============================================================================
+
+describe('GetCodegen', () => {
+  it('evaluates expression and stores in it/result', () => {
+    const result = gen({
+      type: 'command',
+      name: 'get',
+      args: [{ type: 'identifier', value: 'me' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('_ctx.it = _ctx.result = _ctx.me');
+    expect(result!.sideEffects).toBe(true);
+  });
+
+  it('evaluates selector expression', () => {
+    const result = gen({
+      type: 'command',
+      name: 'get',
+      args: [{ type: 'selector', value: '#output' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("getElementById('output')");
+    expect(result!.code).toContain('_ctx.it');
+  });
+
+  it('prefers patient role', () => {
+    const result = gen({
+      type: 'command',
+      name: 'get',
+      args: [{ type: 'literal', value: 'fallback' }],
+      roles: { patient: { type: 'literal', value: 42 } },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('_ctx.it = _ctx.result = 42');
+  });
+
+  it('returns null without args', () => {
+    expect(gen({ type: 'command', name: 'get' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// BREAK COMMAND
+// =============================================================================
+
+describe('BreakCodegen', () => {
+  it('generates break statement', () => {
+    const result = gen({ type: 'command', name: 'break' });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('break');
+    expect(result!.async).toBe(false);
+    expect(result!.sideEffects).toBe(false);
+  });
+});
+
+// =============================================================================
+// CONTINUE COMMAND
+// =============================================================================
+
+describe('ContinueCodegen', () => {
+  it('generates continue statement', () => {
+    const result = gen({ type: 'command', name: 'continue' });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('continue');
+    expect(result!.async).toBe(false);
+    expect(result!.sideEffects).toBe(false);
+  });
+});
+
+// =============================================================================
+// BEEP COMMAND
+// =============================================================================
+
+describe('BeepCodegen', () => {
+  it('beeps without args', () => {
+    const result = gen({ type: 'command', name: 'beep' });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('[beep]');
+    expect(result!.code).toContain('console.log');
+    expect(result!.sideEffects).toBe(true);
+  });
+
+  it('beeps with expression', () => {
+    const result = gen({
+      type: 'command',
+      name: 'beep',
+      args: [{ type: 'identifier', value: 'me' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('[beep]');
+    expect(result!.code).toContain('_ctx.me');
+  });
+
+  it('beeps with literal value', () => {
+    const result = gen({
+      type: 'command',
+      name: 'beep',
+      args: [{ type: 'literal', value: 'debug info' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('"debug info"');
+  });
+});
+
+// =============================================================================
+// JS COMMAND
+// =============================================================================
+
+describe('JsCodegen', () => {
+  it('inlines JavaScript code string', () => {
+    const result = gen({
+      type: 'command',
+      name: 'js',
+      args: [{ type: 'literal', value: 'return document.title' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('return document.title');
+    expect(result!.code).toContain('function(_ctx)');
+    expect(result!.sideEffects).toBe(true);
+  });
+
+  it('evaluates non-string expression', () => {
+    const result = gen({
+      type: 'command',
+      name: 'js',
+      args: [{ type: 'identifier', value: 'myFunc' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_ctx.it = _ctx.result = myFunc');
+  });
+
+  it('returns null without args', () => {
+    expect(gen({ type: 'command', name: 'js' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// COPY COMMAND
+// =============================================================================
+
+describe('CopyCodegen', () => {
+  it('copies text to clipboard', () => {
+    const result = gen({
+      type: 'command',
+      name: 'copy',
+      args: [{ type: 'literal', value: 'hello' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('navigator.clipboard.writeText');
+    expect(result!.code).toContain('"hello"');
+    expect(result!.async).toBe(true);
+  });
+
+  it('copies expression result', () => {
+    const result = gen({
+      type: 'command',
+      name: 'copy',
+      args: [{ type: 'identifier', value: 'it' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('navigator.clipboard.writeText(String(_ctx.it))');
+  });
+
+  it('returns null without content', () => {
+    expect(gen({ type: 'command', name: 'copy' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// MAKE COMMAND
+// =============================================================================
+
+describe('MakeCodegen', () => {
+  it('makes element from HTML literal', () => {
+    const result = gen({
+      type: 'command',
+      name: 'make',
+      args: [
+        {
+          type: 'htmlLiteral',
+          tag: 'div',
+          classes: ['card', 'active'],
+          id: 'myCard',
+        },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("createElement('div')");
+    expect(result!.code).toContain("className = 'card active'");
+    expect(result!.code).toContain("id = 'myCard'");
+    expect(result!.code).toContain('_ctx.it = _ctx.result');
+  });
+
+  it('makes element from string tag name', () => {
+    const result = gen({
+      type: 'command',
+      name: 'make',
+      args: [{ type: 'literal', value: 'span' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe("_ctx.it = _ctx.result = document.createElement('span')");
+  });
+
+  it('makes element from dynamic expression', () => {
+    const result = gen({
+      type: 'command',
+      name: 'make',
+      args: [{ type: 'identifier', value: 'tagName' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('_ctx.it = _ctx.result = document.createElement(tagName)');
+  });
+
+  it('makes element with attributes', () => {
+    const result = gen({
+      type: 'command',
+      name: 'make',
+      args: [
+        {
+          type: 'htmlLiteral',
+          tag: 'input',
+          classes: [],
+          attributes: { type: 'text', placeholder: 'Enter name' },
+        },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("createElement('input')");
+    expect(result!.code).toContain("setAttribute('type', 'text')");
+    expect(result!.code).toContain("setAttribute('placeholder', 'Enter name')");
+  });
+
+  it('returns null without args', () => {
+    expect(gen({ type: 'command', name: 'make' })).toBeNull();
   });
 });

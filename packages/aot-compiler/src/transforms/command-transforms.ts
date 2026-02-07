@@ -1156,6 +1156,206 @@ class ReplaceUrlCodegen implements CommandCodegen {
   }
 }
 
+/**
+ * Get command: get expression (evaluates and stores in `it`/`result`)
+ */
+class GetCodegen implements CommandCodegen {
+  readonly command = 'get';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const expr = roles?.patient ?? args[0];
+    if (!expr) return null;
+
+    const value = ctx.generateExpression(expr);
+    return {
+      code: `_ctx.it = _ctx.result = ${value}`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Break command: break out of a loop
+ */
+class BreakCodegen implements CommandCodegen {
+  readonly command = 'break';
+
+  generate(_node: CommandNode, _ctx: CodegenContext): GeneratedExpression {
+    return {
+      code: 'break',
+      async: false,
+      sideEffects: false,
+    };
+  }
+}
+
+/**
+ * Continue command: skip to next iteration of a loop
+ */
+class ContinueCodegen implements CommandCodegen {
+  readonly command = 'continue';
+
+  generate(_node: CommandNode, _ctx: CodegenContext): GeneratedExpression {
+    return {
+      code: 'continue',
+      async: false,
+      sideEffects: false,
+    };
+  }
+}
+
+/**
+ * Beep command: debug helper — logs expression with formatting
+ */
+class BeepCodegen implements CommandCodegen {
+  readonly command = 'beep';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const expr = roles?.patient ?? args[0];
+    if (!expr) {
+      return {
+        code: `console.log('%c[beep]', 'color: orange; font-weight: bold')`,
+        async: false,
+        sideEffects: true,
+      };
+    }
+
+    const value = ctx.generateExpression(expr);
+    return {
+      code: `console.log('%c[beep]', 'color: orange; font-weight: bold', ${value})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Js command: inline JavaScript block — passes through code string
+ */
+class JsCodegen implements CommandCodegen {
+  readonly command = 'js';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    // The js command body is typically passed as a literal string or the first arg
+    const bodyNode = roles?.patient ?? args[0];
+    if (!bodyNode) return null;
+
+    if (bodyNode.type === 'literal') {
+      const code = (bodyNode as LiteralNode).value;
+      if (typeof code === 'string') {
+        // Inline the JS directly — it runs in handler scope with _ctx available
+        return {
+          code: `(function(_ctx) { ${code} })(_ctx)`,
+          async: false,
+          sideEffects: true,
+        };
+      }
+    }
+
+    // Expression form: evaluate and store result
+    const value = ctx.generateExpression(bodyNode);
+    return {
+      code: `_ctx.it = _ctx.result = ${value}`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Copy command: copy text to clipboard
+ */
+class CopyCodegen implements CommandCodegen {
+  readonly command = 'copy';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const contentNode = roles?.patient ?? args[0];
+    if (!contentNode) return null;
+
+    const content = ctx.generateExpression(contentNode);
+    return {
+      code: `await navigator.clipboard.writeText(String(${content}))`,
+      async: true,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Make command: create a DOM element — `make <tag/> then ...`
+ */
+class MakeCodegen implements CommandCodegen {
+  readonly command = 'make';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const targetNode = roles?.patient ?? args[0];
+    if (!targetNode) return null;
+
+    // HTML literal: make <div.foo#bar/>
+    if (targetNode.type === 'htmlLiteral') {
+      const tagNode = targetNode as HtmlLiteralNode;
+      const tag = tagNode.tag ?? 'div';
+      const classes = tagNode.classes ?? [];
+      const id = tagNode.id;
+      const attrs = tagNode.attributes ?? {};
+
+      let code = `(() => { const _el = document.createElement('${tag}');`;
+      if (classes.length > 0) {
+        code += ` _el.className = '${classes.join(' ')}';`;
+      }
+      if (id) {
+        code += ` _el.id = '${sanitizeIdentifier(id)}';`;
+      }
+      for (const [attr, val] of Object.entries(attrs)) {
+        code += ` _el.setAttribute('${sanitizeSelector(attr)}', '${sanitizeSelector(val)}');`;
+      }
+      code += ` return _el; })()`;
+
+      return {
+        code: `_ctx.it = _ctx.result = ${code}`,
+        async: false,
+        sideEffects: true,
+      };
+    }
+
+    // String tag name: make "div"
+    if (targetNode.type === 'literal') {
+      const tag = (targetNode as LiteralNode).value;
+      if (typeof tag === 'string') {
+        return {
+          code: `_ctx.it = _ctx.result = document.createElement('${sanitizeSelector(tag)}')`,
+          async: false,
+          sideEffects: true,
+        };
+      }
+    }
+
+    // Dynamic: make expr
+    const expr = ctx.generateExpression(targetNode);
+    return {
+      code: `_ctx.it = _ctx.result = document.createElement(${expr})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
 // =============================================================================
 // COMMAND REGISTRY
 // =============================================================================
@@ -1194,6 +1394,13 @@ export const commandCodegens = new Map<string, CommandCodegen>([
   ['pick', new PickCodegen()],
   ['push-url', new PushUrlCodegen()],
   ['replace-url', new ReplaceUrlCodegen()],
+  ['get', new GetCodegen()],
+  ['break', new BreakCodegen()],
+  ['continue', new ContinueCodegen()],
+  ['beep', new BeepCodegen()],
+  ['js', new JsCodegen()],
+  ['copy', new CopyCodegen()],
+  ['make', new MakeCodegen()],
 ]);
 
 /**
