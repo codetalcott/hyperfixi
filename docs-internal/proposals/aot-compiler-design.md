@@ -1,9 +1,9 @@
 # LokaScript AOT Compiler Design
 
-> **Status**: Implemented (with gaps)
+> **Status**: Implemented
 > **Author**: Design Session
 > **Date**: 2026-02-05
-> **Last reviewed**: 2026-02-05
+> **Last reviewed**: 2026-02-06
 
 ## Executive Summary
 
@@ -21,7 +21,7 @@ This document proposes an Ahead-of-Time (AOT) compiler for LokaScript that trans
 8. [Example Outputs](#8-example-outputs)
 9. [Performance Considerations](#9-performance-considerations)
 10. [Migration Path](#10-migration-path)
-11. [Implementation Status (2026-02-05)](#11-implementation-status-2026-02-05)
+11. [Implementation Status (2026-02-06)](#11-implementation-status-2026-02-06)
 
 ---
 
@@ -400,7 +400,7 @@ const commandCodegens = new Map<string, CommandCodegen>([
   ['if', new IfCodegen()],
   ['repeat', new RepeatCodegen()],
   ['fetch', new FetchCodegen()],
-  // ... 40+ commands
+  // ... 45 commands total
 ]);
 ```
 
@@ -1532,7 +1532,7 @@ export default {
 
 ---
 
-## 11. Implementation Status (2026-02-05)
+## 11. Implementation Status (2026-02-06)
 
 ### What's Built
 
@@ -1541,8 +1541,10 @@ The AOT compiler package (`packages/aot-compiler`) is implemented with:
 - **AOT Compiler** (`aot-compiler.ts`): Main orchestrator — parses, generates code, tracks metadata, produces combined output
 - **Two parser adapters**: `CoreParserAdapter` (English, wraps `@lokascript/core`) and `SemanticParserAdapter` (24 languages, wraps `@lokascript/semantic`)
 - **Regex fallback parser** (`createSimpleAST`): Zero-dependency pattern matching for simple cases
-- **Code generation**: `CommandCodegen` (12 commands), `ExpressionCodegen` (all expression types), `EventCodegen` (event handler wiring)
-- **128 tests passing** (vitest, happy-dom environment)
+- **Code generation**: `CommandCodegen` (45 commands), `ExpressionCodegen` (all expression types), `EventCodegen` (event handler wiring)
+- **Static Analyzer** (`analyzer.ts`): Full AST visitor tracking commands, variables, selectors, control flow, runtime helpers, nesting depth
+- **Optimization Pipeline**: 4 passes — constant folding, selector caching, dead code elimination, loop unrolling
+- **533 tests passing** (vitest, happy-dom environment) across 11 test files
 
 ### Adapter Correctness Fixes (commit `a0b580ab`)
 
@@ -1598,58 +1600,80 @@ These pass through the semantic adapter → AOT AST → `CommandCodegen` cleanly
 
 #### Reliability Summary
 
-| Category                      | English (core)      | English (semantic) | Non-English (semantic) |
-| ----------------------------- | ------------------- | ------------------ | ---------------------- |
-| Standalone class ops          | Works               | Works              | Works                  |
-| Event handler + class ops     | Works               | Works              | **Works** (fixed)      |
-| `set` / `put` / data commands | Works               | Works              | Works                  |
-| Control flow (`if`/`repeat`)  | Works (core parser) | Untested           | Untested               |
-| `fetch` / async               | Works               | Untested           | Untested               |
+| Category                      | English (core)      | English (semantic) | Non-English (semantic)        |
+| ----------------------------- | ------------------- | ------------------ | ----------------------------- |
+| Standalone class ops          | Works               | Works              | Works                         |
+| Event handler + class ops     | Works               | Works              | **Works** (fixed)             |
+| `set` / `put` / data commands | Works               | Works              | Works                         |
+| Control flow (`if`/`repeat`)  | Works (core parser) | Works              | Works (tested JA/KO/ES/AR/ZH) |
+| `fetch` / async               | Works               | Works              | Works (tested JA/KO/ES/AR/ZH) |
 
-### Recommended Next Steps
+### Completed Items (2026-02-06)
 
-1. **Expand command codegen coverage** — remaining ~9 commands without AOT codegens: `swap`, `morph`, `transition`, `measure`, `settle`, `tell`, `async`, `install`, `render`.
+1. **Expanded command codegen coverage** — all 45 user-facing commands now have AOT codegens, including `swap`, `morph`, `transition`, `measure`, `settle`, `tell`, `async`, `install`, `render`.
 
-2. **Fix Japanese `add` command** — `追加 .clicked` fails in the semantic parser while other languages work fine.
+2. **Analyzer test coverage** — 67 tests covering command tracking, variable analysis, selector analysis, control flow detection, nesting depth, runtime helpers, event types, expression purity, behaviors, convenience functions, and edge cases.
 
-3. **Test non-English control flow and async** — `if`/`repeat`/`fetch` in JA/KO/ES/AR are untested through the AOT pipeline.
+3. **End-to-end compilation tests** — 28 tests validating full pipeline: code → parse → analyze → optimize → codegen → valid JS (verified via `new Function()`).
+
+4. **Non-English AOT pipeline tests** — 12 tests covering add/remove/show/hide commands in JA, KO, ES, AR, ZH through the full AOT pipeline.
+
+### Remaining Known Gaps
+
+1. **Fix Japanese `add` command** — `追加 .clicked` fails in the semantic parser while other languages work fine.
+
+2. **CLI tests** — The CLI module has 0 tests.
+
+3. **Source map verification** — Declared in config but not end-to-end verified.
 
 ---
 
 ## Appendix A: Command Coverage Matrix
 
-| Command    | AOT Support | Notes                         |
-| ---------- | ----------- | ----------------------------- |
-| toggle     | Full        | Direct classList.toggle()     |
-| add        | Full        | classList.add() or DOM        |
-| remove     | Full        | classList.remove() or DOM     |
-| set        | Full        | Property/attribute assignment |
-| put        | Full        | innerHTML/textContent         |
-| get        | Full        | Property access               |
-| if/else    | Full        | Direct JS conditionals        |
-| repeat     | Full        | for loop                      |
-| for each   | Full        | for...of loop                 |
-| while      | Full        | while loop                    |
-| wait       | Full        | setTimeout promise            |
-| fetch      | Full        | Native fetch API              |
-| send       | Full        | dispatchEvent                 |
-| trigger    | Full        | dispatchEvent                 |
-| call       | Full        | Function call                 |
-| return     | Full        | return statement              |
-| halt       | Full        | throw HALT                    |
-| exit       | Full        | throw EXIT                    |
-| log        | Full        | console.log                   |
-| throw      | Full        | throw Error                   |
-| try/catch  | Full        | try/catch block               |
-| async      | Full        | async/await                   |
-| settle     | Full        | Promise.allSettled            |
-| show/hide  | Full        | display style                 |
-| transition | Partial     | CSS transitions               |
-| measure    | Full        | getBoundingClientRect         |
-| go         | Full        | location/history              |
-| focus/blur | Full        | Element methods               |
-| scroll     | Full        | scrollIntoView                |
-| take       | Full        | classList manipulation        |
+| Command        | AOT Support | Notes                             |
+| -------------- | ----------- | --------------------------------- |
+| toggle         | Full        | Direct classList.toggle()         |
+| add            | Full        | classList.add() or DOM            |
+| remove         | Full        | classList.remove() or DOM         |
+| set            | Full        | Property/attribute assignment     |
+| put            | Full        | innerHTML/textContent             |
+| get            | Full        | Property access                   |
+| if/else        | Full        | Direct JS conditionals            |
+| repeat         | Full        | for loop                          |
+| for each       | Full        | for...of loop                     |
+| while          | Full        | while loop                        |
+| wait           | Full        | setTimeout promise                |
+| fetch          | Full        | Native fetch API                  |
+| send           | Full        | dispatchEvent                     |
+| trigger        | Full        | dispatchEvent                     |
+| call           | Full        | Function call                     |
+| return         | Full        | return statement                  |
+| halt           | Full        | throw HALT                        |
+| exit           | Full        | throw EXIT                        |
+| log            | Full        | console.log                       |
+| throw          | Full        | throw Error                       |
+| try/catch      | Full        | try/catch block                   |
+| async          | Full        | Fire-and-forget IIFE              |
+| settle         | Full        | Wait for animations to complete   |
+| show/hide      | Full        | display style                     |
+| transition     | Full        | CSS transition + transitionend    |
+| measure        | Full        | getBoundingClientRect             |
+| go             | Full        | location/history                  |
+| focus/blur     | Full        | Element methods                   |
+| scroll         | Full        | scrollIntoView                    |
+| take           | Full        | classList manipulation            |
+| swap           | Full        | innerHTML/outerHTML strategies    |
+| morph          | Full        | DOM diffing via runtime helper    |
+| tell           | Full        | Scoped context rebinding          |
+| install        | Full        | Behavior installation via runtime |
+| render         | Full        | Template rendering via runtime    |
+| increment      | Full        | Variable/element increment        |
+| decrement      | Full        | Variable/element decrement        |
+| break/continue | Full        | Loop control                      |
+| beep           | Full        | console.log debug                 |
+| js             | Full        | Inline JavaScript passthrough     |
+| copy           | Full        | Clipboard API                     |
+| make           | Full        | createElement                     |
 
 ---
 

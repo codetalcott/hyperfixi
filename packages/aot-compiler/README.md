@@ -97,35 +97,53 @@ document.getElementById('btn').addEventListener('click', _handler_click_toggle_a
 
 ## Current Status
 
-The compiler supports 21 command codegens, full expression codegen, control flow (if/else, repeat, for-each, while), and 24-language multilingual compilation via the semantic parser adapter. See [aot-compiler-design.md](../../docs-internal/proposals/aot-compiler-design.md#11-implementation-status-2026-02-05) for full reliability assessment.
+The compiler supports 45 command codegens, full expression codegen, control flow (if/else, repeat, for-each, while), and 24-language multilingual compilation via the semantic parser adapter. 533 tests passing. See [aot-compiler-design.md](../../docs-internal/proposals/aot-compiler-design.md#11-implementation-status-2026-02-05) for full reliability assessment.
 
 ## Supported Features
 
 ### Commands
 
-| Command             | Codegen | Notes                     |
-| ------------------- | ------- | ------------------------- |
-| toggle              | Yes     | classList.toggle()        |
-| add                 | Yes     | classList.add() or DOM    |
-| remove              | Yes     | classList.remove() or DOM |
-| show/hide           | Yes     | display style             |
-| focus/blur          | Yes     | Element methods           |
-| log                 | Yes     | console.log               |
-| send/trigger        | Yes     | dispatchEvent             |
-| halt/exit           | Yes     | Control flow              |
-| return              | Yes     | Return statement          |
-| if/else             | Yes     | Conditionals              |
-| repeat              | Yes     | For loops                 |
-| for each            | Yes     | Iteration                 |
-| while               | Yes     | While loops               |
-| set                 | Yes     | Vars, properties, attrs   |
-| put                 | Yes     | into/before/after         |
-| wait                | Yes     | Duration (ms, s, m, h)    |
-| fetch               | Yes     | JSON, text, HTML          |
-| increment/decrement | Yes     | Vars and elements         |
-| call                | Yes     | Function/method calls     |
-| scroll              | Yes     | scrollIntoView            |
-| take                | Yes     | Class from siblings       |
+| Command             | Codegen | Notes                             |
+| ------------------- | ------- | --------------------------------- |
+| toggle              | Yes     | classList.toggle()                |
+| add                 | Yes     | classList.add() or DOM            |
+| remove              | Yes     | classList.remove() or DOM         |
+| show/hide           | Yes     | display style                     |
+| focus/blur          | Yes     | Element methods                   |
+| log                 | Yes     | console.log                       |
+| send/trigger        | Yes     | dispatchEvent                     |
+| halt/exit           | Yes     | Control flow                      |
+| return              | Yes     | Return statement                  |
+| if/else             | Yes     | Conditionals                      |
+| repeat              | Yes     | For loops                         |
+| for each            | Yes     | Iteration                         |
+| while               | Yes     | While loops                       |
+| set                 | Yes     | Vars, properties, attrs           |
+| put                 | Yes     | into/before/after                 |
+| wait                | Yes     | Duration (ms, s, m, h)            |
+| fetch               | Yes     | JSON, text, HTML                  |
+| increment/decrement | Yes     | Vars and elements                 |
+| call                | Yes     | Function/method calls             |
+| scroll              | Yes     | scrollIntoView                    |
+| take                | Yes     | Class from siblings               |
+| get                 | Yes     | Property access                   |
+| go                  | Yes     | location/history navigation       |
+| throw               | Yes     | throw Error                       |
+| try/catch           | Yes     | Exception handling                |
+| break/continue      | Yes     | Loop control                      |
+| beep                | Yes     | console.log debug                 |
+| js                  | Yes     | Inline JavaScript                 |
+| copy                | Yes     | Clipboard API                     |
+| make                | Yes     | createElement                     |
+| swap                | Yes     | innerHTML/outerHTML strategies    |
+| morph               | Yes     | DOM diffing via runtime           |
+| transition          | Yes     | CSS transition + transitionend    |
+| measure             | Yes     | getBoundingClientRect             |
+| settle              | Yes     | Wait for animations to complete   |
+| tell                | Yes     | Scoped context rebinding          |
+| async               | Yes     | Fire-and-forget IIFE              |
+| install             | Yes     | Behavior installation via runtime |
+| render              | Yes     | Template rendering via runtime    |
 
 ### Expressions
 
@@ -200,6 +218,12 @@ import {
   send, // Custom event dispatch
   fetchJSON, // Fetch helper
   globals, // Global variable store
+  morph, // DOM diffing replacement
+  transition, // CSS transition helper
+  measure, // getBoundingClientRect
+  settle, // Wait for animations
+  installBehavior, // Behavior installation
+  render, // Template rendering
 } from '@lokascript/aot-compiler/runtime';
 ```
 

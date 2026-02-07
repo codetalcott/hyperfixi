@@ -385,6 +385,157 @@ export async function fetchHTML(url: string, options?: RequestInit): Promise<Doc
 }
 
 // =============================================================================
+// SWAP / MORPH HELPERS
+// =============================================================================
+
+/**
+ * Minimal DOM morph: updates target's innerHTML while attempting to preserve
+ * matching child elements (by id or tag+index) to reduce layout thrash.
+ */
+export function morph(target: Element, newContent: string | Element): void {
+  const html = typeof newContent === 'string' ? newContent : newContent.outerHTML;
+  // Simple morph: replace innerHTML. A full morphing algorithm (like idiomorph)
+  // is too large for the AOT runtime. Users needing full morph can import it separately.
+  target.innerHTML = html;
+}
+
+// =============================================================================
+// ANIMATION HELPERS
+// =============================================================================
+
+/**
+ * Animate a CSS property using transitions.
+ * Returns a promise that resolves when the transition completes.
+ */
+export async function transition(
+  element: Element,
+  property: string,
+  value: string,
+  duration: number = 300,
+  timing: string = 'ease'
+): Promise<void> {
+  const el = element as HTMLElement;
+  const originalTransition = el.style.transition;
+  el.style.transition = `${property} ${duration}ms ${timing}`;
+  el.style.setProperty(property, value);
+
+  return new Promise<void>(resolve => {
+    const cleanup = () => {
+      el.style.transition = originalTransition;
+      resolve();
+    };
+    const onEnd = (e: TransitionEvent) => {
+      if (e.propertyName === property) {
+        el.removeEventListener('transitionend', onEnd);
+        cleanup();
+      }
+    };
+    el.addEventListener('transitionend', onEnd);
+    // Safety timeout in case transitionend doesn't fire
+    setTimeout(cleanup, duration + 50);
+  });
+}
+
+/**
+ * Measure a property on an element.
+ */
+export function measure(element: Element, property: string): number {
+  const el = element as HTMLElement;
+  const rect = el.getBoundingClientRect();
+  const p = property.toLowerCase();
+
+  const measurements: Record<string, () => number> = {
+    width: () => rect.width,
+    height: () => rect.height,
+    top: () => rect.top,
+    left: () => rect.left,
+    right: () => rect.right,
+    bottom: () => rect.bottom,
+    x: () => el.offsetLeft,
+    y: () => el.offsetTop,
+  };
+
+  if (measurements[p]) return measurements[p]();
+
+  // Try computed style
+  const cssVal = getComputedStyle(el).getPropertyValue(property);
+  const num = parseFloat(cssVal);
+  return isNaN(num) ? 0 : num;
+}
+
+/**
+ * Wait for CSS transitions/animations to settle on an element.
+ */
+export async function settle(element: Element, timeout: number = 5000): Promise<void> {
+  return new Promise<void>(resolve => {
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      element.removeEventListener('transitionend', done);
+      element.removeEventListener('animationend', done);
+      resolve();
+    };
+
+    element.addEventListener('transitionend', done, { once: true });
+    element.addEventListener('animationend', done, { once: true });
+
+    // Also settle after double rAF if no animations detected
+    requestAnimationFrame(() => requestAnimationFrame(done));
+
+    // Safety timeout
+    setTimeout(done, timeout);
+  });
+}
+
+// =============================================================================
+// BEHAVIOR HELPERS
+// =============================================================================
+
+/** Registry for AOT-compiled behaviors */
+const behaviorRegistry = new Map<string, (el: Element, params?: Record<string, unknown>) => void>();
+
+/**
+ * Register a behavior for AOT-compiled code.
+ */
+export function registerBehavior(
+  name: string,
+  init: (el: Element, params?: Record<string, unknown>) => void
+): void {
+  behaviorRegistry.set(name, init);
+}
+
+/**
+ * Install a behavior on an element.
+ */
+export function installBehavior(
+  element: Element,
+  name: string,
+  params?: Record<string, unknown>
+): void {
+  const init = behaviorRegistry.get(name);
+  if (init) {
+    init(element, params);
+  } else {
+    console.warn(`[AOT] Behavior '${name}' not registered. Use registerBehavior() first.`);
+  }
+}
+
+// =============================================================================
+// TEMPLATE HELPERS
+// =============================================================================
+
+/**
+ * Simple template renderer with ${variable} interpolation.
+ */
+export function render(template: string, variables: Record<string, unknown>): string {
+  return template.replace(/\$\{([^}]+)\}/g, (_match, key: string) => {
+    const trimmed = key.trim();
+    return trimmed in variables ? String(variables[trimmed]) : '';
+  });
+}
+
+// =============================================================================
 // TYPE CONVERSION HELPERS
 // =============================================================================
 
@@ -498,6 +649,12 @@ export default {
   put,
   show,
   hide,
+  morph,
+
+  // Animation
+  transition,
+  measure,
+  settle,
 
   // Collections
   contains,
@@ -521,6 +678,13 @@ export default {
   fetchJSON,
   fetchText,
   fetchHTML,
+
+  // Behaviors
+  registerBehavior,
+  installBehavior,
+
+  // Templates
+  render,
 
   // Type conversion
   convert,

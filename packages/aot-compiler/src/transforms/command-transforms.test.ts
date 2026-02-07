@@ -1532,3 +1532,511 @@ describe('MakeCodegen', () => {
     expect(gen({ type: 'command', name: 'make' })).toBeNull();
   });
 });
+
+// =============================================================================
+// SWAP COMMAND
+// =============================================================================
+
+describe('SwapCodegen', () => {
+  it('swaps innerHTML by default', () => {
+    const result = gen({
+      type: 'command',
+      name: 'swap',
+      args: [
+        { type: 'selector', value: '#target' },
+        { type: 'literal', value: '<p>new</p>' },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('.innerHTML =');
+    expect(result!.sideEffects).toBe(true);
+  });
+
+  it('swaps with outerHTML strategy', () => {
+    const result = gen({
+      type: 'command',
+      name: 'swap',
+      args: [
+        { type: 'identifier', value: 'outerhtml' },
+        { type: 'selector', value: '#target' },
+        { type: 'literal', value: '<p>new</p>' },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('.outerHTML =');
+  });
+
+  it('swaps with morph strategy', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'swap',
+        args: [
+          { type: 'identifier', value: 'morph' },
+          { type: 'selector', value: '#target' },
+          { type: 'literal', value: '<p>new</p>' },
+        ],
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.morph(');
+    expect(ctx.requiredHelpers.has('morph')).toBe(true);
+  });
+
+  it('swaps with delete strategy', () => {
+    const result = gen({
+      type: 'command',
+      name: 'swap',
+      args: [
+        { type: 'identifier', value: 'delete' },
+        { type: 'selector', value: '#target' },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('.remove()');
+  });
+
+  it('swaps with roles-based input', () => {
+    const result = gen({
+      type: 'command',
+      name: 'swap',
+      roles: {
+        destination: { type: 'selector', value: '#target' },
+        patient: { type: 'literal', value: '<p>new</p>' },
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('.innerHTML =');
+  });
+
+  it('returns null without args or roles', () => {
+    expect(gen({ type: 'command', name: 'swap' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// MORPH COMMAND
+// =============================================================================
+
+describe('MorphCodegen', () => {
+  it('morphs target with content', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'morph',
+        args: [
+          { type: 'selector', value: '#target' },
+          { type: 'literal', value: '<p>new</p>' },
+        ],
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.morph(');
+    expect(ctx.requiredHelpers.has('morph')).toBe(true);
+  });
+
+  it('morphs with roles-based input', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'morph',
+        roles: {
+          destination: { type: 'selector', value: '#box' },
+          patient: { type: 'identifier', value: 'it' },
+        },
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.morph(');
+    expect(ctx.requiredHelpers.has('morph')).toBe(true);
+  });
+
+  it('returns null without target', () => {
+    expect(gen({ type: 'command', name: 'morph' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// TRANSITION COMMAND
+// =============================================================================
+
+describe('TransitionCodegen', () => {
+  it('transitions a property to a value', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'transition',
+        args: [{ type: 'identifier', value: 'opacity' }],
+        modifiers: { to: { type: 'literal', value: '0.5' } },
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.transition(');
+    expect(result!.code).toContain('opacity');
+    expect(result!.async).toBe(true);
+    expect(ctx.requiredHelpers.has('transition')).toBe(true);
+  });
+
+  it('uses custom duration and timing', () => {
+    const result = gen({
+      type: 'command',
+      name: 'transition',
+      args: [{ type: 'identifier', value: 'left' }],
+      modifiers: {
+        to: { type: 'literal', value: '100px' },
+        over: { type: 'literal', value: 500 },
+        with: { type: 'literal', value: 'ease-in-out' },
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('500');
+    expect(result!.code).toContain('ease-in-out');
+  });
+
+  it('targets specific element', () => {
+    const result = gen({
+      type: 'command',
+      name: 'transition',
+      args: [{ type: 'identifier', value: 'opacity' }],
+      target: { type: 'selector', value: '#box' },
+      modifiers: { to: { type: 'literal', value: '0' } },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("getElementById('box')");
+  });
+
+  it('returns null without property', () => {
+    expect(gen({ type: 'command', name: 'transition' })).toBeNull();
+  });
+
+  it('returns null without value', () => {
+    expect(
+      gen({
+        type: 'command',
+        name: 'transition',
+        args: [{ type: 'identifier', value: 'opacity' }],
+      })
+    ).toBeNull();
+  });
+});
+
+// =============================================================================
+// MEASURE COMMAND
+// =============================================================================
+
+describe('MeasureCodegen', () => {
+  it('measures all dimensions when no property specified', () => {
+    const result = gen({
+      type: 'command',
+      name: 'measure',
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('getBoundingClientRect()');
+    expect(result!.code).toContain('_ctx.it');
+  });
+
+  it('measures specific rect property', () => {
+    const result = gen({
+      type: 'command',
+      name: 'measure',
+      args: [{ type: 'identifier', value: 'width' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('getBoundingClientRect().width');
+  });
+
+  it('measures height', () => {
+    const result = gen({
+      type: 'command',
+      name: 'measure',
+      args: [{ type: 'identifier', value: 'height' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('getBoundingClientRect().height');
+  });
+
+  it('uses runtime helper for custom properties', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'measure',
+        args: [{ type: 'literal', value: 'font-size' }],
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.measure(');
+    expect(ctx.requiredHelpers.has('measure')).toBe(true);
+  });
+
+  it('measures specific target', () => {
+    const result = gen({
+      type: 'command',
+      name: 'measure',
+      target: { type: 'selector', value: '#box' },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("getElementById('box')");
+  });
+});
+
+// =============================================================================
+// SETTLE COMMAND
+// =============================================================================
+
+describe('SettleCodegen', () => {
+  it('settles with default timeout', () => {
+    const ctx = createMockContext();
+    const result = gen({ type: 'command', name: 'settle' }, ctx);
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.settle(');
+    expect(result!.code).toContain('5000');
+    expect(result!.async).toBe(true);
+    expect(ctx.requiredHelpers.has('settle')).toBe(true);
+  });
+
+  it('settles with custom timeout', () => {
+    const result = gen({
+      type: 'command',
+      name: 'settle',
+      modifiers: { for: { type: 'literal', value: 3000 } },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('3000');
+  });
+
+  it('settles on specific target', () => {
+    const result = gen({
+      type: 'command',
+      name: 'settle',
+      target: { type: 'selector', value: '#animated' },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("getElementById('animated')");
+  });
+});
+
+// =============================================================================
+// TELL COMMAND
+// =============================================================================
+
+describe('TellCodegen', () => {
+  it('generates scoped block rebinding me', () => {
+    const result = gen({
+      type: 'command',
+      name: 'tell',
+      args: [{ type: 'selector', value: '#sidebar' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_prevMe');
+    expect(result!.code).toContain('_ctx.me =');
+    expect(result!.code).toContain('_ctx.you =');
+  });
+
+  it('uses roles-based destination', () => {
+    const result = gen({
+      type: 'command',
+      name: 'tell',
+      roles: { destination: { type: 'selector', value: '.buttons' } },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_ctx.me =');
+  });
+
+  it('returns null without target', () => {
+    expect(gen({ type: 'command', name: 'tell' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// ASYNC COMMAND
+// =============================================================================
+
+describe('AsyncCodegen', () => {
+  it('generates async IIFE opening', () => {
+    const result = gen({
+      type: 'command',
+      name: 'async',
+      args: [{ type: 'command', name: 'wait' }],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('(async () => {');
+    expect(result!.async).toBe(false); // The outer handler doesn't await
+    expect(result!.sideEffects).toBe(true);
+  });
+});
+
+// =============================================================================
+// INSTALL COMMAND
+// =============================================================================
+
+describe('InstallCodegen', () => {
+  it('installs a named behavior', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'install',
+        args: [{ type: 'identifier', value: 'Draggable' }],
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("_rt.installBehavior(_ctx.me, 'Draggable')");
+    expect(ctx.requiredHelpers.has('installBehavior')).toBe(true);
+  });
+
+  it('installs with parameters', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'install',
+        args: [
+          { type: 'identifier', value: 'Tooltip' },
+          {
+            type: 'object',
+            properties: [{ key: 'text', value: { type: 'literal', value: 'Help' } }],
+          },
+        ],
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("'Tooltip'");
+    expect(result!.code).toContain('_rt.installBehavior(');
+  });
+
+  it('installs on specific target', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'install',
+        args: [{ type: 'identifier', value: 'Sortable' }],
+        target: { type: 'selector', value: '#list' },
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("getElementById('list')");
+    expect(result!.code).toContain("'Sortable'");
+  });
+
+  it('uses roles-based input', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'install',
+        roles: { patient: { type: 'identifier', value: 'Removable' } },
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("'Removable'");
+  });
+
+  it('returns null without behavior name', () => {
+    expect(gen({ type: 'command', name: 'install' })).toBeNull();
+  });
+});
+
+// =============================================================================
+// RENDER COMMAND
+// =============================================================================
+
+describe('RenderCodegen', () => {
+  it('renders a template', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'render',
+        args: [{ type: 'identifier', value: 'myTemplate' }],
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.render(');
+    expect(result!.code).toContain('.innerHTML =');
+    expect(ctx.requiredHelpers.has('render')).toBe(true);
+  });
+
+  it('renders with variables', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'render',
+        args: [{ type: 'identifier', value: 'template' }],
+        modifiers: {
+          with: {
+            type: 'object',
+            properties: [{ key: 'name', value: { type: 'literal', value: 'Alice' } }],
+          },
+        },
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('_rt.render(');
+  });
+
+  it('renders into specific target', () => {
+    const ctx = createMockContext();
+    const result = gen(
+      {
+        type: 'command',
+        name: 'render',
+        args: [{ type: 'literal', value: '<p>Hello</p>' }],
+        target: { type: 'selector', value: '#output' },
+      },
+      ctx
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("getElementById('output')");
+    expect(result!.code).toContain('.innerHTML =');
+  });
+
+  it('returns null without template', () => {
+    expect(gen({ type: 'command', name: 'render' })).toBeNull();
+  });
+});

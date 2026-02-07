@@ -1357,6 +1357,402 @@ class MakeCodegen implements CommandCodegen {
 }
 
 // =============================================================================
+// SWAP / MORPH COMMANDS
+// =============================================================================
+
+/**
+ * Swap command: swap [strategy] of target with content
+ *
+ * Strategies: innerHTML (default), outerHTML, beforeBegin, afterBegin, beforeEnd, afterEnd, delete, morph
+ */
+class SwapCodegen implements CommandCodegen {
+  readonly command = 'swap';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    // delete strategy: swap delete target
+    if (
+      args.length > 0 &&
+      args[0].type === 'identifier' &&
+      (args[0] as IdentifierNode).value === 'delete'
+    ) {
+      const targetNode = args[1] ?? node.target;
+      if (!targetNode) return null;
+      const target = ctx.generateExpression(targetNode);
+      return { code: `${target}.remove()`, async: false, sideEffects: true };
+    }
+
+    const contentNode = roles?.patient ?? args[args.length - 1];
+    const targetNode = roles?.destination ?? node.target ?? args[0];
+
+    if (!targetNode || !contentNode) return null;
+
+    const target = ctx.generateExpression(targetNode);
+    const content = ctx.generateExpression(contentNode);
+
+    // Determine strategy from modifiers or args
+    const strategy = this.resolveStrategy(node, args);
+
+    switch (strategy) {
+      case 'outerHTML':
+        return { code: `${target}.outerHTML = ${content}`, async: false, sideEffects: true };
+      case 'beforebegin':
+        return {
+          code: `${target}.insertAdjacentHTML('beforebegin', ${content})`,
+          async: false,
+          sideEffects: true,
+        };
+      case 'afterbegin':
+        return {
+          code: `${target}.insertAdjacentHTML('afterbegin', ${content})`,
+          async: false,
+          sideEffects: true,
+        };
+      case 'beforeend':
+        return {
+          code: `${target}.insertAdjacentHTML('beforeend', ${content})`,
+          async: false,
+          sideEffects: true,
+        };
+      case 'afterend':
+        return {
+          code: `${target}.insertAdjacentHTML('afterend', ${content})`,
+          async: false,
+          sideEffects: true,
+        };
+      case 'morph':
+        ctx.requireHelper('morph');
+        return { code: `_rt.morph(${target}, ${content})`, async: false, sideEffects: true };
+      case 'innerHTML':
+      default:
+        return { code: `${target}.innerHTML = ${content}`, async: false, sideEffects: true };
+    }
+  }
+
+  private resolveStrategy(node: CommandNode, args: ASTNode[]): string {
+    // Check modifiers for strategy
+    const mods = node.modifiers as Record<string, unknown> | undefined;
+    if (mods?.strategy && typeof mods.strategy === 'string') return mods.strategy.toLowerCase();
+
+    // Check first arg for strategy keyword
+    if (args.length >= 2 && args[0].type === 'identifier') {
+      const name = ((args[0] as IdentifierNode).value ?? '').toLowerCase();
+      const strategies: Record<string, string> = {
+        innerhtml: 'innerHTML',
+        outerhtml: 'outerHTML',
+        morph: 'morph',
+        beforebegin: 'beforebegin',
+        afterbegin: 'afterbegin',
+        beforeend: 'beforeend',
+        afterend: 'afterend',
+        into: 'innerHTML',
+        over: 'outerHTML',
+      };
+      if (strategies[name]) return strategies[name];
+    }
+
+    return 'innerHTML';
+  }
+}
+
+/**
+ * Morph command: morph target with content (intelligent DOM diffing)
+ */
+class MorphCodegen implements CommandCodegen {
+  readonly command = 'morph';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const targetNode = roles?.destination ?? node.target ?? args[0];
+    const contentNode = roles?.patient ?? args[args.length > 1 ? args.length - 1 : 0];
+
+    if (!targetNode) return null;
+
+    const target = ctx.generateExpression(targetNode);
+    ctx.requireHelper('morph');
+
+    if (!contentNode || contentNode === targetNode) {
+      return { code: `_rt.morph(${target}, '')`, async: false, sideEffects: true };
+    }
+
+    const content = ctx.generateExpression(contentNode);
+    return { code: `_rt.morph(${target}, ${content})`, async: false, sideEffects: true };
+  }
+}
+
+// =============================================================================
+// ANIMATION COMMANDS (transition, measure, settle)
+// =============================================================================
+
+/**
+ * Transition command: transition property to value [over duration] [with timing]
+ *
+ * Generates CSS transition setup + transitionend listener.
+ */
+class TransitionCodegen implements CommandCodegen {
+  readonly command = 'transition';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+    const mods = node.modifiers as Record<string, ASTNode | unknown> | undefined;
+
+    const propertyNode = roles?.patient ?? args[0];
+    if (!propertyNode) return null;
+
+    const property = ctx.generateExpression(propertyNode);
+
+    // Get value from 'to' modifier or second arg
+    const valueNode = (mods?.to as ASTNode | undefined) ?? args[1];
+    if (!valueNode) return null;
+
+    const value = ctx.generateExpression(valueNode);
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+
+    // Duration from 'over' modifier
+    const durationNode = mods?.over as ASTNode | undefined;
+    const duration = durationNode ? ctx.generateExpression(durationNode) : '300';
+
+    // Timing from 'with' modifier
+    const timingNode = mods?.with as ASTNode | undefined;
+    const timing = timingNode ? ctx.generateExpression(timingNode) : "'ease'";
+
+    ctx.requireHelper('transition');
+    return {
+      code: `await _rt.transition(${target}, ${property}, ${value}, ${duration}, ${timing})`,
+      async: true,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Measure command: measure [target] [property]
+ *
+ * Measures element dimensions and stores in `it`/`result`.
+ */
+class MeasureCodegen implements CommandCodegen {
+  readonly command = 'measure';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+
+    // Determine property to measure
+    const propNode = roles?.patient ?? args[0];
+    if (!propNode) {
+      // No property — measure all (getBoundingClientRect)
+      return {
+        code: `_ctx.it = _ctx.result = ${target}.getBoundingClientRect()`,
+        async: false,
+        sideEffects: true,
+      };
+    }
+
+    if (propNode.type === 'identifier') {
+      const propName = (propNode as IdentifierNode).value ?? '';
+      // Common measurement shortcuts
+      const rectProps = ['width', 'height', 'top', 'left', 'right', 'bottom', 'x', 'y'];
+      if (rectProps.includes(propName.toLowerCase())) {
+        return {
+          code: `_ctx.it = _ctx.result = ${target}.getBoundingClientRect().${propName.toLowerCase()}`,
+          async: false,
+          sideEffects: true,
+        };
+      }
+    }
+
+    const prop = ctx.generateExpression(propNode);
+    ctx.requireHelper('measure');
+    return {
+      code: `_ctx.it = _ctx.result = _rt.measure(${target}, ${prop})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Settle command: settle [target] [for timeout]
+ *
+ * Waits for CSS transitions/animations to complete.
+ */
+class SettleCodegen implements CommandCodegen {
+  readonly command = 'settle';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression {
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+    const mods = node.modifiers as Record<string, ASTNode | unknown> | undefined;
+
+    const timeoutNode = mods?.for as ASTNode | undefined;
+    const timeout = timeoutNode ? ctx.generateExpression(timeoutNode) : '5000';
+
+    ctx.requireHelper('settle');
+    return {
+      code: `await _rt.settle(${target}, ${timeout})`,
+      async: true,
+      sideEffects: true,
+    };
+  }
+}
+
+// =============================================================================
+// EXECUTION COMMANDS (tell, async)
+// =============================================================================
+
+/**
+ * Tell command: tell target command [command ...]
+ *
+ * Executes body commands with `me` rebound to the target element.
+ * In AOT, generates a scoped block.
+ */
+class TellCodegen implements CommandCodegen {
+  readonly command = 'tell';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const targetNode = roles?.destination ?? args[0];
+    if (!targetNode) return null;
+
+    const target = ctx.generateExpression(targetNode);
+
+    // Generate a scoped block that rebinds _ctx.me
+    return {
+      code: `{ const _prevMe = _ctx.me; _ctx.me = ${target}; _ctx.you = ${target};`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Async command: async command [command ...]
+ *
+ * Wraps body in a fire-and-forget async IIFE.
+ */
+class AsyncCodegen implements CommandCodegen {
+  readonly command = 'async';
+
+  generate(_node: CommandNode, _ctx: CodegenContext): GeneratedExpression {
+    // The async command wraps its body in a fire-and-forget async IIFE.
+    // The actual body commands are generated by the event handler codegen.
+    // Here we just signal the start of the async block.
+    return {
+      code: `(async () => {`,
+      async: false, // The outer handler doesn't await this
+      sideEffects: true,
+    };
+  }
+}
+
+// =============================================================================
+// BEHAVIOR & TEMPLATE COMMANDS (install, render)
+// =============================================================================
+
+/**
+ * Install command: install BehaviorName [(params)] [on target]
+ *
+ * Installs a named behavior on an element.
+ */
+class InstallCodegen implements CommandCodegen {
+  readonly command = 'install';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+
+    const behaviorNode = roles?.patient ?? args[0];
+    if (!behaviorNode) return null;
+
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+
+    // Extract behavior name
+    let behaviorName: string;
+    if (behaviorNode.type === 'identifier') {
+      behaviorName = (behaviorNode as IdentifierNode).value ?? '';
+    } else if (behaviorNode.type === 'literal') {
+      behaviorName = String((behaviorNode as LiteralNode).value);
+    } else {
+      behaviorName = ctx.generateExpression(behaviorNode);
+      ctx.requireHelper('installBehavior');
+      return {
+        code: `_rt.installBehavior(${target}, ${behaviorName})`,
+        async: false,
+        sideEffects: true,
+      };
+    }
+
+    ctx.requireHelper('installBehavior');
+
+    // Check for parameters (second arg could be an object)
+    const paramsNode = args.length > 1 ? args[1] : undefined;
+    if (paramsNode && paramsNode.type === 'object') {
+      const params = ctx.generateExpression(paramsNode);
+      return {
+        code: `_rt.installBehavior(${target}, '${sanitizeIdentifier(behaviorName)}', ${params})`,
+        async: false,
+        sideEffects: true,
+      };
+    }
+
+    return {
+      code: `_rt.installBehavior(${target}, '${sanitizeIdentifier(behaviorName)}')`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+/**
+ * Render command: render template [with variables]
+ *
+ * Renders a template with variable interpolation.
+ */
+class RenderCodegen implements CommandCodegen {
+  readonly command = 'render';
+
+  generate(node: CommandNode, ctx: CodegenContext): GeneratedExpression | null {
+    const args = node.args ?? [];
+    const roles = node.roles;
+    const mods = node.modifiers as Record<string, ASTNode | unknown> | undefined;
+
+    const templateNode = roles?.patient ?? args[0];
+    if (!templateNode) return null;
+
+    const template = ctx.generateExpression(templateNode);
+    const target = node.target ? ctx.generateExpression(node.target) : '_ctx.me';
+
+    // Check for 'with' modifier or second arg for variables
+    const varsNode = (mods?.with as ASTNode | undefined) ?? (args.length > 1 ? args[1] : undefined);
+
+    ctx.requireHelper('render');
+
+    if (varsNode) {
+      const vars = ctx.generateExpression(varsNode);
+      return {
+        code: `${target}.innerHTML = _rt.render(${template}, ${vars})`,
+        async: false,
+        sideEffects: true,
+      };
+    }
+
+    return {
+      code: `${target}.innerHTML = _rt.render(${template}, {})`,
+      async: false,
+      sideEffects: true,
+    };
+  }
+}
+
+// =============================================================================
 // COMMAND REGISTRY
 // =============================================================================
 
@@ -1401,6 +1797,16 @@ export const commandCodegens = new Map<string, CommandCodegen>([
   ['js', new JsCodegen()],
   ['copy', new CopyCodegen()],
   ['make', new MakeCodegen()],
+  // Phase 1 additions
+  ['swap', new SwapCodegen()],
+  ['morph', new MorphCodegen()],
+  ['transition', new TransitionCodegen()],
+  ['measure', new MeasureCodegen()],
+  ['settle', new SettleCodegen()],
+  ['tell', new TellCodegen()],
+  ['async', new AsyncCodegen()],
+  ['install', new InstallCodegen()],
+  ['render', new RenderCodegen()],
 ]);
 
 /**

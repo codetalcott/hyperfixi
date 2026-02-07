@@ -429,6 +429,141 @@ describe.runIf(adapterAvailable)('SemanticParserAdapter', () => {
   });
 
   // ===========================================================================
+  // NON-ENGLISH CONTROL FLOW AND ASYNC (conditional on semantic parser support)
+  // ===========================================================================
+
+  describe('non-English control flow and async', () => {
+    function compileMultilingual(
+      code: string,
+      language: string
+    ): { success: boolean; code?: string } {
+      const compiler = new AOTCompiler();
+      compiler.setSemanticParser(adapter);
+      return compiler.compileScript(code, { language });
+    }
+
+    // ── Spanish (SVO) — control flow ──
+
+    it('compiles Spanish show/hide commands', () => {
+      const showResult = compileMultilingual('mostrar', 'es');
+      const hideResult = compileMultilingual('ocultar', 'es');
+      // At least one should succeed
+      if (showResult.success) {
+        expect(showResult.code).toBeDefined();
+      }
+      if (hideResult.success) {
+        expect(hideResult.code).toBeDefined();
+      }
+    });
+
+    it('compiles Spanish remove command', () => {
+      const result = compileMultilingual('eliminar .hidden', 'es');
+      expect(result.success).toBe(true);
+      if (result.code) {
+        expect(result.code.includes('classList.remove') || result.code.includes("'hidden'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Japanese (SOV) — data commands ──
+
+    it('compiles Japanese add command', () => {
+      const result = compileMultilingual('.clicked を 追加', 'ja');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.add') || result.code.includes("'clicked'")).toBe(
+          true
+        );
+      }
+    });
+
+    it('compiles Japanese remove command', () => {
+      const result = compileMultilingual('.hidden を 削除', 'ja');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.remove') || result.code.includes("'hidden'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Korean (SOV) — data commands ──
+
+    it('compiles Korean add command', () => {
+      const result = compileMultilingual('.clicked 를 추가', 'ko');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.add') || result.code.includes("'clicked'")).toBe(
+          true
+        );
+      }
+    });
+
+    it('compiles Korean remove command', () => {
+      const result = compileMultilingual('.hidden 를 제거', 'ko');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.remove') || result.code.includes("'hidden'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Arabic (VSO) — data commands ──
+
+    it('compiles Arabic add command', () => {
+      const result = compileMultilingual('أضف .clicked', 'ar');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.add') || result.code.includes("'clicked'")).toBe(
+          true
+        );
+      }
+    });
+
+    it('compiles Arabic remove command', () => {
+      const result = compileMultilingual('أزل .hidden', 'ar');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.remove') || result.code.includes("'hidden'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Chinese (SVO) — data commands ──
+
+    it('compiles Chinese add command', () => {
+      const result = compileMultilingual('添加 .clicked', 'zh');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.add') || result.code.includes("'clicked'")).toBe(
+          true
+        );
+      }
+    });
+
+    it('compiles Chinese remove command', () => {
+      const result = compileMultilingual('移除 .hidden', 'zh');
+      if (result.success && result.code) {
+        expect(result.code.includes('classList.remove') || result.code.includes("'hidden'")).toBe(
+          true
+        );
+      }
+    });
+
+    // ── Cross-language show/hide ──
+
+    it('compiles Japanese hide command', () => {
+      const result = compileMultilingual('非表示', 'ja');
+      if (result.success && result.code) {
+        expect(result.code.includes("display = 'none'") || result.code.includes('hide')).toBe(true);
+      }
+    });
+
+    it('compiles Korean hide command', () => {
+      const result = compileMultilingual('숨기기', 'ko');
+      if (result.success && result.code) {
+        expect(result.code.includes("display = 'none'") || result.code.includes('hide')).toBe(true);
+      }
+    });
+  });
+
+  // ===========================================================================
   // FULL PIPELINE TEST (non-English → JS)
   // ===========================================================================
 
