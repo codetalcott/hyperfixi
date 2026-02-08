@@ -70,7 +70,7 @@ describe('UsageAnalyzer', () => {
   describe('analyzeFile', () => {
     it('should analyze a JavaScript file', async () => {
       const mockFs = await import('fs-extra');
-      vi.mocked(mockFs.readFile).mockResolvedValue(`
+      (mockFs.readFile as any).mockResolvedValue(`
         import { Component } from '@lokascript/core';
         const x = 1;
         export default x;
@@ -84,7 +84,7 @@ describe('UsageAnalyzer', () => {
 
     it('should analyze an HTML file with hyperscript', async () => {
       const mockFs = await import('fs-extra');
-      vi.mocked(mockFs.readFile).mockResolvedValue(`
+      (mockFs.readFile as any).mockResolvedValue(`
         <!DOCTYPE html>
         <html>
         <body>
@@ -103,7 +103,7 @@ describe('UsageAnalyzer', () => {
   describe('caching', () => {
     it('should cache results when enabled', async () => {
       const mockFs = await import('fs-extra');
-      vi.mocked(mockFs.readFile).mockResolvedValue('const x = 1;');
+      (mockFs.readFile as any).mockResolvedValue('const x = 1;');
 
       // First call
       await (analyzer as any).analyzeFile('/test/file.js', true);

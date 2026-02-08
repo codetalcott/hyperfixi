@@ -48,11 +48,11 @@ describe('SmartBundler', () => {
       expect(bundler).toBeInstanceOf(SmartBundler);
     });
 
-    it('should accept custom configuration', () => {
-      const customBundler = new SmartBundler({
-        entry: 'src/index.ts',
-        output: 'dist',
-        minify: true,
+    it('should accept plugins', () => {
+      const customBundler = new SmartBundler();
+      customBundler.addPlugin({
+        name: 'test-plugin',
+        setup: () => {},
       });
 
       expect(customBundler).toBeDefined();
@@ -61,56 +61,84 @@ describe('SmartBundler', () => {
 
   describe('bundle', () => {
     it('should bundle an entry file', async () => {
-      const result = await bundler.bundle({
+      const config: import('./types').BundleConfig = {
         entry: 'src/index.ts',
-        output: 'dist/bundle.js',
-      });
+        output: {
+          dir: 'dist',
+          format: 'esm',
+          minify: false,
+          sourcemap: false,
+          chunkSizeWarningLimit: 500000,
+        },
+        optimization: {
+          treeshaking: true,
+          codeSplitting: true,
+          compression: 'gzip',
+          bundleAnalysis: true,
+          deadCodeElimination: true,
+          modulePreloading: true,
+        },
+        target: { browsers: ['> 0.5%'], node: '16', es: 'es2020' },
+        externals: [],
+        alias: {},
+      };
+      const result = await bundler.bundle(config);
 
       expect(result).toBeDefined();
     });
 
-    it('should return bundle result with metrics', async () => {
-      const result = await bundler.bundle({
+    it('should return bundle result with chunks', async () => {
+      const config: import('./types').BundleConfig = {
         entry: 'src/index.ts',
-        output: 'dist/bundle.js',
-      });
+        output: {
+          dir: 'dist',
+          format: 'esm',
+          minify: false,
+          sourcemap: false,
+          chunkSizeWarningLimit: 500000,
+        },
+        optimization: {
+          treeshaking: true,
+          codeSplitting: true,
+          compression: 'gzip',
+          bundleAnalysis: true,
+          deadCodeElimination: true,
+          modulePreloading: true,
+        },
+        target: { browsers: ['> 0.5%'], node: '16', es: 'es2020' },
+        externals: [],
+        alias: {},
+      };
+      const result = await bundler.bundle(config);
 
-      expect(result.success).toBeDefined();
+      expect(result.chunks).toBeDefined();
     });
   });
 
-  describe('watch', () => {
-    it('should start watch mode', async () => {
-      const watcher = await bundler.watch({
-        entry: 'src/index.ts',
-        output: 'dist/bundle.js',
-      });
+  describe('getJob', () => {
+    it('should return undefined for unknown job', () => {
+      const job = bundler.getJob('nonexistent');
 
-      expect(watcher).toBeDefined();
-
-      // Clean up
-      if (watcher && typeof watcher.close === 'function') {
-        await watcher.close();
-      }
+      expect(job).toBeUndefined();
     });
   });
 });
 
 describe('quickBundle', () => {
   it('should bundle with quick settings', async () => {
-    const result = await quickBundle('src/index.ts', 'dist/bundle.js');
+    const result = await quickBundle({ entry: 'src/index.ts', output: 'dist' });
     expect(result).toBeDefined();
   });
 });
 
 describe('productionBundle', () => {
   it('should bundle with production settings', async () => {
-    const result = await productionBundle('src/index.ts', 'dist/bundle.js');
+    const result = await productionBundle({ entry: 'src/index.ts', output: 'dist' });
     expect(result).toBeDefined();
   });
 
   it('should enable minification by default', async () => {
-    const result = await productionBundle('src/index.ts', 'dist/bundle.js');
+    const result = await productionBundle({ entry: 'src/index.ts', output: 'dist' });
     expect(result).toBeDefined();
   });
 });

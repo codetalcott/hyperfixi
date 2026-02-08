@@ -413,7 +413,7 @@ describe('Translate endpoint', () => {
   });
 
   it('returns 422 for invalid translation', async () => {
-    const { status, body } = await post('/translate', {
+    const { body } = await post('/translate', {
       code: '',
       from: 'en',
       to: 'xx',

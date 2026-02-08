@@ -54,17 +54,22 @@ describe('Quick Start Functions', () => {
   });
 
   describe('quickStartSmartBundling', () => {
-    it('should initialize smart bundling with defaults', async () => {
-      const result = await quickStartSmartBundling('/test/project');
+    it('should initialize smart bundling with defaults', () => {
+      const result = quickStartSmartBundling({
+        entry: 'src/index.js',
+        output: 'dist',
+        projectPath: '/test/project',
+      });
 
       expect(result).toBeDefined();
     });
 
-    it('should accept custom options', async () => {
-      const result = await quickStartSmartBundling('/test/project', {
+    it('should accept custom options', () => {
+      const result = quickStartSmartBundling({
         entry: 'src/main.ts',
         output: 'dist',
-        minify: true,
+        projectPath: '/test/project',
+        mode: 'production',
       });
 
       expect(result).toBeDefined();
@@ -73,13 +78,21 @@ describe('Quick Start Functions', () => {
 
   describe('createOptimizedConfig', () => {
     it('should create an optimized config based on analysis', async () => {
-      const config = await createOptimizedConfig('/test/project');
+      const config = await createOptimizedConfig({
+        entry: 'src/index.ts',
+        output: 'dist',
+        projectPath: '/test/project',
+      });
 
       expect(config).toBeDefined();
     });
 
     it('should include bundler configuration', async () => {
-      const config = await createOptimizedConfig('/test/project');
+      const config = await createOptimizedConfig({
+        entry: 'src/index.ts',
+        output: 'dist',
+        projectPath: '/test/project',
+      });
 
       expect(config).toBeDefined();
     });
@@ -87,7 +100,9 @@ describe('Quick Start Functions', () => {
 
   describe('analyzeProjectUsage', () => {
     it('should analyze project and return usage data', async () => {
-      const analysis = await analyzeProjectUsage('/test/project');
+      const analysis = await analyzeProjectUsage({
+        projectPath: '/test/project',
+      });
 
       expect(analysis).toBeDefined();
       expect(analysis.files).toBeDefined();
@@ -95,7 +110,8 @@ describe('Quick Start Functions', () => {
     });
 
     it('should accept analysis options', async () => {
-      const analysis = await analyzeProjectUsage('/test/project', {
+      const analysis = await analyzeProjectUsage({
+        projectPath: '/test/project',
         include: ['**/*.ts'],
         exclude: ['**/*.test.ts'],
       });

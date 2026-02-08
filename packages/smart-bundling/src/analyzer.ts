@@ -626,7 +626,8 @@ export class UsageAnalyzer {
 
     for (let i = 0; i < lines.length; i++) {
       let match;
-      while ((match = regex.exec(lines[i])) !== null) {
+      const line = lines[i] ?? '';
+      while ((match = regex.exec(line)) !== null) {
         locations.push({
           file: filePath,
           line: i + 1,
@@ -657,7 +658,7 @@ export class UsageAnalyzer {
     // Find the element tag that contains this script
     const beforeScript = content.substring(0, scriptIndex);
     const tagMatch = beforeScript.match(/<(\w+)[^>]*$/);
-    return tagMatch ? tagMatch[1] : 'unknown';
+    return tagMatch?.[1] ?? 'unknown';
   }
 
   private extractHyperscriptFeatures(script: string): string[] {

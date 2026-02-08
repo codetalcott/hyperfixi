@@ -34,9 +34,11 @@ describe('BundleOptimizer', () => {
 
     it('should accept custom configuration', () => {
       const customOptimizer = new BundleOptimizer({
-        minify: true,
-        sourceMaps: true,
-        treeshaking: true,
+        treeshaking: {
+          enabled: true,
+          pureAnnotations: true,
+          sideEffects: false,
+        },
       });
 
       expect(customOptimizer).toBeDefined();
@@ -82,17 +84,17 @@ describe('FileBundleCache', () => {
   });
 
   describe('get/set', () => {
-    it('should store and retrieve cached values', async () => {
-      await cache.set('test-key', { code: 'const x = 1;' });
-      const result = await cache.get('test-key');
+    it('should store and retrieve cached values', () => {
+      cache.set('test-key', { code: 'const x = 1;' }, 'hash123');
+      const result = cache.get('test-key');
 
       expect(result).toBeDefined();
     });
   });
 
   describe('has', () => {
-    it('should check if key exists', async () => {
-      const exists = await cache.has('nonexistent-key');
+    it('should check if key exists', () => {
+      const exists = cache.has('nonexistent-key', 'hash123');
       expect(typeof exists).toBe('boolean');
     });
   });

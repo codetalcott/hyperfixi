@@ -43,7 +43,7 @@ describe('Tool definition contracts', () => {
 
     it(`${toolName} has non-empty description`, () => {
       const tool = compilationTools.find(t => t.name === toolName);
-      expect(tool!.description.length).toBeGreaterThan(10);
+      expect(tool!.description!.length).toBeGreaterThan(10);
     });
   }
 });

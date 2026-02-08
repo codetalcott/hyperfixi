@@ -339,7 +339,7 @@ export class HyperscriptCompiler {
       n => 'selector' in n && typeof (n as any).selector === 'string'
     );
     for (const node of selectorNodes) {
-      const selector = (node as { selector: string }).selector;
+      const selector = (node as unknown as { selector: string }).selector;
       if (selector.match(/^[.#][a-zA-Z0-9_-]+$/) && !metadata.selectors.includes(selector)) {
         metadata.selectors.push(selector);
       }
@@ -453,7 +453,7 @@ export class HyperscriptCompiler {
 
     // If no features found, try to process as direct event handler
     if (jsLines.length === 0 && ast.type === 'eventHandler' && 'eventName' in ast) {
-      const eventName = String((ast as { eventName: unknown }).eventName);
+      const eventName = String((ast as unknown as { eventName: unknown }).eventName);
       const commands = (ast as { commands?: ASTNode[] }).commands || [];
       this.generateEventHandler(eventName, commands, jsLines, script);
     }

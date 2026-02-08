@@ -39,8 +39,8 @@ export function quickStartSmartBundling(
   const bundler = new SmartBundler();
   const analyzer = new UsageAnalyzer();
   const optimizer = new BundleOptimizer({
-    caching: { enabled: cache },
-    analysis: { enabled: analyze },
+    caching: { enabled: cache, strategy: 'content-hash', maxAge: 86400000 },
+    analysis: { enabled: analyze, threshold: 10000, excludeNodeModules: false },
   });
 
   return {

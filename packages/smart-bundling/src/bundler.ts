@@ -132,7 +132,7 @@ export class SmartBundler {
    */
   private async analyzeUsage(config: BundleConfig): Promise<UsageAnalysis> {
     const entryPoints = Array.isArray(config.entry) ? config.entry : [config.entry];
-    const projectPath = path.dirname(entryPoints[0]);
+    const projectPath = path.dirname(entryPoints[0] ?? '.');
 
     return await this.analyzer.analyzeProject(projectPath, {
       include: ['**/*.{js,ts,jsx,tsx,html}'],
@@ -229,7 +229,7 @@ export class SmartBundler {
         const modules: ModuleInfo[] = Object.keys(item.modules).map(id => ({
           id,
           path: id,
-          size: item.modules[id].renderedLength || 0,
+          size: item.modules[id]?.renderedLength || 0,
           dependencies: [],
           exports: [],
           sideEffects: false,

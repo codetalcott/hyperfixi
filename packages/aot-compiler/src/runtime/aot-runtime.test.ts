@@ -302,8 +302,12 @@ describe('contains', () => {
 // =============================================================================
 
 describe('debounce', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('delays execution', () => {
     const fn = vi.fn();
@@ -332,8 +336,12 @@ describe('debounce', () => {
 });
 
 describe('throttle', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('calls immediately on first invocation', () => {
     const fn = vi.fn();
@@ -359,8 +367,12 @@ describe('throttle', () => {
 });
 
 describe('wait', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('resolves after specified ms', async () => {
     const p = wait(500);
@@ -463,7 +475,9 @@ describe('delegate', () => {
 // =============================================================================
 
 describe('fetchJSON', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   it('calls fetch and returns parsed JSON', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -485,7 +499,9 @@ describe('fetchJSON', () => {
 });
 
 describe('fetchText', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   it('returns response text', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('hello', { status: 200 }));
@@ -496,7 +512,9 @@ describe('fetchText', () => {
 });
 
 describe('fetchHTML', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   it('returns parsed HTML Document', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(

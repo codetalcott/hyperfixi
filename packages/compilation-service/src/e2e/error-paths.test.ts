@@ -74,7 +74,7 @@ describe('Missing input', () => {
   });
 
   it('/diff with empty a and b returns diagnostics', async () => {
-    const { status, body } = await post('/diff', {
+    const { body } = await post('/diff', {
       a: {},
       b: {},
     });
@@ -133,7 +133,7 @@ describe('Invalid JSON payloads', () => {
 
 describe('Invalid LLM JSON input', () => {
   it('missing action field in semantic JSON', async () => {
-    const { status, body } = await post('/compile', {
+    const { body } = await post('/compile', {
       semantic: {
         roles: { patient: { type: 'selector', value: '.active' } },
       },
@@ -144,7 +144,7 @@ describe('Invalid LLM JSON input', () => {
   });
 
   it('invalid role value type in semantic JSON', async () => {
-    const { status, body } = await post('/compile', {
+    const { body } = await post('/compile', {
       semantic: {
         action: 'toggle',
         roles: { patient: { type: 'banana', value: '.active' } },
@@ -156,7 +156,7 @@ describe('Invalid LLM JSON input', () => {
   });
 
   it('missing role value in semantic JSON', async () => {
-    const { status, body } = await post('/compile', {
+    const { body } = await post('/compile', {
       semantic: {
         action: 'toggle',
         roles: { patient: { type: 'selector' } },
