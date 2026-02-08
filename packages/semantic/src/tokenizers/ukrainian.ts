@@ -26,6 +26,7 @@ import {
   type KeywordEntry,
 } from './base';
 import { ukrainianProfile } from '../generators/profiles/ukrainian';
+import { UkrainianMorphologicalNormalizer } from './morphology/ukrainian-normalizer';
 
 // =============================================================================
 // Ukrainian Character Classification
@@ -158,6 +159,7 @@ export class UkrainianTokenizer extends BaseTokenizer {
     super();
     // Initialize keywords from profile + extras (single source of truth)
     this.initializeKeywordsFromProfile(ukrainianProfile, UKRAINIAN_EXTRAS);
+    this.normalizer = new UkrainianMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {

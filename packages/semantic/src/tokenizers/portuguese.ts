@@ -25,6 +25,7 @@ import {
   type TimeUnitMapping,
 } from './base';
 import { portugueseProfile } from '../generators/profiles/portuguese';
+import { PortugueseMorphologicalNormalizer } from './morphology/portuguese-normalizer';
 
 // =============================================================================
 // Portuguese Character Classification
@@ -166,6 +167,7 @@ export class PortugueseTokenizer extends BaseTokenizer {
   constructor() {
     super();
     this.initializeKeywordsFromProfile(portugueseProfile, PORTUGUESE_EXTRAS);
+    this.normalizer = new PortugueseMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {

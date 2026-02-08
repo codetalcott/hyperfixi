@@ -25,6 +25,7 @@ import {
   type TimeUnitMapping,
 } from './base';
 import { frenchProfile } from '../generators/profiles/french';
+import { FrenchMorphologicalNormalizer } from './morphology/french-normalizer';
 
 // =============================================================================
 // French Character Classification
@@ -188,6 +189,7 @@ export class FrenchTokenizer extends BaseTokenizer {
   constructor() {
     super();
     this.initializeKeywordsFromProfile(frenchProfile, FRENCH_EXTRAS);
+    this.normalizer = new FrenchMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {

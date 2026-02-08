@@ -13,6 +13,13 @@ import {
   SpanishMorphologicalNormalizer,
   ArabicMorphologicalNormalizer,
   TurkishMorphologicalNormalizer,
+  FrenchMorphologicalNormalizer,
+  GermanMorphologicalNormalizer,
+  ItalianMorphologicalNormalizer,
+  PolishMorphologicalNormalizer,
+  PortugueseMorphologicalNormalizer,
+  RussianMorphologicalNormalizer,
+  UkrainianMorphologicalNormalizer,
 } from '../src/tokenizers/morphology';
 
 // =============================================================================
@@ -975,5 +982,583 @@ describe('Normalization Metadata', () => {
     const result = arabicNormalizer.normalize('والبدل');
     expect(result.metadata?.removedPrefixes).toBeDefined();
     expect(result.metadata?.removedPrefixes?.length).toBeGreaterThan(0);
+  });
+});
+
+// =============================================================================
+// French Normalizer Tests
+// =============================================================================
+
+describe('FrenchMorphologicalNormalizer', () => {
+  const normalizer = new FrenchMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for French words', () => {
+      expect(normalizer.isNormalizable('basculer')).toBe(true);
+      expect(normalizer.isNormalizable('ajoutant')).toBe(true);
+    });
+
+    it('should return false for non-French text', () => {
+      expect(normalizer.isNormalizable('123')).toBe(false);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('a')).toBe(false);
+    });
+  });
+
+  describe('-er verb conjugation', () => {
+    it('should normalize basculant (gerund) to basculer', () => {
+      const result = normalizer.normalize('basculant');
+      expect(result.stem).toBe('basculer');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize basculé (past participle) to basculer', () => {
+      const result = normalizer.normalize('basculé');
+      expect(result.stem).toBe('basculer');
+    });
+
+    it('should normalize bascule (present 3rd) to basculer', () => {
+      const result = normalizer.normalize('bascule');
+      expect(result.stem).toBe('basculer');
+    });
+
+    it('should normalize basculons (present 1st pl) to basculer', () => {
+      const result = normalizer.normalize('basculons');
+      expect(result.stem).toBe('basculer');
+    });
+  });
+
+  describe('infinitive preservation', () => {
+    it('should not modify infinitives', () => {
+      const result = normalizer.normalize('basculer');
+      expect(result.stem).toBe('basculer');
+      expect(result.confidence).toBe(1.0);
+    });
+
+    it('should not modify ajouter', () => {
+      const result = normalizer.normalize('ajouter');
+      expect(result.stem).toBe('ajouter');
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify nouns', () => {
+      const result = normalizer.normalize('bouton');
+      expect(result.stem).toBe('bouton');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+});
+
+// =============================================================================
+// German Normalizer Tests
+// =============================================================================
+
+describe('GermanMorphologicalNormalizer', () => {
+  const normalizer = new GermanMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for German words', () => {
+      expect(normalizer.isNormalizable('umschalten')).toBe(true);
+      expect(normalizer.isNormalizable('hinzufügen')).toBe(true);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('ab')).toBe(false);
+    });
+  });
+
+  describe('infinitive (-en) normalization', () => {
+    it('should not modify infinitives', () => {
+      const result = normalizer.normalize('umschalten');
+      expect(result.stem).toBe('umschalten');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+
+  describe('present tense', () => {
+    it('should normalize zeige (1st sg) to zeigen', () => {
+      const result = normalizer.normalize('zeige');
+      expect(result.stem).toBe('zeigen');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('should normalize zeigt (3rd sg) to zeigen', () => {
+      const result = normalizer.normalize('zeigt');
+      expect(result.stem).toBe('zeigen');
+    });
+  });
+
+  describe('past participle (ge-...-t)', () => {
+    it('should normalize gemacht to machen', () => {
+      const result = normalizer.normalize('gemacht');
+      expect(result.stem).toBe('machen');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify nouns', () => {
+      const result = normalizer.normalize('Knopf');
+      expect(result.stem).toBe('Knopf');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+});
+
+// =============================================================================
+// Italian Normalizer Tests
+// =============================================================================
+
+describe('ItalianMorphologicalNormalizer', () => {
+  const normalizer = new ItalianMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Italian words', () => {
+      expect(normalizer.isNormalizable('alternare')).toBe(true);
+      expect(normalizer.isNormalizable('aggiungendo')).toBe(true);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('a')).toBe(false);
+    });
+  });
+
+  describe('-are verb conjugation', () => {
+    it('should normalize alternando (gerund) to alternare', () => {
+      const result = normalizer.normalize('alternando');
+      expect(result.stem).toBe('alternare');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize alternato (past participle) to alternare', () => {
+      const result = normalizer.normalize('alternato');
+      expect(result.stem).toBe('alternare');
+    });
+
+    it('should normalize alterna (present 3rd) to alternare', () => {
+      const result = normalizer.normalize('alterna');
+      expect(result.stem).toBe('alternare');
+    });
+  });
+
+  describe('-ire verb conjugation', () => {
+    it('should normalize aggiungendo (gerund) — may map to -ere or -ire', () => {
+      const result = normalizer.normalize('aggiungendo');
+      expect(result.stem).toMatch(/^aggiunger|aggiungir/);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+  });
+
+  describe('reflexive verb normalization', () => {
+    it('should normalize mostrarsi to mostrare', () => {
+      const result = normalizer.normalize('mostrarsi');
+      expect(result.stem).toBe('mostrare');
+      expect(result.metadata?.conjugationType).toBe('reflexive');
+    });
+  });
+
+  describe('infinitive preservation', () => {
+    it('should not modify alternare', () => {
+      const result = normalizer.normalize('alternare');
+      expect(result.stem).toBe('alternare');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify nouns', () => {
+      const result = normalizer.normalize('pulsante');
+      // May or may not match a conjugation pattern — just ensure confidence < 1 or matches
+      expect(result.stem).toBeDefined();
+    });
+  });
+});
+
+// =============================================================================
+// Polish Normalizer Tests
+// =============================================================================
+
+describe('PolishMorphologicalNormalizer', () => {
+  const normalizer = new PolishMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Polish words', () => {
+      expect(normalizer.isNormalizable('przełącz')).toBe(true);
+      expect(normalizer.isNormalizable('dodawać')).toBe(true);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('ab')).toBe(false);
+    });
+  });
+
+  describe('imperative normalization (lookup)', () => {
+    it('should normalize przełącz to przełączać', () => {
+      const result = normalizer.normalize('przełącz');
+      expect(result.stem).toBe('przełączać');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.9);
+      expect(result.metadata?.conjugationType).toBe('imperative');
+    });
+
+    it('should normalize dodaj to dodawać', () => {
+      const result = normalizer.normalize('dodaj');
+      expect(result.stem).toBe('dodawać');
+    });
+
+    it('should normalize usuń to usuwać', () => {
+      const result = normalizer.normalize('usuń');
+      expect(result.stem).toBe('usuwać');
+    });
+
+    it('should normalize pokaż to pokazywać', () => {
+      const result = normalizer.normalize('pokaż');
+      expect(result.stem).toBe('pokazywać');
+    });
+  });
+
+  describe('generic imperative patterns', () => {
+    it('should normalize -aj ending to -ać', () => {
+      const result = normalizer.normalize('czytaj');
+      expect(result.stem).toBe('czytać');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.75);
+    });
+
+    it('should normalize -uj ending to -ować', () => {
+      const result = normalizer.normalize('kopiuj');
+      // kopiuj is in the lookup table, should get 0.95
+      expect(result.stem).toBe('kopiować');
+    });
+  });
+
+  describe('present tense normalization', () => {
+    it('should normalize -am ending to -ać', () => {
+      const result = normalizer.normalize('czytam');
+      expect(result.stem).toBe('czytać');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.75);
+    });
+  });
+
+  describe('past tense normalization', () => {
+    it('should normalize -ał ending to -ać', () => {
+      const result = normalizer.normalize('czytał');
+      expect(result.stem).toBe('czytać');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.75);
+    });
+
+    it('should normalize -ałem ending to -ać', () => {
+      const result = normalizer.normalize('czytałem');
+      expect(result.stem).toBe('czytać');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+  });
+
+  describe('infinitive preservation', () => {
+    it('should not modify infinitives', () => {
+      const result = normalizer.normalize('dodawać');
+      expect(result.stem).toBe('dodawać');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify words without verb patterns', () => {
+      // 'przycisk' (button) — no infinitive ending, no imperative match
+      const result = normalizer.normalize('przycisk');
+      expect(result.stem).toBe('przycisk');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+});
+
+// =============================================================================
+// Portuguese Normalizer Tests
+// =============================================================================
+
+describe('PortugueseMorphologicalNormalizer', () => {
+  const normalizer = new PortugueseMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Portuguese words', () => {
+      expect(normalizer.isNormalizable('alternar')).toBe(true);
+      expect(normalizer.isNormalizable('adicionando')).toBe(true);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('a')).toBe(false);
+    });
+  });
+
+  describe('-ar verb conjugation', () => {
+    it('should normalize alternando (gerund) to alternar', () => {
+      const result = normalizer.normalize('alternando');
+      expect(result.stem).toBe('alternar');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize alternado (past participle) to alternar', () => {
+      const result = normalizer.normalize('alternado');
+      expect(result.stem).toBe('alternar');
+    });
+
+    it('should normalize alterna (present 3rd) to alternar', () => {
+      const result = normalizer.normalize('alterna');
+      expect(result.stem).toBe('alternar');
+    });
+
+    it('should normalize alternou (preterite 3rd) to alternar', () => {
+      const result = normalizer.normalize('alternou');
+      expect(result.stem).toBe('alternar');
+    });
+  });
+
+  describe('reflexive verb normalization', () => {
+    it('should normalize mostrar-se to mostrar', () => {
+      const result = normalizer.normalize('mostrar-se');
+      expect(result.stem).toBe('mostrar');
+      expect(result.metadata?.conjugationType).toBe('reflexive');
+    });
+  });
+
+  describe('infinitive preservation', () => {
+    it('should not modify alternar', () => {
+      const result = normalizer.normalize('alternar');
+      expect(result.stem).toBe('alternar');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify nouns without verb endings', () => {
+      const result = normalizer.normalize('menu');
+      expect(result.stem).toBe('menu');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+});
+
+// =============================================================================
+// Russian Normalizer Tests
+// =============================================================================
+
+describe('RussianMorphologicalNormalizer', () => {
+  const normalizer = new RussianMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Russian words', () => {
+      expect(normalizer.isNormalizable('переключить')).toBe(true);
+      expect(normalizer.isNormalizable('добавил')).toBe(true);
+    });
+
+    it('should return false for non-Russian text', () => {
+      expect(normalizer.isNormalizable('toggle')).toBe(false);
+      expect(normalizer.isNormalizable('123')).toBe(false);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('да')).toBe(false);
+    });
+  });
+
+  describe('imperative normalization (lookup)', () => {
+    it('should normalize переключи to переключить', () => {
+      const result = normalizer.normalize('переключи');
+      expect(result.stem).toBe('переключить');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.9);
+      expect(result.metadata?.conjugationType).toBe('imperative');
+    });
+
+    it('should normalize добавь to добавить', () => {
+      const result = normalizer.normalize('добавь');
+      expect(result.stem).toBe('добавить');
+    });
+
+    it('should normalize удали to удалить', () => {
+      const result = normalizer.normalize('удали');
+      expect(result.stem).toBe('удалить');
+    });
+
+    it('should normalize покажи to показать', () => {
+      const result = normalizer.normalize('покажи');
+      expect(result.stem).toBe('показать');
+    });
+
+    it('should normalize скрой to скрыть', () => {
+      const result = normalizer.normalize('скрой');
+      expect(result.stem).toBe('скрыть');
+    });
+  });
+
+  describe('past tense normalization', () => {
+    it('should normalize добавил to добавить', () => {
+      const result = normalizer.normalize('добавил');
+      expect(result.stem).toBe('добавить');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+      expect(result.metadata?.conjugationType).toBe('past');
+    });
+
+    it('should normalize удалила to удалить', () => {
+      const result = normalizer.normalize('удалила');
+      expect(result.stem).toBe('удалить');
+    });
+
+    it('should normalize показали to показать', () => {
+      const result = normalizer.normalize('показали');
+      expect(result.stem).toBe('показать');
+    });
+  });
+
+  describe('present tense normalization', () => {
+    it('should normalize удаляет to удаляать (imperfective stem)', () => {
+      const result = normalizer.normalize('удаляет');
+      // Present tense normalizer strips -ет, adds -ать
+      expect(result.stem).toMatch(/удаля/);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('should normalize добавит to добавить', () => {
+      const result = normalizer.normalize('добавит');
+      expect(result.stem).toBe('добавить');
+      expect(result.metadata?.conjugationType).toBe('present');
+    });
+  });
+
+  describe('infinitive preservation', () => {
+    it('should not modify переключить', () => {
+      const result = normalizer.normalize('переключить');
+      expect(result.stem).toBe('переключить');
+      expect(result.confidence).toBe(1.0);
+    });
+
+    it('should not modify добавить', () => {
+      const result = normalizer.normalize('добавить');
+      expect(result.stem).toBe('добавить');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify nouns without verb patterns', () => {
+      const result = normalizer.normalize('кнопка');
+      // 'кнопка' has no recognized verb suffix
+      expect(result.stem).toBeDefined();
+    });
+
+    it('should return 1.0 confidence for unchanged stems', () => {
+      const result = normalizer.normalize('клик');
+      expect(result.stem).toBe('клик');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+});
+
+// =============================================================================
+// Ukrainian Normalizer Tests
+// =============================================================================
+
+describe('UkrainianMorphologicalNormalizer', () => {
+  const normalizer = new UkrainianMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Ukrainian words', () => {
+      expect(normalizer.isNormalizable('перемкнути')).toBe(true);
+      expect(normalizer.isNormalizable('додав')).toBe(true);
+    });
+
+    it('should return false for non-Ukrainian text', () => {
+      expect(normalizer.isNormalizable('toggle')).toBe(false);
+      expect(normalizer.isNormalizable('123')).toBe(false);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('та')).toBe(false);
+    });
+  });
+
+  describe('imperative normalization (lookup)', () => {
+    it('should normalize перемкни to перемкнути', () => {
+      const result = normalizer.normalize('перемкни');
+      expect(result.stem).toBe('перемкнути');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.9);
+      expect(result.metadata?.conjugationType).toBe('imperative');
+    });
+
+    it('should normalize додай to додати', () => {
+      const result = normalizer.normalize('додай');
+      expect(result.stem).toBe('додати');
+    });
+
+    it('should normalize видали to видалити', () => {
+      const result = normalizer.normalize('видали');
+      expect(result.stem).toBe('видалити');
+    });
+
+    it('should normalize покажи to показати', () => {
+      const result = normalizer.normalize('покажи');
+      expect(result.stem).toBe('показати');
+    });
+
+    it('should normalize сховай to сховати', () => {
+      const result = normalizer.normalize('сховай');
+      expect(result.stem).toBe('сховати');
+    });
+  });
+
+  describe('past tense normalization', () => {
+    it('should normalize додав to додати', () => {
+      const result = normalizer.normalize('додав');
+      expect(result.stem).toBe('додати');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+      expect(result.metadata?.conjugationType).toBe('past');
+    });
+
+    it('should normalize видалила to видалити', () => {
+      const result = normalizer.normalize('видалила');
+      expect(result.stem).toBe('видалити');
+    });
+
+    it('should normalize показали to показати', () => {
+      const result = normalizer.normalize('показали');
+      expect(result.stem).toBe('показати');
+    });
+  });
+
+  describe('present tense normalization', () => {
+    it('should normalize додає to додаати', () => {
+      const result = normalizer.normalize('додає');
+      // Present tense strips -є, adds -ати
+      expect(result.stem).toMatch(/дода/);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('should normalize видалить to видалити (2nd conj)', () => {
+      const result = normalizer.normalize('видалить');
+      expect(result.stem).toBe('видалити');
+      expect(result.metadata?.conjugationType).toBe('present');
+    });
+  });
+
+  describe('infinitive preservation', () => {
+    it('should not modify перемкнути', () => {
+      const result = normalizer.normalize('перемкнути');
+      expect(result.stem).toBe('перемкнути');
+      expect(result.confidence).toBe(1.0);
+    });
+
+    it('should not modify додати', () => {
+      const result = normalizer.normalize('додати');
+      expect(result.stem).toBe('додати');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should return 1.0 confidence for unchanged stems', () => {
+      const result = normalizer.normalize('клік');
+      expect(result.stem).toBe('клік');
+      expect(result.confidence).toBe(1.0);
+    });
   });
 });

@@ -26,6 +26,7 @@ import {
   type KeywordEntry,
 } from './base';
 import { polishProfile } from '../generators/profiles/polish';
+import { PolishMorphologicalNormalizer } from './morphology/polish-normalizer';
 
 // =============================================================================
 // Polish Character Classification
@@ -170,6 +171,7 @@ export class PolishTokenizer extends BaseTokenizer {
     super();
     // Initialize keywords from profile + extras (single source of truth)
     this.initializeKeywordsFromProfile(polishProfile, POLISH_EXTRAS);
+    this.normalizer = new PolishMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {

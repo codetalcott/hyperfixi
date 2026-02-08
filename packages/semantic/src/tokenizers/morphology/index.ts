@@ -44,3 +44,20 @@ export {
 export { FrenchMorphologicalNormalizer, frenchMorphologicalNormalizer } from './french-normalizer';
 
 export { GermanMorphologicalNormalizer, germanMorphologicalNormalizer } from './german-normalizer';
+
+export {
+  ItalianMorphologicalNormalizer,
+  italianMorphologicalNormalizer,
+} from './italian-normalizer';
+
+export { PolishMorphologicalNormalizer, polishMorphologicalNormalizer } from './polish-normalizer';
+
+export {
+  RussianMorphologicalNormalizer,
+  russianMorphologicalNormalizer,
+} from './russian-normalizer';
+
+export {
+  UkrainianMorphologicalNormalizer,
+  ukrainianMorphologicalNormalizer,
+} from './ukrainian-normalizer';

@@ -26,6 +26,7 @@ import {
   type KeywordEntry,
 } from './base';
 import { russianProfile } from '../generators/profiles/russian';
+import { RussianMorphologicalNormalizer } from './morphology/russian-normalizer';
 
 // =============================================================================
 // Russian Character Classification
@@ -162,6 +163,7 @@ export class RussianTokenizer extends BaseTokenizer {
     super();
     // Initialize keywords from profile + extras (single source of truth)
     this.initializeKeywordsFromProfile(russianProfile, RUSSIAN_EXTRAS);
+    this.normalizer = new RussianMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {

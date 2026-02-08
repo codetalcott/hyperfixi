@@ -26,6 +26,7 @@ import {
   type TimeUnitMapping,
 } from './base';
 import { germanProfile } from '../generators/profiles/german';
+import { GermanMorphologicalNormalizer } from './morphology/german-normalizer';
 
 // =============================================================================
 // German Character Classification
@@ -186,6 +187,7 @@ export class GermanTokenizer extends BaseTokenizer {
   constructor() {
     super();
     this.initializeKeywordsFromProfile(germanProfile, GERMAN_EXTRAS);
+    this.normalizer = new GermanMorphologicalNormalizer();
   }
 
   tokenize(input: string): TokenStream {
