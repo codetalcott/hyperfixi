@@ -39,6 +39,9 @@ export {
   CompilationFailedError,
 } from './types';
 
+// Helpers
+export { eventAttribute, escapeAttrValue } from './types';
+
 // Express.js integration
 export {
   lokascriptMiddleware,

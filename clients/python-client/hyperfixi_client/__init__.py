@@ -15,6 +15,8 @@ from .types import (
     ScriptMetadata,
     CompilationError,
     CompilationWarning,
+    event_attribute,
+    escape_attr_value,
 )
 from .exceptions import (
     HyperfixiError,
@@ -45,7 +47,9 @@ __all__ = [
     "ScriptMetadata",
     "CompilationError",
     "CompilationWarning",
-    
+    "event_attribute",
+    "escape_attr_value",
+
     # Exceptions
     "HyperfixiError",
     "CompilationException",

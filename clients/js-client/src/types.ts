@@ -230,6 +230,27 @@ export interface HyperfixiClient {
   clearCache(): Promise<void>;
 }
 
+// Helpers
+
+/**
+ * Returns the inline event handler attribute name (e.g. "onclick", "onsubmit")
+ * for a compiled script based on its metadata. Falls back to "onclick" when no
+ * event information is available.
+ */
+export function eventAttribute(meta: ScriptMetadata | undefined): string {
+  if (meta && meta.events && meta.events.length > 0) {
+    return 'on' + meta.events[0];
+  }
+  return 'onclick';
+}
+
+/**
+ * Escapes a string for safe inclusion inside an HTML attribute value.
+ */
+export function escapeAttrValue(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // Error Types
 export class HyperfixiError extends Error {
   public readonly statusCode: number | undefined;

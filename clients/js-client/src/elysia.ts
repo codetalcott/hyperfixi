@@ -6,6 +6,8 @@ import {
   BatchCompileRequest,
   CompilationOptions,
   HyperfixiError,
+  eventAttribute,
+  escapeAttrValue,
 } from './types';
 
 /**
@@ -229,15 +231,16 @@ async function compileHyperscriptInHtml(
 
     const result = await client.compile(request);
 
-    // Replace hyperscript with compiled JavaScript
+    // Replace hyperscript with compiled JavaScript using correct event attribute
     let compiledHtml = html;
     matches.forEach((match, index) => {
       const scriptId = `script_${index}`;
       const compiled = result.compiled[scriptId];
-      
+
       if (compiled) {
         const oldAttr = match[0]; // Full match like _="on click toggle .active"
-        const newAttr = `onclick="${compiled.replace(/"/g, '&quot;')}"`;
+        const attr = eventAttribute(result.metadata[scriptId]);
+        const newAttr = `${attr}="${escapeAttrValue(compiled)}"`;
         compiledHtml = compiledHtml.replace(oldAttr, newAttr);
       }
     });
@@ -271,7 +274,7 @@ function createElysiaError(error: unknown): Error {
 export function createElysiaTemplateHelpers(client: HyperfixiClient) {
   return {
     async compileHyperscript(
-      script: string, 
+      script: string,
       templateVars?: Record<string, any>
     ): Promise<string> {
       try {
@@ -282,8 +285,9 @@ export function createElysiaTemplateHelpers(client: HyperfixiClient) {
 
         const result = await client.compile(request);
         const compiled = result.compiled.template_script;
-        
-        return compiled ? `onclick="${compiled.replace(/"/g, '&quot;')}"` : '';
+        if (!compiled) return '';
+        const attr = eventAttribute(result.metadata.template_script);
+        return `${attr}="${escapeAttrValue(compiled)}"`;
       } catch (error) {
         console.error('HyperScript template compilation failed:', error);
         return `onclick="/* LokaScript compilation error: ${error instanceof Error ? error.message : 'Unknown error'} */"`;
@@ -304,8 +308,9 @@ export function createElysiaTemplateHelpers(client: HyperfixiClient) {
 
         const result = await client.compile(request);
         const compiled = result.compiled.template_script;
-        
-        return compiled ? `onclick="${compiled.replace(/"/g, '&quot;')}"` : '';
+        if (!compiled) return '';
+        const attr = eventAttribute(result.metadata.template_script);
+        return `${attr}="${escapeAttrValue(compiled)}"`;
       } catch (error) {
         console.error('HyperScript template compilation failed:', error);
         return `onclick="/* LokaScript compilation error: ${error instanceof Error ? error.message : 'Unknown error'} */"`;

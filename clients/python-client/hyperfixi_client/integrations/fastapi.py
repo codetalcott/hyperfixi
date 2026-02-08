@@ -10,7 +10,7 @@ from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response as StarletteResponse
 
 from ..client import HyperfixiClient
-from ..types import CompilationOptions, ParseContext
+from ..types import CompilationOptions, ParseContext, event_attribute, escape_attr_value
 from ..exceptions import HyperfixiError
 
 
@@ -126,17 +126,16 @@ class FastAPIHyperscriptMiddleware(BaseHTTPMiddleware):
                 context=context
             )
             
-            # Replace hyperscript with compiled JavaScript
+            # Replace hyperscript with compiled JavaScript using correct event attribute
             for i, (script_id, compiled) in enumerate(result.compiled.items()):
                 original_script = matches[i]
-                # Replace hyperscript attribute with onclick handler
-                old_attr = f'_="{original_script}"'
-                new_attr = f'onclick="{compiled}"'
-                html = html.replace(old_attr, new_attr, 1)
-                
-                # Also handle data-hs attributes
-                old_attr = f'data-hs="{original_script}"'
-                html = html.replace(old_attr, new_attr, 1)
+                meta = result.metadata.get(script_id)
+                attr = event_attribute(meta)
+                escaped = escape_attr_value(compiled)
+                new_attr = f'{attr}="{escaped}"'
+
+                html = html.replace(f'_="{original_script}"', new_attr, 1)
+                html = html.replace(f'data-hs="{original_script}"', new_attr, 1)
             
             return html
             
@@ -292,19 +291,17 @@ class HyperscriptTemplateRenderer:
                 context=context
             )
             
-            # Replace hyperscript with compiled JavaScript
+            # Replace hyperscript with compiled JavaScript using correct event attribute
             rendered_template = template
             for i, (script_id, compiled) in enumerate(result.compiled.items()):
                 original_script = matches[i]
-                
-                # Replace hyperscript attribute with onclick handler
-                old_attr = f'_="{original_script}"'
-                new_attr = f'onclick="{compiled}"'
-                rendered_template = rendered_template.replace(old_attr, new_attr, 1)
-                
-                # Also handle data-hs attributes
-                old_attr = f'data-hs="{original_script}"'
-                rendered_template = rendered_template.replace(old_attr, new_attr, 1)
+                meta = result.metadata.get(script_id)
+                attr = event_attribute(meta)
+                escaped = escape_attr_value(compiled)
+                new_attr = f'{attr}="{escaped}"'
+
+                rendered_template = rendered_template.replace(f'_="{original_script}"', new_attr, 1)
+                rendered_template = rendered_template.replace(f'data-hs="{original_script}"', new_attr, 1)
             
             return rendered_template
             

@@ -12,7 +12,7 @@ import asyncio
 import json
 
 from ..client import HyperfixiClient
-from ..types import CompilationOptions, ParseContext
+from ..types import CompilationOptions, ParseContext, event_attribute, escape_attr_value
 from ..exceptions import HyperfixiError
 
 
@@ -125,18 +125,16 @@ class DjangoHyperscriptMiddleware(MiddlewareMixin):
                 context=context
             )
             
-            # Replace hyperscript with compiled JavaScript
+            # Replace hyperscript with compiled JavaScript using correct event attribute
             for i, (script_id, compiled) in enumerate(result.compiled.items()):
                 original_script = matches[i]
-                
-                # Replace hyperscript attribute with onclick handler
-                old_attr = f'_="{original_script}"'
-                new_attr = f'onclick="{compiled}"'
-                html = html.replace(old_attr, new_attr, 1)
-                
-                # Also handle data-hs attributes
-                old_attr = f'data-hs="{original_script}"'
-                html = html.replace(old_attr, new_attr, 1)
+                meta = result.metadata.get(script_id)
+                attr = event_attribute(meta)
+                escaped = escape_attr_value(compiled)
+                new_attr = f'{attr}="{escaped}"'
+
+                html = html.replace(f'_="{original_script}"', new_attr, 1)
+                html = html.replace(f'data-hs="{original_script}"', new_attr, 1)
             
             return html
             
@@ -189,14 +187,16 @@ class HyperscriptNode(Node):
             ))
             
             compiled = result.compiled.get('template_script', '')
-            
+            meta = result.metadata.get('template_script')
+            attr = event_attribute(meta)
+            escaped = escape_attr_value(compiled)
+
             if self.var_name:
                 # Store in context variable
                 context[self.var_name] = compiled
                 return ''
             else:
-                # Return as onclick attribute
-                return mark_safe(f'onclick="{compiled}"')
+                return mark_safe(f'{attr}="{escaped}"')
                 
         except Exception as e:
             error_msg = f'<!-- LokaScript compilation error: {e} -->'
@@ -281,7 +281,10 @@ def hyperscript_tag(context, script, **options):
         ))
         
         compiled = result.compiled.get('tag_script', '')
-        return mark_safe(f'onclick="{compiled}"')
+        meta = result.metadata.get('tag_script')
+        attr = event_attribute(meta)
+        escaped = escape_attr_value(compiled)
+        return mark_safe(f'{attr}="{escaped}"')
         
     except Exception as e:
         return mark_safe(f'<!-- LokaScript compilation error: {e} -->')
@@ -323,9 +326,12 @@ def compile_hyperscript(script, options=None):
             scripts={'filter_script': script},
             options=compilation_options
         ))
-        
+
         compiled = result.compiled.get('filter_script', '')
-        return mark_safe(f'onclick="{compiled}"')
+        meta = result.metadata.get('filter_script')
+        attr = event_attribute(meta)
+        escaped = escape_attr_value(compiled)
+        return mark_safe(f'{attr}="{escaped}"')
         
     except Exception as e:
         return mark_safe(f'<!-- LokaScript compilation error: {e} -->')

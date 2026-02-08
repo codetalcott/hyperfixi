@@ -8,9 +8,27 @@ from flask import Flask, request, g, current_app
 from jinja2 import Environment
 import json
 
+import re as _re
+
 from ..client import HyperfixiClient
-from ..types import CompilationOptions, ParseContext
+from ..types import CompilationOptions, ParseContext, event_attribute, escape_attr_value
 from ..exceptions import HyperfixiError
+
+_EVENT_RE = _re.compile(r'^on\s+(\w+)')
+
+
+def _event_attr_from_source(source: str) -> str:
+    """Extract event attribute name from hyperscript source text.
+
+    >>> _event_attr_from_source("on click toggle .active")
+    'onclick'
+    >>> _event_attr_from_source("on submit send /api")
+    'onsubmit'
+    """
+    m = _EVENT_RE.match(source.strip())
+    if m:
+        return "on" + m.group(1)
+    return "onclick"
 
 
 class FlaskHyperscriptExtension:
@@ -107,9 +125,12 @@ class FlaskHyperscriptExtension:
                 options=compilation_options,
                 context=context
             ))
-            
+
             compiled = result.compiled.get('filter_script', '')
-            return f'onclick="{compiled}"'
+            meta = result.metadata.get('filter_script')
+            attr = event_attribute(meta)
+            escaped = escape_attr_value(compiled)
+            return f'{attr}="{escaped}"'
             
         except Exception as e:
             return f'<!-- LokaScript compilation error: {e} -->'
@@ -180,18 +201,18 @@ class FlaskHyperscriptExtension:
                 template_vars=template_vars or getattr(g, 'hyperscript_template_vars', None)
             ))
             
-            # Replace hyperscript with compiled JavaScript
+            # Replace hyperscript with compiled JavaScript using correct event attribute
+            # Note: compile_scripts returns only compiled code; we need full result for metadata
+            # Re-compile to get metadata (compile_scripts is a thin wrapper)
             for i, (script_id, compiled) in enumerate(compiled_scripts.items()):
                 original_script = matches[i]
-                
-                # Replace hyperscript attribute with onclick handler
-                old_attr = f'_="{original_script}"'
-                new_attr = f'onclick="{compiled}"'
-                rendered = rendered.replace(old_attr, new_attr, 1)
-                
-                # Also handle data-hs attributes
-                old_attr = f'data-hs="{original_script}"'
-                rendered = rendered.replace(old_attr, new_attr, 1)
+                # Fallback: extract event from the original hyperscript text
+                attr = _event_attr_from_source(original_script)
+                escaped = escape_attr_value(compiled)
+                new_attr = f'{attr}="{escaped}"'
+
+                rendered = rendered.replace(f'_="{original_script}"', new_attr, 1)
+                rendered = rendered.replace(f'data-hs="{original_script}"', new_attr, 1)
             
             return rendered
             
@@ -326,18 +347,16 @@ class HyperscriptMiddleware:
                 context=context
             )
             
-            # Replace hyperscript with compiled JavaScript
+            # Replace hyperscript with compiled JavaScript using correct event attribute
             for i, (script_id, compiled) in enumerate(result.compiled.items()):
                 original_script = matches[i]
-                
-                # Replace hyperscript attribute with onclick handler
-                old_attr = f'_="{original_script}"'
-                new_attr = f'onclick="{compiled}"'
-                html = html.replace(old_attr, new_attr, 1)
-                
-                # Also handle data-hs attributes
-                old_attr = f'data-hs="{original_script}"'
-                html = html.replace(old_attr, new_attr, 1)
+                meta = result.metadata.get(script_id)
+                attr = event_attribute(meta)
+                escaped = escape_attr_value(compiled)
+                new_attr = f'{attr}="{escaped}"'
+
+                html = html.replace(f'_="{original_script}"', new_attr, 1)
+                html = html.replace(f'data-hs="{original_script}"', new_attr, 1)
             
             return html
             

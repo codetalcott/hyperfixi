@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"regexp"
 	"strings"
@@ -11,6 +12,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// hyperscriptPattern matches _="..." and data-hs="..." attributes in HTML.
+var hyperscriptPattern = regexp.MustCompile(`(?:_|data-hs)="([^"]*)"`)
+
+// eventAttribute returns the inline event handler attribute name (e.g. "onclick",
+// "onsubmit") for the given script metadata. Falls back to "onclick" when no
+// event information is available.
+func eventAttribute(meta ScriptMetadata) string {
+	if len(meta.Events) > 0 {
+		return "on" + meta.Events[0]
+	}
+	return "onclick"
+}
 
 // GinMiddlewareConfig represents configuration for the Gin middleware
 type GinMiddlewareConfig struct {
@@ -142,13 +156,11 @@ func shouldProcessResponse(w *responseWriter, onlyContentTypes []string) bool {
 }
 
 // compileHyperscriptInHTML finds hyperscript attributes in HTML and compiles them
-func compileHyperscriptInHTML(ctx context.Context, client *Client, html string, templateVars map[string]interface{}, options *CompilationOptions) (string, error) {
-	// Find all hyperscript attributes
-	hyperscriptPattern := regexp.MustCompile(`(?:_|data-hs)="([^"]*)"`)
-	matches := hyperscriptPattern.FindAllStringSubmatch(html, -1)
+func compileHyperscriptInHTML(ctx context.Context, client *Client, htmlContent string, templateVars map[string]interface{}, options *CompilationOptions) (string, error) {
+	matches := hyperscriptPattern.FindAllStringSubmatch(htmlContent, -1)
 
 	if len(matches) == 0 {
-		return html, nil
+		return htmlContent, nil
 	}
 
 	// Create scripts map
@@ -174,17 +186,18 @@ func compileHyperscriptInHTML(ctx context.Context, client *Client, html string, 
 	result, err := client.Compile(ctx, req)
 	if err != nil {
 		// If compilation fails, return original HTML
-		return html, nil
+		return htmlContent, nil
 	}
 
 	// Replace hyperscript with compiled JavaScript
-	compiledHTML := html
+	compiledHTML := htmlContent
 	for i, match := range matches {
 		if len(match) > 1 {
 			scriptID := fmt.Sprintf("script_%d", i)
 			if compiled, exists := result.Compiled[scriptID]; exists {
 				oldAttr := match[0] // Full match like _="on click toggle .active"
-				newAttr := fmt.Sprintf(`onclick="%s"`, compiled)
+				attr := eventAttribute(result.Metadata[scriptID])
+				newAttr := fmt.Sprintf(`%s="%s"`, attr, html.EscapeString(compiled))
 				compiledHTML = strings.Replace(compiledHTML, oldAttr, newAttr, 1)
 			}
 		}
@@ -203,20 +216,26 @@ func NewGinHelpers(client *Client) *GinHelpers {
 	return &GinHelpers{client: client}
 }
 
-// CompileHyperscript compiles hyperscript and returns an onclick attribute
+// CompileHyperscript compiles hyperscript and returns an inline event handler attribute.
+// The event type (e.g. onclick, onsubmit) is derived from the script's metadata.
 func (h *GinHelpers) CompileHyperscript(script string, templateVars map[string]interface{}) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	compiled, _, err := h.client.CompileScript(ctx, script, nil)
+	compiled, meta, err := h.client.CompileScript(ctx, script, nil)
 	if err != nil {
 		return fmt.Sprintf(`onclick="/* LokaScript compilation error: %v */"`, err)
 	}
 
-	return fmt.Sprintf(`onclick="%s"`, compiled)
+	attr := "onclick"
+	if meta != nil {
+		attr = eventAttribute(*meta)
+	}
+	return fmt.Sprintf(`%s="%s"`, attr, html.EscapeString(compiled))
 }
 
-// CompileHyperscriptWithOptions compiles hyperscript with custom options
+// CompileHyperscriptWithOptions compiles hyperscript with custom options and
+// returns the appropriate inline event handler attribute.
 func (h *GinHelpers) CompileHyperscriptWithOptions(script string, templateVars map[string]interface{}, options *CompilationOptions) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -238,7 +257,8 @@ func (h *GinHelpers) CompileHyperscriptWithOptions(script string, templateVars m
 	}
 
 	if compiled, exists := result.Compiled["template_script"]; exists {
-		return fmt.Sprintf(`onclick="%s"`, compiled)
+		attr := eventAttribute(result.Metadata["template_script"])
+		return fmt.Sprintf(`%s="%s"`, attr, html.EscapeString(compiled))
 	}
 
 	return `onclick="/* LokaScript compilation failed */"`

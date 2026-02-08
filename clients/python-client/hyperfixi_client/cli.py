@@ -193,12 +193,16 @@ async def cmd_compile(client: HyperfixiClient, args) -> int:
                 print(compiled)
                 if len(result.compiled) > 1:
                     print()
-        else:  # onclick format
+        else:  # event handler attribute format
             for name, compiled in result.compiled.items():
+                meta = result.metadata.get(name)
+                attr = "onclick"
+                if meta and meta.events:
+                    attr = "on" + meta.events[0]
                 if len(result.compiled) > 1:
-                    print(f"{name}: onclick=\"{compiled}\"")
+                    print(f'{name}: {attr}="{compiled}"')
                 else:
-                    print(f"onclick=\"{compiled}\"")
+                    print(f'{attr}="{compiled}"')
         
         # Show warnings and errors
         if result.warnings:
@@ -276,7 +280,11 @@ async def cmd_batch(client: HyperfixiClient, args) -> int:
         
         print(f"Compiled {len(result.compiled)} scripts:")
         for name, compiled in result.compiled.items():
-            print(f"  {name}: onclick=\"{compiled}\"")
+            meta = result.metadata.get(name)
+            attr = "onclick"
+            if meta and meta.events:
+                attr = "on" + meta.events[0]
+            print(f'  {name}: {attr}="{compiled}"')
         
         # Show warnings and errors
         if result.warnings:

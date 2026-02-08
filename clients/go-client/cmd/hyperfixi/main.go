@@ -167,12 +167,16 @@ Examples:
 					fmt.Println()
 				}
 			}
-		default: // onclick format
+		default: // event handler attribute format
 			for name, compiled := range result.Compiled {
+				attr := "onclick"
+				if meta, ok := result.Metadata[name]; ok && len(meta.Events) > 0 {
+					attr = "on" + meta.Events[0]
+				}
 				if len(result.Compiled) > 1 {
-					fmt.Printf("%s: onclick=\"%s\"\n", name, compiled)
+					fmt.Printf("%s: %s=\"%s\"\n", name, attr, compiled)
 				} else {
-					fmt.Printf("onclick=\"%s\"\n", compiled)
+					fmt.Printf("%s=\"%s\"\n", attr, compiled)
 				}
 			}
 		}
@@ -291,7 +295,11 @@ var batchCmd = &cobra.Command{
 
 		fmt.Printf("Compiled %d scripts:\n", len(result.Compiled))
 		for name, compiled := range result.Compiled {
-			fmt.Printf("  %s: onclick=\"%s\"\n", name, compiled)
+			attr := "onclick"
+			if meta, ok := result.Metadata[name]; ok && len(meta.Events) > 0 {
+				attr = "on" + meta.Events[0]
+			}
+			fmt.Printf("  %s: %s=\"%s\"\n", name, attr, compiled)
 		}
 
 		// Show warnings and errors

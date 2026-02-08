@@ -2,9 +2,24 @@
 Type definitions for LokaScript Python client
 """
 
+from html import escape as _html_escape
 from typing import Dict, List, Optional, Any, Union
 from pydantic import BaseModel, Field
 from enum import Enum
+
+
+def event_attribute(meta: Optional["ScriptMetadata"]) -> str:
+    """Return the inline event handler attribute name (e.g. ``onclick``,
+    ``onsubmit``) for the given script metadata.  Falls back to ``onclick``
+    when no event information is available."""
+    if meta and meta.events:
+        return "on" + meta.events[0]
+    return "onclick"
+
+
+def escape_attr_value(value: str) -> str:
+    """Escape a string for safe inclusion inside an HTML attribute value."""
+    return _html_escape(value, quote=True)
 
 
 class CompatibilityMode(str, Enum):
