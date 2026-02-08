@@ -19,7 +19,8 @@ setup(
     url="https://github.com/lokascript/lokascript",
     packages=find_packages(),
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 2 - Pre-Alpha",
+        "Private :: Do Not Upload",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
