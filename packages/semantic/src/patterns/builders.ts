@@ -91,7 +91,7 @@ const _generatedPatternsPerLanguage = new Map<string, LanguagePattern[]>();
 
 /**
  * Get all generated patterns (lazy loaded).
- * @deprecated Use getGeneratedPatternsForLanguage() for lazy loading support.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Use getGeneratedPatternsForLanguage() for lazy loading support.
  */
 export function getGeneratedPatterns(): LanguagePattern[] {
   // For backwards compatibility, generate for all currently registered languages
@@ -190,7 +190,7 @@ const handcraftedLanguages = [
 
 /**
  * Build patterns for all languages.
- * @deprecated Use getPatternsForLanguage() for tree-shaking.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Use getPatternsForLanguage() for tree-shaking.
  */
 export function buildAllPatterns(): LanguagePattern[] {
   const all: LanguagePattern[] = [];

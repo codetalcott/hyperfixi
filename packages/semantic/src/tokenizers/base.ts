@@ -154,20 +154,14 @@ export function createToken(
   // Handle options object
   if (normalizedOrOptions) {
     const { normalized, stem, stemConfidence } = normalizedOrOptions;
-    const token: LanguageToken = { value, kind, position };
-
-    // Build token with only defined properties
-    if (normalized !== undefined) {
-      (token as any).normalized = normalized;
-    }
-    if (stem !== undefined) {
-      (token as any).stem = stem;
-      if (stemConfidence !== undefined) {
-        (token as any).stemConfidence = stemConfidence;
-      }
-    }
-
-    return token;
+    return {
+      value,
+      kind,
+      position,
+      ...(normalized !== undefined && { normalized }),
+      ...(stem !== undefined && { stem }),
+      ...(stemConfidence !== undefined && { stemConfidence }),
+    };
   }
 
   return { value, kind, position };

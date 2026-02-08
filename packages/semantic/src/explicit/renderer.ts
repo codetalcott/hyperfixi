@@ -129,7 +129,7 @@ export class SemanticRendererImpl implements ISemanticRenderer {
           if (node.roles.has(token.role)) {
             // Bonus for patterns that use roles we have
             score += 10;
-          } else if (!(token as any).optional) {
+          } else if (!token.optional) {
             // Heavy penalty for patterns that require roles we DON'T have
             // This prevents selecting "source" patterns when there's no source
             score -= 50;

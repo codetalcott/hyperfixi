@@ -47,7 +47,7 @@ export function getSupportedLanguages(): string[] {
 }
 
 function validateLanguage(language: string): void {
-  if (!SUPPORTED_LANGUAGES.includes(language as any)) {
+  if (!(SUPPORTED_LANGUAGES as readonly string[]).includes(language)) {
     throw new Error(
       `Language not supported in this bundle: ${language}. Supported: ${SUPPORTED_LANGUAGES.join(', ')}`
     );

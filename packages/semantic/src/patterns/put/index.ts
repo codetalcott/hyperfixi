@@ -17,11 +17,9 @@ import { getPutPatternsId } from './id';
 import { getPutPatternsIt } from './it';
 import { getPutPatternsJa } from './ja';
 import { getPutPatternsKo } from './ko';
-import { getPutPatternsMs } from './ms';
 import { getPutPatternsPl } from './pl';
 import { getPutPatternsRu } from './ru';
 import { getPutPatternsTh } from './th';
-import { getPutPatternsTl } from './tl';
 import { getPutPatternsTr } from './tr';
 import { getPutPatternsUk } from './uk';
 import { getPutPatternsVi } from './vi';
@@ -50,16 +48,12 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
       return getPutPatternsJa();
     case 'ko':
       return getPutPatternsKo();
-    case 'ms':
-      return getPutPatternsMs();
     case 'pl':
       return getPutPatternsPl();
     case 'ru':
       return getPutPatternsRu();
     case 'th':
       return getPutPatternsTh();
-    case 'tl':
-      return getPutPatternsTl();
     case 'tr':
       return getPutPatternsTr();
     case 'uk':
@@ -83,11 +77,9 @@ export { getPutPatternsId } from './id';
 export { getPutPatternsIt } from './it';
 export { getPutPatternsJa } from './ja';
 export { getPutPatternsKo } from './ko';
-export { getPutPatternsMs } from './ms';
 export { getPutPatternsPl } from './pl';
 export { getPutPatternsRu } from './ru';
 export { getPutPatternsTh } from './th';
-export { getPutPatternsTl } from './tl';
 export { getPutPatternsTr } from './tr';
 export { getPutPatternsUk } from './uk';
 export { getPutPatternsVi } from './vi';
@@ -106,11 +98,9 @@ export const putPatternLanguages = [
   'it',
   'ja',
   'ko',
-  'ms',
   'pl',
   'ru',
   'th',
-  'tl',
   'tr',
   'uk',
   'vi',

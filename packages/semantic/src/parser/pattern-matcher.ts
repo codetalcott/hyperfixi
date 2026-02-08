@@ -9,12 +9,19 @@ import type {
   LanguagePattern,
   PatternToken,
   PatternMatchResult,
+  ReferenceValue,
   SemanticRole,
   SemanticValue,
   TokenStream,
   LanguageToken,
 } from '../types';
-import { createSelector, createLiteral, createReference, createPropertyPath } from '../types';
+import {
+  createSelector,
+  createLiteral,
+  createReference,
+  createPropertyPath,
+  isValidReference,
+} from '../types';
 import { isTypeCompatible } from './utils/type-validation';
 import { getPossessiveReference } from './utils/possessive-keywords';
 import type { LanguageProfile } from '../generators/profiles/types';
@@ -385,7 +392,8 @@ export class PatternMatcher {
       }
 
       // Create property-path: my value -> { object: me, property: 'value' }
-      return createPropertyPath(createReference(baseRef as any), chainedProps);
+      // baseRef from getPossessiveReference is always a valid reference ('me', 'you', 'it', etc.)
+      return createPropertyPath(createReference(baseRef as ReferenceValue['value']), chainedProps);
     }
 
     // Not a valid property, revert
@@ -781,20 +789,22 @@ export class PatternMatcher {
       case 'keyword':
         // Keywords might be references or values
         const lower = (token.normalized || token.value).toLowerCase();
-        if (['me', 'you', 'it', 'result', 'event', 'target', 'body'].includes(lower)) {
-          return createReference(lower as any);
+        if (isValidReference(lower)) {
+          return createReference(lower);
         }
         return createLiteral(token.normalized || token.value);
 
       case 'identifier':
         // Check if it's a variable reference (:varname)
+        // Note: :varname doesn't match the ReferenceValue union but is used as a
+        // reference token downstream — this cast preserves existing behavior
         if (token.value.startsWith(':')) {
-          return createReference(token.value as any);
+          return createReference(token.value as ReferenceValue['value']);
         }
         // Check if it's a built-in reference
         const identLower = token.value.toLowerCase();
-        if (['me', 'you', 'it', 'result', 'event', 'target', 'body'].includes(identLower)) {
-          return createReference(identLower as any);
+        if (isValidReference(identLower)) {
+          return createReference(identLower);
         }
         // Regular identifiers are variable references - use 'expression' type
         // which gets converted to 'identifier' AST nodes by semantic-integration.ts
@@ -872,7 +882,7 @@ export class PatternMatcher {
    * Check if a pattern token is optional.
    */
   private isOptional(patternToken: PatternToken): boolean {
-    return (patternToken as any).optional === true;
+    return patternToken.type !== 'literal' && patternToken.optional === true;
   }
 
   /**
@@ -1067,7 +1077,8 @@ export class PatternMatcher {
 
       // Check if the value has preposition metadata (from Arabic tokenizer)
       // This metadata is attached when a preposition particle token is consumed
-      const metadata = (value as any).metadata;
+      const metadata =
+        'metadata' in value ? (value as { metadata: Record<string, unknown> }).metadata : undefined;
       if (metadata && typeof metadata.prepositionValue === 'string') {
         const usedPreposition = metadata.prepositionValue;
 

@@ -37,7 +37,7 @@ function ensureAllPatterns(): LanguagePattern[] {
 /**
  * All registered patterns across all languages.
  * Uses a Proxy to lazily build patterns on first access.
- * @deprecated Use getPatternsForLanguage() for tree-shaking.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Use getPatternsForLanguage() for tree-shaking.
  */
 export const allPatterns: LanguagePattern[] = new Proxy([] as LanguagePattern[], {
   get(_target, prop) {
@@ -64,7 +64,7 @@ export const allPatterns: LanguagePattern[] = new Proxy([] as LanguagePattern[],
 
 /**
  * Get all patterns.
- * @deprecated Use getPatternsForLanguage() for tree-shaking.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Use getPatternsForLanguage() for tree-shaking.
  */
 export function getAllPatterns(): LanguagePattern[] {
   if (_allPatterns === null) {

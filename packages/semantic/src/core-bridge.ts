@@ -52,9 +52,10 @@ export interface SemanticAnalyzer {
   /**
    * Analyze input in the specified language.
    *
-   * @deprecated Prefer `parseSemantic()` from `@lokascript/semantic` for new code.
+   * @deprecated Since v1.4.0. Will be removed in v2.0.0.
+   * Prefer `parseSemantic()` from `@lokascript/semantic` for new code.
    * This method is retained for backward compatibility but now uses the full
-   * parser internally (as of v1.4.0) to preserve event handler bodies.
+   * parser internally to preserve event handler bodies.
    *
    * @param input The input string to analyze
    * @param language ISO 639-1 language code

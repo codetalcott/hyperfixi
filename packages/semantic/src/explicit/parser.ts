@@ -21,6 +21,7 @@ import {
   createSelector,
   createLiteral,
   createReference,
+  isValidReference,
 } from '../types';
 
 // =============================================================================
@@ -191,8 +192,9 @@ function parseExplicitValue(valueStr: string): SemanticValue {
   if (valueStr === 'false') return createLiteral(false, 'boolean');
 
   // Reference
-  if (['me', 'you', 'it', 'result', 'event', 'target', 'body'].includes(valueStr.toLowerCase())) {
-    return createReference(valueStr.toLowerCase() as any);
+  const lowerRef = valueStr.toLowerCase();
+  if (isValidReference(lowerRef)) {
+    return createReference(lowerRef);
   }
 
   // Number (possibly with duration suffix)

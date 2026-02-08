@@ -15,11 +15,9 @@ import { getHidePatternsHi } from './hi';
 import { getHidePatternsIt } from './it';
 import { getHidePatternsJa } from './ja';
 import { getHidePatternsKo } from './ko';
-import { getHidePatternsMs } from './ms';
 import { getHidePatternsPl } from './pl';
 import { getHidePatternsRu } from './ru';
 import { getHidePatternsTh } from './th';
-import { getHidePatternsTl } from './tl';
 import { getHidePatternsTr } from './tr';
 import { getHidePatternsUk } from './uk';
 import { getHidePatternsVi } from './vi';
@@ -44,16 +42,12 @@ export function getHidePatternsForLanguage(language: string): LanguagePattern[] 
       return getHidePatternsJa();
     case 'ko':
       return getHidePatternsKo();
-    case 'ms':
-      return getHidePatternsMs();
     case 'pl':
       return getHidePatternsPl();
     case 'ru':
       return getHidePatternsRu();
     case 'th':
       return getHidePatternsTh();
-    case 'tl':
-      return getHidePatternsTl();
     case 'tr':
       return getHidePatternsTr();
     case 'uk':
@@ -75,11 +69,9 @@ export { getHidePatternsHi } from './hi';
 export { getHidePatternsIt } from './it';
 export { getHidePatternsJa } from './ja';
 export { getHidePatternsKo } from './ko';
-export { getHidePatternsMs } from './ms';
 export { getHidePatternsPl } from './pl';
 export { getHidePatternsRu } from './ru';
 export { getHidePatternsTh } from './th';
-export { getHidePatternsTl } from './tl';
 export { getHidePatternsTr } from './tr';
 export { getHidePatternsUk } from './uk';
 export { getHidePatternsVi } from './vi';
@@ -96,11 +88,9 @@ export const hidePatternLanguages = [
   'it',
   'ja',
   'ko',
-  'ms',
   'pl',
   'ru',
   'th',
-  'tl',
   'tr',
   'uk',
   'vi',

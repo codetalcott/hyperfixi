@@ -16,11 +16,9 @@ import { getShowPatternsHi } from './hi';
 import { getShowPatternsIt } from './it';
 import { getShowPatternsJa } from './ja';
 import { getShowPatternsKo } from './ko';
-import { getShowPatternsMs } from './ms';
 import { getShowPatternsPl } from './pl';
 import { getShowPatternsRu } from './ru';
 import { getShowPatternsTh } from './th';
-import { getShowPatternsTl } from './tl';
 import { getShowPatternsTr } from './tr';
 import { getShowPatternsUk } from './uk';
 import { getShowPatternsVi } from './vi';
@@ -47,16 +45,12 @@ export function getShowPatternsForLanguage(language: string): LanguagePattern[] 
       return getShowPatternsJa();
     case 'ko':
       return getShowPatternsKo();
-    case 'ms':
-      return getShowPatternsMs();
     case 'pl':
       return getShowPatternsPl();
     case 'ru':
       return getShowPatternsRu();
     case 'th':
       return getShowPatternsTh();
-    case 'tl':
-      return getShowPatternsTl();
     case 'tr':
       return getShowPatternsTr();
     case 'uk':
@@ -79,11 +73,9 @@ export { getShowPatternsHi } from './hi';
 export { getShowPatternsIt } from './it';
 export { getShowPatternsJa } from './ja';
 export { getShowPatternsKo } from './ko';
-export { getShowPatternsMs } from './ms';
 export { getShowPatternsPl } from './pl';
 export { getShowPatternsRu } from './ru';
 export { getShowPatternsTh } from './th';
-export { getShowPatternsTl } from './tl';
 export { getShowPatternsTr } from './tr';
 export { getShowPatternsUk } from './uk';
 export { getShowPatternsVi } from './vi';
@@ -101,11 +93,9 @@ export const showPatternLanguages = [
   'it',
   'ja',
   'ko',
-  'ms',
   'pl',
   'ru',
   'th',
-  'tl',
   'tr',
   'uk',
   'vi',

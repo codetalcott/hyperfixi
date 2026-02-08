@@ -16,12 +16,10 @@ import { getTogglePatternsHi } from './hi';
 import { getTogglePatternsIt } from './it';
 import { getTogglePatternsJa } from './ja';
 import { getTogglePatternsKo } from './ko';
-import { getTogglePatternsMs } from './ms';
 import { getTogglePatternsPl } from './pl';
 import { getTogglePatternsQu } from './qu';
 import { getTogglePatternsRu } from './ru';
 import { getTogglePatternsTh } from './th';
-import { getTogglePatternsTl } from './tl';
 import { getTogglePatternsTr } from './tr';
 import { getTogglePatternsUk } from './uk';
 import { getTogglePatternsVi } from './vi';
@@ -48,8 +46,6 @@ export function getTogglePatternsForLanguage(language: string): LanguagePattern[
       return getTogglePatternsJa();
     case 'ko':
       return getTogglePatternsKo();
-    case 'ms':
-      return getTogglePatternsMs();
     case 'pl':
       return getTogglePatternsPl();
     case 'qu':
@@ -58,8 +54,6 @@ export function getTogglePatternsForLanguage(language: string): LanguagePattern[
       return getTogglePatternsRu();
     case 'th':
       return getTogglePatternsTh();
-    case 'tl':
-      return getTogglePatternsTl();
     case 'tr':
       return getTogglePatternsTr();
     case 'uk':
@@ -82,12 +76,10 @@ export { getTogglePatternsHi } from './hi';
 export { getTogglePatternsIt } from './it';
 export { getTogglePatternsJa } from './ja';
 export { getTogglePatternsKo } from './ko';
-export { getTogglePatternsMs } from './ms';
 export { getTogglePatternsPl } from './pl';
 export { getTogglePatternsQu } from './qu';
 export { getTogglePatternsRu } from './ru';
 export { getTogglePatternsTh } from './th';
-export { getTogglePatternsTl } from './tl';
 export { getTogglePatternsTr } from './tr';
 export { getTogglePatternsUk } from './uk';
 export { getTogglePatternsVi } from './vi';
@@ -105,12 +97,10 @@ export const togglePatternLanguages = [
   'it',
   'ja',
   'ko',
-  'ms',
   'pl',
   'qu',
   'ru',
   'th',
-  'tl',
   'tr',
   'uk',
   'vi',

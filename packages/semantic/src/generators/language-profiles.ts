@@ -90,7 +90,7 @@ import type { LanguageProfile } from './profiles/types';
 
 /**
  * All available language profiles.
- * @deprecated Import individual profiles for tree-shaking.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Import individual profiles for tree-shaking.
  */
 export const languageProfiles: Record<string, LanguageProfile> = {
   ar: arabicProfile,
@@ -122,7 +122,7 @@ export const languageProfiles: Record<string, LanguageProfile> = {
 
 /**
  * Get a language profile by code.
- * @deprecated Use the registry's getProfile instead.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Use the registry's getProfile instead.
  */
 export function getProfile(code: string): LanguageProfile | undefined {
   return languageProfiles[code];
@@ -130,7 +130,7 @@ export function getProfile(code: string): LanguageProfile | undefined {
 
 /**
  * Get all supported language codes.
- * @deprecated Use the registry's getRegisteredLanguages instead.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Use the registry's getRegisteredLanguages instead.
  */
 export function getSupportedLanguages(): string[] {
   return Object.keys(languageProfiles);
@@ -138,7 +138,7 @@ export function getSupportedLanguages(): string[] {
 
 /**
  * Check if a language is supported.
- * @deprecated Use the registry's isLanguageRegistered instead.
+ * @deprecated Since v1.3.0. Will be removed in v2.0.0. Use the registry's isLanguageRegistered instead.
  */
 export function isLanguageSupported(code: string): boolean {
   return code in languageProfiles;

@@ -39,11 +39,11 @@ export interface SchemaValidation {
  * Extended validation result with backward-compatible getters.
  */
 export interface SchemaValidationResult extends SchemaValidation {
-  /** @deprecated Use items.filter(i => i.severity === 'note') */
+  /** @deprecated Since v1.3.0. Will be removed in v2.0.0. Use items.filter(i => i.severity === 'note') */
   readonly notes: string[];
-  /** @deprecated Use items.filter(i => i.severity === 'warning') */
+  /** @deprecated Since v1.3.0. Will be removed in v2.0.0. Use items.filter(i => i.severity === 'warning') */
   readonly warnings: string[];
-  /** @deprecated Use items.filter(i => i.severity === 'error') */
+  /** @deprecated Since v1.3.0. Will be removed in v2.0.0. Use items.filter(i => i.severity === 'error') */
   readonly errors: string[];
 }
 

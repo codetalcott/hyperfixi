@@ -12,11 +12,9 @@ import { getIncrementPatternsBn } from './bn';
 import { getIncrementPatternsDe } from './de';
 import { getIncrementPatternsHi } from './hi';
 import { getIncrementPatternsIt } from './it';
-import { getIncrementPatternsMs } from './ms';
 import { getIncrementPatternsPl } from './pl';
 import { getIncrementPatternsRu } from './ru';
 import { getIncrementPatternsTh } from './th';
-import { getIncrementPatternsTl } from './tl';
 import { getIncrementPatternsTr } from './tr';
 import { getIncrementPatternsUk } from './uk';
 import { getIncrementPatternsVi } from './vi';
@@ -35,16 +33,12 @@ export function getIncrementPatternsForLanguage(language: string): LanguagePatte
       return getIncrementPatternsHi();
     case 'it':
       return getIncrementPatternsIt();
-    case 'ms':
-      return getIncrementPatternsMs();
     case 'pl':
       return getIncrementPatternsPl();
     case 'ru':
       return getIncrementPatternsRu();
     case 'th':
       return getIncrementPatternsTh();
-    case 'tl':
-      return getIncrementPatternsTl();
     case 'tr':
       return getIncrementPatternsTr();
     case 'uk':
@@ -63,11 +57,9 @@ export { getIncrementPatternsBn } from './bn';
 export { getIncrementPatternsDe } from './de';
 export { getIncrementPatternsHi } from './hi';
 export { getIncrementPatternsIt } from './it';
-export { getIncrementPatternsMs } from './ms';
 export { getIncrementPatternsPl } from './pl';
 export { getIncrementPatternsRu } from './ru';
 export { getIncrementPatternsTh } from './th';
-export { getIncrementPatternsTl } from './tl';
 export { getIncrementPatternsTr } from './tr';
 export { getIncrementPatternsUk } from './uk';
 export { getIncrementPatternsVi } from './vi';
@@ -81,11 +73,9 @@ export const incrementPatternLanguages = [
   'de',
   'hi',
   'it',
-  'ms',
   'pl',
   'ru',
   'th',
-  'tl',
   'tr',
   'uk',
   'vi',
