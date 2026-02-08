@@ -367,13 +367,13 @@ describe('Expression Integration Tests', () => {
     it.skip('should handle string interpolation with property access', async () => {
       // Test string literal with interpolation
       const template = 'Button text: $text, ID: $id';
-      const result = await specialExpressions.stringLiteral.evaluate(context, template);
+      const result = await specialExpressions.stringLiteral.evaluate(context, { value: template });
       expect(result).toBe('Button text: [text], ID: [id]');
     });
 
     it.skip('should handle template literal with expression', async () => {
       const template = 'Value: ${my.getAttribute("data-value")}';
-      const result = await specialExpressions.stringLiteral.evaluate(context, template);
+      const result = await specialExpressions.stringLiteral.evaluate(context, { value: template });
       expect(result).toBe('Value: [my.getAttribute("data-value")]');
     });
   });

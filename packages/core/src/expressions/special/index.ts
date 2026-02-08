@@ -6,7 +6,7 @@
  * Uses centralized type-helpers for consistent type checking.
  */
 
-import { v } from '../../validation/lightweight-validators';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   TypedExpressionContext,
   EvaluationType,
@@ -23,35 +23,35 @@ import { BaseExpressionImpl } from '../base-expression';
 // Input Schemas
 // ============================================================================
 
+type StringLiteralInput = { value: string };
+type NumberLiteralInput = { value: number };
+type BooleanLiteralInput = { value: boolean };
+type BinaryOperationInput = { left: unknown; right: unknown };
+
 const StringLiteralInputSchema = v
   .object({
     value: v.string().describe('String literal value'),
   })
-  .strict();
+  .strict() as unknown as RuntimeValidator<StringLiteralInput>;
 
 const NumberLiteralInputSchema = v
   .object({
     value: v.number().describe('Number literal value'),
   })
-  .strict();
+  .strict() as unknown as RuntimeValidator<NumberLiteralInput>;
 
 const BooleanLiteralInputSchema = v
   .object({
     value: v.boolean().describe('Boolean literal value'),
   })
-  .strict();
+  .strict() as unknown as RuntimeValidator<BooleanLiteralInput>;
 
 const BinaryOperationInputSchema = v
   .object({
     left: v.unknown().describe('Left operand'),
     right: v.unknown().describe('Right operand'),
   })
-  .strict();
-
-type StringLiteralInput = any; // Inferred from RuntimeValidator
-type NumberLiteralInput = any; // Inferred from RuntimeValidator
-type BooleanLiteralInput = any; // Inferred from RuntimeValidator
-type BinaryOperationInput = any; // Inferred from RuntimeValidator
+  .strict() as unknown as RuntimeValidator<BinaryOperationInput>;
 
 // ============================================================================
 // Enhanced String Literal Expression
@@ -160,7 +160,7 @@ export class StringLiteralExpression extends BaseExpressionImpl<StringLiteralInp
       let value = this.resolveVariable(parts[0], context);
 
       for (let i = 1; i < parts.length && value != null; i++) {
-        value = (value as any)[parts[i]];
+        value = (value as Record<string, unknown>)[parts[i]];
       }
 
       return value;
@@ -226,7 +226,7 @@ export class NumberLiteralExpression extends BaseExpressionImpl<NumberLiteralInp
         );
       }
 
-      if (!isFinite(input.value)) {
+      if (!Number.isFinite(input.value)) {
         this.trackSimple(context, startTime, false);
         return this.failure<number>(
           'NumberValidationError',
@@ -260,7 +260,7 @@ export class NumberLiteralExpression extends BaseExpressionImpl<NumberLiteralInp
         );
       }
 
-      if (!isFinite((parsed.data as any).value)) {
+      if (!Number.isFinite((parsed.data as NumberLiteralInput).value)) {
         return this.validationFailure('invalid-argument', 'Number literal value must be finite', [
           'Use finite numbers only',
           'Avoid Infinity and NaN values',
@@ -618,7 +618,5 @@ export const specialExpressions = {
   stringConcatenation: createStringConcatenationExpression(),
   multiplication: createMultiplicationExpression(),
 } as const;
-
-// specialExpressions already exported above
 
 export type SpecialExpressionName = keyof typeof specialExpressions;

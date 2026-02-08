@@ -229,6 +229,12 @@ export function getElementProperty(element: Element, property: string): unknown 
 }
 
 /**
+ * Property names that must never be accessed on plain objects.
+ * Prevents prototype pollution attacks via possessive syntax.
+ */
+const UNSAFE_PROPERTIES = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
  * Access property from regular object
  *
  * @param object - Object to access property from
@@ -238,6 +244,10 @@ export function getElementProperty(element: Element, property: string): unknown 
 export function accessObjectProperty(object: unknown, property: string): unknown {
   if (!isObject(object)) {
     return null;
+  }
+
+  if (UNSAFE_PROPERTIES.has(property)) {
+    return undefined;
   }
 
   const obj = object as Record<string, unknown>;

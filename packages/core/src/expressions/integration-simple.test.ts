@@ -204,13 +204,13 @@ describe('Expression Integration Tests - Core Combinations', () => {
   describe('String Template and Interpolation', () => {
     it.skip('should handle string interpolation', async () => {
       const template = 'Button: $name, Value: $value';
-      const result = await specialExpressions.stringLiteral.evaluate(context, template);
+      const result = await specialExpressions.stringLiteral.evaluate(context, { value: template });
       expect(result).toBe('Button: [name], Value: [value]');
     });
 
     it.skip('should handle template literals', async () => {
       const template = 'Result: ${1 + 2 * 3}';
-      const result = await specialExpressions.stringLiteral.evaluate(context, template);
+      const result = await specialExpressions.stringLiteral.evaluate(context, { value: template });
       expect(result).toBe('Result: [1 + 2 * 3]');
     });
   });

@@ -15,8 +15,6 @@ import type {
 // Enhanced String Interpolation Expression
 // ============================================================================
 
-// type StringInterpolationInput = any; // Inferred from RuntimeValidator - unused
-
 /**
  * Enhanced string interpolation expression with comprehensive variable substitution
  */

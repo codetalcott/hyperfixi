@@ -18,6 +18,9 @@ import { isObject } from '../type-helpers';
 // Re-export for use in tests and external consumers
 export { getElementProperty };
 
+/** Property names that must never be accessed on plain objects (prototype pollution prevention). */
+const UNSAFE_PROPS = new Set(['__proto__', 'constructor', 'prototype']);
+
 // ============================================================================
 // Possessive Expressions
 // ============================================================================
@@ -45,11 +48,12 @@ export const possessiveExpression: ExpressionImplementation = {
 
     // Handle regular object property access
     if (isObject(element)) {
+      if (UNSAFE_PROPS.has(property)) return undefined;
       return (element as Record<string, unknown>)[property];
     }
 
     // Handle primitive values
-    return (element as any)[property];
+    return (element as Record<string, unknown>)[property];
   },
 
   validate(args: any[]): string | null {
@@ -83,11 +87,12 @@ export const myExpression: ExpressionImplementation = {
 
     // Handle plain objects
     if (isObject(context.me)) {
-      return (context.me as any)[property];
+      if (UNSAFE_PROPS.has(property)) return undefined;
+      return (context.me as Record<string, unknown>)[property];
     }
 
     // Handle primitive values
-    return (context.me as any)[property];
+    return (context.me as Record<string, unknown>)[property];
   },
 
   validate(args: any[]): string | null {
@@ -120,11 +125,12 @@ export const itsExpression: ExpressionImplementation = {
 
     // Handle regular object property access
     if (isObject(target)) {
+      if (UNSAFE_PROPS.has(property)) return undefined;
       return (target as Record<string, unknown>)[property];
     }
 
     // Handle primitive values
-    return (target as any)[property];
+    return (target as Record<string, unknown>)[property];
   },
 
   validate(args: any[]): string | null {
@@ -155,11 +161,12 @@ export const yourExpression: ExpressionImplementation = {
 
     // Handle plain objects
     if (isObject(context.you)) {
-      return (context.you as any)[property];
+      if (UNSAFE_PROPS.has(property)) return undefined;
+      return (context.you as Record<string, unknown>)[property];
     }
 
     // Handle primitive values
-    return (context.you as any)[property];
+    return (context.you as Record<string, unknown>)[property];
   },
 
   validate(args: any[]): string | null {
@@ -194,11 +201,12 @@ export const ofExpression: ExpressionImplementation = {
 
     // Handle regular object property access
     if (isObject(object)) {
+      if (UNSAFE_PROPS.has(property)) return undefined;
       return (object as Record<string, unknown>)[property];
     }
 
     // Handle primitive values
-    return (object as any)[property];
+    return (object as Record<string, unknown>)[property];
   },
 
   validate(args: any[]): string | null {

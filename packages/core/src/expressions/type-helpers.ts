@@ -169,7 +169,13 @@ export function inferType(
   if (typeof value === 'string') return 'string';
   if (typeof value === 'number') return 'number';
   if (typeof value === 'boolean') return 'boolean';
-  if (value instanceof HTMLElement) return 'element';
+  // Duck-type element check for cross-realm compatibility (JSDOM/happy-dom)
+  if (
+    typeof value === 'object' &&
+    'nodeType' in value &&
+    (value as { nodeType: unknown }).nodeType === 1
+  )
+    return 'element';
   if (Array.isArray(value)) return 'array';
   if (typeof value === 'function') return 'function';
   if (typeof value === 'object') return 'object';

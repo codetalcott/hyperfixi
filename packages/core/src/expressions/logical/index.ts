@@ -16,6 +16,16 @@ import { isString, isObject } from '../type-helpers';
 import { trackEvaluation } from '../shared';
 import { compareValues } from '../shared/comparison-utils';
 
+/** Duck-typed DOM element check for cross-realm compatibility (JSDOM/happy-dom). */
+function isDOMElement(value: unknown): value is Element {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'nodeType' in (value as object) &&
+    (value as { nodeType: number }).nodeType === 1
+  );
+}
+
 // ============================================================================
 // Enhanced Expression Interface
 // ============================================================================
@@ -539,14 +549,14 @@ export const containsExpression: ExpressionImplementation = {
     // Handle DOM element containment first
     if (container && value) {
       // If both are DOM elements, check containment
-      if ((container as any).nodeType === 1 && (value as any).nodeType === 1) {
+      if (isDOMElement(container) && isDOMElement(value)) {
         return (container as Node).contains(value as Node);
       }
 
       // If container is CSS selector string, resolve to element (uses registry-based type check)
       if (isString(container) && (container as string).match(/^[.#][\w-]+$/)) {
         const containerElement = document.querySelector(container as string);
-        if (containerElement && (value as any).nodeType === 1) {
+        if (containerElement && isDOMElement(value)) {
           return containerElement.contains(value as Node);
         }
         if (containerElement && isString(value) && (value as string).match(/^[.#][\w-]+$/)) {
@@ -556,11 +566,7 @@ export const containsExpression: ExpressionImplementation = {
       }
 
       // If value is CSS selector string, resolve to element (uses registry-based type check)
-      if (
-        isString(value) &&
-        (value as string).match(/^[.#][\w-]+$/) &&
-        (container as any).nodeType === 1
-      ) {
+      if (isString(value) && (value as string).match(/^[.#][\w-]+$/) && isDOMElement(container)) {
         const valueElement = document.querySelector(value as string);
         return valueElement ? (container as Node).contains(valueElement) : false;
       }

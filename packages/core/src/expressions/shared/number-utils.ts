@@ -49,13 +49,19 @@ export function toNumber(value: unknown, context: string): number {
   // Try valueOf for objects
   if (typeof value === 'object' && value !== null) {
     // Unwrap single-element arrays (from querySelectorAll/selector evaluation)
+    // Only unwrap one level to prevent unbounded recursion with nested arrays
     if (Array.isArray(value) && value.length === 1) {
-      return toNumber(value[0], context);
+      const inner = value[0];
+      if (Array.isArray(inner)) {
+        throw new Error(`${context} is a nested array, cannot convert to number`);
+      }
+      return toNumber(inner, context);
     }
 
     // Handle DOM elements — extract textContent or value property
-    if (typeof (value as any).textContent === 'string' || 'value' in (value as any)) {
-      const text = (value as any).value ?? (value as any).textContent;
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.textContent === 'string' || 'value' in obj) {
+      const text = obj.value ?? obj.textContent;
       if (text !== null && text !== undefined) {
         const trimmed = String(text).trim();
         if (trimmed === '') return 0;
@@ -64,7 +70,7 @@ export function toNumber(value: unknown, context: string): number {
       }
     }
 
-    const primitive = (value as any).valueOf();
+    const primitive = (value as { valueOf(): unknown }).valueOf();
     if (typeof primitive === 'number' && Number.isFinite(primitive)) {
       return primitive;
     }
