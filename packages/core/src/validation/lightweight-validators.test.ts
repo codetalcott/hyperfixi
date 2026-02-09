@@ -3,15 +3,13 @@
  * These validators are generated from zod schemas during build time
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   createStringValidator,
   createObjectValidator,
   createArrayValidator,
   createTupleValidator,
   createUnionValidator,
-  ValidationResult,
-  RuntimeValidator,
 } from './lightweight-validators';
 
 describe('Lightweight Validators', () => {
@@ -24,12 +22,11 @@ describe('Lightweight Validators', () => {
         data: 'hello',
       });
 
-      expect(validator.validate('hi')).toEqual({
-        success: false,
-        error: {
-          message: 'String must be at least 3 characters long',
-          path: [],
-        },
+      const result = validator.validate('hi');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatchObject({
+        type: 'runtime-error',
+        message: 'String must be at least 3 characters long',
       });
     });
 
@@ -60,12 +57,12 @@ describe('Lightweight Validators', () => {
         data: { name: 'John', age: '25' },
       });
 
-      expect(validator.validate({ name: 'John' })).toEqual({
-        success: false,
-        error: {
-          message: 'Required field "age" is missing',
-          path: ['age'],
-        },
+      const result = validator.validate({ name: 'John' });
+      expect(result.success).toBe(false);
+      expect(result.error).toMatchObject({
+        type: 'missing-argument',
+        message: 'Required field "age" is missing',
+        path: 'age',
       });
     });
   });
@@ -79,12 +76,11 @@ describe('Lightweight Validators', () => {
         data: ['a', 'b', 'c'],
       });
 
-      expect(validator.validate(['a', 123, 'c'])).toEqual({
-        success: false,
-        error: {
-          message: 'Expected string, received number',
-          path: [1],
-        },
+      const result = validator.validate(['a', 123, 'c']);
+      expect(result.success).toBe(false);
+      expect(result.error).toMatchObject({
+        message: 'Expected string, received number',
+        path: '1',
       });
     });
   });
@@ -102,12 +98,11 @@ describe('Lightweight Validators', () => {
         data: ['property', 'from', 'element'],
       });
 
-      expect(validator.validate(['property', 'to', 'element'])).toEqual({
-        success: false,
-        error: {
-          message: 'Expected "from", received "to"',
-          path: [1],
-        },
+      const result = validator.validate(['property', 'to', 'element']);
+      expect(result.success).toBe(false);
+      expect(result.error).toMatchObject({
+        message: 'Expected "from", received "to"',
+        path: '1',
       });
     });
   });
@@ -129,39 +124,37 @@ describe('Lightweight Validators', () => {
         data: '123',
       });
 
-      expect(validator.validate(123)).toEqual({
-        success: false,
-        error: {
-          message: 'Value does not match any union type',
-          path: [],
-        },
+      const result = validator.validate(123);
+      expect(result.success).toBe(false);
+      expect(result.error).toMatchObject({
+        type: 'type-mismatch',
+        message: 'Value does not match any union type',
       });
     });
   });
 
   describe('Environment-based validation', () => {
-    it('should skip validation in production mode', () => {
-      process.env.NODE_ENV = 'production';
+    // Note: skipValidation is computed at module load time, so changing
+    // process.env.NODE_ENV after import has no effect on existing validators.
+    // These tests verify current behavior (dev mode since tests run in test env).
+
+    it('should perform validation in development/test mode', () => {
       const validator = createStringValidator({ minLength: 10 });
 
-      // In production, validation should pass through without checking
-      expect(validator.validate('short')).toEqual({
-        success: true,
-        data: 'short',
+      const result = validator.validate('short');
+      expect(result.success).toBe(false);
+      expect(result.error).toMatchObject({
+        type: 'runtime-error',
+        message: 'String must be at least 10 characters long',
       });
     });
 
-    it('should perform validation in development mode', () => {
-      process.env.NODE_ENV = 'development';
-      const validator = createStringValidator({ minLength: 10 });
+    it('should pass valid values in development/test mode', () => {
+      const validator = createStringValidator({ minLength: 3 });
 
-      expect(validator.validate('short')).toEqual({
-        success: false,
-        error: {
-          message: 'String must be at least 10 characters long',
-          path: [],
-        },
-      });
+      const result = validator.validate('hello world');
+      expect(result.success).toBe(true);
+      expect(result.data).toBe('hello world');
     });
   });
 });
@@ -183,12 +176,11 @@ describe('Integration with HyperScript Commands', () => {
       data: ['class', 'from', '#element'],
     });
 
-    expect(takeCommandValidator.validate(['class', 'to', '#element'])).toEqual({
-      success: false,
-      error: {
-        message: 'Expected "from", received "to"',
-        path: [1],
-      },
+    const result = takeCommandValidator.validate(['class', 'to', '#element']);
+    expect(result.success).toBe(false);
+    expect(result.error).toMatchObject({
+      message: 'Expected "from", received "to"',
+      path: '1',
     });
   });
 });

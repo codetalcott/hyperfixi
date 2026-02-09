@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import '../test-setup.js';
-import { evalHyperScript } from '../compatibility/eval-hyperscript';
+import { evalHyperScript } from './eval-hyperscript';
 
 describe('Core System Validation', () => {
   let testContainer: HTMLElement;

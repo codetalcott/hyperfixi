@@ -214,7 +214,9 @@ function getConfigForTarget(target: string): PartialValidationConfig {
 function matchesTargetPattern(target: string, pattern: string): boolean {
   if (pattern === '*') return true;
   if (pattern.includes('*')) {
-    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+    // Escape regex special chars except *, then replace * with .*
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+    const regex = new RegExp('^' + escaped + '$');
     return regex.test(target);
   }
   return target === pattern;

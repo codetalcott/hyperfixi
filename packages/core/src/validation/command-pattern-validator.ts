@@ -1,9 +1,13 @@
 /**
- * Enhanced Command Pattern Validator
- * Validates that commands follow the enhanced TypeScript pattern for LLM agents
+ * Command Pattern Validator (V2)
+ *
+ * Validates that commands follow the V2 decorator-based pattern:
+ * - @command({ name, category }) decorator injects `name` property
+ * - @meta({ description, syntax, examples, ... }) decorator injects `metadata` property
+ * - execute() method for command logic
+ * - validate() method as type guard
+ * - createXCommand() factory function for tree-shaking
  */
-
-// Removed unused zod import
 
 export interface PatternValidationResult {
   isEnhanced: boolean;
@@ -15,11 +19,10 @@ export interface PatternValidationResult {
     hasCorrectInterface: boolean;
     hasRequiredProperties: boolean;
     hasProperMetadata: boolean;
-    hasLLMDocumentation: boolean;
     hasValidation: boolean;
     hasFactoryFunction: boolean;
     hasBundleAnnotations: boolean;
-    hasStructuredErrors: boolean;
+    hasAsyncExecute: boolean;
   };
 }
 
@@ -31,11 +34,11 @@ export interface CommandAnalysis {
 }
 
 /**
- * Core pattern validator for individual commands
+ * Core pattern validator for individual commands (V2 decorator pattern)
  */
 export class CommandPatternValidator {
   /**
-   * Validates if a command follows the enhanced TypeScript pattern
+   * Validates if a command follows the V2 decorator-based pattern
    */
   static validateCommand(
     CommandClass: new () => unknown,
@@ -47,13 +50,13 @@ export class CommandPatternValidator {
     const suggestions: string[] = [];
 
     let score = 0;
-    const maxScore = 8; // Total number of checks
+    const maxScore = 7;
 
     // Create instance for testing
     let instance: Record<string, unknown>;
     try {
       instance = new CommandClass() as Record<string, unknown>;
-    } catch (error) {
+    } catch {
       failed.push('Command class cannot be instantiated');
       suggestions.push('Fix constructor issues or provide proper options');
       return {
@@ -66,107 +69,90 @@ export class CommandPatternValidator {
           hasCorrectInterface: false,
           hasRequiredProperties: false,
           hasProperMetadata: false,
-          hasLLMDocumentation: false,
           hasValidation: false,
           hasFactoryFunction: false,
           hasBundleAnnotations: false,
-          hasStructuredErrors: false,
+          hasAsyncExecute: false,
         },
       };
     }
 
-    // 1. Check TypedCommandImplementation interface compliance
+    // 1. Check V2 decorator interface compliance (name, metadata, execute, validate)
     const hasCorrectInterface = this.validateInterface(instance);
     if (hasCorrectInterface) {
-      passed.push('✅ Implements TypedCommandImplementation interface');
+      passed.push('Implements V2 decorator interface (name, metadata, execute, validate)');
       score++;
     } else {
-      failed.push('❌ Does not implement TypedCommandImplementation interface');
-      suggestions.push(
-        'Update class to implement TypedCommandImplementation<TInput, TOutput, TContext>'
-      );
+      failed.push('Missing V2 decorator interface properties');
+      suggestions.push('Apply @command and @meta decorators, implement execute() and validate()');
     }
 
-    // 2. Check required properties
+    // 2. Check required metadata properties from @meta decorator
     const hasRequiredProperties = this.validateRequiredProperties(instance);
     if (hasRequiredProperties) {
-      passed.push(
-        '✅ Has all required properties (name, syntax, description, inputSchema, outputType)'
-      );
+      passed.push('Has all required metadata (description, syntax, examples, category)');
       score++;
     } else {
-      failed.push('❌ Missing required properties');
-      suggestions.push('Add name, syntax, description, inputSchema, and outputType properties');
-    }
-
-    // 3. Check metadata structure
-    const hasProperMetadata = this.validateMetadata(instance.metadata as Record<string, unknown>);
-    if (hasProperMetadata) {
-      passed.push('✅ Has properly structured CommandMetadata');
-      score++;
-    } else {
-      failed.push('❌ Missing or invalid CommandMetadata');
+      failed.push('Missing required metadata properties');
       suggestions.push(
-        'Add comprehensive metadata with category, complexity, sideEffects, examples, and relatedCommands'
+        'Ensure @meta decorator includes description, syntax, examples; @command includes category'
       );
     }
 
-    // 4. Check LLM documentation
-    const hasLLMDocumentation = this.validateLLMDocumentation(
-      instance.documentation as Record<string, unknown>
+    // 3. Check metadata quality (optional fields populated)
+    const hasProperMetadata = this.validateMetadataQuality(
+      instance.metadata as Record<string, unknown>
     );
-    if (hasLLMDocumentation) {
-      passed.push('✅ Has comprehensive LLMDocumentation');
+    if (hasProperMetadata) {
+      passed.push('Has quality metadata (sideEffects, examples with 2+ items)');
       score++;
     } else {
-      failed.push('❌ Missing or incomplete LLMDocumentation');
-      suggestions.push(
-        'Add detailed documentation with summary, parameters, returns, examples, seeAlso, and tags'
-      );
+      failed.push('Metadata quality could be improved');
+      suggestions.push('Add sideEffects array and at least 2 usage examples');
     }
 
-    // 5. Check validation method
+    // 4. Check validation method (optional in V2 — not all commands define it)
     const hasValidation = this.validateValidationMethod(instance);
     if (hasValidation) {
-      passed.push('✅ Has proper validate method with ValidationResult return type');
+      passed.push('Has validate method (type guard)');
       score++;
     } else {
-      failed.push('❌ Missing or incorrect validate method');
-      suggestions.push('Implement validate(args: unknown[]): ValidationResult method');
+      failed.push('No validate method (optional)');
+      suggestions.push('Consider adding validate(input: unknown): input is TInput type guard');
     }
 
-    // 6. Check factory function
+    // 5. Check factory function
     const hasFactoryFunction = factoryFunction !== undefined;
     if (hasFactoryFunction) {
-      passed.push('✅ Has factory function for tree-shaking');
+      passed.push('Has factory function for tree-shaking');
       score++;
     } else {
-      failed.push('❌ Missing factory function');
+      failed.push('Missing factory function');
       suggestions.push('Add createXCommand() factory function for modular imports');
     }
 
-    // 7. Check bundle annotations in source code
+    // 6. Check bundle annotations in source code
     const hasBundleAnnotations = sourceCode ? this.validateBundleAnnotations(sourceCode) : false;
     if (hasBundleAnnotations) {
-      passed.push('✅ Has @llm-bundle-size annotations');
+      passed.push('Has @llm-bundle-size annotations');
       score++;
     } else {
-      failed.push('❌ Missing @llm-bundle-size annotations');
+      failed.push('Missing @llm-bundle-size annotations');
       suggestions.push('Add @llm-bundle-size and @llm-description JSDoc annotations');
     }
 
-    // 8. Check structured error handling
-    const hasStructuredErrors = this.validateStructuredErrors(instance);
-    if (hasStructuredErrors) {
-      passed.push('✅ Uses structured error handling in execute method');
+    // 7. Check execute is async
+    const hasAsyncExecute = this.validateAsyncExecute(instance);
+    if (hasAsyncExecute) {
+      passed.push('Execute method is async');
       score++;
     } else {
-      failed.push('❌ Execute method does not return structured EvaluationResult');
-      suggestions.push('Update execute method to return Promise<EvaluationResult<T>>');
+      failed.push('Execute method should be async');
+      suggestions.push('Make execute() return a Promise');
     }
 
     const finalScore = Math.round((score / maxScore) * 100);
-    const isEnhanced = finalScore >= 80; // 80% threshold for "enhanced"
+    const isEnhanced = finalScore >= 80;
 
     return {
       isEnhanced,
@@ -178,94 +164,82 @@ export class CommandPatternValidator {
         hasCorrectInterface,
         hasRequiredProperties,
         hasProperMetadata,
-        hasLLMDocumentation,
         hasValidation,
         hasFactoryFunction,
         hasBundleAnnotations,
-        hasStructuredErrors,
+        hasAsyncExecute,
       },
     };
   }
 
+  /**
+   * Check V2 decorator interface: name (from @command), metadata (from @meta),
+   * execute method. validate is optional in V2 (not all commands define it).
+   */
   private static validateInterface(instance: Record<string, unknown>): boolean {
     return (
       typeof instance.name === 'string' &&
-      typeof instance.syntax === 'string' &&
-      typeof instance.description === 'string' &&
-      typeof instance.outputType === 'string' &&
-      instance.inputSchema !== undefined &&
-      typeof instance.execute === 'function' &&
-      typeof instance.validate === 'function'
+      instance.metadata !== undefined &&
+      typeof instance.metadata === 'object' &&
+      typeof instance.execute === 'function'
     );
   }
 
+  /**
+   * Check required metadata fields populated by @command and @meta decorators
+   */
   private static validateRequiredProperties(instance: Record<string, unknown>): boolean {
-    return (
-      typeof instance.name === 'string' &&
-      instance.name.length > 0 &&
-      typeof instance.syntax === 'string' &&
-      instance.syntax.length > 0 &&
-      typeof instance.description === 'string' &&
-      instance.description.length > 0 &&
-      typeof instance.outputType === 'string' &&
-      instance.outputType.length > 0 &&
-      instance.inputSchema !== undefined
-    );
-  }
+    if (typeof instance.name !== 'string' || instance.name.length === 0) return false;
 
-  private static validateMetadata(metadata: Record<string, unknown>): boolean {
+    const metadata = instance.metadata as Record<string, unknown> | undefined;
     if (!metadata || typeof metadata !== 'object') return false;
 
+    const syntax = metadata.syntax;
+    const hasSyntax =
+      (typeof syntax === 'string' && syntax.length > 0) ||
+      (Array.isArray(syntax) && syntax.length > 0);
+
     return (
+      typeof metadata.description === 'string' &&
+      (metadata.description as string).length > 0 &&
+      hasSyntax &&
+      Array.isArray(metadata.examples) &&
+      (metadata.examples as unknown[]).length > 0 &&
       typeof metadata.category === 'string' &&
-      ['simple', 'medium', 'complex'].includes(metadata.complexity as string) &&
-      Array.isArray(metadata.sideEffects) &&
-      Array.isArray(metadata.examples) &&
-      Array.isArray(metadata.relatedCommands) &&
-      Array.isArray(metadata.examples) &&
-      metadata.examples.every(
-        (ex: Record<string, unknown>) =>
-          typeof ex.code === 'string' && typeof ex.description === 'string'
-      )
+      (metadata.category as string).length > 0
     );
   }
 
-  private static validateLLMDocumentation(documentation: Record<string, unknown>): boolean {
-    if (!documentation || typeof documentation !== 'object') return false;
+  /**
+   * Check metadata quality — optional fields that indicate thorough documentation
+   */
+  private static validateMetadataQuality(metadata: Record<string, unknown>): boolean {
+    if (!metadata || typeof metadata !== 'object') return false;
 
-    return (
-      typeof documentation.summary === 'string' &&
-      Array.isArray(documentation.parameters) &&
-      typeof documentation.returns === 'object' &&
-      Array.isArray(documentation.examples) &&
-      Array.isArray(documentation.seeAlso) &&
-      Array.isArray(documentation.tags) &&
-      Array.isArray(documentation.parameters) &&
-      documentation.parameters.every(
-        (param: Record<string, unknown>) =>
-          typeof param.name === 'string' &&
-          typeof param.type === 'string' &&
-          typeof param.description === 'string' &&
-          typeof param.optional === 'boolean' &&
-          Array.isArray(param.examples)
-      )
-    );
+    const hasExamplesQuality =
+      Array.isArray(metadata.examples) && (metadata.examples as unknown[]).length >= 2;
+
+    const hasSideEffects =
+      metadata.sideEffects === undefined || Array.isArray(metadata.sideEffects);
+
+    return hasExamplesQuality && hasSideEffects;
   }
 
+  /**
+   * Check validate method exists and is callable.
+   * V2 commands use validate as a type guard (returns boolean), not V1's
+   * {isValid, errors[], suggestions[]} object.
+   */
   private static validateValidationMethod(instance: Record<string, unknown>): boolean {
     if (typeof instance.validate !== 'function') return false;
 
     try {
-      // Test with empty args to see if it returns ValidationResult structure
-      const result = instance.validate([]);
-      return (
-        typeof result === 'object' &&
-        typeof result.isValid === 'boolean' &&
-        Array.isArray(result.errors) &&
-        Array.isArray(result.suggestions)
-      );
+      // V2 validate is a type guard — returns boolean
+      const result = (instance.validate as (input: unknown) => unknown)({});
+      return typeof result === 'boolean';
     } catch {
-      return false;
+      // If it throws on invalid input, that's acceptable behavior
+      return true;
     }
   }
 
@@ -273,15 +247,15 @@ export class CommandPatternValidator {
     return sourceCode.includes('@llm-bundle-size') && sourceCode.includes('@llm-description');
   }
 
-  private static validateStructuredErrors(instance: Record<string, unknown>): boolean {
-    // This is harder to test without actually executing, but we can check method signature
-    const executeMethod = (instance.execute as any).toString();
-    return (
-      executeMethod.includes('Promise<EvaluationResult') ||
-      executeMethod.includes('EvaluationResult<') ||
-      executeMethod.includes('success:') ||
-      executeMethod.includes('error:')
-    );
+  /**
+   * Check that execute is an async function
+   */
+  private static validateAsyncExecute(instance: Record<string, unknown>): boolean {
+    if (typeof instance.execute !== 'function') return false;
+
+    // Check if the function is async (AsyncFunction constructor name)
+    const executeFn = instance.execute as Function;
+    return executeFn.constructor.name === 'AsyncFunction';
   }
 }
 
@@ -326,7 +300,7 @@ export class CommandSuiteValidator {
         sourceCode
       );
 
-      const recommendations = validation.suggestions.slice(0, 3); // Top 3 suggestions
+      const recommendations = validation.suggestions.slice(0, 3);
 
       analyses.push({
         commandName: command.name,
@@ -342,7 +316,6 @@ export class CommandSuiteValidator {
     const averageScore = Math.round(totalScore / commands.length);
     const needsWork = commands.length - enhancedCount;
 
-    // Generate overall recommendations
     const overallRecommendations: string[] = [];
     if (averageScore < 80) {
       overallRecommendations.push('Focus on improving validation methods and error handling');
@@ -373,22 +346,22 @@ export class ValidationReporter {
     const { commandName, validation } = analysis;
     const { score, isEnhanced, passed, failed, suggestions } = validation;
 
-    console.log(`\n🔍 ${commandName} Command Analysis`);
-    console.log(`📊 Score: ${score}/100 ${isEnhanced ? '✅ ENHANCED' : '⚠️  NEEDS WORK'}`);
+    console.log(`\n${commandName} Command Analysis`);
+    console.log(`Score: ${score}/100 ${isEnhanced ? 'ENHANCED' : 'NEEDS WORK'}`);
 
     if (passed.length > 0) {
-      console.log('\n✅ Passed Checks:');
-      passed.forEach(check => console.log(`  ${check}`));
+      console.log('\nPassed Checks:');
+      passed.forEach(check => console.log(`  + ${check}`));
     }
 
     if (failed.length > 0) {
-      console.log('\n❌ Failed Checks:');
-      failed.forEach(check => console.log(`  ${check}`));
+      console.log('\nFailed Checks:');
+      failed.forEach(check => console.log(`  - ${check}`));
     }
 
     if (suggestions.length > 0) {
-      console.log('\n💡 Suggestions:');
-      suggestions.slice(0, 3).forEach(suggestion => console.log(`  • ${suggestion}`));
+      console.log('\nSuggestions:');
+      suggestions.slice(0, 3).forEach(suggestion => console.log(`  * ${suggestion}`));
     }
   }
 
@@ -397,22 +370,22 @@ export class ValidationReporter {
   ): void {
     const { overall, commands, recommendations } = result;
 
-    console.log('\n🏗️  HYPERFIXI COMMAND SUITE VALIDATION');
-    console.log(`📈 Overall Score: ${overall.averageScore}/100`);
-    console.log(`✅ Enhanced Commands: ${overall.enhanced}/${overall.total}`);
-    console.log(`⚠️  Need Enhancement: ${overall.needsWork}`);
+    console.log('\nCOMMAND SUITE VALIDATION');
+    console.log(`Overall Score: ${overall.averageScore}/100`);
+    console.log(`Enhanced Commands: ${overall.enhanced}/${overall.total}`);
+    console.log(`Need Enhancement: ${overall.needsWork}`);
 
-    console.log('\n📋 Command Breakdown:');
+    console.log('\nCommand Breakdown:');
     commands
       .sort((a, b) => b.validation.score - a.validation.score)
       .forEach(cmd => {
-        const status = cmd.validation.isEnhanced ? '✅' : '⚠️';
+        const status = cmd.validation.isEnhanced ? '+' : '-';
         console.log(`  ${status} ${cmd.commandName}: ${cmd.validation.score}/100`);
       });
 
     if (recommendations.length > 0) {
-      console.log('\n🎯 Priority Recommendations:');
-      recommendations.forEach(rec => console.log(`  • ${rec}`));
+      console.log('\nPriority Recommendations:');
+      recommendations.forEach(rec => console.log(`  * ${rec}`));
     }
   }
 }

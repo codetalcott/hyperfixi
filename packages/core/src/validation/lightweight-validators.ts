@@ -219,6 +219,21 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
       for (const [fieldName, validator] of Object.entries(fields)) {
         const fieldValue = obj[fieldName];
         const fieldExists = fieldName in obj;
+
+        // Check if required field is missing BEFORE running the validator
+        // Otherwise the validator fails with a type error (e.g. "Expected string, received undefined")
+        // instead of the more helpful "Required field missing" message
+        if (!fieldExists && !(validator as any)._isOptional) {
+          return {
+            success: false,
+            error: createValidationError(
+              'missing-argument',
+              `Required field "${fieldName}" is missing`,
+              fieldName
+            ),
+          };
+        }
+
         const fieldResult = validator.validate(fieldValue);
 
         if (!fieldResult.success) {
@@ -231,22 +246,6 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
               'validation-error',
               fieldResult.error!.message || `Field "${fieldName}" validation failed`,
               errorPath
-            ),
-          };
-        }
-
-        // Check if required field is missing from input
-        // A field is considered missing if:
-        // 1. It's not present in the input object (!fieldExists)
-        // 2. The validator returned undefined (fieldResult.data === undefined)
-        // 3. The validator is not explicitly optional (!(validator as any)._isOptional)
-        if (!fieldExists && fieldResult.data === undefined && !(validator as any)._isOptional) {
-          return {
-            success: false,
-            error: createValidationError(
-              'missing-argument',
-              `Required field "${fieldName}" is missing`,
-              fieldName
             ),
           };
         }
@@ -649,9 +648,28 @@ addDescribeToValidator = function <T>(validator: any): RuntimeValidator<T> {
   }
   // Add refine method (custom validation)
   if (!validator.refine) {
-    validator.refine = function (_refineFn: any, _errorMessage?: string) {
-      // For now, just return this - we don't enforce refinements
-      return this;
+    validator.refine = function (refineFn: (value: any) => boolean, errorMessage?: string) {
+      const originalValidate = this.validate.bind(this);
+      const refinedValidator = {
+        ...this,
+        validate: (value: unknown): ValidationResult<any> => {
+          const result = originalValidate(value);
+          if (!result.success) {
+            return result;
+          }
+          if (!refineFn(result.data)) {
+            return {
+              success: false,
+              error: createValidationError(
+                'runtime-error',
+                errorMessage || 'Refinement validation failed'
+              ),
+            };
+          }
+          return result;
+        },
+      };
+      return addDescribeToValidator(refinedValidator);
     };
   }
 
@@ -779,47 +797,35 @@ export function createEnumValidator<T extends readonly string[]>(
   });
 }
 
+// Note: Factory functions (createStringValidator, etc.) already call addDescribeToValidator
+// internally, so we don't wrap them again here to avoid double Proxy layers.
 export const v = {
-  string: (options?: StringValidatorOptions) =>
-    addDescribeToValidator(createStringValidator(options || {})),
-  number: (options?: { min?: number; max?: number }) =>
-    addDescribeToValidator(createNumberValidator(options || {})),
-  boolean: () => addDescribeToValidator(createBooleanValidator()),
-  object: (fields: any) => addDescribeToValidator(createObjectValidator(fields)),
-  array: (itemValidator: any) => addDescribeToValidator(createArrayValidator(itemValidator)),
-  tuple: (validators: any) => addDescribeToValidator(createTupleValidator(validators)),
-  union: (validators: any) => addDescribeToValidator(createUnionValidator(validators)),
-  literal: (value: any) => addDescribeToValidator(createLiteralValidator(value)),
-  custom: (validator: any, errorMessage?: string) =>
-    addDescribeToValidator(createCustomValidator(validator, errorMessage)),
+  string: (options?: StringValidatorOptions) => createStringValidator(options || {}),
+  number: (options?: { min?: number; max?: number }) => createNumberValidator(options || {}),
+  boolean: () => createBooleanValidator(),
+  object: (fields: any) => createObjectValidator(fields),
+  array: (itemValidator: any) => createArrayValidator(itemValidator),
+  tuple: (validators: any) => createTupleValidator(validators),
+  union: (validators: any) => createUnionValidator(validators),
+  literal: (value: any) => createLiteralValidator(value),
+  custom: (validator: any, errorMessage?: string) => createCustomValidator(validator, errorMessage),
   record: (keyValidator: any, valueValidator: any) =>
-    addDescribeToValidator(createRecordValidator(keyValidator, valueValidator)),
-  enum: (values: readonly string[]) => addDescribeToValidator(createEnumValidator(values)),
-  function: () =>
-    addDescribeToValidator(
-      createCustomValidator(value => typeof value === 'function', 'Expected function')
-    ),
-  unknown: () => addDescribeToValidator(createPassthroughValidator<unknown>()),
-  any: () => addDescribeToValidator(createPassthroughValidator<any>()),
-  null: () =>
-    addDescribeToValidator(createCustomValidator(value => value === null, 'Expected null')),
-  undefined: () =>
-    addDescribeToValidator(
-      createCustomValidator(value => value === undefined, 'Expected undefined')
-    ),
+    createRecordValidator(keyValidator, valueValidator),
+  enum: (values: readonly string[]) => createEnumValidator(values),
+  function: () => createCustomValidator(value => typeof value === 'function', 'Expected function'),
+  unknown: () => createPassthroughValidator<unknown>(),
+  any: () => createPassthroughValidator<any>(),
+  null: () => createCustomValidator(value => value === null, 'Expected null'),
+  undefined: () => createCustomValidator(value => value === undefined, 'Expected undefined'),
   instanceOf: (constructor: any) =>
-    addDescribeToValidator(
-      createCustomValidator(
-        value => value instanceof constructor,
-        `Expected instance of ${constructor.name}`
-      )
+    createCustomValidator(
+      value => value instanceof constructor,
+      `Expected instance of ${constructor.name}`
     ),
   instanceof: (constructor: any) =>
-    addDescribeToValidator(
-      createCustomValidator(
-        value => value instanceof constructor,
-        `Expected instance of ${constructor.name}`
-      )
+    createCustomValidator(
+      value => value instanceof constructor,
+      `Expected instance of ${constructor.name}`
     ),
 };
 

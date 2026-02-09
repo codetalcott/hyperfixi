@@ -209,10 +209,16 @@ async function main(): Promise<void> {
   await validateSingleCommand(commandName);
 }
 
-// Run CLI if this is the main module
-if (require.main === module) {
+// Run CLI when invoked directly
+// Supports both ESM (import.meta.url) and CJS (require.main) contexts
+const isMainModule =
+  typeof require !== 'undefined' && typeof module !== 'undefined'
+    ? require.main === module
+    : import.meta.url === new URL(`file://${process.argv[1]}`).href;
+
+if (isMainModule) {
   main().catch(error => {
-    console.error('❌ Validation failed:', error);
+    console.error('Validation failed:', error);
     process.exit(1);
   });
 }

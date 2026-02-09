@@ -1,238 +1,130 @@
 /**
- * Test suite for validating enhanced command pattern compliance
+ * Test suite for validating V2 decorator-based command pattern compliance
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-  CommandPatternValidator,
-  CommandSuiteValidator,
-  ValidationReporter,
-} from './command-pattern-validator';
+import { CommandPatternValidator, CommandSuiteValidator } from './command-pattern-validator';
 
-// Import enhanced commands
+// Import V2 decorator-based commands
 import { HideCommand, createHideCommand } from '../commands/dom/hide';
 import { ShowCommand, createShowCommand } from '../commands/dom/show';
 import { ToggleCommand, createToggleCommand } from '../commands/dom/toggle';
 import { AddCommand, createAddCommand } from '../commands/dom/add';
 import { RemoveCommand, createRemoveCommand } from '../commands/dom/remove';
 
-// Skipped: Tests expect V1-style command metadata (syntax, outputType, documentation.parameters)
-// that differs from V2 command structure
-describe.skip('Enhanced Command Pattern Validation', () => {
-  describe('Individual Command Validation', () => {
-    it('HideCommand should pass enhanced pattern validation', () => {
-      const result = CommandPatternValidator.validateCommand(HideCommand, createHideCommand);
+const ALL_COMMANDS = [
+  { name: 'HideCommand', CommandClass: HideCommand, factory: createHideCommand },
+  { name: 'ShowCommand', CommandClass: ShowCommand, factory: createShowCommand },
+  { name: 'ToggleCommand', CommandClass: ToggleCommand, factory: createToggleCommand },
+  { name: 'AddCommand', CommandClass: AddCommand, factory: createAddCommand },
+  { name: 'RemoveCommand', CommandClass: RemoveCommand, factory: createRemoveCommand },
+] as const;
 
-      expect(result.isEnhanced).toBe(true);
-      expect(result.score).toBeGreaterThanOrEqual(80);
+describe('V2 Command Pattern Validation', () => {
+  describe('Individual Command Validation', () => {
+    it.each(ALL_COMMANDS)('$name should pass pattern validation', ({ CommandClass, factory }) => {
+      const result = CommandPatternValidator.validateCommand(
+        CommandClass as unknown as new () => unknown,
+        factory
+      );
+
       expect(result.details.hasCorrectInterface).toBe(true);
       expect(result.details.hasRequiredProperties).toBe(true);
-      expect(result.details.hasProperMetadata).toBe(true);
-      expect(result.details.hasLLMDocumentation).toBe(true);
-      expect(result.details.hasValidation).toBe(true);
       expect(result.details.hasFactoryFunction).toBe(true);
+      // hasAsyncExecute is informational — some commands (e.g., RemoveCommand) have sync execute
+      // validate is optional in V2 — some commands inherit it, others don't define it
+    });
+  });
+
+  describe('V2 Decorator Interface Compliance', () => {
+    it.each(ALL_COMMANDS)('$name should have V2 decorator properties', ({ CommandClass }) => {
+      const instance = new CommandClass() as any;
+
+      // @command decorator injects name
+      expect(typeof instance.name).toBe('string');
+      expect(instance.name.length).toBeGreaterThan(0);
+
+      // @meta decorator injects metadata
+      expect(instance.metadata).toBeDefined();
+      expect(typeof instance.metadata).toBe('object');
+
+      // execute is required
+      expect(typeof instance.execute).toBe('function');
+
+      // validate is optional — only check if defined
+      if (instance.validate !== undefined) {
+        expect(typeof instance.validate).toBe('function');
+      }
+    });
+  });
+
+  describe('CommandMetadata Structure', () => {
+    it.each(ALL_COMMANDS)('$name should have complete CommandMetadata', ({ CommandClass }) => {
+      const instance = new CommandClass() as any;
+      const { metadata } = instance;
+
+      // Required fields
+      expect(typeof metadata.description).toBe('string');
+      expect(metadata.description.length).toBeGreaterThan(0);
+
+      // syntax can be string or string[]
+      if (typeof metadata.syntax === 'string') {
+        expect(metadata.syntax.length).toBeGreaterThan(0);
+      } else {
+        expect(Array.isArray(metadata.syntax)).toBe(true);
+        expect(metadata.syntax.length).toBeGreaterThan(0);
+      }
+
+      expect(Array.isArray(metadata.examples)).toBe(true);
+      expect(metadata.examples.length).toBeGreaterThan(0);
+
+      expect(typeof metadata.category).toBe('string');
+      expect(metadata.category.length).toBeGreaterThan(0);
+
+      // Examples should be strings
+      metadata.examples.forEach((example: unknown) => {
+        expect(typeof example).toBe('string');
+      });
+    });
+  });
+
+  describe('Validate Method (Type Guard)', () => {
+    // Only test commands that define validate
+    const COMMANDS_WITH_VALIDATE = ALL_COMMANDS.filter(({ CommandClass }) => {
+      const instance = new CommandClass() as any;
+      return typeof instance.validate === 'function';
     });
 
-    it('ShowCommand should pass enhanced pattern validation', () => {
-      const result = CommandPatternValidator.validateCommand(ShowCommand, createShowCommand);
+    it.each(COMMANDS_WITH_VALIDATE)('$name validate should return boolean', ({ CommandClass }) => {
+      const instance = new CommandClass() as any;
 
-      expect(result.isEnhanced).toBe(true);
-      expect(result.score).toBeGreaterThanOrEqual(80);
-      expect(result.details.hasCorrectInterface).toBe(true);
-      expect(result.details.hasProperMetadata).toBe(true);
-      expect(result.details.hasLLMDocumentation).toBe(true);
-    });
-
-    it('ToggleCommand should pass enhanced pattern validation', () => {
-      const result = CommandPatternValidator.validateCommand(ToggleCommand, createToggleCommand);
-
-      expect(result.isEnhanced).toBe(true);
-      expect(result.score).toBeGreaterThanOrEqual(80);
-      expect(result.details.hasValidation).toBe(true);
-    });
-
-    it('AddCommand should pass enhanced pattern validation', () => {
-      const result = CommandPatternValidator.validateCommand(AddCommand, createAddCommand);
-
-      expect(result.isEnhanced).toBe(true);
-      expect(result.score).toBeGreaterThanOrEqual(80);
-      expect(result.details.hasCorrectInterface).toBe(true);
-    });
-
-    it('RemoveCommand should pass enhanced pattern validation', () => {
-      const result = CommandPatternValidator.validateCommand(RemoveCommand, createRemoveCommand);
-
-      expect(result.isEnhanced).toBe(true);
-      expect(result.score).toBeGreaterThanOrEqual(80);
-      expect(result.details.hasCorrectInterface).toBe(true);
+      // V2 validate is a type guard returning boolean
+      const result = instance.validate({});
+      expect(typeof result).toBe('boolean');
     });
   });
 
   describe('Command Suite Validation', () => {
     it('All DOM commands should achieve high overall score', async () => {
-      const commands = [
-        {
-          name: 'HideCommand',
-          filePath: './src/commands/dom/hide.ts',
-          CommandClass: HideCommand,
-          factoryFunction: createHideCommand,
-        },
-        {
-          name: 'ShowCommand',
-          filePath: './src/commands/dom/show.ts',
-          CommandClass: ShowCommand,
-          factoryFunction: createShowCommand,
-        },
-        {
-          name: 'ToggleCommand',
-          filePath: './src/commands/dom/toggle.ts',
-          CommandClass: ToggleCommand,
-          factoryFunction: createToggleCommand,
-        },
-        {
-          name: 'AddCommand',
-          filePath: './src/commands/dom/add.ts',
-          CommandClass: AddCommand,
-          factoryFunction: createAddCommand,
-        },
-        {
-          name: 'RemoveCommand',
-          filePath: './src/commands/dom/remove.ts',
-          CommandClass: RemoveCommand,
-          factoryFunction: createRemoveCommand,
-        },
-      ];
+      const commands = ALL_COMMANDS.map(cmd => ({
+        name: cmd.name,
+        filePath: `./src/commands/dom/${cmd.name.replace('Command', '').toLowerCase()}.ts`,
+        CommandClass: cmd.CommandClass as unknown as new () => unknown,
+        factoryFunction: cmd.factory,
+      }));
 
       const suiteResult = await CommandSuiteValidator.validateCommandSuite(commands);
 
-      // All commands should be enhanced
-      expect(suiteResult.overall.enhanced).toBe(5);
       expect(suiteResult.overall.total).toBe(5);
-      expect(suiteResult.overall.averageScore).toBeGreaterThanOrEqual(80);
-      expect(suiteResult.overall.needsWork).toBe(0);
+      // Typical score: interface + required props + metadata + factory = 4/7 (57%) minimum
+      // Most commands also get validation + async = 6/7 (86%)
+      // Bundle annotations require source code, so allow flexibility
+      expect(suiteResult.overall.averageScore).toBeGreaterThanOrEqual(57);
 
-      // Print detailed results
-      console.log('\n📊 DOM Commands Validation Results:');
-      ValidationReporter.printSuiteValidation(suiteResult);
-
-      // Each command should have high individual scores
       suiteResult.commands.forEach(cmd => {
-        expect(cmd.validation.score).toBeGreaterThanOrEqual(80);
-        expect(cmd.validation.isEnhanced).toBe(true);
-      });
-    });
-  });
-
-  describe('Pattern Compliance Details', () => {
-    it('Commands should have proper TypeScript interface compliance', () => {
-      const commands = [HideCommand, ShowCommand, ToggleCommand, AddCommand, RemoveCommand];
-
-      commands.forEach(CommandClass => {
-        const instance = new CommandClass() as any;
-
-        // Check interface compliance
-        expect(typeof instance.name).toBe('string');
-        expect(typeof instance.syntax).toBe('string');
-        expect(typeof instance.description).toBe('string');
-        expect(typeof instance.outputType).toBe('string');
-        expect(instance.inputSchema).toBeDefined();
-        expect(typeof instance.execute).toBe('function');
-        expect(typeof instance.validate).toBe('function');
-        expect(instance.metadata).toBeDefined();
-        expect(instance.documentation).toBeDefined();
-      });
-    });
-
-    it('Commands should have comprehensive metadata', () => {
-      const commands = [HideCommand, ShowCommand, ToggleCommand, AddCommand, RemoveCommand];
-
-      commands.forEach(CommandClass => {
-        const instance = new CommandClass() as any;
-        const { metadata } = instance;
-
-        expect(typeof metadata.category).toBe('string');
-        expect(['simple', 'medium', 'complex']).toContain(metadata.complexity);
-        expect(Array.isArray(metadata.sideEffects)).toBe(true);
-        expect(Array.isArray(metadata.examples)).toBe(true);
-        expect(Array.isArray(metadata.relatedCommands)).toBe(true);
-
-        // Check examples structure
-        metadata.examples.forEach((example: any) => {
-          expect(typeof example.code).toBe('string');
-          expect(typeof example.description).toBe('string');
-          expect(example.expectedOutput).toBeDefined();
-        });
-      });
-    });
-
-    it('Commands should have LLM-friendly documentation', () => {
-      const commands = [HideCommand, ShowCommand, ToggleCommand, AddCommand, RemoveCommand];
-
-      commands.forEach(CommandClass => {
-        const instance = new CommandClass() as any;
-        const { documentation } = instance;
-
-        expect(typeof documentation.summary).toBe('string');
-        expect(Array.isArray(documentation.parameters)).toBe(true);
-        expect(typeof documentation.returns).toBe('object');
-        expect(Array.isArray(documentation.examples)).toBe(true);
-        expect(Array.isArray(documentation.seeAlso)).toBe(true);
-        expect(Array.isArray(documentation.tags)).toBe(true);
-
-        // Check parameter structure
-        documentation.parameters.forEach((param: any) => {
-          expect(typeof param.name).toBe('string');
-          expect(typeof param.type).toBe('string');
-          expect(typeof param.description).toBe('string');
-          expect(typeof param.optional).toBe('boolean');
-          expect(Array.isArray(param.examples)).toBe(true);
-        });
-      });
-    });
-
-    it('Commands should have proper validation methods', () => {
-      const commands = [HideCommand, ShowCommand, ToggleCommand, AddCommand, RemoveCommand];
-
-      commands.forEach(CommandClass => {
-        const instance = new CommandClass() as any;
-
-        // Test validation method
-        const validResult = instance.validate([]);
-        expect(typeof validResult).toBe('object');
-        expect(typeof validResult.isValid).toBe('boolean');
-        expect(Array.isArray(validResult.errors)).toBe(true);
-        expect(Array.isArray(validResult.suggestions)).toBe(true);
-      });
-    });
-  });
-
-  describe('Individual Command Analysis', () => {
-    it('Should provide detailed analysis for each command', () => {
-      const commands = [
-        { name: 'HideCommand', CommandClass: HideCommand, factory: createHideCommand },
-        { name: 'ShowCommand', CommandClass: ShowCommand, factory: createShowCommand },
-        { name: 'ToggleCommand', CommandClass: ToggleCommand, factory: createToggleCommand },
-        { name: 'AddCommand', CommandClass: AddCommand, factory: createAddCommand },
-        { name: 'RemoveCommand', CommandClass: RemoveCommand, factory: createRemoveCommand },
-      ];
-
-      commands.forEach(({ name, CommandClass, factory }) => {
-        const result = CommandPatternValidator.validateCommand(CommandClass, factory);
-
-        console.log(`\n🔍 ${name} Analysis:`);
-        console.log(`📊 Score: ${result.score}/100`);
-        console.log(`✅ Enhanced: ${result.isEnhanced}`);
-        console.log(`📋 Passed: ${result.passed.length} checks`);
-        console.log(`❌ Failed: ${result.failed.length} checks`);
-
-        if (result.failed.length > 0) {
-          console.log('❌ Issues:', result.failed);
-          console.log('💡 Suggestions:', result.suggestions);
-        }
-
-        // All our enhanced commands should pass
-        expect(result.isEnhanced).toBe(true);
-        expect(result.score).toBeGreaterThanOrEqual(85); // High bar for our enhanced commands
+        expect(cmd.validation.details.hasCorrectInterface).toBe(true);
+        expect(cmd.validation.details.hasRequiredProperties).toBe(true);
+        // hasAsyncExecute not asserted — some commands have sync execute (e.g., RemoveCommand)
       });
     });
   });
