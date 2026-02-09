@@ -24,9 +24,44 @@ import {
 
 export type FetchResponseType = 'text' | 'json' | 'html' | 'response' | 'blob' | 'arrayBuffer';
 
+/**
+ * Configuration for a custom fetch response type registered via registerFetchResponseType().
+ * Plugins can extend `fetch <url> as <type>` with custom types (e.g., `as siren`, `as graphql`).
+ */
+export interface FetchResponseTypeConfig {
+  /** Accept header value to send with the request (e.g., 'application/vnd.siren+json') */
+  accept?: string;
+  /** Handler that processes the Response and returns the parsed data */
+  handler: (response: Response, context: TypedExecutionContext) => Promise<unknown>;
+}
+
+const customResponseTypes = new Map<string, FetchResponseTypeConfig>();
+
+/**
+ * Register a custom response type for use with `fetch <url> as <type>`.
+ * This allows plugins to extend fetch without modifying the core command.
+ *
+ * @example
+ * registerFetchResponseType('siren', {
+ *   accept: 'application/vnd.siren+json',
+ *   handler: async (response) => response.json(),
+ * });
+ * // Now `fetch /api/ as siren` works in hyperscript
+ */
+export function registerFetchResponseType(name: string, config: FetchResponseTypeConfig): void {
+  customResponseTypes.set(name.toLowerCase(), config);
+}
+
+/**
+ * Get a registered custom response type config. Used internally by FetchCommand.
+ */
+export function getCustomResponseType(name: string): FetchResponseTypeConfig | undefined {
+  return customResponseTypes.get(name.toLowerCase());
+}
+
 export interface FetchCommandInput {
   url: string;
-  responseType: FetchResponseType;
+  responseType: string;
   options: RequestInit;
 }
 
@@ -90,6 +125,16 @@ export class FetchCommand implements DecoratedCommand {
 
     const requestOptions: RequestInit = { ...options, signal: abortController.signal };
 
+    // Merge Accept header from custom response type (e.g., 'application/vnd.siren+json')
+    const customType = customResponseTypes.get(responseType);
+    if (customType?.accept) {
+      const headers = new Headers(requestOptions.headers as HeadersInit | undefined);
+      if (!headers.has('Accept')) {
+        headers.set('Accept', customType.accept);
+      }
+      requestOptions.headers = headers;
+    }
+
     if (context.me) {
       const detail = {
         ...requestOptions,
@@ -114,7 +159,7 @@ export class FetchCommand implements DecoratedCommand {
         response = detail.response;
       }
 
-      const data = await this.handleResponse(response, responseType);
+      const data = await this.handleResponse(response, responseType, context);
 
       if (context.me) this.dispatchEvent(context.me, 'fetch:afterRequest', { result: data });
 
@@ -159,7 +204,7 @@ export class FetchCommand implements DecoratedCommand {
     return v;
   }
 
-  private parseResponseType(asNode: ASTNode | undefined): FetchResponseType {
+  private parseResponseType(asNode: ASTNode | undefined): string {
     if (!asNode) return 'text';
     const n = asNode as any;
     // Handle both 'identifier' and 'expression' node types (for compatibility with different AST structures)
@@ -170,6 +215,8 @@ export class FetchCommand implements DecoratedCommand {
         if (t === 'object') return 'json';
         if (['text', 'json', 'html', 'response', 'blob', 'arraybuffer'].includes(t))
           return t === 'arraybuffer' ? 'arrayBuffer' : (t as FetchResponseType);
+        // Check for plugin-registered custom response types (e.g., 'siren', 'graphql')
+        if (customResponseTypes.has(t)) return t;
         throw new Error(`fetch: invalid response type "${t}"`);
       }
     }
@@ -219,7 +266,11 @@ export class FetchCommand implements DecoratedCommand {
     return String(body);
   }
 
-  private async handleResponse(response: Response, type: FetchResponseType): Promise<any> {
+  private async handleResponse(
+    response: Response,
+    type: string,
+    context: TypedExecutionContext
+  ): Promise<any> {
     switch (type) {
       case 'response':
         return response;
@@ -231,8 +282,14 @@ export class FetchCommand implements DecoratedCommand {
         return response.blob();
       case 'arrayBuffer':
         return response.arrayBuffer();
-      default:
+      case 'text':
         return response.text();
+      default: {
+        // Delegate to plugin-registered custom response type handler
+        const customType = customResponseTypes.get(type);
+        if (customType) return customType.handler(response, context);
+        return response.text();
+      }
     }
   }
 

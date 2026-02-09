@@ -1,5 +1,9 @@
 # Plan: @lokascript/siren — Siren Hypermedia Plugin
 
+## siren-grail local path
+
+/Users/williamtalcott/projects/siren-grail
+
 ## Goal
 
 Create a LokaScript plugin package that makes Siren hypermedia responses drive DOM behavior declaratively. The server's affordances (actions, links, entities) become the engine of UI state — no client-side router, no local state machine.

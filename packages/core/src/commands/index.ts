@@ -122,7 +122,12 @@ export {
 
 // Async Commands
 export { WaitCommand, createWaitCommand } from './async/wait';
-export { FetchCommand, createFetchCommand } from './async/fetch';
+export {
+  FetchCommand,
+  createFetchCommand,
+  registerFetchResponseType,
+  getCustomResponseType,
+} from './async/fetch';
 
 // Data Commands
 export { SetCommand, createSetCommand } from './data/set';
@@ -222,7 +227,7 @@ export type {
   ProcessPartialsResult,
 } from './dom/process-partials';
 export type { WaitCommandInput } from './async/wait';
-export type { FetchCommandInput } from './async/fetch';
+export type { FetchCommandInput, FetchResponseTypeConfig } from './async/fetch';
 export type { SetCommandInput } from './data/set';
 export type { GetCommandInput } from './data/get';
 export type { NumericModifyInput, NumericOperation, IncrementCommandInput } from './data/increment';

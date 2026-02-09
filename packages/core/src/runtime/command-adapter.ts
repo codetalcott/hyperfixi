@@ -18,6 +18,7 @@ import { HookRegistry } from '../types/hooks';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
 import { isControlFlowError } from './runtime-base';
+import { COMMANDS } from '../parser/parser-constants';
 
 /**
  * Runtime-compatible command interface
@@ -375,6 +376,9 @@ export class CommandRegistryV2 {
     const adapter = new CommandAdapterV2(impl, this.sharedEvaluator, this.hookRegistry);
     this.adapters.set(name, adapter);
 
+    // Also register with the parser so it recognizes the command keyword
+    COMMANDS.add(name);
+
     // Register aliases (for consolidated commands)
     const aliases = impl.metadata?.aliases;
     if (aliases && Array.isArray(aliases)) {
@@ -382,6 +386,7 @@ export class CommandRegistryV2 {
         const aliasLower = alias.toLowerCase();
         this.implementations.set(aliasLower, impl);
         this.adapters.set(aliasLower, adapter);
+        COMMANDS.add(aliasLower);
       }
     }
   }
