@@ -14,6 +14,17 @@ import type {
 import type { ContextMetadata } from '../types/context-types';
 import type { EvaluationResult } from '../types/command-types';
 
+/** Maximum entries retained in history arrays to prevent memory leaks. */
+const MAX_HISTORY_SIZE = 1000;
+
+/** Push to a bounded array, evicting oldest entries when full. */
+function boundedPush<T>(array: T[], item: T, maxSize = MAX_HISTORY_SIZE): void {
+  array.push(item);
+  if (array.length > maxSize) {
+    array.shift();
+  }
+}
+
 // ============================================================================
 // Enhanced On Feature Input/Output Schemas
 // ============================================================================
@@ -188,6 +199,7 @@ export class TypedOnFeatureImplementation {
   private errorHistory: Array<{ error: Error; timestamp: number; context: any }> = [];
   private throttleTimers: Map<string, number> = new Map();
   private debounceTimers: Map<string, number> = new Map();
+  private filterCache: Map<string, Function> = new Map();
 
   public readonly metadata: ContextMetadata = {
     category: 'Frontend',
@@ -427,18 +439,22 @@ export class TypedOnFeatureImplementation {
         );
       }
 
-      // Validate target selector - skip validation in test environment
-      if (
-        data.event?.target &&
-        data.event.target !== 'me' &&
-        data.event.target !== '>>>invalid-selector<<<'
-      ) {
+      // Validate target selector
+      if (data.event?.target && data.event.target !== 'me') {
+        let isInvalidSelector = false;
         try {
           // Basic CSS selector validation
           if (typeof document !== 'undefined') {
             document.querySelector(data.event.target);
           }
-        } catch (selectorError) {
+        } catch {
+          isInvalidSelector = true;
+        }
+        // Catch invalid selectors missed by permissive DOM implementations
+        if (!isInvalidSelector && /[<]/.test(data.event.target)) {
+          isInvalidSelector = true;
+        }
+        if (isInvalidSelector) {
           errors.push({
             type: 'syntax-error',
             message: `Invalid CSS selector: "${data.event.target}"`,
@@ -447,17 +463,6 @@ export class TypedOnFeatureImplementation {
           });
           suggestions.push('Use valid CSS selector syntax for target element');
         }
-      }
-
-      // Special validation for obviously invalid selectors
-      if (data.event?.target === '>>>invalid-selector<<<') {
-        errors.push({
-          type: 'syntax-error',
-          message: `Invalid CSS selector: "${data.event.target}"`,
-          path: 'event.target',
-          suggestions: [],
-        });
-        suggestions.push('Use valid CSS selector syntax for target element');
       }
 
       // Validate performance settings
@@ -571,7 +576,7 @@ export class TypedOnFeatureImplementation {
     commands: any[],
     context: any
   ): Promise<EventListener> {
-    const id = `listener-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `listener-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     const listener: EventListener = {
       id,
@@ -705,7 +710,7 @@ export class TypedOnFeatureImplementation {
         stopPropagation: false, // Would be set by command execution
       };
 
-      this.executionHistory.push(execution);
+      boundedPush(this.executionHistory, execution);
 
       // Update listener statistics
       listener.executionCount++;
@@ -726,8 +731,8 @@ export class TypedOnFeatureImplementation {
         stopPropagation: false,
       };
 
-      this.executionHistory.push(execution);
-      this.errorHistory.push({
+      boundedPush(this.executionHistory, execution);
+      boundedPush(this.errorHistory, {
         error: error as Error,
         timestamp: Date.now(),
         context: { listener, event },
@@ -830,7 +835,11 @@ export class TypedOnFeatureImplementation {
 
   private testEventFilter(event: Event, filter: string): boolean {
     try {
-      const filterFunction = new Function('event', `return ${filter}`);
+      let filterFunction = this.filterCache.get(filter);
+      if (!filterFunction) {
+        filterFunction = new Function('event', `return ${filter}`);
+        this.filterCache.set(filter, filterFunction);
+      }
       return Boolean(filterFunction(event));
     } catch {
       return true; // If filter fails, allow event through
@@ -1052,7 +1061,7 @@ export class TypedOnFeatureImplementation {
 
   private createErrorHandler() {
     return async (error: Error, context: any) => {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error,
         timestamp: Date.now(),
         context,
@@ -1084,9 +1093,26 @@ export class TypedOnFeatureImplementation {
     };
   }
 
+  dispose(): void {
+    for (const timer of this.debounceTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.debounceTimers.clear();
+    for (const timer of this.throttleTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.throttleTimers.clear();
+    this.listeners.clear();
+    this.filters.clear();
+    this.filterCache.clear();
+    this.executionHistory = [];
+    this.errorHistory = [];
+    this.evaluationHistory = [];
+  }
+
   private trackPerformance(startTime: number, success: boolean, output?: EnhancedOnOutput): void {
     const duration = Date.now() - startTime;
-    this.evaluationHistory.push({
+    boundedPush(this.evaluationHistory, {
       input: {} as EnhancedOnInput, // Would store actual input in real implementation
       output,
       success,

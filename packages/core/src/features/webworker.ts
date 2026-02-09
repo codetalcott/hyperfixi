@@ -8,6 +8,17 @@ import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
+/** Maximum entries retained in history arrays to prevent memory leaks. */
+const MAX_HISTORY_SIZE = 1000;
+
+/** Push to a bounded array, evicting oldest entries when full. */
+function boundedPush<T>(array: T[], item: T, maxSize = MAX_HISTORY_SIZE): void {
+  array.push(item);
+  if (array.length > maxSize) {
+    array.shift();
+  }
+}
+
 // ============================================================================
 // Enhanced WebWorker Feature Input/Output Schemas
 // ============================================================================
@@ -213,6 +224,7 @@ export class TypedWebWorkerFeatureImplementation {
   private errorHistory: Array<{ error: Error; timestamp: number; context: any }> = [];
   private throttleTimers: Map<string, number> = new Map();
   private debounceTimers: Map<string, number> = new Map();
+  private filterCache: Map<string, Function> = new Map();
 
   public readonly metadata: ContextMetadata = {
     category: 'Frontend',
@@ -644,7 +656,7 @@ export class TypedWebWorkerFeatureImplementation {
   }
 
   private async createWorker(workerConfig: any, _context: any): Promise<WorkerInstance> {
-    const id = `worker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `worker-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     let worker: Worker;
 
@@ -656,8 +668,8 @@ export class TypedWebWorkerFeatureImplementation {
         type: workerConfig.type || 'classic',
         name: workerConfig.name || id,
       });
-      // Clean up blob URL after worker creation
-      URL.revokeObjectURL(url);
+      // Revoke blob URL after a tick to ensure the worker has fetched the script
+      setTimeout(() => URL.revokeObjectURL(url), 0);
     } else {
       // Create worker from script URL
       worker = new Worker(workerConfig.script, {
@@ -706,7 +718,7 @@ export class TypedWebWorkerFeatureImplementation {
 
   private handleWorkerMessage(worker: WorkerInstance, event: MessageEvent): void {
     const message: WorkerMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       workerId: worker.id,
       type: 'incoming',
       data: event.data,
@@ -714,7 +726,7 @@ export class TypedWebWorkerFeatureImplementation {
       format: this.detectMessageFormat(event.data),
     };
 
-    this.messageHistory.push(message);
+    boundedPush(this.messageHistory, message);
 
     // Process event handlers
     this.processEventHandlers(worker.id, 'message', event);
@@ -722,7 +734,7 @@ export class TypedWebWorkerFeatureImplementation {
 
   private handleWorkerError(worker: WorkerInstance, event: ErrorEvent): void {
     const error = new Error(`Worker error: ${event.message}`);
-    this.errorHistory.push({
+    boundedPush(this.errorHistory, {
       error,
       timestamp: Date.now(),
       context: { worker, event },
@@ -734,7 +746,7 @@ export class TypedWebWorkerFeatureImplementation {
 
   private handleWorkerMessageError(worker: WorkerInstance, event: MessageEvent): void {
     const error = new Error('Worker message error: Failed to deserialize message');
-    this.errorHistory.push({
+    boundedPush(this.errorHistory, {
       error,
       timestamp: Date.now(),
       context: { worker, event },
@@ -778,7 +790,7 @@ export class TypedWebWorkerFeatureImplementation {
       handler.executionCount++;
       handler.lastExecutionTime = Date.now();
     } catch (error) {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error: error as Error,
         timestamp: Date.now(),
         context: { handler, event },
@@ -838,7 +850,11 @@ export class TypedWebWorkerFeatureImplementation {
 
   private testMessageFilter(event: Event, filter: string): boolean {
     try {
-      const filterFunction = new Function('message', `return ${filter}`);
+      let filterFunction = this.filterCache.get(filter);
+      if (!filterFunction) {
+        filterFunction = new Function('message', `return ${filter}`);
+        this.filterCache.set(filter, filterFunction);
+      }
       return Boolean(filterFunction(event));
     } catch {
       return true; // If filter fails, allow message through
@@ -961,7 +977,7 @@ export class TypedWebWorkerFeatureImplementation {
         worker.worker.postMessage(data, transferables || []);
 
         const message: WorkerMessage = {
-          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
           workerId,
           type: 'outgoing',
           data,
@@ -970,10 +986,10 @@ export class TypedWebWorkerFeatureImplementation {
           format: this.detectMessageFormat(data),
         };
 
-        this.messageHistory.push(message);
+        boundedPush(this.messageHistory, message);
         return true;
       } catch (error) {
-        this.errorHistory.push({
+        boundedPush(this.errorHistory, {
           error: error as Error,
           timestamp: Date.now(),
           context: { workerId, data },
@@ -1025,7 +1041,7 @@ export class TypedWebWorkerFeatureImplementation {
 
   private createMessageSubscriber() {
     return async (eventType: 'message' | 'error' | 'messageerror', command: any) => {
-      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       const handler: WorkerEventHandler = {
         id: handlerId,
@@ -1054,7 +1070,7 @@ export class TypedWebWorkerFeatureImplementation {
       eventType: 'message' | 'error' | 'messageerror',
       command: any
     ) => {
-      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       const handler: WorkerEventHandler = {
         id: handlerId,
@@ -1101,7 +1117,7 @@ export class TypedWebWorkerFeatureImplementation {
 
       const queue = this.messageQueue.get(workerId)!;
       queue.push({
-        id: `queued-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `queued-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         workerId,
         type: 'outgoing',
         data: message,
@@ -1124,13 +1140,13 @@ export class TypedWebWorkerFeatureImplementation {
       try {
         for (const message of queue) {
           worker.worker.postMessage(message.data);
-          this.messageHistory.push(message);
+          boundedPush(this.messageHistory, message);
         }
 
         queue.length = 0; // Clear queue
         return true;
       } catch (error) {
-        this.errorHistory.push({
+        boundedPush(this.errorHistory, {
           error: error as Error,
           timestamp: Date.now(),
           context: { workerId, queueSize: queue.length },
@@ -1167,7 +1183,7 @@ export class TypedWebWorkerFeatureImplementation {
 
   private createErrorHandler() {
     return async (error: Error, context: any) => {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error,
         timestamp: Date.now(),
         context,
@@ -1199,9 +1215,30 @@ export class TypedWebWorkerFeatureImplementation {
     };
   }
 
+  dispose(): void {
+    for (const instance of this.workers.values()) {
+      instance.worker.terminate();
+    }
+    this.workers.clear();
+    for (const timer of this.debounceTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.debounceTimers.clear();
+    for (const timer of this.throttleTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.throttleTimers.clear();
+    this.eventHandlers.clear();
+    this.messageQueue.clear();
+    this.filterCache.clear();
+    this.messageHistory = [];
+    this.errorHistory = [];
+    this.evaluationHistory = [];
+  }
+
   private trackPerformance(startTime: number, success: boolean, output?: WebWorkerOutput): void {
     const duration = Date.now() - startTime;
-    this.evaluationHistory.push({
+    boundedPush(this.evaluationHistory, {
       input: {} as WebWorkerInput, // Would store actual input in real implementation
       output,
       success,

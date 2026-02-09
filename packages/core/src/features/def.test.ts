@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DefFeature, FunctionDefinition } from './def';
+import { DefFeature, FunctionDefinition, TypedDefFeatureImplementation } from './def';
 import { createMockHyperscriptContext, createTestElement } from '../test-setup';
 import { ExecutionContext } from '../types/core';
 

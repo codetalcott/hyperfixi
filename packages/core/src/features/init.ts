@@ -9,6 +9,17 @@ import type { ValidationResult, ValidationError, EvaluationType } from '../types
 import type { LLMDocumentation } from '../types/command-types';
 import type { ExecutionContext } from '../types/core';
 
+/** Maximum entries retained in history arrays to prevent memory leaks. */
+const MAX_HISTORY_SIZE = 1000;
+
+/** Push to a bounded array, evicting oldest entries when full. */
+function boundedPush<T>(array: T[], item: T, maxSize = MAX_HISTORY_SIZE): void {
+  array.push(item);
+  if (array.length > maxSize) {
+    array.shift();
+  }
+}
+
 // ============================================================================
 // Enhanced Init Feature Input/Output Schemas
 // ============================================================================
@@ -592,7 +603,7 @@ export class TypedInitFeatureImplementation {
   }
 
   private async registerElement(initConfig: any, _context: any): Promise<InitRegistration> {
-    const id = `init-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `init-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     // Resolve target element
     let element: HTMLElement;
@@ -655,7 +666,7 @@ export class TypedInitFeatureImplementation {
     context: any
   ): Promise<InitExecution> {
     const execution: InitExecution = {
-      id: `exec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `exec-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       registrationId: registration.id,
       element: registration.element,
       commands: registration.commands,
@@ -703,7 +714,7 @@ export class TypedInitFeatureImplementation {
       registration.state = 'error';
       registration.lastError = error as Error;
 
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error: error as Error,
         timestamp: Date.now(),
         context: { registration, execution },
@@ -720,7 +731,7 @@ export class TypedInitFeatureImplementation {
 
       throw error;
     } finally {
-      this.executionHistory.push(execution);
+      boundedPush(this.executionHistory, execution);
     }
 
     return execution;
@@ -862,7 +873,7 @@ export class TypedInitFeatureImplementation {
   }
 
   private emitLifecycleEvent(event: InitLifecycleEvent): void {
-    this.lifecycleEvents.push(event);
+    boundedPush(this.lifecycleEvents, event);
 
     // Emit DOM event if element is available
     if (event.element) {
@@ -1089,7 +1100,7 @@ export class TypedInitFeatureImplementation {
 
   private createErrorHandler() {
     return async (error: Error, context: any) => {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error,
         timestamp: Date.now(),
         context,
@@ -1121,9 +1132,23 @@ export class TypedInitFeatureImplementation {
     };
   }
 
+  dispose(): void {
+    if (this.domObserver) {
+      this.domObserver.disconnect();
+      this.domObserver = undefined;
+    }
+    this.registrations.clear();
+    this.elementRegistrations.clear();
+    this.processedElements = new WeakSet();
+    this.executionHistory = [];
+    this.lifecycleEvents = [];
+    this.errorHistory = [];
+    this.evaluationHistory = [];
+  }
+
   private trackPerformance(startTime: number, success: boolean, output?: InitOutput): void {
     const duration = Date.now() - startTime;
-    this.evaluationHistory.push({
+    boundedPush(this.evaluationHistory, {
       input: {} as InitInput, // Would store actual input in real implementation
       output,
       success,

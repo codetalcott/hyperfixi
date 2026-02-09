@@ -8,6 +8,17 @@ import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
+/** Maximum entries retained in history arrays to prevent memory leaks. */
+const MAX_HISTORY_SIZE = 1000;
+
+/** Push to a bounded array, evicting oldest entries when full. */
+function boundedPush<T>(array: T[], item: T, maxSize = MAX_HISTORY_SIZE): void {
+  array.push(item);
+  if (array.length > maxSize) {
+    array.shift();
+  }
+}
+
 // ============================================================================
 // Enhanced Behaviors Feature Input/Output Schemas
 // ============================================================================
@@ -235,6 +246,7 @@ export class TypedBehaviorsFeatureImplementation {
   private elementBehaviors: Map<HTMLElement, Set<string>> = new Map();
   private lifecycleHistory: LifecycleEvent[] = [];
   private namespaces: Set<string> = new Set();
+  private filterCache: Map<string, Function> = new Map();
 
   public readonly metadata: ContextMetadata = {
     category: 'Frontend',
@@ -540,20 +552,27 @@ export class TypedBehaviorsFeatureImplementation {
             suggestions.push('Use standard DOM event types like "click", "input", "submit", etc.');
           }
 
-          // Validate event source selector - skip validation in test environment
+          // Validate event source selector
           if (
             handler.eventSource &&
             handler.eventSource !== 'me' &&
             handler.eventSource !== 'document' &&
-            handler.eventSource !== 'window' &&
-            handler.eventSource !== '>>>invalid-selector<<<'
+            handler.eventSource !== 'window'
           ) {
+            let isInvalidSelector = false;
             try {
               // Basic CSS selector validation
               if (typeof document !== 'undefined') {
                 document.querySelector(handler.eventSource);
               }
-            } catch (selectorError) {
+            } catch {
+              isInvalidSelector = true;
+            }
+            // Catch invalid selectors missed by permissive DOM implementations
+            if (!isInvalidSelector && /[<]/.test(handler.eventSource)) {
+              isInvalidSelector = true;
+            }
+            if (isInvalidSelector) {
               errors.push({
                 type: 'validation-error',
                 code: 'invalid-event-source-selector',
@@ -563,18 +582,6 @@ export class TypedBehaviorsFeatureImplementation {
               });
               suggestions.push('Use valid CSS selector syntax for event source');
             }
-          }
-
-          // Special validation for obviously invalid selectors
-          if (handler.eventSource === '>>>invalid-selector<<<') {
-            errors.push({
-              type: 'validation-error',
-              code: 'invalid-event-source-selector',
-              message: `Invalid CSS selector: "${handler.eventSource}"`,
-              path: `behavior.eventHandlers[${index}].eventSource`,
-              suggestions: [],
-            });
-            suggestions.push('Use valid CSS selector syntax for event source');
           }
 
           // Validate filter expression
@@ -771,7 +778,7 @@ export class TypedBehaviorsFeatureImplementation {
       throw new Error(`Behavior "${behaviorName}" not found`);
     }
 
-    const instanceId = `instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const instanceId = `instance-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     const instance: BehaviorInstance = {
       id: instanceId,
@@ -838,7 +845,9 @@ export class TypedBehaviorsFeatureImplementation {
     }
 
     if (targetElement) {
-      targetElement.addEventListener(handler.event, eventListener, handler.options);
+      // Only pass standard AddEventListenerOptions to the DOM API
+      const { once, passive, capture } = handler.options;
+      targetElement.addEventListener(handler.event, eventListener, { once, passive, capture });
       instance.eventListeners.set(handler.id, eventListener);
     }
   }
@@ -932,7 +941,7 @@ export class TypedBehaviorsFeatureImplementation {
       timestamp: Date.now(),
     };
 
-    this.lifecycleHistory.push(lifecycleEvent);
+    boundedPush(this.lifecycleHistory, lifecycleEvent);
 
     const commands =
       behavior.lifecycle[
@@ -1003,7 +1012,11 @@ export class TypedBehaviorsFeatureImplementation {
 
   private testEventFilter(event: Event, filter: string): boolean {
     try {
-      const filterFunction = new Function('event', `return ${filter}`);
+      let filterFunction = this.filterCache.get(filter);
+      if (!filterFunction) {
+        filterFunction = new Function('event', `return ${filter}`);
+        this.filterCache.set(filter, filterFunction);
+      }
       return Boolean(filterFunction(event));
     } catch {
       return true; // If filter fails, allow event through
@@ -1283,9 +1296,22 @@ export class TypedBehaviorsFeatureImplementation {
     instance.isActive = false;
   }
 
+  dispose(): void {
+    for (const instance of this.behaviorInstances.values()) {
+      this.destroyBehaviorInstance(instance);
+    }
+    this.behaviorInstances.clear();
+    this.behaviorDefinitions.clear();
+    this.elementBehaviors.clear();
+    this.namespaces.clear();
+    this.filterCache.clear();
+    this.lifecycleHistory = [];
+    this.evaluationHistory = [];
+  }
+
   private trackPerformance(startTime: number, success: boolean, output?: BehaviorsOutput): void {
     const duration = Date.now() - startTime;
-    this.evaluationHistory.push({
+    boundedPush(this.evaluationHistory, {
       input: {} as BehaviorsInput, // Would store actual input in real implementation
       output,
       success,

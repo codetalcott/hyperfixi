@@ -15,6 +15,17 @@ import type { ContextMetadata } from '../types/context-types';
 import type { EvaluationResult } from '../types/command-types';
 import { parseAndEvaluateExpression } from '../parser/expression-parser';
 
+/** Maximum entries retained in history arrays to prevent memory leaks. */
+const MAX_HISTORY_SIZE = 1000;
+
+/** Push to a bounded array, evicting oldest entries when full. */
+function boundedPush<T>(array: T[], item: T, maxSize = MAX_HISTORY_SIZE): void {
+  array.push(item);
+  if (array.length > maxSize) {
+    array.shift();
+  }
+}
+
 // ============================================================================
 // Enhanced Def Feature Input/Output Schemas
 // ============================================================================
@@ -623,7 +634,7 @@ export class TypedDefFeatureImplementation {
           executionTime: Date.now() - startTime,
         };
 
-        this.callHistory.push(call);
+        boundedPush(this.callHistory, call);
         func.metadata.callCount++;
         func.metadata.averageExecutionTime =
           (func.metadata.averageExecutionTime * (func.metadata.callCount - 1) +
@@ -641,7 +652,7 @@ export class TypedDefFeatureImplementation {
           executionTime: Date.now() - startTime,
         };
 
-        this.callHistory.push(call);
+        boundedPush(this.callHistory, call);
 
         // Handle catch block
         if (func.catchBlock) {
@@ -920,9 +931,16 @@ export class TypedDefFeatureImplementation {
     return body.length;
   }
 
+  dispose(): void {
+    this.functions.clear();
+    this.namespaces.clear();
+    this.callHistory = [];
+    this.evaluationHistory = [];
+  }
+
   private trackPerformance(startTime: number, success: boolean, output?: DefOutput): void {
     const duration = Date.now() - startTime;
-    this.evaluationHistory.push({
+    boundedPush(this.evaluationHistory, {
       input: {} as DefInput, // Would store actual input in real implementation
       output,
       success,

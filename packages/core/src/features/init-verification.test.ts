@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { enhancedInitImplementation as initFeature } from './init';
+import { enhancedInitImplementation as initFeature, TypedInitFeatureImplementation } from './init';
 
 // Cast to any to access internal methods for testing - tests are skipped anyway
 const initFeatureAny = initFeature as any;

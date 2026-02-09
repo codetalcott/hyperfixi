@@ -8,6 +8,17 @@ import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
+/** Maximum entries retained in history arrays to prevent memory leaks. */
+const MAX_HISTORY_SIZE = 1000;
+
+/** Push to a bounded array, evicting oldest entries when full. */
+function boundedPush<T>(array: T[], item: T, maxSize = MAX_HISTORY_SIZE): void {
+  array.push(item);
+  if (array.length > maxSize) {
+    array.shift();
+  }
+}
+
 // ============================================================================
 // Enhanced EventSource Feature Input/Output Schemas
 // ============================================================================
@@ -223,6 +234,7 @@ export class TypedEventSourceFeatureImplementation {
   private errorHistory: Array<{ error: Error; timestamp: number; context: any }> = [];
   private throttleTimers: Map<string, number> = new Map();
   private debounceTimers: Map<string, number> = new Map();
+  private filterCache: Map<string, Function> = new Map();
 
   public readonly metadata: ContextMetadata = {
     category: 'Frontend',
@@ -657,7 +669,7 @@ export class TypedEventSourceFeatureImplementation {
   }
 
   private async createConnection(sourceConfig: any, _context: any): Promise<EventSourceConnection> {
-    const id = `connection-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `connection-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     const connection: EventSourceConnection = {
       id,
@@ -706,7 +718,7 @@ export class TypedEventSourceFeatureImplementation {
     } catch (error) {
       connection.state = 'error';
       connection.errorCount++;
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error: error as Error,
         timestamp: Date.now(),
         context: { connection, sourceConfig },
@@ -722,7 +734,7 @@ export class TypedEventSourceFeatureImplementation {
 
   private handleMessage(connection: EventSourceConnection, event: MessageEvent): void {
     const message: SSEMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       connectionId: connection.id,
       event: event.type,
       data: event.data,
@@ -732,7 +744,7 @@ export class TypedEventSourceFeatureImplementation {
       ...(event.origin && { origin: event.origin }),
     };
 
-    this.messageHistory.push(message);
+    boundedPush(this.messageHistory, message);
 
     // Add to buffer if enabled
     const buffer = this.messageBuffers.get(connection.id);
@@ -748,7 +760,7 @@ export class TypedEventSourceFeatureImplementation {
   }
 
   private handleConnectionError(connection: EventSourceConnection, event: Event): void {
-    this.errorHistory.push({
+    boundedPush(this.errorHistory, {
       error: new Error('EventSource connection error'),
       timestamp: Date.now(),
       context: { connection, event },
@@ -806,7 +818,7 @@ export class TypedEventSourceFeatureImplementation {
         this.handleConnectionError(connection, event);
       };
     } catch (error) {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error: error as Error,
         timestamp: Date.now(),
         context: { connection, reconnectAttempt: connection.retryAttempts },
@@ -848,7 +860,7 @@ export class TypedEventSourceFeatureImplementation {
       handler.executionCount++;
       handler.lastExecutionTime = Date.now();
     } catch (error) {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error: error as Error,
         timestamp: Date.now(),
         context: { handler, event },
@@ -911,7 +923,11 @@ export class TypedEventSourceFeatureImplementation {
 
   private testEventFilter(event: Event, filter: string): boolean {
     try {
-      const filterFunction = new Function('event', `return ${filter}`);
+      let filterFunction = this.filterCache.get(filter);
+      if (!filterFunction) {
+        filterFunction = new Function('event', `return ${filter}`);
+        this.filterCache.set(filter, filterFunction);
+      }
       return Boolean(filterFunction(event));
     } catch {
       return true; // If filter fails, allow event through
@@ -1011,7 +1027,7 @@ export class TypedEventSourceFeatureImplementation {
 
   private createEventHandlerAdder() {
     return async (connectionId: string, eventType: string, command: any) => {
-      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       const handler: SSEEventHandler = {
         id: handlerId,
@@ -1099,7 +1115,7 @@ export class TypedEventSourceFeatureImplementation {
 
   private createMessageSubscriber() {
     return async (eventType: string, command: any) => {
-      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       const handler: SSEEventHandler = {
         id: handlerId,
@@ -1124,7 +1140,7 @@ export class TypedEventSourceFeatureImplementation {
 
   private createErrorHandler() {
     return async (error: Error, context: any) => {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error,
         timestamp: Date.now(),
         context,
@@ -1156,9 +1172,33 @@ export class TypedEventSourceFeatureImplementation {
     };
   }
 
+  dispose(): void {
+    for (const connection of this.connections.values()) {
+      if (connection.eventSource) {
+        connection.eventSource.close();
+        connection.eventSource = null;
+      }
+    }
+    this.connections.clear();
+    for (const timer of this.debounceTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.debounceTimers.clear();
+    for (const timer of this.throttleTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.throttleTimers.clear();
+    this.eventHandlers.clear();
+    this.messageBuffers.clear();
+    this.filterCache.clear();
+    this.messageHistory = [];
+    this.errorHistory = [];
+    this.evaluationHistory = [];
+  }
+
   private trackPerformance(startTime: number, success: boolean, output?: EventSourceOutput): void {
     const duration = Date.now() - startTime;
-    this.evaluationHistory.push({
+    boundedPush(this.evaluationHistory, {
       input: {} as EventSourceInput, // Would store actual input in real implementation
       output,
       success,

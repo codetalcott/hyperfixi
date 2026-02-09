@@ -1029,3 +1029,27 @@ describe('Enhanced WebWorker Export', () => {
     expect(enhancedWebWorkerImplementation.name).toBe('webworkerFeature');
   });
 });
+
+describe('WebWorker Feature Improvements', () => {
+  let feature: TypedWebWorkerFeatureImplementation;
+
+  beforeEach(() => {
+    feature = new TypedWebWorkerFeatureImplementation();
+  });
+
+  describe('dispose()', () => {
+    it('should clear all state', () => {
+      feature.dispose();
+      const metrics = feature.getPerformanceMetrics();
+      expect(metrics.totalInitializations).toBe(0);
+      expect(metrics.totalMessages).toBe(0);
+      expect(metrics.totalErrors).toBe(0);
+    });
+
+    it('should be safe to call multiple times', () => {
+      feature.dispose();
+      feature.dispose();
+      expect(true).toBe(true);
+    });
+  });
+});

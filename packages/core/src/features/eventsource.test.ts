@@ -1016,3 +1016,52 @@ describe('Enhanced EventSource Export', () => {
     expect(enhancedEventSourceImplementation.name).toBe('eventsourceFeature');
   });
 });
+
+describe('EventSource Feature Improvements', () => {
+  let feature: TypedEventSourceFeatureImplementation;
+
+  beforeEach(() => {
+    feature = new TypedEventSourceFeatureImplementation();
+  });
+
+  describe('bounded history', () => {
+    it('should cap evaluationHistory at MAX_HISTORY_SIZE', async () => {
+      for (let i = 0; i < 1010; i++) {
+        try {
+          await feature.initialize({
+            source: { url: `https://test${i}.example.com/sse` },
+            options: { enableAutoConnect: false },
+          });
+        } catch {
+          // Expected
+        }
+      }
+      const metrics = feature.getPerformanceMetrics();
+      expect(metrics.totalInitializations).toBeLessThanOrEqual(1000);
+    });
+  });
+
+  describe('dispose()', () => {
+    it('should clear all state', async () => {
+      try {
+        await feature.initialize({
+          source: { url: 'https://test.example.com/sse' },
+          options: { enableAutoConnect: false },
+        });
+      } catch {
+        // Expected
+      }
+      feature.dispose();
+      const metrics = feature.getPerformanceMetrics();
+      expect(metrics.totalInitializations).toBe(0);
+      expect(metrics.totalMessages).toBe(0);
+      expect(metrics.totalErrors).toBe(0);
+    });
+
+    it('should be safe to call multiple times', () => {
+      feature.dispose();
+      feature.dispose();
+      expect(true).toBe(true);
+    });
+  });
+});

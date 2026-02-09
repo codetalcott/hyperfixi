@@ -8,6 +8,17 @@ import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
+/** Maximum entries retained in history arrays to prevent memory leaks. */
+const MAX_HISTORY_SIZE = 1000;
+
+/** Push to a bounded array, evicting oldest entries when full. */
+function boundedPush<T>(array: T[], item: T, maxSize = MAX_HISTORY_SIZE): void {
+  array.push(item);
+  if (array.length > maxSize) {
+    array.shift();
+  }
+}
+
 // ============================================================================
 // Enhanced Sockets Feature Input/Output Schemas
 // ============================================================================
@@ -251,6 +262,7 @@ export class TypedSocketsFeatureImplementation {
   private errorHistory: Array<{ error: Error; timestamp: number; context: any }> = [];
   private throttleTimers: Map<string, number> = new Map();
   private debounceTimers: Map<string, number> = new Map();
+  private filterCache: Map<string, Function> = new Map();
 
   public readonly metadata: ContextMetadata = {
     category: 'Frontend',
@@ -707,7 +719,7 @@ export class TypedSocketsFeatureImplementation {
     eventHandlers: any[],
     _context: any
   ): Promise<SocketConnection> {
-    const connectionId = `socket-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const connectionId = `socket-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     const connection: SocketConnection = {
       id: connectionId,
@@ -738,7 +750,7 @@ export class TypedSocketsFeatureImplementation {
     _connectionId: string,
     handler: any
   ): Promise<SocketEventHandler> {
-    const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     const eventHandler: SocketEventHandler = {
       id: handlerId,
@@ -830,7 +842,7 @@ export class TypedSocketsFeatureImplementation {
 
     // Create message record
     const message: SocketMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       connectionId,
       type: 'incoming',
       data: event.data,
@@ -840,7 +852,7 @@ export class TypedSocketsFeatureImplementation {
       validated: true,
     };
 
-    this.messageHistory.push(message);
+    boundedPush(this.messageHistory, message);
     await this.executeEventHandlers(connectionId, 'message', event);
   }
 
@@ -877,7 +889,7 @@ export class TypedSocketsFeatureImplementation {
           handler.isActive = false;
         }
       } catch (error) {
-        this.errorHistory.push({
+        boundedPush(this.errorHistory, {
           error: error as Error,
           timestamp: Date.now(),
           context: { handler, eventData },
@@ -953,7 +965,11 @@ export class TypedSocketsFeatureImplementation {
 
   private testMessageFilter(eventData: any, filter: string): boolean {
     try {
-      const filterFunction = new Function('message', 'event', `return ${filter}`);
+      let filterFunction = this.filterCache.get(filter);
+      if (!filterFunction) {
+        filterFunction = new Function('message', 'event', `return ${filter}`);
+        this.filterCache.set(filter, filterFunction);
+      }
       return Boolean(filterFunction(eventData?.data, eventData));
     } catch {
       return true; // If filter fails, allow event through
@@ -989,22 +1005,31 @@ export class TypedSocketsFeatureImplementation {
     const connection = this.connections.get(connectionId);
     if (!connection || connection.state !== 'connected') return;
 
-    for (let i = queue.length - 1; i >= 0; i--) {
-      const message = queue[i];
-
+    const remaining: QueuedMessage[] = [];
+    for (const message of queue) {
       try {
         await this.sendMessage(connectionId, message.data, message.format);
-        queue.splice(i, 1); // Remove sent message from queue
+        // Message sent successfully — don't add to remaining
       } catch (error) {
         message.attempts++;
         message.lastAttempt = Date.now();
         message.error = error as Error;
 
-        if (message.attempts >= message.maxAttempts) {
-          queue.splice(i, 1); // Remove failed message
+        if (message.attempts < message.maxAttempts) {
+          remaining.push(message); // Keep for retry
+        } else {
+          boundedPush(this.errorHistory, {
+            error: new Error(
+              `Message ${message.id} dropped after ${message.maxAttempts} failed attempts`
+            ),
+            timestamp: Date.now(),
+            context: { messageId: message.id, data: message.data, format: message.format },
+          });
         }
       }
     }
+    queue.length = 0;
+    queue.push(...remaining);
   }
 
   private async sendMessage(
@@ -1039,7 +1064,7 @@ export class TypedSocketsFeatureImplementation {
 
         // Record outgoing message
         const message: SocketMessage = {
-          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
           connectionId,
           type: 'outgoing',
           data,
@@ -1049,7 +1074,7 @@ export class TypedSocketsFeatureImplementation {
           validated: true,
         };
 
-        this.messageHistory.push(message);
+        boundedPush(this.messageHistory, message);
         return true;
       }
 
@@ -1069,7 +1094,7 @@ export class TypedSocketsFeatureImplementation {
     if (!queue) return;
 
     const message: QueuedMessage = {
-      id: `queued-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `queued-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       data,
       format,
       timestamp: Date.now(),
@@ -1301,7 +1326,7 @@ export class TypedSocketsFeatureImplementation {
 
   private createErrorHandler() {
     return async (error: Error, connectionId: string) => {
-      this.errorHistory.push({
+      boundedPush(this.errorHistory, {
         error,
         timestamp: Date.now(),
         context: { connectionId },
@@ -1333,9 +1358,32 @@ export class TypedSocketsFeatureImplementation {
     };
   }
 
+  dispose(): void {
+    for (const connection of this.connections.values()) {
+      if (connection.websocket) {
+        connection.websocket.close();
+      }
+    }
+    this.connections.clear();
+    for (const timer of this.debounceTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.debounceTimers.clear();
+    for (const timer of this.throttleTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.throttleTimers.clear();
+    this.eventHandlers.clear();
+    this.messageQueue.clear();
+    this.filterCache.clear();
+    this.messageHistory = [];
+    this.errorHistory = [];
+    this.evaluationHistory = [];
+  }
+
   private trackPerformance(startTime: number, success: boolean, output?: SocketsOutput): void {
     const duration = Date.now() - startTime;
-    this.evaluationHistory.push({
+    boundedPush(this.evaluationHistory, {
       input: {} as SocketsInput, // Would store actual input in real implementation
       output,
       success,
