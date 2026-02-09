@@ -30,7 +30,13 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
-    "@lokascript/core": "*"
+    "@lokascript/core": "*",
+    "siren-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "siren-agent": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@lokascript/core": "*",

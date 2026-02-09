@@ -6,7 +6,7 @@
  */
 
 // Plugin
-export { sirenPlugin } from './plugin';
+export { sirenPlugin, _resetProbe } from './plugin';
 
 // Types
 export type {
