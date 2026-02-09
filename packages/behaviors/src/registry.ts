@@ -102,7 +102,10 @@ export function tryGetBehavior(name: string): BehaviorModule | undefined {
 export function getSchema(name: string): BehaviorSchema {
   const schema = schemas.get(name);
   if (!schema) {
-    throw new Error(`Schema for behavior '${name}' is not registered.`);
+    throw new Error(
+      `Schema for behavior '${name}' is not registered. ` +
+        `Use tryGetSchema('${name}') for a non-throwing alternative.`
+    );
   }
   return schema;
 }
@@ -239,7 +242,13 @@ export async function loadBehavior(name: string): Promise<BehaviorModule> {
  */
 export async function preloadTier(tier: BehaviorTier): Promise<void> {
   const names = getBehaviorsByTier(tier);
-  await Promise.all(names.map(name => loadBehavior(name).catch(() => {})));
+  await Promise.all(
+    names.map(name =>
+      loadBehavior(name).catch(err => {
+        console.warn(`[behaviors] Failed to preload '${name}' (tier: ${tier}):`, err);
+      })
+    )
+  );
 }
 
 /**
@@ -247,7 +256,13 @@ export async function preloadTier(tier: BehaviorTier): Promise<void> {
  */
 export async function preloadCategory(category: BehaviorCategory): Promise<void> {
   const names = getBehaviorsByCategory(category);
-  await Promise.all(names.map(name => loadBehavior(name).catch(() => {})));
+  await Promise.all(
+    names.map(name =>
+      loadBehavior(name).catch(err => {
+        console.warn(`[behaviors] Failed to preload '${name}' (category: ${category}):`, err);
+      })
+    )
+  );
 }
 
 /**
@@ -255,7 +270,13 @@ export async function preloadCategory(category: BehaviorCategory): Promise<void>
  */
 export async function loadAll(): Promise<void> {
   const names = getAvailableBehaviors();
-  await Promise.all(names.map(name => loadBehavior(name).catch(() => {})));
+  await Promise.all(
+    names.map(name =>
+      loadBehavior(name).catch(err => {
+        console.warn(`[behaviors] Failed to load '${name}':`, err);
+      })
+    )
+  );
 }
 
 // =============================================================================

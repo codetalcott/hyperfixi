@@ -157,7 +157,7 @@ import { registerRemovable } from './behaviors/removable';
 import { registerToggleable } from './behaviors/toggleable';
 import { registerSortable } from './behaviors/sortable';
 import { registerResizable } from './behaviors/resizable';
-import type { LokaScriptInstance } from './schemas/types';
+import type { LokaScriptInstance, LokaScriptWindow } from './schemas/types';
 
 /**
  * Register all behaviors with HyperFixi.
@@ -192,23 +192,31 @@ export async function registerAll(hyperfixi?: LokaScriptInstance): Promise<void>
 export let ready: Promise<void> | null = null;
 
 // Auto-register all behaviors when loaded in browser with hyperfixi available
-if (typeof window !== 'undefined' && (window as any).lokascript) {
+if (typeof window !== 'undefined' && (window as unknown as LokaScriptWindow).lokascript) {
+  const lsWin = window as unknown as LokaScriptWindow;
   ready = registerAll();
 
-  (window as any).__lokascript_behaviors_ready = ready;
+  lsWin.__lokascript_behaviors_ready = ready;
 
-  ready.then(() => {
-    const hyperfixi = (window as any).lokascript;
-    const savedPromise = (window as any).__lokascript_behaviors_ready;
-    delete (window as any).__lokascript_behaviors_ready;
+  ready
+    .then(() => {
+      const hyperfixi = lsWin.lokascript as LokaScriptInstance & {
+        attributeProcessor?: { scanAndProcessAll: () => Promise<void> };
+        processNode?: (node: Document) => void;
+      };
+      const savedPromise = lsWin.__lokascript_behaviors_ready;
+      delete lsWin.__lokascript_behaviors_ready;
 
-    if (hyperfixi.attributeProcessor?.scanAndProcessAll) {
-      hyperfixi.attributeProcessor.scanAndProcessAll().finally(() => {
-        (window as any).__lokascript_behaviors_ready = savedPromise;
-      });
-    } else if (hyperfixi.processNode) {
-      hyperfixi.processNode(document);
-      (window as any).__lokascript_behaviors_ready = savedPromise;
-    }
-  });
+      if (hyperfixi.attributeProcessor?.scanAndProcessAll) {
+        hyperfixi.attributeProcessor.scanAndProcessAll().finally(() => {
+          lsWin.__lokascript_behaviors_ready = savedPromise;
+        });
+      } else if (hyperfixi.processNode) {
+        hyperfixi.processNode(document);
+        lsWin.__lokascript_behaviors_ready = savedPromise;
+      }
+    })
+    .catch(err => {
+      console.error('[behaviors] Auto-registration failed:', err);
+    });
 }

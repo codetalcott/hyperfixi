@@ -5,6 +5,10 @@ import type { BehaviorSchema } from './types';
  *
  * Drag-and-drop reordering of list items.
  * Apply to a container element; children become sortable.
+ *
+ * Note: This behavior fires lifecycle events but does NOT automatically
+ * reorder DOM elements. Users must handle actual reordering in their
+ * `sortable:move` event handlers.
  */
 export const sortableSchema: BehaviorSchema = {
   name: 'Sortable',
@@ -30,16 +34,20 @@ export const sortableSchema: BehaviorSchema = {
   ],
   events: [
     { name: 'sortable:start', description: 'Fired when drag begins' },
-    { name: 'sortable:move', description: 'Fired when items are reordered' },
+    {
+      name: 'sortable:move',
+      description: 'Fired during drag — handle this event to reorder DOM elements',
+    },
     { name: 'sortable:end', description: 'Fired when drag completes' },
   ],
+  requirements: ['Users must handle DOM reordering in sortable:move event handlers'],
   source: `
 behavior Sortable(handle, dragClass)
   init
     if no dragClass set dragClass to "sorting"
   end
   on pointerdown(target, clientY) from me
-    set item to closest <li, [data-sortable-item]/> in target
+    set item to closest <li/> in target
     if no item exit
     if handle
       set handleEl to target.closest(handle)

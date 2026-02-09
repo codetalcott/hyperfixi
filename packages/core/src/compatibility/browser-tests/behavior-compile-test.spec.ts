@@ -63,6 +63,7 @@ end
       Resizable: `
 behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
   init
+    if no handle set handle to me
     if no minWidth set minWidth to 50
     if no minHeight set minHeight to 50
     if no maxWidth set maxWidth to 9999

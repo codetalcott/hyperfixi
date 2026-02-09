@@ -5,16 +5,20 @@ import type { BehaviorSchema } from './types';
  *
  * Removes an element when a trigger is clicked.
  * Supports optional confirmation and transition effects.
+ *
+ * @since 1.2.0 — `trigger` parameter renamed to `triggerEl` to avoid
+ * shadowing the hyperscript `trigger` command keyword. Users migrating
+ * from v1.x should update: `install Removable(triggerEl: .close-btn)`.
  */
 export const removableSchema: BehaviorSchema = {
   name: 'Removable',
   category: 'data',
   tier: 'common',
-  version: '1.1.0',
+  version: '1.2.0',
   description: 'Makes elements removable on click',
   parameters: [
     {
-      name: 'trigger',
+      name: 'triggerEl',
       type: 'selector',
       optional: true,
       default: 'me',
@@ -24,7 +28,7 @@ export const removableSchema: BehaviorSchema = {
       name: 'confirm',
       type: 'boolean',
       optional: true,
-      default: 'false',
+      default: false,
       description: 'Show confirmation dialog before removal',
     },
     {
@@ -32,6 +36,7 @@ export const removableSchema: BehaviorSchema = {
       type: 'string',
       optional: true,
       default: 'none',
+      enum: ['fade', 'none'],
       description: 'Transition effect: "fade" or "none"',
     },
   ],
@@ -40,13 +45,13 @@ export const removableSchema: BehaviorSchema = {
     { name: 'removable:removed', description: 'Fired after removal' },
   ],
   source: `
-behavior Removable(trigger, confirm, effect)
+behavior Removable(triggerEl, confirm, effect)
   init
-    if trigger is undefined
-      set trigger to me
+    if triggerEl is undefined
+      set triggerEl to me
     end
   end
-  on click from trigger
+  on click from triggerEl
     if confirm
       if not window.confirm("Are you sure?")
         halt

@@ -230,6 +230,26 @@ function validateSchemas(): void {
     if (!schema.category) throw new Error(`Schema ${schema.name} missing category`);
     if (!schema.tier) throw new Error(`Schema ${schema.name} missing tier`);
     if (!schema.source) throw new Error(`Schema ${schema.name} missing source`);
+
+    // Validate parameter schemas
+    for (const param of schema.parameters) {
+      // Warn if boolean default is a string
+      if (param.type === 'boolean' && typeof param.default === 'string') {
+        console.warn(
+          `  Warning: ${schema.name}.${param.name} is type 'boolean' but default is string '${param.default}'`
+        );
+      }
+
+      // Warn if enum is set but default is not in enum
+      if (param.enum && param.default !== undefined) {
+        const defaultStr = String(param.default);
+        if (!param.enum.includes(defaultStr)) {
+          console.warn(
+            `  Warning: ${schema.name}.${param.name} default '${defaultStr}' is not in enum [${param.enum.join(', ')}]`
+          );
+        }
+      }
+    }
   }
 
   console.log(`Validated ${schemas.length} schemas`);

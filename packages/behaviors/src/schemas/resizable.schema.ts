@@ -17,35 +17,35 @@ export const resizableSchema: BehaviorSchema = {
       name: 'handle',
       type: 'selector',
       optional: true,
-      default: 'auto-created',
-      description: 'CSS selector for the resize handle',
+      default: 'me',
+      description: 'CSS selector for the resize handle (defaults to the element itself)',
     },
     {
       name: 'minWidth',
       type: 'number',
       optional: true,
-      default: '50',
+      default: 50,
       description: 'Minimum width in pixels',
     },
     {
       name: 'minHeight',
       type: 'number',
       optional: true,
-      default: '50',
+      default: 50,
       description: 'Minimum height in pixels',
     },
     {
       name: 'maxWidth',
       type: 'number',
       optional: true,
-      default: '9999',
+      default: 9999,
       description: 'Maximum width in pixels',
     },
     {
       name: 'maxHeight',
       type: 'number',
       optional: true,
-      default: '9999',
+      default: 9999,
       description: 'Maximum height in pixels',
     },
   ],
@@ -57,6 +57,7 @@ export const resizableSchema: BehaviorSchema = {
   source: `
 behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
   init
+    if no handle set handle to me
     if no minWidth set minWidth to 50
     if no minHeight set minHeight to 50
     if no maxWidth set maxWidth to 9999

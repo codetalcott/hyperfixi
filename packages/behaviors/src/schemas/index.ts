@@ -50,8 +50,11 @@ export function getSchemaNames(): string[] {
 }
 
 /**
- * Get a schema by name.
+ * Find a schema by name. Returns undefined if not found.
+ *
+ * Note: For the throwing version, use `getSchema()` from the registry
+ * (exported from '@lokascript/behaviors').
  */
-export function getSchema(name: string): BehaviorSchema | undefined {
+export function findSchema(name: string): BehaviorSchema | undefined {
   return ALL_SCHEMAS[name];
 }

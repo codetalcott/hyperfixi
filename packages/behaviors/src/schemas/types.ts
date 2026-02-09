@@ -32,7 +32,9 @@ export interface ParameterSchema {
   name: string;
   type: 'string' | 'number' | 'boolean' | 'selector' | 'element';
   optional?: boolean;
-  default?: string;
+  default?: string | number | boolean;
+  /** Allowed values for constrained parameters */
+  enum?: string[];
   description: string;
 }
 
@@ -93,4 +95,13 @@ export interface LokaScriptInstance {
   };
   execute: (ast: unknown, ctx: unknown) => Promise<unknown>;
   createContext?: () => { locals: Map<string, unknown>; globals: Map<string, unknown> };
+}
+
+/**
+ * Typed window interface for behavior auto-registration.
+ * Avoids `(window as any)` casts throughout the codebase.
+ */
+export interface LokaScriptWindow {
+  lokascript?: LokaScriptInstance;
+  __lokascript_behaviors_ready?: Promise<void> | undefined;
 }

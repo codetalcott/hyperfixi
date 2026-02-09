@@ -77,13 +77,13 @@ end`,
     trigger myevent
   end
 end`,
-      removable: `behavior Removable(trigger, confirm, effect)
+      removable: `behavior Removable(triggerEl, confirm, effect)
   init
-    if trigger is undefined
-      set trigger to me
+    if triggerEl is undefined
+      set triggerEl to me
     end
   end
-  on click from trigger
+  on click from triggerEl
     if confirm
       if not window.confirm("Are you sure?")
         halt

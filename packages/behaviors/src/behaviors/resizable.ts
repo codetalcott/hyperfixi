@@ -13,7 +13,7 @@
  */
 
 import { resizableSchema } from '../schemas/resizable.schema';
-import type { LokaScriptInstance } from '../schemas/types';
+import type { LokaScriptInstance, LokaScriptWindow } from '../schemas/types';
 
 // Re-export schema-derived values for backwards compatibility
 export const resizableSource = resizableSchema.source;
@@ -23,7 +23,9 @@ export const resizableMetadata = resizableSchema;
  * Register the Resizable behavior with LokaScript.
  */
 export async function registerResizable(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const hf = hyperfixi || (typeof window !== 'undefined' ? (window as any).lokascript : null);
+  const hf =
+    hyperfixi ||
+    (typeof window !== 'undefined' ? (window as unknown as LokaScriptWindow).lokascript : null);
 
   if (!hf) {
     throw new Error(
@@ -42,7 +44,7 @@ export async function registerResizable(hyperfixi?: LokaScriptInstance): Promise
 }
 
 // Auto-register when loaded as a script tag
-if (typeof window !== 'undefined' && (window as any).lokascript) {
+if (typeof window !== 'undefined' && (window as unknown as LokaScriptWindow).lokascript) {
   registerResizable().catch(console.error);
 }
 

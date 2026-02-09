@@ -125,6 +125,11 @@ describe('@lokascript/behaviors', () => {
     it('should support confirmation parameter', () => {
       expect(removableSource).toContain('if confirm');
     });
+
+    it('should use triggerEl parameter (not trigger)', () => {
+      expect(removableSource).toContain('behavior Removable(triggerEl');
+      expect(removableSource).toContain('on click from triggerEl');
+    });
   });
 
   describe('Toggleable behavior', () => {
