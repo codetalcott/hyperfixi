@@ -174,16 +174,6 @@ class TestValidate:
         result = validate("on click toggle .active")
         assert result.valid
 
-    def test_basic_validation_explicit(self):
-        """Test basic validation with full=False."""
-        result = validate("on click toggle .active", full=False)
-        assert result.valid
-
-    def test_full_validation_fallback(self):
-        """Test that full validation falls back to basic if CLI unavailable."""
-        # This will fall back to basic since CLI likely not installed
-        result = validate("on click toggle .active", full=True)
-        assert result.valid
 
 
 class TestCountUnescaped:

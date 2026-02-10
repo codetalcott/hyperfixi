@@ -23,8 +23,7 @@ pip install -e ".[fastapi]"
 ```
 lokascript/
 ├── core.py              # hs(), hs_attr(), escape_hyperscript()
-├── validator.py         # Basic regex validation (Tier 1)
-├── cli_validator.py     # Node.js CLI validation (Tier 2)
+├── validator.py         # Regex-based validation
 ├── behaviors.py         # BehaviorRegistry, @behavior decorator
 ├── scanner.py           # Template scanner for bundle generation
 ├── aggregator.py        # Usage aggregation across files
@@ -53,8 +52,8 @@ def removable():
     """on click remove me"""
 
 # Validation
-from lokascript import validate, validate_basic
-result = validate_basic("on click toggle .active")
+from lokascript import validate
+result = validate("on click toggle .active")
 ```
 
 ## Django Usage
@@ -84,12 +83,9 @@ setup_jinja(templates)
 <button {{ hs("on click toggle .active") }}>Toggle</button>
 ```
 
-## Validation Tiers
+## Validation
 
-1. **Tier 1 (Basic)**: Pure Python regex (~80% error detection)
-2. **Tier 2 (Full)**: Node.js CLI via `npx lokascript validate`
-
-Falls back gracefully: Tier 2 → Tier 1 if Node.js unavailable.
+Pure Python regex-based validation that catches common errors (unbalanced quotes/parens, invalid starting keywords, common mistakes) without requiring external dependencies.
 
 ## Template Scanning (Bundle Generation)
 

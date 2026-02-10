@@ -141,26 +141,16 @@ def validate_basic(script: str) -> ValidationResult:
     )
 
 
-def validate(script: str, *, full: bool = False) -> ValidationResult:
+def validate(script: str) -> ValidationResult:
     """
     Validate hyperscript code.
 
     Args:
         script: The hyperscript code to validate.
-        full: If True, attempt full validation via Node.js CLI (Tier 2).
-              Falls back to basic validation if Node.js is unavailable.
 
     Returns:
         ValidationResult with valid flag, errors, and warnings.
     """
-    if full:
-        try:
-            from lokascript.cli_validator import validate_full
-
-            return validate_full(script)
-        except ImportError:
-            pass  # Fall through to basic validation
-
     return validate_basic(script)
 
 
