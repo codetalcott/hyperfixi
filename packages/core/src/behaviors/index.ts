@@ -22,6 +22,8 @@
  */
 
 // HistorySwap - Automatic popstate handling
+import { registerHistorySwap } from './history-swap';
+import { registerBoosted } from './boosted';
 export {
   createHistorySwap,
   registerHistorySwap,
