@@ -553,7 +553,6 @@ See [TYPE_SAFETY_DESIGN.md](docs-internal/analysis/TYPE_SAFETY_DESIGN.md) for im
 | `packages/semantic/src/tokenizers/`               | 24 language tokenizers                      |
 | `packages/core/src/api/hyperscript-api.ts`        | Main API implementation (v2)                |
 | `packages/core/docs/API.md`                       | API documentation                           |
-| `roadmap/plan.md`                                 | Development context and status              |
 
 ## Vite Plugin (Recommended)
 

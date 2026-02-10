@@ -7,9 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Changes for next release go here._
+
+## [1.4.0] - 2026-02-10
+
 ### Added
 
-- Tracking unreleased changes here
+- **Language Server & VSCode Extension**: Full LSP with Go to Definition, Find References, multilingual hover, syntax highlighting, and HTML region extraction
+- **AOT Compiler** (internal): Ahead-of-time compiler with 45 command codegens, expression transforms, 4 optimization passes, and 533 tests
+- **Compilation Service** (internal): HTTP service for multilingual compilation with React renderer, test generation, and semantic diffing
+- **Hyperscript Adapter** (@lokascript/hyperscript-adapter): Multilingual preprocessor plugin for original \_hyperscript with 24 per-language bundles
+- **Semantic**: Russian/Ukrainian normalizers, improved SOV pass rates (JA 99%, KO 96%, TR 96%)
+- **Vite Plugin**: htmx/fixi attribute scanning for zero-config support, hybrid-plus bundle commands
+
+### Changed
+
+- **Monorepo cleanup**: Moved experimental packages (analytics, server-integration, multi-tenant, ssr-support, siren) to `experiments/`
+- **Code audits**: Comprehensive audits across core (+58 tests), runtime (+34 tests), behaviors (+66 tests), expressions (9 security fixes), validation (+20 tests), features (+19 tests), i18n (+33 tests)
+- **Semantic refactoring**: Modularized tokenizer, split pattern generator by word order, eliminated all `as any` casts
+- **CI**: Consolidated workflows, switched to OIDC trusted publishing, upgraded to Node 24 LTS
+- **Test count**: 4046 → 8100+ tests
+
+### Fixed
+
+- Runtime correctness: GC fix, timeout handling, expression security hardening
+- Browser test timeouts and false CI failures
+- TypeScript errors across 6 packages for clean workspace typecheck
+- Debug console.log leak in set command
+
+## [1.3.0] - 2026-01-23
+
+_Synchronized version release. See git history for details._
+
+## [1.2.0] - 2026-01-21
+
+_Synchronized version release. See git history for details._
 
 ## [1.0.0] - 2026-01-19
 
@@ -57,31 +89,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
----
-
-## Version History
-
-### Versioning Strategy
-
-All @lokascript/\* packages are released together with synchronized versions:
-
-- **1.0.0**: Initial public release (2026-01-19)
-
-### Compatibility Promise
-
-- All packages at the same version are tested together
-- Mixing versions (e.g., core@1.0.0 + i18n@1.1.0) is not supported
-- Always upgrade all packages together
-
-### Breaking Changes Policy
-
-We follow [Semantic Versioning](https://semver.org/):
-
-- **Major (2.0.0)**: Breaking API changes, upgrade guide provided
-- **Minor (1.1.0)**: New features, fully backward compatible
-- **Patch (1.0.1)**: Bug fixes only
-
----
-
-[Unreleased]: https://github.com/codetalcott/lokascript/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/codetalcott/lokascript/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/codetalcott/lokascript/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/codetalcott/lokascript/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/codetalcott/lokascript/compare/v1.0.0...v1.2.0
 [1.0.0]: https://github.com/codetalcott/lokascript/releases/tag/v1.0.0
