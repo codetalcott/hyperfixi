@@ -28,20 +28,18 @@ All 14 public packages have been validated and prepared for publication to npm u
 
 ## Packages Ready for Publication
 
-| Package                          | Version | Size (est.) | Status   |
-| -------------------------------- | ------- | ----------- | -------- |
-| @lokascript/core                 | 1.0.0   | ~663 KB     | ✅ Ready |
-| @lokascript/semantic             | 1.0.0   | ~2.7 MB     | ✅ Ready |
-| @lokascript/i18n                 | 1.0.0   | ~2.7 MB     | ✅ Ready |
-| @lokascript/vite-plugin          | 1.0.0   | ~137 KB     | ✅ Ready |
-| @lokascript/ast-toolkit          | 1.0.0   | TBD         | ✅ Ready |
-| @lokascript/behaviors            | 1.0.0   | TBD         | ✅ Ready |
-| @lokascript/component-schema     | 1.0.0   | TBD         | ✅ Ready |
-| @lokascript/mcp-server           | 1.0.0   | TBD         | ✅ Ready |
-| @lokascript/patterns-reference   | 1.0.0   | TBD         | ✅ Ready |
-| @lokascript/template-integration | 1.0.0   | TBD         | ✅ Ready |
-| @lokascript/testing-framework    | 1.0.0   | TBD         | ✅ Ready |
-| @lokascript/types-browser        | 1.0.0   | TBD         | ✅ Ready |
+| Package                        | Version | Size (est.) | Status   |
+| ------------------------------ | ------- | ----------- | -------- |
+| @lokascript/core               | 1.0.0   | ~663 KB     | ✅ Ready |
+| @lokascript/semantic           | 1.0.0   | ~2.7 MB     | ✅ Ready |
+| @lokascript/i18n               | 1.0.0   | ~2.7 MB     | ✅ Ready |
+| @lokascript/vite-plugin        | 1.0.0   | ~137 KB     | ✅ Ready |
+| @lokascript/ast-toolkit        | 1.0.0   | TBD         | ✅ Ready |
+| @lokascript/behaviors          | 1.0.0   | TBD         | ✅ Ready |
+| @lokascript/mcp-server         | 1.0.0   | TBD         | ✅ Ready |
+| @lokascript/patterns-reference | 1.0.0   | TBD         | ✅ Ready |
+| @lokascript/testing-framework  | 1.0.0   | TBD         | ✅ Ready |
+| @lokascript/types-browser      | 1.0.0   | TBD         | ✅ Ready |
 
 ## Private Packages (Not Published)
 

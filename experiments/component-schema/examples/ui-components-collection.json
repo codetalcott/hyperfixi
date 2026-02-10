@@ -23,9 +23,7 @@
   },
   "dependencies": {
     "external": {
-      "css": [
-        "https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"
-      ],
+      "css": ["https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"],
       "javascript": []
     }
   },
@@ -158,15 +156,8 @@
       "environment": "production"
     },
     "assets": {
-      "css": [
-        "dist/ui-components.min.css",
-        "dist/themes/default.css",
-        "dist/themes/dark.css"
-      ],
-      "javascript": [
-        "dist/ui-components.min.js",
-        "dist/ui-components.esm.js"
-      ],
+      "css": ["dist/ui-components.min.css", "dist/themes/default.css", "dist/themes/dark.css"],
+      "javascript": ["dist/ui-components.min.js", "dist/ui-components.esm.js"],
       "templates": [
         "dist/templates/toggle-button.html",
         "dist/templates/ajax-form.html",

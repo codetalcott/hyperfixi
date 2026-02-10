@@ -55,13 +55,11 @@ npm run packages:list:public
 # 📦 Public Packages (14):
 #   ✅ @lokascript/ast-toolkit
 #   ✅ @lokascript/behaviors
-#   ✅ @lokascript/component-schema
 #   ✅ @lokascript/core
 #   ✅ @lokascript/i18n
 #   ✅ @lokascript/mcp-server
 #   ✅ @lokascript/patterns-reference
 #   ✅ @lokascript/semantic
-#   ✅ @lokascript/template-integration
 #   ✅ @lokascript/testing-framework
 #   ✅ @lokascript/types-browser
 #   ✅ @lokascript/vite-plugin
@@ -236,17 +234,11 @@ cd packages/behaviors && npm publish --access public && cd ../..
 # AST Toolkit
 cd packages/ast-toolkit && npm publish --access public && cd ../..
 
-# Component Schema
-cd packages/component-schema && npm publish --access public && cd ../..
-
 # MCP Server
 cd packages/mcp-server && npm publish --access public && cd ../..
 
 # Patterns Reference
 cd packages/patterns-reference && npm publish --access public && cd ../..
-
-# Template Integration
-cd packages/template-integration && npm publish --access public && cd ../..
 
 # Types Browser
 cd packages/types-browser && npm publish --access public && cd ../..

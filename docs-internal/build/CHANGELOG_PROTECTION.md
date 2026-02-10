@@ -71,13 +71,11 @@ This ensures:
 
 - @lokascript/ast-toolkit
 - @lokascript/behaviors
-- @lokascript/component-schema
 - @lokascript/core
 - @lokascript/i18n
 - @lokascript/mcp-server
 - @lokascript/patterns-reference
 - @lokascript/semantic
-- @lokascript/template-integration
 - @lokascript/testing-framework
 - @lokascript/types-browser
 - @lokascript/vite-plugin

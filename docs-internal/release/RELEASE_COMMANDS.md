@@ -91,17 +91,11 @@ cd packages/behaviors && npm publish --access public && cd ../..
 # 7. AST Toolkit
 cd packages/ast-toolkit && npm publish --access public && cd ../..
 
-# 8. Component Schema
-cd packages/component-schema && npm publish --access public && cd ../..
-
 # 9. MCP Server
 cd packages/mcp-server && npm publish --access public && cd ../..
 
 # 10. Patterns Reference
 cd packages/patterns-reference && npm publish --access public && cd ../..
-
-# 11. Template Integration
-cd packages/template-integration && npm publish --access public && cd ../..
 
 # 14. Types Browser
 cd packages/types-browser && npm publish --access public && cd ../..
@@ -131,10 +125,8 @@ npm view @lokascript/vite-plugin version && \
 npm view @lokascript/testing-framework version && \
 npm view @lokascript/behaviors version && \
 npm view @lokascript/ast-toolkit version && \
-npm view @lokascript/component-schema version && \
 npm view @lokascript/mcp-server version && \
 npm view @lokascript/patterns-reference version && \
-npm view @lokascript/template-integration version && \
 npm view @lokascript/types-browser version && \
 echo "✅ All packages published!"
 ```

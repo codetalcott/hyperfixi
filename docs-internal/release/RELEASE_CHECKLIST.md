@@ -54,10 +54,8 @@ See [RELEASE_GUIDE.md](RELEASE_GUIDE.md) for detailed instructions.
 - [ ] @lokascript/testing-framework
 - [ ] @lokascript/behaviors
 - [ ] @lokascript/ast-toolkit
-- [ ] @lokascript/component-schema
 - [ ] @lokascript/mcp-server
 - [ ] @lokascript/patterns-reference
-- [ ] @lokascript/template-integration
 - [ ] @lokascript/types-browser
 
 ## Verification ✅

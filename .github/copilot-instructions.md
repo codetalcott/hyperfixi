@@ -10,7 +10,6 @@
 - Public exports are centralized in `src/index.ts` and mirrored in the `package.json` exports map; update Rollup configs when exposing new entry points.
 - Server API sits in `packages/server-integration`: Express service (`src/service/lokascript-service.ts`) invokes the compiler, cache layer (`src/cache`), and context parser (`src/parser`).
 - Multi-language clients under `clients/*` consume the HTTP API; keep payload shapes consistent with `packages/server-integration/src/types.ts`.
-- Shared schemas/types live in `packages/component-schema`; consume validators there rather than redefining payload shapes.
 - Docs and cookbook examples live under `docs/` and `cookbook/`; update matching demo HTML when changing public APIs.
 - Examples gallery (`examples/`) can be served via `npm run dev` which starts an HTTP server at port 3000.
 - Docs site (`apps/docs-site`) serves documentation; build with `npm run docs:build` or preview via `npm run docs:dev`.
