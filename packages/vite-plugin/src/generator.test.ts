@@ -12,8 +12,8 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { gzipSync } from 'zlib';
 import { Generator } from './generator';
-import { canUseLiteParser, LITE_PARSER_COMMANDS } from '@lokascript/core/bundle-generator';
-import { FULL_RUNTIME_ONLY_COMMANDS, isAvailableCommand } from '@lokascript/core/bundle-generator';
+import { canUseLiteParser, LITE_PARSER_COMMANDS } from '@hyperfixi/core/bundle-generator';
+import { FULL_RUNTIME_ONLY_COMMANDS, isAvailableCommand } from '@hyperfixi/core/bundle-generator';
 
 // Helper to create aggregated usage
 function createUsage(commands: string[], blocks: string[] = [], positional = false) {
@@ -94,12 +94,12 @@ describe('Generator', () => {
   });
 
   describe('No External Imports (Tree-Shaking)', () => {
-    it('should NOT import from @lokascript/core/parser', () => {
+    it('should NOT import from @hyperfixi/core/parser', () => {
       const usage = createUsage(['toggle', 'add']);
       const code = generator.generate(usage, {});
 
-      expect(code).not.toContain("from '@lokascript/core/parser");
-      expect(code).not.toContain('from "@lokascript/core/parser');
+      expect(code).not.toContain("from '@hyperfixi/core/parser");
+      expect(code).not.toContain('from "@hyperfixi/core/parser');
       expect(code).not.toContain('import { HybridParser');
     });
 
@@ -206,7 +206,7 @@ describe('Generator', () => {
       const code = generator.generate(usage, {});
 
       // Should generate full runtime fallback bundle
-      expect(code).toContain('@lokascript/core/browser');
+      expect(code).toContain('@hyperfixi/core/browser');
       expect(code).toContain('Dev Fallback Bundle');
       // Should NOT contain tree-shaken code
       expect(code).not.toContain("case 'toggle'");
@@ -217,7 +217,7 @@ describe('Generator', () => {
       const code = generator.generate(usage, {});
 
       // Should generate full runtime fallback bundle for swap
-      expect(code).toContain('@lokascript/core/browser');
+      expect(code).toContain('@hyperfixi/core/browser');
       expect(code).toContain('Dev Fallback Bundle');
     });
 
@@ -275,7 +275,7 @@ describe('Generator', () => {
       const code = generator.generate(usage, {});
 
       // Should generate tree-shaken bundle, not fallback
-      expect(code).not.toContain('@lokascript/core/browser');
+      expect(code).not.toContain('@hyperfixi/core/browser');
       expect(code).toContain("case 'toggle'");
       expect(code).toContain("case 'add'");
     });
@@ -389,7 +389,7 @@ describe('Vite Integration Edge Cases', () => {
       const code = generator.generate(usage, {});
 
       // Should generate full runtime fallback
-      expect(code).toContain('@lokascript/core/browser');
+      expect(code).toContain('@hyperfixi/core/browser');
       expect(code).toContain('Dev Fallback Bundle');
       // Should NOT contain tree-shaken code
       expect(code).not.toContain("case 'toggle'");
@@ -399,14 +399,14 @@ describe('Vite Integration Edge Cases', () => {
       // The generator has a generateDevFallback method for explicit fallback
       const devFallbackCode = generator.generateDevFallback('full');
 
-      expect(devFallbackCode).toContain('@lokascript/core/browser');
+      expect(devFallbackCode).toContain('@hyperfixi/core/browser');
       expect(devFallbackCode).toContain('Dev Fallback Bundle');
     });
 
     it('should provide hybrid-complete fallback option', () => {
       const hybridFallbackCode = generator.generateDevFallback('hybrid-complete');
 
-      expect(hybridFallbackCode).toContain('@lokascript/core/browser/hybrid-complete');
+      expect(hybridFallbackCode).toContain('@hyperfixi/core/browser/hybrid-complete');
       expect(hybridFallbackCode).toContain('Dev Fallback Bundle');
     });
   });

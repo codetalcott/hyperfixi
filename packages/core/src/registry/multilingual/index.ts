@@ -19,7 +19,7 @@
  *     رد مع <json> المستخدمين </json>
  *
  * Installation:
- *   import { createMultilingualServerPlugin } from '@lokascript/core/registry/multilingual';
+ *   import { createMultilingualServerPlugin } from '@hyperfixi/core/registry/multilingual';
  *
  *   const plugin = createMultilingualServerPlugin({
  *     languages: ['en', 'ja', 'es', 'ar'],

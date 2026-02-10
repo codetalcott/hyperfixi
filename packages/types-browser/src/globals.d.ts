@@ -1,8 +1,8 @@
 /**
- * Global type augmentation for LokaScript browser APIs
+ * Global type augmentation for HyperFixi and LokaScript browser APIs
  *
  * This file augments the Window and globalThis interfaces to include
- * LokaScript global variables, providing IDE autocomplete and type safety.
+ * HyperFixi and LokaScript global variables, providing IDE autocomplete and type safety.
  */
 
 import type { LokaScriptCoreAPI } from './core-api';
@@ -15,28 +15,9 @@ declare global {
    */
   interface Window {
     /**
-     * Lokascript - Multilingual scripting language (primary global)
+     * HyperFixi - Modern hyperscript engine with fixi/htmx integration
      *
-     * Etymology: "loka" (Sanskrit/Indo-European: "world/realm/universe")
-     * Reflects the multilingual scope - 23 languages with SOV/VSO/SVO grammar.
-     *
-     * Loaded from: lokascript-browser.js or lokascript-multilingual.js
-     *
-     * @example
-     * ```typescript
-     * window.lokascript.execute('toggle .active', document.body)
-     * window.lokascript.compile('on click add .highlight')
-     * await lokascript.execute('トグル .active', 'ja')
-     * ```
-     */
-    lokascript: LokaScriptCoreAPI;
-
-    /**
-     * HyperFixi Core - Main hyperscript runtime and parser
-     *
-     * @deprecated Use `lokascript` instead
-     *
-     * Loaded from: lokascript-browser.js or lokascript-multilingual.js
+     * Loaded from: hyperfixi.js or hyperfixi-hx.js
      *
      * @example
      * ```typescript
@@ -45,6 +26,13 @@ declare global {
      * ```
      */
     hyperfixi: LokaScriptCoreAPI;
+
+    /**
+     * @deprecated Use `hyperfixi` instead. Will be removed in v3.0.0.
+     *
+     * Loaded from: hyperfixi.js (backward-compat alias)
+     */
+    lokascript: LokaScriptCoreAPI;
 
     /**
      * Compatibility alias for official _hyperscript API compatibility
@@ -57,7 +45,7 @@ declare global {
     _hyperscript: LokaScriptCoreAPI;
 
     /**
-     * LokaScript Semantic - Multilingual semantic parsing (23 languages)
+     * LokaScript Semantic - Multilingual semantic parsing (24 languages)
      *
      * Loaded from: lokascript-semantic.browser.global.js
      *
@@ -86,8 +74,8 @@ declare global {
   /**
    * globalThis interface augmentation (same as Window for browser contexts)
    */
-  var lokascript: LokaScriptCoreAPI;
   var hyperfixi: LokaScriptCoreAPI;
+  var lokascript: LokaScriptCoreAPI;
   var _hyperscript: LokaScriptCoreAPI;
   var LokaScriptSemantic: LokaScriptSemanticAPI;
   var LokaScriptI18n: LokaScriptI18nAPI;

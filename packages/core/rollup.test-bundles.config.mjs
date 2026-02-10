@@ -52,7 +52,7 @@ export default [
     output: {
       file: 'dist/test-minimal.js',
       format: 'iife',
-      name: 'LokaScriptMinimal',
+      name: 'HyperFixiMinimal',
       sourcemap: true,
     },
     plugins: commonPlugins,
@@ -64,7 +64,7 @@ export default [
     output: {
       file: 'dist/test-standard.js',
       format: 'iife',
-      name: 'LokaScriptStandard',
+      name: 'HyperFixiStandard',
       sourcemap: true,
     },
     plugins: commonPlugins,

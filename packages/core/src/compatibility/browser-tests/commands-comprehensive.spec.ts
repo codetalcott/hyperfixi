@@ -19,7 +19,7 @@ test.describe('Command Compatibility Tests', () => {
     await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-      if (typeof window.lokascript === 'undefined') {
+      if (typeof window.hyperfixi === 'undefined') {
         throw new Error('HyperFixi not loaded');
       }
       // Clear work area before each test

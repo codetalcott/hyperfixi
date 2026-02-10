@@ -143,20 +143,20 @@ function printUsageExamples() {
 
   console.log(`
   // Basic command usage
-  import { HideCommand } from "jsr:@lokascript/core";
+  import { HideCommand } from "jsr:@hyperfixi/core";
   
   const hideCommand = new HideCommand();
   const result = await hideCommand.execute(context, element);
   
   // Runtime with multiple commands
-  import { createMinimalRuntime } from "jsr:@lokascript/core";
+  import { createMinimalRuntime } from "jsr:@hyperfixi/core";
   
   const runtime = createMinimalRuntime()
     .addCommand(new HideCommand())
     .addCommand(new ShowCommand());
   
   // Environment detection
-  import { getLLMRuntimeInfo } from "jsr:@lokascript/core";
+  import { getLLMRuntimeInfo } from "jsr:@hyperfixi/core";
   
   const info = getLLMRuntimeInfo();
   console.log(\`Running on \${info.runtime}\`);

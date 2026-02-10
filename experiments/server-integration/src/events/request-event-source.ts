@@ -14,7 +14,7 @@ import type {
   EventSourceSubscription,
   EventSourceSubscribeOptions,
   ExecutionContext,
-} from '@lokascript/core/registry';
+} from '@hyperfixi/core/registry';
 import type {
   ServerEventPayload,
   ServerRequest,

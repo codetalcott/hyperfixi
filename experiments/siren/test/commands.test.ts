@@ -3,7 +3,7 @@ import { setCurrentEntity, resetClient, getCurrentEntity } from '../src/siren-cl
 import { followCommand } from '../src/commands/follow';
 import { executeActionCommand } from '../src/commands/execute-action';
 import type { SirenEntity } from '../src/types';
-import type { TypedExecutionContext } from '@lokascript/core';
+import type { TypedExecutionContext } from '@hyperfixi/core';
 
 // Mock fetch globally
 const mockFetch = vi.fn();

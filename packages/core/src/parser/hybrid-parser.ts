@@ -18,8 +18,8 @@
  *
  * @example
  * ```typescript
- * import { createRuntime } from '@lokascript/core/runtime';
- * import { hybridParser } from '@lokascript/core/parser/hybrid';
+ * import { createRuntime } from '@hyperfixi/core/runtime';
+ * import { hybridParser } from '@hyperfixi/core/parser/hybrid';
  *
  * const runtime = createRuntime({
  *   commands: [...],

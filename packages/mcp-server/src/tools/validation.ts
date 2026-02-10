@@ -1068,7 +1068,7 @@ function getBundleConfig(
     recommendedBundle: bundle,
     estimatedSize: bundleSize,
     viteConfig: `// vite.config.js
-import { hyperfixi } from '@lokascript/vite-plugin';
+import { hyperfixi } from '@hyperfixi/vite-plugin';
 
 export default {
   plugins: [

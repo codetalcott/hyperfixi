@@ -4,7 +4,7 @@
  * Unified extensibility API for commands, event sources, and context providers.
  *
  * Usage:
- *   import { registry } from '@lokascript/core';
+ *   import { registry } from '@hyperfixi/core';
  *
  *   // Register commands
  *   registry.commands.register('respond', respondCommand);
@@ -224,7 +224,7 @@ export function getDefaultRegistry(): LokaScriptRegistry {
  * Shorthand access to default registries
  *
  * Usage:
- *   import { commands, eventSources, context } from '@lokascript/core/registry';
+ *   import { commands, eventSources, context } from '@hyperfixi/core/registry';
  *
  *   commands.register('respond', respondCommand);
  *   eventSources.register('request', requestEventSource);

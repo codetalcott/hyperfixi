@@ -169,7 +169,7 @@ export class LocaleManager {
  * @example
  * ```typescript
  * import { detectBrowserLocale } from '@lokascript/i18n/parser';
- * import { Parser } from '@lokascript/core';
+ * import { Parser } from '@hyperfixi/core';
  *
  * // Auto-detect and use browser locale
  * const parser = new Parser({ keywords: detectBrowserLocale() });

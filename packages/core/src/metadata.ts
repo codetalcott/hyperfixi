@@ -1,12 +1,12 @@
 /**
- * Package Metadata Module for LokaScript
+ * Package Metadata Module for HyperFixi
  *
  * Provides programmatic access to package and bundle information for
  * developers, build tools, and LLM agents to make informed decisions.
  *
  * @example
  * ```typescript
- * import { packageInfo, bundleInfo, featureMatrix } from '@lokascript/core/metadata';
+ * import { packageInfo, bundleInfo, featureMatrix } from '@hyperfixi/core/metadata';
  *
  * // Get package version
  * console.log(packageInfo.version);
@@ -24,14 +24,14 @@
  * Package information
  */
 export const packageInfo = {
-  name: '@lokascript/core',
-  version: '1.0.0-rc.2',
-  description: 'Multilingual, tree-shakeable hyperscript',
+  name: '@hyperfixi/core',
+  version: '2.0.0',
+  description: 'Modern hyperscript engine with fixi/htmx integration',
   compatibility: '~85% official _hyperscript',
   languages: 24,
   commands: 47,
-  repository: 'https://github.com/codetalcott/lokascript',
-  documentation: 'https://github.com/codetalcott/lokascript/tree/main/packages/core#readme',
+  repository: 'https://github.com/codetalcott/hyperfixi',
+  documentation: 'https://github.com/codetalcott/hyperfixi/tree/main/packages/core#readme',
 } as const;
 
 // =============================================================================
@@ -78,7 +78,7 @@ export const bundleInfo: BundleInfo[] = [
   {
     id: 'lite',
     name: 'Lite',
-    filename: 'lokascript-lite.js',
+    filename: 'hyperfixi-lite.js',
     gzipSize: '1.9 KB',
     rawSize: '5 KB',
     commandCount: 8,
@@ -88,14 +88,14 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: false,
     hasFetch: false,
     hasHtmxCompat: false,
-    importPath: '@lokascript/core/browser/lite',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-lite.js',
+    importPath: '@hyperfixi/core/browser/lite',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-lite.js',
     useCase: 'Minimal interactivity: toggle, show, hide, add, remove, set, put',
   },
   {
     id: 'lite-plus',
     name: 'Lite Plus',
-    filename: 'lokascript-lite-plus.js',
+    filename: 'hyperfixi-lite-plus.js',
     gzipSize: '2.6 KB',
     rawSize: '7 KB',
     commandCount: 14,
@@ -105,14 +105,14 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: false,
     hasFetch: false,
     hasHtmxCompat: false,
-    importPath: '@lokascript/core/browser/lite-plus',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-lite-plus.js',
+    importPath: '@hyperfixi/core/browser/lite-plus',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-lite-plus.js',
     useCase: 'Basic interactivity with wait, log, increment, trigger, go',
   },
   {
     id: 'hybrid-complete',
     name: 'Hybrid Complete',
-    filename: 'lokascript-hybrid-complete.js',
+    filename: 'hyperfixi-hybrid-complete.js',
     gzipSize: '7.2 KB',
     rawSize: '28 KB',
     commandCount: 21,
@@ -122,14 +122,14 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: true,
     hasFetch: true,
     hasHtmxCompat: false,
-    importPath: '@lokascript/core/browser/hybrid-complete',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-hybrid-complete.js',
+    importPath: '@hyperfixi/core/browser/hybrid-complete',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js',
     useCase: 'Recommended for most apps - 85% hyperscript coverage',
   },
   {
     id: 'hybrid-hx',
     name: 'Hybrid HX',
-    filename: 'lokascript-hybrid-hx.js',
+    filename: 'hyperfixi-hx.js',
     gzipSize: '9.7 KB',
     rawSize: '28 KB',
     commandCount: 21,
@@ -139,14 +139,14 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: true,
     hasFetch: true,
     hasHtmxCompat: true,
-    importPath: '@lokascript/core/browser/hybrid-hx',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-hybrid-hx.js',
+    importPath: '@hyperfixi/core/browser/hybrid-hx',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hx.js',
     useCase: 'htmx/fixi drop-in replacement with hx-get, hx-post, hx-target',
   },
   {
     id: 'minimal',
     name: 'Minimal',
-    filename: 'lokascript-browser-minimal.js',
+    filename: 'hyperfixi-minimal.js',
     gzipSize: '63.4 KB',
     rawSize: '271 KB',
     commandCount: 30,
@@ -156,14 +156,14 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: true,
     hasFetch: true,
     hasHtmxCompat: false,
-    importPath: '@lokascript/core/browser/minimal',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-browser-minimal.js',
+    importPath: '@hyperfixi/core/browser/minimal',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-minimal.js',
     useCase: 'Full parser with essential commands',
   },
   {
     id: 'standard',
     name: 'Standard',
-    filename: 'lokascript-browser-standard.js',
+    filename: 'hyperfixi-standard.js',
     gzipSize: '63 KB',
     rawSize: '195 KB',
     commandCount: 35,
@@ -173,14 +173,14 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: true,
     hasFetch: true,
     hasHtmxCompat: false,
-    importPath: '@lokascript/core/browser/standard',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-browser-standard.js',
+    importPath: '@hyperfixi/core/browser/standard',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-standard.js',
     useCase: 'Full parser with common commands',
   },
   {
     id: 'browser',
     name: 'Full Browser',
-    filename: 'lokascript-browser.js',
+    filename: 'hyperfixi.js',
     gzipSize: '199.6 KB',
     rawSize: '943 KB',
     commandCount: 47,
@@ -190,14 +190,14 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: true,
     hasFetch: true,
     hasHtmxCompat: false,
-    importPath: '@lokascript/core/browser',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-browser.js',
+    importPath: '@hyperfixi/core/browser',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi.js',
     useCase: 'Complete bundle with all commands and features',
   },
   {
     id: 'multilingual',
     name: 'Multilingual',
-    filename: 'lokascript-multilingual.js',
+    filename: 'hyperfixi-multilingual.js',
     gzipSize: '64 KB',
     rawSize: '200 KB',
     commandCount: 47,
@@ -207,8 +207,8 @@ export const bundleInfo: BundleInfo[] = [
     hasPositional: true,
     hasFetch: true,
     hasHtmxCompat: false,
-    importPath: '@lokascript/core/browser/multilingual',
-    cdnUrl: 'https://unpkg.com/@lokascript/core/dist/lokascript-multilingual.js',
+    importPath: '@hyperfixi/core/browser/multilingual',
+    cdnUrl: 'https://unpkg.com/@hyperfixi/core/dist/hyperfixi-multilingual.js',
     useCase: 'Full features with multilingual API (requires @lokascript/semantic)',
   },
 ];
@@ -407,13 +407,13 @@ export function compareBundles(bundleIds: string[]): Record<string, BundleInfo> 
 // =============================================================================
 
 /**
- * Related packages in the @lokascript ecosystem
+ * Related packages in the HyperFixi + LokaScript ecosystem
  */
 export const ecosystem = {
   core: {
-    name: '@lokascript/core',
+    name: '@hyperfixi/core',
     description: 'Main runtime, parser, 43 commands',
-    npm: 'https://www.npmjs.com/package/@lokascript/core',
+    npm: 'https://www.npmjs.com/package/@hyperfixi/core',
   },
   semantic: {
     name: '@lokascript/semantic',
@@ -426,9 +426,9 @@ export const ecosystem = {
     npm: 'https://www.npmjs.com/package/@lokascript/i18n',
   },
   vitePlugin: {
-    name: '@lokascript/vite-plugin',
+    name: '@hyperfixi/vite-plugin',
     description: 'Zero-config Vite plugin for automatic minimal bundles',
-    npm: 'https://www.npmjs.com/package/@lokascript/vite-plugin',
+    npm: 'https://www.npmjs.com/package/@hyperfixi/vite-plugin',
   },
   patternsReference: {
     name: '@lokascript/patterns-reference',

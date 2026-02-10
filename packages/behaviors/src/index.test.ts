@@ -25,7 +25,7 @@ import {
   registerAll,
 } from './index';
 
-describe('@lokascript/behaviors', () => {
+describe('@hyperfixi/behaviors', () => {
   describe('exports', () => {
     it('should export all behavior sources', () => {
       expect(draggableSource).toBeDefined();

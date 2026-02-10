@@ -14,11 +14,11 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-multilingual.ts',
   output: {
-    file: 'dist/lokascript-multilingual.js',
+    file: 'dist/hyperfixi-multilingual.js',
     format: 'iife',
-    // Use internal name to avoid overwriting window.lokascript
-    // The bundle sets window.lokascript internally
-    name: '_lokascriptMultilingualInternal',
+    // Use internal name to avoid overwriting window.hyperfixi
+    // The bundle sets window.hyperfixi internally
+    name: '_hyperfixiMultilingualInternal',
     sourcemap: true,
     inlineDynamicImports: true,
   },

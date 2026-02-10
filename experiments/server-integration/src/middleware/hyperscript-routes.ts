@@ -6,7 +6,7 @@
  *
  * @example
  * import { createHyperscriptRoutesMiddleware } from '@lokascript/server-integration';
- * import { registry } from '@lokascript/core/registry';
+ * import { registry } from '@hyperfixi/core/registry';
  *
  * // Setup the middleware
  * const middleware = createHyperscriptRoutesMiddleware({
@@ -18,7 +18,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import type { LokaScriptRegistry } from '@lokascript/core/registry';
+import type { LokaScriptRegistry } from '@hyperfixi/core/registry';
 import {
   createRequestEventSource,
   expressRequestToServerRequest,
@@ -60,7 +60,7 @@ export function createHyperscriptRoutesMiddleware(options: HyperscriptRoutesOpti
     if (!initialized) {
       try {
         // Dynamic import to avoid circular dependencies
-        const { getDefaultRegistry } = await import('@lokascript/core/registry');
+        const { getDefaultRegistry } = await import('@hyperfixi/core/registry');
         const registry = options.registry || getDefaultRegistry();
 
         // Create and register the request event source
@@ -123,7 +123,7 @@ export async function setupHyperscriptRoutes(
 
   try {
     // Import registry
-    const { getDefaultRegistry } = await import('@lokascript/core/registry');
+    const { getDefaultRegistry } = await import('@hyperfixi/core/registry');
     const registry = options.registry || getDefaultRegistry();
 
     // Register context providers for request/response

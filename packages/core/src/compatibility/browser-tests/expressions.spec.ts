@@ -121,7 +121,7 @@ test.describe('Official _hyperscript Expressions Tests', () => {
 
     // Verify HyperFixi and utilities are loaded
     await page.evaluate(() => {
-      if (typeof window.lokascript === 'undefined') {
+      if (typeof window.hyperfixi === 'undefined') {
         throw new Error('HyperFixi browser bundle not loaded');
       }
       if (typeof window.evalHyperScript === 'undefined') {

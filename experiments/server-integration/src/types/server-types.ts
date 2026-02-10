@@ -19,7 +19,7 @@ import type {
   EventSourceSubscription,
   EventSource,
   ExecutionContext,
-} from '@lokascript/core/registry';
+} from '@hyperfixi/core/registry';
 
 /**
  * HTTP Method type

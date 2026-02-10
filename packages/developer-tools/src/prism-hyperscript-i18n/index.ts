@@ -17,7 +17,7 @@
  * @example Node.js usage
  * ```typescript
  * import Prism from 'prismjs';
- * import { registerPrismHyperfixi } from '@lokascript/developer-tools/prism-hyperfixi';
+ * import { registerPrismHyperfixi } from '@hyperfixi/developer-tools/prism-hyperfixi';
  *
  * registerPrismHyperfixi(Prism, { language: 'auto' });
  * ```

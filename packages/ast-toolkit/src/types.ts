@@ -17,10 +17,10 @@ export type {
   ElementType,
   ExpressionCategory,
   EvaluationType,
-} from '@lokascript/core';
+} from '@hyperfixi/core';
 
 // Import ASTNode directly for use in this file
-import type { ASTNode } from '@lokascript/core';
+import type { ASTNode } from '@hyperfixi/core';
 
 // ============================================================================
 // Visitor Pattern Types

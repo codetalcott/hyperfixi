@@ -20,7 +20,7 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { idKeywords } from '@lokascript/i18n/parser/id';
- * import { Parser } from '@lokascript/core';
+ * import { Parser } from '@hyperfixi/core';
  *
  * const parser = new Parser({ keywords: idKeywords });
  * parser.parse('pada klik ganti .active');

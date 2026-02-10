@@ -1,5 +1,5 @@
 /**
- * Type definitions for @lokascript/core browser global (window.hyperfixi)
+ * Type definitions for @hyperfixi/core browser global (window.hyperfixi)
  */
 
 export interface LokaScriptCoreAPI {

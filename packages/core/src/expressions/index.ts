@@ -7,10 +7,10 @@
  * ## Tree-Shaking Usage
  *
  * ```typescript
- * import { createTreeShakeableRuntime } from '@lokascript/core/runtime';
- * import { references, logical } from '@lokascript/core/expressions';
- * import { toggle, add } from '@lokascript/core/commands';
- * import { ConfigurableExpressionEvaluator } from '@lokascript/core/expressions';
+ * import { createTreeShakeableRuntime } from '@hyperfixi/core/runtime';
+ * import { references, logical } from '@hyperfixi/core/expressions';
+ * import { toggle, add } from '@hyperfixi/core/commands';
+ * import { ConfigurableExpressionEvaluator } from '@hyperfixi/core/expressions';
  *
  * const evaluator = new ConfigurableExpressionEvaluator([references, logical]);
  * const runtime = createTreeShakeableRuntime(

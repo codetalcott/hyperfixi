@@ -12,7 +12,7 @@ import {
 } from '../../src/index.js';
 
 // We'll create mock hyperscript ASTs based on the core types
-// In a real implementation, these would come from @lokascript/core parser
+// In a real implementation, these would come from @hyperfixi/core parser
 
 const createRealWorldAST = () => ({
   type: 'program',

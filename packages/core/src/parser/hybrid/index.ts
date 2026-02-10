@@ -7,13 +7,13 @@
  * @example
  * ```typescript
  * // Full parser
- * import { HybridParser } from '@lokascript/core/parser/hybrid';
+ * import { HybridParser } from '@hyperfixi/core/parser/hybrid';
  *
  * // Just tokenizer
- * import { tokenize, Token } from '@lokascript/core/parser/hybrid';
+ * import { tokenize, Token } from '@hyperfixi/core/parser/hybrid';
  *
  * // Just aliases
- * import { addCommandAliases } from '@lokascript/core/parser/hybrid';
+ * import { addCommandAliases } from '@hyperfixi/core/parser/hybrid';
  * ```
  */
 

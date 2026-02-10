@@ -23,24 +23,24 @@ const projectRoot = process.cwd();
 const BUNDLES = {
   // === Critical bundles (fail CI if these don't build) ===
   main: {
-    name: 'main (lokascript-browser.js)',
+    name: 'main (hyperfixi.js)',
     script: 'build:browser:main-only',
     config: 'rollup.browser.config.mjs',
-    output: 'dist/lokascript-browser.js',
+    output: 'dist/hyperfixi.js',
     critical: true,
   },
   multilingual: {
     name: 'multilingual',
     script: 'build:browser:multilingual',
     config: 'rollup.browser-multilingual.config.mjs',
-    output: 'dist/lokascript-multilingual.js',
+    output: 'dist/hyperfixi-multilingual.js',
     critical: true,
   },
   'classic-i18n': {
     name: 'classic-i18n',
     script: 'build:browser:classic-i18n',
     config: 'rollup.browser-classic-i18n.config.mjs',
-    output: 'dist/lokascript-browser-classic-i18n.js',
+    output: 'dist/hyperfixi-classic-i18n.js',
     critical: true,
   },
 
@@ -49,14 +49,14 @@ const BUNDLES = {
     name: 'lite',
     script: 'build:browser:lite',
     config: 'rollup.browser-lite.config.mjs',
-    output: 'dist/lokascript-lite.js',
+    output: 'dist/hyperfixi-lite.js',
     critical: true,
   },
   'lite-plus': {
     name: 'lite-plus',
     script: 'build:browser:lite-plus',
     config: 'rollup.browser-lite-plus.config.mjs',
-    output: 'dist/lokascript-lite-plus.js',
+    output: 'dist/hyperfixi-lite-plus.js',
     critical: true,
   },
 
@@ -65,14 +65,14 @@ const BUNDLES = {
     name: 'hybrid-complete',
     script: 'build:browser:hybrid-complete',
     config: 'rollup.browser-hybrid-complete.config.mjs',
-    output: 'dist/lokascript-hybrid-complete.js',
+    output: 'dist/hyperfixi-hybrid-complete.js',
     critical: true,
   },
   'hybrid-hx': {
     name: 'hybrid-hx',
     script: 'build:browser:hybrid-hx',
     config: 'rollup.browser-hybrid-hx.config.mjs',
-    output: 'dist/lokascript-hybrid-hx.js',
+    output: 'dist/hyperfixi-hx.js',
     critical: true,
   },
 
@@ -81,14 +81,14 @@ const BUNDLES = {
     name: 'minimal',
     script: 'build:browser:minimal',
     config: 'rollup.browser-minimal.config.mjs',
-    output: 'dist/lokascript-browser-minimal.js',
+    output: 'dist/hyperfixi-minimal.js',
     critical: true,
   },
   standard: {
     name: 'standard',
     script: 'build:browser:standard',
     config: 'rollup.browser-standard.config.mjs',
-    output: 'dist/lokascript-browser-standard.js',
+    output: 'dist/hyperfixi-standard.js',
     critical: true,
   },
   modular: {
@@ -122,7 +122,7 @@ Options:
   --help, -h          Show this help message
 
 Available bundles:
-  main                Main lokascript-browser.js bundle
+  main                Main hyperfixi.js bundle
   classic-i18n        Classic bundle with i18n support
   multilingual        Parser-free multilingual bundle
 

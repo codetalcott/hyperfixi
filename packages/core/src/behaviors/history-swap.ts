@@ -14,7 +14,7 @@
  *   end
  *
  * Programmatic usage:
- *   import { registerHistorySwap } from '@lokascript/core/behaviors';
+ *   import { registerHistorySwap } from '@hyperfixi/core/behaviors';
  *   registerHistorySwap(runtime);
  *   // Then in hyperscript: install HistorySwap(target: "#main")
  *

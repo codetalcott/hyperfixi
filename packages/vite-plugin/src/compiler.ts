@@ -10,7 +10,7 @@
  * - Semantic parsing happens at BUILD time (zero runtime overhead)
  */
 
-import { HybridParser } from '@lokascript/core/parser/hybrid/parser-core';
+import { HybridParser } from '@hyperfixi/core/parser/hybrid/parser-core';
 import type {
   ASTNode,
   CommandNode,
@@ -24,7 +24,7 @@ import type {
   SelectorNode,
   LiteralNode,
   PositionalNode,
-} from '@lokascript/core/parser/hybrid/ast-types';
+} from '@hyperfixi/core/parser/hybrid/ast-types';
 
 // =============================================================================
 // SEMANTIC PARSER INTEGRATION (optional)
@@ -61,7 +61,7 @@ let buildASTFn: BuildASTFn | null = null;
  * @example
  * ```typescript
  * import { createSemanticAnalyzer, buildAST } from '@lokascript/semantic';
- * import { setSemanticParser } from '@lokascript/vite-plugin';
+ * import { setSemanticParser } from '@hyperfixi/vite-plugin';
  *
  * setSemanticParser(createSemanticAnalyzer(), buildAST);
  * ```

@@ -9,7 +9,7 @@
  * - Boosted: Automatic AJAX links/forms (htmx boost pattern)
  *
  * @example
- *   import { registerHistorySwap, registerBoosted } from '@lokascript/core/behaviors';
+ *   import { registerHistorySwap, registerBoosted } from '@hyperfixi/core/behaviors';
  *
  *   // Register with runtime
  *   const registry = runtime.getBehaviorRegistry();

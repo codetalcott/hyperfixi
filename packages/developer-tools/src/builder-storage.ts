@@ -229,7 +229,7 @@ export class BuilderStorage {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${project.name}</title>
-  <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi-browser.js"></script>
+  <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi-browser.js"></script>
   <style>
 ${styles}
   </style>

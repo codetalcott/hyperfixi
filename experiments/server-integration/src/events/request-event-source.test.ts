@@ -11,7 +11,7 @@ import {
   type ServerResponse,
   type HttpMethod,
 } from './request-event-source.js';
-import type { ExecutionContext } from '@lokascript/core';
+import type { ExecutionContext } from '@hyperfixi/core';
 
 describe('Request Event Source', () => {
   let source: ReturnType<typeof createRequestEventSource>;

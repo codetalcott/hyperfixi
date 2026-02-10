@@ -1,7 +1,7 @@
 /**
  * Core Integration Tests
  *
- * Tests for the SemanticAnalyzer integration with @lokascript/core.
+ * Tests for the SemanticAnalyzer integration with @hyperfixi/core.
  * These tests validate that semantic parsing works end-to-end through
  * the core parser bridge interface.
  */

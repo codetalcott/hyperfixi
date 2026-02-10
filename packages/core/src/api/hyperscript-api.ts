@@ -900,4 +900,4 @@ export const hyperscript: HyperscriptAPI = {
 export const _hyperscript = hyperscript;
 
 // Note: Default export removed in favor of named exports for better tree-shaking
-// Migration: import { hyperscript } from '@lokascript/core' instead of import hyperfixi from '@lokascript/core'
+// Migration: import { hyperscript } from '@hyperfixi/core' instead of import hyperfixi from '@hyperfixi/core'

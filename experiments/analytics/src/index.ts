@@ -360,7 +360,7 @@ interface LokaScriptRuntime {
 }
 
 /**
- * RuntimeHooks interface from @lokascript/core
+ * RuntimeHooks interface from @hyperfixi/core
  * Defined locally to avoid circular dependency issues
  */
 interface RuntimeHooks {
@@ -371,7 +371,7 @@ interface RuntimeHooks {
 }
 
 /**
- * HookContext interface from @lokascript/core
+ * HookContext interface from @hyperfixi/core
  */
 interface HookContext {
   commandName: string;
@@ -448,7 +448,7 @@ function summarizeResult(result: unknown): string | undefined {
  *
  * @example
  * ```typescript
- * import { createRuntime } from '@lokascript/core';
+ * import { createRuntime } from '@hyperfixi/core';
  * import { createAnalyticsSystem, integrateWithHyperFixi } from '@lokascript/analytics';
  *
  * const runtime = createRuntime();

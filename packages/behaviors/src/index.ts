@@ -1,5 +1,5 @@
 /**
- * @lokascript/behaviors
+ * @hyperfixi/behaviors
  *
  * Reusable hyperscript behaviors for LokaScript.
  * Each behavior can be imported individually for tree-shaking,
@@ -7,19 +7,19 @@
  *
  * @example Individual import (tree-shakeable)
  * ```javascript
- * import { registerDraggable } from '@lokascript/behaviors/draggable';
+ * import { registerDraggable } from '@hyperfixi/behaviors/draggable';
  * await registerDraggable();
  * ```
  *
  * @example Import all
  * ```javascript
- * import { registerAll } from '@lokascript/behaviors';
+ * import { registerAll } from '@hyperfixi/behaviors';
  * await registerAll();
  * ```
  *
  * @example Registry-based lazy loading
  * ```javascript
- * import { loadBehavior, getBehaviorsByCategory } from '@lokascript/behaviors';
+ * import { loadBehavior, getBehaviorsByCategory } from '@hyperfixi/behaviors';
  * await loadBehavior('Draggable');
  * const uiBehaviors = getBehaviorsByCategory('ui');
  * ```
@@ -27,7 +27,7 @@
  * @example CDN usage
  * ```html
  * <script src="lokascript-browser.js"></script>
- * <script src="@lokascript/behaviors/draggable.browser.js"></script>
+ * <script src="@hyperfixi/behaviors/draggable.browser.js"></script>
  * <!-- Draggable is auto-registered -->
  * ```
  */
@@ -167,7 +167,7 @@ import type { LokaScriptInstance, LokaScriptWindow } from './schemas/types';
  *
  * @example
  * ```javascript
- * import { registerAll } from '@lokascript/behaviors';
+ * import { registerAll } from '@hyperfixi/behaviors';
  * await registerAll();
  * ```
  */

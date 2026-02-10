@@ -1,11 +1,11 @@
 /**
- * LokaScript Full Browser Bundle
+ * HyperFixi Full Browser Bundle
  * Includes ALL commands and features (40+ commands)
  *
  * This is the complete bundle for maximum compatibility.
  * For smaller bundle sizes, consider:
- * - lokascript-browser-minimal.js (~50-60KB gzipped, 8 commands, core expressions)
- * - lokascript-browser-standard.js (~100-110KB gzipped, 20 commands, core+common expressions)
+ * - hyperfixi-minimal.js (~50-60KB gzipped, 8 commands, core expressions)
+ * - hyperfixi-standard.js (~100-110KB gzipped, 20 commands, core+common expressions)
  *
  * Phase 2 optimization notes:
  * - When using createRuntime(), specify expressionPreload option:
@@ -55,8 +55,8 @@ import { registerFetchResponseType } from '../commands/async/fetch';
 // Import CompileResult type for browser bundle
 import type { CompileResult, NewCompileOptions } from '../api/hyperscript-api';
 
-// LokaScript Browser API Type
-interface LokaScriptBrowserAPI {
+// HyperFixi Browser API Type
+interface HyperFixiBrowserAPI {
   evalHyperScript: typeof evalHyperScript;
   evalHyperScriptAsync: typeof evalHyperScriptAsync;
   evalHyperScriptSmart: typeof evalHyperScriptSmart;
@@ -113,10 +113,10 @@ interface LokaScriptBrowserAPI {
 // Export to global scope for browser testing
 declare global {
   interface Window {
-    // Primary: lokascript (new name)
-    lokascript: LokaScriptBrowserAPI;
-    // Compatibility: hyperfixi (deprecated, use lokascript)
-    hyperfixi: LokaScriptBrowserAPI;
+    // Primary: hyperfixi
+    hyperfixi: HyperFixiBrowserAPI;
+    /** @deprecated Use window.hyperfixi instead */
+    lokascript: HyperFixiBrowserAPI;
     // Also expose as direct globals for test compatibility
     evalHyperScript: typeof evalHyperScript;
     evalHyperScriptAsync: typeof evalHyperScriptAsync;
@@ -125,7 +125,7 @@ declare global {
 }
 
 // Main browser API - matches _hyperscript signature
-const lokascriptAPI = {
+const hyperfixiAPI = {
   // Core evaluation functions
   evalHyperScript,
   evalHyperScriptAsync,
@@ -136,7 +136,7 @@ const lokascriptAPI = {
 
   // Full hyperscript API for advanced usage
   compile: (code: string, options?: NewCompileOptions) => {
-    debug.parse('BROWSER-BUNDLE: lokascript.compile() called', { code, options });
+    debug.parse('BROWSER-BUNDLE: hyperfixi.compile() called', { code, options });
     const result = hyperscript.compileSync(code, options);
     debug.parse('BROWSER-BUNDLE: hyperscript.compileSync() returned', { result });
 
@@ -178,7 +178,7 @@ const lokascriptAPI = {
     }
     return Promise.resolve();
   },
-  process: (element: Element | Document) => lokascriptAPI.processNode(element), // Alias
+  process: (element: Element | Document) => hyperfixiAPI.processNode(element), // Alias
 
   // Attribute processor for manual control
   attributeProcessor: defaultAttributeProcessor,
@@ -241,7 +241,7 @@ const lokascriptAPI = {
   },
 
   // Global configuration for parsing behavior
-  // Use: lokascript.config.semantic = false to disable semantic parsing
+  // Use: hyperfixi.config.semantic = false to disable semantic parsing
   config,
 
   // Runtime hooks for analytics, logging, debugging, etc.
@@ -266,19 +266,19 @@ if (typeof window !== 'undefined') {
   // Note: Debug auto-enable via URL param is handled in debug-events.ts module load
   // This ensures it happens before attribute processing
 
-  // Primary: lokascript (new name reflecting multilingual world/realm scope)
-  window.lokascript = lokascriptAPI;
+  // Primary: hyperfixi
+  window.hyperfixi = hyperfixiAPI;
 
-  // Deprecated alias with warning (remove in v2.0.0)
-  if (typeof window.hyperfixi === 'undefined') {
-    Object.defineProperty(window, 'hyperfixi', {
+  // Deprecated alias for v1.x compatibility (remove in v3.0.0)
+  if (typeof window.lokascript === 'undefined') {
+    Object.defineProperty(window, 'lokascript', {
       get() {
         console.warn(
-          '[DEPRECATED] window.hyperfixi is deprecated and will be removed in v2.0.0. ' +
-            'Please use window.lokascript instead. ' +
-            'See https://github.com/lokascript/lokascript/blob/main/MIGRATION.md'
+          '[DEPRECATED] window.lokascript is deprecated and will be removed in v3.0.0. ' +
+            'Please use window.hyperfixi instead. ' +
+            'See https://github.com/codetalcott/hyperfixi/blob/main/MIGRATION.md'
         );
-        return window.lokascript;
+        return window.hyperfixi;
       },
       enumerable: true,
       configurable: true,
@@ -303,4 +303,4 @@ if (typeof window !== 'undefined') {
 }
 
 // Export as default for IIFE
-export default lokascriptAPI;
+export default hyperfixiAPI;

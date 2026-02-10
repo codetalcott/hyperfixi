@@ -5,7 +5,7 @@
  * These types use the 'universal' environment which allows both Element and object targets.
  *
  * Usage:
- *   import type { UniversalEventSource, UniversalEventPayload } from '@lokascript/core/registry/universal';
+ *   import type { UniversalEventSource, UniversalEventPayload } from '@hyperfixi/core/registry/universal';
  *
  * Use universal types when:
  * - Writing library code that works in browser and server

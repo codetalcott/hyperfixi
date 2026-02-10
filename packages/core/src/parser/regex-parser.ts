@@ -15,8 +15,8 @@
  *
  * @example
  * ```typescript
- * import { createRuntime } from '@lokascript/core/runtime';
- * import { regexParser } from '@lokascript/core/parser/regex';
+ * import { createRuntime } from '@hyperfixi/core/runtime';
+ * import { regexParser } from '@hyperfixi/core/parser/regex';
  *
  * const runtime = createRuntime({
  *   commands: [toggle(), add(), remove()],

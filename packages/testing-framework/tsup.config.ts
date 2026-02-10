@@ -15,7 +15,7 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   external: [
-    '@lokascript/core',
+    '@hyperfixi/core',
     'puppeteer',
     'playwright',
     'jsdom',

@@ -73,7 +73,7 @@ describe('plugin fetch handler — with mocked parseSirenResponse', () => {
 
     // Capture the handler by intercepting registerFetchResponseType
     let capturedHandler: ((response: Response) => Promise<unknown>) | null = null;
-    vi.doMock('@lokascript/core/commands', () => ({
+    vi.doMock('@hyperfixi/core/commands', () => ({
       registerFetchResponseType: (_name: string, config: { handler: (r: Response) => Promise<unknown> }) => {
         capturedHandler = config.handler;
       },
@@ -99,7 +99,7 @@ describe('plugin fetch handler — with mocked parseSirenResponse', () => {
     // Cleanup
     freshReset();
     vi.doUnmock('siren-agent/siren-tools');
-    vi.doUnmock('@lokascript/core/commands');
+    vi.doUnmock('@hyperfixi/core/commands');
   });
 
   it('falls back to JSON when parseSirenResponse returns null', async () => {

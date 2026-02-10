@@ -2,7 +2,7 @@
  * Parse Validator - Validates hyperscript parsing across languages
  */
 
-import { MultilingualHyperscript } from '@lokascript/core/multilingual';
+import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 import type { SemanticNode } from '@lokascript/semantic';
 import type { PatternTranslation, ParseResult, Validator } from '../types';
 

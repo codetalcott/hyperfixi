@@ -34,7 +34,7 @@ export async function registerDraggable(hyperfixi?: LokaScriptInstance): Promise
 
   if (!hf) {
     throw new Error(
-      'LokaScript not found. Make sure @lokascript/core is loaded before registering behaviors.'
+      'LokaScript not found. Make sure @hyperfixi/core is loaded before registering behaviors.'
     );
   }
 

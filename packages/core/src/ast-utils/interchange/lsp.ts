@@ -6,7 +6,7 @@
  * the language server parser-agnostic — both core and semantic parser output
  * can be converted to interchange and fed through these functions.
  *
- * Defines its own minimal LSP-compatible types so @lokascript/core has no
+ * Defines its own minimal LSP-compatible types so @hyperfixi/core has no
  * dependency on vscode-languageserver. The language server maps between these
  * and the real LSP types (which are structurally identical).
  */

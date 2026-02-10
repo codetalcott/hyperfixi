@@ -2,7 +2,7 @@
  * AST Interchange Format Types (Semantic-local copy)
  *
  * These are structurally identical to the canonical types in
- * @lokascript/core/ast-utils/interchange/types.ts
+ * @hyperfixi/core/ast-utils/interchange/types.ts
  *
  * Duplicated here because the semantic package has no dependency on core.
  * TypeScript's structural typing ensures these are assignable to the

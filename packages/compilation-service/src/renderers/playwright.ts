@@ -40,7 +40,7 @@ export class PlaywrightRenderer implements TestRenderer {
       );
     } else {
       const bundlePath =
-        options.bundlePath ?? './node_modules/@lokascript/core/dist/lokascript-browser.js';
+        options.bundlePath ?? './node_modules/@hyperfixi/core/dist/lokascript-browser.js';
       lines.push(`  await page.addScriptTag({ path: '${escapeString(bundlePath)}' });`);
       lines.push("  await page.waitForFunction(() => document.querySelector('[_]') !== null);");
       // Wait for LokaScript to process attributes

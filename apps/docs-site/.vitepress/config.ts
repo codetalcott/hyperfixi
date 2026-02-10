@@ -139,7 +139,7 @@ export default defineConfig({
           text: 'Core Packages',
           items: [
             { text: 'Overview', link: '/en/packages/' },
-            { text: '@lokascript/core', link: '/en/packages/core' },
+            { text: '@hyperfixi/core', link: '/en/packages/core' },
             { text: '@lokascript/semantic', link: '/en/packages/semantic' },
             { text: '@lokascript/i18n', link: '/en/packages/i18n' }
           ]
@@ -153,7 +153,7 @@ export default defineConfig({
         {
           text: 'Build Tools',
           items: [
-            { text: '@lokascript/vite-plugin', link: '/en/packages/vite-plugin' }
+            { text: '@hyperfixi/vite-plugin', link: '/en/packages/vite-plugin' }
           ]
         }
       ],

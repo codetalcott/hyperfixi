@@ -208,7 +208,7 @@ export function quickStartGenerator(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

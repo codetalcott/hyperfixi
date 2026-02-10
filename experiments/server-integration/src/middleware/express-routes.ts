@@ -7,7 +7,7 @@
  * For maximum flexibility, use framework-agnostic-routes.ts directly.
  */
 
-import type { LokaScriptRegistry } from '@lokascript/core/registry';
+import type { LokaScriptRegistry } from '@hyperfixi/core/registry';
 import {
   createHyperscriptMiddleware,
   setupHyperscriptRoutes as genericSetup,

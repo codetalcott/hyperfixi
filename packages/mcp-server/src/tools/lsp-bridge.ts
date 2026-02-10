@@ -10,7 +10,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 // Try to import ast-utils from core
 let astToolkit: any = null;
 try {
-  astToolkit = await import('@lokascript/core/ast-utils');
+  astToolkit = await import('@hyperfixi/core/ast-utils');
 } catch {
   // core/ast-utils not available
 }
@@ -18,7 +18,7 @@ try {
 // Try to import parse function from core
 let parseFunction: any = null;
 try {
-  const core = await import('@lokascript/core');
+  const core = await import('@hyperfixi/core');
   parseFunction = core.parse;
 } catch {
   // core not available
@@ -34,7 +34,7 @@ try {
 
 // Import error fixes registry
 import { getFixesForDiagnostic } from './error-fixes.js';
-import type { CodeFix } from '@lokascript/core';
+import type { CodeFix } from '@hyperfixi/core';
 
 // =============================================================================
 // Cached Semantic Analyzer (Phase 6 - Performance)

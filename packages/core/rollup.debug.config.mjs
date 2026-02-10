@@ -7,7 +7,7 @@ export default {
   output: {
     file: 'dist/hyperfixi-debug.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: true,
     inlineDynamicImports: true
   },

@@ -153,4 +153,4 @@ export type {
 } from './ast-utils/interchange/types';
 
 // Note: Default export removed in favor of named exports for better tree-shaking
-// Use: import { hyperscript } from '@lokascript/core' instead of import hyperfixi from '@lokascript/core'
+// Use: import { hyperscript } from '@hyperfixi/core' instead of import hyperfixi from '@hyperfixi/core'

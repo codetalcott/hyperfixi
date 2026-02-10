@@ -1,12 +1,12 @@
 /**
- * @lokascript/aot-compiler
+ * @hyperfixi/aot-compiler
  *
  * Ahead-of-Time compiler for LokaScript/hyperscript.
  * Transforms hyperscript to optimized JavaScript at build time.
  *
  * @example
  * ```typescript
- * import { AOTCompiler, compileHyperscript } from '@lokascript/aot-compiler';
+ * import { AOTCompiler, compileHyperscript } from '@hyperfixi/aot-compiler';
  *
  * // Simple usage
  * const js = await compileHyperscript('on click toggle .active');

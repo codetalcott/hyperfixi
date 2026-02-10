@@ -12,8 +12,8 @@
  * For optimal tree-shaking, import only the commands you need:
  *
  * ```typescript
- * import { createTreeShakeableRuntime } from '@lokascript/core/runtime';
- * import { toggle, add, remove } from '@lokascript/core/commands';
+ * import { createTreeShakeableRuntime } from '@hyperfixi/core/runtime';
+ * import { toggle, add, remove } from '@hyperfixi/core/commands';
  *
  * const runtime = createTreeShakeableRuntime(
  *   [toggle(), add(), remove()],

@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { COMMAND_KEYWORDS, HOVER_DOCS } from '@lokascript/core/lsp-metadata';
+ * import { COMMAND_KEYWORDS, HOVER_DOCS } from '@hyperfixi/core/lsp-metadata';
  * ```
  */
 

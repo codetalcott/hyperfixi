@@ -23,7 +23,7 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { quKeywords } from '@lokascript/i18n/parser/qu';
- * import { Parser } from '@lokascript/core';
+ * import { Parser } from '@hyperfixi/core';
  *
  * const parser = new Parser({ keywords: quKeywords });
  * parser.parse('ñitiy-pi yapay #count-ta');

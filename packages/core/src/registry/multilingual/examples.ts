@@ -262,8 +262,8 @@ export const cacheCommand: MultilingualCommand = {
  * Complete multilingual server plugin with all example commands
  *
  * @example
- * import { completeServerPlugin } from '@lokascript/core/registry/multilingual/examples';
- * import { getDefaultRegistry } from '@lokascript/core/registry';
+ * import { completeServerPlugin } from '@hyperfixi/core/registry/multilingual/examples';
+ * import { getDefaultRegistry } from '@hyperfixi/core/registry';
  *
  * getDefaultRegistry().use(completeServerPlugin);
  *
@@ -433,9 +433,9 @@ export const usageExamples = {
  */
 export const expressIntegration = `
 import express from 'express';
-import { getDefaultRegistry } from '@lokascript/core/registry';
-import { createMultilingualServerPlugin } from '@lokascript/core/registry/multilingual';
-import { createRequestEventSource } from '@lokascript/core/registry/examples/server-event-source';
+import { getDefaultRegistry } from '@hyperfixi/core/registry';
+import { createMultilingualServerPlugin } from '@hyperfixi/core/registry/multilingual';
+import { createRequestEventSource } from '@hyperfixi/core/registry/examples/server-event-source';
 
 const app = express();
 const registry = getDefaultRegistry();

@@ -16,7 +16,7 @@ export default defineConfig([
     minify: false,
     splitting: false,
     treeshake: true,
-    external: ['@lokascript/core'],
+    external: ['@hyperfixi/core'],
     banner: {
       js: '/* Analytics System for HyperFixi Applications */',
     },

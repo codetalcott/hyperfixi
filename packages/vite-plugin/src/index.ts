@@ -1,5 +1,5 @@
 /**
- * @lokascript/vite-plugin
+ * @hyperfixi/vite-plugin
  *
  * Zero-config Vite plugin that automatically generates minimal HyperFixi bundles
  * based on detected hyperscript usage in your source files.
@@ -7,7 +7,7 @@
  * @example
  * ```javascript
  * // vite.config.js
- * import { hyperfixi } from '@lokascript/vite-plugin';
+ * import { hyperfixi } from '@hyperfixi/vite-plugin';
  *
  * export default {
  *   plugins: [hyperfixi()]
@@ -82,7 +82,7 @@ const VIRTUAL_MODULE_ID = 'virtual:hyperfixi';
 const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID;
 
 // Import aliases that resolve to the virtual module
-const IMPORT_ALIASES = ['hyperfixi', '@lokascript/core', 'virtual:hyperfixi'];
+const IMPORT_ALIASES = ['hyperfixi', '@hyperfixi/core', 'virtual:hyperfixi'];
 
 /**
  * Create the HyperFixi Vite plugin

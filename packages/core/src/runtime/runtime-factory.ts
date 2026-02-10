@@ -7,9 +7,9 @@
  * ## Basic Usage (with separate parsing)
  *
  * ```typescript
- * import { createTreeShakeableRuntime } from '@lokascript/core/runtime';
- * import { createCoreExpressionEvaluator } from '@lokascript/core/expressions';
- * import { toggle, add } from '@lokascript/core/commands';
+ * import { createTreeShakeableRuntime } from '@hyperfixi/core/runtime';
+ * import { createCoreExpressionEvaluator } from '@hyperfixi/core/expressions';
+ * import { toggle, add } from '@hyperfixi/core/commands';
  *
  * const runtime = createTreeShakeableRuntime(
  *   [toggle(), add()],
@@ -20,10 +20,10 @@
  * ## With Parser (unified API)
  *
  * ```typescript
- * import { createRuntime } from '@lokascript/core/runtime';
- * import { toggle, add } from '@lokascript/core/commands';
- * import { references, logical } from '@lokascript/core/expressions';
- * import { hybridParser } from '@lokascript/core/parser/hybrid';
+ * import { createRuntime } from '@hyperfixi/core/runtime';
+ * import { toggle, add } from '@hyperfixi/core/commands';
+ * import { references, logical } from '@hyperfixi/core/expressions';
+ * import { hybridParser } from '@hyperfixi/core/parser/hybrid';
  *
  * const hyperfixi = createRuntime({
  *   commands: [toggle, add],
@@ -84,22 +84,22 @@ export interface TreeShakeableRuntimeOptions {
  */
 export interface RuntimeOptions {
   /**
-   * Commands to register. Use factory functions from @lokascript/core/commands.
+   * Commands to register. Use factory functions from @hyperfixi/core/commands.
    *
    * @example
    * ```typescript
-   * import { toggle, add, remove } from '@lokascript/core/commands';
+   * import { toggle, add, remove } from '@hyperfixi/core/commands';
    * commands: [toggle, add, remove]
    * ```
    */
   commands: Array<() => any>;
 
   /**
-   * Expression categories to include. Use exports from @lokascript/core/expressions.
+   * Expression categories to include. Use exports from @hyperfixi/core/expressions.
    *
    * @example
    * ```typescript
-   * import { references, logical, positional } from '@lokascript/core/expressions';
+   * import { references, logical, positional } from '@hyperfixi/core/expressions';
    * expressions: [references, logical, positional]
    * ```
    */
@@ -111,7 +111,7 @@ export interface RuntimeOptions {
    *
    * @example
    * ```typescript
-   * import { hybridParser } from '@lokascript/core/parser/hybrid';
+   * import { hybridParser } from '@hyperfixi/core/parser/hybrid';
    * parser: hybridParser
    * ```
    */
@@ -241,10 +241,10 @@ export function createTreeShakeableRuntime(
  *
  * @example
  * ```typescript
- * import { createRuntime } from '@lokascript/core/runtime';
- * import { toggle, add, remove } from '@lokascript/core/commands';
- * import { references, logical } from '@lokascript/core/expressions';
- * import { hybridParser } from '@lokascript/core/parser/hybrid';
+ * import { createRuntime } from '@hyperfixi/core/runtime';
+ * import { toggle, add, remove } from '@hyperfixi/core/commands';
+ * import { references, logical } from '@hyperfixi/core/expressions';
+ * import { hybridParser } from '@hyperfixi/core/parser/hybrid';
  *
  * const hyperfixi = createRuntime({
  *   commands: [toggle, add, remove],

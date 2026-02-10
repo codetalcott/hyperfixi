@@ -108,7 +108,7 @@ describe('Analyzer', () => {
       const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
-  <script src="https://unpkg.com/@lokascript/core"></script>
+  <script src="https://unpkg.com/@hyperfixi/core"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body></body>

@@ -5,7 +5,7 @@
  * These types guarantee DOM APIs (Element, Event) are used correctly.
  *
  * Usage:
- *   import type { BrowserEventPayload, BrowserEventSource } from '@lokascript/core/registry/browser';
+ *   import type { BrowserEventPayload, BrowserEventSource } from '@hyperfixi/core/registry/browser';
  *
  * Benefits:
  * - Full type safety for DOM elements and events

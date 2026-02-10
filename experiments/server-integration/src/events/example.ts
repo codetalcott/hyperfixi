@@ -53,8 +53,8 @@ async function example2() {
   app.use(express.json());
 
   // Import registry and hyperscript compiler
-  const { getDefaultRegistry } = await import('@lokascript/core/registry');
-  const { hyperscript } = await import('@lokascript/core');
+  const { getDefaultRegistry } = await import('@hyperfixi/core/registry');
+  const { hyperscript } = await import('@hyperfixi/core');
 
   // Setup hyperscript routes
   const { middleware } = await setupHyperscriptRoutes(app, {
@@ -102,7 +102,7 @@ async function example3() {
   const app = express();
   app.use(express.json());
 
-  const { hyperscript } = await import('@lokascript/core');
+  const { hyperscript } = await import('@hyperfixi/core');
   await setupHyperscriptRoutes(app, { debug: true });
 
   // Simple in-memory database
@@ -115,7 +115,7 @@ async function example3() {
   };
 
   // Make db available in context
-  const { context } = await import('@lokascript/core/registry');
+  const { context } = await import('@hyperfixi/core/registry');
   context.register('db', () => db);
 
   // Hyperscript CRUD routes
@@ -188,7 +188,7 @@ async function example4() {
   const app = express();
   app.use(express.json());
 
-  const { hyperscript } = await import('@lokascript/core');
+  const { hyperscript } = await import('@hyperfixi/core');
   await setupHyperscriptRoutes(app, { debug: true });
 
   // Load routes from configuration

@@ -10,9 +10,9 @@
  *
  * @example
  * ```typescript
- * import { createRuntime } from '@lokascript/core/runtime';
- * import { hybridParser } from '@lokascript/core/parser/hybrid';
- * import { toggle, add } from '@lokascript/core/commands';
+ * import { createRuntime } from '@hyperfixi/core/runtime';
+ * import { hybridParser } from '@hyperfixi/core/parser/hybrid';
+ * import { toggle, add } from '@hyperfixi/core/commands';
  *
  * const runtime = createRuntime({
  *   commands: [toggle(), add()],

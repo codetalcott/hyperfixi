@@ -22,7 +22,7 @@ function checkDebugEnabled(): boolean {
   // Check localStorage first (browser only, persists across reloads)
   if (typeof localStorage !== 'undefined') {
     try {
-      const setting = localStorage.getItem('lokascript:debug');
+      const setting = localStorage.getItem('hyperfixi:debug') || localStorage.getItem('lokascript:debug');
       if (setting === '*' || setting === 'true') return true;
       // Could also support namespace-specific: 'semantic,parser,evaluator'
     } catch {
@@ -151,8 +151,8 @@ export const debugControl = {
   enable(): void {
     if (typeof localStorage !== 'undefined') {
       try {
-        localStorage.setItem('lokascript:debug', '*');
-        console.log('✅ LokaScript debug logging enabled. Reload page to see detailed logs.');
+        localStorage.setItem('hyperfixi:debug', '*');
+        console.log('HyperFixi debug logging enabled. Reload page to see detailed logs.');
       } catch (e) {
         console.warn('⚠️  Could not enable debug logging (localStorage unavailable):', e);
       }
@@ -170,8 +170,9 @@ export const debugControl = {
   disable(): void {
     if (typeof localStorage !== 'undefined') {
       try {
+        localStorage.removeItem('hyperfixi:debug');
         localStorage.removeItem('lokascript:debug');
-        console.log('✅ LokaScript debug logging disabled. Reload page.');
+        console.log('HyperFixi debug logging disabled. Reload page.');
       } catch (e) {
         console.warn('⚠️  Could not disable debug logging:', e);
       }
@@ -195,7 +196,7 @@ export const debugControl = {
   status(): { enabled: boolean; source: string } {
     if (typeof localStorage !== 'undefined') {
       try {
-        const setting = localStorage.getItem('lokascript:debug');
+        const setting = localStorage.getItem('hyperfixi:debug') || localStorage.getItem('lokascript:debug');
         if (setting) {
           return { enabled: true, source: 'localStorage' };
         }

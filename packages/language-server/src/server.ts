@@ -83,26 +83,26 @@ let lspMetadata: any = null;
 
 // Try to import core package for parsing and interchange-based LSP
 try {
-  const core = await import('@lokascript/core');
+  const core = await import('@hyperfixi/core');
   parseFunction = core.parse;
   fromCoreASTFn = core.fromCoreAST;
   // Interchange-aware LSP module (replaces deprecated @lokascript/ast-toolkit)
-  interchangeLSP = await import('@lokascript/core/ast-utils');
+  interchangeLSP = await import('@hyperfixi/core/ast-utils');
 } catch {
-  console.error('[lokascript-ls] @lokascript/core not available');
+  console.error('[lokascript-ls] @hyperfixi/core not available');
 }
 
 // Try to import LSP metadata from core (canonical keyword/hover docs source)
 try {
-  lspMetadata = await import('@lokascript/core/lsp-metadata');
+  lspMetadata = await import('@hyperfixi/core/lsp-metadata');
 } catch {
   console.error(
-    '[lokascript-ls] @lokascript/core/lsp-metadata not available - using fallback keywords'
+    '[lokascript-ls] @hyperfixi/core/lsp-metadata not available - using fallback keywords'
   );
 }
 
 // =============================================================================
-// Fallback Constants (used when @lokascript/core/lsp-metadata is unavailable)
+// Fallback Constants (used when @hyperfixi/core/lsp-metadata is unavailable)
 // =============================================================================
 
 const FALLBACK_KEYWORDS = [
@@ -734,7 +734,7 @@ function getContextualCompletions(context: string, language: string): Completion
 
   switch (context) {
     case 'event':
-      // Use canonical event names from @lokascript/core/lsp-metadata, with fallback
+      // Use canonical event names from @hyperfixi/core/lsp-metadata, with fallback
       const eventNames: readonly string[] = lspMetadata?.EVENT_NAMES ?? FALLBACK_EVENT_NAMES;
       for (const eventName of eventNames) {
         completions.push({
@@ -979,7 +979,7 @@ function getHoverDocumentation(word: string, language: string): string | null {
     ? resolveCanonicalKeyword(wordLower, language)
     : wordLower;
 
-  // Use canonical hover docs from @lokascript/core/lsp-metadata, with fallback
+  // Use canonical hover docs from @hyperfixi/core/lsp-metadata, with fallback
   const docs = lspMetadata?.HOVER_DOCS ?? FALLBACK_HOVER_DOCS;
 
   const doc = docs[canonicalKey];
@@ -1126,7 +1126,7 @@ function buildReverseKeywordCache(): Map<string, string> {
 
 function resolveCanonicalKeyword(word: string, _language: string): string {
   // If it's already a canonical keyword, return it
-  // Use canonical keyword list from @lokascript/core/lsp-metadata, with fallback
+  // Use canonical keyword list from @hyperfixi/core/lsp-metadata, with fallback
   const canonicalKeywords: readonly string[] = lspMetadata?.ALL_KEYWORDS ?? FALLBACK_KEYWORDS;
   if (canonicalKeywords.includes(word)) return word;
 

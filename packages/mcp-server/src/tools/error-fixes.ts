@@ -7,7 +7,7 @@
  * Each fix follows the LSP CodeAction format for IDE integration.
  */
 
-import type { CodeFix } from '@lokascript/core';
+import type { CodeFix } from '@hyperfixi/core';
 
 /**
  * Registry of automated fixes for known error codes.

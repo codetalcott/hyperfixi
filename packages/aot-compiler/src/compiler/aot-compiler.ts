@@ -37,7 +37,7 @@ const DEFAULT_COMPILE_OPTIONS: Required<CompileOptions> = {
     mode: 'esm',
     minify: false,
     sourceMaps: true,
-    runtimeImport: '@lokascript/aot-compiler/runtime',
+    runtimeImport: '@hyperfixi/aot-compiler/runtime',
     preserveComments: false,
     debugMode: false,
   },
@@ -49,7 +49,7 @@ const DEFAULT_CODEGEN_OPTIONS: CodegenOptions = {
   mode: 'esm',
   minify: false,
   sourceMaps: true,
-  runtimeImport: '@lokascript/aot-compiler/runtime',
+  runtimeImport: '@hyperfixi/aot-compiler/runtime',
   preserveComments: false,
   debugMode: false,
 };
@@ -901,7 +901,7 @@ export async function compileHyperscript(code: string, options?: CompileOptions)
 
 /**
  * Create an AOT compiler with both core and semantic parsers wired up.
- * Dynamically imports @lokascript/core and @lokascript/semantic if available.
+ * Dynamically imports @hyperfixi/core and @lokascript/semantic if available.
  */
 export async function createMultilingualCompiler(): Promise<AOTCompiler> {
   const compiler = new AOTCompiler();
@@ -910,7 +910,7 @@ export async function createMultilingualCompiler(): Promise<AOTCompiler> {
     const { createCoreParserAdapter } = await import('./core-parser-adapter.js');
     compiler.setParser(await createCoreParserAdapter());
   } catch {
-    /* @lokascript/core not available */
+    /* @hyperfixi/core not available */
   }
 
   try {

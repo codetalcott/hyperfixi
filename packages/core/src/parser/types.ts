@@ -193,7 +193,7 @@ export interface ParseError {
  * @example
  * ```typescript
  * import { esKeywords } from '@lokascript/i18n/parser/es';
- * import { parse } from '@lokascript/core';
+ * import { parse } from '@hyperfixi/core';
  *
  * parse('en clic alternar .active', { keywords: esKeywords });
  * ```
@@ -314,8 +314,8 @@ export interface ParserOptions {
    * This enables server-side hyperscript with custom event sources:
    * @example
    * ```typescript
-   * import { Parser } from '@lokascript/core';
-   * import { getDefaultRegistryIntegration } from '@lokascript/core/registry';
+   * import { Parser } from '@hyperfixi/core';
+   * import { getDefaultRegistryIntegration } from '@hyperfixi/core/registry';
    *
    * const parser = new Parser(tokens, {
    *   registryIntegration: getDefaultRegistryIntegration()

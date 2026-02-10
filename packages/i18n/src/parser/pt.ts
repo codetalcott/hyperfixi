@@ -23,7 +23,7 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { ptKeywords } from '@lokascript/i18n/parser/pt';
- * import { Parser } from '@lokascript/core';
+ * import { Parser } from '@hyperfixi/core';
  *
  * const parser = new Parser({ keywords: ptKeywords });
  * parser.parse('em clique alternar .active');

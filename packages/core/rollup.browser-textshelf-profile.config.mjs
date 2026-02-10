@@ -32,9 +32,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-textshelf-profile.ts',
   output: {
-    file: 'dist/lokascript-textshelf.js',
+    file: 'dist/hyperfixi-textshelf.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: false
   },
   plugins: [

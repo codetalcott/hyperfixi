@@ -1,6 +1,6 @@
 {
-  "name": "@lokascript/monorepo",
-  "version": "1.3.0",
+  "name": "@hyperfixi/monorepo",
+  "version": "2.0.0",
   "description": "LokaScript monorepo - multilingual hyperscript engine with 24-language support",
   "private": true,
   "type": "module",
@@ -14,14 +14,14 @@
     "build:workspaces": "npm run build --workspaces --if-present",
     "build:packages": "npm run build --workspace=packages/* --if-present",
     "test": "npm run test --workspaces",
-    "test:integration": "npm test --workspace=@lokascript/core && npm test --workspace=@lokascript/semantic",
+    "test:integration": "npm test --workspace=@hyperfixi/core && npm test --workspace=@lokascript/semantic",
     "test:check": "echo '=== Core ===' && npm run test:check --prefix packages/core && echo '=== Semantic ===' && npm run test:check --prefix packages/semantic && echo '=== i18n ===' && npm run test:check --prefix packages/i18n",
-    "test:core": "npm test --workspace=@lokascript/core",
+    "test:core": "npm test --workspace=@hyperfixi/core",
     "test:semantic": "npm test --workspace=@lokascript/semantic",
-    "test:multilingual": "npm run test:multilingual --workspace=@lokascript/testing-framework",
-    "test:multilingual:quick": "npm run test:multilingual:quick --workspace=@lokascript/testing-framework",
-    "test:multilingual:full": "npm run test:multilingual:full --workspace=@lokascript/testing-framework",
-    "test:multilingual:regression": "npm run test:multilingual:regression --workspace=@lokascript/testing-framework",
+    "test:multilingual": "npm run test:multilingual --workspace=@hyperfixi/testing-framework",
+    "test:multilingual:quick": "npm run test:multilingual:quick --workspace=@hyperfixi/testing-framework",
+    "test:multilingual:full": "npm run test:multilingual:full --workspace=@hyperfixi/testing-framework",
+    "test:multilingual:regression": "npm run test:multilingual:regression --workspace=@hyperfixi/testing-framework",
     "test:watch": "npm run test:watch --workspaces",
     "test:coverage": "npm run test:coverage --workspaces",
     "lint": "npm run lint --workspaces",
@@ -102,12 +102,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/codetalcott/lokascript.git"
+    "url": "git+https://github.com/codetalcott/hyperfixi.git"
   },
   "bugs": {
-    "url": "https://github.com/codetalcott/lokascript/issues"
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
   },
-  "homepage": "https://github.com/codetalcott/lokascript#readme",
+  "homepage": "https://github.com/codetalcott/hyperfixi#readme",
   "engines": {
     "node": ">=18.0.0"
   }

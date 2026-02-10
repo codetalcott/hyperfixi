@@ -2,7 +2,7 @@
  * LokaScript Siren plugin — wires client, context, commands, and behaviors.
  *
  * Usage (bundler):
- *   import { registry } from '@lokascript/core';
+ *   import { registry } from '@hyperfixi/core';
  *   import { sirenPlugin } from '@lokascript/siren';
  *   registry.use(sirenPlugin);
  *
@@ -14,7 +14,7 @@
  *   npm install siren-agent   # adds binary content negotiation
  */
 
-import { registerFetchResponseType } from '@lokascript/core/commands';
+import { registerFetchResponseType } from '@hyperfixi/core/commands';
 import { sirenContextProvider } from './siren-context';
 import { setCurrentEntity } from './siren-client';
 import { followCommand } from './commands/follow';

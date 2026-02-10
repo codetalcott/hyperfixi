@@ -120,7 +120,7 @@ function getSemanticModule(): typeof import('@lokascript/semantic') {
   throw new Error(
     'LokaScriptSemantic not found. Load the semantic bundle before the multilingual bundle:\n' +
       '<script src="lokascript-semantic.browser.global.js"></script>\n' +
-      '<script src="lokascript-multilingual.js"></script>'
+      '<script src="hyperfixi-multilingual.js"></script>'
   );
 }
 
@@ -497,7 +497,7 @@ async function scanAndProcessAll(): Promise<void> {
   // Dispatch ready event
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
-      new CustomEvent('lokascript:initialized', {
+      new CustomEvent('hyperfixi:initialized', {
         detail: { elementsProcessed: elements.length },
       })
     );
@@ -544,18 +544,18 @@ function setupMutationObserver(): void {
 // =============================================================================
 
 if (typeof window !== 'undefined') {
-  // Primary: lokascript (new name)
-  (window as any).lokascript = api;
+  // Primary: hyperfixi
+  (window as any).hyperfixi = api;
 
-  // Compatibility: hyperfixi (deprecated alias)
-  if (typeof (window as any).hyperfixi === 'undefined') {
-    Object.defineProperty(window, 'hyperfixi', {
+  // Deprecated alias for v1.x compatibility (remove in v3.0.0)
+  if (typeof (window as any).lokascript === 'undefined') {
+    Object.defineProperty(window, 'lokascript', {
       get() {
         console.warn(
-          '[DEPRECATED] window.hyperfixi is deprecated and will be removed in v2.0.0. ' +
-            'Please use window.lokascript instead.'
+          '[DEPRECATED] window.lokascript is deprecated and will be removed in v3.0.0. ' +
+            'Please use window.hyperfixi instead.'
         );
-        return (window as any).lokascript;
+        return (window as any).hyperfixi;
       },
       enumerable: true,
       configurable: true,

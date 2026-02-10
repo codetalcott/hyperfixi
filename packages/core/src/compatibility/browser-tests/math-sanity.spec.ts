@@ -11,7 +11,7 @@ test.describe('Math Operator Sanity Check', () => {
     await page.waitForTimeout(500);
 
     await page.evaluate(() => {
-      if (typeof window.lokascript === 'undefined') {
+      if (typeof window.hyperfixi === 'undefined') {
         throw new Error('HyperFixi not loaded');
       }
     });

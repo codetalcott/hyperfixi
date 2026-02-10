@@ -3,7 +3,7 @@
  */
 
 // Base AST node type (from core ast-utils, consolidated from ast-toolkit)
-export type { ASTUtilNode as ASTNode } from '@lokascript/core/ast-utils';
+export type { ASTUtilNode as ASTNode } from '@hyperfixi/core/ast-utils';
 
 // ============================================================================
 // Parser Types

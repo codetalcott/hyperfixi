@@ -210,7 +210,7 @@ describe('output modes', () => {
     const result = compiler.compile(scripts, { codegen: { mode: 'esm' } });
 
     expect(result.code).toContain('import {');
-    expect(result.code).toContain("from '@lokascript/aot-compiler/runtime'");
+    expect(result.code).toContain("from '@hyperfixi/aot-compiler/runtime'");
     expect(result.code).not.toContain('require(');
     expect(result.code).not.toContain('(function()');
   });

@@ -20,7 +20,7 @@
  *     redirect to '/login' if not authenticated
  *
  * Installation:
- *   import { commands } from '@lokascript/core/registry';
+ *   import { commands } from '@hyperfixi/core/registry';
  *   import { respondCommand, redirectCommand, setHeaderCommand } from './server-commands';
  *
  *   commands.register(respondCommand);
@@ -354,8 +354,8 @@ import { definePlugin } from '../index';
  * Server plugin - Bundle of server-side commands and context providers
  *
  * Installation:
- *   import { registry } from '@lokascript/core';
- *   import { serverPlugin } from '@lokascript/core/registry/examples/server-commands';
+ *   import { registry } from '@hyperfixi/core';
+ *   import { serverPlugin } from '@hyperfixi/core/registry/examples/server-commands';
  *
  *   registry.use(serverPlugin);
  */

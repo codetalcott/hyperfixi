@@ -1,6 +1,6 @@
 {
-  "name": "@lokascript/vite-plugin",
-  "version": "1.3.0",
+  "name": "@hyperfixi/vite-plugin",
+  "version": "2.0.0",
   "description": "Vite plugin for automatic tree-shaken hyperscript bundles",
   "type": "module",
   "main": "dist/index.cjs",
@@ -29,7 +29,7 @@
     "vite": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "dependencies": {
-    "@lokascript/core": "*",
+    "@hyperfixi/core": "*",
     "glob": "^10.0.0"
   },
   "devDependencies": {
@@ -50,13 +50,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/codetalcott/lokascript.git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
     "directory": "packages/vite-plugin"
   },
   "bugs": {
-    "url": "https://github.com/codetalcott/lokascript/issues"
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
   },
-  "homepage": "https://github.com/codetalcott/lokascript/tree/main/packages/vite-plugin#readme",
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/vite-plugin#readme",
   "engines": {
     "node": ">=18.0.0"
   },

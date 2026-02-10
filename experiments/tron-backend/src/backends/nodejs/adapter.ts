@@ -125,7 +125,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
       const startTime = performance.now();
 
       // Use hyperfixi's compilation API
-      const { hyperscript } = await import('@lokascript/core');
+      const { hyperscript } = await import('@hyperfixi/core');
 
       const result = await hyperscript.compile(request.source, {
         language: request.language,
@@ -187,7 +187,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
 
     try {
       const startTime = performance.now();
-      const { hyperscript } = await import('@lokascript/core');
+      const { hyperscript } = await import('@hyperfixi/core');
 
       // Get source code from request
       let source: string;
@@ -245,7 +245,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
 
   async validate(request: ValidateRequest): Promise<AdapterResult<ValidateResult>> {
     try {
-      const { hyperscript } = await import('@lokascript/core');
+      const { hyperscript } = await import('@hyperfixi/core');
 
       const result = await hyperscript.validate(request.source);
 
@@ -275,7 +275,7 @@ export class NodeTronAdapter extends BaseTronAdapter {
 
   async translate(request: TranslateRequest): Promise<AdapterResult<TranslateResult>> {
     try {
-      const { MultilingualHyperscript } = await import('@lokascript/core/multilingual');
+      const { MultilingualHyperscript } = await import('@hyperfixi/core/multilingual');
 
       const ml = new MultilingualHyperscript();
       await ml.initialize();

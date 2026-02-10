@@ -28,9 +28,9 @@ const noTerser = process.env.NO_TERSER === '1';
 export default {
   input: 'src/compatibility/browser-bundle-hybrid-hx.ts',
   output: {
-    file: 'dist/lokascript-hybrid-hx.js',
+    file: 'dist/hyperfixi-hx.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: false
   },
   plugins: [

@@ -9,8 +9,8 @@
  *
  * @example
  * ```typescript
- * import { createRuntime } from '@lokascript/core/runtime';
- * import { fullParser } from '@lokascript/core/parser/full';
+ * import { createRuntime } from '@hyperfixi/core/runtime';
+ * import { fullParser } from '@hyperfixi/core/parser/full';
  *
  * const runtime = createRuntime({
  *   commands: [...],

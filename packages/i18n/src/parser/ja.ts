@@ -22,7 +22,7 @@ import type { KeywordProvider } from './types';
  * @example
  * ```typescript
  * import { jaKeywords } from '@lokascript/i18n/parser/ja';
- * import { Parser } from '@lokascript/core';
+ * import { Parser } from '@hyperfixi/core';
  *
  * const parser = new Parser({ keywords: jaKeywords });
  * parser.parse('クリック で 切り替え .active');

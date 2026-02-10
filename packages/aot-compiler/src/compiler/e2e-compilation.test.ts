@@ -176,7 +176,7 @@ describe('E2E: Batch Compilation', () => {
     const result = compiler.compile(scripts);
 
     expect(result.code).toContain('import');
-    expect(result.code).toContain('@lokascript/aot-compiler/runtime');
+    expect(result.code).toContain('@hyperfixi/aot-compiler/runtime');
   });
 
   it('includes ready wrapper', () => {

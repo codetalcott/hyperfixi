@@ -8,9 +8,9 @@ const useTerser = process.env.NO_TERSER !== '1';
 export default {
   input: 'src/compatibility/browser-bundle.ts',
   output: {
-    file: 'dist/lokascript-browser.js',
+    file: 'dist/hyperfixi.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: true,
     inlineDynamicImports: true,
   },

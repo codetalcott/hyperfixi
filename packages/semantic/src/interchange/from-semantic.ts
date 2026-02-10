@@ -12,7 +12,7 @@
  */
 
 // Import types from local copy (structurally identical to core's interchange types).
-// The semantic package has no dependency on @lokascript/core — types are duplicated here.
+// The semantic package has no dependency on @hyperfixi/core — types are duplicated here.
 // TypeScript structural typing ensures compatibility when both are used by a consumer.
 import type {
   InterchangeNode,

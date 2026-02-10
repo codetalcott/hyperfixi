@@ -17,9 +17,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-lite-plus.ts',
   output: {
-    file: 'dist/lokascript-lite-plus.js',
+    file: 'dist/hyperfixi-lite-plus.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: false
   },
   plugins: [

@@ -4,19 +4,22 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Primary bundles are hyperfixi-*.js
+// Backward-compat aliases are lokascript-*.js (for v1.x users)
 const BUNDLE_ALIASES = {
-  'lokascript-browser.js': 'hyperfixi-browser.js',
-  'lokascript-lite.js': 'hyperfixi-lite.js',
-  'lokascript-lite-plus.js': 'hyperfixi-lite-plus.js',
-  'lokascript-hybrid-complete.js': 'hyperfixi-hybrid-complete.js',
-  'lokascript-hybrid-hx.js': 'hyperfixi-hybrid-hx.js',
-  'lokascript-browser-minimal.js': 'hyperfixi-browser-minimal.js',
-  'lokascript-browser-standard.js': 'hyperfixi-browser-standard.js',
-  'lokascript-browser-classic.js': 'hyperfixi-browser-classic.js',
-  'lokascript-browser-classic-i18n.js': 'hyperfixi-browser-classic-i18n.js',
-  'lokascript-modular.js': 'hyperfixi-modular.js',
-  'lokascript-textshelf-profile.js': 'hyperfixi-textshelf-profile.js',
-  'lokascript-textshelf-minimal.js': 'hyperfixi-textshelf-minimal.js',
+  'hyperfixi.js': 'lokascript-browser.js',
+  'hyperfixi-lite.js': 'lokascript-lite.js',
+  'hyperfixi-lite-plus.js': 'lokascript-lite-plus.js',
+  'hyperfixi-hybrid-complete.js': 'lokascript-hybrid-complete.js',
+  'hyperfixi-hx.js': 'lokascript-hybrid-hx.js',
+  'hyperfixi-minimal.js': 'lokascript-browser-minimal.js',
+  'hyperfixi-standard.js': 'lokascript-browser-standard.js',
+  'hyperfixi-classic.js': 'lokascript-browser-classic.js',
+  'hyperfixi-classic-i18n.js': 'lokascript-browser-classic-i18n.js',
+  'hyperfixi-modular.js': 'lokascript-modular.js',
+  'hyperfixi-textshelf.js': 'lokascript-textshelf-profile.js',
+  'hyperfixi-textshelf-minimal.js': 'lokascript-textshelf-minimal.js',
+  'hyperfixi-multilingual.js': 'lokascript-multilingual.js',
 };
 
 const distDir = path.join(__dirname, '..', 'dist');
@@ -27,15 +30,15 @@ console.log('');
 let aliasCount = 0;
 let missingCount = 0;
 
-for (const [newName, oldName] of Object.entries(BUNDLE_ALIASES)) {
-  const src = path.join(distDir, newName);
-  const dest = path.join(distDir, oldName);
+for (const [primary, alias] of Object.entries(BUNDLE_ALIASES)) {
+  const src = path.join(distDir, primary);
+  const dest = path.join(distDir, alias);
 
   if (fs.existsSync(src)) {
     // Copy main bundle
     fs.copyFileSync(src, dest);
     aliasCount++;
-    console.log(`  ✓ ${oldName} → ${newName}`);
+    console.log(`  ${alias} -> ${primary}`);
 
     // Copy source map if exists
     const mapSrc = src + '.map';
@@ -45,17 +48,15 @@ for (const [newName, oldName] of Object.entries(BUNDLE_ALIASES)) {
     }
   } else {
     missingCount++;
-    // Don't warn for missing bundles - they might not all be built
-    // console.log(`  ⚠ Source not found: ${newName}`);
   }
 }
 
 console.log('');
-console.log(`Created ${aliasCount} bundle aliases.`);
+console.log(`Created ${aliasCount} backward-compat aliases.`);
 if (missingCount > 0) {
   console.log(`Skipped ${missingCount} bundles (not built).`);
 }
 console.log('');
-console.log('⚠️  These aliases will be removed in v2.0.0');
-console.log('📖 See MIGRATION.md for upgrade instructions');
+console.log('These lokascript-*.js aliases will be removed in v3.0.0');
+console.log('See MIGRATION.md for upgrade instructions');
 console.log('');

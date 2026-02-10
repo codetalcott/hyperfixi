@@ -27,7 +27,7 @@ test.describe('Expression Compatibility Tests @expression', () => {
     await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
-      if (typeof window.lokascript === 'undefined') {
+      if (typeof window.hyperfixi === 'undefined') {
         throw new Error('HyperFixi not loaded');
       }
     });

@@ -59,7 +59,7 @@ export class CompilationService {
   /**
    * Create a CompilationService by dynamically importing dependencies.
    *
-   * This async factory resolves @lokascript/semantic and @lokascript/aot-compiler
+   * This async factory resolves @lokascript/semantic and @hyperfixi/aot-compiler
    * at runtime, following the same pattern as createMultilingualCompiler().
    */
   static async create(options: ServiceOptions = {}): Promise<CompilationService> {
@@ -83,7 +83,7 @@ export class CompilationService {
     });
 
     // Import AOT compiler
-    const aot = await import('@lokascript/aot-compiler');
+    const aot = await import('@hyperfixi/aot-compiler');
     const compiler = aot.createCompiler();
 
     // Initialize bridge with AST builder and compiler

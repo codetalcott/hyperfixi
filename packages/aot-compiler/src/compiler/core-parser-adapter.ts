@@ -1,9 +1,9 @@
 /**
  * Core Parser Adapter
  *
- * Bridges @lokascript/core's parser output into AOT ASTNode types.
+ * Bridges @hyperfixi/core's parser output into AOT ASTNode types.
  * Delegates AST conversion to the shared interchange format (fromCoreAST)
- * exported by @lokascript/core.
+ * exported by @hyperfixi/core.
  */
 
 import type { ASTNode } from '../types/aot-types.js';
@@ -40,7 +40,7 @@ type InterchangeConverter = (node: CoreASTNode) => ASTNode;
 // =============================================================================
 
 /**
- * Adapts @lokascript/core's compileSync() output into the Parser interface
+ * Adapts @hyperfixi/core's compileSync() output into the Parser interface
  * expected by AOTCompiler.
  */
 export class CoreParserAdapter {
@@ -82,10 +82,10 @@ let _converter: InterchangeConverter | null = null;
 /**
  * Convert a core parser AST node to an AOT AST node.
  *
- * Delegates to `fromCoreAST` from `@lokascript/core`'s interchange format.
+ * Delegates to `fromCoreAST` from `@hyperfixi/core`'s interchange format.
  * This function is available after `createCoreParserAdapter()` has been called.
  *
- * @deprecated Import `fromCoreAST` from `@lokascript/core` directly instead.
+ * @deprecated Import `fromCoreAST` from `@hyperfixi/core` directly instead.
  */
 export function convertCoreASTToAOT(node: CoreASTNode): ASTNode {
   if (_converter) return _converter(node);
@@ -98,18 +98,18 @@ export function convertCoreASTToAOT(node: CoreASTNode): ASTNode {
 // =============================================================================
 
 /**
- * Create a CoreParserAdapter by dynamically importing @lokascript/core.
+ * Create a CoreParserAdapter by dynamically importing @hyperfixi/core.
  * Throws if the package is not available.
  */
 export async function createCoreParserAdapter(): Promise<CoreParserAdapter> {
-  const core = await import('@lokascript/core');
+  const core = await import('@hyperfixi/core');
   // The core package exports `hyperscript` with compileSync
   const api = core.hyperscript ?? core.default ?? core;
 
   if (!api?.compileSync) {
     throw new Error(
-      '@lokascript/core does not export compileSync. ' +
-        'Ensure @lokascript/core >= 1.0.0 is installed.'
+      '@hyperfixi/core does not export compileSync. ' +
+        'Ensure @hyperfixi/core >= 1.0.0 is installed.'
     );
   }
 
@@ -117,8 +117,8 @@ export async function createCoreParserAdapter(): Promise<CoreParserAdapter> {
   const converter = (core as Record<string, unknown>).fromCoreAST as InterchangeConverter;
   if (!converter) {
     throw new Error(
-      '@lokascript/core does not export fromCoreAST. ' +
-        'Ensure @lokascript/core >= 1.3.0 is installed.'
+      '@hyperfixi/core does not export fromCoreAST. ' +
+        'Ensure @hyperfixi/core >= 1.3.0 is installed.'
     );
   }
 

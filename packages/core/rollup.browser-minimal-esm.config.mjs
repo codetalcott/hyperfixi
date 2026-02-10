@@ -13,14 +13,14 @@ import terser from '@rollup/plugin-terser';
  * - Expected: 50-60KB gzipped main bundle (30-40% reduction vs IIFE)
  *
  * Usage:
- *   <script type="module" src="dist/esm/lokascript-browser-minimal.js"></script>
+ *   <script type="module" src="dist/esm/hyperfixi-minimal.js"></script>
  */
 export default {
   input: 'src/compatibility/browser-bundle-minimal.ts',
   output: {
     dir: 'dist/esm',
     format: 'es',
-    entryFileNames: 'lokascript-browser-minimal.js',
+    entryFileNames: 'hyperfixi-minimal.js',
     chunkFileNames: 'chunks/[name]-[hash].js',
     sourcemap: true,
     // Remove inlineDynamicImports to enable code splitting

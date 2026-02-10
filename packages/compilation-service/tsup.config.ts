@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ['@lokascript/aot-compiler', '@lokascript/semantic', 'hono', '@hono/node-server'],
+  external: ['@hyperfixi/aot-compiler', '@lokascript/semantic', 'hono', '@hono/node-server'],
 });

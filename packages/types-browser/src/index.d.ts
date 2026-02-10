@@ -1,17 +1,17 @@
 /**
- * @lokascript/types-browser
+ * @hyperfixi/types-browser
  * TypeScript type definitions for HyperFixi browser globals
  *
  * This package provides complete type definitions for using HyperFixi
  * packages in the browser via global variables.
  *
- * Install with: npm install --save-dev @lokascript/types-browser
+ * Install with: npm install --save-dev @hyperfixi/types-browser
  *
  * Then add to your tsconfig.json:
  * ```json
  * {
  *   "compilerOptions": {
- *     "types": ["@lokascript/types-browser"]
+ *     "types": ["@hyperfixi/types-browser"]
  *   }
  * }
  * ```

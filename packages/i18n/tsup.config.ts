@@ -20,5 +20,5 @@ export default defineConfig({
   clean: true,
   splitting: false,
   treeshake: true,
-  external: ['@lokascript/core', '@lokascript/ast-toolkit'],
+  external: ['@hyperfixi/core', '@lokascript/ast-toolkit'],
 });

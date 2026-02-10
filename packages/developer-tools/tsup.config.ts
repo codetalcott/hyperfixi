@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 const EXTERNAL_DEPS = [
-  '@lokascript/core',
+  '@hyperfixi/core',
   'prismjs',
   'commander',
   'inquirer',

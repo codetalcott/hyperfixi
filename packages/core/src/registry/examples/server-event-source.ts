@@ -9,7 +9,7 @@
  *   on request(POST, /api/users) set user to request.body then respond with user
  *
  * Installation:
- *   import { eventSources } from '@lokascript/core/registry';
+ *   import { eventSources } from '@hyperfixi/core/registry';
  *   import { createRequestEventSource } from './server-event-source';
  *
  *   const requestSource = createRequestEventSource();

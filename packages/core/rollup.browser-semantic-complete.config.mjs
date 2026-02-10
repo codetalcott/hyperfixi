@@ -18,7 +18,7 @@ export default {
   output: {
     file: 'dist/hyperfixi-semantic-complete.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: true,
     inlineDynamicImports: true,
   },

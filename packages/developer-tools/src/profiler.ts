@@ -1,7 +1,7 @@
 /**
  * HyperScript Profiler - Performance analysis for hyperscript code
  *
- * Leverages @lokascript/core/ast-utils for static analysis and provides
+ * Leverages @hyperfixi/core/ast-utils for static analysis and provides
  * runtime profiling capabilities for hyperscript execution.
  */
 
@@ -21,7 +21,7 @@ let astToolkit: AstToolkitFunctions | null = null;
 async function loadAstToolkit(): Promise<AstToolkitFunctions> {
   if (astToolkit === null) {
     try {
-      const toolkit = await import('@lokascript/core/ast-utils');
+      const toolkit = await import('@hyperfixi/core/ast-utils');
       astToolkit = {
         calculateComplexity: (ast: any) => toolkit.calculateComplexity?.(ast),
         detectCodeSmells: (ast: any) => toolkit.detectCodeSmells?.(ast),

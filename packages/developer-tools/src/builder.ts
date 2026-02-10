@@ -773,7 +773,7 @@ ${template}`;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exported Components</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
     <style>
 ${styles}
     </style>
@@ -825,7 +825,7 @@ export function createComponent(id, props = {}) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HyperFixi Visual Builder</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
     <style>
         * {
             margin: 0;

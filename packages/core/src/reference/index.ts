@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { commands, bundles, patterns } from '@lokascript/core/reference';
+ * import { commands, bundles, patterns } from '@hyperfixi/core/reference';
  *
  * // Get command syntax
  * console.log(commands.toggle.syntax); // 'toggle .class [on target]'
@@ -539,7 +539,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: false,
     hasPositional: false,
     useCase: 'Minimal interactivity (toggle, show/hide)',
-    importPath: '@lokascript/core/browser/lite',
+    importPath: '@hyperfixi/core/browser/lite',
   },
   {
     name: 'lite-plus',
@@ -550,7 +550,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: false,
     hasPositional: false,
     useCase: 'Basic interactivity with wait, log, increment',
-    importPath: '@lokascript/core/browser/lite-plus',
+    importPath: '@hyperfixi/core/browser/lite-plus',
   },
   {
     name: 'hybrid-complete',
@@ -561,7 +561,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: true,
     hasPositional: true,
     useCase: 'Most apps (~85% hyperscript coverage)',
-    importPath: '@lokascript/core/browser/hybrid-complete',
+    importPath: '@hyperfixi/core/browser/hybrid-complete',
   },
   {
     name: 'hybrid-hx',
@@ -572,7 +572,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: true,
     hasPositional: true,
     useCase: 'htmx/fixi compatibility with hx-* attributes',
-    importPath: '@lokascript/core/browser/hybrid-hx',
+    importPath: '@hyperfixi/core/browser/hybrid-hx',
   },
   {
     name: 'minimal',
@@ -583,7 +583,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: true,
     hasPositional: true,
     useCase: 'Full parser, reduced commands',
-    importPath: '@lokascript/core/browser/minimal',
+    importPath: '@hyperfixi/core/browser/minimal',
   },
   {
     name: 'standard',
@@ -594,7 +594,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: true,
     hasPositional: true,
     useCase: 'Full parser, common commands',
-    importPath: '@lokascript/core/browser/standard',
+    importPath: '@hyperfixi/core/browser/standard',
   },
   {
     name: 'browser',
@@ -605,7 +605,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: true,
     hasPositional: true,
     useCase: 'Full bundle with all features',
-    importPath: '@lokascript/core/browser',
+    importPath: '@hyperfixi/core/browser',
   },
   {
     name: 'multilingual',
@@ -616,7 +616,7 @@ export const bundles: BundleRef[] = [
     hasEventModifiers: true,
     hasPositional: true,
     useCase: 'Full features + multilingual API (no parser)',
-    importPath: '@lokascript/core/browser/multilingual',
+    importPath: '@hyperfixi/core/browser/multilingual',
   },
 ];
 

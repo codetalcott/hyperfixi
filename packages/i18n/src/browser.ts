@@ -19,7 +19,7 @@
  * Usage with ES modules:
  * ```typescript
  * import { esKeywords } from '@lokascript/i18n';
- * import { Parser } from '@lokascript/core';
+ * import { Parser } from '@hyperfixi/core';
  *
  * const parser = new Parser(tokens, { keywords: esKeywords });
  * ```

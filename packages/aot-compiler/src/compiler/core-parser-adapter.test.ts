@@ -1,7 +1,7 @@
 /**
  * Core Parser Adapter Tests
  *
- * Proves the core parser adapter correctly converts @lokascript/core's
+ * Proves the core parser adapter correctly converts @hyperfixi/core's
  * parser output into AOT AST types, enabling English hyperscript to be
  * compiled to JavaScript through the full AOT pipeline.
  *
@@ -24,7 +24,7 @@ try {
   adapter = await createCoreParserAdapter();
   adapterAvailable = true;
 } catch {
-  // @lokascript/core not available — tests will be skipped
+  // @hyperfixi/core not available — tests will be skipped
 }
 
 // =============================================================================

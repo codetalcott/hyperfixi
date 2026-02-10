@@ -8,7 +8,7 @@ export default defineConfig([
     dts: true,
     clean: true,
     sourcemap: true,
-    external: ['@lokascript/core', '@lokascript/semantic'],
+    external: ['@hyperfixi/core', '@lokascript/semantic'],
   },
   // Runtime (separate entry for smaller imports)
   {
@@ -27,6 +27,6 @@ export default defineConfig([
     banner: {
       js: '#!/usr/bin/env node',
     },
-    external: ['@lokascript/core', '@lokascript/semantic', 'commander', 'fast-glob'],
+    external: ['@hyperfixi/core', '@lokascript/semantic', 'commander', 'fast-glob'],
   },
 ]);

@@ -10,7 +10,7 @@
  *
  * @example
  * ```typescript
- * import { generateBundle, generateBundleCode, getAvailableCommands } from '@lokascript/core/bundle-generator';
+ * import { generateBundle, generateBundleCode, getAvailableCommands } from '@hyperfixi/core/bundle-generator';
  *
  * // Generate bundle with metadata
  * const result = generateBundle({

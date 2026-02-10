@@ -5,9 +5,9 @@ import commonjs from '@rollup/plugin-commonjs';
 export default {
   input: 'src/compatibility/browser-bundle.ts',
   output: {
-    file: 'dist/lokascript-browser.js',
+    file: 'dist/hyperfixi.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: true,
     inlineDynamicImports: true
   },

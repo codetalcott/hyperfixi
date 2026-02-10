@@ -37,7 +37,7 @@ const PROJECT_TEMPLATES: Record<string, ProjectTemplate> = {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}}</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
 </head>
 <body>
     <h1>Welcome to {{name}}</h1>
@@ -82,7 +82,7 @@ const PROJECT_TEMPLATES: Record<string, ProjectTemplate> = {
   "author": "{{author}}",
   "license": "{{license}}",
   "devDependencies": {
-    "@lokascript/developer-tools": "^0.1.0"
+    "@hyperfixi/developer-tools": "^0.1.0"
   }
 }`,
       },
@@ -120,7 +120,7 @@ const PROJECT_TEMPLATES: Record<string, ProjectTemplate> = {
       },
     ],
     dependencies: [],
-    devDependencies: ['@lokascript/developer-tools'],
+    devDependencies: ['@hyperfixi/developer-tools'],
   },
 
   'multi-tenant': {
@@ -136,7 +136,7 @@ const PROJECT_TEMPLATES: Record<string, ProjectTemplate> = {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}} - {{tenant}}</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
     <script src="https://unpkg.com/@lokascript/multi-tenant@latest/dist/index.min.js"></script>
 </head>
 <body>
@@ -272,13 +272,13 @@ app.listen(port, () => {
     "express": "^4.18.0"
   },
   "devDependencies": {
-    "@lokascript/developer-tools": "^0.1.0"
+    "@hyperfixi/developer-tools": "^0.1.0"
   }
 }`,
       },
     ],
     dependencies: ['@lokascript/multi-tenant', 'express'],
-    devDependencies: ['@lokascript/developer-tools'],
+    devDependencies: ['@hyperfixi/developer-tools'],
   },
 
   analytics: {
@@ -294,7 +294,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}} - Analytics Demo</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
     <script src="https://unpkg.com/@lokascript/analytics@latest/dist/index.min.js"></script>
 </head>
 <body>
@@ -397,13 +397,13 @@ app.listen(port, () => {
     "@lokascript/analytics": "^0.1.0"
   },
   "devDependencies": {
-    "@lokascript/developer-tools": "^0.1.0"
+    "@hyperfixi/developer-tools": "^0.1.0"
   }
 }`,
       },
     ],
     dependencies: ['@lokascript/analytics'],
-    devDependencies: ['@lokascript/developer-tools'],
+    devDependencies: ['@hyperfixi/developer-tools'],
   },
 
   'full-stack': {
@@ -419,7 +419,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}}</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
 </head>
 <body>
     <h1>{{name}} - Full Stack</h1>
@@ -545,7 +545,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{name}}</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -573,7 +573,7 @@ app.listen(port, () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - {{name}}</title>
-    <script src="https://unpkg.com/@lokascript/core@latest/dist/hyperfixi.min.js"></script>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -713,10 +713,10 @@ export async function createProject(options: ScaffoldOptions): Promise<void> {
 
   // Add testing setup
   if (testing) {
-    await addDevDependency(projectPath, '@lokascript/testing-framework', '^0.1.0');
+    await addDevDependency(projectPath, '@hyperfixi/testing-framework', '^0.1.0');
 
     // Create test file
-    const testContent = `import { describe, it, expect } from '@lokascript/testing-framework';
+    const testContent = `import { describe, it, expect } from '@hyperfixi/testing-framework';
 
 describe('${name}', () => {
   it('should work', () => {
@@ -914,7 +914,7 @@ export async function createComponent(options: {
   await fs.writeFile(path.join(componentDir, `index.${extension}`), componentContent);
 
   // Component test
-  const testContent = `import { describe, it, expect } from '@lokascript/testing-framework';
+  const testContent = `import { describe, it, expect } from '@hyperfixi/testing-framework';
 import { ${name} } from './index${typescript ? '' : '.js'}';
 
 describe('${name} Component', () => {
@@ -997,7 +997,7 @@ export async function createTemplate(options: {
     slots,
     files: [],
     dependencies: [],
-    devDependencies: ['@lokascript/developer-tools'],
+    devDependencies: ['@hyperfixi/developer-tools'],
   };
 
   await fs.writeFile(
@@ -1174,7 +1174,7 @@ export async function generateCode(
     dependencies: [],
     warnings: [],
     metadata: {
-      generator: '@lokascript/developer-tools',
+      generator: '@hyperfixi/developer-tools',
       version: '0.1.0',
       timestamp: Date.now(),
       source: 'template',
@@ -1218,7 +1218,7 @@ async function generateFromSchema(schema: CodeGenerationSchema): Promise<SchemaG
     dependencies,
     warnings,
     metadata: {
-      generator: '@lokascript/developer-tools',
+      generator: '@hyperfixi/developer-tools',
       version: '0.1.0',
       timestamp: Date.now(),
       source: 'schema',

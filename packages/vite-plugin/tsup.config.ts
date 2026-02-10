@@ -8,5 +8,5 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   minify: false,
-  external: ['vite', '@lokascript/core'],
+  external: ['vite', '@hyperfixi/core'],
 });

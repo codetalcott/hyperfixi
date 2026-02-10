@@ -2,14 +2,14 @@
  * Sync Validation Tests
  *
  * Ensures that the language-server's fallback constants stay in sync
- * with the canonical exports from @lokascript/core/lsp-metadata.
+ * with the canonical exports from @hyperfixi/core/lsp-metadata.
  *
  * These tests will fail if:
  * 1. Core adds new keywords that aren't in the fallback
  * 2. Core removes keywords that are still in the fallback
  * 3. Hover docs get out of sync
  *
- * Note: These tests require @lokascript/core to be built first.
+ * Note: These tests require @hyperfixi/core to be built first.
  * If the import fails, the tests will be skipped.
  */
 
@@ -30,10 +30,10 @@ let lspMetadata: {
 
 beforeAll(async () => {
   try {
-    lspMetadata = await import('@lokascript/core/lsp-metadata');
+    lspMetadata = await import('@hyperfixi/core/lsp-metadata');
   } catch (e) {
     console.warn(
-      '[sync-validation] @lokascript/core/lsp-metadata not available - tests will be skipped'
+      '[sync-validation] @hyperfixi/core/lsp-metadata not available - tests will be skipped'
     );
   }
 });
@@ -135,7 +135,7 @@ const FALLBACK_EVENT_NAMES = [
  */
 function skipIfNoMetadata(): boolean {
   if (!lspMetadata) {
-    console.warn('Skipping: @lokascript/core/lsp-metadata not built');
+    console.warn('Skipping: @hyperfixi/core/lsp-metadata not built');
     return true;
   }
   return false;

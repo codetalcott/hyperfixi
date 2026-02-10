@@ -13,9 +13,9 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/compatibility/browser-bundle-textshelf-minimal.ts',
   output: {
-    file: 'dist/lokascript-textshelf-minimal.js',
+    file: 'dist/hyperfixi-textshelf-minimal.js',
     format: 'iife',
-    name: 'lokascript',
+    name: 'hyperfixi',
     sourcemap: false
   },
   plugins: [

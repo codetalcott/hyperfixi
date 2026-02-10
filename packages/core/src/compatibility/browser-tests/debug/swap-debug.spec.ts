@@ -25,8 +25,8 @@ test('minimal swap test with put instead', async ({ page }) => {
       <script>
         document.addEventListener('DOMContentLoaded', () => {
           console.log('DOM loaded');
-          if (window.lokascript && window.lokascript.process) {
-            window.lokascript.process(document);
+          if (window.hyperfixi && window.hyperfixi.process) {
+            window.hyperfixi.process(document);
             console.log('HyperFixi processed');
           }
         });
@@ -77,13 +77,13 @@ test('swap innerHTML direct', async ({ page }) => {
       <script>
         document.addEventListener('DOMContentLoaded', () => {
           console.log('DOM loaded');
-          if (window.lokascript) {
+          if (window.hyperfixi) {
             console.log('HyperFixi found');
 
             // Enable debug mode to see what's happening
             window.__HYPERFIXI_DEBUG__ = true;
 
-            window.lokascript.process(document);
+            window.hyperfixi.process(document);
             console.log('HyperFixi processed');
 
             // Check if button has handler attached

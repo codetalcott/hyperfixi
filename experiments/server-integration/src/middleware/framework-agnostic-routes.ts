@@ -5,7 +5,7 @@
  * Use this with adapters from ./adapters.ts for your specific framework.
  */
 
-import type { LokaScriptRegistry } from '@lokascript/core/registry';
+import type { LokaScriptRegistry } from '@hyperfixi/core/registry';
 import { createRequestEventSource } from '../events/request-event-source.js';
 import type { FrameworkAdapter } from './adapters.js';
 
@@ -60,7 +60,7 @@ export function createHyperscriptMiddleware(options: HyperscriptRoutesOptions) {
 
     try {
       // Dynamic import to avoid circular dependencies
-      const { getDefaultRegistry } = await import('@lokascript/core/registry');
+      const { getDefaultRegistry } = await import('@hyperfixi/core/registry');
       const registry = options.registry || getDefaultRegistry();
 
       // Create and register the request event source
@@ -144,7 +144,7 @@ export async function setupHyperscriptRoutes(app: any, options: HyperscriptRoute
 
   try {
     // Import registry
-    const { getDefaultRegistry } = await import('@lokascript/core/registry');
+    const { getDefaultRegistry } = await import('@hyperfixi/core/registry');
     const registry = options.registry || getDefaultRegistry();
 
     // Create the middleware

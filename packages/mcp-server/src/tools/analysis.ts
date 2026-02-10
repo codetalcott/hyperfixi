@@ -1,7 +1,7 @@
 /**
  * Analysis Tools
  *
- * Code analysis capabilities using @lokascript/core/ast-utils.
+ * Code analysis capabilities using @hyperfixi/core/ast-utils.
  * These tools help LLMs understand hyperscript code structure and quality.
  */
 
@@ -114,7 +114,7 @@ export async function handleAnalysisTool(
   // Try to import ast-utils from core, but don't fail if unavailable
   let astToolkit: any = null;
   try {
-    astToolkit = await import('@lokascript/core/ast-utils');
+    astToolkit = await import('@hyperfixi/core/ast-utils');
   } catch {
     // core/ast-utils not available - will use fallback functions
   }
@@ -241,7 +241,7 @@ export async function handleAnalysisTool(
 
 async function parseHyperscript(code: string): Promise<any> {
   try {
-    const core = await import('@lokascript/core');
+    const core = await import('@hyperfixi/core');
     if (core.parse) {
       return await core.parse(code);
     }
@@ -268,7 +268,7 @@ function simpleAnalysis(
     conditionalCount: conditionals.length,
     loopCount: loops.length,
     estimatedComplexity: 1 + conditionals.length + loops.length,
-    note: 'Simple analysis (full AST analysis requires @lokascript/core)',
+    note: 'Simple analysis (full AST analysis requires @hyperfixi/core)',
   };
 
   return {
@@ -444,7 +444,7 @@ function simpleIntentRecognition(code: string): { content: Array<{ type: string;
             allIntents: intents,
             confidence,
             code,
-            note: 'Pattern-based analysis (full intent recognition requires @lokascript/core)',
+            note: 'Pattern-based analysis (full intent recognition requires @hyperfixi/core)',
           },
           null,
           2

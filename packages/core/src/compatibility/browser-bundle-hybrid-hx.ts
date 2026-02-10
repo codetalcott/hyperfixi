@@ -94,7 +94,7 @@ function enableHtmxCompatibility(options: HtmxCompatOptions = {}): void {
   // would double-process elements and break event handlers
 
   if (options.debug) {
-    console.log('[lokascript-hx] htmx/fixi compatibility enabled');
+    console.log('[hyperfixi-hx] htmx/fixi compatibility enabled');
   }
 }
 
@@ -176,7 +176,8 @@ const api = {
 
 if (typeof window !== 'undefined') {
   (window as any).hyperfixi = api;
-  (window as any).lokascript = api; // Also expose as lokascript
+  // Deprecated alias for v1.x compatibility (remove in v3.0.0)
+  (window as any).lokascript = api;
 
   // Auto-enable htmx/fixi compatibility when DOM is ready
   const initHybridHx = () => {

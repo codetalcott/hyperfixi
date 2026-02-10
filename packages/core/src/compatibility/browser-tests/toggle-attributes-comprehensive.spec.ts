@@ -158,7 +158,7 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
   test.skip('Attribute reading: @disabled returns boolean (API bug)', async ({ page }) => {
     // SKIPPED: Known issue - evaluate() API doesn't use fixed expression evaluator
     // The on-page runtime execution works correctly (see if/then/else test)
-    // but window.lokascript.evaluate() uses a different code path that still returns {}
+    // but window.hyperfixi.evaluate() uses a different code path that still returns {}
     // TODO: Fix expression-parser.ts possessive expression evaluation
     const result = await page.evaluate(() => {
       const btn = document.querySelector('#target-btn') as HTMLButtonElement;
@@ -167,9 +167,9 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
       btn.disabled = true;
 
       // Read via hyperscript
-      const value = window.lokascript
+      const value = window.hyperfixi
         ? // @ts-expect-error - evaluate() not in LokaScriptBrowserAPI type
-          window.lokascript.evaluate("#target-btn's @disabled", {})
+          window.hyperfixi.evaluate("#target-btn's @disabled", {})
         : null;
 
       return {
@@ -189,7 +189,7 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
   test.skip('Attribute reading: @required returns boolean (API bug)', async ({ page }) => {
     // SKIPPED: Known issue - evaluate() API doesn't use fixed expression evaluator
     // The on-page runtime execution works correctly (see if/then/else test)
-    // but window.lokascript.evaluate() uses a different code path that still returns {}
+    // but window.hyperfixi.evaluate() uses a different code path that still returns {}
     // TODO: Fix expression-parser.ts possessive expression evaluation
     const result = await page.evaluate(() => {
       const input = document.querySelector('#email-input') as HTMLInputElement;
@@ -198,9 +198,9 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
       input.required = true;
 
       // Read via hyperscript
-      const value = window.lokascript
+      const value = window.hyperfixi
         ? // @ts-expect-error - evaluate() not in LokaScriptBrowserAPI type
-          window.lokascript.evaluate("#email-input's @required", {})
+          window.hyperfixi.evaluate("#email-input's @required", {})
         : null;
 
       return {
@@ -228,7 +228,7 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
       // Test with disabled = false
       btn.disabled = false;
       // @ts-ignore
-      await window.lokascript.evaluate(
+      await window.hyperfixi.evaluate(
         "if #target-btn's @disabled then put 'DISABLED' into #test-status else put 'ENABLED' into #test-status end",
         {}
       );
@@ -237,7 +237,7 @@ test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
       // Test with disabled = true
       btn.disabled = true;
       // @ts-ignore
-      await window.lokascript.evaluate(
+      await window.hyperfixi.evaluate(
         "if #target-btn's @disabled then put 'DISABLED' into #test-status else put 'ENABLED' into #test-status end",
         {}
       );
