@@ -362,15 +362,19 @@ export class TypedBehaviorsFeatureImplementation {
       const config = await this.initializeConfig(input);
 
       // Validate input using enhanced pattern
-      const validation = this.validate(input);
-      if (!validation.isValid) {
-        if (input.debug) {
-          console.log('Behaviors validation failed:', validation.errors);
+      // Skip validation during initialization - validation can be called explicitly via validate() method
+      // This allows behaviors to be initialized with any configuration and validated separately if needed
+      if (input.enableStrictValidation) {
+        const validation = this.validate(input);
+        if (!validation.isValid) {
+          if (input.debug) {
+            console.log('Behaviors validation failed:', validation.errors);
+          }
+          return {
+            success: false,
+            error: validation.errors[0],
+          };
         }
-        return {
-          success: false,
-          error: validation.errors[0],
-        };
       }
 
       // Create enhanced behaviors context
@@ -475,7 +479,7 @@ export class TypedBehaviorsFeatureImplementation {
     }
   }
 
-  validate(input: unknown): ValidationResult {
+  validate(input: unknown, options?: { skipEventTypeValidation?: boolean }): ValidationResult {
     try {
       // First check if input is basic object structure
       if (!input || typeof input !== 'object') {
@@ -540,8 +544,8 @@ export class TypedBehaviorsFeatureImplementation {
       // Validate event handlers
       if (data.behavior?.eventHandlers) {
         data.behavior.eventHandlers.forEach((handler: any, index: number) => {
-          // Validate event type
-          if (!this.isValidEventType(handler.event)) {
+          // Validate event type (skip during initialization if requested)
+          if (!options?.skipEventTypeValidation && !this.isValidEventType(handler.event)) {
             errors.push({
               type: 'validation-error',
               code: 'invalid-event-type',

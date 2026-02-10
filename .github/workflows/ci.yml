@@ -41,10 +41,12 @@ jobs:
       # 3. patterns-reference (depends on semantic)
       # 4. i18n (depends on core, semantic)
       # 5. ast-toolkit (depends on core, patterns-reference)
-      # 6. mcp-server (depends on semantic, patterns-reference, ast-toolkit optional)
-      # 7. developer-tools
-      # 8. vite-plugin (depends on core)
-      # 9. language-server (depends on semantic, core, ast-toolkit - all optional)
+      # 6. aot-compiler (depends on core, semantic)
+      # 7. compilation-service (depends on aot-compiler, semantic)
+      # 8. mcp-server (depends on semantic, patterns-reference, compilation-service, ast-toolkit optional)
+      # 9. developer-tools
+      # 10. vite-plugin (depends on core)
+      # 11. language-server (depends on semantic, core, ast-toolkit - all optional)
       - name: Build semantic package
         run: npm run build --prefix packages/semantic
 
@@ -62,6 +64,12 @@ jobs:
 
       - name: Build ast-toolkit package
         run: npm run build --prefix packages/ast-toolkit
+
+      - name: Build aot-compiler package
+        run: npm run build --prefix packages/aot-compiler
+
+      - name: Build compilation-service package
+        run: npm run build --prefix packages/compilation-service
 
       - name: Build mcp-server package
         run: npm run build --prefix packages/mcp-server
@@ -100,6 +108,8 @@ jobs:
             packages/core/dist/
             packages/patterns-reference/dist/
             packages/ast-toolkit/dist/
+            packages/aot-compiler/dist/
+            packages/compilation-service/dist/
             packages/mcp-server/dist/
             packages/developer-tools/dist/
             packages/vite-plugin/dist/
@@ -147,7 +157,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Run export validation for published packages
-          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference ast-toolkit language-server --strict 2>&1 | tee /tmp/export-validation.log
+          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference ast-toolkit aot-compiler compilation-service language-server --strict 2>&1 | tee /tmp/export-validation.log
 
           # Parse results for summary
           if grep -q "✅" /tmp/export-validation.log; then
@@ -225,6 +235,8 @@ jobs:
           npm run typecheck --prefix packages/hyperscript-adapter
           npm run typecheck --prefix packages/vite-plugin
           npm run typecheck --prefix packages/patterns-reference
+          npm run typecheck --prefix packages/aot-compiler
+          npm run typecheck --prefix packages/compilation-service
           npm run typecheck --prefix packages/mcp-server
           npm run typecheck --prefix packages/language-server
 
@@ -297,6 +309,12 @@ jobs:
 
       - name: Test patterns-reference
         run: npm test --prefix packages/patterns-reference
+
+      - name: Test aot-compiler
+        run: npm test --prefix packages/aot-compiler
+
+      - name: Test compilation-service
+        run: npm test --prefix packages/compilation-service
 
       - name: Test mcp-server
         run: npm test --prefix packages/mcp-server

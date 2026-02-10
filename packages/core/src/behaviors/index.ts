@@ -47,10 +47,7 @@ export {
  * @param registry - Behavior registry (Map or object with set method)
  */
 export function registerAllBehaviors(registry: Map<string, unknown> | any): void {
-  // Import behavior registrations
-  const { registerHistorySwap } = require('./history-swap');
-  const { registerBoosted } = require('./boosted');
-
+  // Use already imported ES6 exports
   registerHistorySwap(registry);
   registerBoosted(registry);
 }

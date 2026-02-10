@@ -390,7 +390,7 @@ function removeRedundantOperations(commands: any[]): any[] {
           (lastOp.operation === 'remove' && cmd.name === 'add')
         ) {
           result.splice(lastOp.index, 1);
-          for (const [k, v] of operationTracker) {
+          for (const [_, v] of operationTracker) {
             if (v.index > lastOp.index) {
               v.index--;
             }

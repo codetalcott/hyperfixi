@@ -107,7 +107,7 @@ export function createHistorySwap(config: HistorySwapConfig): HistorySwapInstanc
   };
 
   // Popstate handler
-  const handlePopstate = async (event: PopStateEvent) => {
+  const handlePopstate = async (_event: PopStateEvent) => {
     const targetElement = resolveTarget();
     if (!targetElement) {
       console.warn(`HistorySwap: target "${target}" not found`);

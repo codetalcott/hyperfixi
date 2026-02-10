@@ -5,14 +5,13 @@
  * Extracted from @lokascript/ast-toolkit during consolidation.
  */
 
-import { findNodes, ASTVisitor, visit, measureDepth } from './visitor.js';
+import { ASTVisitor, visit, measureDepth } from './visitor.js';
 import type {
   ASTNode,
   ComplexityMetrics,
   CodeSmell,
   AnalysisResult,
   DependencyGraph,
-  VariableUsage,
   CodeSuggestion,
   PatternMatch,
 } from './types.js';

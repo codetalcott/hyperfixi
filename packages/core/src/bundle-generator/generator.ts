@@ -33,7 +33,7 @@ export function generateBundleCode(config: GeneratorOptions): string {
     parserImportPath = '../parser/hybrid',
     autoInit = true,
     esModule = true,
-    format = 'ts',
+    format = 'ts' as CodeFormat,
     maxLoopIterations = 1000,
   } = config;
 

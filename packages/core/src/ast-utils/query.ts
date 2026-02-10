@@ -62,6 +62,10 @@ export function queryAll(ast: ASTNode | null, selector: string): QueryMatch[] {
     // Track ancestors during traversal
     const ancestorStack: ASTNode[] = [];
 
+    // eslint-disable-next-line no-inner-declarations
+    // NOTE: This function must be defined here as it's a closure over parsedSelector,
+    // matches, and ancestorStack from the outer loop scope. Extracting it would
+    // require passing 3+ additional parameters on every recursive call.
     function traverse(
       node: ASTNode,
       path: string[],
