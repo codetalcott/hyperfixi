@@ -1,5 +1,6 @@
 {
   "name": "@lokascript/siren",
+  "private": true,
   "version": "1.3.0",
   "description": "Siren hypermedia plugin for LokaScript — server affordances drive DOM behavior",
   "type": "module",

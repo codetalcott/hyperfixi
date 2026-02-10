@@ -62,7 +62,8 @@
         }
 
         .content-box {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            background: var(--panel-blue-bg);
+            color: var(--panel-blue-fg);
             padding: 30px;
             border-radius: 12px;
             min-height: 150px;
@@ -71,13 +72,23 @@
 
         .content-box h3 {
             margin: 0 0 15px 0;
-            color: #1976d2;
+            color: inherit;
         }
 
         .content-box p {
             margin: 10px 0;
             line-height: 1.6;
-            color: var(--color-text, #18181b);
+            color: inherit;
+        }
+
+        .content-box.panel-orange {
+            background: var(--panel-orange-bg);
+            color: var(--panel-orange-fg);
+        }
+
+        .content-box.panel-green {
+            background: var(--panel-green-bg);
+            color: var(--panel-green-fg);
         }
 
         .icon {
@@ -178,7 +189,7 @@
             </div>
 
             <div id="features" class="tab-content">
-                <div class="content-box" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                <div class="content-box panel-orange">
                     <h3>⚡ Key Features</h3>
                     <p>🎯 <strong>100% Pattern Coverage:</strong> All 77 hyperscript patterns implemented</p>
                     <p>📘 <strong>TypeScript Support:</strong> Full type safety and IntelliSense</p>
@@ -189,7 +200,7 @@
             </div>
 
             <div id="pricing" class="tab-content">
-                <div class="content-box" style="background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);">
+                <div class="content-box panel-green">
                     <h3>💰 Pricing</h3>
                     <p><strong>Open Source - FREE Forever!</strong></p>
                     <p>

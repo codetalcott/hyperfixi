@@ -90,7 +90,17 @@ export const sirenPlugin: PluginShape = {
     // Start probe (fire-and-forget at setup time)
     probeSirenAgent();
 
-    registerFetchResponseType('siren', {
+    // In browser IIFE mode, the bundled registerFetchResponseType writes to a
+    // different customResponseTypes Map than the running runtime's FetchCommand.
+    // Use the global's version when available so the type is registered on the
+    // runtime's map, falling back to the import for ESM/CJS usage.
+    const win = typeof globalThis !== 'undefined' ? (globalThis as Record<string, unknown>) : {};
+    const runtimeRegister =
+      (win.lokascript as Record<string, unknown> | undefined)?.registerFetchResponseType as
+        typeof registerFetchResponseType | undefined;
+    const register = runtimeRegister ?? registerFetchResponseType;
+
+    register('siren', {
       accept: _parseSirenResponse ? fullAccept : jsonOnlyAccept,
       async handler(response: Response) {
         // Check if parseSirenResponse became available (probe may have resolved)

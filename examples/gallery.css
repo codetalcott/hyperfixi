@@ -30,6 +30,23 @@
   --color-accent: #6366f1;
   --color-accent-muted: #e0e7ff;
 
+  /* Accent panels — colored callout boxes used in examples */
+  --panel-green-bg: #e8f5e9;
+  --panel-green-fg: #1b5e20;
+  --panel-green-border: #4caf50;
+  --panel-orange-bg: #fff3e0;
+  --panel-orange-fg: #e65100;
+  --panel-orange-border: #ff9800;
+  --panel-blue-bg: #e3f2fd;
+  --panel-blue-fg: #0d47a1;
+  --panel-blue-border: #2196f3;
+  --panel-red-bg: #ffebee;
+  --panel-red-fg: #c62828;
+  --panel-red-border: #f44336;
+  --panel-yellow-bg: #fff3cd;
+  --panel-yellow-fg: #7b5e00;
+  --panel-yellow-border: #ffc107;
+
   /* Typography */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
   --font-mono: 'SF Mono', 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
@@ -81,6 +98,22 @@
     --color-border-hover: #52525b;
     --color-accent: #818cf8;
     --color-accent-muted: #312e81;
+
+    --panel-green-bg: #1a2e1a;
+    --panel-green-fg: #a5d6a7;
+    --panel-green-border: #388e3c;
+    --panel-orange-bg: #2e1c0a;
+    --panel-orange-fg: #ffcc80;
+    --panel-orange-border: #f57c00;
+    --panel-blue-bg: #0d1b2a;
+    --panel-blue-fg: #90caf9;
+    --panel-blue-border: #1976d2;
+    --panel-red-bg: #2a0d0d;
+    --panel-red-fg: #ef9a9a;
+    --panel-red-border: #e53935;
+    --panel-yellow-bg: #2a2200;
+    --panel-yellow-fg: #ffe082;
+    --panel-yellow-border: #ffa000;
   }
 }
 
@@ -94,6 +127,22 @@ html.dark-mode {
   --color-border-hover: #52525b;
   --color-accent: #818cf8;
   --color-accent-muted: #312e81;
+
+  --panel-green-bg: #1a2e1a;
+  --panel-green-fg: #a5d6a7;
+  --panel-green-border: #388e3c;
+  --panel-orange-bg: #2e1c0a;
+  --panel-orange-fg: #ffcc80;
+  --panel-orange-border: #f57c00;
+  --panel-blue-bg: #0d1b2a;
+  --panel-blue-fg: #90caf9;
+  --panel-blue-border: #1976d2;
+  --panel-red-bg: #2a0d0d;
+  --panel-red-fg: #ef9a9a;
+  --panel-red-border: #e53935;
+  --panel-yellow-bg: #2a2200;
+  --panel-yellow-fg: #ffe082;
+  --panel-yellow-border: #ffa000;
 }
 
 /* =============================================================================

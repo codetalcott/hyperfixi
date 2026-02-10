@@ -47,6 +47,11 @@ import {
   fromExplicit,
 } from '@lokascript/semantic';
 
+// Plugin registry and fetch extension point
+import { getDefaultRegistry } from '../registry';
+import type { LokaScriptRegistry, LokaScriptPlugin } from '../registry';
+import { registerFetchResponseType } from '../commands/async/fetch';
+
 // Import CompileResult type for browser bundle
 import type { CompileResult, NewCompileOptions } from '../api/hyperscript-api';
 
@@ -99,6 +104,10 @@ interface LokaScriptBrowserAPI {
   registerHooks: (name: string, hooks: RuntimeHooks) => void;
   unregisterHooks: (name: string) => boolean;
   getRegisteredHooks: () => string[];
+  // Plugin registry for external plugins (e.g., @lokascript/siren)
+  registry: LokaScriptRegistry;
+  // Fetch response type extension point
+  registerFetchResponseType: typeof registerFetchResponseType;
 }
 
 // Export to global scope for browser testing
@@ -240,6 +249,13 @@ const lokascriptAPI = {
   registerHooks: hyperscript.registerHooks,
   unregisterHooks: hyperscript.unregisterHooks,
   getRegisteredHooks: hyperscript.getRegisteredHooks,
+
+  // Plugin registry for external plugins (e.g., @lokascript/siren)
+  registry: getDefaultRegistry(),
+
+  // Fetch response type extension point — plugins use this to register
+  // custom `fetch <url> as <type>` handlers (e.g., `as siren`)
+  registerFetchResponseType,
 
   // Version info
   version: '2.0.0-full',
