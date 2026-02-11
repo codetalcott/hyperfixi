@@ -6,7 +6,14 @@ import type { SemanticNode, LanguageTokenizer, LanguagePattern } from '../core/t
 import type { CommandSchema } from '../schema';
 import { PatternMatcher, type PatternMatcherProfile } from '../core/pattern-matching';
 import { generatePattern, type PatternGenLanguageProfile } from '../generation/pattern-generator';
-import type { LanguageProfile as GrammarProfile } from '../grammar';
+import { GrammarTransformer, type LanguageProfile as GrammarProfile } from '../grammar';
+import {
+  type Dictionary,
+  type ProfileProvider,
+  type ValueExtractor,
+  InMemoryDictionary,
+  InMemoryProfileProvider,
+} from '../interfaces';
 
 /**
  * Language configuration for a DSL.
@@ -34,15 +41,39 @@ export interface CodeGenerator {
 }
 
 /**
- * DSL configuration.
+ * DSL configuration with dependency injection support.
  */
 export interface DSLConfig {
+  /** DSL name (for debugging/documentation) */
+  readonly name?: string;
+
   /** Command schemas defining the DSL grammar */
   readonly schemas: readonly CommandSchema[];
+
   /** Language configurations */
   readonly languages: readonly LanguageConfig[];
-  /** Optional code generator */
+
+  // === Dependency Injection (Optional) ===
+
+  /** Dictionary for keyword translation (default: built from language configs) */
+  readonly dictionary?: Dictionary;
+
+  /** Profile provider for grammar transformation (default: built from language configs) */
+  readonly profileProvider?: ProfileProvider;
+
+  /** Value extractors for tokenization (default: generic extractors) */
+  readonly valueExtractors?: ValueExtractor[];
+
+  /** Code generator for compilation (default: none) */
   readonly codeGenerator?: CodeGenerator;
+
+  // === Options ===
+
+  /** Auto-generate patterns from schemas (default: true) */
+  readonly generatePatterns?: boolean;
+
+  /** Custom patterns to supplement generated ones */
+  readonly customPatterns?: LanguagePattern[];
 }
 
 /**
@@ -139,11 +170,13 @@ class DSLRegistry {
 class MultilingualDSLImpl implements MultilingualDSL {
   private registry: DSLRegistry;
   private matcher: PatternMatcher;
+  private transformer: GrammarTransformer;
   private codeGenerator?: CodeGenerator;
 
-  constructor(config: DSLConfig, registry: DSLRegistry) {
+  constructor(config: DSLConfig, registry: DSLRegistry, transformer: GrammarTransformer) {
     this.registry = registry;
     this.matcher = new PatternMatcher();
+    this.transformer = transformer;
     if (config.codeGenerator) {
       this.codeGenerator = config.codeGenerator;
     }
@@ -211,15 +244,9 @@ class MultilingualDSLImpl implements MultilingualDSL {
     }
   }
 
-  translate(_input: string, _fromLanguage: string, _toLanguage: string): string {
-    // Parse in source language
-    // const node = this.parse(input, fromLanguage);
-
-    // TODO: Render in target language using language profile
-    // For now, return a placeholder
-    throw new Error(
-      'Translation not yet implemented - grammar transformation will be added in a future release'
-    );
+  translate(input: string, fromLanguage: string, toLanguage: string): string {
+    // Use injected grammar transformer
+    return this.transformer.transform(input, fromLanguage, toLanguage);
   }
 
   compile(input: string, language: string): CompileResult {
@@ -288,7 +315,53 @@ class MultilingualDSLImpl implements MultilingualDSL {
  * const result = myDSL.compile('select name from users', 'en');
  * ```
  */
+/**
+ * Create default dictionary from language configurations.
+ */
+function createDefaultDictionary(config: DSLConfig): Dictionary {
+  const translations: Record<string, Record<string, string>> = {};
+
+  for (const lang of config.languages) {
+    // Convert keyword objects to simple string mappings
+    const keywords: Record<string, string> = {};
+    for (const [canonical, keywordDef] of Object.entries(lang.patternProfile.keywords)) {
+      keywords[canonical] = keywordDef.primary;
+    }
+    translations[lang.code] = keywords;
+  }
+
+  return new InMemoryDictionary(translations);
+}
+
+/**
+ * Create default profile provider from language configurations.
+ */
+function createDefaultProfileProvider(config: DSLConfig): ProfileProvider {
+  const profiles: Record<string, GrammarProfile> = {};
+
+  for (const lang of config.languages) {
+    if (lang.grammarProfile) {
+      profiles[lang.code] = lang.grammarProfile;
+    }
+  }
+
+  return new InMemoryProfileProvider(profiles);
+}
+
 export function createMultilingualDSL(config: DSLConfig): MultilingualDSL {
+  // Create or use provided dictionary
+  const dictionary = config.dictionary ?? createDefaultDictionary(config);
+
+  // Create or use provided profile provider
+  const profileProvider = config.profileProvider ?? createDefaultProfileProvider(config);
+
+  // Create grammar transformer with injected dependencies
+  const transformer = new GrammarTransformer({
+    dictionary,
+    profileProvider,
+  });
+
+  // Create registry and implementation
   const registry = new DSLRegistry(config);
-  return new MultilingualDSLImpl(config, registry);
+  return new MultilingualDSLImpl(config, registry, transformer);
 }
