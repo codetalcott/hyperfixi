@@ -161,6 +161,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          set -o pipefail
           VERSION="${{ steps.version.outputs.version }}"
           echo "Publishing all packages at version $VERSION"
           FAILED=""
@@ -172,10 +173,11 @@ jobs:
             if npm publish --tag ${{ github.event.inputs.npm-tag }} --access public 2>&1 | tee /tmp/publish-$pkg.log; then
               echo "✅ $SCOPE@$VERSION published"
             else
-              if grep -q "previously published" /tmp/publish-$pkg.log; then
+              if grep -q "previously published\|already exists\|cannot publish over" /tmp/publish-$pkg.log; then
                 echo "⏭️  $SCOPE@$VERSION already published, skipping"
               else
                 echo "❌ $SCOPE@$VERSION failed"
+                cat /tmp/publish-$pkg.log
                 FAILED="$FAILED $SCOPE"
               fi
             fi
