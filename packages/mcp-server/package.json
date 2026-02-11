@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "lokascript-mcp": "./dist/index.js"
+    "lokascript-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",

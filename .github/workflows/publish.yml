@@ -53,19 +53,12 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Verify npm version
         run: |
           echo "Node: $(node --version)"
           echo "npm: $(npm --version)"
-          # OIDC trusted publishing requires npm >= 11.5.1
-          NPM_MAJOR=$(npm --version | cut -d. -f1)
-          NPM_MINOR=$(npm --version | cut -d. -f2)
-          if [ "$NPM_MAJOR" -lt 11 ] || { [ "$NPM_MAJOR" -eq 11 ] && [ "$NPM_MINOR" -lt 5 ]; }; then
-            echo "::error::npm >= 11.5.1 required for OIDC trusted publishing"
-            exit 1
-          fi
-          echo "✅ npm version OK for OIDC trusted publishing"
 
       - name: Configure Git
         run: |
@@ -149,6 +142,8 @@ jobs:
 
       - name: Publish to npm (dry-run)
         if: ${{ github.event.inputs.dry-run == 'true' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           echo "DRY RUN: Would publish all packages at version $VERSION"
@@ -163,15 +158,17 @@ jobs:
 
       - name: Publish to npm
         if: ${{ github.event.inputs.dry-run == 'false' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Publishing all packages at version $VERSION (OIDC trusted publishing)"
+          echo "Publishing all packages at version $VERSION"
 
           for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin; do
             SCOPE=$(node -p "require('./packages/$pkg/package.json').name")
             echo "Publishing $SCOPE@$VERSION"
             cd "packages/$pkg"
-            npm publish --tag ${{ github.event.inputs.npm-tag }} --access public --provenance
+            npm publish --tag ${{ github.event.inputs.npm-tag }} --access public
             cd ../..
           done
 
