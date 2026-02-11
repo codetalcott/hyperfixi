@@ -61,7 +61,7 @@ export const japaneseProfile: LanguageProfile = {
     add: { primary: '追加', alternatives: ['追加する', '加える'], normalized: 'add' },
     remove: { primary: '削除', alternatives: ['削除する', '取り除く'], normalized: 'remove' },
     // Content operations
-    put: { primary: '置く', alternatives: ['入れる', 'セット'], normalized: 'put' },
+    put: { primary: '置く', alternatives: ['入れる'], normalized: 'put' },
     append: { primary: '末尾追加', alternatives: ['末尾に追加', 'アペンド'], normalized: 'append' },
     prepend: {
       primary: '先頭追加',
@@ -74,7 +74,7 @@ export const japaneseProfile: LanguageProfile = {
     swap: { primary: '交換', alternatives: ['スワップ', '入れ替え'], normalized: 'swap' },
     morph: { primary: '変形', alternatives: ['モーフ', '変換'], normalized: 'morph' },
     // Variable operations
-    set: { primary: '設定', alternatives: ['設定する', 'セット'], normalized: 'set' },
+    set: { primary: '設定', alternatives: ['設定する'], normalized: 'set' },
     get: { primary: '取得', alternatives: ['取得する', 'ゲット'], normalized: 'get' },
     increment: {
       primary: '増加',
@@ -96,7 +96,7 @@ export const japaneseProfile: LanguageProfile = {
       normalized: 'transition',
     },
     // Events
-    on: { primary: 'で', alternatives: ['時', 'とき'], normalized: 'on' },
+    on: { primary: 'で', alternatives: ['時'], normalized: 'on' },
     trigger: { primary: '引き金', alternatives: ['発火', 'トリガー'], normalized: 'trigger' },
     send: { primary: '送る', alternatives: ['送信'], normalized: 'send' },
     // DOM focus
@@ -106,11 +106,11 @@ export const japaneseProfile: LanguageProfile = {
     go: { primary: '移動', alternatives: ['行く', 'ナビゲート'], normalized: 'go' },
     // Async
     wait: { primary: '待つ', alternatives: ['待機'], normalized: 'wait' },
-    fetch: { primary: '取得', alternatives: ['フェッチ'], normalized: 'fetch' },
+    fetch: { primary: 'フェッチ', normalized: 'fetch' },
     settle: { primary: '安定', alternatives: ['落ち着く'], normalized: 'settle' },
     // Control flow
     if: { primary: 'もし', alternatives: ['条件'], normalized: 'if' },
-    when: { primary: 'とき', normalized: 'when' },
+    when: { primary: 'とき', alternatives: ['ときに'], normalized: 'when' },
     where: { primary: 'どこ', normalized: 'where' },
     else: { primary: 'そうでなければ', alternatives: ['それ以外'], normalized: 'else' },
     repeat: { primary: '繰り返し', alternatives: ['繰り返す', 'リピート'], normalized: 'repeat' },
@@ -121,8 +121,8 @@ export const japaneseProfile: LanguageProfile = {
     throw: { primary: '投げる', alternatives: ['スロー'], normalized: 'throw' },
     call: { primary: '呼び出し', alternatives: ['コール', '呼ぶ'], normalized: 'call' },
     return: { primary: '戻る', alternatives: ['返す', 'リターン'], normalized: 'return' },
-    then: { primary: 'それから', alternatives: ['次に', 'そして'], normalized: 'then' },
-    and: { primary: 'そして', alternatives: ['と', 'また'], normalized: 'and' },
+    then: { primary: 'それから', alternatives: ['次に'], normalized: 'then' },
+    and: { primary: 'また', alternatives: ['と'], normalized: 'and' },
     end: { primary: '終わり', alternatives: ['終了', 'おわり'], normalized: 'end' },
     // Advanced
     js: { primary: 'JS実行', alternatives: ['js'], normalized: 'js' },
@@ -136,7 +136,7 @@ export const japaneseProfile: LanguageProfile = {
     beep: { primary: 'ビープ', normalized: 'beep' },
     break: { primary: '中断', normalized: 'break' },
     copy: { primary: 'コピー', normalized: 'copy' },
-    exit: { primary: '終了', normalized: 'exit' },
+    exit: { primary: '退出', normalized: 'exit' },
     pick: { primary: '選択', normalized: 'pick' },
     render: { primary: '描画', normalized: 'render' },
     // Modifiers

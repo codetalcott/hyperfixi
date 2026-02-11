@@ -147,10 +147,10 @@ export const russianProfile: LanguageProfile = {
       form: 'infinitive',
     },
     // Events
-    on: { primary: 'при', alternatives: ['когда'], normalized: 'on' },
+    on: { primary: 'при', normalized: 'on' },
     trigger: {
-      primary: 'вызвать',
-      alternatives: ['вызови'],
+      primary: 'инициировать',
+      alternatives: ['запустить', 'запусти'],
       normalized: 'trigger',
       form: 'infinitive',
     },
@@ -261,17 +261,17 @@ export const russianProfile: LanguageProfile = {
     before: { primary: 'до', alternatives: ['перед'], normalized: 'before' },
     after: { primary: 'после', normalized: 'after' },
     // Event modifiers
-    until: { primary: 'до', alternatives: ['пока_не'], normalized: 'until' },
+    until: { primary: 'пока_не', normalized: 'until' },
     event: { primary: 'событие', normalized: 'event' },
     from: { primary: 'из', alternatives: ['от', 'с'], normalized: 'from' },
   },
   eventHandler: {
-    keyword: { primary: 'при', alternatives: ['когда'], normalized: 'on' },
+    keyword: { primary: 'при', normalized: 'on' },
     sourceMarker: { primary: 'на', alternatives: ['в', 'при'], position: 'before' },
     // Event marker: при (at/on/upon), used in SVO pattern
     // Pattern: при [event] [verb] [patient] на [destination?]
     // Example: при клике переключить .active на #button
-    eventMarker: { primary: 'при', alternatives: ['когда'], position: 'before' },
+    eventMarker: { primary: 'при', position: 'before' },
     temporalMarkers: ['когда', 'если'], // temporal conjunctions (when, if)
   },
 };

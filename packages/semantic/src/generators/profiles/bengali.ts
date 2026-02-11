@@ -53,7 +53,7 @@ export const bengaliProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations
-    toggle: { primary: 'টগল', alternatives: ['পরিবর্তন'], normalized: 'toggle' },
+    toggle: { primary: 'টগল', normalized: 'toggle' },
     add: { primary: 'যোগ', alternatives: ['যোগ করুন'], normalized: 'add' },
     remove: { primary: 'সরান', alternatives: ['সরিয়ে ফেলুন', 'মুছুন'], normalized: 'remove' },
     // Content operations
@@ -62,12 +62,12 @@ export const bengaliProfile: LanguageProfile = {
     prepend: { primary: 'শুরুতে যোগ', alternatives: [], normalized: 'prepend' },
     take: { primary: 'নিন', alternatives: ['নে'], normalized: 'take' },
     make: { primary: 'তৈরি করুন', alternatives: ['বানান'], normalized: 'make' },
-    clone: { primary: 'কপি', alternatives: ['প্রতিলিপি'], normalized: 'clone' },
+    clone: { primary: 'ক্লোন', alternatives: ['প্রতিলিপি'], normalized: 'clone' },
     swap: { primary: 'বদল', alternatives: [], normalized: 'swap' },
     morph: { primary: 'রূপান্তর', alternatives: [], normalized: 'morph' },
     // Variable operations
     set: { primary: 'সেট', alternatives: ['নির্ধারণ'], normalized: 'set' },
-    get: { primary: 'পান', alternatives: ['নিন'], normalized: 'get' },
+    get: { primary: 'পান', normalized: 'get' },
     increment: { primary: 'বৃদ্ধি', alternatives: ['বাড়ান'], normalized: 'increment' },
     decrement: { primary: 'হ্রাস', alternatives: ['কমান'], normalized: 'decrement' },
     log: { primary: 'লগ', alternatives: ['রেকর্ড'], normalized: 'log' },
@@ -76,7 +76,7 @@ export const bengaliProfile: LanguageProfile = {
     hide: { primary: 'লুকান', alternatives: ['লুকাও'], normalized: 'hide' },
     transition: { primary: 'সংক্রমণ', alternatives: [], normalized: 'transition' },
     // Events
-    on: { primary: 'তে', alternatives: ['এ', 'যখন'], normalized: 'on' },
+    on: { primary: 'তে', alternatives: ['এ'], normalized: 'on' },
     trigger: { primary: 'ট্রিগার', alternatives: [], normalized: 'trigger' },
     send: { primary: 'পাঠান', alternatives: ['পাঠাও'], normalized: 'send' },
     // DOM focus
@@ -91,7 +91,7 @@ export const bengaliProfile: LanguageProfile = {
     // Navigation
     go: { primary: 'যান', alternatives: ['যাও'], normalized: 'go' },
     // Async
-    wait: { primary: 'অপেক্ষা', alternatives: ['থামুন'], normalized: 'wait' },
+    wait: { primary: 'অপেক্ষা', normalized: 'wait' },
     fetch: { primary: 'আনুন', alternatives: [], normalized: 'fetch' },
     settle: { primary: 'স্থির', alternatives: [], normalized: 'settle' },
     // Control flow
@@ -120,13 +120,13 @@ export const bengaliProfile: LanguageProfile = {
     install: { primary: 'ইনস্টল', alternatives: [], normalized: 'install' },
     measure: { primary: 'মাপুন', alternatives: [], normalized: 'measure' },
     beep: { primary: 'বীপ', alternatives: [], normalized: 'beep' },
-    break: { primary: 'থামুন', alternatives: [], normalized: 'break' },
+    break: { primary: 'ভাঙুন', alternatives: [], normalized: 'break' },
     copy: { primary: 'কপি', alternatives: [], normalized: 'copy' },
     exit: { primary: 'বের', alternatives: [], normalized: 'exit' },
     pick: { primary: 'বাছুন', alternatives: [], normalized: 'pick' },
     render: { primary: 'রেন্ডার', alternatives: [], normalized: 'render' },
     // Modifiers
-    into: { primary: 'তে', alternatives: ['এ'], normalized: 'into' },
+    into: { primary: 'ভিতরে', normalized: 'into' },
     before: { primary: 'আগে', alternatives: [], normalized: 'before' },
     after: { primary: 'পরে', alternatives: [], normalized: 'after' },
     until: { primary: 'পর্যন্ত', alternatives: [], normalized: 'until' },

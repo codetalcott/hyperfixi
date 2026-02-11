@@ -86,14 +86,15 @@ export const turkishProfile: LanguageProfile = {
     remove: { primary: 'kaldır', alternatives: ['sil'], normalized: 'remove' },
     // Content operations
     put: { primary: 'koy', normalized: 'put' },
-    append: { primary: 'ekle', normalized: 'append' },
+    append: { primary: 'iliştir', normalized: 'append' },
+    prepend: { primary: 'başınaekle', normalized: 'prepend' },
     take: { primary: 'tut', normalized: 'take' }, // al removed to avoid collision with get
     make: { primary: 'yap', normalized: 'make' },
-    clone: { primary: 'kopyala', normalized: 'clone' },
+    clone: { primary: 'klonla', normalized: 'clone' },
     swap: { primary: 'takas', normalized: 'swap' }, // Removed değiştir alternative to avoid collision with toggle
     morph: { primary: 'dönüştür', alternatives: ['şekil değiştir'], normalized: 'morph' },
     // Variable operations
-    set: { primary: 'ayarla', alternatives: ['yap', 'belirle'], normalized: 'set' },
+    set: { primary: 'ayarla', alternatives: ['belirle'], normalized: 'set' },
     get: { primary: 'al', normalized: 'get' },
     increment: { primary: 'artır', normalized: 'increment' },
     decrement: { primary: 'azalt', normalized: 'decrement' },
@@ -103,7 +104,7 @@ export const turkishProfile: LanguageProfile = {
     hide: { primary: 'gizle', normalized: 'hide' },
     transition: { primary: 'geçiş', normalized: 'transition' },
     // Events
-    on: { primary: 'üzerinde', alternatives: ['olduğunda', 'zaman'], normalized: 'on' },
+    on: { primary: 'üzerinde', alternatives: ['zaman'], normalized: 'on' },
     trigger: { primary: 'tetikle', normalized: 'trigger' },
     send: { primary: 'gönder', normalized: 'send' },
     // DOM focus
@@ -112,7 +113,7 @@ export const turkishProfile: LanguageProfile = {
     // Common event names (for event handler patterns)
     click: { primary: 'tıklama', alternatives: ['tıkla'], normalized: 'click' },
     hover: { primary: 'üzerine gelme', alternatives: ['üzerinde gezinme'], normalized: 'hover' },
-    submit: { primary: 'gönderme', alternatives: ['gönder'], normalized: 'submit' },
+    submit: { primary: 'gönderme', normalized: 'submit' },
     input: { primary: 'giriş', alternatives: ['girdi'], normalized: 'input' },
     change: { primary: 'değişiklik', alternatives: ['değişim'], normalized: 'change' },
     // Navigation
@@ -128,13 +129,13 @@ export const turkishProfile: LanguageProfile = {
     else: { primary: 'yoksa', normalized: 'else' },
     repeat: { primary: 'tekrarla', normalized: 'repeat' },
     for: { primary: 'için', normalized: 'for' },
-    while: { primary: 'iken', normalized: 'while' },
+    while: { primary: 'süresince', normalized: 'while' },
     continue: { primary: 'devam', normalized: 'continue' },
     halt: { primary: 'durdur', normalized: 'halt' },
     throw: { primary: 'fırlat', normalized: 'throw' },
     call: { primary: 'çağır', normalized: 'call' },
     return: { primary: 'dön', normalized: 'return' },
-    then: { primary: 'sonra', alternatives: ['ardından', 'daha sonra'], normalized: 'then' },
+    then: { primary: 'ardından', alternatives: ['daha sonra'], normalized: 'then' },
     and: { primary: 've', alternatives: ['ayrıca', 'hem de'], normalized: 'and' },
     end: { primary: 'son', alternatives: ['bitiş', 'bitti'], normalized: 'end' },
     // Advanced

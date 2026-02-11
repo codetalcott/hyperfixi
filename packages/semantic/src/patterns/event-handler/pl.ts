@@ -20,7 +20,7 @@ export function getEventHandlerPatternsPl(): LanguagePattern[] {
       template: {
         format: 'gdy {event} na {source}',
         tokens: [
-          { type: 'literal', value: 'gdy', alternatives: ['kiedy', 'przy', 'na'] },
+          { type: 'literal', value: 'gdy', alternatives: ['przy', 'na'] },
           { type: 'role', role: 'event' },
           {
             type: 'group',
@@ -49,7 +49,7 @@ export function getEventHandlerPatternsPl(): LanguagePattern[] {
       template: {
         format: 'gdy {event}',
         tokens: [
-          { type: 'literal', value: 'gdy', alternatives: ['kiedy', 'przy', 'na'] },
+          { type: 'literal', value: 'gdy', alternatives: ['przy', 'na'] },
           { type: 'role', role: 'event' },
         ],
       },

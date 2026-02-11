@@ -625,11 +625,11 @@ describe('Newly Wired Commands', () => {
       expect(node.action).toBe('append');
     });
 
-    it('Spanish: añadir "text" en #container', () => {
-      // Generated pattern uses "en" not "a"
-      expect(canParse('añadir "text" en #container', 'es')).toBe(true);
+    it('Spanish: anexar "text" en #container', () => {
+      // "anexar" is append's primary; "añadir" is now add's alternative (collision fix)
+      expect(canParse('anexar "text" en #container', 'es')).toBe(true);
 
-      const node = parse('añadir "text" en #container', 'es');
+      const node = parse('anexar "text" en #container', 'es');
       expect(node.action).toBe('append');
     });
 

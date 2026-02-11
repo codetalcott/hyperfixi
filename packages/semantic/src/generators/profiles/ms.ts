@@ -63,21 +63,21 @@ export const malayProfile: LanguageProfile = {
     prepend: { primary: 'tambah_mula', normalized: 'prepend' },
     take: { primary: 'ambil', normalized: 'take' },
     make: { primary: 'buat', alternatives: ['cipta'], normalized: 'make' },
-    clone: { primary: 'klon', alternatives: ['salin'], normalized: 'clone' },
+    clone: { primary: 'klon', alternatives: [], normalized: 'clone' },
     swap: { primary: 'tukar_tempat', normalized: 'swap' },
     morph: { primary: 'ubah_bentuk', normalized: 'morph' },
     // Variable operations
     set: { primary: 'tetapkan', alternatives: ['setkan'], normalized: 'set' },
-    get: { primary: 'dapatkan', alternatives: ['ambil'], normalized: 'get' },
+    get: { primary: 'dapatkan', alternatives: [], normalized: 'get' },
     increment: { primary: 'tambah_satu', normalized: 'increment' },
     decrement: { primary: 'kurang_satu', normalized: 'decrement' },
     log: { primary: 'catat', alternatives: ['log'], normalized: 'log' },
     // Visibility
-    show: { primary: 'tunjuk', alternatives: ['papar'], normalized: 'show' },
+    show: { primary: 'tunjuk', alternatives: [], normalized: 'show' },
     hide: { primary: 'sembunyi', alternatives: ['sorok'], normalized: 'hide' },
     transition: { primary: 'peralihan', normalized: 'transition' },
     // Events
-    on: { primary: 'apabila', alternatives: ['bila', 'ketika'], normalized: 'on' },
+    on: { primary: 'apabila', alternatives: ['ketika'], normalized: 'on' },
     trigger: { primary: 'cetuskan', normalized: 'trigger' },
     send: { primary: 'hantar', normalized: 'send' },
     // DOM focus
@@ -91,7 +91,7 @@ export const malayProfile: LanguageProfile = {
     settle: { primary: 'selesai', normalized: 'settle' },
     // Control flow
     if: { primary: 'jika', alternatives: ['kalau'], normalized: 'if' },
-    when: { primary: 'apabila', normalized: 'when' },
+    when: { primary: 'bila', normalized: 'when' },
     where: { primary: 'di_mana', normalized: 'where' },
     else: { primary: 'kalau_tidak', alternatives: ['jika_tidak'], normalized: 'else' },
     repeat: { primary: 'ulang', normalized: 'repeat' },
@@ -115,7 +115,7 @@ export const malayProfile: LanguageProfile = {
     install: { primary: 'pasang', normalized: 'install' },
     measure: { primary: 'ukur', normalized: 'measure' },
     beep: { primary: 'bunyi', normalized: 'beep' },
-    break: { primary: 'henti', normalized: 'break' },
+    break: { primary: 'pecah', normalized: 'break' },
     copy: { primary: 'salin', normalized: 'copy' },
     exit: { primary: 'keluar', normalized: 'exit' },
     pick: { primary: 'pilih', normalized: 'pick' },
@@ -130,7 +130,7 @@ export const malayProfile: LanguageProfile = {
     from: { primary: 'dari', normalized: 'from' },
   },
   eventHandler: {
-    keyword: { primary: 'apabila', alternatives: ['bila', 'ketika'], normalized: 'on' },
+    keyword: { primary: 'apabila', alternatives: ['ketika'], normalized: 'on' },
     sourceMarker: { primary: 'dari', position: 'before' },
   },
 };

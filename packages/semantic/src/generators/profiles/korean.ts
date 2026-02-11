@@ -52,29 +52,30 @@ export const koreanProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations
-    toggle: { primary: '토글', alternatives: ['전환'], normalized: 'toggle' },
+    toggle: { primary: '토글', normalized: 'toggle' },
     add: { primary: '추가', normalized: 'add' },
     remove: { primary: '제거', alternatives: ['삭제'], normalized: 'remove' },
     // Content operations
     put: { primary: '넣다', alternatives: ['넣기', '놓기'], normalized: 'put' },
-    append: { primary: '추가', normalized: 'append' },
+    append: { primary: '덧붙이다', alternatives: ['끝에추가'], normalized: 'append' },
+    prepend: { primary: '앞에추가', alternatives: ['선두추가'], normalized: 'prepend' },
     take: { primary: '가져오다', normalized: 'take' },
     make: { primary: '만들다', normalized: 'make' },
-    clone: { primary: '복사', normalized: 'clone' },
+    clone: { primary: '복제', normalized: 'clone' }, // 복제=duplicate/clone, 복사=copy
     swap: { primary: '교환', alternatives: ['바꾸다'], normalized: 'swap' },
     morph: { primary: '변형', alternatives: ['변환'], normalized: 'morph' },
     // Variable operations
     set: { primary: '설정', normalized: 'set' },
-    get: { primary: '얻다', alternatives: ['가져오기'], normalized: 'get' },
+    get: { primary: '얻다', normalized: 'get' },
     increment: { primary: '증가', normalized: 'increment' },
     decrement: { primary: '감소', normalized: 'decrement' },
     log: { primary: '로그', normalized: 'log' },
     // Visibility
     show: { primary: '보이다', alternatives: ['표시', '보이기'], normalized: 'show' },
     hide: { primary: '숨기다', alternatives: ['숨기기'], normalized: 'hide' },
-    transition: { primary: '전환', normalized: 'transition' },
+    transition: { primary: '트랜지션', normalized: 'transition' }, // loanword to avoid collision with toggle alt 전환
     // Events
-    on: { primary: '에', alternatives: ['시', '때', '할 때'], normalized: 'on' },
+    on: { primary: '에', alternatives: ['시', '할 때'], normalized: 'on' },
     trigger: { primary: '트리거', normalized: 'trigger' },
     send: { primary: '보내다', normalized: 'send' },
     // DOM focus
@@ -90,7 +91,7 @@ export const koreanProfile: LanguageProfile = {
     go: { primary: '이동', normalized: 'go' },
     // Async
     wait: { primary: '대기', normalized: 'wait' },
-    fetch: { primary: '가져오기', normalized: 'fetch' },
+    fetch: { primary: '패치', normalized: 'fetch' }, // loanword to avoid collision with get
     settle: { primary: '안정', normalized: 'settle' },
     // Control flow
     if: { primary: '만약', normalized: 'if' },
@@ -98,16 +99,16 @@ export const koreanProfile: LanguageProfile = {
     where: { primary: '어디', normalized: 'where' },
     else: { primary: '아니면', normalized: 'else' },
     repeat: { primary: '반복', normalized: 'repeat' },
-    for: { primary: '동안', normalized: 'for' },
+    for: { primary: '각각', normalized: 'for' }, // "each" — avoids collision with while 동안
     while: { primary: '동안', normalized: 'while' },
     continue: { primary: '계속', normalized: 'continue' },
     halt: { primary: '정지', normalized: 'halt' },
     throw: { primary: '던지다', normalized: 'throw' },
     call: { primary: '호출', normalized: 'call' },
     return: { primary: '반환', normalized: 'return' },
-    then: { primary: '그다음', alternatives: ['그리고', '그런후'], normalized: 'then' },
+    then: { primary: '그다음', alternatives: ['그런후'], normalized: 'then' },
     and: { primary: '그리고', alternatives: ['또한', '및'], normalized: 'and' },
-    end: { primary: '끝', alternatives: ['종료', '마침'], normalized: 'end' },
+    end: { primary: '끝', alternatives: ['마침'], normalized: 'end' },
     // Advanced
     js: { primary: 'JS실행', alternatives: ['js'], normalized: 'js' },
     async: { primary: '비동기', normalized: 'async' },
@@ -120,7 +121,7 @@ export const koreanProfile: LanguageProfile = {
     beep: { primary: '비프', normalized: 'beep' },
     break: { primary: '중단', normalized: 'break' },
     copy: { primary: '복사', normalized: 'copy' },
-    exit: { primary: '종료', normalized: 'exit' },
+    exit: { primary: '나가기', normalized: 'exit' }, // avoids collision with end alt 종료
     pick: { primary: '선택', normalized: 'pick' },
     render: { primary: '렌더링', normalized: 'render' },
     // Modifiers

@@ -63,21 +63,21 @@ export const tagalogProfile: LanguageProfile = {
     prepend: { primary: 'idagdag_sa_simula', normalized: 'prepend' },
     take: { primary: 'kumuha', normalized: 'take' },
     make: { primary: 'gumawa', alternatives: ['lumikha'], normalized: 'make' },
-    clone: { primary: 'kopyahin', normalized: 'clone' },
+    clone: { primary: 'i-clone', normalized: 'clone' },
     swap: { primary: 'palitan_pwesto', alternatives: ['magpalit'], normalized: 'swap' },
     morph: { primary: 'baguhin', normalized: 'morph' },
     // Variable operations
     set: { primary: 'itakda', alternatives: ['magtakda'], normalized: 'set' },
-    get: { primary: 'kunin', alternatives: ['kumuha'], normalized: 'get' },
+    get: { primary: 'kunin', normalized: 'get' },
     increment: { primary: 'dagdagan', alternatives: ['taasan'], normalized: 'increment' },
     decrement: { primary: 'bawasan', alternatives: ['ibaba'], normalized: 'decrement' },
     log: { primary: 'itala', normalized: 'log' },
     // Visibility
     show: { primary: 'ipakita', alternatives: ['magpakita'], normalized: 'show' },
     hide: { primary: 'itago', alternatives: ['magtago'], normalized: 'hide' },
-    transition: { primary: 'baguhin', alternatives: ['lumipat'], normalized: 'transition' },
+    transition: { primary: 'lumipat', normalized: 'transition' },
     // Events
-    on: { primary: 'kapag', alternatives: ['kung', 'sa'], normalized: 'on' },
+    on: { primary: 'kapag', normalized: 'on' },
     trigger: { primary: 'palitawin', alternatives: ['magpatugtog'], normalized: 'trigger' },
     send: { primary: 'ipadala', alternatives: ['magpadala'], normalized: 'send' },
     // DOM focus
@@ -90,8 +90,8 @@ export const tagalogProfile: LanguageProfile = {
     fetch: { primary: 'kuhanin_mula', alternatives: ['kunin_mula'], normalized: 'fetch' },
     settle: { primary: 'magpatahimik', normalized: 'settle' },
     // Control flow
-    if: { primary: 'kung', alternatives: ['kapag'], normalized: 'if' },
-    when: { primary: 'kapag', normalized: 'when' },
+    if: { primary: 'kung', normalized: 'if' },
+    when: { primary: 'tuwing', normalized: 'when' },
     where: { primary: 'kung_saan', normalized: 'where' },
     else: { primary: 'kung_hindi', alternatives: ['kundi'], normalized: 'else' },
     repeat: { primary: 'ulitin', alternatives: ['paulit-ulit'], normalized: 'repeat' },
@@ -119,15 +119,15 @@ export const tagalogProfile: LanguageProfile = {
     install: { primary: 'ikabit', alternatives: ['mag-install'], normalized: 'install' },
     measure: { primary: 'sukatin', normalized: 'measure' },
     beep: { primary: 'tunog', normalized: 'beep' },
-    break: { primary: 'itigil', normalized: 'break' },
+    break: { primary: 'putulin', normalized: 'break' },
     copy: { primary: 'kopyahin', normalized: 'copy' },
     exit: { primary: 'lumabas', normalized: 'exit' },
     pick: { primary: 'pumili', normalized: 'pick' },
-    render: { primary: 'ipakita', normalized: 'render' },
+    render: { primary: 'irender', normalized: 'render' },
     // Modifiers
     into: { primary: 'sa', normalized: 'into' },
     before: { primary: 'bago', normalized: 'before' },
-    after: { primary: 'matapos', alternatives: ['pagkatapos'], normalized: 'after' },
+    after: { primary: 'matapos', normalized: 'after' },
     // Event modifiers
     until: { primary: 'hanggang', normalized: 'until' },
     event: { primary: 'pangyayari', normalized: 'event' },
@@ -136,6 +136,6 @@ export const tagalogProfile: LanguageProfile = {
   eventHandler: {
     keyword: { primary: 'kapag', normalized: 'on' },
     sourceMarker: { primary: 'mula_sa', alternatives: ['galing_sa'], position: 'before' },
-    eventMarker: { primary: 'kapag', alternatives: ['kung', 'sa'], position: 'before' },
+    eventMarker: { primary: 'kapag', position: 'before' },
   },
 };

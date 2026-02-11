@@ -63,7 +63,7 @@ export const thaiProfile: LanguageProfile = {
     prepend: { primary: 'เพิ่มหน้า', alternatives: [], normalized: 'prepend' },
     take: { primary: 'รับ', alternatives: [], normalized: 'take' },
     make: { primary: 'สร้าง', alternatives: [], normalized: 'make' },
-    clone: { primary: 'คัดลอก', alternatives: ['สำเนา'], normalized: 'clone' },
+    clone: { primary: 'โคลน', alternatives: ['สำเนา'], normalized: 'clone' },
     swap: { primary: 'สลับที่', alternatives: [], normalized: 'swap' },
     morph: { primary: 'แปลงร่าง', alternatives: [], normalized: 'morph' },
     // Variable operations
@@ -75,7 +75,7 @@ export const thaiProfile: LanguageProfile = {
     // Visibility
     show: { primary: 'แสดง', alternatives: [], normalized: 'show' },
     hide: { primary: 'ซ่อน', alternatives: [], normalized: 'hide' },
-    transition: { primary: 'เปลี่ยน', alternatives: [], normalized: 'transition' },
+    transition: { primary: 'เปลี่ยนผ่าน', alternatives: [], normalized: 'transition' },
     // Events
     on: { primary: 'เมื่อ', alternatives: ['ตอน'], normalized: 'on' },
     trigger: { primary: 'ทริกเกอร์', alternatives: [], normalized: 'trigger' },
@@ -86,7 +86,7 @@ export const thaiProfile: LanguageProfile = {
     // Common event names (for event handler patterns)
     click: { primary: 'คลิก', normalized: 'click' },
     hover: { primary: 'โฮเวอร์', alternatives: ['วางเมาส์'], normalized: 'hover' },
-    submit: { primary: 'ส่ง', alternatives: ['ส่งข้อมูล'], normalized: 'submit' },
+    submit: { primary: 'ยื่น', alternatives: ['ส่งข้อมูล'], normalized: 'submit' },
     input: { primary: 'ป้อน', alternatives: ['กรอก'], normalized: 'input' },
     change: { primary: 'เปลี่ยน', alternatives: ['เปลี่ยนแปลง'], normalized: 'change' },
     // Navigation
@@ -97,7 +97,7 @@ export const thaiProfile: LanguageProfile = {
     settle: { primary: 'คงที่', alternatives: [], normalized: 'settle' },
     // Control flow
     if: { primary: 'ถ้า', alternatives: ['หาก'], normalized: 'if' },
-    when: { primary: 'เมื่อ', normalized: 'when' },
+    when: { primary: 'ขณะที่', normalized: 'when' },
     where: { primary: 'ที่ไหน', normalized: 'where' },
     else: { primary: 'ไม่งั้น', alternatives: ['ไม่เช่นนั้น'], normalized: 'else' },
     repeat: { primary: 'ทำซ้ำ', alternatives: [], normalized: 'repeat' },
@@ -121,7 +121,7 @@ export const thaiProfile: LanguageProfile = {
     install: { primary: 'ติดตั้ง', alternatives: [], normalized: 'install' },
     measure: { primary: 'วัด', alternatives: [], normalized: 'measure' },
     beep: { primary: 'บี๊บ', alternatives: [], normalized: 'beep' },
-    break: { primary: 'หยุด', alternatives: [], normalized: 'break' },
+    break: { primary: 'ขัดจังหวะ', alternatives: [], normalized: 'break' },
     copy: { primary: 'คัดลอก', alternatives: [], normalized: 'copy' },
     exit: { primary: 'ออก', alternatives: [], normalized: 'exit' },
     pick: { primary: 'เลือก', alternatives: [], normalized: 'pick' },

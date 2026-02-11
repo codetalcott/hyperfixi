@@ -180,10 +180,10 @@ export const TEST_CASES: Record<CoreCommand, Record<SupportedLanguage, string>> 
     de: 'hole #element',
     it: 'ottenere #element',
     vi: 'lấy giá trị #element',
-    pl: 'pobierz #element',
+    pl: 'uzyskaj #element',
     ja: '#element を 取得',
     zh: '获取 #element',
-    ko: '#element 를 가져오기',
+    ko: '#element 를 얻다',
     ar: 'احصل على #element',
     tr: '#element i al',  // Accusative marker required
     id: 'dapatkan #element',

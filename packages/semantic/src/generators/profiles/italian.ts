@@ -67,21 +67,21 @@ export const italianProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations
-    toggle: { primary: 'commutare', alternatives: ['alternare', 'cambiare'], normalized: 'toggle' },
+    toggle: { primary: 'commutare', alternatives: ['alternare'], normalized: 'toggle' },
     add: { primary: 'aggiungere', alternatives: ['aggiungi'], normalized: 'add' },
     remove: { primary: 'rimuovere', alternatives: ['eliminare', 'togliere'], normalized: 'remove' },
     // Content operations
     put: { primary: 'mettere', alternatives: ['inserire'], normalized: 'put' },
-    append: { primary: 'aggiungere', normalized: 'append' },
+    append: { primary: 'accodare', normalized: 'append' },
     prepend: { primary: 'anteporre', normalized: 'prepend' },
     take: { primary: 'prendere', normalized: 'take' },
     make: { primary: 'fare', alternatives: ['creare'], normalized: 'make' },
-    clone: { primary: 'clonare', alternatives: ['copiare'], normalized: 'clone' },
-    swap: { primary: 'scambiare', alternatives: ['cambiare'], normalized: 'swap' },
+    clone: { primary: 'clonare', normalized: 'clone' },
+    swap: { primary: 'scambiare', normalized: 'swap' },
     morph: { primary: 'trasformare', alternatives: ['convertire'], normalized: 'morph' },
     // Variable operations
     set: { primary: 'impostare', alternatives: ['definire'], normalized: 'set' },
-    get: { primary: 'ottenere', alternatives: ['prendere'], normalized: 'get' },
+    get: { primary: 'ottenere', normalized: 'get' },
     increment: { primary: 'incrementare', alternatives: ['aumentare'], normalized: 'increment' },
     decrement: { primary: 'decrementare', alternatives: ['diminuire'], normalized: 'decrement' },
     log: { primary: 'registrare', normalized: 'log' },
@@ -90,7 +90,7 @@ export const italianProfile: LanguageProfile = {
     hide: { primary: 'nascondere', normalized: 'hide' },
     transition: { primary: 'transizione', alternatives: ['animare'], normalized: 'transition' },
     // Events
-    on: { primary: 'su', alternatives: ['quando', 'al'], normalized: 'on' },
+    on: { primary: 'su', alternatives: ['al'], normalized: 'on' },
     trigger: { primary: 'scatenare', alternatives: ['attivare'], normalized: 'trigger' },
     send: { primary: 'inviare', normalized: 'send' },
     // DOM focus
@@ -140,7 +140,7 @@ export const italianProfile: LanguageProfile = {
     // Common event names (for event handler patterns)
     click: { primary: 'clic', alternatives: ['clicca'], normalized: 'click' },
     hover: { primary: 'passaggio', alternatives: ['sorvolo'], normalized: 'hover' },
-    submit: { primary: 'invio', alternatives: ['inviare'], normalized: 'submit' },
+    submit: { primary: 'invio', alternatives: ['sottomettere'], normalized: 'submit' },
     input: { primary: 'inserimento', alternatives: ['input'], normalized: 'input' },
     change: { primary: 'cambio', alternatives: ['cambiamento'], normalized: 'change' },
     // Event modifiers
@@ -149,7 +149,7 @@ export const italianProfile: LanguageProfile = {
     from: { primary: 'da', alternatives: ['di'], normalized: 'from' },
   },
   eventHandler: {
-    keyword: { primary: 'su', alternatives: ['al', 'quando'], normalized: 'on' },
+    keyword: { primary: 'su', alternatives: ['al'], normalized: 'on' },
     sourceMarker: { primary: 'da', alternatives: ['di'], position: 'before' },
     conditionalKeyword: { primary: 'quando', alternatives: ['se'] },
     // Event marker: al (at/upon), used in SVO pattern

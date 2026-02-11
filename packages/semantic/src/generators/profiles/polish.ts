@@ -110,7 +110,6 @@ export const polishProfile: LanguageProfile = {
     },
     clone: {
       primary: 'sklonuj',
-      alternatives: ['kopiuj'],
       normalized: 'clone',
       form: 'imperative',
     },
@@ -129,8 +128,7 @@ export const polishProfile: LanguageProfile = {
       form: 'imperative',
     },
     get: {
-      primary: 'pobierz',
-      alternatives: ['weź', 'wez'],
+      primary: 'uzyskaj',
       normalized: 'get',
       form: 'imperative',
     },
@@ -157,10 +155,10 @@ export const polishProfile: LanguageProfile = {
       form: 'imperative',
     },
     // Events
-    on: { primary: 'gdy', alternatives: ['kiedy', 'przy', 'na'], normalized: 'on' },
+    on: { primary: 'gdy', alternatives: ['przy', 'na'], normalized: 'on' },
     trigger: {
-      primary: 'wywołaj',
-      alternatives: ['wywolaj', 'wyzwól', 'wyzwol'],
+      primary: 'wyzwól',
+      alternatives: ['wyzwol'],
       normalized: 'trigger',
       form: 'imperative',
     },
@@ -210,7 +208,7 @@ export const polishProfile: LanguageProfile = {
     },
     halt: {
       primary: 'zatrzymaj',
-      alternatives: ['przerwij', 'stop'],
+      alternatives: ['stop'],
       normalized: 'halt',
       form: 'imperative',
     },
@@ -250,12 +248,12 @@ export const polishProfile: LanguageProfile = {
     input: { primary: 'wprowadzeniu', alternatives: ['input'], normalized: 'input' },
     change: { primary: 'zmianie', alternatives: ['zmiana'], normalized: 'change' },
     // Event modifiers
-    until: { primary: 'aż', alternatives: ['az', 'do'], normalized: 'until' },
+    until: { primary: 'aż', alternatives: ['az'], normalized: 'until' },
     event: { primary: 'zdarzenie', normalized: 'event' },
     from: { primary: 'z', alternatives: ['od', 'ze'], normalized: 'from' },
   },
   eventHandler: {
-    keyword: { primary: 'gdy', alternatives: ['kiedy', 'przy', 'na'], normalized: 'on' },
+    keyword: { primary: 'gdy', alternatives: ['przy', 'na'], normalized: 'on' },
     sourceMarker: { primary: 'na', alternatives: ['w', 'przy'], position: 'before' },
     conditionalKeyword: { primary: 'kiedy', alternatives: ['gdy', 'jeśli'] },
     // Event marker: przy (at/on), used in SVO pattern

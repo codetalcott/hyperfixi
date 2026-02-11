@@ -559,6 +559,8 @@ export const POLISH_KEYWORDS = new Set([
   'zwiększ',
   'zwieksz',
   'zmniejsz',
+  'uzyskaj',
+  'pobierz',
   'wywołaj',
   'wywolaj',
   'wyzwól',

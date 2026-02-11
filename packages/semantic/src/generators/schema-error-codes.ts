@@ -57,6 +57,9 @@ export const SchemaErrorCodes = {
   // Loop commands
   FOR_LOOP_MISSING_SOURCE: 'SCHEMA_FOR_LOOP_MISSING_SOURCE',
   WHILE_LOOP_MISSING_CONDITION: 'SCHEMA_WHILE_LOOP_MISSING_CONDITION',
+
+  // Keyword collision
+  KEYWORD_COLLISION: 'PROFILE_KEYWORD_COLLISION',
 } as const;
 
 export type SchemaErrorCode = (typeof SchemaErrorCodes)[keyof typeof SchemaErrorCodes];
@@ -102,6 +105,10 @@ export const SchemaErrorMessages: Record<SchemaErrorCode, string> = {
     "For-loop should have a 'source' role for the collection to iterate over.",
   [SchemaErrorCodes.WHILE_LOOP_MISSING_CONDITION]:
     "While-loop should have a 'condition' role for the loop condition.",
+
+  // Keyword collision
+  [SchemaErrorCodes.KEYWORD_COLLISION]:
+    "Keyword '{keyword}' is used by multiple commands: {commands}. Only the first-registered command will be reachable.",
 };
 
 /**
@@ -127,6 +134,8 @@ export const SchemaErrorSuggestions: Partial<Record<SchemaErrorCode, string>> = 
     "Add a 'source' role for the collection to iterate over.",
   [SchemaErrorCodes.WHILE_LOOP_MISSING_CONDITION]:
     "Add a 'condition' role for the loop continuation condition.",
+  [SchemaErrorCodes.KEYWORD_COLLISION]:
+    'Give each command a unique keyword. Move the shared keyword to alternatives on one command, or use a more specific translation.',
 };
 
 /**

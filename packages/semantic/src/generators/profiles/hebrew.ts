@@ -57,8 +57,8 @@ export const hebrewProfile: LanguageProfile = {
   },
   keywords: {
     // Class/Attribute operations
-    toggle: { primary: 'החלף', alternatives: ['שנה', 'הפוך'], normalized: 'toggle' },
-    add: { primary: 'הוסף', alternatives: ['הכנס'], normalized: 'add' },
+    toggle: { primary: 'מתג', alternatives: ['הדלק כבה'], normalized: 'toggle' },
+    add: { primary: 'הוסף', normalized: 'add' },
     remove: { primary: 'הסר', alternatives: ['מחק', 'הורד'], normalized: 'remove' },
     // Content operations
     put: { primary: 'שים', alternatives: ['הנח', 'הכנס'], normalized: 'put' },
@@ -66,9 +66,9 @@ export const hebrewProfile: LanguageProfile = {
     prepend: { primary: 'הקדם', alternatives: ['הוסף בהתחלה'], normalized: 'prepend' },
     take: { primary: 'קח', normalized: 'take' },
     make: { primary: 'צור', alternatives: ['הכן'], normalized: 'make' },
-    clone: { primary: 'שכפל', alternatives: ['העתק'], normalized: 'clone' },
+    clone: { primary: 'שכפל', normalized: 'clone' },
     swap: { primary: 'החלף', alternatives: ['המר'], normalized: 'swap' },
-    morph: { primary: 'הפוך', alternatives: ['שנה'], normalized: 'morph' },
+    morph: { primary: 'הפוך', alternatives: ['עצב מחדש'], normalized: 'morph' },
     // Variable operations
     set: { primary: 'קבע', alternatives: ['הגדר'], normalized: 'set' },
     get: { primary: 'קבל', alternatives: ['השג'], normalized: 'get' },
@@ -80,14 +80,14 @@ export const hebrewProfile: LanguageProfile = {
     hide: { primary: 'הסתר', alternatives: ['החבא'], normalized: 'hide' },
     transition: { primary: 'מעבר', alternatives: ['הנפש'], normalized: 'transition' },
     // Events
-    on: { primary: 'ב', alternatives: ['כש', 'כאשר', 'עם'], normalized: 'on' },
+    on: { primary: 'ב', alternatives: ['עם'], normalized: 'on' },
     trigger: { primary: 'הפעל', alternatives: ['שגר'], normalized: 'trigger' },
     send: { primary: 'שלח', normalized: 'send' },
     // DOM focus
     focus: { primary: 'מקד', alternatives: ['התמקד'], normalized: 'focus' },
     blur: { primary: 'טשטש', alternatives: ['הסר מיקוד'], normalized: 'blur' },
     // Navigation
-    go: { primary: 'לך', alternatives: ['נווט', 'עבור'], normalized: 'go' },
+    go: { primary: 'לך', alternatives: ['נווט'], normalized: 'go' },
     // Async
     wait: { primary: 'חכה', alternatives: ['המתן'], normalized: 'wait' },
     fetch: { primary: 'הבא', alternatives: ['טען'], normalized: 'fetch' },
@@ -103,9 +103,9 @@ export const hebrewProfile: LanguageProfile = {
     continue: { primary: 'המשך', normalized: 'continue' },
     halt: { primary: 'עצור', alternatives: ['הפסק'], normalized: 'halt' },
     throw: { primary: 'זרוק', normalized: 'throw' },
-    call: { primary: 'קרא', alternatives: ['הפעל'], normalized: 'call' },
-    return: { primary: 'החזר', alternatives: ['חזור'], normalized: 'return' },
-    then: { primary: 'אז', alternatives: ['אחרי', 'ואז'], normalized: 'then' },
+    call: { primary: 'קרא', alternatives: ['זמן'], normalized: 'call' },
+    return: { primary: 'החזר', normalized: 'return' },
+    then: { primary: 'אז', alternatives: ['ואז'], normalized: 'then' },
     and: { primary: 'וגם', alternatives: ['גם'], normalized: 'and' },
     end: { primary: 'סוף', alternatives: ['סיום'], normalized: 'end' },
     // Advanced
@@ -129,7 +129,7 @@ export const hebrewProfile: LanguageProfile = {
     after: { primary: 'אחרי', normalized: 'after' },
     // Common event names (for event handler patterns)
     click: { primary: 'לחיצה', alternatives: ['קליק'], normalized: 'click' },
-    hover: { primary: 'ריחוף', alternatives: ['מעבר'], normalized: 'hover' },
+    hover: { primary: 'ריחוף', normalized: 'hover' },
     submit: { primary: 'שליחה', alternatives: ['הגשה'], normalized: 'submit' },
     input: { primary: 'קלט', alternatives: ['הזנה'], normalized: 'input' },
     change: { primary: 'שינוי', alternatives: ['עדכון'], normalized: 'change' },
@@ -142,7 +142,7 @@ export const hebrewProfile: LanguageProfile = {
     prefixes: ['ה', 'ו', 'ב', 'כ', 'ל', 'מ', 'ש'], // Common Hebrew prefixes
   },
   eventHandler: {
-    keyword: { primary: 'ב', alternatives: ['כש', 'כאשר', 'עם'], normalized: 'on' },
+    keyword: { primary: 'ב', alternatives: ['עם'], normalized: 'on' },
     sourceMarker: { primary: 'מ', alternatives: ['מאת'], position: 'before' },
     conditionalKeyword: { primary: 'כאשר', alternatives: ['כש', 'אם'] },
     // Event marker: ב (at/upon), used in SVO pattern

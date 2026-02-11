@@ -66,10 +66,10 @@ export const spanishMexicoProfile: LanguageProfile = {
     // Class/Attribute operations - Mexican alternatives
     toggle: {
       primary: 'alternar',
-      alternatives: ['cambiar', 'conmutar', 'switchear'], // "switchear" is Spanglish common in MX tech
+      alternatives: ['conmutar', 'switchear'], // "switchear" is Spanglish common in MX tech
       normalized: 'toggle',
     },
-    add: { primary: 'agregar', alternatives: ['añadir', 'meter'], normalized: 'add' },
+    add: { primary: 'agregar', alternatives: ['añadir'], normalized: 'add' },
     remove: {
       primary: 'quitar',
       alternatives: ['eliminar', 'borrar', 'sacar'], // "borrar" more common in MX
@@ -77,16 +77,16 @@ export const spanishMexicoProfile: LanguageProfile = {
     },
     // Content operations
     put: { primary: 'poner', alternatives: ['colocar', 'meter'], normalized: 'put' },
-    append: { primary: 'añadir', normalized: 'append' },
+    append: { primary: 'anexar', normalized: 'append' },
     prepend: { primary: 'anteponer', normalized: 'prepend' },
     take: { primary: 'tomar', alternatives: ['agarrar'], normalized: 'take' }, // "agarrar" more MX
     make: { primary: 'hacer', alternatives: ['crear'], normalized: 'make' },
-    clone: { primary: 'clonar', alternatives: ['copiar'], normalized: 'clone' },
-    swap: { primary: 'intercambiar', alternatives: ['cambiar'], normalized: 'swap' },
+    clone: { primary: 'clonar', alternatives: ['duplicar'], normalized: 'clone' },
+    swap: { primary: 'intercambiar', alternatives: ['permutar'], normalized: 'swap' },
     morph: { primary: 'transformar', alternatives: ['convertir'], normalized: 'morph' },
     // Variable operations
     set: { primary: 'establecer', alternatives: ['fijar', 'definir', 'setear'], normalized: 'set' },
-    get: { primary: 'obtener', alternatives: ['conseguir', 'jalar'], normalized: 'get' },
+    get: { primary: 'obtener', alternatives: ['conseguir'], normalized: 'get' },
     increment: {
       primary: 'incrementar',
       alternatives: ['aumentar', 'subir'],
@@ -103,7 +103,7 @@ export const spanishMexicoProfile: LanguageProfile = {
     hide: { primary: 'ocultar', alternatives: ['esconder'], normalized: 'hide' },
     transition: { primary: 'transición', alternatives: ['animar'], normalized: 'transition' },
     // Events
-    on: { primary: 'en', alternatives: ['cuando', 'al'], normalized: 'on' },
+    on: { primary: 'en', alternatives: ['al'], normalized: 'on' },
     trigger: { primary: 'disparar', alternatives: ['activar'], normalized: 'trigger' },
     send: { primary: 'enviar', alternatives: ['mandar'], normalized: 'send' }, // "mandar" more MX
     // DOM focus
@@ -112,7 +112,7 @@ export const spanishMexicoProfile: LanguageProfile = {
     // Common event names
     click: { primary: 'clic', alternatives: ['hacer clic', 'dar clic'], normalized: 'click' },
     hover: { primary: 'sobrevolar', alternatives: ['pasar encima'], normalized: 'hover' },
-    submit: { primary: 'envío', alternatives: ['enviar'], normalized: 'submit' },
+    submit: { primary: 'envío', alternatives: ['someter'], normalized: 'submit' },
     input: { primary: 'entrada', alternatives: ['introducir'], normalized: 'input' },
     change: { primary: 'cambio', alternatives: ['cambiar'], normalized: 'change' },
     // Navigation
@@ -125,7 +125,7 @@ export const spanishMexicoProfile: LanguageProfile = {
     },
     fetch: {
       primary: 'buscar',
-      alternatives: ['obtener', 'jalar', 'traer'], // "jalar" (pull) common in MX tech
+      alternatives: ['jalar', 'traer', 'recuperar'], // "jalar" (pull) common in MX tech
       normalized: 'fetch',
     },
     settle: { primary: 'estabilizar', normalized: 'settle' },
@@ -146,7 +146,7 @@ export const spanishMexicoProfile: LanguageProfile = {
     },
     call: { primary: 'llamar', normalized: 'call' },
     return: { primary: 'retornar', alternatives: ['devolver', 'regresar'], normalized: 'return' },
-    then: { primary: 'entonces', alternatives: ['luego', 'después'], normalized: 'then' },
+    then: { primary: 'entonces', alternatives: ['luego'], normalized: 'then' },
     and: { primary: 'y', alternatives: ['además', 'también'], normalized: 'and' },
     end: { primary: 'fin', alternatives: ['final', 'terminar'], normalized: 'end' },
     // Advanced
@@ -165,7 +165,7 @@ export const spanishMexicoProfile: LanguageProfile = {
     pick: { primary: 'escoger', normalized: 'pick' },
     render: { primary: 'renderizar', normalized: 'render' },
     // Modifiers
-    into: { primary: 'en', alternatives: ['dentro de'], normalized: 'into' },
+    into: { primary: 'dentro', alternatives: ['adentro'], normalized: 'into' },
     before: { primary: 'antes', normalized: 'before' },
     after: { primary: 'después', normalized: 'after' },
     // Event modifiers

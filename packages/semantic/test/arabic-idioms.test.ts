@@ -454,8 +454,8 @@ describe('Arabic Semantic Equivalence', () => {
       const result = canParse('زِد #counter', 'ar');
       if (result) {
         const node = parse('زِد #counter', 'ar');
-        // زِد maps to 'add' in Arabic dictionary
-        expect(node.action).toBe('add');
+        // زِد is increment's primary keyword in Arabic
+        expect(node.action).toBe('increment');
       } else {
         const tokens = getTokens('زِد #counter', 'ar');
         expect(tokens.length).toBeGreaterThan(0);

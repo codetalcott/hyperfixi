@@ -18,9 +18,9 @@ export function getGetPatternsPl(): LanguagePattern[] {
       command: 'get',
       priority: 100,
       template: {
-        format: 'pobierz {patient} z {source}',
+        format: 'uzyskaj {patient} z {source}',
         tokens: [
-          { type: 'literal', value: 'pobierz', alternatives: ['weź', 'wez', 'uzyskaj'] },
+          { type: 'literal', value: 'uzyskaj' },
           { type: 'role', role: 'patient' },
           {
             type: 'group',
@@ -43,9 +43,9 @@ export function getGetPatternsPl(): LanguagePattern[] {
       command: 'get',
       priority: 90,
       template: {
-        format: 'pobierz {patient}',
+        format: 'uzyskaj {patient}',
         tokens: [
-          { type: 'literal', value: 'pobierz', alternatives: ['weź', 'wez', 'uzyskaj'] },
+          { type: 'literal', value: 'uzyskaj' },
           { type: 'role', role: 'patient' },
         ],
       },

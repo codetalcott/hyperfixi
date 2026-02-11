@@ -76,7 +76,7 @@ export const hindiProfile: LanguageProfile = {
     prepend: { primary: 'जोड़ें_शुरू', alternatives: [], normalized: 'prepend' },
     take: { primary: 'लें', alternatives: ['ले'], normalized: 'take' },
     make: { primary: 'बनाएं', alternatives: ['बना'], normalized: 'make' },
-    clone: { primary: 'कॉपी', alternatives: ['प्रतिलिपि'], normalized: 'clone' },
+    clone: { primary: 'क्लोन', alternatives: ['प्रतिलिपि'], normalized: 'clone' },
     swap: { primary: 'बदलें_स्थान', alternatives: [], normalized: 'swap' },
     morph: { primary: 'रूपांतर', alternatives: [], normalized: 'morph' },
     // Variable operations
@@ -90,7 +90,7 @@ export const hindiProfile: LanguageProfile = {
     hide: { primary: 'छिपाएं', alternatives: ['छिपा'], normalized: 'hide' },
     transition: { primary: 'संक्रमण', alternatives: [], normalized: 'transition' },
     // Events
-    on: { primary: 'पर', alternatives: ['में', 'जब'], normalized: 'on' },
+    on: { primary: 'पर', alternatives: [], normalized: 'on' },
     trigger: { primary: 'ट्रिगर', alternatives: [], normalized: 'trigger' },
     send: { primary: 'भेजें', alternatives: ['भेज'], normalized: 'send' },
     // DOM focus
@@ -100,7 +100,7 @@ export const hindiProfile: LanguageProfile = {
     click: { primary: 'क्लिक', normalized: 'click' },
     hover: { primary: 'होवर', alternatives: ['ऊपर_रखें'], normalized: 'hover' },
     submit: { primary: 'सबमिट', alternatives: ['जमा'], normalized: 'submit' },
-    input: { primary: 'इनपुट', alternatives: ['दर्ज'], normalized: 'input' },
+    input: { primary: 'इनपुट', alternatives: [], normalized: 'input' },
     change: { primary: 'बदलाव', alternatives: ['परिवर्तन'], normalized: 'change' },
     // Navigation
     go: { primary: 'जाएं', alternatives: ['जा'], normalized: 'go' },
@@ -134,7 +134,7 @@ export const hindiProfile: LanguageProfile = {
     install: { primary: 'इंस्टॉल', alternatives: [], normalized: 'install' },
     measure: { primary: 'मापें', alternatives: [], normalized: 'measure' },
     beep: { primary: 'बीप', alternatives: [], normalized: 'beep' },
-    break: { primary: 'रोकें', alternatives: [], normalized: 'break' },
+    break: { primary: 'तोड़ें', alternatives: [], normalized: 'break' },
     copy: { primary: 'कॉपी', alternatives: [], normalized: 'copy' },
     exit: { primary: 'बाहर', alternatives: [], normalized: 'exit' },
     pick: { primary: 'चुनें', alternatives: [], normalized: 'pick' },
@@ -152,7 +152,7 @@ export const hindiProfile: LanguageProfile = {
     boundaryStrategy: 'space',
   },
   eventHandler: {
-    keyword: { primary: 'पर', alternatives: ['में', 'जब'], normalized: 'on' },
+    keyword: { primary: 'पर', alternatives: [], normalized: 'on' },
     sourceMarker: { primary: 'से', position: 'after' },
     // Event marker: पर (at/on), used in SOV pattern
     // Pattern: [event] पर [destination का?] [patient] को [action]

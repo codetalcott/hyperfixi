@@ -12,6 +12,7 @@
 
 import type { CommandSchema } from './command-schemas';
 import type { ActionType } from '../types';
+import type { LanguageProfile } from './profiles/types';
 import {
   type SchemaValidationItem,
   type SchemaValidationSeverity,
@@ -393,4 +394,129 @@ export function getValidationStats(validations: Map<string, SchemaValidationResu
     notes,
     byCode,
   };
+}
+
+// =============================================================================
+// Keyword Collision Validation
+// =============================================================================
+
+/**
+ * Collision type indicating how the keyword overlap occurs.
+ */
+export type KeywordCollisionType =
+  | 'primary-primary'
+  | 'primary-alternative'
+  | 'alternative-alternative';
+
+/**
+ * A keyword collision between two or more commands in a language profile.
+ */
+export interface KeywordCollision {
+  /** The colliding keyword string */
+  keyword: string;
+  /** Commands that share this keyword */
+  commands: string[];
+  /** How the collision occurs */
+  type: KeywordCollisionType;
+}
+
+/**
+ * Result of keyword collision validation for a single language profile.
+ */
+export interface KeywordCollisionResult {
+  language: string;
+  collisions: KeywordCollision[];
+}
+
+/**
+ * Validate a language profile for keyword collisions.
+ *
+ * Checks both primary keywords and alternatives. Any keyword string that
+ * appears in two or more commands (in any position) is reported as a collision.
+ *
+ * @param profile - Language profile to validate
+ * @returns Validation result with all collisions found
+ */
+export function validateKeywordCollisions(profile: LanguageProfile): KeywordCollisionResult {
+  const collisions: KeywordCollision[] = [];
+
+  if (!profile.keywords) {
+    return { language: profile.code, collisions };
+  }
+
+  // Build map: keyword string → [{ command, isPrimary }]
+  const keywordUsage = new Map<string, Array<{ command: string; isPrimary: boolean }>>();
+
+  for (const [command, translation] of Object.entries(profile.keywords)) {
+    if (!translation || !translation.primary) continue;
+
+    // Track primary
+    const existing = keywordUsage.get(translation.primary) || [];
+    existing.push({ command, isPrimary: true });
+    keywordUsage.set(translation.primary, existing);
+
+    // Track alternatives
+    if (translation.alternatives) {
+      for (const alt of translation.alternatives) {
+        const altExisting = keywordUsage.get(alt) || [];
+        altExisting.push({ command, isPrimary: false });
+        keywordUsage.set(alt, altExisting);
+      }
+    }
+  }
+
+  // Find keywords used by multiple commands
+  for (const [keyword, usages] of keywordUsage) {
+    // Get unique commands
+    const uniqueCommands = [...new Set(usages.map(u => u.command))];
+    if (uniqueCommands.length <= 1) continue;
+
+    // Determine collision type
+    const primaryCount = usages.filter(u => u.isPrimary).length;
+    let type: KeywordCollisionType;
+    if (primaryCount >= 2) {
+      type = 'primary-primary';
+    } else if (primaryCount === 1) {
+      type = 'primary-alternative';
+    } else {
+      type = 'alternative-alternative';
+    }
+
+    collisions.push({
+      keyword,
+      commands: uniqueCommands.sort(),
+      type,
+    });
+  }
+
+  // Sort: primary-primary first, then primary-alternative, then alternative-alternative
+  const typeOrder: Record<KeywordCollisionType, number> = {
+    'primary-primary': 0,
+    'primary-alternative': 1,
+    'alternative-alternative': 2,
+  };
+  collisions.sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
+
+  return { language: profile.code, collisions };
+}
+
+/**
+ * Validate all language profiles for keyword collisions.
+ *
+ * @param profiles - Map of language code to profile
+ * @returns Array of results (only languages with collisions)
+ */
+export function validateAllKeywordCollisions(
+  profiles: Record<string, LanguageProfile>
+): KeywordCollisionResult[] {
+  const results: KeywordCollisionResult[] = [];
+
+  for (const [, profile] of Object.entries(profiles)) {
+    const result = validateKeywordCollisions(profile);
+    if (result.collisions.length > 0) {
+      results.push(result);
+    }
+  }
+
+  return results.sort((a, b) => a.language.localeCompare(b.language));
 }

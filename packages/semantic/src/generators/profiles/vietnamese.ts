@@ -66,12 +66,12 @@ export const vietnameseProfile: LanguageProfile = {
     prepend: { primary: 'thêm vào đầu', normalized: 'prepend' },
     take: { primary: 'lấy', normalized: 'take' },
     make: { primary: 'tạo', normalized: 'make' },
-    clone: { primary: 'sao chép', normalized: 'clone' },
+    clone: { primary: 'nhân bản', normalized: 'clone' },
     swap: { primary: 'hoán đổi', normalized: 'swap' },
     morph: { primary: 'biến đổi', normalized: 'morph' },
     // Variable operations
-    set: { primary: 'gán', alternatives: ['thiết lập', 'đặt'], normalized: 'set' },
-    get: { primary: 'lấy giá trị', alternatives: ['nhận', 'lấy'], normalized: 'get' },
+    set: { primary: 'gán', alternatives: ['thiết lập'], normalized: 'set' },
+    get: { primary: 'lấy giá trị', alternatives: ['nhận'], normalized: 'get' },
     increment: { primary: 'tăng', alternatives: ['tăng lên'], normalized: 'increment' },
     decrement: { primary: 'giảm', alternatives: ['giảm đi'], normalized: 'decrement' },
     log: { primary: 'in ra', normalized: 'log' },
@@ -80,7 +80,7 @@ export const vietnameseProfile: LanguageProfile = {
     hide: { primary: 'ẩn', alternatives: ['che', 'giấu'], normalized: 'hide' },
     transition: { primary: 'chuyển tiếp', normalized: 'transition' },
     // Events
-    on: { primary: 'khi', alternatives: ['lúc', 'trên'], normalized: 'on' },
+    on: { primary: 'khi', alternatives: ['trên'], normalized: 'on' },
     trigger: { primary: 'kích hoạt', normalized: 'trigger' },
     send: { primary: 'gửi', normalized: 'send' },
     // DOM focus
@@ -89,7 +89,7 @@ export const vietnameseProfile: LanguageProfile = {
     // Common event names (for event handler patterns)
     click: { primary: 'nhấp', alternatives: ['bấm'], normalized: 'click' },
     hover: { primary: 'di chuột', alternatives: ['rê chuột'], normalized: 'hover' },
-    submit: { primary: 'gửi', alternatives: ['nộp'], normalized: 'submit' },
+    submit: { primary: 'nộp', alternatives: [], normalized: 'submit' },
     input: { primary: 'nhập', alternatives: ['nhập liệu'], normalized: 'input' },
     change: { primary: 'thay đổi', alternatives: ['đổi'], normalized: 'change' },
     // Navigation
@@ -100,7 +100,7 @@ export const vietnameseProfile: LanguageProfile = {
     settle: { primary: 'ổn định', normalized: 'settle' },
     // Control flow
     if: { primary: 'nếu', normalized: 'if' },
-    when: { primary: 'khi', normalized: 'when' },
+    when: { primary: 'lúc', normalized: 'when' },
     where: { primary: 'ở_đâu', normalized: 'where' },
     else: { primary: 'không thì', alternatives: ['nếu không'], normalized: 'else' },
     repeat: { primary: 'lặp lại', normalized: 'repeat' },
@@ -124,7 +124,7 @@ export const vietnameseProfile: LanguageProfile = {
     install: { primary: 'cài đặt', normalized: 'install' },
     measure: { primary: 'đo lường', normalized: 'measure' },
     beep: { primary: 'beep', normalized: 'beep' },
-    break: { primary: 'dừng', normalized: 'break' },
+    break: { primary: 'ngắt', normalized: 'break' },
     copy: { primary: 'sao chép', normalized: 'copy' },
     exit: { primary: 'thoát', normalized: 'exit' },
     pick: { primary: 'chọn', normalized: 'pick' },
@@ -139,7 +139,7 @@ export const vietnameseProfile: LanguageProfile = {
     from: { primary: 'từ', alternatives: ['khỏi'], normalized: 'from' },
   },
   eventHandler: {
-    keyword: { primary: 'khi', alternatives: ['lúc', 'trên'], normalized: 'on' },
+    keyword: { primary: 'khi', alternatives: ['trên'], normalized: 'on' },
     sourceMarker: { primary: 'trên', alternatives: ['tại'], position: 'before' },
     // Event marker: khi (when), used in SVO pattern
     // Pattern: khi [event] [verb] [patient] vào [destination?]

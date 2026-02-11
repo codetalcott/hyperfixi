@@ -147,10 +147,10 @@ export const ukrainianProfile: LanguageProfile = {
       form: 'infinitive',
     },
     // Events
-    on: { primary: 'при', alternatives: ['коли'], normalized: 'on' },
+    on: { primary: 'при', normalized: 'on' },
     trigger: {
-      primary: 'викликати',
-      alternatives: ['виклич'],
+      primary: 'ініціювати',
+      alternatives: ['запустити', 'запусти'],
       normalized: 'trigger',
       form: 'infinitive',
     },
@@ -271,17 +271,17 @@ export const ukrainianProfile: LanguageProfile = {
     before: { primary: 'до', alternatives: ['перед'], normalized: 'before' },
     after: { primary: 'після', normalized: 'after' },
     // Event modifiers
-    until: { primary: 'до', alternatives: ['поки_не'], normalized: 'until' },
+    until: { primary: 'поки_не', normalized: 'until' },
     event: { primary: 'подія', normalized: 'event' },
     from: { primary: 'з', alternatives: ['від', 'із'], normalized: 'from' },
   },
   eventHandler: {
-    keyword: { primary: 'при', alternatives: ['коли'], normalized: 'on' },
+    keyword: { primary: 'при', normalized: 'on' },
     sourceMarker: { primary: 'на', alternatives: ['в', 'при'], position: 'before' },
     // Event marker: при (at/on/upon), used in SVO pattern
     // Pattern: при [event] [verb] [patient] на [destination?]
     // Example: при кліку перемкнути .active на #button
-    eventMarker: { primary: 'при', alternatives: ['коли'], position: 'before' },
+    eventMarker: { primary: 'при', position: 'before' },
     temporalMarkers: ['коли', 'якщо'], // temporal conjunctions (when, if)
   },
 };

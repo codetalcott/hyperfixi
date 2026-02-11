@@ -61,7 +61,7 @@ export const arabicProfile: LanguageProfile = {
   keywords: {
     // Class/Attribute operations
     toggle: { primary: 'بدّل', alternatives: ['بدل', 'غيّر', 'غير'], normalized: 'toggle' },
-    add: { primary: 'أضف', alternatives: ['اضف', 'زِد'], normalized: 'add' },
+    add: { primary: 'أضف', alternatives: ['اضف'], normalized: 'add' },
     remove: { primary: 'احذف', alternatives: ['أزل', 'امسح'], normalized: 'remove' },
     // Content operations
     put: { primary: 'ضع', alternatives: ['اجعل'], normalized: 'put' },
@@ -69,9 +69,9 @@ export const arabicProfile: LanguageProfile = {
     prepend: { primary: 'سبق', normalized: 'prepend' },
     take: { primary: 'خذ', normalized: 'take' }, // Removed احصل to avoid collision with get
     make: { primary: 'اصنع', alternatives: ['أنشئ'], normalized: 'make' },
-    clone: { primary: 'استنسخ', alternatives: ['انسخ'], normalized: 'clone' },
+    clone: { primary: 'استنسخ', normalized: 'clone' },
     swap: { primary: 'استبدل', alternatives: ['تبادل'], normalized: 'swap' },
-    morph: { primary: 'حوّل', alternatives: ['غيّر'], normalized: 'morph' },
+    morph: { primary: 'حوّل', normalized: 'morph' },
     // Variable operations
     set: { primary: 'اضبط', alternatives: ['عيّن', 'حدد'], normalized: 'set' },
     get: { primary: 'احصل', normalized: 'get' }, // Removed خذ to avoid collision with take
@@ -90,7 +90,7 @@ export const arabicProfile: LanguageProfile = {
     focus: { primary: 'تركيز', alternatives: ['ركز'], normalized: 'focus' },
     blur: { primary: 'ضبابية', alternatives: ['شوش'], normalized: 'blur' },
     // Navigation
-    go: { primary: 'اذهب', alternatives: ['انتقل'], normalized: 'go' },
+    go: { primary: 'اذهب', normalized: 'go' },
     // Async
     wait: { primary: 'انتظر', normalized: 'wait' },
     fetch: { primary: 'احضر', alternatives: ['جلب'], normalized: 'fetch' },
@@ -104,7 +104,7 @@ export const arabicProfile: LanguageProfile = {
     for: { primary: 'لكل', normalized: 'for' },
     while: { primary: 'بينما', normalized: 'while' },
     continue: { primary: 'واصل', normalized: 'continue' },
-    halt: { primary: 'أوقف', alternatives: ['توقف'], normalized: 'halt' },
+    halt: { primary: 'أوقف', normalized: 'halt' },
     throw: { primary: 'ارم', alternatives: ['ارمِ'], normalized: 'throw' },
     call: { primary: 'استدع', alternatives: ['نادِ'], normalized: 'call' },
     return: { primary: 'ارجع', alternatives: ['عُد'], normalized: 'return' },
