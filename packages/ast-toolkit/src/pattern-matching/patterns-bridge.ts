@@ -1,6 +1,6 @@
 /**
  * Patterns Bridge
- * Integrates @lokascript/patterns-reference with ast-toolkit pattern matching
+ * Integrates @hyperfixi/patterns-reference with ast-toolkit pattern matching
  */
 
 import type { ASTNode } from '../types.js';
@@ -31,7 +31,7 @@ export interface PatternSource {
 }
 
 // Lazy-loaded patterns-reference module
-let patternsReference: typeof import('@lokascript/patterns-reference') | null = null;
+let patternsReference: typeof import('@hyperfixi/patterns-reference') | null = null;
 let patternSourceInstance: PatternSource | null = null;
 
 /**
@@ -40,7 +40,7 @@ let patternSourceInstance: PatternSource | null = null;
 export function isPatternsReferenceAvailable(): boolean {
   try {
     // Dynamic import check
-    require.resolve('@lokascript/patterns-reference');
+    require.resolve('@hyperfixi/patterns-reference');
     return true;
   } catch {
     return false;
@@ -57,7 +57,7 @@ export async function getPatternSource(): Promise<PatternSource | null> {
 
   try {
     if (!patternsReference) {
-      patternsReference = await import('@lokascript/patterns-reference');
+      patternsReference = await import('@hyperfixi/patterns-reference');
     }
 
     const ref = patternsReference.createPatternsReference();

@@ -1,12 +1,12 @@
 /**
- * @lokascript/patterns-reference
+ * @hyperfixi/patterns-reference
  *
  * Queryable patterns database for hyperscript with multilingual translations
  * and LLM support for few-shot learning.
  *
  * @example
  * ```typescript
- * import { createPatternsReference } from '@lokascript/patterns-reference';
+ * import { createPatternsReference } from '@hyperfixi/patterns-reference';
  *
  * const ref = createPatternsReference();
  *

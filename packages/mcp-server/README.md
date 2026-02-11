@@ -1,4 +1,4 @@
-# @lokascript/mcp-server
+# @hyperfixi/mcp-server
 
 MCP (Model Context Protocol) server for hyperscript development assistance. Provides 22 tools and 5 resources for code analysis, pattern lookup, validation, semantic parsing, language documentation, and LSP-compatible features with full multilingual support.
 
@@ -15,7 +15,7 @@ npm run build
 ### Using npx
 
 ```bash
-npx @lokascript/mcp-server
+npx @hyperfixi/mcp-server
 ```
 
 ## Claude Desktop Configuration
@@ -39,7 +39,7 @@ Or if installed globally:
 {
   "mcpServers": {
     "lokascript": {
-      "command": "lokascript-mcp"
+      "command": "hyperfixi-mcp"
     }
   }
 }
@@ -232,17 +232,17 @@ Each tool has different package requirements. All tools work without optional pa
 | `analyze_metrics`          | `@lokascript/ast-toolkit`         | Simple regex-based metrics          |
 | `explain_code`             | `@lokascript/ast-toolkit`         | Pattern-based explanation           |
 | `recognize_intent`         | `@lokascript/ast-toolkit`         | Pattern-based intent detection      |
-| `get_examples`             | `@lokascript/patterns-reference`  | Built-in example patterns           |
-| `search_patterns`          | `@lokascript/patterns-reference`  | Built-in pattern search             |
+| `get_examples`             | `@hyperfixi/patterns-reference`   | Built-in example patterns           |
+| `search_patterns`          | `@hyperfixi/patterns-reference`   | Built-in pattern search             |
 | `translate_hyperscript`    | `@lokascript/semantic`            | Returns error (no fallback)         |
-| `get_pattern_stats`        | `@lokascript/patterns-reference`  | Basic statistics                    |
+| `get_pattern_stats`        | `@hyperfixi/patterns-reference`   | Basic statistics                    |
 | `get_diagnostics`          | `@lokascript/semantic` (optional) | Regex-based diagnostics             |
 | `get_completions`          | `@lokascript/semantic` (optional) | English-only completions            |
 | `get_hover_info`           | -                                 | Built-in documentation              |
 | `get_document_symbols`     | -                                 | Regex-based extraction              |
-| `get_command_docs`         | `@lokascript/patterns-reference`  | Built-in command docs               |
-| `get_expression_docs`      | `@lokascript/patterns-reference`  | Returns error (needs migration)     |
-| `search_language_elements` | `@lokascript/patterns-reference`  | Built-in search                     |
+| `get_command_docs`         | `@hyperfixi/patterns-reference`   | Built-in command docs               |
+| `get_expression_docs`      | `@hyperfixi/patterns-reference`   | Returns error (needs migration)     |
+| `search_language_elements` | `@hyperfixi/patterns-reference`   | Built-in search                     |
 | `suggest_best_practices`   | -                                 | Full functionality (built-in rules) |
 
 ### Installation Options
@@ -250,13 +250,13 @@ Each tool has different package requirements. All tools work without optional pa
 **Minimal (validation only):**
 
 ```bash
-npm install @lokascript/mcp-server
+npm install @hyperfixi/mcp-server
 ```
 
 **Recommended (full features):**
 
 ```bash
-npm install @lokascript/mcp-server @lokascript/semantic @lokascript/ast-toolkit @lokascript/patterns-reference
+npm install @hyperfixi/mcp-server @lokascript/semantic @lokascript/ast-toolkit @hyperfixi/patterns-reference
 ```
 
 ## Development

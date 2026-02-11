@@ -5,7 +5,7 @@
  * supporting both sync and async access patterns for backward compatibility
  * with packages/core/src/context/llm-examples-query.ts.
  *
- * @module @lokascript/patterns-reference/adapters/llm-adapter
+ * @module @hyperfixi/patterns-reference/adapters/llm-adapter
  */
 
 import { getDatabase, closeDatabase } from '../database/connection';
@@ -349,7 +349,7 @@ function trackUsageSync(db: any, ids: number[]): void {
  *
  * @example
  * ```typescript
- * import { createLLMAdapter } from '@lokascript/patterns-reference/adapters/llm-adapter';
+ * import { createLLMAdapter } from '@hyperfixi/patterns-reference/adapters/llm-adapter';
  *
  * const adapter = createLLMAdapter();
  *

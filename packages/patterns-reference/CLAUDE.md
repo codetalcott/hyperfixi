@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with the patterns-refere
 
 ## Package Overview
 
-The `@lokascript/patterns-reference` package provides a queryable SQLite database for hyperscript patterns, multilingual translations, and LLM few-shot learning examples.
+The `@hyperfixi/patterns-reference` package provides a queryable SQLite database for hyperscript patterns, multilingual translations, and LLM few-shot learning examples.
 
 ### Key Value Propositions
 
@@ -79,7 +79,7 @@ After running `npm run populate`:
 The package provides patterns to the semantic registry:
 
 ```typescript
-import { initializeSemanticIntegration } from '@lokascript/patterns-reference';
+import { initializeSemanticIntegration } from '@hyperfixi/patterns-reference';
 
 await initializeSemanticIntegration();
 // Patterns now available in semantic parser
@@ -95,7 +95,7 @@ Key files:
 The package provides a unified LLM adapter:
 
 ```typescript
-import { findRelevantExamples, buildFewShotContextSync } from '@lokascript/patterns-reference';
+import { findRelevantExamples, buildFewShotContextSync } from '@hyperfixi/patterns-reference';
 ```
 
 Key files:

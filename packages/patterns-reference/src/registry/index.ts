@@ -1,7 +1,7 @@
 /**
  * Registry integration module.
  *
- * @module @lokascript/patterns-reference/registry
+ * @module @hyperfixi/patterns-reference/registry
  */
 
 export * from './patterns-provider';

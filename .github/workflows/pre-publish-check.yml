@@ -104,7 +104,7 @@ jobs:
           # 5. i18n (depends on ast-toolkit)
 
           if [ -d "packages/patterns-reference" ]; then
-            echo "Building @lokascript/patterns-reference..."
+            echo "Building @hyperfixi/patterns-reference..."
             npm run build --prefix packages/patterns-reference 2>&1 || true
           fi
 

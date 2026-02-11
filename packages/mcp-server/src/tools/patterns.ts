@@ -1,7 +1,7 @@
 /**
  * Pattern Tools
  *
- * Pattern lookup and LLM example retrieval from @lokascript/patterns-reference.
+ * Pattern lookup and LLM example retrieval from @hyperfixi/patterns-reference.
  * These tools help LLMs generate correct hyperscript by providing examples.
  */
 
@@ -102,7 +102,7 @@ export async function handlePatternTool(
   // Try to import patterns-reference
   let patternsRef: any;
   try {
-    patternsRef = await import('@lokascript/patterns-reference');
+    patternsRef = await import('@hyperfixi/patterns-reference');
   } catch {
     // Fall back to built-in examples if package not available
     return handleWithBuiltinExamples(name, args);
@@ -458,7 +458,7 @@ function handleWithBuiltinExamples(
               {
                 examples: matches,
                 count: matches.length,
-                note: 'Using built-in examples (install @lokascript/patterns-reference for 400+ examples)',
+                note: 'Using built-in examples (install @hyperfixi/patterns-reference for 400+ examples)',
               },
               null,
               2
@@ -489,7 +489,7 @@ function handleWithBuiltinExamples(
               {
                 patterns: matches.slice(0, limit),
                 count: matches.length,
-                note: 'Using built-in patterns (install @lokascript/patterns-reference for 100+ patterns)',
+                note: 'Using built-in patterns (install @hyperfixi/patterns-reference for 100+ patterns)',
               },
               null,
               2
@@ -509,7 +509,7 @@ function handleWithBuiltinExamples(
                 builtinExamples: BUILTIN_EXAMPLES.length,
                 categories: [...new Set(BUILTIN_EXAMPLES.map(ex => ex.category))],
                 supportedLanguages: ['en'],
-                note: 'Install @lokascript/patterns-reference for 106 patterns, 1378 translations, 414 LLM examples',
+                note: 'Install @hyperfixi/patterns-reference for 106 patterns, 1378 translations, 414 LLM examples',
               },
               null,
               2

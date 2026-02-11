@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { initializeSemanticIntegration } from '@lokascript/patterns-reference';
+ * import { initializeSemanticIntegration } from '@hyperfixi/patterns-reference';
  *
  * // Initialize integration with semantic parser
  * await initializeSemanticIntegration();
@@ -16,7 +16,7 @@
  * const result = parse('toggle .active', 'en');
  * ```
  *
- * @module @lokascript/patterns-reference/semantic-bridge
+ * @module @hyperfixi/patterns-reference/semantic-bridge
  */
 
 import {

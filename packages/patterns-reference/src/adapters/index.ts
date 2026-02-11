@@ -1,7 +1,7 @@
 /**
  * Adapters for cross-package integration.
  *
- * @module @lokascript/patterns-reference/adapters
+ * @module @hyperfixi/patterns-reference/adapters
  */
 
 export * from './llm-adapter';

@@ -40,7 +40,7 @@ import type { LanguageProfile } from './generators/language-profiles';
 // =============================================================================
 
 /**
- * Interface for external pattern sources (e.g., @lokascript/patterns-reference database).
+ * Interface for external pattern sources (e.g., @hyperfixi/patterns-reference database).
  * External sources can provide additional patterns at runtime.
  */
 export interface ExternalPatternsSource {
@@ -80,7 +80,7 @@ const tokenizers = new Map<string, LanguageTokenizer>();
 const profiles = new Map<string, LanguageProfile>();
 const patternCache = new Map<string, LanguagePattern[]>();
 
-// External pattern sources (e.g., @lokascript/patterns-reference database)
+// External pattern sources (e.g., @hyperfixi/patterns-reference database)
 const externalSources = new Map<string, ExternalPatternsSource>();
 
 // Pattern generator function - set by patterns module to avoid circular deps
@@ -254,13 +254,13 @@ export function getRegisteredPatterns(code: string): LanguagePattern[] | undefin
 
 /**
  * Register an external pattern source.
- * External sources (like @lokascript/patterns-reference) can provide
+ * External sources (like @hyperfixi/patterns-reference) can provide
  * additional patterns at runtime.
  *
  * @example
  * ```typescript
  * import { registerPatternsSource } from '@lokascript/semantic';
- * import { createPatternsProvider } from '@lokascript/patterns-reference';
+ * import { createPatternsProvider } from '@hyperfixi/patterns-reference';
  *
  * const provider = createPatternsProvider();
  * registerPatternsSource(provider);

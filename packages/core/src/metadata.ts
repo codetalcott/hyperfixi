@@ -431,14 +431,14 @@ export const ecosystem = {
     npm: 'https://www.npmjs.com/package/@hyperfixi/vite-plugin',
   },
   patternsReference: {
-    name: '@lokascript/patterns-reference',
+    name: '@hyperfixi/patterns-reference',
     description: 'Pattern database with 212 LLM examples',
-    npm: 'https://www.npmjs.com/package/@lokascript/patterns-reference',
+    npm: 'https://www.npmjs.com/package/@hyperfixi/patterns-reference',
   },
   mcpServer: {
-    name: '@lokascript/mcp-server',
+    name: '@hyperfixi/mcp-server',
     description: 'Model Context Protocol server for AI assistants',
-    npm: 'https://www.npmjs.com/package/@lokascript/mcp-server',
+    npm: 'https://www.npmjs.com/package/@hyperfixi/mcp-server',
   },
 } as const;
 

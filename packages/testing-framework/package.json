@@ -71,7 +71,7 @@
   "license": "MIT",
   "dependencies": {
     "@hyperfixi/core": "*",
-    "@lokascript/patterns-reference": "*",
+    "@hyperfixi/patterns-reference": "*",
     "@lokascript/semantic": "*",
     "diff": "^8.0.3",
     "esbuild": "0.25.11",

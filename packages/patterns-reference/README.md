@@ -1,11 +1,11 @@
-# @lokascript/patterns-reference
+# @hyperfixi/patterns-reference
 
 Queryable patterns database for hyperscript with multilingual translations and LLM few-shot learning support.
 
 ## Installation
 
 ```bash
-npm install @lokascript/patterns-reference
+npm install @hyperfixi/patterns-reference
 ```
 
 ## Quick Start
@@ -21,7 +21,7 @@ No setup required - just install and use:
 ### Use the API
 
 ```typescript
-import { createPatternsReference } from '@lokascript/patterns-reference';
+import { createPatternsReference } from '@hyperfixi/patterns-reference';
 
 // Create a patterns reference instance
 const ref = createPatternsReference({
@@ -210,7 +210,7 @@ The patterns-reference package integrates with @lokascript/semantic to provide r
 ### Semantic Bridge
 
 ```typescript
-import { initializeSemanticIntegration } from '@lokascript/patterns-reference';
+import { initializeSemanticIntegration } from '@hyperfixi/patterns-reference';
 
 // Initialize integration (registers database as pattern source)
 const result = await initializeSemanticIntegration();
@@ -222,7 +222,7 @@ if (result.success) {
 }
 
 // Query patterns directly
-import { queryPatterns, getSupportedLanguages } from '@lokascript/patterns-reference';
+import { queryPatterns, getSupportedLanguages } from '@hyperfixi/patterns-reference';
 
 const jaPatterns = await queryPatterns('ja');
 const languages = await getSupportedLanguages();
@@ -233,7 +233,7 @@ const languages = await getSupportedLanguages();
 The package provides a unified LLM adapter that replaces the deprecated `llm-examples-query.ts`:
 
 ```typescript
-import { findRelevantExamples, buildFewShotContextSync } from '@lokascript/patterns-reference';
+import { findRelevantExamples, buildFewShotContextSync } from '@hyperfixi/patterns-reference';
 
 // Find examples matching a prompt
 const examples = findRelevantExamples('toggle a class on click', 'en', 5);
@@ -292,11 +292,11 @@ npm install --global windows-build-tools
 If you get "database not found" errors, the database path may not be resolving correctly. Set it explicitly:
 
 ```typescript
-import { createPatternsReference } from '@lokascript/patterns-reference';
+import { createPatternsReference } from '@hyperfixi/patterns-reference';
 import { join } from 'path';
 
 const ref = createPatternsReference({
-  dbPath: join(__dirname, 'node_modules/@lokascript/patterns-reference/data/patterns.db'),
+  dbPath: join(__dirname, 'node_modules/@hyperfixi/patterns-reference/data/patterns.db'),
 });
 ```
 

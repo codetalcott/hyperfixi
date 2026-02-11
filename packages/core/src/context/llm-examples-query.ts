@@ -7,7 +7,7 @@
  * Note: This module is designed for server-side use. In browser environments,
  * it will gracefully return empty results.
  *
- * @deprecated This module is deprecated. Use `@lokascript/patterns-reference` instead.
+ * @deprecated This module is deprecated. Use `@hyperfixi/patterns-reference` instead.
  *
  * Migration guide:
  * ```typescript
@@ -16,11 +16,11 @@
  * const examples = findRelevantExamples('toggle a class');
  *
  * // After (recommended):
- * import { findRelevantExamples } from '@lokascript/patterns-reference';
+ * import { findRelevantExamples } from '@hyperfixi/patterns-reference';
  * const examples = findRelevantExamples('toggle a class');
  *
  * // Or use the async API:
- * import { getLLMExamples } from '@lokascript/patterns-reference';
+ * import { getLLMExamples } from '@hyperfixi/patterns-reference';
  * const examples = await getLLMExamples('toggle a class');
  * ```
  *
@@ -79,7 +79,7 @@ function getDatabase(): any | null {
 /**
  * Close the database connection
  *
- * @deprecated Use `closeDatabase` from `@lokascript/patterns-reference` instead.
+ * @deprecated Use `closeDatabase` from `@hyperfixi/patterns-reference` instead.
  */
 export function closeDatabase(): void {
   if (db) {
@@ -95,7 +95,7 @@ export function closeDatabase(): void {
 /**
  * Check if the database is available
  *
- * @deprecated Use `isDatabaseAvailable` from `@lokascript/patterns-reference` instead.
+ * @deprecated Use `isDatabaseAvailable` from `@hyperfixi/patterns-reference` instead.
  */
 export function isDatabaseAvailable(): boolean {
   return getDatabase() !== null;
@@ -145,7 +145,7 @@ function extractKeywords(prompt: string): string[] {
  * Uses keyword matching to find examples whose prompts or completions
  * contain similar terms to the input prompt.
  *
- * @deprecated Use `findRelevantExamples` from `@lokascript/patterns-reference` instead.
+ * @deprecated Use `findRelevantExamples` from `@hyperfixi/patterns-reference` instead.
  * @param prompt - The user's request/prompt
  * @param language - Target language code (default: 'en')
  * @param limit - Maximum number of examples to return (default: 5)
@@ -199,7 +199,7 @@ export function findRelevantExamples(
 /**
  * Get examples by command type (toggle, add, remove, etc.)
  *
- * @deprecated Use `findExamplesByCommand` from `@lokascript/patterns-reference` instead.
+ * @deprecated Use `findExamplesByCommand` from `@hyperfixi/patterns-reference` instead.
  */
 export function findExamplesByCommand(
   command: string,
@@ -233,7 +233,7 @@ export function findExamplesByCommand(
  * Increment usage count for retrieved examples.
  * This helps track which examples are most useful over time.
  *
- * @deprecated Use `trackExampleUsage` from `@lokascript/patterns-reference` instead.
+ * @deprecated Use `trackExampleUsage` from `@hyperfixi/patterns-reference` instead.
  */
 export function trackExampleUsage(ids: number[]): void {
   const database = getDatabase();
@@ -265,7 +265,7 @@ export function trackExampleUsage(ids: number[]): void {
  * Creates a formatted string with example prompt/completion pairs
  * that can be used as context for LLM code generation.
  *
- * @deprecated Use `buildFewShotContext` from `@lokascript/patterns-reference` instead.
+ * @deprecated Use `buildFewShotContext` from `@hyperfixi/patterns-reference` instead.
  * @param prompt - The user's request
  * @param language - Target language code
  * @param numExamples - Number of examples to include
@@ -300,7 +300,7 @@ export function buildFewShotContext(
 /**
  * Get statistics about available LLM examples
  *
- * @deprecated Use `getLLMExampleStats` from `@lokascript/patterns-reference` instead.
+ * @deprecated Use `getLLMExampleStats` from `@hyperfixi/patterns-reference` instead.
  */
 export function getLLMExampleStats(): {
   total: number;

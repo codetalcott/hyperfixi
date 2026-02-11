@@ -33,7 +33,7 @@ import { listResources, readResource } from './resources/index.js';
 
 const server = new Server(
   {
-    name: '@lokascript/mcp-server',
+    name: '@hyperfixi/mcp-server',
     version: '1.0.0',
   },
   {

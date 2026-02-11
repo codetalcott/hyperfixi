@@ -10,7 +10,7 @@ import {
   getPatternStats,
   type Pattern,
   type Translation,
-} from '@lokascript/patterns-reference';
+} from '@hyperfixi/patterns-reference';
 import type { LanguageCode, PatternTranslation, TestConfig, SamplingStrategy } from './types';
 
 /**

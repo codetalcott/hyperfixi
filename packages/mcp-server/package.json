@@ -1,11 +1,11 @@
 {
-  "name": "@lokascript/mcp-server",
+  "name": "@hyperfixi/mcp-server",
   "version": "2.0.0",
-  "description": "Model Context Protocol server for LokaScript hyperscript development",
+  "description": "Model Context Protocol server for HyperFixi hyperscript development",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "lokascript-mcp": "dist/index.js"
+    "hyperfixi-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
@@ -37,12 +37,12 @@
     "@modelcontextprotocol/sdk": "^1.25.0",
     "@lokascript/compilation-service": "*",
     "@lokascript/semantic": "*",
-    "@lokascript/patterns-reference": "*"
+    "@hyperfixi/patterns-reference": "*"
   },
   "peerDependencies": {
     "@lokascript/compilation-service": "*",
     "@hyperfixi/core": "*",
-    "@lokascript/patterns-reference": "*",
+    "@hyperfixi/patterns-reference": "*",
     "@lokascript/semantic": "*"
   },
   "peerDependenciesMeta": {
@@ -52,7 +52,7 @@
     "@hyperfixi/core": {
       "optional": true
     },
-    "@lokascript/patterns-reference": {
+    "@hyperfixi/patterns-reference": {
       "optional": true
     },
     "@lokascript/semantic": {
@@ -62,7 +62,7 @@
   "devDependencies": {
     "@lokascript/compilation-service": "*",
     "@hyperfixi/core": "*",
-    "@lokascript/patterns-reference": "*",
+    "@hyperfixi/patterns-reference": "*",
     "@lokascript/semantic": "*",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",

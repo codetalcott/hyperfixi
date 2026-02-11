@@ -279,10 +279,10 @@
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
-    "@lokascript/patterns-reference": "*"
+    "@hyperfixi/patterns-reference": "*"
   },
   "peerDependenciesMeta": {
-    "@lokascript/patterns-reference": {
+    "@hyperfixi/patterns-reference": {
       "optional": true
     }
   },

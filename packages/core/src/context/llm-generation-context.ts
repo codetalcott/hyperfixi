@@ -40,12 +40,12 @@ let trackExampleUsage: TrackExampleUsageFn = localExamplesModule.trackExampleUsa
 let buildFewShotContext: BuildFewShotContextFn = localExamplesModule.buildFewShotContext;
 let isDatabaseAvailable: IsDatabaseAvailableFn = localExamplesModule.isDatabaseAvailable;
 
-// Try to load from @lokascript/patterns-reference (preferred) at runtime
+// Try to load from @hyperfixi/patterns-reference (preferred) at runtime
 // This is an optional peer dependency that provides enhanced example database
 try {
   // Dynamic import attempt for patterns-reference
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const patternsRef = require('@lokascript/patterns-reference');
+  const patternsRef = require('@hyperfixi/patterns-reference');
   if (patternsRef) {
     findRelevantExamples = patternsRef.findRelevantExamples ?? findRelevantExamples;
     trackExampleUsage = patternsRef.trackExampleUsage ?? trackExampleUsage;

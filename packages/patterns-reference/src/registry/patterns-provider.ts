@@ -4,7 +4,7 @@
  * Provides patterns from the patterns-reference database to the semantic registry.
  * This enables runtime pattern matching using database-backed patterns.
  *
- * @module @lokascript/patterns-reference/registry
+ * @module @hyperfixi/patterns-reference/registry
  */
 
 import { getDatabase } from '../database/connection';

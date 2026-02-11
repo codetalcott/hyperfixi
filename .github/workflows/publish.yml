@@ -28,8 +28,8 @@ on:
 env:
   NODE_OPTIONS: --max-old-space-size=4096
   # All public packages to publish (in dependency order)
-  # @lokascript: semantic, i18n, hyperscript-adapter, patterns-reference, mcp-server
-  # @hyperfixi: core, vite-plugin
+  # @lokascript: semantic, i18n, hyperscript-adapter
+  # @hyperfixi: core, vite-plugin, patterns-reference, mcp-server
   PACKAGES: 'semantic,core,i18n,hyperscript-adapter,patterns-reference,mcp-server,vite-plugin'
 
 jobs:
@@ -125,7 +125,7 @@ jobs:
           # Helper: get npm scope for a package
           pkg_scope() {
             case "$1" in
-              core|vite-plugin|behaviors|types-browser|testing-framework|developer-tools|smart-bundling|aot-compiler) echo "@hyperfixi" ;;
+              core|vite-plugin|patterns-reference|mcp-server|behaviors|types-browser|testing-framework|developer-tools|smart-bundling|aot-compiler) echo "@hyperfixi" ;;
               *) echo "@lokascript" ;;
             esac
           }
@@ -240,16 +240,17 @@ jobs:
           All packages published at version ${VERSION}:
           - @hyperfixi/core
           - @hyperfixi/vite-plugin
+          - @hyperfixi/patterns-reference
+          - @hyperfixi/mcp-server
           - @lokascript/semantic
           - @lokascript/i18n
           - @lokascript/hyperscript-adapter
-          - @lokascript/mcp-server
-          - @lokascript/patterns-reference
 
           ### Install
           \`\`\`bash
           npm install @hyperfixi/core@${VERSION}
           npm install @hyperfixi/vite-plugin@${VERSION}
+          npm install @hyperfixi/mcp-server@${VERSION}
           npm install @lokascript/hyperscript-adapter@${VERSION}
           \`\`\`"
 
