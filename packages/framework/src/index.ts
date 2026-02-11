@@ -20,13 +20,29 @@
  * ```
  */
 
-// Core types
+// Main API
+export * from './api';
+
+// Core modules
+export * from './schema';
+export * from './generation';
+
+// Core - export classes and utilities
 export * from './core';
 
-// Re-export submodules for convenience
+// Re-export grammar types with PatternMatcher aliased to avoid conflict
+export type {
+  LanguageProfile,
+  PatternMatcher as GrammarPatternMatcher,
+  PatternTransform,
+  SemanticRole,
+  WordOrder,
+} from './grammar/types';
+
+// Re-export key types for convenience
 export type {
   ActionType,
-  SemanticRole,
+  SemanticRole as SemanticRoleType,
   SemanticValue,
   SemanticNode,
   CommandSemanticNode,
@@ -41,8 +57,24 @@ export type {
   ExpressionValue,
   SemanticMetadata,
   SourcePosition,
+  LanguageToken,
+  TokenStream,
+  LanguageTokenizer,
+  LanguagePattern,
 } from './core/types';
 
+export type { CommandSchema, RoleSpec } from './schema';
+
+export type {
+  LanguageConfig,
+  DSLConfig,
+  MultilingualDSL,
+  CodeGenerator,
+  ValidationResult,
+  CompileResult,
+} from './api';
+
+// Re-export helper functions
 export {
   createLiteral,
   createSelector,
@@ -55,3 +87,5 @@ export {
   createCompoundNode,
   createLoopNode,
 } from './core/types';
+
+export { defineCommand, defineRole } from './schema';

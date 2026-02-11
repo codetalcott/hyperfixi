@@ -212,7 +212,8 @@ export type TokenKind =
   | 'event-modifier' // Event modifier (.once, .debounce(300))
   | 'identifier' // Generic identifier
   | 'operator' // Operators (., +, -, etc.)
-  | 'punctuation'; // Punctuation (parentheses, etc.)
+  | 'punctuation' // Punctuation (parentheses, etc.)
+  | 'url'; // URL or path
 
 /**
  * A language token - the result of tokenization.
@@ -407,7 +408,7 @@ export function createLiteral(
   value: string | number | boolean,
   dataType?: 'string' | 'number' | 'boolean' | 'duration'
 ): LiteralValue {
-  return { type: 'literal', value, dataType };
+  return dataType ? { type: 'literal', value, dataType } : { type: 'literal', value };
 }
 
 /**
@@ -417,7 +418,7 @@ export function createSelector(
   value: string,
   selectorKind?: SelectorValue['selectorKind']
 ): SelectorValue {
-  return { type: 'selector', value, selectorKind };
+  return selectorKind ? { type: 'selector', value, selectorKind } : { type: 'selector', value };
 }
 
 /**
@@ -450,12 +451,15 @@ export function createCommandNode(
   metadata?: SemanticMetadata
 ): CommandSemanticNode {
   const rolesMap = roles instanceof Map ? roles : new Map(Object.entries(roles));
-  return {
+  const node: CommandSemanticNode = {
     kind: 'command',
     action,
     roles: rolesMap,
-    metadata,
   };
+  if (metadata) {
+    return { ...node, metadata };
+  }
+  return node;
 }
 
 /**
@@ -469,13 +473,16 @@ export function createEventHandlerNode(
   eventModifiers?: EventModifiers
 ): EventHandlerSemanticNode {
   const rolesMap = roles instanceof Map ? roles : new Map(Object.entries(roles));
-  return {
-    kind: 'event-handler',
+  const base = {
+    kind: 'event-handler' as const,
     action,
     roles: rolesMap,
     body,
-    eventModifiers,
-    metadata,
+  };
+  return {
+    ...base,
+    ...(eventModifiers && { eventModifiers }),
+    ...(metadata && { metadata }),
   };
 }
 
@@ -490,13 +497,16 @@ export function createConditionalNode(
   metadata?: SemanticMetadata
 ): ConditionalSemanticNode {
   const rolesMap = roles instanceof Map ? roles : new Map(Object.entries(roles));
-  return {
-    kind: 'conditional',
+  const base = {
+    kind: 'conditional' as const,
     action,
     roles: rolesMap,
     thenBranch,
-    elseBranch,
-    metadata,
+  };
+  return {
+    ...base,
+    ...(elseBranch && { elseBranch }),
+    ...(metadata && { metadata }),
   };
 }
 
@@ -508,14 +518,14 @@ export function createCompoundNode(
   chainType: CompoundSemanticNode['chainType'] = 'sequential',
   metadata?: SemanticMetadata
 ): CompoundSemanticNode {
-  return {
-    kind: 'compound',
-    action: 'compound',
+  const base = {
+    kind: 'compound' as const,
+    action: 'compound' as const,
     roles: new Map(),
     statements,
     chainType,
-    metadata,
   };
+  return metadata ? { ...base, metadata } : base;
 }
 
 /**
@@ -531,14 +541,17 @@ export function createLoopNode(
   metadata?: SemanticMetadata
 ): LoopSemanticNode {
   const rolesMap = roles instanceof Map ? roles : new Map(Object.entries(roles));
-  return {
-    kind: 'loop',
+  const base = {
+    kind: 'loop' as const,
     action,
     roles: rolesMap,
     loopVariant,
     body,
-    loopVariable,
-    indexVariable,
-    metadata,
+  };
+  return {
+    ...base,
+    ...(loopVariable && { loopVariable }),
+    ...(indexVariable && { indexVariable }),
+    ...(metadata && { metadata }),
   };
 }
