@@ -1,0 +1,113 @@
+{
+  "name": "@lokascript/framework",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generic framework for building multilingual DSLs with semantic parsing and grammar transformation",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./core/types": {
+      "types": "./dist/core/types.d.ts",
+      "import": "./dist/core/types.js"
+    },
+    "./core/tokenization": {
+      "types": "./dist/core/tokenization/index.d.ts",
+      "import": "./dist/core/tokenization/index.js"
+    },
+    "./core/pattern-matching": {
+      "types": "./dist/core/pattern-matching/index.d.ts",
+      "import": "./dist/core/pattern-matching/index.js"
+    },
+    "./multilingual": {
+      "types": "./dist/multilingual/index.d.ts",
+      "import": "./dist/multilingual/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.js"
+    },
+    "./parsing": {
+      "types": "./dist/parsing/index.d.ts",
+      "import": "./dist/parsing/index.js"
+    },
+    "./generation": {
+      "types": "./dist/generation/index.d.ts",
+      "import": "./dist/generation/index.js"
+    },
+    "./grammar": {
+      "types": "./dist/grammar/index.d.ts",
+      "import": "./dist/grammar/index.js"
+    },
+    "./api": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && npm run build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "dsl",
+    "multilingual",
+    "i18n",
+    "parser",
+    "semantic",
+    "pattern-matching",
+    "grammar-transformation",
+    "natural-language",
+    "framework",
+    "compiler",
+    "svo",
+    "sov",
+    "vso"
+  ],
+  "author": "LokaScript Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.0.17",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/framework"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/framework#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "sideEffects": false
+}

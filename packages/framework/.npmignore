@@ -1,0 +1,12 @@
+# This package is currently private - do not publish
+# Remove "private": true from package.json when ready to publish
+
+# Development files
+test/
+examples/
+*.test.ts
+*.spec.ts
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+.DS_Store
