@@ -154,6 +154,12 @@ export class HebrewProcliticExtractor implements ContextAwareExtractor {
     }
 
     // Only split if the remaining word is meaningful (keyword or at least 2 chars)
+    // SPECIAL CASE: Don't split if afterPrefix is itself a single-char proclitic
+    // (e.g., 'ול' → don't split 'ו' from 'ל')
+    if (afterPrefix.length === 1 && PROCLITIC_PREFIXES.has(afterPrefix)) {
+      return null; // Don't split - remaining char is also a proclitic
+    }
+
     if (!afterPrefixEntry && !isEventName && afterPrefix.length < 2) {
       return null; // Don't split - too short to be meaningful
     }
