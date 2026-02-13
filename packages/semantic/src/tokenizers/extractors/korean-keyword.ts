@@ -109,6 +109,8 @@ export class KoreanKeywordExtractor implements ContextAwareExtractor {
               length: len,
               metadata: {
                 normalized: stemEntry.normalized,
+                stem: morphResult.stem, // Native language stem for pattern matching
+                stemConfidence: morphResult.confidence,
               },
             };
           }
@@ -161,6 +163,13 @@ export class KoreanKeywordExtractor implements ContextAwareExtractor {
         ? keywordEntry.normalized
         : undefined;
 
+    // DEBUG
+    if (word.includes('토글')) {
+      console.log(`[KO DEBUG] word="${word}"`);
+      console.log(`[KO DEBUG] keywordEntry=${keywordEntry ? 'FOUND' : 'NOT FOUND'}`);
+      console.log(`[KO DEBUG] normalizer=${this.context.normalizer ? 'EXISTS' : 'MISSING'}`);
+    }
+
     // Try morphological normalization if available
     let morphNormalized: string | undefined;
     let morphStem: string | undefined;
@@ -173,6 +182,12 @@ export class KoreanKeywordExtractor implements ContextAwareExtractor {
           morphNormalized = stemEntry.normalized;
           morphStem = morphResult.stem; // Native language stem for pattern matching
           morphConfidence = morphResult.confidence;
+          // DEBUG
+          if (word.includes('토글')) {
+            console.log(
+              `[KO DEBUG] word="${word}", stem="${morphResult.stem}", normalized="${morphNormalized}"`
+            );
+          }
         }
       }
     }
