@@ -14,14 +14,50 @@ import type { TokenKind } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
 import { quechuaProfile } from '../generators/profiles/quechua';
 import { quechuaMorphologicalNormalizer } from './morphology/quechua-normalizer';
-import {
-  StringLiteralExtractor,
-  NumberExtractor,
-  OperatorExtractor,
-  PunctuationExtractor,
-} from './generic-extractors';
+import { NumberExtractor, OperatorExtractor, PunctuationExtractor } from './generic-extractors';
 import { getHyperscriptExtractors } from './extractor-helpers';
 import { createQuechuaKeywordExtractor } from './extractors/quechua-keyword';
+import type { ValueExtractor, ExtractionResult } from './value-extractor-types';
+
+// =============================================================================
+// Quechua-Specific String Literal Extractor
+// =============================================================================
+
+/**
+ * Custom string literal extractor for Quechua.
+ * Only accepts double quotes (") to avoid conflicts with apostrophes in words
+ * like "ñit'iy" (glottalized sounds).
+ */
+class QuechuaStringLiteralExtractor implements ValueExtractor {
+  readonly name = 'quechua-string-literal';
+
+  canExtract(input: string, position: number): boolean {
+    return input[position] === '"';
+  }
+
+  extract(input: string, position: number): ExtractionResult | null {
+    const quote = input[position];
+    let value = quote;
+    let pos = position + 1;
+
+    while (pos < input.length) {
+      const char = input[pos];
+      if (char === quote) {
+        value += char;
+        return { value, length: value.length };
+      }
+      if (char === '\\' && pos + 1 < input.length) {
+        value += char + input[pos + 1];
+        pos += 2;
+      } else {
+        value += char;
+        pos++;
+      }
+    }
+
+    return null; // Unclosed string
+  }
+}
 
 // =============================================================================
 // Quechua Suffixes (used in classifyToken)
@@ -158,7 +194,7 @@ export class QuechuaTokenizer extends BaseTokenizer {
     // Register extractors for extractor-based tokenization
     // Order matters: more specific extractors first
     this.registerExtractors(getHyperscriptExtractors()); // CSS, events, URLs
-    this.registerExtractor(new StringLiteralExtractor()); // Strings
+    this.registerExtractor(new QuechuaStringLiteralExtractor()); // Strings (double quotes only)
     this.registerExtractor(new NumberExtractor()); // Numbers
     this.registerExtractor(createQuechuaKeywordExtractor()); // Quechua keywords (context-aware)
     this.registerExtractor(new OperatorExtractor()); // Operators
@@ -185,7 +221,7 @@ export class QuechuaTokenizer extends BaseTokenizer {
       token.startsWith('<')
     )
       return 'selector';
-    if (token.startsWith('"') || token.startsWith("'")) return 'literal';
+    if (token.startsWith('"')) return 'literal';
     if (/^\d/.test(token)) return 'literal';
     if (['==', '!=', '<=', '>=', '<', '>', '&&', '||', '!'].includes(token)) return 'operator';
 
