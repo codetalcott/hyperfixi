@@ -9,9 +9,9 @@
 import type { LanguagePattern } from '../../types';
 
 import { getAppendPatternsEn } from './en';
+import { getAppendPatternsEs } from './es';
 import { getAppendPatternsJa } from './ja';
 import { getAppendPatternsKo } from './ko';
-import { getAppendPatternsEs } from './es';
 
 /**
  * Get append patterns for a specific language.
@@ -20,12 +20,12 @@ export function getAppendPatternsForLanguage(language: string): LanguagePattern[
   switch (language) {
     case 'en':
       return getAppendPatternsEn();
+    case 'es':
+      return getAppendPatternsEs();
     case 'ja':
       return getAppendPatternsJa();
     case 'ko':
       return getAppendPatternsKo();
-    case 'es':
-      return getAppendPatternsEs();
     default:
       return [];
   }
@@ -33,6 +33,11 @@ export function getAppendPatternsForLanguage(language: string): LanguagePattern[
 
 // Re-export language-specific getters for tree-shaking
 export { getAppendPatternsEn } from './en';
+export { getAppendPatternsEs } from './es';
 export { getAppendPatternsJa } from './ja';
 export { getAppendPatternsKo } from './ko';
-export { getAppendPatternsEs } from './es';
+
+/**
+ * Languages that have hand-crafted append patterns.
+ */
+export const appendPatternLanguages = ['en', 'es', 'ja', 'ko'];

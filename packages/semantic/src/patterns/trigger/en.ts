@@ -19,13 +19,13 @@ export function getTriggerPatternsEn(): LanguagePattern[] {
       template: {
         format: 'trigger {event} on {destination}',
         tokens: [
-          { type: 'keyword', value: 'trigger' },
+          { type: 'literal', value: 'trigger' },
           { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
           {
             type: 'group',
             optional: true,
             tokens: [
-              { type: 'keyword', value: 'on' },
+              { type: 'literal', value: 'on' },
               { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
             ],
           },
@@ -47,7 +47,7 @@ export function getTriggerPatternsEn(): LanguagePattern[] {
       template: {
         format: 'trigger {event}',
         tokens: [
-          { type: 'keyword', value: 'trigger' },
+          { type: 'literal', value: 'trigger' },
           { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
         ],
       },

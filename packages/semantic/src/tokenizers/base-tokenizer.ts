@@ -9,6 +9,7 @@
 import type { LanguageToken, TokenKind, TokenStream, LanguageTokenizer } from '../types';
 import type { MorphologicalNormalizer, NormalizationResult } from './morphology/types';
 import type { ValueExtractor } from './value-extractor-types';
+import type { PossessiveConfig } from '../generators/profiles/types';
 import { isContextAwareExtractor, createTokenizerContext } from './context-aware-extractor';
 import {
   createToken,
@@ -48,6 +49,7 @@ export interface TokenizerProfile {
     string,
     { primary: string; alternatives?: string[]; position?: string }
   >;
+  readonly possessive?: PossessiveConfig;
 }
 
 // =============================================================================
@@ -151,11 +153,20 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
         if (extractor.canExtract(input, pos)) {
           const result = extractor.extract(input, pos);
           if (result) {
-            // Extract fields from metadata if present
+            // Extract promoted fields from metadata
             const normalized = result.metadata?.normalized as string | undefined;
             const stem = result.metadata?.stem as string | undefined;
             const stemConfidence = result.metadata?.stemConfidence as number | undefined;
-            const metadata = result.metadata;
+
+            // Create clean metadata without promoted fields
+            const cleanMetadata: Record<string, unknown> = {};
+            if (result.metadata) {
+              for (const [key, value] of Object.entries(result.metadata)) {
+                if (key !== 'normalized' && key !== 'stem' && key !== 'stemConfidence') {
+                  cleanMetadata[key] = value;
+                }
+              }
+            }
 
             // Build options object with all available fields
             const options: {
@@ -167,7 +178,7 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
             if (normalized) options.normalized = normalized;
             if (stem) options.stem = stem;
             if (stemConfidence !== undefined) options.stemConfidence = stemConfidence;
-            if (metadata) options.metadata = metadata;
+            if (Object.keys(cleanMetadata).length > 0) options.metadata = cleanMetadata;
 
             tokens.push(
               createToken(

@@ -19,9 +19,9 @@ export function getAppendPatternsEn(): LanguagePattern[] {
       template: {
         format: 'append {patient} to {destination}',
         tokens: [
-          { type: 'keyword', value: 'append' },
+          { type: 'literal', value: 'append' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'expression'] },
-          { type: 'keyword', value: 'to' },
+          { type: 'literal', value: 'to' },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
         ],
       },

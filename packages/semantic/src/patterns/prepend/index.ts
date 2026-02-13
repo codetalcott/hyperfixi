@@ -9,9 +9,9 @@
 import type { LanguagePattern } from '../../types';
 
 import { getPrependPatternsEn } from './en';
+import { getPrependPatternsEs } from './es';
 import { getPrependPatternsJa } from './ja';
 import { getPrependPatternsKo } from './ko';
-import { getPrependPatternsEs } from './es';
 
 /**
  * Get prepend patterns for a specific language.
@@ -20,12 +20,12 @@ export function getPrependPatternsForLanguage(language: string): LanguagePattern
   switch (language) {
     case 'en':
       return getPrependPatternsEn();
+    case 'es':
+      return getPrependPatternsEs();
     case 'ja':
       return getPrependPatternsJa();
     case 'ko':
       return getPrependPatternsKo();
-    case 'es':
-      return getPrependPatternsEs();
     default:
       return [];
   }
@@ -33,6 +33,11 @@ export function getPrependPatternsForLanguage(language: string): LanguagePattern
 
 // Re-export language-specific getters for tree-shaking
 export { getPrependPatternsEn } from './en';
+export { getPrependPatternsEs } from './es';
 export { getPrependPatternsJa } from './ja';
 export { getPrependPatternsKo } from './ko';
-export { getPrependPatternsEs } from './es';
+
+/**
+ * Languages that have hand-crafted prepend patterns.
+ */
+export const prependPatternLanguages = ['en', 'es', 'ja', 'ko'];

@@ -208,24 +208,42 @@ export class ArabicTokenizer extends BaseTokenizer {
         if (extractor.canExtract(input, pos)) {
           const result = extractor.extract(input, pos);
           if (result) {
-            // Extract normalized from metadata if present
+            // Extract promoted fields from metadata
             const normalized = result.metadata?.normalized as string | undefined;
-            const metadata = result.metadata;
+            const stem = result.metadata?.stem as string | undefined;
+            const stemConfidence = result.metadata?.stemConfidence as number | undefined;
+
+            // Create clean metadata without promoted fields
+            const cleanMetadata: Record<string, unknown> = {};
+            if (result.metadata) {
+              for (const [key, value] of Object.entries(result.metadata)) {
+                if (key !== 'normalized' && key !== 'stem' && key !== 'stemConfidence') {
+                  cleanMetadata[key] = value;
+                }
+              }
+            }
 
             // Special handling for proclitics: use metadata to determine kind
             let kind: TokenKind;
-            if (metadata?.procliticType === 'conjunction') {
+            if (cleanMetadata.procliticType === 'conjunction') {
               kind = 'conjunction';
-            } else if (metadata?.procliticType === 'preposition') {
+            } else if (cleanMetadata.procliticType === 'preposition') {
               kind = 'particle';
             } else {
               kind = this.classifyToken(result.value);
             }
 
-            // Build options object only if we have normalized or metadata
-            const options: { normalized?: string; metadata?: Record<string, unknown> } = {};
+            // Build options object with all available fields
+            const options: {
+              normalized?: string;
+              stem?: string;
+              stemConfidence?: number;
+              metadata?: Record<string, unknown>;
+            } = {};
             if (normalized) options.normalized = normalized;
-            if (metadata) options.metadata = metadata;
+            if (stem) options.stem = stem;
+            if (stemConfidence !== undefined) options.stemConfidence = stemConfidence;
+            if (Object.keys(cleanMetadata).length > 0) options.metadata = cleanMetadata;
 
             tokens.push(
               createToken(

@@ -9,9 +9,9 @@
 import type { LanguagePattern } from '../../types';
 
 import { getTriggerPatternsEn } from './en';
+import { getTriggerPatternsEs } from './es';
 import { getTriggerPatternsJa } from './ja';
 import { getTriggerPatternsKo } from './ko';
-import { getTriggerPatternsEs } from './es';
 
 /**
  * Get trigger patterns for a specific language.
@@ -20,12 +20,12 @@ export function getTriggerPatternsForLanguage(language: string): LanguagePattern
   switch (language) {
     case 'en':
       return getTriggerPatternsEn();
+    case 'es':
+      return getTriggerPatternsEs();
     case 'ja':
       return getTriggerPatternsJa();
     case 'ko':
       return getTriggerPatternsKo();
-    case 'es':
-      return getTriggerPatternsEs();
     default:
       return [];
   }
@@ -33,6 +33,11 @@ export function getTriggerPatternsForLanguage(language: string): LanguagePattern
 
 // Re-export language-specific getters for tree-shaking
 export { getTriggerPatternsEn } from './en';
+export { getTriggerPatternsEs } from './es';
 export { getTriggerPatternsJa } from './ja';
 export { getTriggerPatternsKo } from './ko';
-export { getTriggerPatternsEs } from './es';
+
+/**
+ * Languages that have hand-crafted trigger patterns.
+ */
+export const triggerPatternLanguages = ['en', 'es', 'ja', 'ko'];

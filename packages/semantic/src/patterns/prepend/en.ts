@@ -19,9 +19,9 @@ export function getPrependPatternsEn(): LanguagePattern[] {
       template: {
         format: 'prepend {patient} to {destination}',
         tokens: [
-          { type: 'keyword', value: 'prepend' },
+          { type: 'literal', value: 'prepend' },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'selector', 'expression'] },
-          { type: 'keyword', value: 'to' },
+          { type: 'literal', value: 'to' },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
         ],
       },
