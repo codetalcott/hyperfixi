@@ -690,6 +690,91 @@ describe('ToggleCommand (Standalone V2)', () => {
     });
   });
 
+  describe('execute - popover', () => {
+    it('should call togglePopover on popover elements', async () => {
+      const context = createMockContext();
+      const el = document.createElement('div');
+      el.setAttribute('popover', '');
+      document.body.appendChild(el);
+
+      if (typeof el.togglePopover === 'function') {
+        const spy = vi.spyOn(el, 'togglePopover');
+        await command.execute({ type: 'popover', targets: [el] }, context);
+        expect(spy).toHaveBeenCalled();
+      }
+
+      document.body.removeChild(el);
+    });
+
+    it('should toggle multiple popover elements', async () => {
+      const context = createMockContext();
+      const el1 = document.createElement('div');
+      const el2 = document.createElement('div');
+      el1.setAttribute('popover', 'manual');
+      el2.setAttribute('popover', 'manual');
+      document.body.appendChild(el1);
+      document.body.appendChild(el2);
+
+      if (typeof el1.togglePopover === 'function') {
+        const spy1 = vi.spyOn(el1, 'togglePopover');
+        const spy2 = vi.spyOn(el2, 'togglePopover');
+        await command.execute({ type: 'popover', targets: [el1, el2] }, context);
+        expect(spy1).toHaveBeenCalled();
+        expect(spy2).toHaveBeenCalled();
+      }
+
+      document.body.removeChild(el1);
+      document.body.removeChild(el2);
+    });
+
+    it('should not throw when togglePopover throws', async () => {
+      const context = createMockContext();
+      const el = document.createElement('div');
+      el.setAttribute('popover', '');
+      document.body.appendChild(el);
+
+      if (typeof el.togglePopover === 'function') {
+        vi.spyOn(el, 'togglePopover').mockImplementation(() => {
+          throw new DOMException('Invalid state', 'InvalidStateError');
+        });
+        await expect(
+          command.execute({ type: 'popover', targets: [el] }, context)
+        ).resolves.toBeDefined();
+      }
+
+      document.body.removeChild(el);
+    });
+  });
+
+  describe('parseInput - popover (explicit as popover)', () => {
+    it('should parse "as popover" modifier', async () => {
+      const context = createMockContext();
+      const evaluator = createMockEvaluator();
+      const div = document.createElement('div');
+      div.id = 'my-popover';
+      document.body.appendChild(div);
+
+      try {
+        const input = await command.parseInput(
+          {
+            args: [{ type: 'literal', value: '#my-popover' } as any],
+            modifiers: { as: { type: 'literal', value: 'popover' } as any },
+          },
+          evaluator,
+          context
+        );
+
+        expect(input.type).toBe('popover');
+        if (input.type === 'popover') {
+          expect(input.targets).toHaveLength(1);
+          expect(input.targets[0]).toBe(div);
+        }
+      } finally {
+        document.body.removeChild(div);
+      }
+    });
+  });
+
   describe('integration', () => {
     it('should work end-to-end for class toggle', async () => {
       const context = createMockContext();

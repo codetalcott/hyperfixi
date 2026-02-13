@@ -5,8 +5,12 @@ import {
   toggleDialog,
   toggleDetails,
   toggleSelect,
+  togglePopover,
+  showPopover,
+  hidePopover,
   toggleSmartElement,
   isSmartElement,
+  isPopoverElement,
   isDialogElement,
   isDetailsElement,
   isSelectElement,
@@ -73,12 +77,52 @@ describe('Smart Element Helpers', () => {
       expect(result).toBe(null);
     });
 
-    it('should return null for non-smart elements', () => {
+    it('should return null for non-smart elements without popover', () => {
       const div = document.createElement('div');
       document.body.appendChild(div);
 
       const result = detectSmartElementType([div]);
       expect(result).toBe(null);
+    });
+
+    it('should detect elements with popover attribute', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      const result = detectSmartElementType([div]);
+      // Only returns 'popover' if the browser supports the Popover API
+      if (typeof HTMLElement.prototype.showPopover === 'function') {
+        expect(result).toBe('popover');
+      } else {
+        expect(result).toBe(null);
+      }
+    });
+
+    it('should detect popover on non-standard elements', () => {
+      const section = document.createElement('section');
+      section.setAttribute('popover', 'manual');
+      document.body.appendChild(section);
+
+      const result = detectSmartElementType([section]);
+      if (typeof HTMLElement.prototype.showPopover === 'function') {
+        expect(result).toBe('popover');
+      } else {
+        expect(result).toBe(null);
+      }
+    });
+
+    it('should prioritize popover over dialog tag', () => {
+      const dialog = document.createElement('dialog');
+      dialog.setAttribute('popover', '');
+      document.body.appendChild(dialog);
+
+      const result = detectSmartElementType([dialog]);
+      if (typeof HTMLElement.prototype.showPopover === 'function') {
+        expect(result).toBe('popover');
+      } else {
+        expect(result).toBe('dialog');
+      }
     });
   });
 
@@ -290,6 +334,99 @@ describe('Smart Element Helpers', () => {
     });
   });
 
+  describe('togglePopover', () => {
+    it('should call togglePopover on element', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.togglePopover === 'function') {
+        const spy = vi.spyOn(div, 'togglePopover');
+        togglePopover(div);
+        expect(spy).toHaveBeenCalled();
+      }
+    });
+
+    it('should pass force parameter', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.togglePopover === 'function') {
+        const spy = vi.spyOn(div, 'togglePopover');
+        togglePopover(div, true);
+        expect(spy).toHaveBeenCalledWith(true);
+      }
+    });
+
+    it('should not throw when togglePopover throws InvalidStateError', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.togglePopover === 'function') {
+        vi.spyOn(div, 'togglePopover').mockImplementation(() => {
+          throw new DOMException('Invalid state', 'InvalidStateError');
+        });
+        expect(() => togglePopover(div)).not.toThrow();
+      }
+    });
+  });
+
+  describe('showPopover', () => {
+    it('should call showPopover on element', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.showPopover === 'function') {
+        const spy = vi.spyOn(div, 'showPopover');
+        showPopover(div);
+        expect(spy).toHaveBeenCalled();
+      }
+    });
+
+    it('should not throw when already shown', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.showPopover === 'function') {
+        vi.spyOn(div, 'showPopover').mockImplementation(() => {
+          throw new DOMException('Invalid state', 'InvalidStateError');
+        });
+        expect(() => showPopover(div)).not.toThrow();
+      }
+    });
+  });
+
+  describe('hidePopover', () => {
+    it('should call hidePopover on element', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.hidePopover === 'function') {
+        const spy = vi.spyOn(div, 'hidePopover');
+        hidePopover(div);
+        expect(spy).toHaveBeenCalled();
+      }
+    });
+
+    it('should not throw when already hidden', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.hidePopover === 'function') {
+        vi.spyOn(div, 'hidePopover').mockImplementation(() => {
+          throw new DOMException('Invalid state', 'InvalidStateError');
+        });
+        expect(() => hidePopover(div)).not.toThrow();
+      }
+    });
+  });
+
   describe('toggleSmartElement', () => {
     it('should toggle dialog element', () => {
       const dialog = document.createElement('dialog');
@@ -318,6 +455,19 @@ describe('Smart Element Helpers', () => {
 
       const result = toggleSmartElement(select, 'select');
       expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it('should toggle popover element', () => {
+      const div = document.createElement('div');
+      div.setAttribute('popover', '');
+      document.body.appendChild(div);
+
+      if (typeof div.togglePopover === 'function') {
+        const spy = vi.spyOn(div, 'togglePopover');
+        const result = toggleSmartElement(div, 'popover');
+        expect(result).toBe(true);
+        expect(spy).toHaveBeenCalled();
+      }
     });
 
     it('should return false for unsupported element type', () => {
@@ -360,9 +510,48 @@ describe('Smart Element Helpers', () => {
         expect(isSmartElement(summary)).toBe(true);
       });
 
+      it('should return true for element with popover attribute', () => {
+        const div = document.createElement('div');
+        div.setAttribute('popover', '');
+        if (typeof HTMLElement.prototype.showPopover === 'function') {
+          expect(isSmartElement(div)).toBe(true);
+        }
+      });
+
       it('should return false for non-smart elements', () => {
         const div = document.createElement('div');
         expect(isSmartElement(div)).toBe(false);
+      });
+    });
+
+    describe('isPopoverElement', () => {
+      it('should return true for element with popover attribute when API supported', () => {
+        const div = document.createElement('div');
+        div.setAttribute('popover', '');
+        if (typeof HTMLElement.prototype.showPopover === 'function') {
+          expect(isPopoverElement(div)).toBe(true);
+        }
+      });
+
+      it('should return false for element without popover attribute', () => {
+        const div = document.createElement('div');
+        expect(isPopoverElement(div)).toBe(false);
+      });
+
+      it('should detect popover="auto"', () => {
+        const div = document.createElement('div');
+        div.setAttribute('popover', 'auto');
+        if (typeof HTMLElement.prototype.showPopover === 'function') {
+          expect(isPopoverElement(div)).toBe(true);
+        }
+      });
+
+      it('should detect popover="manual"', () => {
+        const div = document.createElement('div');
+        div.setAttribute('popover', 'manual');
+        if (typeof HTMLElement.prototype.showPopover === 'function') {
+          expect(isPopoverElement(div)).toBe(true);
+        }
       });
     });
 

@@ -30,6 +30,7 @@ import {
   toggleDialog,
   toggleDetails,
   toggleSelect,
+  togglePopover,
 } from '../helpers/smart-element';
 import {
   batchToggleClasses,
@@ -74,6 +75,7 @@ export type ToggleCommandInput =
   | { type: 'dialog'; mode: 'modal' | 'non-modal'; targets: HTMLDialogElement[] }
   | { type: 'details'; targets: HTMLDetailsElement[] }
   | { type: 'select'; targets: HTMLSelectElement[] }
+  | { type: 'popover'; targets: HTMLElement[] }
   | {
       type: 'classes-between';
       classA: string;
@@ -83,25 +85,34 @@ export type ToggleCommandInput =
       untilEvent?: string;
     };
 
-/** Parse modal mode from args and modifiers */
-async function parseModalMode(
+/** Parse modality from args and modifiers ("as modal" or "as popover") */
+async function parseModality(
   args: ASTNode[],
   modifiers: Record<string, ExpressionNode>,
   evaluator: ExpressionEvaluator,
   context: ExecutionContext
-): Promise<'modal' | 'non-modal'> {
+): Promise<'modal' | 'popover' | 'non-modal'> {
   if (modifiers?.as) {
     const asValue = await evaluator.evaluate(modifiers.as, context);
-    if (typeof asValue === 'string' && asValue.toLowerCase() === 'modal') return 'modal';
+    if (typeof asValue === 'string') {
+      const normalized = asValue.toLowerCase();
+      if (normalized === 'modal') return 'modal';
+      if (normalized === 'popover') return 'popover';
+    }
   }
   if (args.length >= 2) {
     const secondArg = await evaluator.evaluate(args[1], context);
     if (typeof secondArg === 'string') {
       const normalized = secondArg.toLowerCase();
       if (normalized === 'modal' || normalized === 'as modal') return 'modal';
+      if (normalized === 'popover' || normalized === 'as popover') return 'popover';
       if (normalized === 'as' && args.length >= 3) {
         const thirdArg = await evaluator.evaluate(args[2], context);
-        if (typeof thirdArg === 'string' && thirdArg.toLowerCase() === 'modal') return 'modal';
+        if (typeof thirdArg === 'string') {
+          const thirdNormalized = thirdArg.toLowerCase();
+          if (thirdNormalized === 'modal') return 'modal';
+          if (thirdNormalized === 'popover') return 'popover';
+        }
       }
     }
   }
@@ -164,12 +175,14 @@ function detectExpressionType(
     'toggle <class> [on <target>]',
     'toggle @attr',
     'toggle <element> [as modal]',
+    'toggle <element> [as popover]',
     'toggle <expr> for <duration>',
   ],
   examples: [
     'toggle .active on me',
     'toggle @disabled',
     'toggle #myDialog as modal',
+    'toggle #myPopover',
     'toggle .loading for 2s',
   ],
   sideEffects: ['dom-mutation'],
@@ -305,9 +318,20 @@ export class ToggleCommand implements DecoratedCommand {
           );
         }
 
+        // Check for explicit "as popover" / "as modal" modality
+        const modality = await parseModality(raw.args, raw.modifiers, evaluator, context);
+
+        // Explicit "as popover" forces popover behavior on any element
+        if (modality === 'popover') {
+          return { type: 'popover', targets: elements };
+        }
+
         const smartType = detectSmartElementType(elements);
+        if (smartType === 'popover') {
+          return { type: 'popover', targets: elements };
+        }
         if (smartType === 'dialog') {
-          const mode = await parseModalMode(raw.args, raw.modifiers, evaluator, context);
+          const mode = modality === 'modal' ? 'modal' : 'non-modal';
           return { type: 'dialog', mode, targets: elements as HTMLDialogElement[] };
         }
         if (smartType === 'details') {
@@ -393,6 +417,9 @@ export class ToggleCommand implements DecoratedCommand {
         return batchApply(input.targets as HTMLElement[], el =>
           toggleSelect(el as HTMLSelectElement)
         );
+
+      case 'popover':
+        return batchApply(input.targets, el => togglePopover(el));
 
       case 'classes-between': {
         // Toggle between two mutually exclusive classes

@@ -15,6 +15,7 @@ import {
   type VisibilityRawInput,
   type VisibilityInput,
 } from '../helpers/visibility-target-parser';
+import { isPopoverElement, showPopover, hidePopover } from '../helpers/smart-element';
 
 /** Visibility mode type */
 export type VisibilityMode = 'show' | 'hide';
@@ -64,8 +65,15 @@ export abstract class VisibilityCommandBase implements DecoratedCommand {
 
   /**
    * Show an element - restores original display or uses default
+   *
+   * For elements with the `popover` attribute, delegates to the native
+   * Popover API (showPopover) instead of manipulating the display property.
    */
   protected showElement(element: HTMLElement, defaultDisplay: string = 'block'): void {
+    if (isPopoverElement(element)) {
+      showPopover(element);
+      return;
+    }
     const originalDisplay = element.dataset.originalDisplay;
     if (originalDisplay !== undefined) {
       element.style.display = originalDisplay || defaultDisplay;
@@ -78,8 +86,15 @@ export abstract class VisibilityCommandBase implements DecoratedCommand {
 
   /**
    * Hide an element - stores original display and sets to none
+   *
+   * For elements with the `popover` attribute, delegates to the native
+   * Popover API (hidePopover) instead of manipulating the display property.
    */
   protected hideElement(element: HTMLElement): void {
+    if (isPopoverElement(element)) {
+      hidePopover(element);
+      return;
+    }
     // Preserve original display value if not already stored
     if (!element.dataset.originalDisplay) {
       const currentDisplay = element.style.display;

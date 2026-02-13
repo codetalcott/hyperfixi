@@ -21,7 +21,7 @@ import { isHTMLElement } from '../../utils/element-check';
 /**
  * Types of smart elements that have special toggle behavior
  */
-export type SmartElementType = 'dialog' | 'details' | 'select' | null;
+export type SmartElementType = 'dialog' | 'details' | 'select' | 'popover' | null;
 
 /**
  * Dialog mode for toggling
@@ -29,10 +29,34 @@ export type SmartElementType = 'dialog' | 'details' | 'select' | null;
 export type DialogMode = 'modal' | 'non-modal';
 
 /**
+ * Whether the browser supports the Popover API
+ */
+const POPOVER_SUPPORTED =
+  typeof HTMLElement !== 'undefined' && typeof HTMLElement.prototype.showPopover === 'function';
+
+/**
+ * Check if an element has the popover attribute and the browser supports the Popover API
+ *
+ * Unlike other smart element types (dialog, details, select) which are detected by
+ * tag name, popover is detected by **attribute presence** since any HTML element
+ * can have the `popover` attribute.
+ *
+ * @param element - Element to check
+ * @returns true if the element has a popover attribute and the API is available
+ */
+export function isPopoverElement(element: HTMLElement): boolean {
+  return POPOVER_SUPPORTED && element.hasAttribute('popover');
+}
+
+/**
  * Detect smart element type from an array of elements
  *
  * Returns the smart element type if all elements are the same smart type,
  * or null if mixed types or not smart elements.
+ *
+ * Detection priority:
+ * 1. Popover attribute (checked first since any element can have it)
+ * 2. Tag-based: dialog, details, select, summary
  *
  * Special handling for SUMMARY: resolves to 'details' type since
  * summary elements toggle their parent details.
@@ -50,6 +74,11 @@ export type DialogMode = 'modal' | 'non-modal';
  */
 export function detectSmartElementType(elements: HTMLElement[]): SmartElementType {
   if (elements.length === 0) return null;
+
+  // Check for popover attribute first (takes precedence since any element can have it)
+  if (elements.every(el => isPopoverElement(el))) {
+    return 'popover';
+  }
 
   const firstTag = elements[0].tagName;
   const allSameType = elements.every(el => el.tagName === firstTag);
@@ -185,6 +214,61 @@ export function toggleSelect(select: HTMLSelectElement): void {
 }
 
 /**
+ * Toggle a popover element
+ *
+ * Uses the native Popover API (togglePopover). Errors are suppressed
+ * for idempotent behavior — calling toggle on an element already in the
+ * target state will not throw.
+ *
+ * @param element - Element with popover attribute to toggle
+ * @param force - Optional boolean to force show (true) or hide (false)
+ *
+ * @example
+ * ```typescript
+ * togglePopover(element);          // Toggle between shown/hidden
+ * togglePopover(element, true);    // Force show
+ * togglePopover(element, false);   // Force hide
+ * ```
+ */
+export function togglePopover(element: HTMLElement, force?: boolean): void {
+  try {
+    element.togglePopover(force);
+  } catch {
+    // Suppress InvalidStateError when element is already in the target state
+  }
+}
+
+/**
+ * Show a popover element
+ *
+ * Uses the native Popover API (showPopover). Silently ignores if already shown.
+ *
+ * @param element - Element with popover attribute to show
+ */
+export function showPopover(element: HTMLElement): void {
+  try {
+    element.showPopover();
+  } catch {
+    // Suppress InvalidStateError when element is already shown
+  }
+}
+
+/**
+ * Hide a popover element
+ *
+ * Uses the native Popover API (hidePopover). Silently ignores if already hidden.
+ *
+ * @param element - Element with popover attribute to hide
+ */
+export function hidePopover(element: HTMLElement): void {
+  try {
+    element.hidePopover();
+  } catch {
+    // Suppress InvalidStateError when element is already hidden
+  }
+}
+
+/**
  * Toggle a smart element based on its type
  *
  * Dispatches to the appropriate toggle function based on element type.
@@ -217,6 +301,9 @@ export function toggleSmartElement(
     case 'select':
       toggleSelect(element as HTMLSelectElement);
       return true;
+    case 'popover':
+      togglePopover(element);
+      return true;
     default:
       return false;
   }
@@ -226,11 +313,17 @@ export function toggleSmartElement(
  * Check if an element is a smart element
  *
  * @param element - Element to check
- * @returns true if element is a dialog, details, select, or summary
+ * @returns true if element is a dialog, details, select, summary, or has popover attribute
  */
 export function isSmartElement(element: HTMLElement): boolean {
   const tag = element.tagName;
-  return tag === 'DIALOG' || tag === 'DETAILS' || tag === 'SELECT' || tag === 'SUMMARY';
+  return (
+    tag === 'DIALOG' ||
+    tag === 'DETAILS' ||
+    tag === 'SELECT' ||
+    tag === 'SUMMARY' ||
+    isPopoverElement(element)
+  );
 }
 
 /**

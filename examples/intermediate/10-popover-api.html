@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popover API - HyperFixi Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        .example {
+            background: var(--color-surface, #ffffff);
+            border: 1px solid var(--color-border, #e4e4e7);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-card);
+        }
+
+        .example h3 {
+            margin-top: 0;
+            color: var(--color-text, #18181b);
+        }
+
+        button.secondary {
+            background: #64748b;
+        }
+
+        button.secondary:hover {
+            background: #475569;
+        }
+
+        /* Popover styling */
+        [popover] {
+            border: 1px solid var(--color-border, #e4e4e7);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+        }
+
+        [popover]::backdrop {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .popover-header {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border, #e4e4e7);
+        }
+
+        .popover-body {
+            color: var(--color-text-muted, #71717a);
+            margin-bottom: 15px;
+        }
+
+        .popover-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge.popover {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.auto {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.manual {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .demo-content {
+            background: var(--color-surface, #f4f4f5);
+            padding: 15px;
+            border: 1px solid var(--color-border, #e4e4e7);
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--color-border, #e4e4e7);
+        }
+
+        .summary-table th {
+            background: var(--color-surface, #f4f4f5);
+            font-weight: 600;
+        }
+
+        .tooltip-trigger {
+            text-decoration: underline dotted;
+            cursor: help;
+        }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">&larr; Back to Gallery</a> / <strong>Intermediate</strong> / 10: Popover API
+        </div>
+
+        <h1>Popover API Integration</h1>
+
+        <div class="description">
+            HyperFixi integrates with the native <a href="https://developer.mozilla.org/en-US/docs/Web/API/Popover_API">Popover API</a>.
+            Elements with the <code>popover</code> attribute are auto-detected by <code>toggle</code>,
+            <code>show</code>, and <code>hide</code> commands, delegating to the browser's native
+            <code>showPopover()</code> / <code>hidePopover()</code> / <code>togglePopover()</code> methods.
+        </div>
+
+        <!-- ========== Auto Popover ========== -->
+        <h2>Auto Popover <span class="badge auto">popover="auto"</span></h2>
+
+        <div class="example">
+            <h3>Toggle with Auto-Detection</h3>
+            <div class="code">
+&lt;div id="menu" popover&gt;Menu content&lt;/div&gt;
+&lt;button _="on click toggle #menu"&gt;Toggle Menu&lt;/button&gt;
+            </div>
+
+            <div class="demo-content">
+                <button _="on click toggle #autoMenu">Toggle Menu</button>
+                <p style="font-size: 14px; color: var(--color-text-muted); margin: 10px 0;">
+                    Auto popovers support light-dismiss: click outside or press Escape to close.
+                </p>
+            </div>
+        </div>
+
+        <div id="autoMenu" popover>
+            <div class="popover-header">Auto Popover Menu</div>
+            <div class="popover-body">
+                <p>This popover was opened with <code>toggle #autoMenu</code>.</p>
+                <p>It auto-detected the <code>popover</code> attribute and called <code>togglePopover()</code>.</p>
+                <p>Click outside or press <kbd>Escape</kbd> to dismiss.</p>
+            </div>
+        </div>
+
+        <!-- ========== Manual Popover ========== -->
+        <h2>Manual Popover <span class="badge manual">popover="manual"</span></h2>
+
+        <div class="example">
+            <h3>Show / Hide with Manual Control</h3>
+            <div class="code">
+&lt;div id="tooltip" popover="manual"&gt;Tooltip&lt;/div&gt;
+&lt;button _="on mouseenter show #tooltip
+            then on mouseleave hide #tooltip"&gt;
+  Hover me
+&lt;/button&gt;
+            </div>
+
+            <div class="demo-content">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button _="on click show #manualPanel">Show Panel</button>
+                    <button _="on click hide #manualPanel">Hide Panel</button>
+                    <button _="on click toggle #manualPanel">Toggle Panel</button>
+                </div>
+                <p style="font-size: 14px; color: var(--color-text-muted); margin: 10px 0;">
+                    Manual popovers do <strong>not</strong> light-dismiss. You must explicitly hide them.
+                </p>
+            </div>
+        </div>
+
+        <div id="manualPanel" popover="manual">
+            <div class="popover-header">Manual Popover Panel</div>
+            <div class="popover-body">
+                <p>This popover uses <code>popover="manual"</code>.</p>
+                <p>It will stay open until you click "Hide Panel" or "Toggle Panel".</p>
+            </div>
+            <div class="popover-footer">
+                <button class="secondary" _="on click hide #manualPanel">Close</button>
+            </div>
+        </div>
+
+        <!-- ========== Explicit "as popover" ========== -->
+        <h2>Explicit Modality <span class="badge popover">as popover</span></h2>
+
+        <div class="example">
+            <h3>Force Popover Behavior with "as popover"</h3>
+            <div class="code">
+&lt;!-- Works even without inspecting the popover attribute --&gt;
+&lt;button _="on click toggle #notification as popover"&gt;
+  Toggle Notification
+&lt;/button&gt;
+            </div>
+
+            <div class="demo-content">
+                <button _="on click toggle #notification as popover">Toggle Notification</button>
+                <p style="font-size: 14px; color: var(--color-text-muted); margin: 10px 0;">
+                    The <code>as popover</code> modifier explicitly invokes popover behavior,
+                    similar to <code>as modal</code> for dialogs.
+                </p>
+            </div>
+        </div>
+
+        <div id="notification" popover>
+            <div class="popover-header">Notification</div>
+            <div class="popover-body">
+                <p>You have 3 unread messages.</p>
+            </div>
+        </div>
+
+        <!-- ========== Events ========== -->
+        <h2>Popover Events</h2>
+
+        <div class="example">
+            <h3>beforetoggle and toggle Events</h3>
+            <div class="code">
+&lt;div id="eventDemo" popover
+  _="on beforetoggle log 'state changing'
+     on toggle log 'state changed'"&gt;
+  Content
+&lt;/div&gt;
+            </div>
+
+            <div class="demo-content">
+                <button _="on click toggle #eventDemo">Toggle (check console)</button>
+                <p style="font-size: 14px; color: var(--color-text-muted); margin: 10px 0;">
+                    Open the browser console to see <code>beforetoggle</code> and <code>toggle</code> events fire.
+                </p>
+            </div>
+        </div>
+
+        <div id="eventDemo" popover
+            _="on beforetoggle log 'beforetoggle: ' + event.newState
+               on toggle log 'toggle: ' + event.newState">
+            <div class="popover-header">Event Demo</div>
+            <div class="popover-body">
+                <p>This popover logs <code>beforetoggle</code> and <code>toggle</code> events to the console.</p>
+            </div>
+        </div>
+
+        <!-- ========== Summary ========== -->
+        <h2>Summary Reference</h2>
+
+        <div class="example">
+            <h3>Popover API Syntax</h3>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Syntax</th>
+                        <th>API Called</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Toggle</td>
+                        <td><code>toggle #popover</code></td>
+                        <td><code>el.togglePopover()</code></td>
+                    </tr>
+                    <tr>
+                        <td>Toggle (explicit)</td>
+                        <td><code>toggle #el as popover</code></td>
+                        <td><code>el.togglePopover()</code></td>
+                    </tr>
+                    <tr>
+                        <td>Show</td>
+                        <td><code>show #popover</code></td>
+                        <td><code>el.showPopover()</code></td>
+                    </tr>
+                    <tr>
+                        <td>Hide</td>
+                        <td><code>hide #popover</code></td>
+                        <td><code>el.hidePopover()</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li><strong>Auto-Detection:</strong> Elements with <code>popover</code> attribute are automatically recognized</li>
+                <li><strong>Native API:</strong> Delegates to browser's Popover API for proper top-layer management</li>
+                <li><strong>Error Tolerant:</strong> Silently handles already-shown/hidden states</li>
+                <li><strong>Feature Detection:</strong> Falls back gracefully on unsupported browsers</li>
+                <li><strong>Both Modes:</strong> Works with <code>popover="auto"</code> (light-dismiss) and <code>popover="manual"</code></li>
+                <li><strong>Explicit Modality:</strong> Use <code>as popover</code> to force popover behavior</li>
+            </ul>
+
+            <h3>Browser Support</h3>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Browser</th>
+                        <th>Version</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Chrome / Edge</td><td>114+</td></tr>
+                    <tr><td>Firefox</td><td>114+</td></tr>
+                    <tr><td>Safari</td><td>17+</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="09-toggle-attributes.html">&larr; Previous: Toggle Attributes</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script src="../debug-panel.js"></script>
+    <script>
+        console.log('HyperFixi loaded with Popover API support!');
+        console.log('Popover API supported:', typeof HTMLElement.prototype.showPopover === 'function');
+    </script>
+</body>
+</html>
