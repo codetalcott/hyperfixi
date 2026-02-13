@@ -75,15 +75,34 @@ export interface RoleSpec {
 }
 
 /**
- * Helper to create a command schema.
+ * Helper to create a command schema with sensible defaults.
+ * Provides defaults for description, category, and primaryRole.
  */
-export function defineCommand(schema: CommandSchema): CommandSchema {
-  return schema;
+export function defineCommand(
+  schema: Partial<CommandSchema> & Pick<CommandSchema, 'action' | 'roles'>
+): CommandSchema {
+  return {
+    description: schema.description || `${schema.action} command`,
+    category: schema.category || 'general',
+    primaryRole: schema.primaryRole || schema.roles[0]?.role || 'patient',
+    ...schema,
+    action: schema.action,
+    roles: schema.roles,
+  } as CommandSchema;
 }
 
 /**
- * Helper to create a role spec.
+ * Helper to create a role spec with sensible defaults.
+ * Provides default for description.
  */
-export function defineRole(role: RoleSpec): RoleSpec {
-  return role;
+export function defineRole(
+  role: Partial<RoleSpec> & Pick<RoleSpec, 'role' | 'required' | 'expectedTypes'>
+): RoleSpec {
+  return {
+    description: role.description || `${role.role} role`,
+    ...role,
+    role: role.role,
+    required: role.required,
+    expectedTypes: role.expectedTypes,
+  };
 }

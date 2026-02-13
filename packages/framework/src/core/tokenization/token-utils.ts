@@ -130,14 +130,57 @@ export interface CreateTokenOptions {
 }
 
 /**
- * Create a language token.
+ * Token creation options (object style).
+ */
+export interface TokenCreationParams extends CreateTokenOptions {
+  value: string;
+  kind: TokenKind;
+  position: SourcePosition;
+}
+
+/**
+ * Create a language token (object style).
+ */
+export function createToken(params: TokenCreationParams): LanguageToken;
+
+/**
+ * Create a language token (separate parameters style).
  */
 export function createToken(
   value: string,
   kind: TokenKind,
   position: SourcePosition,
   normalizedOrOptions?: string | CreateTokenOptions
+): LanguageToken;
+
+/**
+ * Create a language token.
+ * Supports both object style and separate parameters style.
+ */
+export function createToken(
+  valueOrParams: string | TokenCreationParams,
+  kind?: TokenKind,
+  position?: SourcePosition,
+  normalizedOrOptions?: string | CreateTokenOptions
 ): LanguageToken {
+  // Handle object style
+  if (typeof valueOrParams === 'object') {
+    const { value, kind, position, normalized, stem, stemConfidence } = valueOrParams;
+    return {
+      value,
+      kind,
+      position,
+      ...(normalized !== undefined && { normalized }),
+      ...(stem !== undefined && { stem }),
+      ...(stemConfidence !== undefined && { stemConfidence }),
+    };
+  }
+
+  // Handle separate parameters style
+  const value = valueOrParams;
+  if (!kind || !position) {
+    throw new Error('createToken requires kind and position parameters');
+  }
   // Handle legacy string argument for backward compatibility
   if (typeof normalizedOrOptions === 'string') {
     return { value, kind, position, normalized: normalizedOrOptions };

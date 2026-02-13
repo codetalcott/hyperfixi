@@ -16,6 +16,7 @@ import type {
   LanguageToken,
 } from '../types';
 import { createSelector, createLiteral, createReference, createPropertyPath } from '../types';
+import { createLogger } from '../logger';
 
 /**
  * Helper to check if a value is a built-in reference.
@@ -49,8 +50,25 @@ export interface PatternMatcherProfile {
 // =============================================================================
 
 export class PatternMatcher {
+  /** Debug logger */
+  private logger = createLogger('pattern-matcher');
+
   /** Current language profile for the pattern being matched */
   private currentProfile: PatternMatcherProfile | undefined;
+
+  /**
+   * Safely convert a value to lowercase string.
+   * Provides protection against non-string values at runtime.
+   */
+  private safeToLowerCase(value: unknown): string {
+    if (typeof value === 'string') {
+      return value.toLowerCase();
+    }
+    if (value === null || value === undefined) {
+      return '';
+    }
+    return String(value).toLowerCase();
+  }
 
   /**
    * Try to match a single pattern against the token stream.
@@ -68,24 +86,29 @@ export class PatternMatcher {
     const mark = tokens.mark();
     const captured = new Map<SemanticRole, SemanticValue>();
 
-    // ===== DEBUG LOGGING START =====
-    console.log('\n========================================');
-    console.log('matchPattern ENTRY');
-    console.log('========================================');
-    console.log('Pattern ID:', pattern.id);
-    console.log('Pattern command:', pattern.command);
-    console.log('Pattern language:', pattern.language);
-    console.log('Pattern template:', JSON.stringify(pattern.template, null, 2));
-    const firstTokens = [];
-    for (let i = 0; i < 10; i++) {
-      const t = tokens.peek(i);
-      if (t)
-        firstTokens.push({ type: (t as any).type, value: (t as any).value, kind: (t as any).kind });
-      else break;
+    // Debug logging
+    this.logger.debug('========================================');
+    this.logger.debug('matchPattern ENTRY');
+    this.logger.debug('Pattern ID:', pattern.id);
+    this.logger.debug('Pattern command:', pattern.command);
+    this.logger.debug('Pattern language:', pattern.language);
+    this.logger.debug('Pattern template:', JSON.stringify(pattern.template, null, 2));
+
+    if (this.logger.isEnabled()) {
+      const firstTokens = [];
+      for (let i = 0; i < 10; i++) {
+        const t = tokens.peek(i);
+        if (t)
+          firstTokens.push({
+            type: (t as any).type,
+            value: (t as any).value,
+            kind: (t as any).kind,
+          });
+        else break;
+      }
+      this.logger.debug('Input tokens (first 10):', firstTokens);
+      this.logger.debug('Profile code:', profile?.code);
     }
-    console.log('Input tokens (first 10):', firstTokens);
-    console.log('Profile code:', profile?.code);
-    // ===== DEBUG LOGGING END =====
 
     // Use provided profile for possessive keyword lookup
     this.currentProfile = profile;
@@ -94,17 +117,17 @@ export class PatternMatcher {
     this.stemMatchCount = 0;
     this.totalKeywordMatches = 0;
 
-    console.log('\n--- Calling matchTokenSequence ---');
-    console.log('Pattern tokens to match:', JSON.stringify(pattern.template.tokens, null, 2));
+    this.logger.debug('--- Calling matchTokenSequence ---');
+    this.logger.debug('Pattern tokens to match:', JSON.stringify(pattern.template.tokens, null, 2));
     const success = this.matchTokenSequence(tokens, pattern.template.tokens, captured);
-    console.log('matchTokenSequence returned:', success);
-    console.log(
+    this.logger.debug('matchTokenSequence returned:', success);
+    this.logger.debug(
       'Captured roles:',
       Array.from(captured.entries()).map(([k, v]) => [k, JSON.stringify(v)])
     );
 
     if (!success) {
-      console.log('>>> MATCH FAILED - resetting token position');
+      this.logger.debug('>>> MATCH FAILED - resetting token position');
       tokens.reset(mark);
       return null;
     }
@@ -195,9 +218,9 @@ export class PatternMatcher {
     }
 
     for (const patternToken of patternTokens) {
-      console.log('\n  >> Matching pattern token:', JSON.stringify(patternToken, null, 2));
+      this.logger.debug('  >> Matching pattern token:', JSON.stringify(patternToken, null, 2));
       const currTok = tokens.peek();
-      console.log(
+      this.logger.debug(
         '  >> Current input token:',
         currTok
           ? JSON.stringify({
@@ -208,10 +231,10 @@ export class PatternMatcher {
           : 'EOF'
       );
       const matched = this.matchPatternToken(tokens, patternToken, captured);
-      console.log('  >> Match result:', matched);
+      this.logger.debug('  >> Match result:', matched);
 
       if (!matched) {
-        console.log('  >> Token match FAILED');
+        this.logger.debug('  >> Token match FAILED');
         // If token is optional, continue
         if (this.isOptional(patternToken)) {
           continue;
@@ -254,8 +277,8 @@ export class PatternMatcher {
     patternToken: PatternToken & { type: 'literal' }
   ): boolean {
     const token = tokens.peek();
-    console.log('    >>> matchLiteralToken: expecting', patternToken.value);
-    console.log(
+    this.logger.debug('    >>> matchLiteralToken: expecting', patternToken.value);
+    this.logger.debug(
       '    >>> matchLiteralToken: got token',
       token
         ? JSON.stringify({
@@ -266,13 +289,20 @@ export class PatternMatcher {
         : 'null'
     );
     if (!token) {
-      console.log('    >>> matchLiteralToken: FAIL - no token');
+      this.logger.debug('    >>> matchLiteralToken: FAIL - no token');
       return false;
     }
 
     // Check main value
     const matchType = this.getMatchType(token, patternToken.value);
-    console.log('    >>> matchType for', token.value, 'vs', patternToken.value, ':', matchType);
+    this.logger.debug(
+      '    >>> matchType for',
+      token.value,
+      'vs',
+      patternToken.value,
+      ':',
+      matchType
+    );
     if (matchType !== 'none') {
       this.totalKeywordMatches++;
       if (matchType === 'stem') {
@@ -312,14 +342,14 @@ export class PatternMatcher {
     patternToken: PatternToken & { type: 'role' },
     captured: Map<SemanticRole, SemanticValue>
   ): boolean {
-    console.log('    >>> matchRoleToken ENTRY: capturing role', patternToken.role);
-    console.log('    >>> matchRoleToken: expected types', patternToken.expectedTypes);
-    console.log('    >>> matchRoleToken: optional?', patternToken.optional);
+    this.logger.debug('    >>> matchRoleToken ENTRY: capturing role', patternToken.role);
+    this.logger.debug('    >>> matchRoleToken: expected types', patternToken.expectedTypes);
+    this.logger.debug('    >>> matchRoleToken: optional?', patternToken.optional);
     // Skip noise words like "the" before selectors (English idiom support)
     this.skipNoiseWords(tokens);
 
     const token = tokens.peek();
-    console.log(
+    this.logger.debug(
       '    >>> After skipNoiseWords, current token:',
       token ? JSON.stringify({ value: (token as any).value, kind: (token as any).kind }) : 'null'
     );
@@ -400,18 +430,21 @@ export class PatternMatcher {
     }
 
     // Try to extract a semantic value from the token
-    console.log(
+    this.logger.debug(
       '    >>> Trying tokenToSemanticValue for token:',
       token ? JSON.stringify({ value: (token as any).value, kind: (token as any).kind }) : 'null'
     );
     const value = this.tokenToSemanticValue(token);
-    console.log('    >>> tokenToSemanticValue returned:', value ? JSON.stringify(value) : 'null');
+    this.logger.debug(
+      '    >>> tokenToSemanticValue returned:',
+      value ? JSON.stringify(value) : 'null'
+    );
     if (!value) {
       return patternToken.optional || false;
     }
 
     // Validate expected types if specified
-    console.log(
+    this.logger.debug(
       '    >>> Validating type:',
       value.type,
       'against expected:',
@@ -419,11 +452,11 @@ export class PatternMatcher {
     );
     if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
       if (!patternToken.expectedTypes.includes(value.type)) {
-        console.log('    >>> TYPE MISMATCH - returning', patternToken.optional || false);
+        this.logger.debug('    >>> TYPE MISMATCH - returning', patternToken.optional || false);
         return patternToken.optional || false;
       }
     }
-    console.log('    >>> Type validation PASSED');
+    this.logger.debug('    >>> Type validation PASSED');
 
     captured.set(patternToken.role, value);
     tokens.advance();
@@ -441,7 +474,8 @@ export class PatternMatcher {
     // Use profile-based possessive keyword lookup
     if (!this.currentProfile) return null;
 
-    const tokenLower = (token.normalized || token.value).toLowerCase();
+    const tokenValue = token.normalized || token.value;
+    const tokenLower = this.safeToLowerCase(tokenValue);
     const baseRef = getPossessiveReference(this.currentProfile, tokenLower);
 
     if (!baseRef) return null;
@@ -775,7 +809,7 @@ export class PatternMatcher {
     if (!token || token.kind !== 'selector') return null;
 
     // Must be an ID selector (starts with #)
-    if (!token.value.startsWith('#')) return null;
+    if (typeof token.value !== 'string' || !token.value.startsWith('#')) return null;
 
     // Look ahead for: selector that looks like a property (.something)
     const mark = tokens.mark();
@@ -860,7 +894,7 @@ export class PatternMatcher {
     }
 
     // Case-insensitive match for keywords (medium confidence)
-    if (token.kind === 'keyword' && token.value.toLowerCase() === value.toLowerCase()) {
+    if (token.kind === 'keyword' && this.safeToLowerCase(token.value) === value.toLowerCase()) {
       return 'case-insensitive';
     }
 
@@ -897,7 +931,8 @@ export class PatternMatcher {
 
       case 'keyword':
         // Keywords might be references or values
-        const lower = (token.normalized || token.value).toLowerCase();
+        const tokenValue = token.normalized || token.value;
+        const lower = this.safeToLowerCase(tokenValue);
         if (isValidReference(lower)) {
           return createReference(lower);
         }
@@ -907,11 +942,11 @@ export class PatternMatcher {
         // Check if it's a variable reference (:varname)
         // Note: :varname doesn't match the ReferenceValue union but is used as a
         // reference token downstream — this cast preserves existing behavior
-        if (token.value.startsWith(':')) {
+        if (typeof token.value === 'string' && token.value.startsWith(':')) {
           return createReference(token.value as ReferenceValue['value']);
         }
         // Check if it's a built-in reference
-        const identLower = token.value.toLowerCase();
+        const identLower = this.safeToLowerCase(token.value);
         if (isValidReference(identLower)) {
           return createReference(identLower);
         }
@@ -1225,7 +1260,7 @@ export class PatternMatcher {
     const token = tokens.peek();
     if (!token) return;
 
-    const tokenLower = token.value.toLowerCase();
+    const tokenLower = this.safeToLowerCase(token.value);
 
     // Check if current token is a noise word (like "the")
     if (PatternMatcher.ENGLISH_NOISE_WORDS.has(tokenLower)) {
