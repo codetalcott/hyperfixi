@@ -316,6 +316,16 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
       }
     }
 
+    // Extract from possessive keywords (ñuqapa, qampa, etc. for languages like Quechua)
+    if (profile.possessive && 'keywords' in profile.possessive) {
+      const possessiveKeywords = (profile.possessive as any).keywords;
+      if (possessiveKeywords) {
+        for (const [native, normalized] of Object.entries(possessiveKeywords)) {
+          keywordMap.set(native, { native, normalized: normalized as string });
+        }
+      }
+    }
+
     // Add extra entries (literals, positional, events) - these OVERRIDE profile entries
     for (const extra of extras) {
       keywordMap.set(extra.native, extra);
