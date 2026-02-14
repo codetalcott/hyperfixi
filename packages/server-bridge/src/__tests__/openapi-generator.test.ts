@@ -96,6 +96,18 @@ describe('OpenAPIGenerator', () => {
     expect(yaml).toContain("summary: 'Source: test.html:5 (fetch)'");
   });
 
+  it('generates query parameter specs', () => {
+    const route = makeRoute({
+      path: '/api/search',
+      handlerName: 'getApiSearch',
+      queryParams: [{ name: 'q', type: 'string', required: true }],
+    });
+    const result = gen.generate([route], { outputDir: '/out' });
+    const yaml = result.files[0].content;
+    expect(yaml).toContain('name: q');
+    expect(yaml).toContain('in: query');
+  });
+
   it('warns when no routes provided', () => {
     const result = gen.generate([], { outputDir: '/out' });
     expect(result.warnings).toContain('No routes to generate');

@@ -65,6 +65,17 @@ describe('HonoGenerator', () => {
     expect(routeFile!.content).toContain("return c.html('<div>Not implemented</div>')");
   });
 
+  it('generates query param extraction', () => {
+    const route = makeRoute({
+      path: '/api/search',
+      handlerName: 'getApiSearch',
+      queryParams: [{ name: 'q', type: 'string', required: true }],
+    });
+    const result = gen.generate([route], { outputDir: '/out' });
+    const routeFile = result.files.find(f => f.path.includes('api-search'));
+    expect(routeFile!.content).toContain("const q = c.req.query('q')");
+  });
+
   it('generates index file that composes route apps', () => {
     const routes = [
       makeRoute({ path: '/api/users' }),

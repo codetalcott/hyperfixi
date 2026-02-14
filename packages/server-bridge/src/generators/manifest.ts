@@ -28,6 +28,7 @@ export function hashRoute(route: RouteDescriptor): string {
     method: route.method,
     responseFormat: route.responseFormat,
     pathParams: route.pathParams,
+    queryParams: route.queryParams,
     requestBody: route.requestBody,
   });
   return createHash('md5').update(data).digest('hex').slice(0, 8);

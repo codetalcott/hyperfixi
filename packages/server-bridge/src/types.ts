@@ -20,6 +20,8 @@ export interface RouteDescriptor {
   requestBody?: RequestBodyField[];
   /** Path parameters extracted from URL */
   pathParams: string[];
+  /** Query parameters extracted from URL (e.g., ?q=hello&limit=10) */
+  queryParams?: QueryParam[];
   /** Suggested handler function name */
   handlerName: string;
   /** Convention-engine notes */
@@ -46,6 +48,15 @@ export interface RequestBodyField {
   required: boolean;
 }
 
+export interface QueryParam {
+  /** Parameter name from URL query string */
+  name: string;
+  /** HTTP query params are always strings */
+  type: 'string';
+  /** Whether the param appears required (true when explicitly present in URL) */
+  required: boolean;
+}
+
 // =============================================================================
 // Scan Results
 // =============================================================================
@@ -57,6 +68,20 @@ export interface ScanResult {
   filesScanned: string[];
   /** Errors during scanning */
   errors: ScanError[];
+  /** Route conflicts detected (same method+path, different expectations) */
+  conflicts: ConflictWarning[];
+}
+
+export interface ConflictWarning {
+  routeKey: string;
+  conflicts: ConflictDetail[];
+  sources: RouteSource[];
+}
+
+export interface ConflictDetail {
+  field: 'responseFormat' | 'requestBody' | 'queryParams';
+  values: string[];
+  message: string;
 }
 
 export interface ScanError {

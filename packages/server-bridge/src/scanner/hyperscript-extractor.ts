@@ -1,5 +1,9 @@
 import type { RouteDescriptor, RouteSource } from '../types.js';
-import { extractPathParams, normalizeUrl } from '../conventions/url-patterns.js';
+import {
+  extractPathParams,
+  extractQueryParams,
+  normalizeUrl,
+} from '../conventions/url-patterns.js';
 import { inferConventions } from '../conventions/convention-engine.js';
 
 /**
@@ -149,6 +153,8 @@ function addRoute(
     return;
   }
 
+  // Extract query params BEFORE normalization (which strips them)
+  const queryParams = extractQueryParams(rawUrl);
   const path = normalizeUrl(rawUrl);
 
   const conventions = inferConventions(path, {
@@ -171,6 +177,7 @@ function addRoute(
       raw: options.raw,
     },
     pathParams: extractPathParams(path),
+    ...(queryParams.length > 0 ? { queryParams } : {}),
     handlerName: conventions.handlerName,
     notes: conventions.notes,
   });

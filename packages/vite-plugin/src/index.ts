@@ -50,6 +50,7 @@ import { generateCompiledBundle } from './compiled-generator';
 import { transformHTML, extractScripts } from './html-transformer';
 import { getMultilingualCommandAliases } from './semantic-integration';
 import type { SupportedLanguage } from './language-keywords';
+import { loadServerBridge, runServerBridge } from './server-bridge-integration';
 
 // Re-export types
 export type {
@@ -57,6 +58,7 @@ export type {
   FileUsage,
   AggregatedUsage,
   CustomLanguageKeywords,
+  ServerBridgeOptions,
 } from './types';
 export type { CompiledHandler, CompileOptions } from './compiler';
 
@@ -254,11 +256,16 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
     /**
      * Configure plugin based on Vite mode
      */
-    configResolved(config) {
+    async configResolved(config) {
       isDev = config.command === 'serve';
 
       if (options.debug) {
         console.log('[hyperfixi] Plugin initialized, mode:', isDev ? 'development' : 'production');
+      }
+
+      // Lazy-load server-bridge if configured
+      if (options.serverBridge) {
+        await loadServerBridge(options.debug);
       }
     },
 
@@ -376,6 +383,11 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
               invalidateVirtualModule();
             }
           }
+
+          // Re-generate server routes on HTML file changes (hash-based skip if unchanged)
+          if (options.serverBridge && server) {
+            await runServerBridge(server.config.root, options.serverBridge, options.debug);
+          }
         } catch {
           // File was deleted, remove from aggregator
           if (aggregator.remove(file)) {
@@ -442,6 +454,11 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
             positional: summary.positional,
             languages: summary.languages,
           });
+        }
+
+        // Server-bridge: full scan + generate on production build
+        if (options.serverBridge) {
+          await runServerBridge(cwd, options.serverBridge, options.debug, true);
         }
       }
     },

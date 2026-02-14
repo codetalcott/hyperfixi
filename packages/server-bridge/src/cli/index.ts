@@ -2,6 +2,8 @@
 
 import { runScan } from './scan-command.js';
 import { runGenerate } from './generate-command.js';
+import { runDiff } from './diff-command.js';
+import { runWatch } from './watch-command.js';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -36,6 +38,14 @@ function getPositionalArgs(args: string[]): string[] {
   return args.filter(a => !a.startsWith('--'));
 }
 
+function parseFramework(flags: Record<string, string | boolean>) {
+  return (
+    ['hono', 'openapi', 'django', 'fastapi'].includes(flags.framework as string)
+      ? flags.framework
+      : 'express'
+  ) as 'express' | 'hono' | 'openapi' | 'django' | 'fastapi';
+}
+
 async function main(): Promise<void> {
   if (!command || command === '--help' || command === '-h') {
     printHelp();
@@ -58,14 +68,31 @@ async function main(): Promise<void> {
   } else if (command === 'generate') {
     await runGenerate({
       dir,
-      framework: (['hono', 'openapi', 'django', 'fastapi'].includes(flags.framework as string)
-        ? flags.framework
-        : 'express') as 'express' | 'hono' | 'openapi' | 'django' | 'fastapi',
+      framework: parseFramework(flags),
       output: typeof flags.output === 'string' ? flags.output : undefined,
       typescript: flags.typescript !== false,
       overwrite: flags.overwrite === true,
       include: typeof flags.include === 'string' ? flags.include.split(',') : undefined,
       exclude: typeof flags.exclude === 'string' ? flags.exclude.split(',') : undefined,
+    });
+  } else if (command === 'diff') {
+    await runDiff({
+      dir,
+      format: flags.format === 'detailed' ? 'detailed' : 'summary',
+      include: typeof flags.include === 'string' ? flags.include.split(',') : undefined,
+      exclude: typeof flags.exclude === 'string' ? flags.exclude.split(',') : undefined,
+      ignore: typeof flags.ignore === 'string' ? flags.ignore.split(',') : undefined,
+    });
+  } else if (command === 'watch') {
+    await runWatch({
+      dir,
+      framework: parseFramework(flags),
+      output: typeof flags.output === 'string' ? flags.output : undefined,
+      typescript: flags.typescript !== false,
+      include: typeof flags.include === 'string' ? flags.include.split(',') : undefined,
+      exclude: typeof flags.exclude === 'string' ? flags.exclude.split(',') : undefined,
+      ignore: typeof flags.ignore === 'string' ? flags.ignore.split(',') : undefined,
+      debounce: typeof flags.debounce === 'string' ? parseInt(flags.debounce, 10) : undefined,
     });
   } else {
     console.error(`Unknown command: ${command}`);
@@ -81,6 +108,8 @@ serverbridge - Extract routes from hyperscript/htmx HTML and generate server stu
 Usage:
   serverbridge scan [dir] [options]      Scan files and print extracted routes
   serverbridge generate [dir] [options]  Scan + generate server route stubs
+  serverbridge diff [dir] [options]      Show changes since last generation
+  serverbridge watch [dir] [options]     Watch files and auto-regenerate
 
 Scan options:
   --format=json|table    Output format (default: json)
@@ -94,6 +123,14 @@ Generate options:
   --typescript              Generate TypeScript (default: true)
   --no-typescript           Generate JavaScript
   --overwrite               Overwrite existing user code
+
+Diff options:
+  --format=summary|detailed  Output format (default: summary)
+
+Watch options:
+  --framework=...         Same as generate
+  --output=DIR            Same as generate
+  --debounce=MS           Debounce delay in ms (default: 300)
 
 Config file:
   Place .serverbridgerc.json in your project root to set defaults.

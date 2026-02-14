@@ -85,6 +85,27 @@ export interface HyperfixiPluginOptions {
   debug?: boolean;
 
   // =========================================================================
+  // Server Bridge Options
+  // =========================================================================
+
+  /**
+   * Enable server-bridge route generation alongside bundle generation.
+   * Requires `@hyperfixi/server-bridge` to be installed as a peer dependency.
+   * If not installed, a warning is logged and the feature is silently skipped.
+   *
+   * @example
+   * ```typescript
+   * hyperfixi({
+   *   serverBridge: {
+   *     framework: 'express',
+   *     output: './server/routes',
+   *   }
+   * })
+   * ```
+   */
+  serverBridge?: ServerBridgeOptions;
+
+  // =========================================================================
   // Multilingual Semantic Options
   // =========================================================================
 
@@ -273,4 +294,22 @@ export interface AggregatedScripts {
 
   /** Map of file paths to scripts in that file */
   fileScripts: Map<string, string[]>;
+}
+
+// =============================================================================
+// Server Bridge Integration
+// =============================================================================
+
+/**
+ * Options for server-bridge route generation.
+ */
+export interface ServerBridgeOptions {
+  /** Target server framework (default: 'express') */
+  framework?: 'express' | 'hono' | 'openapi' | 'django' | 'fastapi';
+  /** Output directory for generated route files (default: './server/routes') */
+  output?: string;
+  /** Generate TypeScript (default: true) */
+  typescript?: boolean;
+  /** URL patterns to ignore */
+  ignore?: string[];
 }

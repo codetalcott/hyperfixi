@@ -83,6 +83,20 @@ describe('ExpressGenerator', () => {
     expect(indexFile!.content).toContain('router.use(apiProductsRouter)');
   });
 
+  it('generates query param destructuring', () => {
+    const route = makeRoute({
+      path: '/api/search',
+      handlerName: 'getApiSearch',
+      queryParams: [
+        { name: 'q', type: 'string', required: true },
+        { name: 'limit', type: 'string', required: true },
+      ],
+    });
+    const result = gen.generate([route], { outputDir: '/out' });
+    const routerFile = result.files.find(f => f.path.includes('api-search'));
+    expect(routerFile!.content).toContain('const { q, limit } = req.query;');
+  });
+
   it('warns when no routes provided', () => {
     const result = gen.generate([], { outputDir: '/out' });
     expect(result.warnings).toContain('No routes to generate');

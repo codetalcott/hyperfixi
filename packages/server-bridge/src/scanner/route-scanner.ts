@@ -4,6 +4,7 @@ import type { RouteDescriptor, ScanResult, ScanError } from '../types.js';
 import { extractHyperscriptRoutes } from './hyperscript-extractor.js';
 import { extractHtmxRoutes } from './htmx-extractor.js';
 import { extractFormBodies } from './form-scanner.js';
+import { detectConflicts } from './conflict-detector.js';
 import { normalizeUrl } from '../conventions/url-patterns.js';
 
 /**
@@ -81,6 +82,9 @@ export async function scanDirectory(dir: string, options: ScanOptions = {}): Pro
     }
   }
 
+  // Detect conflicts BEFORE deduplication (needs all occurrences)
+  const conflicts = detectConflicts(allRoutes);
+
   // Final deduplication across files
   const deduped = deduplicateRoutes(allRoutes);
 
@@ -94,6 +98,7 @@ export async function scanDirectory(dir: string, options: ScanOptions = {}): Pro
     routes: filtered,
     filesScanned: uniqueFiles,
     errors,
+    conflicts,
   };
 }
 
@@ -116,7 +121,7 @@ function deduplicateRoutes(routes: RouteDescriptor[]): RouteDescriptor[] {
  * Check if a URL path matches an ignore pattern.
  * Supports simple wildcards: /external/** matches /external/anything
  */
-function matchIgnorePattern(path: string, pattern: string): boolean {
+export function matchIgnorePattern(path: string, pattern: string): boolean {
   if (pattern.endsWith('/**')) {
     const prefix = pattern.slice(0, -3);
     return path.startsWith(prefix);

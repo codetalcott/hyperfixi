@@ -70,6 +70,21 @@ export class OpenAPIGenerator implements RouteGenerator {
       }));
     }
 
+    // Query parameters
+    if (route.queryParams && route.queryParams.length > 0) {
+      const queryParamSpecs = route.queryParams.map(param => ({
+        name: param.name,
+        in: 'query' as const,
+        required: param.required,
+        schema: { type: 'string' as const },
+      }));
+      if (op.parameters) {
+        op.parameters.push(...queryParamSpecs);
+      } else {
+        op.parameters = queryParamSpecs;
+      }
+    }
+
     // Request body
     if (
       route.requestBody &&

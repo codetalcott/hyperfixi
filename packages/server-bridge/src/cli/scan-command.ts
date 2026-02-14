@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { scanDirectory } from '../scanner/route-scanner.js';
+import { formatConflicts } from '../scanner/conflict-detector.js';
 import { loadConfig } from './config.js';
 
 interface ScanOptions {
@@ -28,6 +29,12 @@ export async function runScan(options: ScanOptions): Promise<void> {
     for (const err of result.errors) {
       console.error(`Error in ${err.file}: ${err.message}`);
     }
+  }
+
+  if (result.conflicts.length > 0) {
+    console.error(
+      `\nWarning: ${result.conflicts.length} route conflict(s) detected:\n${formatConflicts(result.conflicts)}\n`
+    );
   }
 
   if (options.format === 'table') {

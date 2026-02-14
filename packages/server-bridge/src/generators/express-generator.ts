@@ -74,6 +74,12 @@ export class ExpressGenerator implements RouteGenerator {
       lines.push(`  const { ${paramList} } = req.params;`);
     }
 
+    // Destructure query params
+    if (route.queryParams && route.queryParams.length > 0) {
+      const paramList = route.queryParams.map(p => p.name).join(', ');
+      lines.push(`  const { ${paramList} } = req.query;`);
+    }
+
     // Destructure body fields for POST/PUT/PATCH
     if (
       route.requestBody &&

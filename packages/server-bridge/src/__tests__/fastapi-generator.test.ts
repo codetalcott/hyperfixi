@@ -98,6 +98,17 @@ describe('FastAPIGenerator', () => {
     expect(main.content).toContain('app.include_router(api_users_router)');
   });
 
+  it('generates Query() params in function signature', () => {
+    const route = makeRoute({
+      path: '/api/search',
+      handlerName: 'getApiSearch',
+      queryParams: [{ name: 'q', type: 'string', required: true }],
+    });
+    const result = gen.generate([route], { outputDir: '/out' });
+    const router = result.files.find(f => f.path.endsWith('api_search.py'))!;
+    expect(router.content).toContain('q: str = Query(...)');
+  });
+
   it('warns when no routes provided', () => {
     const result = gen.generate([], { outputDir: '/out' });
     expect(result.warnings).toContain('No routes to generate');

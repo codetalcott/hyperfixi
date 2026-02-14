@@ -1,11 +1,8 @@
 import { resolve, join } from 'node:path';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { scanDirectory } from '../scanner/route-scanner.js';
-import { ExpressGenerator } from '../generators/express-generator.js';
-import { HonoGenerator } from '../generators/hono-generator.js';
-import { OpenAPIGenerator } from '../generators/openapi-generator.js';
-import { DjangoGenerator } from '../generators/django-generator.js';
-import { FastAPIGenerator } from '../generators/fastapi-generator.js';
+import { formatConflicts } from '../scanner/conflict-detector.js';
+import { selectGenerator } from '../generators/index.js';
 import {
   loadManifest,
   saveManifest,
@@ -14,8 +11,6 @@ import {
   extractUserCode,
 } from '../generators/manifest.js';
 import { loadConfig } from './config.js';
-import type { RouteGenerator } from '../generators/types.js';
-
 interface GenerateOptions {
   dir: string;
   framework?: 'express' | 'hono' | 'openapi' | 'django' | 'fastapi';
@@ -51,22 +46,19 @@ export async function runGenerate(options: GenerateOptions): Promise<void> {
     }
   }
 
+  if (result.conflicts.length > 0) {
+    console.error(
+      `\nWarning: ${result.conflicts.length} route conflict(s) detected:\n${formatConflicts(result.conflicts)}\nFirst occurrence used for generation.\n`
+    );
+  }
+
   if (result.routes.length === 0) {
     console.log('No routes found. Nothing to generate.');
     return;
   }
 
   // Select generator
-  const generator: RouteGenerator =
-    config.framework === 'openapi'
-      ? new OpenAPIGenerator()
-      : config.framework === 'hono'
-        ? new HonoGenerator()
-        : config.framework === 'django'
-          ? new DjangoGenerator()
-          : config.framework === 'fastapi'
-            ? new FastAPIGenerator()
-            : new ExpressGenerator();
+  const generator = selectGenerator(config.framework ?? 'express');
 
   const outputDir = resolve(cwd, config.output ?? './server/routes');
 

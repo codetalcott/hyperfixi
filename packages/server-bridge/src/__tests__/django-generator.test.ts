@@ -102,6 +102,17 @@ describe('DjangoGenerator', () => {
     expect(rootUrls.content).toContain("include('api-users.urls')");
   });
 
+  it('generates query param extraction', () => {
+    const route = makeRoute({
+      path: '/api/search',
+      handlerName: 'getApiSearch',
+      queryParams: [{ name: 'q', type: 'string', required: true }],
+    });
+    const result = gen.generate([route], { outputDir: '/out' });
+    const views = result.files.find(f => f.path.endsWith('views.py'))!;
+    expect(views.content).toContain("q = request.GET.get('q')");
+  });
+
   it('warns when no routes provided', () => {
     const result = gen.generate([], { outputDir: '/out' });
     expect(result.warnings).toContain('No routes to generate');

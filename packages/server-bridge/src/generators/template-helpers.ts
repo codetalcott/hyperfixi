@@ -25,6 +25,10 @@ export function todoBlock(route: RouteDescriptor, indent: string = '  '): string
     lines.push(`${indent}// Path params: ${route.pathParams.join(', ')}`);
   }
 
+  if (route.queryParams && route.queryParams.length > 0) {
+    lines.push(`${indent}// Query params: ${route.queryParams.map(p => p.name).join(', ')}`);
+  }
+
   if (route.requestBody && route.requestBody.length > 0) {
     const fields = route.requestBody
       .map(f => `${f.name}: ${f.type}${f.required ? '' : '?'}`)

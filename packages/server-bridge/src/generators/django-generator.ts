@@ -100,6 +100,13 @@ export class DjangoGenerator implements RouteGenerator {
       lines.push(`    # Note: ${note}`);
     }
 
+    // Extract query params
+    if (route.queryParams && route.queryParams.length > 0) {
+      for (const param of route.queryParams) {
+        lines.push(`    ${param.name} = request.GET.get('${param.name}')`);
+      }
+    }
+
     // Parse body for POST/PUT/PATCH
     if (
       route.requestBody &&

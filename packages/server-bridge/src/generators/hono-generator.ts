@@ -72,6 +72,13 @@ export class HonoGenerator implements RouteGenerator {
       }
     }
 
+    // Extract query params
+    if (route.queryParams && route.queryParams.length > 0) {
+      for (const param of route.queryParams) {
+        lines.push(`  const ${param.name} = c.req.query('${param.name}');`);
+      }
+    }
+
     // Parse body for POST/PUT/PATCH
     if (
       route.requestBody &&

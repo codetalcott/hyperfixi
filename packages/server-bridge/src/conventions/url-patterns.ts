@@ -1,4 +1,4 @@
-import type { HttpMethod } from '../types.js';
+import type { HttpMethod, QueryParam } from '../types.js';
 
 /**
  * Extract path parameter names from a URL pattern.
@@ -76,6 +76,45 @@ export function urlToHandlerName(url: string, method: HttpMethod): string {
     });
 
   return prefix + segments.join('');
+}
+
+/**
+ * Extract query parameter names from a URL string.
+ * Must be called BEFORE normalizeUrl (which strips query strings).
+ *
+ * @example
+ *   extractQueryParams('/api/search?q=hello&limit=10')
+ *   // [{ name: 'q', type: 'string', required: true },
+ *   //  { name: 'limit', type: 'string', required: true }]
+ */
+export function extractQueryParams(url: string): QueryParam[] {
+  const queryIndex = url.indexOf('?');
+  if (queryIndex === -1) return [];
+
+  const queryString = url.slice(queryIndex + 1).split('#')[0];
+  if (!queryString) return [];
+
+  const params: QueryParam[] = [];
+  const seen = new Set<string>();
+
+  for (const pair of queryString.split('&')) {
+    const eqIndex = pair.indexOf('=');
+    const rawName = eqIndex === -1 ? pair : pair.slice(0, eqIndex);
+    if (!rawName) continue;
+
+    let name: string;
+    try {
+      name = decodeURIComponent(rawName);
+    } catch {
+      name = rawName;
+    }
+    if (seen.has(name)) continue;
+    seen.add(name);
+
+    params.push({ name, type: 'string', required: true });
+  }
+
+  return params;
 }
 
 function capitalize(s: string): string {
