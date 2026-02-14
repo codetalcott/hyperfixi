@@ -48,6 +48,13 @@ export interface TokenizerProfile {
     string,
     { primary: string; alternatives?: string[]; position?: string }
   >;
+  readonly possessive?: {
+    readonly marker: string;
+    readonly markerPosition: 'after-object' | 'between' | 'before-property';
+    readonly specialForms?: Record<string, string>;
+    readonly usePossessiveAdjectives?: boolean;
+    readonly keywords?: Record<string, string>;
+  };
 }
 
 // =============================================================================
@@ -164,12 +171,33 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
         if (extractor.canExtract(input, pos)) {
           const result = extractor.extract(input, pos);
           if (result) {
+            // Promote normalized/stem/stemConfidence from metadata to top-level token options
+            const normalized = result.metadata?.normalized as string | undefined;
+            const stem = result.metadata?.stem as string | undefined;
+            const stemConfidence = result.metadata?.stemConfidence as number | undefined;
+
+            // Build clean metadata without promoted fields
+            const cleanMetadata: Record<string, unknown> = {};
+            if (result.metadata) {
+              for (const [key, value] of Object.entries(result.metadata)) {
+                if (key !== 'normalized' && key !== 'stem' && key !== 'stemConfidence') {
+                  cleanMetadata[key] = value;
+                }
+              }
+            }
+
+            const options: CreateTokenOptions = {};
+            if (normalized) options.normalized = normalized;
+            if (stem) options.stem = stem;
+            if (stemConfidence !== undefined) options.stemConfidence = stemConfidence;
+            if (Object.keys(cleanMetadata).length > 0) options.metadata = cleanMetadata;
+
             tokens.push(
               createToken(
                 result.value,
                 this.classifyToken(result.value),
                 createPosition(pos, pos + result.length),
-                result.metadata
+                Object.keys(options).length > 0 ? options : undefined
               )
             );
             pos += result.length;
@@ -312,6 +340,13 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
             keywordMap.set(alt, { native: alt, normalized: role });
           }
         }
+      }
+    }
+
+    // Extract from possessive keywords (e.g., ñuqapa, qampa for Quechua)
+    if (profile.possessive?.keywords) {
+      for (const [native, normalized] of Object.entries(profile.possessive.keywords)) {
+        keywordMap.set(native, { native, normalized });
       }
     }
 
