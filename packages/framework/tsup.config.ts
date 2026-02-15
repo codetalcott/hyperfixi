@@ -22,6 +22,7 @@ export default defineConfig([
       'generation/index': 'src/generation/index.ts',
       'grammar/index': 'src/grammar/index.ts',
       'api/index': 'src/api/index.ts',
+      'testing/index': 'src/testing/index.ts',
     },
     format: ['esm'],
     splitting: false,

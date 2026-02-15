@@ -54,6 +54,12 @@ jobs:
       - name: Build domain-bdd package
         run: npm run build --prefix packages/domain-bdd
 
+      - name: Build domain-sql package
+        run: npm run build --prefix packages/domain-sql
+
+      - name: Build domain-jsx package
+        run: npm run build --prefix packages/domain-jsx
+
       - name: Build semantic package
         run: npm run build --prefix packages/semantic
 
@@ -112,6 +118,8 @@ jobs:
           path: |
             packages/framework/dist/
             packages/domain-bdd/dist/
+            packages/domain-sql/dist/
+            packages/domain-jsx/dist/
             packages/semantic/dist/
             packages/i18n/dist/
             packages/core/dist/
@@ -332,6 +340,12 @@ jobs:
 
       - name: Test domain-bdd
         run: npm test --prefix packages/domain-bdd
+
+      - name: Test domain-sql
+        run: npm test --prefix packages/domain-sql
+
+      - name: Test domain-jsx
+        run: npm test --prefix packages/domain-jsx
 
       - name: Test language-server
         run: npm test --prefix packages/language-server -- --run

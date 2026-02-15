@@ -6,8 +6,8 @@
  * each step individually, and assembles a CompoundSemanticNode.
  */
 
-import type { MultilingualDSL } from '@lokascript/framework';
-import type { SemanticNode, SemanticValue } from '@lokascript/framework';
+import type { MultilingualDSL, SemanticNode, SemanticValue } from '@lokascript/framework';
+import { extractValue } from '@lokascript/framework';
 
 // =============================================================================
 // Types
@@ -116,12 +116,6 @@ const STEP_DELIMITERS: Record<string, RegExp> = {
 // =============================================================================
 // Helpers
 // =============================================================================
-
-function extractValue(value: SemanticValue): string {
-  if ('raw' in value && value.raw !== undefined) return String(value.raw);
-  if ('value' in value && value.value !== undefined) return String(value.value);
-  return '';
-}
 
 /**
  * Get the keyword for a step type in a given language.

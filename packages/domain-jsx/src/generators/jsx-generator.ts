@@ -14,15 +14,11 @@
  */
 
 import type { SemanticNode, CodeGenerator } from '@lokascript/framework';
+import { extractRoleValue } from '@lokascript/framework';
 
-function extractValue(value: {
-  type: string;
-  raw?: string;
-  value?: string | number | boolean;
-}): string {
-  if ('raw' in value && value.raw !== undefined) return String(value.raw);
-  if ('value' in value && value.value !== undefined) return String(value.value);
-  return '';
+/** Escape characters for safe interpolation into JS string literals */
+function escapeForString(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 /**
@@ -73,13 +69,10 @@ function parseProps(propsStr: string): string {
 // ---------------------------------------------------------------------------
 
 function generateElement(node: SemanticNode): string {
-  const tag = node.roles.get('tag');
-  const props = node.roles.get('props');
-  const children = node.roles.get('children');
-
-  const tagStr = tag ? extractValue(tag as any) : 'div';
-  const propsStr = props ? ' ' + parseProps(extractValue(props as any)) : '';
-  const childStr = children ? extractValue(children as any) : '';
+  const tagStr = extractRoleValue(node, 'tag') || 'div';
+  const propsRaw = extractRoleValue(node, 'props');
+  const propsStr = propsRaw ? ' ' + parseProps(propsRaw) : '';
+  const childStr = extractRoleValue(node, 'children');
 
   if (childStr) {
     return `<${tagStr}${propsStr}>${childStr}</${tagStr}>`;
@@ -88,13 +81,9 @@ function generateElement(node: SemanticNode): string {
 }
 
 function generateComponent(node: SemanticNode): string {
-  const name = node.roles.get('name');
-  const props = node.roles.get('props');
-  const children = node.roles.get('children');
-
-  const nameStr = name ? extractValue(name as any) : 'Component';
-  const propsStr = props ? extractValue(props as any) : '';
-  const bodyStr = children ? extractValue(children as any) : 'null';
+  const nameStr = extractRoleValue(node, 'name') || 'Component';
+  const propsStr = extractRoleValue(node, 'props');
+  const bodyStr = extractRoleValue(node, 'children') || 'null';
 
   // Build destructured props list
   const propsList = propsStr ? `{ ${propsStr.split(/\s+/).join(', ')} }` : '';
@@ -103,31 +92,22 @@ function generateComponent(node: SemanticNode): string {
 }
 
 function generateRender(node: SemanticNode): string {
-  const source = node.roles.get('source');
-  const destination = node.roles.get('destination');
+  const componentStr = extractRoleValue(node, 'source') || 'App';
+  const targetStr = extractRoleValue(node, 'destination') || 'root';
 
-  const componentStr = source ? extractValue(source as any) : 'App';
-  const targetStr = destination ? extractValue(destination as any) : 'root';
-
-  return `createRoot(document.getElementById("${targetStr}")).render(<${componentStr} />)`;
+  return `createRoot(document.getElementById("${escapeForString(targetStr)}")).render(<${escapeForString(componentStr)} />)`;
 }
 
 function generateState(node: SemanticNode): string {
-  const name = node.roles.get('name');
-  const initial = node.roles.get('initial');
-
-  const nameStr = name ? extractValue(name as any) : 'value';
-  const initialStr = initial ? extractValue(initial as any) : 'null';
+  const nameStr = extractRoleValue(node, 'name') || 'value';
+  const initialStr = extractRoleValue(node, 'initial') || 'null';
 
   return `const [${nameStr}, ${toSetterName(nameStr)}] = useState(${initialStr})`;
 }
 
 function generateEffect(node: SemanticNode): string {
-  const callback = node.roles.get('callback');
-  const deps = node.roles.get('deps');
-
-  const callbackStr = callback ? extractValue(callback as any) : '() => {}';
-  const depsStr = deps ? extractValue(deps as any) : '';
+  const callbackStr = extractRoleValue(node, 'callback') || '() => {}';
+  const depsStr = extractRoleValue(node, 'deps');
 
   // Build deps array
   const depsArray = depsStr ? `[${depsStr.split(/\s+/).join(', ')}]` : '[]';
@@ -136,9 +116,7 @@ function generateEffect(node: SemanticNode): string {
 }
 
 function generateFragment(node: SemanticNode): string {
-  const children = node.roles.get('children');
-
-  const childStr = children ? extractValue(children as any) : '';
+  const childStr = extractRoleValue(node, 'children');
 
   if (!childStr) {
     return '<></>';

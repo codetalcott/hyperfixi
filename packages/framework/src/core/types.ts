@@ -529,6 +529,36 @@ export function createCompoundNode(
 }
 
 /**
+ * Extract a string value from a SemanticValue.
+ *
+ * Handles all value types in the SemanticValue union:
+ * - ExpressionValue: returns `raw`
+ * - LiteralValue/SelectorValue/ReferenceValue: returns `value` as string
+ * - PropertyPathValue: returns `object.property` path
+ *
+ * This is the standard way to get a display string from any semantic value,
+ * eliminating the need for `as any` casts in domain code generators.
+ */
+export function extractValue(value: SemanticValue): string {
+  if ('raw' in value && value.raw !== undefined) return String(value.raw);
+  if ('value' in value && value.value !== undefined) return String(value.value);
+  if (value.type === 'property-path') return `${extractValue(value.object)}.${value.property}`;
+  return '';
+}
+
+/**
+ * Extract a string value from a named role on a SemanticNode.
+ *
+ * Convenience wrapper: looks up the role, returns empty string if missing.
+ * Eliminates the common `const x = node.roles.get('role'); const val = x ? extractValue(x as any) : '';` pattern.
+ */
+export function extractRoleValue(node: SemanticNode, role: string): string {
+  const value = node.roles.get(role);
+  if (!value) return '';
+  return extractValue(value);
+}
+
+/**
  * Create a loop semantic node
  */
 export function createLoopNode(

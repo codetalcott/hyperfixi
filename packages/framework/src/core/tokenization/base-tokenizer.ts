@@ -25,6 +25,7 @@ import {
   type CreateTokenOptions,
 } from './token-utils';
 import { extractCssSelector, extractStringLiteral, extractNumber, extractUrl } from './extractors';
+import { getDefaultExtractors } from './default-extractors';
 
 // =============================================================================
 // Types
@@ -809,4 +810,94 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
     }
     return null;
   }
+}
+
+// =============================================================================
+// Simple Tokenizer Factory
+// =============================================================================
+
+/**
+ * Configuration for createSimpleTokenizer.
+ *
+ * Creates a tokenizer from declarative config instead of a class definition.
+ * Covers the common pattern used by domain packages (SQL, BDD, JSX).
+ */
+export interface SimpleTokenizerConfig {
+  /** ISO 639-1 language code */
+  language: string;
+  /** Text direction (default: 'ltr') */
+  direction?: 'ltr' | 'rtl';
+  /** Keywords to recognize (lowercased for lookup if caseInsensitive) */
+  keywords: string[];
+  /** Extra keyword entries for non-Latin normalization */
+  keywordExtras?: KeywordEntry[];
+  /** Profile for initializeKeywordsFromProfile (for non-Latin scripts) */
+  keywordProfile?: TokenizerProfile;
+  /** Include operator classification (default: false) */
+  includeOperators?: boolean;
+  /** Case-insensitive keyword matching (default: true) */
+  caseInsensitive?: boolean;
+  /** Custom extractors registered BEFORE default extractors */
+  customExtractors?: ValueExtractor[];
+}
+
+/**
+ * Create a tokenizer from declarative configuration.
+ *
+ * Eliminates the boilerplate of extending BaseTokenizer for simple domain tokenizers.
+ * Handles keyword classification, optional operator support, and non-Latin keyword setup.
+ *
+ * @example
+ * ```typescript
+ * const englishSQL = createSimpleTokenizer({
+ *   language: 'en',
+ *   keywords: ['select', 'insert', 'update', 'delete', 'from', 'into', 'where', 'set', 'values'],
+ *   includeOperators: true,
+ *   caseInsensitive: true,
+ * });
+ * ```
+ */
+export function createSimpleTokenizer(config: SimpleTokenizerConfig): LanguageTokenizer {
+  const {
+    language,
+    direction = 'ltr',
+    keywords,
+    keywordExtras,
+    keywordProfile,
+    includeOperators = false,
+    caseInsensitive = true,
+    customExtractors,
+  } = config;
+
+  const keywordSet = new Set(caseInsensitive ? keywords.map(k => k.toLowerCase()) : keywords);
+
+  const OPERATORS = ['>', '<', '=', '>=', '<=', '!=', '==', '+', '-', '*', '/'];
+
+  class SimpleTokenizer extends BaseTokenizer {
+    readonly language = language;
+    readonly direction = direction;
+
+    constructor() {
+      super();
+      if (customExtractors) {
+        this.registerExtractors(customExtractors);
+      }
+      this.registerExtractors(getDefaultExtractors());
+      if (keywordProfile) {
+        this.initializeKeywordsFromProfile(keywordProfile, keywordExtras);
+      }
+    }
+
+    classifyToken(token: string): TokenKind {
+      const lookup = caseInsensitive ? token.toLowerCase() : token;
+      if (keywordSet.has(lookup)) return 'keyword';
+      if (this.isKeyword(token)) return 'keyword';
+      if (/^\d/.test(token)) return 'literal';
+      if (/^['"]/.test(token)) return 'literal';
+      if (includeOperators && OPERATORS.includes(token)) return 'operator';
+      return 'identifier';
+    }
+  }
+
+  return new SimpleTokenizer();
 }

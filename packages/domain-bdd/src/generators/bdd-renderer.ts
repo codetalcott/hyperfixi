@@ -5,7 +5,8 @@
  * for a target language. Inverse of the parser.
  */
 
-import type { SemanticNode, SemanticValue } from '@lokascript/framework';
+import type { SemanticNode } from '@lokascript/framework';
+import { extractValue } from '@lokascript/framework';
 
 // =============================================================================
 // Keyword Tables
@@ -347,14 +348,23 @@ const ASSERTION_WORDS: Record<string, Record<string, string>> = {
 // Helpers
 // =============================================================================
 
-function extractValue(value: SemanticValue): string {
-  if ('raw' in value && value.raw !== undefined) return String(value.raw);
-  if ('value' in value && value.value !== undefined) return String(value.value);
-  return '';
-}
-
 function lookup(table: Record<string, Record<string, string>>, key: string, lang: string): string {
   return table[key.toLowerCase()]?.[lang] ?? key;
+}
+
+// =============================================================================
+// Word Order Helpers
+// =============================================================================
+
+const SOV_LANGUAGES = new Set(['ja', 'ko', 'tr']);
+const VSO_LANGUAGES = new Set(['ar']);
+
+function isSOV(lang: string): boolean {
+  return SOV_LANGUAGES.has(lang);
+}
+
+function isVSO(lang: string): boolean {
+  return VSO_LANGUAGES.has(lang);
 }
 
 // =============================================================================
@@ -369,11 +379,11 @@ function renderGiven(node: SemanticNode, lang: string): string {
   const stateStr = state ? extractValue(state) : 'visible';
   const statePhrase = lookup(STATE_WORDS, stateStr, lang);
 
-  if (lang === 'ja') {
+  if (isSOV(lang)) {
     // SOV: target state keyword
     return `${targetStr} ${statePhrase} ${keyword}`;
   }
-  if (lang === 'ar') {
+  if (isVSO(lang)) {
     // VSO: keyword target state
     return `${keyword} ${targetStr} ${statePhrase}`;
   }
@@ -394,11 +404,11 @@ function renderWhen(node: SemanticNode, lang: string): string {
   const parts = [actionPhrase, targetStr];
   if (valueStr) parts.push(valueStr);
 
-  if (lang === 'ja') {
+  if (isSOV(lang)) {
     // SOV: target action keyword
     return `${targetStr} ${actionPhrase} ${keyword}`.trim();
   }
-  if (lang === 'ar') {
+  if (isVSO(lang)) {
     // VSO: keyword action target
     return `${keyword} ${actionPhrase} ${targetStr}`.trim();
   }
@@ -418,14 +428,14 @@ function renderThen(node: SemanticNode, lang: string): string {
   // CSS class assertion
   if (assertionStr.startsWith('.')) {
     const assertPhrase = `has ${assertionStr}`;
-    if (lang === 'ja') return `${targetStr} に ${assertionStr} ${keyword}`;
+    if (isSOV(lang)) return `${targetStr} に ${assertionStr} ${keyword}`;
     return `${keyword} ${targetStr} ${assertPhrase}`;
   }
 
   const assertPhrase = lookup(ASSERTION_WORDS, assertionStr, lang);
   const valuePart = expectedStr ? ` ${expectedStr}` : '';
 
-  if (lang === 'ja') {
+  if (isSOV(lang)) {
     return `${targetStr} ${assertPhrase}${valuePart} ${keyword}`;
   }
   // SVO/VSO: keyword target assertion [value]

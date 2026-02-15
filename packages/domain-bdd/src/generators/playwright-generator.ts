@@ -8,14 +8,9 @@
  * Uses declarative mappings from ./mappings.ts for extensibility.
  */
 
-import type { SemanticNode, SemanticValue, CodeGenerator } from '@lokascript/framework';
+import type { SemanticNode, CodeGenerator } from '@lokascript/framework';
+import { extractValue } from '@lokascript/framework';
 import { STATE_MAPPINGS, ACTION_MAPPINGS, ASSERTION_MAPPINGS } from './mappings.js';
-
-function extractValue(value: SemanticValue): string {
-  if ('raw' in value && value.raw !== undefined) return String(value.raw);
-  if ('value' in value && value.value !== undefined) return String(value.value);
-  return '';
-}
 
 /** Escape single quotes and backslashes for JS string literals */
 function escapeForString(s: string): string {

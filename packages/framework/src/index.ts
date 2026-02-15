@@ -93,6 +93,10 @@ export {
   createConditionalNode,
   createCompoundNode,
   createLoopNode,
+  extractValue,
+  extractRoleValue,
 } from './core/types';
 
 export { defineCommand, defineRole } from './schema';
+export { createSimpleTokenizer } from './core/tokenization/base-tokenizer';
+export type { SimpleTokenizerConfig } from './core/tokenization/base-tokenizer';
