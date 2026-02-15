@@ -455,7 +455,7 @@ export class PatternMatcher {
       patternToken.expectedTypes
     );
     if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
-      if (!patternToken.expectedTypes.includes(value.type)) {
+      if (!isTypeCompatible(value.type, patternToken.expectedTypes)) {
         this.logger.debug('    >>> TYPE MISMATCH - returning', patternToken.optional || false);
         return patternToken.optional || false;
       }

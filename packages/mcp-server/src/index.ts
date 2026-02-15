@@ -24,6 +24,7 @@ import { languageDocsTools, handleLanguageDocsTool } from './tools/language-docs
 import { profileTools, handleProfileTool } from './tools/profiles.js';
 import { compilationTools, handleCompilationTool } from './tools/compilation.js';
 import { sqlDomainTools, handleSQLDomainTool } from './tools/sql-domain.js';
+import { bddDomainTools, handleBDDDomainTool } from './tools/bdd-domain.js';
 import { routeTools, handleRouteTool } from './tools/routes.js';
 
 // Resource implementations
@@ -61,6 +62,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...profileTools,
       ...compilationTools,
       ...sqlDomainTools,
+      ...bddDomainTools,
       ...routeTools,
     ],
   };
@@ -148,6 +150,16 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     name === 'translate_sql'
   ) {
     return handleSQLDomainTool(name, args as Record<string, unknown>);
+  }
+
+  // BDD domain tools
+  if (
+    name === 'parse_bdd' ||
+    name === 'compile_bdd' ||
+    name === 'validate_bdd' ||
+    name === 'translate_bdd'
+  ) {
+    return handleBDDDomainTool(name, args as Record<string, unknown>);
   }
 
   // ServerBridge route tools

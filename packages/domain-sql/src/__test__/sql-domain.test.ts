@@ -104,6 +104,16 @@ describe('SQL Domain', () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toBeDefined();
     });
+
+    it('should parse keyword used as column name (e.g. "set")', () => {
+      // "set" is a keyword in SQL domain (UPDATE ... SET ...) but should
+      // still work as a column name when used in SELECT context.
+      // This tests the isTypeCompatible() fix in pattern-matcher.ts
+      const node = sql.parse('select set from users', 'en');
+      expect(node.action).toBe('select');
+      expect(node.roles.has('columns')).toBe(true);
+      expect(node.roles.has('source')).toBe(true);
+    });
   });
 
   // ===========================================================================

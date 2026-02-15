@@ -172,6 +172,56 @@ describe('PatternMatcher', () => {
         expect(result?.captured.has('source')).toBe(true);
       });
 
+      it('should match keyword tokens against roles expecting expression type', () => {
+        // Regression: keywords produce 'literal' semantic type but 'expression'
+        // in expectedTypes should act as a wildcard accepting any type.
+        const schema = defineCommand({
+          action: 'given',
+          roles: [
+            defineRole({
+              role: 'target',
+              required: true,
+              expectedTypes: ['expression', 'selector'],
+              svoPosition: 2,
+            }),
+            defineRole({
+              role: 'state',
+              required: true,
+              expectedTypes: ['expression'],
+              svoPosition: 1,
+              markerOverride: { en: 'is' },
+            }),
+          ],
+        });
+
+        const profile: PatternGenLanguageProfile = {
+          code: 'en',
+          wordOrder: 'SVO',
+          keywords: {
+            given: { primary: 'given' },
+          },
+          roleMarkers: {
+            state: { primary: 'is', position: 'before' },
+          },
+        };
+
+        const pattern = generatePattern(schema, profile);
+
+        // 'exists' is a keyword token filling the state role
+        const tokens = createMockTokenStream([
+          createToken({ kind: 'keyword', value: 'given', position: createPosition(0, 5) }),
+          createToken({ kind: 'selector', value: '#button', position: createPosition(6, 13) }),
+          createToken({ kind: 'keyword', value: 'is', position: createPosition(14, 16) }),
+          createToken({ kind: 'keyword', value: 'exists', position: createPosition(17, 23) }),
+        ]);
+
+        const result = matcher.matchPattern(tokens, pattern);
+
+        expect(result).not.toBeNull();
+        expect(result?.captured.has('target')).toBe(true);
+        expect(result?.captured.has('state')).toBe(true);
+      });
+
       it('should apply default values for optional roles', () => {
         const schema = defineCommand({
           action: 'select',

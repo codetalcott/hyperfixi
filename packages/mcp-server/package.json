@@ -45,6 +45,7 @@
     "@hyperfixi/patterns-reference": "*",
     "@lokascript/semantic": "*",
     "@lokascript/domain-sql": "*",
+    "@lokascript/domain-bdd": "*",
     "@hyperfixi/server-bridge": "*"
   },
   "peerDependenciesMeta": {
@@ -63,6 +64,9 @@
     "@lokascript/domain-sql": {
       "optional": true
     },
+    "@lokascript/domain-bdd": {
+      "optional": true
+    },
     "@hyperfixi/server-bridge": {
       "optional": true
     }
@@ -73,6 +77,7 @@
     "@hyperfixi/patterns-reference": "*",
     "@lokascript/semantic": "*",
     "@lokascript/domain-sql": "*",
+    "@lokascript/domain-bdd": "*",
     "@hyperfixi/server-bridge": "*",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
