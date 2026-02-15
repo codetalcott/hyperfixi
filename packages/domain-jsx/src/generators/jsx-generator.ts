@@ -36,12 +36,45 @@ function toPascalCase(name: string): string {
 }
 
 /**
- * Check if a string looks like it has props (key=value or key="value" pairs).
+ * Split a props string into tokens, respecting quoted strings as single tokens.
+ * e.g. 'className "my app" disabled' → ['className', '"my app"', 'disabled']
+ */
+function tokenizeProps(propsStr: string): string[] {
+  const tokens: string[] = [];
+  let i = 0;
+  while (i < propsStr.length) {
+    // Skip whitespace
+    if (/\s/.test(propsStr[i])) {
+      i++;
+      continue;
+    }
+    // Quoted string — consume until matching close quote
+    if (propsStr[i] === '"' || propsStr[i] === "'") {
+      const quote = propsStr[i];
+      let end = i + 1;
+      while (end < propsStr.length && propsStr[end] !== quote) {
+        if (propsStr[end] === '\\') end++; // skip escaped char
+        end++;
+      }
+      tokens.push(propsStr.slice(i, end + 1));
+      i = end + 1;
+      continue;
+    }
+    // Unquoted token — consume until whitespace
+    let end = i;
+    while (end < propsStr.length && !/\s/.test(propsStr[end])) end++;
+    tokens.push(propsStr.slice(i, end));
+    i = end;
+  }
+  return tokens;
+}
+
+/**
+ * Parse a props string into JSX attribute format.
+ * e.g. 'className "my app"' → 'className="my app"'
  */
 function parseProps(propsStr: string): string {
-  // Already formatted as JSX props (e.g. className "app" → className="app")
-  // Split on spaces and pair up key-value
-  const parts = propsStr.split(/\s+/);
+  const parts = tokenizeProps(propsStr);
   const pairs: string[] = [];
   let i = 0;
   while (i < parts.length) {

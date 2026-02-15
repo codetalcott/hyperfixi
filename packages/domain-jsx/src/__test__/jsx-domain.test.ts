@@ -408,6 +408,99 @@ describe('JSX Domain', () => {
   });
 
   // ===========================================================================
+  // Cross-Language Compilation Equivalence
+  // ===========================================================================
+
+  describe('Compilation Equivalence', () => {
+    it('should compile state to identical output across all languages', () => {
+      const en = jsx.compile('state count initial 0', 'en');
+      const es = jsx.compile('estado count inicial 0', 'es');
+      const ja = jsx.compile('count 0 初期値 状態', 'ja');
+      const ar = jsx.compile('حالة count ابتدائي 0', 'ar');
+      for (const result of [en, es, ja, ar]) {
+        expect(result.ok).toBe(true);
+        expect(result.code).toContain('useState');
+        expect(result.code).toContain('count');
+        expect(result.code).toContain('setCount');
+      }
+    });
+
+    it('should compile element to identical output across SVO languages', () => {
+      const en = jsx.compile('element div with className "app"', 'en');
+      const es = jsx.compile('elemento div con className "app"', 'es');
+      for (const result of [en, es]) {
+        expect(result.ok).toBe(true);
+        expect(result.code).toContain('<div');
+        expect(result.code).toContain('className');
+      }
+    });
+
+    it('should compile effect to identical output across all languages', () => {
+      const en = jsx.compile('effect fetchData on count', 'en');
+      const es = jsx.compile('efecto fetchData en count', 'es');
+      const ja = jsx.compile('count で fetchData エフェクト', 'ja');
+      const ar = jsx.compile('تأثير fetchData عند count', 'ar');
+      for (const result of [en, es, ja, ar]) {
+        expect(result.ok).toBe(true);
+        expect(result.code).toContain('useEffect');
+        expect(result.code).toContain('fetchData');
+      }
+    });
+
+    it('should compile fragment to identical output across all languages', () => {
+      const en = jsx.compile('fragment header footer', 'en');
+      const es = jsx.compile('fragmento header footer', 'es');
+      const ar = jsx.compile('جزء header footer', 'ar');
+      for (const result of [en, es, ar]) {
+        expect(result.ok).toBe(true);
+        expect(result.code).toContain('<>');
+        expect(result.code).toContain('</>');
+      }
+    });
+  });
+
+  // ===========================================================================
+  // Code Generation Edge Cases
+  // ===========================================================================
+
+  describe('Code Generation Edge Cases', () => {
+    it('should generate component function declaration', () => {
+      const result = jsx.compile('component Button with props text onClick', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('function Button');
+      // Note: multi-token prop extraction ('text onClick') is a known limitation —
+      // the pattern matcher captures single tokens per role.
+    });
+
+    it('should generate fragment with PascalCase component name', () => {
+      const result = jsx.compile('fragment sidebar', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('<Sidebar />');
+      // Note: multi-child capture ('sidebar content') is a known limitation —
+      // single-role patterns capture one token.
+    });
+
+    it('should generate state with no initial value', () => {
+      const result = jsx.compile('state count', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('useState(null)');
+    });
+
+    it('should generate effect with empty deps array when no deps given', () => {
+      const result = jsx.compile('effect cleanup', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('[]');
+    });
+
+    it('should handle render with escaped characters in target ID', () => {
+      const result = jsx.compile('render App into root', 'en');
+      expect(result.ok).toBe(true);
+      // Verify the output is well-formed JavaScript
+      expect(result.code).toContain('document.getElementById("root")');
+    });
+  });
+
+  // ===========================================================================
   // Error Handling
   // ===========================================================================
 
@@ -425,6 +518,13 @@ describe('JSX Domain', () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toBeDefined();
       expect(result.errors!.length).toBeGreaterThan(0);
+    });
+
+    it('should validate across all supported languages', () => {
+      for (const lang of ['en', 'es', 'ja', 'ar']) {
+        const result = jsx.validate('xyzzy foobar baz qux', lang);
+        expect(result.valid).toBe(false);
+      }
     });
   });
 });

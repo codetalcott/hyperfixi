@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "tsup && npm run build:types",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist --noEmit false",
     "test": "vitest",
     "test:run": "vitest run",
     "test:check": "vitest run --reporter=dot 2>&1 | tail -5",

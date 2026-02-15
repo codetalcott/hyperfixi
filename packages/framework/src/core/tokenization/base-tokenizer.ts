@@ -25,7 +25,12 @@ import {
   type CreateTokenOptions,
 } from './token-utils';
 import { extractCssSelector, extractStringLiteral, extractNumber, extractUrl } from './extractors';
+import { DEFAULT_OPERATORS } from './extractors/operator';
 import { getDefaultExtractors } from './default-extractors';
+
+// Module-scope operator set for O(1) lookup in createSimpleTokenizer.
+// Uses the canonical list from OperatorExtractor to avoid duplication.
+const SIMPLE_TOKENIZER_OPERATOR_SET = new Set(DEFAULT_OPERATORS);
 
 // =============================================================================
 // Types
@@ -821,6 +826,14 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
  *
  * Creates a tokenizer from declarative config instead of a class definition.
  * Covers the common pattern used by domain packages (SQL, BDD, JSX).
+ *
+ * **Keyword resolution** uses two additive paths:
+ * 1. `keywords` — explicit list, checked first. Respects `caseInsensitive`.
+ * 2. `keywordProfile` — populates BaseTokenizer's profile keyword map via
+ *    `initializeKeywordsFromProfile()`. Checked second via `isKeyword()`, which
+ *    always lowercases (harmless for CJK/Arabic; notable for Latin scripts
+ *    with `caseInsensitive: false`). Provides normalization metadata for
+ *    non-Latin scripts.
  */
 export interface SimpleTokenizerConfig {
   /** ISO 639-1 language code */
@@ -833,7 +846,7 @@ export interface SimpleTokenizerConfig {
   keywordExtras?: KeywordEntry[];
   /** Profile for initializeKeywordsFromProfile (for non-Latin scripts) */
   keywordProfile?: TokenizerProfile;
-  /** Include operator classification (default: false) */
+  /** Include operator classification (default: false). Uses DEFAULT_OPERATORS from OperatorExtractor. */
   includeOperators?: boolean;
   /** Case-insensitive keyword matching (default: true) */
   caseInsensitive?: boolean;
@@ -871,8 +884,6 @@ export function createSimpleTokenizer(config: SimpleTokenizerConfig): LanguageTo
 
   const keywordSet = new Set(caseInsensitive ? keywords.map(k => k.toLowerCase()) : keywords);
 
-  const OPERATORS = ['>', '<', '=', '>=', '<=', '!=', '==', '+', '-', '*', '/'];
-
   class SimpleTokenizer extends BaseTokenizer {
     readonly language = language;
     readonly direction = direction;
@@ -889,12 +900,14 @@ export function createSimpleTokenizer(config: SimpleTokenizerConfig): LanguageTo
     }
 
     classifyToken(token: string): TokenKind {
+      // Fast path: explicit keywords from config (respects caseInsensitive)
       const lookup = caseInsensitive ? token.toLowerCase() : token;
       if (keywordSet.has(lookup)) return 'keyword';
+      // Profile path: non-Latin normalization (always lowercases via profileKeywordMap)
       if (this.isKeyword(token)) return 'keyword';
       if (/^\d/.test(token)) return 'literal';
       if (/^['"]/.test(token)) return 'literal';
-      if (includeOperators && OPERATORS.includes(token)) return 'operator';
+      if (includeOperators && SIMPLE_TOKENIZER_OPERATOR_SET.has(token)) return 'operator';
       return 'identifier';
     }
   }

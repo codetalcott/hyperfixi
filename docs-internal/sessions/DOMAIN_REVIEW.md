@@ -198,12 +198,20 @@ Neither `domain-sql`, `domain-bdd`, nor `domain-jsx` appear in `.github/workflow
   - Phase 5c (CI integration)
   - Phase 6 (more languages) — incremental, demand-driven
 
-### domain-jsx (56 tests, 4 languages)
+### domain-jsx (66 tests, 4 languages) — Updated 2026-02-15
 
-- **Maturity:** Proof-of-concept, clean but limited.
-- **Missing:** No documentation (no README.md). No renderer.
-- **Fragility:** `parseProps()` in the generator splits on whitespace, which fails for quoted values with spaces (`className "my app"`). Not tested.
-- **No-ops needed:** As a proof-of-concept, this is fine. If promoted to production use, needs proper prop parsing and edge case tests.
+- **Maturity:** Proof-of-concept, clean and improved.
+- **Fixes applied (2026-02-15):**
+  - `parseProps()` space-in-quotes bug → added `tokenizeProps()` with quote-aware splitting
+  - Docstring JA example wrong token order → corrected to `'count 0 初期値 状態'`
+  - Dead multi-word keyword entries removed (`'with props'`, `'con props'`, `'مع خصائص'`)
+  - Unused singleton tokenizer exports removed
+  - Tokenizers refactored to `createSimpleTokenizer()` (230→120 lines)
+  - `build:types` fixed (`--noEmit false`)
+  - MCP tools added (parse/compile/validate/translate)
+  - 10 new tests (cross-language equivalence, edge cases) → 56→66 total
+- **Known limitations:** Single-token role capture (multi-token props/children not captured). Multi-word markers (`'with props'`) don't match.
+- **Missing:** No renderer, no README.md. See `packages/domain-jsx/IMPROVEMENT_PLAN.md`.
 
 ---
 

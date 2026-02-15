@@ -21,7 +21,7 @@
  * // → { ok: true, code: 'createRoot(document.getElementById("root")).render(<App />)' }
  *
  * // Japanese (SOV)
- * jsx.compile('count 初期値 0 状態', 'ja');
+ * jsx.compile('count 0 初期値 状態', 'ja');
  * // → { ok: true, code: 'const [count, setCount] = useState(0)' }
  *
  * // Arabic (VSO)
@@ -61,28 +61,28 @@ export function createJSXDSL(): MultilingualDSL {
         code: 'en',
         name: 'English',
         nativeName: 'English',
-        tokenizer: new EnglishJSXTokenizer(),
+        tokenizer: EnglishJSXTokenizer,
         patternProfile: englishProfile,
       },
       {
         code: 'es',
         name: 'Spanish',
         nativeName: 'Español',
-        tokenizer: new SpanishJSXTokenizer(),
+        tokenizer: SpanishJSXTokenizer,
         patternProfile: spanishProfile,
       },
       {
         code: 'ja',
         name: 'Japanese',
         nativeName: '日本語',
-        tokenizer: new JapaneseJSXTokenizer(),
+        tokenizer: JapaneseJSXTokenizer,
         patternProfile: japaneseProfile,
       },
       {
         code: 'ar',
         name: 'Arabic',
         nativeName: 'العربية',
-        tokenizer: new ArabicJSXTokenizer(),
+        tokenizer: ArabicJSXTokenizer,
         patternProfile: arabicProfile,
       },
     ],
