@@ -27,6 +27,10 @@ import { sqlDomainTools, handleSQLDomainTool } from './tools/sql-domain.js';
 import { bddDomainTools, handleBDDDomainTool } from './tools/bdd-domain.js';
 import { jsxDomainTools, handleJSXDomainTool } from './tools/jsx-domain.js';
 import { routeTools, handleRouteTool } from './tools/routes.js';
+import {
+  behaviorspecDomainTools,
+  handleBehaviorSpecDomainTool,
+} from './tools/behaviorspec-domain.js';
 
 // Resource implementations
 import { listResources, readResource } from './resources/index.js';
@@ -66,6 +70,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...bddDomainTools,
       ...jsxDomainTools,
       ...routeTools,
+      ...behaviorspecDomainTools,
     ],
   };
 });
@@ -172,6 +177,16 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     name === 'translate_jsx'
   ) {
     return handleJSXDomainTool(name, args as Record<string, unknown>);
+  }
+
+  // BehaviorSpec domain tools
+  if (
+    name === 'parse_behaviorspec' ||
+    name === 'compile_behaviorspec' ||
+    name === 'validate_behaviorspec' ||
+    name === 'translate_behaviorspec'
+  ) {
+    return handleBehaviorSpecDomainTool(name, args as Record<string, unknown>);
   }
 
   // ServerBridge route tools
