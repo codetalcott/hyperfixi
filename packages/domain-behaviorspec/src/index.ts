@@ -2,9 +2,9 @@
  * @lokascript/domain-behaviorspec — Multilingual Interaction Testing Domain
  *
  * A rich interaction testing domain built on @lokascript/framework.
- * Write Playwright tests in natural language across 4 languages (EN, ES, JA, AR),
+ * Write Playwright tests in natural language across 8 languages (EN, ES, JA, AR, KO, ZH, FR, TR),
  * with support for page navigation, viewport control, user interactions,
- * assertions, timing, and negation.
+ * assertions, timing, negation, and feature-level test organization.
  *
  * @example
  * ```typescript
@@ -21,6 +21,12 @@
  * // Parse a full spec (multi-line)
  * const spec = parseBehaviorSpec(
  *   'test "Add to cart"\n  given page /products/1\n  when user clicks on #button\n    #toast appears',
+ *   'en'
+ * );
+ *
+ * // Parse a feature-level spec with shared setup
+ * const feature = parseFeatureSpec(
+ *   'feature "Shopping Cart"\n  setup\n    given page /cart\n  test "Add item"\n    when user clicks on #add\n      #toast appears',
  *   'en'
  * );
  * ```
@@ -41,28 +47,41 @@ import {
   spanishProfile,
   japaneseProfile,
   arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  frenchProfile,
+  turkishProfile,
 } from './profiles/index.js';
 import {
   EnglishBehaviorSpecTokenizer,
   SpanishBehaviorSpecTokenizer,
   JapaneseBehaviorSpecTokenizer,
   ArabicBehaviorSpecTokenizer,
+  KoreanBehaviorSpecTokenizer,
+  ChineseBehaviorSpecTokenizer,
+  FrenchBehaviorSpecTokenizer,
+  TurkishBehaviorSpecTokenizer,
 } from './tokenizers/index.js';
 import {
   behaviorspecCodeGenerator,
   generateSpec,
   generateTestBlock,
+  generateFeature,
+  generateFeatureBlock,
 } from './generators/playwright-generator.js';
 import {
   parseBehaviorSpec as parseSpecImpl,
+  parseFeature as parseFeatureImpl,
   type SpecParseResult,
+  type FeatureParseResult,
+  type FeatureBlock,
   type TestBlock,
   type InteractionBlock,
   type ExpectationNode,
 } from './parser/spec-parser.js';
 
 /**
- * Create a multilingual BehaviorSpec DSL instance with all 4 supported languages.
+ * Create a multilingual BehaviorSpec DSL instance with all 8 supported languages.
  */
 export function createBehaviorSpecDSL(): MultilingualDSL {
   return createMultilingualDSL({
@@ -97,6 +116,34 @@ export function createBehaviorSpecDSL(): MultilingualDSL {
         tokenizer: new ArabicBehaviorSpecTokenizer(),
         patternProfile: arabicProfile,
       },
+      {
+        code: 'ko',
+        name: 'Korean',
+        nativeName: '한국어',
+        tokenizer: new KoreanBehaviorSpecTokenizer(),
+        patternProfile: koreanProfile,
+      },
+      {
+        code: 'zh',
+        name: 'Chinese',
+        nativeName: '中文',
+        tokenizer: new ChineseBehaviorSpecTokenizer(),
+        patternProfile: chineseProfile,
+      },
+      {
+        code: 'fr',
+        name: 'French',
+        nativeName: 'Français',
+        tokenizer: new FrenchBehaviorSpecTokenizer(),
+        patternProfile: frenchProfile,
+      },
+      {
+        code: 'tr',
+        name: 'Turkish',
+        nativeName: 'Türkçe',
+        tokenizer: new TurkishBehaviorSpecTokenizer(),
+        patternProfile: turkishProfile,
+      },
     ],
     codeGenerator: behaviorspecCodeGenerator,
   });
@@ -112,12 +159,30 @@ export function parseBehaviorSpec(input: string, language: string): SpecParseRes
 }
 
 /**
+ * Parse a multi-line BehaviorSpec with feature blocks and shared setup.
+ * Returns FeatureParseResult with feature blocks and standalone tests.
+ */
+export function parseFeatureSpec(input: string, language: string): FeatureParseResult {
+  const dsl = createBehaviorSpecDSL();
+  return parseFeatureImpl(dsl, input, language);
+}
+
+/**
  * Compile a multi-line BehaviorSpec to a Playwright test file.
  * Returns a complete, runnable test file with imports.
  */
 export function compileBehaviorSpec(input: string, language: string): string {
   const spec = parseBehaviorSpec(input, language);
   return generateSpec(spec);
+}
+
+/**
+ * Compile a feature-level BehaviorSpec to a Playwright test file.
+ * Returns a complete file with test.describe() blocks and beforeEach setup.
+ */
+export function compileFeatureSpec(input: string, language: string): string {
+  const result = parseFeatureSpec(input, language);
+  return generateFeature(result);
 }
 
 // Re-export schemas for consumers who want to extend
@@ -127,11 +192,18 @@ export {
   spanishProfile,
   japaneseProfile,
   arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  frenchProfile,
+  turkishProfile,
+  allProfiles,
 } from './profiles/index.js';
 export {
   behaviorspecCodeGenerator,
   generateSpec,
   generateTestBlock,
+  generateFeature,
+  generateFeatureBlock,
 } from './generators/playwright-generator.js';
 export { renderBehaviorSpec } from './generators/behaviorspec-renderer.js';
 export {
@@ -139,9 +211,15 @@ export {
   SpanishBehaviorSpecTokenizer,
   JapaneseBehaviorSpecTokenizer,
   ArabicBehaviorSpecTokenizer,
+  KoreanBehaviorSpecTokenizer,
+  ChineseBehaviorSpecTokenizer,
+  FrenchBehaviorSpecTokenizer,
+  TurkishBehaviorSpecTokenizer,
 } from './tokenizers/index.js';
 export type {
   SpecParseResult,
+  FeatureParseResult,
+  FeatureBlock,
   TestBlock,
   InteractionBlock,
   ExpectationNode,

@@ -3,13 +3,19 @@
  *
  * Transforms BehaviorSpec semantic AST nodes into Playwright test code.
  * Generates individual lines for single steps, or complete test() blocks
- * for compound spec nodes.
+ * for compound spec nodes. Also supports feature-level generation with
+ * test.describe() blocks and shared beforeEach setup.
  */
 
 import type { SemanticNode, CodeGenerator } from '@lokascript/framework';
 import { extractValue } from '@lokascript/framework';
 import { SETUP_MAPPINGS, INTERACTION_MAPPINGS, ASSERTION_MAPPINGS } from './mappings.js';
-import type { SpecParseResult, TestBlock, ExpectationNode } from '../parser/spec-parser.js';
+import type {
+  SpecParseResult,
+  TestBlock,
+  FeatureBlock,
+  FeatureParseResult,
+} from '../parser/spec-parser.js';
 
 // =============================================================================
 // Helpers
@@ -38,7 +44,7 @@ function findMapping<T extends { keywords: string[] }>(
 function interpolate(template: string, vars: Record<string, string>): string {
   return template.replace(/\$\{(\w+)\}/g, (_, key) => {
     const val = vars[key] ?? '';
-    // Don't escape numeric values (for viewport dimensions)
+    // Don't escape numeric values (for viewport dimensions, count)
     if (/^\d+$/.test(val)) return val;
     return escapeForString(val);
   });
@@ -120,7 +126,7 @@ function generateExpect(node: SemanticNode, negated?: boolean): string {
 
   // Handle CSS class assertions: "has class .active" or "has .active"
   if (assertionStr === 'has' && valueStr.startsWith('.')) {
-    const className = valueStr.startsWith('.') ? valueStr.slice(1) : valueStr;
+    const className = valueStr.slice(1);
     const template = negated
       ? `  await expect(page.locator('\${target}')).not.toHaveClass(/${escapeForRegex(className)}/);`
       : `  await expect(page.locator('\${target}')).toHaveClass(/${escapeForRegex(className)}/);`;
@@ -195,6 +201,67 @@ export function generateTestBlock(block: TestBlock): string {
   return lines.join('\n');
 }
 
+// =============================================================================
+// Feature Generator (Phase 3)
+// =============================================================================
+
+/**
+ * Generate a complete Playwright test file from a FeatureParseResult.
+ * Features become test.describe() blocks with beforeEach for shared setup.
+ */
+export function generateFeature(result: FeatureParseResult): string {
+  const lines: string[] = [];
+  lines.push("import { test, expect } from '@playwright/test';");
+  lines.push('');
+
+  // Standalone tests
+  for (const testBlock of result.tests) {
+    lines.push(generateTestBlock(testBlock));
+    lines.push('');
+  }
+
+  // Feature blocks
+  for (const feature of result.features) {
+    lines.push(generateFeatureBlock(feature));
+    lines.push('');
+  }
+
+  return lines.join('\n').trimEnd();
+}
+
+/**
+ * Generate a test.describe() block from a FeatureBlock.
+ */
+export function generateFeatureBlock(feature: FeatureBlock): string {
+  const lines: string[] = [];
+  lines.push(`test.describe('${escapeForString(feature.name)}', () => {`);
+
+  // beforeEach for shared setup
+  if (feature.setup.length > 0) {
+    lines.push(`  test.beforeEach(async ({ page }) => {`);
+    for (const given of feature.setup) {
+      lines.push(`  ${behaviorspecCodeGenerator.generate(given)}`);
+    }
+    lines.push(`  });`);
+    lines.push('');
+  }
+
+  // Individual tests
+  for (const testBlock of feature.tests) {
+    // Indent the test block inside describe
+    const testCode = generateTestBlock(testBlock);
+    const indented = testCode
+      .split('\n')
+      .map(line => (line ? `  ${line}` : line))
+      .join('\n');
+    lines.push(indented);
+    lines.push('');
+  }
+
+  lines.push(`});`);
+  return lines.join('\n');
+}
+
 /** Extract a human-readable comment from a when node */
 function extractWhenComment(node: SemanticNode): string {
   const actor = node.roles.get('actor');
@@ -214,8 +281,10 @@ function extractWhenComment(node: SemanticNode): string {
 export const behaviorspecCodeGenerator: CodeGenerator = {
   generate(node: SemanticNode): string {
     switch (node.action) {
-      case 'test':
-        return `// test: ${extractValue(node.roles.get('name')!)}`;
+      case 'test': {
+        const name = node.roles.get('name');
+        return `// test: ${name ? extractValue(name) : 'Untitled'}`;
+      }
       case 'given':
         return generateGiven(node);
       case 'when':
@@ -224,8 +293,10 @@ export const behaviorspecCodeGenerator: CodeGenerator = {
         return generateExpect(node);
       case 'after':
         return generateAfter(node);
-      case 'not':
-        return `  // not: ${extractValue(node.roles.get('content')!)}`;
+      case 'not': {
+        const content = node.roles.get('content');
+        return `  // not: ${content ? extractValue(content) : ''}`;
+      }
       default:
         throw new Error(`Unknown BehaviorSpec command: ${node.action}`);
     }

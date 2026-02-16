@@ -2,11 +2,12 @@
  * BehaviorSpec Domain Tests
  *
  * Comprehensive test suite covering:
- * - Language support (4 languages)
+ * - Language support (8 languages)
  * - Per-command parsing (test, given, when, expect, after, not)
  * - Cross-language semantic equivalence
  * - Spec parser (indentation-based nesting)
- * - Playwright code generation
+ * - Feature-level parser (test.describe + beforeEach)
+ * - Playwright code generation (including new assertion types)
  * - Renderer (natural language output)
  * - Error handling
  */
@@ -17,9 +18,12 @@ import { extractValue } from '@lokascript/framework';
 import {
   createBehaviorSpecDSL,
   parseBehaviorSpec,
+  parseFeatureSpec,
   compileBehaviorSpec,
+  compileFeatureSpec,
   renderBehaviorSpec,
   generateSpec,
+  generateFeature,
 } from '../index.js';
 
 // =============================================================================
@@ -60,6 +64,26 @@ describe('Language support', () => {
 
   it('supports Arabic (VSO)', () => {
     const node = dsl.parse('بافتراض صفحة /home', 'ar');
+    expect(node.action).toBe('given');
+  });
+
+  it('supports Korean (SOV)', () => {
+    const node = dsl.parse('페이지 /home 전제', 'ko');
+    expect(node.action).toBe('given');
+  });
+
+  it('supports Chinese (SVO)', () => {
+    const node = dsl.parse('假设 页面 /home', 'zh');
+    expect(node.action).toBe('given');
+  });
+
+  it('supports French (SVO)', () => {
+    const node = dsl.parse('soit page /home', 'fr');
+    expect(node.action).toBe('given');
+  });
+
+  it('supports Turkish (SOV)', () => {
+    const node = dsl.parse('sayfa /home verilen', 'tr');
     expect(node.action).toBe('given');
   });
 
@@ -841,5 +865,543 @@ describe('Edge cases', () => {
   it('handles given with deep URL path', () => {
     const node = dsl.parse('given page /api/v2/users/123/profile', 'en');
     expect(roleValue(node, 'value')).toBe('/api/v2/users/123/profile');
+  });
+});
+
+// =============================================================================
+// 15. Korean Parsing (SOV)
+// =============================================================================
+
+describe('Korean parsing (SOV)', () => {
+  it('parses given in SOV order', () => {
+    const node = dsl.parse('페이지 /products/1 전제', 'ko');
+    expect(node.action).toBe('given');
+    expect(roleValue(node, 'subject')).toBe('페이지');
+    expect(roleValue(node, 'value')).toBe('/products/1');
+  });
+
+  it('parses when in SOV order', () => {
+    const node = dsl.parse('사용자 #button 을 클릭 동작', 'ko');
+    expect(node.action).toBe('when');
+    expect(roleValue(node, 'action')).toBe('클릭');
+    expect(roleValue(node, 'target')).toBe('#button');
+  });
+
+  it('parses expect in SOV order', () => {
+    const node = dsl.parse('#toast 보임 기대', 'ko');
+    expect(node.action).toBe('expect');
+    expect(roleValue(node, 'target')).toBe('#toast');
+  });
+
+  it('parses after in SOV order', () => {
+    const node = dsl.parse('300ms 후', 'ko');
+    expect(node.action).toBe('after');
+    expect(roleValue(node, 'duration')).toBe('300ms');
+  });
+});
+
+// =============================================================================
+// 16. Chinese Parsing (SVO)
+// =============================================================================
+
+describe('Chinese parsing (SVO)', () => {
+  it('parses given', () => {
+    const node = dsl.parse('假设 页面 /products/1', 'zh');
+    expect(node.action).toBe('given');
+    expect(roleValue(node, 'subject')).toBe('页面');
+  });
+
+  it('parses when with click', () => {
+    const node = dsl.parse('当 用户 点击 在 #button', 'zh');
+    expect(node.action).toBe('when');
+    expect(roleValue(node, 'action')).toBe('点击');
+    expect(roleValue(node, 'target')).toBe('#button');
+  });
+
+  it('parses expect', () => {
+    const node = dsl.parse('期望 #toast 可见', 'zh');
+    expect(node.action).toBe('expect');
+    expect(roleValue(node, 'target')).toBe('#toast');
+  });
+
+  it('parses after', () => {
+    const node = dsl.parse('之后 500ms', 'zh');
+    expect(node.action).toBe('after');
+    expect(roleValue(node, 'duration')).toBe('500ms');
+  });
+});
+
+// =============================================================================
+// 17. French Parsing (SVO)
+// =============================================================================
+
+describe('French parsing (SVO)', () => {
+  it('parses given', () => {
+    const node = dsl.parse('soit page /products/1', 'fr');
+    expect(node.action).toBe('given');
+    expect(roleValue(node, 'subject')).toBe('page');
+  });
+
+  it('parses when with click', () => {
+    const node = dsl.parse('quand utilisateur cliquer sur #button', 'fr');
+    expect(node.action).toBe('when');
+    expect(roleValue(node, 'action')).toBe('cliquer');
+    expect(roleValue(node, 'target')).toBe('#button');
+  });
+
+  it('parses expect', () => {
+    const node = dsl.parse('attendre #toast visible', 'fr');
+    expect(node.action).toBe('expect');
+    expect(roleValue(node, 'target')).toBe('#toast');
+  });
+
+  it('parses after', () => {
+    const node = dsl.parse('apres 300ms', 'fr');
+    expect(node.action).toBe('after');
+    expect(roleValue(node, 'duration')).toBe('300ms');
+  });
+});
+
+// =============================================================================
+// 18. Turkish Parsing (SOV)
+// =============================================================================
+
+describe('Turkish parsing (SOV)', () => {
+  it('parses given in SOV order', () => {
+    const node = dsl.parse('sayfa /products/1 verilen', 'tr');
+    expect(node.action).toBe('given');
+    expect(roleValue(node, 'subject')).toBe('sayfa');
+    expect(roleValue(node, 'value')).toBe('/products/1');
+  });
+
+  it('parses when in SOV order', () => {
+    const node = dsl.parse('kullanici #button üzerinde tikla eylem', 'tr');
+    expect(node.action).toBe('when');
+    expect(roleValue(node, 'action')).toBe('tikla');
+    expect(roleValue(node, 'target')).toBe('#button');
+  });
+
+  it('parses expect in SOV order', () => {
+    const node = dsl.parse('#toast gorunur bekle', 'tr');
+    expect(node.action).toBe('expect');
+    expect(roleValue(node, 'target')).toBe('#toast');
+  });
+
+  it('parses after in SOV order', () => {
+    const node = dsl.parse('300ms sonra', 'tr');
+    expect(node.action).toBe('after');
+    expect(roleValue(node, 'duration')).toBe('300ms');
+  });
+});
+
+// =============================================================================
+// 19. Cross-Language Equivalence (new languages)
+// =============================================================================
+
+describe('Cross-language equivalence (new languages)', () => {
+  it('KO and EN given parse to same action and value', () => {
+    const en = dsl.parse('given page /products/1', 'en');
+    const ko = dsl.parse('페이지 /products/1 전제', 'ko');
+    expect(en.action).toBe(ko.action);
+    expect(roleValue(en, 'value')).toBe(roleValue(ko, 'value'));
+  });
+
+  it('ZH and EN given parse to same action and value', () => {
+    const en = dsl.parse('given page /products/1', 'en');
+    const zh = dsl.parse('假设 页面 /products/1', 'zh');
+    expect(en.action).toBe(zh.action);
+    expect(roleValue(en, 'value')).toBe(roleValue(zh, 'value'));
+  });
+
+  it('FR and EN given parse to same action and value', () => {
+    const en = dsl.parse('given page /products/1', 'en');
+    const fr = dsl.parse('soit page /products/1', 'fr');
+    expect(en.action).toBe(fr.action);
+    expect(roleValue(en, 'value')).toBe(roleValue(fr, 'value'));
+  });
+
+  it('TR and EN given parse to same action and value', () => {
+    const en = dsl.parse('given page /products/1', 'en');
+    const tr = dsl.parse('sayfa /products/1 verilen', 'tr');
+    expect(en.action).toBe(tr.action);
+    expect(roleValue(en, 'value')).toBe(roleValue(tr, 'value'));
+  });
+
+  it('KO and EN after produce same duration', () => {
+    const en = dsl.parse('after 300ms', 'en');
+    const ko = dsl.parse('300ms 후', 'ko');
+    expect(en.action).toBe(ko.action);
+    expect(roleValue(en, 'duration')).toBe(roleValue(ko, 'duration'));
+  });
+
+  it('TR and EN after produce same duration', () => {
+    const en = dsl.parse('after 300ms', 'en');
+    const tr = dsl.parse('300ms sonra', 'tr');
+    expect(en.action).toBe(tr.action);
+    expect(roleValue(en, 'duration')).toBe(roleValue(tr, 'duration'));
+  });
+});
+
+// =============================================================================
+// 20. New Assertion Types (Phase 4)
+// =============================================================================
+
+describe('New assertion types', () => {
+  it('generates toBeChecked for checked assertion', () => {
+    const result = dsl.compile('expect #checkbox checked', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toBeChecked');
+  });
+
+  it('generates toBeFocused for focused assertion', () => {
+    const result = dsl.compile('expect #input focused', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toBeFocused');
+  });
+
+  it('generates toBeEditable for editable assertion', () => {
+    const result = dsl.compile('expect #input editable', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toBeEditable');
+  });
+
+  it('generates toBeEmpty for empty assertion', () => {
+    const result = dsl.compile('expect #list empty', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toBeEmpty');
+  });
+
+  it('generates toHaveCount for count assertion', () => {
+    const result = dsl.compile('expect .item count saying 5', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toHaveCount');
+  });
+
+  it('generates toHaveValue for value assertion', () => {
+    const result = dsl.compile('expect #input value saying hello', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toHaveValue');
+  });
+
+  it('generates toBeEnabled for enabled assertion', () => {
+    const result = dsl.compile('expect #button enabled', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toBeEnabled');
+  });
+
+  it('generates toBeDisabled for disabled assertion', () => {
+    const result = dsl.compile('expect #button disabled', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toBeDisabled');
+  });
+
+  it('generates toContainText for contains assertion', () => {
+    const result = dsl.compile('expect #text contains saying hello', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('toContainText');
+  });
+});
+
+// =============================================================================
+// 21. New Interaction Types
+// =============================================================================
+
+describe('New interaction types', () => {
+  it('generates hover action', () => {
+    const result = dsl.compile('when user hovers on #menu', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('hover()');
+  });
+
+  it('generates submit action', () => {
+    const result = dsl.compile('when user submits on #form', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain("press('Enter')");
+  });
+
+  it('generates scroll action', () => {
+    const result = dsl.compile('when user scrolls on #content', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('scrollIntoViewIfNeeded');
+  });
+
+  // Note: double-clicks and right-clicks use hyphenated compound keywords
+  // that the tokenizer splits into separate tokens. These mappings exist in
+  // the mapping table but can't be triggered via natural language input yet.
+
+  it('generates focus action', () => {
+    const result = dsl.compile('when user focuses on #input', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('focus()');
+  });
+
+  it('generates clear action', () => {
+    const result = dsl.compile('when user clears on #input', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('clear()');
+  });
+
+  it('generates drag action', () => {
+    const result = dsl.compile('when user drags on #item', 'en');
+    expect(result.ok).toBe(true);
+    expect(result.code).toContain('dragTo');
+  });
+});
+
+// =============================================================================
+// 22. Feature-Level Parser (Phase 3)
+// =============================================================================
+
+describe('Feature parser', () => {
+  it('parses a feature with setup and tests', () => {
+    const spec = `feature "Shopping Cart"
+  setup
+    given page /cart
+
+  test "Add item"
+    when user clicks on #add
+      #toast appears
+
+  test "Remove item"
+    when user clicks on .remove
+      #item disappears`;
+
+    const result = parseFeatureSpec(spec, 'en');
+    expect(result.features).toHaveLength(1);
+    expect(result.features[0].name).toBe('Shopping Cart');
+    expect(result.features[0].setup).toHaveLength(1);
+    expect(result.features[0].tests).toHaveLength(2);
+    expect(result.features[0].tests[0].name).toBe('Add item');
+    expect(result.features[0].tests[1].name).toBe('Remove item');
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('parses standalone tests outside features', () => {
+    const spec = `test "Standalone"
+  given page /home
+  when user clicks on #button
+    #toast appears`;
+
+    const result = parseFeatureSpec(spec, 'en');
+    expect(result.features).toHaveLength(0);
+    expect(result.tests).toHaveLength(1);
+    expect(result.tests[0].name).toBe('Standalone');
+  });
+
+  it('parses mixed features and standalone tests', () => {
+    const spec = `test "Before feature"
+  given page /home
+  when user clicks on #x
+    #y appears
+
+feature "My Feature"
+  setup
+    given page /app
+  test "In feature"
+    when user clicks on #z
+      #w appears`;
+
+    const result = parseFeatureSpec(spec, 'en');
+    expect(result.tests).toHaveLength(1);
+    expect(result.features).toHaveLength(1);
+    expect(result.features[0].name).toBe('My Feature');
+  });
+
+  it('handles feature with no setup section', () => {
+    const spec = `feature "No Setup"
+  test "Only test"
+    given page /home
+    when user clicks on #button
+      #result appears`;
+
+    const result = parseFeatureSpec(spec, 'en');
+    expect(result.features[0].setup).toHaveLength(0);
+    expect(result.features[0].tests).toHaveLength(1);
+  });
+
+  it('handles empty feature', () => {
+    const spec = `feature "Empty"`;
+
+    const result = parseFeatureSpec(spec, 'en');
+    expect(result.features).toHaveLength(1);
+    expect(result.features[0].tests).toHaveLength(0);
+  });
+});
+
+// =============================================================================
+// 23. Feature-Level Code Generation
+// =============================================================================
+
+describe('Feature code generation', () => {
+  it('generates test.describe() from feature', () => {
+    const output = compileFeatureSpec(
+      `feature "Shopping Cart"
+  setup
+    given page /cart
+  test "Add item"
+    when user clicks on #add
+      #toast appears`,
+      'en'
+    );
+
+    expect(output).toContain("import { test, expect } from '@playwright/test'");
+    expect(output).toContain("test.describe('Shopping Cart'");
+    expect(output).toContain('test.beforeEach');
+    expect(output).toContain("page.goto('/cart')");
+    expect(output).toContain("test('Add item'");
+  });
+
+  it('generates standalone tests from features + standalone', () => {
+    const output = compileFeatureSpec(
+      `test "Standalone"
+  given page /home
+  when user clicks on #x
+    #y appears
+
+feature "My Feature"
+  test "In feature"
+    when user clicks on #z
+      #w appears`,
+      'en'
+    );
+
+    expect(output).toContain("test('Standalone'");
+    expect(output).toContain("test.describe('My Feature'");
+  });
+});
+
+// =============================================================================
+// 24. SOV Negation (end-of-line)
+// =============================================================================
+
+describe('SOV negation', () => {
+  it('parses Japanese negation at end of line', () => {
+    const spec = `テスト "否定テスト"
+  ページ /home 前提
+  ユーザー #button を クリック 操作
+    否定 #error 表示 期待`;
+
+    const result = parseBehaviorSpec(spec, 'ja');
+    expect(result.tests).toHaveLength(1);
+    expect(result.errors).toHaveLength(0);
+    // The 否定-prefixed line should be parsed as negated
+    const expectations = result.tests[0].interactions[0].expectations;
+    expect(expectations).toHaveLength(1);
+    expect(expectations[0].negated).toBe(true);
+  });
+});
+
+// =============================================================================
+// 25. Renderer (new languages)
+// =============================================================================
+
+describe('Renderer (new languages)', () => {
+  it('renders given to Korean', () => {
+    const node = dsl.parse('페이지 /home 전제', 'ko');
+    const rendered = renderBehaviorSpec(node, 'ko');
+    expect(rendered).toContain('전제');
+    expect(rendered).toContain('페이지');
+  });
+
+  it('renders given to Chinese', () => {
+    const node = dsl.parse('假设 页面 /home', 'zh');
+    const rendered = renderBehaviorSpec(node, 'zh');
+    expect(rendered).toContain('假设');
+  });
+
+  it('renders given to French', () => {
+    const node = dsl.parse('soit page /home', 'fr');
+    const rendered = renderBehaviorSpec(node, 'fr');
+    expect(rendered).toContain('soit');
+  });
+
+  it('renders given to Turkish', () => {
+    const node = dsl.parse('sayfa /home verilen', 'tr');
+    const rendered = renderBehaviorSpec(node, 'tr');
+    expect(rendered).toContain('verilen');
+  });
+});
+
+// =============================================================================
+// 26. Spec Parser (new languages)
+// =============================================================================
+
+describe('Spec parser (new languages)', () => {
+  it('parses Korean spec', () => {
+    const spec = `테스트 "한국어 테스트"
+  페이지 /home 전제
+  사용자 #button 을 클릭 동작
+    #toast 보임 기대`;
+
+    const result = parseBehaviorSpec(spec, 'ko');
+    expect(result.tests).toHaveLength(1);
+    expect(result.tests[0].name).toBe('한국어 테스트');
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('parses Chinese spec', () => {
+    const spec = `测试 "中文测试"
+  假设 页面 /home
+  当 用户 点击 在 #button
+    期望 #toast 可见`;
+
+    const result = parseBehaviorSpec(spec, 'zh');
+    expect(result.tests).toHaveLength(1);
+    expect(result.tests[0].name).toBe('中文测试');
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('parses French spec', () => {
+    const spec = `test "Test français"
+  soit page /home
+  quand utilisateur cliquer sur #button
+    attendre #toast visible`;
+
+    const result = parseBehaviorSpec(spec, 'fr');
+    expect(result.tests).toHaveLength(1);
+    expect(result.tests[0].name).toBe('Test français');
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('parses Turkish spec', () => {
+    const spec = `test "Türkçe test"
+  sayfa /home verilen
+  kullanici #button üzerinde tikla eylem
+    #toast gorunur bekle`;
+
+    const result = parseBehaviorSpec(spec, 'tr');
+    expect(result.tests).toHaveLength(1);
+    expect(result.tests[0].name).toBe('Türkçe test');
+    expect(result.errors).toHaveLength(0);
+  });
+});
+
+// =============================================================================
+// 27. Error Collection
+// =============================================================================
+
+describe('Error collection', () => {
+  it('collects multiple errors in one spec', () => {
+    const spec = `test "Errors"
+  given page /home
+  orphan-line-no-when
+  when user clicks on #button
+    #toast appears`;
+
+    const result = parseBehaviorSpec(spec, 'en');
+    // orphan-line-no-when should produce an error (outside when block)
+    expect(result.errors.length).toBeGreaterThanOrEqual(1);
+    expect(result.errors[0]).toContain('Line');
+  });
+
+  it('reports line numbers in errors', () => {
+    const spec = `test "Lines"
+  given page /home
+  orphan-line`;
+
+    const result = parseBehaviorSpec(spec, 'en');
+    expect(result.errors.length).toBeGreaterThanOrEqual(1);
+    // Should reference line 3 (orphan-line)
+    expect(result.errors[0]).toMatch(/Line \d+/);
   });
 });

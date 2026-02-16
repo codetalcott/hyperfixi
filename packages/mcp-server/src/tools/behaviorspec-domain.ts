@@ -11,7 +11,9 @@ import { validateRequired, getString, jsonResponse, errorResponse } from './util
 // Lazy-loaded BehaviorSpec DSL instance
 let behaviorDSL: any = null;
 let behaviorSpecParser: any = null;
+let behaviorFeatureParser: any = null;
 let behaviorCompiler: any = null;
+let behaviorFeatureCompiler: any = null;
 let behaviorRenderer: any = null;
 
 async function getBehaviorSpec() {
@@ -19,7 +21,9 @@ async function getBehaviorSpec() {
     return {
       dsl: behaviorDSL,
       parseSpec: behaviorSpecParser,
+      parseFeature: behaviorFeatureParser,
       compile: behaviorCompiler,
+      compileFeature: behaviorFeatureCompiler,
       render: behaviorRenderer,
     };
 
@@ -27,12 +31,16 @@ async function getBehaviorSpec() {
     const mod = await import('@lokascript/domain-behaviorspec');
     behaviorDSL = mod.createBehaviorSpecDSL();
     behaviorSpecParser = mod.parseBehaviorSpec;
+    behaviorFeatureParser = mod.parseFeatureSpec;
     behaviorCompiler = mod.compileBehaviorSpec;
+    behaviorFeatureCompiler = mod.compileFeatureSpec;
     behaviorRenderer = mod.renderBehaviorSpec;
     return {
       dsl: behaviorDSL,
       parseSpec: behaviorSpecParser,
+      parseFeature: behaviorFeatureParser,
       compile: behaviorCompiler,
+      compileFeature: behaviorFeatureCompiler,
       render: behaviorRenderer,
     };
   } catch {
@@ -52,7 +60,7 @@ export const behaviorspecDomainTools = [
     description:
       'Parse a BehaviorSpec scenario into a semantic representation. Supports single steps ' +
       '(given/when/expect/after) and multi-line indented specs with test blocks. ' +
-      'Supports English (SVO), Spanish (SVO), Japanese (SOV), and Arabic (VSO).',
+      'Supports 8 languages: English, Spanish, Japanese, Arabic, Korean, Chinese, French, Turkish.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -64,7 +72,7 @@ export const behaviorspecDomainTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code: en, es, ja, ar',
+          description: 'Language code: en, es, ja, ar, ko, zh, fr, tr',
           default: 'en',
         },
       },
@@ -85,7 +93,7 @@ export const behaviorspecDomainTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code: en, es, ja, ar',
+          description: 'Language code: en, es, ja, ar, ko, zh, fr, tr',
           default: 'en',
         },
       },
@@ -96,7 +104,7 @@ export const behaviorspecDomainTools = [
     name: 'validate_behaviorspec',
     description:
       'Validate BehaviorSpec syntax. Returns whether the spec parses successfully ' +
-      'and any errors. Supports 4 languages.',
+      'and any errors. Supports 8 languages.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -106,7 +114,7 @@ export const behaviorspecDomainTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code: en, es, ja, ar',
+          description: 'Language code: en, es, ja, ar, ko, zh, fr, tr',
           default: 'en',
         },
       },
@@ -127,11 +135,11 @@ export const behaviorspecDomainTools = [
         },
         from: {
           type: 'string',
-          description: 'Source language code: en, es, ja, ar',
+          description: 'Source language code: en, es, ja, ar, ko, zh, fr, tr',
         },
         to: {
           type: 'string',
-          description: 'Target language code: en, es, ja, ar',
+          description: 'Target language code: en, es, ja, ar, ko, zh, fr, tr',
         },
       },
       required: ['scenario', 'from', 'to'],

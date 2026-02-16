@@ -14,7 +14,19 @@
  * "not" prefix negates the following assertion.
  */
 
-import type { MultilingualDSL, SemanticNode, SemanticValue } from '@lokascript/framework';
+import type { MultilingualDSL, SemanticNode } from '@lokascript/framework';
+import {
+  SOV_LANGUAGES,
+  TEST_KEYWORDS,
+  GIVEN_KEYWORDS,
+  WHEN_KEYWORDS,
+  AFTER_KEYWORDS,
+  NOT_KEYWORDS,
+  EXPECT_KEYWORDS,
+  FEATURE_KEYWORDS,
+  SETUP_KEYWORDS,
+  ARTICLE_PREFIXES,
+} from '../constants/keywords.js';
 
 // =============================================================================
 // Types
@@ -22,6 +34,24 @@ import type { MultilingualDSL, SemanticNode, SemanticValue } from '@lokascript/f
 
 export interface SpecParseResult {
   /** Parsed test blocks */
+  tests: TestBlock[];
+  /** Parse errors */
+  errors: string[];
+}
+
+export interface FeatureBlock {
+  /** Feature name */
+  name: string;
+  /** Shared setup steps (applied to all tests) */
+  setup: SemanticNode[];
+  /** Test blocks within this feature */
+  tests: TestBlock[];
+}
+
+export interface FeatureParseResult {
+  /** Parsed feature blocks */
+  features: FeatureBlock[];
+  /** Standalone tests (outside any feature) */
   tests: TestBlock[];
   /** Parse errors */
   errors: string[];
@@ -53,56 +83,6 @@ export interface ExpectationNode {
 }
 
 // =============================================================================
-// Article Prefixes (stripped from assertion lines)
-// =============================================================================
-
-const ARTICLE_PREFIXES: Record<string, string[]> = {
-  en: ['the ', 'a ', 'an '],
-  es: ['el ', 'la ', 'un ', 'una ', 'los ', 'las '],
-  ja: [],
-  ar: ['ال'],
-};
-
-// =============================================================================
-// Command Keywords (for detecting line types)
-// =============================================================================
-
-const TEST_KEYWORDS: Record<string, string[]> = {
-  en: ['test'],
-  es: ['prueba'],
-  ja: ['テスト'],
-  ar: ['اختبار'],
-};
-
-const GIVEN_KEYWORDS: Record<string, string[]> = {
-  en: ['given'],
-  es: ['dado'],
-  ja: ['前提'],
-  ar: ['بافتراض'],
-};
-
-const WHEN_KEYWORDS: Record<string, string[]> = {
-  en: ['when'],
-  es: ['cuando'],
-  ja: ['操作'],
-  ar: ['عندما'],
-};
-
-const AFTER_KEYWORDS: Record<string, string[]> = {
-  en: ['after'],
-  es: ['despues'],
-  ja: ['後'],
-  ar: ['بعد'],
-};
-
-const NOT_KEYWORDS: Record<string, string[]> = {
-  en: ['not'],
-  es: ['no'],
-  ja: ['否定'],
-  ar: ['ليس'],
-};
-
-// =============================================================================
 // Helpers
 // =============================================================================
 
@@ -115,12 +95,10 @@ function getIndent(line: string): number {
   return whitespace.replace(/\t/g, '  ').length;
 }
 
-/** SOV languages where the command keyword appears at the END of the line */
-const SOV_LANGUAGES = new Set(['ja']);
-
 /** Check if a line contains the command keyword (at start for SVO/VSO, at end for SOV) */
 function hasKeyword(line: string, keywords: Record<string, string[]>, language: string): boolean {
   const kwSet = keywords[language] ?? keywords.en;
+  if (!kwSet) return false;
   const trimmed = line.trim();
   const lower = trimmed.toLowerCase();
 
@@ -148,6 +126,37 @@ function stripArticle(line: string, language: string): string {
 function extractTestName(line: string): string {
   const match = line.match(/["'](.+?)["']/);
   return match ? match[1] : line.replace(/^\S+\s*/, '').trim() || 'Untitled';
+}
+
+/** Strip negation keyword from a line (start for SVO/VSO, end for SOV) */
+function stripNegation(line: string, language: string): string {
+  const notKws = NOT_KEYWORDS[language] ?? NOT_KEYWORDS.en;
+  const lower = line.toLowerCase();
+
+  // Try stripping from start
+  for (const kw of notKws) {
+    if (lower.startsWith(kw + ' ') || lower === kw) {
+      return line.slice(kw.length).trim();
+    }
+  }
+
+  // For SOV languages, also try stripping from end
+  if (SOV_LANGUAGES.has(language)) {
+    for (const kw of notKws) {
+      if (lower.endsWith(' ' + kw) || lower === kw) {
+        return line.slice(0, line.length - kw.length).trim();
+      }
+    }
+  }
+
+  return line;
+}
+
+/** Prepend the expect keyword if the line doesn't already start with one */
+function ensureExpectKeyword(line: string, language: string): string {
+  if (hasKeyword(line, EXPECT_KEYWORDS, language)) return line;
+  const expectKw = (EXPECT_KEYWORDS[language] ?? EXPECT_KEYWORDS.en)[0];
+  return `${expectKw} ${line}`;
 }
 
 // =============================================================================
@@ -207,10 +216,6 @@ export function parseBehaviorSpec(
       currentTest = { name: 'Untitled', givens: [], interactions: [] };
     }
 
-    // Determine relative indent level
-    const relativeIndent = baseIndent >= 0 ? Math.max(0, indent - baseIndent) : 0;
-    const level = relativeIndent >= 2 ? 2 : indent > 0 && baseIndent >= 0 ? 1 : 1;
-
     // Level 1: given ...
     if (hasKeyword(trimmed, GIVEN_KEYWORDS, language)) {
       try {
@@ -268,33 +273,16 @@ export function parseBehaviorSpec(
       let lineToParse = trimmed;
       if (hasKeyword(trimmed, NOT_KEYWORDS, language)) {
         negated = true;
-        const notKws = NOT_KEYWORDS[language] ?? NOT_KEYWORDS.en;
-        for (const kw of notKws) {
-          if (lineToParse.toLowerCase().startsWith(kw)) {
-            lineToParse = lineToParse.slice(kw.length).trim();
-            break;
-          }
-        }
+        lineToParse = stripNegation(lineToParse, language);
       }
 
       // Strip articles and parse as expect
       lineToParse = stripArticle(lineToParse, language);
-
-      // Prepend "expect" keyword if the line doesn't start with one
-      const expectKws: Record<string, string[]> = {
-        en: ['expect'],
-        es: ['esperar'],
-        ja: ['期待'],
-        ar: ['توقع'],
-      };
-      if (!hasKeyword(lineToParse, expectKws, language)) {
-        const expectKw = (expectKws[language] ?? expectKws.en)[0];
-        lineToParse = `${expectKw} ${lineToParse}`;
-      }
+      lineToParse = ensureExpectKeyword(lineToParse, language);
 
       try {
         const node = dsl.parse(lineToParse, language);
-        currentInteraction.expectations.push({ node, negated: negated || undefined });
+        currentInteraction.expectations.push({ node, negated: negated ? true : undefined });
       } catch (err) {
         errors.push(
           `Line ${i + 1}: Failed to parse expectation: "${trimmed}" - ${err instanceof Error ? err.message : String(err)}`
@@ -316,4 +304,212 @@ export function parseBehaviorSpec(
   }
 
   return { tests, errors };
+}
+
+// =============================================================================
+// Feature Parser
+// =============================================================================
+
+/**
+ * Parse a multi-line BehaviorSpec that may contain feature blocks with shared setup.
+ *
+ * @example
+ * ```
+ * feature "Shopping Cart"
+ *   setup
+ *     given page /products/1
+ *
+ *   test "Add item"
+ *     when user clicks on #add
+ *       #toast appears
+ *
+ *   test "Remove item"
+ *     when user clicks on .remove
+ *       #item disappears
+ * ```
+ */
+export function parseFeature(
+  dsl: MultilingualDSL,
+  input: string,
+  language: string
+): FeatureParseResult {
+  const lines = input.split('\n');
+  const features: FeatureBlock[] = [];
+  const standaloneTests: TestBlock[] = [];
+  const errors: string[] = [];
+
+  let currentFeature: FeatureBlock | null = null;
+  let currentTest: TestBlock | null = null;
+  let currentInteraction: InteractionBlock | null = null;
+  let inSetup = false;
+  let baseIndent = -1;
+
+  const flushInteraction = () => {
+    if (currentInteraction && currentTest) {
+      currentTest.interactions.push(currentInteraction);
+      currentInteraction = null;
+    }
+  };
+
+  const flushTest = () => {
+    flushInteraction();
+    if (currentTest) {
+      if (currentFeature) {
+        currentFeature.tests.push(currentTest);
+      } else {
+        standaloneTests.push(currentTest);
+      }
+      currentTest = null;
+    }
+  };
+
+  const flushFeature = () => {
+    flushTest();
+    if (currentFeature) {
+      features.push(currentFeature);
+      currentFeature = null;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    // Skip empty lines and comments
+    if (!trimmed || trimmed.startsWith('--') || trimmed.startsWith('//')) continue;
+
+    const indent = getIndent(rawLine);
+
+    // Feature line
+    if (hasKeyword(trimmed, FEATURE_KEYWORDS, language)) {
+      flushFeature();
+      const name = extractTestName(trimmed);
+      currentFeature = { name, setup: [], tests: [] };
+      inSetup = false;
+      baseIndent = -1;
+      continue;
+    }
+
+    // Setup line
+    if (hasKeyword(trimmed, SETUP_KEYWORDS, language)) {
+      flushTest();
+      inSetup = true;
+      continue;
+    }
+
+    // Test line
+    if (hasKeyword(trimmed, TEST_KEYWORDS, language)) {
+      flushTest();
+      inSetup = false;
+      const name = extractTestName(trimmed);
+      currentTest = { name, givens: [], interactions: [] };
+      baseIndent = -1;
+      continue;
+    }
+
+    // Detect base indent
+    if (baseIndent < 0) {
+      baseIndent = indent;
+    }
+
+    // Setup section: parse given lines
+    if (inSetup && currentFeature) {
+      if (hasKeyword(trimmed, GIVEN_KEYWORDS, language)) {
+        try {
+          const node = dsl.parse(trimmed, language);
+          currentFeature.setup.push(node);
+        } catch (err) {
+          errors.push(
+            `Line ${i + 1}: Failed to parse setup given: "${trimmed}" - ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+      }
+      continue;
+    }
+
+    // If no test block yet but inside a feature, create a default one
+    if (!currentTest && currentFeature) {
+      currentTest = { name: 'Untitled', givens: [], interactions: [] };
+    } else if (!currentTest) {
+      currentTest = { name: 'Untitled', givens: [], interactions: [] };
+    }
+
+    // Given
+    if (hasKeyword(trimmed, GIVEN_KEYWORDS, language)) {
+      try {
+        const node = dsl.parse(trimmed, language);
+        currentTest.givens.push(node);
+      } catch (err) {
+        errors.push(
+          `Line ${i + 1}: Failed to parse given: "${trimmed}" - ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+      continue;
+    }
+
+    // When
+    if (hasKeyword(trimmed, WHEN_KEYWORDS, language)) {
+      flushInteraction();
+      try {
+        const node = dsl.parse(trimmed, language);
+        currentInteraction = { when: node, expectations: [] };
+      } catch (err) {
+        errors.push(
+          `Line ${i + 1}: Failed to parse when: "${trimmed}" - ${err instanceof Error ? err.message : String(err)}`
+        );
+        currentInteraction = null;
+      }
+      continue;
+    }
+
+    // Assertions under when
+    if (currentInteraction) {
+      if (hasKeyword(trimmed, AFTER_KEYWORDS, language)) {
+        try {
+          const node = dsl.parse(trimmed, language);
+          const lastExp =
+            currentInteraction.expectations[currentInteraction.expectations.length - 1];
+          if (lastExp) {
+            lastExp.timing = node;
+          }
+        } catch (err) {
+          errors.push(
+            `Line ${i + 1}: Failed to parse after: "${trimmed}" - ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+        continue;
+      }
+
+      let negated = false;
+      let lineToParse = trimmed;
+      if (hasKeyword(trimmed, NOT_KEYWORDS, language)) {
+        negated = true;
+        lineToParse = stripNegation(lineToParse, language);
+      }
+
+      lineToParse = stripArticle(lineToParse, language);
+      lineToParse = ensureExpectKeyword(lineToParse, language);
+
+      try {
+        const node = dsl.parse(lineToParse, language);
+        currentInteraction.expectations.push({ node, negated: negated ? true : undefined });
+      } catch (err) {
+        errors.push(
+          `Line ${i + 1}: Failed to parse expectation: "${trimmed}" - ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+      continue;
+    }
+
+    errors.push(`Line ${i + 1}: Unexpected line outside when block: "${trimmed}"`);
+  }
+
+  // Flush remaining
+  flushFeature();
+  // Any remaining standalone test
+  if (currentTest) {
+    standaloneTests.push(currentTest);
+  }
+
+  return { features, tests: standaloneTests, errors };
 }

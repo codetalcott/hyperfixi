@@ -7,32 +7,12 @@
 
 import type { SemanticNode } from '@lokascript/framework';
 import { extractValue } from '@lokascript/framework';
-
-// =============================================================================
-// Keyword Tables
-// =============================================================================
-
-const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
-  test: { en: 'test', es: 'prueba', ja: 'テスト', ar: 'اختبار' },
-  given: { en: 'given', es: 'dado', ja: '前提', ar: 'بافتراض' },
-  when: { en: 'when', es: 'cuando', ja: '操作', ar: 'عندما' },
-  expect: { en: 'expect', es: 'esperar', ja: '期待', ar: 'توقع' },
-  after: { en: 'after', es: 'despues', ja: '後', ar: 'بعد' },
-  not: { en: 'not', es: 'no', ja: '否定', ar: 'ليس' },
-};
-
-const MARKER_WORDS: Record<string, Record<string, string>> = {
-  on: { en: 'on', es: 'en', ja: 'を', ar: 'على' },
-  into: { en: 'into', es: 'en', ja: 'に', ar: 'في' },
-  saying: { en: 'saying', es: 'diciendo', ja: 'と', ar: 'يقول' },
-};
-
-// =============================================================================
-// Word Order Helpers
-// =============================================================================
-
-const SOV_LANGUAGES = new Set(['ja']);
-const VSO_LANGUAGES = new Set(['ar']);
+import {
+  COMMAND_KEYWORDS,
+  MARKER_WORDS,
+  SOV_LANGUAGES,
+  VSO_LANGUAGES,
+} from '../constants/keywords.js';
 
 // =============================================================================
 // Renderers

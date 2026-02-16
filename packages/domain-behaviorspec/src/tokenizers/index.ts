@@ -4,6 +4,8 @@
  * Language-specific tokenizers for interaction testing input. Each tokenizer
  * extends the framework's BaseTokenizer and includes custom extractors for
  * CSS selectors, URLs, durations, and viewport dimensions.
+ *
+ * 8 languages: EN, ES, JA, AR, KO, ZH, FR, TR
  */
 
 import { BaseTokenizer, getDefaultExtractors } from '@lokascript/framework';
@@ -72,7 +74,9 @@ class DurationExtractor implements ValueExtractor {
   readonly name = 'duration';
 
   canExtract(input: string, position: number): boolean {
-    return /\d/.test(input[position]);
+    if (!/\d/.test(input[position])) return false;
+    // Must be preceded by whitespace or start of input to avoid matching inside identifiers
+    return position === 0 || /\s/.test(input[position - 1]);
   }
 
   extract(input: string, position: number): ExtractionResult | null {
@@ -89,7 +93,9 @@ class DimensionExtractor implements ValueExtractor {
   readonly name = 'dimension';
 
   canExtract(input: string, position: number): boolean {
-    return /\d/.test(input[position]);
+    if (!/\d/.test(input[position])) return false;
+    // Must be preceded by whitespace or start of input
+    return position === 0 || /\s/.test(input[position - 1]);
   }
 
   extract(input: string, position: number): ExtractionResult | null {
@@ -115,19 +121,42 @@ function getBehaviorSpecExtractors(): ValueExtractor[] {
   ];
 }
 
+/** Standard classifyToken logic shared by Latin-script tokenizers */
+function classifyLatinToken(token: string, keywords: Set<string>): TokenKind {
+  if (keywords.has(token.toLowerCase())) return 'keyword';
+  if (token.startsWith('#') || token.startsWith('.')) return 'selector';
+  if (/^\d/.test(token)) return 'literal';
+  if (/^['"]/.test(token)) return 'literal';
+  if (token.startsWith('/')) return 'literal';
+  return 'identifier';
+}
+
+/** Standard classifyToken logic shared by non-Latin-script tokenizers */
+function classifyNonLatinToken(
+  token: string,
+  keywords: Set<string>,
+  isKeywordFn: (t: string) => boolean
+): TokenKind {
+  if (keywords.has(token)) return 'keyword';
+  if (isKeywordFn(token)) return 'keyword';
+  if (token.startsWith('#') || token.startsWith('.')) return 'selector';
+  if (/^\d/.test(token)) return 'literal';
+  if (/^['"]/.test(token)) return 'literal';
+  if (token.startsWith('/')) return 'literal';
+  return 'identifier';
+}
+
 // =============================================================================
 // English BehaviorSpec Tokenizer
 // =============================================================================
 
 const EN_KEYWORDS = new Set([
-  // Command keywords
   'test',
   'given',
   'when',
   'expect',
   'after',
   'not',
-  // Markers (appear as literals in generated patterns)
   'on',
   'into',
   'with',
@@ -135,9 +164,8 @@ const EN_KEYWORDS = new Set([
   'by',
   'to',
   'class',
-  // Note: 'user', 'page', 'viewport' are intentionally NOT keywords.
-  // They are role values that must be identifiers (type='expression')
-  // to match expectedTypes: ['expression'] in the schema.
+  'feature',
+  'setup',
 ]);
 
 export class EnglishBehaviorSpecTokenizer extends BaseTokenizer {
@@ -150,12 +178,7 @@ export class EnglishBehaviorSpecTokenizer extends BaseTokenizer {
   }
 
   classifyToken(token: string): TokenKind {
-    if (EN_KEYWORDS.has(token.toLowerCase())) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.')) return 'selector';
-    if (/^\d/.test(token)) return 'literal';
-    if (/^['"]/.test(token)) return 'literal';
-    if (token.startsWith('/')) return 'literal';
-    return 'identifier';
+    return classifyLatinToken(token, EN_KEYWORDS);
   }
 }
 
@@ -176,6 +199,9 @@ const ES_KEYWORDS = new Set([
   'por',
   'a',
   'clase',
+  'dentro',
+  'funcionalidad',
+  'preparacion',
 ]);
 
 export class SpanishBehaviorSpecTokenizer extends BaseTokenizer {
@@ -188,12 +214,7 @@ export class SpanishBehaviorSpecTokenizer extends BaseTokenizer {
   }
 
   classifyToken(token: string): TokenKind {
-    if (ES_KEYWORDS.has(token.toLowerCase())) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.')) return 'selector';
-    if (/^\d/.test(token)) return 'literal';
-    if (/^['"]/.test(token)) return 'literal';
-    if (token.startsWith('/')) return 'literal';
-    return 'identifier';
+    return classifyLatinToken(token, ES_KEYWORDS);
   }
 }
 
@@ -214,6 +235,8 @@ const JA_KEYWORDS = new Set([
   'と',
   'が',
   'の',
+  '機能',
+  '準備',
 ]);
 
 const JA_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -252,13 +275,7 @@ export class JapaneseBehaviorSpecTokenizer extends BaseTokenizer {
   }
 
   classifyToken(token: string): TokenKind {
-    if (JA_KEYWORDS.has(token)) return 'keyword';
-    if (this.isKeyword(token)) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.')) return 'selector';
-    if (/^\d/.test(token)) return 'literal';
-    if (/^['"]/.test(token)) return 'literal';
-    if (token.startsWith('/')) return 'literal';
-    return 'identifier';
+    return classifyNonLatinToken(token, JA_KEYWORDS, t => this.isKeyword(t));
   }
 }
 
@@ -278,6 +295,8 @@ const AR_KEYWORDS = new Set([
   'ب',
   'يقول',
   'من',
+  'ميزة',
+  'إعداد',
 ]);
 
 const AR_KEYWORD_EXTRAS: KeywordEntry[] = [
@@ -316,12 +335,187 @@ export class ArabicBehaviorSpecTokenizer extends BaseTokenizer {
   }
 
   classifyToken(token: string): TokenKind {
-    if (AR_KEYWORDS.has(token)) return 'keyword';
-    if (this.isKeyword(token)) return 'keyword';
-    if (token.startsWith('#') || token.startsWith('.')) return 'selector';
-    if (/^\d/.test(token)) return 'literal';
-    if (/^['"]/.test(token)) return 'literal';
-    if (token.startsWith('/')) return 'literal';
-    return 'identifier';
+    return classifyNonLatinToken(token, AR_KEYWORDS, t => this.isKeyword(t));
+  }
+}
+
+// =============================================================================
+// Korean BehaviorSpec Tokenizer (SOV)
+// =============================================================================
+
+const KO_KEYWORDS = new Set([
+  '테스트',
+  '전제',
+  '동작',
+  '기대',
+  '후',
+  '아님',
+  '을',
+  '에',
+  '으로',
+  '의',
+  '기능',
+  '설정',
+]);
+
+const KO_KEYWORD_EXTRAS: KeywordEntry[] = [
+  { native: '테스트', normalized: 'test' },
+  { native: '전제', normalized: 'given' },
+  { native: '동작', normalized: 'when' },
+  { native: '기대', normalized: 'expect' },
+  { native: '후', normalized: 'after' },
+  { native: '아님', normalized: 'not' },
+  { native: '을', normalized: 'on' },
+  { native: '에', normalized: 'into' },
+  { native: '으로', normalized: 'saying' },
+];
+
+export class KoreanBehaviorSpecTokenizer extends BaseTokenizer {
+  readonly language = 'ko';
+  readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    this.registerExtractors(getBehaviorSpecExtractors());
+    this.initializeKeywordsFromProfile(
+      {
+        keywords: {
+          test: { primary: '테스트' },
+          given: { primary: '전제' },
+          when: { primary: '동작' },
+          expect: { primary: '기대' },
+          after: { primary: '후' },
+          not: { primary: '아님' },
+        },
+      },
+      KO_KEYWORD_EXTRAS
+    );
+  }
+
+  classifyToken(token: string): TokenKind {
+    return classifyNonLatinToken(token, KO_KEYWORDS, t => this.isKeyword(t));
+  }
+}
+
+// =============================================================================
+// Chinese BehaviorSpec Tokenizer (SVO)
+// =============================================================================
+
+const ZH_KEYWORDS = new Set([
+  '测试',
+  '假设',
+  '当',
+  '期望',
+  '之后',
+  '不',
+  '在',
+  '到',
+  '显示',
+  '功能',
+  '设置',
+]);
+
+const ZH_KEYWORD_EXTRAS: KeywordEntry[] = [
+  { native: '测试', normalized: 'test' },
+  { native: '假设', normalized: 'given' },
+  { native: '当', normalized: 'when' },
+  { native: '期望', normalized: 'expect' },
+  { native: '之后', normalized: 'after' },
+  { native: '不', normalized: 'not' },
+  { native: '在', normalized: 'on' },
+  { native: '到', normalized: 'into' },
+  { native: '显示', normalized: 'saying' },
+];
+
+export class ChineseBehaviorSpecTokenizer extends BaseTokenizer {
+  readonly language = 'zh';
+  readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    this.registerExtractors(getBehaviorSpecExtractors());
+    this.initializeKeywordsFromProfile(
+      {
+        keywords: {
+          test: { primary: '测试' },
+          given: { primary: '假设' },
+          when: { primary: '当' },
+          expect: { primary: '期望' },
+          after: { primary: '之后' },
+          not: { primary: '不' },
+        },
+      },
+      ZH_KEYWORD_EXTRAS
+    );
+  }
+
+  classifyToken(token: string): TokenKind {
+    return classifyNonLatinToken(token, ZH_KEYWORDS, t => this.isKeyword(t));
+  }
+}
+
+// =============================================================================
+// French BehaviorSpec Tokenizer (SVO)
+// =============================================================================
+
+const FR_KEYWORDS = new Set([
+  'test',
+  'soit',
+  'quand',
+  'attendre',
+  'apres',
+  'pas',
+  'sur',
+  'dans',
+  'disant',
+  'avec',
+  'fonctionnalite',
+  'preparation',
+]);
+
+export class FrenchBehaviorSpecTokenizer extends BaseTokenizer {
+  readonly language = 'fr';
+  readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    this.registerExtractors(getBehaviorSpecExtractors());
+  }
+
+  classifyToken(token: string): TokenKind {
+    return classifyLatinToken(token, FR_KEYWORDS);
+  }
+}
+
+// =============================================================================
+// Turkish BehaviorSpec Tokenizer (SOV)
+// =============================================================================
+
+const TR_KEYWORDS = new Set([
+  'test',
+  'verilen',
+  'eylem',
+  'bekle',
+  'sonra',
+  'degil',
+  'üzerinde',
+  'içine',
+  'diyen',
+  'ile',
+  'ozellik',
+  'hazirlik',
+]);
+
+export class TurkishBehaviorSpecTokenizer extends BaseTokenizer {
+  readonly language = 'tr';
+  readonly direction = 'ltr' as const;
+
+  constructor() {
+    super();
+    this.registerExtractors(getBehaviorSpecExtractors());
+  }
+
+  classifyToken(token: string): TokenKind {
+    return classifyLatinToken(token, TR_KEYWORDS);
   }
 }
