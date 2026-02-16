@@ -100,3 +100,18 @@ export {
 export { defineCommand, defineRole } from './schema';
 export { createSimpleTokenizer } from './core/tokenization/base-tokenizer';
 export type { SimpleTokenizerConfig } from './core/tokenization/base-tokenizer';
+
+// Multi-statement parser
+export { createMultiStatementParser, accumulateBlocks } from './parsing/multi-statement';
+export type {
+  MultiStatementParser,
+  MultiStatementConfig,
+  MultiStatementResult,
+  ParsedStatement,
+  StatementError,
+  StatementBlock,
+  BlockConfig,
+  BlockResult,
+  KeywordMap,
+  WordOrderHint,
+} from './parsing/multi-statement';

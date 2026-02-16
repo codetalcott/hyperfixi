@@ -1,10 +1,27 @@
 /**
  * Parsing infrastructure
- *
- * TODO: Add semantic parser interface and utilities
- * For now, parsing is done via createMultilingualDSL().parse()
  */
 
 // Re-export core parsing types
 export type { SemanticNode, TokenStream, LanguageTokenizer } from '../core/types';
 export { PatternMatcher } from '../core/pattern-matching';
+
+// Multi-statement parser
+export { createMultiStatementParser, accumulateBlocks } from './multi-statement';
+export type {
+  MultiStatementParser,
+  MultiStatementConfig,
+  MultiStatementResult,
+  SplitConfig,
+  KeywordConfig,
+  KeywordMap,
+  WordOrderHint,
+  ContinuationConfig,
+  StatementPreprocessor,
+  PreprocessorContext,
+  ParsedStatement,
+  StatementError,
+  BlockConfig,
+  BlockResult,
+  StatementBlock,
+} from './multi-statement';

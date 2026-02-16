@@ -70,7 +70,8 @@
     "test:integration": "vitest run src/__test__/**/*.test.ts src/api/**/*.test.ts",
     "test:pattern-matcher": "vitest run src/core/pattern-matching",
     "test:tokenizer": "vitest run src/core/tokenization",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "create-domain": "npx tsx scripts/create-domain.ts"
   },
   "keywords": [
     "dsl",
