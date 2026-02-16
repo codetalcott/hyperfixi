@@ -23,6 +23,9 @@
 // Main API
 export * from './api';
 
+// AOT (generalized ahead-of-time compilation)
+export * from './aot';
+
 // Interfaces (for dependency injection)
 export * from './interfaces';
 
@@ -109,9 +112,14 @@ export type {
   DomainDescriptor,
   MCPToolDefinition,
   MCPToolResponse,
+  DispatchResult,
+  CompositeParseResult,
+  CompositeStatement,
+  CompositeError,
+  DispatcherOptions,
 } from './api';
 
-export { DomainRegistry } from './api';
+export { DomainRegistry, CrossDomainDispatcher } from './api';
 
 // Re-export helper functions
 export {

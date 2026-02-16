@@ -79,6 +79,21 @@ export interface DomainDescriptor {
    * Which standard tools to generate. Default: all four.
    */
   readonly tools?: readonly ('parse' | 'compile' | 'validate' | 'translate')[];
+
+  /**
+   * Optional scan configuration for AOT compilation and Vite plugin.
+   * Declares which HTML attributes/script types this domain uses.
+   */
+  readonly scanConfig?: {
+    /** Attribute names to scan for (e.g., ['data-sql', '_sql']) */
+    readonly attributes: readonly string[];
+    /** Script tag types to scan for (e.g., ['text/sql-dsl']) */
+    readonly scriptTypes?: readonly string[];
+    /** Default language when not specified on element */
+    readonly defaultLanguage?: string;
+    /** Keywords for detection, keyed by language code */
+    readonly keywords?: Readonly<Record<string, readonly string[]>>;
+  };
 }
 
 // =============================================================================
@@ -202,6 +217,17 @@ export class DomainRegistry {
       const message = error instanceof Error ? error.message : String(error);
       return jsonResponse({ error: `${descriptor.name} tool error: ${message}` }, true);
     }
+  }
+
+  /**
+   * Get the DSL instance for a named domain.
+   * Returns null if the domain is not registered.
+   * The DSL is lazily created and cached.
+   */
+  async getDSLForDomain(name: string): Promise<MultilingualDSL | null> {
+    const descriptor = this.descriptors.get(name);
+    if (!descriptor) return null;
+    return this.getDSL(descriptor);
   }
 
   // ---------------------------------------------------------------------------

@@ -148,6 +148,31 @@ export interface HyperfixiPluginOptions {
    */
   extraLanguages?: string[];
 
+  // =========================================================================
+  // Multi-Domain Options
+  // =========================================================================
+
+  /**
+   * Register additional domains for scanning.
+   * Each domain declares its attribute patterns and keywords for detection.
+   * Runs alongside the default hyperscript scanner.
+   *
+   * @example
+   * ```typescript
+   * hyperfixi({
+   *   domains: [
+   *     {
+   *       domain: 'sql',
+   *       attributes: ['data-sql'],
+   *       scriptTypes: ['text/sql-dsl'],
+   *       keywords: { en: ['select', 'insert', 'update', 'delete'] },
+   *     },
+   *   ],
+   * })
+   * ```
+   */
+  domains?: DomainScanRule[];
+
   /**
    * Custom language keyword definitions.
    * Use this to add new languages or extend/override existing keyword detection.
@@ -294,6 +319,54 @@ export interface AggregatedScripts {
 
   /** Map of file paths to scripts in that file */
   fileScripts: Map<string, string[]>;
+}
+
+// =============================================================================
+// Multi-Domain Scanning
+// =============================================================================
+
+/**
+ * Configuration for a domain's scanning rules in the Vite plugin.
+ */
+export interface DomainScanRule {
+  /** Domain name */
+  readonly domain: string;
+  /** Attribute names to scan for (e.g., ['data-sql', '_sql']) */
+  readonly attributes: readonly string[];
+  /** Script tag types to scan for (e.g., ['text/sql-dsl']) */
+  readonly scriptTypes?: readonly string[];
+  /** Keywords for command detection, keyed by language code */
+  readonly keywords?: Readonly<Record<string, readonly string[]>>;
+}
+
+/**
+ * Per-domain usage detected in a single file.
+ */
+export interface DomainFileUsage {
+  /** Domain name */
+  readonly domain: string;
+  /** Detected keywords/commands */
+  readonly detectedKeywords: Set<string>;
+  /** Languages detected */
+  readonly detectedLanguages: Set<string>;
+  /** Number of snippets found */
+  readonly snippetCount: number;
+}
+
+/**
+ * Aggregated usage across all files for a single domain.
+ */
+export interface DomainAggregatedUsage {
+  /** Domain name */
+  readonly domain: string;
+  /** All detected keywords across files */
+  readonly detectedKeywords: Set<string>;
+  /** All detected languages across files */
+  readonly detectedLanguages: Set<string>;
+  /** Number of files with this domain's usage */
+  readonly fileCount: number;
+  /** Total snippets across all files */
+  readonly totalSnippets: number;
 }
 
 // =============================================================================

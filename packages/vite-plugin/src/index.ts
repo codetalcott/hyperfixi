@@ -59,7 +59,14 @@ export type {
   AggregatedUsage,
   CustomLanguageKeywords,
   ServerBridgeOptions,
+  DomainScanRule,
+  DomainFileUsage,
+  DomainAggregatedUsage,
 } from './types';
+
+// Domain scanning (multi-domain support)
+export { DomainScanner, descriptorToScanRule } from './domain-scanner';
+export { DomainAggregator } from './domain-aggregator';
 export type { CompiledHandler, CompileOptions } from './compiler';
 
 // Re-export semantic parser integration functions for multilingual compile mode
