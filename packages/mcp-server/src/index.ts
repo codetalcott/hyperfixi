@@ -23,14 +23,17 @@ import { lspBridgeTools, handleLspBridgeTool } from './tools/lsp-bridge.js';
 import { languageDocsTools, handleLanguageDocsTool } from './tools/language-docs.js';
 import { profileTools, handleProfileTool } from './tools/profiles.js';
 import { compilationTools, handleCompilationTool } from './tools/compilation.js';
-import { sqlDomainTools, handleSQLDomainTool } from './tools/sql-domain.js';
-import { bddDomainTools, handleBDDDomainTool } from './tools/bdd-domain.js';
-import { jsxDomainTools, handleJSXDomainTool } from './tools/jsx-domain.js';
 import { routeTools, handleRouteTool } from './tools/routes.js';
+
+// Domain registry — auto-generates tool definitions and dispatches tool calls
+import { createDomainRegistry } from './tools/domain-registry-setup.js';
+import { isMultiStepBDD, handleBDDMultiStep } from './tools/bdd-extras.js';
 import {
-  behaviorspecDomainTools,
-  handleBehaviorSpecDomainTool,
-} from './tools/behaviorspec-domain.js';
+  isMultiLineBehaviorSpec,
+  handleBehaviorSpecMultiLine,
+} from './tools/behaviorspec-extras.js';
+
+const registry = createDomainRegistry();
 
 // Resource implementations
 import { listResources, readResource } from './resources/index.js';
@@ -66,11 +69,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...languageDocsTools,
       ...profileTools,
       ...compilationTools,
-      ...sqlDomainTools,
-      ...bddDomainTools,
-      ...jsxDomainTools,
       ...routeTools,
-      ...behaviorspecDomainTools,
+      ...registry.getToolDefinitions(),
     ],
   };
 });
@@ -149,44 +149,25 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     return handleCompilationTool(name, args as Record<string, unknown>);
   }
 
-  // SQL domain tools
-  if (
-    name === 'parse_sql' ||
-    name === 'compile_sql' ||
-    name === 'validate_sql' ||
-    name === 'translate_sql'
-  ) {
-    return handleSQLDomainTool(name, args as Record<string, unknown>);
-  }
+  // Domain tools — registry handles standard operations,
+  // extras handle multi-step/multi-line extensions
+  if (registry.canHandle(name)) {
+    const typedArgs = args as Record<string, unknown>;
 
-  // BDD domain tools
-  if (
-    name === 'parse_bdd' ||
-    name === 'compile_bdd' ||
-    name === 'validate_bdd' ||
-    name === 'translate_bdd'
-  ) {
-    return handleBDDDomainTool(name, args as Record<string, unknown>);
-  }
+    // Multi-step BDD scenarios (comma/newline-separated)
+    if (name.endsWith('_bdd') && isMultiStepBDD(typedArgs)) {
+      return handleBDDMultiStep(name, typedArgs) as any;
+    }
 
-  // JSX domain tools
-  if (
-    name === 'parse_jsx' ||
-    name === 'compile_jsx' ||
-    name === 'validate_jsx' ||
-    name === 'translate_jsx'
-  ) {
-    return handleJSXDomainTool(name, args as Record<string, unknown>);
-  }
+    // Multi-line BehaviorSpec scenarios (indented test blocks)
+    if (name.endsWith('_behaviorspec') && isMultiLineBehaviorSpec(typedArgs)) {
+      return handleBehaviorSpecMultiLine(name, typedArgs) as any;
+    }
 
-  // BehaviorSpec domain tools
-  if (
-    name === 'parse_behaviorspec' ||
-    name === 'compile_behaviorspec' ||
-    name === 'validate_behaviorspec' ||
-    name === 'translate_behaviorspec'
-  ) {
-    return handleBehaviorSpecDomainTool(name, args as Record<string, unknown>);
+    // Standard single-step: registry handles parse/compile/validate/translate
+    // Cast needed: MCPToolResponse uses readonly props vs SDK's mutable types
+    const result = await registry.handleToolCall(name, typedArgs);
+    if (result) return result as any;
   }
 
   // ServerBridge route tools

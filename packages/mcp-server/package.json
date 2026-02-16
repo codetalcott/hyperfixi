@@ -36,11 +36,13 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.0",
     "@lokascript/compilation-service": "*",
+    "@lokascript/framework": "*",
     "@lokascript/semantic": "*",
     "@hyperfixi/patterns-reference": "*"
   },
   "peerDependencies": {
     "@lokascript/compilation-service": "*",
+    "@lokascript/framework": "*",
     "@hyperfixi/core": "*",
     "@hyperfixi/patterns-reference": "*",
     "@lokascript/semantic": "*",
@@ -52,6 +54,9 @@
   },
   "peerDependenciesMeta": {
     "@lokascript/compilation-service": {
+      "optional": true
+    },
+    "@lokascript/framework": {
       "optional": true
     },
     "@hyperfixi/core": {
@@ -81,6 +86,7 @@
   },
   "devDependencies": {
     "@lokascript/compilation-service": "*",
+    "@lokascript/framework": "*",
     "@hyperfixi/core": "*",
     "@hyperfixi/patterns-reference": "*",
     "@lokascript/semantic": "*",
