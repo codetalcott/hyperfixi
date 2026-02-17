@@ -1,0 +1,53 @@
+{
+  "name": "@hyperscript-tools/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for original _hyperscript development — validation, completions, docs, and analysis with zero HyperFixi dependencies",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "hyperscript-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "hyperscript",
+    "_hyperscript",
+    "ai",
+    "llm",
+    "development-tools",
+    "language-server"
+  ],
+  "author": "HyperFixi Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/mcp-server-hyperscript"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/mcp-server-hyperscript#readme"
+}

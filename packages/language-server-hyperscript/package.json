@@ -1,0 +1,52 @@
+{
+  "name": "@hyperscript-tools/language-server",
+  "version": "1.0.0",
+  "description": "Language Server Protocol implementation for original _hyperscript — completions, diagnostics, hover docs",
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "hyperscript-language-server": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsup src/server.ts --format esm --dts",
+    "start": "node dist/server.js --stdio",
+    "dev": "tsx src/server.ts --stdio",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "lsp",
+    "language-server",
+    "hyperscript",
+    "_hyperscript",
+    "vscode",
+    "ide"
+  ],
+  "author": "HyperFixi Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "@lokascript/language-server": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/language-server-hyperscript"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/language-server-hyperscript#readme"
+}

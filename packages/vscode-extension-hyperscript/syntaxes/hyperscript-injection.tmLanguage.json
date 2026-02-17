@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Hyperscript Injection",
+  "scopeName": "inline.hyperscript",
+  "injectionSelector": "L:text.html -comment",
+  "patterns": [
+    {
+      "include": "#hyperscript-attribute"
+    },
+    {
+      "include": "#hyperscript-script-tag"
+    }
+  ],
+  "repository": {
+    "hyperscript-attribute": {
+      "begin": "(_)(=)(\")",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.hyperscript" },
+        "2": { "name": "punctuation.separator.key-value.html" },
+        "3": { "name": "punctuation.definition.string.begin.html" }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.html" }
+      },
+      "name": "meta.attribute.hyperscript.html",
+      "contentName": "meta.embedded.inline.hyperscript",
+      "patterns": [{ "include": "source.hyperscript" }]
+    },
+    "hyperscript-attribute-single": {
+      "begin": "(_)(=)(')",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.hyperscript" },
+        "2": { "name": "punctuation.separator.key-value.html" },
+        "3": { "name": "punctuation.definition.string.begin.html" }
+      },
+      "end": "'",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.html" }
+      },
+      "name": "meta.attribute.hyperscript.html",
+      "contentName": "meta.embedded.inline.hyperscript",
+      "patterns": [{ "include": "source.hyperscript" }]
+    },
+    "hyperscript-script-tag": {
+      "begin": "(<)(script)(\\s+)(type)(=)(\"text/hyperscript\"|'text/hyperscript')([^>]*)(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "3": { "name": "text.html" },
+        "4": { "name": "entity.other.attribute-name.html" },
+        "5": { "name": "punctuation.separator.key-value.html" },
+        "6": { "name": "string.quoted.html" },
+        "7": { "name": "text.html" },
+        "8": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "end": "(</)(script)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "3": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "name": "meta.embedded.block.hyperscript",
+      "contentName": "meta.embedded.inline.hyperscript",
+      "patterns": [{ "include": "source.hyperscript" }]
+    }
+  }
+}

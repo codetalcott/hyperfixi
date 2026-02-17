@@ -1,0 +1,118 @@
+{
+  "name": "hyperscript-vscode",
+  "displayName": "_hyperscript Language Support",
+  "description": "Language support for _hyperscript — syntax highlighting, completions, hover docs, diagnostics, and formatting",
+  "version": "1.0.0",
+  "publisher": "hyperscript-tools",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "hyperscript",
+    "_hyperscript",
+    "htmx",
+    "html"
+  ],
+  "activationEvents": [
+    "onLanguage:html"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "hyperscript",
+        "aliases": [
+          "Hyperscript",
+          "_hyperscript"
+        ],
+        "extensions": [
+          ".hs"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "hyperscript",
+        "scopeName": "source.hyperscript",
+        "path": "./syntaxes/hyperscript.tmLanguage.json"
+      },
+      {
+        "scopeName": "inline.hyperscript",
+        "path": "./syntaxes/hyperscript-injection.tmLanguage.json",
+        "injectTo": [
+          "text.html.basic",
+          "text.html.derivative",
+          "text.html.vue",
+          "source.vue",
+          "source.svelte"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.inline.hyperscript": "hyperscript"
+        }
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "_hyperscript",
+      "properties": {
+        "hyperscript.maxDiagnostics": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of diagnostics to show per file"
+        },
+        "hyperscript.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "hyperscript.restartServer",
+        "title": "_hyperscript: Restart Language Server"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile && npm run bundle:server",
+    "compile": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode",
+    "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
+    "typecheck": "tsc --noEmit",
+    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@hyperfixi/core --external:@lokascript/semantic --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "@vscode/vsce": "^2.0.0",
+    "tsx": "^4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/vscode-extension-hyperscript"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/vscode-extension-hyperscript#readme"
+}

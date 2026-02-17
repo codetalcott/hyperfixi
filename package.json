@@ -6,8 +6,7 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/*",
-    "mcp-server-hyperscript"
+    "apps/*"
   ],
   "scripts": {
     "build": "lerna run build",

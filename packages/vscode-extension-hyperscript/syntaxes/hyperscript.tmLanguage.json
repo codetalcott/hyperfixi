@@ -1,0 +1,239 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Hyperscript",
+  "scopeName": "source.hyperscript",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#event-handlers"
+    },
+    {
+      "include": "#commands"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#selectors"
+    },
+    {
+      "include": "#variables"
+    },
+    {
+      "include": "#references"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#particles"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-dash.hyperscript",
+          "match": "--.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.hyperscript",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.hyperscript",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.hyperscript",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.hyperscript",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.template.hyperscript",
+          "begin": "`",
+          "end": "`",
+          "patterns": [
+            {
+              "name": "constant.character.escape.hyperscript",
+              "match": "\\\\."
+            },
+            {
+              "name": "variable.other.template.hyperscript",
+              "match": "\\$\\{[^}]+\\}"
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.duration.hyperscript",
+          "match": "\\b\\d+(\\.\\d+)?(ms|s|m|h)\\b"
+        },
+        {
+          "name": "constant.numeric.hyperscript",
+          "match": "\\b\\d+(\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "event-handlers": {
+      "patterns": [
+        {
+          "name": "keyword.control.event.hyperscript",
+          "comment": "Event handler keywords (on/upon) in 21 languages",
+          "match": "\\b(olduğunda|üzerinde|apabila|chaypim|ketika|quando|kaqtin|cuando|wakati|kwenye|quand|kiedy|kaypi|unapo|kapag|zaman|upon|lors|wenn|pada|saat|bila|przy|kung|trên|sur|bei|auf|gdy|kwa|khi|lúc|on|su|al|na|em|ao|pi|en|sa)\\b|在\\.\\.\\.时|когда|เมื่อ|כאשר|коли|على|عند|لدى|حين|যখন|में|할 때|при|ตอน|তে|כש|עם|पर|जब|とき|এ|当|ב|で|時|에|시|때"
+        },
+        {
+          "name": "support.type.event.hyperscript",
+          "comment": "Event names in 21 languages",
+          "match": "\\b(pasar por encima|üzerinde gezinme|entfokussieren|mana qhawachiy|defokussieren|üzerine gelme|mất tập trung|pointerenter|pointerleave|wprowadzeniu|pasar encima|touchcancel|pointerdown|pointermove|défocaliser|fokussieren|inserimento|cambiamento|focalizzare|alisin_tuon|mouseenter|mouseleave|touchstart|changement|soumission|concentrer|kliknięciu|klikniecie|najechaniu|hacer clic|introducir|desenfocar|sobrevolar|değişiklik|bulanıklık|mouseover|mousedown|mousemove|dragstart|dragenter|dragleave|touchmove|pointerup|soumettre|focaliser|passaggio|skupienie|alteração|sobrevoar|yaykuchiy|qhawachiy|odaklanma|nhập liệu|tập trung|dblclick|mouseout|keypress|dragover|touchend|modifier|survoler|Änderung|Absenden|Schweben|fokuskan|sfuocare|wysłaniu|wyslaniu|inserção|submeter|desfocar|hawachiy|dar clic|gönderme|thay đổi|di chuột|rê chuột|mouseup|keydown|dragend|Klicken|Eingabe|berubah|arahkan|inviare|sorvolo|zmianie|entrada|mudança|paqariy|cambiar|enfocar|angazia|tıklama|değişim|bulanık|change|submit|unload|scroll|resize|clique|saisie|entrée|survol|Ändern|Senden|clicca|cambio|zmiana|rozmyj|odskup|clicar|passar|tikray|kachay|qhaway|apakuy|enviar|gönder|click|keyup|input|focus|hover|Klick|Hover|tekan|masuk|kirim|fokus|invio|kabur|envio|focar|ñitiy|envío|lenga|ituon|tıkla|giriş|girdi|blur|load|drag|drop|clic|klik|ubah|skup|odak|nhấp|nhập|bấm|đổi|gửi|nộp)\\b|сфокусировать|розфокусувати|เปลี่ยนแปลง|сфокусувати|ফোকাস_সরান|উপরে_রাখুন|फोकस_हटाएं|сфокусируй|натисканні|розфокусуй|הסר מיקוד|изменении|изменение|наведении|наведение|ส่งข้อมูล|відправці|відправка|наведенні|наведення|পরিবর্তন|परिवर्तन|केंद्रित|ऊपर_रखें|отправке|отправка|วางเมาส์|введенні|введення|сфокусуй|フォーカス解除|нажатии|размыть|เปลี่ยน|โฮเวอร์|ضبابية|প্রবেশ|সাবমিট|মনোযোগ|धुंधला|размой|تركيز|ক্লিক|ইনপুট|ফোকাস|ঝাপসা|হোভার|לחיצה|שינוי|עדכון|שליחה|התמקד|ריחוף|क्लिक|इनपुट|बदलाव|सबमिट|フォーカス|клике|вводе|фокус|โฟกัส|кліку|зміні|зміна|קליק|הזנה|הגשה|טשטש|מעבר|दर्ज|फोकस|होवर|клик|ввод|คลิก|ป้อน|กรอก|เบลอ|клік|ركز|شوش|জমা|קלט|מקד|जमा|ぼかし|포커스|ส่ง|点击|输入|改变|变化|提交|聚焦|失焦|悬停|悬浮|集中|클릭|입력|변경|제출|블러|호버"
+        }
+      ]
+    },
+    "commands": {
+      "patterns": [
+        {
+          "name": "keyword.control.command.hyperscript",
+          "comment": "Commands in 21 languages",
+          "match": "\\b(idagdag_sa_simula|asynchronicznie|idagdag_sa_dulo|entfokussieren|protokollieren|transformieren|mana qhawachiy|qhipaman_yapay|badilisha umbo|palitan_pwesto|şekil değiştir|métamorphoser|defokussieren|stabilisieren|tambah_hujung|taripakaramuy|mana waqtalla|rantin_tikray|mất tập trung|voranstellen|transformasi|visualizzare|incrementare|decrementare|stabilizzare|renderizzare|tukar_tempat|rantikunakuy|intercambiar|kuhanin_mula|magpatahimik|thêm vào đầu|défocaliser|enregistrer|incrémenter|décrémenter|transformer|zurückgeben|fokussieren|austauschen|perlihatkan|sembunyikan|focalizzare|transizione|trasformare|tambah_mula|tambah_satu|kurang_satu|tak_segerak|ubah_bentuk|ustabilizuj|przekształć|przeksztalc|acrescentar|incrementar|decrementar|estabilizar|transformar|qallarichiy|ambatanisha|isiyo sawia|magpatugtog|alisin_tuon|lấy giá trị|chuyển tiếp|bất đồng bộ|transition|déclencher|concentrer|stabiliser|asynchrone|umschalten|hinzufügen|verstecken|platzieren|definieren|navigieren|verringern|vermindern|javascript|verwandeln|kembalikan|tingkatkan|animasikan|aggiungere|nascondere|recuperare|registrare|convertire|ambil_dari|configurar|assíncrono|substituir|renderizar|pisiyachiy|establecer|desenfocar|transición|kunin_mula|bulanıklık|chuyển đổi|increment|decrement|supprimer|récupérer|retourner|focaliser|augmenter|entfernen|verbergen|festlegen|animieren|asynchron|erstellen|auswählen|tambahkan|hilangkan|tampilkan|stabilkan|commutare|alternare|rimuovere|eliminare|impostare|aspettare|attendere|scatenare|ritornare|anteporre|aumentare|diminuire|asincrono|scambiare|scegliere|peralihan|zatrzymaj|skupienie|przejście|przejscie|adicionar|registrar|transição|converter|anchuchiy|qhawachiy|qillqakuy|ñawpachiy|kikinchay|conseguir|anteponer|disminuir|asíncrono|convertir|switchear|badilisha|tanguliza|tengeneza|badalisha|magdagdag|tanggalin|magpakita|maghintay|magpadala|palitawin|odaklanma|thiết lập|kích hoạt|tập trung|basculer|permuter|alterner|afficher|chercher|attendre|renvoyer|naviguer|préfixer|diminuer|échanger|wechseln|anzeigen|bekommen|schicken|auslösen|aufrufen|anhalten|ausgeben|anhängen|übergang|erzeugen|kopieren|tauschen|letakkan|masukkan|tetapkan|dapatkan|kirimkan|jalankan|hentikan|berhenti|navigasi|fokuskan|sisipkan|turunkan|transisi|asinkron|beritahu|ciptakan|cambiare|aggiungi|togliere|mostrare|inserire|definire|ottenere|prendere|attivare|chiamare|lanciare|navigare|sfuocare|misurare|sembunyi|cetuskan|przełącz|przelacz|wyświetl|wyswietl|poczekaj|przerwij|poprzedź|poprzedz|zmniejsz|renderuj|alternar|eliminar|esconder|aguardar|disparar|retornar|devolver|desfocar|imprimir|preceder|aumentar|diminuir|escolher|kutichiy|yapaykuy|rikuchiy|qawachiy|tiyachiy|kamaykuy|willakuy|qatichiy|yapachiy|kuyuchiy|conmutar|aguantar|regresar|ongezeko|animisha|maglagay|magtakda|dagdagan|kopyahin|magpalit|değiştir|aç/kapat|sabitlen|asenkron|dönüştür|hiển thị|dừng lại|tăng lên|đo lường|sao chép|hoán đổi|biến đổi|kết xuất|trigger|prepend|measure|ajouter|enlever|retirer|montrer|masquer|définir|établir|obtenir|envoyer|appeler|arrêter|stopper|annexer|prendre|mesurer|choisir|löschen|stellen|abrufen|stoppen|beenden|erhöhen|rendern|piepton|alihkan|peroleh|panggil|kembali|naikkan|kurangi|katakan|mettere|inviare|fermare|animare|clonare|copiare|selesai|wyczyść|wyczysc|schowaj|pobierz|załaduj|zaladuj|wywołaj|wywolaj|przejdź|przejdz|nawiguj|zwiększ|zwieksz|powiedz|sklonuj|wybierz|remover|mostrar|ocultar|colocar|definir|esperar|navegar|t'ikray|pakakuy|taripay|apachiy|kutimuy|chanqay|lluqsiy|paqariy|tiyakuy|qillqay|t'inkuy|cambiar|agregar|enseñar|obtener|activar|arrojar|detener|enfocar|escoger|ahorita|aventar|loguear|agarrar|onyesha|chochea|anzisha|rudisha|angazia|punguza|imarika|hamisha|palitan|itoggle|idagdag|ipakita|magtago|ipadala|tawagin|tawagan|tumawag|bumalik|huminto|lumabas|pumunta|bawasan|sukatin|baguhin|lumipat|sabihin|magsabi|lumikha|belirle|tetikle|bulanık|kopyala|bật tắt|bổ sung|loại bỏ|giảm đi|ổn định|nói với|toggle|remove|return|append|settle|render|cacher|mettre|placer|lancer|sortir|animer|cloner|copier|zeigen|setzen|warten|senden|werfen|nehmen|messen|machen|klonen|tambah|tunggu|lempar|keluar|pindah|uscire|andare|creare|tunjuk|setkan|hantar|pulang|umieść|umiesc|określ|okresl|czekaj|wyślij|wyslij|wyzwól|wyzwol|rozmyj|odskup|wypisz|dołącz|dolacz|zmierz|animuj|utwórz|utworz|stwórz|stworz|kopiuj|zamień|zamien|sygnał|trocar|apagar|exibir|buscar|enviar|ativar|chamar|lançar|anexar|animar|clonar|copiar|apitar|tikray|qichuy|hurquy|churay|apamuy|kachay|kichay|waqyay|qhaway|akllay|añadir|quitar|llamar|lanzar|pitido|borrar|setear|mandar|ongeza|mficho|subiri|peleka|simama|elekea|andika|rekodi|chukua|nakili|rudufu|chagua|alisin|ilagay|itakda|kumuha|hintay|ibalik|ihagis|itapon|itigil|taasan|gumawa|pumili|kaldır|göster|ayarla|gönder|fırlat|durdur|kaydet|chuyển|trả về|đi đến|fetch|throw|focus|async|clone|morph|aller|faire|créer|rendu|holen|laden|gehen|sagen|ganti|tukar|hapus|buang|tutup|taruh|ambil|kirim|pergi|fokus|catat|rekam|cetak|awali|bikin|salin|pilih|bunyi|togol|padam|papar|sorok|letak|henti|kabur|cipta|dodaj|pokaż|pokaz|ukryj|wstaw|ustaw|zwróć|zwroc|wyjdź|loguj|obter|parar|focar|pegar|medir|dizer|fazer|criar|yapay|pakay|suyay|qayay|sayay|tukuy|puriy|hapiy|tupuy|ruray|kamay|waqay|sacar|poner|fijar|salir|tomar|decir|hacer|crear|meter|jalar|traer|subir|bajar|geuza|ondoa|ficha|pokea|pakia|ngoja|rejea|nenda|lenga|tulia|ambia|chora|itago|kunin|punta|ituon|itala|ibaba|tunog|gizle|getir|bekle|çağır|artır|azalt|geçiş|söyle|takas|gỡ bỏ|thoát|in ra|show|hide|wait|send|call|halt|exit|blur|take|tell|make|swap|copy|pick|beep|dire|atur|muat|picu|ukur|buat|klon|tiru|ubah|fare|usuń|usun|rzuć|rzuc|stop|skup|sair|weka|futa|seti|pata|leta|tuma|tupa|acha|toka|enda|pima|sema|unda|ekle|odak|thêm|hiện|giấu|nhận|dừng|tăng|giảm|chọn|add|put|set|get|log|bip|vai|weź|wez|idź|idz|pôr|por|riy|niy|toa|tia|ita|lia|sil|koy|yap|dön|çık|git|tut|ölç|seç|xóa|che|đặt|đưa|gán|lấy|tải|chờ|đợi|gửi|gọi|ném|nối|tạo|go|js|ir|al|bỏ|ẩn|để|đi)\\b|добавить_в_начало|додати_на_початок|добавить_в_конец|трансформировать|стабилизировать|додати_в_кінець|трансформувати|сфокусировать|трансформируй|розфокусувати|стабілізувати|সরিয়ে ফেলুন|ג׳אווהסקריפט|הוסף בהתחלה|जोड़ें_शुरू|बदलें_स्थान|переключить|анимировать|клонировать|завантажити|сфокусувати|трансформуй|відобразити|ছুঁড়ে দিন|ফোকাস_সরান|শুরুতে যোগ|फोकस_हटाएं|जोड़ें_अंत|установить|остановить|остановись|сфокусируй|асинхронно|копировать|отобразить|перемкнути|встановити|розфокусуй|جافاسكربت|অ্যাসিঙ্ক|তৈরি করুন|প্রতিলিপি|הסר מיקוד|הוסף בסוף|אסינכרוני|निर्धारित|प्रतीक्षा|प्रतिलिपि|переключи|поместить|загрузить|отправить|увеличить|уменьшить|ดึงข้อมูล|ทริกเกอร์|เพิ่มท้าย|เพิ่มหน้า|приховати|помістити|надіслати|викликати|повернути|збільшити|анімувати|клонувати|копіювати|পরিবর্তন|যোগ করুন|নির্ধারণ|ফেরত দিন|শেষে যোগ|রূপান্তর|הוסף אחד|केंद्रित|добавить|показать|спрятать|положить|вставить|установи|получить|записать|дописать|измерить|анимируй|клонируй|поменять|เพิ่มค่า|แปลงร่าง|перемкни|видалити|прибрати|показати|приховай|покласти|вставити|встанови|отримати|завантаж|зупинити|зупинись|сфокусуй|записати|дописати|зменшити|виміряти|створити|поміняти|অপেক্ষা|ট্রিগার|নিক্ষেপ|সংক্রমণ|রেন্ডার|प्राप्त|संक्रमण|रूपांतर|フォーカス解除|インクリメント|トランジション|アニメーション|удалить|помести|загрузи|подожди|отправь|вызвать|вернуть|бросить|перейти|перейди|размыть|увеличь|уменьши|сказать|создать|поменяй|выбрать|เปลี่ยน|อะซิงค์|สลับที่|прибери|сховати|поклади|помісти|отримай|зачекай|надішли|поверни|виміряй|сказати|поміняй|вибрати|ضبابية|انتقال|متزامن|استنسخ|استبدل|মনোযোগ|রেকর্ড|বৃদ্ধি|বাড়ান|התייצב|जोड़ें|मिटाएं|दिखाएं|छिपाएं|ट्रिगर|बुलाएं|लौटाएं|फेंकें|धुंधला|बढ़ाएं|非表示にする|デクリメント|добавь|убрать|покажи|скрыть|спрячь|положи|вставь|задать|получи|вызови|размой|запиши|возьми|измерь|создай|รับค่า|คืนค่า|บันทึก|คัดลอก|แสดงผล|додати|видали|сховай|задати|чекати|виклич|кинути|збільш|візьми|анімуй|створи|клонуй|انتظر|تشغيل|استدع|انتقل|تركيز|استقر|تبادل|মুছুন|দেখান|দেখাও|লুকান|লুকাও|রাখুন|থামুন|পাঠান|পাঠাও|ডাকুন|ফিরুন|থামাও|ফোকাস|ঝাপসা|হ্রাস|স্থির|মাপুন|বানান|বাছুন|התמקד|बदलें|हटाएं|डालें|रुकें|भेजें|रोकें|घटाएं|स्थिर|मापें|असिंक|बताएं|बनाएं|चुनें|रेंडर|切り替える|トグルする|ナビゲート|フォーカス|末尾に追加|先頭に追加|プリペンド|удали|убери|скрой|задай|ждать|верни|брось|выйти|фокус|взять|async|скажи|เพิ่ม|ลบออก|กำหนด|เรียก|ไปที่|โฟกัส|ลดค่า|คงที่|เจเอส|สร้าง|สำเนา|เลือก|додай|встав|чекай|вийти|зменш|взяти|بدّل|غيّر|احذف|امسح|اظهر|أظهر|اعرض|أخفِ|اخفي|اجعل|اضبط|عيّن|احصل|احضر|أرسل|أطلق|فعّل|نادِ|ارجع|ارمِ|أوقف|توقف|اخرج|اذهب|ألحق|ارفع|أنقص|انقص|قياس|أخبر|اصنع|أنشئ|انسخ|حوّل|اختر|ارسم|صفّر|সরান|আনুন|কমান|বলুন|জেএস|JS执行|החלף|הפוך|הוסף|הכנס|הורד|הראה|הסתר|החבא|הגדר|המתן|הפעל|החזר|חזור|זרוק|עצור|הפסק|נווט|עבור|טשטש|רשום|הקדם|הגדל|הקטן|הפחת|מדוד|מעבר|הנפש|אמור|שכפל|העתק|רנדר|टॉगल|जोड़|दिखा|छिपा|रखें|पाएं|लाएं|लौटा|फेंक|बाहर|जाएं|फोकस|दर्ज|बढ़ा|जेएस|कॉपी|切り替え|追加する|削除する|取り除く|表示する|設定する|取得する|フェッチ|トリガー|呼び出し|リターン|末尾追加|アペンド|先頭追加|落ち着く|メジャー|アシンク|JS実行|クローン|スワップ|入れ替え|가져오기|가져오다|JS실행|стоп|идти|звук|สลับ|แสดง|ซ่อน|ตั้ง|กลับ|หยุด|เบลอ|บี๊บ|кинь|بدل|غير|أضف|اضف|زِد|أزل|اخف|أخف|حدد|جلب|عُد|ارم|ركز|شوش|سجل|سبق|قلل|قِس|টগল|যোগ|রাখ|সেট|পান|নিন|বের|যান|যাও|কপি|বদল|বীপ|שנה|הסר|מחק|הצג|שים|הנח|קבע|קבל|השג|הבא|טען|חכה|שלח|שגר|קרא|מקד|צרף|צור|הכן|המר|בחר|ביפ|बदल|हटा|डाल|सेट|भेज|कॉल|रोक|लॉग|घटा|लें|बता|बना|बीप|トグル|加える|見せる|非表示|入れる|セット|ゲット|引き金|コール|投げる|スロー|止める|ハルト|ぼかし|増やす|減らす|非同期|伝える|モーフ|コピー|ビープ|보이다|보이기|숨기다|숨기기|보내다|트리거|던지다|포커스|비동기|말하다|만들다|바꾸다|렌더링|жди|иди|ใส่|วาง|ส่ง|โยน|ออก|รับ|วัด|บอก|йти|йди|ضع|زد|خذ|js|কল|লগ|নে|বল|切换|添加|移除|删除|去掉|显示|展示|隐藏|放置|放入|设置|设定|获得|获取|取得|等待|发送|触发|调用|返回|抛出|停止|退出|前往|聚焦|失焦|日志|追加|附加|前置|预置|增加|减少|稳定|测量|过渡|异步|告诉|制作|复制|交换|变形|转换|选取|渲染|蜂鸣|צא|לך|קח|रख|जा|ले|削除|表示|隠す|置く|設定|待つ|待機|送る|送信|発火|呼ぶ|戻る|返す|終了|移動|行く|集中|記録|ログ|出力|増加|減少|取る|安定|測定|計測|遷移|テル|作る|作成|複製|交換|変形|変換|選択|描画|토글|전환|추가|제거|삭제|표시|넣다|넣기|놓기|설정|얻다|대기|호출|반환|정지|종료|이동|블러|로그|증가|감소|안정|측정|복사|교환|변형|변환|선택|비프|ลบ|รอ|ไป|加|放"
+        },
+        {
+          "name": "keyword.control.flow.hyperscript",
+          "comment": "Control flow in 21 languages",
+          "match": "\\b(de lo contrario|predeterminar|chaguo-msingi|anschließend|unterbrechen|interrompere|chaymantataq|unang_halaga|wiederholen|setelah itu|predefinito|kalau_tidak|por defecto|paulit-ulit|cho đến khi|fortfahren|altrimenti|continuare|jika_tidak|vinginevyo|kung_hindi|pagkatapos|magpatuloy|pamantayan|daha sonra|varsayılan|continuer|ansonsten|selainnya|lanjutkan|lepas_itu|następnie|nastepnie|kontynuuj|domyślnie|domyslnie|continuar|chaymanta|kaykamaqa|kung_saan|durumunda|olduğunda|không thì|nếu không|trong khi|continue|terminer|standard|kemudian|hentikan|ripetere|sehingga|teruskan|przerwij|enquanto|manachus|hukniraq|puchukay|sapankaq|qallariy|terminar|entonces|mientras|hanggang|ardından|tekrarla|kết thúc|tiếp tục|mặc định|forever|default|ensuite|répéter|pendant|jusqu'à|arrêter|beenden|solange|während|selesai|di_mana|apabila|inaczej|powtórz|powtorz|podczas|término|repetir|tukukuy|hinaspa|kutipay|qatipay|maykama|después|baadaye|endelea|para_sa|lặp lại|với mỗi|unless|repeat|jusque|depuis|défaut|fertig|danach|weiter|ulangi|selama|sampai|ketika|bawaan|allora|quindi|mentre|quando|selagi|semasa|jeżeli|jezeli|koniec|dopóki|dopoki|depois|padrão|sichus|p'akiy|-manta|romper|cuando|seguir|mwisho|maliza|tamati|halafu|wakati|kutoka|ulitin|habang|itigil|galing|nerede|sau đó|while|until|break|times|where|sinon|finir|alors|quand|falls|sonst|kalau|akhir|tamat|untuk|terus|habis|ulang|henti|lalai|jeśli|jesli|wtedy|potem|każdy|kazdy|dalej|kiedy|gdzie|senão|final|então|parar|desde|tukuy|-kama|manta|maypi|luego|hasta|donde|si no|ikiwa|sivyo|kisha|rudia|vunja|kapag|kundi|wakas|tapos|yoksa|bitiş|bitti|sonra|kadar|devam|ở_đâu|else|then|from|when|puis|pour|wenn|ende|dann|jika|bila|lalu|dari|fine|fino|dove|logo|para|onde|muyu|kama|sino|hadi|wapi|kung|saka|mula|eğer|için|iken|dừng|khỏi|end|for|fin|für|bis|von|aus|poi|per|wpp|dla|fim|até|kwa|son|dur|den|dan|nếu|rồi|thì|khi|if|in|to|by|si|de|où|wo|se|da|di|aż|az|do|od|ze|từ|z)\\b|за_замовчуванням|по_умолчанию|পুনরাবৃত্তি|চালিয়ে যান|ไม่เช่นนั้น|ค่าเริ่มต้น|ברירת מחדל|продолжить|продовжити|повторить|повторити|перервати|продовжуй|خلاف ذلك|डिफ़ॉल्ट|прервать|продолжи|ในขณะที่|افتراضي|বার বার|পর্যন্ত|नहीं तो|दोहराएं|そうでなければ|повтори|пока_не|ไม่งั้น|поки_не|না হলে|সমাপ্ত|যতক্ষণ|কোথায়|ডিফল্ট|כל עוד|समाप्त|के लिए|каждый|สำหรับ|ที่ไหน|інакше|кінець|кожний|نهاية|انتهى|بعدها|بينما|عندما|নতুবা|তারপর|থামুন|אם לא|दोहरा|जब तक|रोकें|デフォルト|иначе|конец|затем|потом|тогда|когда|ทำซ้ำ|จนถึง|ต่อไป|เมื่อ|потім|وإلا|توقف|واصل|জন্য|থেকে|אחרת|סיום|אחרי|חזור|עבור|בזמן|שבור|המשך|כאשר|איפה|היכן|वरना|जारी|कहाँ|それ以外|それから|繰り返し|繰り返す|リピート|если|пока|แล้ว|หยุด|якщо|далі|тоді|поки|коли|إذا|آخر|ثمّ|كرر|لكل|حتى|أين|যদি|শেষ|তখন|যখন|סוף|ואז|לכל|מאת|अगर|यदि|अंत|फिर|終わり|おわり|そして|ために|続ける|아니면|그다음|그리고|그런후|기본값|для|где|ถ้า|หาก|จาก|від|ثم|من|如果|否则|结束|终止|然后|接着|之后|重复|直到|中断|继续|哪里|默认|אם|אז|עד|כש|तब|तक|से|जब|もし|条件|終了|次に|の間|まで|継続|から|とき|どこ|既定|만약|종료|마침|반복|동안|까지|중단|계속|에서|어디|до|из|от|จบ|із|де|完|为|当|从|מ|各|間|迄|끝|때|с|з"
+        },
+        {
+          "name": "keyword.control.definition.hyperscript",
+          "comment": "Definitions in 21 languages",
+          "match": "\\b(initialisieren|comportamiento|comportamento|inizializzare|comportement|installieren|inisialisasi|eventsource|initialiser|inicializar|qallarichiy|mag-install|installare|zachowanie|zainstaluj|installer|verhalten|sakinisha|magsimula|olduğunda|behavior|perilaku|kelakuan|instalar|arrancar|davranış|yüklemek|üzerinde|khởi tạo|install|mulakan|apabila|inicjuj|iniciar|chaypim|anzisha|simulan|hành vi|cài đặt|socket|worker|pasang|instal|ketika|inizia|quando|ruwana|churay|kaqtin|cuando|wakati|kwenye|ikabit|başlat|quand|mulai|kiedy|kaypi|tabia|unapo|ugali|kilos|kapag|yükle|zaman|init|lors|wenn|pada|saat|mula|bila|przy|anza|weka|kung|trên|def|sur|bei|auf|gdy|kwa|kur|khi|lúc|on|su|al|na|em|ao|pi|en|sa)\\b|инициализировать|установить_пакет|встановити_пакет|ініціалізувати|инициализируй|ініціалізуй|поведение|поведінка|พฤติกรรม|เริ่มต้น|התנהגות|व्यवहार|प्रारंभ|इंस्टॉल|ติดตั้ง|ইনস্টল|インストール|تهيئة|تثبيت|在\\.\\.\\.时|ビヘイビア|когда|เมื่อ|سلوك|ثبّت|আচরণ|শুরু|אתחל|התחל|התקן|כאשר|振る舞い|イニット|коли|بدء|على|عند|لدى|حين|যখন|初始化|में|初期化|초기화|할 때|при|ตอน|তে|行为|安装|כש|עם|पर|जब|導入|とき|동작|설치|এ|当|ב|で|時|에|시|때"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.operator.logical.hyperscript",
+          "comment": "Logical operators in 21 languages",
+          "match": "\\b(chaymantawan|além disso|hinallataq|également|contains|vilevile|matches|neither|también|exists|também|además|ayrıca|hem de|empty|aussi|sowie|serta|anche|auch|juga|oraz|and|not|nor|und|dan|ima|pia|or|is|no|et|na|at|ve|và|e|i|y)\\b|وأيضاً|أيضاً|এবং|וגם|そして|그리고|และ|并且|而且|גם|और|また|또한|та|和|と|및|и|і"
+        },
+        {
+          "name": "keyword.other.hyperscript",
+          "comment": "Other keywords (articles, prepositions) in 21 languages",
+          "match": "\\b(dentro de|vào trong|ke dalam|ke_dalam|hinein|dentro|ukuman|their|ndani|içine|with|into|your|dans|the|its|vào|as|at|of|an|my|in|do|em|en|sa|a|w)\\b|לתוך|إلى|में|في|তে|进入|אל|को|으로|во|ใน|এ|へ|に|в|у"
+        },
+        {
+          "name": "constant.language.hyperscript",
+          "comment": "Constants in 21 languages",
+          "match": "\\b(undefined|false|true|null)\\b"
+        },
+        {
+          "name": "keyword.other.modifier.hyperscript",
+          "match": "\\.(once|prevent|stop|debounce|throttle|capture|passive|self|window|document|outside|elsewhere|from|body)\\b"
+        }
+      ]
+    },
+    "selectors": {
+      "patterns": [
+        {
+          "name": "entity.name.tag.css.hyperscript",
+          "match": "<[a-zA-Z][a-zA-Z0-9-]*(?:\\.[a-zA-Z][a-zA-Z0-9-]*)*(?:#[a-zA-Z][a-zA-Z0-9-]*)?\\s*/>"
+        },
+        {
+          "name": "entity.other.attribute-name.id.css.hyperscript",
+          "match": "#[a-zA-Z_][a-zA-Z0-9_-]*"
+        },
+        {
+          "name": "entity.other.attribute-name.class.css.hyperscript",
+          "match": "\\.[a-zA-Z_][a-zA-Z0-9_-]*"
+        },
+        {
+          "name": "entity.other.attribute-name.attr.hyperscript",
+          "match": "@[a-zA-Z_][a-zA-Z0-9_-]*"
+        },
+        {
+          "name": "entity.other.attribute-name.property.hyperscript",
+          "match": "\\*[a-zA-Z_][a-zA-Z0-9_-]*"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.local.hyperscript",
+          "match": ":[a-zA-Z_][a-zA-Z0-9_]*"
+        },
+        {
+          "name": "variable.other.global.hyperscript",
+          "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*"
+        }
+      ]
+    },
+    "references": {
+      "patterns": [
+        {
+          "name": "variable.language.hyperscript",
+          "comment": "References (me, you, it, etc.) in 21 languages",
+          "match": "\\b(pangyayari|événement|peristiwa|risultato|obiettivo|zdarzenie|resultado|ñawpaqman|yourself|document|résultat|Ergebnis|Ereignis|objetivo|mục tiêu|sasaran|rurasqa|ruwakuq|matokeo|resulta|kết quả|sự kiện|myself|result|target|detail|window|Körper|evento|cuerpo|event|cible|corps|hasil|tubuh|corpo|badan|wynik|tukio|lengo|mwili|sonuç|hedef|gövde|your|body|Ziel|saya|anda|esso|kamu|você|alvo|ñuqa|ukhu|ello|mimi|hiyo|wewe|ikaw|olay|you|its|moi|toi|ich|itu|cel|ele|pay|qam|ako|ito|ben|sen|tôi|bạn|me|my|it|il|es|du|io|tu|ia|ja|to|ty|eu|yo|tú|nó|o)\\b|результат|เหตุการณ์|เป้าหมาย|النتيجة|событие|ผลลัพธ์|লক্ষ্য|परिणाम|लक्ष्य|الحدث|الهدف|الجسم|ফলাফল|תוצאה|אירוע|ターゲット|บอดี้|подія|আপনি|ঘটনা|घटना|बॉडी|イベント|цель|body|ціль|أنا|أنت|আমি|এটি|বডি|אני|אתה|יעד|גוף|मैं|あなた|ボディ|이벤트|это|ฉัน|มัน|คุณ|هو|结果|事件|目标|主体|זה|यह|आप|自分|それ|結果|그것|결과|대상|본문|ты|це|ти|我|它|你|나|너|я"
+        },
+        {
+          "name": "keyword.other.positional.hyperscript",
+          "comment": "Positional keywords in 21 languages",
+          "match": "\\b(previous|children|closest|parent|first|last|next)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.hyperscript",
+          "match": "(==|!=|<=|>=|<|>)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.hyperscript",
+          "match": "(\\+|-|\\*|/|%)"
+        },
+        {
+          "name": "keyword.operator.assignment.hyperscript",
+          "match": "="
+        }
+      ]
+    },
+    "particles": {
+      "patterns": [
+        {
+          "name": "keyword.other.particle.hyperscript",
+          "comment": "Japanese particles for role marking",
+          "match": "を|に|へ|から|の|で"
+        },
+        {
+          "name": "keyword.other.particle.korean.hyperscript",
+          "comment": "Korean particles for role marking",
+          "match": "을|를|에|에서|의|로|으로"
+        }
+      ]
+    }
+  }
+}

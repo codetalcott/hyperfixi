@@ -315,6 +315,18 @@ function isHyperscriptCompatMode(mode: ResolvedMode): boolean {
 // Resolved mode (cached, updated on config change)
 let resolvedMode: ResolvedMode = 'hyperscript';
 
+/**
+ * Default mode override via environment variable.
+ *
+ * Set HYPERSCRIPT_LS_DEFAULT_MODE to override the default mode when
+ * the user hasn't configured a mode explicitly. This is used by
+ * wrapper packages like @hyperscript-tools/language-server to default
+ * to 'hyperscript' mode without modifying this server's code.
+ *
+ * Values: 'hyperscript', 'hyperscript-i18n', 'lokascript', 'auto'
+ */
+const envDefaultMode = process.env.HYPERSCRIPT_LS_DEFAULT_MODE as ServerMode | undefined;
+
 // =============================================================================
 // Server Setup
 // =============================================================================
@@ -333,7 +345,9 @@ function getSemanticAnalyzer(): any {
   return cachedAnalyzer;
 }
 
-let globalSettings: ServerSettings = defaultSettings;
+let globalSettings: ServerSettings = envDefaultMode
+  ? { ...defaultSettings, mode: envDefaultMode }
+  : defaultSettings;
 
 // =============================================================================
 // Initialization
@@ -376,10 +390,13 @@ connection.onInitialized(() => {
 
 connection.onDidChangeConfiguration(change => {
   // Accept settings from either 'lokascript' or 'hyperscript' namespace
+  const envDefaults = envDefaultMode
+    ? { ...defaultSettings, mode: envDefaultMode }
+    : defaultSettings;
   globalSettings =
     (change.settings?.lokascript as ServerSettings) ||
     (change.settings?.hyperscript as ServerSettings) ||
-    defaultSettings;
+    envDefaults;
 
   // Re-resolve mode when settings change
   const previousMode = resolvedMode;
