@@ -217,6 +217,7 @@ function evaluateMathExpression(expression: string): number {
   }
 }
 
+/** @deprecated Use getFormValuesProcessed instead — this returns string-only values via FormData */
 function getFormValues(form: HTMLFormElement): Record<string, unknown> {
   const formData = new FormData(form);
   const values: Record<string, unknown> = {};

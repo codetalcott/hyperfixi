@@ -21,8 +21,10 @@ function createMockContext(): CodegenContext {
     implicitTarget: '_ctx.me',
     localVarDeclarations: '',
     canCacheSelector: () => false,
-    getCachedSelector: (sel) => `document.querySelector('${sel}')`,
-    requireHelper: (name) => { requiredHelpers.add(name); },
+    getCachedSelector: sel => `document.querySelector('${sel}')`,
+    requireHelper: name => {
+      requiredHelpers.add(name);
+    },
     requiredHelpers,
     analysis: {} as AnalysisResult,
     options: {} as CodegenOptions,
@@ -190,36 +192,44 @@ describe('ExpressionCodegen', () => {
 
     it('generates equality operators', () => {
       setup();
-      expect(codegen.generate({
-        type: 'binary',
-        operator: 'is',
-        left: { type: 'identifier', value: 'x' },
-        right: { type: 'literal', value: 5 },
-      })).toBe('(x === 5)');
+      expect(
+        codegen.generate({
+          type: 'binary',
+          operator: 'is',
+          left: { type: 'identifier', value: 'x' },
+          right: { type: 'literal', value: 5 },
+        })
+      ).toBe('(x === 5)');
 
-      expect(codegen.generate({
-        type: 'binary',
-        operator: 'is not',
-        left: { type: 'identifier', value: 'x' },
-        right: { type: 'literal', value: 5 },
-      })).toBe('(x !== 5)');
+      expect(
+        codegen.generate({
+          type: 'binary',
+          operator: 'is not',
+          left: { type: 'identifier', value: 'x' },
+          right: { type: 'literal', value: 5 },
+        })
+      ).toBe('(x !== 5)');
     });
 
     it('generates logical operators', () => {
       setup();
-      expect(codegen.generate({
-        type: 'binary',
-        operator: 'and',
-        left: { type: 'literal', value: true },
-        right: { type: 'literal', value: false },
-      })).toBe('(true && false)');
+      expect(
+        codegen.generate({
+          type: 'binary',
+          operator: 'and',
+          left: { type: 'literal', value: true },
+          right: { type: 'literal', value: false },
+        })
+      ).toBe('(true && false)');
 
-      expect(codegen.generate({
-        type: 'binary',
-        operator: 'or',
-        left: { type: 'literal', value: true },
-        right: { type: 'literal', value: false },
-      })).toBe('(true || false)');
+      expect(
+        codegen.generate({
+          type: 'binary',
+          operator: 'or',
+          left: { type: 'literal', value: true },
+          right: { type: 'literal', value: false },
+        })
+      ).toBe('(true || false)');
     });
 
     it('generates contains operator', () => {
@@ -275,6 +285,16 @@ describe('ExpressionCodegen', () => {
         property: '@disabled',
       });
       expect(result).toBe("_ctx.me.getAttribute('disabled')");
+    });
+
+    it('generates getValues helper for values pseudo-property', () => {
+      setup();
+      const result = codegen.generate({
+        type: 'possessive',
+        object: { type: 'identifier', value: 'me' },
+        property: 'values',
+      });
+      expect(result).toBe('_rt.getValues(_ctx.me)');
     });
   });
 

@@ -853,6 +853,7 @@ export class AOTCompiler {
       removeClass: 80,
       getProp: 120,
       setProp: 120,
+      getValues: 180,
       contains: 150,
       matches: 50,
       debounce: 150,

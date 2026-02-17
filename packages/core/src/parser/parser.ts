@@ -1463,6 +1463,19 @@ export class Parser {
         return this.parseTheXofY();
       }
 
+      // Handle bare "values of <target>" (without "the")
+      if (token.value === 'values' && this.check('of')) {
+        this.advance(); // consume 'of'
+        const target = this.parsePrimary();
+        return {
+          type: 'propertyOfExpression',
+          property: { type: 'identifier', name: 'values' },
+          target,
+          line: token.line,
+          column: token.column,
+        } as ASTNode;
+      }
+
       return this.createIdentifier(token.value);
     }
 

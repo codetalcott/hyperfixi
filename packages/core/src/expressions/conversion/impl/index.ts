@@ -19,6 +19,7 @@ import type {
 import type { ExpressionCategory, LLMDocumentation } from '../../../types/expression-types';
 import { BaseExpressionImpl } from '../../base-expression';
 import { isString, isNumber, isBoolean, isObject, isFunction } from '../../type-helpers';
+import { getFormValuesProcessed, getInputValue } from '../index';
 
 // ============================================================================
 // Converter Helper Functions (deduplication)
@@ -264,7 +265,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
   ): EvaluationResult<Record<string, unknown>> => {
     try {
       if (value instanceof HTMLFormElement) {
-        return success(extractFormValues(value), 'object');
+        return success(getFormValuesProcessed(value), 'object');
       }
       if (value instanceof HTMLElement) {
         const inputs = value.querySelectorAll('input, select, textarea');
@@ -272,7 +273,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
         inputs.forEach((input: Element) => {
           const htmlInput = input as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
           if ((htmlInput as HTMLInputElement).name) {
-            const inputValue = extractInputValue(htmlInput);
+            const inputValue = getInputValue(htmlInput);
             if (inputValue !== undefined) {
               values[(htmlInput as HTMLInputElement).name] = inputValue;
             }
@@ -805,69 +806,6 @@ export class IsExpression
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/**
- * Extract form values with comprehensive input handling
- */
-function extractFormValues(form: HTMLFormElement): Record<string, unknown> {
-  const values: Record<string, unknown> = {};
-  const elements = form.querySelectorAll('input, select, textarea');
-
-  elements.forEach(element => {
-    const input = element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-    if (input.name) {
-      const value = extractInputValue(input);
-      if (value !== undefined) {
-        if (values[input.name] !== undefined) {
-          // Multiple values for same name - convert to array
-          if (!Array.isArray(values[input.name])) {
-            values[input.name] = [values[input.name]];
-          }
-          (values[input.name] as unknown[]).push(value);
-        } else {
-          values[input.name] = value;
-        }
-      }
-    }
-  });
-
-  return values;
-}
-
-/**
- * Extract value from form input with type-aware processing
- */
-function extractInputValue(
-  input: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-): unknown {
-  if (input instanceof HTMLInputElement) {
-    switch (input.type) {
-      case 'checkbox':
-        return input.checked;
-      case 'radio':
-        return input.checked ? input.value : undefined;
-      case 'number':
-      case 'range':
-        return input.valueAsNumber;
-      case 'date':
-      case 'datetime-local':
-        return input.valueAsDate;
-      case 'file':
-        return input.files;
-      default:
-        return input.value;
-    }
-  }
-
-  if (input instanceof HTMLSelectElement) {
-    if (input.multiple) {
-      return Array.from(input.selectedOptions).map(option => option.value);
-    }
-    return input.value;
-  }
-
-  return input.value;
-}
 
 // ============================================================================
 // Enhanced Expression Registry

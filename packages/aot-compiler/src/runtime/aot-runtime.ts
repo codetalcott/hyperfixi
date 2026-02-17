@@ -130,6 +130,19 @@ export function getProp(element: Element, property: string): unknown {
 }
 
 /**
+ * Collect form values from an element as FormData.
+ */
+export function getValues(element: Element): FormData {
+  if (element instanceof HTMLFormElement) return new FormData(element);
+  const fd = new FormData();
+  element.querySelectorAll('input, select, textarea').forEach((input: Element) => {
+    const name = input.getAttribute('name');
+    if (name && 'value' in input) fd.append(name, (input as HTMLInputElement).value);
+  });
+  return fd;
+}
+
+/**
  * Set a property on an element (property first, then attribute).
  */
 export function setProp(element: Element, property: string, value: unknown): void {

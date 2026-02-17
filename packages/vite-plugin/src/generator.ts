@@ -222,7 +222,7 @@ async function evaluate(node, ctx) {
         const fd = new FormData();
         obj.querySelectorAll('input, select, textarea').forEach(input => {
           const name = input.getAttribute('name');
-          if (name && 'value' in input) fd.append(name, (input as HTMLInputElement).value);
+          if (name && 'value' in input) fd.append(name, input.value);
         });
         return fd;
       }

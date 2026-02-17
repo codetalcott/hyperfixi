@@ -280,6 +280,36 @@ describe('Parser Integration Tests', () => {
         scope: 'global',
       });
     });
+
+    it('should parse bare values of me as propertyOfExpression', () => {
+      const node = parseOk('set :data to values of me');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      // args: [target, 'to', value]
+      const valueExpr = args[2];
+      expect(valueExpr.type).toBe('propertyOfExpression');
+      expect(valueExpr.property.name).toBe('values');
+    });
+
+    it('should parse the values of me as propertyOfExpression', () => {
+      const node = parseOk('set :data to the values of me');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      const valueExpr = args[2];
+      expect(valueExpr.type).toBe('propertyOfExpression');
+      expect(valueExpr.property.name).toBe('values');
+    });
+
+    it('should parse values of selector as propertyOfExpression', () => {
+      const node = parseOk('set :data to values of #my-form');
+      expect(node.type).toBe('command');
+      const args = getArgs(node);
+      const valueExpr = args[2];
+      expect(valueExpr.type).toBe('propertyOfExpression');
+      expect(valueExpr.property.name).toBe('values');
+    });
   });
 
   // ─── Multi-line Parsing ────────────────────────────────────────────

@@ -406,6 +406,12 @@ export class ExpressionCodegen {
       return `${object}.getAttribute('${sanitizeSelector(attrName)}')`;
     }
 
+    // Form values pseudo-property
+    if (property === 'values') {
+      this.ctx.requireHelper('getValues');
+      return `_rt.getValues(${object})`;
+    }
+
     // Common DOM properties
     const domProps = [
       'value',

@@ -980,6 +980,10 @@ function compileExpression(node: ASTNode): string | null {
       if (prop.startsWith('*')) {
         return `${obj}.style.${prop.slice(1)}`;
       }
+      // Form values pseudo-property
+      if (prop === 'values') {
+        return `(function(el){if(el instanceof HTMLFormElement)return new FormData(el);var fd=new FormData();el.querySelectorAll('input,select,textarea').forEach(function(i){var n=i.getAttribute('name');if(n&&'value'in i)fd.append(n,i.value)});return fd})(${obj})`;
+      }
       return `${obj}.${prop}`;
     }
 
