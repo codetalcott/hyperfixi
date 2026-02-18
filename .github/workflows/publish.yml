@@ -24,22 +24,23 @@ on:
         required: false
         type: boolean
         default: false
+      packages:
+        description: 'Packages to publish (comma-separated subset, or "all")'
+        required: false
+        type: string
+        default: 'all'
 
 env:
   NODE_OPTIONS: --max-old-space-size=4096
-  # All public packages to publish (in dependency order)
-  # @lokascript: semantic, i18n, hyperscript-adapter
-  # @hyperfixi: core, vite-plugin, patterns-reference, mcp-server
-  PACKAGES: 'semantic,core,i18n,hyperscript-adapter,patterns-reference,mcp-server,vite-plugin'
 
 jobs:
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: write
-      id-token: write
+      id-token: write # Required for npm trusted publishing (OIDC provenance)
 
     steps:
       - name: Checkout
@@ -54,11 +55,7 @@ jobs:
           node-version: '24'
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Verify npm version
-        run: |
-          echo "Node: $(node --version)"
-          echo "npm: $(npm --version)"
+          # No auth-token — OIDC trusted publishing handles authentication
 
       - name: Configure Git
         run: |
@@ -68,20 +65,31 @@ jobs:
       - name: Install dependencies
         run: npm install --prefer-offline
 
-      - name: Build packages
+      - name: Build all packages
         run: |
-          # Build order based on dependency graph
+          # Build order: base → semantic → core → everything else
           npm run build --prefix packages/semantic
           npm run build --prefix packages/core
-          npm run build --prefix packages/i18n
           npm run build:browser --prefix packages/core
+          npm run build --prefix packages/i18n
           npm run build --prefix packages/hyperscript-adapter
           npm run build --prefix packages/patterns-reference
-          npm run build --prefix packages/ast-toolkit
           npm run build --prefix packages/aot-compiler
+          npm run build --prefix packages/framework
+          npm run build --prefix packages/server-bridge
+          npm run build --prefix packages/types-browser
+          npm run build --prefix packages/domain-sql
+          npm run build --prefix packages/domain-bdd
+          npm run build --prefix packages/domain-llm
+          npm run build --prefix packages/domain-todo
+          npm run build --prefix packages/domain-behaviorspec
+          npm run build --prefix packages/domain-jsx
           npm run build --prefix packages/compilation-service
           npm run build --prefix packages/mcp-server
           npm run build --prefix packages/vite-plugin
+          npm run build --prefix packages/behaviors
+          npm run build --prefix packages/testing-framework
+          npm run build --prefix packages/language-server
 
       - name: Run tests
         run: |
@@ -89,28 +97,23 @@ jobs:
           npm test --prefix packages/semantic -- --run
           npm test --prefix packages/i18n -- --run
           npm test --prefix packages/hyperscript-adapter -- --run
+          npm test --prefix packages/compilation-service -- --run
           npm test --prefix packages/mcp-server -- --run
 
       - name: Calculate new version
         id: version
         run: |
-          # Get current version from core (all packages should be in sync)
           CURRENT=$(node -p "require('./packages/core/package.json').version")
           echo "Current version: $CURRENT"
-
           VERSION_TYPE="${{ github.event.inputs.version-type }}"
 
           if [ "$VERSION_TYPE" = "current" ]; then
-            # Use the version already in package.json as-is
             NEW="$CURRENT"
           else
-            # Calculate new version via npm version bump
             cd packages/core
             npm version "$VERSION_TYPE" --no-git-tag-version > /dev/null 2>&1
             NEW=$(node -p "require('./package.json').version")
             cd ../..
-
-            # Reset core's package.json (we'll set all at once below)
             git checkout packages/core/package.json
           fi
 
@@ -121,71 +124,66 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           echo "Setting all packages to version $VERSION"
-
-          # Helper: get npm scope for a package
-          pkg_scope() {
-            case "$1" in
-              core|vite-plugin|patterns-reference|mcp-server|behaviors|types-browser|testing-framework|developer-tools|smart-bundling|aot-compiler) echo "@hyperfixi" ;;
-              *) echo "@lokascript" ;;
-            esac
-          }
-
-          for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin; do
-            echo "  → $(pkg_scope $pkg)/$pkg"
-            cd "packages/$pkg"
-            npm version "$VERSION" --no-git-tag-version --allow-same-version
-            cd ../..
+          for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin \
+                     framework server-bridge types-browser \
+                     domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
+                     compilation-service behaviors testing-framework language-server; do
+            if [ -f "packages/$pkg/package.json" ]; then
+              (cd "packages/$pkg" && npm version "$VERSION" --no-git-tag-version --allow-same-version)
+            fi
           done
 
-      - name: Update package-lock.json
-        run: npm install --package-lock-only
-
-      - name: Publish to npm (dry-run)
-        if: ${{ github.event.inputs.dry-run == 'true' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          echo "DRY RUN: Would publish all packages at version $VERSION"
-
-          for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin; do
-            SCOPE=$(node -p "require('./packages/$pkg/package.json').name")
-            echo "  → $SCOPE@$VERSION"
-            cd "packages/$pkg"
-            npm publish --dry-run --tag ${{ github.event.inputs.npm-tag }} --access public
-            cd ../..
-          done
-
-      - name: Publish to npm
-        if: ${{ github.event.inputs.dry-run == 'false' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish packages
         run: |
           set -o pipefail
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Publishing all packages at version $VERSION"
+          DRY_RUN="${{ github.event.inputs.dry-run }}"
+          FILTER="${{ github.event.inputs.packages }}"
           FAILED=""
 
-          for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin; do
-            SCOPE=$(node -p "require('./packages/$pkg/package.json').name")
-            echo "Publishing $SCOPE@$VERSION"
-            cd "packages/$pkg"
-            if npm publish --tag ${{ github.event.inputs.npm-tag }} --access public 2>&1 | tee /tmp/publish-$pkg.log; then
-              echo "✅ $SCOPE@$VERSION published"
-            else
-              if grep -q "previously published\|already exists\|cannot publish over" /tmp/publish-$pkg.log; then
-                echo "⏭️  $SCOPE@$VERSION already published, skipping"
-              else
-                echo "❌ $SCOPE@$VERSION failed"
-                cat /tmp/publish-$pkg.log
-                FAILED="$FAILED $SCOPE"
-              fi
+          # All packages in dependency order
+          # Packages that have version-lock with core use the same VERSION
+          # New domain/framework packages start at 1.0.0 but will be bumped if VERSION_TYPE != current
+          ALL_PACKAGES="semantic core i18n hyperscript-adapter patterns-reference \
+                        framework server-bridge types-browser \
+                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
+                        compilation-service mcp-server vite-plugin \
+                        behaviors testing-framework language-server"
+
+          for pkg in $ALL_PACKAGES; do
+            [ ! -f "packages/$pkg/package.json" ] && continue
+
+            # Skip if not in filter (unless filter is "all")
+            if [ "$FILTER" != "all" ]; then
+              PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
+              echo "$FILTER" | grep -qF "$PKG_NAME" || continue
             fi
-            cd ../..
+
+            PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
+            PKG_VER=$(node -p "require('./packages/$pkg/package.json').version")
+            IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
+            [ "$IS_PRIVATE" = "true" ] && continue
+
+            echo "→ $PKG_NAME@$PKG_VER"
+
+            if [ "$DRY_RUN" = "true" ]; then
+              (cd "packages/$pkg" && npm publish --dry-run --access public \
+                --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tail -3)
+            else
+              (cd "packages/$pkg" && npm publish --access public --provenance \
+                --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tee /tmp/pub-$pkg.log) || {
+                if grep -q "previously published\|already exists\|cannot publish over" /tmp/pub-$pkg.log 2>/dev/null; then
+                  echo "  ⏭ already published, skipping"
+                else
+                  echo "  ✗ FAILED"
+                  FAILED="$FAILED $PKG_NAME"
+                fi
+              }
+            fi
           done
 
           if [ -n "$FAILED" ]; then
-            echo "::error::Failed to publish:$FAILED"
+            echo "::error::Failed:$FAILED"
             exit 1
           fi
 
@@ -193,32 +191,17 @@ jobs:
         if: ${{ github.event.inputs.dry-run == 'false' }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          git add packages/*/package.json package-lock.json
+          git add packages/*/package.json package-lock.json 2>/dev/null || true
           git commit -m "chore: release v$VERSION" || echo "No changes to commit"
-
-          git pull --rebase origin main || {
-            git rebase --abort 2>/dev/null || true
-            git pull --no-rebase origin main
-          }
-
+          git pull --rebase origin main || git pull --no-rebase origin main
           git push
 
       - name: Create Git tags
         if: ${{ github.event.inputs.dry-run == 'false' }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-
-          # Create unified version tag
           git tag -f "v$VERSION"
           git push origin "v$VERSION" --force
-
-          # Create per-package tags (use actual npm name from package.json)
-          for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin; do
-            PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
-            TAG_NAME="${PKG_NAME}@${VERSION}"
-            git tag -f "$TAG_NAME"
-            git push origin "$TAG_NAME" --force
-          done
 
       - name: Create GitHub Release
         if: ${{ github.event.inputs.dry-run == 'false' }}
@@ -227,52 +210,29 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           TAG="${{ github.event.inputs.npm-tag }}"
-          PRERELEASE_FLAG=""
-          if [ "$TAG" != "latest" ]; then
-            PRERELEASE_FLAG="--prerelease"
-          fi
-
+          PRERELEASE=$( [ "$TAG" != "latest" ] && echo "--prerelease" || echo "" )
           gh release create "v$VERSION" \
-            --title "v$VERSION" \
-            $PRERELEASE_FLAG \
-            --notes "## HyperFixi + LokaScript v${VERSION}
-
-          All packages published at version ${VERSION}:
-          - @hyperfixi/core
-          - @hyperfixi/vite-plugin
-          - @hyperfixi/patterns-reference
-          - @hyperfixi/mcp-server
-          - @lokascript/semantic
-          - @lokascript/i18n
-          - @lokascript/hyperscript-adapter
-
-          ### Install
-          \`\`\`bash
-          npm install @hyperfixi/core@${VERSION}
-          npm install @hyperfixi/vite-plugin@${VERSION}
-          npm install @hyperfixi/mcp-server@${VERSION}
-          npm install @lokascript/hyperscript-adapter@${VERSION}
-          \`\`\`"
+            --title "v$VERSION" $PRERELEASE \
+            --generate-notes || echo "Release already exists"
 
       - name: Summary
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "## Publication Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
-          echo "**Version Type**: ${{ github.event.inputs.version-type }}" >> $GITHUB_STEP_SUMMARY
-          echo "**npm Tag**: ${{ github.event.inputs.npm-tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Dry Run**: ${{ github.event.inputs.dry-run }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Packages" >> $GITHUB_STEP_SUMMARY
-          for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin; do
-            PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
-            echo "- $PKG_NAME@$VERSION" >> $GITHUB_STEP_SUMMARY
-          done
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if [ "${{ github.event.inputs.dry-run }}" = "true" ]; then
-            echo "✅ **Dry run completed successfully**" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ **All packages published successfully**" >> $GITHUB_STEP_SUMMARY
-          fi
+          {
+            echo "## Publication Summary"
+            echo "**Version**: $VERSION | **Tag**: ${{ github.event.inputs.npm-tag }} | **Dry run**: ${{ github.event.inputs.dry-run }}"
+            echo ""
+            echo "### Packages published"
+            for pkg in semantic core i18n hyperscript-adapter patterns-reference \
+                       framework server-bridge types-browser \
+                       domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
+                       compilation-service mcp-server vite-plugin \
+                       behaviors testing-framework language-server; do
+              [ -f "packages/$pkg/package.json" ] || continue
+              IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
+              [ "$IS_PRIVATE" = "true" ] && continue
+              PKG_NAME=$(node -p "require('./packages/$pkg/package.json').name")
+              PKG_VER=$(node -p "require('./packages/$pkg/package.json').version")
+              echo "- \`$PKG_NAME@$PKG_VER\`"
+            done
+          } >> $GITHUB_STEP_SUMMARY
