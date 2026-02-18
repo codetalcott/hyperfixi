@@ -90,6 +90,8 @@ jobs:
           npm run build --prefix packages/behaviors
           npm run build --prefix packages/testing-framework
           npm run build --prefix packages/language-server
+          npm run build --prefix packages/mcp-server-hyperscript
+          npm run build --prefix packages/language-server-hyperscript
 
       - name: Run tests
         run: |
@@ -127,7 +129,8 @@ jobs:
           for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin \
                      framework server-bridge types-browser \
                      domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
-                     compilation-service behaviors testing-framework language-server; do
+                     compilation-service behaviors testing-framework language-server \
+                     mcp-server-hyperscript language-server-hyperscript; do
             if [ -f "packages/$pkg/package.json" ]; then
               (cd "packages/$pkg" && npm version "$VERSION" --no-git-tag-version --allow-same-version)
             fi
@@ -148,7 +151,8 @@ jobs:
                         framework server-bridge types-browser \
                         domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
                         compilation-service mcp-server vite-plugin \
-                        behaviors testing-framework language-server"
+                        behaviors testing-framework language-server \
+                        mcp-server-hyperscript language-server-hyperscript"
 
           for pkg in $ALL_PACKAGES; do
             [ ! -f "packages/$pkg/package.json" ] && continue
@@ -227,7 +231,8 @@ jobs:
                        framework server-bridge types-browser \
                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
                        compilation-service mcp-server vite-plugin \
-                       behaviors testing-framework language-server; do
+                       behaviors testing-framework language-server \
+                       mcp-server-hyperscript language-server-hyperscript; do
               [ -f "packages/$pkg/package.json" ] || continue
               IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
               [ "$IS_PRIVATE" = "true" ] && continue
