@@ -61,5 +61,16 @@ export function createDomainRegistry(): DomainRegistry {
     getRenderer: () => import('@lokascript/domain-behaviorspec').then(m => m.renderBehaviorSpec),
   });
 
+  registry.register({
+    name: 'llm',
+    description: 'natural language LLM prompts (ask, summarize, analyze, translate)',
+    languages: ['en', 'es', 'ja', 'ar'],
+    inputLabel: 'command',
+    inputDescription:
+      'LLM command in natural language (e.g., "ask claude to summarize #article as bullets")',
+    getDSL: () => import('@lokascript/domain-llm').then(m => m.createLLMDSL()),
+    getRenderer: () => import('@lokascript/domain-llm').then(m => m.renderLLM),
+  });
+
   return registry;
 }

@@ -10,6 +10,8 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
@@ -33,6 +35,12 @@ import {
   handleBehaviorSpecMultiLine,
 } from './tools/behaviorspec-extras.js';
 
+// MCP Prompts (Layer 2)
+import { getLLMPromptDefinitions, renderLLMPrompt } from './prompts/index.js';
+
+// MCP Sampling tools (Layer 3)
+import { samplingTools, handleSamplingTool } from './tools/llm-sampling.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -51,6 +59,7 @@ const server = new Server(
     capabilities: {
       tools: {},
       resources: {},
+      prompts: {},
     },
   }
 );
@@ -71,6 +80,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...compilationTools,
       ...routeTools,
       ...registry.getToolDefinitions(),
+      ...samplingTools,
     ],
   };
 });
@@ -175,6 +185,16 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     return handleRouteTool(name, args as Record<string, unknown>);
   }
 
+  // MCP Sampling tools (Layer 3 — invoke Claude via client)
+  if (
+    name === 'ask_claude' ||
+    name === 'summarize_content' ||
+    name === 'analyze_content' ||
+    name === 'translate_content'
+  ) {
+    return handleSamplingTool(name, args as Record<string, unknown>, server);
+  }
+
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
   if (name.startsWith('get_')) {
     return handlePatternTool(name, args as Record<string, unknown>);
@@ -184,6 +204,19 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     content: [{ type: 'text', text: `Unknown tool: ${name}` }],
     isError: true,
   };
+});
+
+// =============================================================================
+// Prompt Handlers (Layer 2)
+// =============================================================================
+
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return { prompts: getLLMPromptDefinitions() };
+});
+
+server.setRequestHandler(GetPromptRequestSchema, async request => {
+  const { name, arguments: promptArgs } = request.params;
+  return renderLLMPrompt(name, (promptArgs ?? {}) as Record<string, string>);
 });
 
 // =============================================================================
