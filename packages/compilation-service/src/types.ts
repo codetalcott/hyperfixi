@@ -243,7 +243,7 @@ export interface ComponentResponse {
     name: string;
     /** Full component file content */
     code: string;
-    /** React hooks used */
+    /** Framework-specific reactive primitives (React hooks, Vue composables, Svelte runes) */
     hooks: string[];
     /** Target framework */
     framework: string;

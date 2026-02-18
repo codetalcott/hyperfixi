@@ -35,6 +35,7 @@
     "dev": "npx http-server . -p 3000 -c-1",
     "docs:dev": "npm run dev --workspace=apps/docs-site",
     "docs:build": "npm run build --workspace=apps/docs-site",
+    "check:fresh": "./scripts/ensure-fresh.sh packages/framework packages/semantic packages/aot-compiler packages/compilation-service packages/mcp-server",
     "compatibility:monitor": "node scripts/compatibility-monitor.js",
     "compatibility:improve": "node scripts/improvement-workflow.js",
     "compatibility:cycle": "npm run compatibility:monitor && npm run compatibility:improve",

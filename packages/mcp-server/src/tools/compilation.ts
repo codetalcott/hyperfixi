@@ -114,7 +114,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'generate_component',
     description:
-      'Generate a React component from hyperscript. Maps semantic operations to React hooks and JSX.',
+      'Generate a React component from hyperscript. Maps semantic operations to React hooks and JSX, Vue 3 Composition API and templates, or Svelte 5 runes. Supports react (default), vue, and svelte frameworks.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -129,7 +129,7 @@ export const compilationTools: Tool[] = [
         },
         framework: {
           type: 'string',
-          description: 'Component framework to target (default "react")',
+          description: 'Component framework to target: "react" (default), "vue", or "svelte"',
         },
       },
     },

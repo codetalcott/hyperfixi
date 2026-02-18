@@ -4,7 +4,7 @@
  * Semantic compilation service for LokaScript.
  * Validates and compiles hyperscript from 24 languages, explicit syntax, or LLM JSON.
  * Generates behavior-level tests from semantic analysis.
- * Generates React components from abstract operations.
+ * Generates framework components (React, Vue, Svelte) from abstract operations.
  */
 
 // Main service
@@ -76,6 +76,8 @@ export type { TestRenderer, TestRenderOptions, GeneratedTest } from './renderers
 
 // Component renderers
 export { ReactRenderer } from './renderers/react.js';
+export { VueRenderer } from './renderers/vue.js';
+export { SvelteRenderer } from './renderers/svelte.js';
 export type {
   ComponentRenderer,
   ComponentRenderOptions,

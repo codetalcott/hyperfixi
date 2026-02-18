@@ -39,6 +39,8 @@ import { SemanticCache, generateCacheKey } from './compile/cache.js';
 import { extractOperations } from './operations/extract.js';
 import { PlaywrightRenderer } from './renderers/playwright.js';
 import { ReactRenderer } from './renderers/react.js';
+import { VueRenderer } from './renderers/vue.js';
+import { SvelteRenderer } from './renderers/svelte.js';
 import type { TestRenderer } from './renderers/types.js';
 import type { ComponentRenderer } from './renderers/component-types.js';
 
@@ -62,7 +64,13 @@ export class CompilationService {
       Object.entries(options.testRenderers ?? { playwright: new PlaywrightRenderer() })
     );
     this.componentRenderers = new Map<string, ComponentRenderer>(
-      Object.entries(options.componentRenderers ?? { react: new ReactRenderer() })
+      Object.entries(
+        options.componentRenderers ?? {
+          react: new ReactRenderer(),
+          vue: new VueRenderer(),
+          svelte: new SvelteRenderer(),
+        }
+      )
     );
   }
 
@@ -389,10 +397,10 @@ export class CompilationService {
   }
 
   /**
-   * Generate a React component from hyperscript.
+   * Generate a framework component from hyperscript.
    *
    * Parses the input, extracts abstract operations, and renders
-   * them as a React functional component with hooks.
+   * them as a framework-specific component (React, Vue, or Svelte).
    */
   generateComponent(request: ComponentRequest): ComponentResponse {
     const diagnostics: Diagnostic[] = [];

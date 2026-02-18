@@ -49,6 +49,6 @@ export interface GeneratedComponent {
   framework: string;
   /** Abstract operations for introspection */
   operations: AbstractOperation[];
-  /** React hooks used */
+  /** Framework-specific reactive primitives (React hooks, Vue composables, Svelte runes) */
   hooks: string[];
 }

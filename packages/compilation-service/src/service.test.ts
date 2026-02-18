@@ -415,10 +415,28 @@ describe('CompilationService', () => {
     it('returns error for unknown component framework', () => {
       const result = service.generateComponent({
         explicit: '[toggle patient:.active]',
-        framework: 'svelte',
+        framework: 'angular',
       });
       expect(result.ok).toBe(false);
       expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
+    });
+
+    it('uses default vue renderer for generateComponent()', () => {
+      const result = service.generateComponent({
+        explicit: '[toggle patient:.active]',
+        framework: 'vue',
+      });
+      expect(result.ok).toBe(true);
+      expect(result.component?.framework).toBe('vue');
+    });
+
+    it('uses default svelte renderer for generateComponent()', () => {
+      const result = service.generateComponent({
+        explicit: '[toggle patient:.active]',
+        framework: 'svelte',
+      });
+      expect(result.ok).toBe(true);
+      expect(result.component?.framework).toBe('svelte');
     });
 
     it('accepts custom test renderer via registerTestRenderer()', () => {

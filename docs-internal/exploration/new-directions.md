@@ -175,7 +175,13 @@ The key architectural unlock is abstracting the codegen target. Right now the 45
 
 ### Phase 4 (optional, builds on #3): Semantic Diffing + Progressive Enhancement
 
-These fall out naturally once the abstract operation layer exists. Semantic diffing compares at the operation level. Progressive enhancement is just a dual-target build (JS renderer + HTML-fallback renderer).
+#### Semantic Diffing — DONE
+
+`diffBehaviors()` engine using LCS comparison, integrated into `CompilationService.diff()`, HTTP `POST /diff` endpoint, and MCP `diff_behaviors` tool. 20 unit tests + 3 MCP integration tests. Cross-language diffing works (same behavior in EN vs JA reports `identical: true`).
+
+#### Progressive Enhancement — TODO
+
+Dual-target build (JS renderer + HTML-fallback renderer). Falls out naturally from the abstract operation layer — needs an `HtmlFallbackRenderer` that maps `AbstractOperation` types to no-JS HTML equivalents (e.g., `toggle visibility` → `<details>`, `go destination` → `<a href>`).
 
 ### Where the real moat is
 
@@ -185,4 +191,4 @@ Developers write behavior in their native language
 LLMs generate reliable structured output (not fragile syntax)
 The compiler validates, optimizes, and emits to whatever target the project uses
 Tests are generated automatically from the semantic understanding
-Phase 1 proves the pipeline. Phase 2 proves the abstraction. Phase 3 is the payoff — all three are done.
+Phase 1 proves the pipeline. Phase 2 proves the abstraction. Phase 3 is the payoff — all three are done. Phase 4 semantic diffing adds cross-language behavioral comparison.
