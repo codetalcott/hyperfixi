@@ -184,6 +184,8 @@ jobs:
                 --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tee /tmp/pub-$pkg.log) || {
                 if grep -q "previously published\|already exists\|cannot publish over" /tmp/pub-$pkg.log 2>/dev/null; then
                   echo "  ⏭ already published, skipping"
+                elif grep -q "Scope not found" /tmp/pub-$pkg.log 2>/dev/null; then
+                  echo "  ⚠ scope not found on npm — create @${PKG_NAME%%/*} scope first"
                 else
                   echo "  ✗ FAILED"
                   FAILED="$FAILED $PKG_NAME"

@@ -38,5 +38,10 @@
   "publishConfig": {
     "access": "public"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/domain-todo"
+  }
 }
