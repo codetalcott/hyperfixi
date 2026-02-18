@@ -63,7 +63,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Install dependencies
-        run: npm install --prefer-offline
+        run: npm install
 
       - name: Build all packages
         run: |
@@ -93,6 +93,7 @@ jobs:
           npm run build --prefix packages/language-server
           npm run build --prefix packages/mcp-server-hyperscript
           npm run build --prefix packages/language-server-hyperscript
+          npm run build --prefix packages/multilingual-hyperscript
 
       - name: Run tests
         run: |
@@ -131,7 +132,7 @@ jobs:
                      framework server-bridge types-browser \
                      domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
                      compilation-service behaviors testing-framework language-server \
-                     mcp-server-hyperscript language-server-hyperscript; do
+                     mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript; do
             if [ -f "packages/$pkg/package.json" ]; then
               # Use npm pkg set to avoid registry lookups (safe for unpublished packages)
               (cd "packages/$pkg" && npm pkg set version="$VERSION")
@@ -158,7 +159,7 @@ jobs:
                         domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
                         compilation-service mcp-server vite-plugin \
                         behaviors testing-framework language-server \
-                        mcp-server-hyperscript language-server-hyperscript"
+                        mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript"
 
           for pkg in $ALL_PACKAGES; do
             [ ! -f "packages/$pkg/package.json" ] && continue
@@ -203,7 +204,10 @@ jobs:
         if: ${{ github.event.inputs.dry-run == 'false' }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          git add packages/*/package.json package-lock.json 2>/dev/null || true
+          # Don't commit package-lock.json — it contains workspace-package versions that
+          # would cause the next run's `npm install` to fail (tries to fetch old versions
+          # from registry since they're now published but at a higher version number)
+          git add packages/*/package.json 2>/dev/null || true
           git commit -m "chore: release v$VERSION" || echo "No changes to commit"
           git pull --rebase origin main || git pull --no-rebase origin main
           git push
@@ -240,7 +244,7 @@ jobs:
                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx \
                        compilation-service mcp-server vite-plugin \
                        behaviors testing-framework language-server \
-                       mcp-server-hyperscript language-server-hyperscript; do
+                       mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript; do
               [ -f "packages/$pkg/package.json" ] || continue
               IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
               [ "$IS_PRIVATE" = "true" ] && continue

@@ -1,0 +1,55 @@
+{
+  "name": "@hyperscript-tools/multilingual",
+  "version": "1.0.0",
+  "description": "Write original _hyperscript in 24 languages — Japanese, Korean, Spanish, Arabic, Chinese, Turkish, and more",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "hyperscript",
+    "_hyperscript",
+    "multilingual",
+    "i18n",
+    "internationalization",
+    "japanese",
+    "korean",
+    "spanish",
+    "arabic",
+    "chinese"
+  ],
+  "author": "HyperFixi Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "@lokascript/hyperscript-adapter": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/multilingual-hyperscript"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/multilingual-hyperscript#readme"
+}
