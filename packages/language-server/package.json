@@ -30,8 +30,8 @@
     "vscode-languageserver-textdocument": "^1.0.11"
   },
   "peerDependencies": {
-    "@lokascript/semantic": "*",
-    "@hyperfixi/core": "*"
+    "@hyperfixi/core": "*",
+    "@lokascript/semantic": "*"
   },
   "peerDependenciesMeta": {
     "@lokascript/semantic": {
@@ -42,14 +42,14 @@
     }
   },
   "devDependencies": {
-    "@lokascript/semantic": "*",
     "@hyperfixi/core": "*",
+    "@lokascript/semantic": "*",
     "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^4.0.0",
-    "@vitest/coverage-v8": "^4.0.0"
+    "vitest": "^4.0.0"
   },
   "files": [
     "dist"

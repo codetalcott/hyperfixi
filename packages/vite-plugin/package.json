@@ -26,8 +26,8 @@
     "sync-keywords": "npx tsx scripts/sync-keywords.ts"
   },
   "peerDependencies": {
-    "vite": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0",
-    "@hyperfixi/server-bridge": "*"
+    "@hyperfixi/server-bridge": "*",
+    "vite": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/server-bridge": {

@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/language-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Language Server Protocol implementation for original _hyperscript — completions, diagnostics, hover docs",
   "type": "module",
   "main": "dist/server.js",

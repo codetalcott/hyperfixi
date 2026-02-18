@@ -36,24 +36,24 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.0",
+    "@hyperfixi/patterns-reference": "*",
     "@lokascript/compilation-service": "*",
     "@lokascript/framework": "*",
     "@lokascript/semantic": "*",
-    "@hyperfixi/patterns-reference": "*"
+    "@modelcontextprotocol/sdk": "^1.25.0"
   },
   "peerDependencies": {
-    "@lokascript/compilation-service": "*",
-    "@lokascript/framework": "*",
     "@hyperfixi/core": "*",
     "@hyperfixi/patterns-reference": "*",
-    "@lokascript/semantic": "*",
-    "@lokascript/domain-sql": "*",
+    "@hyperfixi/server-bridge": "*",
+    "@lokascript/compilation-service": "*",
     "@lokascript/domain-bdd": "*",
     "@lokascript/domain-behaviorspec": "*",
     "@lokascript/domain-jsx": "*",
     "@lokascript/domain-llm": "*",
-    "@hyperfixi/server-bridge": "*"
+    "@lokascript/domain-sql": "*",
+    "@lokascript/framework": "*",
+    "@lokascript/semantic": "*"
   },
   "peerDependenciesMeta": {
     "@lokascript/compilation-service": {
@@ -91,17 +91,17 @@
     }
   },
   "devDependencies": {
-    "@lokascript/compilation-service": "*",
-    "@lokascript/framework": "*",
     "@hyperfixi/core": "*",
     "@hyperfixi/patterns-reference": "*",
-    "@lokascript/semantic": "*",
-    "@lokascript/domain-sql": "*",
+    "@hyperfixi/server-bridge": "*",
+    "@lokascript/compilation-service": "*",
     "@lokascript/domain-bdd": "*",
     "@lokascript/domain-behaviorspec": "*",
     "@lokascript/domain-jsx": "*",
     "@lokascript/domain-llm": "*",
-    "@hyperfixi/server-bridge": "*",
+    "@lokascript/domain-sql": "*",
+    "@lokascript/framework": "*",
+    "@lokascript/semantic": "*",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
