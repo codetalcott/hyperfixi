@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LokaScript Chat</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-title">
+        <span class="logo">&#9653;</span>
+        <span>LokaScript Chat</span>
+      </div>
+      <div class="header-controls">
+        <select class="lang-select" id="lang-select" title="Input language"></select>
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-label" id="status-label">Checking...</span>
+      </div>
+    </div>
+
+    <!-- Offline banner -->
+    <div class="offline-banner" id="offline-banner">
+      Compilation service not running. Start it:
+      <code>cd packages/compilation-service &amp;&amp; npx tsx src/serve.ts</code>
+      &mdash; or use <code>?api=http://localhost:PORT</code> to set a custom port.
+    </div>
+
+    <!-- Messages -->
+    <div class="messages" id="messages">
+      <div class="welcome">
+        <h2>LokaScript Chat</h2>
+        <p>
+          Describe a UI behavior in any of 24 languages. See it compiled to
+          hyperscript, JavaScript, React, Vue, and Svelte — instantly.
+        </p>
+        <div class="examples">
+          <button class="example-btn" onclick="useExample('on click toggle .active on me')">toggle class</button>
+          <button class="example-btn" onclick="useExample('on click add .highlight to #header')">add class</button>
+          <button class="example-btn" onclick="useExample('on click hide #modal')">hide element</button>
+          <button class="example-btn" onclick="useExample('on click increment :count')">increment</button>
+          <button class="example-btn" onclick="useExample('on click set #output.innerHTML to &quot;Hello!&quot;')">set content</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="input-area">
+      <div class="input-row">
+        <div class="input-wrap">
+          <textarea
+            id="chat-input"
+            placeholder="Describe a UI behavior..."
+            rows="1"
+            spellcheck="false"
+          ></textarea>
+        </div>
+        <button class="send-btn" id="send-btn">Send</button>
+      </div>
+      <div class="input-hint">
+        Enter to send &middot; Shift+Enter for newline &middot;
+        Try any of 24 languages
+      </div>
+    </div>
+  </div>
+
+  <script src="chat.js"></script>
+</body>
+</html>
