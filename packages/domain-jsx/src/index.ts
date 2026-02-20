@@ -159,3 +159,14 @@ export {
   TurkishJSXTokenizer,
   FrenchJSXTokenizer,
 } from './tokenizers';
+
+// =============================================================================
+// Domain Scan Config (for AOT / Vite plugin integration)
+// =============================================================================
+
+/** HTML attribute and script-type patterns for AOT scanning */
+export const jsxScanConfig = {
+  attributes: ['data-jsx', '_jsx'] as const,
+  scriptTypes: ['text/jsx-dsl'] as const,
+  defaultLanguage: 'en',
+};

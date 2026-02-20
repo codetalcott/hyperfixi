@@ -41,6 +41,9 @@ import { getLLMPromptDefinitions, renderLLMPrompt } from './prompts/index.js';
 // MCP Sampling tools (Layer 3)
 import { samplingTools, handleSamplingTool } from './tools/llm-sampling.js';
 
+// Cross-domain dispatcher tools
+import { dispatcherTools, handleDispatcherTool } from './tools/dispatcher.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -81,6 +84,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...routeTools,
       ...registry.getToolDefinitions(),
       ...samplingTools,
+      ...dispatcherTools,
     ],
   };
 });
@@ -157,6 +161,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     name === 'diff_behaviors'
   ) {
     return handleCompilationTool(name, args as Record<string, unknown>);
+  }
+
+  // Cross-domain dispatcher tools
+  if (name === 'detect_domain' || name === 'parse_composite' || name === 'compile_auto') {
+    return handleDispatcherTool(name, args as Record<string, unknown>, registry);
   }
 
   // Domain tools — registry handles standard operations,

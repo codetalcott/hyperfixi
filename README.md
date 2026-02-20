@@ -96,6 +96,21 @@ export default {
 
 The plugin scans your files for `_="..."` attributes and generates a minimal bundle with only the commands you use.
 
+## Universal DSL Framework
+
+Beyond hyperscript, the `@lokascript/framework` package lets you build **any multilingual DSL** using the same architecture. Define command schemas, add keyword translations, and get parsing in 24+ languages, MCP tools, and cross-language translation for free.
+
+The **Explicit Syntax IR** is the universal interchange format:
+
+```text
+[toggle patient:.active destination:#button]   -- Hyperscript
+[select patient:name source:users]             -- SQL
+[ask patient:"summarize" source:#article]      -- LLM prompts
+[given patient:#button condition:exists]        -- BDD tests
+```
+
+Six domain packages are built on the framework today: SQL, BDD, LLM, Todo, JSX, and BehaviorSpec. See the [Explicit Syntax IR docs](./packages/framework/docs/EXPLICIT_SYNTAX_IR.md) and [Domain Author Guide](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md) for details.
+
 ## Usage Modes
 
 HyperFixi can be used in three ways:

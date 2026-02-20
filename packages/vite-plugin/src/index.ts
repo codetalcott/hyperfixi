@@ -51,6 +51,8 @@ import { transformHTML, extractScripts } from './html-transformer';
 import { getMultilingualCommandAliases } from './semantic-integration';
 import type { SupportedLanguage } from './language-keywords';
 import { loadServerBridge, runServerBridge } from './server-bridge-integration';
+import { DomainScanner } from './domain-scanner';
+import { DomainAggregator } from './domain-aggregator';
 
 // Re-export types
 export type {
@@ -104,6 +106,11 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
   const scanner = new Scanner(options);
   const aggregator = new Aggregator();
   const generator = new Generator(options);
+
+  // Domain scanning (multi-domain support)
+  const domainScanner =
+    options.domains && options.domains.length > 0 ? new DomainScanner(options.domains) : null;
+  const domainAggregator = domainScanner ? new DomainAggregator() : null;
 
   let server: ViteDevServer | null = null;
   let cachedBundle: string | null = null;
@@ -291,6 +298,30 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
       const scannedFiles = await scanner.scanProject(cwd);
       aggregator.loadFromScan(scannedFiles);
 
+      // Domain scanning (if configured)
+      if (domainScanner && domainAggregator) {
+        for (const [filePath] of scannedFiles) {
+          // Re-read file content for domain scanning
+          try {
+            const fs = await import('fs');
+            const content = fs.readFileSync(filePath, 'utf-8');
+            if (domainScanner.hasAnyDomainUsage(content)) {
+              const domainUsages = domainScanner.scan(content, filePath);
+              if (domainUsages.length > 0) {
+                domainAggregator.add(filePath, domainUsages);
+              }
+            }
+          } catch {
+            // File may have been deleted between scan and domain scan
+          }
+        }
+
+        if (options.debug) {
+          const domainSummary = domainAggregator.getUsage();
+          console.log('[hyperfixi] Domain pre-scan:', domainSummary);
+        }
+      }
+
       if (options.debug) {
         const summary = aggregator.getSummary();
         console.log('[hyperfixi] Pre-scan complete:', summary);
@@ -350,6 +381,14 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
       // Interpret mode: just scan for usage
       const usage = scanner.scan(code, id);
       const changed = aggregator.add(id, usage);
+
+      // Domain scanning (detection only)
+      if (domainScanner && domainAggregator && domainScanner.hasAnyDomainUsage(code)) {
+        const domainUsages = domainScanner.scan(code, id);
+        if (domainUsages.length > 0) {
+          domainAggregator.add(id, domainUsages);
+        }
+      }
 
       // Invalidate virtual module if usage changed
       if (changed && server) {
@@ -434,6 +473,29 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
 
         const scannedFiles = await scanner.scanProject(cwd);
         aggregator.loadFromScan(scannedFiles);
+
+        // Domain scanning (if configured)
+        if (domainScanner && domainAggregator) {
+          for (const [filePath] of scannedFiles) {
+            try {
+              const fs = await import('fs');
+              const content = fs.readFileSync(filePath, 'utf-8');
+              if (domainScanner.hasAnyDomainUsage(content)) {
+                const domainUsages = domainScanner.scan(content, filePath);
+                if (domainUsages.length > 0) {
+                  domainAggregator.add(filePath, domainUsages);
+                }
+              }
+            } catch {
+              // File may have been deleted
+            }
+          }
+
+          if (options.debug) {
+            const domainSummary = domainAggregator.getUsage();
+            console.log('[hyperfixi] Domain build scan:', domainSummary);
+          }
+        }
 
         // Configure multilingual aliases for compile mode
         if (mode === 'compile') {

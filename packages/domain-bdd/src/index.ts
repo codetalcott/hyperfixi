@@ -167,3 +167,14 @@ export {
   FrenchBDDTokenizer,
 } from './tokenizers/index.js';
 export type { ScenarioParseResult, FeatureParseResult } from './parser/scenario-parser.js';
+
+// =============================================================================
+// Domain Scan Config (for AOT / Vite plugin integration)
+// =============================================================================
+
+/** HTML attribute and script-type patterns for AOT scanning */
+export const bddScanConfig = {
+  attributes: ['data-bdd', '_bdd'] as const,
+  scriptTypes: ['text/bdd'] as const,
+  defaultLanguage: 'en',
+};

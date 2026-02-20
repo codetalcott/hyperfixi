@@ -162,3 +162,14 @@ export {
   TurkishTodoTokenizer,
   FrenchTodoTokenizer,
 } from './tokenizers/index';
+
+// =============================================================================
+// Domain Scan Config (for AOT / Vite plugin integration)
+// =============================================================================
+
+/** HTML attribute and script-type patterns for AOT scanning */
+export const todoScanConfig = {
+  attributes: ['data-todo', '_todo'] as const,
+  scriptTypes: ['text/todo'] as const,
+  defaultLanguage: 'en',
+};

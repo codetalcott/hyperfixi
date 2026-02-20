@@ -224,3 +224,14 @@ export type {
   InteractionBlock,
   ExpectationNode,
 } from './parser/spec-parser.js';
+
+// =============================================================================
+// Domain Scan Config (for AOT / Vite plugin integration)
+// =============================================================================
+
+/** HTML attribute and script-type patterns for AOT scanning */
+export const behaviorspecScanConfig = {
+  attributes: ['data-spec', '_spec'] as const,
+  scriptTypes: ['text/behaviorspec'] as const,
+  defaultLanguage: 'en',
+};

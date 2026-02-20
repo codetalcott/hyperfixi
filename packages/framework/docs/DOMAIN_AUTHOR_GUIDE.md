@@ -12,6 +12,47 @@ When you create a domain on the framework, you automatically get:
 - **Confidence scoring** — pattern matcher rates how well each input matched
 - **Validation** — structured error reporting for invalid input
 
+## 30-Minute Overview
+
+Here's what building a domain looks like, using a **Timer** example (3 commands, 3 languages):
+
+**1. Schema** -- Define commands and roles (language-neutral):
+
+```typescript
+const startSchema = defineCommand({
+  action: 'start',
+  primaryRole: 'timer',
+  roles: [defineRole({ role: 'timer', required: true, expectedTypes: ['expression'] })],
+});
+```
+
+**2. Profiles** -- Translate keywords per language:
+
+```typescript
+const enProfile = { code: 'en', wordOrder: 'SVO', keywords: { start: { primary: 'start' } } };
+const jaProfile = { code: 'ja', wordOrder: 'SOV', keywords: { start: { primary: '開始' } } };
+```
+
+**3. Wire** -- Create the DSL:
+
+```typescript
+const timerDSL = createMultilingualDSL({ name: 'Timer', schemas: [startSchema], languages: [...], codeGenerator });
+```
+
+**Result** -- The DSL parses in all configured languages and outputs via your generator:
+
+```
+timerDSL.compile('start countdown', 'en')   // -> { ok: true, code: '...' }
+timerDSL.compile('countdown 開始', 'ja')     // -> same semantics, SOV word order
+timerDSL.translate('start countdown', 'en', 'ja')  // -> 'countdown 開始'
+```
+
+Register with `DomainRegistry` and you automatically get MCP tools: `parse_timer`, `compile_timer`, `validate_timer`, `translate_timer`.
+
+See [EXPLICIT_SYNTAX_IR.md](./EXPLICIT_SYNTAX_IR.md) for how the explicit syntax `[start timer:countdown]` connects all 6 existing domains.
+
+---
+
 ## Quick Start
 
 ### 1. Scaffold

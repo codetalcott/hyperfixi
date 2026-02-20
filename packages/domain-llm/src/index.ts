@@ -118,3 +118,14 @@ export {
   ArabicLLMTokenizer,
 } from './tokenizers/index.js';
 export type { LLMPromptSpec, LLMMessage, LLMModelPreferences, LLMAction } from './types.js';
+
+// =============================================================================
+// Domain Scan Config (for AOT / Vite plugin integration)
+// =============================================================================
+
+/** HTML attribute and script-type patterns for AOT scanning */
+export const llmScanConfig = {
+  attributes: ['data-llm', '_llm'] as const,
+  scriptTypes: ['text/llm'] as const,
+  defaultLanguage: 'en',
+};

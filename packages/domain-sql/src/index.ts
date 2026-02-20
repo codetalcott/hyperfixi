@@ -158,3 +158,14 @@ export {
   TurkishSQLTokenizer,
   FrenchSQLTokenizer,
 } from './tokenizers';
+
+// =============================================================================
+// Domain Scan Config (for AOT / Vite plugin integration)
+// =============================================================================
+
+/** HTML attribute and script-type patterns for AOT scanning */
+export const sqlScanConfig = {
+  attributes: ['data-sql', '_sql'] as const,
+  scriptTypes: ['text/sql-dsl'] as const,
+  defaultLanguage: 'en',
+};
