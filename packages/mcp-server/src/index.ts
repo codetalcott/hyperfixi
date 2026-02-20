@@ -44,6 +44,9 @@ import { samplingTools, handleSamplingTool } from './tools/llm-sampling.js';
 // Cross-domain dispatcher tools
 import { dispatcherTools, handleDispatcherTool } from './tools/dispatcher.js';
 
+// IR conversion tools (explicit ↔ JSON)
+import { irTools, handleIRTool } from './tools/ir-tools.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -85,6 +88,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...registry.getToolDefinitions(),
       ...samplingTools,
       ...dispatcherTools,
+      ...irTools,
     ],
   };
 });
@@ -166,6 +170,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   // Cross-domain dispatcher tools
   if (name === 'detect_domain' || name === 'parse_composite' || name === 'compile_auto') {
     return handleDispatcherTool(name, args as Record<string, unknown>, registry);
+  }
+
+  // IR conversion tools (explicit ↔ JSON)
+  if (name === 'convert_format' || name === 'validate_explicit') {
+    return handleIRTool(name, args as Record<string, unknown>);
   }
 
   // Domain tools — registry handles standard operations,

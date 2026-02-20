@@ -17,12 +17,21 @@ import type {
   CompiledHandler,
   FallbackScript,
   EventHandlerNode,
+  CommandNode,
 } from '../types/aot-types.js';
 import { HTMLScanner, VueScanner, SvelteScanner, JSXScanner } from '../scanner/html-scanner.js';
 import { Analyzer } from './analyzer.js';
 import { OptimizationPipeline } from '../optimizations/index.js';
 import { ExpressionCodegen, sanitizeIdentifier } from '../transforms/expression-transforms.js';
 import { EventHandlerCodegen } from '../transforms/event-transforms.js';
+import {
+  isExplicitSyntax,
+  parseExplicit,
+  jsonToSemanticNode,
+  type SemanticNode,
+  type EventHandlerSemanticNode,
+  type SemanticValue,
+} from '@lokascript/framework';
 
 // =============================================================================
 // DEFAULT OPTIONS
@@ -148,11 +157,45 @@ export class AOTCompiler {
 
   /**
    * Parse a hyperscript string to AST.
+   * Supports natural language, explicit bracket syntax, and JSON input.
    */
   parse(code: string, options: CompileOptions = {}): ASTNode | null {
     const { language = 'en', confidenceThreshold = 0.7, debug = false } = options;
 
     let ast: ASTNode | null = null;
+
+    // Try explicit bracket syntax (language-agnostic, no parsers needed)
+    if (isExplicitSyntax(code)) {
+      try {
+        const node = parseExplicit(code);
+        ast = this.semanticNodeToAOT(node);
+        if (debug) {
+          console.log(`[aot] Parsed explicit syntax: "${code}"`);
+        }
+      } catch (error) {
+        if (debug) {
+          console.log(`[aot] Explicit parse error for "${code}":`, error);
+        }
+      }
+      if (ast) return this.ensureEventHandler(ast);
+    }
+
+    // Try JSON input
+    if (this.looksLikeJSON(code)) {
+      try {
+        const json = JSON.parse(code.trim());
+        const node = jsonToSemanticNode(json);
+        ast = this.semanticNodeToAOT(node);
+        if (debug) {
+          console.log(`[aot] Parsed JSON input: "${code.slice(0, 80)}..."`);
+        }
+      } catch (error) {
+        if (debug) {
+          console.log(`[aot] JSON parse error for "${code.slice(0, 80)}":`, error);
+        }
+      }
+      if (ast) return this.ensureEventHandler(ast);
+    }
 
     // Try semantic parser for non-English
     if (language !== 'en' && this.semanticParser?.supportsLanguage(language)) {
@@ -189,18 +232,7 @@ export class AOTCompiler {
       ast = this.createSimpleAST(code);
     }
 
-    // Ensure top-level node is always an event handler.
-    // The codegen pipeline (EventHandlerCodegen) requires this.
-    if (ast && ast.type !== 'event') {
-      ast = {
-        type: 'event',
-        event: 'click',
-        modifiers: {},
-        body: [ast],
-      } as EventHandlerNode;
-    }
-
-    return ast;
+    return this.ensureEventHandler(ast);
   }
 
   /**
@@ -409,6 +441,96 @@ export class AOTCompiler {
   }
 
   // ===========================================================================
+  // EXPLICIT / JSON INPUT HELPERS
+  // ===========================================================================
+
+  /**
+   * Check if input looks like JSON (LLM JSON format).
+   */
+  private looksLikeJSON(code: string): boolean {
+    const trimmed = code.trim();
+    return trimmed.startsWith('{') && trimmed.includes('"action"');
+  }
+
+  /**
+   * Ensure top-level node is always an event handler.
+   * The codegen pipeline (EventHandlerCodegen) requires this.
+   */
+  private ensureEventHandler(ast: ASTNode | null): ASTNode | null {
+    if (ast && ast.type !== 'event') {
+      return {
+        type: 'event',
+        event: 'click',
+        modifiers: {},
+        body: [ast],
+      } as EventHandlerNode;
+    }
+    return ast;
+  }
+
+  /**
+   * Convert a framework SemanticNode to an AOT ASTNode.
+   * Handles the simple cases produced by explicit/JSON parsing.
+   */
+  private semanticNodeToAOT(node: SemanticNode): ASTNode {
+    if (node.kind === 'event-handler') {
+      const eh = node as EventHandlerSemanticNode;
+      const eventValue = eh.roles.get('event');
+      const eventName = eventValue && 'value' in eventValue ? String(eventValue.value) : 'click';
+      return {
+        type: 'event',
+        event: eventName,
+        modifiers: {},
+        body: (eh.body ?? []).map((child: SemanticNode) => this.semanticNodeToAOT(child)),
+      } as EventHandlerNode;
+    }
+
+    // Command node
+    const roles: Record<string, ASTNode> = {};
+    const args: ASTNode[] = [];
+
+    for (const [roleName, value] of node.roles) {
+      const astValue = this.semanticValueToAOT(value);
+      roles[roleName] = astValue;
+      args.push(astValue);
+    }
+
+    return {
+      type: 'command',
+      name: node.action,
+      args,
+      roles,
+    } as CommandNode;
+  }
+
+  /**
+   * Convert a SemanticValue to an ASTNode.
+   */
+  private semanticValueToAOT(value: SemanticValue): ASTNode {
+    switch (value.type) {
+      case 'selector':
+        return { type: 'selector', value: value.value as string };
+      case 'reference':
+        return { type: 'identifier', value: value.value as string };
+      case 'literal': {
+        const lit = value as { value: unknown; dataType?: string };
+        if (lit.dataType === 'duration') {
+          // Parse duration to ms
+          const str = String(lit.value);
+          const match = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(str);
+          if (match) {
+            const ms = match[2] === 's' ? parseFloat(match[1]) * 1000 : parseFloat(match[1]);
+            return { type: 'literal', value: ms };
+          }
+        }
+        return { type: 'literal', value: lit.value as string | number | boolean | null };
+      }
+      default:
+        return { type: 'literal', value: String((value as { value?: unknown }).value ?? '') };
+    }
+  }
+
+  // ===========================================================================
   // ANALYSIS
   // ===========================================================================
 
@@ -585,6 +707,34 @@ export class AOTCompiler {
         runtimeHelpers: Array.from(allHelpers),
       },
     };
+  }
+
+  /**
+   * Compile explicit bracket syntax or LLM JSON to JavaScript.
+   * Uses the framework IR directly — no semantic or traditional parser needed.
+   */
+  compileExplicit(code: string, options: CompileOptions = {}): CompilationResult {
+    try {
+      const ast = isExplicitSyntax(code)
+        ? this.semanticNodeToAOT(parseExplicit(code))
+        : this.semanticNodeToAOT(jsonToSemanticNode(JSON.parse(code.trim())));
+
+      return this.compileAST(ast, options);
+    } catch (error) {
+      return {
+        success: false,
+        errors: [error instanceof Error ? error.message : String(error)],
+        warnings: [],
+        metadata: {
+          handlerId: '',
+          parserUsed: 'traditional',
+          commandsUsed: [],
+          optimizationsApplied: [],
+          needsRuntime: false,
+          runtimeHelpers: [],
+        },
+      };
+    }
   }
 
   /**

@@ -36,6 +36,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@lokascript/framework": "*",
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {
