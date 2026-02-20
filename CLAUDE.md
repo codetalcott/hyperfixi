@@ -47,6 +47,20 @@ packages/
 ├── hyperscript-adapter/  # Multilingual plugin for original _hyperscript (preprocessor)
 │   └── src/              # See packages/hyperscript-adapter/CLAUDE.md
 │
+├── framework/       # Shared DSL framework (createMultilingualDSL, DomainRegistry, CrossDomainDispatcher)
+├── compilation-service/  # Multi-target codegen (React, Vue, Svelte components; Playwright tests)
+├── mcp-server/      # MCP server exposing all tools (hyperscript + domain DSLs)
+├── aot-compiler/    # Ahead-of-time compiler (hyperscript → JS, semantic → JS)
+├── server-bridge/   # Server-side route extraction from HTML
+│
+├── domain-sql/      # SQL DSL (4 languages: en, es, ja, ar)
+├── domain-bdd/      # BDD/Gherkin DSL (4 languages)
+├── domain-behaviorspec/  # Interaction testing DSL (8 languages)
+├── domain-jsx/      # JSX/React DSL (8 languages)
+├── domain-llm/      # LLM prompt DSL (4 languages)
+├── domain-todo/     # Todo management DSL (8 languages)
+├── domain-flow/     # Reactive data flow DSL (4 languages: en, es, ja, ar)
+│
 └── [other packages: smart-bundling, developer-tools, testing-framework, etc.]
 
 examples/
@@ -539,20 +553,26 @@ See [TYPE_SAFETY_DESIGN.md](docs-internal/analysis/TYPE_SAFETY_DESIGN.md) for im
 
 ## Important Files
 
-| File                                              | Purpose                                     |
-| ------------------------------------------------- | ------------------------------------------- |
-| `packages/core/src/runtime/runtime.ts`            | Main runtime (extends RuntimeBase)          |
-| `packages/core/src/parser/parser.ts`              | Hyperscript parser (~3000 lines)            |
-| `packages/core/src/commands-v2/`                  | All 43 command implementations              |
-| `packages/core/src/registry/`                     | Registry system (commands, events, context) |
-| `packages/core/src/registry/browser-types.ts`     | Browser-specific types                      |
-| `packages/server-integration/src/types/`          | Server-specific types                       |
-| `packages/i18n/src/grammar/transformer.ts`        | GrammarTransformer class                    |
-| `packages/i18n/src/browser.ts`                    | Browser bundle exports                      |
-| `packages/semantic/src/parser/semantic-parser.ts` | Semantic parser                             |
-| `packages/semantic/src/tokenizers/`               | 24 language tokenizers                      |
-| `packages/core/src/api/hyperscript-api.ts`        | Main API implementation (v2)                |
-| `packages/core/docs/API.md`                       | API documentation                           |
+| File                                                     | Purpose                                      |
+| -------------------------------------------------------- | -------------------------------------------- |
+| `packages/core/src/runtime/runtime.ts`                   | Main runtime (extends RuntimeBase)           |
+| `packages/core/src/parser/parser.ts`                     | Hyperscript parser (~3000 lines)             |
+| `packages/core/src/commands-v2/`                         | All 43 command implementations               |
+| `packages/core/src/registry/`                            | Registry system (commands, events, context)  |
+| `packages/core/src/registry/browser-types.ts`            | Browser-specific types                       |
+| `packages/core/src/api/hyperscript-api.ts`               | Main API implementation (v2)                 |
+| `packages/core/docs/API.md`                              | API documentation                            |
+| `packages/server-integration/src/types/`                 | Server-specific types                        |
+| `packages/i18n/src/grammar/transformer.ts`               | GrammarTransformer class                     |
+| `packages/i18n/src/browser.ts`                           | Browser bundle exports                       |
+| `packages/semantic/src/parser/semantic-parser.ts`        | Semantic parser                              |
+| `packages/semantic/src/tokenizers/`                      | 24 language tokenizers                       |
+| `packages/framework/src/api/create-dsl.ts`               | `createMultilingualDSL()` factory            |
+| `packages/framework/src/api/domain-registry.ts`          | Domain registry + MCP tool generation        |
+| `packages/framework/src/api/dispatcher.ts`               | `CrossDomainDispatcher` (auto-detect domain) |
+| `packages/mcp-server/src/tools/domain-registry-setup.ts` | Domain registrations for MCP server          |
+| `packages/domain-flow/src/index.ts`                      | FlowScript DSL entry point                   |
+| `packages/compilation-service/src/`                      | Component renderers (React, Vue, Svelte)     |
 
 ## Vite Plugin (Recommended)
 
