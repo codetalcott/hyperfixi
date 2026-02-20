@@ -41,7 +41,7 @@ export const dispatcherTools = [
   {
     name: 'detect_domain',
     description:
-      'Auto-detect which registered domain handles the input. Tries all domains (sql, bdd, jsx, todo, behaviorspec, llm) and returns the best match by confidence score.',
+      'Auto-detect which registered domain handles the input. Tries all domains (sql, bdd, jsx, todo, behaviorspec, llm, flow) and returns the best match by confidence score.',
     inputSchema: {
       type: 'object' as const,
       properties: {

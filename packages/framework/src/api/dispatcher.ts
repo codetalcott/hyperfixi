@@ -123,16 +123,16 @@ export class CrossDomainDispatcher {
     const candidates: DispatchResult[] = [];
 
     for (const name of domainNames) {
-      const dsl = await this.registry.getDSLForDomain(name);
-      if (!dsl) continue;
-
       try {
+        const dsl = await this.registry.getDSLForDomain(name);
+        if (!dsl) continue;
+
         const { node, confidence } = dsl.parseWithConfidence(input, language);
         if (confidence >= this.minConfidence) {
           candidates.push({ domain: name, node, confidence, dsl });
         }
       } catch {
-        // Domain could not parse this input — skip
+        // Domain could not be loaded or parse this input — skip
       }
     }
 
