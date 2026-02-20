@@ -58,7 +58,8 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext ts,tsx",
-    "lint:fix": "eslint src --ext ts,tsx --fix"
+    "lint:fix": "eslint src --ext ts,tsx --fix",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "keywords": [
     "hyperscript",

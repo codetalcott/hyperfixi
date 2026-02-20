@@ -71,7 +71,8 @@
     "build:watch": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "peerDependencies": {
     "@hyperfixi/core": "*"

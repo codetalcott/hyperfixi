@@ -12,7 +12,8 @@
     "start": "node dist/server.js --stdio",
     "dev": "tsx src/server.ts --stdio",
     "test": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "keywords": [
     "lsp",

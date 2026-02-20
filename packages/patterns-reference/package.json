@@ -41,7 +41,8 @@
     "verify:verbose": "tsx scripts/verify-translations.ts --verbose",
     "verify:engine": "tsx scripts/verify-engine-compat.ts",
     "verify:engine:verbose": "tsx scripts/verify-engine-compat.ts --verbose",
-    "verify:engine:dry-run": "tsx scripts/verify-engine-compat.ts --dry-run --verbose"
+    "verify:engine:dry-run": "tsx scripts/verify-engine-compat.ts --dry-run --verbose",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "keywords": [
     "hyperscript",

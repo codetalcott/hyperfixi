@@ -23,7 +23,8 @@
     "service:stop": "launchctl stop com.lokascript.mcp-server",
     "service:restart": "launchctl stop com.lokascript.mcp-server && launchctl start com.lokascript.mcp-server",
     "service:status": "launchctl list | grep lokascript || echo 'Not running'",
-    "service:logs": "tail -f logs/stdout.log logs/stderr.log"
+    "service:logs": "tail -f logs/stdout.log logs/stderr.log",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "keywords": [
     "mcp",

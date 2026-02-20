@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sync-keywords": "npx tsx scripts/sync-keywords.ts"
+    "sync-keywords": "npx tsx scripts/sync-keywords.ts",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "peerDependencies": {
     "@hyperfixi/server-bridge": "*",

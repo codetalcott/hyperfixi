@@ -12,7 +12,8 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "keywords": [
     "mcp",
