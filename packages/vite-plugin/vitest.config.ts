@@ -5,9 +5,9 @@ export default defineConfig({
     // Node environment (no DOM needed for plugin tests)
     environment: 'node',
 
-    // Test file patterns
+    // Test file patterns (exclude E2E specs that require a running server)
     include: ['src/**/*.{test,spec}.ts'],
-    exclude: ['node_modules', 'dist'],
+    exclude: ['node_modules', 'dist', 'src/**/*.spec.ts'],
 
     // Coverage configuration
     coverage: {

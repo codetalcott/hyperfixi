@@ -81,6 +81,7 @@
     "playwright": "^1.40.0",
     "puppeteer": "^24.26.1",
     "tsx": "^4.19.2",
+    "url-parse": "^1.5.10",
     "vite": "^7.1.12"
   },
   "devDependencies": {

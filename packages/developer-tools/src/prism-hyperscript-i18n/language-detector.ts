@@ -48,6 +48,7 @@ function keywordExistsInCode(code: string, keyword: string, isNonLatin: boolean)
  */
 export function detectLanguage(code: string): LanguageDetectionResult {
   const languages = getSupportedLanguages().filter(lang => lang !== 'en');
+  const englishKeywords = new Set(getAllKeywords('en'));
   const scores: LanguageScore[] = [];
 
   for (const lang of languages) {
@@ -58,6 +59,12 @@ export function detectLanguage(code: string): LanguageDetectionResult {
     for (const keyword of keywords) {
       // Skip very short keywords (less than 2 chars) for Latin to reduce false positives
       if (!isNonLatin && keyword.length < 2) {
+        continue;
+      }
+
+      // Skip keywords identical to English — untranslated entries shouldn't
+      // count as evidence for a non-English language
+      if (!isNonLatin && englishKeywords.has(keyword)) {
         continue;
       }
 

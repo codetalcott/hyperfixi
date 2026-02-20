@@ -15,6 +15,26 @@ vi.mock('esbuild', () => ({
   }),
 }));
 
+// Mock rollup (used when treeshaking is enabled)
+vi.mock('rollup', () => ({
+  rollup: vi.fn().mockResolvedValue({
+    generate: vi.fn().mockResolvedValue({ output: [] }),
+    write: vi.fn().mockResolvedValue(undefined),
+    close: vi.fn(),
+  }),
+}));
+
+// Mock rollup plugins (dynamically imported in createRollupPlugins)
+vi.mock('@rollup/plugin-node-resolve', () => ({
+  nodeResolve: vi.fn().mockReturnValue({ name: 'node-resolve' }),
+}));
+vi.mock('@rollup/plugin-commonjs', () => ({
+  default: vi.fn().mockReturnValue({ name: 'commonjs' }),
+}));
+vi.mock('@rollup/plugin-typescript', () => ({
+  default: vi.fn().mockReturnValue({ name: 'typescript' }),
+}));
+
 // Mock fs-extra
 vi.mock('fs-extra', async () => {
   const actual = await vi.importActual('fs-extra');

@@ -7,31 +7,63 @@ import { quickStartSmartBundling, createOptimizedConfig, analyzeProjectUsage } f
 
 // Mock the dependencies
 vi.mock('./analyzer', () => ({
-  UsageAnalyzer: vi.fn().mockImplementation(() => ({
-    analyzeProject: vi.fn().mockResolvedValue({
-      files: [],
-      dependencies: [],
-      components: [],
-      patterns: [],
-      metrics: { totalFiles: 0, totalLines: 0 },
-      recommendations: [],
-    }),
-  })),
+  UsageAnalyzer: vi.fn().mockImplementation(function () {
+    return {
+      analyzeProject: vi.fn().mockResolvedValue({
+        files: [],
+        dependencies: [],
+        components: [],
+        patterns: [],
+        metrics: { totalFiles: 0, totalLines: 0 },
+        recommendations: [],
+      }),
+    };
+  }),
 }));
 
 vi.mock('./bundler', () => ({
-  SmartBundler: vi.fn().mockImplementation(() => ({
-    bundle: vi.fn().mockResolvedValue({ success: true }),
-    watch: vi.fn().mockResolvedValue({ close: vi.fn() }),
-  })),
+  SmartBundler: vi.fn().mockImplementation(function () {
+    return {
+      bundle: vi.fn().mockResolvedValue({ success: true }),
+      watch: vi.fn().mockResolvedValue({ close: vi.fn() }),
+    };
+  }),
   quickBundle: vi.fn().mockResolvedValue({ success: true }),
   productionBundle: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 vi.mock('./optimizer', () => ({
-  BundleOptimizer: vi.fn().mockImplementation(() => ({
-    optimize: vi.fn().mockResolvedValue({ code: '', metrics: {} }),
-  })),
+  BundleOptimizer: vi.fn().mockImplementation(function () {
+    return {
+      optimize: vi.fn().mockResolvedValue({ code: '', metrics: {} }),
+      optimizeBundle: vi.fn().mockResolvedValue({
+        entry: 'src/index.js',
+        output: {
+          dir: 'dist',
+          format: 'esm',
+          minify: false,
+          sourcemap: false,
+          chunkSizeWarningLimit: 500000,
+        },
+        optimization: {
+          treeshaking: true,
+          codeSplitting: true,
+          compression: 'gzip',
+          bundleAnalysis: true,
+          deadCodeElimination: true,
+          modulePreloading: true,
+        },
+        target: { browsers: ['> 0.5%'], node: '16', es: 'es2020' },
+        externals: [],
+        alias: {},
+      }),
+      generateBundlingStrategy: vi.fn().mockReturnValue({
+        name: 'default',
+        description: 'Default strategy',
+        chunks: [],
+      }),
+    };
+  }),
 }));
 
 // Mock fs-extra
