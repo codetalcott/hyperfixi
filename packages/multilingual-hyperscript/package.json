@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/multilingual",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Write original _hyperscript in 24 languages — Japanese, Korean, Spanish, Arabic, Chinese, Turkish, and more",
   "type": "module",
   "main": "dist/index.js",

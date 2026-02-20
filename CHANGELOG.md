@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Changes for next release go here._
 
+## [2.1.0] - 2026-02-20
+
+### Added
+
+- **domain-llm**: Expanded from 4 to 8 languages (added Korean, Chinese, Turkish, French) — 68 tests
+- **domain-flow**: Expanded from 4 to 8 languages (added Korean, Chinese, Turkish, French) — 108 tests
+- **domain-flow**: First npm publication as `@lokascript/domain-flow`
+
+### Changed
+
+- All 7 domain DSLs now consistently support 8 languages (en, es, ja, ar, ko, zh, tr, fr)
+- MCP server registry updated for new domain languages
+
+### Fixed
+
+- Resolved test failures in 4 packages (19 tests)
+- Scoped `first .X in me` to context element instead of document
+- Property target bugs: disabled on button, tabIndex as number
+
+## [2.0.0] - 2026-02-15
+
+### Changed
+
+- **Rebrand**: Renamed from LokaScript to HyperFixi for engine packages (`@lokascript/core` → `@hyperfixi/core`)
+- Multilingual packages remain under `@lokascript/*` scope
+- Synchronized all package versions to 2.0.0
+
 ## [1.4.0] - 2026-02-10
 
 ### Added

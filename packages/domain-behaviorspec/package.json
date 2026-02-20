@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-behaviorspec",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Multilingual interaction testing domain built on @lokascript/framework — write Playwright tests in natural language across 4 languages",
   "type": "module",
   "main": "dist/index.cjs",

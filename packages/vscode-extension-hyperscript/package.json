@@ -2,7 +2,7 @@
   "name": "hyperscript-vscode",
   "displayName": "_hyperscript Language Support",
   "description": "Language support for _hyperscript — syntax highlighting, completions, hover docs, diagnostics, and formatting",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "publisher": "hyperscript-tools",
   "engines": {
     "vscode": "^1.85.0"

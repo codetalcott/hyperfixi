@@ -1,7 +1,7 @@
 {
   "name": "@lokascript/ast-toolkit",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "deprecated": "Consolidated into @hyperfixi/core/ast-utils. Use '@hyperfixi/core/ast-utils' instead.",
   "description": "DEPRECATED: Advanced AST toolkit for hyperscript — consolidated into @hyperfixi/core/ast-utils",
   "type": "module",

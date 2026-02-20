@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/mcp-server",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "MCP server for original _hyperscript development — validation, completions, docs, and analysis with zero HyperFixi dependencies",
   "type": "module",
   "main": "dist/index.js",
