@@ -71,6 +71,24 @@ export interface CompositeParseResult {
   readonly errors: readonly CompositeError[];
 }
 
+/** A single compiled statement in a composite compile result */
+export interface CompositeCompileStatement {
+  readonly line: number;
+  readonly input: string;
+  readonly domain: string;
+  readonly ok: boolean;
+  readonly code?: string | undefined;
+  readonly errors?: string[] | undefined;
+}
+
+/** Result of multi-domain composite compilation */
+export interface CompositeCompileResult {
+  /** Successfully detected and compiled statements */
+  readonly statements: readonly CompositeCompileStatement[];
+  /** Lines that could not be matched to any domain */
+  readonly errors: readonly CompositeError[];
+}
+
 /** Dispatcher configuration options */
 export interface DispatcherOptions {
   /** Minimum confidence to accept a match (default: 0.5) */
@@ -196,6 +214,45 @@ export class CrossDomainDispatcher {
 
     const result = detected.dsl.compile(input, language);
     return { ...result, domain: detected.domain };
+  }
+
+  /**
+   * Compile multi-line input where each line may belong to a different domain.
+   * Detects the domain for each line and compiles it, returning per-line results.
+   * Empty lines and comment lines are skipped.
+   */
+  async compileComposite(input: string, language = 'en'): Promise<CompositeCompileResult> {
+    const lines = input.split('\n');
+    const statements: CompositeCompileStatement[] = [];
+    const errors: CompositeError[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (isSkippableLine(line)) continue;
+
+      const trimmed = line.trim();
+      const detected = await this.detect(trimmed, language);
+
+      if (detected) {
+        const result = detected.dsl.compile(trimmed, language);
+        statements.push({
+          line: i + 1,
+          input: trimmed,
+          domain: detected.domain,
+          ok: result.ok,
+          code: result.code,
+          errors: result.errors,
+        });
+      } else {
+        errors.push({
+          line: i + 1,
+          input: trimmed,
+          message: 'No domain matched this input',
+        });
+      }
+    }
+
+    return { statements, errors };
   }
 
   /**

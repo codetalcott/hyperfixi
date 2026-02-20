@@ -98,6 +98,29 @@ export const dispatcherTools = [
       required: ['input'],
     },
   },
+  {
+    name: 'compile_composite',
+    description:
+      'Compile multi-line input where each line may belong to a different domain. ' +
+      'Lines are auto-detected and compiled via their domain. ' +
+      'Supports natural language and explicit bracket syntax. ' +
+      'Skips blank and comment lines (//, --, #).',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        input: {
+          type: 'string',
+          description: 'Multi-line input text. Each non-blank line is detected and compiled.',
+        },
+        language: {
+          type: 'string',
+          description: 'Language code (en, es, ja, ar, ko, zh, tr, fr). Default: en',
+          default: 'en',
+        },
+      },
+      required: ['input'],
+    },
+  },
 ];
 
 // =============================================================================
@@ -123,6 +146,8 @@ export async function handleDispatcherTool(
         return handleParseComposite(dispatch, input, language);
       case 'compile_auto':
         return handleCompileAuto(dispatch, input, language);
+      case 'compile_composite':
+        return handleCompileComposite(dispatch, input, language);
       default:
         return errorResponse(`Unknown dispatcher tool: ${name}`);
     }
@@ -181,6 +206,34 @@ async function handleParseComposite(
     language,
     summary: {
       matched: result.statements.length,
+      unmatched: result.errors.length,
+      domains: [...new Set(result.statements.map(s => s.domain))],
+    },
+  });
+}
+
+async function handleCompileComposite(
+  dispatch: CrossDomainDispatcher,
+  input: string,
+  language: string
+): Promise<ToolResponse> {
+  const result = await dispatch.compileComposite(input, language);
+
+  return jsonResponse({
+    statements: result.statements.map(s => ({
+      line: s.line,
+      input: s.input,
+      domain: s.domain,
+      ok: s.ok,
+      code: s.code ?? null,
+      errors: s.errors ?? [],
+    })),
+    errors: result.errors,
+    language,
+    summary: {
+      compiled: result.statements.length,
+      succeeded: result.statements.filter(s => s.ok).length,
+      failed: result.statements.filter(s => !s.ok).length,
       unmatched: result.errors.length,
       domains: [...new Set(result.statements.map(s => s.domain))],
     },

@@ -333,4 +333,70 @@ describe('CrossDomainDispatcher', () => {
       expect(callCount).toBe(1);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // compileComposite()
+  // ---------------------------------------------------------------------------
+
+  describe('compileComposite', () => {
+    it('compiles multi-line input across domains', async () => {
+      registry.register(createDescriptor('sql', 'select'));
+      registry.register(createDescriptor('bdd', 'given'));
+      const dispatcher = new CrossDomainDispatcher(registry);
+
+      const result = await dispatcher.compileComposite(
+        'select name from users\ngiven page http://example.com'
+      );
+
+      expect(result.statements).toHaveLength(2);
+      expect(result.errors).toHaveLength(0);
+      expect(result.statements[0].domain).toBe('sql');
+      expect(result.statements[0].ok).toBe(true);
+      expect(result.statements[0].code).toContain('compiled:select');
+      expect(result.statements[1].domain).toBe('bdd');
+      expect(result.statements[1].ok).toBe(true);
+    });
+
+    it('skips comments and empty lines', async () => {
+      registry.register(createDescriptor('sql', 'select'));
+      const dispatcher = new CrossDomainDispatcher(registry);
+
+      const result = await dispatcher.compileComposite(
+        '// comment\n\nselect name\n-- another comment\n'
+      );
+
+      expect(result.statements).toHaveLength(1);
+      expect(result.statements[0].line).toBe(3);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('collects unmatched lines as errors', async () => {
+      registry.register(createDescriptor('sql', 'select'));
+      const dispatcher = new CrossDomainDispatcher(registry);
+
+      const result = await dispatcher.compileComposite('select name\nunknown command\nselect id');
+
+      expect(result.statements).toHaveLength(2);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].line).toBe(2);
+      expect(result.errors[0].message).toBe('No domain matched this input');
+    });
+
+    it('handles empty input', async () => {
+      const dispatcher = new CrossDomainDispatcher(registry);
+      const result = await dispatcher.compileComposite('');
+      expect(result.statements).toHaveLength(0);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('preserves line numbers', async () => {
+      registry.register(createDescriptor('sql', 'select'));
+      const dispatcher = new CrossDomainDispatcher(registry);
+
+      const result = await dispatcher.compileComposite('// header\n\nselect name\n\nselect id');
+
+      expect(result.statements[0].line).toBe(3);
+      expect(result.statements[1].line).toBe(5);
+    });
+  });
 });

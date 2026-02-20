@@ -168,7 +168,12 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   }
 
   // Cross-domain dispatcher tools
-  if (name === 'detect_domain' || name === 'parse_composite' || name === 'compile_auto') {
+  if (
+    name === 'detect_domain' ||
+    name === 'parse_composite' ||
+    name === 'compile_auto' ||
+    name === 'compile_composite'
+  ) {
     return handleDispatcherTool(name, args as Record<string, unknown>, registry);
   }
 

@@ -7,12 +7,13 @@ import { dispatcherTools, handleDispatcherTool } from '../tools/dispatcher.js';
 // =============================================================================
 
 describe('Dispatcher Tool Definitions', () => {
-  it('exports 3 tool definitions', () => {
-    expect(dispatcherTools).toHaveLength(3);
+  it('exports 4 tool definitions', () => {
+    expect(dispatcherTools).toHaveLength(4);
     const names = dispatcherTools.map(t => t.name);
     expect(names).toContain('detect_domain');
     expect(names).toContain('parse_composite');
     expect(names).toContain('compile_auto');
+    expect(names).toContain('compile_composite');
   });
 
   it('all tools require input parameter', () => {

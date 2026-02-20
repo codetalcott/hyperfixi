@@ -14,6 +14,8 @@ import {
   InMemoryDictionary,
   InMemoryProfileProvider,
 } from '../interfaces';
+import { isExplicitSyntax, parseExplicit } from '../ir';
+import type { SchemaLookup } from '../ir';
 
 /**
  * Language configuration for a DSL.
@@ -172,6 +174,7 @@ class MultilingualDSLImpl implements MultilingualDSL {
   private matcher: PatternMatcher;
   private transformer: GrammarTransformer;
   private codeGenerator?: CodeGenerator;
+  private schemaLookup: SchemaLookup;
 
   constructor(config: DSLConfig, registry: DSLRegistry, transformer: GrammarTransformer) {
     this.registry = registry;
@@ -180,6 +183,12 @@ class MultilingualDSLImpl implements MultilingualDSL {
     if (config.codeGenerator) {
       this.codeGenerator = config.codeGenerator;
     }
+
+    // Build SchemaLookup from config schemas for explicit syntax validation
+    const schemaMap = new Map(config.schemas.map(s => [s.action, s]));
+    this.schemaLookup = {
+      getSchema: (action: string) => schemaMap.get(action),
+    };
   }
 
   parse(input: string, language: string): SemanticNode {
@@ -188,6 +197,16 @@ class MultilingualDSLImpl implements MultilingualDSL {
   }
 
   parseWithConfidence(input: string, language: string): { node: SemanticNode; confidence: number } {
+    // Try explicit bracket syntax first (language-agnostic)
+    if (isExplicitSyntax(input)) {
+      const node = parseExplicit(input, { schemaLookup: this.schemaLookup });
+      // Only match if this DSL has a schema for the action
+      if (!this.schemaLookup.getSchema(node.action)) {
+        throw new Error(`No schema for action "${node.action}" in this DSL`);
+      }
+      return { node, confidence: 1.0 };
+    }
+
     // Get tokenizer for language
     const tokenizer = this.registry.getTokenizer(language);
     if (!tokenizer) {
@@ -245,6 +264,8 @@ class MultilingualDSLImpl implements MultilingualDSL {
   }
 
   translate(input: string, fromLanguage: string, toLanguage: string): string {
+    // Explicit syntax is language-agnostic — return unchanged
+    if (isExplicitSyntax(input)) return input;
     // Use injected grammar transformer
     return this.transformer.transform(input, fromLanguage, toLanguage);
   }
