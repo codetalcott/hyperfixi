@@ -657,7 +657,26 @@ describe('resolveAnyPropertyTarget', () => {
     expect(result!.property).toBe('textContent');
   });
 
-  it('should resolve possessiveExpression nodes', async () => {
+  it('should resolve possessiveExpression nodes with @attribute syntax', async () => {
+    const node = {
+      type: 'possessiveExpression',
+      object: { type: 'idSelector', value: '#any-target' },
+      property: { type: 'identifier', name: '@hidden' },
+    };
+
+    const evaluator = createMockEvaluator();
+    const context = createMockContext();
+
+    const result = await resolveAnyPropertyTarget(node as any, evaluator as any, context);
+
+    expect(result).not.toBeNull();
+    expect(result!.element).toBe(testElement);
+    expect(result!.property).toBe('@hidden');
+  });
+
+  it('should return null for possessiveExpression with plain property', async () => {
+    // Plain properties like 'hidden' should NOT be intercepted as property targets
+    // in possessive expressions — they are normal property access (returns value)
     const node = {
       type: 'possessiveExpression',
       object: { type: 'idSelector', value: '#any-target' },
@@ -669,9 +688,7 @@ describe('resolveAnyPropertyTarget', () => {
 
     const result = await resolveAnyPropertyTarget(node as any, evaluator as any, context);
 
-    expect(result).not.toBeNull();
-    expect(result!.element).toBe(testElement);
-    expect(result!.property).toBe('hidden');
+    expect(result).toBeNull();
   });
 
   it('should return null for unsupported node types', async () => {
