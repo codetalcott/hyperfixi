@@ -1,8 +1,8 @@
 /**
  * LLM Domain Tests
  *
- * Validates the multilingual LLM DSL across 4 languages (EN, ES, JA, AR)
- * covering SVO, SOV, and VSO word orders.
+ * Validates the multilingual LLM DSL across 8 languages
+ * covering SVO (EN, ES, ZH, FR), SOV (JA, KO, TR), and VSO (AR) word orders.
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -27,13 +27,17 @@ describe('LLM Domain', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support 4 languages', () => {
+    it('should support 8 languages', () => {
       const languages = llm.getSupportedLanguages();
       expect(languages).toContain('en');
       expect(languages).toContain('es');
       expect(languages).toContain('ja');
       expect(languages).toContain('ar');
-      expect(languages).toHaveLength(4);
+      expect(languages).toContain('ko');
+      expect(languages).toContain('zh');
+      expect(languages).toContain('tr');
+      expect(languages).toContain('fr');
+      expect(languages).toHaveLength(8);
     });
 
     it('should reject unsupported language', () => {
@@ -267,16 +271,136 @@ describe('LLM Domain', () => {
   });
 
   // ===========================================================================
+  // Korean (SOV)
+  // ===========================================================================
+
+  describe('Korean (SOV)', () => {
+    it('should parse Korean ask (SOV: verb last)', () => {
+      const node = llm.parse('"이것은 무엇?" 질문', 'ko');
+      expect(node.action).toBe('ask');
+      expect(node.roles.has('patient')).toBe(true);
+    });
+
+    it('should compile Korean summarize', () => {
+      const result = llm.compile('#document 요약', 'ko');
+      expect(result.ok).toBe(true);
+      const spec = parseSpec(result.code!);
+      expect(spec.action).toBe('summarize');
+    });
+
+    it('should parse Korean analyze', () => {
+      const node = llm.parse('#text 로 sentiment 분석', 'ko');
+      expect(node.action).toBe('analyze');
+    });
+
+    it('should parse Korean translate', () => {
+      const node = llm.parse('#text english 에서 japanese 로 번역', 'ko');
+      expect(node.action).toBe('translate');
+    });
+  });
+
+  // ===========================================================================
+  // Chinese (SVO)
+  // ===========================================================================
+
+  describe('Chinese (SVO)', () => {
+    it('should parse Chinese ask', () => {
+      const node = llm.parse('提问 "这是什么？"', 'zh');
+      expect(node.action).toBe('ask');
+      expect(node.roles.has('patient')).toBe(true);
+    });
+
+    it('should compile Chinese summarize', () => {
+      const result = llm.compile('总结 #document', 'zh');
+      expect(result.ok).toBe(true);
+      const spec = parseSpec(result.code!);
+      expect(spec.action).toBe('summarize');
+    });
+
+    it('should parse Chinese analyze', () => {
+      const node = llm.parse('分析 #text 以 sentiment', 'zh');
+      expect(node.action).toBe('analyze');
+    });
+
+    it('should parse Chinese translate', () => {
+      const node = llm.parse('翻译 #text 从 english 到 japanese', 'zh');
+      expect(node.action).toBe('translate');
+    });
+  });
+
+  // ===========================================================================
+  // Turkish (SOV)
+  // ===========================================================================
+
+  describe('Turkish (SOV)', () => {
+    it('should parse Turkish ask (SOV: verb last)', () => {
+      const node = llm.parse('"Bu nedir?" sor', 'tr');
+      expect(node.action).toBe('ask');
+      expect(node.roles.has('patient')).toBe(true);
+    });
+
+    it('should compile Turkish summarize', () => {
+      const result = llm.compile('#document özetle', 'tr');
+      expect(result.ok).toBe(true);
+      const spec = parseSpec(result.code!);
+      expect(spec.action).toBe('summarize');
+    });
+
+    it('should parse Turkish analyze', () => {
+      const node = llm.parse('#text olarak sentiment çözümle', 'tr');
+      expect(node.action).toBe('analyze');
+    });
+
+    it('should parse Turkish translate', () => {
+      const node = llm.parse('#text english dan japanese e çevir', 'tr');
+      expect(node.action).toBe('translate');
+    });
+  });
+
+  // ===========================================================================
+  // French (SVO)
+  // ===========================================================================
+
+  describe('French (SVO)', () => {
+    it('should parse French ask', () => {
+      const node = llm.parse('demander "Qu\'est-ce que c\'est?"', 'fr');
+      expect(node.action).toBe('ask');
+      expect(node.roles.has('patient')).toBe(true);
+    });
+
+    it('should compile French summarize', () => {
+      const result = llm.compile('résumer #document', 'fr');
+      expect(result.ok).toBe(true);
+      const spec = parseSpec(result.code!);
+      expect(spec.action).toBe('summarize');
+    });
+
+    it('should parse French analyze', () => {
+      const node = llm.parse('analyser #text comme sentiment', 'fr');
+      expect(node.action).toBe('analyze');
+    });
+
+    it('should parse French translate', () => {
+      const node = llm.parse('traduire #text de english vers japanese', 'fr');
+      expect(node.action).toBe('translate');
+    });
+  });
+
+  // ===========================================================================
   // Cross-Language Semantic Equivalence
   // ===========================================================================
 
   describe('Semantic Equivalence', () => {
-    it('should parse ask across all 4 languages to same action', () => {
+    it('should parse ask across all 8 languages to same action', () => {
       const nodes = [
         llm.parse('ask "What is this?"', 'en'),
         llm.parse('preguntar "¿Qué es esto?"', 'es'),
         llm.parse('"これは何？" 聞く', 'ja'),
         llm.parse('اسأل "ما هذا؟"', 'ar'),
+        llm.parse('"이것은 무엇?" 질문', 'ko'),
+        llm.parse('提问 "这是什么？"', 'zh'),
+        llm.parse('"Bu nedir?" sor', 'tr'),
+        llm.parse('demander "Qu\'est-ce que c\'est?"', 'fr'),
       ];
       for (const node of nodes) {
         expect(node.action).toBe('ask');
@@ -290,6 +414,23 @@ describe('LLM Domain', () => {
       expect(en.ok).toBe(true);
       expect(es.ok).toBe(true);
       expect(parseSpec(en.code!).action).toBe(parseSpec(es.code!).action);
+    });
+
+    it('should produce equivalent summarize action across all 8 languages', () => {
+      const results = [
+        llm.compile('summarize #document', 'en'),
+        llm.compile('resumir #document', 'es'),
+        llm.compile('#document 要約', 'ja'),
+        llm.compile('لخّص #document', 'ar'),
+        llm.compile('#document 요약', 'ko'),
+        llm.compile('总结 #document', 'zh'),
+        llm.compile('#document özetle', 'tr'),
+        llm.compile('résumer #document', 'fr'),
+      ];
+      for (const result of results) {
+        expect(result.ok).toBe(true);
+        expect(parseSpec(result.code!).action).toBe('summarize');
+      }
     });
   });
 
@@ -354,7 +495,7 @@ describe('LLM Domain', () => {
     });
 
     it('should validate across all supported languages', () => {
-      for (const lang of ['en', 'es', 'ja', 'ar']) {
+      for (const lang of ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr']) {
         const result = llm.validate('xyzzy random foobar', lang);
         expect(result.valid).toBe(false);
       }
@@ -426,6 +567,10 @@ describe('LLM Renderer', () => {
     expect(renderLLM(node, 'es')).toContain('resumir');
     expect(renderLLM(node, 'ja')).toContain('要約');
     expect(renderLLM(node, 'ar')).toContain('لخّص');
+    expect(renderLLM(node, 'ko')).toContain('요약');
+    expect(renderLLM(node, 'zh')).toContain('总结');
+    expect(renderLLM(node, 'tr')).toContain('özetle');
+    expect(renderLLM(node, 'fr')).toContain('résumer');
   });
 
   it('should render analyze across languages', () => {
@@ -434,6 +579,10 @@ describe('LLM Renderer', () => {
     expect(renderLLM(node, 'es')).toContain('analizar');
     expect(renderLLM(node, 'ja')).toContain('分析');
     expect(renderLLM(node, 'ar')).toContain('حلّل');
+    expect(renderLLM(node, 'ko')).toContain('분석');
+    expect(renderLLM(node, 'zh')).toContain('分析');
+    expect(renderLLM(node, 'tr')).toContain('çözümle');
+    expect(renderLLM(node, 'fr')).toContain('analyser');
   });
 
   it('should render translate across languages', () => {
@@ -442,6 +591,10 @@ describe('LLM Renderer', () => {
     expect(renderLLM(node, 'es')).toContain('traducir');
     expect(renderLLM(node, 'ja')).toContain('翻訳');
     expect(renderLLM(node, 'ar')).toContain('ترجم');
+    expect(renderLLM(node, 'ko')).toContain('번역');
+    expect(renderLLM(node, 'zh')).toContain('翻译');
+    expect(renderLLM(node, 'tr')).toContain('çevir');
+    expect(renderLLM(node, 'fr')).toContain('traduire');
   });
 });
 

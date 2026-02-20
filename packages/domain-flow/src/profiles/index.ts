@@ -1,8 +1,8 @@
 /**
  * FlowScript Language Profiles
  *
- * Pattern generation profiles for 4 supported languages (EN, ES, JA, AR).
- * Covers SVO (English, Spanish), SOV (Japanese), and VSO (Arabic) word orders.
+ * Pattern generation profiles for 8 supported languages.
+ * Covers SVO (EN, ES, ZH, FR), SOV (JA, KO, TR), and VSO (AR) word orders.
  *
  * Role markers are specified via markerOverride on each schema role.
  * Profile roleMarkers are used only when positional defaults need overriding.
@@ -75,7 +75,80 @@ export const arabicProfile: PatternGenLanguageProfile = {
 };
 
 // =============================================================================
+// Korean (SOV)
+// =============================================================================
+
+export const koreanProfile: PatternGenLanguageProfile = {
+  code: 'ko',
+  wordOrder: 'SOV',
+  keywords: {
+    fetch: { primary: '가져오기' },
+    poll: { primary: '폴링' },
+    stream: { primary: '스트리밍' },
+    submit: { primary: '제출' },
+    transform: { primary: '변환' },
+  },
+};
+
+// =============================================================================
+// Chinese (SVO)
+// =============================================================================
+
+export const chineseProfile: PatternGenLanguageProfile = {
+  code: 'zh',
+  wordOrder: 'SVO',
+  keywords: {
+    fetch: { primary: '获取' },
+    poll: { primary: '轮询' },
+    stream: { primary: '流式' },
+    submit: { primary: '提交' },
+    transform: { primary: '转换' },
+  },
+};
+
+// =============================================================================
+// Turkish (SOV)
+// =============================================================================
+
+export const turkishProfile: PatternGenLanguageProfile = {
+  code: 'tr',
+  wordOrder: 'SOV',
+  keywords: {
+    fetch: { primary: 'getir' },
+    poll: { primary: 'yokla' },
+    stream: { primary: 'aktar' },
+    submit: { primary: 'gönder' },
+    transform: { primary: 'dönüştür' },
+  },
+};
+
+// =============================================================================
+// French (SVO)
+// =============================================================================
+
+export const frenchProfile: PatternGenLanguageProfile = {
+  code: 'fr',
+  wordOrder: 'SVO',
+  keywords: {
+    fetch: { primary: 'récupérer' },
+    poll: { primary: 'interroger' },
+    stream: { primary: 'diffuser' },
+    submit: { primary: 'soumettre' },
+    transform: { primary: 'transformer' },
+  },
+};
+
+// =============================================================================
 // All Profiles
 // =============================================================================
 
-export const allProfiles = [englishProfile, spanishProfile, japaneseProfile, arabicProfile];
+export const allProfiles = [
+  englishProfile,
+  spanishProfile,
+  japaneseProfile,
+  arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  turkishProfile,
+  frenchProfile,
+];

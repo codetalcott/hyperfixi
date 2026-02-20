@@ -13,26 +13,80 @@ import { extractRoleValue } from '@lokascript/framework';
 // =============================================================================
 
 const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
-  fetch: { en: 'fetch', es: 'obtener', ja: '取得', ar: 'جلب' },
-  poll: { en: 'poll', es: 'sondear', ja: 'ポーリング', ar: 'استطلع' },
-  stream: { en: 'stream', es: 'transmitir', ja: 'ストリーム', ar: 'بث' },
-  submit: { en: 'submit', es: 'enviar', ja: '送信', ar: 'أرسل' },
-  transform: { en: 'transform', es: 'transformar', ja: '変換', ar: 'حوّل' },
+  fetch: {
+    en: 'fetch',
+    es: 'obtener',
+    ja: '取得',
+    ar: 'جلب',
+    ko: '가져오기',
+    zh: '获取',
+    tr: 'getir',
+    fr: 'récupérer',
+  },
+  poll: {
+    en: 'poll',
+    es: 'sondear',
+    ja: 'ポーリング',
+    ar: 'استطلع',
+    ko: '폴링',
+    zh: '轮询',
+    tr: 'yokla',
+    fr: 'interroger',
+  },
+  stream: {
+    en: 'stream',
+    es: 'transmitir',
+    ja: 'ストリーム',
+    ar: 'بث',
+    ko: '스트리밍',
+    zh: '流式',
+    tr: 'aktar',
+    fr: 'diffuser',
+  },
+  submit: {
+    en: 'submit',
+    es: 'enviar',
+    ja: '送信',
+    ar: 'أرسل',
+    ko: '제출',
+    zh: '提交',
+    tr: 'gönder',
+    fr: 'soumettre',
+  },
+  transform: {
+    en: 'transform',
+    es: 'transformar',
+    ja: '変換',
+    ar: 'حوّل',
+    ko: '변환',
+    zh: '转换',
+    tr: 'dönüştür',
+    fr: 'transformer',
+  },
 };
 
 const MARKERS: Record<string, Record<string, string>> = {
-  as: { en: 'as', es: 'como', ja: 'で', ar: 'ك' },
-  into: { en: 'into', es: 'en', ja: 'に', ar: 'في' },
-  every: { en: 'every', es: 'cada', ja: 'ごとに', ar: 'كل' },
-  to: { en: 'to', es: 'a', ja: 'に', ar: 'إلى' },
-  with: { en: 'with', es: 'con', ja: 'で', ar: 'ب' },
+  as: { en: 'as', es: 'como', ja: 'で', ar: 'ك', ko: '로', zh: '以', tr: 'olarak', fr: 'comme' },
+  into: { en: 'into', es: 'en', ja: 'に', ar: 'في', ko: '에', zh: '到', tr: 'e', fr: 'dans' },
+  every: {
+    en: 'every',
+    es: 'cada',
+    ja: 'ごとに',
+    ar: 'كل',
+    ko: '마다',
+    zh: '每',
+    tr: 'her',
+    fr: 'chaque',
+  },
+  to: { en: 'to', es: 'a', ja: 'に', ar: 'إلى', ko: '로', zh: '到', tr: 'e', fr: 'vers' },
+  with: { en: 'with', es: 'con', ja: 'で', ar: 'ب', ko: '로', zh: '用', tr: 'ile', fr: 'avec' },
 };
 
 // =============================================================================
 // Word Order Helpers
 // =============================================================================
 
-const SOV_LANGUAGES = new Set(['ja']);
+const SOV_LANGUAGES = new Set(['ja', 'ko', 'tr']);
 const VSO_LANGUAGES = new Set(['ar']);
 
 function isSOV(lang: string): boolean {

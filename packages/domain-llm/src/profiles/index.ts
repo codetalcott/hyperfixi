@@ -1,8 +1,8 @@
 /**
  * LLM Language Profiles
  *
- * Pattern generation profiles for 4 supported languages (EN, ES, JA, AR).
- * Covers SVO (English, Spanish), SOV (Japanese), and VSO (Arabic) word orders.
+ * Pattern generation profiles for 8 supported languages.
+ * Covers SVO (EN, ES, ZH, FR), SOV (JA, KO, TR), and VSO (AR) word orders.
  *
  * Role markers are specified via markerOverride on each schema role.
  * Profile roleMarkers are used only when positional defaults need overriding.
@@ -77,7 +77,76 @@ export const arabicProfile: PatternGenLanguageProfile = {
 };
 
 // =============================================================================
+// Korean (SOV)
+// =============================================================================
+
+export const koreanProfile: PatternGenLanguageProfile = {
+  code: 'ko',
+  wordOrder: 'SOV',
+  keywords: {
+    ask: { primary: '질문' },
+    summarize: { primary: '요약' },
+    analyze: { primary: '분석' },
+    translate: { primary: '번역' },
+  },
+};
+
+// =============================================================================
+// Chinese (SVO)
+// =============================================================================
+
+export const chineseProfile: PatternGenLanguageProfile = {
+  code: 'zh',
+  wordOrder: 'SVO',
+  keywords: {
+    ask: { primary: '提问' },
+    summarize: { primary: '总结' },
+    analyze: { primary: '分析' },
+    translate: { primary: '翻译' },
+  },
+};
+
+// =============================================================================
+// Turkish (SOV)
+// =============================================================================
+
+export const turkishProfile: PatternGenLanguageProfile = {
+  code: 'tr',
+  wordOrder: 'SOV',
+  keywords: {
+    ask: { primary: 'sor' },
+    summarize: { primary: 'özetle' },
+    analyze: { primary: 'çözümle' },
+    translate: { primary: 'çevir' },
+  },
+};
+
+// =============================================================================
+// French (SVO)
+// =============================================================================
+
+export const frenchProfile: PatternGenLanguageProfile = {
+  code: 'fr',
+  wordOrder: 'SVO',
+  keywords: {
+    ask: { primary: 'demander' },
+    summarize: { primary: 'résumer' },
+    analyze: { primary: 'analyser' },
+    translate: { primary: 'traduire' },
+  },
+};
+
+// =============================================================================
 // All Profiles
 // =============================================================================
 
-export const allProfiles = [englishProfile, spanishProfile, japaneseProfile, arabicProfile];
+export const allProfiles = [
+  englishProfile,
+  spanishProfile,
+  japaneseProfile,
+  arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  turkishProfile,
+  frenchProfile,
+];

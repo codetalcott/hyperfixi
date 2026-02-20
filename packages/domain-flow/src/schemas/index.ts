@@ -3,7 +3,7 @@
  *
  * Defines the semantic structure of data flow commands using the framework's
  * defineCommand/defineRole helpers. Each schema specifies roles (source, destination,
- * style, duration, etc.) and per-language marker overrides for 4 languages.
+ * style, duration, etc.) and per-language marker overrides for 8 languages.
  */
 
 import { defineCommand, defineRole } from '@lokascript/framework';
@@ -38,6 +38,10 @@ export const fetchSchema = defineCommand({
         es: 'como',
         ja: 'で',
         ar: 'ك',
+        ko: '로',
+        zh: '以',
+        tr: 'olarak',
+        fr: 'comme',
       },
     }),
     defineRole({
@@ -52,6 +56,10 @@ export const fetchSchema = defineCommand({
         es: 'en',
         ja: 'に',
         ar: 'في',
+        ko: '에',
+        zh: '到',
+        tr: 'e',
+        fr: 'dans',
       },
     }),
   ],
@@ -87,6 +95,10 @@ export const pollSchema = defineCommand({
         es: 'cada',
         ja: 'ごとに',
         ar: 'كل',
+        ko: '마다',
+        zh: '每',
+        tr: 'her',
+        fr: 'chaque',
       },
     }),
     defineRole({
@@ -101,6 +113,10 @@ export const pollSchema = defineCommand({
         es: 'como',
         ja: 'で',
         ar: 'ك',
+        ko: '로',
+        zh: '以',
+        tr: 'olarak',
+        fr: 'comme',
       },
     }),
     defineRole({
@@ -115,6 +131,10 @@ export const pollSchema = defineCommand({
         es: 'en',
         ja: 'に',
         ar: 'في',
+        ko: '에',
+        zh: '到',
+        tr: 'e',
+        fr: 'dans',
       },
     }),
   ],
@@ -150,6 +170,10 @@ export const streamSchema = defineCommand({
         es: 'como',
         ja: 'で',
         ar: 'ك',
+        ko: '로',
+        zh: '以',
+        tr: 'olarak',
+        fr: 'comme',
       },
     }),
     defineRole({
@@ -164,6 +188,10 @@ export const streamSchema = defineCommand({
         es: 'en',
         ja: 'に',
         ar: 'في',
+        ko: '에',
+        zh: '到',
+        tr: 'e',
+        fr: 'dans',
       },
     }),
   ],
@@ -199,6 +227,10 @@ export const submitSchema = defineCommand({
         es: 'a',
         ja: 'に',
         ar: 'إلى',
+        ko: '로',
+        zh: '到',
+        tr: 'e',
+        fr: 'vers',
       },
     }),
     defineRole({
@@ -213,6 +245,10 @@ export const submitSchema = defineCommand({
         es: 'como',
         ja: 'で',
         ar: 'ك',
+        ko: '로',
+        zh: '以',
+        tr: 'olarak',
+        fr: 'comme',
       },
     }),
   ],
@@ -248,6 +284,10 @@ export const transformSchema = defineCommand({
         es: 'con',
         ja: 'で',
         ar: 'ب',
+        ko: '로',
+        zh: '用',
+        tr: 'ile',
+        fr: 'avec',
       },
     }),
   ],

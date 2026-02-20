@@ -293,3 +293,185 @@ export const ArabicFlowTokenizer: LanguageTokenizer = createSimpleTokenizer({
   includeOperators: false,
   caseInsensitive: false,
 });
+
+// =============================================================================
+// Korean FlowScript Tokenizer
+// =============================================================================
+
+export const KoreanFlowTokenizer: LanguageTokenizer = createSimpleTokenizer({
+  language: 'ko',
+  customExtractors: sharedExtractors,
+  keywords: [
+    // Commands
+    '가져오기',
+    '폴링',
+    '스트리밍',
+    '제출',
+    '변환',
+    // Role markers / particles
+    '로',
+    '에',
+    '마다',
+    '를',
+    '에서',
+  ],
+  keywordExtras: [
+    { native: '가져오기', normalized: 'fetch' },
+    { native: '폴링', normalized: 'poll' },
+    { native: '스트리밍', normalized: 'stream' },
+    { native: '제출', normalized: 'submit' },
+    { native: '변환', normalized: 'transform' },
+    { native: '로', normalized: 'as' },
+    { native: '에', normalized: 'into' },
+    { native: '마다', normalized: 'every' },
+    { native: '를', normalized: 'patient' },
+  ],
+  keywordProfile: {
+    keywords: {
+      fetch: { primary: '가져오기' },
+      poll: { primary: '폴링' },
+      stream: { primary: '스트리밍' },
+      submit: { primary: '제출' },
+      transform: { primary: '변환' },
+    },
+  },
+  includeOperators: false,
+  caseInsensitive: false,
+});
+
+// =============================================================================
+// Chinese FlowScript Tokenizer
+// =============================================================================
+
+export const ChineseFlowTokenizer: LanguageTokenizer = createSimpleTokenizer({
+  language: 'zh',
+  customExtractors: sharedExtractors,
+  keywords: [
+    // Commands
+    '获取',
+    '轮询',
+    '流式',
+    '提交',
+    '转换',
+    // Role markers
+    '以',
+    '到',
+    '每',
+    '用',
+    '从',
+  ],
+  keywordExtras: [
+    { native: '获取', normalized: 'fetch' },
+    { native: '轮询', normalized: 'poll' },
+    { native: '流式', normalized: 'stream' },
+    { native: '提交', normalized: 'submit' },
+    { native: '转换', normalized: 'transform' },
+    { native: '以', normalized: 'as' },
+    { native: '到', normalized: 'into' },
+    { native: '每', normalized: 'every' },
+    { native: '用', normalized: 'with' },
+  ],
+  keywordProfile: {
+    keywords: {
+      fetch: { primary: '获取' },
+      poll: { primary: '轮询' },
+      stream: { primary: '流式' },
+      submit: { primary: '提交' },
+      transform: { primary: '转换' },
+    },
+  },
+  includeOperators: false,
+  caseInsensitive: false,
+});
+
+// =============================================================================
+// Turkish FlowScript Tokenizer
+// =============================================================================
+
+export const TurkishFlowTokenizer: LanguageTokenizer = createSimpleTokenizer({
+  language: 'tr',
+  customExtractors: [...sharedExtractors, new LatinExtendedIdentifierExtractor()],
+  keywords: [
+    // Commands
+    'getir',
+    'yokla',
+    'aktar',
+    'gönder',
+    'dönüştür',
+    // Role markers
+    'olarak',
+    'e',
+    'her',
+    'ile',
+    'dan',
+  ],
+  keywordExtras: [
+    { native: 'getir', normalized: 'fetch' },
+    { native: 'yokla', normalized: 'poll' },
+    { native: 'aktar', normalized: 'stream' },
+    { native: 'gönder', normalized: 'submit' },
+    { native: 'dönüştür', normalized: 'transform' },
+    { native: 'olarak', normalized: 'as' },
+    { native: 'e', normalized: 'into' },
+    { native: 'her', normalized: 'every' },
+    { native: 'ile', normalized: 'with' },
+  ],
+  keywordProfile: {
+    keywords: {
+      fetch: { primary: 'getir' },
+      poll: { primary: 'yokla' },
+      stream: { primary: 'aktar' },
+      submit: { primary: 'gönder' },
+      transform: { primary: 'dönüştür' },
+    },
+  },
+  includeOperators: false,
+  caseInsensitive: true,
+});
+
+// =============================================================================
+// French FlowScript Tokenizer
+// =============================================================================
+
+export const FrenchFlowTokenizer: LanguageTokenizer = createSimpleTokenizer({
+  language: 'fr',
+  customExtractors: [...sharedExtractors, new LatinExtendedIdentifierExtractor()],
+  keywords: [
+    // Commands
+    'récupérer',
+    'interroger',
+    'diffuser',
+    'soumettre',
+    'transformer',
+    // Role markers
+    'comme',
+    'dans',
+    'chaque',
+    'vers',
+    'avec',
+    'de',
+  ],
+  keywordExtras: [
+    { native: 'récupérer', normalized: 'fetch' },
+    { native: 'interroger', normalized: 'poll' },
+    { native: 'diffuser', normalized: 'stream' },
+    { native: 'soumettre', normalized: 'submit' },
+    { native: 'transformer', normalized: 'transform' },
+    { native: 'comme', normalized: 'as' },
+    { native: 'dans', normalized: 'into' },
+    { native: 'chaque', normalized: 'every' },
+    { native: 'vers', normalized: 'to' },
+    { native: 'avec', normalized: 'with' },
+  ],
+  keywordProfile: {
+    keywords: {
+      fetch: { primary: 'récupérer' },
+      poll: { primary: 'interroger' },
+      stream: { primary: 'diffuser' },
+      submit: { primary: 'soumettre' },
+      transform: { primary: 'transformer' },
+    },
+  },
+  includeOperators: false,
+  caseInsensitive: true,
+});

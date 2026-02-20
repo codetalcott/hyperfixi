@@ -2,7 +2,7 @@
  * @lokascript/domain-llm — Multilingual LLM Prompt DSL
  *
  * A natural language interface for LLM interactions built on @lokascript/framework.
- * Parses commands written in 4 languages and generates LLMPromptSpec objects
+ * Parses commands written in 8 languages and generates LLMPromptSpec objects
  * compatible with MCP sampling/createMessage.
  *
  * @example
@@ -45,17 +45,25 @@ import {
   spanishProfile,
   japaneseProfile,
   arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  turkishProfile,
+  frenchProfile,
 } from './profiles/index.js';
 import {
   EnglishLLMTokenizer,
   SpanishLLMTokenizer,
   JapaneseLLMTokenizer,
   ArabicLLMTokenizer,
+  KoreanLLMTokenizer,
+  ChineseLLMTokenizer,
+  TurkishLLMTokenizer,
+  FrenchLLMTokenizer,
 } from './tokenizers/index.js';
 import { llmCodeGenerator } from './generators/llm-generator.js';
 
 /**
- * Create a multilingual LLM DSL instance with all 4 supported languages.
+ * Create a multilingual LLM DSL instance with all 8 supported languages.
  */
 export function createLLMDSL(): MultilingualDSL {
   return createMultilingualDSL({
@@ -90,6 +98,34 @@ export function createLLMDSL(): MultilingualDSL {
         tokenizer: ArabicLLMTokenizer,
         patternProfile: arabicProfile,
       },
+      {
+        code: 'ko',
+        name: 'Korean',
+        nativeName: '한국어',
+        tokenizer: KoreanLLMTokenizer,
+        patternProfile: koreanProfile,
+      },
+      {
+        code: 'zh',
+        name: 'Chinese',
+        nativeName: '中文',
+        tokenizer: ChineseLLMTokenizer,
+        patternProfile: chineseProfile,
+      },
+      {
+        code: 'tr',
+        name: 'Turkish',
+        nativeName: 'Türkçe',
+        tokenizer: TurkishLLMTokenizer,
+        patternProfile: turkishProfile,
+      },
+      {
+        code: 'fr',
+        name: 'French',
+        nativeName: 'Français',
+        tokenizer: FrenchLLMTokenizer,
+        patternProfile: frenchProfile,
+      },
     ],
     codeGenerator: llmCodeGenerator,
   });
@@ -108,6 +144,10 @@ export {
   spanishProfile,
   japaneseProfile,
   arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  turkishProfile,
+  frenchProfile,
 } from './profiles/index.js';
 export { llmCodeGenerator } from './generators/llm-generator.js';
 export { renderLLM } from './generators/llm-renderer.js';
@@ -116,6 +156,10 @@ export {
   SpanishLLMTokenizer,
   JapaneseLLMTokenizer,
   ArabicLLMTokenizer,
+  KoreanLLMTokenizer,
+  ChineseLLMTokenizer,
+  TurkishLLMTokenizer,
+  FrenchLLMTokenizer,
 } from './tokenizers/index.js';
 export type { LLMPromptSpec, LLMMessage, LLMModelPreferences, LLMAction } from './types.js';
 

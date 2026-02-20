@@ -13,24 +13,69 @@ import { extractRoleValue } from '@lokascript/framework';
 // =============================================================================
 
 const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
-  ask: { en: 'ask', es: 'preguntar', ja: '聞く', ar: 'اسأل' },
-  summarize: { en: 'summarize', es: 'resumir', ja: '要約', ar: 'لخّص' },
-  analyze: { en: 'analyze', es: 'analizar', ja: '分析', ar: 'حلّل' },
-  translate: { en: 'translate', es: 'traducir', ja: '翻訳', ar: 'ترجم' },
+  ask: {
+    en: 'ask',
+    es: 'preguntar',
+    ja: '聞く',
+    ar: 'اسأل',
+    ko: '질문',
+    zh: '提问',
+    tr: 'sor',
+    fr: 'demander',
+  },
+  summarize: {
+    en: 'summarize',
+    es: 'resumir',
+    ja: '要約',
+    ar: 'لخّص',
+    ko: '요약',
+    zh: '总结',
+    tr: 'özetle',
+    fr: 'résumer',
+  },
+  analyze: {
+    en: 'analyze',
+    es: 'analizar',
+    ja: '分析',
+    ar: 'حلّل',
+    ko: '분석',
+    zh: '分析',
+    tr: 'çözümle',
+    fr: 'analyser',
+  },
+  translate: {
+    en: 'translate',
+    es: 'traducir',
+    ja: '翻訳',
+    ar: 'ترجم',
+    ko: '번역',
+    zh: '翻译',
+    tr: 'çevir',
+    fr: 'traduire',
+  },
 };
 
 const MARKERS: Record<string, Record<string, string>> = {
-  from: { en: 'from', es: 'de', ja: 'から', ar: 'من' },
-  as: { en: 'as', es: 'como', ja: 'として', ar: 'ك' },
-  in: { en: 'in', es: 'en', ja: 'で', ar: 'في' },
-  to: { en: 'to', es: 'a', ja: 'に', ar: 'إلى' },
+  from: { en: 'from', es: 'de', ja: 'から', ar: 'من', ko: '에서', zh: '从', tr: 'dan', fr: 'de' },
+  as: {
+    en: 'as',
+    es: 'como',
+    ja: 'として',
+    ar: 'ك',
+    ko: '로',
+    zh: '以',
+    tr: 'olarak',
+    fr: 'comme',
+  },
+  in: { en: 'in', es: 'en', ja: 'で', ar: 'في', ko: '에서', zh: '用', tr: 'ile', fr: 'en' },
+  to: { en: 'to', es: 'a', ja: 'に', ar: 'إلى', ko: '로', zh: '到', tr: 'e', fr: 'vers' },
 };
 
 // =============================================================================
 // Word Order Helpers
 // =============================================================================
 
-const SOV_LANGUAGES = new Set(['ja']);
+const SOV_LANGUAGES = new Set(['ja', 'ko', 'tr']);
 const VSO_LANGUAGES = new Set(['ar']);
 
 function isSOV(lang: string): boolean {

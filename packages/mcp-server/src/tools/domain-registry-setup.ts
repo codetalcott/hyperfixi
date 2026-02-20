@@ -89,7 +89,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'llm',
     description: 'natural language LLM prompts (ask, summarize, analyze, translate)',
-    languages: ['en', 'es', 'ja', 'ar'],
+    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'command',
     inputDescription:
       'LLM command in natural language (e.g., "ask claude to summarize #article as bullets")',
@@ -105,7 +105,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'flow',
     description: 'declarative reactive data flow pipelines (fetch, poll, stream, submit)',
-    languages: ['en', 'es', 'ja', 'ar'],
+    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'pipeline',
     inputDescription: 'FlowScript pipeline (e.g., "fetch /api/users as json into #list")',
     getDSL: () => import('@lokascript/domain-flow').then(m => m.createFlowDSL()),

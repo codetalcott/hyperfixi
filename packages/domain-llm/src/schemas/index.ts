@@ -5,7 +5,8 @@
  * framework's defineCommand/defineRole helpers. Four commands covering
  * the core LLM use cases: ask, summarize, analyze, translate.
  *
- * All commands support 4 languages: EN (SVO), ES (SVO), JA (SOV), AR (VSO).
+ * All commands support 8 languages: EN (SVO), ES (SVO), ZH (SVO), FR (SVO),
+ * JA (SOV), KO (SOV), TR (SOV), AR (VSO).
  */
 
 import { defineCommand, defineRole } from '@lokascript/framework';
@@ -44,6 +45,10 @@ export const askSchema = defineCommand({
         es: 'de',
         ja: 'から',
         ar: 'من',
+        ko: '에서',
+        zh: '从',
+        tr: 'dan',
+        fr: 'de',
       },
     }),
     defineRole({
@@ -58,6 +63,10 @@ export const askSchema = defineCommand({
         es: 'como',
         ja: 'として',
         ar: 'ك',
+        ko: '로',
+        zh: '以',
+        tr: 'olarak',
+        fr: 'comme',
       },
     }),
   ],
@@ -97,6 +106,10 @@ export const summarizeSchema = defineCommand({
         es: 'en',
         ja: 'で',
         ar: 'في',
+        ko: '에서',
+        zh: '用',
+        tr: 'ile',
+        fr: 'en',
       },
     }),
     defineRole({
@@ -111,6 +124,10 @@ export const summarizeSchema = defineCommand({
         es: 'como',
         ja: 'として',
         ar: 'ك',
+        ko: '로',
+        zh: '以',
+        tr: 'olarak',
+        fr: 'comme',
       },
     }),
   ],
@@ -150,6 +167,10 @@ export const analyzeSchema = defineCommand({
         es: 'como',
         ja: 'として',
         ar: 'ك',
+        ko: '로',
+        zh: '以',
+        tr: 'olarak',
+        fr: 'comme',
       },
     }),
   ],
@@ -189,6 +210,10 @@ export const translateSchema = defineCommand({
         es: 'de',
         ja: 'から',
         ar: 'من',
+        ko: '에서',
+        zh: '从',
+        tr: 'dan',
+        fr: 'de',
       },
     }),
     defineRole({
@@ -203,6 +228,10 @@ export const translateSchema = defineCommand({
         es: 'a',
         ja: 'に',
         ar: 'إلى',
+        ko: '로',
+        zh: '到',
+        tr: 'e',
+        fr: 'vers',
       },
     }),
   ],

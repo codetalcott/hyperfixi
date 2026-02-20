@@ -2,7 +2,7 @@
  * @lokascript/domain-flow — Declarative Reactive Data Flow DSL
  *
  * A multilingual data flow domain built on @lokascript/framework.
- * Parses data flow commands written in 4 languages, compiling to
+ * Parses data flow commands written in 8 languages, compiling to
  * vanilla JS (fetch, EventSource, setInterval) or HTMX attributes.
  *
  * @example
@@ -23,6 +23,18 @@
  *
  * // Arabic (VSO)
  * flow.compile('جلب /api/users ك json في #user-list', 'ar');
+ *
+ * // Korean (SOV)
+ * flow.compile('/api/users json 로 가져오기', 'ko');
+ *
+ * // Chinese (SVO)
+ * flow.compile('获取 /api/users 以 json 到 #user-list', 'zh');
+ *
+ * // Turkish (SOV)
+ * flow.compile('/api/users json olarak getir', 'tr');
+ *
+ * // French (SVO)
+ * flow.compile('récupérer /api/users comme json dans #user-list', 'fr');
  * ```
  */
 
@@ -40,17 +52,25 @@ import {
   spanishProfile,
   japaneseProfile,
   arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  turkishProfile,
+  frenchProfile,
 } from './profiles/index.js';
 import {
   EnglishFlowTokenizer,
   SpanishFlowTokenizer,
   JapaneseFlowTokenizer,
   ArabicFlowTokenizer,
+  KoreanFlowTokenizer,
+  ChineseFlowTokenizer,
+  TurkishFlowTokenizer,
+  FrenchFlowTokenizer,
 } from './tokenizers/index.js';
 import { flowCodeGenerator } from './generators/flow-generator.js';
 
 /**
- * Create a multilingual FlowScript DSL instance with all 4 supported languages.
+ * Create a multilingual FlowScript DSL instance with all 8 supported languages.
  */
 export function createFlowDSL(): MultilingualDSL {
   return createMultilingualDSL({
@@ -85,6 +105,34 @@ export function createFlowDSL(): MultilingualDSL {
         tokenizer: ArabicFlowTokenizer,
         patternProfile: arabicProfile,
       },
+      {
+        code: 'ko',
+        name: 'Korean',
+        nativeName: '한국어',
+        tokenizer: KoreanFlowTokenizer,
+        patternProfile: koreanProfile,
+      },
+      {
+        code: 'zh',
+        name: 'Chinese',
+        nativeName: '中文',
+        tokenizer: ChineseFlowTokenizer,
+        patternProfile: chineseProfile,
+      },
+      {
+        code: 'tr',
+        name: 'Turkish',
+        nativeName: 'Türkçe',
+        tokenizer: TurkishFlowTokenizer,
+        patternProfile: turkishProfile,
+      },
+      {
+        code: 'fr',
+        name: 'French',
+        nativeName: 'Français',
+        tokenizer: FrenchFlowTokenizer,
+        patternProfile: frenchProfile,
+      },
     ],
     codeGenerator: flowCodeGenerator,
   });
@@ -97,6 +145,10 @@ export {
   spanishProfile,
   japaneseProfile,
   arabicProfile,
+  koreanProfile,
+  chineseProfile,
+  turkishProfile,
+  frenchProfile,
 } from './profiles/index.js';
 export { flowCodeGenerator, toFlowSpec, parseDuration } from './generators/flow-generator.js';
 export { renderFlow } from './generators/flow-renderer.js';
@@ -111,6 +163,10 @@ export {
   SpanishFlowTokenizer,
   JapaneseFlowTokenizer,
   ArabicFlowTokenizer,
+  KoreanFlowTokenizer,
+  ChineseFlowTokenizer,
+  TurkishFlowTokenizer,
+  FrenchFlowTokenizer,
 } from './tokenizers/index.js';
 export type { FlowSpec, FlowAction } from './types.js';
 

@@ -1,7 +1,7 @@
 /**
  * FlowScript Domain Tests
  *
- * Validates the multilingual FlowScript DSL across 4 languages (EN, ES, JA, AR)
+ * Validates the multilingual FlowScript DSL across 8 languages (EN, ES, JA, AR, KO, ZH, TR, FR)
  * covering SVO, SOV, and VSO word orders.
  */
 
@@ -24,13 +24,17 @@ describe('FlowScript Domain', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support 4 languages', () => {
+    it('should support 8 languages', () => {
       const languages = flow.getSupportedLanguages();
       expect(languages).toContain('en');
       expect(languages).toContain('es');
       expect(languages).toContain('ja');
       expect(languages).toContain('ar');
-      expect(languages).toHaveLength(4);
+      expect(languages).toContain('ko');
+      expect(languages).toContain('zh');
+      expect(languages).toContain('tr');
+      expect(languages).toContain('fr');
+      expect(languages).toHaveLength(8);
     });
 
     it('should reject unsupported language', () => {
@@ -320,6 +324,211 @@ describe('FlowScript Domain', () => {
   });
 
   // ===========================================================================
+  // Korean (SOV)
+  // ===========================================================================
+
+  describe('Korean (SOV)', () => {
+    it('should parse fetch in Korean SOV order', () => {
+      const node = flow.parse('/api/users json 로 가져오기', 'ko');
+      expect(node.action).toBe('fetch');
+      expect(extractRoleValue(node, 'source')).toBe('/api/users');
+      expect(extractRoleValue(node, 'style')).toBe('json');
+    });
+
+    it('should parse poll in Korean', () => {
+      const node = flow.parse('/api/status 5s 마다 폴링', 'ko');
+      expect(node.action).toBe('poll');
+      expect(extractRoleValue(node, 'source')).toBe('/api/status');
+      expect(extractRoleValue(node, 'duration')).toBe('5s');
+    });
+
+    it('should parse stream in Korean', () => {
+      const node = flow.parse('/api/events sse 로 스트리밍', 'ko');
+      expect(node.action).toBe('stream');
+      expect(extractRoleValue(node, 'source')).toBe('/api/events');
+      expect(extractRoleValue(node, 'style')).toBe('sse');
+    });
+
+    it('should parse transform in Korean', () => {
+      // SOV: instrument(sovPos:2) before patient(sovPos:1), marker after value
+      const node = flow.parse('uppercase 로 data 변환', 'ko');
+      expect(node.action).toBe('transform');
+      expect(extractRoleValue(node, 'patient')).toBe('data');
+      expect(extractRoleValue(node, 'instrument')).toBe('uppercase');
+    });
+
+    it('should produce same FlowSpec as English', () => {
+      const enNode = flow.parse('fetch /api/users as json', 'en');
+      const koNode = flow.parse('/api/users json 로 가져오기', 'ko');
+      const enSpec = toFlowSpec(enNode, 'en');
+      const koSpec = toFlowSpec(koNode, 'ko');
+      expect(enSpec.action).toBe(koSpec.action);
+      expect(enSpec.url).toBe(koSpec.url);
+      expect(enSpec.responseFormat).toBe(koSpec.responseFormat);
+    });
+  });
+
+  // ===========================================================================
+  // Chinese (SVO)
+  // ===========================================================================
+
+  describe('Chinese (SVO)', () => {
+    it('should parse fetch in Chinese', () => {
+      const node = flow.parse('获取 /api/users 以 json 到 #user-list', 'zh');
+      expect(node.action).toBe('fetch');
+      expect(extractRoleValue(node, 'source')).toBe('/api/users');
+      expect(extractRoleValue(node, 'style')).toBe('json');
+      expect(extractRoleValue(node, 'destination')).toBe('#user-list');
+    });
+
+    it('should parse poll in Chinese', () => {
+      const node = flow.parse('轮询 /api/status 每 5s', 'zh');
+      expect(node.action).toBe('poll');
+      expect(extractRoleValue(node, 'source')).toBe('/api/status');
+      expect(extractRoleValue(node, 'duration')).toBe('5s');
+    });
+
+    it('should parse stream in Chinese', () => {
+      const node = flow.parse('流式 /api/events 以 sse 到 #event-log', 'zh');
+      expect(node.action).toBe('stream');
+      expect(extractRoleValue(node, 'source')).toBe('/api/events');
+      expect(extractRoleValue(node, 'style')).toBe('sse');
+    });
+
+    it('should parse transform in Chinese', () => {
+      const node = flow.parse('转换 data 用 uppercase', 'zh');
+      expect(node.action).toBe('transform');
+      expect(extractRoleValue(node, 'patient')).toBe('data');
+      expect(extractRoleValue(node, 'instrument')).toBe('uppercase');
+    });
+
+    it('should compile Chinese fetch to same JS as English', () => {
+      const enResult = flow.compile('fetch /api/users as json into #user-list', 'en');
+      const zhResult = flow.compile('获取 /api/users 以 json 到 #user-list', 'zh');
+      expect(enResult.ok).toBe(true);
+      expect(zhResult.ok).toBe(true);
+      expect(enResult.code).toBe(zhResult.code);
+    });
+  });
+
+  // ===========================================================================
+  // Turkish (SOV)
+  // ===========================================================================
+
+  describe('Turkish (SOV)', () => {
+    it('should parse fetch in Turkish SOV order', () => {
+      const node = flow.parse('/api/users json olarak getir', 'tr');
+      expect(node.action).toBe('fetch');
+      expect(extractRoleValue(node, 'source')).toBe('/api/users');
+      expect(extractRoleValue(node, 'style')).toBe('json');
+    });
+
+    it('should parse poll in Turkish', () => {
+      // SOV: marker comes after value (postposition)
+      const node = flow.parse('/api/status 5s her yokla', 'tr');
+      expect(node.action).toBe('poll');
+      expect(extractRoleValue(node, 'source')).toBe('/api/status');
+      expect(extractRoleValue(node, 'duration')).toBe('5s');
+    });
+
+    it('should parse stream in Turkish', () => {
+      const node = flow.parse('/api/events sse olarak aktar', 'tr');
+      expect(node.action).toBe('stream');
+      expect(extractRoleValue(node, 'source')).toBe('/api/events');
+      expect(extractRoleValue(node, 'style')).toBe('sse');
+    });
+
+    it('should parse transform in Turkish', () => {
+      // SOV: instrument(sovPos:2) before patient(sovPos:1), marker after value
+      const node = flow.parse('uppercase ile data dönüştür', 'tr');
+      expect(node.action).toBe('transform');
+      expect(extractRoleValue(node, 'patient')).toBe('data');
+      expect(extractRoleValue(node, 'instrument')).toBe('uppercase');
+    });
+
+    it('should produce same FlowSpec as English', () => {
+      const enNode = flow.parse('fetch /api/users as json', 'en');
+      const trNode = flow.parse('/api/users json olarak getir', 'tr');
+      const enSpec = toFlowSpec(enNode, 'en');
+      const trSpec = toFlowSpec(trNode, 'tr');
+      expect(enSpec.action).toBe(trSpec.action);
+      expect(enSpec.url).toBe(trSpec.url);
+      expect(enSpec.responseFormat).toBe(trSpec.responseFormat);
+    });
+  });
+
+  // ===========================================================================
+  // French (SVO)
+  // ===========================================================================
+
+  describe('French (SVO)', () => {
+    it('should parse fetch in French', () => {
+      const node = flow.parse('récupérer /api/users comme json dans #user-list', 'fr');
+      expect(node.action).toBe('fetch');
+      expect(extractRoleValue(node, 'source')).toBe('/api/users');
+      expect(extractRoleValue(node, 'style')).toBe('json');
+      expect(extractRoleValue(node, 'destination')).toBe('#user-list');
+    });
+
+    it('should parse poll in French', () => {
+      const node = flow.parse('interroger /api/status chaque 5s', 'fr');
+      expect(node.action).toBe('poll');
+      expect(extractRoleValue(node, 'source')).toBe('/api/status');
+      expect(extractRoleValue(node, 'duration')).toBe('5s');
+    });
+
+    it('should parse stream in French', () => {
+      const node = flow.parse('diffuser /api/events comme sse dans #event-log', 'fr');
+      expect(node.action).toBe('stream');
+      expect(extractRoleValue(node, 'source')).toBe('/api/events');
+      expect(extractRoleValue(node, 'style')).toBe('sse');
+    });
+
+    it('should parse transform in French', () => {
+      const node = flow.parse('transformer data avec uppercase', 'fr');
+      expect(node.action).toBe('transform');
+      expect(extractRoleValue(node, 'patient')).toBe('data');
+      expect(extractRoleValue(node, 'instrument')).toBe('uppercase');
+    });
+
+    it('should compile French fetch to same JS as English', () => {
+      const enResult = flow.compile('fetch /api/users as json into #user-list', 'en');
+      const frResult = flow.compile('récupérer /api/users comme json dans #user-list', 'fr');
+      expect(enResult.ok).toBe(true);
+      expect(frResult.ok).toBe(true);
+      expect(enResult.code).toBe(frResult.code);
+    });
+  });
+
+  // ===========================================================================
+  // Semantic Equivalence (all 8 languages)
+  // ===========================================================================
+
+  describe('Semantic Equivalence', () => {
+    it('should produce identical FlowSpec for fetch across all languages', () => {
+      const inputs: [string, string][] = [
+        ['fetch /api/users as json into #user-list', 'en'],
+        ['obtener /api/users como json en #user-list', 'es'],
+        ['جلب /api/users ك json في #user-list', 'ar'],
+        ['获取 /api/users 以 json 到 #user-list', 'zh'],
+        ['récupérer /api/users comme json dans #user-list', 'fr'],
+      ];
+
+      const specs = inputs.map(([input, lang]) => {
+        const node = flow.parse(input, lang);
+        return toFlowSpec(node, lang);
+      });
+
+      for (const spec of specs) {
+        expect(spec.action).toBe('fetch');
+        expect(spec.url).toBe('/api/users');
+        expect(spec.responseFormat).toBe('json');
+        expect(spec.target).toBe('#user-list');
+      }
+    });
+  });
+
+  // ===========================================================================
   // Validation / Error Handling
   // ===========================================================================
 
@@ -342,6 +551,24 @@ describe('FlowScript Domain', () => {
     it('should handle URLs with query params', () => {
       const node = flow.parse('fetch /api/search?q=hello', 'en');
       expect(extractRoleValue(node, 'source')).toBe('/api/search?q=hello');
+    });
+
+    it('should validate in all 8 languages', () => {
+      const validInputs: [string, string][] = [
+        ['fetch /api/users as json', 'en'],
+        ['obtener /api/users como json', 'es'],
+        ['/api/users json で 取得', 'ja'],
+        ['جلب /api/users ك json', 'ar'],
+        ['/api/users json 로 가져오기', 'ko'],
+        ['获取 /api/users 以 json', 'zh'],
+        ['/api/users json olarak getir', 'tr'],
+        ['récupérer /api/users comme json', 'fr'],
+      ];
+
+      for (const [input, lang] of validInputs) {
+        const result = flow.validate(input, lang);
+        expect(result.valid).toBe(true);
+      }
     });
   });
 
@@ -402,6 +629,38 @@ describe('FlowScript Domain', () => {
       const rendered = renderFlow(node, 'ar');
       expect(rendered).toContain('بث');
       expect(rendered).toContain('/api/events');
+    });
+
+    it('should render fetch to Korean SOV', () => {
+      const node = flow.parse('fetch /api/users as json', 'en');
+      const rendered = renderFlow(node, 'ko');
+      expect(rendered).toContain('가져오기');
+      expect(rendered).toContain('/api/users');
+    });
+
+    it('should render fetch to Chinese', () => {
+      const node = flow.parse('fetch /api/users as json into #user-list', 'en');
+      const rendered = renderFlow(node, 'zh');
+      expect(rendered).toContain('获取');
+      expect(rendered).toContain('/api/users');
+      expect(rendered).toContain('以');
+      expect(rendered).toContain('到');
+    });
+
+    it('should render fetch to Turkish SOV', () => {
+      const node = flow.parse('fetch /api/users as json', 'en');
+      const rendered = renderFlow(node, 'tr');
+      expect(rendered).toContain('getir');
+      expect(rendered).toContain('/api/users');
+    });
+
+    it('should render fetch to French', () => {
+      const node = flow.parse('fetch /api/users as json into #user-list', 'en');
+      const rendered = renderFlow(node, 'fr');
+      expect(rendered).toContain('récupérer');
+      expect(rendered).toContain('/api/users');
+      expect(rendered).toContain('comme');
+      expect(rendered).toContain('dans');
     });
 
     it('should round-trip Arabic render through parser', () => {
