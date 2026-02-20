@@ -1,15 +1,19 @@
 # @lokascript/domain-flow
 
-Multilingual reactive data flow DSL built on `@lokascript/framework`. Describe fetch, polling, streaming, form submission, and data transformation pipelines in 4 natural languages and compile to vanilla JS or HTMX attributes.
+Multilingual reactive data flow DSL built on `@lokascript/framework`. Describe fetch, polling, streaming, form submission, and data transformation pipelines in 8 natural languages and compile to vanilla JS or HTMX attributes.
 
 ## Supported Languages
 
-| Language | Code | Word Order | Example                                 |
-| -------- | ---- | ---------- | --------------------------------------- |
-| English  | `en` | SVO        | `fetch /api/users as json into #list`   |
-| Spanish  | `es` | SVO        | `obtener /api/users como json en #list` |
-| Japanese | `ja` | SOV        | `/api/users json で 取得 #list に`      |
-| Arabic   | `ar` | VSO        | `جلب /api/users ك json في #list`        |
+| Language | Code | Word Order | Example                                      |
+| -------- | ---- | ---------- | -------------------------------------------- |
+| English  | `en` | SVO        | `fetch /api/users as json into #list`        |
+| Spanish  | `es` | SVO        | `obtener /api/users como json en #list`      |
+| Japanese | `ja` | SOV        | `/api/users json で 取得 #list に`           |
+| Arabic   | `ar` | VSO        | `جلب /api/users ك json في #list`             |
+| Korean   | `ko` | SOV        | `/api/users json 로 가져오기`                |
+| Chinese  | `zh` | SVO        | `获取 /api/users 以 json 到 #list`           |
+| Turkish  | `tr` | SOV        | `/api/users json olarak getir`               |
+| French   | `fr` | SVO        | `récupérer /api/users comme json dans #list` |
 
 ## Commands
 
@@ -89,7 +93,7 @@ renderFlow(node, 'es'); // → obtener /api/users como json en #list
 
 ### `createFlowDSL(): MultilingualDSL`
 
-Create a DSL instance with all 4 languages.
+Create a DSL instance with all 8 languages.
 
 ### `toFlowSpec(node, language): FlowSpec`
 
