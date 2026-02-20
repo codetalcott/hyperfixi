@@ -1545,6 +1545,44 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     return false;
   }
 
+  // Special handling for 'in' operator with positionalExpression wrapping a selector
+  // e.g., "first .item in me" or "last <.item/> in me"
+  // Scope the selector query to the right operand, then apply first/last
+  if (
+    operator === 'in' &&
+    node.left?.type === 'positionalExpression' &&
+    node.left.argument &&
+    (node.left.argument.type === 'queryReference' || node.left.argument.type === 'cssSelector')
+  ) {
+    let selector: string;
+    if (node.left.argument.type === 'queryReference') {
+      selector = node.left.argument.selector;
+      if (selector.startsWith('<') && selector.endsWith('/>')) {
+        selector = selector.slice(1, -2).trim();
+      }
+    } else {
+      selector = node.left.argument.selector;
+    }
+
+    const contextElement = await evaluateASTNode(node.right, context);
+    if (!contextElement || typeof contextElement.querySelectorAll !== 'function') {
+      throw new ExpressionParseError(
+        `'in' operator requires a DOM element as the right operand (got: ${typeof contextElement})`
+      );
+    }
+
+    const scopedResults = Array.from(contextElement.querySelectorAll(selector));
+    const position = node.left.operator;
+
+    if (position === 'first') {
+      return scopedResults.length > 0 ? scopedResults[0] : null;
+    } else if (position === 'last') {
+      return scopedResults.length > 0 ? scopedResults[scopedResults.length - 1] : null;
+    }
+
+    return scopedResults;
+  }
+
   // Special handling for 'in' operator with queryReference (e.g., <button/> in closest nav)
   // Don't evaluate the left side first - use it as a selector within the context element
   if (operator === 'in' && node.left?.type === 'queryReference') {

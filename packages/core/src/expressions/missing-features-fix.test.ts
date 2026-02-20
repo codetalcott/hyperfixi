@@ -146,6 +146,58 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
         expect(result).toBeNull();
       });
     });
+
+    describe('Scoped Positional with "in" operator', () => {
+      beforeEach(() => {
+        // Add items outside the container to verify scoping works
+        const outsideItem = document.createElement('div');
+        outsideItem.className = 'test-item';
+        outsideItem.textContent = 'Outside Item';
+        outsideItem.setAttribute('data-index', '0');
+        document.body.insertBefore(outsideItem, document.body.firstChild);
+      });
+
+      it('should scope "first .X in me" to the context element', async () => {
+        const container = document.getElementById('test-container')!;
+        context.me = container;
+        const result = await parseAndEvaluateExpression('first .test-item in me', context);
+        expect(result).toBeInstanceOf(HTMLElement);
+        // Should find first .test-item WITHIN container, not the outside one
+        expect(result.getAttribute('data-index')).toBe('1');
+      });
+
+      it('should scope "last .X in me" to the context element', async () => {
+        const container = document.getElementById('test-container')!;
+        context.me = container;
+        const result = await parseAndEvaluateExpression('last .test-item in me', context);
+        expect(result).toBeInstanceOf(HTMLElement);
+        expect(result.getAttribute('data-index')).toBe('5');
+      });
+
+      it('should scope "first <.X/> in me" to the context element', async () => {
+        const container = document.getElementById('test-container')!;
+        context.me = container;
+        const result = await parseAndEvaluateExpression('first <.test-item/> in me', context);
+        expect(result).toBeInstanceOf(HTMLElement);
+        expect(result.getAttribute('data-index')).toBe('1');
+      });
+
+      it('should return null when no matches in scoped element', async () => {
+        const container = document.getElementById('test-container')!;
+        context.me = container;
+        const result = await parseAndEvaluateExpression('first .nonexistent in me', context);
+        expect(result).toBeNull();
+      });
+
+      it('should scope to a specific element via #id', async () => {
+        const result = await parseAndEvaluateExpression(
+          'first .test-item in #test-container',
+          context
+        );
+        expect(result).toBeInstanceOf(HTMLElement);
+        expect(result.getAttribute('data-index')).toBe('1');
+      });
+    });
   });
 
   describe('Async Expressions', () => {
