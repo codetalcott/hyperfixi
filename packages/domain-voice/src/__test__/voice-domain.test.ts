@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createVoiceDSL, renderVoice } from '../index';
+import { createVoiceDSL, renderVoice, toVoiceActionSpec, voiceCodeGenerator } from '../index';
 import type { MultilingualDSL } from '@lokascript/framework';
 import { extractRoleValue } from '@lokascript/framework';
 
@@ -275,10 +275,10 @@ describe('Voice Domain', () => {
       expect(result.code).toContain('.focus()');
     });
 
-    it('compiles "select all" to JS with selectAll', () => {
+    it('compiles "select all" to JS with Range selection', () => {
       const result = voice.compile('select all', 'en');
       expect(result.ok).toBe(true);
-      expect(result.code).toContain('selectAll');
+      expect(result.code).toContain('selectNodeContents');
     });
 
     it('compiles "type hello into #search" to JS with value', () => {
@@ -989,10 +989,11 @@ describe('Voice Domain', () => {
       }
     });
 
-    it('renders click to Arabic', () => {
+    it('renders click to Arabic (with على marker)', () => {
       const node = voice.parse('click submit', 'en');
       const rendered = renderVoice(node, 'ar');
       expect(rendered).toContain('انقر');
+      expect(rendered).toContain('على');
     });
 
     it('renders click to Korean (SOV order)', () => {
@@ -1013,10 +1014,11 @@ describe('Voice Domain', () => {
       expect(rendered).toContain('tıkla');
     });
 
-    it('renders click to French', () => {
+    it('renders click to French (with sur marker)', () => {
       const node = voice.parse('click submit', 'en');
       const rendered = renderVoice(node, 'fr');
       expect(rendered).toContain('cliquer');
+      expect(rendered).toContain('sur');
     });
 
     it('renders navigate with destination', () => {
@@ -1105,6 +1107,126 @@ describe('Voice Domain', () => {
     it('compile returns ok:false for invalid input', () => {
       const result = voice.compile('completely invalid gibberish xyz', 'en');
       expect(result.ok).toBe(false);
+    });
+  });
+
+  // ===========================================================================
+  // Security — XSS Prevention in Code Generator
+  //
+  // The tokenizer strips most special characters before they reach the code
+  // generator, so we test esc() by constructing SemanticNodes manually with
+  // malicious role values and passing them directly to the generator.
+  // ===========================================================================
+
+  describe('Security', () => {
+    it('escapes single quotes in generated JS', () => {
+      // Construct a SemanticNode with a single-quote in the role value
+      const node: import('@lokascript/framework').SemanticNode = {
+        kind: 'command',
+        action: 'click',
+        roles: new Map([['patient', { type: 'literal' as const, value: "test'value" }]]),
+      };
+      const code = voiceCodeGenerator.generate(node);
+      // The single quote must be escaped so it doesn't break out of the string literal
+      expect(code).not.toContain("'test'value'");
+      expect(code).toContain("\\'");
+    });
+
+    it('escapes backticks in generated JS', () => {
+      const node: import('@lokascript/framework').SemanticNode = {
+        kind: 'command',
+        action: 'click',
+        roles: new Map([['patient', { type: 'literal' as const, value: 'test`value' }]]),
+      };
+      const code = voiceCodeGenerator.generate(node);
+      expect(code).toContain('\\`');
+    });
+
+    it('escapes dollar signs in generated JS', () => {
+      const node: import('@lokascript/framework').SemanticNode = {
+        kind: 'command',
+        action: 'click',
+        roles: new Map([['patient', { type: 'literal' as const, value: 'test${alert(1)}' }]]),
+      };
+      const code = voiceCodeGenerator.generate(node);
+      // The $ should be escaped so template literals can't execute
+      expect(code).toContain('\\$');
+      // Should not contain an unescaped $ (i.e., $ not preceded by \)
+      expect(code).not.toMatch(/(?<!\\)\$\{alert/);
+    });
+
+    it('escapes newlines in generated JS', () => {
+      const node: import('@lokascript/framework').SemanticNode = {
+        kind: 'command',
+        action: 'navigate',
+        roles: new Map([['destination', { type: 'literal' as const, value: 'test\nvalue' }]]),
+      };
+      const code = voiceCodeGenerator.generate(node);
+      // The literal newline in the value must be escaped to \\n in the string
+      expect(code).toContain('\\n');
+      // Should not contain an actual unescaped newline inside a string literal
+      expect(code).not.toMatch(/href = 'test\nvalue'/);
+    });
+  });
+
+  // ===========================================================================
+  // Code Generation Quality
+  // ===========================================================================
+
+  describe('Code Generation Quality', () => {
+    it('_findEl uses idempotent guard (no redeclaration)', () => {
+      const result = voice.compile('click submit', 'en');
+      expect(result.ok).toBe(true);
+      // Should use window._findEl guard, not bare function declaration
+      expect(result.code).toContain('window._findEl');
+    });
+
+    it('select all does not use deprecated execCommand', () => {
+      const result = voice.compile('select all', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).not.toContain('execCommand');
+      expect(result.code).toContain('selectNodeContents');
+    });
+
+    it('zoom does not use non-standard body.style.zoom', () => {
+      const result = voice.compile('zoom in', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).not.toContain('body.style.zoom');
+      expect(result.code).toContain('transform');
+    });
+
+    it('zoom reset clears transform', () => {
+      const result = voice.compile('zoom reset', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain("dataset.zoom = '1'");
+    });
+  });
+
+  // ===========================================================================
+  // VoiceActionSpec Converter
+  // ===========================================================================
+
+  describe('toVoiceActionSpec', () => {
+    it('converts click to spec', () => {
+      const node = voice.parse('click submit', 'en');
+      const spec = toVoiceActionSpec(node, 'en');
+      expect(spec.action).toBe('click');
+      expect(spec.target).toBe('submit');
+      expect(spec.metadata.sourceLanguage).toBe('en');
+    });
+
+    it('converts scroll to spec with direction', () => {
+      const node = voice.parse('scroll down', 'en');
+      const spec = toVoiceActionSpec(node, 'en');
+      expect(spec.action).toBe('scroll');
+      expect(spec.direction).toBe('down');
+    });
+
+    it('converts navigate to spec with target', () => {
+      const node = voice.parse('navigate to home', 'en');
+      const spec = toVoiceActionSpec(node, 'en');
+      expect(spec.action).toBe('navigate');
+      expect(spec.target).toBe('home');
     });
   });
 });

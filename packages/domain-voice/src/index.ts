@@ -174,8 +174,9 @@ export {
   FrenchVoiceTokenizer,
 } from './tokenizers/index';
 
-// Re-export types
+// Re-export types and converters
 export type { VoiceActionSpec } from './types';
+export { toVoiceActionSpec } from './types';
 
 // =============================================================================
 // Domain Scan Config (for AOT / Vite plugin integration)

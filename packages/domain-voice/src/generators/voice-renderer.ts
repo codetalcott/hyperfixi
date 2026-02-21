@@ -3,10 +3,14 @@
  *
  * Renders a SemanticNode back into natural-language voice command syntax
  * for a target language. Inverse of the parser.
+ *
+ * Markers are derived from schemas (single source of truth) rather than
+ * maintained as a parallel data structure.
  */
 
-import type { SemanticNode } from '@lokascript/framework';
+import type { SemanticNode, CommandSchema } from '@lokascript/framework';
 import { extractRoleValue } from '@lokascript/framework';
+import { allSchemas } from '../schemas/index';
 
 // =============================================================================
 // Keyword Tables
@@ -155,14 +159,32 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
   },
 };
 
-const MARKERS: Record<string, Record<string, string>> = {
-  to: { en: 'to', es: 'a', ja: 'に', ar: 'إلى', ko: '로', zh: '到', tr: 'ya', fr: 'vers' },
-  into: { en: 'into', es: 'en', ja: 'に', ar: 'في', ko: '에', zh: '到', tr: 'ya', fr: 'dans' },
-  wo: { ja: 'を', ko: '을' },
-  on: { ar: 'على', fr: 'sur' },
-  in: { en: 'in', es: 'en', ja: 'で', ar: 'في', ko: '에서', zh: '在', tr: 'da', fr: 'dans' },
-  about: { ar: 'عن' },
-};
+// =============================================================================
+// Schema-Derived Marker Lookup (single source of truth)
+// =============================================================================
+
+type MarkerLookup = Record<string, Record<string, Record<string, string>>>;
+
+function buildMarkerLookup(schemas: CommandSchema[]): MarkerLookup {
+  const lookup: MarkerLookup = {};
+  for (const schema of schemas) {
+    const actionMarkers: Record<string, Record<string, string>> = {};
+    for (const role of schema.roles) {
+      if (role.markerOverride) {
+        actionMarkers[role.role] = role.markerOverride as Record<string, string>;
+      }
+    }
+    lookup[schema.action] = actionMarkers;
+  }
+  return lookup;
+}
+
+const SCHEMA_MARKERS = buildMarkerLookup(allSchemas);
+
+/** Get marker for a specific action + role + language from schemas. */
+function getMarker(action: string, role: string, lang: string): string {
+  return SCHEMA_MARKERS[action]?.[role]?.[lang] ?? '';
+}
 
 // =============================================================================
 // Word Order Helpers
@@ -174,20 +196,11 @@ function kw(command: string, lang: string): string {
   return COMMAND_KEYWORDS[command]?.[lang] ?? command;
 }
 
-function mk(marker: string, lang: string): string {
-  return MARKERS[marker]?.[lang] ?? '';
-}
-
 // =============================================================================
 // Per-Command Renderers
 // =============================================================================
 
-function renderSingleRole(
-  node: SemanticNode,
-  lang: string,
-  roleName: string,
-  patientMarker?: string
-): string {
+function renderSingleRole(node: SemanticNode, lang: string, roleName: string): string {
   const value = extractRoleValue(node, roleName) || '';
   const keyword = kw(node.action, lang);
 
@@ -195,13 +208,15 @@ function renderSingleRole(
 
   if (SOV_LANGUAGES.has(lang)) {
     const parts = [value];
-    const woMarker = patientMarker ? mk(patientMarker, lang) : '';
-    if (woMarker) parts.push(woMarker);
+    const marker = getMarker(node.action, roleName, lang);
+    if (marker) parts.push(marker);
     parts.push(keyword);
     return parts.join(' ');
   }
 
   // SVO / VSO: keyword [marker] value
+  const marker = getMarker(node.action, roleName, lang);
+  if (marker) return `${keyword} ${marker} ${value}`;
   return `${keyword} ${value}`;
 }
 
@@ -211,15 +226,17 @@ function renderNavigate(node: SemanticNode, lang: string): string {
 
   if (!dest) return keyword;
 
+  const marker = getMarker('navigate', 'destination', lang);
+
   if (SOV_LANGUAGES.has(lang)) {
-    return `${dest} ${mk('to', lang)} ${keyword}`;
+    return marker ? `${dest} ${marker} ${keyword}` : `${dest} ${keyword}`;
   }
 
-  return `${keyword} ${mk('to', lang)} ${dest}`.trim();
+  return marker ? `${keyword} ${marker} ${dest}` : `${keyword} ${dest}`;
 }
 
 function renderClick(node: SemanticNode, lang: string): string {
-  return renderSingleRole(node, lang, 'patient', 'wo');
+  return renderSingleRole(node, lang, 'patient');
 }
 
 function renderType(node: SemanticNode, lang: string): string {
@@ -231,17 +248,25 @@ function renderType(node: SemanticNode, lang: string): string {
 
   if (SOV_LANGUAGES.has(lang)) {
     const parts: string[] = [];
-    if (dest) parts.push(dest, mk('into', lang));
+    if (dest) {
+      parts.push(dest);
+      const destMarker = getMarker('type', 'destination', lang);
+      if (destMarker) parts.push(destMarker);
+    }
     parts.push(text);
-    const woMarker = mk('wo', lang);
-    if (woMarker) parts.push(woMarker);
+    const patientMarker = getMarker('type', 'patient', lang);
+    if (patientMarker) parts.push(patientMarker);
     parts.push(keyword);
     return parts.join(' ');
   }
 
   // SVO: keyword text [into dest]
   const parts = [keyword, text];
-  if (dest) parts.push(mk('into', lang), dest);
+  if (dest) {
+    const destMarker = getMarker('type', 'destination', lang);
+    if (destMarker) parts.push(destMarker);
+    parts.push(dest);
+  }
   return parts.filter(Boolean).join(' ');
 }
 
@@ -259,7 +284,7 @@ function renderScroll(node: SemanticNode, lang: string): string {
 }
 
 function renderRead(node: SemanticNode, lang: string): string {
-  return renderSingleRole(node, lang, 'patient', 'wo');
+  return renderSingleRole(node, lang, 'patient');
 }
 
 function renderZoom(node: SemanticNode, lang: string): string {
@@ -276,7 +301,7 @@ function renderZoom(node: SemanticNode, lang: string): string {
 }
 
 function renderSelect(node: SemanticNode, lang: string): string {
-  return renderSingleRole(node, lang, 'patient', 'wo');
+  return renderSingleRole(node, lang, 'patient');
 }
 
 function renderBack(node: SemanticNode, lang: string): string {
@@ -300,19 +325,19 @@ function renderFocus(node: SemanticNode, lang: string): string {
   if (!patient) return keyword;
 
   if (SOV_LANGUAGES.has(lang)) {
-    const toMarker = mk('to', lang);
-    return `${patient} ${toMarker} ${keyword}`.trim();
+    const marker = getMarker('focus', 'patient', lang);
+    return marker ? `${patient} ${marker} ${keyword}` : `${patient} ${keyword}`;
   }
 
   return `${keyword} ${patient}`;
 }
 
 function renderClose(node: SemanticNode, lang: string): string {
-  return renderSingleRole(node, lang, 'patient', 'wo');
+  return renderSingleRole(node, lang, 'patient');
 }
 
 function renderOpen(node: SemanticNode, lang: string): string {
-  return renderSingleRole(node, lang, 'patient', 'wo');
+  return renderSingleRole(node, lang, 'patient');
 }
 
 function renderSearch(node: SemanticNode, lang: string): string {
@@ -324,10 +349,14 @@ function renderSearch(node: SemanticNode, lang: string): string {
 
   if (SOV_LANGUAGES.has(lang)) {
     const parts: string[] = [];
-    if (dest) parts.push(dest, mk('in', lang));
+    if (dest) {
+      parts.push(dest);
+      const destMarker = getMarker('search', 'destination', lang);
+      if (destMarker) parts.push(destMarker);
+    }
     parts.push(query);
-    const woMarker = mk('wo', lang);
-    if (woMarker) parts.push(woMarker);
+    const patientMarker = getMarker('search', 'patient', lang);
+    if (patientMarker) parts.push(patientMarker);
     parts.push(keyword);
     return parts.filter(Boolean).join(' ');
   }
@@ -335,8 +364,8 @@ function renderSearch(node: SemanticNode, lang: string): string {
   // SVO: keyword query [in dest]
   const parts = [keyword, query];
   if (dest) {
-    const inMarker = mk('in', lang);
-    if (inMarker) parts.push(inMarker, dest);
+    const destMarker = getMarker('search', 'destination', lang);
+    if (destMarker) parts.push(destMarker, dest);
   }
   return parts.join(' ');
 }

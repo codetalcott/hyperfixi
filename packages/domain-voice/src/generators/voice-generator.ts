@@ -13,32 +13,58 @@ import { extractRoleValue } from '@lokascript/framework';
 // =============================================================================
 
 function esc(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"')
+    .replace(/`/g, '\\`')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\$/g, '\\$');
 }
 
 // =============================================================================
 // Shared Element-Finding Helper (injected into generated code)
+// Self-initializing guard: safe to include multiple times, defines only once.
 // =============================================================================
 
 const FIND_EL = [
-  `function _findEl(q, root) {`,
-  `  root = root || document;`,
-  `  if (q.startsWith('#') || q.startsWith('.') || q.includes('[')) {`,
-  `    try { return root.querySelector(q); } catch(e) {}`,
+  `if(!window._findEl){window._findEl=function(q,root){`,
+  `  root=root||document;`,
+  `  if(q.startsWith('#')||q.startsWith('.')||q.includes('[')){`,
+  `    try{return root.querySelector(q)}catch(e){}`,
   `  }`,
-  `  var el = root.querySelector('[aria-label="' + q + '"]');`,
-  `  if (el) return el;`,
-  `  el = root.querySelector('[role="' + q + '"]');`,
-  `  if (el) return el;`,
-  `  var candidates = root.querySelectorAll('button, a, input, [role="button"], [tabindex]');`,
-  `  var lq = q.toLowerCase();`,
-  `  for (var i = 0; i < candidates.length; i++) {`,
-  `    if ((candidates[i].textContent || '').toLowerCase().includes(lq)) return candidates[i];`,
-  `    if ((candidates[i].getAttribute('aria-label') || '').toLowerCase().includes(lq)) return candidates[i];`,
+  `  var el=root.querySelector('[aria-label="'+q+'"]');`,
+  `  if(el)return el;`,
+  `  el=root.querySelector('[role="'+q+'"]');`,
+  `  if(el)return el;`,
+  `  var c=root.querySelectorAll('button,a,input,[role="button"],[tabindex]');`,
+  `  var lq=q.toLowerCase();`,
+  `  for(var i=0;i<c.length;i++){`,
+  `    if((c[i].textContent||'').toLowerCase().includes(lq))return c[i];`,
+  `    if((c[i].getAttribute('aria-label')||'').toLowerCase().includes(lq))return c[i];`,
   `  }`,
   `  return null;`,
-  `}`,
-].join('\n');
+  `}}`,
+].join('');
+
+// =============================================================================
+// i18n Word Sets (all 8 languages)
+// =============================================================================
+
+const SELECT_ALL_WORDS = new Set(['all', 'todo', '全て', '全部', 'الكل', '전체', 'hepsi', 'tout']);
+const TAB_WORDS = new Set(['tab', 'pestaña', 'タブ', '탭', '标签', 'sekme', 'onglet']);
+const DIALOG_WORDS = new Set([
+  'dialog',
+  'modal',
+  'diálogo',
+  'ダイアログ',
+  '대화상자',
+  '对话框',
+  'diyalog',
+  'dialogue',
+]);
+const PAGE_WORDS = new Set(['page', 'página', 'ページ', 'الصفحة', '페이지', '页面', 'sayfa']);
 
 // =============================================================================
 // Per-Command Generators
@@ -121,32 +147,37 @@ function generateRead(node: SemanticNode): string {
 function generateZoom(node: SemanticNode): string {
   const manner = (extractRoleValue(node, 'manner') || 'in').toLowerCase();
   if (manner === 'reset') {
-    return `document.body.style.zoom = '100%';`;
+    return [
+      `document.documentElement.dataset.zoom = '1';`,
+      `document.documentElement.style.transform = '';`,
+    ].join('\n');
   }
-  const delta = manner === 'out' ? -10 : 10;
+  const factor = manner === 'out' ? 0.9 : 1.1;
   return [
-    `var current = parseFloat(document.body.style.zoom || '100');`,
-    `document.body.style.zoom = (current + ${delta}) + '%';`,
+    `var s = parseFloat(document.documentElement.dataset.zoom || '1');`,
+    `s = Math.round(s * ${factor} * 100) / 100;`,
+    `document.documentElement.dataset.zoom = s;`,
+    `document.documentElement.style.transform = 'scale(' + s + ')';`,
+    `document.documentElement.style.transformOrigin = 'top left';`,
   ].join('\n');
 }
 
 function generateSelect(node: SemanticNode): string {
   const patient = extractRoleValue(node, 'patient');
   if (!patient) return '// select: missing target';
-  if (patient === 'all' || patient === 'todo' || patient === '全て' || patient === '全部') {
-    return `document.execCommand('selectAll');`;
-  }
-  return [
-    FIND_EL,
-    `var el = _findEl('${esc(patient)}');`,
+  const target = SELECT_ALL_WORDS.has(patient) ? 'document.body' : `_findEl('${esc(patient)}')`;
+  const lines = SELECT_ALL_WORDS.has(patient) ? [] : [FIND_EL];
+  lines.push(
+    `var el = ${target};`,
     `if (el) {`,
     `  var range = document.createRange();`,
     `  range.selectNodeContents(el);`,
     `  var sel = window.getSelection();`,
     `  sel.removeAllRanges();`,
     `  sel.addRange(range);`,
-    `}`,
-  ].join('\n');
+    `}`
+  );
+  return lines.join('\n');
 }
 
 function generateBack(node: SemanticNode): string {
@@ -168,17 +199,11 @@ function generateFocus(node: SemanticNode): string {
 }
 
 function generateClose(node: SemanticNode): string {
-  const patient = (extractRoleValue(node, 'patient') || '').toLowerCase();
-  if (patient === 'tab' || patient === 'pestaña' || patient === 'タブ' || patient === 'onglet') {
+  const patient = extractRoleValue(node, 'patient') || '';
+  if (TAB_WORDS.has(patient)) {
     return `window.close();`;
   }
-  if (
-    patient === 'dialog' ||
-    patient === 'modal' ||
-    patient === 'diálogo' ||
-    patient === 'ダイアログ' ||
-    patient === 'dialogue'
-  ) {
+  if (DIALOG_WORDS.has(patient)) {
     return `var d = document.querySelector('dialog[open]'); if (d) d.close();`;
   }
   // Default: try to close any open dialog or modal
@@ -205,15 +230,8 @@ function generateSearch(node: SemanticNode): string {
   const query = extractRoleValue(node, 'patient');
   if (!query) return '// search: missing query';
   const dest = extractRoleValue(node, 'destination');
-  if (
-    dest === 'page' ||
-    dest === 'página' ||
-    dest === 'ページ' ||
-    dest === 'الصفحة' ||
-    dest === '페이지' ||
-    dest === '页面' ||
-    dest === 'sayfa'
-  ) {
+  if (dest && PAGE_WORDS.has(dest)) {
+    // window.find() is non-standard but no standard alternative exists for "find in page"
     return `window.find('${esc(query)}');`;
   }
   const selector = dest
