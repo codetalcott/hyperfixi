@@ -494,7 +494,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'if-condition',
     title: 'If Condition',
-    raw_code: 'on click if I match .active then remove .active else add .active',
+    raw_code: 'on click if I match .active then remove .active else add .active end',
     description: 'Conditional execution based on state',
     feature: 'control-flow',
   },
@@ -655,7 +655,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'tabs-aria',
     title: 'Accessible Tabs',
-    raw_code: 'on click set @aria-selected to "true" on me set @aria-selected to "false" on .tab',
+    raw_code: 'on click set @aria-selected to "false" on .tab set @aria-selected to "true" on me',
     description: 'Tab navigation with ARIA attributes',
     feature: 'ui-components',
   },
@@ -954,8 +954,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'fetch-error-handling',
     title: 'Fetch With Error Handling',
-    raw_code: 'on click fetch /api/data catch error put error.message into #error end put it into #result',
-    description: 'Handle fetch errors gracefully',
+    raw_code: 'on click fetch /api/data as json then if it.error put it.error into #error else put it.data into #result end',
+    description: 'Handle API errors by checking response body',
     feature: 'async',
   },
 
@@ -1058,7 +1058,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'announce-screen-reader',
     title: 'Screen Reader Announcement',
-    raw_code: 'on success put message into #sr-announce set @role to "alert" on #sr-announce',
+    raw_code: 'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
     description: 'Announce message to screen readers',
     feature: 'accessibility',
   },
