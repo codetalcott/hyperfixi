@@ -49,6 +49,7 @@ export const selectSchema = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: {
@@ -127,6 +128,7 @@ export const updateSchema = defineCommand({
       description: 'SET clause assignments',
       required: true,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 1,
       sovPosition: 2,
       markerOverride: {
@@ -145,6 +147,7 @@ export const updateSchema = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: {
@@ -194,6 +197,7 @@ export const deleteSchema = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: {

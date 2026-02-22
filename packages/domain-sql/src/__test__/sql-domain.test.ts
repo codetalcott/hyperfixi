@@ -60,10 +60,11 @@ describe('SQL Domain', () => {
       expect(extractRoleValue(node, 'source')).toBe('users');
     });
 
-    it('should parse SELECT with WHERE', () => {
+    it('should parse SELECT with WHERE and capture full condition', () => {
       const node = sql.parse('select name from users where age > 18', 'en');
       expect(node.action).toBe('select');
       expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'condition')).toBe('age > 18');
     });
 
     it('should compile SELECT to exact SQL', () => {
@@ -72,13 +73,22 @@ describe('SQL Domain', () => {
       expect(result.code).toBe('SELECT name FROM users');
     });
 
-    it('should compile SELECT with WHERE to SQL', () => {
+    it('should compile SELECT with WHERE to exact SQL', () => {
       const result = sql.compile('select name from users where age > 18', 'en');
       expect(result.ok).toBe(true);
-      // Framework captures single token per role, so WHERE clause may be partial
-      expect(result.code).toContain('SELECT');
-      expect(result.code).toContain('FROM');
-      expect(result.code).toContain('WHERE');
+      expect(result.code).toBe('SELECT name FROM users WHERE age > 18');
+    });
+
+    it('should capture compound WHERE with AND', () => {
+      const result = sql.compile('select name from users where age > 18 and active = true', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT name FROM users WHERE age > 18 and active = true');
+    });
+
+    it('should capture compound WHERE with OR', () => {
+      const result = sql.compile('select name from users where role = admin or role = editor', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE role = admin or role = editor');
     });
 
     it('should parse INSERT', () => {
@@ -109,26 +119,34 @@ describe('SQL Domain', () => {
       expect(result.code).toContain('SET');
     });
 
-    it('should parse UPDATE with WHERE', () => {
-      // Multi-token expressions after SET may consume tokens that prevent WHERE capture.
-      // This is a known framework limitation with single-token role capture.
-      const node = sql.parse('update users set name where id', 'en');
+    it('should parse UPDATE with WHERE and capture full expressions', () => {
+      const node = sql.parse('update users set name = Bob where id = 1', 'en');
       expect(node.action).toBe('update');
       expect(node.roles.has('source')).toBe(true);
       expect(node.roles.has('values')).toBe(true);
+      expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'values')).toBe('name = Bob');
+      expect(extractRoleValue(node, 'condition')).toBe('id = 1');
     });
 
-    it('should parse DELETE', () => {
+    it('should compile UPDATE with WHERE to exact SQL', () => {
+      const result = sql.compile('update users set name = Bob where id = 1', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('UPDATE users SET name = Bob WHERE id = 1');
+    });
+
+    it('should parse DELETE with WHERE and capture full condition', () => {
       const node = sql.parse('delete from users where id = 1', 'en');
       expect(node.action).toBe('delete');
       expect(node.roles.has('source')).toBe(true);
+      expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'condition')).toBe('id = 1');
     });
 
-    it('should compile DELETE to SQL', () => {
+    it('should compile DELETE with WHERE to exact SQL', () => {
       const result = sql.compile('delete from users where id = 1', 'en');
       expect(result.ok).toBe(true);
-      expect(result.code).toContain('DELETE FROM');
-      expect(result.code).toContain('WHERE');
+      expect(result.code).toBe('DELETE FROM users WHERE id = 1');
     });
 
     it('should validate correct query', () => {
@@ -172,10 +190,17 @@ describe('SQL Domain', () => {
       expect(result.code).toBe('SELECT nombre FROM usuarios');
     });
 
-    it('should parse Spanish SELECT with WHERE', () => {
+    it('should parse Spanish SELECT with WHERE and capture full condition', () => {
       const node = sql.parse('seleccionar nombre de usuarios donde edad > 18', 'es');
       expect(node.action).toBe('select');
       expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'condition')).toBe('edad > 18');
+    });
+
+    it('should compile Spanish SELECT with WHERE to exact SQL', () => {
+      const result = sql.compile('seleccionar nombre de usuarios donde edad > 18', 'es');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT nombre FROM usuarios WHERE edad > 18');
     });
 
     it('should parse Spanish INSERT', () => {
@@ -441,6 +466,68 @@ describe('SQL Domain', () => {
   });
 
   // ===========================================================================
+  // Cross-Language WHERE Clause
+  // ===========================================================================
+
+  describe('Cross-Language WHERE Clause', () => {
+    it('should compile Spanish SELECT with WHERE', () => {
+      const result = sql.compile('seleccionar nombre de usuarios donde edad > 18', 'es');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('edad > 18');
+    });
+
+    it('should compile French SELECT with WHERE', () => {
+      const result = sql.compile('sélectionner name de users où age > 18', 'fr');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile Arabic SELECT with WHERE (VSO)', () => {
+      const result = sql.compile('اختر name من users حيث age > 18', 'ar');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile Chinese SELECT with WHERE', () => {
+      const result = sql.compile('查询 name 从 users 条件 age > 18', 'zh');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    // SOV languages (JA, KO, TR) WHERE clauses are a known framework limitation:
+    // The greedy condition role between the WHERE marker and the verb keyword
+    // creates pattern matching ambiguity in SOV word order. WHERE works in
+    // SVO/VSO languages where condition is always last in the token sequence.
+    it.skip('should compile Japanese SELECT with WHERE (SOV) - known limitation', () => {
+      const result = sql.compile('users から name 条件 age > 18 選択', 'ja');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+    });
+
+    it.skip('should compile Korean SELECT with WHERE (SOV) - known limitation', () => {
+      const result = sql.compile('users 에서 name 조건 age > 18 선택', 'ko');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+    });
+
+    it.skip('should compile Turkish SELECT with WHERE (SOV) - known limitation', () => {
+      const result = sql.compile('users den name koşul age > 18 seç', 'tr');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+    });
+
+    it('should compile DELETE with compound WHERE', () => {
+      const result = sql.compile('delete from users where id = 1 and active = false', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('DELETE FROM users WHERE id = 1 and active = false');
+    });
+  });
+
+  // ===========================================================================
   // Error Handling
   // ===========================================================================
 
@@ -564,6 +651,59 @@ describe('SQL Renderer', () => {
       const rendered = renderSQL(node, 'fr');
       expect(rendered).toContain('sélectionner');
       expect(rendered).toContain('de');
+    });
+  });
+
+  describe('Renderer WHERE Clause', () => {
+    it('should render SELECT with WHERE to English', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render SELECT with WHERE to Spanish', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'es');
+      expect(rendered).toContain('donde');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render SELECT with WHERE to Japanese (SOV)', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'ja');
+      expect(rendered).toContain('条件');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render SELECT with WHERE to Arabic', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'ar');
+      expect(rendered).toContain('حيث');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render UPDATE with WHERE to English', () => {
+      const node = sql.parse('update users set name = Bob where id = 1', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('id = 1');
+      expect(rendered).toContain('set');
+      expect(rendered).toContain('name = Bob');
+    });
+
+    it('should render DELETE with WHERE to English', () => {
+      const node = sql.parse('delete from users where id = 1', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('id = 1');
+    });
+
+    it('should render compound WHERE to English', () => {
+      const node = sql.parse('select name from users where age > 18 and active = true', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('age > 18 and active = true');
     });
   });
 
