@@ -20,7 +20,13 @@ let dispatcher: CrossDomainDispatcher | null = null;
 
 function getDispatcher(registry: DomainRegistry): CrossDomainDispatcher {
   if (!dispatcher) {
-    dispatcher = new CrossDomainDispatcher(registry, { minConfidence: 0.5 });
+    dispatcher = new CrossDomainDispatcher(registry, {
+      minConfidence: 0.5,
+      // Domains with more specific schemas should win over generic catch-all domains
+      // when confidence scores are close. voice/flow have broad patterns that match
+      // inputs intended for sql/bdd/todo/jsx.
+      priority: ['sql', 'bdd', 'behaviorspec', 'jsx', 'todo', 'llm', 'flow', 'voice'],
+    });
   }
   return dispatcher;
 }
@@ -41,7 +47,7 @@ export const dispatcherTools = [
   {
     name: 'detect_domain',
     description:
-      'Auto-detect which registered domain handles the input. Tries all domains (sql, bdd, jsx, todo, behaviorspec, llm, flow) and returns the best match by confidence score.',
+      'Auto-detect which registered domain handles the input. Tries all domains (sql, bdd, jsx, todo, behaviorspec, llm, flow, voice) and returns the best match by confidence score.',
     inputSchema: {
       type: 'object' as const,
       properties: {

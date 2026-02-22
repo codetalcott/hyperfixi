@@ -11,16 +11,16 @@ import {
 // =============================================================================
 
 describe('DomainRegistry Integration', () => {
-  it('registers all 7 domains', () => {
+  it('registers all 8 domains', () => {
     const registry = createDomainRegistry();
     const names = registry.getDomainNames().sort();
-    expect(names).toEqual(['bdd', 'behaviorspec', 'flow', 'jsx', 'llm', 'sql', 'todo']);
+    expect(names).toEqual(['bdd', 'behaviorspec', 'flow', 'jsx', 'llm', 'sql', 'todo', 'voice']);
   });
 
-  it('generates 28 tool definitions (4 per domain)', () => {
+  it('generates 32 tool definitions (4 per domain)', () => {
     const registry = createDomainRegistry();
     const tools = registry.getToolDefinitions();
-    expect(tools).toHaveLength(28);
+    expect(tools).toHaveLength(32);
 
     const toolNames = tools.map(t => t.name).sort();
     expect(toolNames).toContain('parse_sql');
