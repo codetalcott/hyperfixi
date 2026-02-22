@@ -86,7 +86,10 @@ describe('SQL Domain', () => {
     });
 
     it('should capture compound WHERE with OR', () => {
-      const result = sql.compile('select name from users where role = admin or role = editor', 'en');
+      const result = sql.compile(
+        'select name from users where role = admin or role = editor',
+        'en'
+      );
       expect(result.ok).toBe(true);
       expect(result.code).toContain('WHERE role = admin or role = editor');
     });
@@ -498,26 +501,25 @@ describe('SQL Domain', () => {
       expect(result.code).toContain('age > 18');
     });
 
-    // SOV languages (JA, KO, TR) WHERE clauses are a known framework limitation:
-    // The greedy condition role between the WHERE marker and the verb keyword
-    // creates pattern matching ambiguity in SOV word order. WHERE works in
-    // SVO/VSO languages where condition is always last in the token sequence.
-    it.skip('should compile Japanese SELECT with WHERE (SOV) - known limitation', () => {
+    it('should compile Japanese SELECT with WHERE (SOV)', () => {
       const result = sql.compile('users から name 条件 age > 18 選択', 'ja');
       expect(result.ok).toBe(true);
       expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
     });
 
-    it.skip('should compile Korean SELECT with WHERE (SOV) - known limitation', () => {
+    it('should compile Korean SELECT with WHERE (SOV)', () => {
       const result = sql.compile('users 에서 name 조건 age > 18 선택', 'ko');
       expect(result.ok).toBe(true);
       expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
     });
 
-    it.skip('should compile Turkish SELECT with WHERE (SOV) - known limitation', () => {
+    it('should compile Turkish SELECT with WHERE (SOV)', () => {
       const result = sql.compile('users den name koşul age > 18 seç', 'tr');
       expect(result.ok).toBe(true);
       expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
     });
 
     it('should compile DELETE with compound WHERE', () => {

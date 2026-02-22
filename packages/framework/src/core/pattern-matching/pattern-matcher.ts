@@ -210,7 +210,8 @@ export class PatternMatcher {
   private matchTokenSequence(
     tokens: TokenStream,
     patternTokens: PatternToken[],
-    captured: Map<SemanticRole, SemanticValue>
+    captured: Map<SemanticRole, SemanticValue>,
+    parentStopMarkers?: Set<string>
   ): boolean {
     // Skip leading conjunctions for Arabic (proclitics: و, ف, ول, وب, etc.)
     // BUT NOT if the pattern explicitly expects a conjunction (proclitic patterns)
@@ -251,6 +252,11 @@ export class PatternMatcher {
       // recognized marker keyword or end of input
       if (patternToken.type === 'role' && patternToken.greedy) {
         const stopMarkers = this.collectStopMarkers(patternTokens, i + 1);
+        // Merge parent-level stop markers so greedy roles inside groups
+        // know when to stop for tokens outside the group (e.g., SOV verb keywords)
+        if (parentStopMarkers) {
+          for (const m of parentStopMarkers) stopMarkers.add(m);
+        }
         const values: string[] = [];
         while (!tokens.isAtEnd()) {
           const nextToken = tokens.peek();
@@ -269,6 +275,29 @@ export class PatternMatcher {
         } else {
           return false;
         }
+      }
+
+      // Group tokens: compute sibling stop markers and forward to inner matching
+      if (patternToken.type === 'group') {
+        const siblingStopMarkers = this.collectStopMarkers(patternTokens, i + 1);
+        if (parentStopMarkers) {
+          for (const m of parentStopMarkers) siblingStopMarkers.add(m);
+        }
+        const groupMatched = this.matchGroupToken(
+          tokens,
+          patternToken as PatternToken & { type: 'group' },
+          captured,
+          siblingStopMarkers
+        );
+        if (groupMatched) {
+          prevOptionalMark = null;
+          prevOptionalRole = null;
+          continue;
+        }
+        if (this.isOptional(patternToken)) {
+          continue;
+        }
+        return false;
       }
 
       // Save stream position before attempting optional roles
@@ -436,10 +465,7 @@ export class PatternMatcher {
     if (possessiveValue) {
       // Validate expected types if specified
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
-        if (
-          !patternToken.expectedTypes.includes(possessiveValue.type) &&
-          !patternToken.expectedTypes.includes('expression')
-        ) {
+        if (!isTypeCompatible(possessiveValue.type, patternToken.expectedTypes)) {
           return patternToken.optional || false;
         }
       }
@@ -451,10 +477,7 @@ export class PatternMatcher {
     const methodCallValue = this.tryMatchMethodCallExpression(tokens);
     if (methodCallValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
-        if (
-          !patternToken.expectedTypes.includes(methodCallValue.type) &&
-          !patternToken.expectedTypes.includes('expression')
-        ) {
+        if (!isTypeCompatible(methodCallValue.type, patternToken.expectedTypes)) {
           return patternToken.optional || false;
         }
       }
@@ -479,10 +502,7 @@ export class PatternMatcher {
     const propertyAccessValue = this.tryMatchPropertyAccessExpression(tokens);
     if (propertyAccessValue) {
       if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
-        if (
-          !patternToken.expectedTypes.includes(propertyAccessValue.type) &&
-          !patternToken.expectedTypes.includes('expression')
-        ) {
+        if (!isTypeCompatible(propertyAccessValue.type, patternToken.expectedTypes)) {
           return patternToken.optional || false;
         }
       }
@@ -928,12 +948,18 @@ export class PatternMatcher {
   private matchGroupToken(
     tokens: TokenStream,
     patternToken: PatternToken & { type: 'group' },
-    captured: Map<SemanticRole, SemanticValue>
+    captured: Map<SemanticRole, SemanticValue>,
+    parentStopMarkers?: Set<string>
   ): boolean {
     const mark = tokens.mark();
     const capturedBefore = new Set(captured.keys());
 
-    const success = this.matchTokenSequence(tokens, patternToken.tokens, captured);
+    const success = this.matchTokenSequence(
+      tokens,
+      patternToken.tokens,
+      captured,
+      parentStopMarkers
+    );
     if (success) return true;
 
     // Reset from failed attempt
@@ -965,7 +991,12 @@ export class PatternMatcher {
           for (let s = 0; s < offset; s++) tokens.advance();
 
           // Retry group match from marker position
-          const retrySuccess = this.matchTokenSequence(tokens, patternToken.tokens, captured);
+          const retrySuccess = this.matchTokenSequence(
+            tokens,
+            patternToken.tokens,
+            captured,
+            parentStopMarkers
+          );
           if (retrySuccess) return true;
 
           // Retry failed — full reset
@@ -1061,8 +1092,12 @@ export class PatternMatcher {
    */
   private isStopMarker(token: LanguageToken, stopMarkers: Set<string>): boolean {
     if (stopMarkers.size === 0) return false;
-    const value = (token.normalized || token.value).toLowerCase();
-    return stopMarkers.has(value);
+    // Check both raw value and normalized form against stop markers.
+    // Pattern literals use native keywords (e.g., '選択') while tokenizers may
+    // set normalized to the English equivalent (e.g., 'select'). Both must match.
+    if (stopMarkers.has(token.value.toLowerCase())) return true;
+    if (token.normalized && stopMarkers.has(token.normalized.toLowerCase())) return true;
+    return false;
   }
 
   /**

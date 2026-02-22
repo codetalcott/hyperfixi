@@ -603,6 +603,22 @@ In the MCP server, register your domain with the shared registry instead of writ
 
 ---
 
+## Troubleshooting
+
+**Parsing fails in SOV languages but works in SVO.**
+Check that your tokenizer's `keywordExtras` includes `{ native: '...', normalized: 'english_keyword' }` for every non-Latin keyword. The pattern matcher compares stop markers against both `token.value` (native) and `token.normalized` (English) — if normalization is missing, the matcher can't recognize when to stop consuming tokens.
+
+**Role values aren't captured — the matcher skips them or returns low confidence.**
+Only put structural tokens (command keywords, markers like "from"/"から") in your tokenizer's `keywords` list. If a word that should be a role _value_ is in the keyword list, it gets classified as `type: 'literal'` instead of `type: 'expression'`, and roles expecting `['expression']` won't match it.
+
+**Multiple unmarked optional roles before a keyword — only the last one backtracks.**
+The pattern matcher has single-step backtracking: if an optional role consumes a token and the next pattern token fails, it resets that one role and retries. This doesn't chain across multiple consecutive unmarked optional roles. Fix: add markers to optional roles so they form groups, which the matcher handles reliably.
+
+**CSS selectors (`#id`, `.class`) aren't recognized as role values.**
+Register a `CSSSelectorExtractor` in your tokenizer _before_ the default extractors. The default identifier extractor will consume `#` and `.` as separate tokens otherwise. See `domain-bdd` for an example.
+
+---
+
 ## Existing Domains (Reference)
 
 | Domain                                            | Commands                                  | Languages | Compiles To      | Lines |
