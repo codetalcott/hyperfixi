@@ -56,7 +56,8 @@ export type SemanticValue =
   | SelectorValue
   | ReferenceValue
   | PropertyPathValue
-  | ExpressionValue;
+  | ExpressionValue
+  | FlagValue;
 
 /**
  * Expected value types for role tokens.
@@ -91,6 +92,16 @@ export interface ExpressionValue {
   readonly type: 'expression';
   /** Raw expression string for complex expressions that need further parsing */
   readonly raw: string;
+}
+
+/**
+ * A boolean flag value — present (+flag) or negated (~flag).
+ * Used in declarative domains for no-value attributes like primary-key, not-null.
+ */
+export interface FlagValue {
+  readonly type: 'flag';
+  readonly name: string;
+  readonly enabled: boolean;
 }
 
 // =============================================================================
@@ -445,6 +456,13 @@ export function createExpression(raw: string): ExpressionValue {
 }
 
 /**
+ * Create a boolean flag value (+flag or ~flag)
+ */
+export function createFlag(name: string, enabled: boolean = true): FlagValue {
+  return { type: 'flag', name, enabled };
+}
+
+/**
  * Create a command semantic node
  */
 export function createCommandNode(
@@ -542,6 +560,7 @@ export function createCompoundNode(
  * eliminating the need for `as any` casts in domain code generators.
  */
 export function extractValue(value: SemanticValue): string {
+  if (value.type === 'flag') return value.name;
   if ('raw' in value && value.raw !== undefined) return String(value.raw);
   if ('value' in value && value.value !== undefined) return String(value.value);
   if (value.type === 'property-path') return `${extractValue(value.object)}.${value.property}`;

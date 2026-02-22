@@ -49,6 +49,9 @@ export function convertValue(value: SemanticValue, warnings?: string[]): Express
       return convertPropertyPath(value, warnings);
     case 'expression':
       return convertExpression(value);
+    case 'flag':
+      // Flags are boolean attributes — convert to a boolean literal
+      return { type: 'literal', value: value.enabled } as LiteralNode;
     default:
       // Exhaustive check
       const _exhaustive: never = value;

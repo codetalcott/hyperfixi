@@ -41,7 +41,7 @@ export interface SemanticJSON {
  * A typed value in the LLM JSON format.
  */
 export interface SemanticJSONValue {
-  type: 'selector' | 'literal' | 'reference' | 'expression' | 'property-path';
+  type: 'selector' | 'literal' | 'reference' | 'expression' | 'property-path' | 'flag';
   value: string | number | boolean;
 }
 

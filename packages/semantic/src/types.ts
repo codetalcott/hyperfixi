@@ -109,7 +109,8 @@ export type SemanticValue =
   | SelectorValue
   | ReferenceValue
   | PropertyPathValue
-  | ExpressionValue;
+  | ExpressionValue
+  | FlagValue;
 
 /**
  * Expected value types for role tokens.
@@ -144,6 +145,16 @@ export interface ExpressionValue {
   readonly type: 'expression';
   /** Raw expression string for complex expressions that need further parsing */
   readonly raw: string;
+}
+
+/**
+ * A boolean flag value — present (+flag) or negated (~flag).
+ * Used in declarative domains for no-value attributes like primary-key, not-null.
+ */
+export interface FlagValue {
+  readonly type: 'flag';
+  readonly name: string;
+  readonly enabled: boolean;
 }
 
 // =============================================================================

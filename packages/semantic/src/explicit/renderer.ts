@@ -248,6 +248,9 @@ export class SemanticRendererImpl implements ISemanticRenderer {
 
       case 'expression':
         return value.raw;
+
+      case 'flag':
+        return value.name;
     }
   }
 

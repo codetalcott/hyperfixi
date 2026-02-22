@@ -32,7 +32,11 @@ export function renderExplicit(node: SemanticNode): string {
 
   // Add roles
   for (const [role, value] of node.roles) {
-    parts.push(`${role}:${valueToString(value)}`);
+    if (value.type === 'flag') {
+      parts.push(value.enabled ? `+${value.name}` : `~${value.name}`);
+    } else {
+      parts.push(`${role}:${valueToString(value)}`);
+    }
   }
 
   // Handle event handler body
@@ -77,5 +81,8 @@ function valueToString(value: SemanticValue): string {
 
     case 'expression':
       return value.raw;
+
+    case 'flag':
+      return value.name;
   }
 }

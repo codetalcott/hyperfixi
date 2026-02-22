@@ -185,6 +185,100 @@ describe('parseExplicit — with SchemaLookup', () => {
   });
 });
 
+describe('parseExplicit — boolean flags', () => {
+  it('parses +flag as enabled FlagValue', () => {
+    const node = parseExplicit('[column name:id +primary-key]');
+    expect(node.roles.get('primary-key')).toEqual({
+      type: 'flag',
+      name: 'primary-key',
+      enabled: true,
+    });
+  });
+
+  it('parses ~flag as disabled FlagValue', () => {
+    const node = parseExplicit('[field name:email ~nullable]');
+    expect(node.roles.get('nullable')).toEqual({
+      type: 'flag',
+      name: 'nullable',
+      enabled: false,
+    });
+  });
+
+  it('parses flags alongside role:value pairs', () => {
+    const node = parseExplicit('[column name:id type:uuid +primary-key +not-null]');
+    expect(node.action).toBe('column');
+    expect(node.roles.get('name')).toEqual({ type: 'literal', value: 'id', dataType: 'string' });
+    expect(node.roles.get('type')).toEqual({ type: 'literal', value: 'uuid', dataType: 'string' });
+    expect(node.roles.get('primary-key')).toEqual({
+      type: 'flag',
+      name: 'primary-key',
+      enabled: true,
+    });
+    expect(node.roles.get('not-null')).toEqual({
+      type: 'flag',
+      name: 'not-null',
+      enabled: true,
+    });
+  });
+
+  it('parses mixed + and ~ flags', () => {
+    const node = parseExplicit('[field name:email +required ~nullable]');
+    expect(node.roles.get('required')).toEqual({
+      type: 'flag',
+      name: 'required',
+      enabled: true,
+    });
+    expect(node.roles.get('nullable')).toEqual({
+      type: 'flag',
+      name: 'nullable',
+      enabled: false,
+    });
+  });
+
+  it('throws on empty flag name', () => {
+    expect(() => parseExplicit('[column name:id +]')).toThrow('Empty flag name');
+    expect(() => parseExplicit('[column name:id ~]')).toThrow('Empty flag name');
+  });
+
+  it('validates flag names against schema', () => {
+    const schema = defineCommand({
+      action: 'column',
+      roles: [
+        defineRole({ role: 'name', required: true, expectedTypes: ['literal'] }),
+        defineRole({ role: 'primary-key', required: false, expectedTypes: ['flag'] }),
+      ],
+    });
+    const schemaLookup: SchemaLookup = {
+      getSchema(action: string) {
+        if (action === 'column') return schema;
+        return undefined;
+      },
+    };
+    // Valid flag
+    const node = parseExplicit('[column name:id +primary-key]', { schemaLookup });
+    expect(node.roles.get('primary-key')).toBeDefined();
+
+    // Invalid flag
+    expect(() => parseExplicit('[column name:id +unknown-flag]', { schemaLookup })).toThrow(
+      'Unknown flag "unknown-flag"'
+    );
+  });
+
+  it('allows any flags for unknown commands (no schema)', () => {
+    const node = parseExplicit('[widget +draggable +resizable]');
+    expect(node.roles.get('draggable')).toEqual({
+      type: 'flag',
+      name: 'draggable',
+      enabled: true,
+    });
+    expect(node.roles.get('resizable')).toEqual({
+      type: 'flag',
+      name: 'resizable',
+      enabled: true,
+    });
+  });
+});
+
 describe('parseExplicit — custom reference set', () => {
   it('uses custom references', () => {
     const options: ParseExplicitOptions = {

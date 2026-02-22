@@ -21,6 +21,7 @@ import {
   createSelector,
   createLiteral,
   createReference,
+  createFlag,
 } from '../core/types';
 import type { ParseExplicitOptions } from './types';
 import { isValidReference, DEFAULT_REFERENCES } from './references';
@@ -60,13 +61,31 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
   const schema = options.schemaLookup?.getSchema(command);
   const validRoleNames = schema ? new Set(schema.roles.map(r => r.role)) : null;
 
-  // Parse role:value pairs
+  // Parse role:value pairs and flags
   for (let i = 1; i < tokens.length; i++) {
     const token = tokens[i];
+
+    // Boolean flag: +flag-name or ~flag-name
+    if (token.startsWith('+') || token.startsWith('~')) {
+      const enabled = token.startsWith('+');
+      const flagName = token.slice(1);
+      if (!flagName) {
+        throw new Error(`Empty flag name: "${token}"`);
+      }
+      if (validRoleNames && !validRoleNames.has(flagName as SemanticRole)) {
+        const roleList = [...validRoleNames].join(', ');
+        throw new Error(
+          `Unknown flag "${flagName}" for command "${command}". Valid roles: ${roleList}`
+        );
+      }
+      roles.set(flagName as SemanticRole, createFlag(flagName, enabled));
+      continue;
+    }
+
     const colonIndex = token.indexOf(':');
 
     if (colonIndex === -1) {
-      throw new Error(`Invalid role format: "${token}". Expected role:value`);
+      throw new Error(`Invalid role format: "${token}". Expected role:value or +flag`);
     }
 
     const roleName = token.slice(0, colonIndex);

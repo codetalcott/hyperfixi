@@ -252,6 +252,8 @@ function semanticValuesEqual(a: any, b: any): boolean {
       return semanticValuesEqual(a.object, b.object) && a.property === b.property;
     case 'expression':
       return a.raw === b.raw;
+    case 'flag':
+      return a.name === b.name && a.enabled === b.enabled;
     default:
       return false;
   }

@@ -6,6 +6,7 @@ import {
   createSelector,
   createLiteral,
   createReference,
+  createFlag,
   createEventHandlerNode,
   createCompoundNode,
 } from '../core/types';
@@ -81,6 +82,41 @@ describe('renderExplicit', () => {
   });
 });
 
+describe('renderExplicit — flags', () => {
+  it('renders enabled flags as +name', () => {
+    const node = createCommandNode('column', {
+      name: createLiteral('id', 'string'),
+      'primary-key': createFlag('primary-key', true),
+    });
+    const result = renderExplicit(node);
+    expect(result).toContain('+primary-key');
+    expect(result).not.toContain('primary-key:');
+  });
+
+  it('renders disabled flags as ~name', () => {
+    const node = createCommandNode('field', {
+      name: createLiteral('email', 'string'),
+      nullable: createFlag('nullable', false),
+    });
+    const result = renderExplicit(node);
+    expect(result).toContain('~nullable');
+  });
+
+  it('renders flags alongside role:value pairs', () => {
+    const node = createCommandNode('column', {
+      name: createLiteral('id', 'string'),
+      type: createLiteral('uuid', 'string'),
+      'primary-key': createFlag('primary-key', true),
+      'not-null': createFlag('not-null', true),
+    });
+    const result = renderExplicit(node);
+    expect(result).toContain('name:"id"');
+    expect(result).toContain('type:"uuid"');
+    expect(result).toContain('+primary-key');
+    expect(result).toContain('+not-null');
+  });
+});
+
 describe('round-trip: parse → render', () => {
   const cases = [
     '[toggle patient:.active]',
@@ -88,6 +124,8 @@ describe('round-trip: parse → render', () => {
     '[increment destination:#count quantity:5]',
     '[wait duration:500ms]',
     '[fetch source:/api/data responseType:json]',
+    '[column name:id +primary-key +not-null]',
+    '[field name:email +required ~nullable]',
   ];
 
   for (const input of cases) {

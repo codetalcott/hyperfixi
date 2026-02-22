@@ -19,6 +19,7 @@ import {
   createLiteral,
   createReference,
   createExpression,
+  createFlag,
 } from '../core/types';
 import type { SemanticJSON, SemanticJSONValue, IRDiagnostic } from './types';
 
@@ -32,6 +33,7 @@ const VALID_VALUE_TYPES = new Set([
   'reference',
   'expression',
   'property-path',
+  'flag',
 ]);
 
 /**
@@ -241,6 +243,9 @@ function convertJSONValue(value: SemanticJSONValue): SemanticValue {
       // Property paths in JSON are represented as dot-separated strings
       return createExpression(String(value.value));
 
+    case 'flag':
+      return createFlag(String(value.value), true);
+
     default:
       return createLiteral(String(value.value), 'string');
   }
@@ -268,6 +273,9 @@ function semanticValueToJSON(value: SemanticValue): SemanticJSONValue {
         type: 'property-path',
         value: `${semanticValueToJSON(value.object).value}.${value.property}`,
       };
+
+    case 'flag':
+      return { type: 'flag', value: value.enabled };
   }
 }
 
