@@ -1,0 +1,29 @@
+[
+  {
+    "id": "compound-001",
+    "description": "Two commands chained with 'then'",
+    "renderOnly": true,
+    "node": {
+      "kind": "compound",
+      "action": "compound",
+      "chainType": "then",
+      "statements": [
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".loading" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/data", "dataType": "string" }
+          }
+        }
+      ]
+    },
+    "rendered": "[add patient:.loading] then [fetch source:\"/api/data\"]"
+  }
+]

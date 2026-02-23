@@ -248,6 +248,7 @@ clients/python-client/sdist/
 clients/python-client/var/
 clients/python-client/wheels/
 clients/python-client/*.egg-info/
+protocol/python/src/*.egg-info/
 clients/python-client/.installed.cfg
 clients/python-client/*.egg
 

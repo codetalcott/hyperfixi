@@ -1,0 +1,44 @@
+[
+  {
+    "id": "rt-001",
+    "description": "Toggle with class selector",
+    "input": "[toggle patient:.active]",
+    "roundtrip": "[toggle patient:.active]"
+  },
+  {
+    "id": "rt-002",
+    "description": "Add with two selectors",
+    "input": "[add patient:.highlight destination:#output]",
+    "roundtrip": "[add patient:.highlight destination:#output]"
+  },
+  {
+    "id": "rt-003",
+    "description": "Increment with number",
+    "input": "[increment destination:#count quantity:5]",
+    "roundtrip": "[increment destination:#count quantity:5]"
+  },
+  {
+    "id": "rt-004",
+    "description": "Wait with duration",
+    "input": "[wait duration:500ms]",
+    "roundtrip": "[wait duration:500ms]"
+  },
+  {
+    "id": "rt-005",
+    "description": "Fetch with URL (gets quoted on render)",
+    "input": "[fetch source:/api/data responseType:json]",
+    "roundtrip": "[fetch source:\"/api/data\" responseType:\"json\"]"
+  },
+  {
+    "id": "rt-006",
+    "description": "Column with flags",
+    "input": "[column name:id +primary-key +not-null]",
+    "roundtrip": "[column name:\"id\" +primary-key +not-null]"
+  },
+  {
+    "id": "rt-007",
+    "description": "Field with mixed flags",
+    "input": "[field name:email +required ~nullable]",
+    "roundtrip": "[field name:\"email\" +required ~nullable]"
+  }
+]

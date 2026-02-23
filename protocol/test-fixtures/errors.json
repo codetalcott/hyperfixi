@@ -1,0 +1,51 @@
+[
+  {
+    "id": "error-001",
+    "description": "Missing brackets",
+    "input": "toggle patient:.active",
+    "expectError": true,
+    "errorContains": "brackets"
+  },
+  {
+    "id": "error-002",
+    "description": "Empty brackets",
+    "input": "[]",
+    "expectError": true,
+    "errorContains": "Empty"
+  },
+  {
+    "id": "error-003",
+    "description": "Whitespace-only brackets",
+    "input": "[  ]",
+    "expectError": true,
+    "errorContains": "Empty"
+  },
+  {
+    "id": "error-004",
+    "description": "Missing colon in role",
+    "input": "[toggle active]",
+    "expectError": true,
+    "errorContains": "role:value"
+  },
+  {
+    "id": "error-005",
+    "description": "Event handler without event role",
+    "input": "[on body:[toggle patient:.active]]",
+    "expectError": true,
+    "errorContains": "event"
+  },
+  {
+    "id": "error-006",
+    "description": "Empty enabled flag name",
+    "input": "[column name:id +]",
+    "expectError": true,
+    "errorContains": "Empty flag"
+  },
+  {
+    "id": "error-007",
+    "description": "Empty disabled flag name",
+    "input": "[column name:id ~]",
+    "expectError": true,
+    "errorContains": "Empty flag"
+  }
+]

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "lit-001",
+    "description": "Double-quoted string literal",
+    "input": "[put patient:\"hello world\" destination:#output]",
+    "expected": {
+      "kind": "command",
+      "action": "put",
+      "roles": {
+        "patient": { "type": "literal", "value": "hello world", "dataType": "string" },
+        "destination": { "type": "selector", "value": "#output" }
+      }
+    }
+  },
+  {
+    "id": "lit-002",
+    "description": "Boolean true",
+    "input": "[set destination:myVar goal:true]",
+    "expected": {
+      "kind": "command",
+      "action": "set",
+      "roles": {
+        "destination": { "type": "literal", "value": "myVar", "dataType": "string" },
+        "goal": { "type": "literal", "value": true, "dataType": "boolean" }
+      }
+    }
+  },
+  {
+    "id": "lit-003",
+    "description": "Boolean false",
+    "input": "[set destination:myVar goal:false]",
+    "expected": {
+      "kind": "command",
+      "action": "set",
+      "roles": {
+        "destination": { "type": "literal", "value": "myVar", "dataType": "string" },
+        "goal": { "type": "literal", "value": false, "dataType": "boolean" }
+      }
+    }
+  },
+  {
+    "id": "lit-004",
+    "description": "Integer number",
+    "input": "[increment destination:count quantity:5]",
+    "expected": {
+      "kind": "command",
+      "action": "increment",
+      "roles": {
+        "destination": { "type": "literal", "value": "count", "dataType": "string" },
+        "quantity": { "type": "literal", "value": 5, "dataType": "number" }
+      }
+    }
+  },
+  {
+    "id": "lit-005",
+    "description": "Decimal number",
+    "input": "[set destination:ratio goal:3.14]",
+    "expected": {
+      "kind": "command",
+      "action": "set",
+      "roles": {
+        "destination": { "type": "literal", "value": "ratio", "dataType": "string" },
+        "goal": { "type": "literal", "value": 3.14, "dataType": "number" }
+      }
+    }
+  },
+  {
+    "id": "lit-006",
+    "description": "Duration in milliseconds",
+    "input": "[wait duration:500ms]",
+    "expected": {
+      "kind": "command",
+      "action": "wait",
+      "roles": {
+        "duration": { "type": "literal", "value": "500ms", "dataType": "duration" }
+      }
+    }
+  },
+  {
+    "id": "lit-007",
+    "description": "Duration in seconds",
+    "input": "[wait duration:2s]",
+    "expected": {
+      "kind": "command",
+      "action": "wait",
+      "roles": {
+        "duration": { "type": "literal", "value": "2s", "dataType": "duration" }
+      }
+    }
+  },
+  {
+    "id": "lit-008",
+    "description": "Negative number",
+    "input": "[set destination:offset goal:-10]",
+    "expected": {
+      "kind": "command",
+      "action": "set",
+      "roles": {
+        "destination": { "type": "literal", "value": "offset", "dataType": "string" },
+        "goal": { "type": "literal", "value": -10, "dataType": "number" }
+      }
+    }
+  },
+  {
+    "id": "lit-009",
+    "description": "Plain string fallback (URL path)",
+    "input": "[fetch source:/api/users]",
+    "expected": {
+      "kind": "command",
+      "action": "fetch",
+      "roles": {
+        "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+      }
+    }
+  },
+  {
+    "id": "lit-010",
+    "description": "Plain string fallback (format name)",
+    "input": "[fetch responseType:json]",
+    "expected": {
+      "kind": "command",
+      "action": "fetch",
+      "roles": {
+        "responseType": { "type": "literal", "value": "json", "dataType": "string" }
+      }
+    }
+  }
+]

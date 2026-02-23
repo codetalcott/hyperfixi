@@ -1,0 +1,193 @@
+; LokaScript Explicit Syntax (LSE) - Formal Grammar
+; Version 1.0.0
+;
+; RFC 5234 ABNF (Augmented Backus-Naur Form)
+; https://www.rfc-editor.org/rfc/rfc5234
+;
+; This grammar defines the bracket-based intermediate representation
+; used by LokaScript for language-agnostic semantic interchange.
+;
+; IMPORTANT: ABNF is context-free, but LSE tokenization is context-sensitive.
+; The tokenizer splits on spaces only at bracket-depth 0 and outside quoted
+; strings. See "Tokenization Algorithm" in the spec README for the stateful
+; tokenizer specification.
+
+; =============================================================================
+; 1. Document (streaming format)
+; =============================================================================
+
+; An LSE document is a sequence of lines, one statement per line.
+; This is the streaming format (like JSONL).
+
+document       = *( line LF ) [ line ]
+line           = comment / blank-line / statement-line
+comment        = ("//" / "#") *VCHAR
+blank-line     = *WSP
+statement-line = *WSP compound-stmt *WSP
+
+; =============================================================================
+; 2. Statements
+; =============================================================================
+
+; A statement is either a single bracket command or a compound (chained).
+
+compound-stmt  = bracket-cmd *( 1*WSP chain-op 1*WSP bracket-cmd )
+
+chain-op       = "then" / "and" / "async" / "sequential"
+
+; =============================================================================
+; 3. Bracket Command
+; =============================================================================
+
+; The core syntactic unit: [command-name argument ...]
+
+bracket-cmd    = "[" *WSP command-name *( 1*WSP argument ) *WSP "]"
+
+; Command names are lowercased by parsers. The grammar allows mixed case
+; but conformant parsers MUST normalize to lowercase.
+command-name   = 1*( ALPHA / DIGIT / "-" )
+
+; =============================================================================
+; 4. Arguments
+; =============================================================================
+
+; An argument is either a flag (+name / ~name) or a role:value pair.
+
+argument       = flag / role-pair
+
+; --- Flags ---
+; Boolean attributes with no value. + = enabled, ~ = disabled.
+flag           = flag-enabled / flag-disabled
+flag-enabled   = "+" flag-name
+flag-disabled  = "~" flag-name
+flag-name      = 1*( ALPHA / DIGIT / "-" / "_" )
+
+; --- Role Pairs ---
+; Named semantic role with a typed value, separated by colon.
+; No space around the colon.
+role-pair      = role-name ":" value
+role-name      = 1*( ALPHA / DIGIT / "-" / "_" )
+
+; =============================================================================
+; 5. Values
+; =============================================================================
+
+; Values are classified by their syntactic form. Parsers MUST apply these
+; rules in the listed priority order (first match wins):
+;
+;   1. selector     - starts with # . [ @ *
+;   2. string       - starts with " or '
+;   3. boolean      - exact match: true / false
+;   4. nested-body  - starts with [ (only for role "body")
+;   5. duration     - number followed by ms/s/m/h
+;   6. number       - digits with optional decimal
+;   7. reference    - matches a known reference name
+;   8. plain-value  - fallback: any non-whitespace characters
+
+value          = selector
+               / string-literal
+               / boolean-literal
+               / nested-body
+               / duration-literal
+               / number-literal
+               / reference
+               / plain-value
+
+; --- Selectors ---
+; CSS-like selectors detected by leading character.
+
+selector       = id-selector
+               / class-selector
+               / attr-selector
+               / aria-selector
+               / wildcard-selector
+
+id-selector       = "#" 1*ident-char
+class-selector    = "." 1*ident-char
+attr-selector     = "[" 1*attr-char "]"
+aria-selector     = "@" 1*ident-char
+wildcard-selector = "*" *ident-char
+
+ident-char     = ALPHA / DIGIT / "-" / "_"
+attr-char      = VCHAR  ; any visible character except ] (see note)
+; NOTE: attr-char excludes "]" which terminates the attribute selector.
+; Implementations track bracket depth to find the matching "]".
+
+; --- String Literals ---
+; Quoted strings with backslash escapes. Both quote styles supported.
+
+string-literal = dquote-string / squote-string
+
+dquote-string  = DQUOTE *dquote-char DQUOTE
+dquote-char    = %x20-21        ; space and !
+               / %x23-5B        ; # through [
+               / %x5D-7E        ; ] through ~
+               / %x80-10FFFF    ; non-ASCII (UTF-8)
+               / escape-seq
+
+squote-string  = %x27 *squote-char %x27    ; ' ... '
+squote-char    = %x20-26        ; space through &
+               / %x28-5B        ; ( through [
+               / %x5D-7E        ; ] through ~
+               / %x80-10FFFF    ; non-ASCII (UTF-8)
+               / escape-seq
+
+escape-seq     = "\" ( "\" / DQUOTE / %x27 / "n" / "r" / "t" )
+
+; --- Boolean Literals ---
+; Case-sensitive exact match.
+
+boolean-literal = "true" / "false"
+
+; --- Duration Literals ---
+; A number followed by a time suffix.
+
+duration-literal = [ "-" ] 1*DIGIT [ "." 1*DIGIT ] duration-suffix
+duration-suffix  = "ms" / "s" / "m" / "h"
+
+; --- Number Literals ---
+; Integer or decimal. No suffix (distinguishes from duration).
+
+number-literal = [ "-" ] 1*DIGIT [ "." 1*DIGIT ]
+
+; --- References ---
+; Built-in symbolic references. Case-insensitive matching
+; (parsers normalize to lowercase).
+;
+; The default set is defined here. Implementations MAY extend this
+; set for domain-specific references.
+
+reference      = "me" / "you" / "it" / "result"
+               / "event" / "target" / "body"
+
+; --- Nested Body ---
+; A bracket command embedded as a role value. Used for event handler
+; bodies: [on event:click body:[toggle patient:.active]]
+;
+; Parsers MUST track bracket depth to find the matching "]".
+; The nested content is recursively parsed as a bracket-cmd.
+
+nested-body    = bracket-cmd
+
+; --- Plain Value (fallback) ---
+; Any sequence of non-whitespace printable characters.
+; This is the catch-all for values that don't match any above rule,
+; such as URL paths (/api/data), format names (json), etc.
+
+plain-value    = 1*( VCHAR )
+; NOTE: In practice, plain-value tokens are delimited by the tokenizer
+; (spaces at bracket-depth 0). The ABNF 1*VCHAR is an approximation;
+; the actual delimiter is the tokenizer's space-splitting behavior.
+
+; =============================================================================
+; 6. Core ABNF Rules (from RFC 5234 Appendix B)
+; =============================================================================
+
+ALPHA          = %x41-5A / %x61-7A    ; A-Z / a-z
+DIGIT          = %x30-39              ; 0-9
+DQUOTE         = %x22                 ; "
+VCHAR          = %x21-7E             ; visible (printing) characters
+WSP            = SP / HTAB
+SP             = %x20                 ; space
+HTAB           = %x09                 ; horizontal tab
+LF             = %x0A                 ; line feed

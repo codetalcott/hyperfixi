@@ -1,0 +1,70 @@
+[
+  {
+    "id": "flag-001",
+    "description": "Single enabled flag",
+    "input": "[column name:id +primary-key]",
+    "expected": {
+      "kind": "command",
+      "action": "column",
+      "roles": {
+        "name": { "type": "literal", "value": "id", "dataType": "string" },
+        "primary-key": { "type": "flag", "name": "primary-key", "enabled": true }
+      }
+    }
+  },
+  {
+    "id": "flag-002",
+    "description": "Single disabled flag",
+    "input": "[field name:email ~nullable]",
+    "expected": {
+      "kind": "command",
+      "action": "field",
+      "roles": {
+        "name": { "type": "literal", "value": "email", "dataType": "string" },
+        "nullable": { "type": "flag", "name": "nullable", "enabled": false }
+      }
+    }
+  },
+  {
+    "id": "flag-003",
+    "description": "Multiple enabled flags",
+    "input": "[column name:id type:uuid +primary-key +not-null]",
+    "expected": {
+      "kind": "command",
+      "action": "column",
+      "roles": {
+        "name": { "type": "literal", "value": "id", "dataType": "string" },
+        "type": { "type": "literal", "value": "uuid", "dataType": "string" },
+        "primary-key": { "type": "flag", "name": "primary-key", "enabled": true },
+        "not-null": { "type": "flag", "name": "not-null", "enabled": true }
+      }
+    }
+  },
+  {
+    "id": "flag-004",
+    "description": "Mixed enabled and disabled flags",
+    "input": "[field name:email +required ~nullable]",
+    "expected": {
+      "kind": "command",
+      "action": "field",
+      "roles": {
+        "name": { "type": "literal", "value": "email", "dataType": "string" },
+        "required": { "type": "flag", "name": "required", "enabled": true },
+        "nullable": { "type": "flag", "name": "nullable", "enabled": false }
+      }
+    }
+  },
+  {
+    "id": "flag-005",
+    "description": "Flags only (no role:value pairs)",
+    "input": "[widget +draggable +resizable]",
+    "expected": {
+      "kind": "command",
+      "action": "widget",
+      "roles": {
+        "draggable": { "type": "flag", "name": "draggable", "enabled": true },
+        "resizable": { "type": "flag", "name": "resizable", "enabled": true }
+      }
+    }
+  }
+]

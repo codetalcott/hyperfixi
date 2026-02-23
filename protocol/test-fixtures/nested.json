@@ -1,0 +1,45 @@
+[
+  {
+    "id": "nested-001",
+    "description": "Event handler with body",
+    "input": "[on event:click body:[toggle patient:.active]]",
+    "expected": {
+      "kind": "event-handler",
+      "action": "on",
+      "roles": {
+        "event": { "type": "literal", "value": "click", "dataType": "string" }
+      },
+      "body": [
+        {
+          "kind": "command",
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "nested-002",
+    "description": "Event handler with multi-role body",
+    "input": "[on event:click body:[add patient:.highlight destination:#output]]",
+    "expected": {
+      "kind": "event-handler",
+      "action": "on",
+      "roles": {
+        "event": { "type": "literal", "value": "click", "dataType": "string" }
+      },
+      "body": [
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".highlight" },
+            "destination": { "type": "selector", "value": "#output" }
+          }
+        }
+      ]
+    }
+  }
+]
