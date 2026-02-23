@@ -55,6 +55,7 @@
     "@lokascript/domain-llm": "*",
     "@lokascript/domain-sql": "*",
     "@lokascript/domain-todo": "*",
+    "@lokascript/domain-voice": "*",
     "@lokascript/framework": "*",
     "@lokascript/semantic": "*"
   },
@@ -95,6 +96,9 @@
     "@lokascript/domain-todo": {
       "optional": true
     },
+    "@lokascript/domain-voice": {
+      "optional": true
+    },
     "@hyperfixi/server-bridge": {
       "optional": true
     }
@@ -111,6 +115,7 @@
     "@lokascript/domain-llm": "*",
     "@lokascript/domain-sql": "*",
     "@lokascript/domain-todo": "*",
+    "@lokascript/domain-voice": "*",
     "@lokascript/framework": "*",
     "@lokascript/semantic": "*",
     "@types/node": "^20.0.0",
