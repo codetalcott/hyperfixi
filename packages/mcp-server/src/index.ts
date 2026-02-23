@@ -213,9 +213,10 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     name === 'ask_claude' ||
     name === 'summarize_content' ||
     name === 'analyze_content' ||
-    name === 'translate_content'
+    name === 'translate_content' ||
+    name === 'execute_llm'
   ) {
-    return handleSamplingTool(name, args as Record<string, unknown>, server);
+    return handleSamplingTool(name, args as Record<string, unknown>, server, registry);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
