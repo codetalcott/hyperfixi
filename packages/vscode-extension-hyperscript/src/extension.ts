@@ -1,21 +1,24 @@
 /**
  * _hyperscript Language Support for VS Code
  *
- * Provides language support for original _hyperscript.
+ * Provides language support for original _hyperscript,
+ * plus interactive debug session management via WebSocket.
  * Uses the language server in 'hyperscript' mode (no multilingual, no LokaScript extensions).
  */
 
 import * as vscode from 'vscode';
-
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import { DebugClient, SerializedSnapshot } from './debug-client';
 
 let client: LanguageClient | undefined;
+let debugClient: DebugClient | undefined;
+let outputChannel: vscode.OutputChannel | undefined;
+let statusBarItem: vscode.StatusBarItem | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
-  // Path to the language server module (bundled into extension's dist folder)
+  // ── Language Server ───────────────────────────────────────────────
   const serverModule = context.asAbsolutePath('dist/server.mjs');
 
-  // Use command transport (not module) because the server is ESM with top-level await.
   const serverOptions: ServerOptions = {
     run: {
       command: 'node',
@@ -39,9 +42,7 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   };
 
-  // Client options
   const clientOptions: LanguageClientOptions = {
-    // Register for HTML documents (where _="..." attributes live)
     documentSelector: [
       { scheme: 'file', language: 'html' },
       { scheme: 'file', language: 'hyperscript' },
@@ -51,12 +52,10 @@ export function activate(context: vscode.ExtensionContext): void {
       fileEvents: vscode.workspace.createFileSystemWatcher('**/*.hs'),
     },
     initializationOptions: {
-      // Force hyperscript mode — no multilingual
       language: 'en',
     },
   };
 
-  // Create the language client and start it
   client = new LanguageClient(
     'hyperscript',
     '_hyperscript Language Server',
@@ -64,10 +63,51 @@ export function activate(context: vscode.ExtensionContext): void {
     clientOptions
   );
 
-  // Start the client (also launches the server)
   client.start();
 
-  // Register commands
+  // ── Debug Infrastructure ──────────────────────────────────────────
+  const config = vscode.workspace.getConfiguration('hyperscript');
+  const wsUrl = config.get<string>('debug.url', 'ws://localhost:9229');
+
+  debugClient = new DebugClient(wsUrl);
+  outputChannel = vscode.window.createOutputChannel('HyperFixi Debugger');
+
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
+  statusBarItem.show();
+  updateStatusBar('disconnected');
+
+  // Wire debug events
+  debugClient.on('connected', () => {
+    updateStatusBar('connected');
+    outputChannel!.appendLine(`[${timestamp()}] Connected to debug server at ${wsUrl}`);
+    outputChannel!.show(true);
+  });
+
+  debugClient.on('disconnected', () => {
+    updateStatusBar('disconnected');
+    outputChannel!.appendLine(`[${timestamp()}] Disconnected from debug server`);
+  });
+
+  debugClient.on('paused', (snapshot: SerializedSnapshot) => {
+    updateStatusBar('paused', snapshot);
+    logSnapshot('PAUSED', snapshot);
+  });
+
+  debugClient.on('resumed', () => {
+    updateStatusBar('connected');
+    outputChannel!.appendLine(`[${timestamp()}] RESUMED`);
+  });
+
+  debugClient.on('snapshot', (snapshot: SerializedSnapshot) => {
+    const verbose = vscode.workspace
+      .getConfiguration('hyperscript')
+      .get<boolean>('debug.verbose', false);
+    if (verbose) {
+      logSnapshot('STEP', snapshot);
+    }
+  });
+
+  // ── Commands ──────────────────────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand('hyperscript.restartServer', async () => {
       if (client) {
@@ -75,10 +115,42 @@ export function activate(context: vscode.ExtensionContext): void {
         await client.start();
         vscode.window.showInformationMessage('_hyperscript Language Server restarted');
       }
+    }),
+
+    vscode.commands.registerCommand('hyperscript.debug.connect', () => {
+      const url = vscode.workspace
+        .getConfiguration('hyperscript')
+        .get<string>('debug.url', 'ws://localhost:9229');
+      debugClient!.setUrl(url);
+      debugClient!.connect();
+    }),
+
+    vscode.commands.registerCommand('hyperscript.debug.disconnect', () => {
+      debugClient!.disconnect();
+    }),
+
+    vscode.commands.registerCommand('hyperscript.debug.continue', () => {
+      debugClient!.sendContinue();
+    }),
+
+    vscode.commands.registerCommand('hyperscript.debug.pause', () => {
+      debugClient!.sendPause();
+    }),
+
+    vscode.commands.registerCommand('hyperscript.debug.stepOver', () => {
+      debugClient!.sendStepOver();
+    }),
+
+    vscode.commands.registerCommand('hyperscript.debug.stepInto', () => {
+      debugClient!.sendStepInto();
+    }),
+
+    vscode.commands.registerCommand('hyperscript.debug.stepOut', () => {
+      debugClient!.sendStepOut();
     })
   );
 
-  // Watch for configuration changes
+  // ── Configuration changes ─────────────────────────────────────────
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('hyperscript')) {
@@ -86,13 +158,104 @@ export function activate(context: vscode.ExtensionContext): void {
           '_hyperscript configuration changed. Some settings may require a server restart.'
         );
       }
+      if (e.affectsConfiguration('hyperscript.debug.url') && debugClient?.isConnected()) {
+        const newUrl = vscode.workspace
+          .getConfiguration('hyperscript')
+          .get<string>('debug.url', 'ws://localhost:9229');
+        debugClient.disconnect();
+        debugClient.setUrl(newUrl);
+        debugClient.connect();
+      }
     })
   );
+
+  // Auto-connect if configured
+  if (config.get<boolean>('debug.autoConnect', false)) {
+    debugClient.connect();
+  }
+
+  // ── Cleanup ───────────────────────────────────────────────────────
+  context.subscriptions.push({
+    dispose() {
+      debugClient?.dispose();
+      outputChannel?.dispose();
+      statusBarItem?.dispose();
+    },
+  });
 }
 
 export function deactivate(): Thenable<void> | undefined {
+  debugClient?.dispose();
   if (!client) {
     return undefined;
   }
   return client.stop();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+function updateStatusBar(
+  state: 'disconnected' | 'connected' | 'paused',
+  snapshot?: SerializedSnapshot
+): void {
+  if (!statusBarItem) return;
+
+  switch (state) {
+    case 'disconnected':
+      statusBarItem.text = '$(debug-disconnect) Hyperscript Debug';
+      statusBarItem.tooltip = 'Click to connect to debug server';
+      statusBarItem.command = 'hyperscript.debug.connect';
+      statusBarItem.backgroundColor = undefined;
+      break;
+
+    case 'connected':
+      statusBarItem.text = '$(debug-start) Hyperscript: Running';
+      statusBarItem.tooltip = 'Click to pause execution';
+      statusBarItem.command = 'hyperscript.debug.pause';
+      statusBarItem.backgroundColor = undefined;
+      break;
+
+    case 'paused':
+      statusBarItem.text = `$(debug-pause) Paused: ${snapshot?.commandName ?? '...'}`;
+      statusBarItem.tooltip = 'Click to continue execution';
+      statusBarItem.command = 'hyperscript.debug.continue';
+      statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      break;
+  }
+}
+
+function logSnapshot(label: string, snapshot: SerializedSnapshot): void {
+  if (!outputChannel) return;
+
+  outputChannel.appendLine(`[${timestamp()}] ${label} at: ${snapshot.commandName}`);
+  if (snapshot.element) {
+    outputChannel.appendLine(`  Element: ${snapshot.element}`);
+  }
+  outputChannel.appendLine(`  Depth: ${snapshot.depth}, Index: ${snapshot.index}`);
+
+  const vars = snapshot.variables;
+  if (vars && Object.keys(vars).length > 0) {
+    outputChannel.appendLine('  Variables:');
+    for (const [key, value] of Object.entries(vars)) {
+      outputChannel.appendLine(`    ${key}: ${formatValue(value)}`);
+    }
+  }
+}
+
+function formatValue(value: unknown): string {
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  if (typeof value === 'string') return `"${value}"`;
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  return String(value);
+}
+
+function timestamp(): string {
+  return new Date().toLocaleTimeString('en-US', { hour12: false });
 }
