@@ -6,6 +6,8 @@
  */
 
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as cp from 'child_process';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 import { DebugClient, SerializedSnapshot } from './debug-client';
 import { HyperFixiDebugAdapter } from './debug-adapter';
@@ -16,6 +18,7 @@ let debugClient: DebugClient | undefined;
 let outputChannel: vscode.OutputChannel | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
 let breakpointTracker: BreakpointTracker | undefined;
+let inventoryProcess: cp.ChildProcess | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   // ── Language Server ───────────────────────────────────────────────
@@ -137,6 +140,96 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand('lokascript.debug.stepOut', () => {
       debugClient!.sendStepOut();
+    }),
+
+    vscode.commands.registerCommand('lokascript.inventory', async () => {
+      // Pick target directory
+      let targetDir: string | undefined;
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+
+      if (workspaceFolders && workspaceFolders.length === 1) {
+        targetDir = workspaceFolders[0].uri.fsPath;
+      } else if (workspaceFolders && workspaceFolders.length > 1) {
+        const picked = await vscode.window.showWorkspaceFolderPick({
+          placeHolder: 'Select folder to scan for hyperscript/htmx usage',
+        });
+        targetDir = picked?.uri.fsPath;
+      }
+
+      if (!targetDir) {
+        const picked = await vscode.window.showOpenDialog({
+          canSelectFolders: true,
+          canSelectFiles: false,
+          canSelectMany: false,
+          title: 'Select project directory to scan',
+        });
+        if (picked?.[0]) targetDir = picked[0].fsPath;
+      }
+
+      if (!targetDir) return;
+
+      // Kill existing inventory process
+      if (inventoryProcess) {
+        inventoryProcess.kill();
+        inventoryProcess = undefined;
+      }
+
+      const port = vscode.workspace
+        .getConfiguration('lokascript')
+        .get<number>('inventory.port', 4200);
+
+      // Resolve CLI path relative to extension location in monorepo
+      const cliPath = path.resolve(
+        context.extensionPath,
+        '..',
+        'developer-tools',
+        'src',
+        'inventory',
+        'cli.ts'
+      );
+
+      outputChannel!.appendLine(`[Inventory] Starting scan of ${targetDir} on port ${port}...`);
+
+      inventoryProcess = cp.spawn(
+        'npx',
+        ['tsx', cliPath, targetDir, '--port', String(port), '--no-open'],
+        { shell: true, cwd: path.resolve(context.extensionPath, '..', '..') }
+      );
+
+      let opened = false;
+      inventoryProcess.stdout?.on('data', (data: Buffer) => {
+        const text = data.toString();
+        outputChannel!.appendLine(`[Inventory] ${text.trim()}`);
+        if (!opened && text.includes('Inventory server running')) {
+          opened = true;
+          const url = vscode.Uri.parse(`http://localhost:${port}`);
+          vscode.env.openExternal(url);
+          vscode.window.showInformationMessage(
+            `Template Inventory running at http://localhost:${port}`
+          );
+        }
+      });
+
+      inventoryProcess.stderr?.on('data', (data: Buffer) => {
+        outputChannel!.appendLine(`[Inventory] ${data.toString().trim()}`);
+      });
+
+      inventoryProcess.on('exit', code => {
+        outputChannel!.appendLine(`[Inventory] Process exited (code ${code})`);
+        inventoryProcess = undefined;
+      });
+
+      vscode.window.showInformationMessage(`Scanning ${targetDir} for hyperscript/htmx...`);
+    }),
+
+    vscode.commands.registerCommand('lokascript.inventory.stop', () => {
+      if (inventoryProcess) {
+        inventoryProcess.kill();
+        inventoryProcess = undefined;
+        vscode.window.showInformationMessage('Template Inventory server stopped');
+      } else {
+        vscode.window.showInformationMessage('No inventory server running');
+      }
     })
   );
 
@@ -182,6 +275,7 @@ export function activate(context: vscode.ExtensionContext): void {
       debugClient?.dispose();
       outputChannel?.dispose();
       statusBarItem?.dispose();
+      inventoryProcess?.kill();
     },
   });
 }

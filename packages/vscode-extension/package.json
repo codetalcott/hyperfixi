@@ -101,6 +101,16 @@
         "command": "lokascript.debug.stepOut",
         "title": "HyperFixi: Step Out",
         "icon": "$(debug-step-out)"
+      },
+      {
+        "command": "lokascript.inventory",
+        "title": "HyperFixi: Open Template Inventory",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "lokascript.inventory.stop",
+        "title": "HyperFixi: Stop Template Inventory",
+        "icon": "$(stop)"
       }
     ],
     "configuration": {
@@ -141,6 +151,11 @@
           "type": "boolean",
           "default": false,
           "description": "Log all execution snapshots to the output channel (verbose mode)"
+        },
+        "lokascript.inventory.port": {
+          "type": "number",
+          "default": 4200,
+          "description": "Port for the Template Inventory server"
         }
       }
     },
