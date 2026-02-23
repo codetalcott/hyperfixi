@@ -23,7 +23,8 @@
     "debugger"
   ],
   "activationEvents": [
-    "onLanguage:html"
+    "onLanguage:html",
+    "onDebugResolve:hyperfixi"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -142,7 +143,65 @@
           "description": "Log all execution snapshots to the output channel (verbose mode)"
         }
       }
-    }
+    },
+    "debuggers": [
+      {
+        "type": "hyperfixi",
+        "label": "HyperFixi",
+        "languages": [
+          "html",
+          "hyperscript"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL of the page with hyperscript",
+                "default": "http://localhost:3000"
+              },
+              "webSocketUrl": {
+                "type": "string",
+                "description": "WebSocket URL for the debug server",
+                "default": "ws://localhost:9229"
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "webSocketUrl": {
+                "type": "string",
+                "description": "WebSocket URL for the debug server",
+                "default": "ws://localhost:9229"
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "HyperFixi: Debug Page",
+            "description": "Launch a debug session connected to a HyperFixi debug server",
+            "body": {
+              "type": "hyperfixi",
+              "request": "launch",
+              "name": "Debug HyperFixi",
+              "url": "http://localhost:3000",
+              "webSocketUrl": "ws://localhost:9229"
+            }
+          },
+          {
+            "label": "HyperFixi: Attach",
+            "description": "Attach to a running HyperFixi debug session",
+            "body": {
+              "type": "hyperfixi",
+              "request": "attach",
+              "name": "Attach to HyperFixi",
+              "webSocketUrl": "ws://localhost:9229"
+            }
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run generate:grammar && npm run compile && npm run bundle:server",

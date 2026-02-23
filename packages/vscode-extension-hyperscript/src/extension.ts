@@ -9,11 +9,14 @@
 import * as vscode from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 import { DebugClient, SerializedSnapshot } from './debug-client';
+import { HyperFixiDebugAdapter } from './debug-adapter';
+import { BreakpointTracker } from './breakpoint-provider';
 
 let client: LanguageClient | undefined;
 let debugClient: DebugClient | undefined;
 let outputChannel: vscode.OutputChannel | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
+let breakpointTracker: BreakpointTracker | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   // ── Language Server ───────────────────────────────────────────────
@@ -173,6 +176,18 @@ export function activate(context: vscode.ExtensionContext): void {
   if (config.get<boolean>('debug.autoConnect', false)) {
     debugClient.connect();
   }
+
+  // ── DAP (Debug Adapter Protocol) ──────────────────────────────────
+  breakpointTracker = new BreakpointTracker();
+
+  context.subscriptions.push(
+    vscode.debug.registerDebugAdapterDescriptorFactory('hyperfixi', {
+      createDebugAdapterDescriptor(): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+        return new vscode.DebugAdapterInlineImplementation(new HyperFixiDebugAdapter());
+      },
+    }),
+    breakpointTracker
+  );
 
   // ── Cleanup ───────────────────────────────────────────────────────
   context.subscriptions.push({
