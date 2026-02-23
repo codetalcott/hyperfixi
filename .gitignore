@@ -100,11 +100,11 @@ deno.lock
 # Monorepo specific
 lerna-debug.log*
 
-# Debug files (hyperfixi specific)
-debug*.js
-debug*.ts
-debug*.mjs
-debug*.html
+# Debug files (hyperfixi specific — generated bundles at root/dist, not src)
+/debug*.js
+/debug*.ts
+/debug*.mjs
+/debug*.html
 
 # Data files
 *.db

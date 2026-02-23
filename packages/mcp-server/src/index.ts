@@ -37,6 +37,11 @@ import {
 
 // MCP Prompts (Layer 2)
 import { getLLMPromptDefinitions, renderLLMPrompt } from './prompts/index.js';
+import {
+  getDebugPromptDefinitions,
+  renderDebugPrompt,
+  isDebugPrompt,
+} from './prompts/debug-prompts.js';
 
 // MCP Sampling tools (Layer 3)
 import { samplingTools, handleSamplingTool } from './tools/llm-sampling.js';
@@ -46,6 +51,9 @@ import { dispatcherTools, handleDispatcherTool } from './tools/dispatcher.js';
 
 // IR conversion tools (explicit ↔ JSON)
 import { irTools, handleIRTool } from './tools/ir-tools.js';
+
+// Debug tools (AI-assisted debugging)
+import { debugTools, handleDebugTool } from './tools/debug-tools.js';
 
 const registry = createDomainRegistry();
 
@@ -89,6 +97,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...samplingTools,
       ...dispatcherTools,
       ...irTools,
+      ...debugTools,
     ],
   };
 });
@@ -219,6 +228,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     return handleSamplingTool(name, args as Record<string, unknown>, server, registry);
   }
 
+  // Debug tools (AI-assisted debugging)
+  if (name.startsWith('debug_')) {
+    return handleDebugTool(name, args as Record<string, unknown>);
+  }
+
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
   if (name.startsWith('get_')) {
     return handlePatternTool(name, args as Record<string, unknown>);
@@ -235,12 +249,17 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 // =============================================================================
 
 server.setRequestHandler(ListPromptsRequestSchema, async () => {
-  return { prompts: getLLMPromptDefinitions() };
+  return { prompts: [...getLLMPromptDefinitions(), ...getDebugPromptDefinitions()] };
 });
 
 server.setRequestHandler(GetPromptRequestSchema, async request => {
   const { name, arguments: promptArgs } = request.params;
-  return renderLLMPrompt(name, (promptArgs ?? {}) as Record<string, string>);
+  const typedArgs = (promptArgs ?? {}) as Record<string, string>;
+
+  if (isDebugPrompt(name)) {
+    return renderDebugPrompt(name, typedArgs);
+  }
+  return renderLLMPrompt(name, typedArgs);
 });
 
 // =============================================================================

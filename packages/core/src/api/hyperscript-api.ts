@@ -36,6 +36,7 @@ import {
 } from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
 import { process as processDOMElements, initializeDOMProcessor } from './dom-processor';
+import { DebugController } from '../debug/debug-controller';
 
 // =============================================================================
 // Constants
@@ -382,6 +383,9 @@ export interface HyperscriptAPI {
   unregisterHooks(name: string): boolean;
   getRegisteredHooks(): string[];
 
+  /** Interactive step-through debugger */
+  debug: DebugController;
+
   // ─────────────────────────────────────────────────────────────
   // CACHE
   // ─────────────────────────────────────────────────────────────
@@ -400,6 +404,20 @@ export interface HyperscriptAPI {
 // Lazy initialization to avoid loading all 43 commands at import time
 // Runtime is only created when first API call is made
 let _defaultRuntime: Runtime | null = null;
+let _debugController: DebugController | null = null;
+
+/**
+ * Get the singleton DebugController, creating it lazily.
+ * Automatically registers its hooks with the default runtime.
+ */
+function getDebugController(): DebugController {
+  if (!_debugController) {
+    _debugController = new DebugController();
+    // Wire the debug hooks into the runtime
+    getDefaultRuntime().registerHooks('__debugger', _debugController.hooks);
+  }
+  return _debugController;
+}
 
 /**
  * Get the default runtime instance, creating it lazily if needed
@@ -894,6 +912,11 @@ export const hyperscript: HyperscriptAPI = {
   // Cache management
   clearCache: () => astCache.clear(),
   getCacheStats: () => astCache.getStats(),
+
+  // Interactive step-through debugger (lazy-initialized)
+  get debug(): DebugController {
+    return getDebugController();
+  },
 };
 
 // Export as _hyperscript for official _hyperscript API compatibility

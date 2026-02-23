@@ -92,6 +92,10 @@ export {
 } from './debugger/index';
 export type { DebugEvent, DebugEventType, DebugMessage } from './debugger/index';
 
+// Export debug overlay (browser-side interactive debugger)
+export { DebugOverlay } from './debug-overlay/overlay';
+export { ElementHighlighter } from './debug-overlay/element-highlighter';
+
 // Quick start functions
 export { quickStartAnalyzer } from './quick-start/analyzer';
 export { quickStartBuilder } from './quick-start/builder';

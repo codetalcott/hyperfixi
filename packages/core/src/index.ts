@@ -152,5 +152,16 @@ export type {
   EventModifiers as InterchangeEventModifiers,
 } from './ast-utils/interchange/types';
 
+// Interactive step-through debugger
+export { DebugController, createDebugController } from './debug/index';
+export type {
+  StepMode,
+  BreakpointCondition,
+  DebugSnapshot,
+  DebugState,
+  DebugEventType as DebuggerEventType,
+  DebugEventListener as DebuggerEventListener,
+} from './debug/index';
+
 // Note: Default export removed in favor of named exports for better tree-shaking
 // Use: import { hyperscript } from '@hyperfixi/core' instead of import hyperfixi from '@hyperfixi/core'
