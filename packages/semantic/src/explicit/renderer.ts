@@ -210,12 +210,19 @@ export class SemanticRendererImpl implements ISemanticRenderer {
         }
 
         const groupParts: string[] = [];
+        let hasRoleValue = false;
         for (const subToken of token.tokens) {
           const rendered = this.renderPatternToken(subToken, node, language);
           if (rendered !== null) {
             groupParts.push(rendered);
+            if (subToken.type === 'role') hasRoleValue = true;
           }
         }
+
+        // Don't emit an optional group that has only literals (markers) but no
+        // actual role values — e.g. don't emit a dangling "with" when the
+        // style role is absent from "hide #output".
+        if (token.optional && !hasRoleValue) return null;
 
         return groupParts.length > 0 ? groupParts.join(' ') : null;
       }
