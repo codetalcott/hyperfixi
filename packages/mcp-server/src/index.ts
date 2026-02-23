@@ -55,6 +55,9 @@ import { irTools, handleIRTool } from './tools/ir-tools.js';
 // Debug tools (AI-assisted debugging)
 import { debugTools, handleDebugTool } from './tools/debug-tools.js';
 
+// Template inventory tools
+import { inventoryTools, handleInventoryTool } from './tools/inventory.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -98,6 +101,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...dispatcherTools,
       ...irTools,
       ...debugTools,
+      ...inventoryTools,
     ],
   };
 });
@@ -231,6 +235,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   // Debug tools (AI-assisted debugging)
   if (name.startsWith('debug_')) {
     return handleDebugTool(name, args as Record<string, unknown>);
+  }
+
+  // Template inventory tools
+  if (name === 'scan_inventory' || name === 'query_inventory') {
+    return handleInventoryTool(name, args as Record<string, unknown>);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
