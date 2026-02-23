@@ -159,7 +159,7 @@ describe('ClassBatchingPass', () => {
       expect(result.body![0].type).toBe('command');
     });
 
-    it('does not batch commands with explicit targets', () => {
+    it('batches commands with identical explicit #id targets', () => {
       const target = { type: 'selector', value: '#other' } as SelectorNode;
       const ast = eventHandler([
         classCmdWithTarget('add', 'active', target),
@@ -167,10 +167,12 @@ describe('ClassBatchingPass', () => {
       ]);
 
       const result = pass.transform(ast, analysis) as EventHandlerNode;
-      // Both should remain as individual commands (not batched)
-      expect(result.body).toHaveLength(2);
-      expect(result.body![0].type).toBe('command');
-      expect(result.body![1].type).toBe('command');
+      expect(result.body).toHaveLength(1);
+
+      const batch = result.body![0] as BatchedClassOpsNode;
+      expect(batch.type).toBe('batchedClassOps');
+      expect(batch.target).toBe("document.getElementById('other')");
+      expect(batch.adds).toEqual(['active', 'visible']);
     });
 
     it('does not batch when one has explicit target and one does not', () => {
@@ -179,8 +181,56 @@ describe('ClassBatchingPass', () => {
 
       const result = pass.transform(ast, analysis) as EventHandlerNode;
       expect(result.body).toHaveLength(2);
+      // Different targets: implicit me vs explicit #other
       expect(result.body![0].type).toBe('command');
       expect(result.body![1].type).toBe('command');
+    });
+
+    it('does not batch commands with different explicit targets', () => {
+      const ast = eventHandler([
+        classCmdWithTarget('add', 'a', { type: 'selector', value: '#foo' } as SelectorNode),
+        classCmdWithTarget('add', 'b', { type: 'selector', value: '#bar' } as SelectorNode),
+      ]);
+
+      const result = pass.transform(ast, analysis) as EventHandlerNode;
+      expect(result.body).toHaveLength(2);
+      expect(result.body![0].type).toBe('command');
+      expect(result.body![1].type).toBe('command');
+    });
+
+    it('batches mixed implicit and explicit in separate groups', () => {
+      const target = { type: 'selector', value: '#box' } as SelectorNode;
+      const ast = eventHandler([
+        classCmd('add', 'a'),
+        classCmd('add', 'b'),
+        classCmdWithTarget('add', 'c', target),
+        classCmdWithTarget('add', 'd', target),
+      ]);
+
+      const result = pass.transform(ast, analysis) as EventHandlerNode;
+      expect(result.body).toHaveLength(2);
+
+      const batch1 = result.body![0] as BatchedClassOpsNode;
+      expect(batch1.target).toBe('_ctx.me');
+      expect(batch1.adds).toEqual(['a', 'b']);
+
+      const batch2 = result.body![1] as BatchedClassOpsNode;
+      expect(batch2.target).toBe("document.getElementById('box')");
+      expect(batch2.adds).toEqual(['c', 'd']);
+    });
+
+    it('resolves .class selector target via querySelector', () => {
+      const target = { type: 'selector', value: '.panel' } as SelectorNode;
+      const ast = eventHandler([
+        classCmdWithTarget('add', 'a', target),
+        classCmdWithTarget('add', 'b', target),
+      ]);
+
+      const result = pass.transform(ast, analysis) as EventHandlerNode;
+      expect(result.body).toHaveLength(1);
+
+      const batch = result.body![0] as BatchedClassOpsNode;
+      expect(batch.target).toBe("document.querySelector('.panel')");
     });
 
     it('preserves non-class commands', () => {

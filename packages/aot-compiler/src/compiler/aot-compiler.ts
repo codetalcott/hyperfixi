@@ -18,10 +18,12 @@ import type {
   FallbackScript,
   EventHandlerNode,
   CommandNode,
+  PreRenderResult,
 } from '../types/aot-types.js';
 import { HTMLScanner, VueScanner, SvelteScanner, JSXScanner } from '../scanner/html-scanner.js';
 import { Analyzer } from './analyzer.js';
 import { OptimizationPipeline } from '../optimizations/index.js';
+import { preRenderInitBlock } from '../optimizations/init-prerender.js';
 import { ExpressionCodegen, sanitizeIdentifier } from '../transforms/expression-transforms.js';
 import { EventHandlerCodegen } from '../transforms/event-transforms.js';
 import {
@@ -539,6 +541,78 @@ export class AOTCompiler {
    */
   analyze(ast: ASTNode): AnalysisResult {
     return this.analyzer.analyze(ast);
+  }
+
+  // ===========================================================================
+  // INIT PRE-RENDERING
+  // ===========================================================================
+
+  /**
+   * Pre-render pure init block commands into an HTML template at build time.
+   *
+   * Analyzes init block commands for purity (static DOM writes with literal
+   * values targeting #id selectors) and applies them directly to the HTML.
+   * Impure commands are preserved for normal runtime execution.
+   *
+   * @param html - The HTML template string
+   * @param initCommands - Parsed commands from an init block
+   * @returns Modified HTML, remaining impure commands, and count of pre-rendered commands
+   */
+  preRenderInit(html: string, initCommands: ASTNode[]): PreRenderResult {
+    return preRenderInitBlock(html, initCommands);
+  }
+
+  /**
+   * Extract init blocks from HTML, pre-render pure commands, and return modified HTML.
+   * This is a higher-level convenience that combines extraction, parsing, and pre-rendering.
+   *
+   * @param html - The HTML template string
+   * @param options - Compile options (language, etc.)
+   * @returns Modified HTML with pre-rendered init effects and compilation results
+   */
+  preRenderInitBlocks(
+    html: string,
+    options: CompileOptions = {}
+  ): { html: string; preRenderedCount: number; remainingScripts: ExtractedScript[] } {
+    const scripts = this.extract(html, 'template.html');
+    let modifiedHtml = html;
+    let totalPreRendered = 0;
+    const remainingScripts: ExtractedScript[] = [];
+
+    for (const script of scripts) {
+      // Parse the script to AST
+      const ast = this.parse(script.code, {
+        ...options,
+        language: script.language ?? options.language ?? 'en',
+      });
+      if (!ast) {
+        remainingScripts.push(script);
+        continue;
+      }
+
+      // Extract init block body (top-level event handler with 'init' event)
+      const eventNode = ast as EventHandlerNode;
+      if (eventNode.type === 'event' && eventNode.event === 'init' && eventNode.body) {
+        const result = preRenderInitBlock(modifiedHtml, eventNode.body);
+        modifiedHtml = result.html;
+        totalPreRendered += result.preRenderedCount;
+
+        // If there are remaining commands, keep a modified script
+        if (result.remainingInitCommands.length > 0) {
+          remainingScripts.push(script);
+        }
+        // If all commands were pre-rendered, the script is fully consumed
+      } else {
+        // Not an init block — keep as-is
+        remainingScripts.push(script);
+      }
+    }
+
+    return {
+      html: modifiedHtml,
+      preRenderedCount: totalPreRendered,
+      remainingScripts,
+    };
   }
 
   // ===========================================================================

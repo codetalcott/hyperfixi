@@ -395,3 +395,135 @@ describe('generateInitialization()', () => {
     expect(code).toContain('addEventListener("click", _handler_h1)');
   });
 });
+
+// =============================================================================
+// BATCHED CLASS OPS CODEGEN
+// =============================================================================
+
+describe('batchedClassOps codegen', () => {
+  it('generates classList.add with multiple classes', () => {
+    const ctx = createMockContext();
+    const codegen = new EventHandlerCodegen(ctx, createAnalysis());
+    const node = makeEventNode({
+      body: [
+        {
+          type: 'batchedClassOps',
+          target: '_ctx.me',
+          adds: ['active', 'visible', 'highlighted'],
+          removes: [],
+          toggles: [],
+        } as any,
+      ],
+    });
+    const result = codegen.generate(node);
+
+    expect(result.handlerCode).toContain(
+      "_ctx.me.classList.add('active', 'visible', 'highlighted')"
+    );
+  });
+
+  it('generates classList.remove with multiple classes', () => {
+    const ctx = createMockContext();
+    const codegen = new EventHandlerCodegen(ctx, createAnalysis());
+    const node = makeEventNode({
+      body: [
+        {
+          type: 'batchedClassOps',
+          target: '_ctx.me',
+          adds: [],
+          removes: ['hidden', 'disabled', 'loading'],
+          toggles: [],
+        } as any,
+      ],
+    });
+    const result = codegen.generate(node);
+
+    expect(result.handlerCode).toContain(
+      "_ctx.me.classList.remove('hidden', 'disabled', 'loading')"
+    );
+  });
+
+  it('generates separate classList.toggle for each class', () => {
+    const ctx = createMockContext();
+    const codegen = new EventHandlerCodegen(ctx, createAnalysis());
+    const node = makeEventNode({
+      body: [
+        {
+          type: 'batchedClassOps',
+          target: '_ctx.me',
+          adds: [],
+          removes: [],
+          toggles: ['selected', 'focused'],
+        } as any,
+      ],
+    });
+    const result = codegen.generate(node);
+
+    expect(result.handlerCode).toContain("_ctx.me.classList.toggle('selected')");
+    expect(result.handlerCode).toContain("_ctx.me.classList.toggle('focused')");
+  });
+
+  it('generates combined add + remove + toggle in one batch', () => {
+    const ctx = createMockContext();
+    const codegen = new EventHandlerCodegen(ctx, createAnalysis());
+    const node = makeEventNode({
+      body: [
+        {
+          type: 'batchedClassOps',
+          target: '_ctx.me',
+          adds: ['active'],
+          removes: ['hidden'],
+          toggles: ['selected'],
+        } as any,
+      ],
+    });
+    const result = codegen.generate(node);
+
+    expect(result.handlerCode).toContain("_ctx.me.classList.add('active')");
+    expect(result.handlerCode).toContain("_ctx.me.classList.remove('hidden')");
+    expect(result.handlerCode).toContain("_ctx.me.classList.toggle('selected')");
+  });
+
+  it('skips empty arrays in batch', () => {
+    const ctx = createMockContext();
+    const codegen = new EventHandlerCodegen(ctx, createAnalysis());
+    const node = makeEventNode({
+      body: [
+        {
+          type: 'batchedClassOps',
+          target: '_ctx.me',
+          adds: ['active'],
+          removes: [],
+          toggles: [],
+        } as any,
+      ],
+    });
+    const result = codegen.generate(node);
+
+    expect(result.handlerCode).toContain("classList.add('active')");
+    expect(result.handlerCode).not.toContain('classList.remove');
+    expect(result.handlerCode).not.toContain('classList.toggle');
+  });
+
+  it('works alongside regular commands in body', () => {
+    const ctx = createMockContext();
+    const codegen = new EventHandlerCodegen(ctx, createAnalysis());
+    const node = makeEventNode({
+      body: [
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'start' }] } as any,
+        {
+          type: 'batchedClassOps',
+          target: '_ctx.me',
+          adds: ['a', 'b'],
+          removes: [],
+          toggles: [],
+        } as any,
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'end' }] } as any,
+      ],
+    });
+    const result = codegen.generate(node);
+
+    expect(result.handlerCode).toContain('console.log');
+    expect(result.handlerCode).toContain("classList.add('a', 'b')");
+  });
+});

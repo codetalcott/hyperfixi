@@ -61,14 +61,61 @@ function extractClassOp(
 
 /**
  * Check if two commands target the same element.
- * Currently only batches commands that both target implicit `me` (no explicit target).
+ * Batches when both use implicit `me`, or both have identical explicit targets.
  */
 function isSameTarget(a: ASTNode, b: ASTNode): boolean {
   if (a.type !== 'command' || b.type !== 'command') return false;
   const cmdA = a as CommandNode;
   const cmdB = b as CommandNode;
-  // Both must have no explicit target (both use implicit _ctx.me)
-  return !cmdA.target && !cmdB.target;
+
+  // Both implicit me (no explicit target)
+  if (!cmdA.target && !cmdB.target) return true;
+
+  // Both have explicit targets — check structural equality
+  if (cmdA.target && cmdB.target) {
+    return getTargetKey(cmdA.target) === getTargetKey(cmdB.target);
+  }
+
+  // One has target, one doesn't — different
+  return false;
+}
+
+/**
+ * Get a string key for a target node for equality comparison.
+ * Only supports selector and identifier targets (the common cases).
+ */
+function getTargetKey(target: ASTNode): string | null {
+  if (target.type === 'selector') {
+    return `selector:${(target as SelectorNode).value}`;
+  }
+  if (target.type === 'identifier') {
+    return `identifier:${(target as { value: string }).value}`;
+  }
+  return null;
+}
+
+/**
+ * Resolve the target expression string for codegen.
+ * Converts selector/identifier targets to JavaScript expressions.
+ */
+function resolveTarget(cmd: CommandNode): string {
+  if (!cmd.target) return '_ctx.me';
+
+  if (cmd.target.type === 'selector') {
+    const sel = (cmd.target as SelectorNode).value;
+    if (sel.startsWith('#') && !sel.includes(' ') && !sel.includes('.')) {
+      return `document.getElementById('${sel.slice(1)}')`;
+    }
+    return `document.querySelector('${sel}')`;
+  }
+
+  if (cmd.target.type === 'identifier') {
+    const val = (cmd.target as { value: string }).value;
+    if (val === 'me') return '_ctx.me';
+    return val;
+  }
+
+  return '_ctx.me';
 }
 
 /**
@@ -94,9 +141,12 @@ function createBatchNode(run: ASTNode[]): BatchedClassOpsNode {
     }
   }
 
+  // Resolve target from the first command (all commands in a run share the same target)
+  const target = resolveTarget(run[0] as CommandNode);
+
   return {
     type: 'batchedClassOps',
-    target: '_ctx.me',
+    target,
     adds,
     removes,
     toggles,
@@ -121,8 +171,8 @@ function batchBody(nodes: ASTNode[]): ASTNode[] {
 
   for (const node of nodes) {
     const op = extractClassOp(node);
-    if (op && !op.hasExplicitTarget) {
-      // This is a class op on implicit me
+    if (op) {
+      // This is a class op — check if it matches the current run's target
       if (currentRun.length > 0 && isSameTarget(currentRun[0], node)) {
         currentRun.push(node);
       } else {
