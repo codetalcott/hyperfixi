@@ -54,8 +54,7 @@ export const irTools: Tool[] = [
   {
     name: 'validate_explicit',
     description:
-      'Validate explicit bracket syntax without compiling. Returns parsed semantic representation and diagnostics. ' +
-      'Faster than validate_and_compile since it uses only the framework IR layer.',
+      'Validate explicit bracket syntax like `[toggle patient:.active]` without full compilation. Faster than validate_and_compile. Use ONLY for bracket syntax input, not natural language hyperscript.',
     inputSchema: {
       type: 'object',
       properties: {

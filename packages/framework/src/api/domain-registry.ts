@@ -60,6 +60,9 @@ export interface DomainDescriptor {
   /** Description of the primary input parameter */
   readonly inputDescription: string;
 
+  /** What compile_{name} produces (e.g., "a SQL query string"). Used in tool description. */
+  readonly outputDescription?: string;
+
   /**
    * Factory to lazily create the DSL instance.
    * Called once on first tool use. The result is cached.
@@ -380,7 +383,7 @@ function generateToolDefinitions(desc: DomainDescriptor): MCPToolDefinition[] {
       case 'parse':
         tools.push({
           name: `parse_${desc.name}`,
-          description: `Parse a ${desc.description} input into a semantic representation. Supports: ${langList}.`,
+          description: `Parse a ${desc.description} input into a semantic representation (action, roles, confidence). Supports: ${langList}.`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -402,7 +405,7 @@ function generateToolDefinitions(desc: DomainDescriptor): MCPToolDefinition[] {
       case 'compile':
         tools.push({
           name: `compile_${desc.name}`,
-          description: `Compile a ${desc.description} input to target code. Supports: ${langList}.`,
+          description: `Compile a ${desc.description} input to ${desc.outputDescription ?? 'target code'}. Supports: ${langList}.`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -424,7 +427,7 @@ function generateToolDefinitions(desc: DomainDescriptor): MCPToolDefinition[] {
       case 'validate':
         tools.push({
           name: `validate_${desc.name}`,
-          description: `Validate ${desc.description} syntax. Returns whether it parses successfully and any errors. Supports: ${langList}.`,
+          description: `Check ${desc.description} syntax for errors. Returns {valid, errors[]}. Supports: ${langList}.`,
           inputSchema: {
             type: 'object',
             properties: {
@@ -446,7 +449,7 @@ function generateToolDefinitions(desc: DomainDescriptor): MCPToolDefinition[] {
       case 'translate':
         tools.push({
           name: `translate_${desc.name}`,
-          description: `Translate ${desc.description} input between natural languages. Parses in source language and renders in target language.`,
+          description: `Translate ${desc.description} input between natural languages (requires 'from' and 'to' codes). Supports: ${langList}.`,
           inputSchema: {
             type: 'object',
             properties: {

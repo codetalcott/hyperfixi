@@ -6,21 +6,22 @@ The Explicit Syntax is a **language-agnostic, role-labeled intermediate represen
 [toggle patient:.active destination:#button]
 [select patient:name source:users condition:age>25]
 [ask patient:"summarize this" source:#article manner:bullets]
+[column name:id type:uuid +primary-key +not-null]
 ```
 
 ## Properties
 
-| Property              | Description                                   |
-| --------------------- | --------------------------------------------- |
-| **Language-agnostic** | No word order, no particles, no prepositions  |
-| **Self-documenting**  | Every value is labeled with its semantic role |
-| **Machine-readable**  | Trivial to parse: `[action role:value ...]`   |
-| **LLM-friendly**      | Structured enough for reliable generation     |
-| **Human-readable**    | Developers can read and write it directly     |
-| **Roundtrip-safe**    | `parse -> render -> parse` is identity        |
-| **Domain-portable**   | Same format works for any domain's schemas    |
-| **Diffable**          | Behavior comparison operates on explicit form |
-| **Cacheable**         | Canonical form is the semantic cache key      |
+| Property              | Description                                       |
+| --------------------- | ------------------------------------------------- |
+| **Language-agnostic** | No word order, no particles, no prepositions      |
+| **Self-documenting**  | Every value is labeled with its semantic role     |
+| **Machine-readable**  | Trivial to parse: `[action role:value +flag ...]` |
+| **LLM-friendly**      | Structured enough for reliable generation         |
+| **Human-readable**    | Developers can read and write it directly         |
+| **Roundtrip-safe**    | `parse -> render -> parse` is identity            |
+| **Domain-portable**   | Same format works for any domain's schemas        |
+| **Diffable**          | Behavior comparison operates on explicit form     |
+| **Cacheable**         | Canonical form is the semantic cache key          |
 
 ## Universal Interchange
 
@@ -107,6 +108,30 @@ Arabic:   بدّل .active على #button
 | `event`          | Trigger             | `click`, `load`, `submit`      |
 
 Each command defines which roles it accepts. Use `get_command_docs` to see the specific roles for any command.
+
+## Value Types
+
+Role values are automatically classified by the parser:
+
+| Syntax          | Type         | Example                        |
+| --------------- | ------------ | ------------------------------ |
+| `.class`, `#id` | `selector`   | `patient:.active`              |
+| `"quoted"`      | `literal`    | `patient:"hello world"`        |
+| `true`/`false`  | `literal`    | `goal:true`                    |
+| `42`, `500ms`   | `literal`    | `quantity:5`, `duration:500ms` |
+| `me`, `it`      | `reference`  | `destination:me`               |
+| `+name`         | `flag` (on)  | `+primary-key`                 |
+| `~name`         | `flag` (off) | `~nullable`                    |
+| other           | `literal`    | `source:/api/data`             |
+
+**Boolean flags** (`+flag`/`~flag`) are for declarative no-value attributes. They don't use the `role:value` format — the flag name is both the role and the value:
+
+```text
+[column name:id type:uuid +primary-key +not-null]
+[field name:email type:string +required ~nullable]
+```
+
+Flags round-trip through all three representations (explicit, JSON, SemanticNode).
 
 ## Cross-Domain MCP Tools
 

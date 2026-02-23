@@ -49,7 +49,8 @@ function getSemanticAnalyzer(): ReturnType<typeof semanticPackage.createSemantic
 export const validationTools: Tool[] = [
   {
     name: 'validate_hyperscript',
-    description: 'Validate hyperscript syntax and return any errors',
+    description:
+      'Check hyperscript code for syntax errors and role warnings. Use as the FIRST validation step before returning code to users. For detailed line/column positions, use get_diagnostics instead.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -69,7 +70,7 @@ export const validationTools: Tool[] = [
   {
     name: 'validate_schema',
     description:
-      'Validate command schemas for design issues. Returns structured validation items with machine-readable codes, severity levels (error/warning/note), and suggested fixes. Useful for catching schema issues before they cause runtime problems.',
+      'Validate internal command SCHEMA definitions for design issues — NOT for checking user-written hyperscript. Returns structured items with error codes and severity. Use only when developing or debugging LokaScript command schemas.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -171,7 +172,7 @@ export const validationTools: Tool[] = [
   {
     name: 'translate_to_english',
     description:
-      'Translate hyperscript from any supported language to English. Essential for LLMs to understand non-English code.',
+      'Normalize non-English hyperscript to English. Returns English code plus explicit bracket syntax. Set getAllLanguages=true to get all 24 translations at once. Use when you receive code in Japanese, Korean, Arabic, etc.',
     inputSchema: {
       type: 'object',
       properties: {

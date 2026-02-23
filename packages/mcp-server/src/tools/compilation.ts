@@ -62,7 +62,7 @@ export const compilationTools: Tool[] = [
   {
     name: 'validate_and_compile',
     description:
-      'Validate hyperscript without compiling. Returns semantic representation and diagnostics. Same input format as compile_hyperscript.',
+      'Parse hyperscript into semantic IR with diagnostics, without generating JavaScript. Returns action, roles, and trigger structure. Accepts natural language, explicit bracket syntax, or LLM JSON — same input formats as compile_hyperscript.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -76,7 +76,8 @@ export const compilationTools: Tool[] = [
   },
   {
     name: 'translate_code',
-    description: 'Translate hyperscript between any of 24 supported languages.',
+    description:
+      'Translate hyperscript between any of 24 languages via full semantic parsing. Higher fidelity than translate_hyperscript — handles SVO/SOV/VSO grammar transformation. Preferred for production translations.',
     inputSchema: {
       type: 'object',
       properties: {

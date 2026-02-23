@@ -16,6 +16,7 @@ export function createDomainRegistry(): DomainRegistry {
     languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'query',
     inputDescription: 'SQL query in natural language (e.g., "select name from users")',
+    outputDescription: 'a SQL query string',
     getDSL: () => import('@lokascript/domain-sql').then(m => m.createSQLDSL()),
     getRenderer: () => import('@lokascript/domain-sql').then(m => m.renderSQL),
     scanConfig: {
@@ -31,6 +32,7 @@ export function createDomainRegistry(): DomainRegistry {
     languages: ['en', 'es', 'ja', 'ar'],
     inputLabel: 'scenario',
     inputDescription: 'BDD scenario text (e.g., "given #button is exists")',
+    outputDescription: 'Playwright test code with Given/When/Then assertions',
     getDSL: () => import('@lokascript/domain-bdd').then(m => m.createBDDDSL()),
     getRenderer: () => import('@lokascript/domain-bdd').then(m => m.renderBDD),
     scanConfig: {
@@ -47,6 +49,7 @@ export function createDomainRegistry(): DomainRegistry {
     inputLabel: 'code',
     inputDescription:
       'JSX description in natural language (e.g., "element div with className app")',
+    outputDescription: 'JSX/React component markup',
     getDSL: () => import('@lokascript/domain-jsx').then(m => m.createJSXDSL()),
     getRenderer: () => import('@lokascript/domain-jsx').then(m => m.renderJSX),
     scanConfig: {
@@ -62,6 +65,7 @@ export function createDomainRegistry(): DomainRegistry {
     languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'command',
     inputDescription: 'Todo command in natural language (e.g., "add milk to groceries")',
+    outputDescription: 'a structured todo operation object',
     getDSL: () => import('@lokascript/domain-todo').then(m => m.createTodoDSL()),
     getRenderer: () => import('@lokascript/domain-todo').then(m => m.renderTodo),
     scanConfig: {
@@ -77,6 +81,7 @@ export function createDomainRegistry(): DomainRegistry {
     languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'scenario',
     inputDescription: 'BehaviorSpec scenario text (e.g., "given page /home")',
+    outputDescription: 'a Playwright interaction test with page assertions',
     getDSL: () => import('@lokascript/domain-behaviorspec').then(m => m.createBehaviorSpecDSL()),
     getRenderer: () => import('@lokascript/domain-behaviorspec').then(m => m.renderBehaviorSpec),
     scanConfig: {
@@ -93,6 +98,7 @@ export function createDomainRegistry(): DomainRegistry {
     inputLabel: 'command',
     inputDescription:
       'LLM command in natural language (e.g., "ask claude to summarize #article as bullets")',
+    outputDescription: 'an LLMPromptSpec JSON (action, messages, model preferences)',
     getDSL: () => import('@lokascript/domain-llm').then(m => m.createLLMDSL()),
     getRenderer: () => import('@lokascript/domain-llm').then(m => m.renderLLM),
     scanConfig: {
@@ -108,6 +114,7 @@ export function createDomainRegistry(): DomainRegistry {
     languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'pipeline',
     inputDescription: 'FlowScript pipeline (e.g., "fetch /api/users as json into #list")',
+    outputDescription: 'reactive data flow JavaScript (fetch/poll/stream handlers)',
     getDSL: () => import('@lokascript/domain-flow').then(m => m.createFlowDSL()),
     getRenderer: () => import('@lokascript/domain-flow').then(m => m.renderFlow),
     scanConfig: {
@@ -123,6 +130,7 @@ export function createDomainRegistry(): DomainRegistry {
     languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'command',
     inputDescription: 'Voice command in natural language (e.g., "click the submit button")',
+    outputDescription: 'a DOM interaction command (click, scroll, type, navigate)',
     getDSL: () => import('@lokascript/domain-voice').then(m => m.createVoiceDSL()),
     getRenderer: () => import('@lokascript/domain-voice').then(m => m.renderVoice),
     scanConfig: {
