@@ -72,6 +72,9 @@ jobs:
       - name: Build domain-flow package
         run: npm run build --prefix packages/domain-flow
 
+      - name: Build domain-voice package
+        run: npm run build --prefix packages/domain-voice
+
       - name: Build semantic package
         run: npm run build --prefix packages/semantic
 
@@ -139,6 +142,7 @@ jobs:
             packages/domain-behaviorspec/dist/
             packages/domain-llm/dist/
             packages/domain-flow/dist/
+            packages/domain-voice/dist/
             packages/semantic/dist/
             packages/i18n/dist/
             packages/core/dist/
@@ -378,6 +382,9 @@ jobs:
 
       - name: Test domain-flow
         run: npm test --prefix packages/domain-flow
+
+      - name: Test domain-voice
+        run: npm test --prefix packages/domain-voice
 
       - name: Test language-server
         run: npm test --prefix packages/language-server -- --run
