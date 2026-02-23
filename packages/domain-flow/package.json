@@ -3,6 +3,7 @@
   "version": "2.1.0",
   "description": "Declarative reactive data flow DSL built on @lokascript/framework - fetch, poll, stream, submit via natural language",
   "type": "module",
+  "sideEffects": false,
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

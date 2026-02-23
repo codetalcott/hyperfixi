@@ -2,6 +2,7 @@
   "name": "@hyperfixi/developer-tools",
   "version": "2.1.0",
   "private": true,
+  "sideEffects": false,
   "description": "CLI tools and visual builder API for LokaScript development",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

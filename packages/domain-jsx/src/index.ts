@@ -62,7 +62,7 @@ import { jsxCodeGenerator, createJSXCodeGenerator } from './generators/jsx-gener
  * Create a multilingual JSX DSL instance with all 8 supported languages.
  */
 export function createJSXDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'JSX',
     schemas: allSchemas,
     languages: [

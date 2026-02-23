@@ -61,7 +61,7 @@ import { voiceCodeGenerator } from './generators/voice-generator';
  * Create a multilingual voice/accessibility DSL instance with all 8 supported languages.
  */
 export function createVoiceDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'Voice',
     schemas: allSchemas,
     languages: [

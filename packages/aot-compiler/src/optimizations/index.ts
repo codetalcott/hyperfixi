@@ -16,6 +16,7 @@ import type {
   SelectorNode,
   SequenceNode,
 } from '../types/aot-types.js';
+import { ClassBatchingPass } from './class-batching.js';
 
 // =============================================================================
 // CONSTANT FOLDING PASS
@@ -490,6 +491,7 @@ export class OptimizationPipeline {
     new ConstantFoldingPass(),
     new SelectorCachingPass(),
     new DeadCodeEliminationPass(),
+    new ClassBatchingPass(),
     new LoopUnrollingPass(),
   ];
 
@@ -538,7 +540,7 @@ export class OptimizationPipeline {
  * Create a default optimization pipeline.
  */
 export function createOptimizer(): OptimizationPipeline {
-  return new OptimizationPipeline();
+  return /*#__PURE__*/ new OptimizationPipeline();
 }
 
 /**

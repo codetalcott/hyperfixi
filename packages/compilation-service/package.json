@@ -3,6 +3,7 @@
   "version": "2.1.0",
   "description": "Semantic compilation service for LokaScript - validates and compiles hyperscript from 24 languages, explicit syntax, or LLM JSON",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

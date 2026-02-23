@@ -84,7 +84,7 @@ import {
  * Create a multilingual BehaviorSpec DSL instance with all 8 supported languages.
  */
 export function createBehaviorSpecDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'BehaviorSpec',
     schemas: allSchemas,
     languages: [

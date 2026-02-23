@@ -3,6 +3,7 @@
   "version": "2.1.0",
   "description": "Multilingual interaction testing domain built on @lokascript/framework — write Playwright tests in natural language across 4 languages",
   "type": "module",
+  "sideEffects": false,
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

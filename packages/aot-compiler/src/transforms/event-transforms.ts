@@ -9,6 +9,7 @@ import type {
   ASTNode,
   EventHandlerNode,
   CommandNode,
+  BatchedClassOpsNode,
   CodegenContext,
   GeneratedHandler,
   AnalysisResult,
@@ -126,6 +127,23 @@ export class EventHandlerCodegen {
         // Nested event node (from CommandSequence conversion) — inline its body
         const nested = node as EventHandlerNode;
         return this.generateBody(nested.body ?? []);
+      }
+
+      case 'batchedClassOps': {
+        const batch = node as BatchedClassOpsNode;
+        const lines: string[] = [];
+        if (batch.adds.length > 0) {
+          lines.push(`${batch.target}.classList.add(${batch.adds.map(c => `'${c}'`).join(', ')})`);
+        }
+        if (batch.removes.length > 0) {
+          lines.push(
+            `${batch.target}.classList.remove(${batch.removes.map(c => `'${c}'`).join(', ')})`
+          );
+        }
+        for (const t of batch.toggles) {
+          lines.push(`${batch.target}.classList.toggle('${t}')`);
+        }
+        return lines.join(';\n');
       }
 
       default:

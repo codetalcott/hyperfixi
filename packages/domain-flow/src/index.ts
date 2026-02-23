@@ -73,7 +73,7 @@ import { flowCodeGenerator } from './generators/flow-generator.js';
  * Create a multilingual FlowScript DSL instance with all 8 supported languages.
  */
 export function createFlowDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'FlowScript',
     schemas: allSchemas,
     languages: [

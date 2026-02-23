@@ -66,7 +66,7 @@ import { todoCodeGenerator } from './generators/todo-generator';
  * Create a multilingual todo DSL instance with all 8 supported languages.
  */
 export function createTodoDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'Todo',
     schemas: allSchemas,
     languages: [
