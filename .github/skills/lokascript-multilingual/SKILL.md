@@ -1,16 +1,16 @@
 ---
-name: hyperscript-multilingual
-description: 'Translates hyperscript between 24 languages with native SVO/SOV/VSO grammar transformation. Use when user writes or requests hyperscript in non-English languages, or needs translation between languages.'
+name: lokascript-multilingual
+description: 'Translates HyperFixi/LokaScript code between 24 languages with native SVO/SOV/VSO grammar transformation. Use when user writes or requests code in non-English languages, or needs translation between languages.'
 ---
 
-# HyperFixi Multilingual
+# LokaScript Multilingual
 
-Translate hyperscript between 24 languages with native grammar transformation.
+Translate HyperFixi/LokaScript code between 24 languages with native grammar transformation.
 
 ## When to Use
 
-- User writes hyperscript in non-English (Japanese, Korean, Arabic, etc.)
-- User asks to translate hyperscript between languages
+- User writes code in non-English (Japanese, Korean, Arabic, etc.)
+- User asks to translate code between languages
 - User wants to see how code reads in their native language
 - Normalizing non-English input to English for processing
 

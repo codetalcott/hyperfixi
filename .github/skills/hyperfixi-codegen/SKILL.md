@@ -1,19 +1,19 @@
 ---
-name: hyperscript-codegen
-description: 'Compiles hyperscript to JavaScript, generates React/Vue/Svelte components, and produces Playwright tests. Use when user wants compiled output, framework components, test generation, or behavioral comparison from hyperscript.'
+name: hyperfixi-codegen
+description: 'Compiles HyperFixi/LokaScript to JavaScript, generates React/Vue/Svelte components, and produces Playwright tests. Use when user wants compiled output, framework components, test generation, or behavioral comparison.'
 ---
 
 # HyperFixi Code Generation
 
-Compile hyperscript to JavaScript, generate framework components, and produce Playwright tests.
+Compile HyperFixi/LokaScript code to JavaScript, generate framework components, and produce Playwright tests.
 
 ## When to Use
 
-- Compile hyperscript to optimized JavaScript
-- Generate React, Vue, or Svelte components from hyperscript behavior
-- Generate Playwright tests from hyperscript
-- Validate hyperscript semantics without compiling (dry-run)
-- Compare two hyperscript inputs for behavioral equivalence
+- Compile HyperFixi code to optimized JavaScript
+- Generate React, Vue, or Svelte components from HyperFixi behavior
+- Generate Playwright tests from HyperFixi code
+- Validate semantics without compiling (dry-run)
+- Compare two inputs for behavioral equivalence
 
 ## Workflow
 
@@ -63,7 +63,7 @@ validate_and_compile({ code: "on click toggle .active" })
 
 ## Behavior Comparison
 
-Compare two hyperscript inputs at the semantic level:
+Compare two inputs at the semantic level:
 
 ```
 diff_behaviors({
