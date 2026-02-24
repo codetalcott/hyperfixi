@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
-from .parser import parse_explicit, ParseError
+from .parser import parse_explicit, is_explicit_syntax, ParseError
 from .renderer import render_explicit
 from .json_convert import from_json, to_json
 
@@ -72,13 +72,13 @@ def _convert_cmd(lines: str) -> None:
     if not text:
         return
 
-    # Try to detect JSON
-    if text.startswith("{") or text.startswith("[{"):
-        # It's JSON -> render to bracket syntax
-        _render_cmd(text)
-    else:
+    # Use is_explicit_syntax for robust detection
+    if is_explicit_syntax(text.splitlines()[0]):
         # It's bracket syntax -> parse to JSON
         _parse_cmd(text)
+    else:
+        # It's JSON -> render to bracket syntax
+        _render_cmd(text)
 
 
 def main() -> None:

@@ -16,7 +16,7 @@ func fixturesDir() string {
 	return filepath.Join(filepath.Dir(filename), "..", "test-fixtures")
 }
 
-func loadFixtures(t *testing.T, filename string) []map[string]interface{} {
+func loadFixtures(t *testing.T, filename string) []map[string]any {
 	t.Helper()
 	path := filepath.Join(fixturesDir(), filename)
 	data, err := os.ReadFile(path)
@@ -24,7 +24,7 @@ func loadFixtures(t *testing.T, filename string) []map[string]interface{} {
 		t.Skipf("Fixture file not found: %s", path)
 		return nil
 	}
-	var fixtures []map[string]interface{}
+	var fixtures []map[string]any
 	if err := json.Unmarshal(data, &fixtures); err != nil {
 		t.Fatalf("Failed to parse %s: %v", filename, err)
 	}
@@ -32,7 +32,7 @@ func loadFixtures(t *testing.T, filename string) []map[string]interface{} {
 }
 
 // assertRolesMatch compares parsed roles with expected roles from a fixture.
-func assertRolesMatch(t *testing.T, actualRoles map[string]SemanticValue, expectedRoles map[string]interface{}, testID string) {
+func assertRolesMatch(t *testing.T, actualRoles map[string]SemanticValue, expectedRoles map[string]any, testID string) {
 	t.Helper()
 
 	// Check same keys
@@ -48,7 +48,7 @@ func assertRolesMatch(t *testing.T, actualRoles map[string]SemanticValue, expect
 			continue
 		}
 
-		expected, ok := expectedRaw.(map[string]interface{})
+		expected, ok := expectedRaw.(map[string]any)
 		if !ok {
 			t.Errorf("[%s] Expected role %q value is not an object", testID, roleName)
 			continue
@@ -94,7 +94,7 @@ func assertRolesMatch(t *testing.T, actualRoles map[string]SemanticValue, expect
 }
 
 // valuesEqual compares two values, handling JSON number type (float64) vs Go int.
-func valuesEqual(actual, expected interface{}) bool {
+func valuesEqual(actual, expected any) bool {
 	// Handle numeric comparisons (JSON decodes all numbers as float64)
 	switch a := actual.(type) {
 	case int:
@@ -130,7 +130,7 @@ func TestParseConformance(t *testing.T) {
 	for _, filename := range files {
 		fixtures := loadFixtures(t, filename)
 		for _, fixture := range fixtures {
-			expected, ok := fixture["expected"].(map[string]interface{})
+			expected, ok := fixture["expected"].(map[string]any)
 			if !ok || fixture["expectError"] == true {
 				continue
 			}
@@ -153,7 +153,7 @@ func TestParseConformance(t *testing.T) {
 					t.Errorf("action: got %q, want %q", node.Action, expectedAction)
 				}
 
-				expectedRoles, _ := expected["roles"].(map[string]interface{})
+				expectedRoles, _ := expected["roles"].(map[string]any)
 				assertRolesMatch(t, node.Roles, expectedRoles, id)
 			})
 		}
@@ -165,7 +165,7 @@ func TestParseConformance(t *testing.T) {
 func TestNestedConformance(t *testing.T) {
 	fixtures := loadFixtures(t, "nested.json")
 	for _, fixture := range fixtures {
-		expected, ok := fixture["expected"].(map[string]interface{})
+		expected, ok := fixture["expected"].(map[string]any)
 		if !ok {
 			continue
 		}
@@ -188,15 +188,15 @@ func TestNestedConformance(t *testing.T) {
 				t.Errorf("action: got %q, want %q", node.Action, expectedAction)
 			}
 
-			expectedRoles, _ := expected["roles"].(map[string]interface{})
+			expectedRoles, _ := expected["roles"].(map[string]any)
 			assertRolesMatch(t, node.Roles, expectedRoles, id)
 
-			if bodyData, ok := expected["body"].([]interface{}); ok {
+			if bodyData, ok := expected["body"].([]any); ok {
 				if len(node.Body) != len(bodyData) {
 					t.Fatalf("body length: got %d, want %d", len(node.Body), len(bodyData))
 				}
 				for i, expectedBodyRaw := range bodyData {
-					expectedBody, ok := expectedBodyRaw.(map[string]interface{})
+					expectedBody, ok := expectedBodyRaw.(map[string]any)
 					if !ok {
 						continue
 					}
@@ -212,7 +212,7 @@ func TestNestedConformance(t *testing.T) {
 						t.Errorf("body[%d].action: got %q, want %q", i, actualBody.Action, eAction)
 					}
 
-					eRoles, _ := expectedBody["roles"].(map[string]interface{})
+					eRoles, _ := expectedBody["roles"].(map[string]any)
 					assertRolesMatch(t, actualBody.Roles, eRoles, fmt.Sprintf("%s.body[%d]", id, i))
 				}
 			}

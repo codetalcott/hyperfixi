@@ -26,8 +26,8 @@ Every imperative command has an action and named roles:
 | [spec/](spec/)                   | Formal ABNF grammar, wire format, streaming convention |
 | [test-fixtures/](test-fixtures/) | Language-independent conformance test cases            |
 | [python/](python/)               | Python reference parser (pip-installable)              |
-| go/                              | Go reference parser _(planned)_                        |
-| rust/                            | Rust reference parser _(planned)_                      |
+| [go/](go/)                       | Go reference parser                                    |
+| [rust/](rust/)                   | Rust reference parser (crate)                          |
 
 ## Quick Start
 
@@ -46,6 +46,31 @@ print(node.roles['patient'].value)  # ".active"
 
 text = render_explicit(node)
 print(text)  # "[toggle patient:.active destination:#button]"
+```
+
+### Go
+
+```go
+import lse "github.com/lokascript/explicit-syntax-go"
+
+node, err := lse.ParseExplicit("[toggle patient:.active destination:#button]", nil)
+fmt.Println(node.Action) // "toggle"
+fmt.Println(node.Roles["patient"].StringValue()) // ".active"
+
+text := lse.RenderExplicit(node)
+fmt.Println(text) // "[toggle patient:.active destination:#button]"
+```
+
+### Rust
+
+```rust
+use lokascript_explicit::*;
+
+let node = parse_explicit("[toggle patient:.active destination:#button]", None).unwrap();
+assert_eq!(node.action, "toggle");
+
+let rendered = render_explicit(&node);
+// "[toggle patient:.active destination:#button]"
 ```
 
 ### CLI

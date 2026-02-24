@@ -45,6 +45,9 @@ def _value_to_string(value: SemanticValue) -> str:
     """Convert a semantic value to its explicit syntax string form."""
     if value.type == "literal":
         v = value.value  # type: ignore[union-attr]
+        # Bool check must come before str check (bool is a subclass of int in Python)
+        if isinstance(v, bool):
+            return "true" if v else "false"
         if isinstance(v, str):
             dt = getattr(value, "dataType", None)
             # Quote strings that are explicitly typed as string or contain spaces

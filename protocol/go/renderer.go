@@ -2,6 +2,7 @@ package lse
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -22,8 +23,16 @@ func RenderExplicit(node *SemanticNode) string {
 
 	parts := []string{node.Action}
 
+	// Sort roles alphabetically for deterministic output
+	roleNames := make([]string, 0, len(node.Roles))
+	for role := range node.Roles {
+		roleNames = append(roleNames, role)
+	}
+	sort.Strings(roleNames)
+
 	// Add roles
-	for role, value := range node.Roles {
+	for _, role := range roleNames {
+		value := node.Roles[role]
 		if value.Type == TypeFlag {
 			prefix := "+"
 			if value.Enabled != nil && !*value.Enabled {

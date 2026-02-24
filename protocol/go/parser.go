@@ -22,6 +22,10 @@ type ParseOptions struct {
 	// ReferenceSet overrides the default reference names.
 	// If nil, DefaultReferences is used.
 	ReferenceSet map[string]bool
+	// MaxInputLength limits the maximum input length in bytes.
+	// If > 0, inputs exceeding this length are rejected.
+	// Recommended for server-side use to prevent resource exhaustion.
+	MaxInputLength int
 }
 
 var (
@@ -37,6 +41,13 @@ func IsExplicitSyntax(text string) bool {
 
 // ParseExplicit parses explicit bracket syntax into a SemanticNode.
 func ParseExplicit(text string, opts *ParseOptions) (*SemanticNode, error) {
+	// Check input length limit
+	if opts != nil && opts.MaxInputLength > 0 && len(text) > opts.MaxInputLength {
+		return nil, &ParseError{
+			Message: fmt.Sprintf("Input length %d exceeds maximum allowed length %d", len(text), opts.MaxInputLength),
+		}
+	}
+
 	refs := DefaultReferences
 	if opts != nil && opts.ReferenceSet != nil {
 		refs = opts.ReferenceSet
@@ -137,21 +148,36 @@ func ParseExplicit(text string, opts *ParseOptions) (*SemanticNode, error) {
 	}, nil
 }
 
+// countPrecedingBackslashes counts consecutive backslashes immediately
+// before the rune at position pos in the rune slice.
+func countPrecedingBackslashes(runes []rune, pos int) int {
+	count := 0
+	for j := pos - 1; j >= 0; j-- {
+		if runes[j] == '\\' {
+			count++
+		} else {
+			break
+		}
+	}
+	return count
+}
+
 // tokenize splits explicit syntax content on spaces, respecting quoted strings
-// and bracket nesting.
+// and bracket nesting. Uses rune iteration for correct UTF-8 handling.
 func tokenize(content string) []string {
 	var tokens []string
 	var current strings.Builder
 	inString := false
-	stringChar := byte(0)
+	var stringChar rune
 	bracketDepth := 0
 
-	for i := 0; i < len(content); i++ {
-		ch := content[i]
+	runes := []rune(content)
 
+	for i, ch := range runes {
 		if inString {
-			current.WriteByte(ch)
-			if ch == stringChar && (i == 0 || content[i-1] != '\\') {
+			current.WriteRune(ch)
+			// A quote closes the string only if preceded by an even number of backslashes
+			if ch == stringChar && countPrecedingBackslashes(runes, i)%2 == 0 {
 				inString = false
 			}
 			continue
@@ -160,19 +186,19 @@ func tokenize(content string) []string {
 		if ch == '"' || ch == '\'' {
 			inString = true
 			stringChar = ch
-			current.WriteByte(ch)
+			current.WriteRune(ch)
 			continue
 		}
 
 		if ch == '[' {
 			bracketDepth++
-			current.WriteByte(ch)
+			current.WriteRune(ch)
 			continue
 		}
 
 		if ch == ']' {
 			bracketDepth--
-			current.WriteByte(ch)
+			current.WriteRune(ch)
 			continue
 		}
 
@@ -184,7 +210,7 @@ func tokenize(content string) []string {
 			continue
 		}
 
-		current.WriteByte(ch)
+		current.WriteRune(ch)
 	}
 
 	if current.Len() > 0 {

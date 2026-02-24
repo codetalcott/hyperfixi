@@ -38,6 +38,7 @@ def parse_explicit(
     text: str,
     *,
     reference_set: frozenset[str] | set[str] | None = None,
+    max_input_length: int | None = None,
 ) -> SemanticNode:
     """Parse explicit bracket syntax into a SemanticNode.
 
@@ -45,6 +46,9 @@ def parse_explicit(
         text: The input string, e.g. '[toggle patient:.active]'
         reference_set: Custom set of valid reference names.
             Defaults to DEFAULT_REFERENCES.
+        max_input_length: Maximum input length in characters. If set,
+            inputs exceeding this length are rejected. Recommended for
+            server-side use to prevent resource exhaustion.
 
     Returns:
         A SemanticNode representing the parsed command.
@@ -52,6 +56,11 @@ def parse_explicit(
     Raises:
         ParseError: If the input is malformed.
     """
+    if max_input_length is not None and len(text) > max_input_length:
+        raise ParseError(
+            f"Input length {len(text)} exceeds maximum allowed length {max_input_length}"
+        )
+
     refs = reference_set if reference_set is not None else DEFAULT_REFERENCES
 
     trimmed = text.strip()
@@ -138,8 +147,15 @@ def _tokenize(content: str) -> list[str]:
     for i, char in enumerate(content):
         if in_string:
             current += char
-            if char == string_char and (i == 0 or content[i - 1] != "\\"):
-                in_string = False
+            # A quote closes the string only if preceded by an even number of backslashes
+            if char == string_char:
+                num_backslashes = 0
+                j = i - 1
+                while j >= 0 and content[j] == "\\":
+                    num_backslashes += 1
+                    j -= 1
+                if num_backslashes % 2 == 0:
+                    in_string = False
             continue
 
         if char in ('"', "'"):

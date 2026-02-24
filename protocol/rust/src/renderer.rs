@@ -13,8 +13,13 @@ pub fn render_explicit(node: &SemanticNode) -> String {
 
     let mut parts: Vec<String> = vec![node.action.clone()];
 
+    // Sort roles alphabetically for deterministic output
+    let mut role_names: Vec<&String> = node.roles.keys().collect();
+    role_names.sort();
+
     // Add roles
-    for (role, value) in &node.roles {
+    for role in role_names {
+        let value = &node.roles[role];
         if value.value_type == ValueType::Flag {
             let prefix = if value.enabled.unwrap_or(true) {
                 "+"

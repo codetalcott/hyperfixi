@@ -67,7 +67,7 @@ class TestRenderBasic:
             },
         )
         result = render_explicit(node)
-        assert "goal:True" in result or "goal:true" in result
+        assert "goal:true" in result
 
 
 class TestRenderFlags:

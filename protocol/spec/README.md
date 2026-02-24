@@ -67,7 +67,7 @@ ABNF is context-free, but LSE tokenization is context-sensitive. The tokenizer i
 for each character c in input:
   if in_string:
     append c to current_token
-    if c == string_char AND previous character != '\':
+    if c == string_char AND preceding_backslash_count is even:
       in_string = false
     continue
 
@@ -146,6 +146,17 @@ Event handlers use the special `on` command with an `event` role and optional `b
 
 The `body` role value is a nested bracket command, recursively parsed. Event handlers produce a different node kind (`event-handler` vs `command`).
 
+### The `body` Dual Role
+
+The name `body` serves two purposes in LSE:
+
+1. **Reference** — In the default reference set, `body` refers to the document body (e.g., `destination:body` targets `document.body`).
+2. **Structural role** — In event handlers, `body` is a role name whose value contains a nested bracket command.
+
+**Resolution rule:** When parsing a role named `body`, if the value starts with `[`, it is treated as a nested bracket command (structural). Otherwise, `body` appearing as a value (e.g., `destination:body`) is classified as a reference through the normal value classification priority.
+
+This means `body:[toggle patient:.active]` is structural (parsed as nested command), while `destination:body` is a reference (the document body).
+
 ## Compound Statements
 
 Multiple commands can be chained with operators:
@@ -157,6 +168,8 @@ Multiple commands can be chained with operators:
 Chain operators: `then`, `and`, `async`, `sequential`.
 
 Compound statements are rendered by joining each bracket command with the chain operator surrounded by spaces.
+
+> **Note:** In v1.0.0, compound statement _parsing_ from bracket syntax is not yet implemented in the reference parsers. Compound nodes can be constructed from JSON (via `from_json`) and rendered to bracket syntax (via `render_explicit`). Parsing compound bracket syntax is planned for a future minor version.
 
 ## MIME Types
 

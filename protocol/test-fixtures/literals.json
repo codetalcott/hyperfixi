@@ -124,5 +124,55 @@
         "responseType": { "type": "literal", "value": "json", "dataType": "string" }
       }
     }
+  },
+  {
+    "id": "lit-011",
+    "description": "Single-quoted string literal",
+    "input": "[put patient:'hello world' destination:#output]",
+    "expected": {
+      "kind": "command",
+      "action": "put",
+      "roles": {
+        "patient": { "type": "literal", "value": "hello world", "dataType": "string" },
+        "destination": { "type": "selector", "value": "#output" }
+      }
+    }
+  },
+  {
+    "id": "lit-012",
+    "description": "Negative duration",
+    "input": "[adjust duration:-500ms]",
+    "expected": {
+      "kind": "command",
+      "action": "adjust",
+      "roles": {
+        "duration": { "type": "literal", "value": "-500ms", "dataType": "duration" }
+      }
+    }
+  },
+  {
+    "id": "lit-013",
+    "description": "Decimal duration",
+    "input": "[wait duration:1.5s]",
+    "expected": {
+      "kind": "command",
+      "action": "wait",
+      "roles": {
+        "duration": { "type": "literal", "value": "1.5s", "dataType": "duration" }
+      }
+    }
+  },
+  {
+    "id": "lit-014",
+    "description": "String with escaped backslash before closing quote",
+    "input": "[put patient:\"test\\\\\" destination:#output]",
+    "expected": {
+      "kind": "command",
+      "action": "put",
+      "roles": {
+        "patient": { "type": "literal", "value": "test\\\\", "dataType": "string" },
+        "destination": { "type": "selector", "value": "#output" }
+      }
+    }
   }
 ]

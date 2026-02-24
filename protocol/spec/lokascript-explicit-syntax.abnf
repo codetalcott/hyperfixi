@@ -78,19 +78,21 @@ role-name      = 1*( ALPHA / DIGIT / "-" / "_" )
 ;   1. selector     - starts with # . [ @ *
 ;   2. string       - starts with " or '
 ;   3. boolean      - exact match: true / false
-;   4. nested-body  - starts with [ (only for role "body")
+;   4. reference    - matches a known reference name (case-insensitive)
 ;   5. duration     - number followed by ms/s/m/h
 ;   6. number       - digits with optional decimal
-;   7. reference    - matches a known reference name
-;   8. plain-value  - fallback: any non-whitespace characters
+;   7. plain-value  - fallback: any non-whitespace characters
+;
+; NOTE: Nested body detection (role "body" with value starting "[") is
+; handled at the role-parsing level, before value classification.
+; See "Event Handlers" in the spec README for details.
 
 value          = selector
                / string-literal
                / boolean-literal
-               / nested-body
+               / reference
                / duration-literal
                / number-literal
-               / reference
                / plain-value
 
 ; --- Selectors ---
@@ -163,6 +165,11 @@ reference      = "me" / "you" / "it" / "result"
 ; --- Nested Body ---
 ; A bracket command embedded as a role value. Used for event handler
 ; bodies: [on event:click body:[toggle patient:.active]]
+;
+; Nested body is NOT a value type in the priority list. It is detected
+; at the role-parsing level: when the role name is "body" and the value
+; starts with "[", the value is parsed as a nested bracket command.
+; This avoids ambiguity with the "body" reference (document body).
 ;
 ; Parsers MUST track bracket depth to find the matching "]".
 ; The nested content is recursively parsed as a bracket-cmd.

@@ -99,7 +99,7 @@ func cmdParse(input string) error {
 }
 
 func cmdRender(input string) error {
-	var data map[string]interface{}
+	var data map[string]any
 	if err := json.Unmarshal([]byte(input), &data); err != nil {
 		return fmt.Errorf("invalid JSON: %w", err)
 	}

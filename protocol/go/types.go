@@ -32,12 +32,12 @@ const (
 
 // SemanticValue represents a typed value in a role slot.
 type SemanticValue struct {
-	Type     ValueType   `json:"type"`
-	Value    interface{} `json:"value,omitempty"`
-	DataType string      `json:"dataType,omitempty"`
-	Raw      string      `json:"raw,omitempty"`
-	Name     string      `json:"name,omitempty"`
-	Enabled  *bool       `json:"enabled,omitempty"`
+	Type     ValueType `json:"type"`
+	Value    any       `json:"value,omitempty"`
+	DataType string    `json:"dataType,omitempty"`
+	Raw      string    `json:"raw,omitempty"`
+	Name     string    `json:"name,omitempty"`
+	Enabled  *bool     `json:"enabled,omitempty"`
 }
 
 // SelectorValue creates a selector SemanticValue.
@@ -46,7 +46,7 @@ func SelectorValue(value string) SemanticValue {
 }
 
 // LiteralValue creates a literal SemanticValue.
-func LiteralValue(value interface{}, dataType string) SemanticValue {
+func LiteralValue(value any, dataType string) SemanticValue {
 	return SemanticValue{Type: TypeLiteral, Value: value, DataType: dataType}
 }
 
@@ -80,18 +80,18 @@ func (v SemanticValue) StringValue() string {
 
 // SemanticNode represents a parsed LSE node.
 type SemanticNode struct {
-	Kind       NodeKind                  `json:"kind"`
-	Action     string                    `json:"action"`
-	Roles      map[string]SemanticValue  `json:"roles"`
-	Body       []SemanticNode            `json:"body,omitempty"`
-	Statements []SemanticNode            `json:"statements,omitempty"`
-	ChainType  string                    `json:"chainType,omitempty"`
+	Kind       NodeKind                 `json:"kind"`
+	Action     string                   `json:"action"`
+	Roles      map[string]SemanticValue `json:"roles"`
+	Body       []SemanticNode           `json:"body,omitempty"`
+	Statements []SemanticNode           `json:"statements,omitempty"`
+	ChainType  string                   `json:"chainType,omitempty"`
 }
 
 // MarshalJSON implements custom JSON marshaling to match the protocol wire format.
 func (n SemanticNode) MarshalJSON() ([]byte, error) {
-	m := map[string]interface{}{
-		"kind":   n.Kind,
+	m := map[string]any{
+		"kind":   string(n.Kind),
 		"action": n.Action,
 		"roles":  marshalRoles(n.Roles),
 	}
@@ -108,8 +108,8 @@ func (n SemanticNode) MarshalJSON() ([]byte, error) {
 }
 
 // marshalRoles converts roles map to JSON-friendly format.
-func marshalRoles(roles map[string]SemanticValue) map[string]interface{} {
-	result := make(map[string]interface{}, len(roles))
+func marshalRoles(roles map[string]SemanticValue) map[string]any {
+	result := make(map[string]any, len(roles))
 	for k, v := range roles {
 		result[k] = marshalValue(v)
 	}
@@ -117,8 +117,8 @@ func marshalRoles(roles map[string]SemanticValue) map[string]interface{} {
 }
 
 // marshalValue converts a SemanticValue to a JSON-friendly map.
-func marshalValue(v SemanticValue) map[string]interface{} {
-	m := map[string]interface{}{"type": v.Type}
+func marshalValue(v SemanticValue) map[string]any {
+	m := map[string]any{"type": string(v.Type)}
 	switch v.Type {
 	case TypeSelector, TypeReference:
 		m["value"] = v.Value

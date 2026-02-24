@@ -5,10 +5,10 @@ import (
 )
 
 func TestValidateJSONValid(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient": map[string]interface{}{"type": "selector", "value": ".active"},
+		"roles": map[string]any{
+			"patient": map[string]any{"type": "selector", "value": ".active"},
 		},
 	}
 	diags := ValidateJSON(data)
@@ -18,8 +18,8 @@ func TestValidateJSONValid(t *testing.T) {
 }
 
 func TestValidateJSONMissingAction(t *testing.T) {
-	data := map[string]interface{}{
-		"roles": map[string]interface{}{},
+	data := map[string]any{
+		"roles": map[string]any{},
 	}
 	diags := ValidateJSON(data)
 	if len(diags) != 1 || diags[0].Code != "INVALID_ACTION" {
@@ -28,9 +28,9 @@ func TestValidateJSONMissingAction(t *testing.T) {
 }
 
 func TestValidateJSONInvalidRoleValue(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
+		"roles": map[string]any{
 			"patient": "not-an-object",
 		},
 	}
@@ -47,10 +47,10 @@ func TestValidateJSONInvalidRoleValue(t *testing.T) {
 }
 
 func TestValidateJSONInvalidValueType(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient": map[string]interface{}{"type": "unknown", "value": ".active"},
+		"roles": map[string]any{
+			"patient": map[string]any{"type": "unknown", "value": ".active"},
 		},
 	}
 	diags := ValidateJSON(data)
@@ -66,10 +66,10 @@ func TestValidateJSONInvalidValueType(t *testing.T) {
 }
 
 func TestValidateJSONMissingValue(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient": map[string]interface{}{"type": "selector"},
+		"roles": map[string]any{
+			"patient": map[string]any{"type": "selector"},
 		},
 	}
 	diags := ValidateJSON(data)
@@ -85,12 +85,12 @@ func TestValidateJSONMissingValue(t *testing.T) {
 }
 
 func TestValidateJSONValidTrigger(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient": map[string]interface{}{"type": "selector", "value": ".active"},
+		"roles": map[string]any{
+			"patient": map[string]any{"type": "selector", "value": ".active"},
 		},
-		"trigger": map[string]interface{}{"event": "click"},
+		"trigger": map[string]any{"event": "click"},
 	}
 	diags := ValidateJSON(data)
 	if len(diags) != 0 {
@@ -99,12 +99,12 @@ func TestValidateJSONValidTrigger(t *testing.T) {
 }
 
 func TestValidateJSONInvalidTrigger(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient": map[string]interface{}{"type": "selector", "value": ".active"},
+		"roles": map[string]any{
+			"patient": map[string]any{"type": "selector", "value": ".active"},
 		},
-		"trigger": map[string]interface{}{"event": ""},
+		"trigger": map[string]any{"event": ""},
 	}
 	diags := ValidateJSON(data)
 	found := false
@@ -119,10 +119,10 @@ func TestValidateJSONInvalidTrigger(t *testing.T) {
 }
 
 func TestValidateJSONFlagType(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "column",
-		"roles": map[string]interface{}{
-			"primary-key": map[string]interface{}{"type": "flag", "value": true},
+		"roles": map[string]any{
+			"primary-key": map[string]any{"type": "flag", "value": true},
 		},
 	}
 	diags := ValidateJSON(data)
@@ -132,10 +132,10 @@ func TestValidateJSONFlagType(t *testing.T) {
 }
 
 func TestFromJSONBasicCommand(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient": map[string]interface{}{"type": "selector", "value": ".active"},
+		"roles": map[string]any{
+			"patient": map[string]any{"type": "selector", "value": ".active"},
 		},
 	}
 	node, err := FromJSON(data)
@@ -154,12 +154,12 @@ func TestFromJSONBasicCommand(t *testing.T) {
 }
 
 func TestFromJSONTriggerWrapsEventHandler(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient": map[string]interface{}{"type": "selector", "value": ".active"},
+		"roles": map[string]any{
+			"patient": map[string]any{"type": "selector", "value": ".active"},
 		},
-		"trigger": map[string]interface{}{"event": "click"},
+		"trigger": map[string]any{"event": "click"},
 	}
 	node, err := FromJSON(data)
 	if err != nil {
@@ -180,18 +180,18 @@ func TestFromJSONTriggerWrapsEventHandler(t *testing.T) {
 }
 
 func TestFromJSONFullFidelityEventHandler(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"kind":   "event-handler",
 		"action": "on",
-		"roles": map[string]interface{}{
-			"event": map[string]interface{}{"type": "literal", "value": "click", "dataType": "string"},
+		"roles": map[string]any{
+			"event": map[string]any{"type": "literal", "value": "click", "dataType": "string"},
 		},
-		"body": []interface{}{
-			map[string]interface{}{
+		"body": []any{
+			map[string]any{
 				"kind":   "command",
 				"action": "toggle",
-				"roles": map[string]interface{}{
-					"patient": map[string]interface{}{"type": "selector", "value": ".active"},
+				"roles": map[string]any{
+					"patient": map[string]any{"type": "selector", "value": ".active"},
 				},
 			},
 		},
@@ -209,23 +209,23 @@ func TestFromJSONFullFidelityEventHandler(t *testing.T) {
 }
 
 func TestFromJSONCompoundNode(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"kind":      "compound",
 		"action":    "compound",
 		"chainType": "then",
-		"statements": []interface{}{
-			map[string]interface{}{
+		"statements": []any{
+			map[string]any{
 				"kind":   "command",
 				"action": "add",
-				"roles": map[string]interface{}{
-					"patient": map[string]interface{}{"type": "selector", "value": ".loading"},
+				"roles": map[string]any{
+					"patient": map[string]any{"type": "selector", "value": ".loading"},
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"kind":   "command",
 				"action": "fetch",
-				"roles": map[string]interface{}{
-					"source": map[string]interface{}{"type": "literal", "value": "/api/data", "dataType": "string"},
+				"roles": map[string]any{
+					"source": map[string]any{"type": "literal", "value": "/api/data", "dataType": "string"},
 				},
 			},
 		},
@@ -257,8 +257,8 @@ func TestToJSONBasicCommand(t *testing.T) {
 	if result["action"] != "toggle" {
 		t.Errorf("action = %v, want %q", result["action"], "toggle")
 	}
-	roles := result["roles"].(map[string]interface{})
-	patient := roles["patient"].(map[string]interface{})
+	roles := result["roles"].(map[string]any)
+	patient := roles["patient"].(map[string]any)
 	if patient["type"] != "selector" {
 		t.Errorf("patient type = %v, want %q", patient["type"], "selector")
 	}
@@ -277,8 +277,8 @@ func TestToJSONFlag(t *testing.T) {
 		},
 	}
 	result := ToJSON(node)
-	roles := result["roles"].(map[string]interface{})
-	pk := roles["primary-key"].(map[string]interface{})
+	roles := result["roles"].(map[string]any)
+	pk := roles["primary-key"].(map[string]any)
 	if pk["type"] != "flag" {
 		t.Errorf("type = %v, want %q", pk["type"], "flag")
 	}
@@ -291,11 +291,11 @@ func TestToJSONFlag(t *testing.T) {
 }
 
 func TestRoundTripJSON(t *testing.T) {
-	original := map[string]interface{}{
+	original := map[string]any{
 		"action": "toggle",
-		"roles": map[string]interface{}{
-			"patient":     map[string]interface{}{"type": "selector", "value": ".active"},
-			"destination": map[string]interface{}{"type": "selector", "value": "#button"},
+		"roles": map[string]any{
+			"patient":     map[string]any{"type": "selector", "value": ".active"},
+			"destination": map[string]any{"type": "selector", "value": "#button"},
 		},
 	}
 	node, err := FromJSON(original)
@@ -306,8 +306,8 @@ func TestRoundTripJSON(t *testing.T) {
 	if result["action"] != "toggle" {
 		t.Errorf("action = %v, want %q", result["action"], "toggle")
 	}
-	roles := result["roles"].(map[string]interface{})
-	patient := roles["patient"].(map[string]interface{})
+	roles := result["roles"].(map[string]any)
+	patient := roles["patient"].(map[string]any)
 	if patient["type"] != "selector" || patient["value"] != ".active" {
 		t.Errorf("patient = %v, want selector .active", patient)
 	}

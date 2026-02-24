@@ -1,20 +1,18 @@
 package lse
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
 // Diagnostic represents a validation error or warning.
 type Diagnostic struct {
-	Severity   string `json:"severity"`
-	Code       string `json:"code"`
-	Message    string `json:"message"`
-	Suggestion string `json:"suggestion,omitempty"`
+	Severity string `json:"severity"`
+	Code     string `json:"code"`
+	Message  string `json:"message"`
 }
 
 // ValidateJSON validates a SemanticJSON map. Returns a slice of diagnostics (empty = valid).
-func ValidateJSON(data map[string]interface{}) []Diagnostic {
+func ValidateJSON(data map[string]any) []Diagnostic {
 	var diags []Diagnostic
 
 	// Check action
@@ -28,9 +26,9 @@ func ValidateJSON(data map[string]interface{}) []Diagnostic {
 	}
 
 	// Check roles
-	if roles, ok := data["roles"].(map[string]interface{}); ok {
+	if roles, ok := data["roles"].(map[string]any); ok {
 		for roleName, rv := range roles {
-			roleValue, ok := rv.(map[string]interface{})
+			roleValue, ok := rv.(map[string]any)
 			if !ok {
 				diags = append(diags, Diagnostic{
 					Severity: "error",
@@ -66,7 +64,7 @@ func ValidateJSON(data map[string]interface{}) []Diagnostic {
 	}
 
 	// Check trigger
-	if trigger, ok := data["trigger"].(map[string]interface{}); ok {
+	if trigger, ok := data["trigger"].(map[string]any); ok {
 		event, _ := trigger["event"].(string)
 		if event == "" {
 			diags = append(diags, Diagnostic{
@@ -82,19 +80,19 @@ func ValidateJSON(data map[string]interface{}) []Diagnostic {
 
 // FromJSON converts a SemanticJSON map to a SemanticNode.
 // Accepts both full-fidelity and LLM-simplified formats.
-func FromJSON(data map[string]interface{}) (*SemanticNode, error) {
+func FromJSON(data map[string]any) (*SemanticNode, error) {
 	action, _ := data["action"].(string)
-	rawRoles, _ := data["roles"].(map[string]interface{})
+	rawRoles, _ := data["roles"].(map[string]any)
 
 	roles := make(map[string]SemanticValue)
 	for roleName, rv := range rawRoles {
-		if roleMap, ok := rv.(map[string]interface{}); ok {
+		if roleMap, ok := rv.(map[string]any); ok {
 			roles[roleName] = convertJSONValue(roleMap)
 		}
 	}
 
 	// If trigger present, wrap in event handler
-	if trigger, ok := data["trigger"].(map[string]interface{}); ok {
+	if trigger, ok := data["trigger"].(map[string]any); ok {
 		eventName, _ := trigger["event"].(string)
 		eventRoles := map[string]SemanticValue{
 			"event": LiteralValue(eventName, "string"),
@@ -120,9 +118,9 @@ func FromJSON(data map[string]interface{}) (*SemanticNode, error) {
 
 	if kind == KindEventHandler {
 		var body []SemanticNode
-		if bodyData, ok := data["body"].([]interface{}); ok {
+		if bodyData, ok := data["body"].([]any); ok {
 			for _, b := range bodyData {
-				if bMap, ok := b.(map[string]interface{}); ok {
+				if bMap, ok := b.(map[string]any); ok {
 					bodyNode, err := FromJSON(bMap)
 					if err != nil {
 						return nil, err
@@ -141,9 +139,9 @@ func FromJSON(data map[string]interface{}) (*SemanticNode, error) {
 
 	if kind == KindCompound {
 		var stmts []SemanticNode
-		if stmtsData, ok := data["statements"].([]interface{}); ok {
+		if stmtsData, ok := data["statements"].([]any); ok {
 			for _, s := range stmtsData {
-				if sMap, ok := s.(map[string]interface{}); ok {
+				if sMap, ok := s.(map[string]any); ok {
 					stmtNode, err := FromJSON(sMap)
 					if err != nil {
 						return nil, err
@@ -172,16 +170,35 @@ func FromJSON(data map[string]interface{}) (*SemanticNode, error) {
 	}, nil
 }
 
-// ToJSON converts a SemanticNode to a JSON-friendly map.
-func ToJSON(node *SemanticNode) map[string]interface{} {
-	b, _ := json.Marshal(node)
-	var result map[string]interface{}
-	json.Unmarshal(b, &result)
-	return result
+// ToJSON converts a SemanticNode to a full-fidelity JSON-friendly map.
+func ToJSON(node *SemanticNode) map[string]any {
+	m := map[string]any{
+		"kind":   string(node.Kind),
+		"action": node.Action,
+		"roles":  marshalRoles(node.Roles),
+	}
+	if node.Kind == KindEventHandler && len(node.Body) > 0 {
+		bodyMaps := make([]map[string]any, len(node.Body))
+		for i := range node.Body {
+			bodyMaps[i] = ToJSON(&node.Body[i])
+		}
+		m["body"] = bodyMaps
+	}
+	if node.Kind == KindCompound {
+		stmtMaps := make([]map[string]any, len(node.Statements))
+		for i := range node.Statements {
+			stmtMaps[i] = ToJSON(&node.Statements[i])
+		}
+		m["statements"] = stmtMaps
+		if node.ChainType != "" {
+			m["chainType"] = node.ChainType
+		}
+	}
+	return m
 }
 
 // convertJSONValue converts a JSON value object to a SemanticValue.
-func convertJSONValue(data map[string]interface{}) SemanticValue {
+func convertJSONValue(data map[string]any) SemanticValue {
 	vtype, _ := data["type"].(string)
 
 	switch vtype {

@@ -23,6 +23,10 @@ impl std::error::Error for ParseError {}
 pub struct ParseOptions {
     /// Custom reference set. If None, uses default references.
     pub reference_set: Option<HashSet<String>>,
+    /// Maximum input length in bytes. If set, inputs exceeding this
+    /// length will be rejected with a ParseError. Recommended for
+    /// server-side use to prevent resource exhaustion.
+    pub max_input_length: Option<usize>,
 }
 
 /// Check if input is explicit bracket syntax.
@@ -36,6 +40,19 @@ pub fn parse_explicit(
     text: &str,
     opts: Option<&ParseOptions>,
 ) -> Result<SemanticNode, ParseError> {
+    // Check input length limit
+    if let Some(max_len) = opts.and_then(|o| o.max_input_length) {
+        if text.len() > max_len {
+            return Err(ParseError {
+                message: format!(
+                    "Input length {} exceeds maximum allowed length {}",
+                    text.len(),
+                    max_len
+                ),
+            });
+        }
+    }
+
     let refs = match opts.and_then(|o| o.reference_set.as_ref()) {
         Some(r) => r.clone(),
         None => default_references(),
@@ -140,6 +157,21 @@ pub fn parse_explicit(
     Ok(SemanticNode::command(&command, roles))
 }
 
+/// Count consecutive backslashes immediately before position `pos` in a char slice.
+fn count_preceding_backslashes(chars: &[char], pos: usize) -> usize {
+    let mut count = 0;
+    let mut j = pos;
+    while j > 0 {
+        j -= 1;
+        if chars[j] == '\\' {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    count
+}
+
 /// Tokenize explicit syntax content.
 ///
 /// Splits on spaces, but respects quoted strings and bracket nesting.
@@ -157,7 +189,8 @@ fn tokenize(content: &str) -> Vec<String> {
 
         if in_string {
             current.push(ch);
-            if ch == string_char && (i == 0 || chars[i - 1] != '\\') {
+            // A quote closes the string only if preceded by an even number of backslashes
+            if ch == string_char && count_preceding_backslashes(&chars, i) % 2 == 0 {
                 in_string = false;
             }
             continue;
@@ -308,14 +341,17 @@ fn parse_number_str(s: &str) -> Option<f64> {
     s.parse::<f64>().ok()
 }
 
-/// Find the matching closing bracket starting from position `start`.
+/// Find the matching closing bracket starting from byte position `start`.
+///
+/// Uses byte iteration since `[` and `]` are ASCII (single-byte in UTF-8)
+/// and won't appear as continuation bytes in multi-byte sequences.
 fn find_matching_bracket(s: &str, start: usize) -> usize {
-    let chars: Vec<char> = s.chars().collect();
+    let bytes = s.as_bytes();
     let mut depth = 0;
-    for i in start..chars.len() {
-        if chars[i] == '[' {
+    for i in start..bytes.len() {
+        if bytes[i] == b'[' {
             depth += 1;
-        } else if chars[i] == ']' {
+        } else if bytes[i] == b']' {
             depth -= 1;
             if depth == 0 {
                 return i;
@@ -579,6 +615,7 @@ mod tests {
         refs.insert("parent".to_string());
         let opts = ParseOptions {
             reference_set: Some(refs),
+            max_input_length: None,
         };
         let node =
             parse_explicit("[add patient:.active destination:self]", Some(&opts)).unwrap();
@@ -593,6 +630,7 @@ mod tests {
         refs.insert("self".to_string());
         let opts = ParseOptions {
             reference_set: Some(refs),
+            max_input_length: None,
         };
         let node =
             parse_explicit("[add patient:.active destination:me]", Some(&opts)).unwrap();
