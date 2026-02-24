@@ -851,3 +851,70 @@ describe('Compilation Equivalence', () => {
     }
   });
 });
+
+// =============================================================================
+// Render → Recompile Round-Trip Equivalence
+// =============================================================================
+
+describe('Render → Recompile Round-Trip', () => {
+  let sql: MultilingualDSL;
+  const LANGS = ['en', 'es', 'fr', 'zh', 'ja', 'ko', 'tr', 'ar'] as const;
+
+  beforeAll(() => {
+    sql = createSQLDSL();
+  });
+
+  /**
+   * Parse input in English, render to all 8 languages, recompile each,
+   * and assert all produce identical SQL output.
+   */
+  function assertRoundTrip(input: string) {
+    const node = sql.parse(input, 'en');
+    const baseResult = sql.compile(input, 'en');
+    expect(baseResult.ok).toBe(true);
+    const baseSQL = baseResult.code!;
+
+    for (const lang of LANGS) {
+      const surface = renderSQL(node, lang);
+      const recompiled = sql.compile(surface, lang);
+      expect(recompiled.ok, `${lang}: failed to recompile "${surface}"`).toBe(true);
+      expect(recompiled.code, `${lang}: SQL mismatch for "${surface}"`).toBe(baseSQL);
+    }
+  }
+
+  it('should round-trip SELECT across all 8 languages', () => {
+    assertRoundTrip('select name from users');
+  });
+
+  it('should round-trip SELECT with WHERE across all 8 languages', () => {
+    assertRoundTrip('select name from users where age > 18');
+  });
+
+  it('should round-trip SELECT with compound WHERE across all 8 languages', () => {
+    assertRoundTrip('select name from users where age > 18 and active = true');
+  });
+
+  it('should round-trip INSERT across all 8 languages', () => {
+    assertRoundTrip('insert Alice into users');
+  });
+
+  it('should round-trip UPDATE across all 8 languages', () => {
+    assertRoundTrip('update users set name = Bob');
+  });
+
+  it('should round-trip UPDATE with WHERE across all 8 languages', () => {
+    assertRoundTrip('update users set name = Bob where id = 1');
+  });
+
+  it('should round-trip DELETE across all 8 languages', () => {
+    assertRoundTrip('delete from users');
+  });
+
+  it('should round-trip DELETE with WHERE across all 8 languages', () => {
+    assertRoundTrip('delete from users where id = 1');
+  });
+
+  it('should round-trip DELETE with compound WHERE across all 8 languages', () => {
+    assertRoundTrip('delete from users where id = 1 and active = false');
+  });
+});

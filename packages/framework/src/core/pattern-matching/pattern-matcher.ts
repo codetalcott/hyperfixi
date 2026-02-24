@@ -1126,7 +1126,10 @@ export class PatternMatcher {
             break;
           }
         }
-        break;
+        // For optional groups, continue scanning past them so the greedy
+        // capture also sees subsequent required literals (e.g., the SOV verb
+        // keyword after an optional WHERE group).
+        if (!pt.optional) break;
       }
     }
     return markers;

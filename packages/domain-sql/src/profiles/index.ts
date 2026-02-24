@@ -57,9 +57,10 @@ export const japaneseProfile: PatternGenLanguageProfile = {
     delete: { primary: '削除' },
   },
   roleMarkers: {
-    // Only condition needs explicit position override.
     // '条件' (WHERE) acts as a prefix, not a postposition.
     // source (から) and destination (に) use default SOV 'after' position.
+    // Note: SET (設定) position is controlled via markerPosition on the schema
+    // to avoid colliding with the INSERT schema's 'values' role.
     condition: { primary: '条件', position: 'before' },
   },
 };

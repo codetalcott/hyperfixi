@@ -121,7 +121,7 @@ export const updateSchema = defineCommand({
       required: true,
       expectedTypes: ['expression'],
       svoPosition: 2,
-      sovPosition: 1,
+      sovPosition: 2,
     }),
     defineRole({
       role: 'values',
@@ -130,7 +130,8 @@ export const updateSchema = defineCommand({
       expectedTypes: ['expression'],
       greedy: true,
       svoPosition: 1,
-      sovPosition: 2,
+      sovPosition: 1,
+      markerPosition: 'before',
       markerOverride: {
         en: 'set',
         es: 'establecer',

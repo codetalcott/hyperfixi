@@ -74,6 +74,15 @@ export interface RoleSpec {
   readonly renderOverride?: Record<string, string>;
 
   /**
+   * Override the marker position for this role in the generated pattern.
+   * 'before' = marker precedes the role value (preposition: "set X").
+   * 'after'  = marker follows the role value (postposition: "X から").
+   * If not set, falls back to the language profile's roleMarkers position,
+   * then to the word-order default (SOV='after', else='before').
+   */
+  readonly markerPosition?: 'before' | 'after';
+
+  /**
    * When true, this role captures all remaining tokens until the next
    * recognized marker keyword or end of input, joining their values
    * with spaces into a single ExpressionValue.
