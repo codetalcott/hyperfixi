@@ -59,6 +59,9 @@ import { debugTools, handleDebugTool } from './tools/debug-tools.js';
 // Template inventory tools
 import { inventoryTools, handleInventoryTool } from './tools/inventory.js';
 
+// Training data tools (LLM ↔ LSE)
+import { trainingDataTools, handleTrainingDataTool } from './tools/training-data.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -103,6 +106,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...irTools,
       ...debugTools,
       ...inventoryTools,
+      ...trainingDataTools,
     ],
   };
 });
@@ -241,6 +245,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   // Template inventory tools
   if (name === 'scan_inventory' || name === 'query_inventory') {
     return handleInventoryTool(name, args as Record<string, unknown>);
+  }
+
+  // Training data tools (LLM ↔ LSE)
+  if (name === 'generate_training_data') {
+    return handleTrainingDataTool(name, args as Record<string, unknown>);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)

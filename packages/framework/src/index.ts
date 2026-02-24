@@ -147,6 +147,9 @@ export * from './ir';
 // LLM Prompt Generation — auto-generate system prompts from CommandSchema[]
 export * from './prompts';
 
+// Training Data Generation — synthesize (natural_language, LSE) pairs from schemas
+export * from './training';
+
 // Multi-statement parser
 export { createMultiStatementParser, accumulateBlocks } from './parsing/multi-statement';
 export type {
