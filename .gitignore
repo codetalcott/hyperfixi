@@ -105,6 +105,10 @@ lerna-debug.log*
 /debug*.ts
 /debug*.mjs
 /debug*.html
+# Nested debug files (temporary session artifacts anywhere in the tree)
+**/debug-*.test.ts
+**/debug-*.spec.ts
+**/debug-*.html
 
 # Data files
 *.db
