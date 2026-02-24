@@ -33,6 +33,16 @@
 import type { SemanticNode } from '../core/types';
 import type { MultilingualDSL, CompileResult, ValidationResult } from './create-dsl';
 import type { NaturalLanguageRenderer } from '../generation/renderer';
+import type { CommandSchema } from '../schema/command-schema';
+import type { SchemaLookup } from '../ir/types';
+import type { Diagnostic } from '../generation/diagnostics';
+import type { GeneratedPrompt, PromptGeneratorConfig } from '../prompts/types';
+import type { SynthesisConfig, SynthesisResult } from '../training/types';
+import type { LSEFeedback } from '../feedback/types';
+import { generatePrompt as _generatePrompt } from '../prompts/prompt-generator';
+import { synthesizeFromSchemas as _synthesizeFromSchemas } from '../training/schema-synthesizer';
+import { buildFeedback as _buildFeedback } from '../feedback/feedback-formatter';
+import { parseExplicit as _parseExplicit } from '../ir/explicit-parser';
 
 // =============================================================================
 // Descriptor Interface
@@ -82,6 +92,13 @@ export interface DomainDescriptor {
    * Which standard tools to generate. Default: all four.
    */
   readonly tools?: readonly ('parse' | 'compile' | 'validate' | 'translate')[];
+
+  /**
+   * Optional command schemas for this domain.
+   * When provided, enables system prompt generation, training data synthesis,
+   * and structured feedback via the registry's convenience methods.
+   */
+  readonly schemas?: readonly CommandSchema[];
 
   /**
    * Optional scan configuration for AOT compilation and Vite plugin.
@@ -151,6 +168,19 @@ export class DomainRegistry {
       throw new Error(`Domain already registered: ${descriptor.name}`);
     }
     this.descriptors.set(descriptor.name, descriptor);
+  }
+
+  /**
+   * Attach schemas to an already-registered domain.
+   * Useful for lazy loading schemas after initial registration.
+   */
+  setSchemas(name: string, schemas: readonly CommandSchema[]): void {
+    const existing = this.descriptors.get(name);
+    if (!existing) {
+      throw new Error(`Domain not registered: ${name}`);
+    }
+    // Create a new descriptor with schemas attached
+    this.descriptors.set(name, { ...existing, schemas });
   }
 
   /**
@@ -231,6 +261,89 @@ export class DomainRegistry {
     const descriptor = this.descriptors.get(name);
     if (!descriptor) return null;
     return this.getDSL(descriptor);
+  }
+
+  // ---------------------------------------------------------------------------
+  // LLM ↔ LSE Convenience Methods
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generate an LLM system prompt for a domain from its schemas.
+   * Returns null if the domain is not registered or has no schemas.
+   */
+  generatePrompt(domain: string, config?: Partial<PromptGeneratorConfig>): GeneratedPrompt | null {
+    const descriptor = this.descriptors.get(domain);
+    if (!descriptor?.schemas || descriptor.schemas.length === 0) return null;
+
+    return _generatePrompt({
+      domain,
+      description: descriptor.description,
+      schemas: descriptor.schemas,
+      ...config,
+    });
+  }
+
+  /**
+   * Synthesize training data for a domain from its schemas.
+   * Returns null if the domain is not registered or has no schemas.
+   */
+  generateTrainingData(domain: string, config?: Partial<SynthesisConfig>): SynthesisResult | null {
+    const descriptor = this.descriptors.get(domain);
+    if (!descriptor?.schemas || descriptor.schemas.length === 0) return null;
+
+    return _synthesizeFromSchemas(descriptor.schemas, {
+      domain,
+      ...config,
+    });
+  }
+
+  /**
+   * Build structured feedback for a failed LSE input in a domain.
+   * Returns null if the domain is not registered or has no schemas.
+   */
+  buildFeedback(
+    domain: string,
+    input: string,
+    inputFormat: 'explicit' | 'json' | 'natural',
+    diagnostics: readonly Diagnostic[]
+  ): LSEFeedback | null {
+    const descriptor = this.descriptors.get(domain);
+    if (!descriptor?.schemas || descriptor.schemas.length === 0) return null;
+
+    const schemaLookup = this.createSchemaLookup(descriptor.schemas);
+
+    // Try to extract the action from the input
+    let action: string | undefined;
+    try {
+      if (inputFormat === 'explicit') {
+        const node = _parseExplicit(input, { schemaLookup });
+        action = node.action;
+      }
+    } catch {
+      // Action detection failed — still build feedback without it
+    }
+
+    return _buildFeedback(input, inputFormat, diagnostics, schemaLookup, action);
+  }
+
+  /**
+   * Get schemas for a domain (if available).
+   */
+  getSchemas(domain: string): readonly CommandSchema[] | null {
+    const descriptor = this.descriptors.get(domain);
+    if (!descriptor?.schemas) return null;
+    return descriptor.schemas;
+  }
+
+  /**
+   * Create a SchemaLookup from a domain's schemas.
+   */
+  private createSchemaLookup(schemas: readonly CommandSchema[]): SchemaLookup {
+    const map = new Map<string, CommandSchema>();
+    for (const s of schemas) {
+      map.set(s.action, s);
+    }
+    return { getSchema: (action: string) => map.get(action) };
   }
 
   // ---------------------------------------------------------------------------

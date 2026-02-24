@@ -3,10 +3,17 @@
  *
  * Registers all framework domains with the DomainRegistry for automatic
  * MCP tool generation and dispatch. Replaces manual per-domain tool files.
+ *
+ * Each domain provides schemas for LLM prompt generation, training data
+ * synthesis, and structured feedback via the registry's convenience methods.
  */
 
 import { DomainRegistry } from '@lokascript/framework';
 
+/**
+ * Create and populate the domain registry.
+ * Schemas are loaded lazily on first access to keep startup fast.
+ */
 export function createDomainRegistry(): DomainRegistry {
   const registry = new DomainRegistry();
 
@@ -140,5 +147,45 @@ export function createDomainRegistry(): DomainRegistry {
     },
   });
 
+  // Load schemas for all domains asynchronously.
+  // This populates the schemas field so the registry convenience methods
+  // (generatePrompt, generateTrainingData, buildFeedback) work.
+  loadAllSchemas(registry);
+
   return registry;
+}
+
+/**
+ * Asynchronously load and attach schemas to registered domains.
+ * Schemas are lightweight metadata objects — loading them doesn't
+ * instantiate any DSL or parser.
+ */
+async function loadAllSchemas(registry: DomainRegistry): Promise<void> {
+  const loaders: Array<{ domain: string; load: () => Promise<unknown[]> }> = [
+    { domain: 'sql', load: () => import('@lokascript/domain-sql').then(m => [...m.allSchemas]) },
+    { domain: 'bdd', load: () => import('@lokascript/domain-bdd').then(m => [...m.allSchemas]) },
+    { domain: 'jsx', load: () => import('@lokascript/domain-jsx').then(m => [...m.allSchemas]) },
+    { domain: 'todo', load: () => import('@lokascript/domain-todo').then(m => [...m.allSchemas]) },
+    {
+      domain: 'behaviorspec',
+      load: () => import('@lokascript/domain-behaviorspec').then(m => [...m.allSchemas]),
+    },
+    { domain: 'llm', load: () => import('@lokascript/domain-llm').then(m => [...m.allSchemas]) },
+    { domain: 'flow', load: () => import('@lokascript/domain-flow').then(m => [...m.allSchemas]) },
+    {
+      domain: 'voice',
+      load: () => import('@lokascript/domain-voice').then(m => [...m.allSchemas]),
+    },
+  ];
+
+  await Promise.allSettled(
+    loaders.map(async ({ domain, load }) => {
+      try {
+        const schemas = await load();
+        registry.setSchemas(domain, schemas as any);
+      } catch {
+        // Schema loading failure is non-fatal — domain tools still work
+      }
+    })
+  );
 }

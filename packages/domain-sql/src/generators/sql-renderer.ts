@@ -111,11 +111,12 @@ function renderSelect(node: SemanticNode, lang: string): string {
   const parts: string[] = [];
 
   if (isSOV(lang)) {
-    // SOV: source marker columns keyword [condition-marker condition]
-    parts.push(source, mk('from', lang), columns, keyword);
+    // SOV: source marker columns [condition-marker condition] keyword (verb last)
+    parts.push(source, mk('from', lang), columns);
     if (condition) {
       parts.push(mk('where', lang), condition);
     }
+    parts.push(keyword);
   } else {
     // SVO / VSO: keyword columns marker source [marker condition]
     parts.push(keyword, columns, mk('from', lang), source);
@@ -149,15 +150,15 @@ function renderUpdate(node: SemanticNode, lang: string): string {
   const parts: string[] = [];
 
   if (isSOV(lang)) {
-    // SOV: source [values set-marker] keyword [condition-marker condition]
+    // SOV: source [set-marker values] [condition-marker condition] keyword (verb last)
     parts.push(source);
     if (values) {
       parts.push(mk('set', lang), values);
     }
-    parts.push(keyword);
     if (condition) {
       parts.push(mk('where', lang), condition);
     }
+    parts.push(keyword);
   } else {
     // SVO / VSO: keyword source [marker values] [marker condition]
     parts.push(keyword, source);
@@ -180,11 +181,12 @@ function renderDelete(node: SemanticNode, lang: string): string {
   const parts: string[] = [];
 
   if (isSOV(lang)) {
-    // SOV: source marker keyword [condition-marker condition]
-    parts.push(source, mk('from', lang), keyword);
+    // SOV: source marker [condition-marker condition] keyword (verb last)
+    parts.push(source, mk('from', lang));
     if (condition) {
       parts.push(mk('where', lang), condition);
     }
+    parts.push(keyword);
   } else {
     // SVO / VSO: keyword marker source [marker condition]
     parts.push(keyword, mk('from', lang), source);
