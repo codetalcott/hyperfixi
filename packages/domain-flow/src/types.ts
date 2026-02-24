@@ -7,7 +7,16 @@
  * HTMX attributes, or route descriptors.
  */
 
-export type FlowAction = 'fetch' | 'poll' | 'stream' | 'submit' | 'transform';
+export type FlowAction =
+  | 'fetch'
+  | 'poll'
+  | 'stream'
+  | 'submit'
+  | 'transform'
+  | 'enter'
+  | 'follow'
+  | 'perform'
+  | 'capture';
 
 /**
  * Structured data flow specification.
@@ -42,6 +51,23 @@ export interface FlowSpec {
   /** Transform function or format string (transform command) */
   transformFn?: string;
 
+  // ----- HATEOAS-specific fields -----
+
+  /** Link relation name (follow command) */
+  linkRel?: string;
+
+  /** Action name (perform command) */
+  actionName?: string;
+
+  /** Data source selector or inline data (perform command) */
+  dataSource?: string;
+
+  /** Variable name for captured data (capture command) */
+  captureAs?: string;
+
+  /** Property path to capture (capture command) */
+  capturePath?: string;
+
   /** Metadata for debugging */
   metadata: {
     /** Language the command was written in */
@@ -49,4 +75,34 @@ export interface FlowSpec {
     /** Raw role values extracted from the parsed command */
     roles: Record<string, string | undefined>;
   };
+}
+
+// =============================================================================
+// Workflow Spec — siren-grail compilation target
+// =============================================================================
+
+/** A single step in a HATEOAS workflow */
+export type WorkflowStep =
+  | { type: 'navigate'; rel: string; capture?: Record<string, string> }
+  | {
+      type: 'action';
+      action: string;
+      data?: Record<string, unknown>;
+      dataSource?: string;
+      capture?: Record<string, string>;
+    }
+  | { type: 'stop'; result?: string; reason?: string };
+
+/**
+ * A complete HATEOAS workflow specification.
+ *
+ * Compiles to siren-grail's compileWorkflow() step format.
+ * Can also drive an MCP server with dynamic tools.
+ */
+export interface WorkflowSpec {
+  /** API entry point URL */
+  entryPoint: string;
+
+  /** Ordered workflow steps */
+  steps: WorkflowStep[];
 }

@@ -304,6 +304,51 @@ export class PatternMatcher {
       const isOptionalRole = patternToken.type === 'role' && patternToken.optional === true;
       const markBefore = isOptionalRole ? tokens.mark() : null;
 
+      // SOV marker-stealing guard: before matching a required role, check if
+      // the current input token would match the immediately-following pattern
+      // literal (the role's own postpositional marker). If so, skip consuming
+      // this token as a role value — it should be matched as the literal instead.
+      const isRoleToken = patternToken.type === 'role';
+      if (isRoleToken && !isOptionalRole) {
+        const nextPT = i + 1 < patternTokens.length ? patternTokens[i + 1] : null;
+        if (nextPT?.type === 'literal') {
+          const currentToken = tokens.peek();
+          if (currentToken && this.getMatchType(currentToken, nextPT.value) !== 'none') {
+            // Current token is the marker literal, not a role value — treat role as failed
+            this.logger.debug(
+              '  >> MARKER-STEAL GUARD: current token matches next literal, skipping role'
+            );
+            // Fall through to failure handling below
+            // (which will trigger backtracking of previous optional role)
+
+            // Match failed
+            this.logger.debug('  >> Token match FAILED');
+
+            if (this.isOptional(patternToken)) {
+              continue;
+            }
+
+            // Required token failed — try backtracking over the previous optional role
+            if (prevOptionalMark && prevOptionalRole) {
+              this.logger.debug('  >> BACKTRACKING: undoing optional role', prevOptionalRole);
+              tokens.reset(prevOptionalMark);
+              captured.delete(prevOptionalRole);
+              prevOptionalMark = null;
+              prevOptionalRole = null;
+
+              // Retry the current (failed) pattern token from the restored position
+              const retryMatched = this.matchPatternToken(tokens, patternToken, captured);
+              this.logger.debug('  >> Backtrack retry result:', retryMatched);
+              if (retryMatched) {
+                continue;
+              }
+            }
+
+            return false;
+          }
+        }
+      }
+
       const matched = this.matchPatternToken(tokens, patternToken, captured);
       this.logger.debug('  >> Match result:', matched);
 
