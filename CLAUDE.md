@@ -53,15 +53,28 @@ packages/
 ├── aot-compiler/    # Ahead-of-time compiler (hyperscript → JS, semantic → JS)
 ├── server-bridge/   # Server-side route extraction from HTML
 │
-├── domain-sql/      # SQL DSL (4 languages: en, es, ja, ar)
-├── domain-bdd/      # BDD/Gherkin DSL (4 languages)
+├── domain-sql/      # SQL DSL (8 languages: en, es, ja, ar, ko, zh, tr, fr)
+├── domain-bdd/      # BDD/Gherkin DSL (8 languages)
 ├── domain-behaviorspec/  # Interaction testing DSL (8 languages)
 ├── domain-jsx/      # JSX/React DSL (8 languages)
-├── domain-llm/      # LLM prompt DSL (4 languages)
+├── domain-llm/      # LLM prompt DSL (8 languages)
 ├── domain-todo/     # Todo management DSL (8 languages)
-├── domain-flow/     # Reactive data flow DSL (4 languages: en, es, ja, ar)
+├── domain-flow/     # Reactive data flow DSL (8 languages)
+├── domain-voice/    # Voice/accessibility commands DSL (8 languages)
+├── domain-learn/    # Language learning DSL (10 languages)
 │
-└── [other packages: smart-bundling, developer-tools, testing-framework, etc.]
+├── patterns-reference/  # Queryable patterns database with multilingual translations
+├── language-server/     # LSP implementation for LokaScript/hyperscript (21 languages)
+├── behaviors/           # Reusable hyperscript behaviors (draggable, sortable, etc.)
+├── types-browser/       # TypeScript type definitions for browser globals
+│
+├── mcp-server-hyperscript/      # MCP server for original _hyperscript (zero HyperFixi deps)
+├── language-server-hyperscript/ # LSP for original _hyperscript
+├── multilingual-hyperscript/    # Multilingual plugin for original _hyperscript (24 languages)
+├── vscode-extension/            # VSCode extension for LokaScript
+├── vscode-extension-hyperscript/ # VSCode extension for original _hyperscript
+│
+└── [other packages: smart-bundling, developer-tools, testing-framework, ast-toolkit, etc.]
 
 examples/
 ├── multilingual/   # Live grammar transformation demo
