@@ -137,3 +137,46 @@ Compact format optimized for LLM generation. Omits `kind` and uses a flat `trigg
 - **LLM-simplified**: LLM code generation, API responses, lightweight clients
 
 Both formats MUST be accepted by conformant parsers. Conformant renderers MUST produce the full-fidelity format by default.
+
+## JSON Schema
+
+A machine-checkable JSON Schema (Draft 7) for the full-fidelity format is available at:
+
+```text
+protocol/spec/lse-wire-format.schema.json
+```
+
+The schema enforces:
+
+- Exactly 3 node kinds (`command`, `event-handler`, `compound`)
+- All 6 value types with required fields (`name`+`enabled` for flags, `raw` for expressions)
+- `additionalProperties: false` on value types (prevents TS-only fields like `selectorKind`)
+
+## TypeScript Extensions (TS-Layer Only)
+
+The TypeScript framework (`packages/framework`) extends the internal AST with additional
+node kinds and value fields that do **not** appear in the wire format. These exist only
+in-memory during processing within TypeScript code.
+
+| TS-only feature                   | Wire format handling                                               |
+| --------------------------------- | ------------------------------------------------------------------ |
+| `kind: 'conditional'`             | Downgraded to `kind: 'command'`; `thenBranch`/`elseBranch` dropped |
+| `kind: 'loop'`                    | Downgraded to `kind: 'command'`; `body`/`loopVariable` dropped     |
+| `selectorKind` on `SelectorValue` | Stripped                                                           |
+| `roles: ReadonlyMap`              | Converted to `Record<string, ...>`                                 |
+| `property-path` value             | Flattened to `expression` via `extractValue()`                     |
+
+Use `toProtocolJSON()` from `@lokascript/framework/ir` to serialize with these rules applied:
+
+```typescript
+import { toProtocolJSON, fromProtocolJSON } from '@lokascript/framework/ir';
+
+// Serialize TS SemanticNode → protocol wire format
+const wireJSON = toProtocolJSON(semanticNode);
+
+// Deserialize protocol wire format → TS SemanticNode
+const node = fromProtocolJSON(wireJSON);
+```
+
+The downgrades for `conditional` and `loop` are **lossy**: branch bodies are dropped.
+`fromProtocolJSON()` never produces `conditional` or `loop` nodes — only the 3 protocol kinds.

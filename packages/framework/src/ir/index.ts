@@ -39,3 +39,12 @@ export { renderExplicit } from './explicit-renderer';
 
 // JSON schema conversion
 export { jsonToSemanticNode, validateSemanticJSON, semanticNodeToJSON } from './json-schema';
+
+// Protocol full-fidelity wire format
+export type {
+  ProtocolNodeJSON,
+  ProtocolValueJSON,
+  ProtocolNodeKind,
+  ProtocolChainType,
+} from './types';
+export { toProtocolJSON, fromProtocolJSON, validateProtocolJSON } from './protocol-json';

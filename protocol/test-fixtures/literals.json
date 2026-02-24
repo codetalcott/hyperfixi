@@ -174,5 +174,29 @@
         "destination": { "type": "selector", "value": "#output" }
       }
     }
+  },
+  {
+    "id": "lit-015",
+    "description": "Duration in minutes",
+    "input": "[wait duration:2m]",
+    "expected": {
+      "kind": "command",
+      "action": "wait",
+      "roles": {
+        "duration": { "type": "literal", "value": "2m", "dataType": "duration" }
+      }
+    }
+  },
+  {
+    "id": "lit-016",
+    "description": "Duration in hours",
+    "input": "[wait duration:1h]",
+    "expected": {
+      "kind": "command",
+      "action": "wait",
+      "roles": {
+        "duration": { "type": "literal", "value": "1h", "dataType": "duration" }
+      }
+    }
   }
 ]

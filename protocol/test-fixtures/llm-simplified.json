@@ -1,0 +1,80 @@
+[
+  {
+    "id": "llm-001",
+    "description": "LLM format: simple command without trigger",
+    "format": "llm-simplified",
+    "note": "No 'kind' field; no 'trigger' means a standalone command",
+    "input": {
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" }
+      }
+    },
+    "expected_kind": "command",
+    "expected_action": "toggle"
+  },
+  {
+    "id": "llm-002",
+    "description": "LLM format: command with trigger wraps in event-handler",
+    "format": "llm-simplified",
+    "note": "trigger.event causes the command to be wrapped in an event-handler node",
+    "input": {
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" }
+      },
+      "trigger": {
+        "event": "click"
+      }
+    },
+    "expected_kind": "event-handler",
+    "expected_body_action": "toggle"
+  },
+  {
+    "id": "llm-003",
+    "description": "LLM format: simplified flag (value:true, no name/enabled fields)",
+    "format": "llm-simplified",
+    "note": "LLM format uses { type: 'flag', value: true } instead of { type: 'flag', name: 'x', enabled: true }",
+    "input": {
+      "action": "column",
+      "roles": {
+        "name": { "type": "literal", "value": "id" },
+        "primary-key": { "type": "flag", "value": true }
+      }
+    },
+    "expected_kind": "command",
+    "expected_action": "column"
+  },
+  {
+    "id": "llm-004",
+    "description": "LLM format: trigger with modifiers",
+    "format": "llm-simplified",
+    "note": "trigger.modifiers carries event modifiers (once, debounce, etc.)",
+    "input": {
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" }
+      },
+      "trigger": {
+        "event": "click",
+        "modifiers": { "once": true }
+      }
+    },
+    "expected_kind": "event-handler",
+    "expected_body_action": "toggle"
+  },
+  {
+    "id": "llm-005",
+    "description": "LLM format: expression value uses 'value' field (not 'raw')",
+    "format": "llm-simplified",
+    "note": "Full-fidelity uses { type: 'expression', raw: '...' }; LLM format uses { type: 'expression', value: '...' }",
+    "input": {
+      "action": "set",
+      "roles": {
+        "goal": { "type": "expression", "value": "x + 1" }
+      }
+    },
+    "expected_kind": "command",
+    "expected_action": "set"
+  }
+]

@@ -85,3 +85,39 @@ export interface IRDiagnostic {
   message: string;
   suggestion?: string;
 }
+
+// =============================================================================
+// Protocol Full-Fidelity JSON Format
+// =============================================================================
+// These types match the wire format spec (protocol/spec/wire-format.md).
+// Only 3 node kinds — TS-only kinds (conditional, loop) are downgraded on serialization.
+// selectorKind is stripped; property-path is flattened to expression.
+
+export type ProtocolNodeKind = 'command' | 'event-handler' | 'compound';
+export type ProtocolChainType = 'then' | 'and' | 'async' | 'sequential';
+
+/**
+ * A typed semantic value in the protocol full-fidelity JSON format.
+ * Matches protocol/spec/wire-format.md "Value Shapes" table.
+ */
+export interface ProtocolValueJSON {
+  type: 'selector' | 'literal' | 'reference' | 'expression' | 'property-path' | 'flag';
+  value?: string | number | boolean;
+  dataType?: 'string' | 'number' | 'boolean' | 'duration';
+  raw?: string; // expression only
+  name?: string; // flag only
+  enabled?: boolean; // flag only
+}
+
+/**
+ * Full-fidelity protocol JSON node — matches protocol/spec/wire-format.md.
+ * Produced by toProtocolJSON() and consumed by fromProtocolJSON().
+ */
+export interface ProtocolNodeJSON {
+  kind: ProtocolNodeKind;
+  action: string;
+  roles: Record<string, ProtocolValueJSON>;
+  body?: ProtocolNodeJSON[]; // event-handler only
+  statements?: ProtocolNodeJSON[]; // compound only
+  chainType?: ProtocolChainType; // compound only
+}

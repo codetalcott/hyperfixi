@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "lse-wire-format-full-fidelity",
+  "title": "LSE Wire Format — Full-Fidelity",
+  "description": "LokaScript Explicit Syntax full-fidelity JSON interchange format. See protocol/spec/wire-format.md.",
+  "$ref": "#/$defs/SemanticNode",
+  "$defs": {
+    "SelectorValue": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "selector" },
+        "value": { "type": "string", "minLength": 1 }
+      }
+    },
+    "LiteralValue": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "literal" },
+        "value": {
+          "oneOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }]
+        },
+        "dataType": { "enum": ["string", "number", "boolean", "duration"] }
+      }
+    },
+    "ReferenceValue": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "reference" },
+        "value": { "type": "string", "minLength": 1 }
+      }
+    },
+    "ExpressionValue": {
+      "type": "object",
+      "required": ["type", "raw"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "expression" },
+        "raw": { "type": "string" }
+      }
+    },
+    "PropertyPathValue": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "property-path" },
+        "value": { "type": "string" }
+      }
+    },
+    "FlagValue": {
+      "type": "object",
+      "required": ["type", "name", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "flag" },
+        "name": { "type": "string", "minLength": 1 },
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "SemanticValue": {
+      "oneOf": [
+        { "$ref": "#/$defs/SelectorValue" },
+        { "$ref": "#/$defs/LiteralValue" },
+        { "$ref": "#/$defs/ReferenceValue" },
+        { "$ref": "#/$defs/ExpressionValue" },
+        { "$ref": "#/$defs/PropertyPathValue" },
+        { "$ref": "#/$defs/FlagValue" }
+      ]
+    },
+    "RolesObject": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/SemanticValue" }
+    },
+    "CommandNode": {
+      "type": "object",
+      "required": ["kind", "action", "roles"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "command" },
+        "action": { "type": "string", "minLength": 1 },
+        "roles": { "$ref": "#/$defs/RolesObject" }
+      }
+    },
+    "EventHandlerNode": {
+      "type": "object",
+      "required": ["kind", "action", "roles", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "event-handler" },
+        "action": { "type": "string", "minLength": 1 },
+        "roles": { "$ref": "#/$defs/RolesObject" },
+        "body": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        }
+      }
+    },
+    "CompoundNode": {
+      "type": "object",
+      "required": ["kind", "action", "statements"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "compound" },
+        "action": { "type": "string", "minLength": 1 },
+        "roles": { "$ref": "#/$defs/RolesObject" },
+        "statements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "chainType": { "enum": ["then", "and", "async", "sequential"] }
+      }
+    },
+    "SemanticNode": {
+      "oneOf": [
+        { "$ref": "#/$defs/CommandNode" },
+        { "$ref": "#/$defs/EventHandlerNode" },
+        { "$ref": "#/$defs/CompoundNode" }
+      ]
+    }
+  }
+}
