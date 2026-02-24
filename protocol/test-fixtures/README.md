@@ -56,7 +56,7 @@ Each language implementation includes a conformance test runner that loads these
 - **Python**: `pytest tests/test_conformance.py`
 - **Go**: `go test -run TestConformance`
 - **Rust**: `cargo test conformance`
-- **TypeScript**: `npx vitest run protocol/typescript/conformance.test.ts`
+- **TypeScript**: `npm test` (from `protocol/typescript/`)
 
 ## Fixture Files
 

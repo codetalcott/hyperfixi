@@ -6,19 +6,19 @@
 
 All three reference implementations (Go, Python, Rust) are spec-conformant and mutually consistent:
 
-| Feature                     | Go          | Python       | Rust        | Spec               |
-| --------------------------- | ----------- | ------------ | ----------- | ------------------ |
-| Value priority order        | 7-step      | 7-step       | 7-step      | 7-step             |
-| Default references (7)      | all 7       | all 7        | all 7       | all 7              |
-| Node kinds                  | 3           | 3            | 3           | 3                  |
-| Value types                 | 6           | 5+expression | 6           | 6                  |
-| Flags (+/~)                 | yes         | yes          | yes         | yes                |
-| JSON full-fidelity          | yes         | yes          | yes         | yes                |
-| JSON LLM-simplified         | yes         | yes          | yes         | yes                |
-| Compound parsing            | render-only | render-only  | render-only | render-only (v1.0) |
-| Nested body dual-role       | correct     | correct      | correct     | correct            |
-| Context-sensitive tokenizer | correct     | correct      | correct     | correct            |
-| Conformance fixtures        | 56/56       | 56/56        | 56/56       | —                  |
+| Feature                     | Go          | Python       | Rust        | TypeScript  | Spec               |
+| --------------------------- | ----------- | ------------ | ----------- | ----------- | ------------------ |
+| Value priority order        | 7-step      | 7-step       | 7-step      | 7-step      | 7-step             |
+| Default references (7)      | all 7       | all 7        | all 7       | all 7       | all 7              |
+| Node kinds                  | 3           | 3            | 3           | 3           | 3                  |
+| Value types                 | 6           | 5+expression | 6           | 6           | 6                  |
+| Flags (+/~)                 | yes         | yes          | yes         | yes         | yes                |
+| JSON full-fidelity          | yes         | yes          | yes         | yes         | yes                |
+| JSON LLM-simplified         | yes         | yes          | yes         | yes         | yes                |
+| Compound parsing            | render-only | render-only  | render-only | render-only | render-only (v1.0) |
+| Nested body dual-role       | correct     | correct      | correct     | correct     | correct            |
+| Context-sensitive tokenizer | correct     | correct      | correct     | correct     | correct            |
+| Conformance fixtures        | 56/56       | 56/56        | 56/56       | 63/63       | —                  |
 
 No spec violations found in any of the three implementations.
 
@@ -75,7 +75,8 @@ Each implementation still defines its own types independently:
 - **Go:** `types.go` structs
 - **Python:** `types.py` dataclasses
 - **Rust:** `types.rs` structs + enums
-- **TypeScript:** `packages/framework/src/core/types.ts` interfaces + `protocol-json.ts` boundary
+- **TypeScript (spec-only):** `protocol/typescript/src/types.ts` interfaces
+- **TypeScript (framework):** `packages/framework/src/core/types.ts` interfaces + `protocol-json.ts` boundary (superset)
 
 The shared contract is now:
 
@@ -113,4 +114,4 @@ The shared fixtures are comprehensive for bracket syntax but have gaps:
 
 4. ~~**Add missing duration fixtures**~~ — **Done.** `lit-015` (`2m`) and `lit-016` (`1h`) added to `literals.json`.
 
-5. **Consider a `protocol/typescript/` reference implementation** — Still open. The framework IR now serves as the TS boundary, but a standalone spec-only parser would be cleaner for conformance testing.
+5. ~~**Consider a `protocol/typescript/` reference implementation**~~ — **Done.** `protocol/typescript/` added: spec-only `parseExplicit`, `renderExplicit`, `fromJSON`/`toJSON`, with 63 conformance tests passing (`npm test` from `protocol/typescript/`). The implementation uses 3 node kinds and `Record<string, SemanticValue>` matching Go/Python/Rust exactly.
