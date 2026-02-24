@@ -90,6 +90,8 @@ jobs:
           npm run build --prefix packages/domain-behaviorspec
           npm run build --prefix packages/domain-jsx
           npm run build --prefix packages/domain-flow
+          npm run build --prefix packages/domain-voice
+          npm run build --prefix packages/domain-learn
           npm run build --prefix packages/compilation-service
           npm run build --prefix packages/mcp-server
           npm run build --prefix packages/vite-plugin
@@ -134,8 +136,8 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           echo "Setting all packages to version $VERSION"
           for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin \
-                     framework server-bridge types-browser \
-                     domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow \
+                     framework server-bridge types-browser aot-compiler \
+                     domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                      compilation-service behaviors testing-framework language-server \
                      mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript; do
             if [ -f "packages/$pkg/package.json" ]; then
@@ -160,8 +162,8 @@ jobs:
           # Packages that have version-lock with core use the same VERSION
           # New domain/framework packages start at 1.0.0 but will be bumped if VERSION_TYPE != current
           ALL_PACKAGES="semantic core i18n hyperscript-adapter patterns-reference \
-                        framework server-bridge types-browser \
-                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow \
+                        framework server-bridge types-browser aot-compiler \
+                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                         compilation-service mcp-server vite-plugin \
                         behaviors testing-framework language-server \
                         mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript"
@@ -245,8 +247,8 @@ jobs:
             echo ""
             echo "### Packages published"
             for pkg in semantic core i18n hyperscript-adapter patterns-reference \
-                       framework server-bridge types-browser \
-                       domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow \
+                       framework server-bridge types-browser aot-compiler \
+                       domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                        compilation-service mcp-server vite-plugin \
                        behaviors testing-framework language-server \
                        mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript; do
