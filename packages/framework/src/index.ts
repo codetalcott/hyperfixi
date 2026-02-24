@@ -150,6 +150,9 @@ export * from './prompts';
 // Training Data Generation — synthesize (natural_language, LSE) pairs from schemas
 export * from './training';
 
+// Feedback Loop — structured errors, disambiguation, pattern tracking
+export * from './feedback';
+
 // Multi-statement parser
 export { createMultiStatementParser, accumulateBlocks } from './parsing/multi-statement';
 export type {

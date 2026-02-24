@@ -115,7 +115,9 @@ export async function handleTrainingDataTool(
 /**
  * Dynamically load schemas for a domain.
  */
-async function loadDomainSchemas(domain: string): Promise<readonly unknown[] | null> {
+async function loadDomainSchemas(
+  domain: string
+): Promise<readonly import('@lokascript/framework').CommandSchema[] | null> {
   try {
     switch (domain) {
       case 'flow':

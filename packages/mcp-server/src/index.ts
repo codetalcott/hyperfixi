@@ -62,6 +62,9 @@ import { inventoryTools, handleInventoryTool } from './tools/inventory.js';
 // Training data tools (LLM ↔ LSE)
 import { trainingDataTools, handleTrainingDataTool } from './tools/training-data.js';
 
+// Feedback loop tools (LLM ↔ LSE)
+import { feedbackTools, handleFeedbackTool } from './tools/feedback-tools.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -107,6 +110,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...debugTools,
       ...inventoryTools,
       ...trainingDataTools,
+      ...feedbackTools,
     ],
   };
 });
@@ -250,6 +254,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   // Training data tools (LLM ↔ LSE)
   if (name === 'generate_training_data') {
     return handleTrainingDataTool(name, args as Record<string, unknown>);
+  }
+
+  // Feedback loop tools (LLM ↔ LSE)
+  if (name === 'lse_validate_and_feedback' || name === 'lse_pattern_stats') {
+    return handleFeedbackTool(name, args as Record<string, unknown>);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
