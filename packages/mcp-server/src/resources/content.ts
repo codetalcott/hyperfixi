@@ -759,3 +759,73 @@ export function getSetupGuide(): object {
     ],
   };
 }
+
+// =============================================================================
+// LSE Protocol Reference (for LLM ↔ LSE integration)
+// =============================================================================
+
+export function getLSEProtocolSpec(): string {
+  return `# LokaScript Explicit Syntax (LSE) Quick Reference
+
+## Syntax
+
+\`\`\`
+[command role1:value1 role2:value2 +flag1 ~flag2]
+\`\`\`
+
+| Element | Syntax | Example |
+|---------|--------|---------|
+| Command | first token (lowercased) | \`toggle\`, \`fetch\`, \`add\` |
+| Role pair | \`name:value\` | \`patient:.active\` |
+| Enabled flag | \`+name\` | \`+primary-key\` |
+| Disabled flag | \`~name\` | \`~nullable\` |
+| String literal | \`"..."\` or \`'...'\` | \`patient:"hello world"\` |
+| Selector | \`#id\` \`.class\` \`[attr]\` \`@aria\` \`*wild\` | \`destination:#button\` |
+| Boolean | \`true\` / \`false\` | \`goal:true\` |
+| Number | digits with optional decimal | \`quantity:5\` |
+| Duration | number + suffix | \`delay:500ms\`, \`timeout:2s\` |
+| Reference | built-in name | \`destination:me\`, \`source:it\` |
+| Nested body | bracket command in value | \`body:[toggle patient:.active]\` |
+| Compound | chain operator between commands | \`[add ...] then [fetch ...]\` |
+
+## Value Classification Priority (first match wins)
+
+1. **Selector** — starts with \`#\`, \`.\`, \`[\`, \`@\`, \`*\`
+2. **String** — starts with \`"\` or \`'\`
+3. **Boolean** — exact: \`true\` or \`false\`
+4. **Reference** — \`me\`, \`you\`, \`it\`, \`result\`, \`event\`, \`target\`, \`body\`
+5. **Duration** — number + \`ms\`/\`s\`/\`m\`/\`h\`
+6. **Number** — integer or decimal
+7. **Plain** — fallback (any non-whitespace)
+
+## JSON Wire Format (LLM-simplified)
+
+\`\`\`json
+{
+  "action": "fetch",
+  "roles": {
+    "source": { "type": "expression", "value": "/api/users" },
+    "style": { "type": "literal", "value": "json" },
+    "destination": { "type": "selector", "value": "#list" }
+  }
+}
+\`\`\`
+
+Valid value types: \`selector\`, \`literal\`, \`reference\`, \`expression\`, \`flag\`.
+
+## Event Handlers
+
+\`\`\`
+[on event:click body:[toggle patient:.active]]
+\`\`\`
+
+JSON with trigger:
+\`\`\`json
+{
+  "action": "toggle",
+  "roles": { "patient": { "type": "selector", "value": ".active" } },
+  "trigger": { "event": "click" }
+}
+\`\`\`
+`;
+}

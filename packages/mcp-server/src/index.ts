@@ -42,6 +42,7 @@ import {
   renderDebugPrompt,
   isDebugPrompt,
 } from './prompts/debug-prompts.js';
+import { getLSEPromptDefinitions, renderLSEPrompt, isLSEPrompt } from './prompts/lse-prompts.js';
 
 // MCP Sampling tools (Layer 3)
 import { samplingTools, handleSamplingTool } from './tools/llm-sampling.js';
@@ -258,7 +259,13 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 // =============================================================================
 
 server.setRequestHandler(ListPromptsRequestSchema, async () => {
-  return { prompts: [...getLLMPromptDefinitions(), ...getDebugPromptDefinitions()] };
+  return {
+    prompts: [
+      ...getLLMPromptDefinitions(),
+      ...getDebugPromptDefinitions(),
+      ...getLSEPromptDefinitions(),
+    ],
+  };
 });
 
 server.setRequestHandler(GetPromptRequestSchema, async request => {
@@ -267,6 +274,9 @@ server.setRequestHandler(GetPromptRequestSchema, async request => {
 
   if (isDebugPrompt(name)) {
     return renderDebugPrompt(name, typedArgs);
+  }
+  if (isLSEPrompt(name)) {
+    return renderLSEPrompt(name, typedArgs);
   }
   return renderLLMPrompt(name, typedArgs);
 });

@@ -144,6 +144,9 @@ export type { SimpleTokenizerConfig } from './core/tokenization/base-tokenizer';
 // IR (Intermediate Representation) — explicit syntax, JSON conversion, reference validation
 export * from './ir';
 
+// LLM Prompt Generation — auto-generate system prompts from CommandSchema[]
+export * from './prompts';
+
 // Multi-statement parser
 export { createMultiStatementParser, accumulateBlocks } from './parsing/multi-statement';
 export type {
