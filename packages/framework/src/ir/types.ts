@@ -95,7 +95,7 @@ export interface IRDiagnostic {
 // property-path is flattened to expression.
 
 export type ProtocolNodeKind = 'command' | 'event-handler' | 'compound';
-export type ProtocolChainType = 'then' | 'and' | 'async' | 'sequential';
+export type ProtocolChainType = 'then' | 'and' | 'async' | 'sequential' | 'pipe';
 
 /**
  * A typed semantic value in the protocol full-fidelity JSON format.
@@ -119,7 +119,7 @@ export interface ProtocolNodeJSON {
   kind: ProtocolNodeKind;
   action: string;
   roles: Record<string, ProtocolValueJSON>;
-  body?: ProtocolNodeJSON[]; // event-handler only
+  body?: ProtocolNodeJSON[]; // event-handler body OR try body (v1.2)
   statements?: ProtocolNodeJSON[]; // compound only
   chainType?: ProtocolChainType; // compound only
   // Conditional fields (v1.1)
@@ -130,4 +130,48 @@ export interface ProtocolNodeJSON {
   loopBody?: ProtocolNodeJSON[];
   loopVariable?: string;
   indexVariable?: string;
+  // Type constraint diagnostics (v1.2)
+  diagnostics?: ProtocolDiagnosticJSON[];
+  // Metadata annotations (v1.2)
+  annotations?: AnnotationJSON[];
+  // Error handling: try/catch/finally (v1.2)
+  catchBranch?: ProtocolNodeJSON[];
+  finallyBranch?: ProtocolNodeJSON[];
+  // Async coordination: all/race (v1.2)
+  asyncVariant?: 'all' | 'race';
+  asyncBody?: ProtocolNodeJSON[];
+  // Pattern matching: match/arms (v1.2)
+  arms?: MatchArmJSON[];
+  defaultArm?: ProtocolNodeJSON[];
+}
+
+// =============================================================================
+// v1.2 Sub-types
+// =============================================================================
+
+/** A type constraint diagnostic in protocol wire format (v1.2). */
+export interface ProtocolDiagnosticJSON {
+  level: 'error' | 'warning';
+  role: string;
+  message: string;
+  code: string;
+}
+
+/** A metadata annotation in protocol wire format (v1.2). */
+export interface AnnotationJSON {
+  name: string;
+  value?: string;
+}
+
+/** A match arm in protocol wire format (v1.2). */
+export interface MatchArmJSON {
+  pattern: ProtocolValueJSON;
+  body: ProtocolNodeJSON[];
+}
+
+/** Versioned envelope for multi-node LSE documents (v1.2). */
+export interface LSEEnvelopeJSON {
+  lseVersion: string;
+  features?: string[];
+  nodes: ProtocolNodeJSON[];
 }

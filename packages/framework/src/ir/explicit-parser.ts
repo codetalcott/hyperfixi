@@ -34,6 +34,8 @@ export const STRUCTURAL_ROLES = new Set([
   'condition',
   'loop-body',
   'variable',
+  'catch', // v1.2: try/catch/finally
+  'finally', // v1.2: try/catch/finally
 ]);
 
 /**

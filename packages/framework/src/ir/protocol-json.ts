@@ -11,6 +11,8 @@
  * - TS has PropertyPathValue; protocol flattens it to expression
  * - TS conditional/loop nodes are losslessly encoded as command nodes with
  *   thenBranch/elseBranch/loopVariant/loopBody/loopVariable/indexVariable fields (v1.1)
+ * - v1.2 adds: annotations, diagnostics, try/catch/finally, async all/race,
+ *   match/arms, pipe chainType, and LSEEnvelope
  *
  * Use toProtocolJSON() to serialize for tool-to-tool interchange.
  * Use fromProtocolJSON() to deserialize from protocol-conformant sources.
@@ -20,11 +22,14 @@ import type {
   SemanticNode,
   SemanticValue,
   SemanticRole,
+  CommandSemanticNode,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
   ConditionalSemanticNode,
   LoopSemanticNode,
   LoopVariant,
+  AsyncVariant,
+  LSEEnvelope,
 } from '../core/types';
 import {
   createCommandNode,
@@ -32,6 +37,9 @@ import {
   createCompoundNode,
   createConditionalNode,
   createLoopNode,
+  createTryNode,
+  createAsyncNode,
+  createMatchNode,
   createSelector,
   createLiteral,
   createReference,
@@ -39,7 +47,13 @@ import {
   createFlag,
   extractValue,
 } from '../core/types';
-import type { ProtocolNodeJSON, ProtocolValueJSON, ProtocolChainType, IRDiagnostic } from './types';
+import type {
+  ProtocolNodeJSON,
+  ProtocolValueJSON,
+  ProtocolChainType,
+  IRDiagnostic,
+  LSEEnvelopeJSON,
+} from './types';
 
 // =============================================================================
 // Serialization: SemanticNode → ProtocolNodeJSON
@@ -52,57 +66,111 @@ import type { ProtocolNodeJSON, ProtocolValueJSON, ProtocolChainType, IRDiagnost
  * - `conditional` → `command` with thenBranch/elseBranch arrays
  * - `loop` → `command` with loopVariant/loopBody/loopVariable/indexVariable fields
  *
+ * v1.2 fields (annotations, diagnostics, try/catch/finally, async, match)
+ * are serialized when present on the source node.
+ *
  * TS-only value fields:
  * - `property-path` flattened to `expression` using extractValue()
  */
 export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
   const roles = rolesToProtocol(node.roles);
+  let result: ProtocolNodeJSON;
 
   switch (node.kind) {
-    case 'command':
-      return { kind: 'command', action: node.action, roles };
+    case 'command': {
+      const cmd = node as CommandSemanticNode;
+      result = { kind: 'command', action: node.action, roles };
+      // v1.2: try/catch/finally
+      if (cmd.body && cmd.body.length > 0) {
+        result.body = cmd.body.map(toProtocolJSON);
+      }
+      if (cmd.catchBranch && cmd.catchBranch.length > 0) {
+        result.catchBranch = cmd.catchBranch.map(toProtocolJSON);
+      }
+      if (cmd.finallyBranch && cmd.finallyBranch.length > 0) {
+        result.finallyBranch = cmd.finallyBranch.map(toProtocolJSON);
+      }
+      // v1.2: async coordination
+      if (cmd.asyncVariant) {
+        result.asyncVariant = cmd.asyncVariant;
+      }
+      if (cmd.asyncBody && cmd.asyncBody.length > 0) {
+        result.asyncBody = cmd.asyncBody.map(toProtocolJSON);
+      }
+      // v1.2: match
+      if (cmd.arms && cmd.arms.length > 0) {
+        result.arms = cmd.arms.map(arm => ({
+          pattern: valueToProtocol(arm.pattern),
+          body: arm.body.map(toProtocolJSON),
+        }));
+      }
+      if (cmd.defaultArm && cmd.defaultArm.length > 0) {
+        result.defaultArm = cmd.defaultArm.map(toProtocolJSON);
+      }
+      break;
+    }
 
     case 'event-handler': {
       const eh = node as EventHandlerSemanticNode;
-      return {
+      result = {
         kind: 'event-handler',
         action: node.action,
         roles,
         body: eh.body.map(toProtocolJSON),
       };
+      break;
     }
 
     case 'compound': {
       const c = node as CompoundSemanticNode;
-      return {
+      result = {
         kind: 'compound',
         action: 'compound',
-        roles: {},
         statements: c.statements.map(toProtocolJSON),
         chainType: c.chainType,
-      };
+      } as ProtocolNodeJSON;
+      break;
     }
 
     case 'conditional': {
       const cond = node as ConditionalSemanticNode;
-      const result: ProtocolNodeJSON = { kind: 'command', action: node.action, roles };
+      result = { kind: 'command', action: node.action, roles };
       result.thenBranch = cond.thenBranch.map(toProtocolJSON);
       if (cond.elseBranch && cond.elseBranch.length > 0) {
         result.elseBranch = cond.elseBranch.map(toProtocolJSON);
       }
-      return result;
+      break;
     }
 
     case 'loop': {
       const loop = node as LoopSemanticNode;
-      const result: ProtocolNodeJSON = { kind: 'command', action: node.action, roles };
+      result = { kind: 'command', action: node.action, roles };
       result.loopVariant = loop.loopVariant;
       result.loopBody = loop.body.map(toProtocolJSON);
       if (loop.loopVariable) result.loopVariable = loop.loopVariable;
       if (loop.indexVariable) result.indexVariable = loop.indexVariable;
-      return result;
+      break;
     }
   }
+
+  // v1.2: annotations (all node kinds)
+  if (node.annotations && node.annotations.length > 0) {
+    result.annotations = node.annotations.map(a =>
+      a.value !== undefined ? { name: a.name, value: a.value } : { name: a.name }
+    );
+  }
+
+  // v1.2: diagnostics (all node kinds)
+  if (node.diagnostics && node.diagnostics.length > 0) {
+    result.diagnostics = node.diagnostics.map(d => ({
+      level: d.level,
+      role: d.role,
+      message: d.message,
+      code: d.code,
+    }));
+  }
+
+  return result;
 }
 
 function rolesToProtocol(
@@ -160,37 +228,59 @@ function valueToProtocol(value: SemanticValue): ProtocolValueJSON {
 /**
  * Deserialize a protocol wire format JSON object into a SemanticNode.
  *
- * Produces all 5 node kinds — detects v1.1 fields on command nodes to
- * reconstruct conditional and loop nodes:
+ * Produces all 5 node kinds — detects v1.1/v1.2 fields on command nodes to
+ * reconstruct appropriate node types:
  * - thenBranch present → `conditional` node via createConditionalNode()
  * - loopVariant present → `loop` node via createLoopNode()
+ * - catchBranch/finallyBranch → try node via createTryNode() (v1.2)
+ * - asyncVariant → async node via createAsyncNode() (v1.2)
+ * - arms → match node via createMatchNode() (v1.2)
+ *
+ * Annotations and diagnostics (v1.2) are preserved on all node kinds.
  */
 export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
   const roles = new Map<SemanticRole, SemanticValue>(
     Object.entries(json.roles ?? {}).map(([role, val]) => [role, valueFromProtocol(val)])
   );
 
+  // Deserialize v1.2 metadata (applies to all node kinds)
+  const annotations = json.annotations?.map(a =>
+    a.value !== undefined ? { name: a.name, value: a.value } : { name: a.name }
+  );
+  const diagnostics = json.diagnostics?.map(d => ({
+    level: d.level as 'error' | 'warning',
+    role: d.role,
+    message: d.message,
+    code: d.code,
+  }));
+
   if (json.kind === 'event-handler') {
     const body = (json.body ?? []).map(fromProtocolJSON);
-    return createEventHandlerNode(json.action, roles, body);
+    const node = createEventHandlerNode(json.action, roles, body);
+    return applyV12Metadata(node, annotations, diagnostics);
   }
 
   if (json.kind === 'compound') {
     const statements = (json.statements ?? []).map(fromProtocolJSON);
-    return createCompoundNode(statements, (json.chainType ?? 'sequential') as ProtocolChainType);
+    const node = createCompoundNode(
+      statements,
+      (json.chainType ?? 'sequential') as ProtocolChainType
+    );
+    return applyV12Metadata(node, annotations, diagnostics);
   }
 
   // Detect v1.1 conditional encoding: command with thenBranch
   if (json.thenBranch && json.thenBranch.length > 0) {
     const thenBranch = json.thenBranch.map(fromProtocolJSON);
     const elseBranch = json.elseBranch ? json.elseBranch.map(fromProtocolJSON) : undefined;
-    return createConditionalNode(json.action, roles, thenBranch, elseBranch);
+    const node = createConditionalNode(json.action, roles, thenBranch, elseBranch);
+    return applyV12Metadata(node, annotations, diagnostics);
   }
 
   // Detect v1.1 loop encoding: command with loopVariant
   if (json.loopVariant) {
     const loopBody = (json.loopBody ?? []).map(fromProtocolJSON);
-    return createLoopNode(
+    const node = createLoopNode(
       json.action,
       roles,
       json.loopVariant as LoopVariant,
@@ -198,10 +288,67 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
       json.loopVariable,
       json.indexVariable
     );
+    return applyV12Metadata(node, annotations, diagnostics);
+  }
+
+  // v1.2: Detect try/catch/finally (body + catchBranch or finallyBranch)
+  if (json.catchBranch || json.finallyBranch) {
+    const body = (json.body ?? []).map(fromProtocolJSON);
+    const catchBranch = json.catchBranch ? json.catchBranch.map(fromProtocolJSON) : undefined;
+    const finallyBranch = json.finallyBranch ? json.finallyBranch.map(fromProtocolJSON) : undefined;
+    const node = createTryNode(body, catchBranch, finallyBranch);
+    return applyV12Metadata(node, annotations, diagnostics);
+  }
+
+  // v1.2: Detect async coordination (asyncVariant)
+  if (json.asyncVariant) {
+    const asyncBody = (json.asyncBody ?? []).map(fromProtocolJSON);
+    const node = createAsyncNode(json.asyncVariant as AsyncVariant, asyncBody);
+    return applyV12Metadata(node, annotations, diagnostics);
+  }
+
+  // v1.2: Detect match (arms)
+  if (json.arms && json.arms.length > 0) {
+    const arms = json.arms.map(arm => ({
+      pattern: valueFromProtocol(arm.pattern),
+      body: arm.body.map(fromProtocolJSON),
+    }));
+    const defaultArm = json.defaultArm ? json.defaultArm.map(fromProtocolJSON) : undefined;
+    const node = createMatchNode(roles, arms, defaultArm);
+    return applyV12Metadata(node, annotations, diagnostics);
+  }
+
+  // v1.2: command with body only (try with no catch/finally)
+  if (json.body && json.body.length > 0 && json.kind === 'command') {
+    const body = json.body.map(fromProtocolJSON);
+    const node = createTryNode(body);
+    return applyV12Metadata(node, annotations, diagnostics);
   }
 
   // Plain command
-  return createCommandNode(json.action, roles);
+  const node = createCommandNode(json.action, roles);
+  return applyV12Metadata(node, annotations, diagnostics);
+}
+
+/**
+ * Apply v1.2 annotations and diagnostics to a node.
+ * Returns the node unchanged if neither is present.
+ */
+function applyV12Metadata(
+  node: SemanticNode,
+  annotations: Array<{ name: string; value?: string }> | undefined,
+  diagnostics:
+    | Array<{ level: 'error' | 'warning'; role: string; message: string; code: string }>
+    | undefined
+): SemanticNode {
+  if ((!annotations || annotations.length === 0) && (!diagnostics || diagnostics.length === 0)) {
+    return node;
+  }
+  return {
+    ...node,
+    ...(annotations && annotations.length > 0 ? { annotations } : {}),
+    ...(diagnostics && diagnostics.length > 0 ? { diagnostics } : {}),
+  };
 }
 
 function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
@@ -231,6 +378,48 @@ function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
 }
 
 // =============================================================================
+// Envelope (v1.2)
+// =============================================================================
+
+/**
+ * Serialize an LSEEnvelope to its JSON wire format.
+ */
+export function toEnvelopeJSON(envelope: LSEEnvelope): LSEEnvelopeJSON {
+  const result: LSEEnvelopeJSON = {
+    lseVersion: envelope.lseVersion,
+    nodes: envelope.nodes.map(toProtocolJSON),
+  };
+  if (envelope.features && envelope.features.length > 0) {
+    result.features = [...envelope.features];
+  }
+  return result;
+}
+
+/**
+ * Deserialize an LSEEnvelopeJSON into an LSEEnvelope.
+ */
+export function fromEnvelopeJSON(json: LSEEnvelopeJSON): LSEEnvelope {
+  return {
+    lseVersion: json.lseVersion,
+    ...(json.features && json.features.length > 0 ? { features: json.features } : {}),
+    nodes: json.nodes.map(fromProtocolJSON),
+  };
+}
+
+/**
+ * Check whether an unknown JSON value is an LSE envelope (has lseVersion + nodes).
+ */
+export function isEnvelope(json: unknown): json is LSEEnvelopeJSON {
+  return (
+    typeof json === 'object' &&
+    json !== null &&
+    'lseVersion' in json &&
+    'nodes' in json &&
+    Array.isArray((json as Record<string, unknown>).nodes)
+  );
+}
+
+// =============================================================================
 // Validation
 // =============================================================================
 
@@ -243,7 +432,9 @@ const VALID_VALUE_TYPES = new Set([
   'property-path',
   'flag',
 ]);
-const VALID_CHAIN_TYPES = new Set(['then', 'and', 'async', 'sequential']);
+const VALID_CHAIN_TYPES = new Set(['then', 'and', 'async', 'sequential', 'pipe']);
+const VALID_ASYNC_VARIANTS = new Set(['all', 'race']);
+const VALID_DIAGNOSTIC_LEVELS = new Set(['error', 'warning']);
 
 /**
  * Validate that an unknown value conforms to the protocol full-fidelity JSON format.
@@ -288,20 +479,23 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
     });
   }
 
-  // roles
-  if (!('roles' in node)) {
+  // roles (optional on compound nodes)
+  if (!('roles' in node) && node.kind !== 'compound') {
     diagnostics.push({
       severity: 'error',
       code: 'MISSING_ROLES',
       message: 'Missing required field: roles',
     });
-  } else if (typeof node.roles !== 'object' || node.roles === null || Array.isArray(node.roles)) {
+  } else if (
+    'roles' in node &&
+    (typeof node.roles !== 'object' || node.roles === null || Array.isArray(node.roles))
+  ) {
     diagnostics.push({
       severity: 'error',
       code: 'INVALID_ROLES',
       message: 'roles must be a plain object',
     });
-  } else {
+  } else if ('roles' in node && node.roles) {
     for (const [role, value] of Object.entries(node.roles as Record<string, unknown>)) {
       if (typeof value !== 'object' || value === null) {
         diagnostics.push({
@@ -369,8 +563,135 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
       diagnostics.push({
         severity: 'error',
         code: 'INVALID_CHAIN_TYPE',
-        message: `Invalid chainType "${node.chainType}". Must be one of: then, and, async, sequential`,
+        message: `Invalid chainType "${node.chainType}". Must be one of: then, and, async, sequential, pipe`,
       });
+    }
+  }
+
+  // v1.2: validate diagnostics array
+  if ('diagnostics' in node) {
+    if (!Array.isArray(node.diagnostics)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'INVALID_DIAGNOSTICS',
+        message: 'diagnostics must be an array',
+      });
+    } else {
+      for (let i = 0; i < (node.diagnostics as unknown[]).length; i++) {
+        const d = (node.diagnostics as unknown[])[i] as Record<string, unknown> | null;
+        if (!d || typeof d !== 'object') {
+          diagnostics.push({
+            severity: 'error',
+            code: 'INVALID_DIAGNOSTIC_ENTRY',
+            message: `diagnostics[${i}] must be an object`,
+          });
+          continue;
+        }
+        if (!VALID_DIAGNOSTIC_LEVELS.has(String(d.level))) {
+          diagnostics.push({
+            severity: 'error',
+            code: 'INVALID_DIAGNOSTIC_LEVEL',
+            message: `diagnostics[${i}].level must be "error" or "warning"`,
+          });
+        }
+        if (typeof d.role !== 'string') {
+          diagnostics.push({
+            severity: 'error',
+            code: 'MISSING_DIAGNOSTIC_ROLE',
+            message: `diagnostics[${i}] missing required field: role`,
+          });
+        }
+        if (typeof d.message !== 'string') {
+          diagnostics.push({
+            severity: 'error',
+            code: 'MISSING_DIAGNOSTIC_MESSAGE',
+            message: `diagnostics[${i}] missing required field: message`,
+          });
+        }
+        if (typeof d.code !== 'string') {
+          diagnostics.push({
+            severity: 'error',
+            code: 'MISSING_DIAGNOSTIC_CODE',
+            message: `diagnostics[${i}] missing required field: code`,
+          });
+        }
+      }
+    }
+  }
+
+  // v1.2: validate annotations array
+  if ('annotations' in node) {
+    if (!Array.isArray(node.annotations)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'INVALID_ANNOTATIONS',
+        message: 'annotations must be an array',
+      });
+    } else {
+      for (let i = 0; i < (node.annotations as unknown[]).length; i++) {
+        const a = (node.annotations as unknown[])[i] as Record<string, unknown> | null;
+        if (!a || typeof a !== 'object') {
+          diagnostics.push({
+            severity: 'error',
+            code: 'INVALID_ANNOTATION_ENTRY',
+            message: `annotations[${i}] must be an object`,
+          });
+          continue;
+        }
+        if (typeof a.name !== 'string' || a.name.length === 0) {
+          diagnostics.push({
+            severity: 'error',
+            code: 'MISSING_ANNOTATION_NAME',
+            message: `annotations[${i}] missing required field: name`,
+          });
+        }
+      }
+    }
+  }
+
+  // v1.2: validate asyncVariant
+  if ('asyncVariant' in node && !VALID_ASYNC_VARIANTS.has(String(node.asyncVariant))) {
+    diagnostics.push({
+      severity: 'error',
+      code: 'INVALID_ASYNC_VARIANT',
+      message: `Invalid asyncVariant "${node.asyncVariant}". Must be "all" or "race"`,
+    });
+  }
+
+  // v1.2: validate arms
+  if ('arms' in node) {
+    if (!Array.isArray(node.arms)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'INVALID_ARMS',
+        message: 'arms must be an array',
+      });
+    } else {
+      for (let i = 0; i < (node.arms as unknown[]).length; i++) {
+        const arm = (node.arms as unknown[])[i] as Record<string, unknown> | null;
+        if (!arm || typeof arm !== 'object') {
+          diagnostics.push({
+            severity: 'error',
+            code: 'INVALID_ARM_ENTRY',
+            message: `arms[${i}] must be an object`,
+          });
+          continue;
+        }
+        if (!arm.pattern || typeof arm.pattern !== 'object') {
+          diagnostics.push({
+            severity: 'error',
+            code: 'MISSING_ARM_PATTERN',
+            message: `arms[${i}] missing required field: pattern`,
+          });
+        }
+        if (!Array.isArray(arm.body)) {
+          diagnostics.push({
+            severity: 'error',
+            code: 'MISSING_ARM_BODY',
+            message: `arms[${i}] missing required field: body (array)`,
+          });
+        }
+      }
     }
   }
 

@@ -199,8 +199,14 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     return handleDispatcherTool(name, args as Record<string, unknown>, registry);
   }
 
-  // IR conversion tools (explicit ↔ JSON)
-  if (name === 'convert_format' || name === 'validate_explicit') {
+  // IR conversion tools (explicit ↔ JSON, protocol validation, envelopes)
+  if (
+    name === 'convert_format' ||
+    name === 'validate_explicit' ||
+    name === 'validate_protocol' ||
+    name === 'to_envelope' ||
+    name === 'from_envelope'
+  ) {
     return handleIRTool(name, args as Record<string, unknown>);
   }
 

@@ -105,6 +105,39 @@ export interface FlagValue {
 }
 
 // =============================================================================
+// Annotations & Diagnostics (v1.2)
+// =============================================================================
+
+/** A metadata annotation on a node (v1.2). */
+export interface Annotation {
+  readonly name: string;
+  readonly value?: string;
+}
+
+/**
+ * A type constraint diagnostic attached to a node (v1.2).
+ *
+ * Named `ProtocolDiagnostic` to avoid collision with the framework's own
+ * `Diagnostic` type (which has `severity: 'error' | 'warning' | 'info'`
+ * and `suggestion?: string`).
+ */
+export interface ProtocolDiagnostic {
+  readonly level: 'error' | 'warning';
+  readonly role: string;
+  readonly message: string;
+  readonly code: string;
+}
+
+/** Async coordination variant (v1.2). */
+export type AsyncVariant = 'all' | 'race';
+
+/** A single arm in a match command (v1.2). */
+export interface MatchArm {
+  readonly pattern: SemanticValue;
+  readonly body: SemanticNode[];
+}
+
+// =============================================================================
 // Semantic Nodes
 // =============================================================================
 
@@ -117,6 +150,10 @@ export interface SemanticNode {
   readonly action: ActionType;
   readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly metadata?: SemanticMetadata;
+  /** Metadata annotations (v1.2). */
+  readonly annotations?: readonly Annotation[];
+  /** Type constraint diagnostics (v1.2). */
+  readonly diagnostics?: readonly ProtocolDiagnostic[];
 }
 
 /**
@@ -148,9 +185,27 @@ export interface SourcePosition {
 
 /**
  * A command semantic node - represents a single DSL command.
+ *
+ * v1.2 adds optional fields for try/catch/finally, async coordination (all/race),
+ * and pattern matching (match/arms). These are encoded as fields on command nodes
+ * (matching the protocol wire format) rather than new node kinds.
  */
 export interface CommandSemanticNode extends SemanticNode {
   readonly kind: 'command';
+  /** try body — commands to execute in the try block (v1.2). */
+  readonly body?: readonly SemanticNode[];
+  /** catch branch — commands to execute on error (v1.2). */
+  readonly catchBranch?: readonly SemanticNode[];
+  /** finally branch — cleanup commands that always execute (v1.2). */
+  readonly finallyBranch?: readonly SemanticNode[];
+  /** Async coordination variant: all (wait for all) or race (first wins) (v1.2). */
+  readonly asyncVariant?: AsyncVariant;
+  /** Async body — concurrent commands for all/race (v1.2). */
+  readonly asyncBody?: readonly SemanticNode[];
+  /** Match arms — pattern/body pairs for match command (v1.2). */
+  readonly arms?: readonly MatchArm[];
+  /** Default arm — executed when no match arm matches (v1.2). */
+  readonly defaultArm?: readonly SemanticNode[];
 }
 
 /**
@@ -188,7 +243,7 @@ export interface ConditionalSemanticNode extends SemanticNode {
 export interface CompoundSemanticNode extends SemanticNode {
   readonly kind: 'compound';
   readonly statements: SemanticNode[];
-  readonly chainType: 'then' | 'and' | 'async' | 'sequential';
+  readonly chainType: 'then' | 'and' | 'async' | 'sequential' | 'pipe';
 }
 
 /**
@@ -605,4 +660,73 @@ export function createLoopNode(
     ...(indexVariable && { indexVariable }),
     ...(metadata && { metadata }),
   };
+}
+
+// =============================================================================
+// v1.2 Factory Helpers
+// =============================================================================
+
+/**
+ * Create a try/catch/finally command node (v1.2).
+ */
+export function createTryNode(
+  body: SemanticNode[],
+  catchBranch?: SemanticNode[],
+  finallyBranch?: SemanticNode[],
+  metadata?: SemanticMetadata
+): CommandSemanticNode {
+  return {
+    kind: 'command',
+    action: 'try',
+    roles: new Map(),
+    body,
+    ...(catchBranch && catchBranch.length > 0 ? { catchBranch } : {}),
+    ...(finallyBranch && finallyBranch.length > 0 ? { finallyBranch } : {}),
+    ...(metadata ? { metadata } : {}),
+  };
+}
+
+/**
+ * Create an async coordination (all/race) command node (v1.2).
+ */
+export function createAsyncNode(
+  variant: AsyncVariant,
+  asyncBody: SemanticNode[],
+  metadata?: SemanticMetadata
+): CommandSemanticNode {
+  return {
+    kind: 'command',
+    action: variant,
+    roles: new Map(),
+    asyncVariant: variant,
+    asyncBody,
+    ...(metadata ? { metadata } : {}),
+  };
+}
+
+/**
+ * Create a match command node with pattern arms (v1.2).
+ */
+export function createMatchNode(
+  roles: Record<SemanticRole, SemanticValue> | Map<SemanticRole, SemanticValue>,
+  arms: MatchArm[],
+  defaultArm?: SemanticNode[],
+  metadata?: SemanticMetadata
+): CommandSemanticNode {
+  const rolesMap = roles instanceof Map ? roles : new Map(Object.entries(roles));
+  return {
+    kind: 'command',
+    action: 'match',
+    roles: rolesMap,
+    arms,
+    ...(defaultArm && defaultArm.length > 0 ? { defaultArm } : {}),
+    ...(metadata ? { metadata } : {}),
+  };
+}
+
+/** Wire format envelope with version metadata (v1.2). */
+export interface LSEEnvelope {
+  readonly lseVersion: string;
+  readonly features?: readonly string[];
+  readonly nodes: readonly SemanticNode[];
 }

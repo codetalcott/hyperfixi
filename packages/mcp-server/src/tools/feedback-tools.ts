@@ -22,7 +22,8 @@ export const feedbackTools: Tool[] = [
         },
         format: {
           type: 'string',
-          description: 'Input format: explicit (default), json, or natural',
+          description:
+            'Input format: explicit (default), json, protocol (full-fidelity v1.1/v1.2), envelope (v1.2 multi-node), or natural',
         },
         domain: {
           type: 'string',
@@ -84,7 +85,8 @@ async function handleValidateAndFeedback(
       };
     }
 
-    const format = (args.format as 'explicit' | 'json' | 'natural') || 'explicit';
+    const format =
+      (args.format as 'explicit' | 'json' | 'protocol' | 'envelope' | 'natural') || 'explicit';
     const domain = args.domain as string | undefined;
 
     let action: string | undefined;
@@ -131,9 +133,68 @@ async function handleValidateAndFeedback(
           code: 'parse-error',
         });
       }
+    } else if (format === 'protocol') {
+      // Full-fidelity protocol JSON (v1.1/v1.2)
+      try {
+        const { validateProtocolJSON, fromProtocolJSON } = await import('@lokascript/framework');
+        const parsed = JSON.parse(input);
+        const protoDiags = validateProtocolJSON(parsed);
+        for (const d of protoDiags) {
+          diagnostics.push({ severity: d.severity, message: d.message, code: d.code });
+        }
+        if (protoDiags.filter(d => d.severity === 'error').length === 0) {
+          const node = fromProtocolJSON(parsed);
+          action = node.action;
+        }
+      } catch (e) {
+        diagnostics.push({
+          severity: 'error',
+          message: e instanceof Error ? e.message : 'Invalid protocol JSON',
+          code: 'parse-error',
+        });
+      }
+    } else if (format === 'envelope') {
+      // LSE v1.2 envelope: { lseVersion, nodes[], features? }
+      try {
+        const { isEnvelope, fromEnvelopeJSON, validateProtocolJSON } =
+          await import('@lokascript/framework');
+        const parsed = JSON.parse(input);
+        if (!isEnvelope(parsed)) {
+          diagnostics.push({
+            severity: 'error',
+            message: 'Not a valid LSE envelope: missing lseVersion or nodes',
+            code: 'invalid-envelope',
+          });
+        } else {
+          // Validate each node in the envelope
+          for (let i = 0; i < parsed.nodes.length; i++) {
+            const nodeDiags = validateProtocolJSON(parsed.nodes[i]);
+            for (const d of nodeDiags) {
+              diagnostics.push({
+                severity: d.severity,
+                message: `Node ${i}: ${d.message}`,
+                code: d.code,
+              });
+            }
+          }
+          if (diagnostics.filter(d => d.severity === 'error').length === 0) {
+            const envelope = fromEnvelopeJSON(parsed);
+            action = envelope.nodes[0]?.action;
+          }
+        }
+      } catch (e) {
+        diagnostics.push({
+          severity: 'error',
+          message: e instanceof Error ? e.message : 'Invalid envelope JSON',
+          code: 'parse-error',
+        });
+      }
     }
 
-    const feedback = buildFeedback(input, format, diagnostics, schemaLookup, action);
+    // Map protocol/envelope formats to 'json' for buildFeedback (which only knows explicit/json/natural)
+    const feedbackFormat: 'explicit' | 'json' | 'natural' =
+      format === 'protocol' || format === 'envelope' ? 'json' : format;
+    const feedback = buildFeedback(input, feedbackFormat, diagnostics, schemaLookup, action);
 
     return {
       content: [{ type: 'text', text: JSON.stringify(feedback, null, 2) }],

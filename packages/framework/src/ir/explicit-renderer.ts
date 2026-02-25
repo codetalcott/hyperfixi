@@ -8,6 +8,7 @@
 import type {
   SemanticNode,
   SemanticValue,
+  CommandSemanticNode,
   CompoundSemanticNode,
   EventHandlerSemanticNode,
   ConditionalSemanticNode,
@@ -78,6 +79,30 @@ export function renderExplicit(node: SemanticNode): string {
     if (loopNode.body && loopNode.body.length > 0) {
       const bodyParts = loopNode.body.map(n => renderExplicit(n));
       parts.push(`loop-body:${bodyParts.join(' ')}`);
+    }
+  }
+
+  // Handle v1.2 command fields (try/catch/finally, async, match)
+  if (node.kind === 'command') {
+    const cmd = node as CommandSemanticNode;
+    if (cmd.body && cmd.body.length > 0) {
+      const bodyParts = cmd.body.map(n => renderExplicit(n));
+      parts.push(`body:${bodyParts.join(' ')}`);
+    }
+    if (cmd.catchBranch && cmd.catchBranch.length > 0) {
+      const catchParts = cmd.catchBranch.map(n => renderExplicit(n));
+      parts.push(`catch:${catchParts.join(' ')}`);
+    }
+    if (cmd.finallyBranch && cmd.finallyBranch.length > 0) {
+      const finallyParts = cmd.finallyBranch.map(n => renderExplicit(n));
+      parts.push(`finally:${finallyParts.join(' ')}`);
+    }
+    if (cmd.asyncVariant) {
+      parts.push(`async-variant:${cmd.asyncVariant}`);
+    }
+    if (cmd.asyncBody && cmd.asyncBody.length > 0) {
+      const asyncParts = cmd.asyncBody.map(n => renderExplicit(n));
+      parts.push(`async-body:${asyncParts.join(' ')}`);
     }
   }
 
