@@ -46,5 +46,21 @@ export type {
   ProtocolValueJSON,
   ProtocolNodeKind,
   ProtocolChainType,
+  // v1.2 sub-types
+  ProtocolDiagnosticJSON,
+  AnnotationJSON,
+  MatchArmJSON,
+  LSEEnvelopeJSON,
 } from './types';
-export { toProtocolJSON, fromProtocolJSON, validateProtocolJSON } from './protocol-json';
+export {
+  toProtocolJSON,
+  fromProtocolJSON,
+  validateProtocolJSON,
+  // v1.2 envelope
+  toEnvelopeJSON,
+  fromEnvelopeJSON,
+  isEnvelope,
+} from './protocol-json';
+
+// Interchange AST → SemanticNode converter
+export { fromInterchangeNode, convertValue, renderExpr } from './from-interchange';
