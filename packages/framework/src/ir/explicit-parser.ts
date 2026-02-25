@@ -26,6 +26,32 @@ import {
 import type { ParseExplicitOptions } from './types';
 import { isValidReference, DEFAULT_REFERENCES } from './references';
 
+/** Structural role names whose bracket-enclosed values may be nested commands. */
+export const STRUCTURAL_ROLES = new Set([
+  'body',
+  'then',
+  'else',
+  'condition',
+  'loop-body',
+  'variable',
+]);
+
+/**
+ * Checks whether a bracket-enclosed value is a nested command (vs. an attribute selector).
+ * A value starting with `[` is a nested command if the inner content (after stripping
+ * outer `[]`) contains at least one ASCII space or `:` at bracket-depth 0.
+ */
+function isNestedCommand(value: string): boolean {
+  const inner = value.slice(1, -1);
+  let depth = 0;
+  for (const ch of inner) {
+    if (ch === '[') depth++;
+    else if (ch === ']') depth--;
+    else if (depth === 0 && (ch === ' ' || ch === ':')) return true;
+  }
+  return false;
+}
+
 // =============================================================================
 // Explicit Syntax Parser
 // =============================================================================
@@ -90,8 +116,12 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
 
     const roleName = token.slice(0, colonIndex);
 
-    // Validate role name against schema (skip for unknown commands or 'body' structural role)
-    if (validRoleNames && roleName !== 'body' && !validRoleNames.has(roleName as SemanticRole)) {
+    // Validate role name against schema (skip for structural roles)
+    if (
+      validRoleNames &&
+      !STRUCTURAL_ROLES.has(roleName) &&
+      !validRoleNames.has(roleName as SemanticRole)
+    ) {
       const roleList = [...validRoleNames].join(', ');
       throw new Error(
         `Unknown role "${roleName}" for command "${command}". Valid roles: ${roleList}`
@@ -101,8 +131,8 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
     const role = roleName as SemanticRole;
     const valueStr = token.slice(colonIndex + 1);
 
-    // Handle nested explicit syntax for body
-    if (role === ('body' as SemanticRole) && valueStr.startsWith('[')) {
+    // Handle nested explicit syntax for structural roles (body, then, else, condition, loop-body, variable)
+    if (STRUCTURAL_ROLES.has(roleName) && valueStr.startsWith('[') && isNestedCommand(valueStr)) {
       const nestedEnd = findMatchingBracket(token, colonIndex + 1);
       const nestedSyntax = token.slice(colonIndex + 1, nestedEnd + 1);
       roles.set(role, { type: 'expression', raw: nestedSyntax });

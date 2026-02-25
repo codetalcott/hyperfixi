@@ -12,6 +12,27 @@ import { DEFAULT_REFERENCES, isValidReference } from './references';
 const DURATION_RE = /^(-?\d+(?:\.\d+)?)(ms|s|m|h)$/;
 const NUMBER_RE = /^-?\d+(?:\.\d+)?$/;
 
+/** Structural role names whose bracket-enclosed values may be nested commands. */
+export const STRUCTURAL_ROLES = new Set([
+  'body', 'then', 'else', 'condition', 'loop-body', 'variable',
+]);
+
+/**
+ * Checks whether a bracket-enclosed value is a nested command (vs. an attribute selector).
+ * A value starting with `[` is a nested command if the inner content (after stripping
+ * outer `[]`) contains at least one ASCII space or `:` at bracket-depth 0.
+ */
+function isNestedCommand(value: string): boolean {
+  const inner = value.slice(1, -1);
+  let depth = 0;
+  for (const ch of inner) {
+    if (ch === '[') depth++;
+    else if (ch === ']') depth--;
+    else if (depth === 0 && (ch === ' ' || ch === ':')) return true;
+  }
+  return false;
+}
+
 /** Returned when explicit syntax is malformed. */
 export class ParseError extends Error {
   constructor(message: string) {
@@ -89,8 +110,8 @@ export function parseExplicit(text: string, opts?: ParseOptions): SemanticNode {
     const roleName = token.slice(0, colonIdx);
     const valueStr = token.slice(colonIdx + 1);
 
-    // Nested bracket syntax for body role
-    if (roleName === 'body' && valueStr.startsWith('[')) {
+    // Nested bracket syntax for structural roles (body, then, else, condition, loop-body, variable)
+    if (STRUCTURAL_ROLES.has(roleName) && valueStr.startsWith('[') && isNestedCommand(valueStr)) {
       roles[roleName] = expressionValue(valueStr);
       continue;
     }
@@ -116,7 +137,47 @@ export function parseExplicit(text: string, opts?: ParseOptions): SemanticNode {
     return { kind: 'event-handler', action: 'on', roles, body };
   }
 
-  return { kind: 'command', action: command, roles };
+  // Build command node, extracting structural roles into top-level fields
+  const node: SemanticNode = { kind: 'command', action: command, roles };
+
+  // Extract conditional branches (v1.1)
+  extractStructuralBranch(node, roles, 'then', 'thenBranch', opts);
+  extractStructuralBranch(node, roles, 'else', 'elseBranch', opts);
+
+  // Extract loop fields (v1.1)
+  extractStructuralBranch(node, roles, 'loop-body', 'loopBody', opts);
+  if (roles['loopVariant']?.type === 'literal' && typeof roles['loopVariant'].value === 'string') {
+    node.loopVariant = roles['loopVariant'].value as SemanticNode['loopVariant'];
+    delete roles['loopVariant'];
+  }
+  if (roles['loopVariable']?.type === 'literal' && typeof roles['loopVariable'].value === 'string') {
+    node.loopVariable = roles['loopVariable'].value;
+    delete roles['loopVariable'];
+  }
+  if (roles['indexVariable']?.type === 'literal' && typeof roles['indexVariable'].value === 'string') {
+    node.indexVariable = roles['indexVariable'].value;
+    delete roles['indexVariable'];
+  }
+
+  return node;
+}
+
+/**
+ * Extracts a structural role (expression holding nested bracket syntax)
+ * into a top-level array field on the node, then removes it from roles.
+ */
+function extractStructuralBranch(
+  node: SemanticNode,
+  roles: Record<string, SemanticValue>,
+  roleName: string,
+  fieldName: 'thenBranch' | 'elseBranch' | 'loopBody',
+  opts?: ParseOptions,
+): void {
+  const value = roles[roleName];
+  if (value?.type === 'expression' && value.raw) {
+    node[fieldName] = [parseExplicit(value.raw, opts)];
+    delete roles[roleName];
+  }
 }
 
 /**

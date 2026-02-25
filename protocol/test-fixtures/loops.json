@@ -1,0 +1,112 @@
+[
+  {
+    "id": "loop-001",
+    "description": "forever loop variant",
+    "jsonInput": {
+      "kind": "command",
+      "action": "repeat",
+      "roles": {},
+      "loopVariant": "forever",
+      "loopBody": [
+        {
+          "kind": "command",
+          "action": "wait",
+          "roles": {
+            "duration": { "type": "literal", "value": "1s", "dataType": "duration" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "loop-002",
+    "description": "times loop variant with quantity role",
+    "jsonInput": {
+      "kind": "command",
+      "action": "repeat",
+      "roles": {
+        "quantity": { "type": "literal", "value": 5, "dataType": "number" }
+      },
+      "loopVariant": "times",
+      "loopBody": [
+        {
+          "kind": "command",
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "loop-003",
+    "description": "for loop variant with source and loopVariable",
+    "jsonInput": {
+      "kind": "command",
+      "action": "repeat",
+      "roles": {
+        "source": { "type": "selector", "value": "#items" }
+      },
+      "loopVariant": "for",
+      "loopBody": [
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active" },
+            "destination": { "type": "reference", "value": "it" }
+          }
+        }
+      ],
+      "loopVariable": "item"
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "loop-004",
+    "description": "while loop variant with condition",
+    "jsonInput": {
+      "kind": "command",
+      "action": "repeat",
+      "roles": {
+        "condition": { "type": "expression", "raw": "counter < 10" }
+      },
+      "loopVariant": "while",
+      "loopBody": [
+        {
+          "kind": "command",
+          "action": "increment",
+          "roles": {
+            "destination": { "type": "selector", "value": "#counter" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "loop-005",
+    "description": "until loop variant with condition",
+    "jsonInput": {
+      "kind": "command",
+      "action": "repeat",
+      "roles": {
+        "condition": { "type": "reference", "value": "isDone" }
+      },
+      "loopVariant": "until",
+      "loopBody": [
+        {
+          "kind": "command",
+          "action": "wait",
+          "roles": {
+            "duration": { "type": "literal", "value": "100ms", "dataType": "duration" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  }
+]

@@ -29,6 +29,28 @@ export function renderExplicit(node: SemanticNode): string {
     parts.push(`body:${bodyStr}`);
   }
 
+  // Conditional branches (v1.1)
+  if (node.thenBranch && node.thenBranch.length > 0) {
+    parts.push(`then:${node.thenBranch.map(renderExplicit).join(' ')}`);
+  }
+  if (node.elseBranch && node.elseBranch.length > 0) {
+    parts.push(`else:${node.elseBranch.map(renderExplicit).join(' ')}`);
+  }
+
+  // Loop fields (v1.1)
+  if (node.loopVariant) {
+    parts.push(`loopVariant:${node.loopVariant}`);
+  }
+  if (node.loopBody && node.loopBody.length > 0) {
+    parts.push(`loop-body:${node.loopBody.map(renderExplicit).join(' ')}`);
+  }
+  if (node.loopVariable) {
+    parts.push(`loopVariable:${JSON.stringify(node.loopVariable)}`);
+  }
+  if (node.indexVariable) {
+    parts.push(`indexVariable:${JSON.stringify(node.indexVariable)}`);
+  }
+
   return `[${parts.join(' ')}]`;
 }
 

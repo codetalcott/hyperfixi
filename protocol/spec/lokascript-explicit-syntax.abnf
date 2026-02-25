@@ -1,5 +1,5 @@
 ; LokaScript Explicit Syntax (LSE) - Formal Grammar
-; Version 1.0.0
+; Version 1.1.0
 ;
 ; RFC 5234 ABNF (Augmented Backus-Naur Form)
 ; https://www.rfc-editor.org/rfc/rfc5234
@@ -83,9 +83,9 @@ role-name      = 1*( ALPHA / DIGIT / "-" / "_" )
 ;   6. number       - digits with optional decimal
 ;   7. plain-value  - fallback: any non-whitespace characters
 ;
-; NOTE: Nested body detection (role "body" with value starting "[") is
-; handled at the role-parsing level, before value classification.
-; See "Event Handlers" in the spec README for details.
+; NOTE: Structural role detection (role in structural-role-names with value
+; starting "[") is handled at the role-parsing level, before value
+; classification. See "Structural Roles" in the spec README for details.
 
 value          = selector
                / string-literal
@@ -162,19 +162,23 @@ number-literal = [ "-" ] 1*DIGIT [ "." 1*DIGIT ]
 reference      = "me" / "you" / "it" / "result"
                / "event" / "target" / "body"
 
-; --- Nested Body ---
-; A bracket command embedded as a role value. Used for event handler
-; bodies: [on event:click body:[toggle patient:.active]]
+; --- Structural Roles ---
+; Certain role names carry nested bracket commands instead of plain values.
+; When a role name is in the structural-role-names set AND the value starts
+; with "[", parsers apply a disambiguation check: the value is a nested
+; bracket command if the inner content (after stripping outer []) contains
+; at least one ASCII space or ":" at bracket-depth 0. Otherwise it is
+; treated as an attribute selector.
 ;
-; Nested body is NOT a value type in the priority list. It is detected
-; at the role-parsing level: when the role name is "body" and the value
-; starts with "[", the value is parsed as a nested bracket command.
-; This avoids ambiguity with the "body" reference (document body).
+; This allows [on event:click body:[toggle patient:.active]] (nested command)
+; and [if condition:[data-active]] (attribute selector) to coexist.
 ;
 ; Parsers MUST track bracket depth to find the matching "]".
 ; The nested content is recursively parsed as a bracket-cmd.
 
-nested-body    = bracket-cmd
+structural-role-names = "body" / "then" / "else" / "condition" / "loop-body" / "variable"
+
+nested-structural  = bracket-cmd
 
 ; --- Plain Value (fallback) ---
 ; Any sequence of non-whitespace printable characters.

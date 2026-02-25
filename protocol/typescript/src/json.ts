@@ -88,6 +88,22 @@ export function toJSON(node: SemanticNode): Record<string, unknown> {
     if (node.chainType) m['chainType'] = node.chainType;
   }
 
+  // Conditional fields (v1.1)
+  if (node.thenBranch && node.thenBranch.length > 0) {
+    m['thenBranch'] = node.thenBranch.map(toJSON);
+  }
+  if (node.elseBranch && node.elseBranch.length > 0) {
+    m['elseBranch'] = node.elseBranch.map(toJSON);
+  }
+
+  // Loop fields (v1.1)
+  if (node.loopVariant) m['loopVariant'] = node.loopVariant;
+  if (node.loopBody && node.loopBody.length > 0) {
+    m['loopBody'] = node.loopBody.map(toJSON);
+  }
+  if (node.loopVariable) m['loopVariable'] = node.loopVariable;
+  if (node.indexVariable) m['indexVariable'] = node.indexVariable;
+
   return m;
 }
 
@@ -148,7 +164,37 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
     return { kind: 'compound', action, roles, statements, chainType };
   }
 
-  return { kind: 'command', action, roles };
+  // Command node — with optional v1.1 conditional/loop fields
+  const node: SemanticNode = { kind: 'command', action, roles };
+
+  // Conditional fields (v1.1)
+  const thenBranch = deserializeNodeArray(data['thenBranch']);
+  if (thenBranch.length > 0) node.thenBranch = thenBranch;
+  const elseBranch = deserializeNodeArray(data['elseBranch']);
+  if (elseBranch.length > 0) node.elseBranch = elseBranch;
+
+  // Loop fields (v1.1)
+  if (typeof data['loopVariant'] === 'string') {
+    node.loopVariant = data['loopVariant'] as SemanticNode['loopVariant'];
+  }
+  const loopBody = deserializeNodeArray(data['loopBody']);
+  if (loopBody.length > 0) node.loopBody = loopBody;
+  if (typeof data['loopVariable'] === 'string') node.loopVariable = data['loopVariable'];
+  if (typeof data['indexVariable'] === 'string') node.indexVariable = data['indexVariable'];
+
+  return node;
+}
+
+function deserializeNodeArray(arr: unknown): SemanticNode[] {
+  const result: SemanticNode[] = [];
+  if (Array.isArray(arr)) {
+    for (const item of arr) {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        result.push(fromJSON(item as Record<string, unknown>));
+      }
+    }
+  }
+  return result;
 }
 
 function marshalRoles(roles: Record<string, SemanticValue>): Record<string, unknown> {
@@ -163,6 +209,9 @@ function marshalValue(v: SemanticValue): Record<string, unknown> {
   const m: Record<string, unknown> = { type: v.type };
   switch (v.type) {
     case 'selector':
+      m['value'] = v.value;
+      if (v.selectorKind) m['selectorKind'] = v.selectorKind;
+      break;
     case 'reference':
       m['value'] = v.value;
       break;
@@ -186,8 +235,12 @@ function convertJSONValue(data: Record<string, unknown>): SemanticValue {
   const vtype = data['type'] as string;
 
   switch (vtype) {
-    case 'selector':
-      return selectorValue((data['value'] as string) ?? '');
+    case 'selector': {
+      const sv = selectorValue((data['value'] as string) ?? '');
+      const sk = data['selectorKind'] as string | undefined;
+      if (sk) (sv as Record<string, unknown>).selectorKind = sk;
+      return sv;
+    }
 
     case 'literal': {
       const value = data['value'];

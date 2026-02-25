@@ -28,7 +28,11 @@ export interface SemanticValue {
   raw?: string;
   name?: string;
   enabled?: boolean;
+  selectorKind?: 'id' | 'class' | 'attribute' | 'element' | 'complex';
 }
+
+/** Loop variant discriminant. */
+export type LoopVariant = 'forever' | 'times' | 'for' | 'while' | 'until';
 
 /** A parsed LSE node. */
 export interface SemanticNode {
@@ -38,6 +42,14 @@ export interface SemanticNode {
   body?: SemanticNode[];
   statements?: SemanticNode[];
   chainType?: ChainType;
+  // Conditional fields (v1.1)
+  thenBranch?: SemanticNode[];
+  elseBranch?: SemanticNode[];
+  // Loop fields (v1.1)
+  loopVariant?: LoopVariant;
+  loopBody?: SemanticNode[];
+  loopVariable?: string;
+  indexVariable?: string;
 }
 
 // Constructor helpers

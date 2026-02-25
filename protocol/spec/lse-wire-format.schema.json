@@ -11,7 +11,8 @@
       "additionalProperties": false,
       "properties": {
         "type": { "const": "selector" },
-        "value": { "type": "string", "minLength": 1 }
+        "value": { "type": "string", "minLength": 1 },
+        "selectorKind": { "enum": ["id", "class", "attribute", "element", "complex"] }
       }
     },
     "LiteralValue": {
@@ -84,7 +85,22 @@
       "properties": {
         "kind": { "const": "command" },
         "action": { "type": "string", "minLength": 1 },
-        "roles": { "$ref": "#/$defs/RolesObject" }
+        "roles": { "$ref": "#/$defs/RolesObject" },
+        "thenBranch": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "elseBranch": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "loopVariant": { "enum": ["forever", "times", "for", "while", "until"] },
+        "loopBody": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "loopVariable": { "type": "string" },
+        "indexVariable": { "type": "string" }
       }
     },
     "EventHandlerNode": {

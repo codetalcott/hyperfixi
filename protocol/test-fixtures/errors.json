@@ -47,5 +47,18 @@
     "input": "[column name:id ~]",
     "expectError": true,
     "errorContains": "Empty flag"
+  },
+  {
+    "id": "error-008",
+    "description": "Flag value missing required enabled field in JSON",
+    "jsonInput": {
+      "kind": "command",
+      "action": "column",
+      "roles": {
+        "primary-key": { "type": "flag", "name": "primary-key" }
+      }
+    },
+    "expectValidationError": true,
+    "errorCode": "MISSING_FLAG_ENABLED"
   }
 ]

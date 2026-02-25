@@ -90,8 +90,9 @@ export interface IRDiagnostic {
 // Protocol Full-Fidelity JSON Format
 // =============================================================================
 // These types match the wire format spec (protocol/spec/wire-format.md).
-// Only 3 node kinds — TS-only kinds (conditional, loop) are downgraded on serialization.
-// selectorKind is stripped; property-path is flattened to expression.
+// Wire format has 3 node kinds; TS-only kinds (conditional, loop) are losslessly
+// encoded as command nodes with v1.1 extension fields.
+// property-path is flattened to expression.
 
 export type ProtocolNodeKind = 'command' | 'event-handler' | 'compound';
 export type ProtocolChainType = 'then' | 'and' | 'async' | 'sequential';
@@ -107,6 +108,7 @@ export interface ProtocolValueJSON {
   raw?: string; // expression only
   name?: string; // flag only
   enabled?: boolean; // flag only
+  selectorKind?: 'id' | 'class' | 'attribute' | 'element' | 'complex'; // selector only, optional
 }
 
 /**
@@ -120,4 +122,12 @@ export interface ProtocolNodeJSON {
   body?: ProtocolNodeJSON[]; // event-handler only
   statements?: ProtocolNodeJSON[]; // compound only
   chainType?: ProtocolChainType; // compound only
+  // Conditional fields (v1.1)
+  thenBranch?: ProtocolNodeJSON[];
+  elseBranch?: ProtocolNodeJSON[];
+  // Loop fields (v1.1)
+  loopVariant?: 'forever' | 'times' | 'for' | 'while' | 'until';
+  loopBody?: ProtocolNodeJSON[];
+  loopVariable?: string;
+  indexVariable?: string;
 }

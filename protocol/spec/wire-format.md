@@ -64,17 +64,71 @@ Lossless round-trip between parse and render. Used for tool-to-tool interchange.
 
 ### Value Shapes
 
-| Type               | JSON Shape                                                        | Example                                     |
-| ------------------ | ----------------------------------------------------------------- | ------------------------------------------- |
-| selector           | `{ "type": "selector", "value": ".active" }`                      | `#id`, `.class`, `[attr]`, `@aria`, `*wild` |
-| literal (string)   | `{ "type": "literal", "value": "hello", "dataType": "string" }`   | Quoted or fallback strings                  |
-| literal (number)   | `{ "type": "literal", "value": 42, "dataType": "number" }`        | Integer or decimal                          |
-| literal (boolean)  | `{ "type": "literal", "value": true, "dataType": "boolean" }`     | `true` / `false`                            |
-| literal (duration) | `{ "type": "literal", "value": "500ms", "dataType": "duration" }` | Number + suffix                             |
-| reference          | `{ "type": "reference", "value": "me" }`                          | Built-in names                              |
-| expression         | `{ "type": "expression", "raw": "[nested cmd]" }`                 | Nested syntax or raw expressions            |
-| flag (enabled)     | `{ "type": "flag", "name": "primary-key", "enabled": true }`      | `+flag`                                     |
-| flag (disabled)    | `{ "type": "flag", "name": "nullable", "enabled": false }`        | `~flag`                                     |
+| Type               | JSON Shape                                                            | Example                                               |
+| ------------------ | --------------------------------------------------------------------- | ----------------------------------------------------- |
+| selector           | `{ "type": "selector", "value": ".active" }`                          | `#id`, `.class`, `[attr]`, `@aria`, `*wild`           |
+| selector (v1.1)    | `{ "type": "selector", "value": ".active", "selectorKind": "class" }` | Optional kind: id, class, attribute, element, complex |
+| literal (string)   | `{ "type": "literal", "value": "hello", "dataType": "string" }`       | Quoted or fallback strings                            |
+| literal (number)   | `{ "type": "literal", "value": 42, "dataType": "number" }`            | Integer or decimal                                    |
+| literal (boolean)  | `{ "type": "literal", "value": true, "dataType": "boolean" }`         | `true` / `false`                                      |
+| literal (duration) | `{ "type": "literal", "value": "500ms", "dataType": "duration" }`     | Number + suffix                                       |
+| reference          | `{ "type": "reference", "value": "me" }`                              | Built-in names                                        |
+| expression         | `{ "type": "expression", "raw": "[nested cmd]" }`                     | Nested syntax or raw expressions                      |
+| flag (enabled)     | `{ "type": "flag", "name": "primary-key", "enabled": true }`          | `+flag`                                               |
+| flag (disabled)    | `{ "type": "flag", "name": "nullable", "enabled": false }`            | `~flag`                                               |
+
+> **Note (v1.1):** `selectorKind` is optional on selector values and may be omitted. The `enabled` field on flag values is **required** and MUST be present in all conformant implementations.
+
+### Conditional Node (v1.1)
+
+A command node with optional `thenBranch` and `elseBranch` arrays encodes conditional logic losslessly:
+
+```json
+{
+  "kind": "command",
+  "action": "if",
+  "roles": {
+    "condition": { "type": "expression", "raw": "x > 0" }
+  },
+  "thenBranch": [
+    {
+      "kind": "command",
+      "action": "toggle",
+      "roles": { "patient": { "type": "selector", "value": ".active" } }
+    }
+  ],
+  "elseBranch": [
+    {
+      "kind": "command",
+      "action": "remove",
+      "roles": { "patient": { "type": "selector", "value": ".active" } }
+    }
+  ]
+}
+```
+
+### Loop Node (v1.1)
+
+A command node with `loopVariant`, `loopBody`, and optional `loopVariable`/`indexVariable` encodes loops losslessly. Five variants are supported: `forever`, `times`, `for`, `while`, `until`.
+
+```json
+{
+  "kind": "command",
+  "action": "repeat",
+  "roles": {
+    "source": { "type": "selector", "value": "#items" }
+  },
+  "loopVariant": "for",
+  "loopBody": [
+    {
+      "kind": "command",
+      "action": "add",
+      "roles": { "patient": { "type": "selector", "value": ".active" } }
+    }
+  ],
+  "loopVariable": "item"
+}
+```
 
 ### Node Shape
 
@@ -88,6 +142,14 @@ interface SemanticNodeJSON {
   // compound only:
   statements?: SemanticNodeJSON[];
   chainType?: 'then' | 'and' | 'async' | 'sequential';
+  // conditional (v1.1, command nodes only):
+  thenBranch?: SemanticNodeJSON[];
+  elseBranch?: SemanticNodeJSON[];
+  // loop (v1.1, command nodes only):
+  loopVariant?: 'forever' | 'times' | 'for' | 'while' | 'until';
+  loopBody?: SemanticNodeJSON[];
+  loopVariable?: string;
+  indexVariable?: string;
 }
 ```
 
@@ -150,21 +212,21 @@ The schema enforces:
 
 - Exactly 3 node kinds (`command`, `event-handler`, `compound`)
 - All 6 value types with required fields (`name`+`enabled` for flags, `raw` for expressions)
-- `additionalProperties: false` on value types (prevents TS-only fields like `selectorKind`)
+- `additionalProperties: false` on value types
+- Optional v1.1 fields on command nodes: `thenBranch`, `elseBranch`, `loopVariant`, `loopBody`, `loopVariable`, `indexVariable`, `selectorKind`
 
 ## TypeScript Extensions (TS-Layer Only)
 
 The TypeScript framework (`packages/framework`) extends the internal AST with additional
-node kinds and value fields that do **not** appear in the wire format. These exist only
-in-memory during processing within TypeScript code.
+node kinds and value fields. These are losslessly encoded in the wire format (v1.1).
 
-| TS-only feature                   | Wire format handling                                               |
-| --------------------------------- | ------------------------------------------------------------------ |
-| `kind: 'conditional'`             | Downgraded to `kind: 'command'`; `thenBranch`/`elseBranch` dropped |
-| `kind: 'loop'`                    | Downgraded to `kind: 'command'`; `body`/`loopVariable` dropped     |
-| `selectorKind` on `SelectorValue` | Stripped                                                           |
-| `roles: ReadonlyMap`              | Converted to `Record<string, ...>`                                 |
-| `property-path` value             | Flattened to `expression` via `extractValue()`                     |
+| TS feature                        | Wire format handling                                                     |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `kind: 'conditional'`             | Lossless: encoded as `command` with `thenBranch`/`elseBranch` arrays     |
+| `kind: 'loop'`                    | Lossless: encoded as `command` with `loopVariant`/`loopBody`/etc. fields |
+| `selectorKind` on `SelectorValue` | Preserved as optional field (v1.1)                                       |
+| `roles: ReadonlyMap`              | Converted to `Record<string, ...>`                                       |
+| `property-path` value             | Flattened to `expression` via `extractValue()`                           |
 
 Use `toProtocolJSON()` from `@lokascript/framework/ir` to serialize with these rules applied:
 
@@ -175,8 +237,10 @@ import { toProtocolJSON, fromProtocolJSON } from '@lokascript/framework/ir';
 const wireJSON = toProtocolJSON(semanticNode);
 
 // Deserialize protocol wire format → TS SemanticNode
+// Detects v1.1 fields and reconstructs conditional/loop nodes
 const node = fromProtocolJSON(wireJSON);
 ```
 
-The downgrades for `conditional` and `loop` are **lossy**: branch bodies are dropped.
-`fromProtocolJSON()` never produces `conditional` or `loop` nodes — only the 3 protocol kinds.
+`fromProtocolJSON()` detects v1.1 fields (`thenBranch`, `loopVariant`) on command nodes
+and reconstructs `conditional` and `loop` node kinds using `createConditionalNode()` and
+`createLoopNode()` respectively.

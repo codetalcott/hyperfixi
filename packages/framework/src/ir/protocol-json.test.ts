@@ -30,17 +30,22 @@ describe('toProtocolJSON', () => {
       expect(json.roles['patient']).toEqual({ type: 'selector', value: '.active' });
     });
 
-    it('strips selectorKind from selector values', () => {
+    it('preserves selectorKind on selector values (v1.1)', () => {
       const node = createCommandNode('toggle', {
         patient: createSelector('.active', 'class'),
         destination: createSelector('#button', 'id'),
       });
       const json = toProtocolJSON(node);
-      expect(json.roles['patient']).toEqual({ type: 'selector', value: '.active' });
-      expect(json.roles['destination']).toEqual({ type: 'selector', value: '#button' });
-      // selectorKind must not appear
-      expect('selectorKind' in json.roles['patient']).toBe(false);
-      expect('selectorKind' in json.roles['destination']).toBe(false);
+      expect(json.roles['patient']).toEqual({
+        type: 'selector',
+        value: '.active',
+        selectorKind: 'class',
+      });
+      expect(json.roles['destination']).toEqual({
+        type: 'selector',
+        value: '#button',
+        selectorKind: 'id',
+      });
     });
 
     it('serializes literal values with dataType', () => {
@@ -162,31 +167,41 @@ describe('toProtocolJSON', () => {
     });
   });
 
-  describe('TS-only node kinds (lossy downgrade)', () => {
-    it('downgrades conditional to command', () => {
+  describe('TS-only node kinds (lossless v1.1 encoding)', () => {
+    it('encodes conditional as command with thenBranch/elseBranch', () => {
       const thenBranch = [createCommandNode('toggle', { patient: createSelector('.active') })];
+      const elseBranch = [createCommandNode('remove', { patient: createSelector('.active') })];
       const node = createConditionalNode(
         'if',
         { condition: createExpression('x > 0') },
-        thenBranch
+        thenBranch,
+        elseBranch
       );
       const json = toProtocolJSON(node);
       expect(json.kind).toBe('command');
       expect(json.action).toBe('if');
-      // thenBranch is dropped
-      expect('thenBranch' in json).toBe(false);
-      expect('body' in json).toBe(false);
+      expect(json.thenBranch).toHaveLength(1);
+      expect(json.thenBranch![0].action).toBe('toggle');
+      expect(json.elseBranch).toHaveLength(1);
+      expect(json.elseBranch![0].action).toBe('remove');
     });
 
-    it('downgrades loop to command', () => {
+    it('encodes loop as command with loopVariant/loopBody', () => {
       const body = [createCommandNode('toggle', { patient: createSelector('.active') })];
-      const node = createLoopNode('repeat', { count: createLiteral(5, 'number') }, 'times', body);
+      const node = createLoopNode(
+        'repeat',
+        { count: createLiteral(5, 'number') },
+        'times',
+        body,
+        'item'
+      );
       const json = toProtocolJSON(node);
       expect(json.kind).toBe('command');
       expect(json.action).toBe('repeat');
-      // body is dropped
-      expect('body' in json).toBe(false);
-      expect('statements' in json).toBe(false);
+      expect(json.loopVariant).toBe('times');
+      expect(json.loopBody).toHaveLength(1);
+      expect(json.loopBody![0].action).toBe('toggle');
+      expect(json.loopVariable).toBe('item');
     });
   });
 });
@@ -338,17 +353,29 @@ describe('round-trip', () => {
     expect(c.chainType).toBe('then');
   });
 
-  it('conditional downgrade is one-way (lossy)', () => {
+  it('conditional round-trip is lossless (v1.1)', () => {
     const original = createConditionalNode('if', { condition: createExpression('x > 0') }, [
       createCommandNode('show', { patient: createSelector('#result') }),
     ]);
     const protocol = toProtocolJSON(original);
-    // Downgraded to command — fromProtocolJSON produces a command, not conditional
     const restored = fromProtocolJSON(protocol);
-    expect(restored.kind).toBe('command');
+    expect(restored.kind).toBe('conditional');
     expect(restored.action).toBe('if');
-    // thenBranch is gone
-    expect('thenBranch' in restored).toBe(false);
+    const cond = restored as import('../core/types').ConditionalSemanticNode;
+    expect(cond.thenBranch).toHaveLength(1);
+    expect(cond.thenBranch[0].action).toBe('show');
+  });
+
+  it('loop round-trip is lossless (v1.1)', () => {
+    const body = [createCommandNode('wait', { duration: createLiteral('1s', 'duration') })];
+    const original = createLoopNode('repeat', {}, 'forever', body);
+    const protocol = toProtocolJSON(original);
+    const restored = fromProtocolJSON(protocol);
+    expect(restored.kind).toBe('loop');
+    const loop = restored as import('../core/types').LoopSemanticNode;
+    expect(loop.loopVariant).toBe('forever');
+    expect(loop.body).toHaveLength(1);
+    expect(loop.body[0].action).toBe('wait');
   });
 });
 

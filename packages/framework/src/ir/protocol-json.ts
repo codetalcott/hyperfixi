@@ -7,8 +7,10 @@
  * The TypeScript layer is a superset of the protocol spec:
  * - TS has 5 node kinds; protocol has 3 (command, event-handler, compound)
  * - TS uses ReadonlyMap<SemanticRole, SemanticValue>; protocol uses plain Record
- * - TS SelectorValue has optional selectorKind; protocol does not
+ * - TS SelectorValue has optional selectorKind; protocol preserves it when present (v1.1)
  * - TS has PropertyPathValue; protocol flattens it to expression
+ * - TS conditional/loop nodes are losslessly encoded as command nodes with
+ *   thenBranch/elseBranch/loopVariant/loopBody/loopVariable/indexVariable fields (v1.1)
  *
  * Use toProtocolJSON() to serialize for tool-to-tool interchange.
  * Use fromProtocolJSON() to deserialize from protocol-conformant sources.
@@ -20,11 +22,16 @@ import type {
   SemanticRole,
   EventHandlerSemanticNode,
   CompoundSemanticNode,
+  ConditionalSemanticNode,
+  LoopSemanticNode,
+  LoopVariant,
 } from '../core/types';
 import {
   createCommandNode,
   createEventHandlerNode,
   createCompoundNode,
+  createConditionalNode,
+  createLoopNode,
   createSelector,
   createLiteral,
   createReference,
@@ -41,12 +48,11 @@ import type { ProtocolNodeJSON, ProtocolValueJSON, ProtocolChainType, IRDiagnost
 /**
  * Serialize a SemanticNode to the protocol full-fidelity JSON wire format.
  *
- * TS-only node kinds are downgraded (lossy):
- * - `conditional` → `command` (thenBranch/elseBranch dropped)
- * - `loop` → `command` (body/loopVariable/indexVariable dropped)
+ * TS-only node kinds are losslessly encoded as command nodes (v1.1):
+ * - `conditional` → `command` with thenBranch/elseBranch arrays
+ * - `loop` → `command` with loopVariant/loopBody/loopVariable/indexVariable fields
  *
- * TS-only value fields stripped:
- * - `selectorKind` on SelectorValue
+ * TS-only value fields:
  * - `property-path` flattened to `expression` using extractValue()
  */
 export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
@@ -77,12 +83,25 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
       };
     }
 
-    // TS-only kinds: downgrade to command — branch/body/loop data is dropped
-    case 'conditional':
-      return { kind: 'command', action: node.action, roles };
+    case 'conditional': {
+      const cond = node as ConditionalSemanticNode;
+      const result: ProtocolNodeJSON = { kind: 'command', action: node.action, roles };
+      result.thenBranch = cond.thenBranch.map(toProtocolJSON);
+      if (cond.elseBranch && cond.elseBranch.length > 0) {
+        result.elseBranch = cond.elseBranch.map(toProtocolJSON);
+      }
+      return result;
+    }
 
-    case 'loop':
-      return { kind: 'command', action: node.action, roles };
+    case 'loop': {
+      const loop = node as LoopSemanticNode;
+      const result: ProtocolNodeJSON = { kind: 'command', action: node.action, roles };
+      result.loopVariant = loop.loopVariant;
+      result.loopBody = loop.body.map(toProtocolJSON);
+      if (loop.loopVariable) result.loopVariable = loop.loopVariable;
+      if (loop.indexVariable) result.indexVariable = loop.indexVariable;
+      return result;
+    }
   }
 }
 
@@ -98,9 +117,21 @@ function rolesToProtocol(
 
 function valueToProtocol(value: SemanticValue): ProtocolValueJSON {
   switch (value.type) {
-    case 'selector':
-      // selectorKind intentionally stripped — TS-only extension not in wire format
-      return { type: 'selector', value: value.value };
+    case 'selector': {
+      const PROTOCOL_SELECTOR_KINDS = new Set([
+        'id',
+        'class',
+        'attribute',
+        'element',
+        'complex',
+      ] as const);
+      const sk = 'selectorKind' in value ? value.selectorKind : undefined;
+      const sv: ProtocolValueJSON = { type: 'selector', value: value.value };
+      if (sk && PROTOCOL_SELECTOR_KINDS.has(sk as 'id')) {
+        sv.selectorKind = sk as 'id' | 'class' | 'attribute' | 'element' | 'complex';
+      }
+      return sv;
+    }
 
     case 'literal':
       return value.dataType
@@ -129,8 +160,10 @@ function valueToProtocol(value: SemanticValue): ProtocolValueJSON {
 /**
  * Deserialize a protocol wire format JSON object into a SemanticNode.
  *
- * Only produces the 3 protocol-supported node kinds (command, event-handler, compound).
- * Never up-converts to TypeScript-only conditional or loop nodes.
+ * Produces all 5 node kinds — detects v1.1 fields on command nodes to
+ * reconstruct conditional and loop nodes:
+ * - thenBranch present → `conditional` node via createConditionalNode()
+ * - loopVariant present → `loop` node via createLoopNode()
  */
 export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
   const roles = new Map<SemanticRole, SemanticValue>(
@@ -147,14 +180,34 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
     return createCompoundNode(statements, (json.chainType ?? 'sequential') as ProtocolChainType);
   }
 
-  // 'command' (default)
+  // Detect v1.1 conditional encoding: command with thenBranch
+  if (json.thenBranch && json.thenBranch.length > 0) {
+    const thenBranch = json.thenBranch.map(fromProtocolJSON);
+    const elseBranch = json.elseBranch ? json.elseBranch.map(fromProtocolJSON) : undefined;
+    return createConditionalNode(json.action, roles, thenBranch, elseBranch);
+  }
+
+  // Detect v1.1 loop encoding: command with loopVariant
+  if (json.loopVariant) {
+    const loopBody = (json.loopBody ?? []).map(fromProtocolJSON);
+    return createLoopNode(
+      json.action,
+      roles,
+      json.loopVariant as LoopVariant,
+      loopBody,
+      json.loopVariable,
+      json.indexVariable
+    );
+  }
+
+  // Plain command
   return createCommandNode(json.action, roles);
 }
 
 function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
   switch (value.type) {
     case 'selector':
-      return createSelector(String(value.value ?? ''));
+      return createSelector(String(value.value ?? ''), value.selectorKind);
 
     case 'literal':
       return createLiteral(
