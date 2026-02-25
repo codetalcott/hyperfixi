@@ -23,7 +23,7 @@ document       = [ version-header LF ] *( line LF ) [ line ]
 line           = comment / blank-line / statement-line
 comment        = ("//" / "#") *VCHAR
 blank-line     = *WSP
-statement-line = *WSP compound-stmt *WSP
+statement-line = *WSP *annotation compound-stmt *WSP
 
 ; --- Version Header (v1.2) ---
 ; Optional first line declaring the LSE version. Starts with "#!" so v1.0/v1.1
@@ -31,6 +31,17 @@ statement-line = *WSP compound-stmt *WSP
 
 version-header = "#!lse" 1*WSP version-number
 version-number = 1*DIGIT "." 1*DIGIT [ "." 1*DIGIT ]
+
+; --- Annotations (v1.2) ---
+; Zero or more @name or @name(value) decorators precede a statement.
+; Annotations are metadata — parsers MUST preserve them; tools MAY ignore them.
+; Multiple annotations on one statement are written on the same line, separated
+; by whitespace: @timeout(5s) @retry(3) [fetch source:/api/users]
+
+annotation       = "@" annotation-name [ "(" annotation-value ")" ] 1*WSP
+annotation-name  = 1*( ALPHA / DIGIT / "-" / "_" )
+annotation-value = string-literal / duration-literal / number-literal / 1*ann-value-char
+ann-value-char   = ALPHA / DIGIT / "-" / "_" / "." / "/" / ":"
 
 ; =============================================================================
 ; 2. Statements

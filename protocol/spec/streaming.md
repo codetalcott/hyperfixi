@@ -35,6 +35,7 @@ Parsers that recognize the version header MAY use it for feature detection (e.g.
 5. Leading and trailing whitespace on each line is trimmed before parsing
 6. A trailing `LF` at end of file is optional
 7. An optional `#!lse <version>` header on the first line declares the LSE version (v1.2)
+8. Zero or more `@name` or `@name(value)` annotations may precede a statement on the same line (v1.2)
 
 ## Comments
 
@@ -78,6 +79,20 @@ Content-Type: application/vnd.lokascript.explicit-stream
 ```bash
 cat commands.lse | lse parse --stream | jq '.action'
 ```
+
+## Annotations (v1.2)
+
+Annotations prefix a statement on the same line, separated by whitespace:
+
+```
+@timeout(5s) @retry(3) [fetch source:/api/users destination:#list]
+@deprecated [toggle patient:.active]
+@permission(admin) @doc("Removes a user record") [remove patient:#user destination:users]
+```
+
+Annotation syntax: `@name` or `@name(value)`. The value may be a string, duration, number, or a plain identifier. Multiple annotations on one statement are written left-to-right; their order is preserved in the wire format.
+
+Parsers MUST parse and preserve annotations. Tools MAY silently ignore annotations they do not recognize. Unknown annotation names are not an error.
 
 ## Compound Statements in Streams
 

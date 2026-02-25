@@ -109,6 +109,15 @@
         "code": { "type": "string" }
       }
     },
+    "Annotation": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" }
+      }
+    },
     "CommandNode": {
       "type": "object",
       "required": ["kind", "action", "roles"],
@@ -135,6 +144,10 @@
         "diagnostics": {
           "type": "array",
           "items": { "$ref": "#/$defs/Diagnostic" }
+        },
+        "annotations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Annotation" }
         }
       }
     },
@@ -149,6 +162,10 @@
         "body": {
           "type": "array",
           "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "annotations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Annotation" }
         }
       }
     },
@@ -164,7 +181,11 @@
           "type": "array",
           "items": { "$ref": "#/$defs/SemanticNode" }
         },
-        "chainType": { "enum": ["then", "and", "async", "sequential"] }
+        "chainType": { "enum": ["then", "and", "async", "sequential"] },
+        "annotations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Annotation" }
+        }
       }
     },
     "SemanticNode": {

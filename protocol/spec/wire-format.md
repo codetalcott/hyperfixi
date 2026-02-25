@@ -154,6 +154,37 @@ An optional `diagnostics` array on command nodes carries type constraint validat
 
 Diagnostics are informational — they don't prevent the node from being transmitted. Consumers MAY use diagnostics for IDE integration (red squiggles), build warnings, or LLM feedback.
 
+### Annotations (v1.2)
+
+An optional `annotations` array on any node type attaches metadata. Annotations are non-semantic — they don't affect command meaning and parsers MUST preserve them but MAY ignore unknown names.
+
+```json
+{
+  "kind": "command",
+  "action": "fetch",
+  "roles": {
+    "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+  },
+  "annotations": [
+    { "name": "timeout", "value": "5s" },
+    { "name": "retry", "value": "3" }
+  ]
+}
+```
+
+Annotations with no argument omit the `value` field:
+
+```json
+{
+  "kind": "command",
+  "action": "toggle",
+  "roles": { "patient": { "type": "selector", "value": ".active" } },
+  "annotations": [{ "name": "deprecated" }]
+}
+```
+
+Annotation order is preserved — order matters for middleware-like composition (e.g., `@retry` before `@timeout` means retry each attempt before timing out the whole sequence).
+
 ### Versioned Envelope (v1.2)
 
 A versioned envelope wraps multiple nodes with protocol metadata:
@@ -197,6 +228,8 @@ interface SemanticNodeJSON {
   indexVariable?: string;
   // type constraint diagnostics (v1.2, command nodes only):
   diagnostics?: DiagnosticJSON[];
+  // metadata annotations (v1.2, all node kinds):
+  annotations?: AnnotationJSON[];
 }
 
 interface DiagnosticJSON {
@@ -204,6 +237,11 @@ interface DiagnosticJSON {
   role: string;
   message: string;
   code: string;
+}
+
+interface AnnotationJSON {
+  name: string;
+  value?: string;
 }
 
 interface LSEEnvelopeJSON {

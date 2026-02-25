@@ -42,6 +42,12 @@ export interface Diagnostic {
   code: string;
 }
 
+/** A metadata annotation on a node (v1.2). */
+export interface Annotation {
+  name: string;
+  value?: string;
+}
+
 /** A parsed LSE node. */
 export interface SemanticNode {
   kind: NodeKind;
@@ -60,6 +66,8 @@ export interface SemanticNode {
   indexVariable?: string;
   // Type constraint diagnostics (v1.2)
   diagnostics?: Diagnostic[];
+  // Metadata annotations (v1.2)
+  annotations?: Annotation[];
 }
 
 /** Wire format envelope with version metadata (v1.2). */

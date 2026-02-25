@@ -498,3 +498,58 @@ describe('version-envelope.json', () => {
     expect(isEnvelope(bareNode)).toBe(false);
   });
 });
+
+// ── Annotation conformance (v1.2) ────────────────────────────────────────────
+
+describe('annotations.json', () => {
+  const fixtures = loadFixtures('annotations.json');
+  for (const fixture of fixtures) {
+    const id = fixture['id'] as string;
+
+    if (fixture['jsonInput'] && fixture['expectedRoundTrip']) {
+      const jsonInput = fixture['jsonInput'] as Record<string, unknown>;
+
+      it(`${id} (JSON round-trip)`, () => {
+        const node = fromJSON(jsonInput);
+        const json = toJSON(node);
+        const node2 = fromJSON(json);
+
+        expect(node2.kind, `${id}: kind preserved`).toBe(node.kind);
+        expect(node2.action, `${id}: action preserved`).toBe(node.action);
+
+        // Annotations round-trip
+        const expectedAnns = (jsonInput['annotations'] as unknown[]) ?? [];
+        if (expectedAnns.length > 0) {
+          expect(node.annotations?.length, `${id}: annotations parsed`).toBe(expectedAnns.length);
+          expect(node2.annotations?.length, `${id}: annotations round-trip`).toBe(expectedAnns.length);
+
+          for (let i = 0; i < expectedAnns.length; i++) {
+            const ea = expectedAnns[i] as Record<string, unknown>;
+            const aa = node2.annotations![i];
+            expect(aa.name, `${id}: ann[${i}].name`).toBe(ea['name']);
+            expect(aa.value, `${id}: ann[${i}].value`).toBe(ea['value']);
+          }
+        }
+
+        // Annotation order is preserved
+        if (fixture['annotationOrder']) {
+          const expectedOrder = fixture['annotationOrder'] as string[];
+          const actualOrder = node2.annotations?.map(a => a.name) ?? [];
+          expect(actualOrder, `${id}: annotation order preserved`).toEqual(expectedOrder);
+        }
+
+        // Flag-style annotation (no value)
+        if (fixture['noAnnotationValue']) {
+          expect(node.annotations?.[0].value, `${id}: no annotation value`).toBeUndefined();
+          expect(node2.annotations?.[0].value, `${id}: no annotation value round-trip`).toBeUndefined();
+        }
+
+        // Nodes without annotations emit no annotations field
+        if (fixture['noAnnotations']) {
+          expect(node.annotations, `${id}: no annotations`).toBeUndefined();
+          expect(json['annotations'], `${id}: annotations absent in JSON`).toBeUndefined();
+        }
+      });
+    }
+  }
+});

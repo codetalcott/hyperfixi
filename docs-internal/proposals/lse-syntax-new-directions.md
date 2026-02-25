@@ -1,8 +1,9 @@
 # LSE Syntax: New Directions
 
-**Status**: Exploration
+**Status**: Partially Implemented (v1.2: Type Constraints + Version Header shipped)
 **Date**: 2026-02-25
 **Author**: Claude (exploration session)
+**Implementation**: `b677d846` — Direction 7 and Direction 10 implemented in `protocol/` and `packages/semantic/`
 
 ## Context
 
@@ -237,7 +238,9 @@ The `if`/`else` conditional (v1.1) handles binary branching. But real-world logi
 
 ---
 
-## Direction 5: Annotations / Metadata Layer
+## Direction 5: Annotations / Metadata Layer — IMPLEMENTED
+
+> **Shipped in v1.2** (this commit). `@name`/`@name(value)` ABNF prefix syntax, `Annotation` interface in TypeScript protocol, `annotations` array on all three node kinds (command, event-handler, compound), JSON Schema `Annotation` definition, ser/deser in `json.ts`, 7 conformance fixtures + 14 tests.
 
 ### Problem
 
@@ -344,7 +347,9 @@ Additionally, parameter substitution into LSE bracket syntax requires the expand
 
 ---
 
-## Direction 7: Type Constraints on Roles
+## Direction 7: Type Constraints on Roles — IMPLEMENTED
+
+> **Shipped in v1.2** (`b677d846`). `selectorKinds` on `RoleSpec`, `validateRoleValues()`, `diagnostics` on wire format `CommandNode`, 3 new error codes, 11 tests + 5 conformance fixtures.
 
 ### Problem
 
@@ -502,7 +507,9 @@ LSE has no error handling construct. If a command fails, the behavior is runtime
 
 ---
 
-## Direction 10: Versioned Protocol Negotiation
+## Direction 10: Versioned Protocol Negotiation — IMPLEMENTED
+
+> **Shipped in v1.2** (`b677d846`). `#!lse <version>` in ABNF, `LSEEnvelope` type with `lseVersion`/`features`/`nodes`, JSON Schema envelope definition, `isEnvelope()`/`fromEnvelopeJSON()`/`toEnvelopeJSON()`, 7 conformance fixtures.
 
 ### Problem
 
@@ -601,10 +608,10 @@ then [put destination:#result]
 | 4. `match` arms            | Medium     | Yes         | No             | Medium      | Medium      | **High** |
 | 5. Annotations `@`         | Low        | Yes         | No             | Small       | Small       | **High** |
 | 6. Templates `def`/`use`   | Medium     | Yes         | No (macro)     | Medium      | None        | Low      |
-| 7. Type constraints        | Low        | Yes         | No             | None        | Optional    | **High** |
+| 7. Type constraints        | Low        | Yes         | No             | None        | Optional    | **Done** |
 | 8. Collection operators    | Low        | Yes         | No             | None        | None        | Medium   |
 | 9. `try`/`catch`/`finally` | Low        | Yes         | No             | Small       | Small       | **High** |
-| 10. Version negotiation    | Low        | Yes         | No             | Minimal     | Minimal     | Medium   |
+| 10. Version negotiation    | Low        | Yes         | No             | Minimal     | Minimal     | **Done** |
 | 11. `all`/`race`           | Low        | Yes         | No             | Small       | Small       | **High** |
 
 ---

@@ -4,6 +4,7 @@ import {
   type NodeKind,
   type ChainType,
   type LSEEnvelope,
+  type Annotation,
   selectorValue,
   literalValue,
   referenceValue,
@@ -115,6 +116,13 @@ export function toJSON(node: SemanticNode): Record<string, unknown> {
     }));
   }
 
+  // Annotations (v1.2)
+  if (node.annotations && node.annotations.length > 0) {
+    m['annotations'] = node.annotations.map(a =>
+      a.value !== undefined ? { name: a.name, value: a.value } : { name: a.name },
+    );
+  }
+
   return m;
 }
 
@@ -158,7 +166,10 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
         }
       }
     }
-    return { kind: 'event-handler', action, roles, body };
+    const ehAnnotations = deserializeAnnotations(data['annotations']);
+    const ehNode: SemanticNode = { kind: 'event-handler', action, roles, body };
+    if (ehAnnotations) ehNode.annotations = ehAnnotations;
+    return ehNode;
   }
 
   if (kind === 'compound') {
@@ -172,7 +183,10 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
       }
     }
     const chainType = ((data['chainType'] as string) || 'then') as ChainType;
-    return { kind: 'compound', action, roles, statements, chainType };
+    const cmpAnnotations = deserializeAnnotations(data['annotations']);
+    const cmpNode: SemanticNode = { kind: 'compound', action, roles, statements, chainType };
+    if (cmpAnnotations) cmpNode.annotations = cmpAnnotations;
+    return cmpNode;
   }
 
   // Command node — with optional v1.1 conditional/loop fields
@@ -205,6 +219,10 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
         code: (d['code'] as string) ?? '',
       }));
   }
+
+  // Annotations (v1.2)
+  const annotations = deserializeAnnotations(data['annotations']);
+  if (annotations) node.annotations = annotations;
 
   return node;
 }
@@ -244,6 +262,22 @@ export function toEnvelopeJSON(envelope: LSEEnvelope): Record<string, unknown> {
     result['features'] = envelope.features;
   }
   return result;
+}
+
+function deserializeAnnotations(arr: unknown): Annotation[] | undefined {
+  if (!Array.isArray(arr) || arr.length === 0) return undefined;
+  const result: Annotation[] = [];
+  for (const item of arr) {
+    if (item && typeof item === 'object' && !Array.isArray(item)) {
+      const a = item as Record<string, unknown>;
+      if (typeof a['name'] === 'string') {
+        const ann: Annotation = { name: a['name'] };
+        if (typeof a['value'] === 'string') ann.value = a['value'];
+        result.push(ann);
+      }
+    }
+  }
+  return result.length > 0 ? result : undefined;
 }
 
 function deserializeNodeArray(arr: unknown): SemanticNode[] {
