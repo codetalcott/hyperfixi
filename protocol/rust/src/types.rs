@@ -151,8 +151,10 @@ pub struct SemanticValue {
     pub raw: Option<String>,
     /// Flag name (for flag type).
     pub name: Option<String>,
-    /// Flag enabled state (for flag type).
-    pub enabled: Option<bool>,
+    /// Flag enabled state (for flag type). Required when type is Flag.
+    pub enabled: bool,
+    /// Optional selector kind hint (for selector type).
+    pub selector_kind: Option<String>,
 }
 
 impl SemanticValue {
@@ -185,6 +187,11 @@ impl Serialize for SemanticValue {
                 if let Some(ref v) = self.value {
                     map.serialize_entry("value", v)?;
                 }
+                if self.value_type == ValueType::Selector {
+                    if let Some(ref sk) = self.selector_kind {
+                        map.serialize_entry("selectorKind", sk)?;
+                    }
+                }
             }
             ValueType::Literal => {
                 if let Some(ref v) = self.value {
@@ -203,9 +210,7 @@ impl Serialize for SemanticValue {
                 if let Some(ref n) = self.name {
                     map.serialize_entry("name", n)?;
                 }
-                if let Some(e) = self.enabled {
-                    map.serialize_entry("enabled", &e)?;
-                }
+                map.serialize_entry("enabled", &self.enabled)?;
             }
         }
         map.end()
@@ -220,7 +225,8 @@ pub fn selector_value(value: &str) -> SemanticValue {
         data_type: None,
         raw: None,
         name: None,
-        enabled: None,
+        enabled: false,
+        selector_kind: None,
     }
 }
 
@@ -232,7 +238,8 @@ pub fn literal_value(value: DynValue, data_type: &str) -> SemanticValue {
         data_type: Some(data_type.to_string()),
         raw: None,
         name: None,
-        enabled: None,
+        enabled: false,
+        selector_kind: None,
     }
 }
 
@@ -244,7 +251,8 @@ pub fn reference_value(value: &str) -> SemanticValue {
         data_type: None,
         raw: None,
         name: None,
-        enabled: None,
+        enabled: false,
+        selector_kind: None,
     }
 }
 
@@ -256,7 +264,8 @@ pub fn expression_value(raw: &str) -> SemanticValue {
         data_type: None,
         raw: Some(raw.to_string()),
         name: None,
-        enabled: None,
+        enabled: false,
+        selector_kind: None,
     }
 }
 
@@ -268,7 +277,8 @@ pub fn flag_value(name: &str, enabled: bool) -> SemanticValue {
         data_type: None,
         raw: None,
         name: Some(name.to_string()),
-        enabled: Some(enabled),
+        enabled,
+        selector_kind: None,
     }
 }
 
@@ -281,6 +291,14 @@ pub struct SemanticNode {
     pub body: Vec<SemanticNode>,
     pub statements: Vec<SemanticNode>,
     pub chain_type: Option<String>,
+    // Conditional fields (v1.1)
+    pub then_branch: Vec<SemanticNode>,
+    pub else_branch: Vec<SemanticNode>,
+    // Loop fields (v1.1)
+    pub loop_variant: Option<String>,
+    pub loop_body: Vec<SemanticNode>,
+    pub loop_variable: Option<String>,
+    pub index_variable: Option<String>,
 }
 
 impl SemanticNode {
@@ -293,6 +311,12 @@ impl SemanticNode {
             body: Vec::new(),
             statements: Vec::new(),
             chain_type: None,
+            then_branch: Vec::new(),
+            else_branch: Vec::new(),
+            loop_variant: None,
+            loop_body: Vec::new(),
+            loop_variable: None,
+            index_variable: None,
         }
     }
 
@@ -308,6 +332,12 @@ impl SemanticNode {
             body,
             statements: Vec::new(),
             chain_type: None,
+            then_branch: Vec::new(),
+            else_branch: Vec::new(),
+            loop_variant: None,
+            loop_body: Vec::new(),
+            loop_variable: None,
+            index_variable: None,
         }
     }
 
@@ -323,6 +353,12 @@ impl SemanticNode {
             body: Vec::new(),
             statements,
             chain_type: Some(chain_type.to_string()),
+            then_branch: Vec::new(),
+            else_branch: Vec::new(),
+            loop_variant: None,
+            loop_body: Vec::new(),
+            loop_variable: None,
+            index_variable: None,
         }
     }
 }
@@ -347,6 +383,26 @@ impl Serialize for SemanticNode {
             if let Some(ref ct) = self.chain_type {
                 map.serialize_entry("chainType", ct)?;
             }
+        }
+        // Conditional fields (v1.1)
+        if !self.then_branch.is_empty() {
+            map.serialize_entry("thenBranch", &self.then_branch)?;
+        }
+        if !self.else_branch.is_empty() {
+            map.serialize_entry("elseBranch", &self.else_branch)?;
+        }
+        // Loop fields (v1.1)
+        if let Some(ref lv) = self.loop_variant {
+            map.serialize_entry("loopVariant", lv)?;
+        }
+        if !self.loop_body.is_empty() {
+            map.serialize_entry("loopBody", &self.loop_body)?;
+        }
+        if let Some(ref lvar) = self.loop_variable {
+            map.serialize_entry("loopVariable", lvar)?;
+        }
+        if let Some(ref ivar) = self.index_variable {
+            map.serialize_entry("indexVariable", ivar)?;
         }
         map.end()
     }

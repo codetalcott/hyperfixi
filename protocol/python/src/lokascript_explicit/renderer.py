@@ -38,6 +38,27 @@ def render_explicit(node: SemanticNode) -> str:
         body_parts = [render_explicit(n) for n in node.body]
         parts.append(f"body:{' '.join(body_parts)}")
 
+    # Conditional branches (v1.1)
+    if node.thenBranch:
+        branch_parts = [render_explicit(n) for n in node.thenBranch]
+        parts.append(f"then:{' '.join(branch_parts)}")
+    if node.elseBranch:
+        branch_parts = [render_explicit(n) for n in node.elseBranch]
+        parts.append(f"else:{' '.join(branch_parts)}")
+
+    # Loop fields (v1.1)
+    if node.loopVariant is not None:
+        parts.append(f"loopVariant:{node.loopVariant}")
+    if node.loopBody:
+        body_parts = [render_explicit(n) for n in node.loopBody]
+        parts.append(f"loop-body:{' '.join(body_parts)}")
+    if node.loopVariable is not None:
+        import json as _json
+        parts.append(f"loopVariable:{_json.dumps(node.loopVariable)}")
+    if node.indexVariable is not None:
+        import json as _json
+        parts.append(f"indexVariable:{_json.dumps(node.indexVariable)}")
+
     return f"[{' '.join(parts)}]"
 
 

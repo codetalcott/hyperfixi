@@ -33,6 +33,33 @@ var (
 	numberRE   = regexp.MustCompile(`^(-?\d+(?:\.\d+)?)$`)
 )
 
+// structuralRoles are role names whose bracket-enclosed values may be nested commands.
+var structuralRoles = map[string]bool{
+	"body": true, "then": true, "else": true,
+	"condition": true, "loop-body": true, "variable": true,
+}
+
+// isNestedCommand checks whether a bracket-enclosed value is a nested command
+// (vs. an attribute selector). A value starting with '[' is a nested command if
+// the inner content contains at least one ASCII space or ':' at bracket-depth 0.
+func isNestedCommand(value string) bool {
+	if len(value) < 2 {
+		return false
+	}
+	inner := value[1 : len(value)-1]
+	depth := 0
+	for _, ch := range inner {
+		if ch == '[' {
+			depth++
+		} else if ch == ']' {
+			depth--
+		} else if depth == 0 && (ch == ' ' || ch == ':') {
+			return true
+		}
+	}
+	return false
+}
+
 // IsExplicitSyntax checks if the input is explicit bracket syntax.
 func IsExplicitSyntax(text string) bool {
 	trimmed := strings.TrimSpace(text)
@@ -101,11 +128,9 @@ func ParseExplicit(text string, opts *ParseOptions) (*SemanticNode, error) {
 		roleName := token[:colonIdx]
 		valueStr := token[colonIdx+1:]
 
-		// Handle nested explicit syntax for body
-		if roleName == "body" && strings.HasPrefix(valueStr, "[") {
-			nestedEnd := findMatchingBracket(token, colonIdx+1)
-			nestedSyntax := token[colonIdx+1 : nestedEnd+1]
-			roles[roleName] = ExpressionValue(nestedSyntax)
+		// Handle nested explicit syntax for structural roles (body, then, else, etc.)
+		if structuralRoles[roleName] && strings.HasPrefix(valueStr, "[") && isNestedCommand(valueStr) {
+			roles[roleName] = ExpressionValue(valueStr)
 			continue
 		}
 
@@ -141,11 +166,61 @@ func ParseExplicit(text string, opts *ParseOptions) (*SemanticNode, error) {
 		}, nil
 	}
 
-	return &SemanticNode{
+	// Build command node, extracting structural roles into top-level fields
+	node := &SemanticNode{
 		Kind:   KindCommand,
 		Action: command,
 		Roles:  roles,
-	}, nil
+	}
+
+	// Extract conditional branches (v1.1)
+	extractStructuralBranch(node, roles, "then", "thenBranch", opts)
+	extractStructuralBranch(node, roles, "else", "elseBranch", opts)
+
+	// Extract loop fields (v1.1)
+	extractStructuralBranch(node, roles, "loop-body", "loopBody", opts)
+	if lv, ok := roles["loopVariant"]; ok && lv.Type == TypeLiteral {
+		if s, ok := lv.Value.(string); ok {
+			node.LoopVariant = s
+			delete(roles, "loopVariant")
+		}
+	}
+	if lv, ok := roles["loopVariable"]; ok && lv.Type == TypeLiteral {
+		if s, ok := lv.Value.(string); ok {
+			node.LoopVariable = s
+			delete(roles, "loopVariable")
+		}
+	}
+	if iv, ok := roles["indexVariable"]; ok && iv.Type == TypeLiteral {
+		if s, ok := iv.Value.(string); ok {
+			node.IndexVariable = s
+			delete(roles, "indexVariable")
+		}
+	}
+
+	return node, nil
+}
+
+// extractStructuralBranch extracts a structural role (expression holding nested
+// bracket syntax) into a top-level array field on the node, then removes it from roles.
+func extractStructuralBranch(node *SemanticNode, roles map[string]SemanticValue, roleName string, fieldName string, opts *ParseOptions) {
+	value, ok := roles[roleName]
+	if !ok || value.Type != TypeExpression || value.Raw == "" {
+		return
+	}
+	parsed, err := ParseExplicit(value.Raw, opts)
+	if err != nil {
+		return
+	}
+	switch fieldName {
+	case "thenBranch":
+		node.ThenBranch = []SemanticNode{*parsed}
+	case "elseBranch":
+		node.ElseBranch = []SemanticNode{*parsed}
+	case "loopBody":
+		node.LoopBody = []SemanticNode{*parsed}
+	}
+	delete(roles, roleName)
 }
 
 // countPrecedingBackslashes counts consecutive backslashes immediately

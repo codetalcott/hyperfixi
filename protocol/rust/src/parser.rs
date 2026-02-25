@@ -5,6 +5,31 @@ use std::collections::{HashMap, HashSet};
 use crate::references::default_references;
 use crate::types::*;
 
+/// Structural role names whose bracket-enclosed values may be nested commands.
+fn is_structural_role(name: &str) -> bool {
+    matches!(name, "body" | "then" | "else" | "condition" | "loop-body" | "variable")
+}
+
+/// Checks whether a bracket-enclosed value is a nested command (vs. an attribute selector).
+/// A value starting with `[` is a nested command if the inner content contains at least
+/// one ASCII space or `:` at bracket-depth 0.
+fn is_nested_command(value: &str) -> bool {
+    if value.len() < 2 {
+        return false;
+    }
+    let inner = &value[1..value.len() - 1];
+    let mut depth = 0i32;
+    for ch in inner.chars() {
+        match ch {
+            '[' => depth += 1,
+            ']' => depth -= 1,
+            ' ' | ':' if depth == 0 => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
 /// Error type for parse failures.
 #[derive(Debug, Clone)]
 pub struct ParseError {
@@ -114,13 +139,11 @@ pub fn parse_explicit(
         let role_name = &token[..colon_idx];
         let value_str = &token[colon_idx + 1..];
 
-        // Handle nested explicit syntax for body
-        if role_name == "body" && value_str.starts_with('[') {
-            let nested_end = find_matching_bracket(token, colon_idx + 1);
-            let nested_syntax = &token[colon_idx + 1..=nested_end];
+        // Handle nested explicit syntax for structural roles (body, then, else, etc.)
+        if is_structural_role(role_name) && value_str.starts_with('[') && is_nested_command(value_str) {
             roles.insert(
                 role_name.to_string(),
-                expression_value(nested_syntax),
+                expression_value(value_str),
             );
             continue;
         }
@@ -154,7 +177,78 @@ pub fn parse_explicit(
         return Ok(SemanticNode::event_handler(roles, body));
     }
 
-    Ok(SemanticNode::command(&command, roles))
+    // Build command node, extracting structural roles into top-level fields
+    let mut node = SemanticNode::command(&command, roles);
+
+    // Extract conditional branches (v1.1)
+    extract_structural_branch(&mut node, "then", "then_branch", opts);
+    extract_structural_branch(&mut node, "else", "else_branch", opts);
+
+    // Extract loop fields (v1.1)
+    extract_structural_branch(&mut node, "loop-body", "loop_body", opts);
+    if let Some(lv) = node.roles.get("loopVariant") {
+        if lv.value_type == ValueType::Literal {
+            if let Some(DynValue::String(s)) = &lv.value {
+                node.loop_variant = Some(s.clone());
+            }
+        }
+    }
+    if node.loop_variant.is_some() {
+        node.roles.remove("loopVariant");
+    }
+    if let Some(lvar) = node.roles.get("loopVariable") {
+        if lvar.value_type == ValueType::Literal {
+            if let Some(DynValue::String(s)) = &lvar.value {
+                node.loop_variable = Some(s.clone());
+            }
+        }
+    }
+    if node.loop_variable.is_some() {
+        node.roles.remove("loopVariable");
+    }
+    if let Some(ivar) = node.roles.get("indexVariable") {
+        if ivar.value_type == ValueType::Literal {
+            if let Some(DynValue::String(s)) = &ivar.value {
+                node.index_variable = Some(s.clone());
+            }
+        }
+    }
+    if node.index_variable.is_some() {
+        node.roles.remove("indexVariable");
+    }
+
+    Ok(node)
+}
+
+/// Extracts a structural role (expression holding nested bracket syntax)
+/// into a top-level array field on the node, then removes it from roles.
+fn extract_structural_branch(
+    node: &mut SemanticNode,
+    role_name: &str,
+    field_name: &str,
+    opts: Option<&ParseOptions>,
+) {
+    let raw = if let Some(val) = node.roles.get(role_name) {
+        if val.value_type == ValueType::Expression {
+            val.raw.clone()
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    if let Some(raw_str) = raw {
+        if let Ok(parsed) = parse_explicit(&raw_str, opts) {
+            match field_name {
+                "then_branch" => node.then_branch = vec![parsed],
+                "else_branch" => node.else_branch = vec![parsed],
+                "loop_body" => node.loop_body = vec![parsed],
+                _ => {}
+            }
+            node.roles.remove(role_name);
+        }
+    }
 }
 
 /// Count consecutive backslashes immediately before position `pos` in a char slice.
@@ -510,7 +604,7 @@ mod tests {
         let pk = &node.roles["primary-key"];
         assert_eq!(pk.value_type, ValueType::Flag);
         assert_eq!(pk.name.as_deref(), Some("primary-key"));
-        assert_eq!(pk.enabled, Some(true));
+        assert_eq!(pk.enabled, true);
     }
 
     #[test]
@@ -519,29 +613,29 @@ mod tests {
         let n = &node.roles["nullable"];
         assert_eq!(n.value_type, ValueType::Flag);
         assert_eq!(n.name.as_deref(), Some("nullable"));
-        assert_eq!(n.enabled, Some(false));
+        assert_eq!(n.enabled, false);
     }
 
     #[test]
     fn test_parse_multiple_flags() {
         let node =
             parse_explicit("[column name:id type:uuid +primary-key +not-null]", None).unwrap();
-        assert_eq!(node.roles["primary-key"].enabled, Some(true));
-        assert_eq!(node.roles["not-null"].enabled, Some(true));
+        assert_eq!(node.roles["primary-key"].enabled, true);
+        assert_eq!(node.roles["not-null"].enabled, true);
     }
 
     #[test]
     fn test_parse_mixed_flags() {
         let node = parse_explicit("[field name:email +required ~nullable]", None).unwrap();
-        assert_eq!(node.roles["required"].enabled, Some(true));
-        assert_eq!(node.roles["nullable"].enabled, Some(false));
+        assert_eq!(node.roles["required"].enabled, true);
+        assert_eq!(node.roles["nullable"].enabled, false);
     }
 
     #[test]
     fn test_parse_flags_only() {
         let node = parse_explicit("[widget +draggable +resizable]", None).unwrap();
-        assert_eq!(node.roles["draggable"].enabled, Some(true));
-        assert_eq!(node.roles["resizable"].enabled, Some(true));
+        assert_eq!(node.roles["draggable"].enabled, true);
+        assert_eq!(node.roles["resizable"].enabled, true);
     }
 
     // Error cases

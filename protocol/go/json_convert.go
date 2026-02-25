@@ -163,11 +163,59 @@ func FromJSON(data map[string]any) (*SemanticNode, error) {
 		}, nil
 	}
 
-	return &SemanticNode{
+	node := &SemanticNode{
 		Kind:   KindCommand,
 		Action: action,
 		Roles:  roles,
-	}, nil
+	}
+
+	// Deserialize v1.1 conditional fields
+	if thenData, ok := data["thenBranch"].([]any); ok {
+		for _, t := range thenData {
+			if tMap, ok := t.(map[string]any); ok {
+				tNode, err := FromJSON(tMap)
+				if err != nil {
+					return nil, err
+				}
+				node.ThenBranch = append(node.ThenBranch, *tNode)
+			}
+		}
+	}
+	if elseData, ok := data["elseBranch"].([]any); ok {
+		for _, e := range elseData {
+			if eMap, ok := e.(map[string]any); ok {
+				eNode, err := FromJSON(eMap)
+				if err != nil {
+					return nil, err
+				}
+				node.ElseBranch = append(node.ElseBranch, *eNode)
+			}
+		}
+	}
+
+	// Deserialize v1.1 loop fields
+	if lv, ok := data["loopVariant"].(string); ok {
+		node.LoopVariant = lv
+	}
+	if loopData, ok := data["loopBody"].([]any); ok {
+		for _, l := range loopData {
+			if lMap, ok := l.(map[string]any); ok {
+				lNode, err := FromJSON(lMap)
+				if err != nil {
+					return nil, err
+				}
+				node.LoopBody = append(node.LoopBody, *lNode)
+			}
+		}
+	}
+	if lvar, ok := data["loopVariable"].(string); ok {
+		node.LoopVariable = lvar
+	}
+	if ivar, ok := data["indexVariable"].(string); ok {
+		node.IndexVariable = ivar
+	}
+
+	return node, nil
 }
 
 // ToJSON converts a SemanticNode to a full-fidelity JSON-friendly map.
@@ -194,6 +242,38 @@ func ToJSON(node *SemanticNode) map[string]any {
 			m["chainType"] = node.ChainType
 		}
 	}
+	// v1.1 conditional fields
+	if len(node.ThenBranch) > 0 {
+		maps := make([]map[string]any, len(node.ThenBranch))
+		for i := range node.ThenBranch {
+			maps[i] = ToJSON(&node.ThenBranch[i])
+		}
+		m["thenBranch"] = maps
+	}
+	if len(node.ElseBranch) > 0 {
+		maps := make([]map[string]any, len(node.ElseBranch))
+		for i := range node.ElseBranch {
+			maps[i] = ToJSON(&node.ElseBranch[i])
+		}
+		m["elseBranch"] = maps
+	}
+	// v1.1 loop fields
+	if node.LoopVariant != "" {
+		m["loopVariant"] = node.LoopVariant
+	}
+	if len(node.LoopBody) > 0 {
+		maps := make([]map[string]any, len(node.LoopBody))
+		for i := range node.LoopBody {
+			maps[i] = ToJSON(&node.LoopBody[i])
+		}
+		m["loopBody"] = maps
+	}
+	if node.LoopVariable != "" {
+		m["loopVariable"] = node.LoopVariable
+	}
+	if node.IndexVariable != "" {
+		m["indexVariable"] = node.IndexVariable
+	}
 	return m
 }
 
@@ -204,7 +284,11 @@ func convertJSONValue(data map[string]any) SemanticValue {
 	switch vtype {
 	case "selector":
 		val, _ := data["value"].(string)
-		return SelectorValue(val)
+		sv := SelectorValue(val)
+		if sk, ok := data["selectorKind"].(string); ok {
+			sv.SelectorKind = sk
+		}
+		return sv
 
 	case "literal":
 		value := data["value"]

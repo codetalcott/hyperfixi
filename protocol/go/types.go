@@ -32,12 +32,13 @@ const (
 
 // SemanticValue represents a typed value in a role slot.
 type SemanticValue struct {
-	Type     ValueType `json:"type"`
-	Value    any       `json:"value,omitempty"`
-	DataType string    `json:"dataType,omitempty"`
-	Raw      string    `json:"raw,omitempty"`
-	Name     string    `json:"name,omitempty"`
-	Enabled  *bool     `json:"enabled,omitempty"`
+	Type         ValueType `json:"type"`
+	Value        any       `json:"value,omitempty"`
+	DataType     string    `json:"dataType,omitempty"`
+	Raw          string    `json:"raw,omitempty"`
+	Name         string    `json:"name,omitempty"`
+	Enabled      bool      `json:"enabled"`
+	SelectorKind string    `json:"selectorKind,omitempty"`
 }
 
 // SelectorValue creates a selector SemanticValue.
@@ -62,7 +63,7 @@ func ExpressionValue(raw string) SemanticValue {
 
 // FlagValue creates a flag SemanticValue.
 func FlagValue(name string, enabled bool) SemanticValue {
-	return SemanticValue{Type: TypeFlag, Name: name, Enabled: &enabled}
+	return SemanticValue{Type: TypeFlag, Name: name, Enabled: enabled}
 }
 
 // StringValue returns the Value field as a string, or empty string.
@@ -86,6 +87,14 @@ type SemanticNode struct {
 	Body       []SemanticNode           `json:"body,omitempty"`
 	Statements []SemanticNode           `json:"statements,omitempty"`
 	ChainType  string                   `json:"chainType,omitempty"`
+	// Conditional fields (v1.1)
+	ThenBranch []SemanticNode `json:"thenBranch,omitempty"`
+	ElseBranch []SemanticNode `json:"elseBranch,omitempty"`
+	// Loop fields (v1.1)
+	LoopVariant   string         `json:"loopVariant,omitempty"`
+	LoopBody      []SemanticNode `json:"loopBody,omitempty"`
+	LoopVariable  string         `json:"loopVariable,omitempty"`
+	IndexVariable string         `json:"indexVariable,omitempty"`
 }
 
 // MarshalJSON implements custom JSON marshaling to match the protocol wire format.
@@ -103,6 +112,26 @@ func (n SemanticNode) MarshalJSON() ([]byte, error) {
 		if n.ChainType != "" {
 			m["chainType"] = n.ChainType
 		}
+	}
+	// Conditional fields (v1.1)
+	if len(n.ThenBranch) > 0 {
+		m["thenBranch"] = n.ThenBranch
+	}
+	if len(n.ElseBranch) > 0 {
+		m["elseBranch"] = n.ElseBranch
+	}
+	// Loop fields (v1.1)
+	if n.LoopVariant != "" {
+		m["loopVariant"] = n.LoopVariant
+	}
+	if len(n.LoopBody) > 0 {
+		m["loopBody"] = n.LoopBody
+	}
+	if n.LoopVariable != "" {
+		m["loopVariable"] = n.LoopVariable
+	}
+	if n.IndexVariable != "" {
+		m["indexVariable"] = n.IndexVariable
 	}
 	return json.Marshal(m)
 }
@@ -122,6 +151,9 @@ func marshalValue(v SemanticValue) map[string]any {
 	switch v.Type {
 	case TypeSelector, TypeReference:
 		m["value"] = v.Value
+		if v.Type == TypeSelector && v.SelectorKind != "" {
+			m["selectorKind"] = v.SelectorKind
+		}
 	case TypeLiteral:
 		m["value"] = v.Value
 		if v.DataType != "" {
@@ -131,9 +163,7 @@ func marshalValue(v SemanticValue) map[string]any {
 		m["raw"] = v.Raw
 	case TypeFlag:
 		m["name"] = v.Name
-		if v.Enabled != nil {
-			m["enabled"] = *v.Enabled
-		}
+		m["enabled"] = v.Enabled
 	}
 	return m
 }

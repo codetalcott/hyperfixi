@@ -35,7 +35,7 @@ func RenderExplicit(node *SemanticNode) string {
 		value := node.Roles[role]
 		if value.Type == TypeFlag {
 			prefix := "+"
-			if value.Enabled != nil && !*value.Enabled {
+			if !value.Enabled {
 				prefix = "~"
 			}
 			parts = append(parts, prefix+value.Name)
@@ -51,6 +51,40 @@ func RenderExplicit(node *SemanticNode) string {
 			bodyParts[i] = RenderExplicit(&b)
 		}
 		parts = append(parts, "body:"+strings.Join(bodyParts, " "))
+	}
+
+	// Conditional branches (v1.1)
+	if len(node.ThenBranch) > 0 {
+		branchParts := make([]string, len(node.ThenBranch))
+		for i, b := range node.ThenBranch {
+			branchParts[i] = RenderExplicit(&b)
+		}
+		parts = append(parts, "then:"+strings.Join(branchParts, " "))
+	}
+	if len(node.ElseBranch) > 0 {
+		branchParts := make([]string, len(node.ElseBranch))
+		for i, b := range node.ElseBranch {
+			branchParts[i] = RenderExplicit(&b)
+		}
+		parts = append(parts, "else:"+strings.Join(branchParts, " "))
+	}
+
+	// Loop fields (v1.1)
+	if node.LoopVariant != "" {
+		parts = append(parts, "loopVariant:"+node.LoopVariant)
+	}
+	if len(node.LoopBody) > 0 {
+		bodyParts := make([]string, len(node.LoopBody))
+		for i, b := range node.LoopBody {
+			bodyParts[i] = RenderExplicit(&b)
+		}
+		parts = append(parts, "loop-body:"+strings.Join(bodyParts, " "))
+	}
+	if node.LoopVariable != "" {
+		parts = append(parts, "loopVariable:"+fmt.Sprintf("%q", node.LoopVariable))
+	}
+	if node.IndexVariable != "" {
+		parts = append(parts, "indexVariable:"+fmt.Sprintf("%q", node.IndexVariable))
 	}
 
 	return "[" + strings.Join(parts, " ") + "]"

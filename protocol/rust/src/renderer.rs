@@ -21,7 +21,7 @@ pub fn render_explicit(node: &SemanticNode) -> String {
     for role in role_names {
         let value = &node.roles[role];
         if value.value_type == ValueType::Flag {
-            let prefix = if value.enabled.unwrap_or(true) {
+            let prefix = if value.enabled {
                 "+"
             } else {
                 "~"
@@ -37,6 +37,31 @@ pub fn render_explicit(node: &SemanticNode) -> String {
     if node.kind == NodeKind::EventHandler && !node.body.is_empty() {
         let body_parts: Vec<String> = node.body.iter().map(render_explicit).collect();
         parts.push(format!("body:{}", body_parts.join(" ")));
+    }
+
+    // Conditional branches (v1.1)
+    if !node.then_branch.is_empty() {
+        let branch_parts: Vec<String> = node.then_branch.iter().map(render_explicit).collect();
+        parts.push(format!("then:{}", branch_parts.join(" ")));
+    }
+    if !node.else_branch.is_empty() {
+        let branch_parts: Vec<String> = node.else_branch.iter().map(render_explicit).collect();
+        parts.push(format!("else:{}", branch_parts.join(" ")));
+    }
+
+    // Loop fields (v1.1)
+    if let Some(ref lv) = node.loop_variant {
+        parts.push(format!("loopVariant:{}", lv));
+    }
+    if !node.loop_body.is_empty() {
+        let body_parts: Vec<String> = node.loop_body.iter().map(render_explicit).collect();
+        parts.push(format!("loop-body:{}", body_parts.join(" ")));
+    }
+    if let Some(ref lvar) = node.loop_variable {
+        parts.push(format!("loopVariable:{:?}", lvar));
+    }
+    if let Some(ref ivar) = node.index_variable {
+        parts.push(format!("indexVariable:{:?}", ivar));
     }
 
     format!("[{}]", parts.join(" "))

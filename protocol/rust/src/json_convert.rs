@@ -180,6 +180,12 @@ pub fn from_json(data: &Value) -> Result<SemanticNode, String> {
             body,
             statements: Vec::new(),
             chain_type: None,
+            then_branch: Vec::new(),
+            else_branch: Vec::new(),
+            loop_variant: None,
+            loop_body: Vec::new(),
+            loop_variable: None,
+            index_variable: None,
         });
     }
 
@@ -205,10 +211,46 @@ pub fn from_json(data: &Value) -> Result<SemanticNode, String> {
             body: Vec::new(),
             statements: stmts,
             chain_type: Some(chain_type),
+            then_branch: Vec::new(),
+            else_branch: Vec::new(),
+            loop_variant: None,
+            loop_body: Vec::new(),
+            loop_variable: None,
+            index_variable: None,
         });
     }
 
-    Ok(SemanticNode::command(&action, roles))
+    let mut node = SemanticNode::command(&action, roles);
+
+    // Deserialize v1.1 conditional fields
+    if let Some(then_data) = obj.get("thenBranch").and_then(|t| t.as_array()) {
+        for t in then_data {
+            node.then_branch.push(from_json(t)?);
+        }
+    }
+    if let Some(else_data) = obj.get("elseBranch").and_then(|e| e.as_array()) {
+        for e in else_data {
+            node.else_branch.push(from_json(e)?);
+        }
+    }
+
+    // Deserialize v1.1 loop fields
+    if let Some(lv) = obj.get("loopVariant").and_then(|l| l.as_str()) {
+        node.loop_variant = Some(lv.to_string());
+    }
+    if let Some(loop_data) = obj.get("loopBody").and_then(|l| l.as_array()) {
+        for l in loop_data {
+            node.loop_body.push(from_json(l)?);
+        }
+    }
+    if let Some(lvar) = obj.get("loopVariable").and_then(|l| l.as_str()) {
+        node.loop_variable = Some(lvar.to_string());
+    }
+    if let Some(ivar) = obj.get("indexVariable").and_then(|i| i.as_str()) {
+        node.index_variable = Some(ivar.to_string());
+    }
+
+    Ok(node)
 }
 
 /// Convert a SemanticNode to a full-fidelity JSON Value.
@@ -235,7 +277,11 @@ fn convert_json_value(data: &Value) -> SemanticValue {
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
-            selector_value(&v)
+            let mut sv = selector_value(&v);
+            if let Some(sk) = obj.get("selectorKind").and_then(|s| s.as_str()) {
+                sv.selector_kind = Some(sk.to_string());
+            }
+            sv
         }
         "literal" => {
             if let Some(val) = raw_value {

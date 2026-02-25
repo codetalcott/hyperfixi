@@ -12,9 +12,13 @@ class SelectorValue:
 
     type: str = "selector"
     value: str = ""
+    selectorKind: str | None = None
 
     def to_dict(self) -> dict:
-        return {"type": self.type, "value": self.value}
+        d: dict = {"type": self.type, "value": self.value}
+        if self.selectorKind is not None:
+            d["selectorKind"] = self.selectorKind
+        return d
 
 
 @dataclass(frozen=True)
@@ -80,6 +84,14 @@ class SemanticNode:
     body: list[SemanticNode] = field(default_factory=list)
     statements: list[SemanticNode] = field(default_factory=list)
     chainType: str | None = None  # "then", "and", "async", "sequential"
+    # Conditional fields (v1.1)
+    thenBranch: list[SemanticNode] = field(default_factory=list)
+    elseBranch: list[SemanticNode] = field(default_factory=list)
+    # Loop fields (v1.1)
+    loopVariant: str | None = None
+    loopBody: list[SemanticNode] = field(default_factory=list)
+    loopVariable: str | None = None
+    indexVariable: str | None = None
 
     def to_dict(self) -> dict:
         d: dict = {
@@ -93,4 +105,18 @@ class SemanticNode:
             d["statements"] = [n.to_dict() for n in self.statements]
             if self.chainType:
                 d["chainType"] = self.chainType
+        # v1.1 conditional fields
+        if self.thenBranch:
+            d["thenBranch"] = [n.to_dict() for n in self.thenBranch]
+        if self.elseBranch:
+            d["elseBranch"] = [n.to_dict() for n in self.elseBranch]
+        # v1.1 loop fields
+        if self.loopVariant is not None:
+            d["loopVariant"] = self.loopVariant
+        if self.loopBody:
+            d["loopBody"] = [n.to_dict() for n in self.loopBody]
+        if self.loopVariable is not None:
+            d["loopVariable"] = self.loopVariable
+        if self.indexVariable is not None:
+            d["indexVariable"] = self.indexVariable
         return d

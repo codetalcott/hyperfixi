@@ -207,7 +207,7 @@ func TestParseEnabledFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 	v := node.Roles["primary-key"]
-	if v.Type != TypeFlag || v.Name != "primary-key" || v.Enabled == nil || !*v.Enabled {
+	if v.Type != TypeFlag || v.Name != "primary-key" || !v.Enabled {
 		t.Errorf("primary-key = %+v, want flag primary-key enabled", v)
 	}
 }
@@ -218,7 +218,7 @@ func TestParseDisabledFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 	v := node.Roles["nullable"]
-	if v.Type != TypeFlag || v.Name != "nullable" || v.Enabled == nil || *v.Enabled {
+	if v.Type != TypeFlag || v.Name != "nullable" || v.Enabled {
 		t.Errorf("nullable = %+v, want flag nullable disabled", v)
 	}
 }
@@ -229,11 +229,11 @@ func TestParseMultipleFlags(t *testing.T) {
 		t.Fatal(err)
 	}
 	pk := node.Roles["primary-key"]
-	if pk.Type != TypeFlag || !*pk.Enabled {
+	if pk.Type != TypeFlag || !pk.Enabled {
 		t.Errorf("primary-key = %+v, want enabled flag", pk)
 	}
 	nn := node.Roles["not-null"]
-	if nn.Type != TypeFlag || !*nn.Enabled {
+	if nn.Type != TypeFlag || !nn.Enabled {
 		t.Errorf("not-null = %+v, want enabled flag", nn)
 	}
 }
@@ -244,11 +244,11 @@ func TestParseMixedFlags(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := node.Roles["required"]
-	if req.Type != TypeFlag || !*req.Enabled {
+	if req.Type != TypeFlag || !req.Enabled {
 		t.Errorf("required = %+v, want enabled flag", req)
 	}
 	nul := node.Roles["nullable"]
-	if nul.Type != TypeFlag || *nul.Enabled {
+	if nul.Type != TypeFlag || nul.Enabled {
 		t.Errorf("nullable = %+v, want disabled flag", nul)
 	}
 }
@@ -259,11 +259,11 @@ func TestParseFlagsOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	d := node.Roles["draggable"]
-	if d.Type != TypeFlag || !*d.Enabled {
+	if d.Type != TypeFlag || !d.Enabled {
 		t.Errorf("draggable = %+v, want enabled flag", d)
 	}
 	r := node.Roles["resizable"]
-	if r.Type != TypeFlag || !*r.Enabled {
+	if r.Type != TypeFlag || !r.Enabled {
 		t.Errorf("resizable = %+v, want enabled flag", r)
 	}
 }

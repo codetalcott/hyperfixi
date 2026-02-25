@@ -134,7 +134,31 @@ def from_json(data: dict[str, Any]) -> SemanticNode:
             chainType=chain_type,
         )
 
-    return SemanticNode(kind="command", action=action, roles=roles)
+    node = SemanticNode(kind="command", action=action, roles=roles)
+
+    # Deserialize v1.1 conditional fields
+    then_data = data.get("thenBranch", [])
+    if then_data:
+        node.thenBranch = [from_json(t) for t in then_data]
+    else_data = data.get("elseBranch", [])
+    if else_data:
+        node.elseBranch = [from_json(e) for e in else_data]
+
+    # Deserialize v1.1 loop fields
+    loop_variant = data.get("loopVariant")
+    if loop_variant is not None:
+        node.loopVariant = loop_variant
+    loop_body_data = data.get("loopBody", [])
+    if loop_body_data:
+        node.loopBody = [from_json(l) for l in loop_body_data]
+    loop_variable = data.get("loopVariable")
+    if loop_variable is not None:
+        node.loopVariable = loop_variable
+    index_variable = data.get("indexVariable")
+    if index_variable is not None:
+        node.indexVariable = index_variable
+
+    return node
 
 
 def to_json(node: SemanticNode) -> dict[str, Any]:
@@ -148,7 +172,8 @@ def _convert_json_value(role_name: str, data: dict[str, Any]) -> SemanticValue:
     value = data.get("value", data.get("raw", ""))
 
     if vtype == "selector":
-        return SelectorValue(value=str(value))
+        sk = data.get("selectorKind")
+        return SelectorValue(value=str(value), selectorKind=sk)
 
     if vtype == "literal":
         if isinstance(value, bool):

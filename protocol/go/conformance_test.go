@@ -67,7 +67,7 @@ func assertRolesMatch(t *testing.T, actualRoles map[string]SemanticValue, expect
 				t.Errorf("[%s] Flag name: got %q, want %q", testID, actual.Name, expectedName)
 			}
 			expectedEnabled, _ := expected["enabled"].(bool)
-			if actual.Enabled == nil || *actual.Enabled != expectedEnabled {
+			if actual.Enabled != expectedEnabled {
 				t.Errorf("[%s] Flag enabled: got %v, want %v", testID, actual.Enabled, expectedEnabled)
 			}
 

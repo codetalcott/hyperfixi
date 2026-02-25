@@ -28,6 +28,30 @@ class ParseError(Exception):
     pass
 
 
+# Structural role names whose bracket-enclosed values may be nested commands.
+_STRUCTURAL_ROLES = frozenset({"body", "then", "else", "condition", "loop-body", "variable"})
+
+
+def _is_nested_command(value: str) -> bool:
+    """Check whether a bracket-enclosed value is a nested command (vs. attribute selector).
+
+    A value starting with '[' is a nested command if the inner content
+    contains at least one ASCII space or ':' at bracket-depth 0.
+    """
+    if len(value) < 2:
+        return False
+    inner = value[1:-1]
+    depth = 0
+    for ch in inner:
+        if ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth -= 1
+        elif depth == 0 and ch in (" ", ":"):
+            return True
+    return False
+
+
 def is_explicit_syntax(text: str) -> bool:
     """Check if input is explicit bracket syntax."""
     trimmed = text.strip()
@@ -103,11 +127,13 @@ def parse_explicit(
         role_name = token[:colon_idx]
         value_str = token[colon_idx + 1 :]
 
-        # Handle nested explicit syntax for body
-        if role_name == "body" and value_str.startswith("["):
-            nested_end = _find_matching_bracket(token, colon_idx + 1)
-            nested_syntax = token[colon_idx + 1 : nested_end + 1]
-            roles[role_name] = ExpressionValue(raw=nested_syntax)
+        # Handle nested explicit syntax for structural roles (body, then, else, etc.)
+        if (
+            role_name in _STRUCTURAL_ROLES
+            and value_str.startswith("[")
+            and _is_nested_command(value_str)
+        ):
+            roles[role_name] = ExpressionValue(raw=value_str)
             continue
 
         value = _parse_value(value_str, refs)
@@ -130,7 +156,46 @@ def parse_explicit(
 
         return SemanticNode(kind="event-handler", action="on", roles=roles, body=body)
 
-    return SemanticNode(kind="command", action=command, roles=roles)
+    # Build command node, extracting structural roles into top-level fields
+    node = SemanticNode(kind="command", action=command, roles=roles)
+
+    # Extract conditional branches (v1.1)
+    _extract_structural_branch(node, roles, "then", "thenBranch", reference_set=refs)
+    _extract_structural_branch(node, roles, "else", "elseBranch", reference_set=refs)
+
+    # Extract loop fields (v1.1)
+    _extract_structural_branch(node, roles, "loop-body", "loopBody", reference_set=refs)
+    lv = roles.get("loopVariant")
+    if lv is not None and isinstance(lv, LiteralValue) and isinstance(lv.value, str):
+        node.loopVariant = lv.value
+        roles.pop("loopVariant", None)
+    lvar = roles.get("loopVariable")
+    if lvar is not None and isinstance(lvar, LiteralValue) and isinstance(lvar.value, str):
+        node.loopVariable = lvar.value
+        roles.pop("loopVariable", None)
+    ivar = roles.get("indexVariable")
+    if ivar is not None and isinstance(ivar, LiteralValue) and isinstance(ivar.value, str):
+        node.indexVariable = ivar.value
+        roles.pop("indexVariable", None)
+
+    return node
+
+
+def _extract_structural_branch(
+    node: SemanticNode,
+    roles: dict[str, SemanticValue],
+    role_name: str,
+    field_name: str,
+    *,
+    reference_set: frozenset[str] | set[str] | None = None,
+) -> None:
+    """Extract a structural role into a top-level array field on the node."""
+    value = roles.get(role_name)
+    if value is None or not isinstance(value, ExpressionValue) or not value.raw:
+        return
+    parsed = parse_explicit(value.raw, reference_set=reference_set)
+    setattr(node, field_name, [parsed])
+    roles.pop(role_name, None)
 
 
 def _tokenize(content: str) -> list[str]:

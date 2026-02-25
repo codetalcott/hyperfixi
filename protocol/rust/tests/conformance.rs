@@ -75,7 +75,7 @@ fn assert_roles_match(
                     .and_then(|e| e.as_bool())
                     .unwrap_or(true);
                 assert_eq!(
-                    actual.enabled.unwrap_or(true),
+                    actual.enabled,
                     expected_enabled,
                     "[{}] Flag enabled mismatch",
                     test_id
