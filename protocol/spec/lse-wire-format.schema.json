@@ -148,6 +148,19 @@
         "annotations": {
           "type": "array",
           "items": { "$ref": "#/$defs/Annotation" }
+        },
+        "catchBranch": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "finallyBranch": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "asyncVariant": { "enum": ["all", "race"] },
+        "asyncBody": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
         }
       }
     },

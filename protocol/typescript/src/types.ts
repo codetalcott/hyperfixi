@@ -34,6 +34,9 @@ export interface SemanticValue {
 /** Loop variant discriminant. */
 export type LoopVariant = 'forever' | 'times' | 'for' | 'while' | 'until';
 
+/** Async coordination variant discriminant (v1.2). */
+export type AsyncVariant = 'all' | 'race';
+
 /** A type constraint diagnostic (v1.2). */
 export interface Diagnostic {
   level: 'error' | 'warning';
@@ -68,6 +71,12 @@ export interface SemanticNode {
   diagnostics?: Diagnostic[];
   // Metadata annotations (v1.2)
   annotations?: Annotation[];
+  // Error handling (v1.2): try/catch/finally
+  catchBranch?: SemanticNode[];
+  finallyBranch?: SemanticNode[];
+  // Async coordination (v1.2): all/race
+  asyncVariant?: AsyncVariant;
+  asyncBody?: SemanticNode[];
 }
 
 /** Wire format envelope with version metadata (v1.2). */

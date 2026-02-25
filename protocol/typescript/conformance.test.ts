@@ -553,3 +553,99 @@ describe('annotations.json', () => {
     }
   }
 });
+
+// ── try/catch/finally conformance (v1.2) ────────────────────────────────────
+
+describe('try-catch.json', () => {
+  const fixtures = loadFixtures('try-catch.json');
+  for (const fixture of fixtures) {
+    const id = fixture['id'] as string;
+
+    if (fixture['jsonInput'] && fixture['expectedRoundTrip']) {
+      const jsonInput = fixture['jsonInput'] as Record<string, unknown>;
+
+      it(`${id} (JSON round-trip)`, () => {
+        const node = fromJSON(jsonInput);
+        const json = toJSON(node);
+        const node2 = fromJSON(json);
+
+        expect(node2.kind, `${id}: kind preserved`).toBe('command');
+        expect(node2.action, `${id}: action preserved`).toBe(node.action);
+
+        // body round-trip
+        const bodyLen = (jsonInput['body'] as unknown[] | undefined)?.length ?? 0;
+        expect(node.body?.length ?? 0, `${id}: body parsed`).toBe(bodyLen);
+        expect(node2.body?.length ?? 0, `${id}: body round-trip`).toBe(bodyLen);
+
+        // catchBranch round-trip
+        if (fixture['expectedCatchLength'] !== undefined) {
+          const expectedLen = fixture['expectedCatchLength'] as number;
+          expect(node.catchBranch?.length, `${id}: catchBranch parsed`).toBe(expectedLen);
+          expect(node2.catchBranch?.length, `${id}: catchBranch round-trip`).toBe(expectedLen);
+        }
+        if (fixture['noCatch']) {
+          expect(node.catchBranch, `${id}: no catchBranch`).toBeUndefined();
+        }
+
+        // finallyBranch round-trip
+        if (fixture['expectedFinallyLength'] !== undefined) {
+          const expectedLen = fixture['expectedFinallyLength'] as number;
+          expect(node.finallyBranch?.length, `${id}: finallyBranch parsed`).toBe(expectedLen);
+          expect(node2.finallyBranch?.length, `${id}: finallyBranch round-trip`).toBe(expectedLen);
+        }
+        if (fixture['noFinally']) {
+          expect(node.finallyBranch, `${id}: no finallyBranch`).toBeUndefined();
+        }
+
+        // annotations coexist
+        if (fixture['expectedAnnotationCount'] !== undefined) {
+          const expectedLen = fixture['expectedAnnotationCount'] as number;
+          expect(node.annotations?.length, `${id}: annotations`).toBe(expectedLen);
+          expect(node2.annotations?.length, `${id}: annotations round-trip`).toBe(expectedLen);
+        }
+      });
+    }
+  }
+});
+
+// ── all/race async coordination conformance (v1.2) ──────────────────────────
+
+describe('async-coordination.json', () => {
+  const fixtures = loadFixtures('async-coordination.json');
+  for (const fixture of fixtures) {
+    const id = fixture['id'] as string;
+
+    if (fixture['jsonInput'] && fixture['expectedRoundTrip']) {
+      const jsonInput = fixture['jsonInput'] as Record<string, unknown>;
+
+      it(`${id} (JSON round-trip)`, () => {
+        const node = fromJSON(jsonInput);
+        const json = toJSON(node);
+        const node2 = fromJSON(json);
+
+        expect(node2.kind, `${id}: kind preserved`).toBe('command');
+        expect(node2.action, `${id}: action preserved`).toBe(node.action);
+
+        // asyncVariant round-trip
+        if (fixture['expectedAsyncVariant'] !== undefined) {
+          expect(node.asyncVariant, `${id}: asyncVariant parsed`).toBe(fixture['expectedAsyncVariant']);
+          expect(node2.asyncVariant, `${id}: asyncVariant round-trip`).toBe(fixture['expectedAsyncVariant']);
+        }
+
+        // asyncBody round-trip
+        if (fixture['expectedAsyncBodyLength'] !== undefined) {
+          const expectedLen = fixture['expectedAsyncBodyLength'] as number;
+          expect(node.asyncBody?.length, `${id}: asyncBody parsed`).toBe(expectedLen);
+          expect(node2.asyncBody?.length, `${id}: asyncBody round-trip`).toBe(expectedLen);
+        }
+
+        // annotations coexist
+        if (fixture['expectedAnnotationCount'] !== undefined) {
+          const expectedLen = fixture['expectedAnnotationCount'] as number;
+          expect(node.annotations?.length, `${id}: annotations`).toBe(expectedLen);
+          expect(node2.annotations?.length, `${id}: annotations round-trip`).toBe(expectedLen);
+        }
+      });
+    }
+  }
+});

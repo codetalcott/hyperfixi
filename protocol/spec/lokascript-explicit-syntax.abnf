@@ -195,6 +195,7 @@ reference      = "me" / "you" / "it" / "result"
 ; The nested content is recursively parsed as a bracket-cmd.
 
 structural-role-names = "body" / "then" / "else" / "condition" / "loop-body" / "variable"
+                      / "catch" / "finally"
 
 nested-structural  = bracket-cmd
 

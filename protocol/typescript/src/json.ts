@@ -81,7 +81,7 @@ export function toJSON(node: SemanticNode): Record<string, unknown> {
     roles: marshalRoles(node.roles),
   };
 
-  if (node.kind === 'event-handler' && node.body && node.body.length > 0) {
+  if (node.body && node.body.length > 0) {
     m['body'] = node.body.map(toJSON);
   }
 
@@ -121,6 +121,20 @@ export function toJSON(node: SemanticNode): Record<string, unknown> {
     m['annotations'] = node.annotations.map(a =>
       a.value !== undefined ? { name: a.name, value: a.value } : { name: a.name },
     );
+  }
+
+  // Error handling (v1.2): try/catch/finally
+  if (node.catchBranch && node.catchBranch.length > 0) {
+    m['catchBranch'] = node.catchBranch.map(toJSON);
+  }
+  if (node.finallyBranch && node.finallyBranch.length > 0) {
+    m['finallyBranch'] = node.finallyBranch.map(toJSON);
+  }
+
+  // Async coordination (v1.2): all/race
+  if (node.asyncVariant) m['asyncVariant'] = node.asyncVariant;
+  if (node.asyncBody && node.asyncBody.length > 0) {
+    m['asyncBody'] = node.asyncBody.map(toJSON);
   }
 
   return m;
@@ -192,6 +206,10 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
   // Command node — with optional v1.1 conditional/loop fields
   const node: SemanticNode = { kind: 'command', action, roles };
 
+  // body (used by try, all, race)
+  const cmdBody = deserializeNodeArray(data['body']);
+  if (cmdBody.length > 0) node.body = cmdBody;
+
   // Conditional fields (v1.1)
   const thenBranch = deserializeNodeArray(data['thenBranch']);
   if (thenBranch.length > 0) node.thenBranch = thenBranch;
@@ -223,6 +241,18 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
   // Annotations (v1.2)
   const annotations = deserializeAnnotations(data['annotations']);
   if (annotations) node.annotations = annotations;
+
+  // Error handling (v1.2): try/catch/finally
+  const catchBranch = deserializeNodeArray(data['catchBranch']);
+  if (catchBranch.length > 0) node.catchBranch = catchBranch;
+  const finallyBranch = deserializeNodeArray(data['finallyBranch']);
+  if (finallyBranch.length > 0) node.finallyBranch = finallyBranch;
+
+  // Async coordination (v1.2): all/race
+  const av = data['asyncVariant'] as string | undefined;
+  if (av === 'all' || av === 'race') node.asyncVariant = av;
+  const asyncBody = deserializeNodeArray(data['asyncBody']);
+  if (asyncBody.length > 0) node.asyncBody = asyncBody;
 
   return node;
 }

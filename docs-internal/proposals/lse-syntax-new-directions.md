@@ -1,9 +1,9 @@
 # LSE Syntax: New Directions
 
-**Status**: Partially Implemented (v1.2: Type Constraints + Version Header shipped)
+**Status**: Partially Implemented (v1.2: Directions 5, 7, 9, 10, 11 shipped)
 **Date**: 2026-02-25
 **Author**: Claude (exploration session)
-**Implementation**: `b677d846` — Direction 7 and Direction 10 implemented in `protocol/` and `packages/semantic/`
+**Implementation**: `b677d846` (Dir 7+10), `bd21324d` (Dir 5), current commit (Dir 9+11)
 
 ## Context
 
@@ -468,7 +468,9 @@ This avoids introducing a sub-language. The bracket syntax quotes are a serializ
 
 ---
 
-## Direction 9: Error Handling / `try`-`catch`-`finally`
+## Direction 9: Error Handling / `try`-`catch`-`finally` — IMPLEMENTED
+
+> **Shipped in v1.2** (this commit). `catchBranch`/`finallyBranch` on command nodes, `body` deserialization for command kind, JSON Schema fields, ABNF structural roles extended, 5 conformance fixtures + 5 tests.
 
 ### Problem
 
@@ -544,7 +546,9 @@ The `#!lse <version>` shebang line is a version declaration. It's a comment (sta
 
 ---
 
-## Direction 11: Async Coordination / `all` and `race`
+## Direction 11: Async Coordination / `all` and `race` — IMPLEMENTED
+
+> **Shipped in v1.2** (this commit). `asyncVariant`/`asyncBody` on command nodes, JSON Schema fields, `body` deserialization generalized to command nodes, 4 conformance fixtures + 4 tests.
 
 ### Problem
 
@@ -610,9 +614,9 @@ then [put destination:#result]
 | 6. Templates `def`/`use`   | Medium     | Yes         | No (macro)     | Medium      | None        | Low      |
 | 7. Type constraints        | Low        | Yes         | No             | None        | Optional    | **Done** |
 | 8. Collection operators    | Low        | Yes         | No             | None        | None        | Medium   |
-| 9. `try`/`catch`/`finally` | Low        | Yes         | No             | Small       | Small       | **High** |
+| 9. `try`/`catch`/`finally` | Low        | Yes         | No             | Small       | Small       | **Done** |
 | 10. Version negotiation    | Low        | Yes         | No             | Minimal     | Minimal     | **Done** |
-| 11. `all`/`race`           | Low        | Yes         | No             | Small       | Small       | **High** |
+| 11. `all`/`race`           | Low        | Yes         | No             | Small       | Small       | **Done** |
 
 ---
 

@@ -185,6 +185,69 @@ Annotations with no argument omit the `value` field:
 
 Annotation order is preserved — order matters for middleware-like composition (e.g., `@retry` before `@timeout` means retry each attempt before timing out the whole sequence).
 
+### Error Handling Node (v1.2)
+
+A `try` command node uses `body` (in roles), `catchBranch`, and `finallyBranch` arrays — the same structural-field pattern as `if`/`else` and `repeat`/`loopBody`:
+
+```json
+{
+  "kind": "command",
+  "action": "try",
+  "roles": {},
+  "body": [
+    {
+      "kind": "command",
+      "action": "fetch",
+      "roles": { "source": { "type": "literal", "value": "/api/users", "dataType": "string" } }
+    }
+  ],
+  "catchBranch": [
+    {
+      "kind": "command",
+      "action": "show",
+      "roles": { "patient": { "type": "selector", "value": "#error-message" } }
+    }
+  ],
+  "finallyBranch": [
+    {
+      "kind": "command",
+      "action": "remove",
+      "roles": { "patient": { "type": "selector", "value": ".loading" } }
+    }
+  ]
+}
+```
+
+`catchBranch` and `finallyBranch` are both optional. A `try` with only `finallyBranch` (no `catchBranch`) is valid for guaranteed cleanup.
+
+### Async Coordination Node (v1.2)
+
+`all` and `race` command nodes use `asyncVariant` and `asyncBody` — the body commands run concurrently:
+
+```json
+{
+  "kind": "command",
+  "action": "all",
+  "roles": {},
+  "asyncVariant": "all",
+  "asyncBody": [
+    {
+      "kind": "command",
+      "action": "fetch",
+      "roles": { "source": { "type": "literal", "value": "/api/user", "dataType": "string" } }
+    },
+    {
+      "kind": "command",
+      "action": "fetch",
+      "roles": { "source": { "type": "literal", "value": "/api/prefs", "dataType": "string" } }
+    }
+  ]
+}
+```
+
+- **`all`**: Resolves when all body commands complete. Result is an array. If any fails, the whole `all` fails.
+- **`race`**: Resolves with the first to complete. Remaining commands are cancelled.
+
 ### Versioned Envelope (v1.2)
 
 A versioned envelope wraps multiple nodes with protocol metadata:
@@ -230,6 +293,12 @@ interface SemanticNodeJSON {
   diagnostics?: DiagnosticJSON[];
   // metadata annotations (v1.2, all node kinds):
   annotations?: AnnotationJSON[];
+  // error handling (v1.2, command nodes only):
+  catchBranch?: SemanticNodeJSON[];
+  finallyBranch?: SemanticNodeJSON[];
+  // async coordination (v1.2, command nodes only):
+  asyncVariant?: 'all' | 'race';
+  asyncBody?: SemanticNodeJSON[];
 }
 
 interface DiagnosticJSON {
