@@ -12,6 +12,9 @@ import {
   jsonToSemanticNode,
   semanticNodeToJSON,
   validateSemanticJSON,
+  fromProtocolJSON,
+  toProtocolJSON,
+  validateProtocolJSON,
 } from '@lokascript/framework';
 import { jsonResponse, errorResponse } from './utils.js';
 
@@ -153,31 +156,46 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
   }
 
   if (explicitInput) {
-    // Explicit → JSON
+    // Explicit → JSON (always produce full-fidelity protocol JSON)
     const node = parseExplicit(explicitInput);
-    const json = semanticNodeToJSON(node);
     return jsonResponse({
       ok: true,
       explicit: renderExplicit(node),
-      semantic: json,
+      semantic: toProtocolJSON(node),
     });
   }
 
   // JSON → Explicit
-  const diagnostics = validateSemanticJSON(semanticInput as any);
-  const errors = diagnostics.filter(d => d.severity === 'error');
-  if (errors.length > 0) {
+  // Detect full-fidelity protocol JSON by presence of `kind` field
+  const input = semanticInput as Record<string, unknown>;
+  const isProtocol = 'kind' in input;
+
+  if (isProtocol) {
+    // Full-fidelity protocol JSON (v1.1 fields: thenBranch, elseBranch, loopVariant, etc.)
+    const diagnostics = validateProtocolJSON(input);
+    const errors = diagnostics.filter(d => d.severity === 'error');
+    if (errors.length > 0) {
+      return jsonResponse({ ok: false, diagnostics: errors });
+    }
+    const node = fromProtocolJSON(input as any);
     return jsonResponse({
-      ok: false,
-      diagnostics: errors,
+      ok: true,
+      explicit: renderExplicit(node),
+      semantic: toProtocolJSON(node),
     });
   }
 
-  const node = jsonToSemanticNode(semanticInput as any);
+  // LLM-simplified JSON (no `kind` — legacy { action, roles, trigger? })
+  const diagnostics = validateSemanticJSON(input as any);
+  const errors = diagnostics.filter(d => d.severity === 'error');
+  if (errors.length > 0) {
+    return jsonResponse({ ok: false, diagnostics: errors });
+  }
+  const node = jsonToSemanticNode(input as any);
   return jsonResponse({
     ok: true,
     explicit: renderExplicit(node),
-    semantic: semanticNodeToJSON(node),
+    semantic: toProtocolJSON(node),
   });
 }
 

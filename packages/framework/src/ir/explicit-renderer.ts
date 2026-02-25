@@ -10,6 +10,8 @@ import type {
   SemanticValue,
   CompoundSemanticNode,
   EventHandlerSemanticNode,
+  ConditionalSemanticNode,
+  LoopSemanticNode,
 } from '../core/types';
 
 /**
@@ -45,6 +47,37 @@ export function renderExplicit(node: SemanticNode): string {
     if (eventNode.body && eventNode.body.length > 0) {
       const bodyParts = eventNode.body.map(n => renderExplicit(n));
       parts.push(`body:${bodyParts.join(' ')}`);
+    }
+  }
+
+  // Handle conditional branches (v1.1)
+  if (node.kind === 'conditional') {
+    const condNode = node as ConditionalSemanticNode;
+    if (condNode.thenBranch && condNode.thenBranch.length > 0) {
+      const thenParts = condNode.thenBranch.map(n => renderExplicit(n));
+      parts.push(`then:${thenParts.join(' ')}`);
+    }
+    if (condNode.elseBranch && condNode.elseBranch.length > 0) {
+      const elseParts = condNode.elseBranch.map(n => renderExplicit(n));
+      parts.push(`else:${elseParts.join(' ')}`);
+    }
+  }
+
+  // Handle loop body and metadata (v1.1)
+  if (node.kind === 'loop') {
+    const loopNode = node as LoopSemanticNode;
+    if (loopNode.loopVariant) {
+      parts.push(`loop-variant:${loopNode.loopVariant}`);
+    }
+    if (loopNode.loopVariable) {
+      parts.push(`variable:${loopNode.loopVariable}`);
+    }
+    if (loopNode.indexVariable) {
+      parts.push(`index-variable:${loopNode.indexVariable}`);
+    }
+    if (loopNode.body && loopNode.body.length > 0) {
+      const bodyParts = loopNode.body.map(n => renderExplicit(n));
+      parts.push(`loop-body:${bodyParts.join(' ')}`);
     }
   }
 
