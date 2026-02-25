@@ -9,6 +9,7 @@ import pytest
 
 from lokascript_explicit.parser import parse_explicit, ParseError
 from lokascript_explicit.renderer import render_explicit
+from lokascript_explicit.json_convert import from_json, to_json
 
 FIXTURES_DIR = Path(__file__).parent.parent.parent / "test-fixtures"
 
@@ -158,3 +159,144 @@ def test_roundtrip_conformance(fixture):
     assert (
         reparsed.roles == node.roles
     ), f"[{fixture['id']}] roles changed after round-trip"
+
+
+# ---- v1.1 helpers ----
+
+
+def _assert_node_array_match(actual_nodes, expected_nodes, test_id, field_name):
+    """Assert that a list of SemanticNodes matches expected JSON array."""
+    assert len(actual_nodes) == len(
+        expected_nodes
+    ), f"[{test_id}] {field_name} length: {len(actual_nodes)} != {len(expected_nodes)}"
+    for i, (ab, eb) in enumerate(zip(actual_nodes, expected_nodes)):
+        assert (
+            ab.kind == eb["kind"]
+        ), f"[{test_id}] {field_name}[{i}] kind: {ab.kind} != {eb['kind']}"
+        assert (
+            ab.action == eb["action"]
+        ), f"[{test_id}] {field_name}[{i}] action: {ab.action} != {eb['action']}"
+        _assert_roles_match(ab.roles, eb["roles"], f"{test_id}.{field_name}[{i}]")
+
+
+# ---- Structural roles conformance (v1.1) ----
+
+
+def _collect_structural_roles_fixtures():
+    """Collect structural role fixtures."""
+    return [f for f in _load_fixtures("structural-roles.json") if "expected" in f]
+
+
+@pytest.mark.parametrize(
+    "fixture", _collect_structural_roles_fixtures(), ids=lambda f: f["id"]
+)
+def test_structural_roles_conformance(fixture):
+    node = parse_explicit(fixture["input"])
+    expected = fixture["expected"]
+
+    assert node.kind == expected["kind"], f"[{fixture['id']}] kind mismatch"
+    assert node.action == expected["action"], f"[{fixture['id']}] action mismatch"
+    _assert_roles_match(node.roles, expected["roles"], fixture["id"])
+
+    if "thenBranch" in expected:
+        _assert_node_array_match(
+            node.thenBranch, expected["thenBranch"], fixture["id"], "thenBranch"
+        )
+
+
+# ---- Conditional conformance (v1.1) ----
+
+
+def _collect_conditional_parse_fixtures():
+    """Collect conditional parse fixtures."""
+    return [
+        f
+        for f in _load_fixtures("conditionals.json")
+        if "input" in f and "expected" in f
+    ]
+
+
+def _collect_conditional_roundtrip_fixtures():
+    """Collect conditional JSON round-trip fixtures."""
+    return [
+        f
+        for f in _load_fixtures("conditionals.json")
+        if "jsonInput" in f and f.get("expectedRoundTrip")
+    ]
+
+
+@pytest.mark.parametrize(
+    "fixture", _collect_conditional_parse_fixtures(), ids=lambda f: f["id"]
+)
+def test_conditionals_parse_conformance(fixture):
+    node = parse_explicit(fixture["input"])
+    expected = fixture["expected"]
+
+    assert node.kind == expected["kind"], f"[{fixture['id']}] kind mismatch"
+    assert node.action == expected["action"], f"[{fixture['id']}] action mismatch"
+    _assert_roles_match(node.roles, expected["roles"], fixture["id"])
+
+    if "thenBranch" in expected:
+        _assert_node_array_match(
+            node.thenBranch, expected["thenBranch"], fixture["id"], "thenBranch"
+        )
+    if "elseBranch" in expected:
+        _assert_node_array_match(
+            node.elseBranch, expected["elseBranch"], fixture["id"], "elseBranch"
+        )
+
+
+@pytest.mark.parametrize(
+    "fixture", _collect_conditional_roundtrip_fixtures(), ids=lambda f: f["id"]
+)
+def test_conditionals_roundtrip_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+
+    assert (
+        node2.action == node.action
+    ), f"[{fixture['id']}] action not preserved"
+    assert len(node2.thenBranch) == len(
+        node.thenBranch
+    ), f"[{fixture['id']}] thenBranch length not preserved"
+    assert len(node2.elseBranch) == len(
+        node.elseBranch
+    ), f"[{fixture['id']}] elseBranch length not preserved"
+
+
+# ---- Loop conformance (v1.1) ----
+
+
+def _collect_loop_fixtures():
+    """Collect loop JSON round-trip fixtures."""
+    return [
+        f
+        for f in _load_fixtures("loops.json")
+        if "jsonInput" in f and f.get("expectedRoundTrip")
+    ]
+
+
+@pytest.mark.parametrize(
+    "fixture", _collect_loop_fixtures(), ids=lambda f: f["id"]
+)
+def test_loops_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+
+    assert (
+        node2.action == node.action
+    ), f"[{fixture['id']}] action not preserved"
+    assert (
+        node2.loopVariant == node.loopVariant
+    ), f"[{fixture['id']}] loopVariant not preserved"
+    assert len(node2.loopBody) == len(
+        node.loopBody
+    ), f"[{fixture['id']}] loopBody length not preserved"
+    assert (
+        node2.loopVariable == node.loopVariable
+    ), f"[{fixture['id']}] loopVariable not preserved"
+    assert (
+        node2.indexVariable == node.indexVariable
+    ), f"[{fixture['id']}] indexVariable not preserved"

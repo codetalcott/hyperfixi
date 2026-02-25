@@ -247,6 +247,180 @@ func TestErrorConformance(t *testing.T) {
 	}
 }
 
+// assertNodeArrayMatch compares a slice of SemanticNodes against expected JSON array.
+func assertNodeArrayMatch(t *testing.T, actual []SemanticNode, expected []any, testID, fieldName string) {
+	t.Helper()
+	if len(actual) != len(expected) {
+		t.Fatalf("[%s] %s length: got %d, want %d", testID, fieldName, len(actual), len(expected))
+	}
+	for i, expectedRaw := range expected {
+		eb, ok := expectedRaw.(map[string]any)
+		if !ok {
+			continue
+		}
+		ab := actual[i]
+		eKind, _ := eb["kind"].(string)
+		if string(ab.Kind) != eKind {
+			t.Errorf("[%s] %s[%d].kind: got %q, want %q", testID, fieldName, i, ab.Kind, eKind)
+		}
+		eAction, _ := eb["action"].(string)
+		if ab.Action != eAction {
+			t.Errorf("[%s] %s[%d].action: got %q, want %q", testID, fieldName, i, ab.Action, eAction)
+		}
+		if eRoles, ok := eb["roles"].(map[string]any); ok {
+			assertRolesMatch(t, ab.Roles, eRoles, fmt.Sprintf("%s.%s[%d]", testID, fieldName, i))
+		}
+	}
+}
+
+// ---- Structural roles conformance (v1.1) ----
+
+func TestStructuralRolesConformance(t *testing.T) {
+	fixtures := loadFixtures(t, "structural-roles.json")
+	for _, fixture := range fixtures {
+		expected, ok := fixture["expected"].(map[string]any)
+		if !ok {
+			continue
+		}
+		id, _ := fixture["id"].(string)
+		input, _ := fixture["input"].(string)
+
+		t.Run(id, func(t *testing.T) {
+			node, err := ParseExplicit(input, nil)
+			if err != nil {
+				t.Fatalf("Parse failed: %v", err)
+			}
+
+			expectedKind, _ := expected["kind"].(string)
+			if string(node.Kind) != expectedKind {
+				t.Errorf("kind: got %q, want %q", node.Kind, expectedKind)
+			}
+
+			expectedAction, _ := expected["action"].(string)
+			if node.Action != expectedAction {
+				t.Errorf("action: got %q, want %q", node.Action, expectedAction)
+			}
+
+			expectedRoles, _ := expected["roles"].(map[string]any)
+			assertRolesMatch(t, node.Roles, expectedRoles, id)
+
+			if thenData, ok := expected["thenBranch"].([]any); ok {
+				assertNodeArrayMatch(t, node.ThenBranch, thenData, id, "thenBranch")
+			}
+		})
+	}
+}
+
+// ---- Conditional conformance (v1.1) ----
+
+func TestConditionalsConformance(t *testing.T) {
+	fixtures := loadFixtures(t, "conditionals.json")
+	for _, fixture := range fixtures {
+		id, _ := fixture["id"].(string)
+
+		// Parse fixtures (input + expected)
+		if input, ok := fixture["input"].(string); ok {
+			if expected, ok := fixture["expected"].(map[string]any); ok {
+				t.Run(id+"_parse", func(t *testing.T) {
+					node, err := ParseExplicit(input, nil)
+					if err != nil {
+						t.Fatalf("Parse failed: %v", err)
+					}
+
+					expectedKind, _ := expected["kind"].(string)
+					if string(node.Kind) != expectedKind {
+						t.Errorf("kind: got %q, want %q", node.Kind, expectedKind)
+					}
+
+					expectedAction, _ := expected["action"].(string)
+					if node.Action != expectedAction {
+						t.Errorf("action: got %q, want %q", node.Action, expectedAction)
+					}
+
+					expectedRoles, _ := expected["roles"].(map[string]any)
+					assertRolesMatch(t, node.Roles, expectedRoles, id)
+
+					if thenData, ok := expected["thenBranch"].([]any); ok {
+						assertNodeArrayMatch(t, node.ThenBranch, thenData, id, "thenBranch")
+					}
+					if elseData, ok := expected["elseBranch"].([]any); ok {
+						assertNodeArrayMatch(t, node.ElseBranch, elseData, id, "elseBranch")
+					}
+				})
+			}
+		}
+
+		// JSON round-trip fixtures (jsonInput + expectedRoundTrip)
+		if jsonInput, ok := fixture["jsonInput"].(map[string]any); ok {
+			if fixture["expectedRoundTrip"] == true {
+				t.Run(id+"_json_roundtrip", func(t *testing.T) {
+					node, err := FromJSON(jsonInput)
+					if err != nil {
+						t.Fatalf("FromJSON failed: %v", err)
+					}
+					jsonOut := ToJSON(node)
+					node2, err := FromJSON(jsonOut)
+					if err != nil {
+						t.Fatalf("FromJSON (round-trip) failed: %v", err)
+					}
+
+					if node2.Action != node.Action {
+						t.Errorf("action: got %q, want %q", node2.Action, node.Action)
+					}
+					if len(node2.ThenBranch) != len(node.ThenBranch) {
+						t.Errorf("thenBranch length: got %d, want %d", len(node2.ThenBranch), len(node.ThenBranch))
+					}
+					if len(node2.ElseBranch) != len(node.ElseBranch) {
+						t.Errorf("elseBranch length: got %d, want %d", len(node2.ElseBranch), len(node.ElseBranch))
+					}
+				})
+			}
+		}
+	}
+}
+
+// ---- Loop conformance (v1.1) ----
+
+func TestLoopsConformance(t *testing.T) {
+	fixtures := loadFixtures(t, "loops.json")
+	for _, fixture := range fixtures {
+		id, _ := fixture["id"].(string)
+
+		jsonInput, ok := fixture["jsonInput"].(map[string]any)
+		if !ok || fixture["expectedRoundTrip"] != true {
+			continue
+		}
+
+		t.Run(id, func(t *testing.T) {
+			node, err := FromJSON(jsonInput)
+			if err != nil {
+				t.Fatalf("FromJSON failed: %v", err)
+			}
+			jsonOut := ToJSON(node)
+			node2, err := FromJSON(jsonOut)
+			if err != nil {
+				t.Fatalf("FromJSON (round-trip) failed: %v", err)
+			}
+
+			if node2.Action != node.Action {
+				t.Errorf("action: got %q, want %q", node2.Action, node.Action)
+			}
+			if node2.LoopVariant != node.LoopVariant {
+				t.Errorf("loopVariant: got %q, want %q", node2.LoopVariant, node.LoopVariant)
+			}
+			if len(node2.LoopBody) != len(node.LoopBody) {
+				t.Errorf("loopBody length: got %d, want %d", len(node2.LoopBody), len(node.LoopBody))
+			}
+			if node2.LoopVariable != node.LoopVariable {
+				t.Errorf("loopVariable: got %q, want %q", node2.LoopVariable, node.LoopVariable)
+			}
+			if node2.IndexVariable != node.IndexVariable {
+				t.Errorf("indexVariable: got %q, want %q", node2.IndexVariable, node.IndexVariable)
+			}
+		})
+	}
+}
+
 // ---- Round-trip conformance ----
 
 func TestRoundTripConformance(t *testing.T) {

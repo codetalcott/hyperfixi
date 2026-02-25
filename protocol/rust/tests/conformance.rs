@@ -330,6 +330,244 @@ fn test_error_conformance() {
     }
 }
 
+// ---- Helpers for v1.1 node array comparison ----
+
+fn assert_node_array_match(
+    actual: &[SemanticNode],
+    expected: &[Value],
+    test_id: &str,
+    field_name: &str,
+) {
+    assert_eq!(
+        actual.len(),
+        expected.len(),
+        "[{}] {} length mismatch: got {}, want {}",
+        test_id,
+        field_name,
+        actual.len(),
+        expected.len()
+    );
+    for (i, expected_raw) in expected.iter().enumerate() {
+        let eb = expected_raw
+            .as_object()
+            .unwrap_or_else(|| panic!("[{}] {}[{}] is not an object", test_id, field_name, i));
+        let ab = &actual[i];
+
+        let e_kind = eb
+            .get("kind")
+            .and_then(|k| k.as_str())
+            .unwrap_or("");
+        assert_eq!(
+            ab.kind.to_string(),
+            e_kind,
+            "[{}] {}[{}].kind mismatch",
+            test_id,
+            field_name,
+            i
+        );
+
+        let e_action = eb
+            .get("action")
+            .and_then(|a| a.as_str())
+            .unwrap_or("");
+        assert_eq!(
+            ab.action, e_action,
+            "[{}] {}[{}].action mismatch",
+            test_id, field_name, i
+        );
+
+        if let Some(e_roles) = eb.get("roles").and_then(|r| r.as_object()) {
+            assert_roles_match(
+                &ab.roles,
+                e_roles,
+                &format!("{}.{}[{}]", test_id, field_name, i),
+            );
+        }
+    }
+}
+
+// ---- Structural roles conformance (v1.1) ----
+
+#[test]
+fn test_structural_roles_conformance() {
+    let fixtures = load_fixtures("structural-roles.json");
+    for fixture in &fixtures {
+        let obj = fixture.as_object().unwrap();
+        let expected = match obj.get("expected").and_then(|e| e.as_object()) {
+            Some(e) => e,
+            None => continue,
+        };
+
+        let id = obj
+            .get("id")
+            .and_then(|i| i.as_str())
+            .unwrap_or("unknown");
+        let input = obj.get("input").and_then(|i| i.as_str()).unwrap_or("");
+
+        let node =
+            parse_explicit(input, None).unwrap_or_else(|e| panic!("[{}] Parse failed: {}", id, e));
+
+        let expected_kind = expected
+            .get("kind")
+            .and_then(|k| k.as_str())
+            .unwrap_or("");
+        assert_eq!(
+            node.kind.to_string(),
+            expected_kind,
+            "[{}] kind mismatch",
+            id
+        );
+
+        let expected_action = expected
+            .get("action")
+            .and_then(|a| a.as_str())
+            .unwrap_or("");
+        assert_eq!(node.action, expected_action, "[{}] action mismatch", id);
+
+        if let Some(expected_roles) = expected.get("roles").and_then(|r| r.as_object()) {
+            assert_roles_match(&node.roles, expected_roles, id);
+        }
+
+        if let Some(then_data) = expected.get("thenBranch").and_then(|t| t.as_array()) {
+            assert_node_array_match(&node.then_branch, then_data, id, "thenBranch");
+        }
+    }
+}
+
+// ---- Conditional conformance (v1.1) ----
+
+#[test]
+fn test_conditionals_conformance() {
+    let fixtures = load_fixtures("conditionals.json");
+    for fixture in &fixtures {
+        let obj = fixture.as_object().unwrap();
+        let id = obj
+            .get("id")
+            .and_then(|i| i.as_str())
+            .unwrap_or("unknown");
+
+        // Parse fixtures (input + expected)
+        if let Some(input) = obj.get("input").and_then(|i| i.as_str()) {
+            if let Some(expected) = obj.get("expected").and_then(|e| e.as_object()) {
+                let node = parse_explicit(input, None)
+                    .unwrap_or_else(|e| panic!("[{}] Parse failed: {}", id, e));
+
+                let expected_kind = expected
+                    .get("kind")
+                    .and_then(|k| k.as_str())
+                    .unwrap_or("");
+                assert_eq!(
+                    node.kind.to_string(),
+                    expected_kind,
+                    "[{}] kind mismatch",
+                    id
+                );
+
+                let expected_action = expected
+                    .get("action")
+                    .and_then(|a| a.as_str())
+                    .unwrap_or("");
+                assert_eq!(node.action, expected_action, "[{}] action mismatch", id);
+
+                if let Some(expected_roles) = expected.get("roles").and_then(|r| r.as_object()) {
+                    assert_roles_match(&node.roles, expected_roles, id);
+                }
+
+                if let Some(then_data) = expected.get("thenBranch").and_then(|t| t.as_array()) {
+                    assert_node_array_match(&node.then_branch, then_data, id, "thenBranch");
+                }
+                if let Some(else_data) = expected.get("elseBranch").and_then(|e| e.as_array()) {
+                    assert_node_array_match(&node.else_branch, else_data, id, "elseBranch");
+                }
+            }
+        }
+
+        // JSON round-trip fixtures (jsonInput + expectedRoundTrip)
+        if let Some(json_input) = obj.get("jsonInput") {
+            if obj.get("expectedRoundTrip") == Some(&Value::Bool(true)) {
+                let node = from_json(json_input)
+                    .unwrap_or_else(|e| panic!("[{}] from_json failed: {}", id, e));
+                let json_out = to_json(&node);
+                let node2 = from_json(&json_out)
+                    .unwrap_or_else(|e| panic!("[{}] from_json (round-trip) failed: {}", id, e));
+
+                assert_eq!(
+                    node2.action, node.action,
+                    "[{}] action not preserved",
+                    id
+                );
+                assert_eq!(
+                    node2.then_branch.len(),
+                    node.then_branch.len(),
+                    "[{}] thenBranch length not preserved",
+                    id
+                );
+                assert_eq!(
+                    node2.else_branch.len(),
+                    node.else_branch.len(),
+                    "[{}] elseBranch length not preserved",
+                    id
+                );
+            }
+        }
+    }
+}
+
+// ---- Loop conformance (v1.1) ----
+
+#[test]
+fn test_loops_conformance() {
+    let fixtures = load_fixtures("loops.json");
+    for fixture in &fixtures {
+        let obj = fixture.as_object().unwrap();
+        let id = obj
+            .get("id")
+            .and_then(|i| i.as_str())
+            .unwrap_or("unknown");
+
+        let json_input = match obj.get("jsonInput") {
+            Some(ji) => ji,
+            None => continue,
+        };
+        if obj.get("expectedRoundTrip") != Some(&Value::Bool(true)) {
+            continue;
+        }
+
+        let node = from_json(json_input)
+            .unwrap_or_else(|e| panic!("[{}] from_json failed: {}", id, e));
+        let json_out = to_json(&node);
+        let node2 = from_json(&json_out)
+            .unwrap_or_else(|e| panic!("[{}] from_json (round-trip) failed: {}", id, e));
+
+        assert_eq!(
+            node2.action, node.action,
+            "[{}] action not preserved",
+            id
+        );
+        assert_eq!(
+            node2.loop_variant, node.loop_variant,
+            "[{}] loopVariant not preserved",
+            id
+        );
+        assert_eq!(
+            node2.loop_body.len(),
+            node.loop_body.len(),
+            "[{}] loopBody length not preserved",
+            id
+        );
+        assert_eq!(
+            node2.loop_variable, node.loop_variable,
+            "[{}] loopVariable not preserved",
+            id
+        );
+        assert_eq!(
+            node2.index_variable, node.index_variable,
+            "[{}] indexVariable not preserved",
+            id
+        );
+    }
+}
+
 // ---- Round-trip conformance ----
 
 #[test]

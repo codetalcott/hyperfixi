@@ -226,14 +226,14 @@ func ToJSON(node *SemanticNode) map[string]any {
 		"roles":  marshalRoles(node.Roles),
 	}
 	if node.Kind == KindEventHandler && len(node.Body) > 0 {
-		bodyMaps := make([]map[string]any, len(node.Body))
+		bodyMaps := make([]any, len(node.Body))
 		for i := range node.Body {
 			bodyMaps[i] = ToJSON(&node.Body[i])
 		}
 		m["body"] = bodyMaps
 	}
 	if node.Kind == KindCompound {
-		stmtMaps := make([]map[string]any, len(node.Statements))
+		stmtMaps := make([]any, len(node.Statements))
 		for i := range node.Statements {
 			stmtMaps[i] = ToJSON(&node.Statements[i])
 		}
@@ -244,14 +244,14 @@ func ToJSON(node *SemanticNode) map[string]any {
 	}
 	// v1.1 conditional fields
 	if len(node.ThenBranch) > 0 {
-		maps := make([]map[string]any, len(node.ThenBranch))
+		maps := make([]any, len(node.ThenBranch))
 		for i := range node.ThenBranch {
 			maps[i] = ToJSON(&node.ThenBranch[i])
 		}
 		m["thenBranch"] = maps
 	}
 	if len(node.ElseBranch) > 0 {
-		maps := make([]map[string]any, len(node.ElseBranch))
+		maps := make([]any, len(node.ElseBranch))
 		for i := range node.ElseBranch {
 			maps[i] = ToJSON(&node.ElseBranch[i])
 		}
@@ -262,7 +262,7 @@ func ToJSON(node *SemanticNode) map[string]any {
 		m["loopVariant"] = node.LoopVariant
 	}
 	if len(node.LoopBody) > 0 {
-		maps := make([]map[string]any, len(node.LoopBody))
+		maps := make([]any, len(node.LoopBody))
 		for i := range node.LoopBody {
 			maps[i] = ToJSON(&node.LoopBody[i])
 		}

@@ -4,7 +4,7 @@
 
 ## Cross-Language Consistency (`protocol/` directory)
 
-All three reference implementations (Go, Python, Rust) are spec-conformant and mutually consistent:
+All four reference implementations (Go, Python, Rust, TypeScript) are spec-conformant and mutually consistent:
 
 | Feature                     | Go          | Python       | Rust        | TypeScript  | Spec               |
 | --------------------------- | ----------- | ------------ | ----------- | ----------- | ------------------ |
@@ -16,27 +16,31 @@ All three reference implementations (Go, Python, Rust) are spec-conformant and m
 | JSON full-fidelity          | yes         | yes          | yes         | yes         | yes                |
 | JSON LLM-simplified         | yes         | yes          | yes         | yes         | yes                |
 | Compound parsing            | render-only | render-only  | render-only | render-only | render-only (v1.0) |
-| Nested body dual-role       | correct     | correct      | correct     | correct     | correct            |
+| Structural roles (v1.1)     | correct     | correct      | correct     | correct     | correct            |
+| Conditionals (v1.1)         | lossless    | lossless     | lossless    | lossless    | lossless           |
+| Loops (v1.1)                | lossless    | lossless     | lossless    | lossless    | lossless           |
+| `selectorKind` optional     | yes         | yes          | yes         | yes         | yes                |
+| `FlagValue.enabled`         | `bool`      | `bool`       | `bool`      | `boolean`   | required           |
 | Context-sensitive tokenizer | correct     | correct      | correct     | correct     | correct            |
-| Conformance fixtures        | 56/56       | 56/56        | 56/56       | 63/63       | —                  |
+| Conformance fixtures        | 67/67       | 67/67        | 67/67       | 73/73       | —                  |
 
-No spec violations found in any of the three implementations.
+No spec violations found in any of the four implementations.
 
 ## TypeScript (`packages/framework` + `packages/semantic`) vs Protocol Spec
 
 The TypeScript layer is the primary production codebase and extends the protocol in several ways. These are the inconsistencies to be aware of:
 
-### 1. Extra node kinds (TS has 5, spec has 3)
+### 1. Extra node kinds (TS framework has 5, spec has 3)
 
-| Kind            | In Spec | In TS | In Go/Py/Rust |
-| --------------- | ------- | ----- | ------------- |
-| `command`       | yes     | yes   | yes           |
-| `event-handler` | yes     | yes   | yes           |
-| `compound`      | yes     | yes   | yes           |
-| `conditional`   | **no**  | yes   | no            |
-| `loop`          | **no**  | yes   | no            |
+| Kind            | In Spec | In TS | In Go/Py/Rust | Wire Format (v1.1)                         |
+| --------------- | ------- | ----- | ------------- | ------------------------------------------ |
+| `command`       | yes     | yes   | yes           | Direct                                     |
+| `event-handler` | yes     | yes   | yes           | Direct                                     |
+| `compound`      | yes     | yes   | yes           | Direct                                     |
+| `conditional`   | **no**  | yes   | no            | Lossless via `thenBranch`/`elseBranch`     |
+| `loop`          | **no**  | yes   | no            | Lossless via `loopVariant`/`loopBody`/etc. |
 
-The `conditional` and `loop` kinds are TypeScript-only extensions. `toProtocolJSON()` downgrades them to `command` (lossy — branch/body data dropped). `fromProtocolJSON()` never produces these kinds. See `wire-format.md` § TypeScript Extensions.
+The `conditional` and `loop` kinds are TypeScript framework extensions. As of v1.1, `toProtocolJSON()` losslessly encodes them as `command` nodes with `thenBranch`/`elseBranch`/`loopVariant`/`loopBody`/`loopVariable`/`indexVariable` fields. `fromProtocolJSON()` detects these v1.1 fields and reconstructs `conditional`/`loop` node kinds. All four protocol implementations (Go, Python, Rust, TypeScript) support these fields on command nodes.
 
 ### 2. Extra fields on `SelectorValue`
 
