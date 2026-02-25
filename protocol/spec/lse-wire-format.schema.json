@@ -109,6 +109,18 @@
         "code": { "type": "string" }
       }
     },
+    "MatchArm": {
+      "type": "object",
+      "required": ["pattern", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "pattern": { "$ref": "#/$defs/SemanticValue" },
+        "body": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        }
+      }
+    },
     "Annotation": {
       "type": "object",
       "required": ["name"],
@@ -161,6 +173,14 @@
         "asyncBody": {
           "type": "array",
           "items": { "$ref": "#/$defs/SemanticNode" }
+        },
+        "arms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MatchArm" }
+        },
+        "defaultArm": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
         }
       }
     },
@@ -194,7 +214,7 @@
           "type": "array",
           "items": { "$ref": "#/$defs/SemanticNode" }
         },
-        "chainType": { "enum": ["then", "and", "async", "sequential"] },
+        "chainType": { "enum": ["then", "and", "async", "sequential", "pipe"] },
         "annotations": {
           "type": "array",
           "items": { "$ref": "#/$defs/Annotation" }

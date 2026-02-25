@@ -1,0 +1,114 @@
+[
+  {
+    "id": "pipe-001",
+    "description": "Two-step pipe chain",
+    "jsonInput": {
+      "kind": "compound",
+      "action": "compound",
+      "chainType": "pipe",
+      "statements": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "put",
+          "roles": { "destination": { "type": "selector", "value": "#user-list" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedChainType": "pipe",
+    "expectedStatementCount": 2
+  },
+  {
+    "id": "pipe-002",
+    "description": "Three-step pipe chain: fetch |> filter |> put",
+    "jsonInput": {
+      "kind": "compound",
+      "action": "compound",
+      "chainType": "pipe",
+      "statements": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/products", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "filter",
+          "roles": {
+            "condition": { "type": "expression", "raw": "category == 'electronics'" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "put",
+          "roles": { "destination": { "type": "selector", "value": "#product-list" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedChainType": "pipe",
+    "expectedStatementCount": 3
+  },
+  {
+    "id": "pipe-003",
+    "description": "Pipe is distinct from then (different chainType)",
+    "jsonInput": {
+      "kind": "compound",
+      "action": "compound",
+      "chainType": "then",
+      "statements": [
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": { "patient": { "type": "selector", "value": ".loading" } }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/data", "dataType": "string" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedChainType": "then",
+    "notPipe": true
+  },
+  {
+    "id": "pipe-004",
+    "description": "Pipe chain with annotation",
+    "jsonInput": {
+      "kind": "compound",
+      "action": "compound",
+      "chainType": "pipe",
+      "statements": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "put",
+          "roles": { "destination": { "type": "selector", "value": "#list" } }
+        }
+      ],
+      "annotations": [{ "name": "timeout", "value": "5s" }]
+    },
+    "expectedRoundTrip": true,
+    "expectedChainType": "pipe",
+    "expectedAnnotationCount": 1
+  }
+]

@@ -185,6 +185,92 @@ Annotations with no argument omit the `value` field:
 
 Annotation order is preserved — order matters for middleware-like composition (e.g., `@retry` before `@timeout` means retry each attempt before timing out the whole sequence).
 
+### Pipe Chain (v1.2)
+
+The `|>` operator creates a compound node with `chainType: "pipe"`. It explicitly threads the output of the left command into the `patient` role of the right command (or `source` if `patient` is already present):
+
+```json
+{
+  "kind": "compound",
+  "action": "compound",
+  "chainType": "pipe",
+  "statements": [
+    {
+      "kind": "command",
+      "action": "fetch",
+      "roles": { "source": { "type": "literal", "value": "/api/users", "dataType": "string" } }
+    },
+    {
+      "kind": "command",
+      "action": "filter",
+      "roles": { "condition": { "type": "expression", "raw": "role == 'admin'" } }
+    },
+    {
+      "kind": "command",
+      "action": "put",
+      "roles": { "destination": { "type": "selector", "value": "#user-list" } }
+    }
+  ]
+}
+```
+
+**Pipe semantics:**
+
+- `|>` desugars to `then` with an implicit `patient:result` on the right command
+- If the right command already has `patient`, feeds into `source` instead
+- If both `patient` and `source` are present, `|>` is a parse error (ambiguous)
+
+### Match Command (v1.2)
+
+A `match` command node carries `arms` (ordered array of pattern→body pairs) and an optional `defaultArm` catch-all:
+
+```json
+{
+  "kind": "command",
+  "action": "match",
+  "roles": {
+    "patient": { "type": "reference", "value": "result" }
+  },
+  "arms": [
+    {
+      "pattern": { "type": "literal", "value": "200", "dataType": "string" },
+      "body": [
+        {
+          "kind": "command",
+          "action": "put",
+          "roles": {
+            "patient": { "type": "reference", "value": "body" },
+            "destination": { "type": "selector", "value": "#result" }
+          }
+        }
+      ]
+    },
+    {
+      "pattern": { "type": "literal", "value": "404", "dataType": "string" },
+      "body": [
+        {
+          "kind": "command",
+          "action": "show",
+          "roles": { "patient": { "type": "selector", "value": "#not-found" } }
+        }
+      ]
+    }
+  ],
+  "defaultArm": [
+    {
+      "kind": "command",
+      "action": "log",
+      "roles": { "patient": { "type": "reference", "value": "result" } }
+    }
+  ]
+}
+```
+
+- `arms` are checked in order; first match wins
+- `defaultArm` is optional; without it, a non-matching value is a no-op
+- No implicit fallthrough between arms
+- v1.2 supports literal patterns only; guard clauses and range patterns are deferred
+
 ### Error Handling Node (v1.2)
 
 A `try` command node uses `body` (in roles), `catchBranch`, and `finallyBranch` arrays — the same structural-field pattern as `if`/`else` and `repeat`/`loopBody`:
@@ -299,6 +385,9 @@ interface SemanticNodeJSON {
   // async coordination (v1.2, command nodes only):
   asyncVariant?: 'all' | 'race';
   asyncBody?: SemanticNodeJSON[];
+  // pattern matching (v1.2, command nodes only):
+  arms?: MatchArmJSON[];
+  defaultArm?: SemanticNodeJSON[];
 }
 
 interface DiagnosticJSON {
@@ -311,6 +400,11 @@ interface DiagnosticJSON {
 interface AnnotationJSON {
   name: string;
   value?: string;
+}
+
+interface MatchArmJSON {
+  pattern: SemanticValueJSON;
+  body: SemanticNodeJSON[];
 }
 
 interface LSEEnvelopeJSON {

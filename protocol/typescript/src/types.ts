@@ -18,7 +18,13 @@ export type ValueType =
 export type NodeKind = 'command' | 'event-handler' | 'compound';
 
 /** Chain operators for compound statements. */
-export type ChainType = 'then' | 'and' | 'async' | 'sequential';
+export type ChainType = 'then' | 'and' | 'async' | 'sequential' | 'pipe';
+
+/** A single arm in a match command (v1.2). */
+export interface MatchArm {
+  pattern: SemanticValue;
+  body: SemanticNode[];
+}
 
 /** A typed value in a role slot. */
 export interface SemanticValue {
@@ -77,6 +83,9 @@ export interface SemanticNode {
   // Async coordination (v1.2): all/race
   asyncVariant?: AsyncVariant;
   asyncBody?: SemanticNode[];
+  // Pattern matching (v1.2): match/arms
+  arms?: MatchArm[];
+  defaultArm?: SemanticNode[];
 }
 
 /** Wire format envelope with version metadata (v1.2). */

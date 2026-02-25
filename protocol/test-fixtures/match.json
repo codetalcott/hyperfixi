@@ -1,0 +1,172 @@
+[
+  {
+    "id": "match-001",
+    "description": "match with two arms and a default",
+    "jsonInput": {
+      "kind": "command",
+      "action": "match",
+      "roles": {
+        "patient": { "type": "reference", "value": "result" }
+      },
+      "arms": [
+        {
+          "pattern": { "type": "literal", "value": "200", "dataType": "string" },
+          "body": [
+            {
+              "kind": "command",
+              "action": "show",
+              "roles": { "patient": { "type": "selector", "value": "#success" } }
+            }
+          ]
+        },
+        {
+          "pattern": { "type": "literal", "value": "404", "dataType": "string" },
+          "body": [
+            {
+              "kind": "command",
+              "action": "show",
+              "roles": { "patient": { "type": "selector", "value": "#not-found" } }
+            }
+          ]
+        }
+      ],
+      "defaultArm": [
+        {
+          "kind": "command",
+          "action": "log",
+          "roles": { "patient": { "type": "reference", "value": "result" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedArmCount": 2,
+    "expectedDefaultArm": true
+  },
+  {
+    "id": "match-002",
+    "description": "match with arms only (no default)",
+    "jsonInput": {
+      "kind": "command",
+      "action": "match",
+      "roles": {
+        "patient": { "type": "reference", "value": "status" }
+      },
+      "arms": [
+        {
+          "pattern": { "type": "literal", "value": true, "dataType": "boolean" },
+          "body": [
+            {
+              "kind": "command",
+              "action": "add",
+              "roles": { "patient": { "type": "selector", "value": ".success" } }
+            }
+          ]
+        },
+        {
+          "pattern": { "type": "literal", "value": false, "dataType": "boolean" },
+          "body": [
+            {
+              "kind": "command",
+              "action": "add",
+              "roles": { "patient": { "type": "selector", "value": ".error" } }
+            }
+          ]
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedArmCount": 2,
+    "noDefaultArm": true
+  },
+  {
+    "id": "match-003",
+    "description": "match arm with multiple body commands",
+    "jsonInput": {
+      "kind": "command",
+      "action": "match",
+      "roles": {
+        "patient": { "type": "reference", "value": "it" }
+      },
+      "arms": [
+        {
+          "pattern": { "type": "literal", "value": "ok", "dataType": "string" },
+          "body": [
+            {
+              "kind": "command",
+              "action": "remove",
+              "roles": { "patient": { "type": "selector", "value": ".loading" } }
+            },
+            {
+              "kind": "command",
+              "action": "add",
+              "roles": { "patient": { "type": "selector", "value": ".done" } }
+            }
+          ]
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedArmCount": 1,
+    "expectedArmBodyLength": 2
+  },
+  {
+    "id": "match-004",
+    "description": "match with numeric pattern",
+    "jsonInput": {
+      "kind": "command",
+      "action": "match",
+      "roles": {
+        "patient": { "type": "reference", "value": "count" }
+      },
+      "arms": [
+        {
+          "pattern": { "type": "literal", "value": 0, "dataType": "number" },
+          "body": [
+            {
+              "kind": "command",
+              "action": "show",
+              "roles": { "patient": { "type": "selector", "value": "#empty-state" } }
+            }
+          ]
+        }
+      ],
+      "defaultArm": [
+        {
+          "kind": "command",
+          "action": "hide",
+          "roles": { "patient": { "type": "selector", "value": "#empty-state" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedArmCount": 1,
+    "expectedDefaultArm": true
+  },
+  {
+    "id": "match-005",
+    "description": "match pattern round-trips preserve pattern type and value",
+    "jsonInput": {
+      "kind": "command",
+      "action": "match",
+      "roles": {
+        "patient": { "type": "reference", "value": "result" }
+      },
+      "arms": [
+        {
+          "pattern": { "type": "literal", "value": "active", "dataType": "string" },
+          "body": [
+            {
+              "kind": "command",
+              "action": "toggle",
+              "roles": { "patient": { "type": "selector", "value": ".active" } }
+            }
+          ]
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedArmCount": 1,
+    "expectedArmPatternType": "literal",
+    "expectedArmPatternValue": "active"
+  }
+]

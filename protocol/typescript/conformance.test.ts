@@ -649,3 +649,97 @@ describe('async-coordination.json', () => {
     }
   }
 });
+
+// ── Pipe operator conformance (v1.2) ─────────────────────────────────────────
+
+describe('pipe.json', () => {
+  const fixtures = loadFixtures('pipe.json');
+  for (const fixture of fixtures) {
+    const id = fixture['id'] as string;
+
+    if (fixture['jsonInput'] && fixture['expectedRoundTrip']) {
+      const jsonInput = fixture['jsonInput'] as Record<string, unknown>;
+
+      it(`${id} (JSON round-trip)`, () => {
+        const node = fromJSON(jsonInput);
+        const json = toJSON(node);
+        const node2 = fromJSON(json);
+
+        expect(node2.kind, `${id}: kind preserved`).toBe(node.kind);
+        expect(node2.action, `${id}: action preserved`).toBe(node.action);
+
+        if (fixture['expectedChainType'] !== undefined) {
+          expect(node.chainType, `${id}: chainType parsed`).toBe(fixture['expectedChainType']);
+          expect(node2.chainType, `${id}: chainType round-trip`).toBe(fixture['expectedChainType']);
+        }
+
+        if (fixture['expectedStatementCount'] !== undefined) {
+          const expectedLen = fixture['expectedStatementCount'] as number;
+          expect(node.statements?.length, `${id}: statement count`).toBe(expectedLen);
+          expect(node2.statements?.length, `${id}: statement count round-trip`).toBe(expectedLen);
+        }
+
+        if (fixture['notPipe']) {
+          expect(node.chainType, `${id}: is not pipe`).not.toBe('pipe');
+        }
+
+        if (fixture['expectedAnnotationCount'] !== undefined) {
+          const expectedLen = fixture['expectedAnnotationCount'] as number;
+          expect(node.annotations?.length, `${id}: annotations`).toBe(expectedLen);
+          expect(node2.annotations?.length, `${id}: annotations round-trip`).toBe(expectedLen);
+        }
+      });
+    }
+  }
+});
+
+// ── match/arms conformance (v1.2) ────────────────────────────────────────────
+
+describe('match.json', () => {
+  const fixtures = loadFixtures('match.json');
+  for (const fixture of fixtures) {
+    const id = fixture['id'] as string;
+
+    if (fixture['jsonInput'] && fixture['expectedRoundTrip']) {
+      const jsonInput = fixture['jsonInput'] as Record<string, unknown>;
+
+      it(`${id} (JSON round-trip)`, () => {
+        const node = fromJSON(jsonInput);
+        const json = toJSON(node);
+        const node2 = fromJSON(json);
+
+        expect(node2.kind, `${id}: kind preserved`).toBe('command');
+        expect(node2.action, `${id}: action preserved`).toBe(node.action);
+
+        if (fixture['expectedArmCount'] !== undefined) {
+          const expectedLen = fixture['expectedArmCount'] as number;
+          expect(node.arms?.length, `${id}: arm count parsed`).toBe(expectedLen);
+          expect(node2.arms?.length, `${id}: arm count round-trip`).toBe(expectedLen);
+        }
+
+        if (fixture['expectedDefaultArm']) {
+          expect(node.defaultArm?.length, `${id}: defaultArm present`).toBeGreaterThan(0);
+          expect(node2.defaultArm?.length, `${id}: defaultArm round-trip`).toBeGreaterThan(0);
+        }
+        if (fixture['noDefaultArm']) {
+          expect(node.defaultArm, `${id}: no defaultArm`).toBeUndefined();
+        }
+
+        if (fixture['expectedArmBodyLength'] !== undefined) {
+          const expectedLen = fixture['expectedArmBodyLength'] as number;
+          expect(node.arms?.[0].body.length, `${id}: arm body length`).toBe(expectedLen);
+          expect(node2.arms?.[0].body.length, `${id}: arm body length round-trip`).toBe(expectedLen);
+        }
+
+        if (fixture['expectedArmPatternType'] !== undefined) {
+          expect(node.arms?.[0].pattern.type, `${id}: arm pattern type`).toBe(fixture['expectedArmPatternType']);
+          expect(node2.arms?.[0].pattern.type, `${id}: arm pattern type round-trip`).toBe(fixture['expectedArmPatternType']);
+        }
+        if (fixture['expectedArmPatternValue'] !== undefined) {
+          expect(node.arms?.[0].pattern.value, `${id}: arm pattern value`).toBe(fixture['expectedArmPatternValue']);
+          expect(node2.arms?.[0].pattern.value, `${id}: arm pattern value round-trip`).toBe(fixture['expectedArmPatternValue']);
+        }
+      });
+    }
+  }
+});

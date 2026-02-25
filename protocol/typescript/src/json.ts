@@ -5,6 +5,7 @@ import {
   type ChainType,
   type LSEEnvelope,
   type Annotation,
+  type MatchArm,
   selectorValue,
   literalValue,
   referenceValue,
@@ -137,6 +138,17 @@ export function toJSON(node: SemanticNode): Record<string, unknown> {
     m['asyncBody'] = node.asyncBody.map(toJSON);
   }
 
+  // Pattern matching (v1.2): match/arms
+  if (node.arms && node.arms.length > 0) {
+    m['arms'] = node.arms.map(arm => ({
+      pattern: marshalValue(arm.pattern),
+      body: arm.body.map(toJSON),
+    }));
+  }
+  if (node.defaultArm && node.defaultArm.length > 0) {
+    m['defaultArm'] = node.defaultArm.map(toJSON);
+  }
+
   return m;
 }
 
@@ -253,6 +265,28 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
   if (av === 'all' || av === 'race') node.asyncVariant = av;
   const asyncBody = deserializeNodeArray(data['asyncBody']);
   if (asyncBody.length > 0) node.asyncBody = asyncBody;
+
+  // Pattern matching (v1.2): match/arms
+  const armsRaw = data['arms'];
+  if (Array.isArray(armsRaw) && armsRaw.length > 0) {
+    const arms: MatchArm[] = [];
+    for (const ar of armsRaw) {
+      if (ar && typeof ar === 'object' && !Array.isArray(ar)) {
+        const armData = ar as Record<string, unknown>;
+        const patternRaw = armData['pattern'];
+        const armBody = deserializeNodeArray(armData['body']);
+        if (patternRaw && typeof patternRaw === 'object' && !Array.isArray(patternRaw)) {
+          arms.push({
+            pattern: convertJSONValue(patternRaw as Record<string, unknown>),
+            body: armBody,
+          });
+        }
+      }
+    }
+    if (arms.length > 0) node.arms = arms;
+  }
+  const defaultArm = deserializeNodeArray(data['defaultArm']);
+  if (defaultArm.length > 0) node.defaultArm = defaultArm;
 
   return node;
 }

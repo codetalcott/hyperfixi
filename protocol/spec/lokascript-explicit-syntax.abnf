@@ -51,7 +51,9 @@ ann-value-char   = ALPHA / DIGIT / "-" / "_" / "." / "/" / ":"
 
 compound-stmt  = bracket-cmd *( 1*WSP chain-op 1*WSP bracket-cmd )
 
-chain-op       = "then" / "and" / "async" / "sequential"
+chain-op       = "then" / "and" / "async" / "sequential" / "|>"
+; "|>" (pipe) threads the output of the left command into the patient/source
+; role of the right command. Wire format: chainType "pipe" on compound nodes.
 
 ; =============================================================================
 ; 3. Bracket Command

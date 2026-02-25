@@ -1,9 +1,9 @@
 # LSE Syntax: New Directions
 
-**Status**: Partially Implemented (v1.2: Directions 5, 7, 9, 10, 11 shipped)
+**Status**: Partially Implemented (v1.2: Directions 1, 4, 5, 7, 9, 10, 11 shipped)
 **Date**: 2026-02-25
 **Author**: Claude (exploration session)
-**Implementation**: `b677d846` (Dir 7+10), `bd21324d` (Dir 5), current commit (Dir 9+11)
+**Implementation**: `b677d846` (Dir 7+10), `bd21324d` (Dir 5), `783e3a9b` (Dir 9+11), current commit (Dir 1+4)
 
 ## Context
 
@@ -13,7 +13,9 @@ This document explores directions **beyond v1.1** — structural and conceptual 
 
 ---
 
-## Direction 1: Pipe Syntax for Data Flow
+## Direction 1: Pipe Syntax for Data Flow — IMPLEMENTED
+
+> **Shipped in v1.2** (this commit). `chainType: "pipe"` on compound nodes, `|>` added to ABNF `chain-op`, `pipe` added to JSON Schema chainType enum and TypeScript `ChainType`, 4 conformance fixtures + 4 tests.
 
 ### Problem
 
@@ -181,7 +183,9 @@ Adding a 4th node kind (`scoped`) to the protocol is significant. An alternative
 
 ---
 
-## Direction 4: Pattern Matching / `match` Expression
+## Direction 4: Pattern Matching / `match` Expression — IMPLEMENTED
+
+> **Shipped in v1.2** (this commit). `MatchArm` interface (`{pattern, body[]}`), `arms` and `defaultArm` fields on `SemanticNode`/`CommandNode`, JSON Schema `MatchArm` definition, ser/deser in `json.ts`, 5 conformance fixtures + 5 tests. Literal patterns only (guards and ranges deferred per design).
 
 ### Problem
 
@@ -606,10 +610,10 @@ then [put destination:#result]
 
 | Direction                  | Complexity | v1.1 Compat | New Node Kinds | ABNF Change | Wire Change | Priority |
 | -------------------------- | ---------- | ----------- | -------------- | ----------- | ----------- | -------- |
-| 1. Pipe `\|>`              | Low        | Yes         | No             | Minimal     | Minimal     | **High** |
+| 1. Pipe `\|>`              | Low        | Yes         | No             | Minimal     | Minimal     | **Done** |
 | 2. Destructuring `=> {}`   | Medium     | Yes         | No             | Small       | Small       | Medium   |
 | 3. `with` blocks           | Medium     | Debatable   | Maybe          | Medium      | Medium      | Medium   |
-| 4. `match` arms            | Medium     | Yes         | No             | Medium      | Medium      | **High** |
+| 4. `match` arms            | Medium     | Yes         | No             | Medium      | Medium      | **Done** |
 | 5. Annotations `@`         | Low        | Yes         | No             | Small       | Small       | **High** |
 | 6. Templates `def`/`use`   | Medium     | Yes         | No (macro)     | Medium      | None        | Low      |
 | 7. Type constraints        | Low        | Yes         | No             | None        | Optional    | **Done** |
