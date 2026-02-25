@@ -1,5 +1,9 @@
 # LLM ↔ LSE Integration Build Plan
 
+> **Status: COMPLETE** — All 4 phases implemented and merged to `main` (2026-02-24).
+> Commits: `c215791d` (Phase 1), `e1f68a81` (Phase 2), `ca124512` (Phase 3), `f398d500` (Phase 4).
+> Total: 23 new files, 143 tests (487 framework tests pass).
+
 ## Architecture
 
 All core logic lives in `packages/framework` (unit-testable, no MCP dependency). MCP tools/resources/prompts are thin wrappers in `packages/mcp-server`. Everything is schema-driven — when a domain adds a command, the entire pipeline updates automatically.
@@ -7,7 +11,7 @@ All core logic lives in `packages/framework` (unit-testable, no MCP dependency).
 ```
                         ┌─────────────────────────────────┐
                         │        DomainRegistry           │
-                        │  (schemas from 7 domains)       │
+                        │  (schemas from 8 domains)       │
                         └──────────┬──────────────────────┘
                                    │
              ┌─────────────────────┼─────────────────────┐
@@ -330,7 +334,7 @@ interface DomainDescriptor {
 }
 ```
 
-Wire schemas for all 7 domains in `domain-registry-setup.ts`. Each domain already exports its schemas.
+Wire schemas for all 8 domains in `domain-registry-setup.ts` via async `loadAllSchemas()` + `registry.setSchemas()`.
 
 ### 4B: DomainRegistry Methods
 
@@ -361,19 +365,19 @@ class DomainRegistry {
 
 ## Summary
 
-| Phase                 | Package    | New Files | Modified | Tests   | Depends On |
-| --------------------- | ---------- | --------- | -------- | ------- | ---------- |
-| 1A Prompt Generator   | framework  | 3         | 0        | 30      | —          |
-| 1B MCP Resources      | mcp-server | 0         | 3        | 10      | 1A         |
-| 1C MCP Prompts        | mcp-server | 1         | 1        | 8       | 1A         |
-| 2A Training Data      | framework  | 6         | 0        | 45      | 1A         |
-| 2B MCP Training Tools | mcp-server | 1         | 1        | 8       | 2A         |
-| 3A Error Feedback     | framework  | 3         | 0        | 20      | —          |
-| 3B Disambiguation     | framework  | 2         | 0        | 10      | —          |
-| 3C Pattern Tracker    | framework  | 2         | 0        | 15      | —          |
-| 3D MCP Feedback Tools | mcp-server | 1         | 1        | 6       | 3A–C       |
-| 4 Integration         | both       | 2         | 2        | 20      | All        |
-| **Total**             |            | **21**    | **8**    | **172** |            |
+| Phase                 | Package    | New Files | Modified | Tests (actual) | Depends On |
+| --------------------- | ---------- | --------- | -------- | -------------- | ---------- |
+| 1A Prompt Generator   | framework  | 4         | 1        | 35             | —          |
+| 1B MCP Resources      | mcp-server | 0         | 2        | —              | 1A         |
+| 1C MCP Prompts        | mcp-server | 1         | 1        | —              | 1A         |
+| 2A Training Data      | framework  | 5         | 1        | 32             | 1A         |
+| 2B MCP Training Tools | mcp-server | 1         | 1        | —              | 2A         |
+| 3A Error Feedback     | framework  | 3         | 0        | 21             | —          |
+| 3B Disambiguation     | framework  | 2         | 0        | 13             | —          |
+| 3C Pattern Tracker    | framework  | 2         | 0        | 16             | —          |
+| 3D MCP Feedback Tools | mcp-server | 1         | 1        | —              | 3A–C       |
+| 4 Integration         | both       | 1         | 3        | 26             | All        |
+| **Total**             |            | **20**    | **10**   | **143**        |            |
 
 ---
 
@@ -394,4 +398,4 @@ class DomainRegistry {
 4 (Integration) ←─────────── depends on all above
 ```
 
-Phases 1A, 3A, 3B, 3C can run in parallel. Phase 2A depends on 1A. Phase 4 is the final integration pass. Pilot everything on `domain-flow` first (richest schemas, all word orders), then generalize.
+Phases 1A, 3A, 3B, 3C can run in parallel. Phase 2A depends on 1A. Phase 4 is the final integration pass. All 8 domains (sql, bdd, jsx, todo, behaviorspec, llm, flow, voice) are wired.
