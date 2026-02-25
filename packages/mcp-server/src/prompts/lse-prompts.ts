@@ -149,14 +149,14 @@ ${errors || '(no errors provided)'}
 function buildLSESystemPrompt(domain: string, format: string): string {
   const formatInstructions =
     format === 'json'
-      ? 'Output valid JSON in the LLM-simplified format: { "action": "...", "roles": { "roleName": { "type": "...", "value": "..." } } }'
+      ? 'Output valid JSON in the full-fidelity format: { "kind": "command", "action": "...", "roles": { "roleName": { "type": "...", "value": "..." } } }'
       : format === 'both'
-        ? 'Output EITHER bracket syntax [command role:value ...] OR JSON { "action": "...", "roles": { ... } }.'
+        ? 'Output EITHER bracket syntax [command role:value ...] OR full-fidelity JSON { "kind": "command", "action": "...", "roles": { ... } }.'
         : 'Output valid LSE bracket syntax: [command role:value ...]';
 
   return `You are generating LokaScript Explicit Syntax (LSE) for the "${domain}" domain.
 
-**LSE Syntax:**
+**LSE Bracket Syntax:**
 - Commands: \`[action role1:value1 role2:value2 +flag]\`
 - No spaces around the colon in role:value pairs
 - Selectors: \`#id\`, \`.class\`, \`[attr]\`, \`@aria\`, \`*wild\`
@@ -164,6 +164,25 @@ function buildLSESystemPrompt(domain: string, format: string): string {
 - References: \`me\`, \`you\`, \`it\`, \`result\`, \`event\`, \`target\`, \`body\`
 - Flags: \`+enabled\`, \`~disabled\`
 - Durations: \`500ms\`, \`2s\`, \`1m\`, \`1h\`
+- Compound: \`[add patient:.loading] then [fetch source:/api]\` (chain operators: then, and, async, sequential)
+
+**Event Handlers:**
+\`[on event:click body:[toggle patient:.active]]\`
+
+**Conditional (v1.1):**
+\`[if condition:"x > 0" then:[toggle patient:.active] else:[remove patient:.active]]\`
+
+**Loop (v1.1):**
+- \`[repeat loopVariant:forever body:[wait delay:1s]]\`
+- \`[repeat quantity:5 loopVariant:times body:[increment patient:#count]]\`
+- \`[repeat source:#items loopVariant:for loopVariable:item body:[add patient:.active]]\`
+- \`[repeat condition:"x > 0" loopVariant:while body:[decrement patient:#count]]\`
+
+**Value types:** selector, literal (string/number/boolean/duration), reference, expression, property-path, flag.
+
+**Node kinds (JSON):** command, event-handler, compound.
+- Conditionals are \`command\` nodes with \`thenBranch\`/\`elseBranch\` arrays.
+- Loops are \`command\` nodes with \`loopVariant\`, \`loopBody\`, \`loopVariable\`?, \`indexVariable\`?.
 
 **${formatInstructions}**
 

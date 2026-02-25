@@ -41,11 +41,57 @@ export const irTools: Tool[] = [
         },
         semantic: {
           type: 'object',
-          description: 'LLM JSON to convert: { action, roles }',
+          description:
+            'Full-fidelity or LLM-simplified JSON to convert. ' +
+            'Full-fidelity: { kind, action, roles, body?, statements?, chainType?, thenBranch?, elseBranch?, loopVariant?, loopBody?, loopVariable?, indexVariable? }. ' +
+            'LLM-simplified: { action, roles, trigger? }.',
           properties: {
+            kind: {
+              type: 'string',
+              enum: ['command', 'event-handler', 'compound'],
+              description: 'Node kind (full-fidelity only)',
+            },
             action: { type: 'string' },
             roles: { type: 'object' },
-            trigger: { type: 'object' },
+            trigger: { type: 'object', description: 'Event trigger (LLM-simplified only)' },
+            body: {
+              type: 'array',
+              description: 'Event handler body commands (event-handler nodes)',
+            },
+            statements: {
+              type: 'array',
+              description: 'Chained commands (compound nodes)',
+            },
+            chainType: {
+              type: 'string',
+              enum: ['then', 'and', 'async', 'sequential'],
+              description: 'Chain operator (compound nodes)',
+            },
+            thenBranch: {
+              type: 'array',
+              description: 'Then-branch commands (v1.1 conditional)',
+            },
+            elseBranch: {
+              type: 'array',
+              description: 'Else-branch commands (v1.1 conditional)',
+            },
+            loopVariant: {
+              type: 'string',
+              enum: ['forever', 'times', 'for', 'while', 'until'],
+              description: 'Loop variant (v1.1 loop)',
+            },
+            loopBody: {
+              type: 'array',
+              description: 'Loop body commands (v1.1 loop)',
+            },
+            loopVariable: {
+              type: 'string',
+              description: 'Loop iteration variable name (v1.1 loop)',
+            },
+            indexVariable: {
+              type: 'string',
+              description: 'Optional loop index variable name (v1.1 loop)',
+            },
           },
         },
       },
