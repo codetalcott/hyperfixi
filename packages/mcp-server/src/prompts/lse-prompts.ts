@@ -178,11 +178,35 @@ function buildLSESystemPrompt(domain: string, format: string): string {
 - \`[repeat source:#items loopVariant:for loopVariable:item body:[add patient:.active]]\`
 - \`[repeat condition:"x > 0" loopVariant:while body:[decrement patient:#count]]\`
 
+**Pipe operator (v1.2):**
+\`[fetch source:/api/users] |> [put destination:#list]\` (threads output of left into right)
+- In JSON: compound node with \`chainType: "pipe"\`
+
+**Match / pattern dispatch (v1.2):**
+\`[match patient:status arms:[{pattern:"active" body:[show patient:#panel]},{pattern:"idle" body:[hide patient:#panel]}] defaultArm:[log patient:"unknown"]]\`
+- Arms are ordered; first match wins; \`defaultArm\` is the catch-all
+
+**Try / catch / finally (v1.2):**
+\`[try body:[fetch source:/api] catchBranch:[show patient:#error] finallyBranch:[remove patient:.loading]]\`
+- \`catchBranch\` and \`finallyBranch\` are both optional
+
+**Async coordination (v1.2):**
+- \`[all asyncBody:[fetch source:/api/users, fetch source:/api/posts]]\` — wait for all, fail fast
+- \`[race asyncBody:[fetch source:/cache, fetch source:/api]]\` — first to resolve wins
+
+**Annotations (v1.2):**
+\`@timeout(5s) @retry(3) [fetch source:/api/users]\`
+- In JSON: \`annotations: [{name:"timeout",value:"5s"},{name:"retry",value:"3"}]\` on the node
+- Annotations are metadata; they do not change command semantics
+
 **Value types:** selector, literal (string/number/boolean/duration), reference, expression, property-path, flag.
 
 **Node kinds (JSON):** command, event-handler, compound.
 - Conditionals are \`command\` nodes with \`thenBranch\`/\`elseBranch\` arrays.
 - Loops are \`command\` nodes with \`loopVariant\`, \`loopBody\`, \`loopVariable\`?, \`indexVariable\`?.
+- Try/catch is a \`command\` node with \`body\`, \`catchBranch\`?, \`finallyBranch\`? arrays.
+- Async is a \`command\` node with \`asyncVariant: "all"|"race"\` and \`asyncBody\` array.
+- Match is a \`command\` node with \`arms\` array and optional \`defaultArm\` array.
 
 **${formatInstructions}**
 
