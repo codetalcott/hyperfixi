@@ -69,7 +69,9 @@ Add an optional `yields` annotation to command definitions that declares the nam
 ```typescript
 const fetchSchema: CommandSchema = {
   action: 'fetch',
-  roles: [/*...*/],
+  roles: [
+    /*...*/
+  ],
   yields: ['body', 'status', 'headers', 'ok'],
 };
 ```
@@ -84,6 +86,10 @@ const fetchSchema: CommandSchema = {
 ```
 
 The `=> {...}` syntax is a **destructuring bind** that extracts named outputs into local references. These references are scoped to the compound chain.
+
+### Concern: Scoping with Pipes and Nested Chains
+
+Destructuring introduces scoped bindings, which interacts non-trivially with pipes (Direction 1) and nested compound chains. Consider whether `yields` at the schema level alone (for documentation, autocomplete, and validation) is sufficient without the destructuring _syntax_ — tools could still use `result.body` with schema-validated autocomplete from `yields` metadata.
 
 **ABNF extension:**
 
@@ -170,6 +176,8 @@ ambient-roles  = "{" *WSP role-pair *( *WSP "," *WSP role-pair ) *WSP "}"
 
 Adding a 4th node kind (`scoped`) to the protocol is significant. An alternative is to keep `scoped` as a TS-layer-only kind (like `conditional` and `loop`) that gets flattened to repeated `command` nodes in the wire format, with ambient roles merged into each child.
 
+**Recommendation:** Start TS-layer-only. If `scoped` flattens at the wire level, downstream tools never see the grouping intent — but that's acceptable until multiple consumers (LSP, compilation service) demonstrate a need for the structural information. Promote to wire format only under real demand.
+
 ---
 
 ## Direction 4: Pattern Matching / `match` Expression
@@ -215,7 +223,7 @@ The `if`/`else` conditional (v1.1) handles binary branching. But real-world logi
 
 ### Design Considerations
 
-- **Pattern types**: Literal values, selector presence checks (`has:.active`), type guards (`is:number`), and range patterns (`range:1..10`)
+- **Pattern types**: v1.3 should support literal values only. Advanced patterns — selector presence checks (`has:.active`), type guards (`is:number`), and range patterns (`range:1..10`) — require expression nodes as arm patterns rather than just literals. Defer these to a later version to avoid designing the pattern node types prematurely.
 - **Fallthrough**: No implicit fallthrough (unlike C `switch`). Each arm is independent.
 - **Exhaustiveness**: Optional. The `default` arm is a catch-all. Without it, a non-matching value is a no-op.
 - Like conditionals and loops, `match` is a `command` node with extra top-level fields (`arms`, `defaultArm`) — not a new node kind
@@ -263,17 +271,17 @@ annotation-name  = 1*( ALPHA / DIGIT / "-" / "_" )
 annotation-value = string-literal / duration-literal / number-literal / 1*ident-char
 ```
 
-**Wire format:** Add an optional `annotations` field to all node types:
+**Wire format:** Add an optional `annotations` array to all node types. Use an array (not an object) because annotation order can be semantically meaningful for middleware-like composition (e.g., `@retry` before `@timeout`):
 
 ```json
 {
   "kind": "command",
   "action": "fetch",
   "roles": { ... },
-  "annotations": {
-    "timeout": "5s",
-    "retry": "3"
-  }
+  "annotations": [
+    { "name": "timeout", "value": "5s" },
+    { "name": "retry", "value": "3" }
+  ]
 }
 ```
 
@@ -332,6 +340,8 @@ This is explicitly a **macro system**, not a function system. There's no call st
 
 A macro system is the beginning of a programming language. The explicit restriction to "textual substitution, no recursion, no conditional expansion" keeps it manageable. If more power is needed, users should use the host language (JavaScript) or a domain DSL.
 
+Additionally, parameter substitution into LSE bracket syntax requires the expander to understand role-name/role-value boundaries. Edge cases like `[use template:x patient:"text with :colons"]` need the parser to distinguish template parameter names from role syntax — this is solvable but adds non-trivial parsing complexity.
+
 ---
 
 ## Direction 7: Type Constraints on Roles
@@ -351,13 +361,13 @@ const toggleSchema: CommandSchema = {
     {
       role: 'patient',
       required: true,
-      accepts: ['selector'],  // Only CSS selectors
-      selectorKinds: ['class', 'attribute'],  // Only class/attribute selectors
+      accepts: ['selector'], // Only CSS selectors
+      selectorKinds: ['class', 'attribute'], // Only class/attribute selectors
     },
     {
       role: 'destination',
       required: false,
-      accepts: ['selector', 'reference'],  // Selector or reference (me, you)
+      accepts: ['selector', 'reference'], // Selector or reference (me, you)
     },
   ],
 };
@@ -416,13 +426,13 @@ The `repeat` loop (v1.1) handles iteration, but there's no compact way to expres
 
 These are standard commands (not new syntax) with well-defined role mappings:
 
-| Command  | `source`   | `patient`       | `condition`   | `manner`          |
-| -------- | ---------- | --------------- | ------------- | ----------------- |
-| `filter` | Collection | —               | Predicate     | —                 |
-| `map`    | Collection | Transform expr  | —             | —                 |
-| `sort`   | Collection | Sort key        | —             | asc/desc          |
-| `group`  | Collection | Group key       | —             | —                 |
-| `reduce` | Collection | Accumulator     | —             | Operation (sum, etc.) |
+| Command  | `source`   | `patient`      | `condition` | `manner`              |
+| -------- | ---------- | -------------- | ----------- | --------------------- |
+| `filter` | Collection | —              | Predicate   | —                     |
+| `map`    | Collection | Transform expr | —           | —                     |
+| `sort`   | Collection | Sort key       | —           | asc/desc              |
+| `group`  | Collection | Group key      | —           | —                     |
+| `reduce` | Collection | Accumulator    | —           | Operation (sum, etc.) |
 
 These commands compose naturally with pipes:
 
@@ -433,6 +443,16 @@ These commands compose naturally with pipes:
   |> [map patient:"item.name + ': $' + item.price"]
   |> [put destination:#product-list]
 ```
+
+### Resolution: Expression Roles Use Existing Wire Types
+
+The `condition` and `patient` roles in collection operators appear as quoted strings in bracket syntax (`condition:"price > 100"`), but LSE v1.1 already has structured `expression` value types in the wire format (binary operations, member access, possessives). The resolution:
+
+1. **Wire format**: No change — `"price > 100"` becomes `{ type: "expression", operator: ">", left: { type: "reference", value: "price" }, right: { type: "literal", value: "100", dataType: "number" } }`
+2. **Bracket syntax**: Quoted strings in expression-typed roles are parsed into structured expression nodes, not stored as opaque string literals
+3. **Prerequisite**: Type constraints (Direction 7) must land first — the schema's `accepts: ['expression']` tells the bracket parser to structurally parse the quoted content rather than treating it as a string literal
+
+This avoids introducing a sub-language. The bracket syntax quotes are a serialization convenience; the wire format stays fully structured.
 
 ### Why This Matters
 
@@ -517,20 +537,75 @@ The `#!lse <version>` shebang line is a version declaration. It's a comment (sta
 
 ---
 
+## Direction 11: Async Coordination / `all` and `race`
+
+### Problem
+
+The `async` chain operator fires commands concurrently, but there's no way to wait for all of them to complete or to take the first result. Real-world patterns like "fetch user data AND fetch preferences, then merge" or "try the cache first, fall back to network" require fan-out/fan-in semantics.
+
+### Proposal: `all` and `race` Compound Operators
+
+**Wait for all:**
+
+```
+[all
+  body:[fetch source:/api/user destination:user]
+  body:[fetch source:/api/prefs destination:prefs]]
+then [merge source:user source:prefs destination:#profile]
+```
+
+**First to complete wins:**
+
+```
+[race
+  body:[fetch source:/cache/data]
+  body:[fetch source:/api/data]]
+then [put destination:#result]
+```
+
+**Wire format:** `all` and `race` are `command` nodes with a `body` array (same pattern as `repeat`/`loopBody`). Each entry in the body runs concurrently.
+
+```json
+{
+  "kind": "command",
+  "action": "all",
+  "roles": {},
+  "body": [
+    { "kind": "command", "action": "fetch", "roles": { "source": ... } },
+    { "kind": "command", "action": "fetch", "roles": { "source": ... } }
+  ]
+}
+```
+
+**Semantics:**
+
+- `all`: Runs all body commands concurrently. Resolves when all complete. Result is an array of individual results. If any command fails, the entire `all` fails (use `try`/`catch` from Direction 9 to handle partial failures).
+- `race`: Runs all body commands concurrently. Resolves with the first to complete. Remaining commands are cancelled.
+
+### Why This Matters
+
+- Parallel data fetching is the most common async pattern in web applications
+- Composes naturally with pipes (Direction 1) and error handling (Direction 9)
+- The `async` chain operator only handles fire-and-forget; `all`/`race` handle coordination
+- Critical for multi-agent and server-side scenarios
+
+---
+
 ## Evaluation Matrix
 
-| Direction                  | Complexity | v1.1 Compat | New Node Kinds | ABNF Change | Wire Change | Priority   |
-| -------------------------- | ---------- | ----------- | -------------- | ----------- | ----------- | ---------- |
-| 1. Pipe `\|>`              | Low        | Yes         | No             | Minimal     | Minimal     | **High**   |
-| 2. Destructuring `=> {}`   | Medium     | Yes         | No             | Small       | Small       | Medium     |
-| 3. `with` blocks           | Medium     | Debatable   | Maybe          | Medium      | Medium      | Medium     |
-| 4. `match` arms            | Medium     | Yes         | No             | Medium      | Medium      | **High**   |
-| 5. Annotations `@`         | Low        | Yes         | No             | Small       | Small       | **High**   |
-| 6. Templates `def`/`use`   | Medium     | Yes         | No (macro)     | Medium      | None        | Low        |
-| 7. Type constraints        | Low        | Yes         | No             | None        | Optional    | **High**   |
-| 8. Collection operators    | Low        | Yes         | No             | None        | None        | Medium     |
-| 9. `try`/`catch`/`finally` | Low        | Yes         | No             | Small       | Small       | **High**   |
-| 10. Version negotiation    | Low        | Yes         | No             | Minimal     | Minimal     | Medium     |
+| Direction                  | Complexity | v1.1 Compat | New Node Kinds | ABNF Change | Wire Change | Priority |
+| -------------------------- | ---------- | ----------- | -------------- | ----------- | ----------- | -------- |
+| 1. Pipe `\|>`              | Low        | Yes         | No             | Minimal     | Minimal     | **High** |
+| 2. Destructuring `=> {}`   | Medium     | Yes         | No             | Small       | Small       | Medium   |
+| 3. `with` blocks           | Medium     | Debatable   | Maybe          | Medium      | Medium      | Medium   |
+| 4. `match` arms            | Medium     | Yes         | No             | Medium      | Medium      | **High** |
+| 5. Annotations `@`         | Low        | Yes         | No             | Small       | Small       | **High** |
+| 6. Templates `def`/`use`   | Medium     | Yes         | No (macro)     | Medium      | None        | Low      |
+| 7. Type constraints        | Low        | Yes         | No             | None        | Optional    | **High** |
+| 8. Collection operators    | Low        | Yes         | No             | None        | None        | Medium   |
+| 9. `try`/`catch`/`finally` | Low        | Yes         | No             | Small       | Small       | **High** |
+| 10. Version negotiation    | Low        | Yes         | No             | Minimal     | Minimal     | Medium   |
+| 11. `all`/`race`           | Low        | Yes         | No             | Small       | Small       | **High** |
 
 ---
 
@@ -545,21 +620,22 @@ The `#!lse <version>` shebang line is a version declaration. It's a comment (sta
 3. **`try`/`catch`/`finally`** — follows `if`/`else` and `repeat`/`loopBody` pattern exactly
 4. **Type constraints** — schema-level only, no syntax change
 5. **Version header** — backward-compatible comment line
+6. **`all`/`race`** — follows `repeat`/`loopBody` body-array pattern, complements pipes
 
 ### v1.3: Compositional Extensions (Medium Risk)
 
 **Ship these after v1.2 proves stable:**
 
-6. **`match` with arms** — new top-level field pattern, well-bounded
-7. **Collection operators** — new commands, no syntax change
-8. **Destructuring** — new compound syntax, needs careful design
+1. **`match` with arms** — new top-level field pattern, well-bounded (literal patterns only; defer guards and complex patterns)
+2. **Collection operators** — new commands, no syntax change (requires resolving the embedded-expression question first)
+3. **Destructuring** — new compound syntax, needs careful design (consider whether schema-level `yields` alone suffices)
 
 ### v2.0: Structural Extensions (Higher Risk)
 
 **Ship these only if v1.x proves they're needed:**
 
-9. **`with` blocks** — potentially a new node kind; consider TS-layer-only first
-10. **Templates** — macro system; consider whether domain-level abstraction suffices
+1. **`with` blocks** — potentially a new node kind; consider TS-layer-only first
+2. **Templates** — macro system; consider whether domain-level abstraction suffices
 
 ---
 
@@ -567,7 +643,7 @@ The `#!lse <version>` shebang line is a version declaration. It's a comment (sta
 
 1. **Should pipe `|>` auto-bind to `patient` or `source`?** The patient role is "what to act on" — semantically closer to piped data. But source is "where data comes from" — also valid. Proposal: bind to `patient` if absent, then `source` if absent, else error.
 
-2. **Should annotations be ordered or unordered?** JSON objects are unordered. If annotation order matters (e.g., middleware-like composition), we need an array representation.
+2. **~~Should annotations be ordered or unordered?~~** Resolved: use an array wire format (see Direction 5). Annotation order is preserved for middleware-like composition.
 
 3. **Should `match` support guard clauses?** E.g., `arm:">100" guard:"currency == 'USD'"`. This adds power but significant complexity.
 
@@ -583,6 +659,6 @@ The `#!lse <version>` shebang line is a version declaration. It's a comment (sta
 
 ## Relationship to Existing Proposals
 
-- **semantic-schema-evolution.md**: Directions 1, 2, 8 complement the `agent` role and multi-target generation — pipes and collection operators make data flow between agents explicit.
+- **semantic-schema-evolution.md**: Directions 1, 2, 8, 11 complement the `agent` role and multi-target generation — pipes, collection operators, and `all`/`race` make data flow between agents explicit.
 - **complex-patterns-strategy.md**: Directions 3, 4, 6, 9 address the "Level 4-6" complexity gaps — `match`, `try`/`catch`, and templates handle multi-line bodies, error recovery, and reusable patterns.
 - **LSE-v1.1-Plan.md**: All directions follow the v1.1 design philosophy — prefer top-level fields on `command` nodes over new node kinds; keep the ABNF minimal; maintain backward compatibility.

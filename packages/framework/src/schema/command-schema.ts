@@ -91,6 +91,16 @@ export interface RoleSpec {
    * by a marked role. Default: false.
    */
   readonly greedy?: boolean;
+
+  /**
+   * Restricts which selector subtypes are valid for this role (v1.2).
+   * Only meaningful when expectedTypes includes 'selector'.
+   * If omitted, all selector kinds are accepted.
+   *
+   * Example: `selectorKinds: ['class', 'attribute']` means only `.class`
+   * and `[attr]` selectors are valid, not `#id` or `*wildcard`.
+   */
+  readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
 }
 
 /**

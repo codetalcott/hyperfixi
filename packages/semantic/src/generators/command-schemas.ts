@@ -42,6 +42,13 @@ export interface RoleSpec {
    * Maps language code to the rendering preposition.
    */
   readonly renderOverride?: Record<string, string>;
+
+  /**
+   * Restricts which selector subtypes are valid for this role (v1.2).
+   * Only meaningful when expectedTypes includes 'selector'.
+   * If omitted, all selector kinds are accepted.
+   */
+  readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
 }
 
 /**
@@ -122,6 +129,7 @@ export const toggleSchema: CommandSchema = {
       description: 'The class or attribute to toggle',
       required: true,
       expectedTypes: ['selector'],
+      selectorKinds: ['class', 'attribute'],
       svoPosition: 1,
       sovPosition: 2,
     },

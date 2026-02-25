@@ -3,6 +3,7 @@ import {
   type SemanticValue,
   type NodeKind,
   type ChainType,
+  type LSEEnvelope,
   selectorValue,
   literalValue,
   referenceValue,
@@ -104,6 +105,16 @@ export function toJSON(node: SemanticNode): Record<string, unknown> {
   if (node.loopVariable) m['loopVariable'] = node.loopVariable;
   if (node.indexVariable) m['indexVariable'] = node.indexVariable;
 
+  // Diagnostics (v1.2)
+  if (node.diagnostics && node.diagnostics.length > 0) {
+    m['diagnostics'] = node.diagnostics.map(d => ({
+      level: d.level,
+      role: d.role,
+      message: d.message,
+      code: d.code,
+    }));
+  }
+
   return m;
 }
 
@@ -182,7 +193,57 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
   if (typeof data['loopVariable'] === 'string') node.loopVariable = data['loopVariable'];
   if (typeof data['indexVariable'] === 'string') node.indexVariable = data['indexVariable'];
 
+  // Diagnostics (v1.2)
+  const diagnosticsRaw = data['diagnostics'];
+  if (Array.isArray(diagnosticsRaw) && diagnosticsRaw.length > 0) {
+    node.diagnostics = diagnosticsRaw
+      .filter((d): d is Record<string, unknown> => d != null && typeof d === 'object')
+      .map(d => ({
+        level: (d['level'] as 'error' | 'warning') ?? 'error',
+        role: (d['role'] as string) ?? '',
+        message: (d['message'] as string) ?? '',
+        code: (d['code'] as string) ?? '',
+      }));
+  }
+
   return node;
+}
+
+/**
+ * Check if data is an LSE versioned envelope (v1.2).
+ */
+export function isEnvelope(data: Record<string, unknown>): boolean {
+  return typeof data['lseVersion'] === 'string' && Array.isArray(data['nodes']);
+}
+
+/**
+ * Convert a versioned envelope to its typed form.
+ */
+export function fromEnvelopeJSON(data: Record<string, unknown>): LSEEnvelope {
+  const lseVersion = data['lseVersion'] as string;
+  const features = Array.isArray(data['features'])
+    ? (data['features'] as string[])
+    : undefined;
+  const nodesRaw = (data['nodes'] as unknown[]) ?? [];
+  const nodes: SemanticNode[] = nodesRaw
+    .filter((n): n is Record<string, unknown> => n != null && typeof n === 'object' && !Array.isArray(n))
+    .map(n => fromJSON(n));
+
+  return { lseVersion, ...(features && { features }), nodes };
+}
+
+/**
+ * Convert a typed envelope to a JSON-compatible object.
+ */
+export function toEnvelopeJSON(envelope: LSEEnvelope): Record<string, unknown> {
+  const result: Record<string, unknown> = {
+    lseVersion: envelope.lseVersion,
+    nodes: envelope.nodes.map(toJSON),
+  };
+  if (envelope.features && envelope.features.length > 0) {
+    result['features'] = envelope.features;
+  }
+  return result;
 }
 
 function deserializeNodeArray(arr: unknown): SemanticNode[] {

@@ -1,5 +1,5 @@
 ; LokaScript Explicit Syntax (LSE) - Formal Grammar
-; Version 1.1.0
+; Version 1.2.0
 ;
 ; RFC 5234 ABNF (Augmented Backus-Naur Form)
 ; https://www.rfc-editor.org/rfc/rfc5234
@@ -19,11 +19,18 @@
 ; An LSE document is a sequence of lines, one statement per line.
 ; This is the streaming format (like JSONL).
 
-document       = *( line LF ) [ line ]
+document       = [ version-header LF ] *( line LF ) [ line ]
 line           = comment / blank-line / statement-line
 comment        = ("//" / "#") *VCHAR
 blank-line     = *WSP
 statement-line = *WSP compound-stmt *WSP
+
+; --- Version Header (v1.2) ---
+; Optional first line declaring the LSE version. Starts with "#!" so v1.0/v1.1
+; parsers treat it as a comment and ignore it gracefully.
+
+version-header = "#!lse" 1*WSP version-number
+version-number = 1*DIGIT "." 1*DIGIT [ "." 1*DIGIT ]
 
 ; =============================================================================
 ; 2. Statements

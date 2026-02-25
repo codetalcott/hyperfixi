@@ -12,6 +12,20 @@ One bracket command per line, separated by `LF` (`\n`).
 [fetch source:/api/data method:GET]
 ```
 
+## Version Header (v1.2)
+
+An optional version header may appear as the first line of a streaming document:
+
+```
+#!lse 1.2
+[toggle patient:.active destination:#button]
+[add patient:.loading destination:me]
+```
+
+The `#!lse <version>` shebang declares which LSE version the document uses. Because it starts with `#`, v1.0/v1.1 parsers treat it as a comment and ignore it gracefully.
+
+Parsers that recognize the version header MAY use it for feature detection (e.g., whether diagnostics or pipe operators are supported).
+
 ## Rules
 
 1. Each non-empty, non-comment line contains exactly one statement (bracket command or compound)
@@ -20,6 +34,7 @@ One bracket command per line, separated by `LF` (`\n`).
 4. Comment lines start with `//` or `#` (after optional leading whitespace)
 5. Leading and trailing whitespace on each line is trimmed before parsing
 6. A trailing `LF` at end of file is optional
+7. An optional `#!lse <version>` header on the first line declares the LSE version (v1.2)
 
 ## Comments
 

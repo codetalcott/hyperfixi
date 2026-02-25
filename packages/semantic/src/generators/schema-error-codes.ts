@@ -58,6 +58,11 @@ export const SchemaErrorCodes = {
   FOR_LOOP_MISSING_SOURCE: 'SCHEMA_FOR_LOOP_MISSING_SOURCE',
   WHILE_LOOP_MISSING_CONDITION: 'SCHEMA_WHILE_LOOP_MISSING_CONDITION',
 
+  // Type constraint issues (v1.2)
+  VALUE_TYPE_MISMATCH: 'SCHEMA_VALUE_TYPE_MISMATCH',
+  SELECTOR_KIND_MISMATCH: 'SCHEMA_SELECTOR_KIND_MISMATCH',
+  SELECTOR_KINDS_WITHOUT_SELECTOR_TYPE: 'SCHEMA_SELECTOR_KINDS_WITHOUT_SELECTOR_TYPE',
+
   // Keyword collision
   KEYWORD_COLLISION: 'PROFILE_KEYWORD_COLLISION',
 } as const;
@@ -106,6 +111,14 @@ export const SchemaErrorMessages: Record<SchemaErrorCode, string> = {
   [SchemaErrorCodes.WHILE_LOOP_MISSING_CONDITION]:
     "While-loop should have a 'condition' role for the loop condition.",
 
+  // Type constraint (v1.2)
+  [SchemaErrorCodes.VALUE_TYPE_MISMATCH]:
+    "Role '{role}' of command '{command}' expects type [{expectedTypes}], got '{actualType}'.",
+  [SchemaErrorCodes.SELECTOR_KIND_MISMATCH]:
+    "Role '{role}' of command '{command}' expects selector kind [{selectorKinds}], got '{actualKind}'.",
+  [SchemaErrorCodes.SELECTOR_KINDS_WITHOUT_SELECTOR_TYPE]:
+    "Role '{role}' has selectorKinds but expectedTypes does not include 'selector'.",
+
   // Keyword collision
   [SchemaErrorCodes.KEYWORD_COLLISION]:
     "Keyword '{keyword}' is used by multiple commands: {commands}. Only the first-registered command will be reachable.",
@@ -134,6 +147,12 @@ export const SchemaErrorSuggestions: Partial<Record<SchemaErrorCode, string>> = 
     "Add a 'source' role for the collection to iterate over.",
   [SchemaErrorCodes.WHILE_LOOP_MISSING_CONDITION]:
     "Add a 'condition' role for the loop continuation condition.",
+  [SchemaErrorCodes.VALUE_TYPE_MISMATCH]:
+    'Ensure the value matches one of the expected types: [{expectedTypes}].',
+  [SchemaErrorCodes.SELECTOR_KIND_MISMATCH]:
+    'Use a selector of the correct kind: [{selectorKinds}].',
+  [SchemaErrorCodes.SELECTOR_KINDS_WITHOUT_SELECTOR_TYPE]:
+    "Either add 'selector' to expectedTypes or remove selectorKinds.",
   [SchemaErrorCodes.KEYWORD_COLLISION]:
     'Give each command a unique keyword. Move the shared keyword to alternatives on one command, or use a more specific translation.',
 };

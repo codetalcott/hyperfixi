@@ -130,6 +130,51 @@ A command node with `loopVariant`, `loopBody`, and optional `loopVariable`/`inde
 }
 ```
 
+### Diagnostics (v1.2)
+
+An optional `diagnostics` array on command nodes carries type constraint validation results. Diagnostics are produced when a role value doesn't match the command schema's `expectedTypes` or `selectorKinds` constraints.
+
+```json
+{
+  "kind": "command",
+  "action": "toggle",
+  "roles": {
+    "patient": { "type": "selector", "value": "#button", "selectorKind": "id" }
+  },
+  "diagnostics": [
+    {
+      "level": "error",
+      "role": "patient",
+      "message": "toggle.patient expects selector kind [class, attribute], got 'id'",
+      "code": "SCHEMA_SELECTOR_KIND_MISMATCH"
+    }
+  ]
+}
+```
+
+Diagnostics are informational — they don't prevent the node from being transmitted. Consumers MAY use diagnostics for IDE integration (red squiggles), build warnings, or LLM feedback.
+
+### Versioned Envelope (v1.2)
+
+A versioned envelope wraps multiple nodes with protocol metadata:
+
+```json
+{
+  "lseVersion": "1.2",
+  "features": ["diagnostics", "version-header"],
+  "nodes": [
+    { "kind": "command", "action": "toggle", "roles": { ... } },
+    { "kind": "command", "action": "add", "roles": { ... } }
+  ]
+}
+```
+
+The envelope is optional. Single-node documents MAY use the bare `SemanticNode` format (backward-compatible with v1.0/v1.1). The envelope is recommended when:
+
+- The document contains multiple top-level nodes
+- The producer wants to declare which LSE version and features are in use
+- Feature detection is needed by the consumer
+
 ### Node Shape
 
 ```typescript
@@ -150,6 +195,21 @@ interface SemanticNodeJSON {
   loopBody?: SemanticNodeJSON[];
   loopVariable?: string;
   indexVariable?: string;
+  // type constraint diagnostics (v1.2, command nodes only):
+  diagnostics?: DiagnosticJSON[];
+}
+
+interface DiagnosticJSON {
+  level: 'error' | 'warning';
+  role: string;
+  message: string;
+  code: string;
+}
+
+interface LSEEnvelopeJSON {
+  lseVersion: string;
+  features?: string[];
+  nodes: SemanticNodeJSON[];
 }
 ```
 

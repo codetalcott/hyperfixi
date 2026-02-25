@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest';
 
 import { parseExplicit, ParseError } from './src/parser';
 import { renderExplicit } from './src/renderer';
-import { fromJSON, toJSON } from './src/json';
+import { fromJSON, toJSON, isEnvelope, fromEnvelopeJSON, toEnvelopeJSON } from './src/json';
 import type { SemanticNode, SemanticValue } from './src/types';
 
 // ── Fixture loading ──────────────────────────────────────────────────────────
@@ -401,4 +401,100 @@ describe('loops.json', () => {
       });
     }
   }
+});
+
+// ── Type constraint conformance (v1.2) ──────────────────────────────────────
+
+describe('type-constraints.json', () => {
+  const fixtures = loadFixtures('type-constraints.json');
+  for (const fixture of fixtures) {
+    const id = fixture['id'] as string;
+
+    if (fixture['jsonInput'] && fixture['expectedRoundTrip']) {
+      const jsonInput = fixture['jsonInput'] as Record<string, unknown>;
+
+      it(`${id} (JSON round-trip)`, () => {
+        const node = fromJSON(jsonInput);
+        const json = toJSON(node);
+        const node2 = fromJSON(json);
+
+        expect(node2.kind, `${id}: kind preserved`).toBe(node.kind);
+        expect(node2.action, `${id}: action preserved`).toBe(node.action);
+
+        // Diagnostics round-trip
+        const expectedDiags = (jsonInput['diagnostics'] as unknown[]) ?? [];
+        if (expectedDiags.length > 0) {
+          expect(node.diagnostics?.length, `${id}: diagnostics parsed`).toBe(expectedDiags.length);
+          expect(node2.diagnostics?.length, `${id}: diagnostics round-trip`).toBe(expectedDiags.length);
+
+          for (let i = 0; i < expectedDiags.length; i++) {
+            const ed = expectedDiags[i] as Record<string, unknown>;
+            const ad = node2.diagnostics![i];
+            expect(ad.level, `${id}: diag[${i}].level`).toBe(ed['level']);
+            expect(ad.role, `${id}: diag[${i}].role`).toBe(ed['role']);
+            expect(ad.message, `${id}: diag[${i}].message`).toBe(ed['message']);
+            expect(ad.code, `${id}: diag[${i}].code`).toBe(ed['code']);
+          }
+        }
+
+        if (fixture['noDiagnostics']) {
+          expect(node.diagnostics, `${id}: no diagnostics`).toBeUndefined();
+        }
+      });
+    }
+  }
+});
+
+// ── Version envelope conformance (v1.2) ─────────────────────────────────────
+
+describe('version-envelope.json', () => {
+  const fixtures = loadFixtures('version-envelope.json');
+  for (const fixture of fixtures) {
+    const id = fixture['id'] as string;
+
+    if (fixture['jsonInput']) {
+      const jsonInput = fixture['jsonInput'] as Record<string, unknown>;
+
+      it(`${id} (envelope detection)`, () => {
+        expect(isEnvelope(jsonInput), `${id}: is envelope`).toBe(true);
+      });
+
+      it(`${id} (envelope parse)`, () => {
+        const envelope = fromEnvelopeJSON(jsonInput);
+
+        if (fixture['expectedVersion']) {
+          expect(envelope.lseVersion, `${id}: version`).toBe(fixture['expectedVersion']);
+        }
+
+        if (fixture['expectedNodeCount'] !== undefined) {
+          expect(envelope.nodes.length, `${id}: node count`).toBe(fixture['expectedNodeCount']);
+        }
+
+        if (fixture['expectedFeatures']) {
+          expect(envelope.features, `${id}: features`).toEqual(fixture['expectedFeatures']);
+        }
+      });
+
+      if (fixture['expectedRoundTrip']) {
+        it(`${id} (envelope round-trip)`, () => {
+          const envelope = fromEnvelopeJSON(jsonInput);
+          const json = toEnvelopeJSON(envelope);
+          const envelope2 = fromEnvelopeJSON(json);
+
+          expect(envelope2.lseVersion, `${id}: version preserved`).toBe(envelope.lseVersion);
+          expect(envelope2.nodes.length, `${id}: node count preserved`).toBe(envelope.nodes.length);
+          expect(envelope2.features, `${id}: features preserved`).toEqual(envelope.features);
+        });
+      }
+    }
+  }
+
+  it('bare node is not an envelope', () => {
+    const bareNode = {
+      kind: 'command',
+      action: 'toggle',
+      roles: { patient: { type: 'selector', value: '.active' } },
+    };
+    expect(isEnvelope(bareNode)).toBe(false);
+  });
 });

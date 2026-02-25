@@ -3,8 +3,28 @@
   "$id": "lse-wire-format-full-fidelity",
   "title": "LSE Wire Format — Full-Fidelity",
   "description": "LokaScript Explicit Syntax full-fidelity JSON interchange format. See protocol/spec/wire-format.md.",
-  "$ref": "#/$defs/SemanticNode",
+  "oneOf": [{ "$ref": "#/$defs/SemanticNode" }, { "$ref": "#/$defs/LSEEnvelope" }],
   "$defs": {
+    "LSEEnvelope": {
+      "type": "object",
+      "description": "Versioned envelope for multi-node LSE documents (v1.2)",
+      "required": ["lseVersion", "nodes"],
+      "additionalProperties": false,
+      "properties": {
+        "lseVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+        },
+        "features": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        }
+      }
+    },
     "SelectorValue": {
       "type": "object",
       "required": ["type", "value"],
@@ -78,6 +98,17 @@
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/SemanticValue" }
     },
+    "Diagnostic": {
+      "type": "object",
+      "required": ["level", "role", "message", "code"],
+      "additionalProperties": false,
+      "properties": {
+        "level": { "enum": ["error", "warning"] },
+        "role": { "type": "string" },
+        "message": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    },
     "CommandNode": {
       "type": "object",
       "required": ["kind", "action", "roles"],
@@ -100,7 +131,11 @@
           "items": { "$ref": "#/$defs/SemanticNode" }
         },
         "loopVariable": { "type": "string" },
-        "indexVariable": { "type": "string" }
+        "indexVariable": { "type": "string" },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Diagnostic" }
+        }
       }
     },
     "EventHandlerNode": {

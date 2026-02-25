@@ -34,6 +34,14 @@ export interface SemanticValue {
 /** Loop variant discriminant. */
 export type LoopVariant = 'forever' | 'times' | 'for' | 'while' | 'until';
 
+/** A type constraint diagnostic (v1.2). */
+export interface Diagnostic {
+  level: 'error' | 'warning';
+  role: string;
+  message: string;
+  code: string;
+}
+
 /** A parsed LSE node. */
 export interface SemanticNode {
   kind: NodeKind;
@@ -50,6 +58,15 @@ export interface SemanticNode {
   loopBody?: SemanticNode[];
   loopVariable?: string;
   indexVariable?: string;
+  // Type constraint diagnostics (v1.2)
+  diagnostics?: Diagnostic[];
+}
+
+/** Wire format envelope with version metadata (v1.2). */
+export interface LSEEnvelope {
+  lseVersion: string;
+  features?: string[];
+  nodes: SemanticNode[];
 }
 
 // Constructor helpers
