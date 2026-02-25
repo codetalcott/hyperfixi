@@ -114,6 +114,29 @@ pub fn validate_json(data: &Value) -> Vec<Diagnostic> {
     diagnostics
 }
 
+/// Helper: deserialize annotations array from an object map.
+fn deserialize_annotations(obj: &serde_json::Map<String, Value>) -> Vec<Annotation> {
+    if let Some(Value::Array(ann_arr)) = obj.get("annotations") {
+        ann_arr.iter().filter_map(|a| {
+            let aobj = a.as_object()?;
+            let name = aobj.get("name")?.as_str()?.to_string();
+            let value = aobj.get("value").and_then(|v| v.as_str()).map(String::from);
+            Some(Annotation { name, value })
+        }).collect()
+    } else {
+        Vec::new()
+    }
+}
+
+/// Helper: deserialize a node array from an object map by key.
+fn deserialize_node_array(obj: &serde_json::Map<String, Value>, key: &str) -> Vec<SemanticNode> {
+    if let Some(Value::Array(arr)) = obj.get(key) {
+        arr.iter().filter_map(|n| from_json(n).ok()).collect()
+    } else {
+        Vec::new()
+    }
+}
+
 /// Convert a SemanticJSON Value to a SemanticNode.
 ///
 /// Accepts both full-fidelity and LLM-simplified formats.
@@ -137,7 +160,9 @@ pub fn from_json(data: &Value) -> Result<SemanticNode, String> {
     let mut roles: HashMap<String, SemanticValue> = HashMap::new();
     for (role_name, role_value) in &raw_roles {
         if role_value.is_object() {
-            roles.insert(role_name.clone(), convert_json_value(role_value));
+            if let Some(sv) = convert_json_value(role_name, role_value) {
+                roles.insert(role_name.clone(), sv);
+            }
         }
     }
 
@@ -173,19 +198,14 @@ pub fn from_json(data: &Value) -> Result<SemanticNode, String> {
         for b in &body_data {
             body.push(from_json(b)?);
         }
+        let annotations = deserialize_annotations(obj);
         return Ok(SemanticNode {
             kind: NodeKind::EventHandler,
             action,
             roles,
             body,
-            statements: Vec::new(),
-            chain_type: None,
-            then_branch: Vec::new(),
-            else_branch: Vec::new(),
-            loop_variant: None,
-            loop_body: Vec::new(),
-            loop_variable: None,
-            index_variable: None,
+            annotations,
+            ..Default::default()
         });
     }
 
@@ -204,22 +224,19 @@ pub fn from_json(data: &Value) -> Result<SemanticNode, String> {
             .and_then(|c| c.as_str())
             .unwrap_or("then")
             .to_string();
+        let annotations = deserialize_annotations(obj);
         return Ok(SemanticNode {
             kind: NodeKind::Compound,
             action,
             roles,
-            body: Vec::new(),
             statements: stmts,
             chain_type: Some(chain_type),
-            then_branch: Vec::new(),
-            else_branch: Vec::new(),
-            loop_variant: None,
-            loop_body: Vec::new(),
-            loop_variable: None,
-            index_variable: None,
+            annotations,
+            ..Default::default()
         });
     }
 
+    // Command node — with optional v1.1 conditional/loop fields and v1.2 fields
     let mut node = SemanticNode::command(&action, roles);
 
     // Deserialize v1.1 conditional fields
@@ -250,6 +267,58 @@ pub fn from_json(data: &Value) -> Result<SemanticNode, String> {
         node.index_variable = Some(ivar.to_string());
     }
 
+    // v1.2: body for command nodes (try/all/race)
+    node.body = deserialize_node_array(obj, "body");
+
+    // v1.2: diagnostics
+    node.diagnostics = if let Some(Value::Array(diag_arr)) = obj.get("diagnostics") {
+        diag_arr.iter().filter_map(|d| {
+            let dobj = d.as_object()?;
+            Some(NodeDiagnostic {
+                level: dobj.get("level")?.as_str()?.to_string(),
+                role: dobj.get("role")?.as_str()?.to_string(),
+                message: dobj.get("message")?.as_str()?.to_string(),
+                code: dobj.get("code")?.as_str()?.to_string(),
+            })
+        }).collect()
+    } else {
+        Vec::new()
+    };
+
+    // v1.2: annotations
+    node.annotations = deserialize_annotations(obj);
+
+    // v1.2: catchBranch
+    node.catch_branch = deserialize_node_array(obj, "catchBranch");
+
+    // v1.2: finallyBranch
+    node.finally_branch = deserialize_node_array(obj, "finallyBranch");
+
+    // v1.2: asyncVariant (only "all" or "race")
+    node.async_variant = obj.get("asyncVariant")
+        .and_then(|v| v.as_str())
+        .filter(|&av| av == "all" || av == "race")
+        .map(String::from);
+
+    // v1.2: asyncBody
+    node.async_body = deserialize_node_array(obj, "asyncBody");
+
+    // v1.2: arms
+    node.arms = if let Some(Value::Array(arms_arr)) = obj.get("arms") {
+        arms_arr.iter().filter_map(|arm| {
+            let arm_obj = arm.as_object()?;
+            let pattern_val = arm_obj.get("pattern")?;
+            let pattern = convert_json_value("pattern", pattern_val)?;
+            let body = deserialize_node_array(arm_obj, "body");
+            Some(MatchArm { pattern, body })
+        }).collect()
+    } else {
+        Vec::new()
+    };
+
+    // v1.2: defaultArm
+    node.default_arm = deserialize_node_array(obj, "defaultArm");
+
     Ok(node)
 }
 
@@ -258,11 +327,55 @@ pub fn to_json(node: &SemanticNode) -> Value {
     serde_json::to_value(node).unwrap_or(Value::Null)
 }
 
-/// Convert a JSON value object to a SemanticValue.
-fn convert_json_value(data: &Value) -> SemanticValue {
+/// Check if a JSON value is an LSE versioned envelope (v1.2).
+pub fn is_envelope(data: &Value) -> bool {
     let obj = match data.as_object() {
         Some(o) => o,
-        None => return literal_value(DynValue::String(String::new()), "string"),
+        None => return false,
+    };
+    obj.get("lseVersion").and_then(|v| v.as_str()).is_some()
+        && obj.contains_key("nodes")
+}
+
+/// Convert a versioned envelope JSON value to its typed form.
+pub fn from_envelope_json(data: &Value) -> Result<LSEEnvelope, String> {
+    let obj = data.as_object().ok_or("expected object")?;
+    let lse_version = obj.get("lseVersion")
+        .and_then(|v| v.as_str())
+        .ok_or("missing lseVersion")?
+        .to_string();
+    let features = obj.get("features").and_then(|v| v.as_array()).map(|arr| {
+        arr.iter().filter_map(|f| f.as_str().map(String::from)).collect()
+    });
+    let nodes = if let Some(Value::Array(nodes_arr)) = obj.get("nodes") {
+        nodes_arr.iter().filter_map(|n| from_json(n).ok()).collect()
+    } else {
+        Vec::new()
+    };
+    Ok(LSEEnvelope { lse_version, features, nodes })
+}
+
+/// Convert a typed envelope to a JSON Value.
+pub fn to_envelope_json(envelope: &LSEEnvelope) -> Value {
+    let mut map = serde_json::Map::new();
+    map.insert("lseVersion".to_string(), Value::String(envelope.lse_version.clone()));
+    if let Some(ref features) = envelope.features {
+        map.insert("features".to_string(), Value::Array(
+            features.iter().map(|f| Value::String(f.clone())).collect()
+        ));
+    }
+    map.insert("nodes".to_string(), Value::Array(
+        envelope.nodes.iter().map(|n| to_json(n)).collect()
+    ));
+    Value::Object(map)
+}
+
+/// Convert a JSON value object to a SemanticValue.
+/// Returns None if conversion fails (e.g. non-object input).
+fn convert_json_value(_role_name: &str, data: &Value) -> Option<SemanticValue> {
+    let obj = match data.as_object() {
+        Some(o) => o,
+        None => return Some(literal_value(DynValue::String(String::new()), "string")),
     };
 
     let vtype = obj
@@ -271,7 +384,7 @@ fn convert_json_value(data: &Value) -> SemanticValue {
         .unwrap_or("literal");
     let raw_value = obj.get("value").or_else(|| obj.get("raw"));
 
-    match vtype {
+    Some(match vtype {
         "selector" => {
             let v = raw_value
                 .and_then(|v| v.as_str())
@@ -289,7 +402,11 @@ fn convert_json_value(data: &Value) -> SemanticValue {
                     literal_value(DynValue::Bool(val.as_bool().unwrap()), "boolean")
                 } else if val.is_number() {
                     let dv = DynValue::from_json_value(val);
-                    literal_value(dv, "number")
+                    let dt = obj
+                        .get("dataType")
+                        .and_then(|dt| dt.as_str())
+                        .unwrap_or("number");
+                    literal_value(dv, dt)
                 } else {
                     let data_type = obj
                         .get("dataType")
@@ -346,7 +463,7 @@ fn convert_json_value(data: &Value) -> SemanticValue {
                 .to_string();
             literal_value(DynValue::String(s), "string")
         }
-    }
+    })
 }
 
 #[cfg(test)]

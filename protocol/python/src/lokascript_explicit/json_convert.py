@@ -12,6 +12,10 @@ from .types import (
     ReferenceValue,
     ExpressionValue,
     FlagValue,
+    Annotation,
+    NodeDiagnostic,
+    MatchArm,
+    LSEEnvelope,
 )
 
 # Valid value types for JSON validation
@@ -120,19 +124,35 @@ def from_json(data: dict[str, Any]) -> SemanticNode:
     if kind == "event-handler":
         body_data = data.get("body", [])
         body = [from_json(b) for b in body_data] if body_data else []
-        return SemanticNode(kind="event-handler", action=action, roles=roles, body=body)
+        node = SemanticNode(kind="event-handler", action=action, roles=roles, body=body)
+        # v1.2: annotations
+        ann_data = data.get("annotations", [])
+        if ann_data:
+            node.annotations = [
+                Annotation(name=a.get("name", ""), value=a.get("value"))
+                for a in ann_data if isinstance(a, dict) and "name" in a
+            ]
+        return node
 
     if kind == "compound":
         stmts_data = data.get("statements", [])
         stmts = [from_json(s) for s in stmts_data]
         chain_type = data.get("chainType", "then")
-        return SemanticNode(
+        node = SemanticNode(
             kind="compound",
             action=action,
             roles=roles,
             statements=stmts,
             chainType=chain_type,
         )
+        # v1.2: annotations
+        ann_data = data.get("annotations", [])
+        if ann_data:
+            node.annotations = [
+                Annotation(name=a.get("name", ""), value=a.get("value"))
+                for a in ann_data if isinstance(a, dict) and "name" in a
+            ]
+        return node
 
     node = SemanticNode(kind="command", action=action, roles=roles)
 
@@ -157,6 +177,72 @@ def from_json(data: dict[str, Any]) -> SemanticNode:
     index_variable = data.get("indexVariable")
     if index_variable is not None:
         node.indexVariable = index_variable
+
+    # v1.2: body for command nodes
+    body_data = data.get("body", [])
+    if body_data:
+        node.body = [from_json(b) for b in body_data if isinstance(b, dict)]
+
+    # v1.2: diagnostics
+    diag_data = data.get("diagnostics", [])
+    if diag_data:
+        node.diagnostics = [
+            NodeDiagnostic(
+                level=diag.get("level", "error"),
+                role=diag.get("role", ""),
+                message=diag.get("message", ""),
+                code=diag.get("code", ""),
+            )
+            for diag in diag_data if isinstance(diag, dict)
+        ]
+
+    # v1.2: annotations
+    ann_data = data.get("annotations", [])
+    if ann_data:
+        node.annotations = [
+            Annotation(name=a.get("name", ""), value=a.get("value"))
+            for a in ann_data if isinstance(a, dict) and "name" in a
+        ]
+
+    # v1.2: catchBranch / finallyBranch
+    catch_data = data.get("catchBranch", [])
+    if catch_data:
+        node.catchBranch = [from_json(c) for c in catch_data if isinstance(c, dict)]
+    finally_data = data.get("finallyBranch", [])
+    if finally_data:
+        node.finallyBranch = [from_json(f) for f in finally_data if isinstance(f, dict)]
+
+    # v1.2: asyncVariant (only "all" or "race")
+    async_variant = data.get("asyncVariant")
+    if async_variant in ("all", "race"):
+        node.asyncVariant = async_variant
+
+    # v1.2: asyncBody
+    async_body_data = data.get("asyncBody", [])
+    if async_body_data:
+        node.asyncBody = [from_json(a) for a in async_body_data if isinstance(a, dict)]
+
+    # v1.2: arms
+    arms_data = data.get("arms", [])
+    if arms_data:
+        arms = []
+        for arm in arms_data:
+            if not isinstance(arm, dict):
+                continue
+            pattern_raw = arm.get("pattern", {})
+            if not isinstance(pattern_raw, dict):
+                continue
+            pattern = _convert_json_value("pattern", pattern_raw)
+            if pattern is None:
+                continue
+            body = [from_json(b) for b in arm.get("body", []) if isinstance(b, dict)]
+            arms.append(MatchArm(pattern=pattern, body=body))
+        node.arms = arms
+
+    # v1.2: defaultArm
+    default_arm_data = data.get("defaultArm", [])
+    if default_arm_data:
+        node.defaultArm = [from_json(d) for d in default_arm_data if isinstance(d, dict)]
 
     return node
 
@@ -201,3 +287,27 @@ def _convert_json_value(role_name: str, data: dict[str, Any]) -> SemanticValue:
 
     # Fallback
     return LiteralValue(value=str(value), dataType="string")
+
+
+def is_envelope(data: dict) -> bool:
+    """Return True if data is an LSEEnvelope (has lseVersion + nodes)."""
+    return isinstance(data.get("lseVersion"), str) and isinstance(data.get("nodes"), list)
+
+
+def from_envelope_json(data: dict) -> LSEEnvelope:
+    """Deserialize an LSEEnvelope from a JSON dict."""
+    version = data["lseVersion"]
+    features = data.get("features")
+    nodes = [from_json(n) for n in data.get("nodes", []) if isinstance(n, dict)]
+    return LSEEnvelope(lseVersion=version, nodes=nodes, features=features)
+
+
+def to_envelope_json(envelope: LSEEnvelope) -> dict:
+    """Serialize an LSEEnvelope to a JSON dict."""
+    result: dict = {
+        "lseVersion": envelope.lseVersion,
+        "nodes": [to_json(n) for n in envelope.nodes],
+    }
+    if envelope.features:
+        result["features"] = envelope.features
+    return result

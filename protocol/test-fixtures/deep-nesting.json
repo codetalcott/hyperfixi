@@ -1,0 +1,132 @@
+[
+  {
+    "id": "deep-001",
+    "description": "3-level nesting: event-handler > try command > body command",
+    "jsonInput": {
+      "kind": "event-handler",
+      "action": "on",
+      "roles": {
+        "event": { "type": "literal", "value": "click", "dataType": "string" }
+      },
+      "body": [
+        {
+          "kind": "command",
+          "action": "try",
+          "roles": {},
+          "body": [
+            {
+              "kind": "command",
+              "action": "fetch",
+              "roles": {
+                "source": { "type": "literal", "value": "/api/data", "dataType": "string" }
+              }
+            }
+          ],
+          "catchBranch": [
+            {
+              "kind": "command",
+              "action": "show",
+              "roles": { "patient": { "type": "selector", "value": "#error" } }
+            }
+          ]
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedDepth": 3
+  },
+  {
+    "id": "deep-002",
+    "description": "3-level nesting: event-handler > conditional > thenBranch command",
+    "jsonInput": {
+      "kind": "event-handler",
+      "action": "on",
+      "roles": {
+        "event": { "type": "literal", "value": "submit", "dataType": "string" }
+      },
+      "body": [
+        {
+          "kind": "command",
+          "action": "if",
+          "roles": {
+            "condition": { "type": "expression", "raw": "isValid" }
+          },
+          "thenBranch": [
+            {
+              "kind": "command",
+              "action": "add",
+              "roles": { "patient": { "type": "selector", "value": ".success" } }
+            }
+          ],
+          "elseBranch": [
+            {
+              "kind": "command",
+              "action": "add",
+              "roles": { "patient": { "type": "selector", "value": ".error" } }
+            }
+          ]
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedDepth": 3
+  },
+  {
+    "id": "deep-003",
+    "description": "3-level nesting: async all > body > try command",
+    "jsonInput": {
+      "kind": "command",
+      "action": "all",
+      "roles": {},
+      "asyncVariant": "all",
+      "asyncBody": [
+        {
+          "kind": "command",
+          "action": "try",
+          "roles": {},
+          "body": [
+            {
+              "kind": "command",
+              "action": "fetch",
+              "roles": {
+                "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+              }
+            }
+          ],
+          "catchBranch": [
+            {
+              "kind": "command",
+              "action": "log",
+              "roles": { "patient": { "type": "reference", "value": "it" } }
+            }
+          ]
+        },
+        {
+          "kind": "command",
+          "action": "try",
+          "roles": {},
+          "body": [
+            {
+              "kind": "command",
+              "action": "fetch",
+              "roles": {
+                "source": { "type": "literal", "value": "/api/posts", "dataType": "string" }
+              }
+            }
+          ],
+          "finallyBranch": [
+            {
+              "kind": "command",
+              "action": "remove",
+              "roles": { "patient": { "type": "selector", "value": ".loading" } }
+            }
+          ]
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedDepth": 3,
+    "expectedAsyncVariant": "all",
+    "expectedAsyncBodyLength": 2
+  }
+]

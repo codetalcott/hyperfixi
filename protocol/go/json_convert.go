@@ -129,12 +129,17 @@ func FromJSON(data map[string]any) (*SemanticNode, error) {
 				}
 			}
 		}
-		return &SemanticNode{
+		ehNode := &SemanticNode{
 			Kind:   KindEventHandler,
 			Action: action,
 			Roles:  roles,
 			Body:   body,
-		}, nil
+		}
+		// v1.2: annotations on event-handler
+		if anns := deserializeAnnotations(data["annotations"]); anns != nil {
+			ehNode.Annotations = anns
+		}
+		return ehNode, nil
 	}
 
 	if kind == KindCompound {
@@ -154,13 +159,18 @@ func FromJSON(data map[string]any) (*SemanticNode, error) {
 		if chainType == "" {
 			chainType = "then"
 		}
-		return &SemanticNode{
+		cmpNode := &SemanticNode{
 			Kind:       KindCompound,
 			Action:     action,
 			Roles:      roles,
 			Statements: stmts,
 			ChainType:  chainType,
-		}, nil
+		}
+		// v1.2: annotations on compound
+		if anns := deserializeAnnotations(data["annotations"]); anns != nil {
+			cmpNode.Annotations = anns
+		}
+		return cmpNode, nil
 	}
 
 	node := &SemanticNode{
@@ -215,7 +225,206 @@ func FromJSON(data map[string]any) (*SemanticNode, error) {
 		node.IndexVariable = ivar
 	}
 
+	// Deserialize v1.2 command body (used by try, all, race)
+	if bodyData, ok := data["body"].([]any); ok {
+		for _, b := range bodyData {
+			if bMap, ok := b.(map[string]any); ok {
+				bNode, err := FromJSON(bMap)
+				if err != nil {
+					return nil, err
+				}
+				node.Body = append(node.Body, *bNode)
+			}
+		}
+	}
+
+	// Deserialize v1.2 diagnostics
+	if diagsRaw, ok := data["diagnostics"].([]any); ok {
+		for _, d := range diagsRaw {
+			if dMap, ok := d.(map[string]any); ok {
+				level, _ := dMap["level"].(string)
+				role, _ := dMap["role"].(string)
+				message, _ := dMap["message"].(string)
+				code, _ := dMap["code"].(string)
+				node.Diagnostics = append(node.Diagnostics, NodeDiagnostic{
+					Level:   level,
+					Role:    role,
+					Message: message,
+					Code:    code,
+				})
+			}
+		}
+	}
+
+	// Deserialize v1.2 annotations
+	if anns := deserializeAnnotations(data["annotations"]); anns != nil {
+		node.Annotations = anns
+	}
+
+	// Deserialize v1.2 catchBranch
+	if catchData, ok := data["catchBranch"].([]any); ok {
+		for _, c := range catchData {
+			if cMap, ok := c.(map[string]any); ok {
+				cNode, err := FromJSON(cMap)
+				if err != nil {
+					return nil, err
+				}
+				node.CatchBranch = append(node.CatchBranch, *cNode)
+			}
+		}
+	}
+
+	// Deserialize v1.2 finallyBranch
+	if finallyData, ok := data["finallyBranch"].([]any); ok {
+		for _, f := range finallyData {
+			if fMap, ok := f.(map[string]any); ok {
+				fNode, err := FromJSON(fMap)
+				if err != nil {
+					return nil, err
+				}
+				node.FinallyBranch = append(node.FinallyBranch, *fNode)
+			}
+		}
+	}
+
+	// Deserialize v1.2 asyncVariant
+	if av, ok := data["asyncVariant"].(string); ok {
+		if av == "all" || av == "race" {
+			node.AsyncVariant = av
+		}
+	}
+
+	// Deserialize v1.2 asyncBody
+	if asyncData, ok := data["asyncBody"].([]any); ok {
+		for _, a := range asyncData {
+			if aMap, ok := a.(map[string]any); ok {
+				aNode, err := FromJSON(aMap)
+				if err != nil {
+					return nil, err
+				}
+				node.AsyncBody = append(node.AsyncBody, *aNode)
+			}
+		}
+	}
+
+	// Deserialize v1.2 arms
+	if armsRaw, ok := data["arms"].([]any); ok {
+		for _, ar := range armsRaw {
+			if armMap, ok := ar.(map[string]any); ok {
+				patternRaw, hasPattern := armMap["pattern"].(map[string]any)
+				if !hasPattern {
+					continue
+				}
+				pattern := convertJSONValue(patternRaw)
+				var armBody []SemanticNode
+				if armBodyData, ok := armMap["body"].([]any); ok {
+					for _, b := range armBodyData {
+						if bMap, ok := b.(map[string]any); ok {
+							bNode, err := FromJSON(bMap)
+							if err != nil {
+								return nil, err
+							}
+							armBody = append(armBody, *bNode)
+						}
+					}
+				}
+				node.Arms = append(node.Arms, MatchArm{Pattern: pattern, Body: armBody})
+			}
+		}
+	}
+
+	// Deserialize v1.2 defaultArm
+	if defaultData, ok := data["defaultArm"].([]any); ok {
+		for _, d := range defaultData {
+			if dMap, ok := d.(map[string]any); ok {
+				dNode, err := FromJSON(dMap)
+				if err != nil {
+					return nil, err
+				}
+				node.DefaultArm = append(node.DefaultArm, *dNode)
+			}
+		}
+	}
+
 	return node, nil
+}
+
+// deserializeAnnotations converts a raw JSON annotations array to []Annotation.
+// Returns nil if the input is nil, not an array, or empty.
+func deserializeAnnotations(raw any) []Annotation {
+	arr, ok := raw.([]any)
+	if !ok || len(arr) == 0 {
+		return nil
+	}
+	var result []Annotation
+	for _, item := range arr {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, ok := m["name"].(string)
+		if !ok || name == "" {
+			continue
+		}
+		ann := Annotation{Name: name}
+		if v, ok := m["value"].(string); ok {
+			ann.Value = v
+		}
+		result = append(result, ann)
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+// IsEnvelope returns true if data is an LSEEnvelope (has lseVersion + nodes).
+func IsEnvelope(data map[string]any) bool {
+	_, hasVersion := data["lseVersion"].(string)
+	_, hasNodes := data["nodes"]
+	return hasVersion && hasNodes
+}
+
+// FromEnvelopeJSON converts a versioned envelope map to an LSEEnvelope.
+func FromEnvelopeJSON(data map[string]any) (*LSEEnvelope, error) {
+	lseVersion, _ := data["lseVersion"].(string)
+	env := &LSEEnvelope{LSEVersion: lseVersion}
+	if featuresRaw, ok := data["features"].([]any); ok {
+		for _, f := range featuresRaw {
+			if s, ok := f.(string); ok {
+				env.Features = append(env.Features, s)
+			}
+		}
+	}
+	if nodesRaw, ok := data["nodes"].([]any); ok {
+		for _, n := range nodesRaw {
+			if nMap, ok := n.(map[string]any); ok {
+				node, err := FromJSON(nMap)
+				if err != nil {
+					return nil, err
+				}
+				env.Nodes = append(env.Nodes, *node)
+			}
+		}
+	}
+	return env, nil
+}
+
+// ToEnvelopeJSON converts an LSEEnvelope to a JSON-compatible map.
+func ToEnvelopeJSON(env *LSEEnvelope) map[string]any {
+	result := map[string]any{
+		"lseVersion": env.LSEVersion,
+		"nodes":      []any{},
+	}
+	if len(env.Features) > 0 {
+		result["features"] = env.Features
+	}
+	nodeMaps := make([]any, len(env.Nodes))
+	for i := range env.Nodes {
+		nodeMaps[i] = ToJSON(&env.Nodes[i])
+	}
+	result["nodes"] = nodeMaps
+	return result
 }
 
 // ToJSON converts a SemanticNode to a full-fidelity JSON-friendly map.
@@ -226,6 +435,13 @@ func ToJSON(node *SemanticNode) map[string]any {
 		"roles":  marshalRoles(node.Roles),
 	}
 	if node.Kind == KindEventHandler && len(node.Body) > 0 {
+		bodyMaps := make([]any, len(node.Body))
+		for i := range node.Body {
+			bodyMaps[i] = ToJSON(&node.Body[i])
+		}
+		m["body"] = bodyMaps
+	}
+	if node.Kind == KindCommand && len(node.Body) > 0 {
 		bodyMaps := make([]any, len(node.Body))
 		for i := range node.Body {
 			bodyMaps[i] = ToJSON(&node.Body[i])
@@ -273,6 +489,75 @@ func ToJSON(node *SemanticNode) map[string]any {
 	}
 	if node.IndexVariable != "" {
 		m["indexVariable"] = node.IndexVariable
+	}
+	// v1.2 fields
+	if len(node.Diagnostics) > 0 {
+		diags := make([]any, len(node.Diagnostics))
+		for i, d := range node.Diagnostics {
+			diags[i] = map[string]any{
+				"level":   d.Level,
+				"role":    d.Role,
+				"message": d.Message,
+				"code":    d.Code,
+			}
+		}
+		m["diagnostics"] = diags
+	}
+	if len(node.Annotations) > 0 {
+		anns := make([]any, len(node.Annotations))
+		for i, a := range node.Annotations {
+			if a.Value != "" {
+				anns[i] = map[string]any{"name": a.Name, "value": a.Value}
+			} else {
+				anns[i] = map[string]any{"name": a.Name}
+			}
+		}
+		m["annotations"] = anns
+	}
+	if len(node.CatchBranch) > 0 {
+		maps := make([]any, len(node.CatchBranch))
+		for i := range node.CatchBranch {
+			maps[i] = ToJSON(&node.CatchBranch[i])
+		}
+		m["catchBranch"] = maps
+	}
+	if len(node.FinallyBranch) > 0 {
+		maps := make([]any, len(node.FinallyBranch))
+		for i := range node.FinallyBranch {
+			maps[i] = ToJSON(&node.FinallyBranch[i])
+		}
+		m["finallyBranch"] = maps
+	}
+	if node.AsyncVariant != "" {
+		m["asyncVariant"] = node.AsyncVariant
+	}
+	if len(node.AsyncBody) > 0 {
+		maps := make([]any, len(node.AsyncBody))
+		for i := range node.AsyncBody {
+			maps[i] = ToJSON(&node.AsyncBody[i])
+		}
+		m["asyncBody"] = maps
+	}
+	if len(node.Arms) > 0 {
+		arms := make([]any, len(node.Arms))
+		for i, arm := range node.Arms {
+			bodyMaps := make([]any, len(arm.Body))
+			for j := range arm.Body {
+				bodyMaps[j] = ToJSON(&arm.Body[j])
+			}
+			arms[i] = map[string]any{
+				"pattern": marshalValue(arm.Pattern),
+				"body":    bodyMaps,
+			}
+		}
+		m["arms"] = arms
+	}
+	if len(node.DefaultArm) > 0 {
+		maps := make([]any, len(node.DefaultArm))
+		for i := range node.DefaultArm {
+			maps[i] = ToJSON(&node.DefaultArm[i])
+		}
+		m["defaultArm"] = maps
 	}
 	return m
 }

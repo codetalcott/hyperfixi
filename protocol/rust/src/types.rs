@@ -1,6 +1,7 @@
 //! Core types for LokaScript Explicit Syntax.
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
+use serde::ser::SerializeMap;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -282,6 +283,68 @@ pub fn flag_value(name: &str, enabled: bool) -> SemanticValue {
     }
 }
 
+/// A metadata annotation on a node (v1.2).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Annotation {
+    pub name: String,
+    pub value: Option<String>,
+}
+
+impl Serialize for Annotation {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("name", &self.name)?;
+        if let Some(ref v) = self.value {
+            map.serialize_entry("value", v)?;
+        }
+        map.end()
+    }
+}
+
+/// A type-constraint diagnostic on a node (v1.2).
+#[derive(Debug, Clone, PartialEq)]
+pub struct NodeDiagnostic {
+    pub level: String,
+    pub role: String,
+    pub message: String,
+    pub code: String,
+}
+
+impl Serialize for NodeDiagnostic {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(Some(4))?;
+        map.serialize_entry("level", &self.level)?;
+        map.serialize_entry("role", &self.role)?;
+        map.serialize_entry("message", &self.message)?;
+        map.serialize_entry("code", &self.code)?;
+        map.end()
+    }
+}
+
+/// A single arm in a match command (v1.2).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchArm {
+    pub pattern: SemanticValue,
+    pub body: Vec<SemanticNode>,
+}
+
+impl Serialize for MatchArm {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(Some(2))?;
+        map.serialize_entry("pattern", &self.pattern)?;
+        map.serialize_entry("body", &self.body)?;
+        map.end()
+    }
+}
+
+/// Versioned wire-format wrapper (v1.2).
+#[derive(Debug, Clone, PartialEq)]
+pub struct LSEEnvelope {
+    pub lse_version: String,
+    pub features: Option<Vec<String>>,
+    pub nodes: Vec<SemanticNode>,
+}
+
 /// A parsed LSE node.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SemanticNode {
@@ -299,15 +362,23 @@ pub struct SemanticNode {
     pub loop_body: Vec<SemanticNode>,
     pub loop_variable: Option<String>,
     pub index_variable: Option<String>,
+    // v1.2 fields
+    pub diagnostics: Vec<NodeDiagnostic>,
+    pub annotations: Vec<Annotation>,
+    pub catch_branch: Vec<SemanticNode>,
+    pub finally_branch: Vec<SemanticNode>,
+    pub async_variant: Option<String>,
+    pub async_body: Vec<SemanticNode>,
+    pub arms: Vec<MatchArm>,
+    pub default_arm: Vec<SemanticNode>,
 }
 
-impl SemanticNode {
-    /// Create a new command node.
-    pub fn command(action: &str, roles: HashMap<String, SemanticValue>) -> Self {
+impl Default for SemanticNode {
+    fn default() -> Self {
         SemanticNode {
             kind: NodeKind::Command,
-            action: action.to_string(),
-            roles,
+            action: String::new(),
+            roles: HashMap::new(),
             body: Vec::new(),
             statements: Vec::new(),
             chain_type: None,
@@ -317,6 +388,26 @@ impl SemanticNode {
             loop_body: Vec::new(),
             loop_variable: None,
             index_variable: None,
+            diagnostics: Vec::new(),
+            annotations: Vec::new(),
+            catch_branch: Vec::new(),
+            finally_branch: Vec::new(),
+            async_variant: None,
+            async_body: Vec::new(),
+            arms: Vec::new(),
+            default_arm: Vec::new(),
+        }
+    }
+}
+
+impl SemanticNode {
+    /// Create a new command node.
+    pub fn command(action: &str, roles: HashMap<String, SemanticValue>) -> Self {
+        SemanticNode {
+            kind: NodeKind::Command,
+            action: action.to_string(),
+            roles,
+            ..Default::default()
         }
     }
 
@@ -330,14 +421,7 @@ impl SemanticNode {
             action: "on".to_string(),
             roles,
             body,
-            statements: Vec::new(),
-            chain_type: None,
-            then_branch: Vec::new(),
-            else_branch: Vec::new(),
-            loop_variant: None,
-            loop_body: Vec::new(),
-            loop_variable: None,
-            index_variable: None,
+            ..Default::default()
         }
     }
 
@@ -349,16 +433,9 @@ impl SemanticNode {
         SemanticNode {
             kind: NodeKind::Compound,
             action: "compound".to_string(),
-            roles: HashMap::new(),
-            body: Vec::new(),
             statements,
             chain_type: Some(chain_type.to_string()),
-            then_branch: Vec::new(),
-            else_branch: Vec::new(),
-            loop_variant: None,
-            loop_body: Vec::new(),
-            loop_variable: None,
-            index_variable: None,
+            ..Default::default()
         }
     }
 }
@@ -403,6 +480,35 @@ impl Serialize for SemanticNode {
         }
         if let Some(ref ivar) = self.index_variable {
             map.serialize_entry("indexVariable", ivar)?;
+        }
+        // v1.2 fields
+        if !self.diagnostics.is_empty() {
+            map.serialize_entry("diagnostics", &self.diagnostics)?;
+        }
+        if !self.annotations.is_empty() {
+            map.serialize_entry("annotations", &self.annotations)?;
+        }
+        // body for command nodes (try/all/race) — event-handler body is handled above
+        if self.kind == NodeKind::Command && !self.body.is_empty() {
+            map.serialize_entry("body", &self.body)?;
+        }
+        if !self.catch_branch.is_empty() {
+            map.serialize_entry("catchBranch", &self.catch_branch)?;
+        }
+        if !self.finally_branch.is_empty() {
+            map.serialize_entry("finallyBranch", &self.finally_branch)?;
+        }
+        if let Some(ref av) = self.async_variant {
+            map.serialize_entry("asyncVariant", av)?;
+        }
+        if !self.async_body.is_empty() {
+            map.serialize_entry("asyncBody", &self.async_body)?;
+        }
+        if !self.arms.is_empty() {
+            map.serialize_entry("arms", &self.arms)?;
+        }
+        if !self.default_arm.is_empty() {
+            map.serialize_entry("defaultArm", &self.default_arm)?;
         }
         map.end()
     }

@@ -9,7 +9,8 @@ import pytest
 
 from lokascript_explicit.parser import parse_explicit, ParseError
 from lokascript_explicit.renderer import render_explicit
-from lokascript_explicit.json_convert import from_json, to_json
+from lokascript_explicit.json_convert import from_json, to_json, from_envelope_json, to_envelope_json, is_envelope
+from lokascript_explicit.types import Annotation, NodeDiagnostic, MatchArm, LSEEnvelope
 
 FIXTURES_DIR = Path(__file__).parent.parent.parent / "test-fixtures"
 
@@ -300,3 +301,248 @@ def test_loops_conformance(fixture):
     assert (
         node2.indexVariable == node.indexVariable
     ), f"[{fixture['id']}] indexVariable not preserved"
+
+
+# ---- Type constraints conformance (v1.2) ----
+
+
+def _collect_type_constraints_fixtures():
+    return [f for f in _load_fixtures("type-constraints.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_type_constraints_fixtures(), ids=lambda f: f["id"])
+def test_type_constraints_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    if fixture.get("noDiagnostics"):
+        assert not node2.diagnostics
+    else:
+        expected_diags = fixture["jsonInput"].get("diagnostics", [])
+        assert len(node2.diagnostics) == len(expected_diags)
+        for i, ed in enumerate(expected_diags):
+            assert node2.diagnostics[i].level == ed["level"]
+            assert node2.diagnostics[i].role == ed["role"]
+            assert node2.diagnostics[i].code == ed["code"]
+
+
+# ---- Annotations conformance (v1.2) ----
+
+
+def _collect_annotations_fixtures():
+    return [f for f in _load_fixtures("annotations.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_annotations_fixtures(), ids=lambda f: f["id"])
+def test_annotations_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    if fixture.get("noAnnotations"):
+        assert not node2.annotations
+        assert "annotations" not in json_out
+        return
+    if fixture.get("noAnnotationValue"):
+        assert len(node2.annotations) >= 1
+        assert node2.annotations[0].value is None
+        return
+    if "annotationOrder" in fixture:
+        actual_order = [a.name for a in node2.annotations]
+        assert actual_order == fixture["annotationOrder"]
+    assert len(node2.annotations) == len(node.annotations)
+    for i, a in enumerate(node.annotations):
+        assert node2.annotations[i].name == a.name
+        assert node2.annotations[i].value == a.value
+
+
+# ---- Try/catch conformance (v1.2) ----
+
+
+def _collect_try_catch_fixtures():
+    return [f for f in _load_fixtures("try-catch.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_try_catch_fixtures(), ids=lambda f: f["id"])
+def test_try_catch_conformance(fixture):
+    ji = fixture["jsonInput"]
+    node = from_json(ji)
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    # body
+    assert len(node2.body) == len(ji.get("body", []))
+    # catchBranch
+    if fixture.get("noCatch"):
+        assert not node2.catchBranch
+    elif "expectedCatchLength" in fixture:
+        assert len(node2.catchBranch) == fixture["expectedCatchLength"]
+    # finallyBranch
+    if fixture.get("noFinally"):
+        assert not node2.finallyBranch
+    elif "expectedFinallyLength" in fixture:
+        assert len(node2.finallyBranch) == fixture["expectedFinallyLength"]
+    # annotations
+    if "expectedAnnotationCount" in fixture:
+        assert len(node2.annotations) == fixture["expectedAnnotationCount"]
+
+
+# ---- Async coordination conformance (v1.2) ----
+
+
+def _collect_async_fixtures():
+    return [f for f in _load_fixtures("async-coordination.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_async_fixtures(), ids=lambda f: f["id"])
+def test_async_coordination_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    if "expectedAsyncVariant" in fixture:
+        assert node2.asyncVariant == fixture["expectedAsyncVariant"]
+    if "expectedAsyncBodyLength" in fixture:
+        assert len(node2.asyncBody) == fixture["expectedAsyncBodyLength"]
+    if "expectedAnnotationCount" in fixture:
+        assert len(node2.annotations) == fixture["expectedAnnotationCount"]
+
+
+# ---- Pipe conformance (v1.2) ----
+
+
+def _collect_pipe_fixtures():
+    return [f for f in _load_fixtures("pipe.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_pipe_fixtures(), ids=lambda f: f["id"])
+def test_pipe_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    if "expectedChainType" in fixture:
+        assert node2.chainType == fixture["expectedChainType"]
+    if "expectedStatementCount" in fixture:
+        assert len(node2.statements) == fixture["expectedStatementCount"]
+    if fixture.get("notPipe"):
+        assert node2.chainType != "pipe"
+    if "expectedAnnotationCount" in fixture:
+        assert len(node2.annotations) == fixture["expectedAnnotationCount"]
+
+
+# ---- Match conformance (v1.2) ----
+
+
+def _collect_match_fixtures():
+    return [f for f in _load_fixtures("match.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_match_fixtures(), ids=lambda f: f["id"])
+def test_match_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    if "expectedArmCount" in fixture:
+        assert len(node2.arms) == fixture["expectedArmCount"]
+    if fixture.get("noDefaultArm"):
+        assert not node2.defaultArm
+    if fixture.get("expectedDefaultArm"):
+        assert len(node2.defaultArm) > 0
+    if "expectedArmBodyLength" in fixture and node2.arms:
+        assert len(node2.arms[0].body) == fixture["expectedArmBodyLength"]
+    if "expectedArmPatternType" in fixture and node2.arms:
+        assert node2.arms[0].pattern.type == fixture["expectedArmPatternType"]
+    if "expectedArmPatternValue" in fixture and node2.arms:
+        assert node2.arms[0].pattern.value == fixture["expectedArmPatternValue"]
+
+
+# ---- Version envelope conformance (v1.2) ----
+
+
+def _collect_version_envelope_fixtures():
+    return [f for f in _load_fixtures("version-envelope.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_version_envelope_fixtures(), ids=lambda f: f["id"])
+def test_version_envelope_conformance(fixture):
+    ji = fixture["jsonInput"]
+    assert is_envelope(ji)
+    envelope = from_envelope_json(ji)
+    if "expectedVersion" in fixture:
+        assert envelope.lseVersion == fixture["expectedVersion"]
+    if "expectedNodeCount" in fixture:
+        assert len(envelope.nodes) == fixture["expectedNodeCount"]
+    if "expectedFeatures" in fixture:
+        assert envelope.features == fixture["expectedFeatures"]
+    # round-trip
+    json_out = to_envelope_json(envelope)
+    envelope2 = from_envelope_json(json_out)
+    assert envelope2.lseVersion == envelope.lseVersion
+    assert len(envelope2.nodes) == len(envelope.nodes)
+
+def test_bare_node_is_not_envelope():
+    bare = {"kind": "command", "action": "toggle", "roles": {}}
+    assert not is_envelope(bare)
+
+
+# ---- Expression values conformance (v1.2) ----
+
+
+def _collect_expression_fixtures():
+    return [f for f in _load_fixtures("expression-values.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_expression_fixtures(), ids=lambda f: f["id"])
+def test_expression_values_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    if "expectedExpressionRaw" in fixture:
+        expr_role = next(
+            (v for v in node2.roles.values() if v.type == "expression"), None
+        )
+        assert expr_role is not None, "no expression role found"
+        assert expr_role.raw == fixture["expectedExpressionRaw"]
+
+
+# ---- Unicode values conformance (v1.2) ----
+
+
+def _collect_unicode_fixtures():
+    return [f for f in _load_fixtures("unicode-values.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_unicode_fixtures(), ids=lambda f: f["id"])
+def test_unicode_values_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    if "expectedSelectorValue" in fixture:
+        sel_role = next((v for v in node2.roles.values() if v.type == "selector"), None)
+        assert sel_role is not None
+        assert sel_role.value == fixture["expectedSelectorValue"]
+    if "expectedLiteralValue" in fixture:
+        lit_role = next((v for v in node2.roles.values() if v.type == "literal"), None)
+        assert lit_role is not None
+        assert lit_role.value == fixture["expectedLiteralValue"]
+    if "expectedReferenceValue" in fixture:
+        ref_role = next((v for v in node2.roles.values() if v.type == "reference"), None)
+        assert ref_role is not None
+        assert ref_role.value == fixture["expectedReferenceValue"]
+
+
+# ---- Deep nesting conformance (v1.2) ----
+
+
+def _collect_deep_nesting_fixtures():
+    return [f for f in _load_fixtures("deep-nesting.json")
+            if "jsonInput" in f and f.get("expectedRoundTrip")]
+
+@pytest.mark.parametrize("fixture", _collect_deep_nesting_fixtures(), ids=lambda f: f["id"])
+def test_deep_nesting_conformance(fixture):
+    node = from_json(fixture["jsonInput"])
+    json_out = to_json(node)
+    node2 = from_json(json_out)
+    assert node2.kind == node.kind
+    assert node2.action == node.action
+    if "expectedAsyncVariant" in fixture:
+        assert node2.asyncVariant == fixture["expectedAsyncVariant"]
+    if "expectedAsyncBodyLength" in fixture:
+        assert len(node2.asyncBody) == fixture["expectedAsyncBodyLength"]

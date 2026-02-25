@@ -79,6 +79,34 @@ func (v SemanticValue) StringValue() string {
 	}
 }
 
+// Annotation is a metadata tag on a node (v1.2).
+type Annotation struct {
+	Name  string `json:"name"`
+	Value string `json:"value,omitempty"`
+}
+
+// NodeDiagnostic is a type-constraint diagnostic on a node (v1.2).
+// (Named NodeDiagnostic to avoid collision with the existing Diagnostic validator type.)
+type NodeDiagnostic struct {
+	Level   string `json:"level"`
+	Role    string `json:"role"`
+	Message string `json:"message"`
+	Code    string `json:"code"`
+}
+
+// MatchArm is a single arm in a match command (v1.2).
+type MatchArm struct {
+	Pattern SemanticValue  `json:"pattern"`
+	Body    []SemanticNode `json:"body"`
+}
+
+// LSEEnvelope is the versioned wire-format wrapper (v1.2).
+type LSEEnvelope struct {
+	LSEVersion string         `json:"lseVersion"`
+	Features   []string       `json:"features,omitempty"`
+	Nodes      []SemanticNode `json:"nodes"`
+}
+
 // SemanticNode represents a parsed LSE node.
 type SemanticNode struct {
 	Kind       NodeKind                 `json:"kind"`
@@ -95,6 +123,15 @@ type SemanticNode struct {
 	LoopBody      []SemanticNode `json:"loopBody,omitempty"`
 	LoopVariable  string         `json:"loopVariable,omitempty"`
 	IndexVariable string         `json:"indexVariable,omitempty"`
+	// v1.2 fields
+	Diagnostics   []NodeDiagnostic `json:"diagnostics,omitempty"`
+	Annotations   []Annotation     `json:"annotations,omitempty"`
+	CatchBranch   []SemanticNode   `json:"catchBranch,omitempty"`
+	FinallyBranch []SemanticNode   `json:"finallyBranch,omitempty"`
+	AsyncVariant  string           `json:"asyncVariant,omitempty"`
+	AsyncBody     []SemanticNode   `json:"asyncBody,omitempty"`
+	Arms          []MatchArm       `json:"arms,omitempty"`
+	DefaultArm    []SemanticNode   `json:"defaultArm,omitempty"`
 }
 
 // MarshalJSON implements custom JSON marshaling to match the protocol wire format.
@@ -105,6 +142,9 @@ func (n SemanticNode) MarshalJSON() ([]byte, error) {
 		"roles":  marshalRoles(n.Roles),
 	}
 	if n.Kind == KindEventHandler && len(n.Body) > 0 {
+		m["body"] = n.Body
+	}
+	if n.Kind == KindCommand && len(n.Body) > 0 {
 		m["body"] = n.Body
 	}
 	if n.Kind == KindCompound {
@@ -132,6 +172,59 @@ func (n SemanticNode) MarshalJSON() ([]byte, error) {
 	}
 	if n.IndexVariable != "" {
 		m["indexVariable"] = n.IndexVariable
+	}
+	// v1.2 fields
+	if len(n.Diagnostics) > 0 {
+		diags := make([]map[string]any, len(n.Diagnostics))
+		for i, d := range n.Diagnostics {
+			diags[i] = map[string]any{
+				"level":   d.Level,
+				"role":    d.Role,
+				"message": d.Message,
+				"code":    d.Code,
+			}
+		}
+		m["diagnostics"] = diags
+	}
+	if len(n.Annotations) > 0 {
+		anns := make([]map[string]any, len(n.Annotations))
+		for i, a := range n.Annotations {
+			if a.Value != "" {
+				anns[i] = map[string]any{"name": a.Name, "value": a.Value}
+			} else {
+				anns[i] = map[string]any{"name": a.Name}
+			}
+		}
+		m["annotations"] = anns
+	}
+	if len(n.CatchBranch) > 0 {
+		m["catchBranch"] = n.CatchBranch
+	}
+	if len(n.FinallyBranch) > 0 {
+		m["finallyBranch"] = n.FinallyBranch
+	}
+	if n.AsyncVariant != "" {
+		m["asyncVariant"] = n.AsyncVariant
+	}
+	if len(n.AsyncBody) > 0 {
+		m["asyncBody"] = n.AsyncBody
+	}
+	if len(n.Arms) > 0 {
+		arms := make([]map[string]any, len(n.Arms))
+		for i, arm := range n.Arms {
+			bodyMaps := make([]any, len(arm.Body))
+			for j := range arm.Body {
+				bodyMaps[j] = arm.Body[j]
+			}
+			arms[i] = map[string]any{
+				"pattern": marshalValue(arm.Pattern),
+				"body":    bodyMaps,
+			}
+		}
+		m["arms"] = arms
+	}
+	if len(n.DefaultArm) > 0 {
+		m["defaultArm"] = n.DefaultArm
 	}
 	return json.Marshal(m)
 }

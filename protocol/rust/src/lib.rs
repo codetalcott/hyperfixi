@@ -29,7 +29,10 @@ pub mod renderer;
 pub mod types;
 
 // Re-export public API
-pub use json_convert::{from_json, to_json, validate_json, Diagnostic};
+pub use json_convert::{
+    from_json, to_json, validate_json, Diagnostic,
+    is_envelope, from_envelope_json, to_envelope_json,
+};
 pub use parser::{is_explicit_syntax, parse_explicit, ParseError, ParseOptions};
 pub use references::{default_references, is_valid_reference};
 pub use renderer::render_explicit;
