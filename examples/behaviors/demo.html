@@ -188,6 +188,98 @@
       color: white;
       font-size: 12px;
     }
+
+    /* Clipboard */
+    .copy-area {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .copy-area code {
+      padding: 0.5rem 1rem;
+      background: var(--color-border, #e4e4e7);
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    .copy-area button.copied {
+      background: #22c55e;
+    }
+
+    /* AutoDismiss */
+    .toast {
+      padding: 1rem;
+      margin: 0.5rem 0;
+      border-radius: 4px;
+      background: #3b82f6;
+      color: white;
+    }
+
+    .toast.warning {
+      background: #f59e0b;
+      color: #18181b;
+    }
+
+    /* Tabs */
+    .tabs-demo [role="tablist"] {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--color-border, #e4e4e7);
+    }
+
+    .tabs-demo [role="tab"] {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      color: var(--color-text-muted, #a1a1aa);
+    }
+
+    .tabs-demo [role="tab"].active {
+      color: var(--color-accent, #6366f1);
+      border-bottom-color: var(--color-accent, #6366f1);
+    }
+
+    .tabs-demo [role="tab"]:focus {
+      outline: 2px solid var(--color-accent, #6366f1);
+      outline-offset: -2px;
+    }
+
+    .tabs-demo [role="tabpanel"] {
+      padding: 1.5rem;
+      display: none;
+    }
+
+    .tabs-demo [role="tabpanel"].active {
+      display: block;
+    }
+
+    /* ScrollReveal */
+    .scroll-container {
+      height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border, #e4e4e7);
+      border-radius: 4px;
+      padding: 1rem;
+    }
+
+    .reveal-item {
+      padding: 1rem;
+      margin: 1rem 0;
+      background: var(--color-border, #e4e4e7);
+      border-radius: 4px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+
+    .reveal-item.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body class="example-page">
@@ -283,9 +375,116 @@
     </div>
   </div>
 
+  <!-- Clipboard Demo -->
+  <div class="demo-section">
+    <h2>Clipboard</h2>
+    <p>Click to copy text to clipboard. Visual feedback on the button.</p>
+    <div class="copy-area">
+      <code id="code-snippet">npm install @hyperfixi/behaviors</code>
+      <button _="install Clipboard(source: '#code-snippet', feedbackDuration: 1500)">
+        Copy
+      </button>
+    </div>
+    <div class="copy-area" style="margin-top: 0.5rem;">
+      <button _="install Clipboard(text: 'Hello from LokaScript!')">
+        Copy "Hello from LokaScript!"
+      </button>
+    </div>
+  </div>
+
+  <!-- AutoDismiss Demo -->
+  <div class="demo-section">
+    <h2>AutoDismiss</h2>
+    <p>These toasts auto-dismiss after a delay. Hover to pause the countdown.</p>
+    <button onclick="addToast()">Add Toast (5s)</button>
+    <button onclick="addToast(3000, 'warning')">Add Warning Toast (3s)</button>
+    <div id="toast-container"></div>
+  </div>
+
+  <!-- Tabs Demo -->
+  <div class="demo-section">
+    <h2>Tabs</h2>
+    <p>Accessible tabs with keyboard navigation. Use arrow keys, Home, and End.</p>
+    <div class="tabs-demo" _="install Tabs">
+      <div role="tablist">
+        <button role="tab">Overview</button>
+        <button role="tab">Features</button>
+        <button role="tab">API</button>
+      </div>
+      <div role="tabpanel">
+        <h3>Overview</h3>
+        <p>LokaScript behaviors are reusable, tree-shakeable UI patterns. Install them on any element with <code>_="install BehaviorName"</code>.</p>
+      </div>
+      <div role="tabpanel">
+        <h3>Features</h3>
+        <ul>
+          <li>WAI-ARIA compliant with roving tabindex</li>
+          <li>Keyboard navigation (Arrow keys, Home, End)</li>
+          <li>Cancelable <code>tabs:change</code> event</li>
+          <li>Horizontal and vertical orientation</li>
+        </ul>
+      </div>
+      <div role="tabpanel">
+        <h3>API Reference</h3>
+        <p>Parameters: <code>orientation</code>, <code>activeTab</code>, <code>wrap</code>, <code>activeClass</code></p>
+        <p>Events: <code>tabs:change</code> (cancelable), <code>tabs:changed</code></p>
+      </div>
+    </div>
+
+    <h3>Vertical Tabs</h3>
+    <div class="tabs-demo" _="install Tabs(orientation: 'vertical')" style="display: flex;">
+      <div role="tablist" style="flex-direction: column; border-bottom: none; border-right: 2px solid var(--color-border, #e4e4e7);">
+        <button role="tab" style="border-bottom: none; border-right: 2px solid transparent; margin-bottom: 0; margin-right: -2px;">Tab A</button>
+        <button role="tab" style="border-bottom: none; border-right: 2px solid transparent; margin-bottom: 0; margin-right: -2px;">Tab B</button>
+      </div>
+      <div role="tabpanel" style="padding: 0 1.5rem;">Content for Tab A. Use Up/Down arrows to navigate.</div>
+      <div role="tabpanel" style="padding: 0 1.5rem;">Content for Tab B.</div>
+    </div>
+  </div>
+
+  <!-- ScrollReveal Demo -->
+  <div class="demo-section">
+    <h2>ScrollReveal</h2>
+    <p>Scroll down in the container to reveal items as they enter the viewport.</p>
+    <div class="scroll-container">
+      <p>Scroll down to see items appear...</p>
+      <div style="height: 100px;"></div>
+      <div class="reveal-item" _="install ScrollReveal(cls: 'revealed', threshold: 0.5)">
+        First revealed item
+      </div>
+      <div style="height: 60px;"></div>
+      <div class="reveal-item" _="install ScrollReveal(cls: 'revealed', threshold: 0.5)">
+        Second revealed item
+      </div>
+      <div style="height: 60px;"></div>
+      <div class="reveal-item" _="install ScrollReveal(cls: 'revealed', threshold: 0.5, once: false)">
+        Third item (re-hides on scroll out)
+      </div>
+      <div style="height: 100px;"></div>
+    </div>
+  </div>
+
   <!-- Load LokaScript and Behaviors -->
   <script src="../../packages/core/dist/hyperfixi.js"></script>
   <script src="../../packages/behaviors/dist/all.browser.global.js"></script>
+
+  <!-- Toast helper for AutoDismiss demo -->
+  <script>
+    let toastCount = 0;
+    function addToast(delay = 5000, cls = '') {
+      toastCount++;
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast' + (cls ? ' ' + cls : '');
+      toast.textContent = 'Toast #' + toastCount + ' — hover to pause, auto-dismisses in ' + (delay / 1000) + 's';
+      toast.setAttribute('_', 'install AutoDismiss(delay: ' + delay + ', pauseOnHover: true, effect: fade)');
+      container.appendChild(toast);
+      // Re-process the new element
+      if (window.hyperfixi?.attributeProcessor?.processElement) {
+        window.hyperfixi.attributeProcessor.processElement(toast);
+      }
+    }
+  </script>
 
   <!-- Debug logging for tests -->
   <script>
