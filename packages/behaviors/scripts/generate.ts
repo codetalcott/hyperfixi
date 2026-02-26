@@ -19,6 +19,12 @@ import { sortableSchema } from '../src/schemas/sortable.schema.js';
 import { resizableSchema } from '../src/schemas/resizable.schema.js';
 import { removableSchema } from '../src/schemas/removable.schema.js';
 import { toggleableSchema } from '../src/schemas/toggleable.schema.js';
+import { clipboardSchema } from '../src/schemas/clipboard.schema.js';
+import { autoDismissSchema } from '../src/schemas/autodismiss.schema.js';
+import { clickOutsideSchema } from '../src/schemas/clickoutside.schema.js';
+import { focusTrapSchema } from '../src/schemas/focustrap.schema.js';
+import { scrollRevealSchema } from '../src/schemas/scrollreveal.schema.js';
+import { tabsSchema } from '../src/schemas/tabs.schema.js';
 import type { BehaviorSchema, BehaviorCategory, BehaviorTier } from '../src/schemas/types.js';
 
 const schemas: BehaviorSchema[] = [
@@ -27,6 +33,12 @@ const schemas: BehaviorSchema[] = [
   resizableSchema,
   removableSchema,
   toggleableSchema,
+  clipboardSchema,
+  autoDismissSchema,
+  clickOutsideSchema,
+  focusTrapSchema,
+  scrollRevealSchema,
+  tabsSchema,
 ];
 
 const GENERATED_DIR = path.join(__dirname, '../src/generated');

@@ -38,3 +38,40 @@ export {
   registerToggleable,
   default as Toggleable,
 } from './toggleable';
+
+export {
+  clipboardSource,
+  clipboardMetadata,
+  registerClipboard,
+  default as Clipboard,
+} from './clipboard';
+
+export {
+  autoDismissSource,
+  autoDismissMetadata,
+  registerAutoDismiss,
+  default as AutoDismiss,
+} from './autodismiss';
+
+export {
+  clickOutsideSource,
+  clickOutsideMetadata,
+  registerClickOutside,
+  default as ClickOutside,
+} from './clickoutside';
+
+export {
+  focusTrapSource,
+  focusTrapMetadata,
+  registerFocusTrap,
+  default as FocusTrap,
+} from './focustrap';
+
+export {
+  scrollRevealSource,
+  scrollRevealMetadata,
+  registerScrollReveal,
+  default as ScrollReveal,
+} from './scrollreveal';
+
+export { tabsSource, tabsMetadata, registerTabs, default as Tabs } from './tabs';

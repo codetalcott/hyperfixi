@@ -175,17 +175,38 @@ describe('registry', () => {
   });
 
   describe('registerWithRuntime', () => {
-    it('should load and call module.register', async () => {
+    it('should load and call module.register (imperative behavior)', async () => {
       const mockInstance = {
         compileSync: vi.fn().mockReturnValue({ ok: true, ast: {} }),
         execute: vi.fn().mockResolvedValue(undefined),
         createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
       };
 
-      // Load first so module is available
       await loadBehavior('Draggable');
-
       await registerWithRuntime('Draggable', mockInstance);
+
+      // Imperative behaviors use execute with synthetic node, not compileSync
+      expect(mockInstance.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'behavior',
+          name: 'Draggable',
+          imperativeInstaller: expect.any(Function),
+        }),
+        expect.objectContaining({ locals: expect.any(Map), globals: expect.any(Map) })
+      );
+    });
+
+    it('should load and call module.register (compiled behavior)', async () => {
+      const mockInstance = {
+        compileSync: vi.fn().mockReturnValue({ ok: true, ast: {} }),
+        execute: vi.fn().mockResolvedValue(undefined),
+        createContext: vi.fn().mockReturnValue({ locals: new Map(), globals: new Map() }),
+      };
+
+      await loadBehavior('Removable');
+      await registerWithRuntime('Removable', mockInstance);
+
+      // Source-compiled behaviors use compileSync
       expect(mockInstance.compileSync).toHaveBeenCalled();
     });
   });
@@ -200,8 +221,8 @@ describe('registry', () => {
 
       await loadAll();
       await registerAllWithRuntime(mockInstance);
-      // Each behavior calls compileSync once
-      expect(mockInstance.compileSync.mock.calls.length).toBeGreaterThanOrEqual(5);
+      // execute called for each behavior (imperative + compiled)
+      expect(mockInstance.execute.mock.calls.length).toBeGreaterThanOrEqual(10);
     });
   });
 });

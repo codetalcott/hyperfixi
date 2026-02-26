@@ -22,6 +22,12 @@ export { sortableSchema } from './sortable.schema';
 export { resizableSchema } from './resizable.schema';
 export { removableSchema } from './removable.schema';
 export { toggleableSchema } from './toggleable.schema';
+export { clipboardSchema } from './clipboard.schema';
+export { autoDismissSchema } from './autodismiss.schema';
+export { clickOutsideSchema } from './clickoutside.schema';
+export { focusTrapSchema } from './focustrap.schema';
+export { scrollRevealSchema } from './scrollreveal.schema';
+export { tabsSchema } from './tabs.schema';
 
 // All schemas as a collection
 import { draggableSchema } from './draggable.schema';
@@ -29,6 +35,12 @@ import { sortableSchema } from './sortable.schema';
 import { resizableSchema } from './resizable.schema';
 import { removableSchema } from './removable.schema';
 import { toggleableSchema } from './toggleable.schema';
+import { clipboardSchema } from './clipboard.schema';
+import { autoDismissSchema } from './autodismiss.schema';
+import { clickOutsideSchema } from './clickoutside.schema';
+import { focusTrapSchema } from './focustrap.schema';
+import { scrollRevealSchema } from './scrollreveal.schema';
+import { tabsSchema } from './tabs.schema';
 import type { BehaviorSchema } from './types';
 
 /**
@@ -40,6 +52,12 @@ export const ALL_SCHEMAS: Record<string, BehaviorSchema> = {
   Resizable: resizableSchema,
   Removable: removableSchema,
   Toggleable: toggleableSchema,
+  Clipboard: clipboardSchema,
+  AutoDismiss: autoDismissSchema,
+  ClickOutside: clickOutsideSchema,
+  FocusTrap: focusTrapSchema,
+  ScrollReveal: scrollRevealSchema,
+  Tabs: tabsSchema,
 };
 
 /**

@@ -71,6 +71,43 @@ export {
   default as Resizable,
 } from './behaviors/resizable';
 
+export {
+  clipboardSource,
+  clipboardMetadata,
+  registerClipboard,
+  default as Clipboard,
+} from './behaviors/clipboard';
+
+export {
+  autoDismissSource,
+  autoDismissMetadata,
+  registerAutoDismiss,
+  default as AutoDismiss,
+} from './behaviors/autodismiss';
+
+export {
+  clickOutsideSource,
+  clickOutsideMetadata,
+  registerClickOutside,
+  default as ClickOutside,
+} from './behaviors/clickoutside';
+
+export {
+  focusTrapSource,
+  focusTrapMetadata,
+  registerFocusTrap,
+  default as FocusTrap,
+} from './behaviors/focustrap';
+
+export {
+  scrollRevealSource,
+  scrollRevealMetadata,
+  registerScrollReveal,
+  default as ScrollReveal,
+} from './behaviors/scrollreveal';
+
+export { tabsSource, tabsMetadata, registerTabs, default as Tabs } from './behaviors/tabs';
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -157,6 +194,12 @@ import { registerRemovable } from './behaviors/removable';
 import { registerToggleable } from './behaviors/toggleable';
 import { registerSortable } from './behaviors/sortable';
 import { registerResizable } from './behaviors/resizable';
+import { registerClipboard } from './behaviors/clipboard';
+import { registerAutoDismiss } from './behaviors/autodismiss';
+import { registerClickOutside } from './behaviors/clickoutside';
+import { registerFocusTrap } from './behaviors/focustrap';
+import { registerScrollReveal } from './behaviors/scrollreveal';
+import { registerTabs } from './behaviors/tabs';
 import type { LokaScriptInstance } from './schemas/types';
 import { resolveRuntime } from './schemas/types';
 import type { LokaScriptWindow } from './schemas/types';
@@ -180,6 +223,12 @@ export async function registerAll(hyperfixi?: LokaScriptInstance): Promise<void>
     registerToggleable(hyperfixi),
     registerSortable(hyperfixi),
     registerResizable(hyperfixi),
+    registerClipboard(hyperfixi),
+    registerAutoDismiss(hyperfixi),
+    registerClickOutside(hyperfixi),
+    registerFocusTrap(hyperfixi),
+    registerScrollReveal(hyperfixi),
+    registerTabs(hyperfixi),
   ]);
 }
 
