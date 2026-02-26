@@ -104,6 +104,15 @@ Every domain generates 4 tools following the pattern `{operation}_{domain}`:
 | `analyze_content`   | Analyze via sampling                           |
 | `translate_content` | Translate via sampling                         |
 
+### LSE Pipeline (LLM Round-Trip)
+
+| Tool                   | When to Use                                                            |
+| ---------------------- | ---------------------------------------------------------------------- |
+| `lse_from_hyperscript` | Parse hyperscript (any of 24 languages) to LSE bracket + protocol JSON |
+| `lse_to_hyperscript`   | Validate/compile LSE from an LLM response back to JavaScript           |
+
+Typical round-trip: `lse_from_hyperscript` → LLM modifies LSE → `lse_to_hyperscript` → get compiled JS.
+
 ### LSE Training & Feedback
 
 | Tool                        | When to Use                                       |

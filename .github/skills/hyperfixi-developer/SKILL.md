@@ -116,11 +116,20 @@ If validation fails, use `get_diagnostics` for detailed error locations.
 If code doesn't work:
 
 1. Use `validate_hyperscript` to check syntax
-2. Add `log` command: `on click log me then toggle .active`
-3. Check browser console for errors
-4. Verify selectors exist in DOM
+2. Use `debug_explain_handler` to get a step-by-step breakdown
+3. Add `log` command: `on click log me then toggle .active`
+4. Check browser console for errors
+5. Verify selectors exist in DOM
+
+For deeper debugging with the debug overlay:
+
+- `debug_analyze_snapshot` -- understand current execution state at a breakpoint
+- `debug_suggest_fix` -- get fix suggestions from a failure snapshot
+- `debug_trace_variable` -- trace how a variable changed over an execution history
 
 ## MCP Tools
+
+### Writing & Validating Code
 
 | Tool                   | When to Use                                   |
 | ---------------------- | --------------------------------------------- |
@@ -129,7 +138,50 @@ If code doesn't work:
 | `search_patterns`      | Search pattern database by keyword/category   |
 | `validate_hyperscript` | **Always use before returning code**          |
 | `get_diagnostics`      | Detailed errors with line/column positions    |
-| `explain_code`         | Explain existing code to user                 |
+| `get_code_fixes`       | Auto-fix suggestions for specific error codes |
+
+### Understanding Code
+
+| Tool                 | When to Use                                      |
+| -------------------- | ------------------------------------------------ |
+| `explain_code`       | Explain existing code to user                    |
+| `recognize_intent`   | Identify what a snippet is trying to do          |
+| `analyze_complexity` | Assess complexity of a handler                   |
+| `analyze_metrics`    | Get quantitative metrics (commands, depth, etc.) |
+
+### Language Documentation
+
+| Tool                       | When to Use                                  |
+| -------------------------- | -------------------------------------------- |
+| `get_command_docs`         | Get documentation for a specific command     |
+| `get_expression_docs`      | Get documentation for expression types       |
+| `search_language_elements` | Search commands/expressions by keyword       |
+| `suggest_best_practices`   | Get best practices for a pattern or use case |
+
+### LSP Tools
+
+| Tool                   | When to Use                                       |
+| ---------------------- | ------------------------------------------------- |
+| `get_diagnostics`      | Detailed errors with line/column positions        |
+| `get_completions`      | Get autocomplete suggestions at a cursor position |
+| `get_hover_info`       | Get hover documentation for a token               |
+| `get_document_symbols` | List all symbols/handlers in a document           |
+
+### Debug Tools
+
+| Tool                     | When to Use                                      |
+| ------------------------ | ------------------------------------------------ |
+| `debug_analyze_snapshot` | Understand execution state at a debug breakpoint |
+| `debug_explain_handler`  | Step-by-step breakdown of an event handler       |
+| `debug_suggest_fix`      | Get fix suggestions from a failure snapshot      |
+| `debug_trace_variable`   | Trace variable changes over an execution history |
+
+### Project Inventory
+
+| Tool              | When to Use                                                |
+| ----------------- | ---------------------------------------------------------- |
+| `scan_inventory`  | Scan project templates for all hyperscript/htmx/fixi usage |
+| `query_inventory` | Filter/search within scanned inventory results             |
 
 ## References
 

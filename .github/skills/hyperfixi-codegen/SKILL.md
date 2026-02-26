@@ -93,12 +93,23 @@ The language-agnostic IR format `[command role:value ...]`:
 
 ## MCP Tools
 
-| Tool                   | Description                                    |
-| ---------------------- | ---------------------------------------------- |
-| `compile_hyperscript`  | Compile to optimized JavaScript                |
-| `validate_and_compile` | Parse to semantic IR without generating JS     |
-| `generate_component`   | Generate React/Vue/Svelte component            |
-| `generate_tests`       | Generate Playwright behavior tests             |
-| `diff_behaviors`       | Compare two inputs for semantic equivalence    |
-| `validate_explicit`    | Validate bracket syntax (fast, no compilation) |
-| `convert_format`       | Convert between bracket syntax and LLM JSON    |
+### Compilation & Generation
+
+| Tool                   | Description                                      |
+| ---------------------- | ------------------------------------------------ |
+| `compile_hyperscript`  | Compile to optimized JavaScript                  |
+| `validate_and_compile` | Parse to semantic IR without generating JS       |
+| `generate_component`   | Generate React/Vue/Svelte component              |
+| `generate_tests`       | Generate Playwright behavior tests               |
+| `diff_behaviors`       | Compare two inputs for semantic equivalence      |
+| `translate_code`       | Translate code between languages (high fidelity) |
+
+### IR Format Conversion
+
+| Tool                | Description                                               |
+| ------------------- | --------------------------------------------------------- |
+| `convert_format`    | Convert between bracket syntax, protocol JSON, and AST    |
+| `validate_explicit` | Validate bracket syntax (fast, no compilation)            |
+| `validate_protocol` | Validate protocol JSON node (v1.1/v1.2 structural checks) |
+| `to_envelope`       | Wrap protocol JSON nodes into LSE v1.2 envelope           |
+| `from_envelope`     | Unwrap LSE v1.2 envelope into constituent nodes           |
