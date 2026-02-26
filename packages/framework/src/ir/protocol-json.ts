@@ -1,8 +1,12 @@
 /**
- * Protocol Full-Fidelity JSON Serialization
+ * Protocol JSON Serialization
  *
  * Converts between TypeScript SemanticNode (internal representation) and
  * the protocol wire format defined in protocol/spec/wire-format.md.
+ *
+ * `kind` is optional and defaults to `"command"` when absent.
+ * `trigger` is accepted as convenience sugar for wrapping a command in an
+ * event handler (e.g., `{ action: "toggle", trigger: { event: "click" } }`).
  *
  * The TypeScript layer is a superset of the protocol spec:
  * - TS has 5 node kinds; protocol has 3 (command, event-handler, compound)
@@ -254,13 +258,32 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
     code: d.code,
   }));
 
-  if (json.kind === 'event-handler') {
+  // trigger sugar: wrap command in event handler (check before kind dispatch)
+  if (json.trigger) {
+    const eventName = json.trigger.event;
+    roles.set('event' as SemanticRole, createLiteral(eventName, 'string'));
+    const bodyRoles = new Map(roles);
+    bodyRoles.delete('event' as SemanticRole);
+    const bodyNode = createCommandNode(json.action, bodyRoles);
+    const node = createEventHandlerNode(
+      'on',
+      roles,
+      [bodyNode],
+      { sourceLanguage: 'json' },
+      (json.trigger.modifiers as Record<string, unknown> | undefined) ?? {}
+    );
+    return applyV12Metadata(node, annotations, diagnostics);
+  }
+
+  const kind = json.kind ?? 'command';
+
+  if (kind === 'event-handler') {
     const body = (json.body ?? []).map(fromProtocolJSON);
     const node = createEventHandlerNode(json.action, roles, body);
     return applyV12Metadata(node, annotations, diagnostics);
   }
 
-  if (json.kind === 'compound') {
+  if (kind === 'compound') {
     const statements = (json.statements ?? []).map(fromProtocolJSON);
     const node = createCompoundNode(
       statements,
@@ -319,7 +342,7 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
   }
 
   // v1.2: command with body only (try with no catch/finally)
-  if (json.body && json.body.length > 0 && json.kind === 'command') {
+  if (json.body && json.body.length > 0 && kind === 'command') {
     const body = json.body.map(fromProtocolJSON);
     const node = createTryNode(body);
     return applyV12Metadata(node, annotations, diagnostics);
@@ -369,7 +392,10 @@ function valueFromProtocol(value: ProtocolValueJSON): SemanticValue {
       return createExpression(value.raw ?? String(value.value ?? ''));
 
     case 'flag':
-      return createFlag(value.name ?? '', value.enabled ?? true);
+      return createFlag(
+        value.name ?? String(value.value ?? ''),
+        value.enabled ?? (typeof value.value === 'boolean' ? value.value : true)
+      );
 
     case 'property-path':
       // Protocol property-path has no structured form; restore as expression
@@ -437,7 +463,9 @@ const VALID_ASYNC_VARIANTS = new Set(['all', 'race']);
 const VALID_DIAGNOSTIC_LEVELS = new Set(['error', 'warning']);
 
 /**
- * Validate that an unknown value conforms to the protocol full-fidelity JSON format.
+ * Validate that an unknown value conforms to the protocol JSON format.
+ * `kind` is optional (defaults to `"command"`). `trigger` is accepted as
+ * convenience sugar for wrapping a command in an event handler.
  * Returns an array of diagnostics (empty array = valid).
  */
 export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
@@ -449,14 +477,9 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
 
   const node = json as Record<string, unknown>;
 
-  // kind
-  if (!('kind' in node)) {
-    diagnostics.push({
-      severity: 'error',
-      code: 'MISSING_KIND',
-      message: 'Missing required field: kind',
-    });
-  } else if (!VALID_KINDS.has(String(node.kind))) {
+  // kind (optional, defaults to "command")
+  const kind = 'kind' in node ? String(node.kind) : 'command';
+  if ('kind' in node && !VALID_KINDS.has(kind)) {
     diagnostics.push({
       severity: 'error',
       code: 'INVALID_KIND',
@@ -480,7 +503,7 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
   }
 
   // roles (optional on compound nodes)
-  if (!('roles' in node) && node.kind !== 'compound') {
+  if (!('roles' in node) && kind !== 'compound') {
     diagnostics.push({
       severity: 'error',
       code: 'MISSING_ROLES',
@@ -513,34 +536,57 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
           message: `Role "${role}" has invalid type "${v.type}"`,
         });
       }
+      // Flags: accept { name, enabled } or { value } (simplified form)
       if (v.type === 'flag') {
-        if (typeof v.name !== 'string') {
+        const hasName = typeof v.name === 'string';
+        const hasEnabled = typeof v.enabled === 'boolean';
+        const hasValue = 'value' in v;
+        if (!hasName && !hasValue) {
           diagnostics.push({
             severity: 'error',
             code: 'MISSING_FLAG_NAME',
-            message: `Flag role "${role}" missing required field: name`,
+            message: `Flag role "${role}" missing required field: name (or value)`,
           });
         }
-        if (typeof v.enabled !== 'boolean') {
+        if (!hasEnabled && !hasValue) {
           diagnostics.push({
             severity: 'error',
             code: 'MISSING_FLAG_ENABLED',
-            message: `Flag role "${role}" missing required field: enabled`,
+            message: `Flag role "${role}" missing required field: enabled (or value)`,
           });
         }
       }
-      if (v.type === 'expression' && typeof v.raw !== 'string') {
+      // Expressions: accept { raw } or { value } (simplified form)
+      if (v.type === 'expression' && typeof v.raw !== 'string' && !('value' in v)) {
         diagnostics.push({
           severity: 'error',
           code: 'MISSING_EXPRESSION_RAW',
-          message: `Expression role "${role}" missing required field: raw`,
+          message: `Expression role "${role}" missing required field: raw (or value)`,
         });
       }
     }
   }
 
-  // event-handler requires body array
-  if (node.kind === 'event-handler') {
+  // trigger validation (convenience sugar for event handlers)
+  if ('trigger' in node && node.trigger) {
+    const trigger = node.trigger as Record<string, unknown>;
+    if (typeof trigger !== 'object' || trigger === null) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'INVALID_TRIGGER',
+        message: 'trigger must be an object',
+      });
+    } else if (!trigger.event || typeof trigger.event !== 'string') {
+      diagnostics.push({
+        severity: 'error',
+        code: 'INVALID_TRIGGER',
+        message: 'trigger.event is required and must be a non-empty string',
+      });
+    }
+  }
+
+  // event-handler requires body array (unless using trigger sugar)
+  if (kind === 'event-handler' && !('trigger' in node)) {
     if (!('body' in node) || !Array.isArray(node.body)) {
       diagnostics.push({
         severity: 'error',
@@ -551,7 +597,7 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
   }
 
   // compound requires statements array
-  if (node.kind === 'compound') {
+  if (kind === 'compound') {
     if (!('statements' in node) || !Array.isArray(node.statements)) {
       diagnostics.push({
         severity: 'error',

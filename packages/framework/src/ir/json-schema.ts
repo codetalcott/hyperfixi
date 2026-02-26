@@ -1,8 +1,17 @@
 /**
- * LLM JSON Schema Conversion
+ * LLM JSON Schema Conversion (DEPRECATED)
  *
- * Converts between the LLM JSON format (SemanticJSON) and SemanticNode.
- * Provides validation for LLM-generated input and bidirectional conversion.
+ * These functions are superseded by the unified protocol JSON functions in
+ * protocol-json.ts. `fromProtocolJSON()` now accepts optional `kind` (defaults
+ * to "command") and `trigger` sugar, making these wrappers unnecessary.
+ *
+ * Use instead:
+ * - `validateProtocolJSON()` instead of `validateSemanticJSON()`
+ * - `fromProtocolJSON()` instead of `jsonToSemanticNode()`
+ * - `toProtocolJSON()` instead of `semanticNodeToJSON()`
+ *
+ * These functions are kept for backward compatibility and will be removed
+ * in a future major version.
  */
 
 import type {
@@ -39,6 +48,7 @@ const VALID_VALUE_TYPES = new Set([
 /**
  * Validate LLM JSON input structure.
  * Returns diagnostics (empty array = valid).
+ * @deprecated Use `validateProtocolJSON()` from `protocol-json.ts` instead.
  */
 export function validateSemanticJSON(input: SemanticJSON): IRDiagnostic[] {
   const diagnostics: IRDiagnostic[] = [];
@@ -111,6 +121,7 @@ export function validateSemanticJSON(input: SemanticJSON): IRDiagnostic[] {
  *
  * Returns a properly typed SemanticNode using the framework's factory functions.
  * If `trigger` is present, wraps the command in an event handler node.
+ * @deprecated Use `fromProtocolJSON()` from `protocol-json.ts` instead.
  */
 export function jsonToSemanticNode(input: SemanticJSON): SemanticNode {
   const roles = new Map<SemanticRole, SemanticValue>();
@@ -154,6 +165,7 @@ export function jsonToSemanticNode(input: SemanticJSON): SemanticNode {
  *
  * This is the inverse of jsonToSemanticNode(). For event handlers,
  * the event is extracted into the `trigger` field.
+ * @deprecated Use `toProtocolJSON()` from `protocol-json.ts` instead.
  */
 export function semanticNodeToJSON(node: SemanticNode): SemanticJSON {
   if (node.kind === 'compound') {

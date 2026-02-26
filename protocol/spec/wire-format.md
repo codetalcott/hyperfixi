@@ -359,14 +359,16 @@ The envelope is optional. Single-node documents MAY use the bare `SemanticNode` 
 
 ```typescript
 interface SemanticNodeJSON {
-  kind: 'command' | 'event-handler' | 'compound';
+  kind?: 'command' | 'event-handler' | 'compound'; // defaults to "command"
   action: string;
   roles: Record<string, SemanticValueJSON>;
+  // convenience sugar: wraps command in event handler
+  trigger?: { event: string; modifiers?: Record<string, unknown> };
   // event-handler only:
   body?: SemanticNodeJSON[];
   // compound only:
   statements?: SemanticNodeJSON[];
-  chainType?: 'then' | 'and' | 'async' | 'sequential';
+  chainType?: 'then' | 'and' | 'async' | 'sequential' | 'pipe';
   // conditional (v1.1, command nodes only):
   thenBranch?: SemanticNodeJSON[];
   elseBranch?: SemanticNodeJSON[];
@@ -414,11 +416,12 @@ interface LSEEnvelopeJSON {
 }
 ```
 
-## LLM-Simplified Format
+## Optional Fields and Convenience Sugar
 
-Compact format optimized for LLM generation. Omits `kind` and uses a flat `trigger` field for event handlers.
+### Optional `kind`
 
-### Command
+The `kind` field defaults to `"command"` when absent. This allows compact single-command
+representations without boilerplate:
 
 ```json
 {
@@ -429,7 +432,16 @@ Compact format optimized for LLM generation. Omits `kind` and uses a flat `trigg
 }
 ```
 
-### Event Handler
+This is equivalent to `{ "kind": "command", "action": "toggle", ... }`.
+
+Event handler (`kind: "event-handler"`) and compound (`kind: "compound"`) nodes still
+require explicit `kind` since they have distinct structural requirements (`body` and
+`statements` arrays, respectively).
+
+### `trigger` Sugar
+
+The `trigger` field is convenience sugar that wraps a command in an event handler.
+When `trigger` is present, the node is treated as an event handler regardless of `kind`:
 
 ```json
 {
@@ -444,26 +456,37 @@ Compact format optimized for LLM generation. Omits `kind` and uses a flat `trigg
 }
 ```
 
-### Differences from Full-Fidelity
+This is equivalent to:
 
-| Aspect            | Full-Fidelity                                      | LLM-Simplified                             |
-| ----------------- | -------------------------------------------------- | ------------------------------------------ |
-| `kind` field      | Required                                           | Absent                                     |
-| Event handlers    | Separate `event-handler` kind with `body`          | `trigger` field wraps a command            |
-| Compound          | `statements` array                                 | Not supported (single commands only)       |
-| Expression values | `{ "type": "expression", "raw": "..." }`           | `{ "type": "expression", "value": "..." }` |
-| Flag values       | `{ "type": "flag", "name": "x", "enabled": true }` | `{ "type": "flag", "value": true }`        |
+```json
+{
+  "kind": "event-handler",
+  "action": "on",
+  "roles": { "event": { "type": "literal", "value": "click" } },
+  "body": [
+    {
+      "kind": "command",
+      "action": "toggle",
+      "roles": { "patient": { "type": "selector", "value": ".active" } }
+    }
+  ]
+}
+```
 
-### When to Use Which
+### Value Shorthand Forms
 
-- **Full-fidelity**: Tool-to-tool interchange, round-trip testing, storage
-- **LLM-simplified**: LLM code generation, API responses, lightweight clients
+Expression and flag values accept shorthand forms for convenience:
 
-Both formats MUST be accepted by conformant parsers. Conformant renderers MUST produce the full-fidelity format by default.
+| Value type | Full form                                          | Shorthand form                               |
+| ---------- | -------------------------------------------------- | -------------------------------------------- |
+| Expression | `{ "type": "expression", "raw": "x + 1" }`         | `{ "type": "expression", "value": "x + 1" }` |
+| Flag       | `{ "type": "flag", "name": "x", "enabled": true }` | `{ "type": "flag", "value": true }`          |
+
+Conformant parsers MUST accept both forms. Conformant renderers SHOULD produce the full form by default.
 
 ## JSON Schema
 
-A machine-checkable JSON Schema (Draft 7) for the full-fidelity format is available at:
+A machine-checkable JSON Schema (Draft 7) for the protocol JSON format is available at:
 
 ```text
 protocol/spec/lse-wire-format.schema.json
@@ -471,8 +494,9 @@ protocol/spec/lse-wire-format.schema.json
 
 The schema enforces:
 
-- Exactly 3 node kinds (`command`, `event-handler`, `compound`)
-- All 6 value types with required fields (`name`+`enabled` for flags, `raw` for expressions)
+- 3 node kinds (`command`, `event-handler`, `compound`) — `kind` optional on commands (defaults to `"command"`)
+- All 6 value types with full or shorthand forms (expressions accept `raw` or `value`; flags accept `name`+`enabled` or `value`)
+- `trigger` convenience sugar on command nodes
 - `additionalProperties: false` on value types
 - Optional v1.1 fields on command nodes: `thenBranch`, `elseBranch`, `loopVariant`, `loopBody`, `loopVariable`, `indexVariable`, `selectorKind`
 

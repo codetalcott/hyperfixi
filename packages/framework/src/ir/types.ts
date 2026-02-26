@@ -112,13 +112,17 @@ export interface ProtocolValueJSON {
 }
 
 /**
- * Full-fidelity protocol JSON node — matches protocol/spec/wire-format.md.
+ * Protocol JSON node — matches protocol/spec/wire-format.md.
  * Produced by toProtocolJSON() and consumed by fromProtocolJSON().
+ *
+ * `kind` defaults to `"command"` when omitted.
+ * `trigger` is convenience sugar that wraps a command in an event handler.
  */
 export interface ProtocolNodeJSON {
-  kind: ProtocolNodeKind;
+  kind?: ProtocolNodeKind; // defaults to "command" when absent
   action: string;
   roles: Record<string, ProtocolValueJSON>;
+  trigger?: { event: string; modifiers?: Record<string, unknown> }; // convenience sugar
   body?: ProtocolNodeJSON[]; // event-handler body OR try body (v1.2)
   statements?: ProtocolNodeJSON[]; // compound only
   chainType?: ProtocolChainType; // compound only

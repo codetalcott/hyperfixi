@@ -7,7 +7,7 @@
 
 import type { CompileRequest, NormalizeResult, SemanticJSON, Diagnostic } from '../types.js';
 import { detectFormat } from './detect.js';
-import { validateSemanticJSON, jsonToSemanticNode } from './json-schema.js';
+import { validateProtocolJSON, fromProtocolJSON } from '@lokascript/framework';
 
 // =============================================================================
 // Dynamic imports (resolved at service creation time)
@@ -147,8 +147,8 @@ function normalizeExplicit(input: string): NormalizeResult {
 }
 
 function normalizeJSON(input: SemanticJSON): NormalizeResult {
-  // Validate structure
-  const validationErrors = validateSemanticJSON(input);
+  // Validate structure (unified protocol JSON validator accepts optional kind + trigger)
+  const validationErrors = validateProtocolJSON(input);
   if (validationErrors.some(d => d.severity === 'error')) {
     return {
       node: null,
@@ -158,8 +158,8 @@ function normalizeJSON(input: SemanticJSON): NormalizeResult {
     };
   }
 
-  // Convert to SemanticNode
-  const node = jsonToSemanticNode(input);
+  // Convert to SemanticNode (unified path accepts optional kind + trigger)
+  const node = fromProtocolJSON(input as any);
   return {
     node,
     confidence: 1.0,

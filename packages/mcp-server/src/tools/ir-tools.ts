@@ -1,8 +1,8 @@
 /**
  * IR Conversion Tools
  *
- * Lightweight tools for converting between explicit bracket syntax and LLM JSON
- * without full compilation. Uses @lokascript/framework/ir directly.
+ * Lightweight tools for converting between explicit bracket syntax and
+ * protocol JSON without full compilation. Uses @lokascript/framework/ir directly.
  */
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
@@ -10,9 +10,6 @@ import type { SemanticNode } from '@lokascript/framework';
 import {
   parseExplicit,
   renderExplicit,
-  jsonToSemanticNode,
-  semanticNodeToJSON,
-  validateSemanticJSON,
   fromProtocolJSON,
   toProtocolJSON,
   validateProtocolJSON,
@@ -60,22 +57,27 @@ export const irTools: Tool[] = [
         semantic: {
           type: 'object',
           description:
-            'Full-fidelity or LLM-simplified JSON to convert. ' +
-            'Full-fidelity: { kind, action, roles, body?, statements?, chainType?, ' +
+            'Protocol JSON to convert. `kind` is optional (defaults to "command"). ' +
+            '`trigger` is convenience sugar that wraps a command in an event handler. ' +
+            'Full form: { kind?, action, roles, trigger?, body?, statements?, chainType?, ' +
             'thenBranch?, elseBranch?, loopVariant?, loopBody?, loopVariable?, indexVariable?, ' +
             'catchBranch?, finallyBranch?, asyncVariant?, asyncBody?, arms?, defaultArm?, ' +
             'annotations?, diagnostics? }. ' +
-            'LLM-simplified: { action, roles, trigger? }. ' +
             'Envelope: { lseVersion, nodes[], features? }.',
           properties: {
             kind: {
               type: 'string',
               enum: ['command', 'event-handler', 'compound'],
-              description: 'Node kind (full-fidelity only)',
+              description: 'Node kind (optional, defaults to "command")',
             },
             action: { type: 'string' },
             roles: { type: 'object' },
-            trigger: { type: 'object', description: 'Event trigger (LLM-simplified only)' },
+            trigger: {
+              type: 'object',
+              description:
+                'Convenience sugar: wraps command in event handler. ' +
+                '{ event: string, modifiers?: object }',
+            },
             body: {
               type: 'array',
               description: 'Event handler body commands (event-handler nodes)',
@@ -171,7 +173,7 @@ export const irTools: Tool[] = [
   {
     name: 'validate_protocol',
     description:
-      'Validate a full-fidelity protocol JSON node (v1.1/v1.2). Returns diagnostics for any structural issues.',
+      'Validate a protocol JSON node (v1.1/v1.2). Returns diagnostics for any structural issues.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -265,7 +267,7 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
   }
 
   if (explicitInput) {
-    // Explicit → JSON (always produce full-fidelity protocol JSON)
+    // Explicit → JSON (always produce protocol JSON)
     const node = parseExplicit(explicitInput);
     return jsonResponse({
       ok: true,
@@ -305,31 +307,13 @@ function handleConvertFormat(args: Record<string, unknown>): ToolResponse {
     });
   }
 
-  // Detect full-fidelity protocol JSON by presence of `kind` field
-  const isProtocol = 'kind' in input;
-
-  if (isProtocol) {
-    // Full-fidelity protocol JSON (v1.1/v1.2 fields)
-    const diagnostics = validateProtocolJSON(input);
-    const errors = diagnostics.filter(d => d.severity === 'error');
-    if (errors.length > 0) {
-      return jsonResponse({ ok: false, diagnostics: errors });
-    }
-    const node = fromProtocolJSON(input as any);
-    return jsonResponse({
-      ok: true,
-      explicit: renderExplicit(node),
-      semantic: toProtocolJSON(node),
-    });
-  }
-
-  // LLM-simplified JSON (no `kind` — legacy { action, roles, trigger? })
-  const diagnostics = validateSemanticJSON(input as any);
+  // Unified protocol JSON path (kind optional, trigger accepted)
+  const diagnostics = validateProtocolJSON(input);
   const errors = diagnostics.filter(d => d.severity === 'error');
   if (errors.length > 0) {
     return jsonResponse({ ok: false, diagnostics: errors });
   }
-  const node = jsonToSemanticNode(input as any);
+  const node = fromProtocolJSON(input as any);
   return jsonResponse({
     ok: true,
     explicit: renderExplicit(node),
@@ -345,7 +329,7 @@ function handleValidateExplicit(args: Record<string, unknown>): ToolResponse {
 
   try {
     const node = parseExplicit(explicit);
-    const json = semanticNodeToJSON(node);
+    const json = toProtocolJSON(node);
     return jsonResponse({
       ok: true,
       semantic: json,

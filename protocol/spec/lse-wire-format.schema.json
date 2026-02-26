@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "lse-wire-format-full-fidelity",
-  "title": "LSE Wire Format — Full-Fidelity",
-  "description": "LokaScript Explicit Syntax full-fidelity JSON interchange format. See protocol/spec/wire-format.md.",
+  "$id": "lse-wire-format",
+  "title": "LSE Wire Format",
+  "description": "LokaScript Explicit Syntax JSON interchange format. `kind` defaults to \"command\" when absent. `trigger` is convenience sugar for event handlers. See protocol/spec/wire-format.md.",
   "oneOf": [{ "$ref": "#/$defs/SemanticNode" }, { "$ref": "#/$defs/LSEEnvelope" }],
   "$defs": {
     "LSEEnvelope": {
@@ -58,12 +58,14 @@
     },
     "ExpressionValue": {
       "type": "object",
-      "required": ["type", "raw"],
+      "required": ["type"],
       "additionalProperties": false,
       "properties": {
         "type": { "const": "expression" },
-        "raw": { "type": "string" }
-      }
+        "raw": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "anyOf": [{ "required": ["raw"] }, { "required": ["value"] }]
     },
     "PropertyPathValue": {
       "type": "object",
@@ -76,13 +78,15 @@
     },
     "FlagValue": {
       "type": "object",
-      "required": ["type", "name", "enabled"],
+      "required": ["type"],
       "additionalProperties": false,
       "properties": {
         "type": { "const": "flag" },
         "name": { "type": "string", "minLength": 1 },
-        "enabled": { "type": "boolean" }
-      }
+        "enabled": { "type": "boolean" },
+        "value": { "type": "boolean" }
+      },
+      "anyOf": [{ "required": ["name", "enabled"] }, { "required": ["value"] }]
     },
     "SemanticValue": {
       "oneOf": [
@@ -97,6 +101,14 @@
     "RolesObject": {
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/SemanticValue" }
+    },
+    "Trigger": {
+      "type": "object",
+      "required": ["event"],
+      "properties": {
+        "event": { "type": "string", "minLength": 1 },
+        "modifiers": { "type": "object" }
+      }
     },
     "Diagnostic": {
       "type": "object",
@@ -132,12 +144,13 @@
     },
     "CommandNode": {
       "type": "object",
-      "required": ["kind", "action", "roles"],
+      "required": ["action", "roles"],
       "additionalProperties": false,
       "properties": {
-        "kind": { "const": "command" },
+        "kind": { "const": "command", "default": "command" },
         "action": { "type": "string", "minLength": 1 },
         "roles": { "$ref": "#/$defs/RolesObject" },
+        "trigger": { "$ref": "#/$defs/Trigger" },
         "thenBranch": {
           "type": "array",
           "items": { "$ref": "#/$defs/SemanticNode" }
@@ -153,6 +166,10 @@
         },
         "loopVariable": { "type": "string" },
         "indexVariable": { "type": "string" },
+        "body": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SemanticNode" }
+        },
         "diagnostics": {
           "type": "array",
           "items": { "$ref": "#/$defs/Diagnostic" }

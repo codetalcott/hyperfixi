@@ -331,6 +331,52 @@ describe('fromProtocolJSON', () => {
     const c = node as import('../core/types').CompoundSemanticNode;
     expect(c.chainType).toBe('sequential');
   });
+
+  it('defaults kind to command when absent', () => {
+    const json = {
+      action: 'toggle',
+      roles: { patient: { type: 'selector' as const, value: '.active' } },
+    };
+    const node = fromProtocolJSON(json as any);
+    expect(node.kind).toBe('command');
+    expect(node.action).toBe('toggle');
+    expect(node.roles.get('patient')).toEqual({ type: 'selector', value: '.active' });
+  });
+
+  it('deserializes trigger sugar into event handler', () => {
+    const json = {
+      action: 'toggle',
+      roles: { patient: { type: 'selector' as const, value: '.active' } },
+      trigger: { event: 'click' },
+    };
+    const node = fromProtocolJSON(json as any);
+    expect(node.kind).toBe('event-handler');
+    expect(node.action).toBe('on');
+    const eh = node as import('../core/types').EventHandlerSemanticNode;
+    expect(eh.body).toHaveLength(1);
+    expect(eh.body[0].action).toBe('toggle');
+    expect(eh.body[0].roles.get('patient')).toEqual({ type: 'selector', value: '.active' });
+  });
+
+  it('accepts expression value with value instead of raw', () => {
+    const json = {
+      kind: 'command' as const,
+      action: 'set',
+      roles: { goal: { type: 'expression' as const, value: 'x + 1' } },
+    };
+    const node = fromProtocolJSON(json as any);
+    expect(node.roles.get('goal')).toEqual({ type: 'expression', raw: 'x + 1' });
+  });
+
+  it('accepts flag value shorthand', () => {
+    const json = {
+      kind: 'command' as const,
+      action: 'column',
+      roles: { 'primary-key': { type: 'flag' as const, value: true } },
+    };
+    const node = fromProtocolJSON(json as any);
+    expect(node.roles.get('primary-key')).toEqual({ type: 'flag', name: 'true', enabled: true });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -442,9 +488,9 @@ describe('validateProtocolJSON', () => {
     expect(errors.some(e => e.code === 'INVALID_ROOT')).toBe(true);
   });
 
-  it('rejects missing kind', () => {
+  it('accepts missing kind (defaults to command)', () => {
     const errors = validateProtocolJSON({ action: 'toggle', roles: {} });
-    expect(errors.some(e => e.code === 'MISSING_KIND')).toBe(true);
+    expect(errors).toEqual([]);
   });
 
   it('rejects invalid kind', () => {
@@ -528,13 +574,49 @@ describe('validateProtocolJSON', () => {
     expect(errors.some(e => e.code === 'MISSING_FLAG_ENABLED')).toBe(true);
   });
 
-  it('rejects expression without raw', () => {
+  it('accepts expression with value as fallback for raw', () => {
     const errors = validateProtocolJSON({
       kind: 'command',
       action: 'set',
       roles: { goal: { type: 'expression', value: 'x + 1' } },
     });
+    expect(errors).toEqual([]);
+  });
+
+  it('rejects expression without raw or value', () => {
+    const errors = validateProtocolJSON({
+      kind: 'command',
+      action: 'set',
+      roles: { goal: { type: 'expression' } },
+    });
     expect(errors.some(e => e.code === 'MISSING_EXPRESSION_RAW')).toBe(true);
+  });
+
+  // Unified format: trigger sugar, optional kind, value fallbacks
+  it('accepts trigger sugar and wraps in event handler', () => {
+    const errors = validateProtocolJSON({
+      action: 'toggle',
+      roles: { patient: { type: 'selector', value: '.active' } },
+      trigger: { event: 'click' },
+    });
+    expect(errors).toEqual([]);
+  });
+
+  it('rejects trigger with missing event', () => {
+    const errors = validateProtocolJSON({
+      action: 'toggle',
+      roles: {},
+      trigger: { modifiers: {} },
+    });
+    expect(errors.some(e => e.code === 'INVALID_TRIGGER')).toBe(true);
+  });
+
+  it('accepts flag with value shorthand', () => {
+    const errors = validateProtocolJSON({
+      action: 'column',
+      roles: { 'primary-key': { type: 'flag', value: true } },
+    });
+    expect(errors).toEqual([]);
   });
 
   // v1.2 validation

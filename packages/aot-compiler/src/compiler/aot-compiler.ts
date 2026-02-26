@@ -29,7 +29,7 @@ import { EventHandlerCodegen } from '../transforms/event-transforms.js';
 import {
   isExplicitSyntax,
   parseExplicit,
-  jsonToSemanticNode,
+  fromProtocolJSON,
   type SemanticNode,
   type EventHandlerSemanticNode,
   type SemanticValue,
@@ -186,7 +186,7 @@ export class AOTCompiler {
     if (this.looksLikeJSON(code)) {
       try {
         const json = JSON.parse(code.trim());
-        const node = jsonToSemanticNode(json);
+        const node = fromProtocolJSON(json);
         ast = this.semanticNodeToAOT(node);
         if (debug) {
           console.log(`[aot] Parsed JSON input: "${code.slice(0, 80)}..."`);
@@ -791,7 +791,7 @@ export class AOTCompiler {
     try {
       const ast = isExplicitSyntax(code)
         ? this.semanticNodeToAOT(parseExplicit(code))
-        : this.semanticNodeToAOT(jsonToSemanticNode(JSON.parse(code.trim())));
+        : this.semanticNodeToAOT(fromProtocolJSON(JSON.parse(code.trim())));
 
       return this.compileAST(ast, options);
     } catch (error) {

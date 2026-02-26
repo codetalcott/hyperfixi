@@ -37,7 +37,7 @@ export { parseExplicit, isExplicitSyntax } from './explicit-parser';
 // Explicit syntax renderer
 export { renderExplicit } from './explicit-renderer';
 
-// JSON schema conversion
+// JSON schema conversion (deprecated — use fromProtocolJSON/validateProtocolJSON/toProtocolJSON)
 export { jsonToSemanticNode, validateSemanticJSON, semanticNodeToJSON } from './json-schema';
 
 // Protocol full-fidelity wire format

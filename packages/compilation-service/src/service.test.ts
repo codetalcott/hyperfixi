@@ -7,7 +7,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { CompilationService } from './service.js';
 import { detectFormat } from './input/detect.js';
-import { validateSemanticJSON } from './input/json-schema.js';
 import { SemanticCache, generateCacheKey } from './compile/cache.js';
 
 // =============================================================================
@@ -34,50 +33,6 @@ describe('detectFormat', () => {
   it('treats invalid JSON as natural language', () => {
     expect(detectFormat('{not valid json}')).toBe('natural');
     expect(detectFormat('{ "noAction": true }')).toBe('natural');
-  });
-});
-
-// =============================================================================
-// JSON Schema Validation (unit tests)
-// =============================================================================
-
-describe('validateSemanticJSON', () => {
-  it('validates well-formed input', () => {
-    const errors = validateSemanticJSON({
-      action: 'toggle',
-      roles: { patient: { type: 'selector', value: '.active' } },
-    });
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects missing action', () => {
-    const errors = validateSemanticJSON({ action: '', roles: {} });
-    expect(errors.some(e => e.code === 'INVALID_ACTION')).toBe(true);
-  });
-
-  it('rejects invalid role value type', () => {
-    const errors = validateSemanticJSON({
-      action: 'toggle',
-      roles: { patient: { type: 'unknown' as 'selector', value: '.active' } },
-    });
-    expect(errors.some(e => e.code === 'INVALID_VALUE_TYPE')).toBe(true);
-  });
-
-  it('rejects missing value in role', () => {
-    const errors = validateSemanticJSON({
-      action: 'toggle',
-      roles: { patient: { type: 'selector', value: undefined as unknown as string } },
-    });
-    expect(errors.some(e => e.code === 'MISSING_VALUE')).toBe(true);
-  });
-
-  it('validates trigger', () => {
-    const errors = validateSemanticJSON({
-      action: 'toggle',
-      roles: {},
-      trigger: { event: '' },
-    });
-    expect(errors.some(e => e.code === 'INVALID_TRIGGER')).toBe(true);
   });
 });
 
