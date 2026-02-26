@@ -59,21 +59,19 @@ function installFocusTrap(element: HTMLElement, params: Record<string, any>): vo
       return;
     }
 
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
+    // Always prevent default Tab and manually manage focus.
+    // This ensures focus never escapes to elements outside the trap,
+    // even when the modal is embedded in a page with other focusable elements.
+    e.preventDefault();
+
+    const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
 
     if (e.shiftKey) {
-      // Shift+Tab: wrap from first to last
-      if (document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      }
+      const prevIndex = currentIndex <= 0 ? focusable.length - 1 : currentIndex - 1;
+      focusable[prevIndex].focus();
     } else {
-      // Tab: wrap from last to first
-      if (document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
+      const nextIndex = currentIndex >= focusable.length - 1 ? 0 : currentIndex + 1;
+      focusable[nextIndex].focus();
     }
   }
 

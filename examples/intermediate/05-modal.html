@@ -286,11 +286,62 @@
             </div>
         </div>
 
-        <!-- Global keyboard handler -->
+        <!-- Demo 4: Behavior-Powered Modal -->
+        <div class="demo">
+            <h2>Demo 4: Behavior-Powered Modal</h2>
+
+            <p style="text-align: left; max-width: 600px; margin: 0 auto 20px;">
+                Same modal pattern, but using <code>ClickOutside</code> + <code>FocusTrap</code>
+                behaviors. No manual event wiring — composable, accessible, and self-contained.
+            </p>
+
+            <button class="success" _="on click js openBehaviorModal() end">
+                Open Behavior Modal
+            </button>
+
+            <div id="behavior-modal" class="modal-overlay">
+                <div id="behavior-content" class="modal"
+                     _="install ClickOutside(active: false)
+                        install FocusTrap(active: false)
+                        on clickoutside js closeBehaviorModal() end end
+                        on keydown[key=='Escape'] js closeBehaviorModal() end end">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <h3>✅ Behavior-Powered Modal</h3>
+                        <button class="close-btn"
+                                _="on click js closeBehaviorModal() end">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            <strong>Composable behaviors replace manual wiring!</strong>
+                        </p>
+                        <p>This modal uses two behaviors:</p>
+                        <ul style="text-align: left;">
+                            <li><code>install ClickOutside</code> — fires <code>clickoutside</code> event when clicking the overlay</li>
+                            <li><code>install FocusTrap</code> — traps Tab key, sets <code>aria-modal</code>, restores focus on close</li>
+                        </ul>
+                        <p>Try pressing <strong>Tab</strong> to see focus stay trapped inside the modal.</p>
+                        <label for="demo-input">Test input:</label>
+                        <input type="text" id="demo-input" placeholder="Tab cycles through focusable elements" />
+                    </div>
+                    <div class="modal-footer">
+                        <button class="secondary"
+                                _="on click js closeBehaviorModal() end">
+                            Close
+                        </button>
+                        <button class="success"
+                                _="on click js closeBehaviorModal(); console.log('Action confirmed!') end">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global keyboard handler (for Demos 1-3 only; Demo 4 uses behaviors) -->
         <div _="on keydown[key=='Escape'] from window
                hide .modal-overlay"></div>
 
-        <!-- Click outside to close -->
+        <!-- Click outside to close (for Demos 1-3 only; Demo 4 uses ClickOutside behavior) -->
         <div _="on click from .modal-overlay
                if target matches .modal-overlay
                  hide .modal-overlay
@@ -422,6 +473,40 @@
 &lt;/button&gt;
             </div>
 
+            <h3>With Behaviors (Demo 4):</h3>
+            <p>Behaviors replace manual event wiring with composable, accessible primitives.</p>
+            <div class="code">
+<span class="comment">&lt;!-- Before: Manual wiring (Demos 1-3) --&gt;</span>
+<span class="comment">&lt;!-- 1. Global ESC handler --&gt;</span>
+&lt;div <span class="keyword">_</span>=<span class="string">"on keydown[key=='Escape'] from window
+     hide .modal-overlay"</span>&gt;&lt;/div&gt;
+<span class="comment">&lt;!-- 2. Global click-outside handler --&gt;</span>
+&lt;div <span class="keyword">_</span>=<span class="string">"on click from .modal-overlay
+     if target matches .modal-overlay
+       hide .modal-overlay
+     end"</span>&gt;&lt;/div&gt;
+<span class="comment">&lt;!-- 3. Halt on each modal to prevent bubble --&gt;</span>
+&lt;div <span class="keyword">class</span>=<span class="string">"modal"</span> <span class="keyword">_</span>=<span class="string">"on click halt"</span>&gt;
+<span class="comment">&lt;!-- 4. No focus trapping ❌ --&gt;</span>
+            </div>
+
+            <div class="code">
+<span class="comment">&lt;!-- After: Behavior-powered (Demo 4) --&gt;</span>
+&lt;div <span class="keyword">class</span>=<span class="string">"modal"</span>
+     <span class="keyword">_</span>=<span class="string">"install ClickOutside(active: false)
+        install FocusTrap(active: false)
+        on clickoutside js closeBehaviorModal() end end
+        on keydown[key=='Escape'] js closeBehaviorModal() end end"</span>&gt;
+
+<span class="comment">&lt;!-- Behaviors activated/deactivated via CustomEvents: --&gt;</span>
+<span class="comment">&lt;!-- el.dispatchEvent(new CustomEvent('focustrap:activate')) --&gt;</span>
+<span class="comment">&lt;!-- el.dispatchEvent(new CustomEvent('clickoutside:activate')) --&gt;</span>
+<span class="comment">&lt;!-- ✅ Click-outside detection via behavior --&gt;</span>
+<span class="comment">&lt;!-- ✅ Focus trapping + aria-modal --&gt;</span>
+<span class="comment">&lt;!-- ✅ Focus restored on close --&gt;</span>
+<span class="comment">&lt;!-- ✅ Self-contained, no global handlers --&gt;</span>
+            </div>
+
             <h3>Accessibility Best Practices:</h3>
             <ul>
                 <li>Add <code>role="dialog"</code> to modal container</li>
@@ -451,9 +536,31 @@
         </div>
     </div>
 
-    <!-- Load LokaScript -->
+    <!-- Load LokaScript + Behaviors -->
     <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/behaviors/dist/all.browser.global.js"></script>
     <script src="../prism-loader.js"></script>
     <script src="../debug-panel.js"></script>
+
+    <!-- Behavior modal helpers (Demo 4) -->
+    <script>
+      function openBehaviorModal() {
+        const overlay = document.getElementById('behavior-modal');
+        const content = document.getElementById('behavior-content');
+        overlay.classList.add('show');
+        overlay.style.display = 'flex';
+        content.dispatchEvent(new CustomEvent('clickoutside:activate'));
+        content.dispatchEvent(new CustomEvent('focustrap:activate'));
+      }
+
+      function closeBehaviorModal() {
+        const overlay = document.getElementById('behavior-modal');
+        const content = document.getElementById('behavior-content');
+        content.dispatchEvent(new CustomEvent('clickoutside:deactivate'));
+        content.dispatchEvent(new CustomEvent('focustrap:deactivate'));
+        overlay.classList.remove('show');
+        overlay.style.display = '';
+      }
+    </script>
 </body>
 </html>
