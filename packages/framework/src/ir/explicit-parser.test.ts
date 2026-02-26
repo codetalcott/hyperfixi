@@ -22,8 +22,16 @@ describe('parseExplicit — without schema', () => {
     const node = parseExplicit('[toggle patient:.active destination:#button]');
     expect(node.kind).toBe('command');
     expect(node.action).toBe('toggle');
-    expect(node.roles.get('patient')).toEqual({ type: 'selector', value: '.active' });
-    expect(node.roles.get('destination')).toEqual({ type: 'selector', value: '#button' });
+    expect(node.roles.get('patient')).toEqual({
+      type: 'selector',
+      value: '.active',
+      selectorKind: 'class',
+    });
+    expect(node.roles.get('destination')).toEqual({
+      type: 'selector',
+      value: '#button',
+      selectorKind: 'id',
+    });
   });
 
   it('parses selector values', () => {
@@ -72,15 +80,14 @@ describe('parseExplicit — without schema', () => {
 
   it('parses plain string values (unquoted, non-special)', () => {
     const node = parseExplicit('[fetch source:/api/users responseType:json]');
+    // Unquoted values get no dataType — only explicitly quoted values get dataType: 'string'
     expect(node.roles.get('source')).toEqual({
       type: 'literal',
       value: '/api/users',
-      dataType: 'string',
     });
     expect(node.roles.get('responseType')).toEqual({
       type: 'literal',
       value: 'json',
-      dataType: 'string',
     });
   });
 
@@ -100,17 +107,14 @@ describe('parseExplicit — without schema', () => {
     expect(node.roles.get('destination')).toEqual({
       type: 'literal',
       value: 'production',
-      dataType: 'string',
     });
     expect(node.roles.get('source')).toEqual({
       type: 'literal',
       value: 'main',
-      dataType: 'string',
     });
     expect(node.roles.get('manner')).toEqual({
       type: 'literal',
       value: 'rolling',
-      dataType: 'string',
     });
   });
 
@@ -207,8 +211,8 @@ describe('parseExplicit — boolean flags', () => {
   it('parses flags alongside role:value pairs', () => {
     const node = parseExplicit('[column name:id type:uuid +primary-key +not-null]');
     expect(node.action).toBe('column');
-    expect(node.roles.get('name')).toEqual({ type: 'literal', value: 'id', dataType: 'string' });
-    expect(node.roles.get('type')).toEqual({ type: 'literal', value: 'uuid', dataType: 'string' });
+    expect(node.roles.get('name')).toEqual({ type: 'literal', value: 'id' });
+    expect(node.roles.get('type')).toEqual({ type: 'literal', value: 'uuid' });
     expect(node.roles.get('primary-key')).toEqual({
       type: 'flag',
       name: 'primary-key',
@@ -292,12 +296,11 @@ describe('parseExplicit — custom reference set', () => {
     const options: ParseExplicitOptions = {
       referenceSet: new Set(['self']),
     };
-    // 'me' is not in the custom set, so it becomes a literal string
+    // 'me' is not in the custom set, so it becomes a literal (no dataType for unquoted values)
     const node = parseExplicit('[add patient:.active destination:me]', options);
     expect(node.roles.get('destination')).toEqual({
       type: 'literal',
       value: 'me',
-      dataType: 'string',
     });
   });
 });

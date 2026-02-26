@@ -39,7 +39,8 @@ export const irTools: Tool[] = [
     description:
       'Convert between explicit bracket syntax, LLM JSON, and InterchangeNode AST without compilation. ' +
       'Provide `explicit` (bracket syntax), `semantic` (JSON), or `interchange` (InterchangeNode AST). ' +
-      'Returns both explicit and protocol JSON formats for bidirectional use.',
+      'Returns both explicit and protocol JSON formats for bidirectional use. ' +
+      'Tip: use lse_from_hyperscript to parse natural hyperscript into LSE first, then pipe its output here.',
     inputSchema: {
       type: 'object',
       properties: {

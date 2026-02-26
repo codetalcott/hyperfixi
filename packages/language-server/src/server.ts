@@ -88,8 +88,9 @@ try {
   fromCoreASTFn = core.fromCoreAST;
   // Interchange-aware LSP module (replaces deprecated @lokascript/ast-toolkit)
   interchangeLSP = await import('@hyperfixi/core/ast-utils');
+  console.error('[lokascript-ls] @hyperfixi/core loaded — AST parsing + interchange LSP enabled');
 } catch {
-  console.error('[lokascript-ls] @hyperfixi/core not available');
+  console.error('[lokascript-ls] @hyperfixi/core not available — diagnostics and hover degraded');
 }
 
 // Try to import LSP metadata from core (canonical keyword/hover docs source)
@@ -100,6 +101,28 @@ try {
     '[lokascript-ls] @hyperfixi/core/lsp-metadata not available - using fallback keywords'
   );
 }
+
+// Try to import framework IR for LSE bracket notation in hover
+let frameworkIR: {
+  fromInterchangeNode: (n: any) => any;
+  renderExplicit: (n: any) => string;
+} | null = null;
+try {
+  const fw = await import('@lokascript/framework');
+  frameworkIR = { fromInterchangeNode: fw.fromInterchangeNode, renderExplicit: fw.renderExplicit };
+  console.error(
+    '[lokascript-ls] @lokascript/framework loaded — LSE bracket notation in hover enabled'
+  );
+} catch {
+  console.error(
+    '[lokascript-ls] @lokascript/framework not available — hover will omit LSE bracket notation'
+  );
+}
+
+// Log capability summary
+console.error(
+  `[lokascript-ls] capabilities: core=${!!parseFunction}, interchange=${!!interchangeLSP}, metadata=${!!lspMetadata}, framework=${!!frameworkIR}`
+);
 
 // =============================================================================
 // Fallback Constants (used when @hyperfixi/core/lsp-metadata is unavailable)
@@ -947,8 +970,14 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
       const word = getWordAtPosition(currentLine, found.localChar);
       if (!word) return null;
 
-      const doc = getHoverDocumentation(word.text, globalSettings.language);
+      let doc = getHoverDocumentation(word.text, globalSettings.language);
       if (!doc) return null;
+
+      // Append LSE bracket notation if we can parse the full region
+      const lse = tryGetLSE(found.region.code);
+      if (lse) {
+        doc += `\n\n**LSE:** \`${lse}\``;
+      }
 
       // Map range back to document coordinates
       const startChar = found.localLine === 0 ? found.region.startChar + word.start : word.start;
@@ -971,8 +1000,14 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     const word = getWordAtPosition(currentLine, position.character);
     if (!word) return null;
 
-    const doc = getHoverDocumentation(word.text, globalSettings.language);
+    let doc = getHoverDocumentation(word.text, globalSettings.language);
     if (!doc) return null;
+
+    // Append LSE bracket notation if we can parse the full line/block
+    const lse = tryGetLSE(text);
+    if (lse) {
+      doc += `\n\n**LSE:** \`${lse}\``;
+    }
 
     return {
       contents: { kind: MarkupKind.Markdown, value: doc },
@@ -986,6 +1021,24 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     return null;
   }
 });
+
+/**
+ * Try to parse hyperscript code and render as LSE bracket notation.
+ * Returns null if parsing or rendering fails (non-fatal).
+ */
+function tryGetLSE(code: string): string | null {
+  if (!interchangeLSP || !parseFunction || !fromCoreASTFn || !frameworkIR) return null;
+  try {
+    const ast = parseFunction(code);
+    if (!ast) return null;
+    const interchange = fromCoreASTFn(ast);
+    if (!interchange) return null;
+    const semanticNode = frameworkIR.fromInterchangeNode(interchange);
+    return frameworkIR.renderExplicit(semanticNode);
+  } catch {
+    return null;
+  }
+}
 
 function getHoverDocumentation(word: string, language: string): string | null {
   const wordLower = word.toLowerCase();

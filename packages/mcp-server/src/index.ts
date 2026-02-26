@@ -65,6 +65,9 @@ import { trainingDataTools, handleTrainingDataTool } from './tools/training-data
 // Feedback loop tools (LLM ↔ LSE)
 import { feedbackTools, handleFeedbackTool } from './tools/feedback-tools.js';
 
+// LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
+import { lsePipelineTools, handleLsePipelineTool } from './tools/lse-pipeline.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -111,6 +114,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...inventoryTools,
       ...trainingDataTools,
       ...feedbackTools,
+      ...lsePipelineTools,
     ],
   };
 });
@@ -265,6 +269,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   // Feedback loop tools (LLM ↔ LSE)
   if (name === 'lse_validate_and_feedback' || name === 'lse_pattern_stats') {
     return handleFeedbackTool(name, args as Record<string, unknown>);
+  }
+
+  // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
+  if (name === 'lse_from_hyperscript' || name === 'lse_to_hyperscript') {
+    return handleLsePipelineTool(name, args as Record<string, unknown>);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)

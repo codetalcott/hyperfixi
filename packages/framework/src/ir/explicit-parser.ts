@@ -14,10 +14,18 @@
  *   [select patient:name source:users condition:age>25]
  */
 
-import type { SemanticNode, SemanticValue, SemanticRole, ActionType } from '../core/types';
+import type {
+  SemanticNode,
+  SemanticValue,
+  SemanticRole,
+  ActionType,
+  LoopVariant,
+} from '../core/types';
 import {
   createCommandNode,
   createEventHandlerNode,
+  createConditionalNode,
+  createLoopNode,
   createSelector,
   createLiteral,
   createReference,
@@ -156,31 +164,92 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
     }
   }
 
-  // Build appropriate node type
-  if (command === 'on') {
-    const eventValue = roles.get('event');
-    if (!eventValue) {
-      throw new Error('Event handler requires event role: [on event:click ...]');
+  // Build appropriate node type based on action name
+  switch (command) {
+    case 'on': {
+      const eventValue = roles.get('event');
+      if (!eventValue) {
+        throw new Error('Event handler requires event role: [on event:click ...]');
+      }
+
+      // Parse body if present
+      const body = extractStructuralBody(roles, 'body', options);
+      roles.delete('body' as SemanticRole);
+
+      return createEventHandlerNode('on', roles, body, {
+        sourceLanguage: 'explicit',
+      });
     }
 
-    // Parse body if present
-    const bodyValue = roles.get('body' as SemanticRole);
-    const body: SemanticNode[] = [];
-    if (bodyValue && bodyValue.type === 'expression') {
-      body.push(parseExplicit(bodyValue.raw, options));
+    case 'if': {
+      // Extract structural roles for conditional
+      const thenBranch = extractStructuralBody(roles, 'then', options);
+      const elseBranch = extractStructuralBody(roles, 'else', options);
+      roles.delete('then' as SemanticRole);
+      roles.delete('else' as SemanticRole);
+
+      return createConditionalNode(
+        command,
+        roles,
+        thenBranch,
+        elseBranch.length > 0 ? elseBranch : undefined,
+        {
+          sourceLanguage: 'explicit',
+        }
+      );
     }
 
-    roles.delete('body' as SemanticRole);
+    case 'repeat': {
+      // Extract loop structural roles
+      const loopBody = extractStructuralBody(roles, 'loop-body', options);
+      const loopVariantValue = roles.get('loop-variant' as SemanticRole);
+      const variableValue = roles.get('variable' as SemanticRole);
+      const indexVariableValue = roles.get('index-variable' as SemanticRole);
 
-    return createEventHandlerNode('on', roles, body, {
-      sourceLanguage: 'explicit',
-    });
+      roles.delete('loop-body' as SemanticRole);
+      roles.delete('loop-variant' as SemanticRole);
+      roles.delete('variable' as SemanticRole);
+      roles.delete('index-variable' as SemanticRole);
+
+      // Determine loop variant: explicit > inferred from roles
+      let variant: LoopVariant;
+      if (
+        loopVariantValue &&
+        loopVariantValue.type === 'literal' &&
+        typeof loopVariantValue.value === 'string'
+      ) {
+        variant = loopVariantValue.value as LoopVariant;
+      } else if (roles.has('quantity' as SemanticRole)) {
+        variant = 'times';
+      } else if (roles.has('source' as SemanticRole)) {
+        variant = 'for';
+      } else if (roles.has('condition' as SemanticRole)) {
+        variant = 'while';
+      } else {
+        variant = 'forever';
+      }
+
+      const loopVariable =
+        variableValue?.type === 'literal' && typeof variableValue.value === 'string'
+          ? variableValue.value
+          : variableValue?.type === 'expression'
+            ? variableValue.raw
+            : undefined;
+      const indexVariable =
+        indexVariableValue?.type === 'literal' && typeof indexVariableValue.value === 'string'
+          ? indexVariableValue.value
+          : undefined;
+
+      return createLoopNode(command, roles, variant, loopBody, loopVariable, indexVariable, {
+        sourceLanguage: 'explicit',
+      });
+    }
+
+    default:
+      return createCommandNode(command, roles, {
+        sourceLanguage: 'explicit',
+      });
   }
-
-  // Regular command
-  return createCommandNode(command, roles, {
-    sourceLanguage: 'explicit',
-  });
 }
 
 /**
@@ -194,6 +263,38 @@ export function isExplicitSyntax(input: string): boolean {
 // =============================================================================
 // Internal Helpers
 // =============================================================================
+
+/**
+ * Extract and parse a structural role (body, then, else, loop-body) into SemanticNode[].
+ * Returns an empty array if the role is not present.
+ */
+function extractStructuralBody(
+  roles: Map<SemanticRole, SemanticValue>,
+  roleName: string,
+  options: ParseExplicitOptions
+): SemanticNode[] {
+  const value = roles.get(roleName as SemanticRole);
+  if (!value) return [];
+  if (value.type === 'expression') {
+    return [parseExplicit(value.raw, options)];
+  }
+  return [];
+}
+
+/**
+ * Infer selectorKind from a CSS selector string.
+ */
+function inferSelectorKind(
+  value: string
+): 'id' | 'class' | 'attribute' | 'element' | 'complex' | undefined {
+  if (!value) return undefined;
+  if (value.startsWith('#')) return 'id';
+  if (value.startsWith('.')) return 'class';
+  if (value.startsWith('[')) return 'attribute';
+  if (value.startsWith('<') || value.startsWith('*')) return 'element';
+  if (/[>+~ ]/.test(value) && value.length > 1) return 'complex';
+  return undefined;
+}
 
 /**
  * Tokenize explicit syntax content (space-separated, respecting quotes and brackets).
@@ -265,7 +366,7 @@ function parseExplicitValue(valueStr: string, referenceSet: ReadonlySet<string>)
     valueStr.startsWith('@') ||
     valueStr.startsWith('*')
   ) {
-    return createSelector(valueStr);
+    return createSelector(valueStr, inferSelectorKind(valueStr));
   }
 
   // String literal
@@ -295,8 +396,9 @@ function parseExplicitValue(valueStr: string, referenceSet: ReadonlySet<string>)
     return createLiteral(num, 'number');
   }
 
-  // Default to string
-  return createLiteral(valueStr, 'string');
+  // Default to untyped string literal (no dataType — avoids spurious quoting on round-trip).
+  // Only explicitly-quoted values (handled above) get dataType: 'string'.
+  return createLiteral(valueStr);
 }
 
 /**

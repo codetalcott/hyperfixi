@@ -204,11 +204,26 @@ export function interchangeToLSPSymbols(nodes: InterchangeNode[]): DocumentSymbo
 }
 
 /**
+ * Options for hover generation.
+ */
+export interface HoverOptions {
+  /**
+   * Optional callback to render an InterchangeNode as LSE bracket syntax.
+   * Injected by the caller to avoid circular dependency (core → framework).
+   *
+   * Typical implementation:
+   *   (node) => renderExplicit(fromInterchangeNode(node))
+   */
+  renderLSE?: (node: InterchangeNode) => string;
+}
+
+/**
  * Generate hover information for the interchange node at a given position.
  */
 export function interchangeToLSPHover(
   nodes: InterchangeNode[],
-  position: Position
+  position: Position,
+  options?: HoverOptions
 ): HoverInfo | null {
   const node = findNodeAtPosition(nodes, position);
   if (!node) return null;
@@ -230,6 +245,18 @@ export function interchangeToLSPHover(
     case 'while':
       contents += 'Loop construct\n\n';
       break;
+  }
+
+  // LSE bracket notation (if renderer provided)
+  if (options?.renderLSE) {
+    try {
+      const lse = options.renderLSE(node);
+      if (lse) {
+        contents += `**LSE:** \`${lse}\`\n\n`;
+      }
+    } catch {
+      // LSE rendering failed silently — not all nodes are renderable
+    }
   }
 
   // Complexity for event/control-flow nodes
