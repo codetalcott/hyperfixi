@@ -13,7 +13,8 @@
  */
 
 import { removableSchema } from '../schemas/removable.schema';
-import type { LokaScriptInstance, LokaScriptWindow } from '../schemas/types';
+import type { LokaScriptInstance } from '../schemas/types';
+import { resolveRuntime } from '../schemas/types';
 
 // Re-export schema-derived values for backwards compatibility
 export const removableSource = removableSchema.source;
@@ -23,9 +24,7 @@ export const removableMetadata = removableSchema;
  * Register the Removable behavior with LokaScript.
  */
 export async function registerRemovable(hyperfixi?: LokaScriptInstance): Promise<void> {
-  const hf =
-    hyperfixi ||
-    (typeof window !== 'undefined' ? (window as unknown as LokaScriptWindow).lokascript : null);
+  const hf = hyperfixi || resolveRuntime();
 
   if (!hf) {
     throw new Error(
@@ -44,7 +43,7 @@ export async function registerRemovable(hyperfixi?: LokaScriptInstance): Promise
 }
 
 // Auto-register when loaded as a script tag
-if (typeof window !== 'undefined' && (window as unknown as LokaScriptWindow).lokascript) {
+if (resolveRuntime()) {
   registerRemovable().catch(console.error);
 }
 

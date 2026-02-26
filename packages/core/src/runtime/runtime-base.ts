@@ -938,12 +938,27 @@ export class RuntimeBase {
       parameters?: string[];
       eventHandlers?: EventHandlerNode[];
       initBlock?: ASTNode;
+      imperativeInstaller?: (element: HTMLElement, parameters: Record<string, any>) => void;
     },
     _context: ExecutionContext
   ): Promise<void> {
     const { name, parameters, eventHandlers, initBlock } = node;
-    this.behaviorRegistry.set(name, { name, parameters, eventHandlers, initBlock });
-    debug.runtime(`RUNTIME BASE: Registered behavior '${name}'`);
+    const imperativeInstaller = (node as any).imperativeInstaller;
+
+    if (typeof imperativeInstaller === 'function') {
+      // Imperative behavior: store the installer function directly
+      this.behaviorRegistry.set(name, {
+        name,
+        parameters,
+        type: 'imperative',
+        install: imperativeInstaller,
+      });
+      debug.runtime(`RUNTIME BASE: Registered imperative behavior '${name}'`);
+    } else {
+      // Hyperscript behavior: store AST for event-handler-based installation
+      this.behaviorRegistry.set(name, { name, parameters, eventHandlers, initBlock });
+      debug.runtime(`RUNTIME BASE: Registered behavior '${name}'`);
+    }
   }
 
   protected async installBehaviorOnElement(
@@ -954,6 +969,15 @@ export class RuntimeBase {
     debug.runtime(`BEHAVIOR: installBehaviorOnElement called: ${behaviorName}`);
     const behavior = this.behaviorRegistry.get(behaviorName);
     if (!behavior) throw new Error(`Behavior "${behaviorName}" not found`);
+
+    // Imperative behavior: call the installer directly and return
+    if (behavior.type === 'imperative' && typeof behavior.install === 'function') {
+      debug.runtime(`BEHAVIOR: Installing imperative behavior '${behaviorName}'`);
+      behavior.install(element, parameters);
+      debug.runtime(`BEHAVIOR: Finished installing imperative behavior '${behaviorName}'`);
+      return;
+    }
+
     debug.runtime(
       `BEHAVIOR: Found behavior, eventHandlers count: ${behavior.eventHandlers?.length || 0}`
     );

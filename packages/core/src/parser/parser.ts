@@ -2609,49 +2609,9 @@ export class Parser {
           }
         }
 
-        // Parse commands until we hit 'end'
-        const handlerCommands: CommandNode[] = [];
-        while (!this.isAtEnd() && !this.check('end')) {
-          if (this.checkIsCommand() || this.isCommand(this.peek().value)) {
-            this.advance(); // Consume command token
-
-            // Save error state (following parseCommandSequence pattern)
-            const savedError = this.error;
-
-            try {
-              const cmd = this.parseCommand();
-
-              // Restore error state if command parsing added an error
-              // This allows us to continue parsing even if a command has issues
-              if (this.error && this.error !== savedError) {
-                this.error = savedError;
-              }
-
-              handlerCommands.push(cmd);
-
-              // Skip any unexpected tokens until next command or 'end'
-              // (handles edge cases like extra whitespace tokens)
-              while (
-                !this.isAtEnd() &&
-                !this.check('end') &&
-                !this.checkIsCommand() &&
-                !this.isCommand(this.peek().value)
-              ) {
-                this.advance();
-              }
-            } catch (error) {
-              // If command parsing throws, restore error state and exit
-              this.error = savedError;
-              break;
-            }
-          } else {
-            // Not a command token - should be at 'end' or something's wrong
-            if (!this.check('end')) {
-              this.addError(`Unexpected token in event handler: ${this.peek().value}`);
-            }
-            break;
-          }
-        }
+        // Parse commands using the same method as repeat/for blocks,
+        // which properly handles nested end tokens from if...end, repeat...end, etc.
+        const handlerCommands = this.parseCommandListUntilEnd();
 
         // Create event handler node with captured target and args
         const handlerNode: EventHandlerNode = {
@@ -2667,9 +2627,6 @@ export class Parser {
         };
 
         eventHandlers.push(handlerNode);
-
-        // Expect 'end' after event handler body
-        this.consume('end', "Expected 'end' after event handler body");
       } else if (this.match('init')) {
         // Parse init block
         const initCommands = this.parseCommandBlock(['end']);

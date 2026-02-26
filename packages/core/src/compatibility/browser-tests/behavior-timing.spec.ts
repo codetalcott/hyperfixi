@@ -54,11 +54,10 @@ test('check behaviors timing and installation', async ({ page }) => {
     testBtn.textContent = 'Test';
     document.body.appendChild(testBtn);
 
-    const result = hf.compile('install Toggleable');
-    if (!result.success) return { error: result.errors };
+    const result = hf.compileSync('install Toggleable');
+    if (!result.ok) return { error: result.errors };
 
-    const ctx = hf.createContext();
-    ctx.me = testBtn;
+    const ctx = hf.createContext(testBtn);
     await hf.execute(result.ast, ctx);
 
     // Check class before click
@@ -83,7 +82,7 @@ test('check behaviors timing and installation', async ({ page }) => {
   console.log('Manual install:', manualInstall);
 
   // Test actual page button - toggle on and off
-  const toggleButton = page.locator('.toggle-button');
+  const toggleButton = page.locator('.toggle-button').first();
   const beforeClick = await toggleButton.evaluate(el => el.classList.contains('active'));
   await toggleButton.click();
   await page.waitForTimeout(100);
