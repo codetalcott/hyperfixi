@@ -16,15 +16,9 @@ let extractSnippetsFromProjectImpl: ((dir: string, options?: any) => Promise<any
 async function getExtractor() {
   if (extractSnippetsFromProjectImpl) return extractSnippetsFromProjectImpl;
   try {
-    const mod = await import('@hyperfixi/developer-tools/analyzer');
-    // Try the inventory module path
-    const inv = await import(
-      /* webpackIgnore: true */
-      '../../../developer-tools/src/inventory/extractor.js'
-    ).catch(() => null);
-
-    if (inv?.extractSnippetsFromProject) {
-      extractSnippetsFromProjectImpl = inv.extractSnippetsFromProject;
+    const mod: any = await import('@hyperfixi/developer-tools');
+    if (mod?.extractSnippetsFromProject) {
+      extractSnippetsFromProjectImpl = mod.extractSnippetsFromProject;
     } else {
       // Fallback: inline implementation for when developer-tools isn't built
       extractSnippetsFromProjectImpl = createInlineExtractor();
