@@ -8,7 +8,6 @@ import {
   classifyInitCommands,
   applyPureCommand,
   preRenderInitBlock,
-  type PureCommand,
 } from './init-prerender.js';
 import type { ASTNode, CommandNode, SelectorNode, LiteralNode } from '../types/aot-types.js';
 
