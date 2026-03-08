@@ -190,6 +190,54 @@ The compilation service already generates framework components:
 
 ---
 
+## Code Quality Deep Dive
+
+### Type Safety
+
+The core package has **3,344 uses of `any`** — acknowledged in `.eslintrc.json` line 14:
+> "~1000 'any' types exist. Turned off to unblock CI."
+
+Key hotspots:
+- `src/core/binary-expression-evaluator.ts` — 10+ `as any` casts for arithmetic
+- `src/core/events.ts` — 35+ window property casts
+- `src/api/hyperscript-api.ts:223` — double cast: `semanticAnalyzerInstance as unknown as SemanticAnalyzerInterface`
+- `src/api/dom-processor.ts` — 15+ direct `console.error()`/`console.warn()` calls (should use the debug system)
+
+The semantic package is much cleaner at only 49 `any` uses (a 60:1 ratio).
+
+**Recommendation**: Re-enable `@typescript-eslint/no-explicit-any` as `warn`, reduce to <500, then flip to `error`.
+
+### TypeScript Configuration Gaps
+
+In `packages/core/tsconfig.json`:
+- `noUnusedLocals: false` — allows dead code
+- `noUnusedParameters: false` — hides refactoring opportunities
+- `exactOptionalPropertyTypes: false` — permits `undefined` misuse
+
+These should be tightened incrementally.
+
+### ESLint Too Permissive
+
+In `packages/core/.eslintrc.json`:
+- `@typescript-eslint/no-explicit-any: "off"` — disabled entirely
+- `explicit-function-return-type: "off"` — no return type checking
+- `prefer-const: "warn"` — should be `error`
+- `no-case-declarations: "warn"` — should be `error`
+
+### Production Console Logging
+
+`dom-processor.ts` has 15+ direct `console.error()`/`console.warn()` calls that pollute the user's browser console. These should route through the existing `DebugController` system that respects the `hyperfixi:debug` localStorage flag.
+
+### SemanticAnalyzerInterface Mismatch
+
+The `SemanticAnalyzerInterface` type is defined independently in both `@hyperfixi/core` and `@lokascript/semantic`, requiring a double cast at their integration point (`hyperscript-api.ts:223`). Unifying this into a shared types package would eliminate the unsafe cast.
+
+### Architecture Decision Records Missing
+
+Parser comments reference "Phase 1", "Phase 4", "Phase 7", "Phase 8", "Phase 9-3a" — but there are no ADRs documenting what these phases were or why decisions were made. Future contributors will struggle to understand the parser's evolution.
+
+---
+
 ## Metrics to Track
 
 | Metric | Current | Target |
@@ -200,3 +248,5 @@ The compilation service already generates framework components:
 | Behavior implementations complete | 7/10 | 10/10 |
 | Bundle size (hybrid-complete, gzip) | 7.3 KB | <7 KB |
 | Test count | 8,100+ | 9,000+ |
+| `any` type uses (core) | 3,344 | <500 |
+| Dependabot vulnerabilities | 20 (1 critical) | 0 |
