@@ -30,6 +30,10 @@ on:
         type: string
         default: 'all'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_OPTIONS: --max-old-space-size=4096
 

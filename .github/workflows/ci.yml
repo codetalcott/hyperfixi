@@ -3,8 +3,18 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -160,7 +170,7 @@ jobs:
             packages/server-bridge/dist/
             packages/vite-plugin/dist/
             packages/language-server/dist/
-          retention-days: 1
+          retention-days: 3
 
   # ============================================
   # Job 2: Export Validation
@@ -545,7 +555,7 @@ jobs:
         with:
           name: playwright-report
           path: ./core/playwright-report/
-          retention-days: 7
+          retention-days: 3
 
   # ============================================
   # Job 7: Multilingual Validation
@@ -605,7 +615,7 @@ jobs:
         with:
           name: multilingual-test-results
           path: ./testing-framework/test-results/
-          retention-days: 30
+          retention-days: 3
 
   # ============================================
   # Job 8: Bundle Size Analysis
@@ -753,4 +763,4 @@ jobs:
         with:
           name: benchmark-results
           path: ./core/benchmark-results/
-          retention-days: 30
+          retention-days: 3

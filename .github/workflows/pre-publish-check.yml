@@ -9,6 +9,10 @@ on:
         type: string
         default: 'all'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pre-publish-check:
     name: Validate Publication Readiness
@@ -396,7 +400,7 @@ jobs:
         with:
           name: bundle-compatibility-report
           path: packages/core/playwright-report/
-          retention-days: 7
+          retention-days: 3
 
       - name: Final verdict
         run: |
