@@ -211,16 +211,9 @@ The `mcp-server` package exposes HyperFixi tools to LLM agents via [Model Contex
 
 ## Examples
 
-Run locally:
+Browse the interactive examples gallery at [hyperfixi.org/examples/](https://hyperfixi.org/examples/).
 
-```bash
-# Start local server
-npx http-server . -p 3000 -c-1
-
-# Then visit:
-# http://127.0.0.1:3000/examples/           # Gallery index
-# http://127.0.0.1:3000/examples/multilingual/  # Multilingual demos
-```
+Source lives in the [\_hyper_min](https://github.com/codetalcott/hyperfixi-docs) monorepo under `packages/examples/`.
 
 ## Language-Specific Bundles
 
