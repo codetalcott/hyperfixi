@@ -17,6 +17,7 @@ import {
   fromEnvelopeJSON,
   isEnvelope,
   validateProtocolJSON,
+  semanticNodeToRuntimeAST,
 } from './index';
 
 describe('LSE bridge', () => {
@@ -172,6 +173,52 @@ describe('LSE bridge', () => {
     it('non-envelope returns false', async () => {
       expect(await isEnvelope({ action: 'toggle' })).toBe(false);
       expect(await isEnvelope(null)).toBe(false);
+    });
+  });
+
+  describe('semanticNodeToRuntimeAST', () => {
+    it('converts a command node to runtime format', async () => {
+      const node = await parseExplicit('[toggle patient:.active]');
+      const ast = await semanticNodeToRuntimeAST(node);
+      expect(ast.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+      expect((ast as any).args).toHaveLength(1);
+      expect((ast as any).args[0]).toEqual(
+        expect.objectContaining({ type: 'selector', value: '.active' })
+      );
+      expect((ast as any).roles.patient).toEqual(
+        expect.objectContaining({ type: 'selector', value: '.active' })
+      );
+    });
+
+    it('converts multi-role command', async () => {
+      const node = await parseExplicit('[put patient:"hello" destination:#output]');
+      const ast = await semanticNodeToRuntimeAST(node);
+      expect(ast.type).toBe('command');
+      expect((ast as any).name).toBe('put');
+      expect((ast as any).args).toHaveLength(2);
+      expect((ast as any).roles.patient).toEqual(
+        expect.objectContaining({ type: 'literal', value: 'hello' })
+      );
+      expect((ast as any).roles.destination).toEqual(
+        expect.objectContaining({ type: 'selector', value: '#output' })
+      );
+    });
+
+    it('converts references to identifiers', async () => {
+      const node = await parseExplicit('[toggle patient:.active destination:me]');
+      const ast = await semanticNodeToRuntimeAST(node);
+      expect((ast as any).roles.destination).toEqual(
+        expect.objectContaining({ type: 'identifier', value: 'me' })
+      );
+    });
+
+    it('handles duration literals', async () => {
+      const node = await parseExplicit('[wait patient:"500ms"]');
+      const ast = await semanticNodeToRuntimeAST(node);
+      expect((ast as any).roles.patient).toEqual(
+        expect.objectContaining({ type: 'literal', value: '500ms' })
+      );
     });
   });
 });

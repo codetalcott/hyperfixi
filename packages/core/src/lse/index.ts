@@ -53,6 +53,9 @@ export type {
   AnnotationJSON,
   MatchArmJSON,
   LSEEnvelopeJSON,
+  RuntimeASTNode,
+  RuntimeCommandNode,
+  RuntimeEventNode,
 } from '@lokascript/framework';
 
 // Lazy-loaded framework module
@@ -184,4 +187,20 @@ export async function fromEnvelopeJSON(json: import('@lokascript/framework').LSE
 export async function isEnvelope(json: unknown): Promise<boolean> {
   const fw = await getFramework();
   return fw.isEnvelope(json);
+}
+
+/**
+ * Convert a SemanticNode (LSE IR) to a RuntimeASTNode that the core
+ * runtime can execute directly.
+ *
+ * @example
+ * ```typescript
+ * const node = await parseExplicit('[toggle patient:.active]');
+ * const ast = await semanticNodeToRuntimeAST(node);
+ * // Pass ast to runtime.execute()
+ * ```
+ */
+export async function semanticNodeToRuntimeAST(node: import('@lokascript/framework').SemanticNode) {
+  const fw = await getFramework();
+  return fw.semanticNodeToRuntimeAST(node);
 }

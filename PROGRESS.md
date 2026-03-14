@@ -2,9 +2,13 @@
 
 Tracking implementation of [parser-ecosystem-plan-v3.md](/Users/williamtalcott/projects/ideas/parser-ecosystem-plan-v3.md).
 
+## Workflow
+
+Each phase: implement → validate (typecheck + tests + bundle sizes) → commit → push → proceed to next phase.
+
 ## Phase 1: LSE as Canonical IR
 
-- [ ] 1.0 Dependency Spike
+- [x] 1.0 Dependency Spike — `df7d4b7d` (2026-03-14)
 - [ ] 1.1 Bridge LSE to Core Runtime
 - [ ] 1.2 LSE Diagnostics
 - [ ] 1.3 LSE API Surface
@@ -55,4 +59,4 @@ Tracking implementation of [parser-ecosystem-plan-v3.md](/Users/williamtalcott/p
 
 ## Decisions Log
 
-(key decisions made during implementation, with date and rationale)
+- **2026-03-14 — Phase 1.0: Option A (peer dep + separate entry point)** — `@lokascript/framework` as optional peer dep with `@hyperfixi/core/lse` subpath. Imports from root `@lokascript/framework` (not subpaths) because core uses `moduleResolution: "node"`. Dynamic `import()` for zero bundle overhead.

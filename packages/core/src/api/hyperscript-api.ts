@@ -387,6 +387,22 @@ export interface HyperscriptAPI {
   debug: DebugController;
 
   // ─────────────────────────────────────────────────────────────
+  // LSE (LokaScript Explicit Syntax)
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Execute LSE bracket syntax directly.
+   * Requires @lokascript/framework as a peer dependency.
+   *
+   * @example
+   * ```typescript
+   * await hyperscript.evalLSE('[toggle patient:.active]', button);
+   * await hyperscript.evalLSE('[add patient:.highlight destination:#output]');
+   * ```
+   */
+  evalLSE(lse: string, element?: Element): Promise<unknown>;
+
+  // ─────────────────────────────────────────────────────────────
   // CACHE
   // ─────────────────────────────────────────────────────────────
 
@@ -468,6 +484,29 @@ function isExecutionContext(value: unknown): value is ExecutionContext {
  */
 function hasMe(value: unknown): value is { me?: HTMLElement } {
   return typeof value === 'object' && value !== null && 'me' in value;
+}
+
+// ============================================================================
+// LSE Execution
+// ============================================================================
+
+/**
+ * Parse LSE bracket syntax and execute directly.
+ * Uses dynamic import to load @lokascript/framework — zero cost when unused.
+ */
+async function evalLSECode(lse: string, element?: Element): Promise<unknown> {
+  if (typeof lse !== 'string' || lse.trim().length === 0) {
+    throw new Error('LSE code must be a non-empty string');
+  }
+
+  // Dynamic import keeps framework out of the bundle when unused
+  const { parseExplicit, semanticNodeToRuntimeAST } = await import('../lse/index');
+  const node = await parseExplicit(lse);
+  const ast = await semanticNodeToRuntimeAST(node);
+
+  const executionContext = element ? createContext(element as HTMLElement) : createContext();
+
+  return await getDefaultRuntime().execute(ast as ASTNode, executionContext);
 }
 
 // ============================================================================
@@ -908,6 +947,9 @@ export const hyperscript: HyperscriptAPI = {
   getRegisteredHooks: () => {
     return getDefaultRuntime().getRegisteredHooks();
   },
+
+  // LSE execution
+  evalLSE: evalLSECode,
 
   // Cache management
   clearCache: () => astCache.clear(),
