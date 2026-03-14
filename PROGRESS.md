@@ -42,7 +42,7 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 ## Phase 6: Performance
 
 - [x] 6.1 Selective Memoization
-- [ ] 6.2 Binding Power Tree-Shake
+- [x] 6.2 Binding Power Tree-Shake
 
 ## Phase 7: Open the Doors
 
