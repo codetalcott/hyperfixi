@@ -15,8 +15,8 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 
 ## Phase 2: Core Parser Improvements
 
-- [x] 2.1 Tokenizer Migration (pending commit)
-- [ ] 2.2 Pratt Parser
+- [x] 2.1 Tokenizer Migration — `c71b522c` (2026-03-14)
+- [x] 2.2 Pratt Parser
 - [ ] 2.2b Expression Eval Consolidation
 - [ ] 2.3 Resilient Parsing
 - [ ] 2.4 ParserContext Slim-Down

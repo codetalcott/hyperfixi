@@ -94,6 +94,14 @@ import * as asyncCommands from './command-parsers/async-commands';
 import * as utilityCommands from './command-parsers/utility-commands';
 import * as variableCommands from './command-parsers/variable-commands';
 
+// Phase 2.2: Pratt parser for expression parsing
+import {
+  PARSER_TABLE,
+  STOP_TOKENS as PRATT_STOP_TOKENS,
+  STOP_DELIMITERS as PRATT_STOP_DELIMITERS,
+  type BindingPowerFragment,
+} from './pratt-parser';
+
 // Use core types for consistency
 export type ParseResult = CoreParseResult;
 // Re-export ParseError from ./types
@@ -481,24 +489,166 @@ export class Parser {
   }
 
   private parseExpression(): ASTNode {
-    return this.parseAssignment();
+    return this.parseExpressionPratt(0);
   }
 
+  // ============================================================================
+  // Phase 2.2: Pratt Expression Parser
+  // Replaces the cascading parseAssignment → parseLogicalOr → ... → parseUnary chain.
+  // ============================================================================
+
+  /** The binding power table for expression parsing. */
+  private static readonly PRATT_TABLE: BindingPowerFragment = PARSER_TABLE;
+
+  /**
+   * Pratt expression parser — the core ~30 line loop.
+   * Replaces 9 cascading precedence methods with a single data-driven loop.
+   *
+   * @param minBp - Minimum binding power to continue parsing infix operators
+   */
+  private parseExpressionPratt(minBp: number): ASTNode {
+    // --- NUD (prefix / atom) ---
+    if (this.isAtEnd()) {
+      this.addError('Unexpected end of expression');
+      return this.createErrorNode();
+    }
+
+    const firstToken = this.peek();
+    const prefixEntry = Parser.PRATT_TABLE.get(firstToken.value);
+    let left: ASTNode;
+
+    if (prefixEntry?.prefix) {
+      const token = this.advance();
+
+      // Handle missing operand for prefix operators
+      if (this.isAtEnd()) {
+        this.addError(`Expected expression after '${token.value}' operator`);
+        return this.createErrorNode();
+      }
+
+      left = prefixEntry.prefix.handler(token, this.makePrattContext());
+    } else {
+      // Fallback: parseCall → parsePrimary chain for atoms
+      left = this.parseCall();
+    }
+
+    // --- LED (infix) loop ---
+    while (!this.isAtEnd()) {
+      const nextToken = this.peek();
+
+      // Check infix table FIRST — operators like 'in' are both stop tokens
+      // and comparison operators; the Pratt table takes priority.
+      const infixEntry = Parser.PRATT_TABLE.get(nextToken.value);
+      if (!infixEntry?.infix) {
+        // Not an operator — check stop tokens and delimiters
+        if (PRATT_STOP_TOKENS.has(nextToken.value) || PRATT_STOP_DELIMITERS.has(nextToken.value)) {
+          break;
+        }
+        break; // Unknown token and not a stop token — can't continue infix loop
+      }
+
+      const [leftBp] = infixEntry.infix.bp;
+      if (leftBp < minBp) break;
+
+      // Special case: '=' followed by '>' is arrow function syntax (not assignment)
+      if (nextToken.value === '=') {
+        if (this.current + 1 < this.tokens.length && this.tokens[this.current + 1].value === '>') {
+          this.advance(); // consume '='
+          this.advance(); // consume '>'
+          this.addError(
+            'Arrow functions (=>) are not supported in hyperscript. ' +
+              'Use "js ... end" blocks for JavaScript callbacks.'
+          );
+          // Recovery: try to parse and discard the arrow body
+          if (!this.isAtEnd()) {
+            try {
+              this.parseExpressionPratt(0);
+            } catch {
+              /* recovery */
+            }
+          }
+          return this.createErrorNode();
+        }
+      }
+
+      // Special case: check for double operators (e.g., '++', '+-', '**')
+      if (nextToken.value === '+' || nextToken.value === '-') {
+        const afterOp =
+          this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+        if (afterOp && (afterOp.value === '+' || afterOp.value === '-')) {
+          this.addError(`Invalid operator combination: ${nextToken.value}${afterOp.value}`);
+          return left;
+        }
+      }
+      if (nextToken.value === '*' || nextToken.value === '/' || nextToken.value === '%') {
+        const afterOp =
+          this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+        if (
+          afterOp &&
+          (afterOp.value === '*' ||
+            afterOp.value === '/' ||
+            afterOp.value === '%' ||
+            afterOp.value === '+' ||
+            afterOp.value === '-')
+        ) {
+          if (nextToken.value === '*' && afterOp.value === '*') {
+            this.addError(`Unexpected token: ${afterOp.value}`);
+          } else {
+            this.addError(`Invalid operator combination: ${nextToken.value}${afterOp.value}`);
+          }
+          return left;
+        }
+      }
+
+      const opToken = this.advance();
+
+      // Check for missing right operand
+      if (this.isAtEnd() && !Parser.POSTFIX_UNARY_OPERATORS.has(opToken.value)) {
+        this.addError(`Expected expression after '${opToken.value}' operator`);
+        return left;
+      }
+
+      left = infixEntry.infix.handler(left, opToken, this.makePrattContext());
+    }
+
+    return left;
+  }
+
+  /** Create a PrattContext adapter that bridges the Pratt interface to the Parser's internal state. */
+  private makePrattContext() {
+    const self = this;
+    return {
+      peek: () => (self.current < self.tokens.length ? self.tokens[self.current] : undefined),
+      advance: () => {
+        const token = self.tokens[self.current];
+        self.current++;
+        return token;
+      },
+      parseExpr: (bp: number) => self.parseExpressionPratt(bp),
+      isStopToken: () => {
+        const t = self.tokens[self.current];
+        if (!t) return true;
+        return PRATT_STOP_TOKENS.has(t.value) || PRATT_STOP_DELIMITERS.has(t.value);
+      },
+      atEnd: () => self.current >= self.tokens.length,
+    };
+  }
+
+  // ============================================================================
+  // Legacy expression chain methods (kept for reference, no longer called)
+  // These will be removed in a follow-up cleanup.
+  // ============================================================================
+
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseAssignment(): ASTNode {
     let expr = this.parseLogicalOr();
-
-    // Right associative - assignment operators associate right-to-left
     if (this.match('=')) {
-      // Detect arrow function syntax: identifier => expression
-      // The tokenizer produces '=' and '>' as separate tokens ('=>' is not a two-char operator).
-      // Note: '>=' is a single token so match('=') won't fire on it.
       if (this.check('>')) {
-        this.advance(); // consume '>'
+        this.advance();
         this.addError(
           'Arrow functions (=>) are not supported in hyperscript. ' +
             'Use "js ... end" blocks for JavaScript callbacks.'
         );
-        // Recovery: try to parse and discard the arrow body
         if (!this.isAtEnd()) {
           try {
             this.parseExpression();
@@ -508,42 +658,38 @@ export class Parser {
         }
         return this.createErrorNode();
       }
-
       const operator = this.previous().value;
-      const right = this.parseAssignment(); // Recursive call for right associativity
+      const right = this.parseAssignment();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseLogicalOr(): ASTNode {
     let expr = this.parseLogicalAnd();
-
     while (this.match('or')) {
       const operator = this.previous().value;
       const right = this.parseLogicalAnd();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseLogicalAnd(): ASTNode {
     let expr = this.parseEquality();
-
     while (this.match('and')) {
       const operator = this.previous().value;
       const right = this.parseEquality();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseEquality(): ASTNode {
     let expr = this.parseComparison();
-
     while (
       this.matchComparisonOperator() ||
       this.match(
@@ -560,71 +706,55 @@ export class Parser {
       )
     ) {
       const operator = this.previous().value;
-
-      // Handle postfix unary operators (no right operand)
       if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
-        expr = this.createUnaryExpression(operator, expr, false); // false = postfix
+        expr = this.createUnaryExpression(operator, expr, false);
         continue;
       }
-
       const right = this.parseComparison();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseComparison(): ASTNode {
     let expr = this.parseAddition();
-
     while (this.matchComparisonOperator()) {
       const operator = this.previous().value;
-
-      // Handle postfix unary operators (no right operand)
       if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
-        expr = this.createUnaryExpression(operator, expr, false); // false = postfix
+        expr = this.createUnaryExpression(operator, expr, false);
         continue;
       }
-
       const right = this.parseAddition();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseAddition(): ASTNode {
     let expr = this.parseMultiplication();
-
     while (this.match('+', '-') || this.matchOperator('+') || this.matchOperator('-')) {
       const operator = this.previous().value;
-
-      // Check for double operators like '++' or '+-'
       if (this.check('+') || this.check('-')) {
         this.addError(`Invalid operator combination: ${operator}${this.peek().value}`);
         return expr;
       }
-
-      // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return expr;
       }
-
       const right = this.parseMultiplication();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseMultiplication(): ASTNode {
     let expr = this.parseUnary();
-
     while (this.match('*', '/', '%', 'mod')) {
       const operator = this.previous().value;
-
-      // Check for double operators
       if (
         this.check('*') ||
         this.check('/') ||
@@ -633,7 +763,6 @@ export class Parser {
         this.check('-')
       ) {
         const nextOp = this.peek().value;
-        // Special handling for ** which should be "Unexpected token"
         if (operator === '*' && nextOp === '*') {
           this.addError(`Unexpected token: ${nextOp}`);
         } else {
@@ -641,38 +770,27 @@ export class Parser {
         }
         return expr;
       }
-
-      // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return expr;
       }
-
       const right = this.parseUnary();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseUnary(): ASTNode {
-    // Handle single-word unary operators
     if (this.match('not', 'no', 'exists', 'some', '-', '+')) {
       const operator = this.previous().value;
-
-      // Only flag as missing operand if this starts a complex expression and lacks proper context
-      // Valid unary: "-5", "not true", "no value", "+number", "exists value", "some array"
-      // Invalid: "5 + + 3" (handled elsewhere), standalone "+" (handled below)
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return this.createErrorNode();
       }
-
       const expr = this.parseUnary();
       return this.createUnaryExpression(operator, expr, true);
     }
-
-    // Handle multi-word unary operator: "does not exist"
     if (
       this.check('does') &&
       this.current + 1 < this.tokens.length &&
@@ -680,19 +798,16 @@ export class Parser {
       this.current + 2 < this.tokens.length &&
       this.tokens[this.current + 2].value === 'exist'
     ) {
-      this.advance(); // consume 'does'
-      this.advance(); // consume 'not'
-      this.advance(); // consume 'exist'
-
+      this.advance();
+      this.advance();
+      this.advance();
       if (this.isAtEnd()) {
         this.addError(`Expected expression after 'does not exist' operator`);
         return this.createErrorNode();
       }
-
       const expr = this.parseUnary();
       return this.createUnaryExpression('does not exist', expr, true);
     }
-
     return this.parseImplicitBinary();
   }
 
