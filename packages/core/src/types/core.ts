@@ -273,6 +273,7 @@ export interface ParseResult<T = ASTNode> {
   node?: T;
   ast?: T; // Alias for node - some code uses ast instead of node
   error?: ParseError;
+  errors?: ParseError[]; // All accumulated errors (resilient parsing)
   warnings?: ParseWarning[];
   tokens: Token[];
 }

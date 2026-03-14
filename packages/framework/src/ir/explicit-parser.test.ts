@@ -304,3 +304,88 @@ describe('parseExplicit — custom reference set', () => {
     });
   });
 });
+
+// ===========================================================================
+// collectDiagnostics mode (v1.2.1)
+// ===========================================================================
+
+describe('parseExplicit — collectDiagnostics', () => {
+  const toggleSchema = defineCommand({
+    action: 'toggle',
+    roles: [
+      defineRole({ role: 'patient', required: true, expectedTypes: ['selector'] }),
+      defineRole({ role: 'destination', required: false, expectedTypes: ['selector'] }),
+    ],
+  });
+
+  const schemaLookup: SchemaLookup = {
+    getSchema(action: string) {
+      if (action === 'toggle') return toggleSchema;
+      return undefined;
+    },
+  };
+
+  const collectOpts: ParseExplicitOptions = { schemaLookup, collectDiagnostics: true };
+
+  it('returns node with diagnostics for unknown role', () => {
+    const node = parseExplicit('[toggle patient:.active badRole:foo]', collectOpts);
+    expect(node.action).toBe('toggle');
+    expect(node.diagnostics).toHaveLength(1);
+    expect(node.diagnostics![0].severity).toBe('error');
+    expect(node.diagnostics![0].code).toBe('UNKNOWN_ROLE');
+    expect(node.diagnostics![0].message).toContain('badRole');
+    expect(node.diagnostics![0].source).toBe('schema');
+    expect(node.diagnostics![0].suggestions).toContain('patient');
+  });
+
+  it('returns node with diagnostics for missing required role', () => {
+    const node = parseExplicit('[toggle destination:.active]', collectOpts);
+    expect(node.action).toBe('toggle');
+    expect(node.diagnostics).toHaveLength(1);
+    expect(node.diagnostics![0].code).toBe('MISSING_REQUIRED_ROLE');
+    expect(node.diagnostics![0].message).toContain('patient');
+  });
+
+  it('returns node with diagnostics for unknown flag', () => {
+    const node = parseExplicit('[toggle patient:.active +badFlag]', collectOpts);
+    expect(node.diagnostics).toHaveLength(1);
+    expect(node.diagnostics![0].code).toBe('UNKNOWN_FLAG');
+  });
+
+  it('returns node with diagnostics for invalid role format', () => {
+    const node = parseExplicit('[toggle patient:.active noColonHere]', collectOpts);
+    expect(node.diagnostics).toHaveLength(1);
+    expect(node.diagnostics![0].code).toBe('INVALID_ROLE_FORMAT');
+  });
+
+  it('collects multiple diagnostics', () => {
+    const node = parseExplicit('[toggle badRole:foo +badFlag]', collectOpts);
+    // unknown role + unknown flag + missing required role (patient)
+    expect(node.diagnostics!.length).toBeGreaterThanOrEqual(2);
+    const codes = node.diagnostics!.map(d => d.code);
+    expect(codes).toContain('UNKNOWN_ROLE');
+    expect(codes).toContain('UNKNOWN_FLAG');
+  });
+
+  it('returns clean node when no errors (no diagnostics field)', () => {
+    const node = parseExplicit('[toggle patient:.active]', collectOpts);
+    expect(node.action).toBe('toggle');
+    expect(node.diagnostics).toBeUndefined();
+  });
+
+  it('still throws on fatal errors (missing brackets)', () => {
+    expect(() => parseExplicit('toggle patient:.active', collectOpts)).toThrow(
+      'Explicit syntax must be wrapped in brackets'
+    );
+  });
+
+  it('still throws on empty input', () => {
+    expect(() => parseExplicit('[]', collectOpts)).toThrow('Empty explicit statement');
+  });
+
+  it('returns diagnostics on event handler missing event role', () => {
+    const node = parseExplicit('[on body:[toggle patient:.active]]', collectOpts);
+    expect(node.diagnostics).toHaveLength(1);
+    expect(node.diagnostics![0].code).toBe('MISSING_EVENT_ROLE');
+  });
+});

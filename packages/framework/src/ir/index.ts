@@ -64,3 +64,7 @@ export {
 
 // Interchange AST → SemanticNode converter
 export { fromInterchangeNode, convertValue, renderExpr } from './from-interchange';
+
+// SemanticNode → Runtime AST converter (for core runtime execution)
+export { semanticNodeToRuntimeAST, semanticValueToAST } from './to-runtime-ast';
+export type { RuntimeASTNode, RuntimeCommandNode, RuntimeEventNode } from './to-runtime-ast';

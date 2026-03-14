@@ -17,7 +17,6 @@ import type {
   CompiledHandler,
   FallbackScript,
   EventHandlerNode,
-  CommandNode,
   PreRenderResult,
 } from '../types/aot-types.js';
 import { HTMLScanner, VueScanner, SvelteScanner, JSXScanner } from '../scanner/html-scanner.js';
@@ -30,9 +29,7 @@ import {
   isExplicitSyntax,
   parseExplicit,
   fromProtocolJSON,
-  type SemanticNode,
-  type EventHandlerSemanticNode,
-  type SemanticValue,
+  semanticNodeToRuntimeAST,
 } from '@lokascript/framework';
 
 // =============================================================================
@@ -170,7 +167,7 @@ export class AOTCompiler {
     if (isExplicitSyntax(code)) {
       try {
         const node = parseExplicit(code);
-        ast = this.semanticNodeToAOT(node);
+        ast = semanticNodeToRuntimeAST(node) as ASTNode;
         if (debug) {
           console.log(`[aot] Parsed explicit syntax: "${code}"`);
         }
@@ -187,7 +184,7 @@ export class AOTCompiler {
       try {
         const json = JSON.parse(code.trim());
         const node = fromProtocolJSON(json);
-        ast = this.semanticNodeToAOT(node);
+        ast = semanticNodeToRuntimeAST(node) as ASTNode;
         if (debug) {
           console.log(`[aot] Parsed JSON input: "${code.slice(0, 80)}..."`);
         }
@@ -470,68 +467,6 @@ export class AOTCompiler {
     return ast;
   }
 
-  /**
-   * Convert a framework SemanticNode to an AOT ASTNode.
-   * Handles the simple cases produced by explicit/JSON parsing.
-   */
-  private semanticNodeToAOT(node: SemanticNode): ASTNode {
-    if (node.kind === 'event-handler') {
-      const eh = node as EventHandlerSemanticNode;
-      const eventValue = eh.roles.get('event');
-      const eventName = eventValue && 'value' in eventValue ? String(eventValue.value) : 'click';
-      return {
-        type: 'event',
-        event: eventName,
-        modifiers: {},
-        body: (eh.body ?? []).map((child: SemanticNode) => this.semanticNodeToAOT(child)),
-      } as EventHandlerNode;
-    }
-
-    // Command node
-    const roles: Record<string, ASTNode> = {};
-    const args: ASTNode[] = [];
-
-    for (const [roleName, value] of node.roles) {
-      const astValue = this.semanticValueToAOT(value);
-      roles[roleName] = astValue;
-      args.push(astValue);
-    }
-
-    return {
-      type: 'command',
-      name: node.action,
-      args,
-      roles,
-    } as CommandNode;
-  }
-
-  /**
-   * Convert a SemanticValue to an ASTNode.
-   */
-  private semanticValueToAOT(value: SemanticValue): ASTNode {
-    switch (value.type) {
-      case 'selector':
-        return { type: 'selector', value: value.value as string };
-      case 'reference':
-        return { type: 'identifier', value: value.value as string };
-      case 'literal': {
-        const lit = value as { value: unknown; dataType?: string };
-        if (lit.dataType === 'duration') {
-          // Parse duration to ms
-          const str = String(lit.value);
-          const match = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(str);
-          if (match) {
-            const ms = match[2] === 's' ? parseFloat(match[1]) * 1000 : parseFloat(match[1]);
-            return { type: 'literal', value: ms };
-          }
-        }
-        return { type: 'literal', value: lit.value as string | number | boolean | null };
-      }
-      default:
-        return { type: 'literal', value: String((value as { value?: unknown }).value ?? '') };
-    }
-  }
-
   // ===========================================================================
   // ANALYSIS
   // ===========================================================================
@@ -790,8 +725,8 @@ export class AOTCompiler {
   compileExplicit(code: string, options: CompileOptions = {}): CompilationResult {
     try {
       const ast = isExplicitSyntax(code)
-        ? this.semanticNodeToAOT(parseExplicit(code))
-        : this.semanticNodeToAOT(fromProtocolJSON(JSON.parse(code.trim())));
+        ? (semanticNodeToRuntimeAST(parseExplicit(code)) as ASTNode)
+        : (semanticNodeToRuntimeAST(fromProtocolJSON(JSON.parse(code.trim()))) as ASTNode);
 
       return this.compileAST(ast, options);
     } catch (error) {

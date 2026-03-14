@@ -9,10 +9,10 @@ import type { LanguagePattern } from '../types';
 import { englishProfile } from '../generators/profiles/english';
 import { generatePatternsForLanguage } from '../generators/pattern-generator';
 
-// Import directly from per-language files for tree-shaking
-import { getTogglePatternsEn } from './toggle/en';
-import { getPutPatternsEn } from './put/en';
-import { getEventHandlerPatternsEn } from './event-handler/en';
+// Import from consolidated pattern files (Phase 3.2)
+import { getTogglePatternsForLanguage } from './toggle';
+import { getPutPatternsForLanguage } from './put';
+import { getEventHandlerPatternsForLanguage } from './event-handler';
 
 // =============================================================================
 // Hand-crafted English-only patterns
@@ -275,9 +275,9 @@ export function buildEnglishPatterns(): LanguagePattern[] {
   const patterns: LanguagePattern[] = [];
 
   // 1. Hand-crafted patterns
-  patterns.push(...getTogglePatternsEn());
-  patterns.push(...getPutPatternsEn());
-  patterns.push(...getEventHandlerPatternsEn());
+  patterns.push(...getTogglePatternsForLanguage('en'));
+  patterns.push(...getPutPatternsForLanguage('en'));
+  patterns.push(...getEventHandlerPatternsForLanguage('en'));
 
   // 2. English-only hand-crafted patterns
   patterns.push(

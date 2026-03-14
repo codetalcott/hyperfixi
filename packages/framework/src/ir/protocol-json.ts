@@ -54,6 +54,7 @@ import {
 import type {
   ProtocolNodeJSON,
   ProtocolValueJSON,
+  ProtocolDiagnosticJSON,
   ProtocolChainType,
   IRDiagnostic,
   LSEEnvelopeJSON,
@@ -164,14 +165,18 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
     );
   }
 
-  // v1.2: diagnostics (all node kinds)
+  // v1.2/v1.2.1: diagnostics (all node kinds)
   if (node.diagnostics && node.diagnostics.length > 0) {
-    result.diagnostics = node.diagnostics.map(d => ({
-      level: d.level,
-      role: d.role,
-      message: d.message,
-      code: d.code,
-    }));
+    result.diagnostics = node.diagnostics.map(d => {
+      const json: ProtocolDiagnosticJSON = {
+        level: d.severity,
+        message: d.message,
+      };
+      if (d.code) json.code = d.code;
+      if (d.source) json.source = d.source;
+      if (d.suggestions && d.suggestions.length > 0) json.suggestions = [...d.suggestions];
+      return json;
+    });
   }
 
   return result;
@@ -252,10 +257,11 @@ export function fromProtocolJSON(json: ProtocolNodeJSON): SemanticNode {
     a.value !== undefined ? { name: a.name, value: a.value } : { name: a.name }
   );
   const diagnostics = json.diagnostics?.map(d => ({
-    level: d.level as 'error' | 'warning',
-    role: d.role,
+    severity: d.level as 'error' | 'warning' | 'info',
     message: d.message,
-    code: d.code,
+    ...(d.code ? { code: d.code } : {}),
+    ...(d.source ? { source: d.source } : {}),
+    ...(d.suggestions && d.suggestions.length > 0 ? { suggestions: d.suggestions } : {}),
   }));
 
   // trigger sugar: wrap command in event handler (check before kind dispatch)
@@ -361,7 +367,13 @@ function applyV12Metadata(
   node: SemanticNode,
   annotations: Array<{ name: string; value?: string }> | undefined,
   diagnostics:
-    | Array<{ level: 'error' | 'warning'; role: string; message: string; code: string }>
+    | Array<{
+        severity: 'error' | 'warning' | 'info';
+        message: string;
+        code?: string;
+        source?: string;
+        suggestions?: string[];
+      }>
     | undefined
 ): SemanticNode {
   if ((!annotations || annotations.length === 0) && (!diagnostics || diagnostics.length === 0)) {
@@ -460,7 +472,7 @@ const VALID_VALUE_TYPES = new Set([
 ]);
 const VALID_CHAIN_TYPES = new Set(['then', 'and', 'async', 'sequential', 'pipe']);
 const VALID_ASYNC_VARIANTS = new Set(['all', 'race']);
-const VALID_DIAGNOSTIC_LEVELS = new Set(['error', 'warning']);
+const VALID_DIAGNOSTIC_LEVELS = new Set(['error', 'warning', 'info']);
 
 /**
  * Validate that an unknown value conforms to the protocol JSON format.
@@ -637,14 +649,7 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
           diagnostics.push({
             severity: 'error',
             code: 'INVALID_DIAGNOSTIC_LEVEL',
-            message: `diagnostics[${i}].level must be "error" or "warning"`,
-          });
-        }
-        if (typeof d.role !== 'string') {
-          diagnostics.push({
-            severity: 'error',
-            code: 'MISSING_DIAGNOSTIC_ROLE',
-            message: `diagnostics[${i}] missing required field: role`,
+            message: `diagnostics[${i}].level must be "error", "warning", or "info"`,
           });
         }
         if (typeof d.message !== 'string') {
@@ -654,11 +659,12 @@ export function validateProtocolJSON(json: unknown): IRDiagnostic[] {
             message: `diagnostics[${i}] missing required field: message`,
           });
         }
-        if (typeof d.code !== 'string') {
+        // v1.2.1: role and code are now optional
+        if ('code' in d && typeof d.code !== 'string') {
           diagnostics.push({
-            severity: 'error',
-            code: 'MISSING_DIAGNOSTIC_CODE',
-            message: `diagnostics[${i}] missing required field: code`,
+            severity: 'warning',
+            code: 'INVALID_DIAGNOSTIC_CODE',
+            message: `diagnostics[${i}].code must be a string if present`,
           });
         }
       }

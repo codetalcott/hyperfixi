@@ -1,8 +1,5 @@
-/**
- * Thai Dictionary
- *
- * Thai translations for hyperscript keywords.
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
@@ -53,7 +50,16 @@ export const thaiDictionary: Dictionary = {
     clone: 'คัดลอก',
     swap: 'สลับที่',
     morph: 'แปลงร่าง',
+    beep: 'บี๊บ',
+    break: 'ขัดจังหวะ',
+    copy: 'คัดลอก',
+    exit: 'ออก',
+    js: 'เจเอส',
+    pick: 'เลือก',
+    render: 'แสดงผล',
+    until: 'จนถึง',
   },
+
   modifiers: {
     to: 'ไปยัง',
     from: 'จาก',
@@ -73,6 +79,7 @@ export const thaiDictionary: Dictionary = {
     until: 'จนถึง',
     of: 'ของ',
   },
+
   events: {
     click: 'คลิก',
     change: 'เปลี่ยนแปลง',
@@ -89,6 +96,7 @@ export const thaiDictionary: Dictionary = {
     resize: 'ปรับขนาด',
     every: 'ทุก',
   },
+
   logical: {
     if: 'ถ้า',
     when: 'เมื่อ',
@@ -99,14 +107,17 @@ export const thaiDictionary: Dictionary = {
     or: 'หรือ',
     is: 'เป็น',
     exists: 'มีอยู่',
-    has: 'มี', // possession verb (context-based)
-    have: 'มี', // same for first/third person
+    has: 'มี',
+    have: 'มี',
     empty: 'ว่าง',
     true: 'จริง',
     false: 'เท็จ',
     null: 'ว่าง',
     undefined: 'ไม่กำหนด',
+    end: 'จบ',
+    then: 'แล้ว',
   },
+
   temporal: {
     now: 'ตอนนี้',
     seconds: 'วินาที',
@@ -118,6 +129,7 @@ export const thaiDictionary: Dictionary = {
     s: 'วิ',
     ms: 'มว',
   },
+
   values: {
     me: 'ฉัน',
     my: 'ของฉัน',
@@ -127,7 +139,10 @@ export const thaiDictionary: Dictionary = {
     event: 'เหตุการณ์',
     target: 'เป้าหมาย',
     body: 'บอดี้',
+    you: 'คุณ',
+    your: 'ของคุณ',
   },
+
   attributes: {
     class: 'คลาส',
     id: 'ไอดี',
@@ -138,6 +153,7 @@ export const thaiDictionary: Dictionary = {
     disabled: 'ปิดใช้งาน',
     checked: 'เลือกแล้ว',
   },
+
   expressions: {
     first: 'แรก',
     last: 'สุดท้าย',
@@ -152,5 +168,4 @@ export const thaiDictionary: Dictionary = {
   },
 };
 
-// Default export alias
 export const th = thaiDictionary;

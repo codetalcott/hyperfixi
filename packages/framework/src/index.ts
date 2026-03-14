@@ -151,6 +151,13 @@ export { defineCommand, defineRole } from './schema';
 export { createSimpleTokenizer } from './core/tokenization/base-tokenizer';
 export type { SimpleTokenizerConfig } from './core/tokenization/base-tokenizer';
 
+// Morphological normalization base class and types
+export { BaseMorphologicalNormalizer } from './core/tokenization/morphology/base-normalizer';
+export type {
+  ConjugationEnding,
+  NormalizerConfig,
+} from './core/tokenization/morphology/base-normalizer';
+
 // IR (Intermediate Representation) — explicit syntax, JSON conversion, reference validation
 export * from './ir';
 

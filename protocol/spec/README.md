@@ -1,6 +1,6 @@
 # LokaScript Explicit Syntax (LSE) Specification
 
-**Version**: 1.0.0
+**Version**: 1.2.0
 
 ## Overview
 

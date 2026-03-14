@@ -18,6 +18,9 @@ export type {
 
 import type { SemanticRole } from './types/grammar-types';
 
+// Re-export Diagnostic from framework for structured error reporting (Phase 3.4)
+export type { Diagnostic, DiagnosticSeverity } from '@lokascript/framework';
+
 // =============================================================================
 // Action Types
 // =============================================================================
@@ -170,6 +173,8 @@ export interface SemanticNode {
   readonly action: ActionType;
   readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly metadata?: SemanticMetadata;
+  /** Structured diagnostics from parsing stages (Phase 3.4) */
+  readonly diagnostics?: readonly import('@lokascript/framework').Diagnostic[];
 }
 
 /**

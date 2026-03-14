@@ -1,0 +1,31 @@
+{
+  "name": "@lokascript/lse-conformance",
+  "version": "1.2.0",
+  "description": "Conformance test fixtures for the LokaScript Explicit Syntax (LSE) protocol",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./fixtures/*.json": "./fixtures/*.json",
+    "./*.json": "./*.json"
+  },
+  "files": [
+    "*.json",
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "lokascript",
+    "lse",
+    "conformance",
+    "test-fixtures",
+    "protocol"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codetalcott/hyperfixi",
+    "directory": "protocol/test-fixtures"
+  }
+}

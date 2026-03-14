@@ -10,6 +10,7 @@ export const englishProfile: LanguageProfile = {
   code: 'en',
   name: 'English',
   nativeName: 'English',
+  regions: ['western', 'priority'],
   direction: 'ltr',
   script: 'latin',
   wordOrder: 'SVO',

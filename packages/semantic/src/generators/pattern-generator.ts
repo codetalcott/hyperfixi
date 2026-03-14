@@ -141,7 +141,7 @@ export function generateSimplePattern(
   // Adjust for simple variant
   return {
     ...pattern,
-    id: `${schema.action}-${profile.code}-simple`,
+    id: `${schema.action}-${profile.code}-generated-simple`,
     priority: (config.basePriority ?? 100) - 5, // Lower priority than full pattern (was -10)
     extraction: buildExtractionRulesWithDefaults(schema, profile),
   };

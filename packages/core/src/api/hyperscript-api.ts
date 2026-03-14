@@ -280,10 +280,13 @@ export interface CompileResult {
   /** Compilation errors (present if ok=false) */
   errors?: CompileError[];
 
+  /** LSE SemanticNode representation (when available) */
+  lse?: unknown;
+
   /** Metadata about the compilation */
   meta: {
     /** Which parser was used */
-    parser: 'semantic' | 'traditional';
+    parser: 'semantic' | 'traditional' | 'lse';
     /** Confidence score if semantic parser was used */
     confidence?: number;
     /** Language detected/used */
@@ -387,6 +390,57 @@ export interface HyperscriptAPI {
   debug: DebugController;
 
   // ─────────────────────────────────────────────────────────────
+  // LSE (LokaScript Explicit Syntax)
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Execute LSE bracket syntax directly.
+   * Requires @lokascript/framework as a peer dependency.
+   *
+   * @example
+   * ```typescript
+   * await hyperscript.evalLSE('[toggle patient:.active]', button);
+   * await hyperscript.evalLSE('[add patient:.highlight destination:#output]');
+   * ```
+   */
+  evalLSE(lse: string, element?: Element): Promise<unknown>;
+
+  /**
+   * Compile LSE bracket syntax to an executable AST.
+   * Returns a CompileResult with parser='lse' and the SemanticNode in `lse`.
+   *
+   * @example
+   * ```typescript
+   * const result = await hyperscript.compileLSE('[toggle patient:.active]');
+   * if (result.ok) await hyperscript.execute(result.ast!);
+   * ```
+   */
+  compileLSE(lse: string): Promise<CompileResult>;
+
+  /**
+   * Convert natural language hyperscript to LSE bracket syntax.
+   * Requires @lokascript/semantic for non-English languages.
+   *
+   * @example
+   * ```typescript
+   * const lse = await hyperscript.toLSE('toggle .active');
+   * // "[toggle patient:.active]"
+   * ```
+   */
+  toLSE(code: string, language?: string): Promise<string>;
+
+  /**
+   * Convert LSE bracket syntax to natural language hyperscript.
+   *
+   * @example
+   * ```typescript
+   * const en = await hyperscript.fromLSE('[toggle patient:.active]', 'en');
+   * // "toggle .active"
+   * ```
+   */
+  fromLSE(lse: string, language: string): Promise<string>;
+
+  // ─────────────────────────────────────────────────────────────
   // CACHE
   // ─────────────────────────────────────────────────────────────
 
@@ -468,6 +522,114 @@ function isExecutionContext(value: unknown): value is ExecutionContext {
  */
 function hasMe(value: unknown): value is { me?: HTMLElement } {
   return typeof value === 'object' && value !== null && 'me' in value;
+}
+
+// ============================================================================
+// LSE Execution
+// ============================================================================
+
+/**
+ * Parse LSE bracket syntax and execute directly.
+ * Uses dynamic import to load @lokascript/framework — zero cost when unused.
+ */
+async function evalLSECode(lse: string, element?: Element): Promise<unknown> {
+  if (typeof lse !== 'string' || lse.trim().length === 0) {
+    throw new Error('LSE code must be a non-empty string');
+  }
+
+  // Dynamic import keeps framework out of the bundle when unused
+  const { parseExplicit, semanticNodeToRuntimeAST } = await import('../lse/index');
+  const node = await parseExplicit(lse);
+  const ast = await semanticNodeToRuntimeAST(node);
+
+  const executionContext = element ? createContext(element as HTMLElement) : createContext();
+
+  return await getDefaultRuntime().execute(ast as ASTNode, executionContext);
+}
+
+/**
+ * Compile LSE bracket syntax to a CompileResult.
+ */
+async function compileLSECode(lse: string): Promise<CompileResult> {
+  const start = performance.now();
+
+  if (typeof lse !== 'string' || lse.trim().length === 0) {
+    return {
+      ok: false,
+      errors: [{ message: 'LSE code must be a non-empty string', line: 0, column: 0 }],
+      meta: { parser: 'lse', language: 'explicit', timeMs: performance.now() - start },
+    };
+  }
+
+  try {
+    const { parseExplicit, semanticNodeToRuntimeAST } = await import('../lse/index');
+    const node = await parseExplicit(lse, { collectDiagnostics: true });
+    const ast = await semanticNodeToRuntimeAST(node);
+
+    // Check for error-level diagnostics
+    const errors = node.diagnostics?.filter((d: { severity: string }) => d.severity === 'error');
+    const hasErrors = errors && errors.length > 0;
+
+    return {
+      ok: !hasErrors,
+      ast: hasErrors ? undefined : (ast as ASTNode),
+      lse: node,
+      ...(hasErrors
+        ? {
+            errors: errors.map((d: { message: string }) => ({
+              message: d.message,
+              line: 0,
+              column: 0,
+            })),
+          }
+        : {}),
+      meta: {
+        parser: 'lse',
+        language: 'explicit',
+        timeMs: performance.now() - start,
+      },
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      errors: [{ message: (e as Error).message, line: 0, column: 0 }],
+      meta: { parser: 'lse', language: 'explicit', timeMs: performance.now() - start },
+    };
+  }
+}
+
+/**
+ * Convert natural language to LSE bracket syntax.
+ * Uses semantic parser for language detection and rendering.
+ */
+async function toLSECode(code: string, language?: string): Promise<string> {
+  const lang = language || DEFAULT_LANGUAGE;
+
+  // For English: parse with core parser, convert to SemanticNode, render as LSE
+  // For other languages: use semantic parser
+  const { parseSemantic } = await import('@lokascript/semantic');
+  const { renderExplicit } = await import('../lse/index');
+
+  const result = parseSemantic(code, lang);
+  if (!result || !result.node) {
+    throw new Error(`Failed to parse "${code}" as ${lang} hyperscript`);
+  }
+
+  return await renderExplicit(result.node);
+}
+
+/**
+ * Convert LSE bracket syntax to natural language.
+ * Uses semantic renderer.
+ */
+async function fromLSECode(lse: string, language: string): Promise<string> {
+  const { render } = await import('@lokascript/semantic');
+  const { parseExplicit } = await import('../lse/index');
+
+  const node = await parseExplicit(lse);
+  // Cast needed: framework and semantic SemanticNode types are structurally
+  // compatible but TypeScript sees them as nominally distinct
+  return render(node as Parameters<typeof render>[0], language);
 }
 
 // ============================================================================
@@ -908,6 +1070,12 @@ export const hyperscript: HyperscriptAPI = {
   getRegisteredHooks: () => {
     return getDefaultRuntime().getRegisteredHooks();
   },
+
+  // LSE execution
+  evalLSE: evalLSECode,
+  compileLSE: compileLSECode,
+  toLSE: toLSECode,
+  fromLSE: fromLSECode,
 
   // Cache management
   clearCache: () => astCache.clear(),

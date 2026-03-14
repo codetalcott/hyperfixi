@@ -1,8 +1,5 @@
-/**
- * Bengali Dictionary
- *
- * Bengali translations for hyperscript keywords.
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
@@ -53,7 +50,16 @@ export const bengaliDictionary: Dictionary = {
     clone: 'কপি',
     swap: 'বদল',
     morph: 'রূপান্তর',
+    beep: 'বীপ',
+    break: 'ভাঙুন',
+    copy: 'কপি',
+    exit: 'বের',
+    js: 'জেএস',
+    pick: 'বাছুন',
+    render: 'রেন্ডার',
+    until: 'পর্যন্ত',
   },
+
   modifiers: {
     to: 'কে',
     from: 'থেকে',
@@ -73,6 +79,7 @@ export const bengaliDictionary: Dictionary = {
     until: 'পর্যন্ত',
     of: 'র',
   },
+
   events: {
     click: 'ক্লিক',
     change: 'পরিবর্তন',
@@ -89,6 +96,7 @@ export const bengaliDictionary: Dictionary = {
     resize: 'রিসাইজ',
     every: 'প্রতি',
   },
+
   logical: {
     if: 'যদি',
     when: 'যখন',
@@ -99,14 +107,17 @@ export const bengaliDictionary: Dictionary = {
     or: 'অথবা',
     is: 'হয়',
     exists: 'আছে',
-    has: 'আছে', // possession verb (context-based)
-    have: 'আছি', // first-person: আমার আছি
+    has: 'আছে',
+    have: 'আছি',
     empty: 'খালি',
     true: 'সত্য',
     false: 'মিথ্যা',
     null: 'শূন্য',
     undefined: 'অনির্ধারিত',
+    end: 'শেষ',
+    then: 'তারপর',
   },
+
   temporal: {
     now: 'এখন',
     seconds: 'সেকেন্ড',
@@ -118,6 +129,7 @@ export const bengaliDictionary: Dictionary = {
     s: 'সে',
     ms: 'মিসে',
   },
+
   values: {
     me: 'আমি',
     my: 'আমার',
@@ -127,7 +139,10 @@ export const bengaliDictionary: Dictionary = {
     event: 'ঘটনা',
     target: 'লক্ষ্য',
     body: 'বডি',
+    you: 'আপনি',
+    your: 'তোমার',
   },
+
   attributes: {
     class: 'শ্রেণি',
     id: 'আইডি',
@@ -138,6 +153,7 @@ export const bengaliDictionary: Dictionary = {
     disabled: 'অক্ষম',
     checked: 'চেক করা',
   },
+
   expressions: {
     first: 'প্রথম',
     last: 'শেষ',
@@ -152,5 +168,4 @@ export const bengaliDictionary: Dictionary = {
   },
 };
 
-// Default export alias
 export const bn = bengaliDictionary;

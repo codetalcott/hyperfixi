@@ -11,6 +11,7 @@ export const koreanProfile: LanguageProfile = {
   code: 'ko',
   name: 'Korean',
   nativeName: '한국어',
+  regions: ['east-asian', 'priority'],
   direction: 'ltr',
   script: 'hangul',
   wordOrder: 'SOV',

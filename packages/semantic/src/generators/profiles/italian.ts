@@ -12,6 +12,7 @@ export const italianProfile: LanguageProfile = {
   code: 'it',
   name: 'Italian',
   nativeName: 'Italiano',
+  regions: ['western'],
   direction: 'ltr',
   script: 'latin',
   wordOrder: 'SVO',

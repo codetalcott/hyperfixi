@@ -67,6 +67,12 @@ export interface ParseExplicitOptions {
   schemaLookup?: SchemaLookup;
   /** Custom set of valid reference names (defaults to DEFAULT_REFERENCES) */
   referenceSet?: ReadonlySet<string>;
+  /**
+   * When true, validation errors are collected as diagnostics on the
+   * returned node instead of throwing. Fatal parse errors (missing brackets,
+   * empty input) still throw. Default: false.
+   */
+  collectDiagnostics?: boolean;
 }
 
 // =============================================================================
@@ -153,12 +159,16 @@ export interface ProtocolNodeJSON {
 // v1.2 Sub-types
 // =============================================================================
 
-/** A type constraint diagnostic in protocol wire format (v1.2). */
+/** A diagnostic in protocol wire format (v1.2, extended v1.2.1). */
 export interface ProtocolDiagnosticJSON {
-  level: 'error' | 'warning';
-  role: string;
+  level: 'error' | 'warning' | 'info';
+  role?: string;
   message: string;
-  code: string;
+  code?: string;
+  /** v1.2.1: source parser/stage that produced this diagnostic. */
+  source?: string;
+  /** v1.2.1: actionable fix suggestions. */
+  suggestions?: string[];
 }
 
 /** A metadata annotation in protocol wire format (v1.2). */

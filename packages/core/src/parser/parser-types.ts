@@ -8,7 +8,6 @@
  */
 
 import type { Token, ASTNode, CommandNode } from '../types/core';
-import { TokenType } from './tokenizer';
 
 /**
  * Position information for AST nodes
@@ -179,33 +178,25 @@ export interface MultiWordPattern {
   maxArgs?: number;
 }
 
-/**
- * ParserContext - Shared context for command parsers
- *
- * This interface provides command parsers with controlled access to parser
- * state and utilities without exposing Parser class internals.
- *
- * Command parsers receive this context and use it to:
- * - Navigate the token stream
- * - Create AST nodes
- * - Parse expressions
- * - Track positions
- * - Report errors
- */
-export interface ParserContext {
-  // ==========================================
-  // Token Stream Access (Read-Only)
-  // ==========================================
+// ============================================================================
+// Phase 2.4: Focused Sub-Interfaces
+//
+// ParserContext is now a composition of focused sub-interfaces. Command parsers
+// can import the specific sub-interface they need for better dependency
+// visibility and simpler test mocks. ParserContext itself is unchanged for
+// backward compatibility — it extends all sub-interfaces.
+// ============================================================================
 
+/**
+ * TokenStream — core token navigation.
+ * Used by virtually every command parser.
+ */
+export interface TokenStream {
   /** Array of tokens being parsed */
   readonly tokens: Token[];
 
   /** Current position in token stream (synced with parser via getter/setter) */
   current: number;
-
-  // ==========================================
-  // Token Navigation Methods
-  // ==========================================
 
   /** Consume and return current token, advancing position */
   advance(): Token;
@@ -217,17 +208,29 @@ export interface ParserContext {
   previous(): Token;
 
   /** Consume expected token or add error */
-  consume(expected: string | TokenType, message: string): Token;
+  consume(expected: string, message: string): Token;
 
   /** Check if current token value matches */
   check(value: string): boolean;
 
-  // ==========================================
-  // Predicate-Based Token Checking (Phase 4)
-  // These methods use token predicates for semantic classification,
-  // enabling migration from TokenType enum checks to predicate functions.
-  // ==========================================
+  /** Match and consume if current token matches any given values */
+  match(...types: string[]): boolean;
 
+  /** Match and consume if current token is operator with given value */
+  matchOperator(operator: string): boolean;
+
+  /** Check if at end of token stream */
+  isAtEnd(): boolean;
+
+  /** Peek at token relative to current position (0 = current, 1 = next) */
+  peekAt(offset: number): Token | null;
+}
+
+/**
+ * TokenPredicates — semantic token classification.
+ * Higher-level checks based on token kind.
+ */
+export interface TokenPredicates {
   /** Check if current token is identifier-like (IDENTIFIER, CONTEXT_VAR, KEYWORD, COMMAND, EVENT) */
   checkIdentifierLike(): boolean;
 
@@ -254,20 +257,12 @@ export interface ParserContext {
 
   /** Check if current token is a context variable */
   checkContextVar(): boolean;
+}
 
-  /** Match and consume if current token matches any given types */
-  match(...types: Array<string | TokenType>): boolean;
-
-  /** Match and consume if current token is operator with given value */
-  matchOperator(operator: string): boolean;
-
-  /** Check if at end of token stream */
-  isAtEnd(): boolean;
-
-  // ==========================================
-  // AST Node Creation
-  // ==========================================
-
+/**
+ * ASTFactory — AST node creation.
+ */
+export interface ASTFactory {
   /** Create identifier AST node */
   createIdentifier(name: string): IdentifierNode;
 
@@ -300,11 +295,15 @@ export interface ParserContext {
 
   /** Create command node from identifier */
   createCommandFromIdentifier(identifierNode: IdentifierNode): CommandNode;
+}
 
-  // ==========================================
-  // Expression Parsing
-  // ==========================================
-
+/**
+ * ExpressionParser — expression parsing methods.
+ * The main entry point is `parseExpression()`; the individual precedence-level
+ * methods are legacy (superseded by the Pratt parser in Phase 2.2) but kept
+ * for backward compatibility.
+ */
+export interface ExpressionParser {
   /** Parse a complete expression */
   parseExpression(): ASTNode;
 
@@ -370,11 +369,12 @@ export interface ParserContext {
 
   /** Parse CSS object literal */
   parseCSSObjectLiteral(): ASTNode;
+}
 
-  // ==========================================
-  // Command Sequence Parsing
-  // ==========================================
-
+/**
+ * CommandParser — command and command sequence parsing.
+ */
+export interface CommandParser {
   /** Parse a single command */
   parseCommand(): CommandNode;
 
@@ -383,41 +383,37 @@ export interface ParserContext {
 
   /** Parse command list until 'end' keyword */
   parseCommandListUntilEnd(): ASTNode[];
+}
 
-  // ==========================================
-  // Position Checkpoint Methods
-  // ==========================================
-
+/**
+ * PositionCheckpoint — position save/restore for lookahead and backtracking.
+ */
+export interface PositionCheckpoint {
   /** Save current position for later restoration (returns opaque position handle) */
   savePosition(): number;
 
   /** Restore to a previously saved position */
   restorePosition(pos: number): void;
 
-  /** Peek at token relative to current position without consuming (0 = current, 1 = next, etc.) */
-  peekAt(offset: number): Token | null;
-
-  // ==========================================
-  // Position Tracking
-  // ==========================================
-
   /** Get current position for AST node */
   getPosition(): Position;
+}
 
-  // ==========================================
-  // Error Handling
-  // ==========================================
-
+/**
+ * ParserErrorHandler — error and warning reporting.
+ */
+export interface ParserErrorHandler {
   /** Add parse error */
   addError(message: string): void;
 
   /** Add parse warning */
   addWarning(warning: string): void;
+}
 
-  // ==========================================
-  // Utility Functions
-  // ==========================================
-
+/**
+ * ParserUtilities — lookup and resolution functions.
+ */
+export interface ParserUtilities {
   /** Check if identifier is a command */
   isCommand(name: string): boolean;
 
@@ -442,10 +438,6 @@ export interface ParserContext {
    */
   resolveKeyword(value: string): string;
 
-  // ==========================================
-  // Raw Input Access (for preserving literal code)
-  // ==========================================
-
   /**
    * Get a slice of the original input string by character position.
    * Useful for extracting raw code that shouldn't be tokenized (e.g., JavaScript in js...end blocks).
@@ -456,6 +448,27 @@ export interface ParserContext {
    */
   getInputSlice(start: number, end?: number): string;
 }
+
+/**
+ * ParserContext - Shared context for command parsers
+ *
+ * Composition of all focused sub-interfaces. Command parsers can use the full
+ * ParserContext (backward-compatible) or import specific sub-interfaces for
+ * better dependency visibility and simpler test mocks.
+ *
+ * Sub-interfaces: TokenStream, TokenPredicates, ASTFactory, ExpressionParser,
+ * CommandParser, PositionCheckpoint, ParserErrorHandler, ParserUtilities
+ */
+export interface ParserContext
+  extends
+    TokenStream,
+    TokenPredicates,
+    ASTFactory,
+    ExpressionParser,
+    CommandParser,
+    PositionCheckpoint,
+    ParserErrorHandler,
+    ParserUtilities {}
 
 /**
  * CommandParserFunction - Standard signature for command parsers

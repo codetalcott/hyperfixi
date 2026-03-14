@@ -230,7 +230,8 @@
     "benchmark:json": "npx tsx scripts/benchmark-all.ts --json",
     "benchmark:save": "npx tsx scripts/benchmark-all.ts --save",
     "benchmark:ci": "npx tsx scripts/benchmark-all.ts --save --compare",
-    "benchmark:lookup": "npx tsx scripts/benchmark-tokenizer-lookup.ts"
+    "benchmark:lookup": "npx tsx scripts/benchmark-tokenizer-lookup.ts",
+    "generate:language-assets": "npx tsx scripts/generate-language-assets.ts"
   },
   "sideEffects": [
     "./src/languages/*.ts",
@@ -248,9 +249,11 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/framework": "*"
+    "@lokascript/framework": "*",
+    "nearley": "^2.20.1"
   },
   "devDependencies": {
+    "@types/nearley": "^2.11.5",
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^4.0.17",
     "tsup": "^8.0.0",

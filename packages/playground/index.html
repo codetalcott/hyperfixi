@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LokaScript Playground</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>LokaScript Playground</h1>
+      <div class="header-controls">
+        <select id="language-select" aria-label="Language">
+          <option value="en">English</option>
+          <option value="es">Espa&ntilde;ol</option>
+          <option value="ja">&#26085;&#26412;&#35486;</option>
+          <option value="ko">&#54620;&#44397;&#50612;</option>
+          <option value="zh">&#20013;&#25991;</option>
+          <option value="ar">&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</option>
+          <option value="fr">Fran&ccedil;ais</option>
+          <option value="de">Deutsch</option>
+          <option value="pt">Portugu&ecirc;s</option>
+          <option value="tr">T&uuml;rk&ccedil;e</option>
+          <option value="ru">&#1056;&#1091;&#1089;&#1089;&#1082;&#1080;&#1081;</option>
+          <option value="hi">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</option>
+          <option value="id">Indonesia</option>
+          <option value="it">Italiano</option>
+          <option value="pl">Polski</option>
+          <option value="sw">Kiswahili</option>
+          <option value="th">&#3652;&#3607;&#3618;</option>
+          <option value="uk">&#1059;&#1082;&#1088;&#1072;&#1111;&#1085;&#1089;&#1100;&#1082;&#1072;</option>
+          <option value="vi">Ti&#7871;ng Vi&#7879;t</option>
+        </select>
+        <button id="share-btn" title="Copy permalink">Share</button>
+      </div>
+    </header>
+
+    <nav id="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="hyperscript">Hyperscript</button>
+      <button role="tab" data-tab="translation">Translation</button>
+    </nav>
+
+    <main>
+      <!-- Hyperscript tab -->
+      <div id="panel-hyperscript" class="tab-panel active">
+        <div class="editor-grid">
+          <section class="pane">
+            <h2>Source</h2>
+            <textarea
+              id="source-editor"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="Type hyperscript here..."
+            >on click toggle .active on me</textarea>
+          </section>
+          <section class="pane">
+            <h2>LSE (Intermediate Representation)</h2>
+            <pre id="lse-output" class="output"></pre>
+          </section>
+          <section class="pane">
+            <h2>Compiled Output</h2>
+            <pre id="compiled-output" class="output"></pre>
+          </section>
+        </div>
+        <section class="diagnostics">
+          <h2>Diagnostics</h2>
+          <pre id="diagnostics-output" class="output"></pre>
+        </section>
+      </div>
+
+      <!-- Translation tab -->
+      <div id="panel-translation" class="tab-panel">
+        <div class="translation-input">
+          <textarea
+            id="translate-editor"
+            spellcheck="false"
+            autocomplete="off"
+            placeholder="Type a command to see translations..."
+          >toggle .active on #button</textarea>
+        </div>
+        <div id="translation-grid" class="translation-grid"></div>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

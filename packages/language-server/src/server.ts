@@ -58,6 +58,16 @@ import {
 import { getWordAtPosition, escapeRegExp, findNextNonEmptyLine } from './utils.js';
 import { formatHyperscript } from './formatting.js';
 
+// Chevrotain-based parser for enhanced diagnostics and content assist (Phase 5.2)
+import {
+  parseWithRecovery,
+  getContentAssist,
+  type ChevrotainDiagnostic,
+} from './chevrotain-parser.js';
+
+// Localized descriptions for completions and hover (Phase 7.3)
+import { getCommandDescription } from './localized-descriptions.js';
+
 // =============================================================================
 // Optional Package Imports
 // =============================================================================
@@ -624,6 +634,36 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     }
   }
 
+  // Chevrotain-based structural analysis (Phase 5.2)
+  // Supplements semantic/AST diagnostics with error recovery-based parsing
+  if (diagnostics.length === 0) {
+    try {
+      const chevrotainResult = parseWithRecovery(code);
+      for (const diag of chevrotainResult.diagnostics) {
+        const lines = code.split('\n');
+        const { line: startLine, character: startChar } = offsetToLineChar(code, diag.startOffset);
+        const { line: endLine, character: endChar } = offsetToLineChar(code, diag.endOffset);
+        diagnostics.push({
+          range: {
+            start: { line: startLine, character: startChar },
+            end: { line: endLine, character: endChar },
+          },
+          severity:
+            diag.severity === 'error'
+              ? DiagnosticSeverity.Error
+              : diag.severity === 'warning'
+                ? DiagnosticSeverity.Warning
+                : DiagnosticSeverity.Information,
+          code: diag.code,
+          source: brand,
+          message: diag.message,
+        });
+      }
+    } catch (e) {
+      connection.console.log(`[${brand}-ls] Chevrotain parsing failed: ${e}`);
+    }
+  }
+
   // Fallback: simple pattern-based analysis
   if (diagnostics.length === 0) {
     const simpleDiagnostics = runSimpleDiagnostics(code, language);
@@ -632,6 +672,21 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
   }
 
   return diagnostics.slice(0, globalSettings.maxDiagnostics);
+}
+
+/** Convert a byte offset to {line, character} in a string */
+function offsetToLineChar(text: string, offset: number): { line: number; character: number } {
+  let line = 0;
+  let col = 0;
+  for (let i = 0; i < offset && i < text.length; i++) {
+    if (text[i] === '\n') {
+      line++;
+      col = 0;
+    } else {
+      col++;
+    }
+  }
+  return { line, character: col };
 }
 
 function runSimpleDiagnostics(code: string, _language: string): Diagnostic[] {
@@ -724,7 +779,35 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
     const offset = document.offsetAt(position);
     const beforeCursor = text.slice(0, offset);
     const context = inferContext(beforeCursor);
-    return getContextualCompletions(context, language);
+    const completions = getContextualCompletions(context, language);
+
+    // Supplement with Chevrotain content assist (Phase 5.2)
+    try {
+      const chevrotainSuggestions = getContentAssist(beforeCursor, offset);
+      const existingLabels = new Set(completions.map(c => c.label));
+      for (const s of chevrotainSuggestions) {
+        if (existingLabels.has(s.label)) continue; // No duplicates
+        completions.push({
+          label: s.label,
+          kind:
+            s.kind === 'command'
+              ? CompletionItemKind.Method
+              : s.kind === 'event'
+                ? CompletionItemKind.Event
+                : s.kind === 'selector'
+                  ? CompletionItemKind.Field
+                  : s.kind === 'variable'
+                    ? CompletionItemKind.Variable
+                    : CompletionItemKind.Keyword,
+          detail: s.detail,
+          insertText: s.insertText,
+        });
+      }
+    } catch {
+      // Chevrotain content assist failed — rely on existing completions
+    }
+
+    return completions;
   }
 });
 
@@ -772,6 +855,12 @@ function getContextualCompletions(context: string, language: string): Completion
   const isCommandAvailable = (cmd: string) =>
     availableCommands.includes(cmd as (typeof availableCommands)[number]);
 
+  // Phase 7.3: Localized detail/documentation for commands
+  const getDetail = (command: string, fallback: string): string => {
+    const desc = getCommandDescription(command, effectiveLanguage);
+    return desc?.detail ?? fallback;
+  };
+
   switch (context) {
     case 'event':
       // Use canonical event names from @hyperfixi/core/lsp-metadata, with fallback
@@ -791,55 +880,71 @@ function getContextualCompletions(context: string, language: string): Completion
         {
           label: getKeyword('toggle'),
           kind: CompletionItemKind.Method,
-          detail: 'Toggle class/visibility',
+          detail: getDetail('toggle', 'Toggle class/visibility'),
           insertText: `${getKeyword('toggle')} .\${1:class}`,
         },
         {
           label: getKeyword('add'),
           kind: CompletionItemKind.Method,
-          detail: 'Add class/attribute',
+          detail: getDetail('add', 'Add class/attribute'),
           insertText: `${getKeyword('add')} .\${1:class} to \${2:me}`,
         },
         {
           label: getKeyword('remove'),
           kind: CompletionItemKind.Method,
-          detail: 'Remove class/element',
+          detail: getDetail('remove', 'Remove class/element'),
           insertText: `${getKeyword('remove')} .\${1:class} from \${2:me}`,
         },
-        { label: getKeyword('show'), kind: CompletionItemKind.Method, detail: 'Show element' },
-        { label: getKeyword('hide'), kind: CompletionItemKind.Method, detail: 'Hide element' },
+        {
+          label: getKeyword('show'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('show', 'Show element'),
+        },
+        {
+          label: getKeyword('hide'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('hide', 'Hide element'),
+        },
         {
           label: getKeyword('put'),
           kind: CompletionItemKind.Method,
-          detail: 'Set content',
+          detail: getDetail('put', 'Set content'),
           insertText: `${getKeyword('put')} \${1:value} into \${2:target}`,
         },
         {
           label: getKeyword('set'),
           kind: CompletionItemKind.Method,
-          detail: 'Set variable',
+          detail: getDetail('set', 'Set variable'),
           insertText: `${getKeyword('set')} \${1:variable} to \${2:value}`,
         },
         {
           label: getKeyword('fetch'),
           kind: CompletionItemKind.Method,
-          detail: 'HTTP request',
+          detail: getDetail('fetch', 'HTTP request'),
           insertText: `${getKeyword('fetch')} \${1:/api/endpoint}`,
         },
         {
           label: getKeyword('wait'),
           kind: CompletionItemKind.Method,
-          detail: 'Pause execution',
+          detail: getDetail('wait', 'Pause execution'),
           insertText: `${getKeyword('wait')} \${1:1s}`,
         },
         {
           label: getKeyword('send'),
           kind: CompletionItemKind.Method,
-          detail: 'Dispatch event',
+          detail: getDetail('send', 'Dispatch event'),
           insertText: `${getKeyword('send')} \${1:eventName} to \${2:target}`,
         },
-        { label: getKeyword('trigger'), kind: CompletionItemKind.Method, detail: 'Trigger event' },
-        { label: getKeyword('log'), kind: CompletionItemKind.Method, detail: 'Console log' },
+        {
+          label: getKeyword('trigger'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('trigger', 'Trigger event'),
+        },
+        {
+          label: getKeyword('log'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('log', 'Console log'),
+        },
         { label: getKeyword('if'), kind: CompletionItemKind.Keyword, detail: 'Conditional' },
         { label: getKeyword('repeat'), kind: CompletionItemKind.Keyword, detail: 'Loop' }
       );
@@ -1055,7 +1160,8 @@ function getHoverDocumentation(word: string, language: string): string | null {
   const doc = docs[canonicalKey];
   if (!doc) return null;
 
-  // Build hover content
+  // Build hover content — use localized description if available (Phase 7.3)
+  const localizedDesc = getCommandDescription(canonicalKey, language);
   let content = `**${doc.title}**`;
 
   // Show the user's keyword with the canonical form for reference
@@ -1063,7 +1169,9 @@ function getHoverDocumentation(word: string, language: string): string | null {
     content = `**${word}** (${canonicalKey})`;
   }
 
-  content += `\n\n${doc.description}`;
+  // Use localized documentation if available, otherwise fall back to English
+  const description = localizedDesc?.documentation ?? doc.description;
+  content += `\n\n${description}`;
   content += `\n\n\`\`\`hyperscript\n${doc.example}\n\`\`\``;
 
   // Add translations in multilingual modes

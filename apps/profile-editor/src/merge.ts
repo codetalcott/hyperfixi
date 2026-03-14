@@ -19,7 +19,7 @@ export function getMergedProfile(code: string): LanguageProfile | null {
   const edits = getEditsForLanguage(code);
   if (edits.length === 0) return base;
 
-  const merged = structuredClone(base) as Record<string, unknown>;
+  const merged = structuredClone(base) as unknown as Record<string, unknown>;
 
   for (const edit of edits) {
     applyEdit(merged, edit);
