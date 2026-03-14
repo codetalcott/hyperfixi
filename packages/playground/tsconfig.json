@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@hyperfixi/core/*": ["../core/src/*"],
+      "@lokascript/semantic": ["../semantic/src"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}
