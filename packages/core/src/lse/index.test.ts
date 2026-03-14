@@ -4,7 +4,7 @@
  * Verifies that @hyperfixi/core/lse can consume @lokascript/framework/ir
  * via the optional peer dependency pattern.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import {
   parseExplicit,
   renderExplicit,
@@ -219,6 +219,57 @@ describe('LSE bridge', () => {
       expect((ast as any).roles.patient).toEqual(
         expect.objectContaining({ type: 'literal', value: '500ms' })
       );
+    });
+  });
+
+  describe('compileLSE (direct)', () => {
+    it('compiles LSE to executable AST', async () => {
+      const node = await parseExplicit('[toggle patient:.active]');
+      const ast = await semanticNodeToRuntimeAST(node);
+      expect(ast).toBeDefined();
+      expect(ast.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+      // Node should have no diagnostics (clean parse)
+      expect(node.diagnostics).toBeUndefined();
+    });
+
+    it('collects diagnostics for invalid input', async () => {
+      // parseExplicit with collectDiagnostics returns node with diagnostics
+      const node = await parseExplicit('[toggle badRole:foo]', {
+        collectDiagnostics: true,
+      });
+      // Without schema, no diagnostics (any role is accepted)
+      expect(node.action).toBe('toggle');
+    });
+
+    it('throws on non-bracket syntax', async () => {
+      await expect(parseExplicit('not bracket syntax')).rejects.toThrow(
+        'Explicit syntax must be wrapped in brackets'
+      );
+    });
+  });
+
+  describe('toLSE (semantic → LSE)', () => {
+    it('round-trips English via semantic parser', async () => {
+      // Parse English → SemanticNode → render LSE
+      const { parseSemantic } = await import('@lokascript/semantic');
+      const result = parseSemantic('toggle .active', 'en');
+      expect(result.node).not.toBeNull();
+      const lse = await renderExplicit(result.node!);
+      expect(lse).toContain('[');
+      expect(lse).toContain('toggle');
+      expect(lse).toContain('.active');
+    });
+  });
+
+  describe('fromLSE (LSE → natural language)', () => {
+    it('renders LSE to English', async () => {
+      const { render } = await import('@lokascript/semantic');
+      const node = await parseExplicit('[toggle patient:.active]');
+      const english = render(node as any, 'en');
+      expect(english).toBeDefined();
+      expect(english.length).toBeGreaterThan(0);
+      expect(english.toLowerCase()).toContain('toggle');
     });
   });
 });

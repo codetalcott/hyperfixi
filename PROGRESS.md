@@ -10,8 +10,8 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 
 - [x] 1.0 Dependency Spike — `df7d4b7d` (2026-03-14)
 - [x] 1.1 Bridge LSE to Core Runtime — `179652e4` (2026-03-14)
-- [x] 1.2 LSE Diagnostics (pending commit)
-- [ ] 1.3 LSE API Surface
+- [x] 1.2 LSE Diagnostics — `3d3c4f03` (2026-03-14)
+- [x] 1.3 LSE API Surface (pending commit)
 
 ## Phase 2: Core Parser Improvements
 
