@@ -26,7 +26,7 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 - [x] 3.1 Morphology Base
 - [x] 3.2 Pattern Consolidation
 - [x] 3.3 Confidence Model
-- [ ] 3.4 Error Reporting
+- [x] 3.4 Error Reporting
 
 ## Phase 4: Profile-Driven Pipeline
 

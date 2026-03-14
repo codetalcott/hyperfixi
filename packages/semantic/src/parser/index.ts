@@ -20,6 +20,7 @@ export {
 
 export {
   SemanticParserImpl,
+  SemanticParseError,
   semanticParser,
   parse,
   canParse,
