@@ -8,7 +8,6 @@
  */
 
 import type { Token, ASTNode, CommandNode } from '../types/core';
-import { TokenType } from './tokenizer';
 
 /**
  * Position information for AST nodes
@@ -217,15 +216,14 @@ export interface ParserContext {
   previous(): Token;
 
   /** Consume expected token or add error */
-  consume(expected: string | TokenType, message: string): Token;
+  consume(expected: string, message: string): Token;
 
   /** Check if current token value matches */
   check(value: string): boolean;
 
   // ==========================================
   // Predicate-Based Token Checking (Phase 4)
-  // These methods use token predicates for semantic classification,
-  // enabling migration from TokenType enum checks to predicate functions.
+  // These methods use token predicates for semantic classification.
   // ==========================================
 
   /** Check if current token is identifier-like (IDENTIFIER, CONTEXT_VAR, KEYWORD, COMMAND, EVENT) */
@@ -255,8 +253,8 @@ export interface ParserContext {
   /** Check if current token is a context variable */
   checkContextVar(): boolean;
 
-  /** Match and consume if current token matches any given types */
-  match(...types: Array<string | TokenType>): boolean;
+  /** Match and consume if current token matches any given values */
+  match(...types: string[]): boolean;
 
   /** Match and consume if current token is operator with given value */
   matchOperator(operator: string): boolean;

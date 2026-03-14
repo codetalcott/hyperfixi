@@ -11,11 +11,11 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 - [x] 1.0 Dependency Spike — `df7d4b7d` (2026-03-14)
 - [x] 1.1 Bridge LSE to Core Runtime — `179652e4` (2026-03-14)
 - [x] 1.2 LSE Diagnostics — `3d3c4f03` (2026-03-14)
-- [x] 1.3 LSE API Surface (pending commit)
+- [x] 1.3 LSE API Surface — `7fc62aea` (2026-03-14)
 
 ## Phase 2: Core Parser Improvements
 
-- [ ] 2.1 Tokenizer Migration
+- [x] 2.1 Tokenizer Migration (pending commit)
 - [ ] 2.2 Pratt Parser
 - [ ] 2.2b Expression Eval Consolidation
 - [ ] 2.3 Resilient Parsing
