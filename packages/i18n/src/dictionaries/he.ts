@@ -1,0 +1,101 @@
+// @generated from semantic profiles — do not edit manually
+// To modify, update the semantic profile and run: npm run generate:language-assets
+
+import { Dictionary } from '../types';
+
+export const he: Dictionary = {
+  commands: {
+    add: 'הוסף',
+    append: 'צרף',
+    async: 'אסינכרוני',
+    beep: 'ביפ',
+    break: 'שבור',
+    call: 'קרא',
+    continue: 'המשך',
+    copy: 'העתק',
+    decrement: 'הקטן',
+    default: 'ברירת מחדל',
+    exit: 'צא',
+    fetch: 'הבא',
+    for: 'עבור',
+    get: 'קבל',
+    go: 'לך',
+    halt: 'עצור',
+    hide: 'הסתר',
+    if: 'אם',
+    increment: 'הגדל',
+    install: 'התקן',
+    js: 'js',
+    log: 'רשום',
+    make: 'צור',
+    measure: 'מדוד',
+    morph: 'הפוך',
+    on: 'ב',
+    pick: 'בחר',
+    put: 'שים',
+    remove: 'הסר',
+    render: 'רנדר',
+    repeat: 'חזור',
+    return: 'החזר',
+    send: 'שלח',
+    set: 'קבע',
+    settle: 'התייצב',
+    show: 'הראה',
+    swap: 'החלף',
+    take: 'קח',
+    tell: 'אמור',
+    throw: 'זרוק',
+    toggle: 'מתג',
+    transition: 'מעבר',
+    trigger: 'הפעל',
+    until: 'עד',
+    wait: 'חכה',
+    while: 'כל עוד',
+  },
+
+  modifiers: {
+    after: 'אחרי',
+    before: 'לפני',
+    from: 'מ',
+    into: 'לתוך',
+    to: 'על',
+    with: 'עם',
+  },
+
+  events: {
+    blur: 'טשטש',
+    change: 'שינוי',
+    click: 'לחיצה',
+    focus: 'מקד',
+    input: 'קלט',
+    submit: 'שליחה',
+  },
+
+  logical: {
+    and: 'וגם',
+    else: 'אחרת',
+    end: 'סוף',
+    then: 'אז',
+    when: 'כאשר',
+    where: 'איפה',
+  },
+
+  temporal: {},
+
+  values: {
+    body: 'גוף',
+    event: 'אירוע',
+    it: 'זה',
+    its: 'שלו',
+    me: 'אני',
+    my: 'שלי',
+    result: 'תוצאה',
+    target: 'יעד',
+    you: 'אתה',
+    your: 'שלך',
+  },
+
+  attributes: {},
+
+  expressions: {},
+};
