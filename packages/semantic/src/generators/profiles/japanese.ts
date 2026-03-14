@@ -11,6 +11,7 @@ export const japaneseProfile: LanguageProfile = {
   code: 'ja',
   name: 'Japanese',
   nativeName: '日本語',
+  regions: ['east-asian', 'priority'],
   direction: 'ltr',
   script: 'cjk',
   wordOrder: 'SOV',

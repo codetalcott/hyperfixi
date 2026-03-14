@@ -11,6 +11,7 @@ export const turkishProfile: LanguageProfile = {
   code: 'tr',
   name: 'Turkish',
   nativeName: 'Türkçe',
+  regions: ['priority'],
   direction: 'ltr',
   script: 'latin',
   wordOrder: 'SOV',

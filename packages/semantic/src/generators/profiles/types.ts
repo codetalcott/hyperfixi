@@ -79,6 +79,17 @@ export interface PossessiveConfig {
 
 /**
  * Complete language profile for pattern generation.
+ *
+ * Canonical field mapping (Phase 4.1 — single source of truth):
+ *
+ * | Profile Field      | Downstream Artifact                           | Generator Script              |
+ * |--------------------|-----------------------------------------------|-------------------------------|
+ * | keywords.primary   | i18n dictionary files                         | generate-i18n-dictionaries    |
+ * | wordOrder, markers | i18n grammar profiles                         | generate-i18n-grammar-profiles|
+ * | grammarRules       | i18n grammar transformation rules             | generate-i18n-grammar-profiles|
+ * | keywords (top-N)   | vite-plugin detection keyword sets            | generate-vite-keywords        |
+ * | regions            | semantic bundle entry points + tsup config     | generate-bundle-entries       |
+ * | code, extends      | language registration + variant inheritance    | (runtime)                     |
  */
 export interface LanguageProfile {
   /** ISO 639-1 or BCP 47 language code (e.g., 'es' or 'es-MX') */
@@ -128,6 +139,29 @@ export interface LanguageProfile {
    * Example: 'es-MX' profile with extends: 'es' inherits from Spanish base.
    */
   readonly extends?: string;
+  /**
+   * Bundle region tags for automatic bundle selection (Phase 4.1).
+   * Used by vite-plugin and bundle generation scripts.
+   * Example: ['east-asian', 'priority'] for Japanese.
+   */
+  readonly regions?: readonly string[];
+  /**
+   * Grammar transformation rules for i18n word-order rewriting (Phase 4.1).
+   * When present, these rules can generate i18n grammar profiles automatically.
+   * Format TBD — currently the i18n package defines its own GrammarRule type.
+   */
+  readonly grammarRules?: readonly GrammarRuleRef[];
+}
+
+/**
+ * Reference to a grammar transformation rule (Phase 4.1).
+ * Lightweight pointer — full rule definitions live in the i18n package.
+ */
+export interface GrammarRuleRef {
+  /** Rule name (matches i18n GrammarRule.name) */
+  readonly name: string;
+  /** Priority override (higher = checked first) */
+  readonly priority?: number;
 }
 
 /**

@@ -11,6 +11,7 @@ export const germanProfile: LanguageProfile = {
   code: 'de',
   name: 'German',
   nativeName: 'Deutsch',
+  regions: ['western', 'priority'],
   direction: 'ltr',
   script: 'latin',
   wordOrder: 'SVO',

@@ -30,7 +30,7 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 
 ## Phase 4: Profile-Driven Pipeline
 
-- [ ] 4.1 Profile Single Source
+- [x] 4.1 Profile Single Source
 - [ ] 4.2 Asset Generation
 - [ ] 4.3 Vite Plugin Language Selection
 

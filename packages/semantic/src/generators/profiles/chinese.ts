@@ -11,6 +11,7 @@ export const chineseProfile: LanguageProfile = {
   code: 'zh',
   name: 'Chinese',
   nativeName: '中文',
+  regions: ['east-asian', 'priority'],
   direction: 'ltr',
   script: 'cjk',
   wordOrder: 'SVO',

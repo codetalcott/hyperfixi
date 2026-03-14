@@ -11,6 +11,7 @@ export const arabicProfile: LanguageProfile = {
   code: 'ar',
   name: 'Arabic',
   nativeName: 'العربية',
+  regions: ['priority'],
   direction: 'rtl',
   script: 'arabic',
   wordOrder: 'VSO',

@@ -11,6 +11,7 @@ export const spanishProfile: LanguageProfile = {
   code: 'es',
   name: 'Spanish',
   nativeName: 'Español',
+  regions: ['western', 'priority'],
   direction: 'ltr',
   script: 'latin',
   wordOrder: 'SVO',
