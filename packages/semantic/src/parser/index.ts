@@ -25,4 +25,10 @@ export {
   parse,
   canParse,
   getCommandType,
+  parseAutoDetect,
 } from './semantic-parser';
+export type { AutoDetectParseResult } from './semantic-parser';
+
+// Language detection (Phase 5.1)
+export type { LanguageDetectionResult, LanguageCandidate } from './language-detector';
+export { detectLanguage, needsLanguageDetection } from './language-detector';

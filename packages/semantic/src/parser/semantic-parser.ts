@@ -1524,3 +1524,44 @@ export function roundTrip(input: string, language: string): string {
   const explicit = toExplicit(input, language);
   return fromExplicit(explicit, language);
 }
+
+// =============================================================================
+// Language Auto-Detection (Phase 5.1)
+// =============================================================================
+
+import { detectLanguage, type LanguageDetectionResult } from './language-detector';
+
+export interface AutoDetectParseResult {
+  /** The parsed semantic node */
+  readonly node: SemanticNode;
+  /** The detected language code */
+  readonly language: string;
+  /** Detection confidence (0-1) */
+  readonly confidence: number;
+  /** Full detection result */
+  readonly detection: LanguageDetectionResult;
+}
+
+/**
+ * Parse hyperscript input with automatic language detection.
+ *
+ * Uses Nearley-based detection (Phase 5.1) to determine the input
+ * language, then parses with the detected language.
+ *
+ * @param input - Hyperscript code in any supported language
+ * @param registeredLanguages - Optional set of languages to limit detection to
+ * @returns Parsed node with detected language metadata
+ */
+export function parseAutoDetect(
+  input: string,
+  registeredLanguages?: ReadonlySet<string>
+): AutoDetectParseResult {
+  const detection = detectLanguage(input, registeredLanguages);
+  const node = parse(input, detection.language);
+  return {
+    node,
+    language: detection.language,
+    confidence: detection.confidence,
+    detection,
+  };
+}

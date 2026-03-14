@@ -249,9 +249,11 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/framework": "*"
+    "@lokascript/framework": "*",
+    "nearley": "^2.20.1"
   },
   "devDependencies": {
+    "@types/nearley": "^2.11.5",
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^4.0.17",
     "tsup": "^8.0.0",

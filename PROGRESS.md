@@ -36,7 +36,7 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 
 ## Phase 5: Advanced Parser Integration
 
-- [ ] 5.1 Nearley Language Detection
+- [x] 5.1 Nearley Language Detection
 - [ ] 5.2 Chevrotain LSP
 
 ## Phase 6: Performance
