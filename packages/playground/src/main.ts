@@ -87,8 +87,8 @@ async function updateCompilation() {
   // 1. Parse with semantic parser to get LSE
   try {
     const semanticResult = parseSemantic(code, language);
-    if (semanticResult && semanticResult.confidence > 0.3) {
-      const lse = renderExplicit(semanticResult);
+    if (semanticResult?.node && semanticResult.confidence > 0.3) {
+      const lse = renderExplicit(semanticResult.node);
       lseOutput.textContent = lse;
     } else {
       lseOutput.textContent = '(low confidence — try a different command or language)';
@@ -101,7 +101,7 @@ async function updateCompilation() {
   try {
     const result = hyperscript.compileSync(code, { language });
     if (result.ok) {
-      compiledOutput.textContent = JSON.stringify(result.node, null, 2);
+      compiledOutput.textContent = JSON.stringify(result.ast, null, 2);
       diagnosticsOutput.textContent = 'No errors';
       diagnosticsOutput.className = 'output diagnostic-ok';
     } else {
