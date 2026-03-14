@@ -263,6 +263,22 @@ export interface ParseError {
 }
 
 /**
+ * Structured diagnostic for parse errors, warnings, and hints.
+ * Structurally compatible with framework's Diagnostic type.
+ */
+export type ParseDiagnosticSeverity = 'error' | 'warning' | 'info';
+
+export interface ParseDiagnostic {
+  readonly message: string;
+  readonly severity: ParseDiagnosticSeverity;
+  readonly code?: string;
+  readonly line?: number;
+  readonly column?: number;
+  readonly source?: string;
+  readonly suggestions?: readonly string[];
+}
+
+/**
  * AST Node for parser compatibility (unified definition)
  */
 export interface ASTNode {
@@ -272,6 +288,7 @@ export interface ASTNode {
   readonly start?: number;
   readonly end?: number;
   readonly raw?: string;
+  readonly diagnostics?: readonly ParseDiagnostic[];
   [key: string]: unknown;
 }
 

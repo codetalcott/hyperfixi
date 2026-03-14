@@ -16,8 +16,8 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 ## Phase 2: Core Parser Improvements
 
 - [x] 2.1 Tokenizer Migration — `c71b522c` (2026-03-14)
-- [x] 2.2 Pratt Parser
-- [ ] 2.2b Expression Eval Consolidation
+- [x] 2.2 Pratt Parser — `2211a82c` (2026-03-14)
+- [x] 2.2b Expression Eval Consolidation — `976c9704` (2026-03-14)
 - [ ] 2.3 Resilient Parsing
 - [ ] 2.4 ParserContext Slim-Down
 
@@ -54,8 +54,8 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 
 ## Blocked
 
-- 2.3 Resilient Parsing → needs 1.2 (LSE Diagnostics)
-- 3.4 Error Reporting → needs 1.2 (LSE Diagnostics)
+- ~~2.3 Resilient Parsing → needs 1.2 (LSE Diagnostics)~~ ✅ unblocked
+- ~~3.4 Error Reporting → needs 1.2 (LSE Diagnostics)~~ ✅ unblocked
 
 ## Decisions Log
 

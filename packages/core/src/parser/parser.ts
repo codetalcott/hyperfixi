@@ -155,6 +155,7 @@ export class Parser {
   private tokens: Token[];
   private current: number = 0;
   private error: LocalParseError | undefined;
+  private errors: LocalParseError[] = [];
   private warnings: ParseWarning[] = [];
   private keywordResolver?: KeywordResolver;
   private semanticAdapter?: SemanticIntegrationAdapter;
@@ -213,6 +214,15 @@ export class Parser {
   }
 
   parse(): ParseResult {
+    const result = this.parseInternal();
+    // Attach accumulated errors for resilient parsing
+    if (this.errors.length > 0) {
+      result.errors = [...this.errors];
+    }
+    return result;
+  }
+
+  private parseInternal(): ParseResult {
     try {
       // Handle empty input
       if (this.tokens.length === 0) {
@@ -2860,7 +2870,43 @@ export class Parser {
         // No more commands
         break;
       } else {
-        this.addError(`Expected command, got: ${this.peek().value}`);
+        // Resilient parsing: create error node and synchronize to next command boundary
+        const errorToken = this.peek();
+        const errorPos = this.getPosition();
+        const errorMessage = `Expected command, got: ${errorToken.value}`;
+
+        // Accumulate as a parse error
+        this.addError(errorMessage);
+
+        // Create error command node with diagnostic
+        const errorNode = astHelpers.createErrorCommandNode(
+          errorPos,
+          errorMessage,
+          errorToken.value
+        ) as CommandNode;
+        commands.push(errorNode);
+
+        // Synchronize: skip tokens until next command boundary (then, end, on, or a command token)
+        this.synchronizeToCommandBoundary();
+
+        // If at end, done
+        if (this.isAtEnd()) break;
+
+        // Check for 'then' separator and continue to next command
+        if (this.match('then')) continue;
+
+        // Check for 'end' or 'on' — these stop the sequence
+        if (this.check('end') || this.check('on')) break;
+
+        // If next is a command, continue parsing
+        if (
+          this.checkIsCommand() ||
+          (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))
+        ) {
+          continue;
+        }
+
+        // Nothing recognizable — stop
         break;
       }
     }
@@ -3889,6 +3935,32 @@ export class Parser {
       column: Math.max(1, column),
       position: Math.max(0, position),
     };
+
+    // Accumulate errors for resilient parsing
+    this.errors.push(this.error);
+  }
+
+  /**
+   * Synchronize to the next command boundary after a parse error.
+   * Skips tokens until: `then`, `end`, `on`, a known command, or end-of-input.
+   */
+  private synchronizeToCommandBoundary(): void {
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+
+      // Command boundary delimiters
+      if (token.value === 'then' || token.value === 'end' || token.value === 'on') {
+        return;
+      }
+
+      // Known command token
+      if (this.checkIsCommand() || (this.isCommand(token.value) && !this.isKeyword(token.value))) {
+        return;
+      }
+
+      debug.parse('⚠️  synchronize: Skipping token:', token.value);
+      this.advance();
+    }
   }
 
   private parseAttributeOrArrayLiteral(): ASTNode {

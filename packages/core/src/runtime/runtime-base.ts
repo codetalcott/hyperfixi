@@ -196,6 +196,8 @@ export class RuntimeBase {
   private autoCleanupObserver: MutationObserver | null = null;
   /** Registry integration for context providers and event sources */
   protected registryIntegration: RegistryIntegration | null = null;
+  /** Accumulated runtime warnings from error-diagnosed nodes (resilient parsing) */
+  protected runtimeWarnings: string[] = [];
 
   constructor(options: RuntimeBaseOptions) {
     this.options = {
@@ -368,6 +370,21 @@ export class RuntimeBase {
   }
 
   /**
+   * Check if an AST node has error-severity diagnostics (resilient parsing).
+   */
+  private hasErrorDiagnostics(node: ASTNode): boolean {
+    const diagnostics = node.diagnostics as Array<{ severity: string }> | undefined;
+    return !!diagnostics?.some(d => d.severity === 'error');
+  }
+
+  /**
+   * Get accumulated runtime warnings from error-diagnosed nodes.
+   */
+  getWarnings(): readonly string[] {
+    return this.runtimeWarnings;
+  }
+
+  /**
    * Main Entry Point: Execute an AST node
    */
   async execute(node: ASTNode, context: ExecutionContext): Promise<unknown> {
@@ -387,6 +404,14 @@ export class RuntimeBase {
     }
 
     try {
+      // Resilient parsing: skip error-diagnosed nodes
+      if (this.hasErrorDiagnostics(node)) {
+        const diag = (node.diagnostics as readonly { message: string }[] | undefined)?.[0];
+        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${diag?.message || 'unknown error'}`);
+        this.runtimeWarnings.push(diag?.message || 'Skipped error node');
+        return undefined;
+      }
+
       switch (node.type) {
         case 'command': {
           // Use Result-based execution when enabled (~12-18% faster)
@@ -650,6 +675,14 @@ export class RuntimeBase {
     let lastResult: unknown = undefined;
 
     for (const command of commands) {
+      // Resilient parsing: skip error-diagnosed nodes
+      if (this.hasErrorDiagnostics(command)) {
+        const diag = (command.diagnostics as readonly { message: string }[] | undefined)?.[0];
+        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${diag?.message || 'unknown error'}`);
+        this.runtimeWarnings.push(diag?.message || 'Skipped error node');
+        continue;
+      }
+
       // For commands, use Result-based execution
       if (command.type === 'command') {
         const result = await this.processCommandWithResult(command as CommandNode, context);
