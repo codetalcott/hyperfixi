@@ -102,4 +102,7 @@ export default [
 
   // AST utilities (interchange format, analysis, visitor)
   createSubpathEntry('src/ast-utils/index.ts', 'dist/ast-utils/index'),
+
+  // LSE bridge (framework IR integration)
+  createSubpathEntry('src/lse/index.ts', 'dist/lse/index', ['@lokascript/framework']),
 ];
