@@ -67,7 +67,7 @@
   "dependencies": {
     "@hyperfixi/core": "*",
     "@lokascript/semantic": "*",
-    "esbuild": "0.27.3",
+    "esbuild": "0.26.0",
     "happy-dom": "20.0.6",
     "vite": "^7.1.12"
   },
