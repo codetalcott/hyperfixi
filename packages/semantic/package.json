@@ -230,7 +230,8 @@
     "benchmark:json": "npx tsx scripts/benchmark-all.ts --json",
     "benchmark:save": "npx tsx scripts/benchmark-all.ts --save",
     "benchmark:ci": "npx tsx scripts/benchmark-all.ts --save --compare",
-    "benchmark:lookup": "npx tsx scripts/benchmark-tokenizer-lookup.ts"
+    "benchmark:lookup": "npx tsx scripts/benchmark-tokenizer-lookup.ts",
+    "generate:language-assets": "npx tsx scripts/generate-language-assets.ts"
   },
   "sideEffects": [
     "./src/languages/*.ts",

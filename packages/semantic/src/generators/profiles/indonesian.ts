@@ -11,6 +11,7 @@ export const indonesianProfile: LanguageProfile = {
   code: 'id',
   name: 'Indonesian',
   nativeName: 'Bahasa Indonesia',
+  regions: ['priority'],
   direction: 'ltr',
   script: 'latin',
   wordOrder: 'SVO',

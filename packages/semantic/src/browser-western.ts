@@ -7,6 +7,7 @@
  * - Portuguese (pt)
  * - French (fr)
  * - German (de)
+ * - Italian (it)
  *
  * All SVO/V2 word order, Latin script, preposition-based.
  * Estimated size: ~150 KB
@@ -25,11 +26,12 @@
 // Register Western Languages
 // =============================================================================
 
+import './languages/de';
 import './languages/en';
 import './languages/es';
-import './languages/pt';
 import './languages/fr';
-import './languages/de';
+import './languages/it';
+import './languages/pt';
 
 // =============================================================================
 // Version
@@ -41,7 +43,7 @@ export const VERSION = '1.0.0-western';
 // Supported Languages
 // =============================================================================
 
-const SUPPORTED_LANGUAGES = ['en', 'es', 'pt', 'fr', 'de'] as const;
+const SUPPORTED_LANGUAGES = ['de', 'en', 'es', 'fr', 'it', 'pt'] as const;
 
 /**
  * Get all supported languages in this bundle.
@@ -82,6 +84,7 @@ export { spanishTokenizer } from './tokenizers/spanish';
 export { portugueseTokenizer } from './tokenizers/portuguese';
 export { frenchTokenizer } from './tokenizers/french';
 export { germanTokenizer } from './tokenizers/german';
+export { italianTokenizer } from './tokenizers/italian';
 
 // =============================================================================
 // Patterns (from registry - lazy generation)
@@ -120,6 +123,7 @@ export { spanishProfile } from './generators/profiles/spanish';
 export { portugueseProfile } from './generators/profiles/portuguese';
 export { frenchProfile } from './generators/profiles/french';
 export { germanProfile } from './generators/profiles/german';
+export { italianProfile } from './generators/profiles/italian';
 
 // =============================================================================
 // Parsing
