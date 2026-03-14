@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/core": "workspace:*",
-    "@lokascript/semantic": "workspace:*"
+    "@hyperfixi/core": "*",
+    "@lokascript/semantic": "*"
   },
   "devDependencies": {
     "vite": "^6.3.5"
