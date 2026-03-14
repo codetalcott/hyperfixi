@@ -18,8 +18,8 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 - [x] 2.1 Tokenizer Migration — `c71b522c` (2026-03-14)
 - [x] 2.2 Pratt Parser — `2211a82c` (2026-03-14)
 - [x] 2.2b Expression Eval Consolidation — `976c9704` (2026-03-14)
-- [ ] 2.3 Resilient Parsing
-- [ ] 2.4 ParserContext Slim-Down
+- [x] 2.3 Resilient Parsing — `af760a80` (2026-03-14)
+- [x] 2.4 ParserContext Slim-Down — `pending` (2026-03-14)
 
 ## Phase 3: Semantic Parser Improvements
 
