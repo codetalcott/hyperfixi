@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { renderExplicit } from './explicit-renderer';
-import { parseExplicit } from './explicit-parser';
+import { renderExplicit, renderDocument } from './explicit-renderer';
+import { parseExplicit, parseCompound } from './explicit-parser';
 import {
   createCommandNode,
   createSelector,
@@ -10,6 +10,7 @@ import {
   createEventHandlerNode,
   createCompoundNode,
 } from '../core/types';
+import type { SemanticNode, LSEEnvelope } from '../core/types';
 
 describe('renderExplicit', () => {
   it('renders a basic command', () => {
@@ -141,4 +142,88 @@ describe('round-trip: parse → render', () => {
       }
     });
   }
+});
+
+describe('renderExplicit — annotations', () => {
+  it('renders a node with a single annotation', () => {
+    const node: SemanticNode = {
+      ...createCommandNode('fetch', {
+        source: createLiteral('/api/users', 'string'),
+      }),
+      annotations: [{ name: 'timeout', value: '5s' }],
+    };
+    expect(renderExplicit(node)).toBe('@timeout(5s) [fetch source:"/api/users"]');
+  });
+
+  it('renders annotation without value', () => {
+    const node: SemanticNode = {
+      ...createCommandNode('toggle', {
+        patient: createSelector('.active'),
+      }),
+      annotations: [{ name: 'deprecated' }],
+    };
+    expect(renderExplicit(node)).toBe('@deprecated [toggle patient:.active]');
+  });
+
+  it('renders multiple annotations preserving order', () => {
+    const node: SemanticNode = {
+      ...createCommandNode('fetch', {
+        source: createLiteral('/api/data', 'string'),
+      }),
+      annotations: [
+        { name: 'retry', value: '3' },
+        { name: 'timeout', value: '10s' },
+      ],
+    };
+    const result = renderExplicit(node);
+    expect(result).toBe('@retry(3) @timeout(10s) [fetch source:"/api/data"]');
+  });
+
+  it('renders no prefix when annotations are absent', () => {
+    const node = createCommandNode('toggle', {
+      patient: createSelector('.active'),
+    });
+    expect(renderExplicit(node)).toBe('[toggle patient:.active]');
+  });
+
+  it('annotation round-trip: render → parse → render', () => {
+    const node: SemanticNode = {
+      ...createCommandNode('fetch', {
+        source: createLiteral('/api/users', 'string'),
+      }),
+      annotations: [{ name: 'timeout', value: '5s' }],
+    };
+    const rendered = renderExplicit(node);
+    const reparsed = parseCompound(rendered);
+    const rerendered = renderExplicit(reparsed);
+    expect(rerendered).toBe(rendered);
+  });
+});
+
+describe('renderDocument', () => {
+  it('renders an envelope with version header', () => {
+    const envelope: LSEEnvelope = {
+      lseVersion: '1.2',
+      nodes: [
+        createCommandNode('toggle', { patient: createSelector('.active') }),
+        createCommandNode('add', { patient: createSelector('.highlight') }),
+      ],
+    };
+    const result = renderDocument(envelope);
+    expect(result).toBe('#!lse 1.2\n[toggle patient:.active]\n[add patient:.highlight]');
+  });
+
+  it('omits version header for version 1.0', () => {
+    const envelope: LSEEnvelope = {
+      lseVersion: '1.0',
+      nodes: [createCommandNode('toggle', { patient: createSelector('.active') })],
+    };
+    const result = renderDocument(envelope);
+    expect(result).toBe('[toggle patient:.active]');
+  });
+
+  it('renders empty envelope', () => {
+    const envelope: LSEEnvelope = { lseVersion: '1.2', nodes: [] };
+    expect(renderDocument(envelope)).toBe('#!lse 1.2');
+  });
 });

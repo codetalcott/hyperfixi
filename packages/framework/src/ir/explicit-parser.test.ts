@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { parseExplicit, isExplicitSyntax } from './explicit-parser';
+import {
+  parseExplicit,
+  parseCompound,
+  parseDocument,
+  isExplicitSyntax,
+  isCompoundSyntax,
+  isDocumentSyntax,
+} from './explicit-parser';
 import type { ParseExplicitOptions, SchemaLookup } from './types';
 import { defineCommand, defineRole } from '../schema/command-schema';
+import type { CompoundSemanticNode } from '../core/types';
 
 describe('isExplicitSyntax', () => {
   it('detects bracket syntax', () => {
@@ -387,5 +395,218 @@ describe('parseExplicit — collectDiagnostics', () => {
     const node = parseExplicit('[on body:[toggle patient:.active]]', collectOpts);
     expect(node.diagnostics).toHaveLength(1);
     expect(node.diagnostics![0].code).toBe('MISSING_EVENT_ROLE');
+  });
+});
+
+// =============================================================================
+// parseCompound
+// =============================================================================
+
+describe('parseCompound', () => {
+  it('passes through single bracket command to parseExplicit', () => {
+    const node = parseCompound('[toggle patient:.active]');
+    expect(node.kind).toBe('command');
+    expect(node.action).toBe('toggle');
+    expect(node.roles.get('patient')?.value).toBe('.active');
+  });
+
+  it('parses two commands chained with then', () => {
+    const node = parseCompound('[add patient:.loading] then [fetch source:"/api/data"]');
+    expect(node.kind).toBe('compound');
+    const compound = node as CompoundSemanticNode;
+    expect(compound.chainType).toBe('then');
+    expect(compound.statements).toHaveLength(2);
+    expect(compound.statements[0].action).toBe('add');
+    expect(compound.statements[1].action).toBe('fetch');
+  });
+
+  it('parses commands chained with and', () => {
+    const node = parseCompound('[add patient:.a] and [add patient:.b]');
+    expect(node.kind).toBe('compound');
+    expect((node as CompoundSemanticNode).chainType).toBe('and');
+  });
+
+  it('parses commands chained with async', () => {
+    const node = parseCompound('[fetch source:/api/a] async [fetch source:/api/b]');
+    expect(node.kind).toBe('compound');
+    expect((node as CompoundSemanticNode).chainType).toBe('async');
+  });
+
+  it('parses commands chained with sequential', () => {
+    const node = parseCompound('[add patient:.a] sequential [add patient:.b]');
+    expect(node.kind).toBe('compound');
+    expect((node as CompoundSemanticNode).chainType).toBe('sequential');
+  });
+
+  it('parses commands chained with |> pipe', () => {
+    const node = parseCompound('[fetch source:/api/users] |> [put destination:#list]');
+    expect(node.kind).toBe('compound');
+    const compound = node as CompoundSemanticNode;
+    expect(compound.chainType).toBe('pipe');
+    expect(compound.statements).toHaveLength(2);
+    expect(compound.statements[0].action).toBe('fetch');
+    expect(compound.statements[1].action).toBe('put');
+  });
+
+  it('handles three or more chained commands', () => {
+    const node = parseCompound(
+      '[add patient:.loading] then [fetch source:/api/data] then [remove patient:.loading]'
+    );
+    expect(node.kind).toBe('compound');
+    const compound = node as CompoundSemanticNode;
+    expect(compound.chainType).toBe('then');
+    expect(compound.statements).toHaveLength(3);
+  });
+
+  it('uses first chain operator for mixed operators', () => {
+    const node = parseCompound('[add patient:.a] then [add patient:.b] and [add patient:.c]');
+    expect(node.kind).toBe('compound');
+    expect((node as CompoundSemanticNode).chainType).toBe('then');
+  });
+});
+
+// =============================================================================
+// Annotation parsing (via parseCompound)
+// =============================================================================
+
+describe('parseCompound — annotations', () => {
+  it('parses single annotation with value', () => {
+    const node = parseCompound('@timeout(5s) [fetch source:"/api/users"]');
+    expect(node.annotations).toHaveLength(1);
+    expect(node.annotations![0]).toEqual({ name: 'timeout', value: '5s' });
+    expect(node.action).toBe('fetch');
+  });
+
+  it('parses annotation without value (flag-style)', () => {
+    const node = parseCompound('@deprecated [toggle patient:.active]');
+    expect(node.annotations).toHaveLength(1);
+    expect(node.annotations![0]).toEqual({ name: 'deprecated' });
+  });
+
+  it('parses multiple annotations preserving order', () => {
+    const node = parseCompound('@retry(3) @timeout(10s) @cache(60s) [fetch source:"/api/data"]');
+    expect(node.annotations).toHaveLength(3);
+    expect(node.annotations![0].name).toBe('retry');
+    expect(node.annotations![1].name).toBe('timeout');
+    expect(node.annotations![2].name).toBe('cache');
+  });
+
+  it('handles annotation with path-like value', () => {
+    const node = parseCompound('@source(/api/v2/users) [fetch source:"/api"]');
+    expect(node.annotations![0]).toEqual({ name: 'source', value: '/api/v2/users' });
+  });
+
+  it('handles annotation with quoted string value', () => {
+    const node = parseCompound('@doc("Toggle active state on click") [toggle patient:.active]');
+    expect(node.annotations![0]).toEqual({
+      name: 'doc',
+      value: 'Toggle active state on click',
+    });
+  });
+
+  it('returns no annotations when none present', () => {
+    const node = parseCompound('[toggle patient:.active]');
+    expect(node.annotations).toBeUndefined();
+  });
+
+  it('attaches annotations to compound nodes', () => {
+    const node = parseCompound(
+      '@permission(admin) [add patient:.loading] then [fetch source:"/api/users"]'
+    );
+    expect(node.kind).toBe('compound');
+    expect(node.annotations).toHaveLength(1);
+    expect(node.annotations![0]).toEqual({ name: 'permission', value: 'admin' });
+  });
+});
+
+// =============================================================================
+// parseDocument
+// =============================================================================
+
+describe('parseDocument', () => {
+  it('parses a simple document with version header', () => {
+    const envelope = parseDocument('#!lse 1.2\n[toggle patient:.active]\n[add patient:.highlight]');
+    expect(envelope.lseVersion).toBe('1.2');
+    expect(envelope.nodes).toHaveLength(2);
+    expect(envelope.nodes[0].action).toBe('toggle');
+    expect(envelope.nodes[1].action).toBe('add');
+  });
+
+  it('defaults to version 1.0 when no header present', () => {
+    const envelope = parseDocument('[toggle patient:.active]');
+    expect(envelope.lseVersion).toBe('1.0');
+    expect(envelope.nodes).toHaveLength(1);
+  });
+
+  it('skips // comments', () => {
+    const envelope = parseDocument(
+      '#!lse 1.2\n// This is a comment\n[toggle patient:.active]\n// Another comment'
+    );
+    expect(envelope.nodes).toHaveLength(1);
+  });
+
+  it('skips # comments', () => {
+    const envelope = parseDocument('#!lse 1.2\n# This is a comment\n[toggle patient:.active]');
+    expect(envelope.nodes).toHaveLength(1);
+  });
+
+  it('skips blank lines', () => {
+    const envelope = parseDocument(
+      '#!lse 1.2\n\n[toggle patient:.active]\n\n\n[add patient:.highlight]\n'
+    );
+    expect(envelope.nodes).toHaveLength(2);
+  });
+
+  it('handles three-part version numbers', () => {
+    const envelope = parseDocument('#!lse 1.2.0\n[toggle patient:.active]');
+    expect(envelope.lseVersion).toBe('1.2.0');
+  });
+
+  it('handles compound statements in document lines', () => {
+    const envelope = parseDocument(
+      '#!lse 1.2\n[add patient:.loading] then [fetch source:/api/data]'
+    );
+    expect(envelope.nodes).toHaveLength(1);
+    expect(envelope.nodes[0].kind).toBe('compound');
+  });
+
+  it('handles annotated statements in document lines', () => {
+    const envelope = parseDocument('#!lse 1.2\n@timeout(5s) [fetch source:"/api/users"]');
+    expect(envelope.nodes).toHaveLength(1);
+    expect(envelope.nodes[0].annotations).toHaveLength(1);
+  });
+});
+
+// =============================================================================
+// Detection helpers
+// =============================================================================
+
+describe('isCompoundSyntax', () => {
+  it('detects compound statements', () => {
+    expect(isCompoundSyntax('[a patient:x] then [b patient:y]')).toBe(true);
+    expect(isCompoundSyntax('[a patient:x] |> [b patient:y]')).toBe(true);
+  });
+
+  it('rejects single commands', () => {
+    expect(isCompoundSyntax('[toggle patient:.active]')).toBe(false);
+  });
+});
+
+describe('isDocumentSyntax', () => {
+  it('detects multi-line input', () => {
+    expect(isDocumentSyntax('[a patient:x]\n[b patient:y]')).toBe(true);
+  });
+
+  it('detects version header', () => {
+    expect(isDocumentSyntax('#!lse 1.2')).toBe(true);
+  });
+
+  it('detects comment lines', () => {
+    expect(isDocumentSyntax('// a comment')).toBe(true);
+    expect(isDocumentSyntax('# a comment')).toBe(true);
+  });
+
+  it('rejects single bracket commands', () => {
+    expect(isDocumentSyntax('[toggle patient:.active]')).toBe(false);
   });
 });

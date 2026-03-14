@@ -32,10 +32,17 @@ export type {
 export { DEFAULT_REFERENCES, isValidReference } from './references';
 
 // Explicit syntax parser
-export { parseExplicit, isExplicitSyntax } from './explicit-parser';
+export {
+  parseExplicit,
+  parseCompound,
+  parseDocument,
+  isExplicitSyntax,
+  isCompoundSyntax,
+  isDocumentSyntax,
+} from './explicit-parser';
 
 // Explicit syntax renderer
-export { renderExplicit } from './explicit-renderer';
+export { renderExplicit, renderDocument } from './explicit-renderer';
 
 // JSON schema conversion (deprecated — use fromProtocolJSON/validateProtocolJSON/toProtocolJSON)
 export { jsonToSemanticNode, validateSemanticJSON, semanticNodeToJSON } from './json-schema';

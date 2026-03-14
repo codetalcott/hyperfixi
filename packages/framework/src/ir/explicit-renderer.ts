@@ -3,6 +3,8 @@
  *
  * Serializes SemanticNode to the universal [command role:value ...] bracket syntax.
  * Zero dependencies beyond core types — no language-specific logic.
+ *
+ * Also renders annotations (@name(value)) and multi-line documents.
  */
 
 import type {
@@ -13,24 +15,78 @@ import type {
   EventHandlerSemanticNode,
   ConditionalSemanticNode,
   LoopSemanticNode,
+  LSEEnvelope,
 } from '../core/types';
 
 /**
  * Render a semantic node as explicit bracket syntax.
  *
+ * Handles annotations (v1.2) — if the node has annotations, they are
+ * prepended as @name or @name(value) before the bracket output.
+ *
  * @example
  * ```typescript
  * renderExplicit(node) // "[toggle patient:.active destination:#button]"
+ * // With annotations:
+ * renderExplicit(annotatedNode) // "@timeout(5s) [fetch source:\"/api/users\"]"
  * ```
  */
 export function renderExplicit(node: SemanticNode): string {
+  let result: string;
+
   // Handle compound nodes
   if (node.kind === 'compound') {
     const compoundNode = node as CompoundSemanticNode;
     const renderedStatements = compoundNode.statements.map(stmt => renderExplicit(stmt));
-    return renderedStatements.join(` ${compoundNode.chainType} `);
+    result = renderedStatements.join(` ${compoundNode.chainType} `);
+  } else {
+    result = renderBracketCommand(node);
   }
 
+  // Prepend annotations if present
+  if (node.annotations && node.annotations.length > 0) {
+    const annParts = node.annotations.map(ann =>
+      ann.value !== undefined ? `@${ann.name}(${ann.value})` : `@${ann.name}`
+    );
+    return annParts.join(' ') + ' ' + result;
+  }
+
+  return result;
+}
+
+/**
+ * Render an LSEEnvelope as a multi-line document string.
+ *
+ * @example
+ * ```typescript
+ * renderDocument(envelope)
+ * // "#!lse 1.2\n[toggle patient:.active]\n[add patient:.highlight]"
+ * ```
+ */
+export function renderDocument(envelope: LSEEnvelope): string {
+  const lines: string[] = [];
+
+  // Emit version header if not the default
+  if (envelope.lseVersion && envelope.lseVersion !== '1.0') {
+    lines.push(`#!lse ${envelope.lseVersion}`);
+  }
+
+  // Emit each node on its own line
+  for (const node of envelope.nodes) {
+    lines.push(renderExplicit(node));
+  }
+
+  return lines.join('\n');
+}
+
+// =============================================================================
+// Internal Helpers
+// =============================================================================
+
+/**
+ * Render a single bracket command (non-compound node).
+ */
+function renderBracketCommand(node: SemanticNode): string {
   const parts: string[] = [node.action];
 
   // Add roles
@@ -108,10 +164,6 @@ export function renderExplicit(node: SemanticNode): string {
 
   return `[${parts.join(' ')}]`;
 }
-
-// =============================================================================
-// Internal Helpers
-// =============================================================================
 
 /**
  * Convert a semantic value to its explicit syntax string form.

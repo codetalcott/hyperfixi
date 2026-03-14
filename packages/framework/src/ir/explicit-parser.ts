@@ -4,14 +4,15 @@
  * Parses the universal [command role:value ...] bracket syntax.
  * Domain-agnostic — schema validation is injectable via ParseExplicitOptions.
  *
+ * Three parsing levels matching the ABNF grammar:
+ *   parseDocument()  → parseCompound()  → parseExplicit()
+ *   (multi-line)       (chain ops)         (single bracket)
+ *
  * Syntax:
  *   [command role1:value1 role2:value2 ...]
- *
- * Examples:
- *   [toggle patient:.active destination:#button]
- *   [put patient:"hello" destination:#output]
- *   [on event:click body:[toggle patient:.active]]
- *   [select patient:name source:users condition:age>25]
+ *   [cmd1 ...] then [cmd2 ...]
+ *   @annotation(value) [command ...]
+ *   #!lse 1.2\n[cmd1 ...]\n[cmd2 ...]
  */
 
 import type {
@@ -20,12 +21,16 @@ import type {
   SemanticRole,
   ActionType,
   LoopVariant,
+  Annotation,
+  LSEEnvelope,
+  CompoundSemanticNode,
 } from '../core/types';
 import {
   createCommandNode,
   createEventHandlerNode,
   createConditionalNode,
   createLoopNode,
+  createCompoundNode,
   createSelector,
   createLiteral,
   createReference,
@@ -339,6 +344,294 @@ export function parseExplicit(input: string, options: ParseExplicitOptions = {})
 export function isExplicitSyntax(input: string): boolean {
   const trimmed = input.trim();
   return trimmed.startsWith('[') && trimmed.endsWith(']');
+}
+
+// =============================================================================
+// Compound Statement Parsing
+// =============================================================================
+
+/** Chain operators per ABNF: "then" / "and" / "async" / "sequential" / "|>" */
+const CHAIN_KEYWORDS = new Set(['then', 'and', 'async', 'sequential']);
+
+/**
+ * Split input into bracket-command segments separated by chain operators.
+ * Returns segments and the chain operator found (first one wins for mixed).
+ */
+function splitCompoundSegments(input: string): {
+  segments: string[];
+  chainType: CompoundSemanticNode['chainType'] | null;
+} {
+  const segments: string[] = [];
+  let chainType: CompoundSemanticNode['chainType'] | null = null;
+  let current = '';
+  let bracketDepth = 0;
+  let inString = false;
+  let stringChar = '';
+
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+
+    if (inString) {
+      current += char;
+      if (char === stringChar && input[i - 1] !== '\\') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      inString = true;
+      stringChar = char;
+      current += char;
+      continue;
+    }
+
+    if (char === '[') {
+      bracketDepth++;
+      current += char;
+      continue;
+    }
+
+    if (char === ']') {
+      bracketDepth--;
+      current += char;
+
+      // At depth 0 after closing bracket, check for chain operator
+      if (bracketDepth === 0) {
+        const rest = input.slice(i + 1);
+        // Check for |> pipe operator
+        const pipeMatch = rest.match(/^\s*\|>\s*/);
+        if (pipeMatch) {
+          segments.push(current.trim());
+          current = '';
+          chainType ??= 'pipe';
+          i += pipeMatch[0].length;
+          continue;
+        }
+        // Check for keyword chain operators
+        const keywordMatch = rest.match(/^\s+(then|and|async|sequential)\s+/);
+        if (keywordMatch && CHAIN_KEYWORDS.has(keywordMatch[1])) {
+          segments.push(current.trim());
+          current = '';
+          chainType ??= keywordMatch[1] as CompoundSemanticNode['chainType'];
+          i += keywordMatch[0].length;
+          continue;
+        }
+      }
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim()) {
+    segments.push(current.trim());
+  }
+
+  return { segments, chainType };
+}
+
+/**
+ * Parse a compound statement (one or more bracket commands chained with operators).
+ *
+ * ABNF: compound-stmt = bracket-cmd *( chain-op bracket-cmd )
+ *
+ * Single commands pass through to parseExplicit(). Multiple commands produce
+ * a CompoundSemanticNode.
+ *
+ * Also handles annotations (@name or @name(value)) before the first bracket.
+ *
+ * @example
+ * ```typescript
+ * // Single command — passthrough
+ * parseCompound('[toggle patient:.active]')
+ *
+ * // Compound statement
+ * parseCompound('[add patient:.loading] then [fetch source:/api/data]')
+ *
+ * // With annotation
+ * parseCompound('@timeout(5s) [fetch source:/api/users]')
+ * ```
+ */
+export function parseCompound(input: string, options?: ParseExplicitOptions): SemanticNode {
+  const trimmed = input.trim();
+
+  // Extract annotations before the first bracket
+  const { annotations, remainder } = extractAnnotations(trimmed);
+
+  const { segments, chainType } = splitCompoundSegments(remainder);
+
+  let node: SemanticNode;
+  if (segments.length <= 1) {
+    // Single command — delegate to parseExplicit
+    node = parseExplicit(segments[0] || remainder, options);
+  } else {
+    // Multiple commands — create compound node
+    const statements = segments.map(seg => parseExplicit(seg, options));
+    node = createCompoundNode(statements, chainType ?? 'sequential');
+  }
+
+  // Attach annotations if any
+  if (annotations.length > 0) {
+    return { ...node, annotations };
+  }
+  return node;
+}
+
+// =============================================================================
+// Annotation Parsing
+// =============================================================================
+
+/**
+ * Extract @name and @name(value) annotations from before the first bracket.
+ * Per ABNF, annotations precede the compound statement on the same line.
+ */
+function extractAnnotations(input: string): { annotations: Annotation[]; remainder: string } {
+  const annotations: Annotation[] = [];
+  let pos = 0;
+
+  while (pos < input.length) {
+    // Skip whitespace
+    while (pos < input.length && (input[pos] === ' ' || input[pos] === '\t')) {
+      pos++;
+    }
+
+    // If we hit '[' or end of string, we're done with annotations
+    if (pos >= input.length || input[pos] !== '@') {
+      break;
+    }
+
+    // Parse @name
+    pos++; // skip @
+    const nameStart = pos;
+    while (pos < input.length && /[A-Za-z0-9\-_]/.test(input[pos])) {
+      pos++;
+    }
+    const name = input.slice(nameStart, pos);
+    if (!name) break;
+
+    // Check for (value)
+    let value: string | undefined;
+    if (pos < input.length && input[pos] === '(') {
+      pos++; // skip (
+      const valueStart = pos;
+      // Handle quoted strings inside annotation values
+      if (pos < input.length && (input[pos] === '"' || input[pos] === "'")) {
+        const quote = input[pos];
+        pos++; // skip opening quote
+        while (pos < input.length && input[pos] !== quote) {
+          if (input[pos] === '\\') pos++; // skip escape
+          pos++;
+        }
+        pos++; // skip closing quote
+        value = input.slice(valueStart + 1, pos - 1); // strip quotes
+      } else {
+        // Plain value chars: ALPHA / DIGIT / "-" / "_" / "." / "/" / ":"
+        while (pos < input.length && input[pos] !== ')') {
+          pos++;
+        }
+        value = input.slice(valueStart, pos);
+      }
+      if (pos < input.length && input[pos] === ')') {
+        pos++; // skip )
+      }
+    }
+
+    annotations.push(value !== undefined ? { name, value } : { name });
+  }
+
+  return { annotations, remainder: input.slice(pos).trim() };
+}
+
+// =============================================================================
+// Document Parsing
+// =============================================================================
+
+/** Version header regex: #!lse <version> */
+const VERSION_HEADER_RE = /^#!lse\s+(\d+\.\d+(?:\.\d+)?)\s*$/;
+
+/**
+ * Parse a multi-line LSE document into an LSEEnvelope.
+ *
+ * ABNF: document = [ version-header LF ] *( line LF ) [ line ]
+ *
+ * Handles version headers (#!lse 1.2), comments (// or #), blank lines,
+ * and statement lines (one compound statement per line).
+ *
+ * @example
+ * ```typescript
+ * const envelope = parseDocument(`
+ *   #!lse 1.2
+ *   // Toggle active state
+ *   [toggle patient:.active]
+ *   [add patient:.highlight]
+ * `);
+ * // envelope.lseVersion === '1.2'
+ * // envelope.nodes.length === 2
+ * ```
+ */
+export function parseDocument(input: string, options?: ParseExplicitOptions): LSEEnvelope {
+  const lines = input.split('\n');
+  let lseVersion = '1.0';
+  const nodes: SemanticNode[] = [];
+  let startLine = 0;
+
+  // Check for version header on first non-blank line
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) continue; // skip leading blank lines
+    const versionMatch = trimmed.match(VERSION_HEADER_RE);
+    if (versionMatch) {
+      lseVersion = versionMatch[1];
+      startLine = i + 1;
+    }
+    break;
+  }
+
+  // Parse remaining lines
+  for (let i = startLine; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+
+    // Skip blank lines
+    if (!trimmed) continue;
+
+    // Skip comments (// or #, but NOT #! which is version header)
+    if (trimmed.startsWith('//') || (trimmed.startsWith('#') && !trimmed.startsWith('#!'))) {
+      continue;
+    }
+
+    // Parse statement line
+    nodes.push(parseCompound(trimmed, options));
+  }
+
+  return { lseVersion, nodes };
+}
+
+// =============================================================================
+// Detection Helpers
+// =============================================================================
+
+/**
+ * Check if input contains compound chaining (multiple bracket commands
+ * with chain operators at bracket-depth 0).
+ */
+export function isCompoundSyntax(input: string): boolean {
+  const { segments } = splitCompoundSegments(input.trim());
+  return segments.length > 1;
+}
+
+/**
+ * Check if input is a multi-line LSE document (contains newlines,
+ * version header, or comment lines).
+ */
+export function isDocumentSyntax(input: string): boolean {
+  const trimmed = input.trim();
+  if (trimmed.includes('\n')) return true;
+  if (VERSION_HEADER_RE.test(trimmed)) return true;
+  if (trimmed.startsWith('//') || (trimmed.startsWith('#') && !trimmed.startsWith('#!'))) {
+    return true;
+  }
+  return false;
 }
 
 // =============================================================================
