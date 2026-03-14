@@ -32,7 +32,7 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 
 - [x] 4.1 Profile Single Source
 - [x] 4.2 Asset Generation
-- [ ] 4.3 Vite Plugin Language Selection
+- [x] 4.3 Vite Plugin Language Selection (already implemented)
 
 ## Phase 5: Advanced Parser Integration
 
