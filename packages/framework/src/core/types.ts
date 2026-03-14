@@ -8,6 +8,8 @@
  * These types are domain-agnostic - they work for any DSL (SQL, animations, etc.)
  */
 
+import type { Diagnostic } from '../generation/diagnostics';
+
 // =============================================================================
 // Action Types (Generic)
 // =============================================================================
@@ -152,8 +154,8 @@ export interface SemanticNode {
   readonly metadata?: SemanticMetadata;
   /** Metadata annotations (v1.2). */
   readonly annotations?: readonly Annotation[];
-  /** Type constraint diagnostics (v1.2). */
-  readonly diagnostics?: readonly ProtocolDiagnostic[];
+  /** Diagnostics from parsing, validation, and schema checks (v1.2, extended v1.2.1). */
+  readonly diagnostics?: readonly Diagnostic[];
 }
 
 /**

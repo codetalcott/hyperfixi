@@ -9,8 +9,8 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 ## Phase 1: LSE as Canonical IR
 
 - [x] 1.0 Dependency Spike — `df7d4b7d` (2026-03-14)
-- [ ] 1.1 Bridge LSE to Core Runtime
-- [ ] 1.2 LSE Diagnostics
+- [x] 1.1 Bridge LSE to Core Runtime — `179652e4` (2026-03-14)
+- [x] 1.2 LSE Diagnostics (pending commit)
 - [ ] 1.3 LSE API Surface
 
 ## Phase 2: Core Parser Improvements

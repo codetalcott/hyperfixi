@@ -92,7 +92,6 @@
           "diagnostics": [
             {
               "level": "error",
-              "role": "patient",
               "message": "toggle.patient expects type [selector], got 'literal'",
               "code": "SCHEMA_VALUE_TYPE_MISMATCH"
             }

@@ -40,6 +40,9 @@ export type {
   Annotation,
   ProtocolDiagnostic,
   LSEEnvelope,
+  Diagnostic,
+  DiagnosticSeverity,
+  DiagnosticResult,
 } from '@lokascript/framework';
 
 export type {

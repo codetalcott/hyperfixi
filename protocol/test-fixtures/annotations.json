@@ -112,7 +112,6 @@
       "diagnostics": [
         {
           "level": "error",
-          "role": "patient",
           "message": "toggle.patient expects selector kind [class, attribute], got 'id'",
           "code": "SCHEMA_SELECTOR_KIND_MISMATCH"
         }

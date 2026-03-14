@@ -995,10 +995,10 @@ describe('v1.2: diagnostics', () => {
       ...createCommandNode('toggle', { patient: createSelector('#button', 'id') }),
       diagnostics: [
         {
-          level: 'error',
-          role: 'patient',
+          severity: 'error',
           message: "toggle.patient expects selector kind [class, attribute], got 'id'",
           code: 'SCHEMA_SELECTOR_KIND_MISMATCH',
+          source: 'schema',
         },
       ],
     };
@@ -1006,6 +1006,7 @@ describe('v1.2: diagnostics', () => {
     expect(json.diagnostics).toHaveLength(1);
     expect(json.diagnostics![0].level).toBe('error');
     expect(json.diagnostics![0].code).toBe('SCHEMA_SELECTOR_KIND_MISMATCH');
+    expect(json.diagnostics![0].source).toBe('schema');
   });
 
   it('deserializes diagnostics from protocol JSON', () => {
@@ -1025,6 +1026,7 @@ describe('v1.2: diagnostics', () => {
     const node = fromProtocolJSON(json);
     expect(node.diagnostics).toHaveLength(1);
     expect(node.diagnostics![0].code).toBe('SCHEMA_VALUE_TYPE_MISMATCH');
+    expect(node.diagnostics![0].severity).toBe('error');
   });
 
   describe('fixture conformance: type-constraints.json', () => {
