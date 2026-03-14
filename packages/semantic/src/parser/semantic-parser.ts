@@ -31,7 +31,7 @@ import {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { patternMatcher } from './pattern-matcher';
-import { eventNameTranslations } from '../patterns/event-handler/shared';
+import { eventNameTranslations } from '../patterns/event-handler';
 import { render as renderExplicitFn } from '../explicit/renderer';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 

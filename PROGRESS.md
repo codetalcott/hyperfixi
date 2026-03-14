@@ -24,7 +24,7 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 ## Phase 3: Semantic Parser Improvements
 
 - [x] 3.1 Morphology Base
-- [ ] 3.2 Pattern Consolidation
+- [x] 3.2 Pattern Consolidation
 - [ ] 3.3 Confidence Model
 - [ ] 3.4 Error Reporting
 

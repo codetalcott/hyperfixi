@@ -8,7 +8,7 @@
  * - builders.ts: Pattern building and generation logic
  * - registry.ts: Pattern cache and lookup functions
  * - languages/en/: English-only hand-crafted patterns
- * - toggle/, put/, event-handler/: Per-command patterns by language
+ * - {command}.ts: Consolidated per-command patterns (Phase 3.2)
  */
 
 import type { LanguagePattern } from '../types';
@@ -45,14 +45,14 @@ export type { PatternStats } from './registry';
 // Re-exports from per-command pattern directories
 // =============================================================================
 
-// Per-language getter functions (tree-shakeable)
-export { getTogglePatternsForLanguage } from './toggle/index';
-export { getPutPatternsForLanguage } from './put/index';
-export { getEventHandlerPatternsForLanguage } from './event-handler/index';
-export { getGrammarTransformedPatternsForLanguage } from './grammar-transformed/index';
+// Per-command consolidated pattern files (Phase 3.2)
+export { getTogglePatternsForLanguage } from './toggle';
+export { getPutPatternsForLanguage } from './put';
+export { getEventHandlerPatternsForLanguage } from './event-handler';
+export { getGrammarTransformedPatternsForLanguage } from './grammar-transformed';
 
 // Event handler utilities
-export { eventNameTranslations, normalizeEventName } from './event-handler/shared';
+export { eventNameTranslations, normalizeEventName } from './event-handler';
 
 // =============================================================================
 // Registry Pattern Generator Setup
