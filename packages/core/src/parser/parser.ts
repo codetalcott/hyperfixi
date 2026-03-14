@@ -162,6 +162,14 @@ export class Parser {
   private originalInput?: string;
   private registryIntegration?: any; // From ParserOptions - typed as 'any' to avoid circular dependency
 
+  /**
+   * Selective memoization cache for Pratt expression parsing (Phase 6.1).
+   * Caches expression results keyed by `${tokenPosition}:${minBp}`.
+   * Stores both the parsed node and the end token position for replay.
+   * Cleared at the start of each top-level parse() call.
+   */
+  private prattCache = new Map<string, { node: ASTNode; endPos: number }>();
+
   // Postfix unary operators that do NOT take a right operand
   private static readonly POSTFIX_UNARY_OPERATORS = new Set([
     'exists',
@@ -214,6 +222,8 @@ export class Parser {
   }
 
   parse(): ParseResult {
+    // Clear Pratt expression cache for this parse (Phase 6.1)
+    this.prattCache.clear();
     const result = this.parseInternal();
     // Attach accumulated errors for resilient parsing
     if (this.errors.length > 0) {
@@ -517,6 +527,15 @@ export class Parser {
    * @param minBp - Minimum binding power to continue parsing infix operators
    */
   private parseExpressionPratt(minBp: number): ASTNode {
+    // Phase 6.1: Selective memoization — cache hits replay the result and skip tokens
+    const cacheKey = `${this.current}:${minBp}`;
+    const cached = this.prattCache.get(cacheKey);
+    if (cached) {
+      this.current = cached.endPos;
+      return cached.node;
+    }
+    const startPos = this.current;
+
     // --- NUD (prefix / atom) ---
     if (this.isAtEnd()) {
       this.addError('Unexpected end of expression');
@@ -620,6 +639,9 @@ export class Parser {
 
       left = infixEntry.infix.handler(left, opToken, this.makePrattContext());
     }
+
+    // Phase 6.1: Cache the result for this position and binding power
+    this.prattCache.set(cacheKey, { node: left, endPos: this.current });
 
     return left;
   }

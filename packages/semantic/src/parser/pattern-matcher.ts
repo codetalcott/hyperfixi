@@ -38,6 +38,12 @@ export class PatternMatcher {
   private currentProfile: LanguageProfile | undefined;
   /** Injectable confidence scoring model (Phase 3.3) */
   private readonly confidenceModel: ConfidenceModel;
+  /**
+   * Selective memoization cache (Phase 6.1).
+   * Caches pattern match results keyed by `tokenPosition:patternId`.
+   * Cleared before each top-level matchBest() call.
+   */
+  private matchCache = new Map<string, PatternMatchResult | null>();
 
   constructor(confidenceModel?: ConfidenceModel) {
     this.confidenceModel = confidenceModel ?? defaultConfidenceModel;
@@ -89,11 +95,25 @@ export class PatternMatcher {
    * Try to match multiple patterns, return the best match.
    */
   matchBest(tokens: TokenStream, patterns: LanguagePattern[]): PatternMatchResult | null {
+    // Clear memoization cache for this matching round (Phase 6.1)
+    this.matchCache.clear();
+
     const matches: PatternMatchResult[] = [];
+    const startPos = tokens.position();
 
     for (const pattern of patterns) {
       const mark = tokens.mark();
-      const result = this.matchPattern(tokens, pattern);
+
+      // Check memoization cache (Phase 6.1)
+      const cacheKey = `${startPos}:${pattern.id}`;
+      let result: PatternMatchResult | null;
+
+      if (this.matchCache.has(cacheKey)) {
+        result = this.matchCache.get(cacheKey)!;
+      } else {
+        result = this.matchPattern(tokens, pattern);
+        this.matchCache.set(cacheKey, result);
+      }
 
       if (result) {
         matches.push(result);
