@@ -318,7 +318,7 @@ describe('Pattern Generator', () => {
       const simple = generateSimplePattern(toggleSchema, englishProfile);
 
       expect(simple).not.toBeNull();
-      expect(simple!.id).toBe('toggle-en-simple');
+      expect(simple!.id).toBe('toggle-en-generated-simple');
     });
 
     it('should return null for commands with no optional roles', () => {
@@ -351,7 +351,7 @@ describe('Pattern Generator', () => {
       const ids = variants.map(v => v.id);
 
       expect(ids).toContain('toggle-en-generated');
-      expect(ids).toContain('toggle-en-simple');
+      expect(ids).toContain('toggle-en-generated-simple');
     });
   });
 
