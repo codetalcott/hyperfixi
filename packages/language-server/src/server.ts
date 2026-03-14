@@ -65,6 +65,9 @@ import {
   type ChevrotainDiagnostic,
 } from './chevrotain-parser.js';
 
+// Localized descriptions for completions and hover (Phase 7.3)
+import { getCommandDescription } from './localized-descriptions.js';
+
 // =============================================================================
 // Optional Package Imports
 // =============================================================================
@@ -852,6 +855,12 @@ function getContextualCompletions(context: string, language: string): Completion
   const isCommandAvailable = (cmd: string) =>
     availableCommands.includes(cmd as (typeof availableCommands)[number]);
 
+  // Phase 7.3: Localized detail/documentation for commands
+  const getDetail = (command: string, fallback: string): string => {
+    const desc = getCommandDescription(command, effectiveLanguage);
+    return desc?.detail ?? fallback;
+  };
+
   switch (context) {
     case 'event':
       // Use canonical event names from @hyperfixi/core/lsp-metadata, with fallback
@@ -871,55 +880,71 @@ function getContextualCompletions(context: string, language: string): Completion
         {
           label: getKeyword('toggle'),
           kind: CompletionItemKind.Method,
-          detail: 'Toggle class/visibility',
+          detail: getDetail('toggle', 'Toggle class/visibility'),
           insertText: `${getKeyword('toggle')} .\${1:class}`,
         },
         {
           label: getKeyword('add'),
           kind: CompletionItemKind.Method,
-          detail: 'Add class/attribute',
+          detail: getDetail('add', 'Add class/attribute'),
           insertText: `${getKeyword('add')} .\${1:class} to \${2:me}`,
         },
         {
           label: getKeyword('remove'),
           kind: CompletionItemKind.Method,
-          detail: 'Remove class/element',
+          detail: getDetail('remove', 'Remove class/element'),
           insertText: `${getKeyword('remove')} .\${1:class} from \${2:me}`,
         },
-        { label: getKeyword('show'), kind: CompletionItemKind.Method, detail: 'Show element' },
-        { label: getKeyword('hide'), kind: CompletionItemKind.Method, detail: 'Hide element' },
+        {
+          label: getKeyword('show'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('show', 'Show element'),
+        },
+        {
+          label: getKeyword('hide'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('hide', 'Hide element'),
+        },
         {
           label: getKeyword('put'),
           kind: CompletionItemKind.Method,
-          detail: 'Set content',
+          detail: getDetail('put', 'Set content'),
           insertText: `${getKeyword('put')} \${1:value} into \${2:target}`,
         },
         {
           label: getKeyword('set'),
           kind: CompletionItemKind.Method,
-          detail: 'Set variable',
+          detail: getDetail('set', 'Set variable'),
           insertText: `${getKeyword('set')} \${1:variable} to \${2:value}`,
         },
         {
           label: getKeyword('fetch'),
           kind: CompletionItemKind.Method,
-          detail: 'HTTP request',
+          detail: getDetail('fetch', 'HTTP request'),
           insertText: `${getKeyword('fetch')} \${1:/api/endpoint}`,
         },
         {
           label: getKeyword('wait'),
           kind: CompletionItemKind.Method,
-          detail: 'Pause execution',
+          detail: getDetail('wait', 'Pause execution'),
           insertText: `${getKeyword('wait')} \${1:1s}`,
         },
         {
           label: getKeyword('send'),
           kind: CompletionItemKind.Method,
-          detail: 'Dispatch event',
+          detail: getDetail('send', 'Dispatch event'),
           insertText: `${getKeyword('send')} \${1:eventName} to \${2:target}`,
         },
-        { label: getKeyword('trigger'), kind: CompletionItemKind.Method, detail: 'Trigger event' },
-        { label: getKeyword('log'), kind: CompletionItemKind.Method, detail: 'Console log' },
+        {
+          label: getKeyword('trigger'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('trigger', 'Trigger event'),
+        },
+        {
+          label: getKeyword('log'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('log', 'Console log'),
+        },
         { label: getKeyword('if'), kind: CompletionItemKind.Keyword, detail: 'Conditional' },
         { label: getKeyword('repeat'), kind: CompletionItemKind.Keyword, detail: 'Loop' }
       );
@@ -1135,7 +1160,8 @@ function getHoverDocumentation(word: string, language: string): string | null {
   const doc = docs[canonicalKey];
   if (!doc) return null;
 
-  // Build hover content
+  // Build hover content — use localized description if available (Phase 7.3)
+  const localizedDesc = getCommandDescription(canonicalKey, language);
   let content = `**${doc.title}**`;
 
   // Show the user's keyword with the canonical form for reference
@@ -1143,7 +1169,9 @@ function getHoverDocumentation(word: string, language: string): string | null {
     content = `**${word}** (${canonicalKey})`;
   }
 
-  content += `\n\n${doc.description}`;
+  // Use localized documentation if available, otherwise fall back to English
+  const description = localizedDesc?.documentation ?? doc.description;
+  content += `\n\n${description}`;
   content += `\n\n\`\`\`hyperscript\n${doc.example}\n\`\`\``;
 
   // Add translations in multilingual modes

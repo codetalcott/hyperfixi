@@ -48,7 +48,7 @@ Each phase: implement → validate (typecheck + tests + bundle sizes) → commit
 
 - [x] 7.1 LSE Protocol Publication
 - [x] 7.2 Interactive Playground
-- [ ] 7.3 Localized DX
+- [x] 7.3 Localized DX
 - [ ] 7.4 Domain Creation Pipeline
 - [ ] 7.5 LLM-Native LSE
 
