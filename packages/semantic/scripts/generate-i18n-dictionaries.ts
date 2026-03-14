@@ -6,9 +6,10 @@
  * extracts keyword translations, and writes i18n dictionary files to
  * packages/i18n/src/dictionaries/.
  *
- * The semantic profile is the single source of truth for keyword translations.
+ * The generator MERGES derived entries with existing hand-written dictionaries.
+ * Existing entries always take priority — the generator only ADDS missing entries.
  * Categories not derivable from profiles (events, temporal, attributes, etc.)
- * are preserved from existing dictionary files.
+ * are fully preserved from existing dictionary files.
  *
  * Usage:
  *   npx tsx scripts/generate-i18n-dictionaries.ts
@@ -345,24 +346,24 @@ function deriveFromProfile(
     }
   }
 
-  // 5. Merge with existing dictionary for non-derivable categories
+  // 5. Merge with existing dictionary — existing entries always take priority
   //    Events, temporal, attributes are fully preserved from existing files.
-  //    For partially derivable categories, we merge: derived values take priority,
-  //    then existing values fill in the gaps.
+  //    For partially derivable categories, existing entries take priority;
+  //    derived entries only fill in keys that don't already exist.
   if (existing) {
     for (const category of DICTIONARY_CATEGORIES) {
       if (NON_DERIVABLE_CATEGORIES.has(category)) {
         // Fully preserve from existing
         result[category] = { ...existing[category] };
       } else {
-        // Merge: existing fills gaps, derived takes priority
+        // Merge: existing entries take priority, derived entries only fill gaps
         const merged: Record<string, string> = {};
-        // Start with existing entries
-        for (const [key, value] of Object.entries(existing[category])) {
+        // Start with derived entries
+        for (const [key, value] of Object.entries(result[category])) {
           merged[key] = value;
         }
-        // Override with derived entries
-        for (const [key, value] of Object.entries(result[category])) {
+        // Existing entries override derived ones (hand-written takes priority)
+        for (const [key, value] of Object.entries(existing[category])) {
           merged[key] = value;
         }
         result[category] = merged;
@@ -374,9 +375,35 @@ function deriveFromProfile(
 }
 
 // ---------------------------------------------------------------------------
-// Sort object keys alphabetically for consistent output
+// Order keys: preserve existing order, append new keys sorted at end
 // ---------------------------------------------------------------------------
 
+function orderKeys(
+  merged: Record<string, string>,
+  existingKeys: string[]
+): Record<string, string> {
+  const ordered: Record<string, string> = {};
+  const existingSet = new Set(existingKeys);
+
+  // First: preserve existing keys in their original order
+  for (const key of existingKeys) {
+    if (key in merged) {
+      ordered[key] = merged[key];
+    }
+  }
+
+  // Then: append new keys (not in existing) sorted alphabetically
+  const newKeys = Object.keys(merged)
+    .filter(k => !existingSet.has(k))
+    .sort();
+  for (const key of newKeys) {
+    ordered[key] = merged[key];
+  }
+
+  return ordered;
+}
+
+// Sort all keys alphabetically (for new files with no existing dictionary)
 function sortKeys(obj: Record<string, string>): Record<string, string> {
   const sorted: Record<string, string> = {};
   for (const key of Object.keys(obj).sort()) {
@@ -389,21 +416,24 @@ function sortKeys(obj: Record<string, string>): Record<string, string> {
 // Generate file content
 // ---------------------------------------------------------------------------
 
-function generateFileContent(code: string, dict: Dictionary): string {
+function generateFileContent(code: string, dict: Dictionary, existing: Dictionary | null): string {
   const exportInfo = EXPORT_NAMES[code] || { varName: code, useAlias: false };
   const { varName, useAlias } = exportInfo;
 
   const lines: string[] = [];
 
-  lines.push('// @generated from semantic profiles — do not edit manually');
-  lines.push('// To modify, update the semantic profile and run: npm run generate:language-assets');
+  lines.push('// Generated/merged from semantic profiles — hand-written entries are preserved');
+  lines.push('// To add derived entries, update the semantic profile and run: npm run generate:language-assets');
   lines.push('');
   lines.push("import { Dictionary } from '../types';");
   lines.push('');
   lines.push(`export const ${varName}: Dictionary = {`);
 
   for (const category of DICTIONARY_CATEGORIES) {
-    const entries = sortKeys(dict[category]);
+    // Preserve existing key order, append new keys sorted at end
+    const entries = existing
+      ? orderKeys(dict[category], Object.keys(existing[category]))
+      : sortKeys(dict[category]);
     const entryKeys = Object.keys(entries);
 
     lines.push(`  ${category}: {`);
@@ -486,39 +516,32 @@ function main(): void {
     // Derive the dictionary
     const derived = deriveFromProfile(profile, existing);
 
-    // Count changes
-    let changedEntries = 0;
+    // Count new entries (existing entries are never changed)
     let newEntries = 0;
     if (existing) {
       for (const category of DICTIONARY_CATEGORIES) {
-        for (const [key, value] of Object.entries(derived[category])) {
+        for (const key of Object.keys(derived[category])) {
           if (existing[category][key] === undefined) {
             newEntries++;
-          } else if (existing[category][key] !== value) {
-            changedEntries++;
           }
         }
       }
     }
 
     // Generate file content
-    const content = generateFileContent(code, derived);
+    const content = generateFileContent(code, derived, existing);
 
     if (dryRun) {
-      const status = !fileExists ? 'CREATE' : changedEntries > 0 || newEntries > 0 ? 'UPDATE' : 'OK';
-      const details: string[] = [];
-      if (changedEntries > 0) details.push(`${changedEntries} changed`);
-      if (newEntries > 0) details.push(`${newEntries} new`);
-      const detailStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+      const status = !fileExists ? 'CREATE' : newEntries > 0 ? 'UPDATE' : 'OK';
+      const detailStr = newEntries > 0 ? ` (${newEntries} new)` : '';
       console.log(`  ${status.padEnd(6)} ${code} (${profile.name})${detailStr}`);
-    } else {
+    } else if (!fileExists || newEntries > 0) {
       fs.writeFileSync(dictFilePath, content, 'utf-8');
       const status = !fileExists ? 'CREATE' : 'UPDATE';
-      const details: string[] = [];
-      if (changedEntries > 0) details.push(`${changedEntries} changed`);
-      if (newEntries > 0) details.push(`${newEntries} new`);
-      const detailStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+      const detailStr = newEntries > 0 ? ` (${newEntries} new)` : '';
       console.log(`  ${status.padEnd(6)} ${code} (${profile.name})${detailStr}`);
+    } else {
+      console.log(`  OK     ${code} (${profile.name})`);
     }
 
     generated++;

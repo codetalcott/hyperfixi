@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/vi.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const vi: Dictionary = {
   commands: {
-    // Event handling
     on: 'khi',
     tell: 'nói với',
     trigger: 'kích hoạt',
     send: 'gửi',
-
-    // DOM manipulation
     take: 'lấy',
     put: 'đặt',
     set: 'gán',
@@ -20,8 +18,6 @@ export const vi: Dictionary = {
     toggle: 'chuyển đổi',
     hide: 'ẩn',
     show: 'hiển thị',
-
-    // Control flow
     if: 'nếu',
     unless: 'trừ khi',
     repeat: 'lặp lại',
@@ -31,57 +27,35 @@ export const vi: Dictionary = {
     continue: 'tiếp tục',
     break: 'dừng',
     halt: 'dừng lại',
-
-    // Async
     wait: 'chờ',
     fetch: 'tải',
     call: 'gọi',
     return: 'trả về',
-
-    // Other commands
     make: 'tạo',
     log: 'in ra',
     throw: 'ném',
     catch: 'bắt',
     measure: 'đo lường',
     transition: 'chuyển tiếp',
-
-    // Data Commands
     increment: 'tăng',
     decrement: 'giảm',
     default: 'mặc định',
-
-    // Navigation Commands
     go: 'đi đến',
     pushUrl: 'pushUrl',
     replaceUrl: 'thayThếUrl',
-
-    // Utility Commands
     copy: 'sao chép',
     pick: 'chọn',
     beep: 'beep',
-
-    // Advanced Commands
     js: 'js',
     async: 'bất đồng bộ',
     render: 'hiển thị',
-
-    // Animation Commands
     swap: 'hoán đổi',
     morph: 'biến đổi',
     settle: 'ổn định',
-
-    // Content Commands
     append: 'nối',
-
-    // Control Flow
     exit: 'thoát',
-
-    // Focus
     focus: 'tập trung',
     blur: 'mất tập trung',
-
-    // Additional
     init: 'khởi tạo',
     behavior: 'hành vi',
     install: 'cài đặt',
@@ -140,12 +114,15 @@ export const vi: Dictionary = {
     contains: 'chứa',
     matches: 'khớp',
     exists: 'tồn tại',
-    has: 'có', // possession verb (context-based)
-    have: 'có', // same for first/third person
+    has: 'có',
+    have: 'có',
     empty: 'trống',
     true: 'đúng',
     false: 'sai',
     null: 'rỗng',
+    else: 'không thì',
+    end: 'kết thúc',
+    then: 'rồi',
   },
 
   temporal: {
@@ -172,6 +149,16 @@ export const vi: Dictionary = {
     some: 'một số',
     each: 'mỗi',
     every: 'tất cả',
+    body: 'body',
+    event: 'sự kiện',
+    it: 'nó',
+    its: 'của nó',
+    me: 'tôi',
+    my: 'của tôi',
+    result: 'kết quả',
+    target: 'mục tiêu',
+    you: 'bạn',
+    your: 'của bạn',
   },
 
   attributes: {
