@@ -55,6 +55,7 @@
     "packages:list": "node scripts/list-packages.cjs",
     "packages:list:public": "node scripts/list-packages.cjs --public",
     "packages:list:private": "node scripts/list-packages.cjs --private",
+    "create-domain": "npx tsx packages/framework/scripts/create-domain.ts",
     "rebuild": "npm run build && npm run typecheck",
     "rebuild:full": "./scripts/rebuild-all.sh",
     "rebuild:clean": "./scripts/rebuild-all.sh --clean",
