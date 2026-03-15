@@ -535,7 +535,7 @@ jobs:
 
       - name: Checkout examples gallery
         run: |
-          git clone --depth 1 https://codeberg.org/codetalcott/theme-dev-hyperscript.git _hyper_min
+          git clone --depth 1 https://github.com/codetalcott/hyperscript-theme.git _hyper_min
           ln -s _hyper_min/packages/examples examples
           ls examples/basics/01-hello-world.html  # Verify symlink works
 
