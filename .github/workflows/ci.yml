@@ -458,7 +458,7 @@ jobs:
         run: npm run test:coverage --prefix packages/i18n
 
       - name: Upload core coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: packages/core/coverage/lcov.info
           flags: core
@@ -467,7 +467,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload semantic coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: packages/semantic/coverage/lcov.info
           flags: semantic
@@ -476,7 +476,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload i18n coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: packages/i18n/coverage/lcov.info
           flags: i18n
@@ -488,7 +488,7 @@ jobs:
         run: npm test --prefix packages/language-server -- --coverage
 
       - name: Upload language-server coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: packages/language-server/coverage/lcov.info
           flags: language-server
