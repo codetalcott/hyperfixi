@@ -79,9 +79,12 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "tar": "^7.5.7",
+    "tar": "^7.5.11",
     "esbuild": "^0.25.11",
-    "hono": "^4.11.7"
+    "hono": "^4.12.7",
+    "minimatch": "^10.2.3",
+    "serialize-javascript": "^7.0.3",
+    "yauzl": "^3.2.1"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
