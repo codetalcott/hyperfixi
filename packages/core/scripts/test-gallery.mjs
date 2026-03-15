@@ -13,10 +13,21 @@
  */
 
 import { chromium } from 'playwright';
+import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, resolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(__dirname, '../../..');
+
+// Fail fast if examples symlink is missing
+if (!existsSync(join(repoRoot, 'examples', 'basics', '01-hello-world.html'))) {
+  console.error(
+    '\n  Missing examples/ directory at repo root.\n' +
+    '  Create a symlink: ln -s ../_hyper_min/packages/examples examples\n'
+  );
+  process.exit(1);
+}
 
 // Configuration
 const BASE_URL = 'http://127.0.0.1:3000';

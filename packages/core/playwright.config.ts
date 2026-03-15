@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  globalSetup: './global-setup.ts',
   testDir: './src/compatibility/browser-tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

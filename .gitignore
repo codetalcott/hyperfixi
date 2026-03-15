@@ -1,3 +1,6 @@
+# Examples symlink (points to _hyper_min/packages/examples)
+/examples
+
 # Dependencies
 node_modules/
 npm-debug.log*
