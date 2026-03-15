@@ -190,7 +190,7 @@ jobs:
 
             if [ "$DRY_RUN" = "true" ]; then
               (cd "packages/$pkg" && npm publish --dry-run --access public \
-                --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tail -3)
+                --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tail -3) || true
             else
               (cd "packages/$pkg" && npm publish --access public --provenance \
                 --tag "${{ github.event.inputs.npm-tag }}" 2>&1 | tee /tmp/pub-$pkg.log) || {
