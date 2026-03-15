@@ -69,7 +69,13 @@ export type ToggleCommandInput =
       duration?: number;
       untilEvent?: string;
     }
-  | { type: 'css-property'; property: 'display' | 'visibility' | 'opacity'; targets: HTMLElement[] }
+  | {
+      type: 'css-property';
+      property: 'display' | 'visibility' | 'opacity';
+      targets: HTMLElement[];
+      duration?: number;
+      untilEvent?: string;
+    }
   | { type: 'property'; target: PropertyTarget }
   | { type: 'dialog'; mode: 'modal' | 'non-modal'; targets: HTMLDialogElement[] }
   | { type: 'details'; targets: HTMLDetailsElement[] }
