@@ -1,5 +1,9 @@
-# Examples symlink (points to _hyper_min/packages/examples)
-/examples
+# Examples: exclude non-test content (vite projects, playground, experiments)
+/examples/vite-plugin-test/
+/examples/vite-plugin-multilingual/
+/examples/playground/
+/examples/experiments/
+/examples/dictionary-editor/
 
 # Dependencies
 node_modules/
@@ -180,6 +184,7 @@ packages/*/html/
 !**/test-runner.html
 !**/test-dashboard.html
 !**/test-measure-css-properties.html
+!examples/**/test-*.html
 
 # MCP server files
 mcp-server-hyperscript/dist/

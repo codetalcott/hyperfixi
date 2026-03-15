@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic-First Multilingual Parsing</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Semantic demo - dark themed app */
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #e0e0e0;
+            max-width: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--color-accent, #6366f1);
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .card {
+            background: #1e1e2e;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #2d2d3d;
+        }
+
+        .card h2 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card p {
+            color: #888;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        /* Language input section */
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group select {
+            padding: 12px 15px;
+            border: 2px solid #3d3d4d;
+            border-radius: 8px;
+            background: #2d2d3d;
+            color: #fff;
+            font-size: 15px;
+            font-family: var(--font-mono);
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--color-accent, #6366f1);
+        }
+
+        .input-group select {
+            cursor: pointer;
+        }
+
+        /* Results grid */
+        .results-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .result-card {
+            background: #252535;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #3d3d4d;
+        }
+
+        .result-header {
+            background: #2d2d3d;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #3d3d4d;
+        }
+
+        .result-header .flag {
+            font-size: 1.2rem;
+        }
+
+        .result-header .lang-name {
+            color: #fff;
+        }
+
+        .result-header .badge {
+            margin-left: auto;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-svo { background: var(--color-accent, #6366f1); color: white; }
+        .badge-sov { background: #e91e63; color: white; }
+        .badge-vso { background: #22c55e; color: white; }
+        .badge-explicit { background: #ff9800; color: black; }
+
+        .result-content {
+            padding: 15px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: #d4d4d4;
+            line-height: 1.6;
+        }
+
+        .result-content.rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        /* Semantic AST display */
+        .semantic-display {
+            background: #1a1a2a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .semantic-display .key { color: #569cd6; }
+        .semantic-display .value { color: #ce9178; }
+        .semantic-display .role { color: #4ec9b0; }
+
+        /* Quick examples */
+        .examples-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .example-btn {
+            padding: 8px 14px;
+            border: 1px solid #3d3d4d;
+            border-radius: 6px;
+            background: #2d2d3d;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .example-btn:hover {
+            background: #3d3d4d;
+            color: #fff;
+            border-color: var(--color-accent, #6366f1);
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Architecture diagram */
+        .architecture {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            flex-wrap: wrap;
+        }
+
+        .arch-box {
+            background: #2d2d3d;
+            padding: 20px 25px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .arch-box.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .arch-arrow {
+            color: var(--color-accent, #6366f1);
+            font-size: 24px;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #3d3d4d;
+        }
+
+        .comparison-table th {
+            background: #2d2d3d;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            color: #aaa;
+        }
+
+        .comparison-table tr:hover td {
+            background: #252535;
+        }
+
+        /* Info box */
+        .info-box {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 4px solid var(--color-accent, #6366f1);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 20px;
+        }
+
+        .info-box strong {
+            color: var(--color-accent, #6366f1);
+        }
+
+        @media (max-width: 768px) {
+            .input-section {
+                grid-template-columns: 1fr;
+            }
+            .architecture {
+                flex-direction: column;
+            }
+            .arch-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-link">Back to Multilingual Demo</a>
+            <h1>Semantic-First Parser</h1>
+            <p class="tagline">Native-feeling syntax in every language, not translated English</p>
+        </header>
+
+        <!-- Architecture Overview -->
+        <div class="card">
+            <h2>How It Works</h2>
+            <p>
+                Unlike keyword translation, the semantic parser understands the <strong>meaning</strong> of your code.
+                Each language has idiomatic patterns that feel natural to native speakers.
+            </p>
+            <div class="architecture">
+                <div class="arch-box">
+                    <div style="font-size: 24px; margin-bottom: 8px;">&#x1F1EF;&#x1F1F5; &#x1F1F8;&#x1F1E6; &#x1F1EA;&#x1F1F8;</div>
+                    <div>Native Input</div>
+                </div>
+                <div class="arch-arrow">&#x2192;</div>
+                <div class="arch-box">
+                    <div style="font-size: 24px; margin-bottom: 8px;">&#x1F524;</div>
+                    <div>Tokenizer</div>
+                </div>
+                <div class="arch-arrow">&#x2192;</div>
+                <div class="arch-box">
+                    <div style="font-size: 24px; margin-bottom: 8px;">&#x1F3AF;</div>
+                    <div>Pattern Match</div>
+                </div>
+                <div class="arch-arrow">&#x2192;</div>
+                <div class="arch-box highlight">
+                    <div style="font-size: 24px; margin-bottom: 8px;">&#x1F48E;</div>
+                    <div>Semantic AST</div>
+                </div>
+                <div class="arch-arrow">&#x2192;</div>
+                <div class="arch-box">
+                    <div style="font-size: 24px; margin-bottom: 8px;">&#x26A1;</div>
+                    <div>Runtime</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Parser Demo -->
+        <div class="card">
+            <h2>&#x1F504; Bidirectional Parser Demo</h2>
+            <p>
+                Enter hyperscript in <strong>any supported language</strong>. The parser extracts semantic meaning
+                and can render to any other language. Try typing in Japanese, Arabic, or Spanish!
+            </p>
+
+            <div class="examples-row">
+                <button class="example-btn" onclick="setExample('toggle .active on #button', 'en')">&#x1F1FA;&#x1F1F8; toggle .active</button>
+                <button class="example-btn" onclick="setExample('#button の .active を 切り替え', 'ja')">&#x1F1EF;&#x1F1F5; 切り替え</button>
+                <button class="example-btn" onclick="setExample('بدّل .active على #button', 'ar')">&#x1F1F8;&#x1F1E6; بدّل</button>
+                <button class="example-btn" onclick="setExample('alternar .active en #button', 'es')">&#x1F1EA;&#x1F1F8; alternar</button>
+                <button class="example-btn" onclick="setExample('.active 를 토글', 'ko')">&#x1F1F0;&#x1F1F7; 토글</button>
+                <button class="example-btn" onclick="setExample('切换 .active 在 #button', 'zh')">&#x1F1E8;&#x1F1F3; 切换</button>
+                <button class="example-btn" onclick="setExample('.active değiştir', 'tr')">&#x1F1F9;&#x1F1F7; değiştir</button>
+                <button class="example-btn" onclick="setExample('basculer .active sur #button', 'fr')">&#x1F1EB;&#x1F1F7; basculer</button>
+                <button class="example-btn" onclick="setExample('umschalten .active auf #button', 'de')">&#x1F1E9;&#x1F1EA; umschalten</button>
+                <button class="example-btn" onclick="setExample('alternar .active em #button', 'pt')">&#x1F1E7;&#x1F1F7; alternar</button>
+                <button class="example-btn" onclick="setExample('alihkan .active pada #button', 'id')">&#x1F1EE;&#x1F1E9; alihkan</button>
+                <button class="example-btn" onclick="setExample('tikray .active', 'qu')">&#x1F1F5;&#x1F1EA; tikray</button>
+                <button class="example-btn" onclick="setExample('badilisha .active kwenye #button', 'sw')">&#x1F1F0;&#x1F1EA; badilisha</button>
+            </div>
+
+            <div class="input-section">
+                <div class="input-group">
+                    <label>Input (any supported language)</label>
+                    <input type="text" id="parser-input" value="toggle .active on #button" placeholder="Enter hyperscript...">
+                </div>
+                <div class="input-group">
+                    <label>Source Language</label>
+                    <select id="source-lang">
+                        <option value="en">&#x1F1FA;&#x1F1F8; English</option>
+                        <option value="ja">&#x1F1EF;&#x1F1F5; Japanese</option>
+                        <option value="ar">&#x1F1F8;&#x1F1E6; Arabic</option>
+                        <option value="es">&#x1F1EA;&#x1F1F8; Spanish</option>
+                        <option value="ko">&#x1F1F0;&#x1F1F7; Korean</option>
+                        <option value="tr">&#x1F1F9;&#x1F1F7; Turkish</option>
+                        <option value="zh">&#x1F1E8;&#x1F1F3; Chinese</option>
+                        <option value="pt">&#x1F1E7;&#x1F1F7; Portuguese</option>
+                        <option value="fr">&#x1F1EB;&#x1F1F7; French</option>
+                        <option value="de">&#x1F1E9;&#x1F1EA; German</option>
+                        <option value="id">&#x1F1EE;&#x1F1E9; Indonesian</option>
+                        <option value="qu">&#x1F1F5;&#x1F1EA; Quechua</option>
+                        <option value="sw">&#x1F1F0;&#x1F1EA; Swahili</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Semantic AST -->
+            <h3 style="color: #fff; margin-bottom: 10px; font-size: 1rem;">Semantic Representation (Language-Neutral)</h3>
+            <div class="semantic-display" id="semantic-output">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Translations -->
+            <h3 style="color: #fff; margin: 20px 0 10px; font-size: 1rem;">Rendered in All Languages</h3>
+            <div class="results-grid" id="translations-output">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Explicit Mode -->
+        <div class="card">
+            <h2>&#x1F50D; Explicit Mode</h2>
+            <p>
+                A universal syntax that makes semantic roles visible. Perfect for learning, debugging,
+                and documentation. Same in all languages!
+            </p>
+
+            <div class="examples-row">
+                <button class="example-btn" onclick="showExplicit('[toggle patient:.active destination:#button]')">[toggle patient:.active destination:#button]</button>
+                <button class="example-btn" onclick="showExplicit('[put patient:\"hello\" destination:#output]')">[put patient:"hello" destination:#output]</button>
+                <button class="example-btn" onclick="showExplicit('[on event:click body:[toggle patient:.active]]')">[on event:click ...]</button>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label>Explicit Syntax</label>
+                <input type="text" id="explicit-input" value="[toggle patient:.active destination:#button]" placeholder="[command role:value ...]">
+            </div>
+
+            <h3 style="color: #fff; margin-bottom: 10px; font-size: 1rem;">Converts To Natural Language</h3>
+            <div class="results-grid" id="explicit-output">
+                <!-- Filled by JS -->
+            </div>
+
+            <div class="info-box">
+                <strong>Semantic Roles:</strong> The explicit syntax shows the underlying meaning.
+                <code>patient</code> is what's being acted on, <code>destination</code> is where,
+                <code>source</code> is from where, <code>event</code> is what triggers it.
+            </div>
+        </div>
+
+        <!-- Pattern Examples -->
+        <div class="card">
+            <h2>&#x1F4DD; Native Patterns by Language</h2>
+            <p>
+                Each language has patterns that feel natural to native speakers, not just translated keywords.
+            </p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Language</th>
+                        <th>Word Order</th>
+                        <th>Toggle Pattern</th>
+                        <th>Natural Feel</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>&#x1F1FA;&#x1F1F8; English</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>toggle .active on #button</code></td>
+                        <td>Verb first, optional target</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1EF;&#x1F1F5; Japanese</td>
+                        <td><span class="badge badge-sov">SOV</span></td>
+                        <td><code>#button の .active を 切り替え</code></td>
+                        <td>Object before verb, particles mark roles</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1F8;&#x1F1E6; Arabic</td>
+                        <td><span class="badge badge-vso">VSO</span></td>
+                        <td><code>بدّل .active على #button</code></td>
+                        <td>Verb first, RTL text</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1EA;&#x1F1F8; Spanish</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>alternar .active en #button</code></td>
+                        <td>Similar to English structure</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1F0;&#x1F1F7; Korean</td>
+                        <td><span class="badge badge-sov">SOV</span></td>
+                        <td><code>.active 를 토글</code></td>
+                        <td>Object-marker + verb at end</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1F9;&#x1F1F7; Turkish</td>
+                        <td><span class="badge badge-sov">SOV</span></td>
+                        <td><code>.active değiştir</code></td>
+                        <td>Agglutinative, verb at end</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1E8;&#x1F1F3; Chinese</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>切换 .active 在 #button</code></td>
+                        <td>Similar to English, no inflection</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1E7;&#x1F1F7; Portuguese</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>alternar .active em #button</code></td>
+                        <td>Romance language, like Spanish</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1EB;&#x1F1F7; French</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>basculer .active sur #button</code></td>
+                        <td>Romance language structure</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1E9;&#x1F1EA; German</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>umschalten .active auf #button</code></td>
+                        <td>Germanic, compound-friendly</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1EE;&#x1F1E9; Indonesian</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>alihkan .active pada #button</code></td>
+                        <td>Simple structure, no conjugation</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1F5;&#x1F1EA; Quechua</td>
+                        <td><span class="badge badge-sov">SOV</span></td>
+                        <td><code>.active tikray</code></td>
+                        <td>Agglutinative Andean language</td>
+                    </tr>
+                    <tr>
+                        <td>&#x1F1F0;&#x1F1EA; Swahili</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>badilisha .active kwenye #button</code></td>
+                        <td>Bantu language, noun class system</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <strong>Key Insight:</strong> Japanese uses particles (を, の, に) to mark grammatical roles,
+                so word order is flexible. Arabic is RTL but CSS selectors remain LTR "islands".
+                The semantic parser understands these linguistic features natively.
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the semantic package (IIFE bundle) -->
+    <script src="../../packages/semantic/dist/browser.global.js"></script>
+    <script>
+        // Using the real LokaScriptSemantic bundle!
+        const Semantic = window.LokaScriptSemantic;
+
+        // Check if bundle loaded
+        if (!Semantic) {
+            console.error('LokaScriptSemantic bundle not loaded!');
+            document.body.innerHTML = '<h1 style="color: red; text-align: center; margin-top: 100px;">Error: Semantic bundle not loaded. Run "npm run build:browser" in packages/semantic/</h1>';
+        } else {
+            console.log('LokaScriptSemantic loaded:', Semantic.VERSION || 'unknown version');
+            console.log('Supported languages:', Semantic.getSupportedLanguages ? Semantic.getSupportedLanguages() : 'API not available');
+        }
+
+        const languages = {
+            en: { name: 'English', flag: '\u{1F1FA}\u{1F1F8}', wordOrder: 'SVO', rtl: false },
+            ja: { name: '\u65E5\u672C\u8A9E', flag: '\u{1F1EF}\u{1F1F5}', wordOrder: 'SOV', rtl: false },
+            ar: { name: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', flag: '\u{1F1F8}\u{1F1E6}', wordOrder: 'VSO', rtl: true },
+            es: { name: 'Espanol', flag: '\u{1F1EA}\u{1F1F8}', wordOrder: 'SVO', rtl: false },
+            ko: { name: '\uD55C\uAD6D\uC5B4', flag: '\u{1F1F0}\u{1F1F7}', wordOrder: 'SOV', rtl: false },
+            tr: { name: 'Turkce', flag: '\u{1F1F9}\u{1F1F7}', wordOrder: 'SOV', rtl: false },
+            zh: { name: '\u4E2D\u6587', flag: '\u{1F1E8}\u{1F1F3}', wordOrder: 'SVO', rtl: false },
+            pt: { name: 'Portugues', flag: '\u{1F1E7}\u{1F1F7}', wordOrder: 'SVO', rtl: false },
+            fr: { name: 'Francais', flag: '\u{1F1EB}\u{1F1F7}', wordOrder: 'SVO', rtl: false },
+            de: { name: 'Deutsch', flag: '\u{1F1E9}\u{1F1EA}', wordOrder: 'SVO', rtl: false },
+            id: { name: 'Indonesia', flag: '\u{1F1EE}\u{1F1E9}', wordOrder: 'SVO', rtl: false },
+            qu: { name: 'Runasimi', flag: '\u{1F1F5}\u{1F1EA}', wordOrder: 'SOV', rtl: false },
+            sw: { name: 'Kiswahili', flag: '\u{1F1F0}\u{1F1EA}', wordOrder: 'SVO', rtl: false },
+        };
+
+        function updateParserDemo() {
+            const input = document.getElementById('parser-input').value.trim();
+            const sourceLang = document.getElementById('source-lang').value;
+            const semanticOutput = document.getElementById('semantic-output');
+            const translationsOutput = document.getElementById('translations-output');
+
+            if (!input) {
+                semanticOutput.innerHTML = `<span style="color: #888;">Enter a command to see semantic analysis</span>`;
+                translationsOutput.innerHTML = `<div style="color: #888; padding: 20px; text-align: center;">Enter a command above to see translations.</div>`;
+                return;
+            }
+
+            try {
+                // Parse using the real semantic parser
+                const parseResult = Semantic.parse(input, sourceLang);
+
+                if (!parseResult || parseResult.confidence === 0) {
+                    semanticOutput.innerHTML = `<span style="color: #f44;">Parse failed or low confidence</span>
+<span style="color: #888;">Input: "${escapeHtml(input)}"</span>
+<span style="color: #888;">Language: ${sourceLang}</span>`;
+                    translationsOutput.innerHTML = `<div style="color: #f44; padding: 20px; text-align: center;">Could not parse input. Try a different pattern or check the syntax.</div>`;
+                    return;
+                }
+
+                // Display semantic representation
+                const semantic = parseResult.semantic || parseResult;
+                const rolesObj = semantic.roles || {};
+                let rolesHtml = '';
+
+                if (rolesObj instanceof Map) {
+                    for (const [role, value] of rolesObj) {
+                        const valueStr = formatSemanticValue(value);
+                        rolesHtml += `    <span class="role">${role}</span>: <span class="value">${valueStr}</span>,\n`;
+                    }
+                } else if (typeof rolesObj === 'object') {
+                    for (const [role, value] of Object.entries(rolesObj)) {
+                        const valueStr = formatSemanticValue(value);
+                        rolesHtml += `    <span class="role">${role}</span>: <span class="value">${valueStr}</span>,\n`;
+                    }
+                }
+
+                // Get explicit syntax
+                let explicitStr = '';
+                try {
+                    // toExplicit takes (input, language), not the parseResult
+                    explicitStr = Semantic.toExplicit ? Semantic.toExplicit(input, sourceLang) : '[explicit not available]';
+                } catch (e) {
+                    console.error('toExplicit error:', e);
+                    explicitStr = '[error generating explicit]';
+                }
+
+                semanticOutput.innerHTML = `{
+  <span class="key">action</span>: <span class="value">"${semantic.action || semantic.type || 'unknown'}"</span>,
+  <span class="key">confidence</span>: <span class="value">${(parseResult.confidence || 0).toFixed(2)}</span>,
+  <span class="key">roles</span>: {
+${rolesHtml}  },
+  <span class="key">explicit</span>: <span class="value">"${escapeHtml(explicitStr)}"</span>
+}`;
+
+                // Generate translations to all languages
+                let translationsHtml = '';
+
+                for (const [code, lang] of Object.entries(languages)) {
+                    let translation = input; // Default to input
+                    try {
+                        if (Semantic.render) {
+                            translation = Semantic.render(parseResult, code);
+                        } else if (Semantic.translate && code !== sourceLang) {
+                            translation = Semantic.translate(input, sourceLang, code);
+                        }
+                    } catch (e) {
+                        console.warn(`Translation to ${code} failed:`, e);
+                        translation = `[error: ${e.message}]`;
+                    }
+
+                    const badgeClass = lang.wordOrder === 'SVO' ? 'badge-svo' : lang.wordOrder === 'SOV' ? 'badge-sov' : 'badge-vso';
+                    const isSource = code === sourceLang;
+
+                    translationsHtml += `
+                        <div class="result-card" ${isSource ? 'style="border-color: #667eea;"' : ''}>
+                            <div class="result-header">
+                                <span class="flag">${lang.flag}</span>
+                                <span class="lang-name">${lang.name}</span>
+                                ${isSource ? '<span class="badge" style="background: #667eea; color: white;">SOURCE</span>' : ''}
+                                <span class="badge ${badgeClass}">${lang.wordOrder}</span>
+                            </div>
+                            <div class="result-content ${lang.rtl ? 'rtl' : ''}">${escapeHtml(translation)}</div>
+                        </div>
+                    `;
+                }
+
+                // Add explicit mode
+                translationsHtml += `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="flag">&#x1F527;</span>
+                            <span class="lang-name">Explicit Mode</span>
+                            <span class="badge badge-explicit">Universal</span>
+                        </div>
+                        <div class="result-content">${escapeHtml(explicitStr)}</div>
+                    </div>
+                `;
+
+                translationsOutput.innerHTML = translationsHtml;
+
+            } catch (error) {
+                console.error('Parse error:', error);
+                semanticOutput.innerHTML = `<span style="color: #f44;">Error: ${escapeHtml(error.message)}</span>`;
+                translationsOutput.innerHTML = `<div style="color: #f44; padding: 20px; text-align: center;">Parse error occurred. Check console for details.</div>`;
+            }
+        }
+
+        function formatSemanticValue(value) {
+            if (value === null || value === undefined) return 'null';
+            if (typeof value === 'string') return `"${escapeHtml(value)}"`;
+            if (typeof value === 'object') {
+                if (value.type === 'selector') return `selector("${value.value}")`;
+                if (value.type === 'literal') return `literal(${JSON.stringify(value.value)})`;
+                if (value.type === 'reference') return `ref(${value.name})`;
+                return JSON.stringify(value);
+            }
+            return String(value);
+        }
+
+        function updateExplicitDemo() {
+            const input = document.getElementById('explicit-input').value.trim();
+            const output = document.getElementById('explicit-output');
+
+            if (!input) {
+                output.innerHTML = `<div style="color: #888; padding: 20px; text-align: center;">Enter explicit syntax to see renderings.</div>`;
+                return;
+            }
+
+            try {
+                // Try to parse explicit syntax
+                if (!Semantic.parseExplicit) {
+                    output.innerHTML = `<div style="color: #f44; padding: 20px; text-align: center;">parseExplicit not available in bundle</div>`;
+                    return;
+                }
+
+                const parsed = Semantic.parseExplicit(input);
+
+                if (!parsed) {
+                    output.innerHTML = `<div style="color: #f44; padding: 20px; text-align: center;">Could not parse explicit syntax</div>`;
+                    return;
+                }
+
+                let html = '';
+                for (const [code, lang] of Object.entries(languages)) {
+                    let translation = '';
+                    try {
+                        translation = Semantic.render ? Semantic.render(parsed, code) : '[render not available]';
+                    } catch (e) {
+                        translation = `[error: ${e.message}]`;
+                    }
+
+                    const badgeClass = lang.wordOrder === 'SVO' ? 'badge-svo' : lang.wordOrder === 'SOV' ? 'badge-sov' : 'badge-vso';
+
+                    html += `
+                        <div class="result-card">
+                            <div class="result-header">
+                                <span class="flag">${lang.flag}</span>
+                                <span class="lang-name">${lang.name}</span>
+                                <span class="badge ${badgeClass}">${lang.wordOrder}</span>
+                            </div>
+                            <div class="result-content ${lang.rtl ? 'rtl' : ''}">${escapeHtml(translation)}</div>
+                        </div>
+                    `;
+                }
+
+                output.innerHTML = html;
+
+            } catch (error) {
+                console.error('Explicit parse error:', error);
+                output.innerHTML = `<div style="color: #f44; padding: 20px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        // Helper functions
+        function setExample(text, lang) {
+            document.getElementById('parser-input').value = text;
+            document.getElementById('source-lang').value = lang;
+            updateParserDemo();
+        }
+
+        function showExplicit(text) {
+            document.getElementById('explicit-input').value = text;
+            updateExplicitDemo();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up event listeners
+            document.getElementById('parser-input').addEventListener('input', updateParserDemo);
+            document.getElementById('source-lang').addEventListener('change', updateParserDemo);
+            document.getElementById('explicit-input').addEventListener('input', updateExplicitDemo);
+
+            // Initial render
+            updateParserDemo();
+            updateExplicitDemo();
+        });
+
+        // Expose functions globally for onclick handlers
+        window.setExample = setExample;
+        window.showExplicit = showExplicit;
+    </script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05: Boosted Links - htmx-like Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles */
+        .nav-container {
+            background: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .nav-container a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            margin: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+        .nav-container a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .nav-container a.active {
+            background: var(--color-accent, #6366f1);
+            color: white;
+        }
+
+        .content-area {
+            background: var(--color-surface, #f4f4f5);
+            border: 2px solid var(--color-border, #e4e4e7);
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 200px;
+        }
+
+        .content-area.hx-swapping {
+            opacity: 0.6;
+        }
+
+        .content-area.hx-boosting {
+            border-color: var(--color-accent, #6366f1);
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 10px 0;
+        }
+
+        .card h3 {
+            margin: 0 0 10px 0;
+        }
+
+        .card p {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .url-display {
+            background: var(--code-bg);
+            color: #4fc3f7;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            margin: 15px 0;
+            word-break: break-all;
+        }
+
+        .url-display::before {
+            content: "URL: ";
+            color: var(--color-text-muted, #71717a);
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            background: var(--color-surface, #f4f4f5);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--color-accent, #6366f1);
+        }
+
+        .feature-item h4 {
+            margin: 0 0 5px 0;
+            color: var(--color-text, #18181b);
+        }
+
+        .feature-item p {
+            margin: 0;
+            color: var(--color-text-muted, #71717a);
+            font-size: 14px;
+        }
+
+        form {
+            margin: 20px 0;
+        }
+
+        input[type="text"], input[type="search"] {
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid var(--color-border, #e4e4e7);
+            border-radius: 8px;
+            margin: 5px;
+            width: 300px;
+            background: var(--color-surface, #ffffff);
+            color: var(--color-text, #18181b);
+        }
+
+        input:focus {
+            border-color: var(--color-accent, #6366f1);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>htmx-like</strong> / 05: Boosted Links
+        </div>
+
+        <h1>Boosted Links & Forms</h1>
+
+        <div class="description">
+            <strong>Automatic AJAX navigation for links and forms</strong><br>
+            The "Boosted" pattern intercepts regular link clicks and form submissions,
+            converting them to AJAX requests. This provides SPA-like navigation without
+            rewriting your entire application.
+            <br><br>
+            <strong>Like htmx's <code>hx-boost</code></strong> but using hyperscript behaviors!
+        </div>
+
+        <div>
+            <span class="tag">boosted</span>
+            <span class="tag">AJAX links</span>
+            <span class="tag htmx">htmx-like</span>
+            <span class="tag">SPA navigation</span>
+        </div>
+
+        <div class="note">
+            <strong>How it works:</strong> When you click a link inside a boosted container,
+            LokaScript intercepts the click, fetches the content via AJAX, swaps it into
+            the target area, and updates the URL. No page reload!
+        </div>
+
+        <!-- Demo 1: Manual Boosted Pattern -->
+        <div class="demo">
+            <h2>Demo 1: Manual Boosted Pattern</h2>
+            <p>Click the navigation links - they load content without page reload:</p>
+
+            <div class="url-display" id="demo1-url"></div>
+
+            <nav class="nav-container" id="boosted-nav">
+                <a href="#/home" class="active"
+                    _="on click
+                       halt the event
+                       remove .active from <a/> in #boosted-nav
+                       add .active to me
+                       add .hx-swapping to #boosted-content
+                       wait 300ms
+                       set homeHtml to '<div class=card><h3>Home Page</h3><p>Welcome! This content was loaded via AJAX.</p><p>The URL updated but the page did not reload.</p></div>'
+                       swap innerHTML of #boosted-content with homeHtml
+                       push url '#/home'
+                       put window.location.href into #demo1-url
+                       remove .hx-swapping from #boosted-content"
+                >
+                    Home
+                </a>
+                <a href="#/products"
+                    _="on click
+                       halt the event
+                       remove .active from <a/> in #boosted-nav
+                       add .active to me
+                       add .hx-swapping to #boosted-content
+                       wait 300ms
+                       set productsHtml to '<div class=card style=background:linear-gradient(135deg,#4caf50,#2e7d32)><h3>Products Page</h3><p>Browse our amazing products!</p><p>All loaded via AJAX - fast and smooth.</p></div>'
+                       swap innerHTML of #boosted-content with productsHtml
+                       push url '#/products'
+                       put window.location.href into #demo1-url
+                       remove .hx-swapping from #boosted-content"
+                >
+                    Products
+                </a>
+                <a href="#/about"
+                    _="on click
+                       halt the event
+                       remove .active from <a/> in #boosted-nav
+                       add .active to me
+                       add .hx-swapping to #boosted-content
+                       wait 300ms
+                       set aboutHtml to '<div class=card style=background:linear-gradient(135deg,#2196f3,#1976d2)><h3>About Page</h3><p>Learn about our company.</p><p>Smooth transitions between pages!</p></div>'
+                       swap innerHTML of #boosted-content with aboutHtml
+                       push url '#/about'
+                       put window.location.href into #demo1-url
+                       remove .hx-swapping from #boosted-content"
+                >
+                    About
+                </a>
+                <a href="#/contact"
+                    _="on click
+                       halt the event
+                       remove .active from <a/> in #boosted-nav
+                       add .active to me
+                       add .hx-swapping to #boosted-content
+                       wait 300ms
+                       set contactHtml to '<div class=card style=background:linear-gradient(135deg,#e91e63,#c2185b)><h3>Contact Page</h3><p>Get in touch with us!</p><p>All navigation is boosted.</p></div>'
+                       swap innerHTML of #boosted-content with contactHtml
+                       push url '#/contact'
+                       put window.location.href into #demo1-url
+                       remove .hx-swapping from #boosted-content"
+                >
+                    Contact
+                </a>
+            </nav>
+
+            <div id="boosted-content" class="content-area">
+                <div class="card">
+                    <h3>Home Page</h3>
+                    <p>Welcome! This content was loaded via AJAX.</p>
+                    <p>The URL updated but the page did not reload.</p>
+                </div>
+            </div>
+
+            <script>
+                document.getElementById('demo1-url').textContent = window.location.href;
+                window.addEventListener('hyperfixi:pushurl', function() {
+                    document.getElementById('demo1-url').textContent = window.location.href;
+                });
+            </script>
+        </div>
+
+        <!-- Demo 2: Boosted Forms -->
+        <div class="demo">
+            <h2>Demo 2: Boosted Form Submission</h2>
+            <p>Form submission via AJAX with result display:</p>
+
+            <form id="search-form"
+                _="on submit
+                   halt the event
+                   set query to #search-input's value
+                   if query is ''
+                     set errorHtml to '<p style=color:#f44336>Please enter a search term</p>'
+                     swap innerHTML of #search-results with errorHtml
+                   else
+                     add .hx-swapping to #search-results
+                     wait 500ms
+                     set resultsHtml to '<div class=card><h3>Search Results</h3><p>Searching for: <strong>' + query + '</strong></p><p>Results would appear here (simulated)</p></div>'
+                     swap innerHTML of #search-results with resultsHtml
+                     set fullUrl to '#/search?q=' + query
+                     replace url fullUrl
+                     remove .hx-swapping from #search-results
+                   end"
+            >
+                <input type="search" id="search-input" placeholder="Search..." style="width: 250px;">
+                <button type="submit">
+                    Search
+                </button>
+            </form>
+
+            <div id="search-results" class="content-area">
+                <p style="color: var(--color-text-muted, #71717a); text-align: center;">Enter a search term and submit</p>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="demo">
+            <h2>Boosted Behavior Features</h2>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <h4>Link Interception</h4>
+                    <p>Catches clicks on links and fetches via AJAX</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Form Handling</h4>
+                    <p>Submits forms via AJAX (GET or POST)</p>
+                </div>
+                <div class="feature-item">
+                    <h4>History Management</h4>
+                    <p>Updates URL with pushState</p>
+                </div>
+                <div class="feature-item">
+                    <h4>View Transitions</h4>
+                    <p>Optional smooth CSS animations</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Smart Detection</h4>
+                    <p>Skips external links, downloads, new tabs</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Modifier Keys</h4>
+                    <p>Respects Ctrl/Cmd+click for new tab</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+
+        <h3>Manual Boosted Pattern (Hyperscript):</h3>
+        <div class="code">
+<span class="comment">&lt;!-- Each link handles its own AJAX loading --&gt;</span>
+&lt;a href="/page"
+   <span class="keyword">_</span>=<span class="string">"on click
+      halt the event
+      add .hx-swapping to #content
+      fetch the @href of me as html
+      swap #content with it using view transition
+      push url the @href of me
+      remove .hx-swapping from #content"</span>&gt;
+  Page Link
+&lt;/a&gt;
+        </div>
+
+        <h3>Boosted Form:</h3>
+        <div class="code">
+&lt;form <span class="keyword">_</span>=<span class="string">"on submit
+         halt the event
+         set formData to new FormData(me)
+         set params to new URLSearchParams(formData)
+         fetch `/search?${params}` as html
+         swap #results with it
+         replace url `/search?${params}`"</span>&gt;
+  &lt;input name="q" /&gt;
+  &lt;button type="submit"&gt;Search&lt;/button&gt;
+&lt;/form&gt;
+        </div>
+
+        <h3>Programmatic Boosted Behavior:</h3>
+        <div class="code">
+<span class="comment">// Using the pre-built Boosted behavior (JavaScript)</span>
+<span class="keyword">import</span> { createBoosted } <span class="keyword">from</span> <span class="string">'@lokascript/core/behaviors'</span>;
+
+<span class="keyword">const</span> boost = createBoosted({
+  container: document.querySelector(<span class="string">'nav'</span>),
+  target: <span class="string">'#content'</span>,
+  strategy: <span class="string">'morph'</span>,
+  pushUrl: <span class="keyword">true</span>,
+  useViewTransition: <span class="keyword">true</span>,
+});
+        </div>
+
+        <h3>Hyperscript Behavior Definition:</h3>
+        <div class="code">
+<span class="keyword">behavior</span> Boosted(target, pushHistory)
+  <span class="keyword">init</span>
+    <span class="keyword">if no</span> target <span class="keyword">then set</span> target <span class="keyword">to</span> document.body <span class="keyword">end</span>
+    <span class="keyword">if no</span> pushHistory <span class="keyword">then set</span> pushHistory <span class="keyword">to true end</span>
+  <span class="keyword">end</span>
+
+  <span class="keyword">on</span> click <span class="keyword">from</span> &lt;a[href]/&gt; <span class="keyword">in</span> me
+    <span class="comment">-- Skip if modifier keys pressed</span>
+    <span class="keyword">if</span> event.metaKey <span class="keyword">or</span> event.ctrlKey <span class="keyword">then exit end</span>
+    <span class="keyword">halt the</span> event
+    <span class="keyword">add</span> .hx-swapping <span class="keyword">to</span> target
+    <span class="keyword">fetch the</span> @href <span class="keyword">of the</span> target <span class="keyword">as</span> html
+    <span class="keyword">swap</span> target <span class="keyword">with</span> it
+    <span class="keyword">remove</span> .hx-swapping <span class="keyword">from</span> target
+    <span class="keyword">if</span> pushHistory <span class="keyword">then push url the</span> @href <span class="keyword">of the</span> target <span class="keyword">end</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li>Intercept link clicks with <code>halt the event</code></li>
+                <li>Fetch content via AJAX using <code>fetch</code></li>
+                <li>Swap into target using <code>swap</code> or <code>morph</code></li>
+                <li>Update URL with <code>push url</code></li>
+                <li>Smart detection skips external links and new tab clicks</li>
+            </ul>
+
+            <h3>htmx Comparison:</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <tr style="background: var(--color-surface, #f4f4f5);">
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">htmx</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border, #e4e4e7);">LokaScript</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);"><code>&lt;body hx-boost="true"&gt;</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);">Manual per-link or behavior pattern</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);">Automatic link interception</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--color-border, #e4e4e7);">Explicit control per link/form</td>
+                </tr>
+            </table>
+
+            <h3>When to use boosting:</h3>
+            <ul>
+                <li>Converting multi-page sites to SPA-like experience</li>
+                <li>Faster perceived navigation</li>
+                <li>Preserving page state between navigations</li>
+                <li>Progressive enhancement</li>
+            </ul>
+
+            <h3>Smart behaviors (automatic):</h3>
+            <ul>
+                <li>External links open normally</li>
+                <li>Links with <code>target="_blank"</code> work normally</li>
+                <li>Ctrl/Cmd+click opens in new tab</li>
+                <li>Download links are not intercepted</li>
+                <li>Links with <code>data-no-boost</code> are skipped</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="04-multi-target-swaps.html">← Previous: Multi-Target Swaps</a>
+            <a href="06-partial-validation.html">Next: Partial Validation →</a>
+        </div>
+    </div>
+
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../prism-loader.js"></script>
+</body>
+</html>

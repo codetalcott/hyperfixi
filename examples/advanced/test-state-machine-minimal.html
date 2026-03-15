@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Minimal State Machine Test</title>
+</head>
+<body>
+    <div id="test"
+         _="init
+              set :state to 'idle'
+              set :history to []
+              log 'Init started'
+              call :history.push({
+                state: 'idle',
+                timestamp: new Date().toLocaleTimeString(),
+                action: 'Initialized'
+              })
+              log 'After push'
+              send addEntry('Started')
+              send updateUI
+              log 'Init complete'
+            end
+
+            on addEntry(action)
+              log 'addEntry called'
+              log :state
+              log :history
+              if :history is not null
+                call :history.push({
+                  state: :state,
+                  timestamp: new Date().toLocaleTimeString(),
+                  action: action
+                })
+                send updateHistory
+              end
+            end
+
+            on updateHistory
+              log 'updateHistory called'
+              set html to ''
+              for entry in :history
+                log 'Processing entry'
+                set html to html + `<div class='history-item'>
+                  <strong>${entry.action}</strong> in ${entry.state}
+                  <div class='timestamp'>${entry.timestamp}</div>
+                </div>`
+              end
+              log 'History loop complete'
+              put html into #history-list
+            end
+
+            on updateUI
+              log 'updateUI called'
+              for box in .state-box
+                remove .active from box
+              end
+
+              call document.getElementById('state-' + :state)
+              add .active to it
+
+              if :state is 'idle'
+                put 'Idle State' into #current-state
+                set #btn-action's disabled to false
+              else if :state is 'active'
+                put 'Active State' into #current-state
+                set #btn-action's disabled to true
+              else if :state is 'done'
+                put 'Done State' into #current-state
+              end
+
+              log 'updateUI complete'
+            end">
+        <div id="state-idle" class="state-box">Box 1 (idle)</div>
+        <div id="state-active" class="state-box">Box 2 (active)</div>
+        <div id="state-done" class="state-box">Box 3 (done)</div>
+        <div id="current-state">Loading...</div>
+        <button id="btn-action">Action Button</button>
+        <div id="history-list"></div>
+    </div>
+
+    <script src="../../packages/core/dist/lokascript-browser.js"></script>
+</body>
+</html>

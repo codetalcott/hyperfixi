@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multilingual Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Showcase - dark themed */
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #e0e0e0;
+            max-width: none;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--color-accent, #6366f1);
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 25px;
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .lang-selector label {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        .lang-selector select {
+            padding: 10px 16px;
+            font-size: 15px;
+            border: 2px solid #3d3d4d;
+            border-radius: 8px;
+            background: #2d2d3d;
+            color: #fff;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .lang-selector select:focus {
+            outline: none;
+            border-color: var(--color-accent, #6366f1);
+        }
+
+        /* Example Cards */
+        .example-card {
+            background: #1e1e2e;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #2d2d3d;
+        }
+
+        .example-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .example-header h2 {
+            font-size: 1.3rem;
+            color: #fff;
+            margin: 0;
+        }
+
+        .example-header .description {
+            color: #888;
+            font-size: 0.9rem;
+            margin-left: auto;
+        }
+
+        /* Code Display */
+        .code-section {
+            margin-bottom: 20px;
+        }
+
+        .code-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .code-label span {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-svo { background: var(--color-accent, #6366f1); color: white; }
+        .badge-sov { background: #e91e63; color: white; }
+        .badge-vso { background: #22c55e; color: white; }
+
+        .code-block {
+            background: #252535;
+            border-radius: 8px;
+            padding: 15px 18px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: #d4d4d4;
+            line-height: 1.6;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block.rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            background: #3d3d4d;
+            border: none;
+            border-radius: 4px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #4d4d5d;
+            color: #fff;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Demo Section */
+        .demo-section {
+            background: #252535;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .demo-label {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        /* Counter Demo */
+        .counter-demo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .counter-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--color-accent, #6366f1);
+            min-width: 80px;
+            text-align: center;
+            font-family: var(--font-mono);
+        }
+
+        .demo-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .demo-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .demo-btn.secondary {
+            background: #3d3d4d;
+            color: #ddd;
+        }
+
+        .demo-btn.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Toggle Demo */
+        .toggle-demo {
+            display: flex;
+            justify-content: center;
+        }
+
+        .toggle-btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: 2px solid var(--color-accent, #6366f1);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--color-accent, #6366f1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.active {
+            background: var(--color-accent, #6366f1);
+            color: white;
+        }
+
+        /* Input Mirror Demo */
+        .mirror-demo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mirror-input {
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #3d3d4d;
+            border-radius: 8px;
+            background: #1e1e2e;
+            color: #fff;
+            width: 250px;
+        }
+
+        .mirror-input:focus {
+            outline: none;
+            border-color: var(--color-accent, #6366f1);
+        }
+
+        .mirror-arrow {
+            color: var(--color-accent, #6366f1);
+            font-size: 24px;
+        }
+
+        .mirror-output {
+            padding: 12px 16px;
+            min-width: 150px;
+            min-height: 44px;
+            background: #3d3d4d;
+            border-radius: 8px;
+            color: #d4d4d4;
+            font-family: var(--font-mono);
+        }
+
+        /* Tabs Demo */
+        .tabs-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: #3d3d4d;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab-btn.active {
+            background: var(--color-accent, #6366f1);
+            color: white;
+        }
+
+        .tab-content {
+            background: #3d3d4d;
+            padding: 20px;
+            border-radius: 0 8px 8px 8px;
+            min-height: 80px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* View All Languages */
+        .expand-btn {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px dashed #3d3d4d;
+            border-radius: 8px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .expand-btn:hover {
+            border-color: var(--color-accent, #6366f1);
+            color: var(--color-accent, #6366f1);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .all-languages {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .all-languages.show {
+            display: block;
+        }
+
+        .lang-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .lang-item {
+            background: #252535;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #3d3d4d;
+        }
+
+        .lang-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .lang-item-header .flag {
+            font-size: 1.1rem;
+        }
+
+        .lang-item-header .name {
+            color: #fff;
+        }
+
+        .lang-item-code {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: #aaa;
+            word-break: break-all;
+        }
+
+        .lang-item-code.rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        /* Word Order Legend */
+        .legend {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid #2d2d3d;
+        }
+
+        .legend h3 {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-item .badge {
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .legend-item .desc {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .legend-item .langs {
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--color-accent, #6366f1);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .counter-value { font-size: 36px; }
+            .mirror-demo { flex-direction: column; }
+            .mirror-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-link">Back to Multilingual Demo</a>
+            <h1>Multilingual Examples</h1>
+            <p class="tagline">Write hyperscript in your native language using native idioms</p>
+
+            <div class="lang-selector">
+                <label for="language">Language:</label>
+                <select id="language" onchange="updateLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="es">Spanish</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="zh">Chinese</option>
+                    <option value="ar">Arabic</option>
+                    <option value="tr">Turkish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="id">Indonesian</option>
+                    <option value="qu">Quechua</option>
+                    <option value="sw">Swahili</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Counter Example -->
+        <div class="example-card" id="counter-card">
+            <div class="example-header">
+                <h2>Counter</h2>
+                <span class="description">Increment and decrement values</span>
+            </div>
+
+            <div class="code-section">
+                <div class="code-label">
+                    <span>Code:</span>
+                    <span class="badge badge-svo" id="counter-badge">SVO</span>
+                </div>
+                <div class="code-block" id="counter-code">
+                    <button class="copy-btn" onclick="copyCode('counter-code')">Copy</button>
+                    <span id="counter-code-increment">on click increment #counter-value</span>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <div class="demo-label">Live Demo:</div>
+                <div class="counter-demo">
+                    <button class="demo-btn secondary" id="counter-demo-decrement" _="on click decrement #counter-value">Decrease</button>
+                    <div class="counter-value" id="counter-value">0</div>
+                    <button class="demo-btn primary" id="counter-demo-increment" _="on click increment #counter-value">Increase</button>
+                    <button class="demo-btn danger" id="counter-demo-reset" _="on click put 0 into #counter-value">Reset</button>
+                </div>
+            </div>
+
+            <button class="expand-btn" onclick="toggleAllLanguages('counter')">View in all 13 languages</button>
+            <div class="all-languages" id="counter-all-languages"></div>
+        </div>
+
+        <!-- Toggle Class Example -->
+        <div class="example-card" id="toggle-card">
+            <div class="example-header">
+                <h2>Toggle Class</h2>
+                <span class="description">Add and remove CSS classes</span>
+            </div>
+
+            <div class="code-section">
+                <div class="code-label">
+                    <span>Code:</span>
+                    <span class="badge badge-svo" id="toggle-badge">SVO</span>
+                </div>
+                <div class="code-block" id="toggle-code">
+                    <button class="copy-btn" onclick="copyCode('toggle-code')">Copy</button>
+                    <span id="toggle-code-toggle">on click toggle .active on me</span>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <div class="demo-label">Live Demo:</div>
+                <div class="toggle-demo">
+                    <button class="toggle-btn" id="toggle-demo-toggle" _="on click toggle .active on me">Click to toggle</button>
+                </div>
+            </div>
+
+            <button class="expand-btn" onclick="toggleAllLanguages('toggle')">View in all 13 languages</button>
+            <div class="all-languages" id="toggle-all-languages"></div>
+        </div>
+
+        <!-- Input Mirror Example -->
+        <div class="example-card" id="mirror-card">
+            <div class="example-header">
+                <h2>Input Mirror</h2>
+                <span class="description">Mirror input values in real-time</span>
+            </div>
+
+            <div class="code-section">
+                <div class="code-label">
+                    <span>Code:</span>
+                    <span class="badge badge-svo" id="mirror-badge">SVO</span>
+                </div>
+                <div class="code-block" id="mirror-code">
+                    <button class="copy-btn" onclick="copyCode('mirror-code')">Copy</button>
+                    <span id="mirror-code-mirror">on input put my value into #mirror-output</span>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <div class="demo-label">Live Demo:</div>
+                <div class="mirror-demo">
+                    <input type="text" class="mirror-input" id="mirror-demo-mirror" placeholder="Type here..." _="on input put my value into #mirror-output">
+                    <span class="mirror-arrow">&#x2192;</span>
+                    <div class="mirror-output" id="mirror-output"></div>
+                </div>
+            </div>
+
+            <button class="expand-btn" onclick="toggleAllLanguages('mirror')">View in all 13 languages</button>
+            <div class="all-languages" id="mirror-all-languages"></div>
+        </div>
+
+        <!-- Tabs Example -->
+        <div class="example-card" id="tabs-card">
+            <div class="example-header">
+                <h2>Tabs Navigation</h2>
+                <span class="description">Multi-element coordination</span>
+            </div>
+
+            <div class="code-section">
+                <div class="code-label">
+                    <span>Code:</span>
+                    <span class="badge badge-svo" id="tabs-badge">SVO</span>
+                </div>
+                <div class="code-block" id="tabs-code">
+                    <button class="copy-btn" onclick="copyCode('tabs-code')">Copy</button>
+                    <span id="tabs-code-tabBtn">on click remove .active from .tab-btn then add .active to me</span>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <div class="demo-label">Live Demo:</div>
+                <div class="tabs-demo">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" id="tabs-demo-tab1" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel1">Tab 1</button>
+                        <button class="tab-btn" id="tabs-demo-tab2" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel2">Tab 2</button>
+                        <button class="tab-btn" id="tabs-demo-tab3" _="on click remove .active from .tab-btn then add .active to me then hide .tab-panel then show #panel3">Tab 3</button>
+                    </div>
+                    <div class="tab-content">
+                        <div class="tab-panel active" id="panel1">Content for Tab 1. This demonstrates multi-element coordination.</div>
+                        <div class="tab-panel" id="panel2">Content for Tab 2. The code removes .active from all tabs, then adds it to the clicked one.</div>
+                        <div class="tab-panel" id="panel3">Content for Tab 3. This pattern is common in UI frameworks.</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="expand-btn" onclick="toggleAllLanguages('tabs')">View in all 13 languages</button>
+            <div class="all-languages" id="tabs-all-languages"></div>
+        </div>
+
+        <!-- Word Order Legend -->
+        <div class="legend">
+            <h3>Word Order Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="badge badge-svo">SVO</span>
+                    <div>
+                        <div class="desc">Subject-Verb-Object</div>
+                        <div class="langs">English, Spanish, Chinese, French, German, Portuguese, Indonesian, Swahili</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="badge badge-sov">SOV</span>
+                    <div>
+                        <div class="desc">Subject-Object-Verb</div>
+                        <div class="langs">Japanese, Korean, Turkish, Quechua</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <span class="badge badge-vso">VSO</span>
+                    <div>
+                        <div class="desc">Verb-Subject-Object</div>
+                        <div class="langs">Arabic</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                LokaScript uses <strong>native idioms</strong>, not just translated keywords.<br>
+                <a href="semantic-demo.html">Try the Semantic Parser Demo</a> |
+                <a href="../index.html">Back to Gallery</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Load LokaScript bundles -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/semantic/dist/browser.global.js"></script>
+
+    <script>
+        // Language metadata
+        const languages = {
+            en: { name: 'English', flag: '\u{1F1FA}\u{1F1F8}', wordOrder: 'SVO', rtl: false },
+            ja: { name: '\u65E5\u672C\u8A9E', flag: '\u{1F1EF}\u{1F1F5}', wordOrder: 'SOV', rtl: false },
+            ko: { name: '\uD55C\uAD6D\uC5B4', flag: '\u{1F1F0}\u{1F1F7}', wordOrder: 'SOV', rtl: false },
+            es: { name: 'Espanol', flag: '\u{1F1EA}\u{1F1F8}', wordOrder: 'SVO', rtl: false },
+            pt: { name: 'Portugues', flag: '\u{1F1E7}\u{1F1F7}', wordOrder: 'SVO', rtl: false },
+            zh: { name: '\u4E2D\u6587', flag: '\u{1F1E8}\u{1F1F3}', wordOrder: 'SVO', rtl: false },
+            ar: { name: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', flag: '\u{1F1F8}\u{1F1E6}', wordOrder: 'VSO', rtl: true },
+            tr: { name: 'Turkce', flag: '\u{1F1F9}\u{1F1F7}', wordOrder: 'SOV', rtl: false },
+            fr: { name: 'Francais', flag: '\u{1F1EB}\u{1F1F7}', wordOrder: 'SVO', rtl: false },
+            de: { name: 'Deutsch', flag: '\u{1F1E9}\u{1F1EA}', wordOrder: 'SVO', rtl: false },
+            id: { name: 'Indonesia', flag: '\u{1F1EE}\u{1F1E9}', wordOrder: 'SVO', rtl: false },
+            qu: { name: 'Runasimi', flag: '\u{1F1F5}\u{1F1EA}', wordOrder: 'SOV', rtl: false },
+            sw: { name: 'Kiswahili', flag: '\u{1F1F0}\u{1F1EA}', wordOrder: 'SVO', rtl: false },
+        };
+
+        // Example definitions
+        const examples = {
+            counter: {
+                scripts: {
+                    increment: 'on click increment #counter-value',
+                    decrement: 'on click decrement #counter-value',
+                    reset: 'on click put 0 into #counter-value'
+                },
+                displayScript: 'increment' // Which script to show in the code block
+            },
+            toggle: {
+                scripts: {
+                    toggle: 'on click toggle .active on me'
+                },
+                displayScript: 'toggle'
+            },
+            mirror: {
+                scripts: {
+                    mirror: 'on input put my value into #mirror-output'
+                },
+                displayScript: 'mirror'
+            },
+            tabs: {
+                scripts: {
+                    tabBtn: 'on click remove .active from .tab-btn then add .active to me'
+                },
+                displayScript: 'tabBtn'
+            }
+        };
+
+        // Current language
+        let currentLang = localStorage.getItem('showcase-lang') || 'en';
+
+        // Check if semantic package is loaded
+        function checkSemantic() {
+            if (!window.LokaScriptSemantic) {
+                console.error('LokaScriptSemantic not loaded! Translation will not work.');
+                return false;
+            }
+            return true;
+        }
+
+        // Translate a script
+        function translateScript(script, targetLang) {
+            if (!checkSemantic()) return script;
+            try {
+                return LokaScriptSemantic.translate(script, 'en', targetLang);
+            } catch (e) {
+                console.warn('Translation failed:', e);
+                return script;
+            }
+        }
+
+        // Update all examples for a language
+        function updateLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('showcase-lang', lang);
+            const langInfo = languages[lang];
+
+            // Update dropdown
+            document.getElementById('language').value = lang;
+
+            for (const [exampleId, example] of Object.entries(examples)) {
+                // Update displayed code
+                const displayScript = example.scripts[example.displayScript];
+                const translated = translateScript(displayScript, lang);
+
+                const codeEl = document.getElementById(`${exampleId}-code-${example.displayScript}`);
+                if (codeEl) {
+                    codeEl.textContent = translated;
+                    codeEl.parentElement.classList.toggle('rtl', langInfo.rtl);
+                }
+
+                // Update badge
+                const badgeEl = document.getElementById(`${exampleId}-badge`);
+                if (badgeEl) {
+                    badgeEl.textContent = langInfo.wordOrder;
+                    badgeEl.className = `badge badge-${langInfo.wordOrder.toLowerCase()}`;
+                }
+
+                // Update demo elements with translated scripts
+                for (const [scriptKey, script] of Object.entries(example.scripts)) {
+                    const translatedScript = translateScript(script, lang);
+                    const demoEl = document.getElementById(`${exampleId}-demo-${scriptKey}`);
+                    if (demoEl) {
+                        demoEl.setAttribute('_', translatedScript);
+                        // Re-process with hyperfixi
+                        if (window.hyperfixi && window.hyperfixi.processNode) {
+                            window.hyperfixi.processNode(demoEl);
+                        }
+                    }
+                }
+
+                // Update "all languages" grid if visible
+                const allLangsEl = document.getElementById(`${exampleId}-all-languages`);
+                if (allLangsEl && allLangsEl.classList.contains('show')) {
+                    renderAllLanguages(exampleId);
+                }
+            }
+        }
+
+        // Toggle "all languages" view
+        function toggleAllLanguages(exampleId) {
+            const container = document.getElementById(`${exampleId}-all-languages`);
+            const isShowing = container.classList.toggle('show');
+
+            if (isShowing) {
+                renderAllLanguages(exampleId);
+            }
+        }
+
+        // Render all languages grid
+        function renderAllLanguages(exampleId) {
+            const container = document.getElementById(`${exampleId}-all-languages`);
+            const example = examples[exampleId];
+            const script = example.scripts[example.displayScript];
+
+            let html = '<div class="lang-grid">';
+
+            for (const [code, lang] of Object.entries(languages)) {
+                const translated = translateScript(script, code);
+                const isCurrentLang = code === currentLang;
+
+                html += `
+                    <div class="lang-item" style="${isCurrentLang ? 'border-color: #667eea;' : ''}">
+                        <div class="lang-item-header">
+                            <span class="flag">${lang.flag}</span>
+                            <span class="name">${lang.name}</span>
+                            <span class="badge badge-${lang.wordOrder.toLowerCase()}">${lang.wordOrder}</span>
+                        </div>
+                        <div class="lang-item-code ${lang.rtl ? 'rtl' : ''}">${escapeHtml(translated)}</div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Copy code to clipboard
+        function copyCode(codeBlockId) {
+            const codeEl = document.getElementById(codeBlockId);
+            const spanEl = codeEl.querySelector('span');
+            const text = spanEl ? spanEl.textContent : codeEl.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = codeEl.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = originalText; }, 1500);
+            });
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Update language selector options with flags
+            const select = document.getElementById('language');
+            select.innerHTML = Object.entries(languages)
+                .map(([code, lang]) => `<option value="${code}">${lang.flag} ${lang.name}</option>`)
+                .join('');
+
+            // Apply saved language preference
+            updateLanguage(currentLang);
+
+            console.log('Multilingual Showcase loaded');
+            console.log('Semantic package:', window.LokaScriptSemantic ? 'loaded' : 'NOT LOADED');
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 /**
  * Playwright Global Setup
  *
- * Validates that the examples symlink and prism plugin are available
+ * Validates that the examples directory and prism plugin are available
  * before running browser tests. Fails fast with actionable instructions.
  */
 import fs from 'fs';
@@ -18,7 +18,7 @@ export default function globalSetup() {
     'packages/developer-tools/dist/prism-hyperscript-i18n/browser.mjs',
   );
 
-  // Check examples symlink
+  // Check examples directory
   if (!fs.existsSync(examplesPath)) {
     const msg = [
       '',
@@ -26,13 +26,9 @@ export default function globalSetup() {
       '║  Missing examples/ directory                                ║',
       '╠══════════════════════════════════════════════════════════════╣',
       '║                                                             ║',
-      '║  Browser tests require the examples gallery, which lives    ║',
-      '║  in the _hyper_min repo. Create a symlink at the repo root: ║',
+      '║  Browser tests require the examples gallery, which should   ║',
+      '║  be checked into the repo at examples/.                     ║',
       '║                                                             ║',
-      '║  cd /path/to/hyperfixi                                      ║',
-      '║  ln -s ../_hyper_min/packages/examples examples             ║',
-      '║                                                             ║',
-      '║  In CI, the workflow checks out the repo automatically.     ║',
       '╚══════════════════════════════════════════════════════════════╝',
       '',
     ].join('\n');
@@ -43,8 +39,8 @@ export default function globalSetup() {
   const sampleFile = path.join(examplesPath, 'basics/01-hello-world.html');
   if (!fs.existsSync(sampleFile)) {
     throw new Error(
-      `examples/ symlink exists but basics/01-hello-world.html not found.\n` +
-        `Verify the symlink target contains the gallery examples.`,
+      `examples/ directory exists but basics/01-hello-world.html not found.\n` +
+        `Verify the examples directory contains the gallery examples.`,
     );
   }
 

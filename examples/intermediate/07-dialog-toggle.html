@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialog Toggle - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles */
+        .example {
+            background: var(--color-surface, #f4f4f5);
+            border: 1px solid var(--color-border, #e4e4e7);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .example h3 {
+            margin-top: 0;
+            color: var(--color-text, #18181b);
+        }
+
+        button.secondary {
+            background: #64748b;
+        }
+
+        button.secondary:hover {
+            background: #475569;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
+        dialog {
+            border: none;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            min-width: 400px;
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .dialog-header {
+            background: var(--color-surface, #f4f4f5);
+            padding: 20px;
+            border-bottom: 1px solid var(--color-border, #e4e4e7);
+        }
+
+        .dialog-header h3 {
+            margin: 0;
+            color: var(--color-text, #18181b);
+        }
+
+        .dialog-body {
+            padding: 20px;
+        }
+
+        .dialog-footer {
+            background: var(--color-surface, #f4f4f5);
+            padding: 15px 20px;
+            border-top: 1px solid var(--color-border, #e4e4e7);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge.default {
+            background: var(--color-surface, #e3f2fd);
+            color: var(--color-text, #18181b);
+        }
+
+        .badge.modal {
+            background: var(--tag-experiment-bg);
+            color: var(--tag-experiment-color);
+        }
+
+        .demo-content {
+            background: var(--color-surface, #ffffff);
+            padding: 15px;
+            border: 1px solid var(--color-border, #e4e4e7);
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        .status {
+            font-size: 14px;
+            color: var(--color-text-muted, #71717a);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Intermediate</strong> / 07: Dialog Toggle
+        </div>
+
+        <h1>Dialog Toggle Examples</h1>
+
+        <div class="description">
+            Demonstrating smart dialog detection and toggle functionality in LokaScript.
+        </div>
+
+        <!-- Example 1: Basic Non-Modal Dialog (Default) -->
+        <div class="example">
+            <h3>1. Non-Modal Dialog (Default) <span class="badge default">show()</span></h3>
+            <p>Default behavior uses <code>show()</code> for non-modal dialogs. Page remains interactive.</p>
+
+            <div class="code">
+&lt;button _="on click toggle #infoDialog"&gt;Toggle Info&lt;/button&gt;
+
+&lt;dialog id="infoDialog"&gt;
+  &lt;button _="on click toggle #infoDialog"&gt;Close&lt;/button&gt;
+&lt;/dialog&gt;
+            </div>
+
+            <div class="demo-content">
+                <button _="on click toggle #infoDialog">Toggle Info Dialog</button>
+                <p class="status">Try clicking outside the dialog - page stays interactive!</p>
+            </div>
+        </div>
+
+        <dialog id="infoDialog">
+            <div class="dialog-header">
+                <h3>ℹ️ Information</h3>
+            </div>
+            <div class="dialog-body">
+                <p>This is a non-modal dialog opened with <code>show()</code>.</p>
+                <p>You can still interact with the page behind this dialog.</p>
+                <p><strong>Notice:</strong> No backdrop, no focus trap.</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="secondary" _="on click toggle #infoDialog">Close Dialog</button>
+            </div>
+        </dialog>
+
+        <!-- Example 2: Modal Dialog -->
+        <div class="example">
+            <h3>2. Modal Dialog <span class="badge modal">showModal()</span></h3>
+            <p>Use <code>modal</code> parameter to open with <code>showModal()</code>. Blocks page interaction.</p>
+
+            <div class="code">
+&lt;button _="on click toggle #confirmDialog modal"&gt;Open Modal&lt;/button&gt;
+
+&lt;dialog id="confirmDialog"&gt;
+  &lt;button _="on click toggle #confirmDialog"&gt;Close&lt;/button&gt;
+&lt;/dialog&gt;
+            </div>
+
+            <div class="demo-content">
+                <button _="on click toggle #confirmDialog modal">Open Confirmation Modal</button>
+                <p class="status">Modal dialogs block interaction with the page and have a backdrop.</p>
+            </div>
+        </div>
+
+        <dialog id="confirmDialog">
+            <div class="dialog-header">
+                <h3>⚠️ Confirm Action</h3>
+            </div>
+            <div class="dialog-body">
+                <p>This is a modal dialog opened with <code>showModal()</code>.</p>
+                <p><strong>Notice the backdrop</strong> and try clicking outside.</p>
+                <p>Press ESC to close, or use the buttons below.</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="secondary" _="on click toggle #confirmDialog">Cancel</button>
+                <button class="danger" _="on click toggle #confirmDialog then log 'Confirmed!'">Confirm</button>
+            </div>
+        </dialog>
+
+        <!-- Example 3: Form Dialog -->
+        <div class="example">
+            <h3>3. Form Dialog with Submission</h3>
+            <p>Dialog with a form that closes on submit.</p>
+
+            <div class="code">
+&lt;button _="on click toggle #formDialog modal"&gt;Open Form&lt;/button&gt;
+
+&lt;dialog id="formDialog"&gt;
+  &lt;form _="on submit
+            halt the event
+            then toggle #formDialog
+            then log 'Form submitted: ' + my.name.value"&gt;
+    &lt;input name="name" required&gt;
+    &lt;button type="submit"&gt;Submit&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/dialog&gt;
+            </div>
+
+            <div class="demo-content">
+                <button _="on click toggle #formDialog modal">Open Form Dialog</button>
+                <p class="status">Form submission closes the dialog automatically.</p>
+            </div>
+        </div>
+
+        <dialog id="formDialog">
+            <div class="dialog-header">
+                <h3>📝 User Form</h3>
+            </div>
+            <form _="on submit
+                      halt the event
+                      then toggle #formDialog
+                      then log 'Form submitted with name: ' + my.name.value">
+                <div class="dialog-body">
+                    <label for="userName" style="display: block; margin-bottom: 5px;">Name:</label>
+                    <input
+                        type="text"
+                        id="userName"
+                        name="name"
+                        required
+                        style="width: 100%; padding: 8px; border: 1px solid var(--color-border, #e4e4e7); border-radius: 4px;">
+
+                    <label for="userEmail" style="display: block; margin-top: 15px; margin-bottom: 5px;">Email:</label>
+                    <input
+                        type="email"
+                        id="userEmail"
+                        name="email"
+                        required
+                        style="width: 100%; padding: 8px; border: 1px solid var(--color-border, #e4e4e7); border-radius: 4px;">
+                </div>
+                <div class="dialog-footer">
+                    <button type="button" class="secondary" _="on click toggle #formDialog">Cancel</button>
+                    <button type="submit">Submit Form</button>
+                </div>
+            </form>
+        </dialog>
+
+        <!-- Example 4: Multiple Dialogs -->
+        <div class="example">
+            <h3>4. Multiple Dialogs</h3>
+            <p>Toggle multiple dialogs independently.</p>
+
+            <div class="demo-content">
+                <button _="on click toggle #dialog1 modal">Open Dialog 1</button>
+                <button _="on click toggle #dialog2">Open Dialog 2 (non-modal)</button>
+                <p class="status">Each dialog can be toggled independently.</p>
+            </div>
+        </div>
+
+        <dialog id="dialog1">
+            <div class="dialog-header">
+                <h3>Dialog 1 (Modal)</h3>
+            </div>
+            <div class="dialog-body">
+                <p>This is the first modal dialog.</p>
+                <p>You can open another dialog from here:</p>
+                <button _="on click toggle #dialog2">Open Dialog 2</button>
+            </div>
+            <div class="dialog-footer">
+                <button class="secondary" _="on click toggle #dialog1">Close</button>
+            </div>
+        </dialog>
+
+        <dialog id="dialog2">
+            <div class="dialog-header">
+                <h3>Dialog 2 (Non-Modal)</h3>
+            </div>
+            <div class="dialog-body">
+                <p>This is the second dialog (non-modal by default).</p>
+                <p>Notice you can still interact with other elements!</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="secondary" _="on click toggle #dialog2">Close</button>
+            </div>
+        </dialog>
+
+        <!-- Example 5: Chaining Actions -->
+        <div class="example">
+            <h3>5. Chaining with Other Actions</h3>
+            <p>Toggle dialogs and chain with other hyperscript commands.</p>
+
+            <div class="code">
+&lt;button _="on click
+            toggle #chainDialog modal
+            then wait 100ms
+            then log 'Dialog toggled!'"&gt;
+  Open with Logging
+&lt;/button&gt;
+            </div>
+
+            <div class="demo-content">
+                <button _="on click
+                          toggle #chainDialog modal
+                          then wait 100ms
+                          then log 'Dialog toggled!'">
+                    Open with Logging
+                </button>
+                <p class="status" id="chainStatus">Status: Ready</p>
+            </div>
+        </div>
+
+        <dialog id="chainDialog">
+            <div class="dialog-header">
+                <h3>🔗 Chained Actions</h3>
+            </div>
+            <div class="dialog-body">
+                <p>This dialog was opened with chained actions!</p>
+                <p>Check the browser console for the log message.</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="secondary"
+                        _="on click
+                        toggle #chainDialog
+                        then put 'Dialog closed!' into #chainStatus">
+                    Close with Update
+                </button>
+            </div>
+        </dialog>
+
+        <hr style="margin: 40px 0; border: none; border-top: 2px solid var(--color-border, #e4e4e7);">
+
+        <h2>Summary</h2>
+        <div class="example">
+            <h3>Syntax Reference</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--color-surface, #f4f4f5);">
+                        <th style="padding: 10px; text-align: left; border: 1px solid var(--color-border, #e4e4e7);">Syntax</th>
+                        <th style="padding: 10px; text-align: left; border: 1px solid var(--color-border, #e4e4e7);">Method</th>
+                        <th style="padding: 10px; text-align: left; border: 1px solid var(--color-border, #e4e4e7);">Behavior</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);"><code>toggle #myDialog</code></td>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);"><code>show()</code></td>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);">Non-modal (default, safer)</td>
+                    </tr>
+                    <tr style="background: var(--color-surface, #f4f4f5);">
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);"><code>toggle #myDialog modal</code></td>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);"><code>showModal()</code></td>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);">Modal (blocks page)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);"><code>toggle #myDialog</code></td>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);"><code>close()</code></td>
+                        <td style="padding: 10px; border: 1px solid var(--color-border, #e4e4e7);">Close dialog (from inside or outside)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 20px;">Key Points</h3>
+            <ul>
+                <li><strong>Default is non-modal:</strong> <code>toggle #dialog</code> uses <code>show()</code></li>
+                <li><strong>Explicit modal:</strong> Add <code>modal</code> parameter for <code>showModal()</code></li>
+                <li><strong>Backward compatible:</strong> Class/attribute toggle still works on dialogs</li>
+                <li><strong>Accessibility:</strong> Non-modal is safer for screen readers</li>
+                <li><strong>Smart detection:</strong> Automatically detects <code>&lt;dialog&gt;</code> elements</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="06-native-dialog.html">← Previous: Native Dialog</a>
+            <a href="08-smart-element-toggle.html">Next: Smart Element Toggle →</a>
+        </div>
+    </div>
+
+    <!-- Load LokaScript -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script>
+        console.log('LokaScript loaded with dialog toggle support!');
+        console.log('Try opening the dialogs and watch for events in the console.');
+
+        // Add event listeners to log dialog events
+        document.querySelectorAll('dialog').forEach(dialog => {
+            dialog.addEventListener('hyperscript:toggle', (e) => {
+                console.log('Dialog toggled:', {
+                    id: dialog.id,
+                    mode: e.detail.mode,
+                    state: e.detail.state,
+                    type: e.detail.type
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug: Landing Page Color Cycling</title>
+  <link rel="stylesheet" href="../gallery.css">
+  <style>
+    /* Example-specific styles */
+    #color-box {
+      width: 300px;
+      height: 200px;
+      background: hsl(200, 100%, 90%);
+      border: 3px solid #333;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      margin: 20px auto;
+    }
+
+    #log {
+      background: #1e1e1e;
+      color: #00ff00;
+      font-family: var(--font-mono);
+      padding: 15px;
+      border-radius: 6px;
+      height: 300px;
+      overflow-y: auto;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .error { color: #ff6b6b; }
+    .warn { color: #ffd93d; }
+    .info { color: #6bcfff; }
+  </style>
+</head>
+<body class="example-page">
+  <div class="page-container">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Back to Gallery</a> / <strong>Landing Page</strong> / Color Cycling Debug
+    </div>
+
+    <h1>Debug: Landing Page Example</h1>
+
+    <div id="color-box"
+         _="on pointerdown
+              repeat until event pointerup from the document
+                set rand to Math.random() * 360
+                transition
+                  *background-color
+                  to `hsl($rand 100% 90%)`
+                  over 250ms
+              end
+              transition *background-color to initial">
+      Press & Hold Me!
+    </div>
+
+    <h3>Console Log</h3>
+    <div id="log"></div>
+    <button onclick="document.getElementById('log').innerHTML = ''">Clear Log</button>
+  </div>
+
+  <script>
+    // Capture all console output
+    const logEl = document.getElementById('log');
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    function appendLog(msg, className = '') {
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = className;
+      div.textContent = `[${time}] ${msg}`;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    console.log = (...args) => {
+      originalLog.apply(console, args);
+      appendLog(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : a).join(' '), 'info');
+    };
+    console.error = (...args) => {
+      originalError.apply(console, args);
+      appendLog('ERROR: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'error');
+    };
+    console.warn = (...args) => {
+      originalWarn.apply(console, args);
+      appendLog('WARN: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'warn');
+    };
+
+    // Capture uncaught errors
+    window.onerror = (msg, src, line, col, error) => {
+      appendLog(`UNCAUGHT: ${msg} at ${src}:${line}:${col}`, 'error');
+    };
+
+    // Track background color changes
+    const colorBox = document.getElementById('color-box');
+    let lastBg = '';
+
+    const observer = new MutationObserver(() => {
+      const bg = colorBox.style.backgroundColor;
+      if (bg && bg !== lastBg) {
+        appendLog(`Style changed: backgroundColor = "${bg}"`);
+
+        // Check if $rand was interpolated or literal
+        if (bg.includes('$rand')) {
+          appendLog('WARNING: $rand was NOT interpolated - passed literally!', 'error');
+        } else if (bg.includes('hsl')) {
+          appendLog('Template interpolation working correctly', 'info');
+        }
+        lastBg = bg;
+      }
+    });
+    observer.observe(colorBox, { attributes: true, attributeFilter: ['style'] });
+
+    colorBox.addEventListener('pointerdown', () => {
+      appendLog('pointerdown event fired');
+    });
+
+    document.addEventListener('pointerup', () => {
+      appendLog('pointerup event fired (document level)');
+    });
+
+    appendLog('Debug page loaded, waiting for LokaScript...');
+  </script>
+
+  <!-- Enable debug mode -->
+  <script>
+    window.__HYPERFIXI_DEBUG__ = true;
+  </script>
+
+  <script src="../../packages/core/dist/hyperfixi.js"></script>
+
+  <script>
+    appendLog('LokaScript loaded: ' + (typeof hyperfixi !== 'undefined'));
+
+    // Check what the parsed AST looks like
+    if (typeof hyperfixi !== 'undefined') {
+      try {
+        const code = `on pointerdown
+          repeat until event pointerup from the document
+            set rand to Math.random() * 360
+            transition
+              *background-color
+              to \`hsl(\$rand 100% 90%)\`
+              over 250ms
+          end
+          transition *background-color to initial`;
+
+        const result = hyperfixi.compile(code);
+        if (result.success) {
+          appendLog('Compilation successful');
+          // Look for template literal in AST
+          const astStr = JSON.stringify(result.ast);
+          if (astStr.includes('$rand')) {
+            appendLog('AST contains $rand reference');
+          }
+          if (astStr.includes('TemplateLiteral') || astStr.includes('template')) {
+            appendLog('AST has template literal node');
+          }
+        } else {
+          appendLog('Compilation failed: ' + JSON.stringify(result.errors), 'error');
+        }
+      } catch (e) {
+        appendLog('Compile check error: ' + e.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

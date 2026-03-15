@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04: Input Mirroring - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles */
+        input, textarea {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid var(--color-border, #e4e4e7);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+            background: var(--color-surface, #ffffff);
+            color: var(--color-text, #18181b);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-accent, #6366f1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .mirror-box {
+            padding: 20px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1976d2;
+            word-break: break-word;
+            text-align: center;
+        }
+
+        .mirror-box.large {
+            font-size: 32px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #d84315;
+            padding: 30px;
+        }
+
+        .mirror-box.styled {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: var(--font-mono);
+            letter-spacing: 2px;
+        }
+
+        .char-count {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--color-text, #18181b);
+        }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Basics</strong> / 04: Input Mirroring
+        </div>
+
+        <h1>Input Mirroring</h1>
+
+        <div class="description">
+            <strong>Mirror input values to other elements in real-time</strong><br>
+            Learn how to capture input events and update the DOM as users type. Perfect for
+            live previews, character counters, and interactive forms!
+        </div>
+
+        <div>
+            <span class="tag">on input</span>
+            <span class="tag">value</span>
+            <span class="tag">my</span>
+            <span class="tag">possessive</span>
+        </div>
+
+        <!-- Demo 1: Basic Mirroring -->
+        <div class="demo">
+            <h2>Demo 1: Basic Text Mirroring</h2>
+            <label for="name">Type your name:</label>
+            <input
+                type="text"
+                id="name"
+                placeholder="Enter your name..."
+                _="on input put my value into #name-mirror"
+            />
+
+            <div id="name-mirror" class="mirror-box">
+                Your name will appear here...
+            </div>
+        </div>
+
+        <!-- Demo 2: Large Display Mirror -->
+        <div class="demo">
+            <h2>Demo 2: Large Display</h2>
+            <label for="headline">Create a headline:</label>
+            <input
+                type="text"
+                id="headline"
+                placeholder="Breaking news..."
+                _="on input put my value into #headline-display"
+            />
+
+            <div id="headline-display" class="mirror-box large">
+                HEADLINE GOES HERE
+            </div>
+        </div>
+
+        <!-- Demo 3: Styled Mirror -->
+        <div class="demo">
+            <h2>Demo 3: Code Preview</h2>
+            <label for="code">Type some code:</label>
+            <input
+                type="text"
+                id="code"
+                placeholder="console.log('Hello')"
+                _="on input put my value into #code-display"
+            />
+
+            <div id="code-display" class="mirror-box styled">
+                &lt; CODE &gt;
+            </div>
+        </div>
+
+        <!-- Demo 4: Character Counter -->
+        <div class="demo">
+            <h2>Demo 4: Character Counter</h2>
+            <label for="bio">Write your bio (with character count):</label>
+            <textarea
+                id="bio"
+                placeholder="Tell us about yourself..."
+                _="on input
+                   put my value into #bio-mirror
+                   then put my value's length into #char-count"
+            ></textarea>
+
+            <div id="bio-mirror" class="mirror-box">
+                Your bio will appear here...
+            </div>
+
+            <div style="text-align: center;">
+                <span class="char-count">
+                    Characters: <span id="char-count">0</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+
+        <h3>Basic Input Mirroring:</h3>
+        <div class="code">
+&lt;input <span class="keyword">_</span>=<span class="string">"on input put my value into #mirror"</span> /&gt;
+&lt;div <span class="keyword">id</span>=<span class="string">"mirror"</span>&gt;&lt;/div&gt;
+        </div>
+
+        <h3>Character Counter:</h3>
+        <div class="code">
+&lt;textarea <span class="keyword">_</span>=<span class="string">"on input
+           put my value into #mirror
+           then put my value's length into #count"</span>&gt;
+&lt;/textarea&gt;
+&lt;div <span class="keyword">id</span>=<span class="string">"mirror"</span>&gt;&lt;/div&gt;
+&lt;span <span class="keyword">id</span>=<span class="string">"count"</span>&gt;&lt;/span&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>on input</code> - Fires every time the input value changes (as user types)</li>
+                <li><code>my value</code> - Gets the current value of the input element</li>
+                <li><code>into #mirror</code> - Updates the target element with the new value</li>
+                <li><code>my value's length</code> - Accesses the length property of the value string</li>
+            </ul>
+
+            <h3>Key Concepts:</h3>
+            <ul>
+                <li><strong>Real-time Updates:</strong> <code>on input</code> triggers on every keystroke</li>
+                <li><strong>Self-reference:</strong> <code>my</code> refers to the current element</li>
+                <li><strong>Possessive Syntax:</strong> <code>my value's length</code> accesses properties</li>
+                <li><strong>Command Chaining:</strong> <code>then</code> allows multiple actions</li>
+            </ul>
+
+            <h3>Input Events:</h3>
+            <ul>
+                <li><code>on input</code> - Fires on every change (recommended for mirroring)</li>
+                <li><code>on change</code> - Fires only when input loses focus</li>
+                <li><code>on keyup</code> - Fires on every key release</li>
+                <li><code>on keydown</code> - Fires on every key press</li>
+            </ul>
+
+            <h3>Common Use Cases:</h3>
+            <ul>
+                <li><strong>Live Previews:</strong> Show formatted output as user types</li>
+                <li><strong>Character Counters:</strong> Display remaining characters in forms</li>
+                <li><strong>Search Filters:</strong> Filter lists as user types</li>
+                <li><strong>Form Validation:</strong> Real-time validation feedback</li>
+                <li><strong>Synchronized Inputs:</strong> Keep multiple inputs in sync</li>
+            </ul>
+
+            <h3>Advanced Patterns:</h3>
+            <div class="code">
+<span class="comment">&lt;!-- Uppercase transformation --&gt;</span>
+&lt;input <span class="keyword">_</span>=<span class="string">"on input put my value.toUpperCase() into #output"</span> /&gt;
+
+<span class="comment">&lt;!-- Word count --&gt;</span>
+&lt;textarea <span class="keyword">_</span>=<span class="string">"on input
+           put my value.split(' ').length into #word-count"</span>&gt;
+&lt;/textarea&gt;
+
+<span class="comment">&lt;!-- Conditional display --&gt;</span>
+&lt;input <span class="keyword">_</span>=<span class="string">"on input
+        if my value's length > 5
+          put 'Long enough!' into #status
+        else
+          put 'Too short' into #status
+        end"</span> /&gt;
+            </div>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Add text transformation (uppercase, lowercase, trim)</li>
+                <li>Create a password strength indicator</li>
+                <li>Build a live markdown preview</li>
+                <li>Add validation with colored feedback</li>
+                <li>Create a search filter for a list of items</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="03-show-hide.html">← Previous: Show/Hide</a>
+            <a href="05-counter.html">Next: Counter →</a>
+        </div>
+    </div>
+
+    <!-- Load LokaScript (uses ?bundle= param to switch bundles) -->
+    <script src="../bundle-loader.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script src="../bundle-selector.js"></script>
+</body>
+</html>

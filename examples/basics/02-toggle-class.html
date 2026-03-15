@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02: Toggle Classes - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles */
+        .demo-box {
+            width: 200px;
+            height: 200px;
+            background: var(--color-surface, #e3f2fd);
+            border: 3px solid var(--color-text, #18181b);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--color-text, #18181b);
+            margin: 20px auto;
+            transition: all 0.3s ease;
+        }
+
+        .demo-box.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button {
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Basics</strong> / 02: Toggle Classes
+        </div>
+
+        <h1>Toggle Classes</h1>
+
+        <div class="description">
+            <strong>Add and remove CSS classes dynamically</strong><br>
+            Toggle classes to create interactive UI elements with smooth transitions and visual feedback.
+        </div>
+
+        <div>
+            <span class="tag">toggle</span>
+            <span class="tag">classes</span>
+            <span class="tag">CSS</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <div id="box" class="demo-box">
+                Click the button!
+            </div>
+            <button _="on click toggle .active on #box">
+                Toggle Active State
+            </button>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;div <span class="keyword">id</span>=<span class="string">"box"</span> <span class="keyword">class</span>=<span class="string">"demo-box"</span>&gt;
+  Click the button!
+&lt;/div&gt;
+
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle .active on #box"</span>&gt;
+  Toggle Active State
+&lt;/button&gt;
+
+<span class="comment">/* CSS */</span>
+.demo-box.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: scale(1.1) rotate(5deg);
+}
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>toggle .active</code> - Adds or removes the "active" class</li>
+                <li><code>on #box</code> - Targets the element with id="box"</li>
+                <li>CSS transitions create smooth animations automatically</li>
+            </ul>
+
+            <h3>Other Toggle Commands:</h3>
+            <ul>
+                <li><code>add .className</code> - Add a class (if not present)</li>
+                <li><code>remove .className</code> - Remove a class (if present)</li>
+                <li><code>toggle .className</code> - Add if absent, remove if present</li>
+                <li><code>toggle between .class1 and .class2</code> - Swap classes</li>
+            </ul>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Add multiple classes: <code>toggle .active .highlighted</code></li>
+                <li>Toggle on the element itself: <code>toggle .active on me</code></li>
+                <li>Target multiple elements: <code>toggle .active on .demo-box</code></li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="01-hello-world.html">← Previous: Hello World</a>
+            <a href="03-show-hide.html">Next: Show/Hide →</a>
+        </div>
+    </div>
+
+    <!-- Load LokaScript (uses ?bundle= param to switch bundles) -->
+    <script src="../bundle-loader.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script src="../bundle-selector.js"></script>
+</body>
+</html>
