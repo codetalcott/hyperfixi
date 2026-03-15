@@ -143,7 +143,7 @@ jobs:
           find packages/semantic/dist -type f | wc -l
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-artifacts
           path: |
@@ -550,7 +550,7 @@ jobs:
         continue-on-error: true # Known failures: behaviors not fully implemented
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
@@ -611,7 +611,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: multilingual-test-results
           path: ./testing-framework/test-results/
@@ -759,7 +759,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
           path: ./core/benchmark-results/
