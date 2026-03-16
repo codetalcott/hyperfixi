@@ -224,7 +224,11 @@ export function tokenize(input: string): Token[] {
       // e.g., `previous.innerText` = dot access, `previous .active` = CSS selector
       const isAdjacentToPrev = prevToken && prevToken.end === tokenizer.position;
 
-      if (isCSSSelectorContext && !isAdjacentToPrev && isAlpha(peek(tokenizer))) {
+      if (
+        isCSSSelectorContext &&
+        !isAdjacentToPrev &&
+        (isAlpha(peek(tokenizer)) || peek(tokenizer) === '{')
+      ) {
         tokenizeCSSSelector(tokenizer);
         continue;
       }
@@ -537,6 +541,19 @@ function tokenizeCSSSelector(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   const prefix = advance(tokenizer); // # or .
   let value = prefix;
+
+  // Dynamic class/id selector: .{varName} or #{varName}
+  // Produces a selector token like ".{cls}" that is resolved at runtime
+  if (tokenizer.position < tokenizer.input.length && tokenizer.input[tokenizer.position] === '{') {
+    value += advance(tokenizer); // consume '{'
+    while (tokenizer.position < tokenizer.input.length) {
+      const ch = tokenizer.input[tokenizer.position];
+      value += advance(tokenizer);
+      if (ch === '}') break;
+    }
+    addToken(tokenizer, TokenKind.SELECTOR, value, start);
+    return;
+  }
 
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
