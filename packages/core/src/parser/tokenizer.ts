@@ -220,7 +220,11 @@ export function tokenize(input: string): Token[] {
         prevToken.value === ',' ||
         prevToken.value === ';';
 
-      if (isCSSSelectorContext && isAlpha(peek(tokenizer))) {
+      // Adjacent dot (no whitespace) is always property access, not a CSS selector.
+      // e.g., `previous.innerText` = dot access, `previous .active` = CSS selector
+      const isAdjacentToPrev = prevToken && prevToken.end === tokenizer.position;
+
+      if (isCSSSelectorContext && !isAdjacentToPrev && isAlpha(peek(tokenizer))) {
         tokenizeCSSSelector(tokenizer);
         continue;
       }

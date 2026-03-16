@@ -349,6 +349,60 @@ describe('Hyperscript Tokenizer', () => {
         value: 'property',
       });
     });
+
+    it('should tokenize adjacent dot after "previous" as member access, not CSS selector', () => {
+      const tokens = tokenize('previous.innerText');
+
+      expect(tokens).toHaveLength(3);
+      expect(tokens[0]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'previous' });
+      expect(tokens[1]).toMatchObject({ kind: TokenKind.OPERATOR, value: '.' });
+      expect(tokens[2]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'innerText' });
+    });
+
+    it('should tokenize "my previous.innerText" as property access chain', () => {
+      const tokens = tokenize('my previous.innerText');
+
+      expect(tokens).toHaveLength(4);
+      expect(tokens[0]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'my' });
+      expect(tokens[1]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'previous' });
+      expect(tokens[2]).toMatchObject({ kind: TokenKind.OPERATOR, value: '.' });
+      expect(tokens[3]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'innerText' });
+    });
+
+    it('should tokenize adjacent dot after "first" as member access', () => {
+      const tokens = tokenize('first.property');
+
+      expect(tokens).toHaveLength(3);
+      expect(tokens[0]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'first' });
+      expect(tokens[1]).toMatchObject({ kind: TokenKind.OPERATOR, value: '.' });
+      expect(tokens[2]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'property' });
+    });
+
+    it('should tokenize adjacent dot after "closest" as member access', () => {
+      const tokens = tokenize('closest.parentElement');
+
+      expect(tokens).toHaveLength(3);
+      expect(tokens[0]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'closest' });
+      expect(tokens[1]).toMatchObject({ kind: TokenKind.OPERATOR, value: '.' });
+      expect(tokens[2]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'parentElement' });
+    });
+
+    it('should tokenize adjacent dot after command as member access', () => {
+      const tokens = tokenize('toggle.active');
+
+      expect(tokens).toHaveLength(3);
+      expect(tokens[0]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'toggle' });
+      expect(tokens[1]).toMatchObject({ kind: TokenKind.OPERATOR, value: '.' });
+      expect(tokens[2]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'active' });
+    });
+
+    it('should still tokenize spaced dot after "previous" as CSS selector', () => {
+      const tokens = tokenize('previous .active');
+
+      expect(tokens).toHaveLength(2);
+      expect(tokens[0]).toMatchObject({ kind: TokenKind.IDENTIFIER, value: 'previous' });
+      expect(tokens[1]).toMatchObject({ kind: TokenKind.SELECTOR, value: '.active' });
+    });
   });
 
   describe('Performance', () => {
