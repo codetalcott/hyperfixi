@@ -32,8 +32,7 @@ examples/
     ├── 01-color-cycling.html
     ├── 02-draggable.html
     ├── 03-sortable-list.html
-    ├── 04-infinite-scroll.html
-    └── 05-state-machine.html
+    └── 04-infinite-scroll.html
 ```
 
 ## 🚀 Getting Started
