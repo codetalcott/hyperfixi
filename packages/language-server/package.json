@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/language-server",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Language Server Protocol implementation for LokaScript/hyperscript with 21 language support",
   "type": "module",
   "main": "dist/server.js",

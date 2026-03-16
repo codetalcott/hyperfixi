@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/behaviors",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Reusable hyperscript behaviors for LokaScript",
   "type": "module",
   "main": "./dist/index.js",
