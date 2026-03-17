@@ -91,6 +91,9 @@ jobs:
       - name: Build semantic package
         run: npm run build --prefix packages/semantic
 
+      - name: Build behaviors package
+        run: npm run build --prefix packages/behaviors
+
       - name: Build core package (full)
         run: npm run build --prefix packages/core
 
