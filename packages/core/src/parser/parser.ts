@@ -885,8 +885,15 @@ export class Parser {
           } else {
             // For simple commands, check if it takes non-selector arguments (like wait with time)
             const commandName = (expr as IdentifierNode).name.toLowerCase();
-            if (commandName === 'wait' && this.checkTimeExpression()) {
-              // wait with time expression should be a command
+            if (
+              commandName === 'wait' &&
+              (this.checkTimeExpression() ||
+                this.checkNumber() ||
+                this.checkIdentifier() ||
+                this.checkContextVar() ||
+                this.check('('))
+            ) {
+              // wait with time/variable/expression should be a command
               const command = this.createCommandFromIdentifier(expr as IdentifierNode);
               if (command) {
                 expr = command;

@@ -230,9 +230,60 @@
             </div>
         </div>
 
-        <!-- Demo 5: Combined Transforms -->
+        <!-- Demo 5: Variable Wait Duration -->
         <div class="demo">
-            <h2>Demo 5: Scale & Rotate</h2>
+            <h2>Demo 5: Variable Wait Duration</h2>
+            <p>Use expressions to control timing dynamically:</p>
+
+            <div style="margin-bottom: 15px;">
+                <label>Duration (ms):
+                    <input type="range" id="speed-slider" min="100" max="2000" value="500" step="100"
+                        _="on input put my value into #speed-label">
+                    <span id="speed-label">500</span>ms
+                </label>
+            </div>
+
+            <button _="on click
+                      set delay to #speed-slider's value as Int
+                      add .fade-out to #var-box
+                      wait delay
+                      remove .fade-out from #var-box">
+                Fade with variable delay
+            </button>
+
+            <button class="secondary" _="on click
+                                          set delay to #speed-slider's value as Int
+                                          add .fade-out to #var-box-1
+                                          wait delay
+                                          add .fade-out to #var-box-2
+                                          wait delay
+                                          add .fade-out to #var-box-3
+                                          wait delay
+                                          remove .fade-out from #var-box-1
+                                          remove .fade-out from #var-box-2
+                                          remove .fade-out from #var-box-3">
+                Staggered sequence
+            </button>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <div id="var-box" class="fade-box" style="flex: 2; padding: 20px; font-size: 16px;">
+                    Single box
+                </div>
+                <div id="var-box-1" class="fade-box" style="flex: 1; padding: 20px; font-size: 16px;">
+                    1
+                </div>
+                <div id="var-box-2" class="fade-box" style="flex: 1; padding: 20px; font-size: 16px;">
+                    2
+                </div>
+                <div id="var-box-3" class="fade-box" style="flex: 1; padding: 20px; font-size: 16px;">
+                    3
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo 6: Combined Transforms -->
+        <div class="demo">
+            <h2>Demo 6: Scale & Rotate</h2>
             <p>Combine multiple transform effects:</p>
 
             <button _="on click toggle .scale-up on #transform-box">
@@ -363,7 +414,27 @@ transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 transition: opacity 0.5s ease 0.2s; <span class="comment">/* 0.2s delay */</span>
             </div>
 
-            <h3>Advanced Patterns:</h3>
+            <h3>Variable Wait Duration:</h3>
+        <div class="code">
+<span class="comment">&lt;!-- Read duration from a slider --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click
+         set delay to #speed-slider's value as Int
+         add .fade-out to #box
+         wait delay
+         remove .fade-out from #box"</span>&gt;
+  Fade
+&lt;/button&gt;
+
+<span class="comment">&lt;!-- Context variable --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click
+         set $duration to 750
+         wait $duration
+         toggle .active on me"</span>&gt;
+  Delayed Toggle
+&lt;/button&gt;
+        </div>
+
+        <h3>Advanced Patterns:</h3>
             <div class="code">
 <span class="comment">&lt;!-- Fade in on page load --&gt;</span>
 &lt;div <span class="keyword">_</span>=<span class="string">"on load

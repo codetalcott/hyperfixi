@@ -172,6 +172,9 @@ export class BaseExpressionEvaluator {
       case 'attributeAccess':
         return this.evaluateAttributeAccess(node as any, context);
 
+      case 'asExpression':
+        return this.evaluateAsExpression(node as any, context);
+
       default:
         throw new Error(`Unsupported AST node type for evaluation: ${node.type}`);
     }
@@ -656,6 +659,21 @@ export class BaseExpressionEvaluator {
       return accessAttribute(context.me as Element, node.attributeName);
     }
     return `@${node.attributeName}`;
+  }
+
+  /**
+   * Evaluate 'as' type conversion expressions (e.g., `x as Int`, `value as String`)
+   */
+  protected async evaluateAsExpression(
+    node: { expression: any; targetType: string },
+    context: ExecutionContext
+  ): Promise<unknown> {
+    const value = await this.evaluate(node.expression, context);
+    const asExpr = this.expressionRegistry.get('as');
+    if (asExpr) {
+      return asExpr.evaluate(context, value, node.targetType);
+    }
+    throw new Error(`Conversion type 'as' not registered`);
   }
 
   /**
