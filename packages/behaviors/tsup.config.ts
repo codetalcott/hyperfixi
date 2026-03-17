@@ -56,4 +56,15 @@ export default defineConfig([
     sourcemap: true,
     minify: true,
   },
+  // Resolver bundle — lazy compilation of behaviors on demand
+  // Include after hyperfixi.js: <script src="hyperfixi-behaviors.js"></script>
+  {
+    entry: {
+      'resolver.browser': 'src/browser-resolver-bundle.ts',
+    },
+    format: ['iife'],
+    globalName: 'HyperFixiBehaviors',
+    sourcemap: true,
+    minify: true,
+  },
 ]);

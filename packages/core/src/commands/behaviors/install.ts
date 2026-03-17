@@ -305,15 +305,22 @@ export class InstallCommand {
     // Check context for behaviors registry
     const behaviorRegistry = context.locals.get('_behaviors');
     if (behaviorRegistry && typeof behaviorRegistry === 'object') {
-      const registry = behaviorRegistry as Map<string, unknown>;
-      return registry.has(behaviorName);
+      const registry = behaviorRegistry as any;
+      if (registry.has(behaviorName)) return true;
+      // Try resolver if available
+      if (registry.resolve && registry.resolve(behaviorName)) return true;
     }
 
     // Check global hyperscript runtime if available
     if (typeof globalThis !== 'undefined') {
       const hyperscriptGlobal = (globalThis as any)._hyperscript;
       if (hyperscriptGlobal?.behaviors) {
-        return hyperscriptGlobal.behaviors.has(behaviorName);
+        if (hyperscriptGlobal.behaviors.has(behaviorName)) return true;
+        if (
+          hyperscriptGlobal.behaviors.resolve &&
+          hyperscriptGlobal.behaviors.resolve(behaviorName)
+        )
+          return true;
       }
     }
 

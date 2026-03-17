@@ -242,6 +242,8 @@ export class RuntimeBase {
     this.behaviorAPI = {
       has: (name: string) => this.behaviorRegistry.has(name),
       get: (name: string) => this.behaviorRegistry.get(name),
+      set: (name: string, definition: any) => this.behaviorRegistry.set(name, definition),
+      resolve: null as ((name: string) => boolean) | null,
       install: async (
         behaviorName: string,
         element: HTMLElement,
@@ -1000,8 +1002,14 @@ export class RuntimeBase {
     parameters: Record<string, any>
   ): Promise<void> {
     debug.runtime(`BEHAVIOR: installBehaviorOnElement called: ${behaviorName}`);
-    const behavior = this.behaviorRegistry.get(behaviorName);
-    if (!behavior) throw new Error(`Behavior "${behaviorName}" not found`);
+    let behavior = this.behaviorRegistry.get(behaviorName);
+    if (!behavior) {
+      // Try resolver before throwing
+      if (this.behaviorAPI.resolve && this.behaviorAPI.resolve(behaviorName)) {
+        behavior = this.behaviorRegistry.get(behaviorName);
+      }
+      if (!behavior) throw new Error(`Behavior "${behaviorName}" not found`);
+    }
 
     // Imperative behavior: call the installer directly and return
     if (behavior.type === 'imperative' && typeof behavior.install === 'function') {
