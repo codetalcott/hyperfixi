@@ -8,6 +8,7 @@ Complete API documentation for LokaScript.
   - [API v2 Methods (Recommended)](#api-v2-methods-recommended)
   - [Legacy Methods (Deprecated)](#legacy-methods-deprecated)
 - [HTML Integration](#html-integration)
+- [Behaviors](#behaviors)
 - [Types](#types)
 - [Context Management](#context-management)
 - [Runtime Configuration](#runtime-configuration)
@@ -701,6 +702,127 @@ Re-process an element (and descendants) after dynamic HTML insertion:
 ```javascript
 container.innerHTML = '<div _="on click log \'hello\'">New</div>';
 lokascript.processNode(container);
+```
+
+---
+
+## Behaviors
+
+Behaviors are reusable hyperscript components that encapsulate event handlers and state. Define once, install on any element.
+
+### Quick Start (Browser)
+
+Include the resolver bundle after the core — all standard behaviors resolve on demand:
+
+```html
+<script src="hyperfixi.js"></script>
+<script src="resolver.browser.global.js"></script>
+
+<button _="install Toggleable">Toggle me</button>
+<button _="install Toggleable(cls: 'highlighted')">Custom class</button>
+<div _="install Draggable" style="position: absolute">Drag me</div>
+```
+
+The resolver compiles behavior source strings on first use. Bundle size: ~3.8 KB gzipped.
+
+### Available Behaviors
+
+| Behavior       | Parameters                                        | Description                 |
+| -------------- | ------------------------------------------------- | --------------------------- |
+| `Toggleable`   | `cls` (default: "active"), `target`               | Toggle CSS class on click   |
+| `Removable`    | `triggerEl`, `confirm`, `effect`                  | Remove element on click     |
+| `AutoDismiss`  | `delay` (default: 5000), `effect`                 | Auto-remove after delay     |
+| `Clipboard`    | `text`, `source`, `feedback`, `feedbackDuration`  | Copy to clipboard on click  |
+| `Draggable`    | `dragHandle`                                      | Pointer-based drag and drop |
+| `ClickOutside` | `active`                                          | Fire event on outside click |
+| `ScrollReveal` | `cls`, `threshold`, `once`                        | Reveal on viewport entry    |
+| `Tabs`         | `orientation`, `activeTab`, `wrap`, `activeClass` | ARIA tabs with keyboard nav |
+
+### Defining Custom Behaviors
+
+```html
+<script type="text/hyperscript">
+  behavior MyBehavior(param1, param2)
+    init
+      if param1 is undefined
+        set param1 to "default"
+      end
+    end
+    on click
+      toggle .{param1} on me
+    end
+  end
+</script>
+
+<div _="install MyBehavior(param1: 'highlighted')">Click me</div>
+```
+
+### Dynamic Class Selectors
+
+Use `.{varName}` to reference variables as class names in `toggle`, `add`, and `remove`:
+
+```hyperscript
+behavior Highlighter(cls)
+  on click
+    toggle .{cls} on me
+  end
+end
+```
+
+The `{cls}` is resolved from the behavior's parameter context at runtime.
+
+### Behavior Resolver Hook
+
+The runtime supports a `resolve` callback on `behaviorAPI` for lazy behavior loading:
+
+```javascript
+// Register a custom resolver
+window._hyperscript.behaviors.resolve = name => {
+  const source = myBehaviorSources[name];
+  if (!source) return false;
+
+  const result = window.hyperfixi.compileSync(source, { traditional: true });
+  if (!result.ok) return false;
+
+  window._hyperscript.behaviors.set(name, {
+    name: result.ast.name,
+    parameters: result.ast.parameters,
+    eventHandlers: result.ast.eventHandlers,
+    initBlock: result.ast.initBlock,
+  });
+  return true;
+};
+```
+
+The resolver is called when `install X` encounters an undefined behavior. If it returns `true`, installation proceeds normally.
+
+### Programmatic Registration
+
+```javascript
+// Compile and execute a behavior definition
+const result = hyperscript.compileSync(
+  `
+  behavior MyBehavior()
+    on click add .clicked to me
+  end
+`,
+  { traditional: true }
+);
+await hyperscript.execute(result.ast);
+
+// Now install it on elements
+await hyperscript.eval('install MyBehavior', element);
+```
+
+### Loading from Patterns Reference
+
+The `@hyperfixi/patterns-reference` package stores behavior definitions in a queryable database with multilingual translations:
+
+```javascript
+import { loadBehaviors } from '@hyperfixi/patterns-reference';
+
+const result = await loadBehaviors(runtime);
+// result.loaded: ['behavior-toggleable', 'behavior-draggable', ...]
 ```
 
 ---

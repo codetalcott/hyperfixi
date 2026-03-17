@@ -319,6 +319,40 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 - Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.3 KB), hybrid-hx (9.5 KB), minimal (58 KB), standard (63 KB), browser (203 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
+### Using Behaviors (Browser)
+
+Include the resolver bundle after core — all standard behaviors resolve on demand:
+
+```html
+<script src="hyperfixi.js"></script>
+<script src="resolver.browser.global.js"></script>
+<!-- install Toggleable, Draggable, etc. just work -->
+<button _="install Toggleable(cls: 'highlighted')">Toggle</button>
+```
+
+Behaviors are hyperscript source strings compiled on first use. The resolver bundle is 3.8 KB gzipped.
+
+### Dynamic Class Selectors
+
+`.{varName}` resolves a variable as a CSS class name in `toggle`, `add`, and `remove`:
+
+```hyperscript
+behavior MyBehavior(cls)
+  on click toggle .{cls} on me
+end
+```
+
+### Behavior Resolver Hook
+
+External code can register a resolver for custom behaviors:
+
+```javascript
+window._hyperscript.behaviors.resolve = name => {
+  /* compile & register, return true */
+};
+window._hyperscript.behaviors.set(name, { name, parameters, eventHandlers, initBlock });
+```
+
 ### Adding a New Command
 
 1. Create implementation in `packages/core/src/commands-v2/`
@@ -621,11 +655,12 @@ hyperfixi({
 
 ### Core Bundles
 
-| Bundle                                         | Global                  | Size (gzip) | Use Case                 |
-| ---------------------------------------------- | ----------------------- | ----------- | ------------------------ |
-| `packages/core/dist/hyperfixi.js`              | `window.hyperfixi`      | 203.5 KB    | Full bundle with parser  |
-| `packages/core/dist/hyperfixi-multilingual.js` | `window.hyperfixi`      | 64.3 KB     | Multilingual (no parser) |
-| `packages/i18n/dist/lokascript-i18n.min.js`    | `window.LokaScriptI18n` | 35.0 KB     | Grammar transformation   |
+| Bundle                                               | Global                  | Size (gzip) | Use Case                             |
+| ---------------------------------------------------- | ----------------------- | ----------- | ------------------------------------ |
+| `packages/core/dist/hyperfixi.js`                    | `window.hyperfixi`      | 203.5 KB    | Full bundle with parser              |
+| `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 3.8 KB      | Lazy behavior resolver (8 behaviors) |
+| `packages/core/dist/hyperfixi-multilingual.js`       | `window.hyperfixi`      | 64.3 KB     | Multilingual (no parser)             |
+| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 35.0 KB     | Grammar transformation               |
 
 > **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Backward-compatible aliases (`lokascript-*.js`) are provided but will be removed in v3.0.0. See [MIGRATION.md](MIGRATION.md).
 
