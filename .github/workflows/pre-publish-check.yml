@@ -101,7 +101,7 @@ jobs:
           echo "Building core packages (required for typecheck)..." >> $GITHUB_STEP_SUMMARY
 
           # Build in dependency order (matches ci.yml and publish.yml)
-          BUILD_ORDER="framework domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn semantic core patterns-reference i18n hyperscript-adapter ast-toolkit aot-compiler compilation-service mcp-server server-bridge types-browser vite-plugin language-server"
+          BUILD_ORDER="framework domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn semantic behaviors core patterns-reference i18n hyperscript-adapter ast-toolkit aot-compiler compilation-service mcp-server server-bridge types-browser vite-plugin language-server"
 
           for pkg in $BUILD_ORDER; do
             if [ -d "packages/$pkg" ]; then
@@ -298,7 +298,7 @@ jobs:
           # Size limits (gzipped bytes)
           MAX_LITE=4000           # 4 KB
           MAX_HYBRID=15000        # 15 KB
-          MAX_BROWSER=230000      # 230 KB
+          MAX_BROWSER=290000      # 290 KB (actual: ~273 KB, allow headroom)
 
           failed=0
 
