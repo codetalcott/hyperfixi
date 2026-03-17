@@ -54,15 +54,18 @@ behavior AutoDismiss(delay, pauseOnHover, effect)
     if effect is undefined
       set effect to "none"
     end
-  end
-  on load
-    trigger autodismiss:start
-    wait delay ms
-    trigger autodismiss:dismissed
-    if effect is "fade"
-      transition opacity to 0 over 300ms
+    js(me, delay, effect)
+      setTimeout(function() {
+        me.dispatchEvent(new CustomEvent('autodismiss:dismissed', { bubbles: true }));
+        if (effect === 'fade') {
+          me.style.transition = 'opacity 300ms';
+          me.style.opacity = '0';
+          setTimeout(function() { me.remove(); }, 300);
+        } else {
+          me.remove();
+        }
+      }, delay);
     end
-    remove me
   end
 end`.trim(),
 };
