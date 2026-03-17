@@ -132,7 +132,12 @@ export function parsePropertyOfTarget(ctx: ParserContext, startPosition: number)
   if (exprAny.type === 'binaryExpression' && exprAny.operator === KEYWORDS.OF) {
     const property = exprAny.left as ASTNode;
     const target = exprAny.right as ASTNode;
-    return createPropertyOfExpression(property, target, startPosition, ctx.savePosition());
+    return createPropertyOfExpression(property, target, {
+      start: property.start ?? 0,
+      end: (target as ASTNode).end ?? 0,
+      line: property.line ?? 1,
+      column: property.column ?? 1,
+    });
   }
 
   // "the <expr> to <value>" — strip the article, return the expression as-is
