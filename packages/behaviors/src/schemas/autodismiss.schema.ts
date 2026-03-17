@@ -51,12 +51,21 @@ behavior AutoDismiss(delay, pauseOnHover, effect)
     if delay is undefined
       set delay to 5000
     end
+    if pauseOnHover is undefined
+      set pauseOnHover to true
+    end
     if effect is undefined
       set effect to "none"
     end
-    js(me, delay, effect)
-      setTimeout(function() {
-        me.dispatchEvent(new CustomEvent('autodismiss:dismissed', { bubbles: true }));
+    js(me, delay, effect, pauseOnHover)
+      me.dispatchEvent(new CustomEvent('autodismiss:start', { bubbles: true }));
+      var remaining = delay;
+      var startedAt = Date.now();
+      var timerId = null;
+      function dismiss() {
+        var ev = new CustomEvent('autodismiss:dismissed', { bubbles: true, cancelable: true });
+        me.dispatchEvent(ev);
+        if (ev.defaultPrevented) return;
         if (effect === 'fade') {
           me.style.transition = 'opacity 300ms';
           me.style.opacity = '0';
@@ -64,7 +73,29 @@ behavior AutoDismiss(delay, pauseOnHover, effect)
         } else {
           me.remove();
         }
-      }, delay);
+      }
+      function start() {
+        startedAt = Date.now();
+        timerId = setTimeout(dismiss, remaining);
+      }
+      start();
+      if (pauseOnHover) {
+        me.addEventListener('mouseenter', function() {
+          if (timerId != null) {
+            clearTimeout(timerId);
+            timerId = null;
+            remaining -= Date.now() - startedAt;
+            if (remaining < 0) remaining = 0;
+            me.dispatchEvent(new CustomEvent('autodismiss:paused', { bubbles: true }));
+          }
+        });
+        me.addEventListener('mouseleave', function() {
+          if (timerId == null && me.isConnected) {
+            me.dispatchEvent(new CustomEvent('autodismiss:resumed', { bubbles: true }));
+            start();
+          }
+        });
+      }
     end
   end
 end`.trim(),

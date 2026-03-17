@@ -14,6 +14,20 @@ import Database from 'better-sqlite3';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, resolve } from 'path';
 
+// Import behavior schemas as single source of truth
+import { toggleableSchema } from '../../behaviors/src/schemas/toggleable.schema';
+import { removableSchema } from '../../behaviors/src/schemas/removable.schema';
+import { autoDismissSchema } from '../../behaviors/src/schemas/autodismiss.schema';
+import { clipboardSchema } from '../../behaviors/src/schemas/clipboard.schema';
+import { draggableSchema } from '../../behaviors/src/schemas/draggable.schema';
+import { clickOutsideSchema } from '../../behaviors/src/schemas/clickoutside.schema';
+import { scrollRevealSchema } from '../../behaviors/src/schemas/scrollreveal.schema';
+import { tabsSchema } from '../../behaviors/src/schemas/tabs.schema';
+import { focusTrapSchema } from '../../behaviors/src/schemas/focustrap.schema';
+import { sortableSchema } from '../../behaviors/src/schemas/sortable.schema';
+import { resizableSchema } from '../../behaviors/src/schemas/resizable.schema';
+import type { BehaviorSchema } from '../../behaviors/src/schemas/types';
+
 // =============================================================================
 // Configuration
 // =============================================================================
@@ -205,6 +219,78 @@ interface SeedExample {
   description: string;
   feature: string;
   engine?: string | null;
+}
+
+/**
+ * Generate seed entries for behavior patterns from @hyperfixi/behaviors schemas.
+ * This ensures patterns-reference always matches the canonical behavior source.
+ */
+const BEHAVIOR_SCHEMAS: { schema: BehaviorSchema; description: string }[] = [
+  {
+    schema: toggleableSchema,
+    description:
+      'Toggles a CSS class on click. Use: install Toggleable or install Toggleable(cls: "highlighted", target: "#menu")',
+  },
+  {
+    schema: removableSchema,
+    description:
+      'Removes element on click with optional confirmation and fade effect. Use: install Removable(confirmRemoval: true, effect: "fade")',
+  },
+  {
+    schema: autoDismissSchema,
+    description:
+      'Auto-removes element after a delay (toast/flash). Use: install AutoDismiss(delay: 3000, effect: "fade")',
+  },
+  {
+    schema: clipboardSchema,
+    description:
+      'Copies text to clipboard on click with visual feedback. Use: install Clipboard(source: "#code-snippet")',
+  },
+  {
+    schema: draggableSchema,
+    description:
+      'Makes element draggable with pointer events. Use: install Draggable(dragHandle: ".titlebar")',
+  },
+  {
+    schema: clickOutsideSchema,
+    description:
+      'Fires clickoutside event when user clicks outside the element. Use: install ClickOutside',
+  },
+  {
+    schema: scrollRevealSchema,
+    description:
+      'Reveals element when it enters viewport via IntersectionObserver. Use: install ScrollReveal(cls: "visible", once: true)',
+  },
+  {
+    schema: tabsSchema,
+    description:
+      'WAI-ARIA compliant tabs with roving tabindex keyboard navigation. Use: install Tabs(orientation: "vertical")',
+  },
+  {
+    schema: focusTrapSchema,
+    description:
+      'Confines Tab navigation inside an element with ARIA support. Use: install FocusTrap(initialFocus: "#first-input")',
+  },
+  {
+    schema: sortableSchema,
+    description:
+      'Makes child elements reorderable via drag-and-drop. Use: install Sortable(handle: ".drag-handle")',
+  },
+  {
+    schema: resizableSchema,
+    description:
+      'Makes elements resizable by dragging. Use: install Resizable(minWidth: 100, minHeight: 100)',
+  },
+];
+
+function behaviorSeedEntries(): SeedExample[] {
+  return BEHAVIOR_SCHEMAS.map(({ schema, description }) => ({
+    id: `behavior-${schema.name.toLowerCase()}`,
+    title: `${schema.name} Behavior`,
+    raw_code: schema.source,
+    description,
+    feature: 'behavior',
+  }));
 }
 
 const SEED_EXAMPLES: SeedExample[] = [
@@ -1141,306 +1227,9 @@ const SEED_EXAMPLES: SeedExample[] = [
 
   // ==========================================================================
   // Behavior Definitions — Installable via `install BehaviorName(params)`
+  // Sources imported from @hyperfixi/behaviors schemas (single source of truth)
   // ==========================================================================
-  {
-    id: 'behavior-toggleable',
-    title: 'Toggleable Behavior',
-    raw_code: [
-      'behavior Toggleable(cls, target)',
-      '  init',
-      '    if cls is undefined',
-      '      set cls to "active"',
-      '    end',
-      '    if target is undefined',
-      '      set target to me',
-      '    end',
-      '  end',
-      '  on click',
-      '    toggle .{cls} on target',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'Toggles a CSS class on click. Use: install Toggleable or install Toggleable(cls: "highlighted", target: "#menu")',
-    feature: 'behavior',
-  },
-  {
-    id: 'behavior-removable',
-    title: 'Removable Behavior',
-    raw_code: [
-      'behavior Removable(triggerEl, confirmRemoval, effect)',
-      '  init',
-      '    if triggerEl is undefined',
-      '      set triggerEl to me',
-      '    end',
-      '  end',
-      '  on click from triggerEl',
-      '    if confirmRemoval',
-      '      js(me)',
-      '        if (!window.confirm("Are you sure?")) return "cancel";',
-      '      end',
-      '      if it is "cancel"',
-      '        halt',
-      '      end',
-      '    end',
-      '    trigger removable:before',
-      '    if effect is "fade"',
-      '      transition opacity to 0 over 300ms',
-      '    end',
-      '    trigger removable:removed',
-      '    remove me',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'Removes element on click with optional confirmation and fade effect. Use: install Removable(confirm: true, effect: "fade")',
-    feature: 'behavior',
-  },
-  {
-    id: 'behavior-autodismiss',
-    title: 'AutoDismiss Behavior',
-    raw_code: [
-      'behavior AutoDismiss(delay, pauseOnHover, effect)',
-      '  init',
-      '    if delay is undefined',
-      '      set delay to 5000',
-      '    end',
-      '    if effect is undefined',
-      '      set effect to "none"',
-      '    end',
-      '    js(me, delay, effect)',
-      '      setTimeout(function() {',
-      "        me.dispatchEvent(new CustomEvent('autodismiss:dismissed', { bubbles: true }));",
-      "        if (effect === 'fade') {",
-      "          me.style.transition = 'opacity 300ms';",
-      "          me.style.opacity = '0';",
-      '          setTimeout(function() { me.remove(); }, 300);',
-      '        } else {',
-      '          me.remove();',
-      '        }',
-      '      }, delay);',
-      '    end',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'Auto-removes element after a delay (toast/flash). Use: install AutoDismiss(delay: 3000, effect: "fade")',
-    feature: 'behavior',
-  },
-  {
-    id: 'behavior-clipboard',
-    title: 'Clipboard Behavior',
-    raw_code: [
-      'behavior Clipboard(text, source, feedback, feedbackDuration)',
-      '  init',
-      '    if feedbackDuration is undefined',
-      '      set feedbackDuration to 2000',
-      '    end',
-      '    if source is undefined',
-      '      set source to me',
-      '    end',
-      '  end',
-      '  on click',
-      '    if text is not undefined',
-      '      set copyText to text',
-      '    else',
-      "      set copyText to source's textContent",
-      '    end',
-      '    js(copyText) navigator.clipboard.writeText(copyText) end',
-      '    set feedbackEl to feedback or me',
-      '    add .copied to feedbackEl',
-      '    js(feedbackEl, feedbackDuration)',
-      '      setTimeout(function() {',
-      "        feedbackEl.classList.remove('copied');",
-      "        feedbackEl.dispatchEvent(new CustomEvent('clipboard:copied', { bubbles: true }));",
-      '      }, feedbackDuration);',
-      '    end',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'Copies text to clipboard on click with visual feedback. Use: install Clipboard(source: "#code-snippet")',
-    feature: 'behavior',
-  },
-  {
-    id: 'behavior-draggable',
-    title: 'Draggable Behavior',
-    raw_code: [
-      'behavior Draggable(dragHandle)',
-      '  init',
-      '    if no dragHandle set dragHandle to me',
-      '  end',
-      '  on pointerdown(clientX, clientY) from dragHandle',
-      '    halt the event',
-      '    trigger draggable:start',
-      '    measure x',
-      '    set startX to it',
-      '    measure y',
-      '    set startY to it',
-      '    set xoff to clientX - startX',
-      '    set yoff to clientY - startY',
-      '    repeat until event pointerup from document',
-      '      wait for pointermove(clientX, clientY) or',
-      '               pointerup(clientX, clientY) from document',
-      '      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }',
-      '      trigger draggable:move',
-      '    end',
-      '    trigger draggable:end',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'Makes element draggable with pointer events. Use: install Draggable(dragHandle: ".titlebar")',
-    feature: 'behavior',
-  },
-  {
-    id: 'behavior-clickoutside',
-    title: 'ClickOutside Behavior',
-    raw_code: [
-      'behavior ClickOutside(active)',
-      '  init',
-      '    if active is undefined',
-      '      set active to true',
-      '    end',
-      '  end',
-      '  on pointerdown from document',
-      '    js(me, active)',
-      '      if (active && !me.contains(event.target)) {',
-      "        me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));",
-      '      }',
-      '    end',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'Fires clickoutside event when user clicks outside the element. Use: install ClickOutside',
-    feature: 'behavior',
-  },
-  {
-    id: 'behavior-scrollreveal',
-    title: 'ScrollReveal Behavior',
-    raw_code: [
-      'behavior ScrollReveal(cls, threshold, once)',
-      '  init',
-      '    if cls is undefined',
-      '      set cls to "revealed"',
-      '    end',
-      '    if threshold is undefined',
-      '      set threshold to 0.1',
-      '    end',
-      '    if once is undefined',
-      '      set once to true',
-      '    end',
-      '    js(me, cls, threshold, once)',
-      '      var obs = new IntersectionObserver(function(entries) {',
-      '        for (var i = 0; i < entries.length; i++) {',
-      '          if (entries[i].isIntersecting) {',
-      '            me.classList.add(cls);',
-      "            me.dispatchEvent(new CustomEvent('scrollreveal:enter', { bubbles: true }));",
-      '            if (once) obs.disconnect();',
-      '          } else if (!once) {',
-      '            me.classList.remove(cls);',
-      "            me.dispatchEvent(new CustomEvent('scrollreveal:exit', { bubbles: true }));",
-      '          }',
-      '        }',
-      '      }, { threshold: threshold });',
-      '      obs.observe(me);',
-      '    end',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'Reveals element when it enters viewport via IntersectionObserver. Use: install ScrollReveal(cls: "visible", once: true)',
-    feature: 'behavior',
-  },
-  {
-    id: 'behavior-tabs',
-    title: 'Tabs Behavior',
-    raw_code: [
-      'behavior Tabs(orientation, activeTab, wrap, activeClass)',
-      '  init',
-      '    if orientation is undefined',
-      '      set orientation to "horizontal"',
-      '    end',
-      '    if activeTab is undefined',
-      '      set activeTab to 0',
-      '    end',
-      '    if wrap is undefined',
-      '      set wrap to true',
-      '    end',
-      '    if activeClass is undefined',
-      '      set activeClass to "active"',
-      '    end',
-      '    js(me, orientation, activeTab, wrap, activeClass)',
-      '      var tabs = Array.from(me.querySelectorAll(\'[role="tab"]\'));',
-      '      var panels = Array.from(me.querySelectorAll(\'[role="tabpanel"]\'));',
-      '      if (tabs.length === 0 || panels.length === 0) return;',
-      '      var tablist = me.querySelector(\'[role="tablist"]\') || tabs[0].parentElement;',
-      "      if (tablist) tablist.setAttribute('aria-orientation', orientation);",
-      '      var count = Math.min(tabs.length, panels.length);',
-      '      var idN = 0;',
-      '      for (var i = 0; i < count; i++) {',
-      "        if (!tabs[i].id) tabs[i].id = 'tab-' + (++idN);",
-      "        if (!panels[i].id) panels[i].id = 'tabpanel-' + idN;",
-      "        tabs[i].setAttribute('aria-controls', panels[i].id);",
-      "        panels[i].setAttribute('aria-labelledby', tabs[i].id);",
-      '      }',
-      '      var cur = Math.max(0, Math.min(activeTab, count - 1));',
-      '      function activate(idx, prev) {',
-      '        if (idx === prev || idx < 0 || idx >= count) return false;',
-      "        var ev = new CustomEvent('tabs:change', { bubbles: true, cancelable: true, detail: { index: idx, previousIndex: prev } });",
-      '        me.dispatchEvent(ev);',
-      '        if (ev.defaultPrevented) return false;',
-      '        if (prev >= 0 && prev < count) {',
-      "          tabs[prev].setAttribute('aria-selected', 'false');",
-      "          tabs[prev].setAttribute('tabindex', '-1');",
-      '          tabs[prev].classList.remove(activeClass);',
-      "          panels[prev].setAttribute('aria-hidden', 'true');",
-      '          panels[prev].classList.remove(activeClass);',
-      '        }',
-      "        tabs[idx].setAttribute('aria-selected', 'true');",
-      "        tabs[idx].setAttribute('tabindex', '0');",
-      '        tabs[idx].classList.add(activeClass);',
-      "        panels[idx].setAttribute('aria-hidden', 'false');",
-      '        panels[idx].classList.add(activeClass);',
-      '        cur = idx;',
-      "        me.dispatchEvent(new CustomEvent('tabs:changed', { bubbles: true, detail: { index: idx } }));",
-      '        return true;',
-      '      }',
-      '      for (var j = 0; j < count; j++) {',
-      "        tabs[j].setAttribute('aria-selected', 'false');",
-      "        tabs[j].setAttribute('tabindex', '-1');",
-      "        panels[j].setAttribute('aria-hidden', 'true');",
-      '        panels[j].classList.remove(activeClass);',
-      '      }',
-      "      tabs[cur].setAttribute('aria-selected', 'true');",
-      "      tabs[cur].setAttribute('tabindex', '0');",
-      '      tabs[cur].classList.add(activeClass);',
-      "      panels[cur].setAttribute('aria-hidden', 'false');",
-      '      panels[cur].classList.add(activeClass);',
-      '      for (var k = 0; k < count; k++) {',
-      '        (function(idx) {',
-      "          tabs[idx].addEventListener('click', function() { if (activate(idx, cur)) tabs[idx].focus(); });",
-      '        })(k);',
-      '      }',
-      "      (tablist || me).addEventListener('keydown', function(e) {",
-      "        var nk = orientation === 'horizontal' ? 'ArrowRight' : 'ArrowDown';",
-      "        var pk = orientation === 'horizontal' ? 'ArrowLeft' : 'ArrowUp';",
-      '        var next = null;',
-      '        if (e.key === nk) { next = cur + 1; if (next >= count) next = wrap ? 0 : null; }',
-      '        else if (e.key === pk) { next = cur - 1; if (next < 0) next = wrap ? count - 1 : null; }',
-      "        else if (e.key === 'Home') next = 0;",
-      "        else if (e.key === 'End') next = count - 1;",
-      '        if (next !== null) { e.preventDefault(); if (activate(next, cur)) tabs[next].focus(); }',
-      '      });',
-      '    end',
-      '  end',
-      'end',
-    ].join('\n'),
-    description:
-      'WAI-ARIA compliant tabs with roving tabindex keyboard navigation. Use: install Tabs(orientation: "vertical")',
-    feature: 'behavior',
-  },
+  ...behaviorSeedEntries(),
 ];
 
 // Language word orders

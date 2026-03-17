@@ -52,6 +52,16 @@ interface ValidationResult {
 // =============================================================================
 
 /**
+ * Strip js(...) ... end blocks from hyperscript code.
+ * These contain raw JavaScript where quote/bracket balancing rules differ.
+ */
+function stripJsBlocks(code: string): string {
+  // Match js(...) ... end blocks — the js() block ends at a line-start "end" or "    end"
+  // Use a simple state machine: find "js(" or "js " at line start, then find matching " end"
+  return code.replace(/\bjs\([^)]*\)[\s\S]*?\bend\b/g, 'js_block_stripped');
+}
+
+/**
  * Validate a single hyperscript pattern.
  * This is a basic structural validation - full parsing requires the runtime.
  */
@@ -63,9 +73,15 @@ function validatePattern(code: string): { valid: boolean; error?: string } {
     return { valid: false, error: 'Empty code' };
   }
 
-  // Check for unbalanced quotes
-  const singleQuotes = (trimmed.match(/'/g) || []).length;
-  const doubleQuotes = (trimmed.match(/"/g) || []).length;
+  // Strip js() blocks before checking quotes — JS code has its own quoting rules
+  let withoutJs = stripJsBlocks(trimmed);
+
+  // Strip possessive 's (e.g., "source's textContent") — not string delimiters
+  withoutJs = withoutJs.replace(/\w's\b/g, 'possessive');
+
+  // Check for unbalanced quotes (outside js blocks and possessives)
+  const singleQuotes = (withoutJs.match(/'/g) || []).length;
+  const doubleQuotes = (withoutJs.match(/"/g) || []).length;
 
   if (singleQuotes % 2 !== 0) {
     return { valid: false, error: 'Unbalanced single quotes' };
@@ -75,7 +91,7 @@ function validatePattern(code: string): { valid: boolean; error?: string } {
     return { valid: false, error: 'Unbalanced double quotes' };
   }
 
-  // Check for unbalanced parentheses
+  // Check for unbalanced parentheses (on full code — js blocks have balanced parens)
   let parenDepth = 0;
   let bracketDepth = 0;
   let braceDepth = 0;

@@ -23,6 +23,14 @@ export const clickOutsideSchema: BehaviorSchema = {
   ],
   events: [
     { name: 'clickoutside', description: 'Fired when a pointer press occurs outside the element' },
+    {
+      name: 'clickoutside:activate',
+      description: 'Listen for this event to programmatically activate detection',
+    },
+    {
+      name: 'clickoutside:deactivate',
+      description: 'Listen for this event to programmatically deactivate detection',
+    },
   ],
   requirements: ['Uses pointerdown instead of click to avoid timing issues with removed elements'],
   source: `
@@ -31,12 +39,16 @@ behavior ClickOutside(active)
     if active is undefined
       set active to true
     end
-  end
-  on pointerdown from document
     js(me, active)
-      if (active && !me.contains(event.target)) {
-        me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
-      }
+      var isActive = active;
+      document.addEventListener('pointerdown', function(e) {
+        if (!me.isConnected) return;
+        if (isActive && !me.contains(e.target)) {
+          me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
+        }
+      });
+      me.addEventListener('clickoutside:activate', function() { isActive = true; });
+      me.addEventListener('clickoutside:deactivate', function() { isActive = false; });
     end
   end
 end`.trim(),

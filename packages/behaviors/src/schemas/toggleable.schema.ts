@@ -44,6 +44,10 @@ behavior Toggleable(cls, target)
   end
   on click
     toggle .{cls} on target
+    js(target, cls)
+      var eventName = target.classList.contains(cls) ? 'toggleable:on' : 'toggleable:off';
+      target.dispatchEvent(new CustomEvent(eventName, { bubbles: true }));
+    end
   end
 end`.trim(),
 };

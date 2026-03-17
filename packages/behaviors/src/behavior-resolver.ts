@@ -25,6 +25,9 @@ import { draggableSchema } from './schemas/draggable.schema';
 import { clickOutsideSchema } from './schemas/clickoutside.schema';
 import { scrollRevealSchema } from './schemas/scrollreveal.schema';
 import { tabsSchema } from './schemas/tabs.schema';
+import { focusTrapSchema } from './schemas/focustrap.schema';
+import { sortableSchema } from './schemas/sortable.schema';
+import { resizableSchema } from './schemas/resizable.schema';
 
 export const BEHAVIOR_SOURCES: Record<string, string> = {
   Toggleable: toggleableSchema.source,
@@ -35,6 +38,9 @@ export const BEHAVIOR_SOURCES: Record<string, string> = {
   ClickOutside: clickOutsideSchema.source,
   ScrollReveal: scrollRevealSchema.source,
   Tabs: tabsSchema.source,
+  FocusTrap: focusTrapSchema.source,
+  Sortable: sortableSchema.source,
+  Resizable: resizableSchema.source,
 };
 
 interface CompileResult {
