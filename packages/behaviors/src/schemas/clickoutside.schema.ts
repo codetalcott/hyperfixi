@@ -39,17 +39,20 @@ behavior ClickOutside(active)
     if active is undefined
       set active to true
     end
+  end
+  on pointerdown from document
     js(me, active)
-      var isActive = active;
-      document.addEventListener('pointerdown', function(e) {
-        if (!me.isConnected) return;
-        if (isActive && !me.contains(e.target)) {
-          me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
-        }
-      });
-      me.addEventListener('clickoutside:activate', function() { isActive = true; });
-      me.addEventListener('clickoutside:deactivate', function() { isActive = false; });
+      if (!me.isConnected) return;
+      if (active && !me.contains(event.target)) {
+        me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
+      }
     end
+  end
+  on clickoutside:activate
+    set active to true
+  end
+  on clickoutside:deactivate
+    set active to false
   end
 end`.trim(),
 };

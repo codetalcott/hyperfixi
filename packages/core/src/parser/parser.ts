@@ -2705,10 +2705,8 @@ export class Parser {
         // Parse event handler manually (not using parseEventHandler which is for top-level)
         const handlerPos = this.getPosition();
 
-        // Get event name (current token after match consumed 'on')
-        const eventToken = this.peek();
-        const eventName = eventToken.value;
-        this.advance(); // Now advance past the event name
+        // Get event name — supports namespaced events like clickoutside:activate
+        const eventName = this.parseEventNameWithNamespace("Expected event name after 'on'");
 
         // Capture parameter list if present: (clientX, clientY)
         const eventArgs: string[] = [];

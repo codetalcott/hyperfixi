@@ -57,11 +57,21 @@ export const resizableSchema: BehaviorSchema = {
   source: `
 behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
   init
-    if no handle set handle to me
-    if no minWidth set minWidth to 50
-    if no minHeight set minHeight to 50
-    if no maxWidth set maxWidth to 9999
-    if no maxHeight set maxHeight to 9999
+    if handle is undefined
+      set handle to me
+    end
+    if minWidth is undefined
+      set minWidth to 50
+    end
+    if minHeight is undefined
+      set minHeight to 50
+    end
+    if maxWidth is undefined
+      set maxWidth to 9999
+    end
+    if maxHeight is undefined
+      set maxHeight to 9999
+    end
   end
   on pointerdown(clientX, clientY) from handle
     halt the event
@@ -73,15 +83,13 @@ behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
     set startX to clientX
     set startY to clientY
     repeat until event pointerup from document
-      wait for pointermove(clientX, clientY) or
-               pointerup from document
-      set newWidth to startWidth + (clientX - startX)
-      set newHeight to startHeight + (clientY - startY)
-      if newWidth < minWidth set newWidth to minWidth
-      if newWidth > maxWidth set newWidth to maxWidth
-      if newHeight < minHeight set newHeight to minHeight
-      if newHeight > maxHeight set newHeight to maxHeight
-      add { width: \${newWidth}px; height: \${newHeight}px; }
+      wait for pointermove(clientX, clientY) or pointerup from document
+      js(startWidth, startHeight, clientX, clientY, startX, startY, minWidth, maxWidth, minHeight, maxHeight, me)
+        var nw = Math.max(minWidth, Math.min(maxWidth, startWidth + (clientX - startX)));
+        var nh = Math.max(minHeight, Math.min(maxHeight, startHeight + (clientY - startY)));
+        me.style.width = nw + 'px';
+        me.style.height = nh + 'px';
+      end
       trigger resizable:resize
     end
     trigger resizable:end

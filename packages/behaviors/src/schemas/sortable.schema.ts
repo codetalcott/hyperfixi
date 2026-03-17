@@ -44,25 +44,31 @@ export const sortableSchema: BehaviorSchema = {
   source: `
 behavior Sortable(handle, dragClass)
   init
-    if no dragClass set dragClass to "sorting"
-  end
-  on pointerdown(target, clientY) from me
-    set item to closest <li/> in target
-    if no item exit
-    if handle
-      set handleEl to target.closest(handle)
-      if no handleEl exit
+    if dragClass is undefined
+      set dragClass to "sorting"
     end
-    halt the event
-    add dragClass to item
+  end
+  on pointerdown(clientY) from me
+    js(me, handle, event)
+      var target = event.target;
+      var item = target.closest("li");
+      if (!item || !me.contains(item)) return false;
+      if (handle && !target.closest(handle)) return false;
+      event.preventDefault();
+      event.stopPropagation();
+      return true;
+    end
+    if it is false
+      exit
+    end
+    add .{dragClass} to me
     trigger sortable:start on me
     repeat until event pointerup from document
       wait for pointermove(clientY) from document
       trigger sortable:move on me
     end
-    remove dragClass from item
+    remove .{dragClass} from me
     trigger sortable:end on me
   end
-end
-`.trim(),
+end`.trim(),
 };

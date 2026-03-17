@@ -33,18 +33,47 @@ const schemas = [
   resizableSchema,
 ];
 
-// Sortable and Resizable use `repeat until event` inside behavior event handlers,
-// which the traditional behavior parser doesn't yet support (the `repeat` end-block
-// matching conflicts with the behavior's own `end`). These are tracked for future fix.
-const KNOWN_PARSE_FAILURES = new Set(['Sortable', 'Resizable']);
+describe('behavior parser: namespaced events', () => {
+  it('should parse on foo:bar event handlers in behaviors', () => {
+    const code = `behavior Test()
+  on custom:activate
+    set x to 1
+  end
+  on custom:deactivate
+    set x to 0
+  end
+end`;
+    const result = hyperscript.compileSync(code, { traditional: true });
+    expect(result.ok, `Failed: ${JSON.stringify(result.errors)}`).toBe(true);
+
+    const ast = result.ast as any;
+    expect(ast.type).toBe('behavior');
+    expect(ast.eventHandlers).toHaveLength(2);
+    expect(ast.eventHandlers[0].event).toBe('custom:activate');
+    expect(ast.eventHandlers[1].event).toBe('custom:deactivate');
+  });
+
+  it('should parse namespaced events alongside regular events', () => {
+    const code = `behavior Test()
+  on click
+    set x to 1
+  end
+  on modal:close
+    set x to 0
+  end
+end`;
+    const result = hyperscript.compileSync(code, { traditional: true });
+    expect(result.ok, `Failed: ${JSON.stringify(result.errors)}`).toBe(true);
+
+    const ast = result.ast as any;
+    expect(ast.eventHandlers).toHaveLength(2);
+    expect(ast.eventHandlers[0].event).toBe('click');
+    expect(ast.eventHandlers[1].event).toBe('modal:close');
+  });
+});
 
 describe('behavior schema sources compile', () => {
   for (const schema of schemas) {
-    if (KNOWN_PARSE_FAILURES.has(schema.name)) {
-      it.skip(`${schema.name} should compile (known: repeat-until-event in behaviors)`, () => {});
-      continue;
-    }
-
     it(`${schema.name} should compile`, () => {
       const result = hyperscript.compileSync(schema.source, { traditional: true });
       expect(result.ok, `${schema.name} failed: ${JSON.stringify(result.errors)}`).toBe(true);
