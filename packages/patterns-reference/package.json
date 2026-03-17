@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/patterns-reference",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Queryable patterns database for hyperscript with multilingual translations and LLM support",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

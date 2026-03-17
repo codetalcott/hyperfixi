@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-sql",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Multilingual SQL DSL built on @lokascript/framework - proof of cross-domain generality",
   "type": "module",
   "sideEffects": false,

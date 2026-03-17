@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Changes for next release go here._
 
+## [2.3.0] - 2026-03-17
+
+### Added
+
+- **Lazy behavior resolver**: `install X` just works — behaviors resolve on demand without manual registration
+- **Hyperscript-native behaviors**: Behaviors defined as hyperscript source strings via patterns-reference schemas
+- **Dynamic class selectors**: `.{varName}` syntax in `toggle`, `add`, and `remove` resolves variables as CSS class names
+- **Variable/expression durations**: `wait` command now accepts variable and expression durations (e.g., `wait feedbackDuration ms`)
+- **Behavior schema sources**: Single source of truth for behavior schemas in patterns-reference
+
+### Fixed
+
+- **Parser**: `js()` single-quote parsing, `set the X.Y` dotted property chains (e.g., `event.detail.result`), improved `set` error messages
+- **Parser**: Namespaced events (`custom:activate`) and `trigger`/`on` inside `repeat` blocks in behaviors
+- **Parser**: Adjacent dot after keywords treated as property access, not CSS selector
+- **Behaviors**: Clipboard `wait feedbackDuration`, AutoDismiss wait timing, Removable confirm dialog
+- **Browser**: Resolver bundle timing and Playwright test stability
+- **CI**: Behaviors package added to build pipeline, artifact upload, and pre-publish-check build order
+
+## [2.2.1] - 2026-03-16
+
+### Fixed
+
+- Parser: adjacent dot after keywords treated as property access, not CSS selector
+- Dependency updates (build-tools group)
+
+## [2.2.0] - 2026-03-15
+
+### Fixed
+
+- Dependency security: resolved 27 of 33 Dependabot vulnerabilities
+- CI: copy examples gallery into repo, remove external clone dependency
+- CI: suppress already-published errors in publish dry run
+
 ## [2.1.0] - 2026-02-20
 
 ### Added
@@ -116,8 +150,13 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/lokascript/compare/v1.4.0...HEAD
-[1.4.0]: https://github.com/codetalcott/lokascript/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/codetalcott/lokascript/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/codetalcott/lokascript/compare/v1.0.0...v1.2.0
-[1.0.0]: https://github.com/codetalcott/lokascript/releases/tag/v1.0.0
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/codetalcott/hyperfixi/compare/v2.2.1...v2.3.0
+[2.2.1]: https://github.com/codetalcott/hyperfixi/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/codetalcott/hyperfixi/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/codetalcott/hyperfixi/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/codetalcott/hyperfixi/compare/v1.4.0...v2.0.0
+[1.4.0]: https://github.com/codetalcott/hyperfixi/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/codetalcott/hyperfixi/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/codetalcott/hyperfixi/compare/v1.0.0...v1.2.0
+[1.0.0]: https://github.com/codetalcott/hyperfixi/releases/tag/v1.0.0

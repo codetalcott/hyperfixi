@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/core",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Multilingual, tree-shakeable hyperscript",
   "type": "module",
   "main": "dist/index.js",

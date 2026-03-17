@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-voice",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Multilingual voice/accessibility commands — 14 commands in 8 languages for speech-controlled web interaction",
   "type": "module",
   "sideEffects": false,
