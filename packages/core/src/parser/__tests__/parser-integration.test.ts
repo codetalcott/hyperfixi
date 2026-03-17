@@ -814,4 +814,129 @@ describe('Parser Integration Tests', () => {
       expect(node.name).toBe('morph');
     });
   });
+
+  // ─── js() Single-Quote Bug Fix ──────────────────────────────────────
+
+  describe('js() Single-Quote Handling', () => {
+    it('should parse js block with single-quoted strings', () => {
+      const node = parseOk("js return 'hello' end");
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      // Code body should contain the single-quoted string
+      expect(args[0].value).toContain("'hello'");
+    });
+
+    it('should parse js block with single-quoted string in method call', () => {
+      const node = parseOk("js(el) return el.closest('li') end");
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      expect(args[0].value).toContain("closest('li')");
+      // Params should include 'el'
+      expect(args[1].type).toBe('arrayLiteral');
+      expect((args[1] as any).elements).toHaveLength(1);
+    });
+
+    it('should parse js block with mixed quotes', () => {
+      const node = parseOk(`js(x) var a = 'single'; var b = "double"; return a + b end`);
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      expect(args[0].value).toContain("'single'");
+      expect(args[0].value).toContain('"double"');
+    });
+
+    it('should not match "end" inside a JS string', () => {
+      const node = parseOk(`js return "not the end yet" end`);
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      expect(args[0].value).toContain('not the end yet');
+    });
+
+    it('should not match "end" inside a single-quoted JS string', () => {
+      const node = parseOk("js return 'not the end yet' end");
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      expect(args[0].value).toContain('not the end yet');
+    });
+
+    it('should parse js block with template literals', () => {
+      const node = parseOk('js return `hello ${name}` end');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      expect(args[0].value).toContain('`hello ${name}`');
+    });
+
+    it('should handle js block with escaped quotes', () => {
+      const node = parseOk("js return 'it\\'s working' end");
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+    });
+
+    it('should parse js block with "end" in identifier (e.g. "endsWith")', () => {
+      const node = parseOk('js(s) return s.endsWith("x") end');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('js');
+      const args = getArgs(node);
+      expect(args[0].value).toContain('endsWith');
+    });
+
+    it('should parse js block in event handler with single quotes', () => {
+      const node = parseOk("on click js(el) return el.getAttribute('data-id') end");
+      expect(node.type).toBe('eventHandler');
+      const commands = getCommands(node);
+      expect(commands[0].name).toBe('js');
+      const jsArgs = getArgs(commands[0]);
+      expect(jsArgs[0].value).toContain("getAttribute('data-id')");
+    });
+  });
+
+  // ─── set the X.Y to Z (dotted property with "the") ────────────────
+
+  describe('set the X.Y to Z (dotted property chains)', () => {
+    it('should parse "set the textContent of #counter to 0" (existing behavior)', () => {
+      const node = parseOk('set the textContent of #counter to "0"');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      const target = args[0];
+      expect(target.type).toBe('propertyOfExpression');
+    });
+
+    it('should parse "set the event.detail to value" with dotted chain', () => {
+      const node = parseOk('set the event.detail to "data"');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      const target = args[0];
+      // Should be a memberExpression, not fail silently
+      expect(target.type).toBe('memberExpression');
+      expect(target.object.name).toBe('event');
+      expect(target.property.name).toBe('detail');
+    });
+
+    it('should parse "set the obj.nested.prop to value" with deep chain', () => {
+      const node = parseOk('set the obj.nested.prop to 42');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      const target = args[0];
+      // Should be a nested memberExpression
+      expect(target.type).toBe('memberExpression');
+    });
+
+    it('should still handle "set the count to 5" (simple variable)', () => {
+      const node = parseOk('set the count to 5');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('set');
+      const args = getArgs(node);
+      const target = args[0];
+      expect(target.type).toBe('identifier');
+      expect(target.name).toBe('count');
+    });
+  });
 });

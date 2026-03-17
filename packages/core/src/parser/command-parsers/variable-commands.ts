@@ -114,50 +114,30 @@ export function parsePropertyOfTarget(ctx: ParserContext, startPosition: number)
   const thePosition = ctx.savePosition();
   ctx.advance(); // consume 'the'
 
-  const nextToken = ctx.peek();
-  const tokenAfterNext = ctx.peekAt(1);
-
-  if (nextToken && tokenAfterNext && tokenAfterNext.value === KEYWORDS.OF) {
-    const propertyToken = ctx.advance();
-
-    if (ctx.check(KEYWORDS.OF)) {
-      ctx.advance(); // consume 'of'
-      const targetToken = ctx.advance();
-
-      const isIdSelector = targetToken.value.startsWith('#');
-      return {
-        type: 'propertyOfExpression',
-        property: {
-          type: 'identifier',
-          name: propertyToken.value,
-          start: propertyToken.start,
-          end: propertyToken.end,
-        },
-        target: {
-          type: isIdSelector ? 'idSelector' : 'cssSelector',
-          value: targetToken.value,
-          start: targetToken.start,
-          end: targetToken.end,
-        },
-        start: startPosition,
-        end: ctx.savePosition(),
-      };
-    }
-
-    // 'of' wasn't where expected - full rollback
-    ctx.restorePosition(startPosition);
+  // Parse the full property expression — handles dotted chains like event.detail.result,
+  // single tokens like textContent, and complex expressions.
+  // parseExpression() stops at 'to' (STOP_TOKEN) and treats 'of' as an infix operator,
+  // so both "the textContent of #el" and "the event.detail to value" are handled.
+  const propertyExpr = ctx.parseExpression();
+  if (!propertyExpr) {
+    ctx.restorePosition(thePosition);
     return null;
   }
 
-  if (nextToken && tokenAfterNext && tokenAfterNext.value === KEYWORDS.TO) {
-    // "the X to Y" - strip the article, variable is X
-    const variableToken = ctx.advance();
-    return {
-      type: 'identifier',
-      name: variableToken.value,
-      start: variableToken.start,
-      end: variableToken.end,
-    };
+  // "the <expr> of <target>" — propertyOfExpression
+  // When 'of' has binding power in the Pratt table, parseExpression() will have
+  // already consumed it as an infix operator producing a binary 'of' node.
+  // Check if the parsed expression is a binary 'of' node.
+  const exprAny = propertyExpr as Record<string, unknown>;
+  if (exprAny.type === 'binaryExpression' && exprAny.operator === KEYWORDS.OF) {
+    const property = exprAny.left as ASTNode;
+    const target = exprAny.right as ASTNode;
+    return createPropertyOfExpression(property, target, startPosition, ctx.savePosition());
+  }
+
+  // "the <expr> to <value>" — strip the article, return the expression as-is
+  if (ctx.check(KEYWORDS.TO)) {
+    return propertyExpr;
   }
 
   // No recognized pattern after 'the' - rollback

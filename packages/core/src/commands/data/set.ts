@@ -183,7 +183,12 @@ export class SetCommand implements DecoratedCommand {
 
     // Default: variable assignment
     if (typeof firstValue !== 'string') {
-      throw new Error('set command target must be a string or object literal');
+      // Provide a more helpful error when a member expression chain evaluated to null/undefined
+      const isMember = firstArg?.type === 'memberExpression' || firstArg?.type === 'propertyAccess';
+      const hint = isMember
+        ? ` (a property chain evaluated to ${firstValue === null ? 'null' : typeof firstValue} — check that all intermediate objects exist)`
+        : '';
+      throw new Error(`set command target must be a string or object literal${hint}`);
     }
 
     const value = await this.extractValue(raw, evaluator, context);
