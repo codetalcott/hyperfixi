@@ -66,7 +66,6 @@
       background: var(--color-border-hover, #a1a1aa);
     }
 
-    /* Removable with close button */
     .notification {
       position: relative;
       padding: 1rem;
@@ -143,50 +142,6 @@
     .accordion-item.active .accordion-content {
       max-height: 200px;
       padding: 1rem;
-    }
-
-    /* Sortable */
-    .sortable-list {
-      list-style: none;
-      padding: 0;
-    }
-
-    .sortable-list li {
-      padding: 1rem;
-      margin: 0.5rem 0;
-      background: var(--color-border, #e4e4e7);
-      border-radius: 4px;
-      cursor: grab;
-    }
-
-    .sortable-list li.sorting {
-      background: var(--color-accent, #6366f1);
-      color: white;
-    }
-
-    /* Resizable */
-    .resizable-box {
-      position: relative;
-      width: 200px;
-      height: 150px;
-      background: var(--color-accent, #6366f1);
-      color: white;
-      padding: 1rem;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .lokascript-resize-handle {
-      background: rgba(255,255,255,0.3);
-    }
-
-    .lokascript-resize-handle::after {
-      content: '';
-      position: absolute;
-      right: 2px;
-      bottom: 0;
-      color: white;
-      font-size: 12px;
     }
 
     /* Clipboard */
@@ -288,7 +243,7 @@
   </div>
 
   <h1>LokaScript Behaviors Demo</h1>
-  <p class="muted mb-lg">Reusable behaviors for common UI patterns. Each behavior can be installed on any element.</p>
+  <p class="muted mb-lg">Reusable behaviors defined in pure hyperscript. Each behavior can be installed on any element with <code>_="install BehaviorName(params)"</code>.</p>
 
   <!-- Draggable Demo -->
   <div class="demo-section">
@@ -330,7 +285,7 @@
   <!-- Toggleable Demo -->
   <div class="demo-section">
     <h2>Toggleable</h2>
-    <p>Click to toggle states.</p>
+    <p>Click to toggle states. Uses dynamic class selector <code>.{cls}</code> for parameterized class names.</p>
     <button class="toggle-button" _="install Toggleable">
       Toggle Active (default .active class)
     </button>
@@ -350,28 +305,6 @@
       <div class="accordion-content">
         <p>This is the content of section 2. More content here.</p>
       </div>
-    </div>
-  </div>
-
-  <!-- Sortable Demo -->
-  <div class="demo-section">
-    <h2>Sortable</h2>
-    <p>Drag items to reorder them.</p>
-    <ul class="sortable-list" _="install Sortable">
-      <li>Item 1</li>
-      <li>Item 2</li>
-      <li>Item 3</li>
-      <li>Item 4</li>
-      <li>Item 5</li>
-    </ul>
-  </div>
-
-  <!-- Resizable Demo -->
-  <div class="demo-section">
-    <h2>Resizable</h2>
-    <p>Drag the corner to resize the box.</p>
-    <div class="resizable-box" _="install Resizable(minWidth: 100, minHeight: 80, maxWidth: 400)">
-      Resize me by dragging the bottom-right corner!
     </div>
   </div>
 
@@ -395,7 +328,7 @@
   <!-- AutoDismiss Demo -->
   <div class="demo-section">
     <h2>AutoDismiss</h2>
-    <p>These toasts auto-dismiss after a delay. Hover to pause the countdown.</p>
+    <p>These toasts auto-dismiss after a delay.</p>
     <button onclick="addToast()">Add Toast (5s)</button>
     <button onclick="addToast(3000, 'warning')">Add Warning Toast (3s)</button>
     <div id="toast-container"></div>
@@ -413,7 +346,7 @@
       </div>
       <div role="tabpanel">
         <h3>Overview</h3>
-        <p>LokaScript behaviors are reusable, tree-shakeable UI patterns. Install them on any element with <code>_="install BehaviorName"</code>.</p>
+        <p>LokaScript behaviors are reusable UI patterns defined in pure hyperscript. Install them on any element with <code>_="install BehaviorName"</code>.</p>
       </div>
       <div role="tabpanel">
         <h3>Features</h3>
@@ -464,9 +397,237 @@
     </div>
   </div>
 
-  <!-- Load LokaScript and Behaviors -->
+  <!-- Load LokaScript core (only dependency) -->
   <script src="../../packages/core/dist/hyperfixi.js"></script>
-  <script src="../../packages/behaviors/dist/all.browser.global.js"></script>
+
+  <!-- Define all behaviors in pure hyperscript -->
+  <script type="text/hyperscript">
+behavior Toggleable(cls, target)
+  init
+    if cls is undefined
+      set cls to "active"
+    end
+    if target is undefined
+      set target to me
+    end
+  end
+  on click
+    toggle .{cls} on target
+  end
+end
+
+behavior Removable(triggerEl, confirm, effect)
+  init
+    if triggerEl is undefined
+      set triggerEl to me
+    end
+  end
+  on click from triggerEl
+    if confirm
+      if not window.confirm("Are you sure?")
+        halt
+      end
+    end
+    trigger removable:before
+    if effect is "fade"
+      transition opacity to 0 over 300ms
+    end
+    trigger removable:removed
+    remove me
+  end
+end
+
+behavior AutoDismiss(delay, pauseOnHover, effect)
+  init
+    if delay is undefined
+      set delay to 5000
+    end
+    if effect is undefined
+      set effect to "none"
+    end
+  end
+  on load
+    trigger autodismiss:start
+    wait delay ms
+    trigger autodismiss:dismissed
+    if effect is "fade"
+      transition opacity to 0 over 300ms
+    end
+    remove me
+  end
+end
+
+behavior Clipboard(text, source, feedback, feedbackDuration)
+  init
+    if feedbackDuration is undefined
+      set feedbackDuration to 2000
+    end
+    if source is undefined
+      set source to me
+    end
+  end
+  on click
+    if text is not undefined
+      set copyText to text
+    else
+      set copyText to source's textContent
+    end
+    js(copyText) navigator.clipboard.writeText(copyText) end
+    set feedbackEl to feedback or me
+    add .copied to feedbackEl
+    wait feedbackDuration ms
+    remove .copied from feedbackEl
+    trigger clipboard:copied
+  end
+end
+
+behavior Draggable(dragHandle)
+  init
+    if no dragHandle set dragHandle to me
+  end
+  on pointerdown(clientX, clientY) from dragHandle
+    halt the event
+    trigger draggable:start
+    measure x
+    set startX to it
+    measure y
+    set startY to it
+    set xoff to clientX - startX
+    set yoff to clientY - startY
+    repeat until event pointerup from document
+      wait for pointermove(clientX, clientY) or
+               pointerup(clientX, clientY) from document
+      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
+      trigger draggable:move
+    end
+    trigger draggable:end
+  end
+end
+
+behavior ClickOutside(active)
+  init
+    if active is undefined
+      set active to true
+    end
+  end
+  on pointerdown from document
+    js(me, active)
+      if (active && !me.contains(event.target)) {
+        me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
+      }
+    end
+  end
+end
+
+behavior ScrollReveal(cls, threshold, once)
+  init
+    if cls is undefined
+      set cls to "revealed"
+    end
+    if threshold is undefined
+      set threshold to 0.1
+    end
+    if once is undefined
+      set once to true
+    end
+    js(me, cls, threshold, once)
+      var obs = new IntersectionObserver(function(entries) {
+        for (var i = 0; i < entries.length; i++) {
+          if (entries[i].isIntersecting) {
+            me.classList.add(cls);
+            me.dispatchEvent(new CustomEvent('scrollreveal:enter', { bubbles: true }));
+            if (once) obs.disconnect();
+          } else if (!once) {
+            me.classList.remove(cls);
+            me.dispatchEvent(new CustomEvent('scrollreveal:exit', { bubbles: true }));
+          }
+        }
+      }, { threshold: threshold });
+      obs.observe(me);
+    end
+  end
+end
+
+behavior Tabs(orientation, activeTab, wrap, activeClass)
+  init
+    if orientation is undefined
+      set orientation to "horizontal"
+    end
+    if activeTab is undefined
+      set activeTab to 0
+    end
+    if wrap is undefined
+      set wrap to true
+    end
+    if activeClass is undefined
+      set activeClass to "active"
+    end
+    js(me, orientation, activeTab, wrap, activeClass)
+      var tabs = Array.from(me.querySelectorAll('[role="tab"]'));
+      var panels = Array.from(me.querySelectorAll('[role="tabpanel"]'));
+      if (tabs.length === 0 || panels.length === 0) return;
+      var tablist = me.querySelector('[role="tablist"]') || tabs[0].parentElement;
+      if (tablist) tablist.setAttribute('aria-orientation', orientation);
+      var count = Math.min(tabs.length, panels.length);
+      var idN = 0;
+      for (var i = 0; i < count; i++) {
+        if (!tabs[i].id) tabs[i].id = 'tab-' + (++idN);
+        if (!panels[i].id) panels[i].id = 'tabpanel-' + idN;
+        tabs[i].setAttribute('aria-controls', panels[i].id);
+        panels[i].setAttribute('aria-labelledby', tabs[i].id);
+      }
+      var cur = Math.max(0, Math.min(activeTab, count - 1));
+      function activate(idx, prev) {
+        if (idx === prev || idx < 0 || idx >= count) return false;
+        var ev = new CustomEvent('tabs:change', { bubbles: true, cancelable: true, detail: { index: idx, previousIndex: prev } });
+        me.dispatchEvent(ev);
+        if (ev.defaultPrevented) return false;
+        if (prev >= 0 && prev < count) {
+          tabs[prev].setAttribute('aria-selected', 'false');
+          tabs[prev].setAttribute('tabindex', '-1');
+          tabs[prev].classList.remove(activeClass);
+          panels[prev].setAttribute('aria-hidden', 'true');
+          panels[prev].classList.remove(activeClass);
+        }
+        tabs[idx].setAttribute('aria-selected', 'true');
+        tabs[idx].setAttribute('tabindex', '0');
+        tabs[idx].classList.add(activeClass);
+        panels[idx].setAttribute('aria-hidden', 'false');
+        panels[idx].classList.add(activeClass);
+        cur = idx;
+        me.dispatchEvent(new CustomEvent('tabs:changed', { bubbles: true, detail: { index: idx } }));
+        return true;
+      }
+      for (var j = 0; j < count; j++) {
+        tabs[j].setAttribute('aria-selected', 'false');
+        tabs[j].setAttribute('tabindex', '-1');
+        panels[j].setAttribute('aria-hidden', 'true');
+        panels[j].classList.remove(activeClass);
+      }
+      tabs[cur].setAttribute('aria-selected', 'true');
+      tabs[cur].setAttribute('tabindex', '0');
+      tabs[cur].classList.add(activeClass);
+      panels[cur].setAttribute('aria-hidden', 'false');
+      panels[cur].classList.add(activeClass);
+      for (var k = 0; k < count; k++) {
+        (function(idx) {
+          tabs[idx].addEventListener('click', function() { if (activate(idx, cur)) tabs[idx].focus(); });
+        })(k);
+      }
+      (tablist || me).addEventListener('keydown', function(e) {
+        var nk = orientation === 'horizontal' ? 'ArrowRight' : 'ArrowDown';
+        var pk = orientation === 'horizontal' ? 'ArrowLeft' : 'ArrowUp';
+        var next = null;
+        if (e.key === nk) { next = cur + 1; if (next >= count) next = wrap ? 0 : null; }
+        else if (e.key === pk) { next = cur - 1; if (next < 0) next = wrap ? count - 1 : null; }
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = count - 1;
+        if (next !== null) { e.preventDefault(); if (activate(next, cur)) tabs[next].focus(); }
+      });
+    end
+  end
+end
+  </script>
 
   <!-- Toast helper for AutoDismiss demo -->
   <script>
@@ -476,24 +637,14 @@
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = 'toast' + (cls ? ' ' + cls : '');
-      toast.textContent = 'Toast #' + toastCount + ' — hover to pause, auto-dismisses in ' + (delay / 1000) + 's';
-      toast.setAttribute('_', 'install AutoDismiss(delay: ' + delay + ', pauseOnHover: true, effect: fade)');
+      toast.textContent = 'Toast #' + toastCount + ' — auto-dismisses in ' + (delay / 1000) + 's';
+      toast.setAttribute('_', 'install AutoDismiss(delay: ' + delay + ', effect: fade)');
       container.appendChild(toast);
       // Re-process the new element
       if (window.hyperfixi?.attributeProcessor?.processElement) {
         window.hyperfixi.attributeProcessor.processElement(toast);
       }
     }
-  </script>
-
-  <!-- Debug logging for tests -->
-  <script>
-    window.__hyperfixi_debug = [];
-
-    // Listen for actual initialization completion
-    window.addEventListener('lokascript:initialized', () => {
-      window.__hyperfixi_debug.push('init() completed');
-    });
   </script>
 </body>
 </html>

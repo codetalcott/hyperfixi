@@ -45,22 +45,24 @@ export const autoDismissSchema: BehaviorSchema = {
     { name: 'autodismiss:paused', description: 'Fired when the timer is paused on hover' },
     { name: 'autodismiss:resumed', description: 'Fired when the timer resumes on mouseleave' },
   ],
-  source: [
-    'behavior AutoDismiss(delay, pauseOnHover, effect)',
-    '  init',
-    '    if delay is undefined set delay to 5000',
-    '    if pauseOnHover is undefined set pauseOnHover to true',
-    '    if effect is undefined set effect to "none"',
-    '  end',
-    '  on load',
-    '    trigger autodismiss:start',
-    '    wait delay ms',
-    '    trigger autodismiss:dismissed',
-    '    if effect is "fade"',
-    '      transition opacity to 0 over 300ms',
-    '    end',
-    '    remove me',
-    '  end',
-    'end',
-  ].join('\n'),
+  source: `
+behavior AutoDismiss(delay, pauseOnHover, effect)
+  init
+    if delay is undefined
+      set delay to 5000
+    end
+    if effect is undefined
+      set effect to "none"
+    end
+  end
+  on load
+    trigger autodismiss:start
+    wait delay ms
+    trigger autodismiss:dismissed
+    if effect is "fade"
+      transition opacity to 0 over 300ms
+    end
+    remove me
+  end
+end`.trim(),
 };

@@ -48,25 +48,28 @@ export const clipboardSchema: BehaviorSchema = {
     'navigator.clipboard.writeText() requires HTTPS or localhost',
     'Falls back to document.execCommand("copy") for older browsers',
   ],
-  source: [
-    'behavior Clipboard(text, source, feedback, feedbackDuration)',
-    '  init',
-    '    if feedbackDuration is undefined set feedbackDuration to 2000',
-    '    if source is undefined set source to me',
-    '  end',
-    '  on click',
-    '    if text is not undefined',
-    '      set copyText to text',
-    '    else',
-    "      set copyText to source's value or source's textContent",
-    '    end',
-    '    js(copyText) navigator.clipboard.writeText(copyText) end',
-    '    set feedbackEl to feedback or me',
-    '    add .copied to feedbackEl',
-    '    wait feedbackDuration ms',
-    '    remove .copied from feedbackEl',
-    '    trigger clipboard:copied',
-    '  end',
-    'end',
-  ].join('\n'),
+  source: `
+behavior Clipboard(text, source, feedback, feedbackDuration)
+  init
+    if feedbackDuration is undefined
+      set feedbackDuration to 2000
+    end
+    if source is undefined
+      set source to me
+    end
+  end
+  on click
+    if text is not undefined
+      set copyText to text
+    else
+      set copyText to source's textContent
+    end
+    js(copyText) navigator.clipboard.writeText(copyText) end
+    set feedbackEl to feedback or me
+    add .copied to feedbackEl
+    wait feedbackDuration ms
+    remove .copied from feedbackEl
+    trigger clipboard:copied
+  end
+end`.trim(),
 };

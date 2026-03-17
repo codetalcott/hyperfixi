@@ -28,11 +28,15 @@ export const clickOutsideSchema: BehaviorSchema = {
   source: `
 behavior ClickOutside(active)
   init
-    if active is undefined set active to true
+    if active is undefined
+      set active to true
+    end
   end
   on pointerdown from document
-    if active and not me.contains(event.target)
-      trigger clickoutside on me
+    js(me, active)
+      if (active && !me.contains(event.target)) {
+        me.dispatchEvent(new CustomEvent('clickoutside', { bubbles: true }));
+      }
     end
   end
 end`.trim(),

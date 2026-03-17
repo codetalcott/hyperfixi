@@ -45,6 +45,5 @@ behavior Toggleable(cls, target)
   on click
     toggle .{cls} on target
   end
-end
-`.trim(),
+end`.trim(),
 };
