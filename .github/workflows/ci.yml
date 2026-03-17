@@ -160,6 +160,7 @@ jobs:
             packages/semantic/dist/
             packages/i18n/dist/
             packages/core/dist/
+            packages/behaviors/dist/
             packages/patterns-reference/dist/
             packages/hyperscript-adapter/dist/
             packages/ast-toolkit/dist/
