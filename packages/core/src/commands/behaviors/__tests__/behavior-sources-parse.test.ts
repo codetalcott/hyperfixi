@@ -6,18 +6,20 @@
 import { describe, it, expect } from 'vitest';
 import { hyperscript } from '../../../api/hyperscript-api';
 
-// Import all schema sources
-import { toggleableSchema } from '../../../../../behaviors/src/schemas/toggleable.schema';
-import { removableSchema } from '../../../../../behaviors/src/schemas/removable.schema';
-import { autoDismissSchema } from '../../../../../behaviors/src/schemas/autodismiss.schema';
-import { clipboardSchema } from '../../../../../behaviors/src/schemas/clipboard.schema';
-import { draggableSchema } from '../../../../../behaviors/src/schemas/draggable.schema';
-import { clickOutsideSchema } from '../../../../../behaviors/src/schemas/clickoutside.schema';
-import { scrollRevealSchema } from '../../../../../behaviors/src/schemas/scrollreveal.schema';
-import { tabsSchema } from '../../../../../behaviors/src/schemas/tabs.schema';
-import { focusTrapSchema } from '../../../../../behaviors/src/schemas/focustrap.schema';
-import { sortableSchema } from '../../../../../behaviors/src/schemas/sortable.schema';
-import { resizableSchema } from '../../../../../behaviors/src/schemas/resizable.schema';
+// Import all schema sources from the behaviors package dist (avoid rootDir violation)
+import {
+  toggleableSchema,
+  removableSchema,
+  autoDismissSchema,
+  clipboardSchema,
+  draggableSchema,
+  clickOutsideSchema,
+  scrollRevealSchema,
+  tabsSchema,
+  focusTrapSchema,
+  sortableSchema,
+  resizableSchema,
+} from '../../../../../behaviors/dist/schemas/index';
 
 const schemas = [
   toggleableSchema,
