@@ -9,12 +9,45 @@
 <body>
     <div id="work-area"></div>
     
+    <!-- Sinon for fetch/XHR mocking (used by official test suite) -->
+    <script src="https://cdn.jsdelivr.net/npm/sinon@17/pkg/sinon.js"></script>
+
     <!-- Original _hyperscript library (optional - gracefully handles missing) -->
     <script src="dist/_hyperscript.js" onerror="console.log('_hyperscript not available')"></script>
 
     <!-- Our hyperfixi implementation (relative path works from any server root) -->
     <script src="dist/hyperfixi.js"></script>
     
+    <script>
+        // _hyperscript compatibility shim — maps official API names to HyperFixi
+        // Many official tests reference window._hyperscript directly
+        window._hyperscript = function(code, ctx) {
+            return hyperfixi.evalHyperScript(code, ctx);
+        };
+        window._hyperscript.processNode = function(el) {
+            return hyperfixi.processNode(el);
+        };
+        window._hyperscript.internals = {
+            lexer: {
+                tokenize: function(code) {
+                    // Map to HyperFixi's tokenizer
+                    if (hyperfixi.tokenize) {
+                        return hyperfixi.tokenize(code);
+                    }
+                    return null;
+                }
+            },
+            parser: hyperfixi.Parser ? new hyperfixi.Parser() : null,
+            runtime: null,
+        };
+        // The config API
+        window._hyperscript.config = {
+            attributes: '_',
+            defaultTransition: 'all 500ms ease-in',
+            conversions: {},
+        };
+    </script>
+
     <script>
         // Setup compatibility helpers
         window.testResults = [];
@@ -115,16 +148,13 @@
 
                 return {
                     equal: function(expected) {
-                        // Convert String objects to primitives for comparison
-                        const actualValue = (self != null && self.constructor === String) ? self.valueOf() : self;
-                        const expectedValue = (expected != null && expected.constructor === String) ? expected.valueOf() : expected;
+                        // Unwrap wrapper objects (Boolean, Number, String) to primitives.
+                        // Object.prototype.should wraps primitives, so `self` may be
+                        // a Boolean/Number/String object instead of a primitive.
+                        const actualValue = (self != null && self.valueOf) ? self.valueOf() : self;
+                        const expectedValue = (expected != null && expected.valueOf && typeof expected !== 'function') ? expected.valueOf() : expected;
 
-                        // Use loose equality for numbers (handles 10 === 10.0)
-                        if (typeof actualValue === 'number' && typeof expectedValue === 'number') {
-                            if (actualValue !== expectedValue) {
-                                throw new Error(`Expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)}`);
-                            }
-                        } else if (actualValue !== expectedValue) {
+                        if (actualValue !== expectedValue) {
                             throw new Error(`Expected ${JSON.stringify(expectedValue)}, got ${JSON.stringify(actualValue)}`);
                         }
                         return this;
@@ -147,16 +177,18 @@
                                 return this;
                             };
                         },
-                        true: (function() {
-                            if (self !== true) {
-                                throw new Error(`Expected true, got ${self}`);
+                        get true() {
+                            const v = (self != null && self.valueOf) ? self.valueOf() : self;
+                            if (v !== true) {
+                                throw new Error(`Expected true, got ${JSON.stringify(v)}`);
                             }
-                        })(),
-                        false: (function() {
-                            if (self !== false) {
-                                throw new Error(`Expected false, got ${self}`);
+                        },
+                        get false() {
+                            const v = (self != null && self.valueOf) ? self.valueOf() : self;
+                            if (v !== false) {
+                                throw new Error(`Expected false, got ${JSON.stringify(v)}`);
                             }
-                        })()
+                        }
                     }
                 };
             },
@@ -232,45 +264,32 @@
             }
         };
 
-        // Make function for creating DOM elements with hyperscript behavior
-        window.make = function(htmlString) {
-            try {
-                console.log('[make] Creating element from:', htmlString);
-
-                // Create a temporary container to parse the HTML
-                const container = document.createElement('div');
-                container.innerHTML = htmlString;
-
-                // Get the first child element
-                const element = container.firstElementChild;
-                if (!element) {
-                    throw new Error('Invalid HTML string');
+        // Make function for creating DOM elements with hyperscript behavior.
+        // Mirrors the official _hyperscript test utility: creates the element,
+        // appends it to the work area, then processes it through the runtime
+        // so that _="..." attributes are properly parsed and event handlers bound.
+        //
+        // Returns a Promise<Element> because HyperFixi's processing is async.
+        // The test runner auto-inserts `await` before make() calls.
+        window.make = async function(htmlString) {
+            var range = document.createRange();
+            var fragment = range.createContextualFragment(htmlString);
+            var wa = document.getElementById('work-area');
+            var child = null;
+            while (fragment.children.length > 0) {
+                child = fragment.children[0];
+                wa.appendChild(child);
+                // Process the element through HyperFixi runtime
+                if (child.getAttribute && (child.getAttribute('_') || child.getAttribute('data-hs') || child.getAttribute('script'))) {
+                    await hyperfixi.processNode(child);
                 }
-
-                console.log('[make] Created element:', element, 'className:', element.className);
-
-                // Add element to work area so it can be queried
-                const workArea = document.getElementById('work-area');
-                if (workArea) {
-                    workArea.appendChild(element);
-                    console.log('[make] Added to work area, workArea children:', workArea.children.length);
-                } else {
-                    console.warn('[make] Work area not found!');
+                // Also process any children with hyperscript attributes
+                var hsChildren = child.querySelectorAll ? child.querySelectorAll('[_],[data-hs],[script]') : [];
+                for (var i = 0; i < hsChildren.length; i++) {
+                    await hyperfixi.processNode(hsChildren[i]);
                 }
-
-                // Check for hyperscript behavior attribute
-                const hyperschriptBehavior = element.getAttribute('_');
-                if (hyperschriptBehavior) {
-                    // Use our proper hyperscript API instead of custom implementation
-                    window.initHyperscriptBehaviorProper(element, hyperschriptBehavior);
-                }
-
-                console.log('[make] Returning element:', element);
-                return element;
-            } catch (error) {
-                console.error('make() error:', error.message);
-                throw error;
             }
+            return child;
         };
         
         // Proper hyperscript behavior initialization using our API

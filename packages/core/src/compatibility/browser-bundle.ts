@@ -172,11 +172,10 @@ const hyperfixiAPI = {
   // DOM processing for HTMX/manual compatibility
   processNode: async (element: Element | Document): Promise<void> => {
     if (element === document) {
-      defaultAttributeProcessor.scanAndProcessAll();
+      await defaultAttributeProcessor.scanAndProcessAll();
     } else if (element instanceof HTMLElement) {
-      defaultAttributeProcessor.processElement(element);
+      await defaultAttributeProcessor.processElementAsync(element);
     }
-    return Promise.resolve();
   },
   process: (element: Element | Document) => hyperfixiAPI.processNode(element), // Alias
 
