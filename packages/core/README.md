@@ -1,12 +1,10 @@
 # @lokascript/core
 
-🚀 **Complete hyperscript implementation with 100% \_hyperscript compatibility**
-
-An experimental hyperscript engine that provides fast parsing, command execution, and comprehensive error handling for web applications. Built with TypeScript-first design and full compatibility with the official \_hyperscript library.
+An experimental hyperscript engine that provides fast parsing, command execution, and comprehensive error handling for web applications. Built with TypeScript-first design.
 
 ## Features
 
-- 🎯 **100% \_hyperscript Compatible** - Full compatibility with official \_hyperscript library
+- 🎯 **\_hyperscript Compatible** - Tested via gallery examples, bundle compatibility matrix, and command/expression browser tests
 - 🚀 **High Performance** - Optimized tokenizer and parser for large expressions
 - 🔧 **TypeScript First** - Complete type safety with comprehensive type definitions
 - 🧪 **Thoroughly Tested** - 2800+ tests with 98.5%+ reliability
@@ -170,7 +168,7 @@ For complete API documentation, see [API.md](./docs/API.md).
 - **Async Operations**: `wait 500ms`, `fetch "/api/data"`
 - **Events**: `send customEvent to me`
 
-### Expressions (100% \_hyperscript Compatible)
+### Expressions
 
 - **Arithmetic**: `5 + 3 * 2`, `value / 2`, `x mod 3`
 - **Logical**: `true and false`, `value > 10`, `x contains y`
@@ -204,14 +202,13 @@ npx playwright test --grep "Command Tests"
 npx playwright test --grep "Expression Tests"
 ```
 
-The compatibility tests measure:
+Compatibility is validated via Playwright browser tests:
 
-- **Expression compatibility**: **100%** (15/15 tests passing) ✅
-- **Command compatibility**: **100%** (2/2 core tests passing) ✅
-- **HTML Integration**: **100%** (3/3 integration tests passing) ✅
-- **Overall compatibility**: **~95%** across all hyperscript features ✅
+- **Gallery examples** — real hyperscript patterns load and execute without errors
+- **Bundle compatibility matrix** — each bundle size correctly supports its documented features
+- **Command/expression tests** — individual commands and expressions verified in browser context
 
-View detailed test results at `http://localhost:9323` after running browser tests.
+Run `cd packages/core && npx playwright test` for the full browser test suite.
 
 ## License
 

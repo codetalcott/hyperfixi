@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **8100+ tests** passing across all suites
 - **203 KB** browser bundle (gzipped, 39% reduction from original)
-- **~85%** compatibility with official \_hyperscript
+- **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
 
