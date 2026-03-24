@@ -49,14 +49,20 @@ function execShell(
   cmd: string,
   cwd: string,
   timeout: number
-): Promise<{ exitCode: number; output: string; duration_ms: number }> {
+): Promise<{ exitCode: number; output: string; duration_ms: number; timedOut: boolean }> {
   return new Promise(resolve => {
     const start = Date.now();
     exec(cmd, { cwd, timeout: timeout * 1000 }, (error, stdout, stderr) => {
       const duration_ms = Date.now() - start;
       const output = truncate((stdout ?? '') + (stderr ?? '')).trim();
+      const timedOut = !!(error && 'killed' in error && error.killed);
       const exitCode = error ? (error.code ?? 1) : 0;
-      resolve({ exitCode, output, duration_ms });
+      resolve({
+        exitCode,
+        output: timedOut ? `Timed out after ${timeout}s` : output,
+        duration_ms,
+        timedOut,
+      });
     });
   });
 }

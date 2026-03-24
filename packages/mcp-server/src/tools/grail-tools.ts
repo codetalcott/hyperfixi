@@ -11,6 +11,12 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { jsonResponse, errorResponse, getString, getBoolean } from './utils.js';
 import { loadGrailConfig, findGrailYaml } from './grail-yaml-loader.js';
 import { GrailRegistry } from './grail-registry.js';
+import {
+  parseConditionMap,
+  plan as bfsPlan,
+  createPlanStep,
+  applyEffects,
+} from '../../../../experiments/siren/src/planner.js';
 
 // ---------- Tool Definitions ----------
 
@@ -215,6 +221,7 @@ async function handlePlan(args: Record<string, unknown>): Promise<ReturnType<typ
       feasible: true,
       phases: 1,
       totalCost: aff.cost ?? 1,
+      currentConditions: truth,
       steps: [
         {
           action: goal,
@@ -228,96 +235,69 @@ async function handlePlan(args: Record<string, unknown>): Promise<ReturnType<typ
     });
   }
 
-  // Build plan using backward chaining from the condition map
+  // Use BFS planner from siren experiment (handles template effects, cost ranking)
   const conditionMap = registry.conditionMap();
-  const enablesGraph = registry.enablesGraph();
+  const { defs, conditionNames, mutexPrefixes } = parseConditionMap(conditionMap);
 
-  // Simple backward-chaining planner
-  const steps: Array<{
-    action: string;
-    cmd: string;
-    resolves: string[];
-    phase: number;
-    cost: number;
-    blocked_by: Array<{ condition: string; needed_by: string }>;
-  }> = [];
-  const planned = new Set<string>();
-  const unsatisfiable: string[] = [];
-
-  function resolve(condition: string, visited: Set<string>): boolean {
-    if (truth[condition]) return true;
-    if (planned.has(condition)) return true;
-    if (visited.has(condition)) return false; // cycle
-
-    visited.add(condition);
-    const entry = conditionMap[condition];
-    if (!entry || entry.producedBy.length === 0) {
-      unsatisfiable.push(condition);
-      return false;
-    }
-
-    // Try each producer, prefer lowest cost
-    const producers = entry.producedBy
-      .map(name => registry.affordances.get(name))
-      .filter(Boolean)
-      .sort((a, b) => (a!.cost ?? 1) - (b!.cost ?? 1));
-
-    for (const producer of producers) {
-      if (!producer) continue;
-
-      // Resolve producer's preconditions first
-      const producerPreconditions = producer.preconditions ?? [];
-      const allMet = producerPreconditions.every(
-        p => truth[p] || planned.has(p) || resolve(p, new Set(visited))
-      );
-
-      if (allMet) {
-        // Add producer to plan
-        for (const effect of producer.effects ?? []) {
-          planned.add(effect);
-        }
-
-        if (!steps.some(s => s.action === producer.name)) {
-          steps.push({
-            action: producer.name,
-            cmd: producer.action?.cmd ?? '',
-            resolves: producer.effects ?? [],
-            phase: 0, // assigned below
-            cost: producer.cost ?? 1,
-            blocked_by: [],
-          });
-        }
-        return true;
-      }
-    }
-
-    unsatisfiable.push(condition);
-    return false;
-  }
-
-  // Resolve each unmet precondition of the goal
-  for (const precond of check.unmet) {
-    resolve(precond, new Set());
-  }
-
-  if (unsatisfiable.length > 0) {
+  const goalDef = defs.find(d => d.name === goal);
+  if (!goalDef) {
     return jsonResponse({
       goal,
       feasible: false,
-      reason: 'unsatisfiable conditions',
-      unsatisfiable: [...new Set(unsatisfiable)],
+      reason: 'unknown affordance in condition map',
+      unsatisfiable: [],
       steps: [],
     });
   }
 
+  // Build start state from truth vector
+  const startState = new Set<string>();
+  for (const [name, passing] of Object.entries(truth)) {
+    if (passing) startState.add(name);
+  }
+
+  // Plan each unmet precondition via BFS with forward state simulation
+  const unmet = goalDef.preconditions.filter(p => !startState.has(p));
+  const planSteps: Array<{ name: string; params: Record<string, string> }> = [];
+  const usedKeys = new Set<string>();
+  let currentState = startState;
+
+  for (const precond of unmet) {
+    if (currentState.has(precond)) continue;
+    const paths = bfsPlan(currentState, precond, defs, mutexPrefixes);
+    if (paths.length === 0) {
+      return jsonResponse({
+        goal,
+        feasible: false,
+        reason: 'unsatisfiable conditions',
+        unsatisfiable: [precond],
+        currentConditions: truth,
+        steps: [],
+      });
+    }
+    for (const step of paths[0]) {
+      if (usedKeys.has(step.key())) continue;
+      usedKeys.add(step.key());
+      planSteps.push({ name: step.name, params: { ...step.params } });
+      const affDef = defs.find(d => d.name === step.name);
+      if (affDef) currentState = applyEffects(currentState, affDef, step.params, mutexPrefixes);
+    }
+  }
+
   // Add goal as final step
-  steps.push({
-    action: goal,
-    cmd: aff.action?.cmd ?? '',
-    resolves: aff.effects ?? [],
-    phase: 0,
-    cost: aff.cost ?? 1,
-    blocked_by: [],
+  planSteps.push({ name: goal, params: {} });
+
+  // Format steps with phase assignment and blocked_by
+  const steps = planSteps.map(ps => {
+    const stepAff = registry.affordances.get(ps.name);
+    return {
+      action: ps.name,
+      cmd: stepAff?.action?.cmd ?? '',
+      resolves: stepAff?.effects ?? [],
+      phase: 0,
+      cost: stepAff?.cost ?? 1,
+      blocked_by: [] as Array<{ condition: string; needed_by: string }>,
+    };
   });
 
   // Assign phases (topological sort)
@@ -327,18 +307,16 @@ async function handlePlan(args: Record<string, unknown>): Promise<ReturnType<typ
       condProducer.set(effect, i);
     }
   }
-
   for (let i = 0; i < steps.length; i++) {
     let depPhase = -1;
-    const step = steps[i];
-    const stepAff = registry.affordances.get(step.action);
+    const stepAff = registry.affordances.get(steps[i].action);
     for (const precond of stepAff?.preconditions ?? []) {
       const producerIdx = condProducer.get(precond);
       if (producerIdx !== undefined && producerIdx !== i) {
         depPhase = Math.max(depPhase, steps[producerIdx].phase);
       }
     }
-    step.phase = depPhase + 1;
+    steps[i].phase = depPhase + 1;
   }
 
   // Compute blocked_by
@@ -361,6 +339,7 @@ async function handlePlan(args: Record<string, unknown>): Promise<ReturnType<typ
     feasible: true,
     phases,
     totalCost,
+    currentConditions: truth,
     steps,
   });
 }
@@ -442,6 +421,7 @@ async function handleRun(args: Record<string, unknown>): Promise<ReturnType<type
     exitCode: result.exitCode,
     duration_ms: result.duration_ms,
     output: result.output,
+    effects: aff.effects ?? [],
     driftWarnings: driftWarnings.length > 0 ? driftWarnings : undefined,
   });
 }
