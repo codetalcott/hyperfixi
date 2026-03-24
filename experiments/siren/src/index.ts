@@ -65,6 +65,13 @@ export type {
 export { waitForCondition } from './wait-for-condition';
 export type { WaitForConditionOptions } from './wait-for-condition';
 
+// Pursuit
+export { pursue, pursueReactive, executeProactivePlan } from './pursue';
+export type { PursuitResult, PursuitStep, PursuitOptions } from './pursue';
+
+// Condition map
+export { fetchConditionMap } from './fetch-condition-map';
+
 // Context
 export { sirenContextProvider } from './siren-context';
 export type { SirenContextValue } from './siren-context';
@@ -79,6 +86,11 @@ export {
   type SirenAffordanceConfig,
   type SirenAffordanceInstance,
 } from './behaviors/siren-affordance';
+export {
+  createSirenPlanUI,
+  type SirenPlanUIConfig,
+  type SirenPlanUIInstance,
+} from './behaviors/siren-plan-ui';
 
 // Utilities
 export { resolveUrl, reconcileFields, classifyError } from './util';
