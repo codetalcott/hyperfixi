@@ -1,0 +1,149 @@
+version: '1.0'
+domain:
+  name: 'hyperfixi'
+  description: 'LokaScript monorepo — lint, typecheck, test, build, publish across 30+ packages'
+
+entities:
+  type: 'packages'
+  discover:
+    type: glob
+    pattern: 'packages/*/package.json'
+  context:
+    pkg_dir: '{cwd}/packages/{entity}'
+    monorepo_root: '{cwd}'
+
+conditions:
+  - name: project.lint.passing
+    description: 'ESLint passes across all workspaces'
+    eval:
+      type: shell
+      cmd: 'npm run lint'
+      cwd: '{cwd}'
+
+  - name: project.typecheck.passing
+    description: 'TypeScript compiles across all workspaces'
+    eval:
+      type: shell
+      cmd: 'npm run typecheck'
+      cwd: '{cwd}'
+
+  - name: project.tests.passing
+    description: 'Tests pass across all workspaces'
+    eval:
+      type: shell
+      cmd: 'npm test'
+      cwd: '{cwd}'
+
+  - name: project.versions.consistent
+    description: 'Package versions are consistent across monorepo'
+    eval:
+      type: shell
+      cmd: 'node scripts/validate-versions.cjs'
+      cwd: '{cwd}'
+
+  - name: project.clean.workdir
+    description: 'No uncommitted changes'
+    eval:
+      type: shell
+      cmd: 'test -z "$(git status --porcelain)"'
+      cwd: '{cwd}'
+
+  - name: pkg.built
+    description: 'Package dist/ directory exists and is current'
+    eval:
+      type: shell
+      cmd: 'test -d {pkg_dir}/dist'
+
+  - name: pkg.tests.passing
+    description: 'Package tests pass individually'
+    eval:
+      type: shell
+      cmd: 'npm test --workspace=packages/{entity}'
+      cwd: '{cwd}'
+
+affordances:
+  - name: run-lint
+    title: 'Lint All Packages'
+    preconditions: []
+    effects: [project.lint.passing]
+    action:
+      type: shell
+      cmd: 'npm run lint'
+      cwd: '{cwd}'
+    cost: 1
+
+  - name: lint-fix
+    title: 'Auto-fix Lint Issues'
+    preconditions: []
+    effects: [project.lint.passing]
+    action:
+      type: shell
+      cmd: 'npm run lint:fix'
+      cwd: '{cwd}'
+    cost: 1
+
+  - name: typecheck
+    title: 'Type Check All Packages'
+    preconditions: []
+    effects: [project.typecheck.passing]
+    action:
+      type: shell
+      cmd: 'npm run typecheck'
+      cwd: '{cwd}'
+    cost: 2
+
+  - name: run-tests
+    title: 'Run All Tests'
+    preconditions: [project.lint.passing, project.typecheck.passing]
+    effects: [project.tests.passing]
+    action:
+      type: shell
+      cmd: 'npm test'
+      cwd: '{cwd}'
+    cost: 3
+
+  - name: build-packages
+    title: 'Build All Packages'
+    preconditions: [project.typecheck.passing]
+    effects: [pkg.built]
+    action:
+      type: shell
+      cmd: 'npm run build:packages'
+      cwd: '{cwd}'
+    cost: 3
+
+  - name: validate-versions
+    title: 'Validate Version Consistency'
+    preconditions: []
+    effects: [project.versions.consistent]
+    action:
+      type: shell
+      cmd: 'node scripts/validate-versions.cjs'
+      cwd: '{cwd}'
+    cost: 1
+
+  - name: release-version
+    title: 'Bump Version (Conventional Commits)'
+    preconditions:
+      - project.tests.passing
+      - project.versions.consistent
+      - project.clean.workdir
+    effects: []
+    action:
+      type: shell
+      cmd: 'lerna version --conventional-commits'
+      cwd: '{cwd}'
+    cost: 3
+
+  - name: release-publish
+    title: 'Publish to npm'
+    preconditions:
+      - project.tests.passing
+      - project.versions.consistent
+      - pkg.built
+    effects: []
+    action:
+      type: shell
+      cmd: 'lerna publish from-git'
+      cwd: '{cwd}'
+    cost: 5

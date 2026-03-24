@@ -23,6 +23,8 @@ export interface SirenAction {
   preconditions?: string[];
   /** Cooperative affordance: effects of this action */
   effects?: string[];
+  /** Cooperative affordance: relative effort weight for planning */
+  cost?: number;
 }
 
 export interface SirenField {
@@ -61,11 +63,69 @@ export interface SirenEntityEventDetail {
   previousUrl: string | null;
 }
 
+/**
+ * The properties block in a GRAIL 409 Blocked response body.
+ */
+export interface BlockedProperties {
+  status: 409;
+  message: string;
+  blockedAction: string;
+  blockedCondition: string;
+  unmetConditions?: string[];
+}
+
+/**
+ * A 409 Conflict response body from a GRAIL server.
+ * Contains the blocked action info and offered affordances.
+ */
+export interface BlockedResponse {
+  class: string[];
+  properties: BlockedProperties;
+  actions?: SirenAction[];
+  /** Active conditions on this entity (also sent as x-conditions header) */
+  'x-conditions'?: string[];
+}
+
 /** Detail payload for siren:blocked CustomEvent */
 export interface SirenBlockedEventDetail {
   message: string;
   blockedAction: string | null;
+  /** The specific condition that blocked execution */
+  blockedCondition: string | null;
+  /** All conditions that are not met */
+  unmetConditions: string[];
   offeredActions: SirenAction[];
+  /** The raw 409 response body (present when body is valid GRAIL blocked response) */
+  raw: BlockedResponse | null;
+}
+
+/** Detail payload for siren:conditions CustomEvent */
+export interface ConditionsChangedDetail {
+  /** The entity URL path whose conditions changed */
+  entity: string;
+  /** Current active conditions */
+  conditions: string[];
+  /** Conditions that were added since last update */
+  added: string[];
+  /** Conditions that were removed since last update */
+  removed: string[];
+}
+
+/**
+ * Data payload for a GRAIL SSE `conditions` event.
+ * Matches the wire format: event: conditions / data: JSON
+ */
+export interface ConditionsSSEData {
+  /** Entity URL path */
+  entity: string;
+  /** Full set of active conditions */
+  conditions: string[];
+  /** Conditions that became true */
+  added: string[];
+  /** Conditions that became false */
+  removed: string[];
+  /** The action that caused the change (optional) */
+  trigger?: string;
 }
 
 /** Detail payload for siren:error CustomEvent */

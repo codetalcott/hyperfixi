@@ -18,6 +18,10 @@ export type {
   SirenEntityEventDetail,
   SirenBlockedEventDetail,
   SirenErrorEventDetail,
+  BlockedResponse,
+  BlockedProperties,
+  ConditionsChangedDetail,
+  ConditionsSSEData,
 } from './types';
 
 // Client
@@ -25,9 +29,14 @@ export {
   fetchSiren,
   getCurrentEntity,
   getCurrentUrl,
+  getConditionState,
   setCurrentEntity,
   resetClient,
 } from './siren-client';
+
+// Conditions
+export { ConditionState } from './condition-state';
+export { connectConditionSSE } from './condition-sse';
 
 // Context
 export { sirenContextProvider } from './siren-context';

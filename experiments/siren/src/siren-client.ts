@@ -10,8 +10,15 @@ import type {
   SirenEntityEventDetail,
   SirenBlockedEventDetail,
   SirenErrorEventDetail,
+  BlockedResponse,
 } from './types';
 import { classifyError } from './util';
+import {
+  ConditionState,
+  parseConditionsHeader,
+  entityKeyFromUrl,
+  dispatchConditionsChanged,
+} from './condition-state';
 
 // ---------------------------------------------------------------------------
 // Module-level state (singleton)
@@ -19,6 +26,11 @@ import { classifyError } from './util';
 
 let currentEntity: SirenEntity | null = null;
 let currentUrl: string | null = null;
+const conditionState = new ConditionState();
+
+export function getConditionState(): ConditionState {
+  return conditionState;
+}
 
 export function getCurrentEntity(): SirenEntity | null {
   return currentEntity;
@@ -47,6 +59,7 @@ export function setCurrentEntity(entity: SirenEntity, url: string): void {
 export function resetClient(): void {
   currentEntity = null;
   currentUrl = null;
+  conditionState.clear();
 }
 
 // ---------------------------------------------------------------------------
@@ -102,18 +115,41 @@ export async function fetchSiren(url: string, opts?: RequestInit): Promise<Siren
 
   // 409 Conflict — cooperative affordance
   if (response.status === 409) {
-    let body: SirenEntity | undefined;
+    let body: BlockedResponse | undefined;
     try {
-      body = (await response.json()) as SirenEntity;
+      body = (await response.json()) as BlockedResponse;
     } catch {
       // Body may not be valid JSON
     }
 
+    const isGrailBlocked = body?.class?.includes('blocked') &&
+      typeof body?.properties?.blockedAction === 'string';
+
     const detail: SirenBlockedEventDetail = {
       message: (body?.properties?.message as string) ?? response.statusText,
-      blockedAction: null,
+      blockedAction: isGrailBlocked ? body!.properties.blockedAction : null,
+      blockedCondition: isGrailBlocked ? body!.properties.blockedCondition : null,
+      unmetConditions: isGrailBlocked
+        ? (body!.properties.unmetConditions ?? [body!.properties.blockedCondition])
+        : [],
       offeredActions: body?.actions ?? [],
+      raw: isGrailBlocked ? body! : null,
     };
+
+    // Track conditions from 409 body if present
+    if (body?.['x-conditions']) {
+      const entity = entityKeyFromUrl(url);
+      const { added, removed } = conditionState.update(entity, body['x-conditions']);
+      if (added.length > 0 || removed.length > 0) {
+        dispatchConditionsChanged(conditionState, {
+          entity,
+          conditions: body['x-conditions'],
+          added,
+          removed,
+        });
+      }
+    }
+
     document.dispatchEvent(new CustomEvent('siren:blocked', { detail }));
     return null;
   }
@@ -134,5 +170,22 @@ export async function fetchSiren(url: string, opts?: RequestInit): Promise<Siren
   // 2xx success — parse entity
   const entity = (await response.json()) as SirenEntity;
   setCurrentEntity(entity, response.url || url);
+
+  // Track conditions from x-conditions header
+  const conditionsHeader = response.headers.get('x-conditions');
+  if (conditionsHeader) {
+    const entityKey = entityKeyFromUrl(response.url || url);
+    const conditions = parseConditionsHeader(conditionsHeader);
+    const { added, removed } = conditionState.update(entityKey, conditions);
+    if (added.length > 0 || removed.length > 0) {
+      dispatchConditionsChanged(conditionState, {
+        entity: entityKey,
+        conditions,
+        added,
+        removed,
+      });
+    }
+  }
+
   return entity;
 }
