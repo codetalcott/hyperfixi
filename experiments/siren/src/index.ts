@@ -22,6 +22,8 @@ export type {
   BlockedProperties,
   ConditionsChangedDetail,
   ConditionsSSEData,
+  SirenPlanEventDetail,
+  ConditionMapEntry,
 } from './types';
 
 // Client
@@ -37,6 +39,31 @@ export {
 // Conditions
 export { ConditionState } from './condition-state';
 export { connectConditionSSE } from './condition-sse';
+
+// Planner
+export {
+  createPlanStep,
+  createAffordanceDef,
+  plan,
+  planWithCost,
+  planForAction,
+  planFromEntity,
+  buildDefsFromActions,
+  parseConditionMap,
+  applyEffects,
+  inferConditions,
+  inferHeuristicMappings,
+} from './planner';
+export type {
+  PlanStep,
+  AffordanceDef,
+  PlanResult,
+  PlanOptions,
+} from './planner';
+
+// Wait for condition
+export { waitForCondition } from './wait-for-condition';
+export type { WaitForConditionOptions } from './wait-for-condition';
 
 // Context
 export { sirenContextProvider } from './siren-context';

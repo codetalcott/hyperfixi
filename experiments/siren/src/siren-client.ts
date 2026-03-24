@@ -10,6 +10,7 @@ import type {
   SirenEntityEventDetail,
   SirenBlockedEventDetail,
   SirenErrorEventDetail,
+  SirenPlanEventDetail,
   BlockedResponse,
 } from './types';
 import { classifyError } from './util';
@@ -151,6 +152,37 @@ export async function fetchSiren(url: string, opts?: RequestInit): Promise<Siren
     }
 
     document.dispatchEvent(new CustomEvent('siren:blocked', { detail }));
+
+    // Auto-plan when we have enough GRAIL information
+    if (isGrailBlocked && body!.actions?.length) {
+      const actionsWithEffects = body!.actions!.filter(
+        a => a.effects?.length || a.preconditions?.length,
+      );
+      if (actionsWithEffects.length > 0) {
+        try {
+          const { planFromEntity } = await import('./planner');
+          const syntheticEntity: SirenEntity & { 'x-conditions'?: string[] } = {
+            actions: body!.actions,
+            properties: body!.properties as unknown as Record<string, unknown>,
+            ...(body!['x-conditions'] ? { 'x-conditions': body!['x-conditions'] } : {}),
+          };
+          const result = planFromEntity(syntheticEntity, body!.properties.blockedAction);
+          if (result && result.steps.length > 0) {
+            const planDetail: SirenPlanEventDetail = {
+              blockedAction: body!.properties.blockedAction,
+              steps: result.steps.map(s => ({ name: s.name, params: { ...s.params } })),
+              totalCost: result.totalCost,
+              alternativeCount: result.alternativeCount,
+              fromEntityActions: true,
+            };
+            document.dispatchEvent(new CustomEvent('siren:plan', { detail: planDetail }));
+          }
+        } catch {
+          // Planner not available or failed — not fatal
+        }
+      }
+    }
+
     return null;
   }
 

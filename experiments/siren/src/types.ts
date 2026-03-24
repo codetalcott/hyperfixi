@@ -128,6 +128,27 @@ export interface ConditionsSSEData {
   trigger?: string;
 }
 
+/** Detail payload for siren:plan CustomEvent */
+export interface SirenPlanEventDetail {
+  /** The action that was blocked (from 409 response) */
+  blockedAction: string;
+  /** Ordered steps to unblock the action */
+  steps: Array<{ name: string; params: Record<string, string> }>;
+  /** Total cost of the plan */
+  totalCost: number;
+  /** Number of alternative equal-length paths found */
+  alternativeCount: number;
+  /** Whether the plan was generated from entity actions (true) or condition map (false) */
+  fromEntityActions: boolean;
+}
+
+/** Entry in a condition map from the /conditions endpoint */
+export interface ConditionMapEntry {
+  description?: string;
+  producedBy: string[];
+  requiredBy: string[];
+}
+
 /** Detail payload for siren:error CustomEvent */
 export interface SirenErrorEventDetail {
   status: number;
