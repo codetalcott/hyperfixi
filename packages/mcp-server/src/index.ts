@@ -68,6 +68,9 @@ import { feedbackTools, handleFeedbackTool } from './tools/feedback-tools.js';
 // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
 import { lsePipelineTools, handleLsePipelineTool } from './tools/lse-pipeline.js';
 
+// GRAIL tools (condition/affordance workflow)
+import { grailTools, handleGrailTool } from './tools/grail-tools.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -115,6 +118,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...trainingDataTools,
       ...feedbackTools,
       ...lsePipelineTools,
+      ...grailTools,
     ],
   };
 });
@@ -274,6 +278,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
   if (name === 'lse_from_hyperscript' || name === 'lse_to_hyperscript') {
     return handleLsePipelineTool(name, args as Record<string, unknown>);
+  }
+
+  // GRAIL tools (condition/affordance workflow)
+  if (name.startsWith('grail_')) {
+    return handleGrailTool(name, args as Record<string, unknown>);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
