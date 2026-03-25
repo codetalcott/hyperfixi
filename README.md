@@ -17,11 +17,11 @@ Save this as an HTML file and open it in your browser:
   <body>
     <button _="on click toggle .active on me">Toggle</button>
 
-    <button _="on click increment :count then put :count into next <span/>">
-      Clicks: <span>0</span>
+    <button _="on click set my.count to (my.count or 0) + 1 then put 'Clicks: ' + my.count into me">
+      Clicks: 0
     </button>
 
-    <button _="on click toggle @hidden on #message">Show/Hide</button>
+    <button _="on click toggle .hidden on #message">Show/Hide</button>
     <p id="message">Hello from HyperFixi.</p>
 
     <style>
@@ -29,6 +29,9 @@ Save this as an HTML file and open it in your browser:
         background: #0066cc;
         color: white;
         border-radius: 4px;
+      }
+      .hidden {
+        display: none;
       }
     </style>
     <script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js"></script>

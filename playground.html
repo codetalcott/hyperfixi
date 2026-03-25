@@ -119,12 +119,13 @@ const EXAMPLES = {
 
 <style>.active { background: #0066cc; color: white; border-radius: 4px; }</style>`,
 
-  counter: `<button _="on click increment :count then put :count into next <span/>">
-  Clicks: <span>0</span>
+  counter: `<button _="on click set my.count to (my.count or 0) + 1 then put 'Clicks: ' + my.count into me">
+  Clicks: 0
 </button>`,
 
-  showhide: `<button _="on click toggle @hidden on #message">Show / Hide</button>
-<p id="message">Hello from HyperFixi.</p>`,
+  showhide: `<button _="on click toggle .hidden on #message">Show / Hide</button>
+<p id="message">Hello from HyperFixi.</p>
+<style>.hidden { display: none; }</style>`,
 
   input: `<input type="text" placeholder="Type here..."
        _="on input put my value into #mirror" />
