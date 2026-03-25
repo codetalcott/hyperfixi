@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-learn",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Multilingual learning domain DSL — morphology, sentence generation, and exercise support for 15 verbs × 10 languages × 7 communicative functions",
   "type": "module",
   "sideEffects": false,

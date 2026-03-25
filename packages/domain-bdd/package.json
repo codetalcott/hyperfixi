@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-bdd",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Multilingual BDD specification domain built on @lokascript/framework — Given/When/Then in 4 languages, compiles to Playwright tests",
   "type": "module",
   "sideEffects": false,

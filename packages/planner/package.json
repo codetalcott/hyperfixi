@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/planner",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "BFS planner over affordance graphs — cost-aware planning with preconditions, effects, and template parameters",
   "type": "module",
   "main": "dist/index.cjs",
