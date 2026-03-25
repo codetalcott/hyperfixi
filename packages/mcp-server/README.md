@@ -45,6 +45,20 @@ Or if installed globally:
 }
 ```
 
+## GRAIL Workflow Tools (5)
+
+5 stable tools for Claude-native workflow orchestration: evaluate conditions, plan dependency-ordered steps, and execute actions with precondition checks, cost-aware planning, and drift detection.
+
+| Tool          | Description                                                    |
+| ------------- | -------------------------------------------------------------- |
+| `grail_check` | Evaluate conditions, show available/blocked affordances        |
+| `grail_plan`  | Compute dependency-ordered plan for a goal affordance          |
+| `grail_run`   | Execute an affordance with precondition and confirmation gates |
+| `grail_info`  | Return full workflow graph (conditions, affordances, enables)  |
+| `grail_list`  | List all condition and affordance names                        |
+
+See **[GRAIL.md](GRAIL.md)** for full documentation, schema reference, and examples.
+
 ## Available Tools (80)
 
 ### Validation & Semantic Tools (8)

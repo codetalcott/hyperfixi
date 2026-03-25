@@ -16,7 +16,7 @@ import {
   plan as bfsPlan,
   createPlanStep,
   applyEffects,
-} from '../../../../experiments/siren/src/planner.js';
+} from '@lokascript/planner';
 
 // ---------- Tool Definitions ----------
 

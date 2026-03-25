@@ -40,6 +40,7 @@
     "@hyperfixi/patterns-reference": "*",
     "@lokascript/compilation-service": "*",
     "@lokascript/framework": "*",
+    "@lokascript/planner": "*",
     "@lokascript/semantic": "*",
     "@modelcontextprotocol/sdk": "^1.25.0",
     "yaml": "^2.8.3"
