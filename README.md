@@ -14,10 +14,17 @@ Save this as an HTML file and open it in your browser:
 ```html
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
   <body>
     <button _="on click toggle .active on me">Toggle</button>
 
-    <button _="on click set my.count to (my.count or 0) + 1 then put 'Clicks: ' + my.count into me">
+    <button
+      _="on click
+        set my.count to (my.count or 0) + 1
+        then put 'Clicks: ' + my.count into me"
+    >
       Clicks: 0
     </button>
 
@@ -84,8 +91,11 @@ Use `@hyperfixi/*` packages. Add `@lokascript/*` only if you need multilingual s
 - [Playground](https://hyperfixi.org/playground/) -- live REPL
 - [Vite plugin guide](https://hyperfixi.org/guide/vite-plugin/) -- automatic tree-shaking
 - [Multilingual support](https://lokascript.org) -- hyperscript in 24 languages
-- [DSL framework](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md) -- build your own multilingual DSL
+
+**Going deeper:**
+
 - [Architecture](./docs/ARCHITECTURE.md) -- monorepo structure, package map, bundle tiers
+- [DSL framework](./packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md) -- build your own multilingual DSL
 - [About this project](./docs/ABOUT.md) -- motivation, experiment notes, current gaps
 - [Contributing](./CONTRIBUTING.md)
 - [Migration from v1.x](./MIGRATION.md)
