@@ -36,7 +36,7 @@ Save this as an HTML file and open it in your browser:
 </html>
 ```
 
-No server, no npm, no build step. Just save and open.
+No server, no npm, no build step. Just save and open. Or [try it live](https://hyperfixi.org/try/).
 
 ## Install
 
