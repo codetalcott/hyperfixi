@@ -9,7 +9,7 @@ A tree-shakeable [\_hyperscript](https://hyperscript.org) runtime. Human-readabl
 
 ## Try It
 
-Save this as an HTML file and open it in your browser:
+Save this as an HTML file and open it in your browser — or [try it live](https://hyperfixi.org/try/).
 
 ```html
 <!DOCTYPE html>
@@ -43,7 +43,7 @@ Save this as an HTML file and open it in your browser:
 </html>
 ```
 
-No server, no npm, no build step. Just save and open. Or [try it live](https://hyperfixi.org/try/).
+No server, no npm, no build step. Just save and open.
 
 ## Install
 
