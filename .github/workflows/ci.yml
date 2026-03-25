@@ -172,6 +172,7 @@ jobs:
             packages/ast-toolkit/dist/
             packages/aot-compiler/dist/
             packages/compilation-service/dist/
+            packages/planner/dist/
             packages/mcp-server/dist/
             packages/developer-tools/dist/
             packages/server-bridge/dist/
