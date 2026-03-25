@@ -3,10 +3,11 @@
  *
  * Run: npx tsx experiments/grail-demo/demo.ts
  *
- * This script shows the Claude-as-agent pattern:
- * 1. grail_check → see what's passing/failing
- * 2. grail_plan → compute steps to reach a goal
- * 3. grail_info → inspect the full workflow graph
+ * Shows the Claude-as-agent pattern:
+ * 1. grail_list / grail_info → inspect workflow graph (instant)
+ * 2. grail_check → evaluate conditions (runs shell commands — slow)
+ * 3. grail_plan(goal, truth) → compute steps using cached truth (instant)
+ * 4. grail_run(action) → execute an action
  */
 
 import { handleGrailTool, _resetRegistry } from '../../packages/mcp-server/src/tools/grail-tools.js';
@@ -26,33 +27,34 @@ async function demo() {
   process.env.GRAIL_CWD = repoRoot;
   _resetRegistry();
 
-  // Step 1: List available conditions and affordances
+  // Step 1: Structural queries — instant, no shell evaluation
   print('grail_list', await handleGrailTool('grail_list', {}));
-
-  // Step 2: Check current state (skip actual evaluation for speed — just show structure)
-  console.log('\n[Note: grail_check evaluates shell commands — skipping in demo for speed]');
-  console.log('[In real usage, Claude calls grail_check to see what\'s passing/failing]');
-
-  // Step 3: Plan for release-publish
-  // Use a mock truth vector to demo planning without running commands
-  console.log('\n--- Demonstrating grail_plan with the workflow graph ---');
-  print('grail_plan(release-publish)', await handleGrailTool('grail_plan', { goal: 'release-publish' }));
-
-  // Step 4: Plan for a simpler goal
-  print('grail_plan(run-lint)', await handleGrailTool('grail_plan', { goal: 'run-lint' }));
-
-  // Step 5: Show the workflow graph
   print('grail_info', await handleGrailTool('grail_info', {}));
 
-  // Step 6: Dry run an action
-  print('grail_run(run-lint, dry_run)', await handleGrailTool('grail_run', { action: 'run-lint', dry_run: true }));
+  // Step 2: Evaluate conditions — runs real shell commands
+  console.log('\n--- Evaluating conditions (runs npm run lint, npm test, etc.) ---');
+  const checkResponse = await handleGrailTool('grail_check', {});
+  print('grail_check', checkResponse);
+
+  // Extract truth vector from check response
+  const checkData = JSON.parse(checkResponse.content[0].text);
+  const truth = checkData.truth;
+
+  // Step 3: Plan using cached truth — instant (no re-evaluation)
+  const planResponse = await handleGrailTool('grail_plan', { goal: 'release-publish', truth });
+  print('grail_plan(release-publish) — using cached truth', planResponse);
+
+  // Step 4: Dry run using cached truth — instant
+  const runResponse = await handleGrailTool('grail_run', {
+    action: 'run-lint',
+    dry_run: true,
+    truth,
+  });
+  print('grail_run(run-lint, dry_run) — using cached truth', runResponse);
 
   console.log('\n--- Demo complete ---');
-  console.log('In a real session, Claude would:');
-  console.log('  1. Call grail_check to see current state');
-  console.log('  2. Call grail_plan to compute steps toward a goal');
-  console.log('  3. Call grail_run for each step');
-  console.log('  4. Call grail_check again to verify progress');
+  console.log('Pattern: grail_check once → pass truth to grail_plan/grail_run');
+  console.log('This avoids redundant condition evaluation (30s+ per call).');
 }
 
 demo().catch(console.error);

@@ -42,13 +42,19 @@ export const grailTools: Tool[] = [
     description:
       'Compute a dependency-ordered plan to make a goal affordance feasible. ' +
       'Returns ordered steps with phases, costs, and blocked-by links. ' +
-      'Returns infeasible report if goal is unreachable.',
+      'Pass truth from a prior grail_check to skip re-evaluation.',
     inputSchema: {
       type: 'object',
       properties: {
         goal: {
           type: 'string',
           description: 'The affordance name to plan for (e.g., "release-publish")',
+        },
+        truth: {
+          type: 'object',
+          description:
+            'Pre-evaluated truth vector from grail_check response (condition name → boolean). ' +
+            'If omitted, evaluates all conditions (slow).',
         },
       },
       required: ['goal'],
@@ -58,7 +64,8 @@ export const grailTools: Tool[] = [
     name: 'grail_run',
     description:
       'Execute a GRAIL affordance. Checks preconditions first — blocks if unmet. ' +
-      'Respects confirmation gates. Use dry_run=true to preview without executing.',
+      'Respects confirmation gates. Use dry_run=true to preview without executing. ' +
+      'Pass truth from a prior grail_check to skip re-evaluation of preconditions.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -73,6 +80,12 @@ export const grailTools: Tool[] = [
         confirmed: {
           type: 'boolean',
           description: 'Confirm execution for actions with confirmation gates (default: false)',
+        },
+        truth: {
+          type: 'object',
+          description:
+            'Pre-evaluated truth vector from grail_check response (condition name → boolean). ' +
+            'If omitted, evaluates all conditions to check preconditions (slow).',
         },
       },
       required: ['action'],
@@ -186,6 +199,7 @@ async function handleCheck(
     summary: `${passing.length} passing, ${failing.length} failing`,
     available,
     blocked,
+    truth,
   });
 }
 
@@ -205,11 +219,17 @@ async function handlePlan(args: Record<string, unknown>): Promise<ReturnType<typ
     });
   }
 
-  // Evaluate current state
-  const results = await registry.evaluateAll();
-  const truth: Record<string, boolean> = {};
-  for (const [name, result] of Object.entries(results)) {
-    truth[name] = result.passing;
+  // Use pre-evaluated truth vector if provided, otherwise evaluate (slow)
+  let truth: Record<string, boolean>;
+  const suppliedTruth = args.truth as Record<string, boolean> | undefined;
+  if (suppliedTruth && typeof suppliedTruth === 'object') {
+    truth = suppliedTruth;
+  } else {
+    const results = await registry.evaluateAll();
+    truth = {};
+    for (const [name, result] of Object.entries(results)) {
+      truth[name] = result.passing;
+    }
   }
 
   // Check if goal is already feasible
@@ -355,11 +375,20 @@ async function handleRun(args: Record<string, unknown>): Promise<ReturnType<type
   const aff = registry.affordances.get(action);
   if (!aff) return errorResponse(`Unknown affordance: ${action}`);
 
-  // Evaluate preconditions
-  const results = await registry.evaluateAll();
-  const truth: Record<string, boolean> = {};
-  for (const [name, result] of Object.entries(results)) {
-    truth[name] = result.passing;
+  // Use pre-evaluated truth vector if provided, otherwise evaluate (slow)
+  let truth: Record<string, boolean>;
+  const suppliedTruth = args.truth as Record<string, boolean> | undefined;
+  if (suppliedTruth && typeof suppliedTruth === 'object') {
+    truth = suppliedTruth;
+  } else if ((aff.preconditions ?? []).length === 0) {
+    // No preconditions — skip evaluation entirely
+    truth = {};
+  } else {
+    const results = await registry.evaluateAll();
+    truth = {};
+    for (const [name, result] of Object.entries(results)) {
+      truth[name] = result.passing;
+    }
   }
 
   const check = registry.checkPreconditions(action, truth);

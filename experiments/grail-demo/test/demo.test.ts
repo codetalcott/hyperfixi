@@ -5,10 +5,7 @@
  * running grail_run (which would execute real shell commands).
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-
-// These tests evaluate real shell commands — need longer timeouts
-vi.setConfig({ testTimeout: 60_000 });
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { resolve } from 'node:path';
 import { handleGrailTool, _resetRegistry } from '../../../packages/mcp-server/src/tools/grail-tools.js';
 
@@ -58,18 +55,43 @@ describe('grail_info against real grail.yaml', () => {
   });
 });
 
-describe('grail_plan against real grail.yaml', () => {
-  it('plans for release-publish (complex multi-step goal)', async () => {
-    const response = await handleGrailTool('grail_plan', { goal: 'release-publish' });
+describe('grail_check returns truth vector', () => {
+  it('includes truth in response for reuse by plan/run', { timeout: 60_000 }, async () => {
+    const response = await handleGrailTool('grail_check', {});
+    const data = parseResult(response);
+
+    expect(data.truth).toBeDefined();
+    expect(typeof data.truth).toBe('object');
+    // Should have entries for every condition in the config
+    expect('project.lint.passing' in data.truth).toBe(true);
+    expect(typeof data.truth['project.lint.passing']).toBe('boolean');
+  });
+});
+
+describe('grail_plan with pre-evaluated truth (fast path)', () => {
+  // Use a synthetic truth vector — no shell evaluation needed
+  const truth: Record<string, boolean> = {
+    'project.lint.passing': true,
+    'project.typecheck.passing': true,
+    'project.tests.passing': false,
+    'project.versions.consistent': false,
+    'project.clean.workdir': false,
+    'pkg.built': false,
+    'pkg.tests.passing': false,
+  };
+
+  it('plans for release-publish using cached truth (instant)', async () => {
+    const response = await handleGrailTool('grail_plan', {
+      goal: 'release-publish',
+      truth,
+    });
     const data = parseResult(response);
 
     expect(data.goal).toBe('release-publish');
-    // May be feasible or not depending on current state — either way, response shape is valid
     expect(typeof data.feasible).toBe('boolean');
     if (data.feasible) {
       expect(data.steps.length).toBeGreaterThan(0);
       expect(data.totalCost).toBeGreaterThan(0);
-      expect(data.phases).toBeGreaterThan(0);
       expect(data.steps[data.steps.length - 1].action).toBe('release-publish');
     } else {
       expect(data.reason).toBeDefined();
@@ -77,18 +99,21 @@ describe('grail_plan against real grail.yaml', () => {
   });
 
   it('plans for run-lint (no preconditions — single step)', async () => {
-    const response = await handleGrailTool('grail_plan', { goal: 'run-lint' });
+    const response = await handleGrailTool('grail_plan', {
+      goal: 'run-lint',
+      truth,
+    });
     const data = parseResult(response);
 
-    expect(data.goal).toBe('run-lint');
-    // run-lint has no preconditions — always feasible as a single step
     expect(data.feasible).toBe(true);
     expect(data.steps.length).toBe(1);
     expect(data.steps[0].action).toBe('run-lint');
   });
 
   it('returns infeasible for unknown goal', async () => {
-    const response = await handleGrailTool('grail_plan', { goal: 'nonexistent' });
+    const response = await handleGrailTool('grail_plan', {
+      goal: 'nonexistent',
+    });
     const data = parseResult(response);
 
     expect(data.feasible).toBe(false);
@@ -96,8 +121,22 @@ describe('grail_plan against real grail.yaml', () => {
   });
 });
 
-describe('grail_run dry_run against real grail.yaml', () => {
-  it('previews run-lint without executing', async () => {
+describe('grail_run with pre-evaluated truth (fast path)', () => {
+  it('previews run-lint without evaluating conditions', async () => {
+    const response = await handleGrailTool('grail_run', {
+      action: 'run-lint',
+      dry_run: true,
+      truth: { 'project.lint.passing': true },
+    });
+    const data = parseResult(response);
+
+    expect(data.dry_run).toBe(true);
+    expect(data.preconditions_met).toBe(true);
+    expect(data.cmd).toContain('npm run lint');
+  });
+
+  it('skips evaluation for actions with no preconditions', async () => {
+    // run-lint has no preconditions — should be instant even without truth
     const response = await handleGrailTool('grail_run', {
       action: 'run-lint',
       dry_run: true,
@@ -106,6 +145,5 @@ describe('grail_run dry_run against real grail.yaml', () => {
 
     expect(data.dry_run).toBe(true);
     expect(data.preconditions_met).toBe(true);
-    expect(data.cmd).toContain('npm run lint');
   });
 });

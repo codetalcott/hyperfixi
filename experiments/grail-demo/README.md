@@ -14,13 +14,14 @@ This experiment demonstrates using GRAIL MCP tools to navigate the hyperfixi mon
 
 ## The Agent Loop
 
-```
+```text
 Claude calls grail_check
   → "3 passing, 2 failing. run-lint available, release-publish blocked."
+  → also returns truth: { "project.lint.passing": false, ... }
 
-Claude calls grail_plan(goal: "release-publish")
-  → "Phase 0: run-lint (cost 1), Phase 1: typecheck (cost 2), run-tests (cost 3),
-     Phase 2: build-packages (cost 3), Phase 3: release-publish (cost 5)"
+Claude calls grail_plan(goal: "release-publish", truth: <from check>)
+  → instant (no re-evaluation)
+  → "Phase 0: run-lint (cost 1), Phase 1: typecheck (cost 2), ..."
 
 Claude calls grail_run(action: "run-lint")
   → "success, exit 0, 1.2s"
@@ -30,6 +31,8 @@ Claude calls grail_check
 
 ...repeat until goal is feasible...
 ```
+
+**Key optimization:** `grail_check` returns a `truth` vector. Pass it to subsequent `grail_plan` and `grail_run` calls to skip redundant condition evaluation (saves 30s+ per call on large monorepos).
 
 ## Run the Demo
 
