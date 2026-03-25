@@ -21,7 +21,7 @@ Save this as an HTML file and open it in your browser:
       Clicks: 0
     </button>
 
-    <button _="on click toggle .hidden on #message">Show/Hide</button>
+    <button _="on click toggle @hidden on #message">Show/Hide</button>
     <p id="message">Hello from HyperFixi.</p>
 
     <style>
@@ -29,9 +29,6 @@ Save this as an HTML file and open it in your browser:
         background: #0066cc;
         color: white;
         border-radius: 4px;
-      }
-      .hidden {
-        display: none;
       }
     </style>
     <script src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js"></script>
