@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders — Siren+GRAIL Demo</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Orders Demo</h1>
+  <p class="subtitle">Siren hypermedia + GRAIL cooperative affordances — <a href="incident.html" style="color:var(--accent)">Incident Response demo →</a></p>
+
+  <!-- Order Selector -->
+  <div class="card">
+    <h2>Select Order</h2>
+    <div style="display:flex;gap:0.5rem;align-items:center">
+      <select id="order-select">
+        <option value="">Loading orders...</option>
+      </select>
+      <button id="btn-load" class="primary">Load</button>
+      <button id="btn-refresh">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Entity Display -->
+  <div class="card" id="entity-card" style="display:none">
+    <h2>Order Details</h2>
+    <div id="entity-container"></div>
+
+    <!-- Actions -->
+    <div id="actions-container" class="actions"></div>
+
+    <!-- Goal action (may trigger 409) -->
+    <div style="margin-top:1rem">
+      <button id="btn-ship" class="primary">Ship This Order</button>
+    </div>
+
+    <!-- Blocked message -->
+    <div id="blocked-msg" class="message message-blocked" style="display:none"></div>
+
+    <!-- Plan UI -->
+    <div id="plan-container" class="plan-container"></div>
+    <button id="btn-pursue" class="primary" style="display:none;margin-top:0.5rem">Pursue Plan</button>
+
+    <!-- Conditions -->
+    <div id="conditions-container" class="conditions"></div>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="card">
+    <h2>Activity Log</h2>
+    <div id="log-container" class="log">
+      <div class="log-entry">Ready — start the siren-grail server: cd projects/siren-grail && node server.js</div>
+    </div>
+  </div>
+</div>
+
+<!-- Load siren browser bundle -->
+<script src="/dist/siren.browser.global.js"></script>
+<script type="module">
+import { initDemo } from './siren-demo.js';
+
+const SERVER = 'http://localhost:3000';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const demo = initDemo({
+    serverUrl: SERVER,
+    entityContainer: document.getElementById('entity-container'),
+    actionsContainer: document.getElementById('actions-container'),
+    conditionsContainer: document.getElementById('conditions-container'),
+    planContainer: document.getElementById('plan-container'),
+    logContainer: document.getElementById('log-container'),
+  });
+
+  const entityCard = document.getElementById('entity-card');
+  const blockedMsg = document.getElementById('blocked-msg');
+  const btnPursue = document.getElementById('btn-pursue');
+  const planContainer = document.getElementById('plan-container');
+  const orderSelect = document.getElementById('order-select');
+
+  // Show entity card on load
+  document.addEventListener('siren:entity', () => {
+    entityCard.style.display = '';
+    blockedMsg.style.display = 'none';
+    btnPursue.style.display = 'none';
+  });
+
+  // Show blocked message, offered actions, and pursue button
+  let lastBlockedAction = null;
+  document.addEventListener('siren:blocked', (e) => {
+    const { message, blockedAction, offeredActions } = e.detail;
+    blockedMsg.textContent = message;
+    blockedMsg.style.display = '';
+    lastBlockedAction = blockedAction;
+
+    // Show offered actions as a plan
+    if (offeredActions.length > 0) {
+      planContainer.innerHTML = '';
+      const p = document.createElement('p');
+      p.textContent = `To unblock ${blockedAction}:`;
+      planContainer.appendChild(p);
+      const ol = document.createElement('ol');
+      for (const action of offeredActions) {
+        const li = document.createElement('li');
+        li.textContent = action.title || action.name;
+        if (action.fields?.length) {
+          const fieldInfo = action.fields
+            .filter(f => f.value !== undefined)
+            .map(f => `${f.name}=${f.value}`)
+            .join(', ');
+          if (fieldInfo) li.textContent += ` (${fieldInfo})`;
+        }
+        ol.appendChild(li);
+      }
+      // Add the goal action as final step
+      const goalLi = document.createElement('li');
+      goalLi.textContent = `${blockedAction} (retry)`;
+      ol.appendChild(goalLi);
+      planContainer.appendChild(ol);
+
+      btnPursue.style.display = '';
+      btnPursue.textContent = `Pursue (${offeredActions.length + 1} steps)`;
+    }
+  });
+
+  // Also handle siren:plan if auto-plan fires
+  document.addEventListener('siren:plan', (e) => {
+    if (e.detail.steps.length > 0) {
+      btnPursue.style.display = '';
+      btnPursue.textContent = `Pursue (${e.detail.steps.length} steps, cost ${e.detail.totalCost})`;
+    }
+  });
+
+  // Pursue button — uses pursueReactive with offered actions from the 409
+  let lastOfferedActions = [];
+  document.addEventListener('siren:blocked', (e) => {
+    lastOfferedActions = e.detail.offeredActions;
+  });
+
+  btnPursue.addEventListener('click', async () => {
+    if (!lastBlockedAction || lastOfferedActions.length === 0) return;
+    btnPursue.disabled = true;
+    btnPursue.textContent = 'Pursuing...';
+    try {
+      const siren = demo.siren;
+      // Execute each offered action in sequence, then retry the goal
+      for (const action of lastOfferedActions) {
+        demo.log(`Executing prerequisite: ${action.name}`);
+        const url = action.href;
+        const method = (action.method || 'POST').toUpperCase();
+        const data = {};
+        for (const field of action.fields || []) {
+          if (field.value !== undefined) data[field.name] = field.value;
+        }
+        const opts = { method };
+        if (method !== 'GET' && method !== 'HEAD') {
+          opts.headers = { 'Content-Type': action.type || 'application/json' };
+          opts.body = JSON.stringify(data);
+        }
+        await siren.fetchSiren(url, opts);
+      }
+      // Retry the goal action
+      demo.log(`Retrying goal: ${lastBlockedAction}`);
+      const currentUrl = siren.getCurrentUrl();
+      if (currentUrl) {
+        const shipUrl = currentUrl.replace(/\/$/, '') + '/ship';
+        await siren.fetchSiren(shipUrl, { method: 'POST' });
+      }
+      blockedMsg.style.display = 'none';
+      btnPursue.style.display = 'none';
+      planContainer.innerHTML = '';
+    } catch (err) {
+      demo.log(`Pursuit error: ${err.message}`);
+      blockedMsg.textContent = `Pursuit error: ${err.message}`;
+    } finally {
+      btnPursue.disabled = false;
+    }
+  });
+
+  // Load order list
+  async function loadOrderList() {
+    try {
+      const response = await fetch(`${SERVER}/orders`, {
+        headers: { Accept: 'application/vnd.siren+json' },
+      });
+      const data = await response.json();
+      orderSelect.innerHTML = '';
+
+      const entities = data.entities || [];
+      if (entities.length === 0) {
+        orderSelect.innerHTML = '<option value="">No orders found</option>';
+        return;
+      }
+
+      for (const sub of entities) {
+        const opt = document.createElement('option');
+        const href = sub.href || sub.links?.[0]?.href || '';
+        opt.value = href;
+        const props = sub.properties || {};
+        opt.textContent = `Order #${props.id || '?'} — ${props.status || 'unknown'}`;
+        orderSelect.appendChild(opt);
+      }
+      demo.log(`Loaded ${entities.length} orders`);
+    } catch (err) {
+      orderSelect.innerHTML = `<option value="">Error: ${err.message}</option>`;
+      demo.log(`Failed to load orders: ${err.message}`);
+    }
+  }
+
+  // Load selected order
+  document.getElementById('btn-load').addEventListener('click', async () => {
+    const href = orderSelect.value;
+    if (!href) return;
+    const url = new URL(href, SERVER).href;
+    await demo.fetchEntity(url);
+  });
+
+  document.getElementById('btn-refresh').addEventListener('click', loadOrderList);
+
+  // Ship button — attempts ship action, will 409 if preconditions unmet
+  document.getElementById('btn-ship').addEventListener('click', async () => {
+    const siren = demo.siren;
+    const entity = siren.getCurrentEntity();
+    const url = siren.getCurrentUrl();
+    if (!entity || !url) {
+      demo.log('No order loaded');
+      return;
+    }
+    // Derive ship URL from entity URL
+    const shipUrl = url.replace(/\/$/, '') + '/ship';
+    demo.log(`Attempting to ship: POST ${shipUrl}`);
+    await siren.fetchSiren(shipUrl, { method: 'POST' });
+  });
+
+  // Initial load
+  await loadOrderList();
+});
+</script>
+
+</body>
+</html>
