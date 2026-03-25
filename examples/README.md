@@ -215,7 +215,7 @@ Perfect for testing multiple patterns together!
       <!-- Code Explanation -->
       <!-- Navigation -->
     </div>
-    <script src="../../packages/core/dist/lokascript-browser.js"></script>
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
   </body>
 </html>
 ```

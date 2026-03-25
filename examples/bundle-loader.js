@@ -6,7 +6,7 @@
  *
  * Usage:
  *   <script src="../bundle-loader.js"></script>
- *   <!-- No need to include lokascript-browser.js -->
+ *   <!-- No need to include hyperfixi-browser.js -->
  *
  * URL Parameters:
  *   ?bundle=browser   - Full bundle (default)
@@ -24,10 +24,10 @@
 
   // Bundle configurations
   const BUNDLES = {
-    'browser': 'lokascript-browser.js',
-    'hybrid-complete': 'lokascript-hybrid-complete.js',
-    'hybrid-hx': 'lokascript-hybrid-hx.js',
-    'lite': 'lokascript-lite.js',
+    'browser': 'hyperfixi-browser.js',
+    'hybrid-complete': 'hyperfixi-hybrid-complete.js',
+    'hybrid-hx': 'hyperfixi-hybrid-hx.js',
+    'lite': 'hyperfixi-lite.js',
     'lite-plus': 'hyperfixi-lite-plus.js',
     'standard': 'hyperfixi-browser-standard.js',
     'minimal': 'hyperfixi-browser-minimal.js',
@@ -111,7 +111,7 @@
       fallback.onerror = function () {
         console.error('[HyperFixi] CRITICAL: Failed to load fallback browser bundle!');
         console.error(`[HyperFixi] Attempted fallback path: ${browserPath}`);
-        console.error('[HyperFixi] Please check that packages/core/dist/lokascript-browser.js exists');
+        console.error('[HyperFixi] Please check that packages/core/dist/hyperfixi-browser.js exists');
       };
 
       fallback.onload = function () {
@@ -126,7 +126,7 @@
       console.error('[HyperFixi] CRITICAL: Browser bundle failed to load - no fallback available!');
       console.error('[HyperFixi] Please verify:');
       console.error('  1. Server is running from project root');
-      console.error('  2. packages/core/dist/lokascript-browser.js exists');
+      console.error('  2. packages/core/dist/hyperfixi-browser.js exists');
       console.error('  3. File permissions are correct');
     }
   };
