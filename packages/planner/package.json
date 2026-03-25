@@ -21,16 +21,6 @@
     "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [
-    "planner",
-    "bfs",
-    "affordance",
-    "preconditions",
-    "effects",
-    "grail",
-    "siren",
-    "hypermedia"
-  ],
   "author": "LokaScript Contributors",
   "license": "MIT",
   "devDependencies": {
@@ -38,12 +28,6 @@
     "typescript": "^5.0.0",
     "vitest": "^4.0.0"
   },
-  "files": [
-    "dist",
-    "src",
-    "LICENSE",
-    "README.md"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/codetalcott/hyperfixi.git",
@@ -55,8 +39,6 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "publishConfig": {
-    "access": "public"
-  },
+  "private": true,
   "sideEffects": false
 }
