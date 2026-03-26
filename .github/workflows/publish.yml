@@ -97,6 +97,7 @@ jobs:
           npm run build --prefix packages/domain-voice
           npm run build --prefix packages/domain-learn
           npm run build --prefix packages/compilation-service
+          npm run build --prefix packages/planner
           npm run build --prefix packages/mcp-server
           npm run build --prefix packages/vite-plugin
           npm run build --prefix packages/behaviors
