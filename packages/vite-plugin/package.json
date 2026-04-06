@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/vite-plugin",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Vite plugin for automatic tree-shaken hyperscript bundles",
   "type": "module",
   "main": "dist/index.cjs",
@@ -29,7 +29,7 @@
   },
   "peerDependencies": {
     "@hyperfixi/server-bridge": "*",
-    "vite": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
+    "vite": ">=4.0.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/server-bridge": {
@@ -43,7 +43,7 @@
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.8.3",
-    "vite": "^7.1.12",
+    "vite": "^8.0.0",
     "vitest": "^4.0.0"
   },
   "keywords": [
@@ -70,6 +70,7 @@
   },
   "sideEffects": false,
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
   }
 }
