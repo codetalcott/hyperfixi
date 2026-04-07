@@ -56,26 +56,19 @@ describe('loadBehaviors', () => {
     closeDatabase();
   });
 
-  it('loads all 11 behavior patterns from the database', async () => {
+  it('loads all 4 behavior patterns from the database', async () => {
     const { runtime, compiled, executed } = createMockRuntime();
     const result = await loadBehaviors(runtime, { connectionOptions: connOptions });
 
     expect(result.errors).toEqual([]);
-    expect(result.loaded).toHaveLength(11);
-    expect(compiled).toHaveLength(11);
-    expect(executed).toHaveLength(11);
+    expect(result.loaded).toHaveLength(4);
+    expect(compiled).toHaveLength(4);
+    expect(executed).toHaveLength(4);
 
-    // Verify all expected behaviors are loaded
+    // Verify all expected behaviors are loaded (only hyperscript-driven behaviors)
     const expectedIds = [
-      'behavior-toggleable',
       'behavior-removable',
-      'behavior-autodismiss',
-      'behavior-clipboard',
       'behavior-draggable',
-      'behavior-clickoutside',
-      'behavior-scrollreveal',
-      'behavior-tabs',
-      'behavior-focustrap',
       'behavior-sortable',
       'behavior-resizable',
     ];
@@ -85,14 +78,14 @@ describe('loadBehaviors', () => {
   it('filters by name when names option is provided', async () => {
     const { runtime } = createMockRuntime();
     const result = await loadBehaviors(runtime, {
-      names: ['Toggleable', 'Clipboard'],
+      names: ['Removable', 'Draggable'],
       connectionOptions: connOptions,
     });
 
     expect(result.errors).toEqual([]);
     expect(result.loaded).toHaveLength(2);
-    expect(result.loaded).toContain('behavior-toggleable');
-    expect(result.loaded).toContain('behavior-clipboard');
+    expect(result.loaded).toContain('behavior-removable');
+    expect(result.loaded).toContain('behavior-draggable');
   });
 
   it('reports compile errors without crashing', async () => {
@@ -130,7 +123,7 @@ describe('loadBehaviors', () => {
   it('behavior patterns contain valid hyperscript source', async () => {
     const patterns = await getBehaviorPatterns(connOptions);
 
-    expect(patterns.length).toBe(11);
+    expect(patterns.length).toBe(4);
     for (const pattern of patterns) {
       // Every behavior source should start with "behavior" keyword
       expect(pattern.rawCode).toMatch(/^behavior\s+\w+\(/);

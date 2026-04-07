@@ -15,15 +15,8 @@ import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, resolve } from 'path';
 
 // Import behavior schemas as single source of truth
-import { toggleableSchema } from '../../behaviors/src/schemas/toggleable.schema';
 import { removableSchema } from '../../behaviors/src/schemas/removable.schema';
-import { autoDismissSchema } from '../../behaviors/src/schemas/autodismiss.schema';
-import { clipboardSchema } from '../../behaviors/src/schemas/clipboard.schema';
 import { draggableSchema } from '../../behaviors/src/schemas/draggable.schema';
-import { clickOutsideSchema } from '../../behaviors/src/schemas/clickoutside.schema';
-import { scrollRevealSchema } from '../../behaviors/src/schemas/scrollreveal.schema';
-import { tabsSchema } from '../../behaviors/src/schemas/tabs.schema';
-import { focusTrapSchema } from '../../behaviors/src/schemas/focustrap.schema';
 import { sortableSchema } from '../../behaviors/src/schemas/sortable.schema';
 import { resizableSchema } from '../../behaviors/src/schemas/resizable.schema';
 import type { BehaviorSchema } from '../../behaviors/src/schemas/types';
@@ -227,49 +220,14 @@ interface SeedExample {
  */
 const BEHAVIOR_SCHEMAS: { schema: BehaviorSchema; description: string }[] = [
   {
-    schema: toggleableSchema,
-    description:
-      'Toggles a CSS class on click. Use: install Toggleable or install Toggleable(cls: "highlighted", target: "#menu")',
-  },
-  {
     schema: removableSchema,
     description:
       'Removes element on click with optional confirmation and fade effect. Use: install Removable(confirmRemoval: true, effect: "fade")',
   },
   {
-    schema: autoDismissSchema,
-    description:
-      'Auto-removes element after a delay (toast/flash). Use: install AutoDismiss(delay: 3000, effect: "fade")',
-  },
-  {
-    schema: clipboardSchema,
-    description:
-      'Copies text to clipboard on click with visual feedback. Use: install Clipboard(source: "#code-snippet")',
-  },
-  {
     schema: draggableSchema,
     description:
       'Makes element draggable with pointer events. Use: install Draggable(dragHandle: ".titlebar")',
-  },
-  {
-    schema: clickOutsideSchema,
-    description:
-      'Fires clickoutside event when user clicks outside the element. Use: install ClickOutside',
-  },
-  {
-    schema: scrollRevealSchema,
-    description:
-      'Reveals element when it enters viewport via IntersectionObserver. Use: install ScrollReveal(cls: "visible", once: true)',
-  },
-  {
-    schema: tabsSchema,
-    description:
-      'WAI-ARIA compliant tabs with roving tabindex keyboard navigation. Use: install Tabs(orientation: "vertical")',
-  },
-  {
-    schema: focusTrapSchema,
-    description:
-      'Confines Tab navigation inside an element with ARIA support. Use: install FocusTrap(initialFocus: "#first-input")',
   },
   {
     schema: sortableSchema,
