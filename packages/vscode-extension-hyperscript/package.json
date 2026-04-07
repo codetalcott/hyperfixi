@@ -201,7 +201,7 @@
     "compile": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode",
     "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
-    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@hyperfixi/core --external:@lokascript/semantic --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
+    "bundle:server": "node build-server.mjs",
     "package": "vsce package --no-dependencies",
     "publish": "vsce publish --no-dependencies"
   },
