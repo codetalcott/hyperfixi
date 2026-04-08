@@ -49,7 +49,8 @@ export type InterchangeNode =
   | RepeatNode
   | ForEachNode
   | WhileNode
-  | PositionalNode;
+  | PositionalNode
+  | ErrorNode;
 
 /**
  * Base fields shared by all nodes. Not used directly — use InterchangeNode.
@@ -132,6 +133,12 @@ export interface PositionalNode extends BaseNode {
   readonly type: 'positional';
   readonly position: 'first' | 'last' | 'next' | 'previous' | 'closest' | 'parent' | 'random';
   readonly target?: InterchangeNode;
+}
+
+export interface ErrorNode extends BaseNode {
+  readonly type: 'error';
+  readonly message: string;
+  readonly token?: string;
 }
 
 // =============================================================================

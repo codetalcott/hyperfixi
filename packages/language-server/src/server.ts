@@ -57,6 +57,7 @@ import {
 } from './extraction.js';
 import { getWordAtPosition, escapeRegExp, findNextNonEmptyLine } from './utils.js';
 import { formatHyperscript } from './formatting.js';
+import { runSimpleDiagnostics } from './simple-diagnostics.js';
 
 // Chevrotain-based parser for enhanced diagnostics and content assist (Phase 5.2)
 import {
@@ -695,21 +696,50 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     }
   }
 
-  // Try AST-based analysis via interchange format (works in both modes)
-  if (diagnostics.length === 0 && interchangeLSP && parseFunction && fromCoreASTFn) {
+  // AST-based analysis via interchange format (works in both modes)
+  // Always runs when core is available — produces parse errors + complexity diagnostics
+  if (parseFunction && fromCoreASTFn) {
     try {
-      const ast = parseFunction(code);
-      if (ast) {
-        const interchange = fromCoreASTFn(ast);
-        const nodes = interchange.type === 'event' ? [interchange] : [interchange];
-        const astDiagnostics = interchangeLSP.interchangeToLSPDiagnostics(nodes, { source: brand });
-        diagnostics.push(...astDiagnostics);
+      const parseResult = parseFunction(code);
+
+      // Surface parse errors as diagnostics
+      if (parseResult.errors?.length) {
+        for (const err of parseResult.errors) {
+          diagnostics.push({
+            range: {
+              start: {
+                line: Math.max(0, (err.line ?? 1) - 1),
+                character: Math.max(0, err.column ?? 0),
+              },
+              end: {
+                line: Math.max(0, (err.line ?? 1) - 1),
+                character: Math.max(0, err.column ?? 0) + 10,
+              },
+            },
+            severity: DiagnosticSeverity.Error,
+            code: 'parse-error',
+            source: brand,
+            message: err.message,
+          });
+        }
+      }
+
+      // Convert partial/full AST to interchange for complexity diagnostics
+      if (parseResult.node && interchangeLSP) {
+        const interchange = fromCoreASTFn(parseResult.node);
+        if (interchange && interchange.type !== 'literal') {
+          const nodes = Array.isArray(interchange) ? interchange : [interchange];
+          const astDiagnostics = interchangeLSP.interchangeToLSPDiagnostics(nodes, {
+            source: brand,
+          });
+          diagnostics.push(...astDiagnostics);
+        }
       }
     } catch (parseError: any) {
       diagnostics.push({
         range: {
           start: { line: 0, character: 0 },
-          end: { line: 0, character: code.length },
+          end: { line: 0, character: Math.min(code.length, 80) },
         },
         severity: DiagnosticSeverity.Error,
         code: 'parse-error',
@@ -772,56 +802,6 @@ function offsetToLineChar(text: string, offset: number): { line: number; charact
     }
   }
   return { line, character: col };
-}
-
-function runSimpleDiagnostics(code: string, _language: string): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  const lines = code.split('\n');
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Unmatched quotes — strip possessive 's before counting single quotes
-    const withoutPossessives = line.replace(/'s\b/g, '');
-    const singleQuotes = (withoutPossessives.match(/'/g) || []).length;
-    const doubleQuotes = (line.match(/"/g) || []).length;
-
-    if (singleQuotes % 2 !== 0) {
-      diagnostics.push({
-        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
-        severity: DiagnosticSeverity.Error,
-        code: 'unmatched-quote',
-        source: 'lokascript',
-        message: 'Unmatched single quote',
-      });
-    }
-
-    if (doubleQuotes % 2 !== 0) {
-      diagnostics.push({
-        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
-        severity: DiagnosticSeverity.Error,
-        code: 'unmatched-quote',
-        source: 'lokascript',
-        message: 'Unmatched double quote',
-      });
-    }
-  }
-
-  // Check for unbalanced parentheses/brackets
-  const openParens = (code.match(/\(/g) || []).length;
-  const closeParens = (code.match(/\)/g) || []).length;
-
-  if (openParens !== closeParens) {
-    diagnostics.push({
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
-      severity: DiagnosticSeverity.Error,
-      code: 'unbalanced-parens',
-      source: 'lokascript',
-      message: `Unbalanced parentheses: ${openParens} open, ${closeParens} close`,
-    });
-  }
-
-  return diagnostics;
 }
 
 // =============================================================================
@@ -1220,9 +1200,9 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
 function tryGetLSE(code: string): string | null {
   if (!interchangeLSP || !parseFunction || !fromCoreASTFn || !frameworkIR) return null;
   try {
-    const ast = parseFunction(code);
-    if (!ast) return null;
-    const interchange = fromCoreASTFn(ast);
+    const parseResult = parseFunction(code);
+    if (!parseResult.node) return null;
+    const interchange = fromCoreASTFn(parseResult.node);
     if (!interchange) return null;
     const semanticNode = frameworkIR.fromInterchangeNode(interchange);
     return frameworkIR.renderExplicit(semanticNode);

@@ -148,6 +148,18 @@ export function interchangeToLSPDiagnostics(
   const diagnostics: Diagnostic[] = [];
 
   for (const node of nodes) {
+    // Surface error nodes from resilient parsing as diagnostics
+    if (node.type === 'error') {
+      diagnostics.push({
+        range: nodeToRange(node),
+        severity: DiagnosticSeverity.Error,
+        code: 'parse-error',
+        source,
+        message: (node as any).message ?? 'Parse error',
+      });
+      continue;
+    }
+
     const cyclomatic = calculateCyclomatic(node);
     const cognitive = calculateCognitive(node);
     const smells = detectSmells(node);

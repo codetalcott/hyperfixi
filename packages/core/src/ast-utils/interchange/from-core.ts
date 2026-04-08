@@ -52,8 +52,26 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
       return convertCommand(node);
     case 'CommandSequence':
       return convertCommandSequence(node);
+    case 'Program': {
+      // Program node wraps multiple top-level features (event handlers, behaviors, etc.)
+      const statements = (node.statements ?? []) as CoreNode[];
+      if (statements.length === 1) {
+        return fromCoreAST(statements[0]);
+      }
+      // Return the first event handler or command; LSP processes one region at a time
+      return fromCoreAST(statements[0]);
+    }
     case 'block':
       return convertBlock(node);
+
+    // Error nodes from resilient parsing
+    case 'errorCommand':
+      return {
+        type: 'error' as const,
+        message: (node.message as string) ?? 'Parse error',
+        token: (node.token as string) ?? undefined,
+        ...pos(node),
+      };
 
     // Expression types
     case 'literal':
