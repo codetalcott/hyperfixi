@@ -18,6 +18,7 @@ import {
   // Tokens
   WhiteSpace,
   StringLiteral,
+  TemplateLiteral,
   NumberLiteral,
   CSSSelector,
   AttributeSelector,
@@ -521,6 +522,7 @@ class HyperscriptParser extends CstParser {
       this.OR([
         { ALT: () => this.CONSUME(Identifier) },
         { ALT: () => this.CONSUME(StringLiteral) },
+        { ALT: () => this.CONSUME(TemplateLiteral) },
         { ALT: () => this.CONSUME(NumberLiteral) },
         { ALT: () => this.CONSUME(CSSSelector) },
         { ALT: () => this.CONSUME(LocalVariable) },
@@ -611,6 +613,7 @@ class HyperscriptParser extends CstParser {
     });
     this.OR2([
       { ALT: () => this.CONSUME(StringLiteral) },
+      { ALT: () => this.CONSUME(TemplateLiteral) },
       { ALT: () => this.CONSUME(NumberLiteral) },
       { ALT: () => this.CONSUME(CSSSelector) },
       { ALT: () => this.CONSUME(AttributeSelector) },

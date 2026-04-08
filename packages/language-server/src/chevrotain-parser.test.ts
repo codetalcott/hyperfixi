@@ -128,6 +128,45 @@ describe('Chevrotain Lexer', () => {
     expect(nonWS[0].tokenType.name).toBe('Cmd_fetch');
     expect(nonWS[1].tokenType.name).toBe('URLLiteral');
   });
+
+  it('tokenizes string with escaped quotes', () => {
+    const result = hyperscriptLexer.tokenize("put 'it\\'s fine' into #msg");
+    expect(result.errors).toHaveLength(0);
+
+    const nonWS = result.tokens.filter(t => t.tokenType.name !== 'WhiteSpace');
+    expect(nonWS[0].tokenType.name).toBe('Cmd_put');
+    expect(nonWS[1].tokenType.name).toBe('StringLiteral');
+    expect(nonWS[1].image).toBe("'it\\'s fine'");
+  });
+
+  it('tokenizes template literal with backticks', () => {
+    const result = hyperscriptLexer.tokenize('fetch `https://api.com` as json');
+    expect(result.errors).toHaveLength(0);
+
+    const nonWS = result.tokens.filter(t => t.tokenType.name !== 'WhiteSpace');
+    expect(nonWS[0].tokenType.name).toBe('Cmd_fetch');
+    expect(nonWS[1].tokenType.name).toBe('TemplateLiteral');
+    expect(nonWS[1].image).toBe('`https://api.com`');
+  });
+
+  it('tokenizes possessive before property', () => {
+    const result = hyperscriptLexer.tokenize("#count's textContent");
+    expect(result.errors).toHaveLength(0);
+
+    const nonWS = result.tokens.filter(t => t.tokenType.name !== 'WhiteSpace');
+    expect(nonWS[0].tokenType.name).toBe('CSSSelector');
+    expect(nonWS[1].tokenType.name).toBe('PossessiveS');
+    expect(nonWS[2].tokenType.name).toBe('Identifier');
+    expect(nonWS[2].image).toBe('textContent');
+  });
+
+  it('tokenizes double-quoted string with embedded single quotes', () => {
+    const result = hyperscriptLexer.tokenize('put "she said \'hello\'" into #msg');
+    expect(result.errors).toHaveLength(0);
+
+    const nonWS = result.tokens.filter(t => t.tokenType.name !== 'WhiteSpace');
+    expect(nonWS[1].tokenType.name).toBe('StringLiteral');
+  });
 });
 
 // =============================================================================

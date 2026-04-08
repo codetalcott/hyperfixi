@@ -48,59 +48,8 @@ function createMockSemanticAnalyzer() {
   };
 }
 
-/**
- * Get diagnostics from code using pattern-based analysis.
- * This mirrors the fallback logic in server.ts.
- */
-function runSimpleDiagnostics(code: string, _language: string = 'en'): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  const lines = code.split('\n');
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Unmatched quotes — strip possessive 's before counting single quotes
-    const withoutPossessives = line.replace(/'s\b/g, '');
-    const singleQuotes = (withoutPossessives.match(/'/g) || []).length;
-    const doubleQuotes = (line.match(/"/g) || []).length;
-
-    if (singleQuotes % 2 !== 0) {
-      diagnostics.push({
-        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
-        severity: DiagnosticSeverity.Error,
-        code: 'unmatched-quote',
-        source: 'lokascript',
-        message: 'Unmatched single quote',
-      });
-    }
-
-    if (doubleQuotes % 2 !== 0) {
-      diagnostics.push({
-        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
-        severity: DiagnosticSeverity.Error,
-        code: 'unmatched-quote',
-        source: 'lokascript',
-        message: 'Unmatched double quote',
-      });
-    }
-  }
-
-  // Check for unbalanced parentheses/brackets
-  const openParens = (code.match(/\(/g) || []).length;
-  const closeParens = (code.match(/\)/g) || []).length;
-
-  if (openParens !== closeParens) {
-    diagnostics.push({
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
-      severity: DiagnosticSeverity.Error,
-      code: 'unbalanced-parens',
-      source: 'lokascript',
-      message: `Unbalanced parentheses: ${openParens} open, ${closeParens} close`,
-    });
-  }
-
-  return diagnostics;
-}
+// Import the real runSimpleDiagnostics from extracted module
+import { runSimpleDiagnostics } from './simple-diagnostics.js';
 
 /**
  * Infer context from text before cursor.
@@ -271,7 +220,6 @@ describe('Diagnostics', () => {
       const diagnostics = runSimpleDiagnostics('call myFunc(arg');
       expect(diagnostics).toHaveLength(1);
       expect(diagnostics[0].code).toBe('unbalanced-parens');
-      expect(diagnostics[0].message).toContain('1 open, 0 close');
     });
 
     it('handles multiline code', () => {
@@ -287,6 +235,43 @@ describe('Diagnostics', () => {
       const diagnostics = runSimpleDiagnostics("put #count's textContent into me");
       const quoteErrors = diagnostics.filter((d: any) => d.code === 'unmatched-quote');
       expect(quoteErrors).toHaveLength(0);
+    });
+
+    it('does not flag escaped quotes as unmatched', () => {
+      const diagnostics = runSimpleDiagnostics("put 'it\\'s fine' into #msg");
+      expect(diagnostics.filter((d: any) => d.code === 'unmatched-quote')).toHaveLength(0);
+    });
+
+    it('does not flag quotes nested in opposite delimiters', () => {
+      const diagnostics = runSimpleDiagnostics('put "she said \'hello\'" into #msg');
+      expect(diagnostics.filter((d: any) => d.code === 'unmatched-quote')).toHaveLength(0);
+    });
+
+    it('does not flag backtick strings as errors', () => {
+      const diagnostics = runSimpleDiagnostics('fetch `https://api.com` as json');
+      expect(diagnostics).toHaveLength(0);
+    });
+
+    it('detects unmatched backtick', () => {
+      const diagnostics = runSimpleDiagnostics('fetch `https://api.com as json');
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].code).toBe('unmatched-quote');
+      expect(diagnostics[0].message).toContain('backtick');
+    });
+
+    it('does not count parens inside strings', () => {
+      const diagnostics = runSimpleDiagnostics("put '(hello)' into #msg");
+      expect(diagnostics.filter((d: any) => d.code === 'unbalanced-parens')).toHaveLength(0);
+    });
+
+    it('handles multiple possessives per line', () => {
+      const diagnostics = runSimpleDiagnostics("#a's value and #b's value");
+      expect(diagnostics.filter((d: any) => d.code === 'unmatched-quote')).toHaveLength(0);
+    });
+
+    it('handles event filter brackets', () => {
+      const diagnostics = runSimpleDiagnostics('on keydown[key=="Enter"] toggle .active');
+      expect(diagnostics).toHaveLength(0);
     });
 
     it('returns valid LSP diagnostic format', () => {

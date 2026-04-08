@@ -74,7 +74,8 @@ await build({
     '@lokascript/framework': resolve(shimDir, 'lokascript-framework.ts'),
     '@hyperfixi/core': resolve(shimDir, 'hyperfixi-core.ts'),
     '@hyperfixi/core/ast-utils': resolve(shimDir, 'hyperfixi-core-ast-utils.ts'),
-    '@hyperfixi/core/lsp-metadata': resolve(shimDir, 'hyperfixi-core-lsp-metadata.ts'),
+    // lsp-metadata is a pure data module with no core deps — bundle it directly
+    '@hyperfixi/core/lsp-metadata': resolve(__dirname, '../core/src/lsp-metadata.ts'),
   },
   plugins: [cleanLogsPlugin],
   logLevel: 'info',

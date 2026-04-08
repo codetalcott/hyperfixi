@@ -135,7 +135,8 @@ function buildTokenDefs(keywords: Map<string, Set<string>>): TokenDef[] {
   // Pattern strings are written as regex literals in the output file
   tokens.push(
     { name: 'WhiteSpace', pattern: String.raw`/\s+/`, category: 'whitespace' },
-    { name: 'StringLiteral', pattern: String.raw`/'[^']*'|"[^"]*"/`, category: 'literal' },
+    { name: 'StringLiteral', pattern: String.raw`/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/`, category: 'literal' },
+    { name: 'TemplateLiteral', pattern: '/`(?:[^`\\\\]|\\\\.)*`/', category: 'literal' },
     { name: 'NumberLiteral', pattern: String.raw`/\d+(\.\d+)?/`, category: 'literal' },
     { name: 'CSSSelector', pattern: String.raw`/[#.][a-zA-Z_][\w-]*/`, category: 'selector' },
     { name: 'AttributeSelector', pattern: String.raw`/@[a-zA-Z_][\w-]*/`, category: 'selector' },
@@ -147,6 +148,7 @@ function buildTokenDefs(keywords: Map<string, Set<string>>): TokenDef[] {
     { name: 'RParen', pattern: String.raw`/\)/` },
     { name: 'Comma', pattern: `/,/` },
     { name: 'Dot', pattern: String.raw`/\./` },
+    { name: 'PossessiveS', pattern: String.raw`/'s(?=[\s),.\]}|])/` },
   );
 
   // Event names — skip those that duplicate command names (focus, blur are both events and commands)
@@ -316,7 +318,7 @@ function generateOutput(
 
   // Literals before identifiers
   lines.push('  // Literals');
-  lines.push('  StringLiteral, NumberLiteral, URLLiteral,');
+  lines.push('  StringLiteral, TemplateLiteral, PossessiveS, NumberLiteral, URLLiteral,');
 
   // Selectors
   lines.push('  // Selectors');

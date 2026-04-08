@@ -20,7 +20,8 @@ export const Identifier = createToken({ name: 'Identifier', pattern: /[a-zA-Z\u0
 export const WhiteSpace = createToken({ name: 'WhiteSpace', pattern: /\s+/ });
 
 // --- literal ---
-export const StringLiteral = createToken({ name: 'StringLiteral', pattern: /'[^']*'|"[^"]*"/ });
+export const StringLiteral = createToken({ name: 'StringLiteral', pattern: /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/ });
+export const TemplateLiteral = createToken({ name: 'TemplateLiteral', pattern: /`(?:[^`\\]|\\.)*`/ });
 export const NumberLiteral = createToken({ name: 'NumberLiteral', pattern: /\d+(\.\d+)?/ });
 export const URLLiteral = createToken({ name: 'URLLiteral', pattern: /\/[a-zA-Z0-9_\-.\/]+/ });
 
@@ -38,7 +39,7 @@ export const LParen = createToken({ name: 'LParen', pattern: /\(/ });
 export const RParen = createToken({ name: 'RParen', pattern: /\)/ });
 export const Comma = createToken({ name: 'Comma', pattern: /,/ });
 export const Dot = createToken({ name: 'Dot', pattern: /\./ });
-export const PossessiveS = createToken({ name: 'PossessiveS', pattern: /'s(?=\s)/ });
+export const PossessiveS = createToken({ name: 'PossessiveS', pattern: /'s(?=[\s),.\]}|])/ });
 
 // --- keyword ---
 export const Kw_previous = createToken({ name: 'Kw_previous', pattern: /previous/, longer_alt: Identifier });
@@ -177,7 +178,7 @@ export const allTokens: TokenType[] = [
   // Whitespace
   WhiteSpace,
   // Literals
-  StringLiteral, PossessiveS, NumberLiteral, URLLiteral,
+  StringLiteral, TemplateLiteral, PossessiveS, NumberLiteral, URLLiteral,
   // Selectors
   CSSSelector, AttributeSelector, HTMLSelector,
   // Variables

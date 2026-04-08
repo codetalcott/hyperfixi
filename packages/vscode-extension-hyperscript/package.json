@@ -203,7 +203,8 @@
     "typecheck": "tsc --noEmit",
     "bundle:server": "node build-server.mjs",
     "package": "vsce package --no-dependencies",
-    "publish": "vsce publish --no-dependencies"
+    "publish": "vsce publish --no-dependencies",
+    "dev:install": "npm run compile && npm run bundle:server && node scripts/dev-install.mjs"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",
