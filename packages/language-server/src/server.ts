@@ -59,12 +59,8 @@ import { getWordAtPosition, escapeRegExp, findNextNonEmptyLine } from './utils.j
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics } from './simple-diagnostics.js';
 
-// Chevrotain-based parser for enhanced diagnostics and content assist (Phase 5.2)
-import {
-  parseWithRecovery,
-  getContentAssist,
-  type ChevrotainDiagnostic,
-} from './chevrotain-parser.js';
+// Chevrotain-based content assist (Phase 5.2) — diagnostics removed (grammar too incomplete)
+import { getContentAssist } from './chevrotain-parser.js';
 
 // Localized descriptions for completions and hover (Phase 7.3)
 import { getCommandDescription } from './localized-descriptions.js';
@@ -749,56 +745,15 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     }
   }
 
-  // Chevrotain-based structural analysis (Phase 5.2)
-  // Supplements semantic/AST diagnostics with error recovery-based parsing
-  if (diagnostics.length === 0) {
-    try {
-      const chevrotainResult = parseWithRecovery(code);
-      for (const diag of chevrotainResult.diagnostics) {
-        const lines = code.split('\n');
-        const { line: startLine, character: startChar } = offsetToLineChar(code, diag.startOffset);
-        const { line: endLine, character: endChar } = offsetToLineChar(code, diag.endOffset);
-        diagnostics.push({
-          range: {
-            start: { line: startLine, character: startChar },
-            end: { line: endLine, character: endChar },
-          },
-          // Chevrotain grammar is incomplete — downgrade all to Hint
-          // to avoid false positives on valid constructs (my, possessives, etc.)
-          severity: DiagnosticSeverity.Hint,
-          code: diag.code,
-          source: brand,
-          message: diag.message,
-        });
-      }
-    } catch (e) {
-      connection.console.log(`[${brand}-ls] Chevrotain parsing failed: ${e}`);
-    }
-  }
-
-  // Fallback: simple pattern-based analysis
+  // Simple pattern-based analysis (quote/bracket validation)
+  // Always runs — the state machine handles possessives, escaped quotes, etc.
+  // correctly, unlike the Chevrotain grammar which produces false positives
   if (diagnostics.length === 0) {
     const simpleDiagnostics = runSimpleDiagnostics(code, language);
-    // Update source to match current branding
     diagnostics.push(...simpleDiagnostics.map(d => ({ ...d, source: brand })));
   }
 
   return diagnostics.slice(0, globalSettings.maxDiagnostics);
-}
-
-/** Convert a byte offset to {line, character} in a string */
-function offsetToLineChar(text: string, offset: number): { line: number; character: number } {
-  let line = 0;
-  let col = 0;
-  for (let i = 0; i < offset && i < text.length; i++) {
-    if (text[i] === '\n') {
-      line++;
-      col = 0;
-    } else {
-      col++;
-    }
-  }
-  return { line, character: col };
 }
 
 // =============================================================================
