@@ -30,6 +30,7 @@ import {
   RParen,
   Comma,
   Dot,
+  PossessiveS,
   // Structural keywords
   Kw_on,
   Kw_then,
@@ -199,10 +200,15 @@ class HyperscriptParser extends CstParser {
     this.OPTION(() => {
       this.SUBRULE(this.eventModifiers);
     });
+    // Event filter: 'in <selector>' or 'from <selector>'
     this.OPTION2(() => {
-      this.SUBRULE(this.commandChain);
+      this.OR2([{ ALT: () => this.CONSUME(Kw_in) }, { ALT: () => this.CONSUME(Kw_from) }]);
+      this.SUBRULE(this.selectorOrExpression);
     });
     this.OPTION3(() => {
+      this.SUBRULE(this.commandChain);
+    });
+    this.OPTION4(() => {
       this.CONSUME(Kw_end);
     });
   });
@@ -582,6 +588,13 @@ class HyperscriptParser extends CstParser {
           ALT: () => {
             this.CONSUME(Dot);
             this.CONSUME(Identifier);
+          },
+        },
+        {
+          // Possessive property access: #element's property
+          ALT: () => {
+            this.CONSUME(PossessiveS);
+            this.CONSUME2(Identifier);
           },
         },
       ]);

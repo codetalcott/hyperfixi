@@ -38,6 +38,7 @@ export const LParen = createToken({ name: 'LParen', pattern: /\(/ });
 export const RParen = createToken({ name: 'RParen', pattern: /\)/ });
 export const Comma = createToken({ name: 'Comma', pattern: /,/ });
 export const Dot = createToken({ name: 'Dot', pattern: /\./ });
+export const PossessiveS = createToken({ name: 'PossessiveS', pattern: /'s(?=\s)/ });
 
 // --- keyword ---
 export const Kw_previous = createToken({ name: 'Kw_previous', pattern: /previous/, longer_alt: Identifier });
@@ -176,7 +177,7 @@ export const allTokens: TokenType[] = [
   // Whitespace
   WhiteSpace,
   // Literals
-  StringLiteral, NumberLiteral, URLLiteral,
+  StringLiteral, PossessiveS, NumberLiteral, URLLiteral,
   // Selectors
   CSSSelector, AttributeSelector, HTMLSelector,
   // Variables
