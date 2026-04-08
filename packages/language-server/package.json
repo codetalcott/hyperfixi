@@ -13,8 +13,7 @@
     "dev": "tsx src/server.ts --stdio",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
-    "generate:chevrotain-grammar": "npx tsx scripts/generate-chevrotain-grammar.ts"
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "keywords": [
     "lsp",
@@ -28,7 +27,6 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "chevrotain": "^12.0.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.11"
   },

@@ -59,9 +59,6 @@ import { getWordAtPosition, escapeRegExp, findNextNonEmptyLine } from './utils.j
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics } from './simple-diagnostics.js';
 
-// Chevrotain-based content assist (Phase 5.2) — diagnostics removed (grammar too incomplete)
-import { getContentAssist } from './chevrotain-parser.js';
-
 // Localized descriptions for completions and hover (Phase 7.3)
 import { getCommandDescription } from './localized-descriptions.js';
 
@@ -797,35 +794,7 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
     const offset = document.offsetAt(position);
     const beforeCursor = text.slice(0, offset);
     const context = inferContext(beforeCursor);
-    const completions = getContextualCompletions(context, language);
-
-    // Supplement with Chevrotain content assist (Phase 5.2)
-    try {
-      const chevrotainSuggestions = getContentAssist(beforeCursor, offset);
-      const existingLabels = new Set(completions.map(c => c.label));
-      for (const s of chevrotainSuggestions) {
-        if (existingLabels.has(s.label)) continue; // No duplicates
-        completions.push({
-          label: s.label,
-          kind:
-            s.kind === 'command'
-              ? CompletionItemKind.Method
-              : s.kind === 'event'
-                ? CompletionItemKind.Event
-                : s.kind === 'selector'
-                  ? CompletionItemKind.Field
-                  : s.kind === 'variable'
-                    ? CompletionItemKind.Variable
-                    : CompletionItemKind.Keyword,
-          detail: s.detail,
-          insertText: s.insertText,
-        });
-      }
-    } catch {
-      // Chevrotain content assist failed — rely on existing completions
-    }
-
-    return completions;
+    return getContextualCompletions(context, language);
   }
 });
 
@@ -1006,6 +975,25 @@ function getContextualCompletions(context: string, language: string): Completion
           }
         );
       }
+      // Role markers (prepositions used after commands)
+      completions.push(
+        { label: getKeyword('to'), kind: CompletionItemKind.Keyword, detail: 'Target destination' },
+        { label: getKeyword('from'), kind: CompletionItemKind.Keyword, detail: 'Source element' },
+        {
+          label: getKeyword('into'),
+          kind: CompletionItemKind.Keyword,
+          detail: 'Insert destination',
+        },
+        { label: getKeyword('on'), kind: CompletionItemKind.Keyword, detail: 'Target element' },
+        { label: getKeyword('with'), kind: CompletionItemKind.Keyword, detail: 'Options/data' },
+        { label: getKeyword('by'), kind: CompletionItemKind.Keyword, detail: 'Amount/method' },
+        { label: getKeyword('as'), kind: CompletionItemKind.Keyword, detail: 'Type/format' },
+        {
+          label: getKeyword('then'),
+          kind: CompletionItemKind.Keyword,
+          detail: 'Chain next command',
+        }
+      );
       break;
 
     case 'expression':
