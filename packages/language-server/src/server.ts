@@ -281,6 +281,91 @@ const FALLBACK_HOVER_DOCS: Record<string, { title: string; description: string; 
       description: 'Alias for it - the result of the last expression.',
       example: 'call myFunction() then log result',
     },
+    increment: {
+      title: 'increment',
+      description: 'Increases a numeric value by 1 (or a specified amount).',
+      example: 'increment #count',
+    },
+    decrement: {
+      title: 'decrement',
+      description: 'Decreases a numeric value by 1 (or a specified amount).',
+      example: 'decrement #count',
+    },
+    append: {
+      title: 'append',
+      description: 'Appends content to an element.',
+      example: 'append "<li>item</li>" to #list',
+    },
+    prepend: {
+      title: 'prepend',
+      description: 'Prepends content to an element.',
+      example: 'prepend "<li>first</li>" to #list',
+    },
+    take: {
+      title: 'take',
+      description: 'Takes a class from sibling elements (exclusive toggle).',
+      example: 'take .active from .tabs',
+    },
+    transition: {
+      title: 'transition',
+      description: 'Applies a CSS transition to an element.',
+      example: 'transition opacity to 0 over 500ms',
+    },
+    settle: {
+      title: 'settle',
+      description: 'Waits for CSS transitions to complete.',
+      example: 'add .fade then settle',
+    },
+    halt: {
+      title: 'halt',
+      description: 'Stops the current event from propagating.',
+      example: 'halt the event',
+    },
+    throw: {
+      title: 'throw',
+      description: 'Throws an error.',
+      example: 'throw "Something went wrong"',
+    },
+    return: {
+      title: 'return',
+      description: 'Returns a value from a function or behavior.',
+      example: 'return 42',
+    },
+    install: {
+      title: 'install',
+      description: 'Installs a behavior on an element.',
+      example: 'install Draggable(snap: true)',
+    },
+    default: {
+      title: 'default',
+      description: 'Sets a variable to a value only if it is not already set.',
+      example: 'default :count to 0',
+    },
+    then: {
+      title: 'then',
+      description: 'Chains commands together sequentially.',
+      example: 'add .active then wait 1s then remove .active',
+    },
+    end: {
+      title: 'end',
+      description: 'Closes a block (event handler, behavior, if, repeat).',
+      example: 'on click\\n  toggle .active\\nend',
+    },
+    async: {
+      title: 'async',
+      description: 'Runs a command asynchronously without blocking.',
+      example: 'async fetch /api/data',
+    },
+    tell: {
+      title: 'tell',
+      description: 'Sets the default target for subsequent commands.',
+      example: 'tell #modal then add .visible',
+    },
+    copy: {
+      title: 'copy',
+      description: 'Copies text to the clipboard.',
+      example: 'copy "Hello" to the clipboard',
+    },
   };
 
 const FALLBACK_EVENT_NAMES = [
@@ -696,8 +781,9 @@ function runSimpleDiagnostics(code: string, _language: string): Diagnostic[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Unmatched quotes
-    const singleQuotes = (line.match(/'/g) || []).length;
+    // Unmatched quotes — strip possessive 's before counting single quotes
+    const withoutPossessives = line.replace(/'s\b/g, '');
+    const singleQuotes = (withoutPossessives.match(/'/g) || []).length;
     const doubleQuotes = (line.match(/"/g) || []).length;
 
     if (singleQuotes % 2 !== 0) {

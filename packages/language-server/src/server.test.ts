@@ -59,8 +59,9 @@ function runSimpleDiagnostics(code: string, _language: string = 'en'): Diagnosti
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Unmatched quotes
-    const singleQuotes = (line.match(/'/g) || []).length;
+    // Unmatched quotes — strip possessive 's before counting single quotes
+    const withoutPossessives = line.replace(/'s\b/g, '');
+    const singleQuotes = (withoutPossessives.match(/'/g) || []).length;
     const doubleQuotes = (line.match(/"/g) || []).length;
 
     if (singleQuotes % 2 !== 0) {
@@ -280,6 +281,12 @@ describe('Diagnostics', () => {
       const diagnostics = runSimpleDiagnostics(code);
       expect(diagnostics).toHaveLength(1);
       expect(diagnostics[0].code).toBe('unmatched-quote');
+    });
+
+    it('does not flag possessive apostrophe as unmatched quote', () => {
+      const diagnostics = runSimpleDiagnostics("put #count's textContent into me");
+      const quoteErrors = diagnostics.filter((d: any) => d.code === 'unmatched-quote');
+      expect(quoteErrors).toHaveLength(0);
     });
 
     it('returns valid LSP diagnostic format', () => {
