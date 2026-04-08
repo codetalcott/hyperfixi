@@ -33,7 +33,9 @@ import {
   CodeActionParams,
   DidChangeConfigurationNotification,
   Location,
+  Range,
   TextEdit,
+  WorkspaceEdit,
   DocumentFormattingParams,
 } from 'vscode-languageserver/node.js';
 
@@ -47,17 +49,11 @@ import {
   getCommandsForMode,
   HYPERSCRIPT_COMMANDS,
 } from './command-tiers.js';
-import {
-  isHtmlDocument,
-  extractHyperscriptRegions,
-  offsetToPosition,
-  findRegionAtPosition,
-  findLineInRegion,
-  findCharInLine,
-} from './extraction.js';
-import { getWordAtPosition, escapeRegExp, findNextNonEmptyLine } from './utils.js';
+import { isHtmlDocument, extractHyperscriptRegions, findRegionAtPosition } from './extraction.js';
+import { getWordAtPosition, findNextNonEmptyLine } from './utils.js';
 import { formatHyperscript } from './formatting.js';
 import { runSimpleDiagnostics } from './simple-diagnostics.js';
+import { getSymbolTable, invalidateSymbolTable } from './symbol-table.js';
 
 // Localized descriptions for completions and hover (Phase 7.3)
 import { getCommandDescription } from './localized-descriptions.js';
@@ -485,6 +481,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
       },
       definitionProvider: true,
       referencesProvider: true,
+      renameProvider: { prepareProvider: true },
       documentFormattingProvider: true,
     },
   };
@@ -1324,154 +1321,8 @@ function resolveCanonicalKeyword(word: string, _language: string): string {
 }
 
 // =============================================================================
-// Go to Definition
+// Symbol Table Helpers
 // =============================================================================
-
-connection.onDefinition((params: TextDocumentPositionParams): Location | Location[] | null => {
-  try {
-    const document = documents.get(params.textDocument.uri);
-    if (!document) return null;
-
-    const text = document.getText();
-    const uri = document.uri;
-    const position = params.position;
-
-    // Get the word at the current position
-    let targetWord: string | null = null;
-
-    if (isHtmlDocument(uri, text)) {
-      // Find if cursor is inside a hyperscript region
-      const regions = extractHyperscriptRegions(text);
-      const found = findRegionAtPosition(regions, position.line, position.character);
-
-      if (!found) {
-        return null;
-      }
-
-      // Get the line within the region
-      const regionLines = found.region.code.split('\n');
-      const currentLine = regionLines[found.localLine];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, found.localChar);
-      if (!word) return null;
-
-      targetWord = word.text;
-    } else {
-      // Pure hyperscript file
-      const lines = text.split('\n');
-      const currentLine = lines[position.line];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, position.character);
-      if (!word) return null;
-
-      targetWord = word.text;
-    }
-
-    if (!targetWord) return null;
-
-    // Search for definitions in the document
-    const locations: Location[] = [];
-
-    // Get multilingual variants for behavior/def keywords
-    const behaviorVariants = getKeywordVariants('behavior');
-    const defVariants = getKeywordVariants('def');
-
-    // Pattern for behavior definitions: behavior Name
-    const behaviorPattern = new RegExp(
-      `\\b(${behaviorVariants.join('|')})\\s+(${escapeRegExp(targetWord)})\\b`,
-      'gi'
-    );
-
-    // Pattern for function definitions: def functionName
-    const defPattern = new RegExp(
-      `\\b(${defVariants.join('|')})\\s+(${escapeRegExp(targetWord)})\\b`,
-      'gi'
-    );
-
-    // Search in all hyperscript regions if HTML, or the entire file
-    if (isHtmlDocument(uri, text)) {
-      const regions = extractHyperscriptRegions(text);
-
-      for (const region of regions) {
-        // Search for behavior definitions
-        for (const match of region.code.matchAll(behaviorPattern)) {
-          const matchLine = findLineInRegion(region.code, match.index ?? 0);
-          const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-          locations.push({
-            uri: params.textDocument.uri,
-            range: {
-              start: {
-                line: region.startLine + matchLine,
-                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-              },
-              end: {
-                line: region.startLine + matchLine,
-                character:
-                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-              },
-            },
-          });
-        }
-
-        // Search for function definitions
-        for (const match of region.code.matchAll(defPattern)) {
-          const matchLine = findLineInRegion(region.code, match.index ?? 0);
-          const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-          locations.push({
-            uri: params.textDocument.uri,
-            range: {
-              start: {
-                line: region.startLine + matchLine,
-                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-              },
-              end: {
-                line: region.startLine + matchLine,
-                character:
-                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-              },
-            },
-          });
-        }
-      }
-    } else {
-      // Pure hyperscript file - search entire text
-      // Search for behavior definitions
-      for (const match of text.matchAll(behaviorPattern)) {
-        const pos = offsetToPosition(text, match.index ?? 0);
-        locations.push({
-          uri: params.textDocument.uri,
-          range: {
-            start: pos,
-            end: { line: pos.line, character: pos.character + match[0].length },
-          },
-        });
-      }
-
-      // Search for function definitions
-      for (const match of text.matchAll(defPattern)) {
-        const pos = offsetToPosition(text, match.index ?? 0);
-        locations.push({
-          uri: params.textDocument.uri,
-          range: {
-            start: pos,
-            end: { line: pos.line, character: pos.character + match[0].length },
-          },
-        });
-      }
-    }
-
-    if (locations.length === 0) return null;
-    if (locations.length === 1) return locations[0]!;
-    return locations;
-  } catch (error) {
-    connection.console.error(`Go to Definition error: ${error}`);
-    return null;
-  }
-});
 
 /**
  * Helper: Get all localized variants for a given canonical keyword
@@ -1503,6 +1354,51 @@ function getKeywordVariants(eng: string): string[] {
   return variants;
 }
 
+/** Get the cached symbol table for a document, extracting regions as needed. */
+function getDocSymbolTable(document: { uri: string; version: number; getText(): string }) {
+  const text = document.getText();
+  const uri = document.uri;
+  const regions = isHtmlDocument(uri, text)
+    ? extractHyperscriptRegions(text)
+    : [{ code: text, startLine: 0, startChar: 0, endLine: 0, endChar: 0, type: 'script' as const }];
+  return { table: getSymbolTable(uri, document.version, regions, getKeywordVariants), uri };
+}
+
+/** Convert a SymbolLocation to an LSP Location. */
+function symbolLocToLocation(
+  uri: string,
+  loc: { line: number; character: number; length: number }
+): Location {
+  return {
+    uri,
+    range: {
+      start: { line: loc.line, character: loc.character },
+      end: { line: loc.line, character: loc.character + loc.length },
+    },
+  };
+}
+
+// =============================================================================
+// Go to Definition
+// =============================================================================
+
+connection.onDefinition((params: TextDocumentPositionParams): Location | Location[] | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const { table, uri } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry || entry.definitions.length === 0) return null;
+
+    const locations = entry.definitions.map(loc => symbolLocToLocation(uri, loc));
+    return locations.length === 1 ? locations[0]! : locations;
+  } catch (error) {
+    connection.console.error(`Go to Definition error: ${error}`);
+    return null;
+  }
+});
+
 // =============================================================================
 // Find References
 // =============================================================================
@@ -1512,86 +1408,81 @@ connection.onReferences((params): Location[] | null => {
     const document = documents.get(params.textDocument.uri);
     if (!document) return null;
 
-    const text = document.getText();
-    const uri = document.uri;
-    const position = params.position;
+    const { table, uri } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry) return null;
 
-    // Get the word at the current position
-    let targetWord: string | null = null;
+    // Include both definitions and usages
+    const allLocs = [...entry.definitions, ...entry.usages];
+    if (allLocs.length === 0) return null;
 
-    if (isHtmlDocument(uri, text)) {
-      const regions = extractHyperscriptRegions(text);
-      const found = findRegionAtPosition(regions, position.line, position.character);
-
-      if (!found) return null;
-
-      const regionLines = found.region.code.split('\n');
-      const currentLine = regionLines[found.localLine];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, found.localChar);
-      if (!word) return null;
-
-      targetWord = word.text;
-    } else {
-      const lines = text.split('\n');
-      const currentLine = lines[position.line];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, position.character);
-      if (!word) return null;
-
-      targetWord = word.text;
-    }
-
-    if (!targetWord) return null;
-
-    // Search for all references (word boundaries)
-    const locations: Location[] = [];
-
-    // Pattern to find all occurrences of the word
-    const wordPattern = new RegExp(`\\b${escapeRegExp(targetWord)}\\b`, 'gi');
-
-    if (isHtmlDocument(uri, text)) {
-      const regions = extractHyperscriptRegions(text);
-
-      for (const region of regions) {
-        for (const match of region.code.matchAll(wordPattern)) {
-          const matchLine = findLineInRegion(region.code, match.index ?? 0);
-          const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-          locations.push({
-            uri: params.textDocument.uri,
-            range: {
-              start: {
-                line: region.startLine + matchLine,
-                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-              },
-              end: {
-                line: region.startLine + matchLine,
-                character:
-                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-              },
-            },
-          });
-        }
-      }
-    } else {
-      for (const match of text.matchAll(wordPattern)) {
-        const pos = offsetToPosition(text, match.index ?? 0);
-        locations.push({
-          uri: params.textDocument.uri,
-          range: {
-            start: pos,
-            end: { line: pos.line, character: pos.character + match[0].length },
-          },
-        });
-      }
-    }
-
-    return locations.length > 0 ? locations : null;
+    return allLocs.map(loc => symbolLocToLocation(uri, loc));
   } catch (error) {
     connection.console.error(`Find References error: ${error}`);
+    return null;
+  }
+});
+
+// =============================================================================
+// Rename
+// =============================================================================
+
+connection.onPrepareRename((params): { range: Range; placeholder: string } | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const { table } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry) return null;
+
+    // Find the specific location the cursor is on
+    const allLocs = [...entry.definitions, ...entry.usages];
+    for (const loc of allLocs) {
+      if (
+        loc.line === params.position.line &&
+        params.position.character >= loc.character &&
+        params.position.character < loc.character + loc.length
+      ) {
+        return {
+          range: {
+            start: { line: loc.line, character: loc.character },
+            end: { line: loc.line, character: loc.character + loc.length },
+          },
+          placeholder: entry.name,
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    connection.console.error(`Prepare Rename error: ${error}`);
+    return null;
+  }
+});
+
+connection.onRenameRequest((params): WorkspaceEdit | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const { table, uri } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry) return null;
+
+    const allLocs = [...entry.definitions, ...entry.usages];
+    if (allLocs.length === 0) return null;
+
+    const edits: TextEdit[] = allLocs.map(loc => ({
+      range: {
+        start: { line: loc.line, character: loc.character },
+        end: { line: loc.line, character: loc.character + loc.length },
+      },
+      newText: params.newName,
+    }));
+
+    return { changes: { [uri]: edits } };
+  } catch (error) {
+    connection.console.error(`Rename error: ${error}`);
     return null;
   }
 });

@@ -386,6 +386,24 @@ export function createErrorCommandNode(pos: Position, message: string, source?: 
 }
 
 /**
+ * Create a partial command node that preserves the command name for incomplete parses.
+ * Used when a command parser returns null (e.g., user is mid-typing "toggle" with no arguments yet).
+ * The LSP uses the name to offer command-specific argument completions.
+ */
+export function createPartialCommandNode(name: string, pos: Position): ASTNode {
+  return {
+    type: 'command',
+    name,
+    args: [],
+    partial: true,
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
  * Create a Program node that contains multiple top-level statements
  *
  * @param statements - Array of statement nodes

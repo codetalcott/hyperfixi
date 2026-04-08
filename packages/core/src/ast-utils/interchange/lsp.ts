@@ -284,6 +284,65 @@ export function interchangeToLSPHover(
   };
 }
 
+// Command-specific argument completions keyed by command name.
+// Each entry lists the typical next tokens after typing that command.
+const COMMAND_ARG_COMPLETIONS: Record<string, CompletionItem[]> = {
+  toggle: [
+    { label: '.', kind: CompletionItemKind.Value, detail: 'CSS class (e.g., .active)' },
+    { label: '@', kind: CompletionItemKind.Value, detail: 'Attribute (e.g., @hidden)' },
+    { label: 'me', kind: CompletionItemKind.Variable, detail: 'Current element' },
+  ],
+  add: [
+    { label: '.', kind: CompletionItemKind.Value, detail: 'CSS class to add' },
+    { label: '@', kind: CompletionItemKind.Value, detail: 'Attribute to add' },
+  ],
+  remove: [
+    { label: '.', kind: CompletionItemKind.Value, detail: 'CSS class to remove' },
+    { label: '@', kind: CompletionItemKind.Value, detail: 'Attribute to remove' },
+    { label: 'me', kind: CompletionItemKind.Variable, detail: 'Remove element' },
+  ],
+  set: [
+    { label: ':', kind: CompletionItemKind.Variable, detail: 'Local variable (e.g., :x)' },
+    { label: '$', kind: CompletionItemKind.Variable, detail: 'Global variable (e.g., $x)' },
+    { label: 'the', kind: CompletionItemKind.Keyword, detail: 'Property (e.g., the value of me)' },
+  ],
+  put: [
+    { label: 'it', kind: CompletionItemKind.Variable, detail: 'Last result' },
+    { label: 'the', kind: CompletionItemKind.Keyword, detail: 'Property value' },
+  ],
+  fetch: [
+    { label: '/', kind: CompletionItemKind.Value, detail: 'URL path' },
+    { label: 'as', kind: CompletionItemKind.Keyword, detail: 'Response type (e.g., as json)' },
+  ],
+  send: [{ label: 'to', kind: CompletionItemKind.Keyword, detail: 'Target element' }],
+  trigger: [{ label: 'on', kind: CompletionItemKind.Keyword, detail: 'Target element' }],
+  wait: [{ label: 'for', kind: CompletionItemKind.Keyword, detail: 'Wait for event' }],
+  show: [
+    { label: 'me', kind: CompletionItemKind.Variable, detail: 'Current element' },
+    { label: 'with', kind: CompletionItemKind.Keyword, detail: 'Animation' },
+  ],
+  hide: [
+    { label: 'me', kind: CompletionItemKind.Variable, detail: 'Current element' },
+    { label: 'with', kind: CompletionItemKind.Keyword, detail: 'Animation' },
+  ],
+};
+
+// Fallback completions for commands not in the map above
+const DEFAULT_COMMAND_ARG_COMPLETIONS: CompletionItem[] = [
+  { label: 'me', kind: CompletionItemKind.Variable, detail: 'Current element' },
+  { label: 'it', kind: CompletionItemKind.Variable, detail: 'Last result' },
+  { label: 'to', kind: CompletionItemKind.Keyword, detail: 'Target' },
+  { label: 'from', kind: CompletionItemKind.Keyword, detail: 'Source' },
+  { label: 'into', kind: CompletionItemKind.Keyword, detail: 'Destination' },
+  { label: 'with', kind: CompletionItemKind.Keyword, detail: 'Modifier' },
+  { label: 'then', kind: CompletionItemKind.Keyword, detail: 'Next command' },
+];
+
+/** Get argument completions for a command node (especially useful for partial/incomplete commands). */
+function getCommandArgumentCompletions(cmd: CommandNode): CompletionItem[] {
+  return COMMAND_ARG_COMPLETIONS[cmd.name] ?? DEFAULT_COMMAND_ARG_COMPLETIONS;
+}
+
 /**
  * Generate context-aware completions at a given position.
  */
@@ -315,6 +374,8 @@ export function interchangeToLSPCompletions(
         { label: 'if', kind: CompletionItemKind.Keyword, detail: 'Conditional' },
         { label: 'repeat', kind: CompletionItemKind.Keyword, detail: 'Loop' },
       ];
+    case 'command':
+      return getCommandArgumentCompletions(node as CommandNode);
     case 'if':
       return [
         { label: 'then', kind: CompletionItemKind.Keyword, detail: 'Then clause' },

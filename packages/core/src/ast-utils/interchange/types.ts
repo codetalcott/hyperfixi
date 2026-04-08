@@ -153,6 +153,8 @@ export interface CommandNode extends BaseNode {
   readonly modifiers?: Record<string, unknown>;
   /** Semantic roles from the semantic parser (patient, destination, source, etc.). */
   readonly roles?: Readonly<Record<string, InterchangeNode>>;
+  /** True when the command was incompletely parsed (mid-typing). */
+  readonly partial?: boolean;
 }
 
 export interface EventNode extends BaseNode {

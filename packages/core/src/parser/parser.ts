@@ -3196,7 +3196,10 @@ export class Parser {
         column: commandToken.column,
       };
       const result = this.parseCompoundCommand(identifierNode);
-      return result || (this.createErrorNode() as unknown as CommandNode);
+      return (
+        result ||
+        (astHelpers.createPartialCommandNode(lowerName, this.getPosition()) as CommandNode)
+      );
     }
 
     const args: ASTNode[] = [];
