@@ -149,6 +149,18 @@ describe('Chevrotain Lexer', () => {
     expect(nonWS[1].image).toBe('`https://api.com`');
   });
 
+  it('tokenizes possessive followed by string literal', () => {
+    const result = hyperscriptLexer.tokenize("put #count's textContent then set :msg to 'hello'");
+    expect(result.errors).toHaveLength(0);
+
+    const nonWS = result.tokens.filter(t => t.tokenType.name !== 'WhiteSpace');
+    const possessiveIdx = nonWS.findIndex(t => t.tokenType.name === 'PossessiveS');
+    const stringIdx = nonWS.findIndex(t => t.tokenType.name === 'StringLiteral');
+    expect(possessiveIdx).toBeGreaterThan(-1);
+    expect(stringIdx).toBeGreaterThan(possessiveIdx);
+    expect(nonWS[stringIdx].image).toBe("'hello'");
+  });
+
   it('tokenizes possessive before property', () => {
     const result = hyperscriptLexer.tokenize("#count's textContent");
     expect(result.errors).toHaveLength(0);

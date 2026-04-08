@@ -763,12 +763,9 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
             start: { line: startLine, character: startChar },
             end: { line: endLine, character: endChar },
           },
-          severity:
-            diag.severity === 'error'
-              ? DiagnosticSeverity.Error
-              : diag.severity === 'warning'
-                ? DiagnosticSeverity.Warning
-                : DiagnosticSeverity.Information,
+          // Chevrotain grammar is incomplete — downgrade all to Hint
+          // to avoid false positives on valid constructs (my, possessives, etc.)
+          severity: DiagnosticSeverity.Hint,
           code: diag.code,
           source: brand,
           message: diag.message,

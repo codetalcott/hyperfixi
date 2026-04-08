@@ -318,7 +318,7 @@ function generateOutput(
 
   // Literals before identifiers
   lines.push('  // Literals');
-  lines.push('  StringLiteral, TemplateLiteral, PossessiveS, NumberLiteral, URLLiteral,');
+  lines.push('  PossessiveS, StringLiteral, TemplateLiteral, NumberLiteral, URLLiteral,');
 
   // Selectors
   lines.push('  // Selectors');

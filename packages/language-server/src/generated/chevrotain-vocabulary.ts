@@ -178,7 +178,7 @@ export const allTokens: TokenType[] = [
   // Whitespace
   WhiteSpace,
   // Literals
-  StringLiteral, TemplateLiteral, PossessiveS, NumberLiteral, URLLiteral,
+  PossessiveS, StringLiteral, TemplateLiteral, NumberLiteral, URLLiteral,
   // Selectors
   CSSSelector, AttributeSelector, HTMLSelector,
   // Variables

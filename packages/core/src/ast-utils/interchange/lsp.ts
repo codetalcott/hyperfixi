@@ -155,7 +155,7 @@ export function interchangeToLSPDiagnostics(
         severity: DiagnosticSeverity.Error,
         code: 'parse-error',
         source,
-        message: (node as any).message ?? 'Parse error',
+        message: node.message,
       });
       continue;
     }

@@ -53,12 +53,14 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
     case 'CommandSequence':
       return convertCommandSequence(node);
     case 'Program': {
-      // Program node wraps multiple top-level features (event handlers, behaviors, etc.)
       const statements = (node.statements ?? []) as CoreNode[];
+      if (statements.length === 0) {
+        return { type: 'literal', value: null, ...pos(node) };
+      }
       if (statements.length === 1) {
         return fromCoreAST(statements[0]);
       }
-      // Return the first event handler or command; LSP processes one region at a time
+      // Multiple top-level features — convert first; LSP processes one region at a time
       return fromCoreAST(statements[0]);
     }
     case 'block':

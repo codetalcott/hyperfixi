@@ -32,7 +32,7 @@ function isPossessive(code: string, i: number): boolean {
   return /[\s),.\]}|@*]/.test(after);
 }
 
-export function runSimpleDiagnostics(code: string, _language: string): Diagnostic[] {
+export function runSimpleDiagnostics(code: string, _language: string = 'en'): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
 
   let state = QuoteState.NORMAL;
