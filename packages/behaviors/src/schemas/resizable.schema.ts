@@ -14,13 +14,6 @@ export const resizableSchema: BehaviorSchema = {
   description: 'Makes elements resizable by dragging',
   parameters: [
     {
-      name: 'handle',
-      type: 'selector',
-      optional: true,
-      default: 'me',
-      description: 'CSS selector for the resize handle (defaults to the element itself)',
-    },
-    {
       name: 'minWidth',
       type: 'number',
       optional: true,
@@ -55,25 +48,8 @@ export const resizableSchema: BehaviorSchema = {
     { name: 'resizable:end', description: 'Fired when resize completes' },
   ],
   source: `
-behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
-  init
-    if handle is undefined
-      set handle to me
-    end
-    if minWidth is undefined
-      set minWidth to 50
-    end
-    if minHeight is undefined
-      set minHeight to 50
-    end
-    if maxWidth is undefined
-      set maxWidth to 9999
-    end
-    if maxHeight is undefined
-      set maxHeight to 9999
-    end
-  end
-  on pointerdown(clientX, clientY) from handle
+behavior Resizable
+  on pointerdown(clientX, clientY) from me
     halt the event
     trigger resizable:start
     measure width
@@ -83,13 +59,11 @@ behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
     set startX to clientX
     set startY to clientY
     repeat until event pointerup from document
-      wait for pointermove(clientX, clientY) or pointerup from document
-      js(startWidth, startHeight, clientX, clientY, startX, startY, minWidth, maxWidth, minHeight, maxHeight, me)
-        var nw = Math.max(minWidth, Math.min(maxWidth, startWidth + (clientX - startX)));
-        var nh = Math.max(minHeight, Math.min(maxHeight, startHeight + (clientY - startY)));
-        me.style.width = nw + 'px';
-        me.style.height = nh + 'px';
-      end
+      wait for pointermove(clientX, clientY) from document
+      set newWidth to startWidth + clientX - startX
+      set newHeight to startHeight + clientY - startY
+      set my style.width to newWidth + "px"
+      set my style.height to newHeight + "px"
       trigger resizable:resize
     end
     trigger resizable:end

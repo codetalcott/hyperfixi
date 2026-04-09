@@ -84,7 +84,7 @@ export async function registerResizable(hyperfixi?: LokaScriptInstance): Promise
   const syntheticNode = {
     type: 'behavior',
     name: 'Resizable',
-    parameters: ['handle', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight'],
+    parameters: [],
     eventHandlers: [],
     imperativeInstaller: installResizable,
   };

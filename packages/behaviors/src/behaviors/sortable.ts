@@ -83,7 +83,7 @@ export async function registerSortable(hyperfixi?: LokaScriptInstance): Promise<
   const syntheticNode = {
     type: 'behavior',
     name: 'Sortable',
-    parameters: ['handle', 'dragClass'],
+    parameters: ['dragClass'],
     eventHandlers: [],
     imperativeInstaller: installSortable,
   };
