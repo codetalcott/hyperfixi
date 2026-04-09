@@ -108,6 +108,11 @@ interface HyperFixiBrowserAPI {
   registry: LokaScriptRegistry;
   // Fetch response type extension point
   registerFetchResponseType: typeof registerFetchResponseType;
+  // LSE SemanticNode execution — used by <lse-intent> custom element
+  evalLSENode(
+    node: import('@lokascript/framework').SemanticNode,
+    element?: Element
+  ): Promise<unknown>;
 }
 
 // Export to global scope for browser testing
@@ -255,6 +260,10 @@ const hyperfixiAPI = {
   // Fetch response type extension point — plugins use this to register
   // custom `fetch <url> as <type>` handlers (e.g., `as siren`)
   registerFetchResponseType,
+
+  // LSE SemanticNode execution — delegates to hyperscript API
+  // Used by the <lse-intent> custom element via window.hyperfixi.evalLSENode()
+  evalLSENode: hyperscript.evalLSENode.bind(hyperscript),
 
   // Version info
   version: '2.0.0-full',
