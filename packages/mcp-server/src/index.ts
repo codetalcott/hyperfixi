@@ -71,6 +71,9 @@ import { lsePipelineTools, handleLsePipelineTool } from './tools/lse-pipeline.js
 // GRAIL tools (condition/affordance workflow)
 import { grailTools, handleGrailTool } from './tools/grail-tools.js';
 
+// LSE correction tool (stateless LLM-driven generation + self-correction)
+import { lseCorrectionTools, handleLseCorrectionTool } from './tools/lse-correction.js';
+
 const registry = createDomainRegistry();
 
 // Resource implementations
@@ -119,6 +122,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...feedbackTools,
       ...lsePipelineTools,
       ...grailTools,
+      ...lseCorrectionTools,
     ],
   };
 });
@@ -283,6 +287,11 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
   // GRAIL tools (condition/affordance workflow)
   if (name.startsWith('grail_')) {
     return handleGrailTool(name, args as Record<string, unknown>);
+  }
+
+  // LSE correction tool (stateless generation + self-correction loop)
+  if (name === 'lse_generate_with_correction') {
+    return handleLseCorrectionTool(name, args as Record<string, unknown>);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)

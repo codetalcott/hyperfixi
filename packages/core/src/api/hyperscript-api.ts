@@ -406,6 +406,24 @@ export interface HyperscriptAPI {
   evalLSE(lse: string, element?: Element): Promise<unknown>;
 
   /**
+   * Execute a pre-parsed SemanticNode directly.
+   * Use this when you already have a SemanticNode (e.g. from `fromProtocolJSON`),
+   * rather than bracket syntax. Avoids re-parsing.
+   * Requires @lokascript/framework as a peer dependency.
+   *
+   * @example
+   * ```typescript
+   * import { fromProtocolJSON } from '@lokascript/intent';
+   * const node = fromProtocolJSON(json);
+   * await hyperscript.evalLSENode(node, button);
+   * ```
+   */
+  evalLSENode(
+    node: import('@lokascript/framework').SemanticNode,
+    element?: Element
+  ): Promise<unknown>;
+
+  /**
    * Compile LSE bracket syntax to an executable AST.
    * Returns a CompileResult with parser='lse' and the SemanticNode in `lse`.
    *
@@ -527,6 +545,20 @@ function hasMe(value: unknown): value is { me?: HTMLElement } {
 // ============================================================================
 // LSE Execution
 // ============================================================================
+
+/**
+ * Execute a pre-parsed SemanticNode directly, skipping bracket-syntax parsing.
+ * Used by <lse-intent> and other consumers that already hold a SemanticNode.
+ */
+async function evalLSENode(
+  node: import('@lokascript/framework').SemanticNode,
+  element?: Element
+): Promise<unknown> {
+  const { semanticNodeToRuntimeAST } = await import('../lse/index');
+  const ast = await semanticNodeToRuntimeAST(node);
+  const executionContext = element ? createContext(element as HTMLElement) : createContext();
+  return await getDefaultRuntime().execute(ast as ASTNode, executionContext);
+}
 
 /**
  * Parse LSE bracket syntax and execute directly.
@@ -1073,6 +1105,7 @@ export const hyperscript: HyperscriptAPI = {
 
   // LSE execution
   evalLSE: evalLSECode,
+  evalLSENode,
   compileLSE: compileLSECode,
   toLSE: toLSECode,
   fromLSE: fromLSECode,

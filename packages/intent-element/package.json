@@ -1,0 +1,75 @@
+{
+  "name": "@hyperfixi/intent-element",
+  "version": "2.3.1",
+  "description": "<lse-intent> custom element — validates LSE protocol JSON and executes it via the hyperfixi runtime.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./browser": {
+      "import": "./dist/intent-element.iife.js"
+    }
+  },
+  "sideEffects": [
+    "./dist/intent-element.iife.js",
+    "./src/index.ts"
+  ],
+  "scripts": {
+    "build": "tsup && npm run build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "test": "vitest run",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "lse",
+    "intent",
+    "custom-element",
+    "web-component",
+    "hyperscript",
+    "hyperfixi"
+  ],
+  "author": "LokaScript Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "@lokascript/intent": "*"
+  },
+  "peerDependencies": {
+    "@hyperfixi/core": "*"
+  },
+  "peerDependenciesMeta": {
+    "@hyperfixi/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@hyperfixi/core": "*",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/intent-element"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

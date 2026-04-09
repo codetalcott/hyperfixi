@@ -22,6 +22,7 @@ import type {
   TestRequest,
   ComponentRequest,
   DiffRequest,
+  GenerateRequest,
 } from './types.js';
 import { bodyLimit } from './middleware/body-limit.js';
 import { timeout } from './middleware/timeout.js';
@@ -150,6 +151,37 @@ export function createApp(options: HttpOptions = {}): Hono {
     const svc = await getService();
     const body = await c.req.json<DiffRequest>();
     const result = svc.diff(body);
+    return c.json(result, result.ok ? 200 : 422);
+  });
+
+  /**
+   * POST /generate — convert LSE to a target-specific output.
+   *
+   * Accepts bracket syntax or protocol JSON produced by an LLM
+   * (e.g. via the `lse_generate_with_correction` MCP tool) and renders
+   * it to the requested target format.
+   *
+   * Body: { lse: string, target?: 'js'|'react'|'vue'|'svelte'|'intent-element', task?: string }
+   */
+  app.post('/generate', async c => {
+    const svc = await getService();
+    const body = await c.req.json<GenerateRequest>();
+    if (!body.lse || typeof body.lse !== 'string') {
+      return c.json(
+        {
+          ok: false,
+          diagnostics: [
+            {
+              severity: 'error',
+              code: 'MISSING_LSE',
+              message: 'Request body must include a non-empty `lse` string.',
+            },
+          ],
+        },
+        400
+      );
+    }
+    const result = await svc.generate(body);
     return c.json(result, result.ok ? 200 : 422);
   });
 
