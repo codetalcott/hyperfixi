@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Tests for ClickOutside + FocusTrap behavior composition
- * in examples/intermediate/05-modal.html (Demo 4)
+ * in examples/dialogs/modal.html (Demo 4)
  */
 test.describe('Behavior-Powered Modal @integration', () => {
-  const url = '/examples/intermediate/05-modal.html';
+  const url = '/examples/dialogs/modal.html';
 
   async function setupPage(page: import('@playwright/test').Page) {
     const consoleErrors: string[] = [];

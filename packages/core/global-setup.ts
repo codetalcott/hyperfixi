@@ -36,10 +36,10 @@ export default function globalSetup() {
   }
 
   // Check for at least one expected example file
-  const sampleFile = path.join(examplesPath, 'basics/01-hello-world.html');
+  const sampleFile = path.join(examplesPath, 'events-and-dom/hello-world.html');
   if (!fs.existsSync(sampleFile)) {
     throw new Error(
-      `examples/ directory exists but basics/01-hello-world.html not found.\n` +
+      `examples/ directory exists but events-and-dom/hello-world.html not found.\n` +
         `Verify the examples directory contains the gallery examples.`,
     );
   }

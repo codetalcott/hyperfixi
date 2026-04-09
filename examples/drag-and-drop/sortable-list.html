@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03: Sortable List - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles */
+        .sortable-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .sortable-item {
+            background: linear-gradient(135deg, var(--color-surface, #e3f2fd) 0%, #bbdefb 100%);
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid transparent;
+        }
+
+        .sortable-item:hover {
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+            transform: translateX(5px);
+        }
+
+        .sortable-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .sortable-item.drag-over {
+            border-color: var(--color-accent, #6366f1);
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .drag-handle {
+            font-size: 24px;
+            cursor: grab;
+            color: var(--color-text-muted, #a1a1aa);
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .item-title {
+            font-weight: bold;
+            color: var(--color-text, #18181b);
+            margin: 0 0 5px 0;
+        }
+
+        .item-description {
+            color: var(--color-text-muted, #71717a);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .item-number {
+            background: var(--color-accent, #6366f1);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        button.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .add-item-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: center;
+        }
+
+        .add-item-form input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--color-border, #e4e4e7);
+            border-radius: 6px;
+            font-size: 16px;
+            background: var(--color-surface, #ffffff);
+            color: var(--color-text, #18181b);
+        }
+
+        .add-item-form input:focus {
+            outline: none;
+            border-color: var(--color-accent, #6366f1);
+        }
+
+        .status-message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        /* Visual insertion marker */
+        #insert-marker {
+            position: fixed;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 100ms ease;
+            z-index: 1000;
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.6);
+        }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Drag & Drop</strong> / Sortable List
+        </div>
+
+        <h1>Drag-and-Drop Sortable List</h1>
+
+        <div class="description">
+            <strong>Build interactive sortable lists with drag-and-drop</strong><br>
+            Learn how to create draggable list items that can be reordered using hyperscript's
+            drag-and-drop events. Perfect for task lists, priority queues, and custom ordering!
+        </div>
+
+        <div>
+            <span class="tag">draggable</span>
+            <span class="tag">dragstart</span>
+            <span class="tag">dragover</span>
+            <span class="tag">drop</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <h2>Interactive Task List</h2>
+            <p>Drag items to reorder them, or use the controls to manage the list:</p>
+
+            <div style="margin: 20px 0;">
+                <button _="on click
+                          js
+                            var list = document.getElementById('task-list');
+                            var items = Array.from(list.children);
+                            items.reverse();
+                            items.forEach(function(item) { list.appendChild(item); });
+                          end">
+                    Reverse Order
+                </button>
+                <button class="secondary" _="on click
+                                              js
+                                                var list = document.getElementById('task-list');
+                                                while (list.firstChild) { list.removeChild(list.firstChild); }
+                                              end">
+                    Clear All
+                </button>
+                <button class="success" _="on click
+                                            js
+                                              var list = document.getElementById('task-list');
+                                              return list.children.length;
+                                            end
+                                            set count to it
+                                            put 'Total items: ' + count into #status
+                                            add .show to #status
+                                            wait 3s
+                                            remove .show from #status">
+                    Show Count
+                </button>
+            </div>
+
+            <!-- Visual insertion marker -->
+            <div id="insert-marker"></div>
+
+            <ul id="task-list" class="sortable-list"
+                _="on dragstart
+                     set item to target.closest('.sortable-item')
+                     if item is not null then
+                       add .dragging to item
+                     end
+                     set the event.dataTransfer.effectAllowed to 'move'
+
+                   on dragend
+                     set dragged to me.querySelector('.dragging')
+                     if dragged is not null then remove .dragging from dragged end
+                     add { opacity: 0; } to #insert-marker
+
+                   on dragover
+                     halt the event
+                     set the event.dataTransfer.dropEffect to 'move'
+
+                     -- Find the drop target
+                     set dropTarget to target.closest('.sortable-item')
+                     if dropTarget is null then exit end
+                     if dropTarget matches .dragging then exit end
+
+                     -- Calculate position relative to target
+                     set box to dropTarget.getBoundingClientRect()
+                     set midpoint to box.top + box.height / 2
+                     if event.clientY < midpoint then
+                       set markerTop to box.top
+                     else
+                       set markerTop to box.bottom
+                     end
+
+                     -- Position the marker
+                     add { top: ${markerTop}px; left: ${box.left}px; width: ${box.width}px; opacity: 1; } to #insert-marker
+
+                   on dragleave
+                     if event.relatedTarget is null or not me.contains(event.relatedTarget) then
+                       add { opacity: 0; } to #insert-marker
+                     end
+
+                   on drop
+                     halt the event
+                     add { opacity: 0; } to #insert-marker
+
+                     -- Find drop target and dragged item
+                     set dropTarget to target.closest('.sortable-item')
+                     set draggedItem to me.querySelector('.dragging')
+
+                     if dropTarget is null or draggedItem is null or dropTarget == draggedItem then exit end
+
+                     -- Insert before or after based on cursor position
+                     set box to dropTarget.getBoundingClientRect()
+                     set midpoint to box.top + box.height / 2
+                     if event.clientY < midpoint then
+                       call me.insertBefore(draggedItem, dropTarget)
+                     else
+                       call me.insertBefore(draggedItem, dropTarget.nextSibling)
+                     end">
+                <li class="sortable-item" draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="item-number">1</span>
+                    <div class="item-content">
+                        <div class="item-title">Complete project proposal</div>
+                        <div class="item-description">Draft and submit the Q4 project proposal</div>
+                    </div>
+                    <button class="delete-btn" _="on click remove closest .sortable-item">×</button>
+                </li>
+
+                <li class="sortable-item" draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="item-number">2</span>
+                    <div class="item-content">
+                        <div class="item-title">Review team feedback</div>
+                        <div class="item-description">Go through all feedback from the sprint retrospective</div>
+                    </div>
+                    <button class="delete-btn" _="on click remove closest .sortable-item">×</button>
+                </li>
+
+                <li class="sortable-item" draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="item-number">3</span>
+                    <div class="item-content">
+                        <div class="item-title">Update documentation</div>
+                        <div class="item-description">Update API docs with new endpoints and examples</div>
+                    </div>
+                    <button class="delete-btn" _="on click remove closest .sortable-item">×</button>
+                </li>
+
+                <li class="sortable-item" draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="item-number">4</span>
+                    <div class="item-content">
+                        <div class="item-title">Schedule team meeting</div>
+                        <div class="item-description">Find a time slot that works for everyone next week</div>
+                    </div>
+                    <button class="delete-btn" _="on click remove closest .sortable-item">×</button>
+                </li>
+
+                <li class="sortable-item" draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="item-number">5</span>
+                    <div class="item-content">
+                        <div class="item-title">Deploy to staging</div>
+                        <div class="item-description">Push latest changes to staging environment for testing</div>
+                    </div>
+                    <button class="delete-btn" _="on click remove closest .sortable-item">×</button>
+                </li>
+            </ul>
+
+            <div id="status" class="status-message"></div>
+
+            <!-- Hidden template for new items -->
+            <template id="task-template">
+                <li class="sortable-item" draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="item-number"></span>
+                    <div class="item-content">
+                        <div class="item-title"></div>
+                        <div class="item-description">New task added</div>
+                    </div>
+                    <button class="delete-btn" _="on click remove closest .sortable-item">×</button>
+                </li>
+            </template>
+
+            <div class="add-item-form">
+                <input type="text" id="new-item-input" placeholder="Add a new task...">
+                <button _="on click
+                          set input to first #new-item-input
+                          set title to input.value
+                          if title is not '' then
+                            js(title)
+                              var template = document.getElementById('task-template');
+                              var listEl = document.getElementById('task-list');
+                              var num = listEl.children.length + 1;
+                              var clone = template.content.firstElementChild.cloneNode(true);
+                              clone.querySelector('.item-number').textContent = num;
+                              clone.querySelector('.item-title').textContent = title;
+                              listEl.appendChild(clone);
+                              return clone;
+                            end
+                            set newItem to it
+                            call window.hyperfixi.processNode(newItem)
+                            put '' into input.value
+                          end">
+                    Add Task
+                </button>
+            </div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+
+        <h3>Event Delegation Pattern (Container-Level Handlers):</h3>
+        <div class="code">
+<span class="comment">&lt;!-- Visual insertion marker --&gt;</span>
+&lt;div <span class="keyword">id</span>=<span class="string">"insert-marker"</span>&gt;&lt;/div&gt;
+
+<span class="comment">&lt;!-- All drag handlers on the container, not each item --&gt;</span>
+&lt;ul <span class="keyword">id</span>=<span class="string">"task-list"</span>
+    <span class="keyword">_</span>=<span class="string">"on dragstart
+         set item to target.closest('.sortable-item')
+         if item is not null then
+           add .dragging to item
+         end
+         set the event.dataTransfer.effectAllowed to 'move'
+
+       on dragend
+         set dragged to me.querySelector('.dragging')
+         if dragged is not null then remove .dragging from dragged end
+         add { opacity: 0; } to #insert-marker
+
+       on dragover
+         halt the event
+         set dropTarget to target.closest('.sortable-item')
+         if dropTarget is null then exit end
+         if dropTarget matches .dragging then exit end
+
+         -- Position insertion marker
+         set box to dropTarget.getBoundingClientRect()
+         set midpoint to box.top + box.height / 2
+         if event.clientY < midpoint then
+           set markerTop to box.top
+         else
+           set markerTop to box.bottom
+         end
+         add { top: ${markerTop}px; left: ${box.left}px;
+               width: ${box.width}px; opacity: 1; } to #insert-marker
+
+       on drop
+         halt the event
+         add { opacity: 0; } to #insert-marker
+         set dropTarget to target.closest('.sortable-item')
+         set draggedItem to me.querySelector('.dragging')
+         if dropTarget is null or draggedItem is null then exit end
+
+         set box to dropTarget.getBoundingClientRect()
+         if event.clientY < box.top + box.height / 2 then
+           call me.insertBefore(draggedItem, dropTarget)
+         else
+           call me.insertBefore(draggedItem, dropTarget.nextSibling)
+         end"</span>&gt;
+
+  <span class="comment">&lt;!-- Items are simple - no individual handlers needed --&gt;</span>
+  &lt;li <span class="keyword">class</span>=<span class="string">"sortable-item"</span> <span class="keyword">draggable</span>=<span class="string">"true"</span>&gt;
+    &lt;span class="drag-handle"&gt;☰&lt;/span&gt;
+    &lt;div class="item-content"&gt;Task content&lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+        </div>
+
+        <h3>Delete Item:</h3>
+        <div class="code">
+&lt;button <span class="keyword">_</span>=<span class="string">"on click remove closest .sortable-item"</span>&gt;
+  Delete
+&lt;/button&gt;
+        </div>
+
+        <h3>Reverse List Order:</h3>
+        <div class="code">
+&lt;button <span class="keyword">_</span>=<span class="string">"on click
+        call #task-list.children.reverse()
+        for item in #task-list.children
+          call #task-list.appendChild(item)
+        end"</span>&gt;
+  Reverse
+&lt;/button&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>draggable="true"</code> - Makes element draggable</li>
+                <li><code>on dragstart</code> - Fired when drag begins, adds visual feedback</li>
+                <li><code>on dragover</code> - Fired when dragging over element, positions marker</li>
+                <li><code>on drop</code> - Fired when dropped, reorders the items</li>
+                <li><code>halt the event</code> - Prevents default browser behavior</li>
+                <li><code>insertBefore()</code> - Repositions elements in the DOM</li>
+                <li><code>add { ... } to #marker</code> - CSS template literals for dynamic styling</li>
+            </ul>
+
+            <h3>Key Concepts:</h3>
+            <ul>
+                <li><strong>Event Delegation:</strong> All handlers on container, not each item (DRY principle)</li>
+                <li><strong>Visual Marker:</strong> Fixed-position line shows precise drop location</li>
+                <li><strong>CSS Template Literals:</strong> <code>add { top: ${y}px; }</code> for dynamic styles</li>
+                <li><strong>Drag Events:</strong> dragstart, dragend, dragover, dragleave, drop</li>
+                <li><strong>Position Detection:</strong> Use event.clientY and getBoundingClientRect()</li>
+                <li><strong>DOM Manipulation:</strong> insertBefore() to reorder elements</li>
+            </ul>
+
+            <h3>Drag Event Sequence:</h3>
+            <ol>
+                <li><strong>dragstart:</strong> User starts dragging an item</li>
+                <li><strong>dragover:</strong> Dragged item moves over a drop target</li>
+                <li><strong>dragleave:</strong> Dragged item leaves a drop target</li>
+                <li><strong>drop:</strong> User releases the item over a drop target</li>
+                <li><strong>dragend:</strong> Drag operation completes (success or cancel)</li>
+            </ol>
+
+            <h3>Advanced Patterns:</h3>
+            <div class="code">
+<span class="comment">&lt;!-- Drag between multiple lists --&gt;</span>
+&lt;ul <span class="keyword">class</span>=<span class="string">"droppable-list"</span>
+    <span class="keyword">_</span>=<span class="string">"on drop
+         halt the event
+         get first .dragging
+         if result exists
+           put result at end of me
+         end"</span>&gt;
+&lt;/ul&gt;
+
+<span class="comment">&lt;!-- Save order to localStorage --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click
+         set order to []
+         for item in .sortable-item
+           call order.push(item.id)
+         end
+         call localStorage.setItem('order', JSON.stringify(order))"</span>&gt;
+  Save Order
+&lt;/button&gt;
+
+<span class="comment">&lt;!-- Restore from localStorage --&gt;</span>
+&lt;div <span class="keyword">_</span>=<span class="string">"on load
+       set saved to localStorage.getItem('order')
+       if saved
+         set order to JSON.parse(saved)
+         for id in order
+           get #{id}
+           if result then put result at end of #list end
+         end
+       end"</span>&gt;
+&lt;/div&gt;
+
+<span class="comment">&lt;!-- Drag handles only --&gt;</span>
+&lt;li <span class="keyword">class</span>=<span class="string">"sortable-item"</span>&gt;
+  &lt;span <span class="keyword">class</span>=<span class="string">"drag-handle"</span>
+        <span class="keyword">draggable</span>=<span class="string">"true"</span>
+        <span class="keyword">_</span>=<span class="string">"on dragstart
+             set the dragTarget to closest .sortable-item
+             add .dragging to dragTarget"</span>&gt;
+    ☰
+  &lt;/span&gt;
+  &lt;div&gt;Content (not draggable)&lt;/div&gt;
+&lt;/li&gt;
+            </div>
+
+            <h3>Common Use Cases:</h3>
+            <ul>
+                <li><strong>Task Lists:</strong> Prioritize tasks by dragging to reorder</li>
+                <li><strong>Kanban Boards:</strong> Drag cards between columns</li>
+                <li><strong>File Managers:</strong> Organize files and folders</li>
+                <li><strong>Playlist Editors:</strong> Reorder songs in a playlist</li>
+                <li><strong>Form Builders:</strong> Arrange form fields</li>
+                <li><strong>Dashboard Widgets:</strong> Customize widget layout</li>
+            </ul>
+
+            <h3>Accessibility Considerations:</h3>
+            <ul>
+                <li>Add <code>role="list"</code> and <code>role="listitem"</code> for screen readers</li>
+                <li>Provide keyboard alternatives (arrow keys + modifier)</li>
+                <li>Include visible focus indicators</li>
+                <li>Use <code>aria-grabbed</code> and <code>aria-dropeffect</code> attributes</li>
+                <li>Announce reorder actions to screen readers</li>
+            </ul>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Add save/load functionality with localStorage</li>
+                <li>Create multiple lists with drag-between support</li>
+                <li>Add keyboard shortcuts for reordering</li>
+                <li>Implement undo/redo for drag operations</li>
+                <li>Create a Kanban board with multiple columns</li>
+                <li>Add drag animations with CSS transforms</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="02-color-cycling.html">← Previous: Color Cycling</a>
+            <a href="04-infinite-scroll.html">Next: Infinite Scroll →</a>
+        </div>
+    </div>
+
+    <!-- Enable debug mode -->
+    <script>
+        window.__HYPERFIXI_DEBUG__ = true;
+        localStorage.setItem('hyperfixi:debug', '*');
+    </script>
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../prism-loader.js"></script>
+</body>
+</html>

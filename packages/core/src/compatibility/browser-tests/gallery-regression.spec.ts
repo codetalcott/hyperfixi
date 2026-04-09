@@ -13,7 +13,7 @@ const BASE_URL = 'http://127.0.0.1:3000';
 test.describe('Gallery Example Regression Tests @comprehensive', () => {
   test.describe('Counter Example (05-counter.html)', () => {
     test('reset button should replace content, not append', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/basics/05-counter.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/counter.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -38,7 +38,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     });
 
     test('put command should replace, not append on multiple resets', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/basics/05-counter.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/counter.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -59,7 +59,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
 
   test.describe('Input Mirror Example (04-input-mirror.html)', () => {
     test('input mirror should replace content, not concatenate', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/basics/04-input-mirror.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/input-mirror.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -75,7 +75,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     });
 
     test('input mirror should handle clearing and retyping', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/basics/04-input-mirror.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/input-mirror.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -95,7 +95,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
 
   test.describe('Tab Navigation Example (04-tabs.html)', () => {
     test('clicking tabs should remove active from ALL tabs, not just first', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/intermediate/04-tabs.html`, {
+      await page.goto(`${BASE_URL}/examples/navigation/tabs.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -131,7 +131,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     });
 
     test('tab content should show only selected panel', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/intermediate/04-tabs.html`, {
+      await page.goto(`${BASE_URL}/examples/navigation/tabs.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -153,7 +153,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
     });
 
     test('CSS class selector should target all matching elements', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/intermediate/04-tabs.html`, {
+      await page.goto(`${BASE_URL}/examples/navigation/tabs.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -182,7 +182,7 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
         pageErrors.push(err.message);
       });
 
-      await page.goto(`${BASE_URL}/examples/advanced/01-color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });

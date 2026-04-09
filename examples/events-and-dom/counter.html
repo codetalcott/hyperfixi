@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05: Counter - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles */
+        #debug-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            min-width: auto;
+        }
+
+        #debug-toggle:hover {
+            background: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        #debug-toggle.enabled {
+            background: #22c55e;
+        }
+
+        .counter-display {
+            font-size: 72px;
+            font-weight: bold;
+            color: var(--color-accent, #6366f1);
+            margin: 30px 0;
+            font-family: var(--font-mono);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            min-width: 120px;
+        }
+
+        button.reset {
+            background: #dc3545;
+        }
+
+        button.reset:hover {
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+    </style>
+</head>
+<body class="example-page">
+    <!-- Debug Toggle Button -->
+    <button id="debug-toggle" onclick="toggleDebug()">
+        🐛 Debug: OFF
+    </button>
+
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Events & DOM</strong> / Counter
+        </div>
+
+        <h1>Counter</h1>
+
+        <div class="description">
+            <strong>Increment and decrement values</strong><br>
+            Learn how to modify numeric values with hyperscript's increment and decrement commands.
+        </div>
+
+        <div>
+            <span class="tag">increment</span>
+            <span class="tag">decrement</span>
+            <span class="tag">numbers</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <div id="count" class="counter-display">0</div>
+
+            <div class="button-group">
+                <button _="on click decrement #count">
+                    Decrease
+                </button>
+
+                <button class="reset" _="on click put 0 into #count">
+                    Reset
+                </button>
+
+                <button _="on click increment #count">
+                    Increase
+                </button>
+            </div>
+
+            <p style="margin-top: 20px; color: #666;">
+                Current value: <span id="count-mirror" _="on change in #count put #count's textContent into me">0</span>
+            </p>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;div <span class="keyword">id</span>=<span class="string">"count"</span> <span class="keyword">class</span>=<span class="string">"counter-display"</span>&gt;0&lt;/div&gt;
+
+&lt;button <span class="keyword">_</span>=<span class="string">"on click decrement #count"</span>&gt;
+  Decrease
+&lt;/button&gt;
+
+&lt;button <span class="keyword">_</span>=<span class="string">"on click put 0 into #count"</span>&gt;
+  Reset
+&lt;/button&gt;
+
+&lt;button <span class="keyword">_</span>=<span class="string">"on click increment #count"</span>&gt;
+  Increase
+&lt;/button&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>increment #count</code> - Adds 1 to the counter's value</li>
+                <li><code>decrement #count</code> - Subtracts 1 from the counter's value</li>
+                <li><code>put 0 into #count</code> - Resets the counter to zero</li>
+            </ul>
+
+            <h3>Advanced Increment/Decrement:</h3>
+            <ul>
+                <li><code>increment #count by 5</code> - Add 5 instead of 1</li>
+                <li><code>decrement #count by 10</code> - Subtract 10</li>
+                <li><code>increment my value</code> - Increment an element's value attribute</li>
+                <li><code>increment @data-score</code> - Increment a data attribute</li>
+            </ul>
+
+            <h3>Reactive Updates:</h3>
+            <p>
+                The count mirror below the buttons uses:
+                <code>on change in #count</code> to reactively update whenever the counter changes!
+                This pattern watches for content changes in the #count element and automatically
+                mirrors the value.
+            </p>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Add a button that increments by 10</li>
+                <li>Create a counter that only allows values 0-100</li>
+                <li>Build a multi-counter with separate increment/decrement buttons</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="04-input-mirror.html">← Previous: Input Mirror</a>
+            <a href="../forms/form-validation.html">Next: Form Validation →</a>
+        </div>
+    </div>
+
+    <!-- Debug Mode Control -->
+    <script>
+        // Check localStorage on page load
+        if (localStorage.getItem('__HYPERFIXI_DEBUG__') === 'true') {
+            window.__HYPERFIXI_DEBUG__ = true;
+        }
+
+        // Initialize debug button state
+        function initDebugButton() {
+            const isEnabled = window.__HYPERFIXI_DEBUG__ === true;
+            const button = document.getElementById('debug-toggle');
+            if (isEnabled) {
+                button.textContent = '🐛 Debug: ON';
+                button.classList.add('enabled');
+            } else {
+                button.textContent = '🐛 Debug: OFF';
+                button.classList.remove('enabled');
+            }
+        }
+
+        // Toggle debug mode
+        function toggleDebug() {
+            const currentState = window.__HYPERFIXI_DEBUG__ === true;
+            const newState = !currentState;
+
+            // Store in localStorage to persist across reloads
+            if (newState) {
+                localStorage.setItem('__HYPERFIXI_DEBUG__', 'true');
+                window.__HYPERFIXI_DEBUG__ = true;
+            } else {
+                localStorage.removeItem('__HYPERFIXI_DEBUG__');
+                window.__HYPERFIXI_DEBUG__ = false;
+            }
+
+            // Reload page to apply debug settings
+            location.reload();
+        }
+
+        // Initialize button state when page loads
+        window.addEventListener('DOMContentLoaded', initDebugButton);
+    </script>
+
+    <!-- Load HyperFixi (uses ?bundle= param to switch bundles) -->
+    <script src="../bundle-loader.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script src="../bundle-selector.js"></script>
+
+    <!-- Report Debug Status -->
+    <script>
+        window.addEventListener('load', () => {
+            console.log('🎯 Counter Example Loaded');
+            console.log('🐛 Debug Mode:', window.__HYPERFIXI_DEBUG__ ? 'ENABLED' : 'DISABLED');
+
+            if (window.__HYPERFIXI_DEBUG__) {
+                console.log('📊 Watch for:');
+                console.log('  - MutationObserver setup messages');
+                console.log('  - Content change detection');
+                console.log('  - Command execution logs');
+                console.log('  - Context variable updates (oldValue, newValue)');
+            }
+        });
+    </script>
+</body>
+</html>

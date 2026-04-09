@@ -14,7 +14,7 @@ import { createErrorCollector } from './test-utils';
 
 test.describe('Error Playground', () => {
   test.beforeEach(async ({ page, baseURL }) => {
-    await page.goto(`${baseURL}/examples/playground/error-playground.html`);
+    await page.goto(`${baseURL}/examples/multilingual/error-playground.html`);
 
     // Wait for LokaScriptSemantic to load
     await page.waitForFunction(() => typeof (window as any).LokaScriptSemantic !== 'undefined', {

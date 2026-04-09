@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Hyperscript Injection - Experiments</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles for Dynamic Injection */
+        body.example-page {
+            background: linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0369a1 100%);
+            max-width: 1200px;
+            padding: 40px 20px;
+            color: white;
+        }
+
+        header { text-align: center; margin-bottom: 40px; }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #38bdf8, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline { color: #a0aec0; font-size: 1.1rem; margin-bottom: 10px; }
+
+        .experiment-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Locale Selector */
+        .locale-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .locale-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .locale-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .locale-btn.active {
+            background: rgba(56, 189, 248, 0.3);
+            border-color: #38bdf8;
+        }
+
+        .locale-btn .flag { font-size: 20px; }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .panel-body { padding: 20px; }
+
+        /* Code Snippets */
+        .snippet-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .snippet-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .snippet-card:hover {
+            border-color: #38bdf8;
+            transform: translateY(-2px);
+        }
+
+        .snippet-card.active {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .snippet-header {
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .snippet-name { font-weight: 600; }
+
+        .snippet-status {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .snippet-status.loaded {
+            background: #22c55e;
+            color: white;
+        }
+
+        .snippet-code {
+            padding: 15px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: #d4d4d4;
+            white-space: pre-wrap;
+        }
+
+        .snippet-code.rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        /* Execution Panel */
+        .exec-area {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 25px;
+            min-height: 200px;
+        }
+
+        .exec-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .exec-targets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .target-counter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .counter-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .counter-btn.inc { background: #22c55e; color: white; }
+        .counter-btn.dec { background: #ef4444; color: white; }
+        .counter-btn:hover { transform: scale(1.1); }
+
+        .counter-value {
+            font-size: 32px;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .target-box {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .target-box.active {
+            background: linear-gradient(135deg, #22c55e, #10b981);
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .target-input {
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            width: 200px;
+        }
+
+        .target-input:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+
+        .target-output {
+            padding: 12px 15px;
+            background: rgba(56, 189, 248, 0.2);
+            border-radius: 8px;
+            min-width: 200px;
+            min-height: 45px;
+            color: #38bdf8;
+        }
+
+        /* Pipeline Display */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .pipeline-step {
+            padding: 10px 18px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pipeline-step.active {
+            background: rgba(56, 189, 248, 0.3);
+            border: 1px solid #38bdf8;
+        }
+
+        .pipeline-arrow {
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .info-box h3 { color: #38bdf8; margin-bottom: 10px; }
+        .info-box p { color: #a0aec0; line-height: 1.6; }
+
+        .inject-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #38bdf8, #22d3ee);
+            border: none;
+            border-radius: 8px;
+            color: #0c4a6e;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 15px;
+        }
+
+        .inject-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        .inject-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #a0aec0;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover { background: rgba(255,255,255,0.2); color: white; }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container" style="background: transparent; box-shadow: none;">
+        <header>
+            <a href="../index.html" class="back-link">← Back to Gallery</a>
+            <h1>Dynamic Hyperscript Injection</h1>
+            <p class="tagline">Fetch code → Transform to locale → Inject → Execute</p>
+            <span class="experiment-badge">EXPERIMENT</span>
+        </header>
+
+        <!-- Locale Selector -->
+        <div class="locale-selector">
+            <button class="locale-btn active" data-lang="en">
+                <span class="flag">🇺🇸</span> English
+            </button>
+            <button class="locale-btn" data-lang="ja">
+                <span class="flag">🇯🇵</span> 日本語
+            </button>
+            <button class="locale-btn" data-lang="ar">
+                <span class="flag">🇸🇦</span> العربية
+            </button>
+            <button class="locale-btn" data-lang="ko">
+                <span class="flag">🇰🇷</span> 한국어
+            </button>
+            <button class="locale-btn" data-lang="zh">
+                <span class="flag">🇨🇳</span> 中文
+            </button>
+        </div>
+
+        <!-- Pipeline Visualization -->
+        <div class="pipeline">
+            <div class="pipeline-step" id="step-fetch">
+                <span>📥</span> Fetch Code
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step" id="step-transform">
+                <span>🔄</span> Grammar Transform
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step" id="step-inject">
+                <span>💉</span> Inject to DOM
+            </div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step" id="step-execute">
+                <span>▶️</span> Execute
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Code Snippets Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>📦</span> Available Code Snippets
+                </div>
+                <div class="panel-body">
+                    <div class="snippet-grid" id="snippets">
+                        <!-- Generated by JavaScript -->
+                    </div>
+                    <button class="inject-btn" id="inject-btn" onclick="injectSelected()">
+                        💉 Inject Selected Snippet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Execution Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>🎯</span> Execution Targets
+                </div>
+                <div class="panel-body">
+                    <div class="exec-area">
+                        <div class="exec-label">Interactive Elements</div>
+                        <div class="exec-targets">
+                            <div class="target-counter">
+                                <button class="counter-btn dec" id="btn-dec">−</button>
+                                <div class="counter-value" id="counter">0</div>
+                                <button class="counter-btn inc" id="btn-inc">+</button>
+                            </div>
+                            <div class="target-box" id="toggle-box">Toggle</div>
+                        </div>
+                        <div class="exec-targets" style="margin-top: 20px;">
+                            <input type="text" class="target-input" id="mirror-input" placeholder="Type here...">
+                            <div class="target-output" id="mirror-output">Output appears here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>How This Works</h3>
+            <p>
+                This experiment demonstrates a <strong>dynamic code injection pipeline</strong>. Code snippets
+                are stored as English hyperscript, then transformed to your selected locale using the grammar
+                transformation system. The transformed code is injected into the DOM and processed by LokaScript's
+                runtime. Click a snippet, then click "Inject" to attach the behavior to the target elements.
+                The code you see is the actual hyperscript that will execute - in your language.
+            </p>
+        </div>
+    </div>
+
+    <!-- Load LokaScript -->
+    <script src="../bundle-loader.js"></script>
+    <script src="https://unpkg.com/@lokascript/i18n@2.3.0/dist/lokascript-i18n.min.js"></script>
+
+    <script>
+        // Code snippets (stored as English, transformed on demand)
+        const snippets = [
+            {
+                id: 'counter-inc',
+                name: 'Counter Increment',
+                target: '#btn-inc',
+                english: 'on click increment #counter'
+            },
+            {
+                id: 'counter-dec',
+                name: 'Counter Decrement',
+                target: '#btn-dec',
+                english: 'on click decrement #counter'
+            },
+            {
+                id: 'toggle',
+                name: 'Toggle Active',
+                target: '#toggle-box',
+                english: 'on click toggle .active'
+            },
+            {
+                id: 'mirror',
+                name: 'Input Mirror',
+                target: '#mirror-input',
+                english: 'on input put my value into #mirror-output'
+            }
+        ];
+
+        let currentLocale = 'en';
+        let selectedSnippet = null;
+        let loadedSnippets = new Set();
+
+        const rtlLanguages = ['ar', 'he'];
+
+        function translateCode(english, locale) {
+            if (locale === 'en') return english;
+
+            const translate = window.LokaScriptI18n?.translate;
+            if (!translate) return english;
+
+            try {
+                return translate(english, 'en', locale);
+            } catch (e) {
+                console.error('Translation error:', e);
+                return english;
+            }
+        }
+
+        function renderSnippets() {
+            const container = document.getElementById('snippets');
+            const isRtl = rtlLanguages.includes(currentLocale);
+
+            let html = '';
+            for (const snippet of snippets) {
+                const translated = translateCode(snippet.english, currentLocale);
+                const isLoaded = loadedSnippets.has(snippet.id);
+                const isSelected = selectedSnippet === snippet.id;
+
+                html += `
+                    <div class="snippet-card ${isSelected ? 'active' : ''}" data-id="${snippet.id}" onclick="selectSnippet('${snippet.id}')">
+                        <div class="snippet-header">
+                            <span class="snippet-name">${snippet.name}</span>
+                            <span class="snippet-status ${isLoaded ? 'loaded' : ''}">${isLoaded ? 'Loaded' : 'Ready'}</span>
+                        </div>
+                        <div class="snippet-code ${isRtl ? 'rtl' : ''}">${escapeHtml(translated)}</div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function selectSnippet(id) {
+            selectedSnippet = id;
+            renderSnippets();
+        }
+
+        function animatePipeline() {
+            const steps = ['step-fetch', 'step-transform', 'step-inject', 'step-execute'];
+            let i = 0;
+
+            const animate = () => {
+                steps.forEach(s => document.getElementById(s).classList.remove('active'));
+                if (i < steps.length) {
+                    document.getElementById(steps[i]).classList.add('active');
+                    i++;
+                    setTimeout(animate, 300);
+                }
+            };
+
+            animate();
+        }
+
+        function injectSelected() {
+            if (!selectedSnippet) {
+                alert('Please select a snippet first');
+                return;
+            }
+
+            const snippet = snippets.find(s => s.id === selectedSnippet);
+            if (!snippet) return;
+
+            animatePipeline();
+
+            // Get translated code
+            const translated = translateCode(snippet.english, currentLocale);
+
+            // Find target element
+            const target = document.querySelector(snippet.target);
+            if (!target) {
+                console.error('Target not found:', snippet.target);
+                return;
+            }
+
+            // Remove existing hyperscript if any
+            target.removeAttribute('_');
+
+            // Inject the English code (runtime needs English)
+            target.setAttribute('_', snippet.english);
+
+            // Process with LokaScript
+            if (window.hyperfixi?.processNode) {
+                window.hyperfixi.processNode(target);
+            }
+
+            // Mark as loaded
+            loadedSnippets.add(snippet.id);
+            renderSnippets();
+
+            console.log(`Injected "${snippet.name}" onto ${snippet.target}`);
+            console.log(`  English: ${snippet.english}`);
+            console.log(`  ${currentLocale}: ${translated}`);
+        }
+
+        function setLocale(locale) {
+            currentLocale = locale;
+
+            // Update active button
+            document.querySelectorAll('.locale-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === locale);
+            });
+
+            renderSnippets();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Locale buttons
+            document.querySelectorAll('.locale-btn').forEach(btn => {
+                btn.addEventListener('click', () => setLocale(btn.dataset.lang));
+            });
+
+            // Initial render
+            renderSnippets();
+
+            console.log('LokaScript loaded:', !!window.hyperfixi);
+            console.log('LokaScript i18n loaded:', !!window.LokaScriptI18n);
+        });
+    </script>
+</body>
+</html>

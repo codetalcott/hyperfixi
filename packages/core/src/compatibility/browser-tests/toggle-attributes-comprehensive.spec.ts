@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Toggle Attributes - Comprehensive Test Suite', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://127.0.0.1:3000/examples/intermediate/09-toggle-attributes.html');
+    await page.goto('http://127.0.0.1:3000/examples/toggle-and-state/toggle-attributes.html');
     await page.waitForTimeout(1000); // Give time for LokaScript to initialize
   });
 

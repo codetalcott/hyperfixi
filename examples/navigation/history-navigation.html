@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03: History Navigation - htmx-like Examples</title>
+  <link rel="stylesheet" href="../gallery.css">
+  <style>
+    /* Example-specific styles */
+    .page-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .page-nav button {
+      background: var(--color-surface, #f4f4f5);
+      border: 1px solid var(--color-border, #e4e4e7);
+    }
+    .page-nav button.active {
+      background: var(--color-accent, #6366f1);
+      color: white;
+      border-color: var(--color-accent, #6366f1);
+    }
+    #history-content {
+      min-height: 150px;
+      padding: 20px;
+      background: var(--color-surface, #f4f4f5);
+      border-radius: 8px;
+    }
+    .url-display {
+      font-family: var(--font-mono);
+      background: var(--color-border, #e4e4e7);
+      padding: 5px 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body class="example-page">
+  <div class="page-container">
+    <div class="breadcrumb">
+      <a href="../index.html">← Back to Gallery</a> / <strong>htmx-like</strong> / 03: History Navigation
+    </div>
+
+    <h1>History Navigation Example</h1>
+
+    <div class="description">
+      <strong>Purpose:</strong> Demonstrates hypermedia navigation with server-fetched fragments,
+      <code>push url</code> / <code>replace url</code> commands, and the <code>HistorySwap</code> behavior
+      for handling browser back/forward.
+      <div class="url-display">Current URL: <span id="current-url"></span></div>
+    </div>
+
+    <div>
+      <span class="tag htmx">push url</span>
+      <span class="tag htmx">replace url</span>
+      <span class="tag">history API</span>
+    </div>
+
+    <h2>Navigation with Push URL</h2>
+
+    <div class="page-nav">
+      <button id="nav-home" class="active" _="on click
+        remove .active from <button/> in closest .page-nav
+        add .active to me
+        fetch '/examples/navigation/fragments/home.html' as html
+        swap innerHTML of #history-content with it
+        push url '/examples/navigation/fragments/home.html'
+      ">Home</button>
+
+      <button id="nav-products" _="on click
+        remove .active from <button/> in closest .page-nav
+        add .active to me
+        fetch '/examples/navigation/fragments/products.html' as html
+        swap innerHTML of #history-content with it
+        push url '/examples/navigation/fragments/products.html'
+      ">Products</button>
+
+      <button id="nav-about" _="on click
+        remove .active from <button/> in closest .page-nav
+        add .active to me
+        fetch '/examples/navigation/fragments/about.html' as html
+        swap innerHTML of #history-content with it
+        push url '/examples/navigation/fragments/about.html'
+      ">About</button>
+
+      <button id="nav-contact" _="on click
+        remove .active from <button/> in closest .page-nav
+        add .active to me
+        fetch '/examples/navigation/fragments/contact.html' as html
+        swap innerHTML of #history-content with it
+        push url '/examples/navigation/fragments/contact.html'
+      ">Contact</button>
+    </div>
+
+    <div id="history-content" _="
+      on load
+        install HistorySwap(target: me, strategy: 'innerHTML')
+      end
+    ">
+      <h3>Home</h3>
+      <p>Welcome to the home page!</p>
+    </div>
+
+    <h2>Replace URL (No History Entry)</h2>
+
+    <div class="demo">
+      <p>Replace URL updates the URL without creating a history entry (can't go back):</p>
+      <button _="on click
+        fetch '/examples/navigation/fragments/filter.html' as html
+        swap innerHTML of #history-content with it
+        replace url '/examples/navigation/fragments/filter.html'
+      ">Apply Filter (replace)</button>
+
+      <button class="secondary" _="on click
+        fetch '/examples/navigation/fragments/sort-date.html' as html
+        swap innerHTML of #history-content with it
+        replace url '/examples/navigation/fragments/sort-date.html'
+      ">Sort by Date (replace)</button>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-buttons">
+      <a href="02-morph-comparison.html">← Previous: Morph Comparison</a>
+      <a href="04-multi-target-swaps.html">Next: Multi-Target Swaps →</a>
+    </div>
+  </div>
+
+  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <script>
+    // Update URL display
+    function updateUrlDisplay() {
+      document.getElementById('current-url').textContent = window.location.pathname;
+    }
+    updateUrlDisplay();
+
+    // Listen for URL changes
+    window.addEventListener('popstate', updateUrlDisplay);
+  </script>
+</body>
+</html>

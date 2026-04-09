@@ -21,7 +21,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../../..');
 
 // Fail fast if examples directory is missing
-if (!existsSync(join(repoRoot, 'examples', 'basics', '01-hello-world.html'))) {
+if (!existsSync(join(repoRoot, 'examples', 'events-and-dom', 'hello-world.html'))) {
   console.error(
     '\n  Missing examples/ directory at repo root.\n' +
     '  The examples gallery should be checked into the repo.\n'
@@ -96,7 +96,7 @@ const BUNDLES = {
 const GALLERY_EXAMPLES = [
   {
     name: 'Toggle Class',
-    path: '/examples/basics/02-toggle-class.html',
+    path: '/examples/toggle-and-state/toggle-class.html',
     requiredFeatures: ['toggle'],
     test: async (page) => {
       const box = page.locator('#box');
@@ -117,7 +117,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Counter',
-    path: '/examples/basics/05-counter.html',
+    path: '/examples/events-and-dom/counter.html',
     requiredFeatures: ['increment'],
     test: async (page) => {
       // Wait for hyperfixi to initialize
@@ -147,7 +147,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Input Mirror',
-    path: '/examples/basics/04-input-mirror.html',
+    path: '/examples/events-and-dom/input-mirror.html',
     requiredFeatures: ['put', 'possessiveExpr'],  // Uses `my value` syntax
     test: async (page) => {
       // Wait for hyperfixi to initialize
@@ -177,7 +177,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Show/Hide',
-    path: '/examples/basics/03-show-hide.html',
+    path: '/examples/events-and-dom/show-hide.html',
     requiredFeatures: ['show'],
     test: async (page) => {
       const btn = page.locator('button').first();
@@ -191,7 +191,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Hello World',
-    path: '/examples/basics/01-hello-world.html',
+    path: '/examples/events-and-dom/hello-world.html',
     requiredFeatures: ['put'],
     test: async (page) => {
       const btn = page.locator('button').first();

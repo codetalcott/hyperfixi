@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>01: Hello World - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Events & DOM</strong> / Hello World
+        </div>
+
+        <h1>Hello World</h1>
+
+        <div class="description">
+            <strong>Your first hyperscript.</strong><br>
+            This example demonstrates the most basic hyperscript pattern: listening for a click event
+            and updating the DOM.
+        </div>
+
+        <div>
+            <span class="tag">on click</span>
+            <span class="tag">put</span>
+            <span class="tag">event handling</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <button _="on click put 'Hello, HyperFixi' into #output">
+                Click
+            </button>
+            <div id="output">Output appears here</div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;button <span class="keyword">_</span>=<span class="string">"on click put 'Hello, HyperFixi' into #output"</span>&gt;
+  Click
+&lt;/button&gt;
+&lt;div <span class="keyword">id</span>=<span class="string">"output"</span>&gt;&lt;/div&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>_="..."</code> - The hyperscript attribute</li>
+                <li><code>on click</code> - Listen for click events on this button</li>
+                <li><code>put 'Hello, HyperFixi'</code> - The value to insert</li>
+                <li><code>into #output</code> - Target the element with id="output"</li>
+            </ul>
+
+            <h3>Key Concepts:</h3>
+            <ul>
+                <li><strong>Event Handling:</strong> <code>on [event]</code> sets up event listeners</li>
+                <li><strong>DOM Updates:</strong> <code>put [value] into [target]</code> updates content</li>
+                <li><strong>CSS Selectors:</strong> <code>#output</code> uses standard CSS selector syntax</li>
+                <li><strong>Declarative:</strong> Describe what should happen, not how to do it</li>
+            </ul>
+
+            <h3>Try it yourself:</h3>
+            <p>
+                Modify the hyperscript to change different parts:
+            </p>
+            <ul>
+                <li>Change the message to your own text</li>
+                <li>Try <code>on mouseover</code> instead of <code>on click</code></li>
+                <li>Use <code>append</code> instead of <code>put</code> to add text</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="../index.html">← Gallery Home</a>
+            <a href="02-toggle-class.html">Next: Toggle Classes →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../bundle-loader.js"></script>
+    <script src="../prism-loader.js"></script>
+    <script src="../bundle-selector.js"></script>
+</body>
+</html>

@@ -34,7 +34,7 @@ Toggle a CSS class on click:
 - `toggle .active` - Toggles the "active" class
 - `on me` - Targets the button itself
 
-**See also:** [Live Demo](../../examples/basics/02-toggle-class.html)
+**See also:** [Live Demo](../../examples/toggle-and-state/toggle-class.html)
 
 **Variations:**
 
@@ -308,7 +308,7 @@ Mirror input value in real-time:
 <div id="mirror">You typed:</div>
 ```
 
-**See also:** [Live Demo](../../examples/basics/04-input-mirror.html)
+**See also:** [Live Demo](../../examples/events-and-dom/input-mirror.html)
 
 ### Form Validation
 
@@ -337,7 +337,7 @@ Validate email on blur:
 </style>
 ```
 
-**See also:** [Live Demo](../../examples/intermediate/01-form-validation.html)
+**See also:** [Live Demo](../../examples/forms/form-validation.html)
 
 Required field validation:
 
@@ -471,7 +471,7 @@ Fade out and remove:
 </style>
 ```
 
-**See also:** [Live Demo](../../examples/intermediate/03-fade-effects.html)
+**See also:** [Live Demo](../../examples/animation/fade-effects.html)
 
 Fade in on page load:
 
@@ -568,7 +568,7 @@ Show/hide modal:
 </style>
 ```
 
-**See also:** [Live Demo](../../examples/intermediate/05-modal.html)
+**See also:** [Live Demo](../../examples/dialogs/modal.html)
 
 ### Modal with Escape Key
 
@@ -603,7 +603,7 @@ Use HTML5 `<dialog>` element:
 </style>
 ```
 
-**See also:** [Live Demo](../../examples/intermediate/06-native-dialog.html)
+**See also:** [Live Demo](../../examples/dialogs/native-dialog.html)
 
 ---
 
@@ -731,7 +731,7 @@ Tab navigation pattern:
 </style>
 ```
 
-**See also:** [Live Demo](../../examples/intermediate/04-tabs.html)
+**See also:** [Live Demo](../../examples/navigation/tabs.html)
 
 ### Accordion
 
@@ -876,7 +876,7 @@ Load data from API:
 <div id="output"></div>
 ```
 
-**See also:** [Live Demo](../../examples/intermediate/02-fetch-data.html)
+**See also:** [Live Demo](../../examples/fetch-and-async/fetch-data.html)
 
 ### Fetch with Loading State
 
@@ -1088,7 +1088,7 @@ Load more content on scroll:
 </div>
 ```
 
-**See also:** [Live Demo](../../examples/advanced/04-infinite-scroll.html)
+**See also:** [Live Demo](../../examples/fetch-and-async/infinite-scroll.html)
 
 ### Copy to Clipboard
 

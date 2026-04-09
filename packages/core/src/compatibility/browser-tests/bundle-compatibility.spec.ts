@@ -137,7 +137,7 @@ const BUNDLES = {
 const GALLERY_EXAMPLES = [
   {
     name: 'Toggle Class',
-    path: '/examples/basics/02-toggle-class.html',
+    path: '/examples/toggle-and-state/toggle-class.html',
     requiredFeatures: ['toggle'],
     test: async (page: Page) => {
       // Find a button that toggles a class
@@ -152,7 +152,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Show/Hide Elements',
-    path: '/examples/basics/03-show-hide.html',
+    path: '/examples/events-and-dom/show-hide.html',
     requiredFeatures: ['show', 'hide'],
     test: async (page: Page) => {
       const showBtn = page.locator('button').filter({ hasText: /show/i }).first();
@@ -172,7 +172,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Input Mirror',
-    path: '/examples/basics/04-input-mirror.html',
+    path: '/examples/events-and-dom/input-mirror.html',
     requiredFeatures: ['put'],
     test: async (page: Page) => {
       const input = page.locator('input').first();
@@ -194,7 +194,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Counter',
-    path: '/examples/basics/05-counter.html',
+    path: '/examples/events-and-dom/counter.html',
     requiredFeatures: ['increment'],
     test: async (page: Page) => {
       // Find increment button (the "Increase" button with +)
@@ -226,7 +226,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Modal Dialog',
-    path: '/examples/intermediate/05-modal.html',
+    path: '/examples/dialogs/modal.html',
     requiredFeatures: ['addClass', 'blocks'],
     test: async (page: Page) => {
       const openBtn = page.locator('button').filter({ hasText: /open/i }).first();
@@ -245,7 +245,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Fetch Data',
-    path: '/examples/intermediate/02-fetch-data.html',
+    path: '/examples/fetch-and-async/fetch-data.html',
     requiredFeatures: ['fetch', 'blocks'],
     test: async (page: Page) => {
       const fetchBtn = page
@@ -262,7 +262,7 @@ const GALLERY_EXAMPLES = [
   },
   {
     name: 'Tab Navigation',
-    path: '/examples/intermediate/04-tabs.html',
+    path: '/examples/navigation/tabs.html',
     requiredFeatures: ['addClass', 'toggle'],
     test: async (page: Page) => {
       const tabs = page.locator('[role="tab"], .tab');
@@ -289,7 +289,9 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
         errors.push('PageError: ' + err.message);
       });
 
-      await page.goto(`${BASE_URL}/examples/basics/02-toggle-class.html?bundle=${bundleKey}`);
+      await page.goto(
+        `${BASE_URL}/examples/toggle-and-state/toggle-class.html?bundle=${bundleKey}`
+      );
       await page.waitForTimeout(1000);
 
       // Filter out expected errors
@@ -306,7 +308,9 @@ for (const [bundleKey, bundleConfig] of Object.entries(BUNDLES)) {
 
     // Test toggle works (all bundles support this)
     test('toggle command works', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/basics/02-toggle-class.html?bundle=${bundleKey}`);
+      await page.goto(
+        `${BASE_URL}/examples/toggle-and-state/toggle-class.html?bundle=${bundleKey}`
+      );
       await page.waitForTimeout(500);
 
       // This example toggles .active on #box, not on the button
