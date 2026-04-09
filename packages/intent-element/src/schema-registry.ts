@@ -48,6 +48,7 @@ class IntentSchemaRegistry {
   /**
    * Fetch and register schemas from a JSON endpoint.
    * The endpoint must return an array of CommandSchema objects.
+   * Throws if the response is not OK, not an array, or contains malformed schemas.
    */
   async loadFrom(url: string): Promise<void> {
     const response = await fetch(url);
@@ -56,8 +57,19 @@ class IntentSchemaRegistry {
         `Failed to load schemas from ${url}: ${response.status} ${response.statusText}`
       );
     }
-    const schemas: CommandSchema[] = await response.json();
-    this.registerAll(schemas);
+    const body: unknown = await response.json();
+    if (!Array.isArray(body)) {
+      throw new Error(`Expected array of schemas from ${url}, got ${typeof body}`);
+    }
+    for (let i = 0; i < body.length; i++) {
+      const s = body[i] as Record<string, unknown>;
+      if (typeof s?.action !== 'string' || !Array.isArray(s?.roles)) {
+        throw new Error(
+          `Schema at index ${i} from ${url} is missing required fields "action" (string) and "roles" (array)`
+        );
+      }
+    }
+    this.registerAll(body as CommandSchema[]);
   }
 }
 

@@ -32,10 +32,16 @@ function makeElement(inlineJson?: string): LSEIntentElement {
   return el;
 }
 
-function waitForEvent(el: Element, type: string): Promise<CustomEvent> {
-  return new Promise(resolve => {
-    el.addEventListener(type, e => resolve(e as CustomEvent), { once: true });
-  });
+/** Wait for a CustomEvent, failing after `ms` milliseconds if it never fires. */
+function waitForEvent(el: Element, type: string, ms = 1000): Promise<CustomEvent> {
+  return Promise.race([
+    new Promise<CustomEvent>(resolve =>
+      el.addEventListener(type, e => resolve(e as CustomEvent), { once: true })
+    ),
+    new Promise<CustomEvent>((_, reject) =>
+      setTimeout(() => reject(new Error(`"${type}" event not fired within ${ms}ms`)), ms)
+    ),
+  ]);
 }
 
 // ─── intentRegistry ──────────────────────────────────────────────────────────
@@ -89,6 +95,35 @@ describe('intentRegistry', () => {
     };
     intentRegistry.registerAll([s1, s2]);
     expect(intentRegistry.size).toBe(2);
+  });
+
+  it('loadFrom() throws for non-array response', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ action: 'toggle' }), // object, not array
+    } as unknown as Response);
+    await expect(intentRegistry.loadFrom('http://example.com/schemas.json')).rejects.toThrow(
+      'Expected array'
+    );
+  });
+
+  it('loadFrom() throws for schema missing action field', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [{ roles: [] }], // missing action
+    } as unknown as Response);
+    await expect(intentRegistry.loadFrom('http://example.com/schemas.json')).rejects.toThrow(
+      'missing required fields'
+    );
+  });
+
+  it('loadFrom() throws for HTTP error', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+    } as unknown as Response);
+    await expect(intentRegistry.loadFrom('http://example.com/schemas.json')).rejects.toThrow('404');
   });
 });
 
@@ -161,6 +196,21 @@ describe('LSEIntentElement — validation', () => {
     expect(el.diagnostics).toHaveLength(0);
   });
 
+  it('diagnostics getter returns a copy (external mutation does not affect element)', async () => {
+    delete (globalThis as Record<string, unknown>)['hyperfixi'];
+    const el = makeElement(VALID_JSON);
+    const validated = waitForEvent(el, 'lse:validated');
+    document.body.appendChild(el);
+    await validated;
+    await new Promise(r => setTimeout(r, 20));
+    const copy = el.diagnostics as IRDiagnostic[];
+    const originalLength = copy.length;
+    // Mutate the returned array — internal state must not change
+    (copy as IRDiagnostic[]).push({ severity: 'error', code: 'FAKE', message: 'injected' });
+    expect(el.diagnostics).toHaveLength(originalLength);
+    document.body.removeChild(el);
+  });
+
   it('does nothing when disabled attribute is set', async () => {
     const el = makeElement(VALID_JSON);
     el.setAttribute('disabled', '');
@@ -168,10 +218,26 @@ describe('LSEIntentElement — validation', () => {
     el.addEventListener('lse:validated', e => events.push(e));
     el.addEventListener('lse:error', e => events.push(e));
     document.body.appendChild(el);
-    // Give microtasks a chance to run
     await new Promise(r => setTimeout(r, 50));
     expect(events).toHaveLength(0);
     document.body.removeChild(el);
+  });
+
+  it('uses 5000ms default when timeout attribute is empty string', async () => {
+    // We can't directly test the timeout value, but we can confirm initialization
+    // succeeds (doesn't immediately time out) with timeout=""
+    (globalThis as Record<string, unknown>)['hyperfixi'] = {
+      evalLSENode: vi.fn().mockResolvedValue('ok'),
+    };
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('timeout', '');
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    // If timeout were 0ms this would fire lse:error instead
+    const event = await executed;
+    expect(event.detail.result).toBe('ok');
+    document.body.removeChild(el);
+    delete (globalThis as Record<string, unknown>)['hyperfixi'];
   });
 });
 
@@ -202,13 +268,37 @@ describe('LSEIntentElement — schema validation', () => {
     expect(schemaDiag).toBeDefined();
     document.body.removeChild(el);
   });
+
+  it('adds warning diagnostic for role with unexpected type', async () => {
+    intentRegistry.register({
+      action: 'toggle',
+      roles: [
+        { role: 'patient', required: true, expectedTypes: ['selector'], description: 'target' },
+      ],
+      description: 'toggle',
+      primaryRole: 'patient',
+      category: 'dom',
+    });
+
+    // patient is present but as a literal, not a selector
+    const el = makeElement(
+      JSON.stringify({ action: 'toggle', roles: { patient: { type: 'literal', value: 'foo' } } })
+    );
+    const validated = waitForEvent(el, 'lse:validated');
+    document.body.appendChild(el);
+    const event = await validated;
+    const typeDiag = event.detail.diagnostics.find(
+      (d: { code: string }) => d.code === 'UNEXPECTED_ROLE_TYPE'
+    );
+    expect(typeDiag).toBeDefined();
+    document.body.removeChild(el);
+  });
 });
 
 // ─── LSEIntentElement — execution ────────────────────────────────────────────
 
 describe('LSEIntentElement — execution', () => {
   beforeEach(() => {
-    // Stub window.hyperfixi with evalLSENode
     (globalThis as Record<string, unknown>)['hyperfixi'] = {
       evalLSENode: vi.fn().mockResolvedValue('executed'),
     };
@@ -266,4 +356,24 @@ describe('LSEIntentElement — execution', () => {
     expect(hasWarning).toBe(true);
     document.body.removeChild(el);
   });
+
+  it('does not use _hyperscript fallback — only window.hyperfixi is supported', async () => {
+    delete (globalThis as Record<string, unknown>)['hyperfixi'];
+    (globalThis as Record<string, unknown>)['_hyperscript'] = {
+      evalLSENode: vi.fn().mockResolvedValue('should-not-run'),
+    };
+    const el = makeElement(VALID_JSON);
+    const validated = waitForEvent(el, 'lse:validated');
+    document.body.appendChild(el);
+    await validated;
+    await new Promise(r => setTimeout(r, 20));
+    // Should see NO_RUNTIME, not lse:executed
+    expect(el.diagnostics.some(d => d.code === 'NO_RUNTIME')).toBe(true);
+    delete (globalThis as Record<string, unknown>)['_hyperscript'];
+    document.body.removeChild(el);
+  });
 });
+
+// ─── Type helpers ─────────────────────────────────────────────────────────────
+
+type IRDiagnostic = { severity: string; code: string; message: string };

@@ -27,7 +27,7 @@
  */
 
 import { fromProtocolJSON, validateProtocolJSON } from '@lokascript/intent';
-import type { SemanticNode, IRDiagnostic } from '@lokascript/intent';
+import type { SemanticNode, IRDiagnostic, CommandSchema, SemanticValue } from '@lokascript/intent';
 import { intentRegistry } from './schema-registry.js';
 import { sandboxed } from './sandbox.js';
 
@@ -41,7 +41,7 @@ interface HyperfiziRuntime {
 
 function getRuntime(): HyperfiziRuntime | null {
   const w = globalThis as Record<string, unknown>;
-  const api = w['hyperfixi'] ?? w['_hyperscript'];
+  const api = w['hyperfixi'];
   if (api && typeof (api as Record<string, unknown>)['evalLSENode'] === 'function') {
     return api as HyperfiziRuntime;
   }
@@ -57,11 +57,17 @@ export class LSEIntentElement extends HTMLElement {
 
   private _node: SemanticNode | null = null;
   private _diagnostics: IRDiagnostic[] = [];
+  private _abortController: AbortController | null = null;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   connectedCallback(): void {
     void this._initialize();
+  }
+
+  disconnectedCallback(): void {
+    this._abortController?.abort();
+    this._abortController = null;
   }
 
   attributeChangedCallback(name: string, _old: string | null, _new: string | null): void {
@@ -77,9 +83,9 @@ export class LSEIntentElement extends HTMLElement {
     return this._node;
   }
 
-  /** Diagnostics from the last validation attempt. */
+  /** Diagnostics from the last validation attempt. Returns a snapshot copy. */
   get diagnostics(): readonly IRDiagnostic[] {
-    return this._diagnostics;
+    return [...this._diagnostics];
   }
 
   /** Re-run initialization (useful after updating the inline JSON). */
@@ -128,7 +134,7 @@ export class LSEIntentElement extends HTMLElement {
 
     this._node = node;
     this._diagnostics = [...wireDiags, ...schemaDiags];
-    this._emit('lse:validated', { node, diagnostics: this._diagnostics });
+    this._emit('lse:validated', { node, diagnostics: [...this._diagnostics] });
 
     // Execute
     const runtime = getRuntime();
@@ -143,7 +149,8 @@ export class LSEIntentElement extends HTMLElement {
       return;
     }
 
-    const timeoutMs = Number(this.getAttribute('timeout') ?? 5000);
+    const rawTimeout = this.getAttribute('timeout');
+    const timeoutMs = rawTimeout !== null ? parseInt(rawTimeout, 10) || 5000 : 5000;
     const result = await sandboxed(() => runtime.evalLSENode(node, this), timeoutMs);
 
     if (result.ok) {
@@ -155,7 +162,7 @@ export class LSEIntentElement extends HTMLElement {
         message: result.error?.message ?? 'Unknown execution error',
       });
       this._showError();
-      this._emit('lse:error', { diagnostics: this._diagnostics, error: result.error });
+      this._emit('lse:error', { diagnostics: [...this._diagnostics], error: result.error });
     }
   }
 
@@ -163,14 +170,18 @@ export class LSEIntentElement extends HTMLElement {
     // 1. src attribute — fetch remote JSON
     const src = this.getAttribute('src');
     if (src) {
+      this._abortController?.abort();
+      this._abortController = new AbortController();
       try {
-        const response = await fetch(src);
+        const response = await fetch(src, { signal: this._abortController.signal });
         if (!response.ok) {
           this._emitFetchError(src, response.status);
           return null;
         }
         return (await response.json()) as Record<string, unknown>;
       } catch (err) {
+        // AbortError means the element was disconnected — silently ignore
+        if (err instanceof Error && err.name === 'AbortError') return null;
         this._emitFetchError(src, 0, err instanceof Error ? err : undefined);
         return null;
       }
@@ -197,18 +208,30 @@ export class LSEIntentElement extends HTMLElement {
     return null;
   }
 
-  private _validateSchema(
-    node: SemanticNode,
-    schema: import('@lokascript/intent').CommandSchema
-  ): IRDiagnostic[] {
+  private _validateSchema(node: SemanticNode, schema: CommandSchema): IRDiagnostic[] {
     const diags: IRDiagnostic[] = [];
     for (const roleSpec of schema.roles) {
-      if (roleSpec.required && !node.roles.has(roleSpec.role)) {
+      const value = node.roles.get(roleSpec.role) as SemanticValue | undefined;
+
+      if (roleSpec.required && !value) {
         diags.push({
           severity: 'error',
           code: 'MISSING_REQUIRED_ROLE',
           message: `Required role "${roleSpec.role}" is missing for command "${node.action}"`,
         });
+        continue;
+      }
+
+      if (value && roleSpec.expectedTypes && roleSpec.expectedTypes.length > 0) {
+        if (
+          !roleSpec.expectedTypes.includes(value.type as (typeof roleSpec.expectedTypes)[number])
+        ) {
+          diags.push({
+            severity: 'warning',
+            code: 'UNEXPECTED_ROLE_TYPE',
+            message: `Role "${roleSpec.role}" has type "${value.type}" but expected one of: ${roleSpec.expectedTypes.join(', ')}`,
+          });
+        }
       }
     }
     return diags;
@@ -216,8 +239,8 @@ export class LSEIntentElement extends HTMLElement {
 
   private _showError(): void {
     const errorSlot = this.querySelector('[slot="error"]');
-    if (errorSlot) {
-      (errorSlot as HTMLElement).style.display = '';
+    if (errorSlot instanceof HTMLElement) {
+      errorSlot.style.display = '';
     }
   }
 

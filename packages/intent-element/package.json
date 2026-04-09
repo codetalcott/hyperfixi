@@ -17,8 +17,7 @@
     }
   },
   "sideEffects": [
-    "./dist/intent-element.iife.js",
-    "./src/index.ts"
+    "./dist/intent-element.iife.js"
   ],
   "scripts": {
     "build": "tsup && npm run build:types",
