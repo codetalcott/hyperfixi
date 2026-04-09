@@ -82,7 +82,7 @@
     "puppeteer": "^24.26.1",
     "tsx": "^4.19.2",
     "url-parse": "^1.5.10",
-    "vite": "^7.1.12"
+    "vite": "^6.4.2"
   },
   "devDependencies": {
     "@types/diff": "^5.0.0",
