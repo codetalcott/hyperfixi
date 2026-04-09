@@ -59,7 +59,7 @@
     <h2>2. Add <code>.highlighted</code> to <code>#target-box</code></h2>
     <p>Uses the <code>add</code> action. Click to add the class (idempotent).</p>
 
-    <lse-intent id="demo-add">
+    <lse-intent id="demo-add" disabled>
       <script type="application/lse+json">
         {
           "action": "add",
@@ -69,7 +69,7 @@
           }
         }
       </script>
-      <button slot="trigger" onclick="document.getElementById('demo-add').refresh()">Highlight Box</button>
+      <button slot="trigger" onclick="const el = document.getElementById('demo-add'); el.removeAttribute('disabled'); el.refresh();">Highlight Box</button>
       <span slot="error" style="display:none; color:red;">Interaction unavailable</span>
     </lse-intent>
 
