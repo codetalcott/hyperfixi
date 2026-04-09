@@ -94,6 +94,9 @@
   ],
   "author": "LokaScript Contributors",
   "license": "MIT",
+  "dependencies": {
+    "@lokascript/intent": "*"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^4.0.17",
