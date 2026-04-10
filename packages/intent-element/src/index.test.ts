@@ -703,6 +703,177 @@ describe('LSEIntentElement — trigger modes', () => {
   });
 });
 
+// ─── LSEIntentElement — event-handler unwrap ────────────────────────────────
+
+describe('LSEIntentElement — event-handler unwrap', () => {
+  let evalMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    evalMock = vi.fn().mockResolvedValue('executed');
+    (globalThis as Record<string, unknown>)['hyperfixi'] = { evalLSENode: evalMock };
+  });
+
+  it('unwraps verbose event-handler form: body command is passed to evalLSENode, not the wrapper', async () => {
+    // Verbose protocol form: kind:"event-handler" with body:[command{toggle}].
+    // The element's own click listener provides the event wiring — the inner
+    // event-handler metadata is redundant. _execute must unwrap the body and
+    // pass the plain command node to evalLSENode, not the event-handler node.
+    const verboseJson = JSON.stringify({
+      kind: 'event-handler',
+      action: 'on',
+      roles: { event: { type: 'literal', value: 'click', dataType: 'string' } },
+      body: [
+        {
+          kind: 'command',
+          action: 'toggle',
+          roles: { patient: { type: 'selector', value: '.active' } },
+        },
+      ],
+    });
+
+    const el = makeElement(verboseJson);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.click();
+    await executed;
+
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    const [passedNode] = evalMock.mock.calls[0];
+    expect(passedNode.kind).toBe('command');
+    expect(passedNode.action).toBe('toggle');
+    document.body.removeChild(el);
+  });
+
+  it('unwraps compact trigger-sugar form: body command is passed to evalLSENode, not the wrapper', async () => {
+    // Compact protocol form: {action, roles, trigger:{event}}. This is what
+    // the compilation service now emits (Option A fix in @lokascript/intent).
+    // fromProtocolJSON still deserializes it into an event-handler SemanticNode,
+    // so _execute must unwrap it the same way as the verbose form above.
+    const compactJson = JSON.stringify({
+      action: 'toggle',
+      roles: { patient: { type: 'selector', value: '.active' } },
+      trigger: { event: 'click' },
+    });
+
+    const el = makeElement(compactJson);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.click();
+    await executed;
+
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    const [passedNode] = evalMock.mock.calls[0];
+    expect(passedNode.kind).toBe('command');
+    expect(passedNode.action).toBe('toggle');
+    document.body.removeChild(el);
+  });
+
+  it('passes bare command nodes to evalLSENode unchanged', async () => {
+    // Regression guard: bare command JSON (no kind, no trigger) was the one
+    // form that already worked pre-fix. Confirm the unwrap didn't break it.
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.click();
+    await executed;
+
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    const [passedNode] = evalMock.mock.calls[0];
+    expect(passedNode.kind).toBe('command');
+    expect(passedNode.action).toBe('toggle');
+    document.body.removeChild(el);
+  });
+
+  it('unwraps multi-command bodies and executes each in sequence', async () => {
+    // Verbose form with multiple body commands. Each should be executed
+    // sequentially. The final lse:executed event carries the results array.
+    const multiJson = JSON.stringify({
+      kind: 'event-handler',
+      action: 'on',
+      roles: { event: { type: 'literal', value: 'click', dataType: 'string' } },
+      body: [
+        {
+          kind: 'command',
+          action: 'add',
+          roles: { patient: { type: 'selector', value: '.loading' } },
+        },
+        {
+          kind: 'command',
+          action: 'remove',
+          roles: { patient: { type: 'selector', value: '.done' } },
+        },
+      ],
+    });
+
+    let callIndex = 0;
+    evalMock.mockImplementation(async () => `result-${callIndex++}`);
+
+    const el = makeElement(multiJson);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.click();
+    const event = await executed;
+
+    expect(evalMock).toHaveBeenCalledTimes(2);
+    expect(evalMock.mock.calls[0][0].action).toBe('add');
+    expect(evalMock.mock.calls[1][0].action).toBe('remove');
+    expect(event.detail.results).toEqual(['result-0', 'result-1']);
+    document.body.removeChild(el);
+  });
+
+  it('stops execution on first body command failure and emits lse:error', async () => {
+    const multiJson = JSON.stringify({
+      kind: 'event-handler',
+      action: 'on',
+      roles: { event: { type: 'literal', value: 'click', dataType: 'string' } },
+      body: [
+        { kind: 'command', action: 'add', roles: { patient: { type: 'selector', value: '.a' } } },
+        { kind: 'command', action: 'fail', roles: {} },
+        {
+          kind: 'command',
+          action: 'remove',
+          roles: { patient: { type: 'selector', value: '.a' } },
+        },
+      ],
+    });
+
+    evalMock.mockImplementation(async (n: { action: string }) => {
+      if (n.action === 'fail') throw new Error('boom');
+      return 'ok';
+    });
+
+    const el = makeElement(multiJson);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+
+    const errored = waitForEvent(el, 'lse:error');
+    el.click();
+    await errored;
+
+    // Should have executed the first two (add, fail) but not the third (remove)
+    expect(evalMock).toHaveBeenCalledTimes(2);
+    expect(evalMock.mock.calls[0][0].action).toBe('add');
+    expect(evalMock.mock.calls[1][0].action).toBe('fail');
+    expect(el.diagnostics.some(d => d.code === 'EXECUTION_ERROR')).toBe(true);
+    document.body.removeChild(el);
+  });
+});
+
 // ─── Type helpers ─────────────────────────────────────────────────────────────
 
 type IRDiagnostic = { severity: string; code: string; message: string };

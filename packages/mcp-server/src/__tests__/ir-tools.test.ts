@@ -522,8 +522,17 @@ describe('convert_format — interchange input', () => {
     expect(response.isError).toBeUndefined();
     const data = parseResult(response);
     expect(data.ok).toBe(true);
-    expect(data.semantic.kind).toBe('event-handler');
-    expect(data.semantic.body).toHaveLength(1);
+    // `semantic` is the protocol JSON shape (from toProtocolJSON). Single-body
+    // event handlers are emitted in compact `trigger` form: the body command's
+    // action is hoisted to the top, and the event name moves under
+    // `trigger.event`. See @lokascript/intent protocol.ts:canEmitCompactTrigger.
+    expect(data.semantic.kind).toBeUndefined();
+    expect(data.semantic.action).toBe('toggle');
+    expect(data.semantic.trigger).toEqual({ event: 'click' });
+    expect(data.semantic.body).toBeUndefined();
+    // The explicit bracket rendering is unchanged — it still reflects the
+    // event-handler structure because the renderer walks the SemanticNode,
+    // not the JSON output.
     expect(data.explicit).toContain('event:click');
   });
 

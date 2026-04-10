@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LLM-Native UI — verbose event-handler form (fixed)</title>
+    <style>
+      body { font-family: system-ui; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+      #sidebar { padding: 1rem; border: 2px solid #ccc; margin-top: 1rem; }
+      #sidebar.active { background: #4caf50; color: white; border-color: #388e3c; }
+      .banner { background: #d4edda; border: 1px solid #28a745; padding: 1rem; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>Verbose event-handler form (now fixed)</h1>
+    <div class="banner">
+      <strong>This page used to be broken.</strong> It demonstrates the verbose-form
+      protocol JSON (<code>kind: "event-handler"</code>, nested <code>body:[...]</code>)
+      that the compilation service emitted before the 2026-04-10 fix. The fix landed
+      in <code>&lt;lse-intent&gt;._execute</code>: the element now unwraps event-handler
+      semantic nodes and executes their body commands directly, rather than passing the
+      wrapper to <code>evalLSENode</code> (which would attempt to re-wire a listener at
+      runtime and silently drop the body). See <a href="./README.md">README.md</a> for
+      the investigation.
+    </div>
+
+    <p>
+      This is the shape of the old compilation service output for
+      <code>[on event:click body:[toggle patient:.active destination:#sidebar]]</code>.
+      It's still a valid wire format (round-trips through the protocol parser) — it's
+      just more verbose than the new compact form.
+    </p>
+
+    <lse-intent trigger="click" id="button-host" style="display:inline-block; cursor:pointer;">
+      <script type="application/lse+json">
+        {
+          "kind": "event-handler",
+          "action": "on",
+          "roles": { "event": { "type": "literal", "value": "click" } },
+          "body": [
+            {
+              "kind": "command",
+              "action": "toggle",
+              "roles": {
+                "patient": { "type": "selector", "value": ".active", "selectorKind": "class" },
+                "destination": { "type": "selector", "value": "#sidebar", "selectorKind": "id" }
+              }
+            }
+          ]
+        }
+      </script>
+      <button style="padding: 0.5rem 1rem;">Click to toggle sidebar</button>
+    </lse-intent>
+
+    <div id="sidebar">Sidebar content — toggles <code>.active</code> on click</div>
+
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
+  </body>
+</html>

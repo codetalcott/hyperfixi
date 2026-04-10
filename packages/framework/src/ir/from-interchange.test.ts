@@ -759,17 +759,21 @@ describe('round-trip: InterchangeNode → SemanticNode → protocol JSON', () =>
     });
   });
 
-  it('event handler produces valid protocol JSON', () => {
+  it('event handler produces valid protocol JSON (compact trigger form)', () => {
     const node = fromInterchangeNode({
       type: 'event',
       event: 'click',
       body: [{ type: 'command', name: 'log', args: [{ type: 'literal', value: 'clicked' }] }],
     });
 
+    // Single-command bodies are emitted in the compact form — the body
+    // command's action is hoisted to the top level and the event name moves
+    // under `trigger.event`. See protocol.ts:canEmitCompactTrigger.
     const proto = toProtocolJSON(node);
-    expect(proto.kind).toBe('event-handler');
-    expect(proto.body).toHaveLength(1);
-    expect(proto.body![0].action).toBe('log');
+    expect(proto.kind).toBeUndefined();
+    expect(proto.action).toBe('log');
+    expect(proto.trigger).toEqual({ event: 'click' });
+    expect(proto.body).toBeUndefined();
   });
 
   it('if/else produces valid protocol JSON', () => {

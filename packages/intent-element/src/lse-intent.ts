@@ -358,6 +358,14 @@ export class LSEIntentElement extends HTMLElement {
   /**
    * Execute a prepared node via the hyperfixi runtime. Emits `lse:executed`
    * on success or `lse:error` on failure. Safe to call multiple times.
+   *
+   * **Event-handler unwrap.** If the prepared node is an event-handler (from
+   * either verbose wire format or compact `trigger` sugar), the element's
+   * own `trigger` attribute has already wired the DOM event listener — the
+   * wire-format event metadata is redundant at this point. We unwrap the
+   * event-handler and execute each body command directly, rather than passing
+   * the event-handler node to `evalLSENode` (which would attempt to re-wire
+   * a listener at runtime, effectively discarding the body).
    */
   private async _execute(node: SemanticNode): Promise<void> {
     const runtime = getRuntime();
@@ -372,21 +380,43 @@ export class LSEIntentElement extends HTMLElement {
       return;
     }
 
+    // Unwrap event-handler nodes into their body commands. See the comment
+    // above and examples/llm-native-todo-demo/README.md for the motivation.
+    const executables: SemanticNode[] =
+      node.kind === 'event-handler'
+        ? [...((node as { body?: SemanticNode[] }).body ?? [])]
+        : [node];
+
     const rawTimeout = this.getAttribute('timeout');
     const timeoutMs = rawTimeout !== null ? parseInt(rawTimeout, 10) || 5000 : 5000;
-    const result = await sandboxed(() => runtime.evalLSENode(node, this), timeoutMs);
 
-    if (result.ok) {
-      this._emit('lse:executed', { node, result: result.result });
-    } else {
-      this._diagnostics.push({
-        severity: 'error',
-        code: result.timedOut ? 'EXECUTION_TIMEOUT' : 'EXECUTION_ERROR',
-        message: result.error?.message ?? 'Unknown execution error',
-      });
-      this._showError();
-      this._emit('lse:error', { diagnostics: [...this._diagnostics], error: result.error });
+    // Execute body commands sequentially. A single failure stops the sequence
+    // and emits `lse:error`; all successful commands before the failure have
+    // already mutated the DOM.
+    const results: unknown[] = [];
+    for (const cmd of executables) {
+      const result = await sandboxed(() => runtime.evalLSENode(cmd, this), timeoutMs);
+      if (result.ok) {
+        results.push(result.result);
+      } else {
+        this._diagnostics.push({
+          severity: 'error',
+          code: result.timedOut ? 'EXECUTION_TIMEOUT' : 'EXECUTION_ERROR',
+          message: result.error?.message ?? 'Unknown execution error',
+        });
+        this._showError();
+        this._emit('lse:error', { diagnostics: [...this._diagnostics], error: result.error });
+        return;
+      }
     }
+
+    this._emit('lse:executed', {
+      node,
+      // For single-body cases keep the legacy `result` shape (first/only value);
+      // for multi-body cases expose the full array via `results` too.
+      result: results.length === 1 ? results[0] : results,
+      results,
+    });
   }
 
   private async _readJSON(): Promise<Record<string, unknown> | null> {

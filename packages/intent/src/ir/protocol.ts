@@ -78,6 +78,35 @@ export function toProtocolJSON(node: SemanticNode): ProtocolNodeJSON {
     }
     case 'event-handler': {
       const eh = node as EventHandlerSemanticNode;
+
+      // Emit compact form with `trigger` sugar when it's lossless. The compact
+      // form is `{action: bodyAction, roles: bodyRoles, trigger: {event, modifiers?}}`
+      // and deserializes back to an identical event-handler node via the
+      // `if (json.trigger)` branch in fromProtocolJSON. The compact form is
+      // also the only form the runtime dispatch path currently executes
+      // correctly for most commands — see examples/llm-native-todo-demo.
+      if (canEmitCompactTrigger(eh)) {
+        const body = eh.body[0] as CommandSemanticNode;
+        const eventValue = eh.roles.get('event' as SemanticRole);
+        // Safe because canEmitCompactTrigger verified type + value.
+        const eventName = (eventValue as { value: string }).value;
+
+        const trigger: { event: string; modifiers?: Record<string, unknown> } = {
+          event: eventName,
+        };
+        const triggerModifiers = serializeEventModifiers(eh.eventModifiers);
+        if (triggerModifiers) trigger.modifiers = triggerModifiers;
+
+        result = {
+          action: body.action,
+          roles: rolesToProtocol(body.roles),
+          trigger,
+        };
+        break;
+      }
+
+      // Fallback: verbose form (multi-command body, nested control flow,
+      // additional events, parameter names, annotations on body, etc.)
       result = {
         kind: 'event-handler',
         action: node.action,
@@ -171,6 +200,79 @@ function valueToProtocol(value: SemanticValue): ProtocolValueJSON {
     case 'flag':
       return { type: 'flag', name: value.name, enabled: value.enabled };
   }
+}
+
+/**
+ * Decide whether an event-handler node can be emitted in the compact
+ * `{action, roles, trigger}` form without losing information.
+ *
+ * The compact form is lossless when the event-handler wraps exactly one plain
+ * command, uses a simple literal event name, and carries no metadata that
+ * compact form can't represent (body-level annotations, additional events,
+ * parameter names, etc.). Round-trip: `fromProtocolJSON(compact)` rebuilds an
+ * equivalent event-handler via the `if (json.trigger)` branch.
+ */
+function canEmitCompactTrigger(eh: EventHandlerSemanticNode): boolean {
+  // Must wrap exactly one body node and that node must be a plain command.
+  if (!eh.body || eh.body.length !== 1) return false;
+  const body = eh.body[0];
+  if (body.kind !== 'command') return false;
+
+  // The body command must not carry its own control flow or v1.2 extensions.
+  const cmd = body as CommandSemanticNode;
+  if (cmd.body && cmd.body.length > 0) return false;
+  if (cmd.catchBranch && cmd.catchBranch.length > 0) return false;
+  if (cmd.finallyBranch && cmd.finallyBranch.length > 0) return false;
+  if (cmd.asyncVariant) return false;
+  if (cmd.asyncBody && cmd.asyncBody.length > 0) return false;
+  if (cmd.arms && cmd.arms.length > 0) return false;
+  if (cmd.defaultArm && cmd.defaultArm.length > 0) return false;
+
+  // Event handler must expose a simple literal string event name.
+  const eventValue = eh.roles.get('event' as SemanticRole);
+  if (!eventValue || eventValue.type !== 'literal') return false;
+  if (typeof (eventValue as { value: unknown }).value !== 'string') return false;
+
+  // The body command must NOT have its own `event` role — in compact form
+  // `roles.event` is reserved for the trigger and would collide on re-parse.
+  if (cmd.roles.has('event' as SemanticRole)) return false;
+
+  // Event handler must not carry features compact form cannot represent.
+  if (eh.additionalEvents && eh.additionalEvents.length > 0) return false;
+  if (eh.parameterNames && eh.parameterNames.length > 0) return false;
+
+  // Annotations/diagnostics: compact form collapses event-handler and body
+  // command into one node, so only EH-level annotations round-trip. If either
+  // the EH or the body command carries annotations/diagnostics, fall back
+  // to verbose form to preserve them losslessly.
+  if (eh.annotations && eh.annotations.length > 0) return false;
+  if (eh.diagnostics && eh.diagnostics.length > 0) return false;
+  if (cmd.annotations && cmd.annotations.length > 0) return false;
+  if (cmd.diagnostics && cmd.diagnostics.length > 0) return false;
+
+  return true;
+}
+
+/**
+ * Serialize EventModifiers to the shape expected by `trigger.modifiers` in the
+ * wire format. Returns undefined when there are no modifiers, so the caller
+ * can omit the field entirely.
+ *
+ * `from` is a SemanticValue reference and is not round-trip-safe through the
+ * trigger sugar path; if present, it signals that canEmitCompactTrigger
+ * should have rejected the node. We still emit the simple keys here so
+ * partial information survives if the caller bypasses the guard.
+ */
+function serializeEventModifiers(
+  mods: EventHandlerSemanticNode['eventModifiers']
+): Record<string, unknown> | undefined {
+  if (!mods) return undefined;
+  const out: Record<string, unknown> = {};
+  if (mods.once) out.once = true;
+  if (typeof mods.debounce === 'number') out.debounce = mods.debounce;
+  if (typeof mods.throttle === 'number') out.throttle = mods.throttle;
+  if (mods.queue) out.queue = mods.queue;
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 // =============================================================================

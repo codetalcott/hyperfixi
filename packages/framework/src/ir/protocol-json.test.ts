@@ -136,20 +136,25 @@ describe('toProtocolJSON', () => {
   });
 
   describe('event-handler node', () => {
-    it('serializes body array recursively', () => {
+    it('serializes single-command body in compact form (trigger sugar)', () => {
+      // Single-command bodies round-trip through the compact form —
+      // `{action, roles, trigger: {event}}` — which is also what the runtime
+      // dispatch path reliably executes. See protocol.ts:canEmitCompactTrigger.
       const body = createCommandNode('toggle', { patient: createSelector('.active') });
       const node = createEventHandlerNode('on', { event: createLiteral('click', 'string') }, [
         body,
       ]);
       const json = toProtocolJSON(node);
-      expect(json.kind).toBe('event-handler');
-      expect(json.action).toBe('on');
-      expect(json.body).toHaveLength(1);
-      expect(json.body![0].kind).toBe('command');
-      expect(json.body![0].action).toBe('toggle');
+      expect(json.kind).toBeUndefined(); // defaults to 'command'
+      expect(json.action).toBe('toggle'); // body action is hoisted
+      expect(json.trigger).toEqual({ event: 'click' });
+      expect(json.roles).toMatchObject({ patient: { type: 'selector', value: '.active' } });
+      expect(json.body).toBeUndefined();
     });
 
-    it('serializes nested event-handler body', () => {
+    it('falls back to verbose form for multi-command event-handler body', () => {
+      // Compact form can only represent a single body command; multi-command
+      // bodies still use the verbose `kind: event-handler` form.
       const inner = createCommandNode('add', { patient: createSelector('.highlight') });
       const outer = createCommandNode('remove', { patient: createSelector('.active') });
       const node = createEventHandlerNode('on', { event: createLiteral('click', 'string') }, [
@@ -157,8 +162,12 @@ describe('toProtocolJSON', () => {
         outer,
       ]);
       const json = toProtocolJSON(node);
+      expect(json.kind).toBe('event-handler');
+      expect(json.action).toBe('on');
       expect(json.body).toHaveLength(2);
+      expect(json.body![0].action).toBe('add');
       expect(json.body![1].action).toBe('remove');
+      expect(json.trigger).toBeUndefined();
     });
   });
 

@@ -299,11 +299,37 @@ describe('toProtocolJSON / fromProtocolJSON', () => {
     expect(restored.roles.get('patient')).toMatchObject({ type: 'selector', value: '.active' });
   });
 
-  it('serializes an event-handler node', () => {
+  it('serializes an event-handler node in compact form by default', () => {
     const body = [parseExplicit('[toggle patient:.active]')];
     const node = createEventHandlerNode('on', new Map([['event', createLiteral('click')]]), body);
     const json = toProtocolJSON(node);
+    // Compact form: no `kind` (defaults to command), body hoisted into the
+    // top-level action+roles, event name moved under `trigger.event`.
+    expect(json.kind).toBeUndefined();
+    expect(json.action).toBe('toggle');
+    expect(json.trigger).toEqual({ event: 'click' });
+    expect(json.roles).toMatchObject({ patient: { type: 'selector', value: '.active' } });
+    expect(json.body).toBeUndefined();
+
+    // Round-trip: compact JSON deserializes back to an event-handler node.
+    const restored = fromProtocolJSON(json);
+    expect(restored.kind).toBe('event-handler');
+    expect(restored.action).toBe('on');
+  });
+
+  it('falls back to verbose form for multi-command event-handler bodies', () => {
+    const body = [
+      parseExplicit('[add patient:.loading]'),
+      parseExplicit('[remove patient:.loading]'),
+    ];
+    const node = createEventHandlerNode('on', new Map([['event', createLiteral('click')]]), body);
+    const json = toProtocolJSON(node);
     expect(json.kind).toBe('event-handler');
+    expect(json.action).toBe('on');
+    expect(json.body).toHaveLength(2);
+    expect(json.body![0].action).toBe('add');
+    expect(json.body![1].action).toBe('remove');
+    expect(json.trigger).toBeUndefined();
   });
 
   it('ProtocolDiagnostic.severity matches Diagnostic.severity (not .level)', () => {

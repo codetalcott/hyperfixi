@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LLM-Native UI — compact-form with trigger sugar</title>
+    <style>
+      body { font-family: system-ui; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+      #sidebar { padding: 1rem; border: 2px solid #ccc; margin-top: 1rem; }
+      #sidebar.active { background: #4caf50; color: white; border-color: #388e3c; }
+    </style>
+  </head>
+  <body>
+    <h1>Compact form with trigger sugar</h1>
+    <p>
+      This is the literal output of the compilation service <em>after</em> the Option A fix
+      (<code>toProtocolJSON</code> now emits compact form). Clicking should toggle
+      <code>.active</code> on <code>#sidebar</code>.
+    </p>
+
+    <lse-intent trigger="click" id="button-host" style="display:inline-block; cursor:pointer;">
+      <script type="application/lse+json">
+        {
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active", "selectorKind": "class" },
+            "destination": { "type": "selector", "value": "#sidebar", "selectorKind": "id" }
+          },
+          "trigger": { "event": "click" }
+        }
+      </script>
+      <button style="padding: 0.5rem 1rem;">Click to toggle sidebar</button>
+    </lse-intent>
+
+    <div id="sidebar">Sidebar content — should toggle .active on click</div>
+
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
+  </body>
+</html>

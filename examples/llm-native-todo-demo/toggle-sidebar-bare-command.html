@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LLM-Native UI Test: toggle sidebar</title>
+    <style>
+      body { font-family: system-ui; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+      #sidebar { padding: 1rem; border: 2px solid #ccc; margin-top: 1rem; }
+      #sidebar.active { background: #4caf50; color: white; border-color: #388e3c; }
+      #result { margin-top: 1rem; font-family: monospace; font-size: 0.85rem; color: #666; }
+    </style>
+  </head>
+  <body>
+    <h1>LLM-Native UI Test</h1>
+    <p>
+      Compilation service output for:
+      <code>[on event:click body:[toggle patient:.active destination:#sidebar]]</code>
+    </p>
+    <p>
+      Clicking the <code>&lt;lse-intent&gt;</code> (or its button) should toggle <code>.active</code>
+      on <code>#sidebar</code> — NOT on <code>#button-host</code>.
+    </p>
+
+    <!--
+      IMPORTANT: this uses the COMPACT wire format (no "kind", no event-handler wrapper),
+      with the trigger sugar picked up by trigger="click" on the element. The equivalent
+      VERBOSE form (kind:"event-handler", body:[...]) does NOT execute correctly at runtime
+      even though the compilation service emits it and it parses cleanly. See the demo
+      writeup for details.
+    -->
+    <lse-intent trigger="click" id="button-host" style="display:inline-block; cursor:pointer;">
+      <script type="application/lse+json">
+        {
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active" },
+            "destination": { "type": "selector", "value": "#sidebar" }
+          }
+        }
+      </script>
+      <button style="padding: 0.5rem 1rem;">Click to toggle sidebar</button>
+    </lse-intent>
+
+    <div id="sidebar">Sidebar content — should toggle .active on click</div>
+
+    <div id="result">Waiting for click…</div>
+
+    <script>
+      // Listeners BEFORE the IIFE so we catch the upgrade-time events.
+      const result = document.getElementById('result');
+      const sidebar = document.getElementById('sidebar');
+      const host = document.getElementById('button-host');
+
+      function update() {
+        const sidebarHasActive = sidebar.classList.contains('active');
+        const hostHasActive = host.classList.contains('active');
+        result.textContent =
+          '#sidebar.active = ' +
+          sidebarHasActive +
+          '  |  #button-host.active = ' +
+          hostHasActive;
+        document.title =
+          'sidebar=' + sidebarHasActive + ' host=' + hostHasActive;
+      }
+
+      const mo = new MutationObserver(update);
+      mo.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+      mo.observe(host, { attributes: true, attributeFilter: ['class'] });
+
+      document.addEventListener('lse:executed', () => update());
+      document.addEventListener('lse:error', e =>
+        console.error('lse:error', e.detail.diagnostics)
+      );
+
+      update();
+    </script>
+
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
+  </body>
+</html>
