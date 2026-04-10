@@ -4,24 +4,39 @@
 
 ## Overview
 
-The LokaScript Explicit Syntax (LSE) is a language-agnostic, role-labeled format for imperative commands. It serves as a universal interchange format between tools, languages, and runtimes.
+LSE (LokaScript Explicit Syntax) is a two-layer protocol for representing imperative commands:
 
-```
-[toggle patient:.active destination:#button]
-[select patient:name source:users condition:age>25]
-[column name:id type:uuid +primary-key +not-null]
+**Layer A — Universal infrastructure.** Grammar, tokenization, wire format, and tree structure. Every LSE implementation must support Layer A, and every LSE-conformant document uses it.
+
+**Layer B — Pluggable domain vocabularies.** Action and role names that describe a specific domain. Different DSLs use different vocabularies. The UI-behavior vocabulary (Fillmore-inspired) is the reference vocabulary used by hyperscript, but it is not the only vocabulary and LSE does not require it. See [vocabularies.md](../docs/vocabularies.md) for the catalog of vocabularies currently in use.
+
+The canonical bracket form illustrates Layer A structure; the role names chosen illustrate a Layer B vocabulary:
+
+```text
+[toggle patient:.active destination:#button]          # UI-behavior vocabulary
+[select columns:name source:users condition:age>25]  # SQL vocabulary
+[column name:id type:uuid +primary-key +not-null]    # SQL vocabulary (DDL)
 ```
 
-The format is inspired by Fillmore's case grammar (1968) — semantic roles (patient, destination, source) are universal across natural languages. LSE makes these roles explicit, eliminating word order and morphology from the representation.
+All of these are valid LSE. All parse via the same grammar and serialize to the same wire format. They differ only in which role names they use.
 
 ## Design Principles
 
-1. **Language-agnostic** — No word order, particles, or prepositions
-2. **Self-documenting** — Every value is labeled with its semantic role
-3. **Machine-readable** — Trivial to parse: `[action role:value +flag ...]`
-4. **LLM-friendly** — Structured enough for reliable generation
-5. **Roundtrip-safe** — `parse -> render -> parse` is identity
-6. **Domain-portable** — Same format for any imperative domain
+1. **Universal infrastructure, pluggable vocabularies.** Layer A works for any imperative command domain. Layer B is defined per-domain.
+2. **Language-agnostic grammar.** Layer A has no word order, particles, or prepositions. Surface-language differences (SVO, SOV, VSO, agglutination) are a concern for _authoring_ DSLs that target LSE, not for LSE itself.
+3. **Self-documenting.** Every value is labeled with its role name. Role names are chosen by the vocabulary.
+4. **Machine-readable.** Trivial to parse: `[action role:value +flag ...]`.
+5. **LLM-friendly.** Bracket syntax is compact and structured enough for reliable LLM generation. For LLMs constrained to JSON output (function-calling APIs), an LLM-simplified JSON format is also supported.
+6. **Roundtrip-safe.** `parse → render → parse` is identity within Layer A. Vocabularies that use non-standard role names round-trip just as reliably as the reference UI-behavior vocabulary.
+7. **Domain-extensible.** A new domain adds a vocabulary (Layer B). It does not need to modify the grammar, the wire format, or any reference parser.
+
+## Scope and Non-goals
+
+LSE is designed for imperative command DSLs. A few things LSE is deliberately NOT:
+
+- **Not a universal semantic interlingua.** The protocol does not impose a single meaning on role names across domains. A `patient` role in a UI-behavior context means "the element being acted on"; the same role name in another vocabulary may mean something different. LSE provides the _structure_ vocabularies share, not a harmonization of their _meaning_.
+- **Not a natural-language understanding (NLU) system.** LSE does not parse "click the red button" into structured commands. That is the job of the DSLs built on top of LSE.
+- **Not a data description or configuration language.** LSE describes imperative actions ("do X"). Declarative structures (schemas, configuration trees, data serialization) should use other formats (JSON Schema, YAML, Protocol Buffers).
 
 ## Syntax Summary
 
