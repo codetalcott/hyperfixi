@@ -46,7 +46,7 @@ export type AsyncVariant = 'all' | 'race';
 /** A type constraint diagnostic (v1.2). */
 export interface Diagnostic {
   level: 'error' | 'warning';
-  role: string;
+  role?: string;
   message: string;
   code: string;
 }

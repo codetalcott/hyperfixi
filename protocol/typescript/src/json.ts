@@ -6,6 +6,7 @@ import {
   type LSEEnvelope,
   type Annotation,
   type MatchArm,
+  type Diagnostic as NodeDiagnostic,
   selectorValue,
   literalValue,
   referenceValue,
@@ -14,15 +15,15 @@ import {
 } from './types';
 
 /** A validation diagnostic (error or warning). */
-export interface Diagnostic {
+export interface ValidationDiagnostic {
   severity: 'error' | 'warning';
   code: string;
   message: string;
 }
 
 /** Validates a parsed JSON object. Returns diagnostics (empty array = valid). */
-export function validateJSON(data: Record<string, unknown>): Diagnostic[] {
-  const diags: Diagnostic[] = [];
+export function validateJSON(data: Record<string, unknown>): ValidationDiagnostic[] {
+  const diags: ValidationDiagnostic[] = [];
 
   const action = data['action'];
   if (typeof action !== 'string' || !action) {
@@ -109,12 +110,15 @@ export function toJSON(node: SemanticNode): Record<string, unknown> {
 
   // Diagnostics (v1.2)
   if (node.diagnostics && node.diagnostics.length > 0) {
-    m['diagnostics'] = node.diagnostics.map(d => ({
-      level: d.level,
-      role: d.role,
-      message: d.message,
-      code: d.code,
-    }));
+    m['diagnostics'] = node.diagnostics.map(d => {
+      const out: Record<string, unknown> = {
+        level: d.level,
+        message: d.message,
+        code: d.code,
+      };
+      if (d.role !== undefined) out['role'] = d.role;
+      return out;
+    });
   }
 
   // Annotations (v1.2)
@@ -242,12 +246,15 @@ export function fromJSON(data: Record<string, unknown>): SemanticNode {
   if (Array.isArray(diagnosticsRaw) && diagnosticsRaw.length > 0) {
     node.diagnostics = diagnosticsRaw
       .filter((d): d is Record<string, unknown> => d != null && typeof d === 'object')
-      .map(d => ({
-        level: (d['level'] as 'error' | 'warning') ?? 'error',
-        role: (d['role'] as string) ?? '',
-        message: (d['message'] as string) ?? '',
-        code: (d['code'] as string) ?? '',
-      }));
+      .map(d => {
+        const diag: NodeDiagnostic = {
+          level: (d['level'] as 'error' | 'warning') ?? 'error',
+          message: (d['message'] as string) ?? '',
+          code: (d['code'] as string) ?? '',
+        };
+        if (typeof d['role'] === 'string') diag.role = d['role'];
+        return diag;
+      });
   }
 
   // Annotations (v1.2)
@@ -396,8 +403,16 @@ function convertJSONValue(data: Record<string, unknown>): SemanticValue {
   switch (vtype) {
     case 'selector': {
       const sv = selectorValue((data['value'] as string) ?? '');
-      const sk = data['selectorKind'] as string | undefined;
-      if (sk) (sv as Record<string, unknown>).selectorKind = sk;
+      const sk = data['selectorKind'];
+      if (
+        sk === 'id' ||
+        sk === 'class' ||
+        sk === 'attribute' ||
+        sk === 'element' ||
+        sk === 'complex'
+      ) {
+        sv.selectorKind = sk;
+      }
       return sv;
     }
 
