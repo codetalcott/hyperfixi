@@ -627,8 +627,31 @@ export class CompilationService {
         const protocol = toProtocolJSON(node);
         const protocolStr = JSON.stringify(protocol, null, 2);
         const taskComment = task ? `<!-- Task: ${task.replace(/-->/g, '-\\->')} -->\n` : '';
+
+        // Infer a declarative trigger attribute from the node.
+        //
+        // - event-handler nodes carry their event name in roles.get('event')
+        //   as a literal (wire-format trigger sugar is unwrapped into this
+        //   shape by fromProtocolJSON). Emit trigger="<event>".
+        // - Everything else gets trigger="load" — the element fires
+        //   validation+execution on connect. This matches the default
+        //   behavior and is the safest choice when no event is specified.
+        let triggerAttr = 'load';
+        if (node.kind === 'event-handler') {
+          const eventValue = node.roles.get('event');
+          if (
+            eventValue &&
+            eventValue.type === 'literal' &&
+            typeof eventValue.value === 'string' &&
+            eventValue.value.length > 0
+          ) {
+            triggerAttr = eventValue.value;
+          }
+        }
+        const escapedTrigger = triggerAttr.replace(/"/g, '&quot;');
+
         const output = [
-          `${taskComment}<lse-intent>`,
+          `${taskComment}<lse-intent trigger="${escapedTrigger}">`,
           `  <script type="application/lse+json">`,
           protocolStr
             .split('\n')

@@ -374,6 +374,335 @@ describe('LSEIntentElement — execution', () => {
   });
 });
 
+// ─── LSEIntentElement — trigger modes ────────────────────────────────────────
+
+describe('LSEIntentElement — trigger modes', () => {
+  let evalMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    evalMock = vi.fn().mockResolvedValue('executed');
+    (globalThis as Record<string, unknown>)['hyperfixi'] = { evalLSENode: evalMock };
+  });
+
+  it('trigger="load" (default) fires immediately on connect', async () => {
+    const el = makeElement(VALID_JSON);
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('trigger="manual" does NOT execute on connect', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'manual');
+    const validated = waitForEvent(el, 'lse:validated');
+    document.body.appendChild(el);
+    await validated; // prepare phase completes
+    await new Promise(r => setTimeout(r, 20));
+    expect(evalMock).not.toHaveBeenCalled();
+    document.body.removeChild(el);
+  });
+
+  it('trigger="manual" executes via refresh()', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'manual');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    await el.refresh();
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('trigger="click" wires a click listener and fires on click', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.click();
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('trigger="click" with a nested trigger slot child bubbles up', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'click');
+    const button = document.createElement('button');
+    button.setAttribute('slot', 'trigger');
+    button.textContent = 'Toggle';
+    el.appendChild(button);
+
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    button.click(); // click bubbles to the custom element
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('trigger="click" fires every time the element is clicked', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+
+    el.click();
+    el.click();
+    el.click();
+    await new Promise(r => setTimeout(r, 30));
+    expect(evalMock).toHaveBeenCalledTimes(3);
+    document.body.removeChild(el);
+  });
+
+  it('trigger="submit" wires a submit listener on the ancestor form', async () => {
+    const form = document.createElement('form');
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'submit');
+    form.appendChild(el);
+    document.body.appendChild(form);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(form);
+  });
+
+  it('trigger="submit" calls preventDefault synchronously', async () => {
+    const form = document.createElement('form');
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'submit');
+    form.appendChild(el);
+    document.body.appendChild(form);
+    await waitForEvent(el, 'lse:validated');
+
+    const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+    form.dispatchEvent(submitEvent);
+    expect(submitEvent.defaultPrevented).toBe(true);
+    document.body.removeChild(form);
+  });
+
+  it('trigger="submit" emits a diagnostic warning when no ancestor form exists', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'submit');
+    const validated = waitForEvent(el, 'lse:validated');
+    document.body.appendChild(el);
+    await validated;
+    await new Promise(r => setTimeout(r, 20));
+    expect(el.diagnostics.some(d => d.code === 'NO_ANCESTOR_FORM')).toBe(true);
+    expect(evalMock).not.toHaveBeenCalled();
+    document.body.removeChild(el);
+  });
+
+  it('trigger="intersect" wires an IntersectionObserver', async () => {
+    const observers: Array<{
+      observe: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+    }> = [];
+    let capturedCallback: IntersectionObserverCallback | null = null;
+    class MockObserver {
+      observe: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+      constructor(cb: IntersectionObserverCallback) {
+        capturedCallback = cb;
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+        observers.push(this);
+      }
+    }
+    const OriginalIO = globalThis.IntersectionObserver;
+    (globalThis as unknown as { IntersectionObserver: typeof MockObserver }).IntersectionObserver =
+      MockObserver;
+
+    try {
+      const el = makeElement(VALID_JSON);
+      el.setAttribute('trigger', 'intersect');
+      document.body.appendChild(el);
+      await waitForEvent(el, 'lse:validated');
+      expect(observers).toHaveLength(1);
+      expect(observers[0].observe).toHaveBeenCalledWith(el);
+      expect(evalMock).not.toHaveBeenCalled();
+
+      // Simulate an intersection
+      const executed = waitForEvent(el, 'lse:executed');
+      capturedCallback!(
+        [{ isIntersecting: true, target: el } as unknown as IntersectionObserverEntry],
+        observers[0] as unknown as IntersectionObserver
+      );
+      await executed;
+      expect(evalMock).toHaveBeenCalledTimes(1);
+      // One-shot: observer should disconnect after firing
+      expect(observers[0].disconnect).toHaveBeenCalled();
+      document.body.removeChild(el);
+    } finally {
+      (globalThis as unknown as { IntersectionObserver: typeof OriginalIO }).IntersectionObserver =
+        OriginalIO;
+    }
+  });
+
+  it('trigger="intersect" emits a diagnostic warning when IntersectionObserver is unavailable', async () => {
+    const OriginalIO = globalThis.IntersectionObserver;
+    (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = undefined;
+    try {
+      const el = makeElement(VALID_JSON);
+      el.setAttribute('trigger', 'intersect');
+      const validated = waitForEvent(el, 'lse:validated');
+      document.body.appendChild(el);
+      await validated;
+      await new Promise(r => setTimeout(r, 20));
+      expect(el.diagnostics.some(d => d.code === 'NO_INTERSECTION_OBSERVER')).toBe(true);
+      expect(evalMock).not.toHaveBeenCalled();
+      document.body.removeChild(el);
+    } finally {
+      (globalThis as unknown as { IntersectionObserver: typeof OriginalIO }).IntersectionObserver =
+        OriginalIO;
+    }
+  });
+
+  it('arbitrary event name in trigger attribute wires addEventListener', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'mouseenter');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.dispatchEvent(new Event('mouseenter'));
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('trigger attribute is case-insensitive', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'CLICK');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.click();
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('auto-wires from JSON trigger.event sugar when attribute is absent', async () => {
+    const json = JSON.stringify({
+      action: 'toggle',
+      roles: { patient: { type: 'selector', value: '.active' } },
+      trigger: { event: 'click' },
+    });
+    const el = makeElement(json);
+    // No `trigger` attribute set — element must pick up the JSON sugar
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+    // Wire-format trigger.event means: wrap in event-handler. The element
+    // should NOT execute immediately; it should wire a click listener.
+    await new Promise(r => setTimeout(r, 20));
+    expect(evalMock).not.toHaveBeenCalled();
+
+    const executed = waitForEvent(el, 'lse:executed');
+    el.click();
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+
+  it('trigger attribute takes precedence over JSON trigger.event sugar', async () => {
+    const json = JSON.stringify({
+      action: 'toggle',
+      roles: { patient: { type: 'selector', value: '.active' } },
+      trigger: { event: 'click' },
+    });
+    const el = makeElement(json);
+    el.setAttribute('trigger', 'load'); // attribute overrides JSON
+    const executed = waitForEvent(el, 'lse:executed');
+    document.body.appendChild(el);
+    await executed;
+    expect(evalMock).toHaveBeenCalledTimes(1); // fired on load, not on click
+    document.body.removeChild(el);
+  });
+
+  it('disconnect removes the click listener', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+
+    document.body.removeChild(el);
+    // After disconnect, clicking should NOT trigger execution
+    el.click();
+    await new Promise(r => setTimeout(r, 20));
+    expect(evalMock).not.toHaveBeenCalled();
+  });
+
+  it('disconnect disconnects the intersection observer', async () => {
+    const observers: Array<{
+      observe: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+    }> = [];
+    class MockObserver {
+      observe: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+      constructor(_cb: IntersectionObserverCallback) {
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+        observers.push(this);
+      }
+    }
+    const OriginalIO = globalThis.IntersectionObserver;
+    (globalThis as unknown as { IntersectionObserver: typeof MockObserver }).IntersectionObserver =
+      MockObserver;
+
+    try {
+      const el = makeElement(VALID_JSON);
+      el.setAttribute('trigger', 'intersect');
+      document.body.appendChild(el);
+      await waitForEvent(el, 'lse:validated');
+      expect(observers[0].disconnect).not.toHaveBeenCalled();
+
+      document.body.removeChild(el);
+      expect(observers[0].disconnect).toHaveBeenCalled();
+    } finally {
+      (globalThis as unknown as { IntersectionObserver: typeof OriginalIO }).IntersectionObserver =
+        OriginalIO;
+    }
+  });
+
+  it('changing the trigger attribute tears down the old wiring and wires the new one', async () => {
+    const el = makeElement(VALID_JSON);
+    el.setAttribute('trigger', 'click');
+    document.body.appendChild(el);
+    await waitForEvent(el, 'lse:validated');
+
+    // Switch to manual: clicks should no longer fire
+    el.setAttribute('trigger', 'manual');
+    await waitForEvent(el, 'lse:validated');
+    el.click();
+    await new Promise(r => setTimeout(r, 20));
+    expect(evalMock).not.toHaveBeenCalled();
+
+    // refresh() still works in manual mode
+    await el.refresh();
+    expect(evalMock).toHaveBeenCalledTimes(1);
+    document.body.removeChild(el);
+  });
+});
+
 // ─── Type helpers ─────────────────────────────────────────────────────────────
 
 type IRDiagnostic = { severity: string; code: string; message: string };

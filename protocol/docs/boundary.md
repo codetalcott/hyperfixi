@@ -83,14 +83,30 @@ Any change to the LSE grammar, wire format, JSON Schema, or conformance fixtures
 
 A change that only updates the hyperfixi TypeScript implementation (`@lokascript/intent`) without updating the other three reference parsers is a **drift risk** and should be avoided. Either update all four, or keep the change in hyperfixi and file a protocol-change proposal for later coordination.
 
-### Rule 4: Hyperfixi cannot silently change protocol behavior
+### Rule 4: Shared grammar and semantic types must stay consistent; hyperfixi-layer extensions are allowed
 
-`@lokascript/intent` in the hyperfixi layer is an in-monorepo re-implementation of the TypeScript reference parser. It must stay behaviorally identical to `@lokascript/explicit-syntax` in `protocol/typescript/`. If hyperfixi needs a behavior that the protocol parser doesn't provide, the right path is:
+`@lokascript/intent` in the hyperfixi layer is **not** a duplicate of `@lokascript/explicit-syntax` in `protocol/typescript/`. It is intentionally a **superset** that shares the grammar and semantic type definitions with the protocol reference parser and adds hyperfixi-layer features on top:
 
-1. **Propose the change at the protocol layer.** Add it to the spec and all four reference parsers.
-2. **Then update `@lokascript/intent` to match.** Not the other way around.
+- **Shared with the protocol layer** (must stay consistent):
+  - Bracket syntax parsing rules and tokenization algorithm
+  - Semantic node kinds (command, event-handler, conditional, compound, loop)
+  - Value types (selector, literal, reference, property-path, expression, flag)
+  - Wire format node shapes
 
-The anti-pattern is adding a feature to `@lokascript/intent` first and leaving the reference parsers behind. That creates a fork: consumers of the protocol layer see one behavior; consumers of the hyperfixi layer see another. Both are then load-bearing and incompatible.
+- **Extensions unique to the hyperfixi layer** (not in the protocol reference parser, and legitimately so):
+  - Schema definition and validation (`defineCommand`, `defineRole`, `getRoleSpec`)
+  - Diagnostic collection infrastructure (`DiagnosticCollector`, `filterBySeverity`, collect-don't-throw parsing mode)
+  - Protocol JSON wire-format serialization (`toProtocolJSON`, `fromProtocolJSON`, envelope helpers)
+  - v1.2 features (try/catch, match arms, annotations) — these live in `@lokascript/intent` because they are used by the framework and domains; they are candidates for eventual promotion to the protocol layer, but do not need to be there today
+
+These extensions exist because hyperfixi-layer consumers (framework, intent-element, compilation-service, MCP tools) need more than the minimal reference parser provides. External protocol consumers who don't need schema validation or diagnostics should use `@lokascript/explicit-syntax` directly.
+
+**The rule is about the shared layer, not the extensions:**
+
+- Changes to bracket syntax, tokenization, node kinds, or value types — the shared layer — must land in **both** `@lokascript/intent` and `@lokascript/explicit-syntax` (plus the other three reference parsers, plus spec and conformance fixtures). See Rule 3.
+- Changes to schema APIs, diagnostics, wire-format serialization helpers, or other hyperfixi-layer extensions stay in `@lokascript/intent` and do not need to be replicated in the protocol reference parsers.
+
+**The anti-pattern** is changing bracket syntax, tokenization, or semantic type shapes in `@lokascript/intent` without also updating the protocol reference parsers. That creates a fork in the shared layer: consumers of the protocol layer see one grammar; consumers of the hyperfixi layer see another. Both then become load-bearing and incompatible. Adding new schema helpers, diagnostic codes, or wire-format serialization utilities to `@lokascript/intent` is **not** the anti-pattern — those are exactly the hyperfixi-layer extensions this rule permits.
 
 ### Rule 5: The bracket syntax is for LLMs, conformance, and CLI debugging — not for humans inside hyperfixi
 

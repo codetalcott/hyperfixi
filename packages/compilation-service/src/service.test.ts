@@ -535,3 +535,78 @@ describe('CompilationService with custom renderers', () => {
     expect(result.diagnostics.some(d => d.code === 'UNKNOWN_FRAMEWORK')).toBe(true);
   });
 });
+
+// =============================================================================
+// intent-element target (generates <lse-intent> HTML snippets)
+// =============================================================================
+
+describe('CompilationService — intent-element target', () => {
+  let service: CompilationService;
+
+  beforeAll(async () => {
+    service = await CompilationService.create();
+  }, 30000);
+
+  it('emits trigger="load" for a bare command node', async () => {
+    const result = await service.generate({
+      lse: '[toggle patient:.active]',
+      target: 'intent-element',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('<lse-intent trigger="load">');
+  });
+
+  it('emits trigger="click" for an event-handler node (explicit syntax)', async () => {
+    const result = await service.generate({
+      lse: '[on event:click body:[toggle patient:.active]]',
+      target: 'intent-element',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('<lse-intent trigger="click">');
+  });
+
+  it('emits trigger="click" for a command with JSON trigger.event sugar', async () => {
+    // Wire-format trigger sugar — fromProtocolJSON unwraps this into an
+    // event-handler node, so the output should carry trigger="click".
+    const json = JSON.stringify({
+      action: 'toggle',
+      roles: { patient: { type: 'selector', value: '.active' } },
+      trigger: { event: 'click' },
+    });
+    const result = await service.generate({
+      lse: json,
+      target: 'intent-element',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('<lse-intent trigger="click">');
+  });
+
+  it('emits trigger="mouseenter" for a custom event name', async () => {
+    const result = await service.generate({
+      lse: '[on event:mouseenter body:[add patient:.hover]]',
+      target: 'intent-element',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('<lse-intent trigger="mouseenter">');
+  });
+
+  it('includes the task comment when provided', async () => {
+    const result = await service.generate({
+      lse: '[toggle patient:.active]',
+      target: 'intent-element',
+      task: 'Toggle the active class',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('<!-- Task: Toggle the active class -->');
+  });
+
+  it('embeds the protocol JSON as an inline script child', async () => {
+    const result = await service.generate({
+      lse: '[toggle patient:.active]',
+      target: 'intent-element',
+    });
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain('<script type="application/lse+json">');
+    expect(result.output).toContain('"action": "toggle"');
+  });
+});

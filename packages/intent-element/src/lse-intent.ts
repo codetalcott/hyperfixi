@@ -3,21 +3,55 @@
  *
  * Accepts LSE protocol JSON via an inline <script type="application/lse+json">
  * child (or a `src` attribute), validates it, and executes it via the hyperfixi
- * runtime. Degrades gracefully when the runtime is unavailable.
+ * runtime according to a declarative trigger model. Degrades gracefully when
+ * the runtime is unavailable.
+ *
+ * ## Trigger modes
+ *
+ * The `trigger` attribute controls when validation + execution fires:
+ *
+ * - `load`      (default) — fire immediately on `connectedCallback`
+ * - `click`     — fire on click anywhere inside the element
+ * - `submit`    — fire on submit of the closest ancestor `<form>`; preventDefault is called synchronously
+ * - `intersect` — fire when the element scrolls into view (IntersectionObserver; one-shot)
+ * - `manual`    — never fire automatically; caller must invoke `.refresh()`
+ * - (any other value) — treated as a DOM event name, wired via addEventListener on the element
+ *
+ * If no `trigger` attribute is set, the element inspects the JSON wire-format
+ * `trigger.event` sugar field (protocol/spec/wire-format.md lines 441–474) and
+ * uses it as the event name. If neither is present, defaults to `load`.
  *
  * @example
  * ```html
- * <!-- Inline JSON -->
+ * <!-- Load on connect (default) -->
  * <lse-intent>
+ *   <script type="application/lse+json">
+ *     {"action":"toggle","roles":{"patient":{"type":"selector","value":".active"}}}
+ *   </script>
+ * </lse-intent>
+ *
+ * <!-- Fire on click -->
+ * <lse-intent trigger="click">
+ *   <button slot="trigger">Toggle</button>
+ *   <script type="application/lse+json">
+ *     {"action":"toggle","roles":{"patient":{"type":"selector","value":".active"}}}
+ *   </script>
+ * </lse-intent>
+ *
+ * <!-- Auto-wire from JSON trigger.event sugar -->
+ * <lse-intent>
+ *   <button>Toggle</button>
  *   <script type="application/lse+json">
  *     {"action":"toggle","roles":{"patient":{"type":"selector","value":".active"}},"trigger":{"event":"click"}}
  *   </script>
- *   <button slot="trigger">Toggle</button>
- *   <span slot="error">Interaction unavailable</span>
  * </lse-intent>
  *
- * <!-- Attribute form -->
- * <lse-intent src="/intents/toggle-sidebar.json"></lse-intent>
+ * <!-- Manual (caller drives refresh) -->
+ * <lse-intent trigger="manual" id="my-intent">...</lse-intent>
+ * <script>document.getElementById('my-intent').refresh()</script>
+ *
+ * <!-- Fetch from URL, fire on intersect -->
+ * <lse-intent src="/intents/toggle-sidebar.json" trigger="intersect"></lse-intent>
  * ```
  *
  * Events dispatched on the element:
@@ -49,15 +83,43 @@ function getRuntime(): HyperfiziRuntime | null {
 }
 
 // ---------------------------------------------------------------------------
+// Trigger resolution
+// ---------------------------------------------------------------------------
+
+type TriggerSpec =
+  | { kind: 'load' }
+  | { kind: 'manual' }
+  | { kind: 'intersect' }
+  | { kind: 'submit' }
+  | { kind: 'event'; eventName: string };
+
+function parseTriggerValue(value: string): TriggerSpec {
+  const v = value.trim().toLowerCase();
+  if (v === '' || v === 'load') return { kind: 'load' };
+  if (v === 'manual') return { kind: 'manual' };
+  if (v === 'intersect') return { kind: 'intersect' };
+  if (v === 'submit') return { kind: 'submit' };
+  return { kind: 'event', eventName: v };
+}
+
+// ---------------------------------------------------------------------------
 // <lse-intent>
 // ---------------------------------------------------------------------------
 
+interface PreparedNode {
+  node: SemanticNode;
+  raw: Record<string, unknown>;
+}
+
 export class LSEIntentElement extends HTMLElement {
-  static observedAttributes = ['src', 'disabled', 'timeout'];
+  static observedAttributes = ['src', 'disabled', 'timeout', 'trigger'];
 
   private _node: SemanticNode | null = null;
   private _diagnostics: IRDiagnostic[] = [];
   private _abortController: AbortController | null = null;
+  private _triggerCleanup: (() => void) | null = null;
+  private _initInFlight = false;
+  private _initPending = false;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -68,12 +130,17 @@ export class LSEIntentElement extends HTMLElement {
   disconnectedCallback(): void {
     this._abortController?.abort();
     this._abortController = null;
+    this._tearDownTrigger();
   }
 
   attributeChangedCallback(name: string, _old: string | null, _new: string | null): void {
-    if (name === 'src' || name === 'disabled') {
-      void this._initialize();
-    }
+    if (name !== 'src' && name !== 'disabled' && name !== 'trigger') return;
+    // Only react to attribute changes when connected. Before connect, the
+    // connectedCallback will run _initialize once with the final attribute
+    // state. This avoids races between setAttribute() calls that happen
+    // before the element is appended to the document.
+    if (!this.isConnected) return;
+    void this._initialize();
   }
 
   // ── Public accessors ───────────────────────────────────────────────────────
@@ -88,18 +155,167 @@ export class LSEIntentElement extends HTMLElement {
     return [...this._diagnostics];
   }
 
-  /** Re-run initialization (useful after updating the inline JSON). */
+  /**
+   * Re-run preparation and execution explicitly. Useful after updating the
+   * inline JSON, and required when `trigger="manual"`. Always executes
+   * regardless of trigger mode.
+   */
   async refresh(): Promise<void> {
-    await this._initialize();
+    const prepared = await this._prepare();
+    if (!prepared) return;
+    await this._execute(prepared.node);
   }
 
-  // ── Private ────────────────────────────────────────────────────────────────
+  // ── Private: initialization and trigger dispatch ───────────────────────────
 
+  /**
+   * Serialize concurrent `_initialize` calls. If one is already running,
+   * mark a re-init as pending and return. The in-flight init will re-run
+   * once after it finishes so the final attribute/JSON state is reflected.
+   */
   private async _initialize(): Promise<void> {
+    if (this._initInFlight) {
+      this._initPending = true;
+      return;
+    }
+    this._initInFlight = true;
+    try {
+      await this._doInitialize();
+      while (this._initPending) {
+        this._initPending = false;
+        await this._doInitialize();
+      }
+    } finally {
+      this._initInFlight = false;
+    }
+  }
+
+  private async _doInitialize(): Promise<void> {
+    // Always tear down any existing trigger wiring before re-initializing.
+    this._tearDownTrigger();
+
     if (this.hasAttribute('disabled')) return;
 
+    const prepared = await this._prepare();
+    if (!prepared) return;
+
+    // The element may have been disconnected while _prepare() was awaiting
+    // a fetch or JSON parse. If so, don't wire triggers — disconnectedCallback
+    // already ran cleanup.
+    if (!this.isConnected) return;
+
+    const spec = this._resolveTriggerSpec(prepared.raw);
+
+    switch (spec.kind) {
+      case 'load':
+        await this._execute(prepared.node);
+        return;
+      case 'manual':
+        return;
+      case 'intersect':
+        this._wireIntersect(prepared.node);
+        return;
+      case 'submit':
+        this._wireSubmit(prepared.node);
+        return;
+      case 'event':
+        this._wireEvent(prepared.node, spec.eventName);
+        return;
+    }
+  }
+
+  private _resolveTriggerSpec(raw: Record<string, unknown>): TriggerSpec {
+    // 1. Explicit trigger attribute wins.
+    const attr = this.getAttribute('trigger');
+    if (attr !== null) {
+      return parseTriggerValue(attr);
+    }
+
+    // 2. Wire-format trigger.event sugar in the JSON.
+    const triggerObj = raw['trigger'];
+    if (triggerObj && typeof triggerObj === 'object' && !Array.isArray(triggerObj)) {
+      const eventName = (triggerObj as Record<string, unknown>)['event'];
+      if (typeof eventName === 'string' && eventName.length > 0) {
+        return parseTriggerValue(eventName);
+      }
+    }
+
+    // 3. Default.
+    return { kind: 'load' };
+  }
+
+  // ── Private: trigger wiring ────────────────────────────────────────────────
+
+  private _tearDownTrigger(): void {
+    if (this._triggerCleanup) {
+      this._triggerCleanup();
+      this._triggerCleanup = null;
+    }
+  }
+
+  private _wireEvent(node: SemanticNode, eventName: string): void {
+    const handler = (_ev: Event): void => {
+      void this._execute(node);
+    };
+    this.addEventListener(eventName, handler);
+    this._triggerCleanup = () => this.removeEventListener(eventName, handler);
+  }
+
+  private _wireSubmit(node: SemanticNode): void {
+    const form = this.closest('form');
+    if (!form) {
+      this._diagnostics.push({
+        severity: 'warning',
+        code: 'NO_ANCESTOR_FORM',
+        message: 'trigger="submit" requires an ancestor <form>; none found.',
+      });
+      return;
+    }
+    const handler = (ev: Event): void => {
+      // preventDefault synchronously so the form does not navigate while
+      // execution is in flight. If execution fails, the diagnostics event
+      // still fires but the form stays on the page.
+      ev.preventDefault();
+      void this._execute(node);
+    };
+    form.addEventListener('submit', handler);
+    this._triggerCleanup = () => form.removeEventListener('submit', handler);
+  }
+
+  private _wireIntersect(node: SemanticNode): void {
+    if (typeof IntersectionObserver === 'undefined') {
+      this._diagnostics.push({
+        severity: 'warning',
+        code: 'NO_INTERSECTION_OBSERVER',
+        message:
+          'trigger="intersect" requires IntersectionObserver; not available in this environment.',
+      });
+      return;
+    }
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          // One-shot: disconnect after first intersection.
+          observer.disconnect();
+          void this._execute(node);
+          return;
+        }
+      }
+    });
+    observer.observe(this);
+    this._triggerCleanup = () => observer.disconnect();
+  }
+
+  // ── Private: prepare + execute ─────────────────────────────────────────────
+
+  /**
+   * Read the JSON, validate, deserialize, and emit `lse:validated`. Returns
+   * the prepared node and raw JSON on success, or null on failure (in which
+   * case `lse:error` has already been emitted).
+   */
+  private async _prepare(): Promise<PreparedNode | null> {
     const raw = await this._readJSON();
-    if (raw === null) return;
+    if (raw === null) return null;
 
     // Validate wire format
     const wireDiags = validateProtocolJSON(raw);
@@ -110,7 +326,7 @@ export class LSEIntentElement extends HTMLElement {
       this._node = null;
       this._showError();
       this._emit('lse:error', { diagnostics: wireDiags, error: null });
-      return;
+      return null;
     }
 
     // Deserialize to SemanticNode
@@ -125,7 +341,7 @@ export class LSEIntentElement extends HTMLElement {
       this._node = null;
       this._showError();
       this._emit('lse:error', { diagnostics: this._diagnostics, error });
-      return;
+      return null;
     }
 
     // Optional schema validation
@@ -136,10 +352,17 @@ export class LSEIntentElement extends HTMLElement {
     this._diagnostics = [...wireDiags, ...schemaDiags];
     this._emit('lse:validated', { node, diagnostics: [...this._diagnostics] });
 
-    // Execute
+    return { node, raw };
+  }
+
+  /**
+   * Execute a prepared node via the hyperfixi runtime. Emits `lse:executed`
+   * on success or `lse:error` on failure. Safe to call multiple times.
+   */
+  private async _execute(node: SemanticNode): Promise<void> {
     const runtime = getRuntime();
     if (!runtime) {
-      // Runtime not loaded — emit a warning but don't error
+      // Runtime not loaded — emit a warning but don't error.
       this._diagnostics.push({
         severity: 'warning',
         code: 'NO_RUNTIME',

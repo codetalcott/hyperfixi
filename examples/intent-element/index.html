@@ -31,12 +31,12 @@
   <h1>&lt;lse-intent&gt; Demo</h1>
   <p class="subtitle">Browser custom element that validates LSE protocol JSON and executes it via the hyperfixi runtime.</p>
 
-  <!-- ─── Example 1: Toggle class ──────────────────────────────────── -->
+  <!-- ─── Example 1: trigger="click" — declarative click trigger ────── -->
   <section>
-    <h2>1. Toggle <code>.active</code> on <code>#sidebar</code></h2>
-    <p>Inline protocol JSON triggers toggle on click via <code>evalLSENode()</code>.</p>
+    <h2>1. <code>trigger="click"</code> — Toggle <code>.active</code> on <code>#sidebar</code></h2>
+    <p>No JavaScript wiring. The <code>trigger="click"</code> attribute attaches a click listener automatically; clicking anywhere inside the element fires <code>evalLSENode()</code>.</p>
 
-    <lse-intent id="demo-toggle">
+    <lse-intent id="demo-toggle" trigger="click">
       <script type="application/lse+json">
         {
           "action": "toggle",
@@ -46,7 +46,7 @@
           }
         }
       </script>
-      <button slot="trigger" onclick="document.getElementById('demo-toggle').refresh()">Toggle Sidebar</button>
+      <button slot="trigger">Toggle Sidebar</button>
       <span slot="error" style="display:none; color:red;">Interaction unavailable</span>
     </lse-intent>
 
@@ -54,28 +54,111 @@
     <div id="status"></div>
   </section>
 
-  <!-- ─── Example 2: Add class ─────────────────────────────────────── -->
+  <!-- ─── Example 2: trigger via JSON sugar (no attribute) ──────────── -->
   <section>
-    <h2>2. Add <code>.highlighted</code> to <code>#target-box</code></h2>
-    <p>Uses the <code>add</code> action. Click to add the class (idempotent).</p>
+    <h2>2. JSON <code>trigger.event</code> sugar — Add <code>.highlighted</code></h2>
+    <p>No <code>trigger</code> attribute. The element reads the JSON wire-format <code>trigger.event</code> field and auto-wires to that event. This matches the protocol wire format spec and is the most LLM-friendly form.</p>
 
-    <lse-intent id="demo-add" disabled>
+    <lse-intent id="demo-add">
       <script type="application/lse+json">
         {
           "action": "add",
           "roles": {
             "patient": { "type": "selector", "value": ".highlighted" },
             "destination": { "type": "selector", "value": "#target-box" }
-          }
+          },
+          "trigger": { "event": "click" }
         }
       </script>
-      <button slot="trigger" onclick="const el = document.getElementById('demo-add'); el.removeAttribute('disabled'); el.refresh();">Highlight Box</button>
+      <button slot="trigger">Highlight Box</button>
       <span slot="error" style="display:none; color:red;">Interaction unavailable</span>
     </lse-intent>
 
     <div id="target-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
       Target box — gets <code>.highlighted</code>
     </div>
+  </section>
+
+  <!-- ─── Example 2b: trigger="manual" — caller-driven ──────────────── -->
+  <section>
+    <h2>2b. <code>trigger="manual"</code> — caller invokes <code>refresh()</code></h2>
+    <p>The element prepares the node but never fires automatically. Useful when you want full control over when execution happens.</p>
+
+    <lse-intent id="demo-manual" trigger="manual">
+      <script type="application/lse+json">
+        {
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".manual-fired" },
+            "destination": { "type": "selector", "value": "#manual-box" }
+          }
+        }
+      </script>
+    </lse-intent>
+
+    <button onclick="document.getElementById('demo-manual').refresh()">Fire manually</button>
+    <div id="manual-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
+      Manual-fired box — gets <code>.manual-fired</code>
+    </div>
+    <style>
+      .manual-fired { background: #cce5ff !important; border-color: #0066cc !important; }
+    </style>
+  </section>
+
+  <!-- ─── Example 2c: trigger="submit" — form-driven ────────────────── -->
+  <section>
+    <h2>2c. <code>trigger="submit"</code> — fire on form submit</h2>
+    <p>The element listens on the closest ancestor <code>&lt;form&gt;</code> and calls <code>preventDefault()</code> so the form never navigates.</p>
+
+    <form onsubmit="return false">
+      <input type="text" placeholder="Type anything then press Enter" style="padding: 0.5rem; margin-right: 0.5rem;">
+      <button type="submit">Submit</button>
+      <lse-intent trigger="submit">
+        <script type="application/lse+json">
+          {
+            "action": "add",
+            "roles": {
+              "patient": { "type": "selector", "value": ".submitted" },
+              "destination": { "type": "selector", "value": "#submit-box" }
+            }
+          }
+        </script>
+      </lse-intent>
+    </form>
+    <div id="submit-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
+      Submit box — gets <code>.submitted</code> on form submit
+    </div>
+    <style>
+      .submitted { background: #d4edda !important; border-color: #28a745 !important; }
+    </style>
+  </section>
+
+  <!-- ─── Example 2d: trigger="intersect" — fires on scroll into view  -->
+  <section>
+    <h2>2d. <code>trigger="intersect"</code> — fire when scrolled into view</h2>
+    <p>Uses <code>IntersectionObserver</code>. The element fires once when it first scrolls into view (one-shot). Scroll down to trigger.</p>
+
+    <div style="height: 300px; background: repeating-linear-gradient(45deg, #f9f9f9 0 10px, #f0f0f0 10px 20px); display: flex; align-items: center; justify-content: center; color: #999;">
+      Scroll down ↓
+    </div>
+
+    <lse-intent trigger="intersect">
+      <script type="application/lse+json">
+        {
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".seen" },
+            "destination": { "type": "selector", "value": "#intersect-box" }
+          }
+        }
+      </script>
+    </lse-intent>
+    <div id="intersect-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
+      Intersect box — gets <code>.seen</code> when scrolled into view
+    </div>
+    <style>
+      .seen { background: #fff3cd !important; border-color: #ffc107 !important; }
+    </style>
   </section>
 
   <!-- ─── Example 3: Validation only (no runtime) ──────────────────── -->
@@ -112,11 +195,13 @@
   </section>
 
   <!-- ─── Scripts ───────────────────────────────────────────────────── -->
-  <!-- Load hyperfixi runtime first (provides window.hyperfixi + evalLSENode) -->
-  <script src="../../packages/core/dist/hyperfixi.js"></script>
-  <!-- Load intent-element IIFE (auto-registers <lse-intent>) -->
-  <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
-
+  <!--
+    Register event log listeners BEFORE loading the intent-element IIFE.
+    When the IIFE calls customElements.define(), all existing <lse-intent>
+    elements upgrade synchronously and fire lse:validated (+ lse:executed
+    for trigger="load") immediately. If the document listener is registered
+    after the IIFE, these initial events are missed.
+  -->
   <script>
     // Event log
     const log = document.getElementById('event-log');
@@ -136,8 +221,15 @@
     document.addEventListener('lse:validated', e => logEvent('lse:validated', e.detail));
     document.addEventListener('lse:executed', e => logEvent('lse:executed', e.detail));
     document.addEventListener('lse:error', e => logEvent('lse:error', e.detail));
+  </script>
 
-    // Status update for demo 1
+  <!-- Load hyperfixi runtime (provides window.hyperfixi + evalLSENode) -->
+  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <!-- Load intent-element IIFE (auto-registers <lse-intent>) -->
+  <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
+
+  <script>
+    // Status update for demo 1 — watches the sidebar's class list.
     const sidebar = document.getElementById('sidebar');
     const status = document.getElementById('status');
     new MutationObserver(() => {
