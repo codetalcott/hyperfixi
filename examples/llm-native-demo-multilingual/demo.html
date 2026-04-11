@@ -199,6 +199,52 @@
         color: var(--accent-2);
       }
 
+      .grammar-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        background: #0f0f1e;
+        border-radius: 6px;
+        border-left: 3px solid var(--accent-2);
+        font-size: 0.8rem;
+      }
+      .grammar-info .label {
+        color: var(--text-dim);
+        font-family: system-ui, sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.7rem;
+      }
+      .grammar-info .value {
+        color: var(--accent-2);
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-weight: 600;
+      }
+
+      .parse-error {
+        padding: 1rem;
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid #f87171;
+        color: #fca5a5;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+      }
+
+      .loading-state {
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+      .loading-state.error {
+        color: #fca5a5;
+        border: 1px solid #f87171;
+        border-radius: 6px;
+      }
+
       .event-log {
         max-height: 150px;
         overflow-y: auto;
@@ -296,11 +342,17 @@
 
       <!-- Parsed LSE JSON -->
       <div class="card">
-        <h2>3. Parsed to protocol JSON</h2>
-        <pre class="json-display" id="json-display"></pre>
+        <h2>3. Parsed to protocol JSON (live)</h2>
+        <div class="grammar-info" id="grammar-info">
+          <span class="label">Grammar</span>
+          <span class="label">Matched pattern</span>
+          <span class="value" id="grammar-order">—</span>
+          <span class="value" id="grammar-pattern">—</span>
+        </div>
+        <pre class="json-display" id="json-display">Loading semantic parser…</pre>
         <div class="equivalence-note" id="equivalence-note">
-          ↑ This JSON is <strong>identical</strong> for all 5 languages (modulo metadata and role
-          order)
+          ↑ Parsed live by <code>LokaScriptSemantic.parse()</code>. Each language routes through
+          a different grammar pattern — the normalized JSON body is identical across all 5.
         </div>
       </div>
 
@@ -334,102 +386,259 @@
     </div>
 
     <!--
-      PROMPTS AND PRE-COMPUTED JSON
+      LIVE PARSING
 
-      These five prompts were drawn verbatim from the canonical cross-language
-      fixtures at packages/semantic/test/language-coverage/test-cases.ts. The
-      JSON values below are the normalized output of @lokascript/semantic's
-      parse() function for each phrase, verified by Phase 0 of this demo's
-      implementation plan (see phase-0-verification.md).
+      The 5 prompts are drawn verbatim from the canonical cross-language fixtures
+      at packages/semantic/test/language-coverage/test-cases.ts. Each one is
+      parsed IN THE BROWSER at language-switch time via LokaScriptSemantic.parse(),
+      which routes through the grammar-specific pattern handlers in
+      packages/semantic/src/generators/ (event-handlers-sov.ts, event-handlers-vso.ts,
+      pattern-generator.ts). The resulting SemanticNode is serialized to wire
+      format and fed to <lse-intent> for execution.
 
-      The Phase 0 script is at /tmp/phase-0-cross-language-check.mjs and can
-      be re-run at any time to regenerate these values.
+      The "Grammar" label comes from LokaScriptSemantic.getProfile(lang).wordOrder —
+      the language's declared linguistic grammar. The "Matched pattern" label is
+      the pattern ID from the parser's internal diagnostics, which reveals which
+      code path the parser actually used.
+
+      Note on SVO languages and the VSO handler: when the parser encounters an
+      event-wrapped command in an SVO language, it routes through the generic
+      VSO event-handler pattern because the structure (event-marker verb patient)
+      is the same as VSO. That's why English and Spanish match `-vso`-suffixed
+      patterns despite being declared SVO in their profiles. The pattern suffix
+      is an implementation detail of the pattern generator;
+      `profile.wordOrder` is the linguistic fact.
 
       The Arabic phrase uses the 'toggle-with-destination' fixture (line 605)
-      rather than 'toggle-on-click' (line 330), because the line 330 word
-      order triggers a known Arabic parser bug. The behavior is the same.
+      rather than 'toggle-on-click' (line 330), because the line 330 word order
+      triggers a known Arabic tokenizer bug. See phase-0-verification.md.
     -->
     <script>
-      // The SAME JSON for all 5 languages — that's the point of the demo.
-      // Compact form: no `kind` (defaults to command), wrapped in `trigger` sugar
-      // which <lse-intent>._execute() will unwrap at runtime (see commit 0722874e).
-      const CANONICAL_JSON = {
-        action: 'toggle',
-        roles: {
-          patient: { type: 'selector', value: '.active' },
-          destination: { type: 'selector', value: '#button' },
-        },
-        trigger: { event: 'click' },
-      };
-
       const PROMPTS = {
-        en: {
-          text: 'on click toggle .active on #button',
-          label: 'English (SVO)',
-          rtl: false,
-        },
-        ja: {
-          text: 'クリック で #button の .active を 切り替え',
-          label: '日本語 (SOV — particle-marked)',
-          rtl: false,
-        },
-        ar: {
-          text: 'عند النقر بدّل .active على #button',
-          label: 'العربية (VSO — right-to-left)',
-          rtl: true,
-        },
-        es: {
-          text: 'al clic alternar .active en #button',
-          label: 'Español (SVO)',
-          rtl: false,
-        },
-        ko: {
-          text: '클릭 할 때 #button 의 .active 를 토글',
-          label: '한국어 (SOV — particle-marked, agglutinative)',
-          rtl: false,
-        },
+        en: { text: 'on click toggle .active on #button', rtl: false },
+        ja: { text: 'クリック で #button の .active を 切り替え', rtl: false },
+        ar: { text: 'عند النقر بدّل .active على #button', rtl: true },
+        es: { text: 'al clic alternar .active en #button', rtl: false },
+        ko: { text: '클릭 할 때 #button 의 .active 를 토글', rtl: false },
       };
 
-      // ── Wiring ──────────────────────────────────────────────────────────────
+      const LANG_DISPLAY = {
+        en: { name: 'English', native: 'English' },
+        ja: { name: 'Japanese', native: '日本語' },
+        ar: { name: 'Arabic', native: 'العربية' },
+        es: { name: 'Spanish', native: 'Español' },
+        ko: { name: 'Korean', native: '한국어' },
+      };
+
+      // ── DOM refs ──────────────────────────────────────────────────────────
 
       const promptDisplay = document.getElementById('prompt-display');
       const promptText = document.getElementById('prompt-text');
+      const promptLabel = promptDisplay.querySelector('.label');
       const jsonDisplay = document.getElementById('json-display');
       const jsonPayload = document.getElementById('lse-json-payload');
       const lseHost = document.getElementById('lse-host');
       const picker = document.getElementById('lang-picker');
+      const grammarOrder = document.getElementById('grammar-order');
+      const grammarPattern = document.getElementById('grammar-pattern');
+
+      // ── SemanticNode → wire format ────────────────────────────────────────
+      //
+      // The semantic parser returns SemanticNode with `roles` as a Map. The
+      // <lse-intent> element expects protocol JSON (roles as plain object).
+      // This is a minimal serializer tailored to the shape this demo produces
+      // (event-handler with a single-command body). For a general-purpose
+      // serializer, see toProtocolJSON() in @lokascript/intent.
+
+      function valueToWire(value) {
+        if (!value || typeof value !== 'object') return value;
+        const { type } = value;
+        if (type === 'selector') {
+          const out = { type: 'selector', value: value.value };
+          if (value.selectorKind) out.selectorKind = value.selectorKind;
+          return out;
+        }
+        if (type === 'literal') {
+          const out = { type: 'literal', value: value.value };
+          if (value.dataType) out.dataType = value.dataType;
+          return out;
+        }
+        if (type === 'reference') return { type: 'reference', value: value.value };
+        if (type === 'expression') return { type: 'expression', raw: value.raw };
+        if (type === 'flag') return { type: 'flag', name: value.name, enabled: value.enabled };
+        return value;
+      }
+
+      // Canonical role order — matches the English reference shape. Ensures
+      // the wire JSON is byte-identical across languages that parse to the
+      // same semantic content but iterate roles in different orders (e.g.,
+      // Japanese/Korean emit `destination` before `patient`, while English/
+      // Arabic/Spanish emit `patient` first). Any role not in this list
+      // retains its natural order after the canonical ones.
+      const CANONICAL_ROLE_ORDER = [
+        'patient',
+        'destination',
+        'source',
+        'condition',
+        'instrument',
+        'quantity',
+        'goal',
+        'target',
+        'event',
+      ];
+
+      function rolesToWire(rolesMap) {
+        const out = {};
+        if (!rolesMap) return out;
+        const entries =
+          rolesMap instanceof Map ? rolesMap.entries() : Object.entries(rolesMap);
+        const byKey = new Map();
+        for (const [k, v] of entries) byKey.set(k, valueToWire(v));
+
+        // Emit canonical roles first in the fixed order (if present)...
+        for (const k of CANONICAL_ROLE_ORDER) {
+          if (byKey.has(k)) {
+            out[k] = byKey.get(k);
+            byKey.delete(k);
+          }
+        }
+        // ...then any remaining roles in their original iteration order.
+        for (const [k, v] of byKey) out[k] = v;
+        return out;
+      }
+
+      function semanticNodeToWire(node) {
+        if (!node) return null;
+        if (node.kind === 'event-handler') {
+          // Compact trigger-sugar form. All 5 demo phrases produce a single-body
+          // event handler, so this is sufficient.
+          const body = node.body && node.body[0];
+          if (!body) throw new Error('event-handler has no body');
+          const eventRole =
+            node.roles instanceof Map ? node.roles.get('event') : node.roles.event;
+          const eventName =
+            eventRole && typeof eventRole === 'object' ? String(eventRole.value ?? '') : 'click';
+          return {
+            action: body.action,
+            roles: rolesToWire(body.roles),
+            trigger: { event: eventName },
+          };
+        }
+        return { action: node.action, roles: rolesToWire(node.roles) };
+      }
+
+      // ── Pattern ID extraction ─────────────────────────────────────────────
+      //
+      // The parser attaches a `pattern-match` diagnostic on the returned node
+      // whose message contains the matched pattern ID. Shape:
+      //   { code: 'pattern-match', message: 'event pattern matched: <id> (confidence: <n>)' }
+
+      function extractPatternId(node) {
+        if (!node || !Array.isArray(node.diagnostics)) return null;
+        for (const d of node.diagnostics) {
+          const msg = d.message || '';
+          const m = msg.match(/pattern matched:\s*([a-z0-9-]+)/i);
+          if (m) return m[1];
+        }
+        return null;
+      }
+
+      // ── Language label from profile ───────────────────────────────────────
+
+      function labelForLang(lang) {
+        const display = LANG_DISPLAY[lang] || { name: lang, native: lang };
+        let wordOrder = '';
+        try {
+          const profile = window.LokaScriptSemantic?.getProfile?.(lang);
+          if (profile?.wordOrder) wordOrder = ` — ${profile.wordOrder}`;
+        } catch (_err) {
+          // getProfile can throw for unknown languages; ignore.
+        }
+        return `${display.name} / ${display.native}${wordOrder}`;
+      }
+
+      function wordOrderForLang(lang) {
+        try {
+          const profile = window.LokaScriptSemantic?.getProfile?.(lang);
+          if (profile?.wordOrder) return profile.wordOrder;
+        } catch (_err) {}
+        return '—';
+      }
+
+      // ── Error + success rendering ─────────────────────────────────────────
+
+      function renderParseError(lang, message) {
+        jsonDisplay.textContent = `Parse error (${lang}): ${message}`;
+        jsonDisplay.style.borderLeftColor = '#f87171';
+        jsonDisplay.style.color = '#fca5a5';
+        grammarOrder.textContent = '—';
+        grammarPattern.textContent = '(parse failed)';
+      }
+
+      function renderParseSuccess(lang, wireJson, patternId) {
+        jsonDisplay.textContent = JSON.stringify(wireJson, null, 2);
+        jsonDisplay.style.borderLeftColor = '';
+        jsonDisplay.style.color = '';
+        grammarOrder.textContent = wordOrderForLang(lang);
+        grammarPattern.textContent = patternId || '(no pattern diagnostic)';
+      }
+
+      // ── Main: parse and render one language ───────────────────────────────
 
       function setLanguage(lang) {
         const prompt = PROMPTS[lang];
         if (!prompt) return;
 
-        // Update prompt display
+        // Prompt display
         promptText.textContent = prompt.text;
-        promptDisplay.querySelector('.label').textContent = prompt.label;
+        promptLabel.textContent = labelForLang(lang);
         promptDisplay.classList.toggle('rtl', prompt.rtl);
 
-        // Update JSON display (pretty-printed)
-        jsonDisplay.textContent = JSON.stringify(CANONICAL_JSON, null, 2);
-
-        // Update the <lse-intent> payload
-        jsonPayload.textContent = JSON.stringify(CANONICAL_JSON, null, 2);
-
-        // Re-initialize the element so the new JSON takes effect
-        if (typeof lseHost.refresh === 'function') {
-          // refresh() is in manual mode; the element's trigger="click" means
-          // we need to re-parse via attributeChangedCallback. Simplest way:
-          // toggle the disabled attribute to force re-init.
-          lseHost.setAttribute('disabled', '');
-          lseHost.removeAttribute('disabled');
-        }
-
-        // Visual state for the picker buttons
+        // Picker visual state
         for (const btn of picker.querySelectorAll('.lang-btn')) {
           btn.classList.toggle('active', btn.dataset.lang === lang);
         }
 
-        // Reset #button state so each language starts from a clean slate
+        // Reset #button state so each language starts clean
         document.getElementById('button').classList.remove('active');
+
+        // Guard: semantic bundle must be loaded
+        if (typeof window.LokaScriptSemantic === 'undefined') {
+          renderParseError(lang, 'LokaScriptSemantic not loaded yet');
+          return;
+        }
+
+        // LIVE PARSE — routes through the grammar-specific pattern handlers
+        let node;
+        try {
+          node = window.LokaScriptSemantic.parse(prompt.text, lang);
+        } catch (err) {
+          renderParseError(lang, err && err.message ? err.message : String(err));
+          return;
+        }
+        if (!node) {
+          renderParseError(lang, 'parse returned null');
+          return;
+        }
+
+        // Serialize to wire format
+        let wireJson;
+        try {
+          wireJson = semanticNodeToWire(node);
+        } catch (err) {
+          renderParseError(lang, 'serialize failed: ' + err.message);
+          return;
+        }
+
+        const patternId = extractPatternId(node);
+        renderParseSuccess(lang, wireJson, patternId);
+
+        // Update the <lse-intent> payload with the live-parsed JSON
+        jsonPayload.textContent = JSON.stringify(wireJson, null, 2);
+
+        // Force <lse-intent> to re-initialize so the new JSON takes effect.
+        lseHost.setAttribute('disabled', '');
+        lseHost.removeAttribute('disabled');
       }
 
       picker.addEventListener('click', e => {
@@ -438,12 +647,28 @@
         setLanguage(btn.dataset.lang);
       });
 
-      // Initialize with English
-      setLanguage('en');
+      // Defer initialization until the semantic bundle has loaded.
+      function initWhenReady() {
+        if (typeof window.LokaScriptSemantic !== 'undefined') {
+          setLanguage('en');
+        } else {
+          requestAnimationFrame(initWhenReady);
+        }
+      }
+      // The semantic <script>'s onload handler calls this; the requestAnimationFrame
+      // fallback handles the case where the onload fired before this inline script ran.
+      window.__demoInit = initWhenReady;
+      requestAnimationFrame(initWhenReady);
     </script>
 
-    <!-- Load hyperfixi runtime + intent-element IIFE -->
+    <!-- Load the semantic bundle (exposes window.LokaScriptSemantic) -->
+    <script
+      src="../../packages/semantic/dist/browser.global.js"
+      onload="window.__demoInit && window.__demoInit()"
+    ></script>
+    <!-- Load hyperfixi runtime (exposes window.hyperfixi + evalLSENode) -->
     <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <!-- Load intent-element IIFE (auto-registers <lse-intent>) -->
     <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
   </body>
 </html>

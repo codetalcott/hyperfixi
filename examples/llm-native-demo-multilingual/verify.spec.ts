@@ -58,25 +58,62 @@ for (const { code, name } of LANGUAGES) {
   });
 }
 
-test('canonical JSON is identical across all 5 languages', async ({ page }) => {
+test('canonical JSON is identical across all 5 languages (live-parsed)', async ({ page }) => {
   await page.goto(URL);
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(300); // semantic bundle is ~650KB, give it time to load
 
   const snapshots: string[] = [];
   for (const { code } of LANGUAGES) {
     await page.locator(`.lang-btn[data-lang="${code}"]`).click();
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(150);
     const json = await page.locator('#json-display').textContent();
     snapshots.push(json?.trim() ?? '');
   }
 
-  // All 5 snapshots should be character-identical — that's the demo's whole point.
+  // All 5 snapshots should be character-identical after canonical role ordering.
+  // The demo normalizes role iteration order (patient before destination) in
+  // its serializer; without that, ja/ko would emit destination first.
   const [first, ...rest] = snapshots;
   for (const s of rest) {
     expect(s).toBe(first);
   }
-  // Sanity: the canonical JSON should at least mention the action.
   expect(first).toContain('"action": "toggle"');
   expect(first).toContain('"patient"');
   expect(first).toContain('"destination"');
+});
+
+test('grammar label and pattern ID update per language', async ({ page }) => {
+  await page.goto(URL);
+  await page.waitForTimeout(300);
+
+  // Expected: every language has a non-empty wordOrder and a pattern ID that
+  // contains the language code. We don't hard-code the exact pattern names
+  // because they're implementation details of the pattern generator and
+  // could change; we just assert they update per language and look sensible.
+  const observations: Array<{ code: string; wordOrder: string; pattern: string }> = [];
+
+  for (const { code } of LANGUAGES) {
+    await page.locator(`.lang-btn[data-lang="${code}"]`).click();
+    await page.waitForTimeout(150);
+
+    const wordOrder = (await page.locator('#grammar-order').textContent())?.trim() ?? '';
+    const pattern = (await page.locator('#grammar-pattern').textContent())?.trim() ?? '';
+    observations.push({ code, wordOrder, pattern });
+
+    // wordOrder must be non-empty and recognizable
+    expect(wordOrder, `${code} grammar order`).toMatch(/^(SVO|SOV|VSO|V2|OSV|VOS|OVS)$/);
+
+    // pattern ID must exist (not "(no pattern diagnostic)" or "(parse failed)")
+    expect(pattern, `${code} pattern ID`).not.toMatch(/^\(/);
+    expect(pattern, `${code} pattern ID`).not.toBe('—');
+
+    // pattern ID should contain the language code somewhere (e.g. toggle-event-ja-sov)
+    // — except for English, which matches `event-en-standard` (a generic handler).
+    expect(pattern, `${code} pattern contains lang code`).toContain(code);
+  }
+
+  // At least two different wordOrders should appear across the 5 languages
+  // (we expect SVO for en/es and SOV for ja/ko and VSO for ar).
+  const uniqueOrders = new Set(observations.map(o => o.wordOrder));
+  expect(uniqueOrders.size, 'should see multiple distinct grammars').toBeGreaterThanOrEqual(2);
 });

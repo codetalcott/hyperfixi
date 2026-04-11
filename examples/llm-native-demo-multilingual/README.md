@@ -72,15 +72,47 @@ This is a genuine, defensible capability. No other LLM-UI tool offers it.
                       .classList.toggle('active')
 ```
 
-## Pre-computed vs live parsing
+## Live parsing (updated 2026-04-10)
 
-The demo uses **pre-computed** protocol JSON rather than parsing in the browser. Reasons:
+The demo now **parses live in the browser** via `@lokascript/semantic`'s `browser.global.js` bundle. When you click a language button, the demo calls `LokaScriptSemantic.parse(phrase, lang)` — which routes through the grammar-specific pattern handlers in `packages/semantic/src/generators/event-handlers-sov.ts`, `event-handlers-vso.ts`, and `pattern-generator.ts` — then serializes the resulting SemanticNode to wire format and feeds it to `<lse-intent>` for execution.
 
-1. **Recording reliability.** The demo is designed for a screen recording; any in-browser runtime failure during the recording would sink it. Pre-computing the JSON offline (via the Phase 0 script) eliminates the possibility of a parser stall mid-recording.
-2. **Proof by identity.** The canonical JSON is a single JavaScript constant used for all 5 language buttons. If the 5 languages truly normalize to the same output (which Phase 0 verified), then using the same JSON for all of them is semantically correct — it's the normalized form.
-3. **No extra browser bundle needed.** `@lokascript/semantic`'s browser bundle would add ~90 KB to the page for a benefit (live parsing) that doesn't change the demo's message.
+The parsed-JSON panel in the demo UI also shows:
 
-If you want to see the live parser in action, use the existing `examples/multilingual/semantic-demo.html` — it loads the semantic browser bundle and parses at runtime across all 24 languages. This demo is narrower on purpose.
+- **Grammar:** the language's `profile.wordOrder` (SVO / SOV / VSO / V2), read live from `LokaScriptSemantic.getProfile(lang)`. This is the language's _linguistic_ grammar.
+- **Matched pattern:** the pattern ID from the parser's internal diagnostics, e.g. `toggle-event-ja-sov`, `toggle-event-ar-vso`. This reveals which code path the parser actually used.
+
+### Note on SVO languages matching `-vso` patterns
+
+You may notice English and Spanish match pattern IDs with a `-vso` suffix (e.g. `event-en-standard` for English, `toggle-event-es-vso` for Spanish). Spanish is declared SVO in its profile, so why VSO?
+
+This is intentional. When the pattern generator encounters an event-wrapped command in an SVO language, it routes through the generic VSO event-handler pattern because the structure — `[event-marker] [verb] [patient]` — is identical to VSO's event handler. See `packages/semantic/src/generators/pattern-generator.ts:453–463`:
+
+```typescript
+} else {
+  // SVO: Use VSO pattern structure for event handlers
+  ...
+  patterns.push(
+    generateVSOEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
+  );
+}
+```
+
+The `-vso` suffix is an implementation detail of the pattern generator. The language's linguistic grammar (`profile.wordOrder`) is the real fact: Spanish is SVO, and the demo's "Grammar" label reflects that. The "Matched pattern" label is a peek at internals for the curious.
+
+### Canonical role ordering
+
+Different languages emit roles in different iteration orders (ja/ko emit `destination` first; en/ar/es emit `patient` first). The demo's serializer normalizes this by emitting canonical role keys in a fixed order (`patient`, `destination`, `source`, `condition`, ...) regardless of the parser's iteration order. Without this, the JSON-identity assertion would fail on role-ordering alone.
+
+This normalization is cosmetic — the runtime honors the role `Map` regardless of iteration order, and the semantic content is identical. But the displayed JSON needs a canonical shape to make the "same JSON" claim visually true.
+
+### Why not pre-computed?
+
+An earlier version of this demo used pre-computed JSON hardcoded as a single constant. That approach was rejected because the central claim of the demo — _"the grammar code normalizes 5 languages to the same protocol"_ — needs to be **demonstrated live**, not played back. A viewer of a pre-computed version could reasonably ask "how do I know you aren't just serving the same JSON from 5 buttons?" The live-parse version answers that immediately: the parser runs on every click, the pattern ID changes per language, and the normalized output is shown in real time.
+
+### Alternatives for other use cases
+
+- For a **broader multilingual demo** that covers all 24 languages, see `../multilingual/semantic-demo.html`.
+- For a **minimal recording target** that doesn't load the semantic bundle, keep pre-computed JSON and reference this version for comparison.
 
 ## Re-running the Phase 0 verification
 
@@ -125,9 +157,10 @@ Drawn verbatim from `packages/semantic/test/language-coverage/test-cases.ts` whi
 
 - **5 languages, not 24.** The demo scopes to 5 to fit a recording budget. The underlying parser supports 24.
 - **One command (`toggle`).** No form handling, no multi-step sequences, nothing that would trip over the unfixed bugs documented in `../llm-native-todo-demo/README.md`.
-- **Pre-computed JSON.** The demo asserts the equivalence; it doesn't re-derive it live. For live parsing, use `examples/multilingual/semantic-demo.html`.
+- **One canonical phrase per language.** The Phase 0 fixture set was chosen to work with the parser as it exists today. Other phrasings of the same intent may parse differently (or fail entirely — see the Arabic note below).
 - **No LLM in the loop.** The demo shows that the same protocol emerges from 5 language inputs. An LLM is one way to produce those inputs; the demo is agnostic about the input source.
 - **The Arabic parser has a known word-order bug** on the variant that fronts the destination (see `phase-0-verification.md`). The demo uses the working phrasing and files the other for future work.
+- **Role ordering in the wire JSON is normalized in the demo**, not by the protocol itself. The underlying protocol JSON iteration order is unstable across languages; the demo's serializer imposes a canonical order for display. The runtime doesn't care about iteration order, but hand-comparing two wire-format JSONs from different languages requires this normalization.
 
 ## What this validates
 
