@@ -1,0 +1,108 @@
+{
+  "name": "@lokascript/mcp-multilingual-intent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multilingual-intent MCP server — parses natural language in 24 languages, emits LSE protocol JSON. Wraps @lokascript/framework + @hyperfixi/patterns-reference behind a Siren HTTP API that siren-mcp bridges to MCP.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-multilingual-intent": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "dev:watch": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "mcp": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api",
+    "mcp:verbose": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api --verbose",
+    "mcp:http": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api --http 8080",
+    "mcp:test": "tsx examples/mcp-test.ts"
+  },
+  "keywords": [
+    "mcp",
+    "multilingual",
+    "hyperscript",
+    "lokascript",
+    "siren",
+    "hateoas",
+    "ai",
+    "llm"
+  ],
+  "author": "LokaScript Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "@hyperfixi/patterns-reference": "*",
+    "@lokascript/framework": "*",
+    "hono": "^4.6.0"
+  },
+  "peerDependencies": {
+    "@lokascript/domain-bdd": "*",
+    "@lokascript/domain-behaviorspec": "*",
+    "@lokascript/domain-flow": "*",
+    "@lokascript/domain-jsx": "*",
+    "@lokascript/domain-llm": "*",
+    "@lokascript/domain-sql": "*",
+    "@lokascript/domain-todo": "*",
+    "@lokascript/domain-voice": "*"
+  },
+  "peerDependenciesMeta": {
+    "@lokascript/domain-bdd": {
+      "optional": true
+    },
+    "@lokascript/domain-behaviorspec": {
+      "optional": true
+    },
+    "@lokascript/domain-flow": {
+      "optional": true
+    },
+    "@lokascript/domain-jsx": {
+      "optional": true
+    },
+    "@lokascript/domain-llm": {
+      "optional": true
+    },
+    "@lokascript/domain-sql": {
+      "optional": true
+    },
+    "@lokascript/domain-todo": {
+      "optional": true
+    },
+    "@lokascript/domain-voice": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@lokascript/domain-bdd": "*",
+    "@lokascript/domain-behaviorspec": "*",
+    "@lokascript/domain-flow": "*",
+    "@lokascript/domain-jsx": "*",
+    "@lokascript/domain-llm": "*",
+    "@lokascript/domain-sql": "*",
+    "@lokascript/domain-todo": "*",
+    "@lokascript/domain-voice": "*",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/mcp-multilingual-intent"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/mcp-multilingual-intent#readme"
+}
