@@ -161,6 +161,29 @@ Examples:
 
 The role vocabulary shown above (`patient`, `destination`, `source`, `condition`) is the **UI-behavior vocabulary** — the reference vocabulary used by hyperscript. If your domain uses a different vocabulary (SQL, JSX, BDD, etc.), substitute the appropriate role names. See [vocabularies.md](vocabularies.md) for the full catalog.
 
+## Multilingual input
+
+LSE is a **language-neutral protocol**. If a user writes their request in Japanese, Spanish, Arabic, Korean, or any of 24 supported natural languages, you should **still emit LSE in the canonical form** (bracket syntax or JSON wire format). The semantic parser normalizes all 24 languages to the same protocol output, so the LSE you emit doesn't change based on the prompt's language.
+
+**Example — the same toggle behavior in 5 languages, producing identical LSE:**
+
+| Prompt language | User request                                 | Your LSE output                                                      |
+| --------------- | -------------------------------------------- | -------------------------------------------------------------------- |
+| English         | "on click toggle `.active` on `#button`"     | `[on event:click body:[toggle patient:.active destination:#button]]` |
+| Japanese        | "クリック で #button の .active を 切り替え" | `[on event:click body:[toggle patient:.active destination:#button]]` |
+| Arabic          | "عند النقر بدّل .active على #button"         | `[on event:click body:[toggle patient:.active destination:#button]]` |
+| Spanish         | "al clic alternar .active en #button"        | `[on event:click body:[toggle patient:.active destination:#button]]` |
+| Korean          | "클릭 할 때 #button 의 .active 를 토글"      | `[on event:click body:[toggle patient:.active destination:#button]]` |
+
+All five prompts compile to the same protocol JSON. The semantic parser handles the word order differences (SVO / SOV / VSO / agglutinative) so you don't have to. Don't try to translate the user's prompt to English first — emit LSE directly.
+
+**What this means for you as an LLM:**
+
+- Read the user's request in whatever language they wrote it in.
+- Identify the intended action (toggle, add, fetch, etc.) and its participants (what's being acted on, where it's going, etc.).
+- Emit LSE using the standard English keywords (`toggle`, `patient`, `destination`, ...) regardless of the prompt language.
+- Do NOT emit LSE keywords in the user's language. The protocol uses English keywords by convention; the natural-language layer is handled by the semantic parser on the input side, not the output side.
+
 ## JSON wire format
 
 The wire format is a single JSON representation with optional shortcuts for compactness. Both verbose and compact forms are conformant and produce the same semantic node.
