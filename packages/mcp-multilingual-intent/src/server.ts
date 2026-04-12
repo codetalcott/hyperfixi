@@ -10,6 +10,7 @@
  */
 
 import { Hono, type Context } from 'hono';
+import { cors } from 'hono/cors';
 import { CrossDomainDispatcher } from '@lokascript/framework';
 
 import { createDomainRegistry, DOMAIN_PRIORITY } from './domain-registry.js';
@@ -38,6 +39,19 @@ export function createServer(options: ServerOptions = {}): Hono {
   });
 
   const app = new Hono();
+
+  // CORS — allow browser-based landing-page demos to call the API.
+  // Scoped to localhost by default; override via MCP_CORS_ORIGIN=* for
+  // hosted demo deployments.
+  const corsOrigin = process.env.MCP_CORS_ORIGIN ?? '*';
+  app.use(
+    '*',
+    cors({
+      origin: corsOrigin,
+      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Accept'],
+    })
+  );
 
   // ── Entry point ────────────────────────────────────────────────────
   // GET /api → full entry-point entity with all actions listed.
