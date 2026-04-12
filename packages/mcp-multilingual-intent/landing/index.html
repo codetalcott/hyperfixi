@@ -97,6 +97,59 @@
       button.run:hover { background: var(--accent2); }
       button.run:disabled { opacity: 0.5; cursor: not-allowed; }
 
+      /* Try-it-live example grid — curated click-to-run cards */
+      .try-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .try-item {
+        background: #252535; border: 1px solid #3d3d4d; border-radius: 10px;
+        padding: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem;
+      }
+      .try-head {
+        display: flex; align-items: center; gap: 0.4rem;
+        font-size: 0.78rem; color: var(--dim);
+      }
+      .try-head .flag { font-size: 1.1rem; }
+      .try-head .tl { color: var(--text); font-weight: 500; }
+      .try-head .td {
+        padding: 1px 7px; border-radius: 8px; font-size: 0.7rem;
+        font-family: var(--mono); background: var(--accent); color: #fff;
+      }
+      .try-head .tt {
+        padding: 1px 7px; border-radius: 8px; font-size: 0.7rem;
+        font-family: var(--mono); background: #3d3d4d; color: var(--accent2);
+        margin-left: auto;
+      }
+      .try-input {
+        background: #0f0f1e; border-radius: 5px; padding: 0.55rem 0.7rem;
+        font-family: var(--mono); font-size: 0.82rem; color: var(--accent2);
+        border-left: 3px solid var(--accent);
+        word-break: break-word;
+      }
+      .try-input.rtl { direction: rtl; text-align: right; border-left: none; border-right: 3px solid var(--accent); }
+      button.run-try {
+        align-self: flex-start; font-size: 0.8rem; padding: 0.4rem 0.9rem;
+      }
+      pre.try-out {
+        background: #0a0a14; border-radius: 5px; padding: 0.7rem;
+        font-family: var(--mono); font-size: 0.75rem; color: #a5d8ff;
+        overflow-x: auto; white-space: pre; line-height: 1.45;
+        border-left: 3px solid var(--success); margin: 0;
+      }
+      pre.try-out.error { border-left-color: var(--err); color: var(--err); }
+
+      details.byo {
+        margin-top: 1.25rem; padding-top: 1rem;
+        border-top: 1px solid #3d3d4d;
+      }
+      details.byo summary {
+        cursor: pointer; color: var(--accent2); font-size: 0.9rem;
+        font-weight: 500; padding: 0.25rem 0;
+      }
+      details.byo summary:hover { color: var(--text); }
+      details.byo[open] summary { margin-bottom: 0.5rem; }
+
       /* JSON output */
       pre.output {
         background: #0a0a14; border-radius: 6px; padding: 1rem;
@@ -183,6 +236,7 @@
       @media (max-width: 640px) {
         .demo-row { grid-template-columns: 1fr; }
         .hero-stat { flex-direction: column; gap: 0.25rem; }
+        .try-grid { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -212,39 +266,102 @@
       <div class="card">
         <h2>Try it live</h2>
         <p>
-          Type natural language in any supported language. The server auto-detects the domain
-          (SQL, BDD, JSX, Todo, LLM, Flow, Voice, BehaviorSpec), parses to a semantic AST,
-          and optionally compiles to target output.
+          Click any example below to send it to the MCP server in real time.
+          Each card shows a <strong>representative intent</strong> (what an LLM agent would
+          say in natural language) and the <strong>expected tool</strong>. Output renders inline
+          so you can confirm the server parses, classifies, or compiles correctly.
         </p>
-        <div class="demo-row">
-          <input type="text" id="input" value="select name from users"
-                 placeholder="Type in any language..." />
-          <select id="lang">
-            <option value="en">EN</option>
-            <option value="ja">JA</option>
-            <option value="es">ES</option>
-            <option value="ar">AR</option>
-            <option value="ko">KO</option>
-            <option value="zh">ZH</option>
-            <option value="tr">TR</option>
-            <option value="fr">FR</option>
-          </select>
+
+        <div class="try-grid">
+          <!-- 1. EN SQL compile -->
+          <div class="try-item" data-lang="en" data-tool="compile"
+               data-text="select name from users">
+            <div class="try-head">
+              <span class="flag">&#x1F1EC;&#x1F1E7;</span>
+              <span class="tl">English</span>
+              <span class="td">sql</span>
+              <span class="tt">compile</span>
+            </div>
+            <div class="try-input">select name from users</div>
+            <button class="run run-try" onclick="runTryItem(this)">Compile &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
+
+          <!-- 2. JA SQL compile — same output, different language -->
+          <div class="try-item" data-lang="ja" data-tool="compile"
+               data-text="users から name 選択">
+            <div class="try-head">
+              <span class="flag">&#x1F1EF;&#x1F1F5;</span>
+              <span class="tl">Japanese</span>
+              <span class="td">sql</span>
+              <span class="tt">compile</span>
+            </div>
+            <div class="try-input">users から name 選択</div>
+            <button class="run run-try" onclick="runTryItem(this)">Compile &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
+
+          <!-- 3. AR SQL compile — RTL, identifiers preserved -->
+          <div class="try-item" data-lang="ar" data-tool="compile"
+               data-text="اختر الاسم من المستخدمين">
+            <div class="try-head">
+              <span class="flag">&#x1F1F8;&#x1F1E6;</span>
+              <span class="tl">Arabic</span>
+              <span class="td">sql</span>
+              <span class="tt">compile</span>
+            </div>
+            <div class="try-input rtl">اختر الاسم من المستخدمين</div>
+            <button class="run run-try" onclick="runTryItem(this)">Compile &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
+
+          <!-- 4. EN BehaviorSpec detect — different domain -->
+          <div class="try-item" data-lang="en" data-tool="detect"
+               data-text="given page /home when click #submit then url contains /success">
+            <div class="try-head">
+              <span class="flag">&#x1F1EC;&#x1F1E7;</span>
+              <span class="tl">English</span>
+              <span class="td">behaviorspec</span>
+              <span class="tt">detect</span>
+            </div>
+            <div class="try-input">given page /home when click #submit then url contains /success</div>
+            <button class="run run-try" onclick="runTryItem(this)">Detect domain &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
         </div>
-        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
-          <button class="run" onclick="runTool('parse')">Parse intent</button>
-          <button class="run" onclick="runTool('detect')">Detect domain</button>
-          <button class="run" onclick="runTool('compile')">Compile</button>
-          <button class="run" onclick="runTool('examples')">Pattern examples</button>
-        </div>
-        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;font-size:0.78rem;">
-          <button class="run" style="background:#2a2a3e;font-size:0.78rem;" onclick="setExample('select name from users','en')">EN: select name from users</button>
-          <button class="run" style="background:#2a2a3e;font-size:0.78rem;" onclick="setExample('users から name 選択','ja')">JA: users から name 選択</button>
-          <button class="run" style="background:#2a2a3e;font-size:0.78rem;" onclick="setExample('اختر الاسم من المستخدمين','ar')">AR: اختر الاسم من المستخدمين</button>
-          <button class="run" style="background:#2a2a3e;font-size:0.78rem;" onclick="setExample('seleccionar nombre de usuarios','es')">ES: seleccionar nombre...</button>
-          <button class="run" style="background:#2a2a3e;font-size:0.78rem;" onclick="setExample('given page /home','en')">EN: given page /home</button>
-        </div>
-        <pre class="output" id="output">Click a button above to call the MCP server.
-Requires: npm run dev --prefix packages/mcp-multilingual-intent</pre>
+
+        <details class="byo">
+          <summary>Or type your own input</summary>
+          <p style="font-size:0.85rem;color:var(--dim);margin:0.5rem 0 0.75rem;">
+            What the server understands: natural-language commands for one of 8 domains.
+            SQL needs a verb + table/columns (<code>select name from users</code>).
+            BDD/BehaviorSpec uses <code>given</code>/<code>when</code>/<code>then</code>.
+            Todo uses <code>add X to Y</code>. JSX uses <code>element X with attr Y</code>.
+            See the <a href="#tools-table" style="color:var(--accent2);">tools table</a>
+            for full schemas.
+          </p>
+          <div class="demo-row">
+            <input type="text" id="input" value="select name from users"
+                   placeholder="e.g. select name from users" />
+            <select id="lang">
+              <option value="en">EN</option>
+              <option value="ja">JA</option>
+              <option value="es">ES</option>
+              <option value="ar">AR</option>
+              <option value="ko">KO</option>
+              <option value="zh">ZH</option>
+              <option value="tr">TR</option>
+              <option value="fr">FR</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <button class="run" onclick="runTool('parse')">Parse intent</button>
+            <button class="run" onclick="runTool('detect')">Detect domain</button>
+            <button class="run" onclick="runTool('compile')">Compile</button>
+            <button class="run" onclick="runTool('examples')">Pattern examples</button>
+          </div>
+          <pre class="output" id="output">Click a button above to call the MCP server with your input.</pre>
+        </details>
       </div>
 
       <!-- Three examples -->
@@ -430,7 +547,7 @@ Requires: npm run dev --prefix packages/mcp-multilingual-intent</pre>
       </div>
 
       <!-- Tools reference -->
-      <div class="card">
+      <div class="card" id="tools-table">
         <h2>MCP tools exposed</h2>
         <table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
           <thead>
@@ -509,6 +626,51 @@ Requires: npm run dev --prefix packages/mcp-multilingual-intent</pre>
       function setExample(text, lang) {
         inputEl.value = text;
         langEl.value = lang;
+      }
+
+      async function runTryItem(btn) {
+        const item = btn.closest('.try-item');
+        const text = item.dataset.text;
+        const lang = item.dataset.lang;
+        const tool = item.dataset.tool;
+        const out = item.querySelector('.try-out');
+
+        if (!serverUp) {
+          out.hidden = false;
+          out.className = 'try-out error';
+          out.textContent = 'Server not running. Start with:\n  npm run dev --prefix packages/mcp-multilingual-intent';
+          return;
+        }
+
+        const endpoints = {
+          parse: { path: '/parse', body: { text, language: lang } },
+          detect: { path: '/detect', body: { text, language: lang } },
+          compile: { path: '/compile', body: { text, language: lang } },
+          examples: { path: '/examples', body: { prompt: text, language: lang, limit: 5 } },
+        };
+        const ep = endpoints[tool];
+
+        out.hidden = false;
+        out.className = 'try-out';
+        out.textContent = 'Calling server...';
+        btn.disabled = true;
+
+        try {
+          const r = await fetch(API + ep.path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ep.body),
+          });
+          const data = await r.json();
+          const result = data.properties?.result ?? data.properties?.error ?? data;
+          out.textContent = JSON.stringify(result, null, 2);
+          out.className = r.ok ? 'try-out' : 'try-out error';
+        } catch (err) {
+          out.textContent = 'Request failed: ' + (err.message || err);
+          out.className = 'try-out error';
+        } finally {
+          btn.disabled = false;
+        }
       }
 
       async function runTool(tool) {
