@@ -34,12 +34,28 @@ export interface RendererTables {
   readonly markers: Record<string, Record<string, string>>;
 }
 
+/**
+ * Matcher for an acknowledged-but-unfixed finding. Each entry is an object
+ * whose fields are compared against the finding's rule + context. A finding
+ * matches a waiver if every field in the waiver matches the corresponding
+ * field on the finding (or finding.context). Matched findings are dropped
+ * from the returned result entirely.
+ *
+ * Use sparingly — waivers are real debt that should have a plan to resolve.
+ */
+export interface LintWaiver {
+  readonly rule: string;
+  readonly reason: string; // human-readable; not matched against — for audit
+  readonly matches?: Record<string, string | number | boolean>;
+}
+
 export interface DomainLintInput {
   readonly name: string;
   readonly schemas: readonly CommandSchema[];
   readonly profiles: readonly PatternGenLanguageProfile[];
   readonly tokenizers: Readonly<Record<string, LanguageTokenizer>>;
   readonly renderer?: RendererTables;
+  readonly waivers?: readonly LintWaiver[];
 }
 
 /**

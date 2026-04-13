@@ -97,6 +97,11 @@ export const markerTokenizationRule: LintRule = input => {
       continue;
     }
 
+    // Empty-string markers mean "no marker in this language" (an explicit
+    // opt-out pattern used by domain-learn to signal that a role is
+    // positional in some languages but marker-bearing in others).
+    if (word === '') continue;
+
     // Whitespace-containing markers (e.g., 'mettre-à-jour' is one word, but
     // 'ask X to Y' wouldn't be) — tokenize the raw word and expect 1 token.
     // Multi-word markers with explicit spaces are out of scope for this rule;
