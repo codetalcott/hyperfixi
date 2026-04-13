@@ -6,7 +6,7 @@
  * Each tokenizer handles keyword classification for command verbs and markers.
  */
 
-import { createSimpleTokenizer } from '@lokascript/framework';
+import { createSimpleTokenizer, LatinExtendedIdentifierExtractor } from '@lokascript/framework';
 import type { LanguageTokenizer, ValueExtractor, ExtractionResult } from '@lokascript/framework';
 
 // =============================================================================
@@ -31,28 +31,6 @@ class CSSSelectorExtractor implements ValueExtractor {
       end++;
     }
     if (end === position + 1) return null;
-    return { value: input.slice(position, end), length: end - position };
-  }
-}
-
-// =============================================================================
-// Latin Extended Identifier Extractor
-// Handles diacritics in Spanish (é, ó, ú, ñ) and other Latin-script languages
-// =============================================================================
-
-class LatinExtendedIdentifierExtractor implements ValueExtractor {
-  readonly name = 'latin-extended-identifier';
-
-  canExtract(input: string, position: number): boolean {
-    return /\p{L}/u.test(input[position]);
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    let end = position;
-    while (end < input.length && /[\p{L}\p{N}_-]/u.test(input[end])) {
-      end++;
-    }
-    if (end === position) return null;
     return { value: input.slice(position, end), length: end - position };
   }
 }
