@@ -12,7 +12,7 @@ import { extractRoleValue } from '@lokascript/framework';
 // Keyword Tables
 // =============================================================================
 
-const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
+export const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
   select: {
     en: 'select',
     es: 'seleccionar',
@@ -65,7 +65,7 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
   },
 };
 
-const MARKERS: Record<string, Record<string, string>> = {
+export const MARKERS: Record<string, Record<string, string>> = {
   from: { en: 'from', es: 'de', ja: 'から', ar: 'من', ko: '에서', zh: '从', tr: 'den', fr: 'de' },
   into: { en: 'into', es: 'en', ja: 'に', ar: 'في', ko: '에', zh: '到', tr: 'e', fr: 'dans' },
   where: {
