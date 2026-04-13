@@ -1,0 +1,47 @@
+{
+  "name": "@lokascript/domain-config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared domain-registry wiring + priority order for MCP servers and other consumers. Single source of truth for which LokaScript domains exist and how the dispatcher breaks ambiguity.",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup && npm run build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist --noEmit false",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lokascript/framework": "*",
+    "@lokascript/domain-sql": "*",
+    "@lokascript/domain-bdd": "*",
+    "@lokascript/domain-jsx": "*",
+    "@lokascript/domain-todo": "*",
+    "@lokascript/domain-behaviorspec": "*",
+    "@lokascript/domain-llm": "*",
+    "@lokascript/domain-flow": "*",
+    "@lokascript/domain-voice": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
+}

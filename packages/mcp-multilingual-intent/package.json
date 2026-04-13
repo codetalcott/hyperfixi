@@ -38,6 +38,7 @@
   "dependencies": {
     "@hono/node-server": "^1.13.0",
     "@hyperfixi/patterns-reference": "*",
+    "@lokascript/domain-config": "*",
     "@lokascript/framework": "*",
     "hono": "^4.6.0"
   },
