@@ -761,7 +761,94 @@ jobs:
           exit $failed
 
   # ============================================
-  # Job 9: Performance Benchmarks (main branch only)
+  # Job 9: MCP Multilingual Intent — demos + compat test
+  # ============================================
+  # Starts the Hono Siren API in background, runs the Siren-compat test
+  # and the three IDE integration demos (EN ≡ JA/AR/KO schema equivalence).
+  # Captures demo output as an artifact so the landing page can embed it.
+  # Reuses build artifacts from Job 1 — no rebuild cost.
+  mcp-demos:
+    name: MCP Multilingual Demos
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts
+          path: packages
+
+      - name: Rebuild workspace links
+        run: |
+          rm -rf node_modules/@hyperfixi node_modules/@lokascript
+          npm install
+
+      - name: Start Hono Siren server
+        working-directory: packages/mcp-multilingual-intent
+        run: |
+          nohup npm run dev > /tmp/mcp-server.log 2>&1 &
+          echo $! > /tmp/mcp-server.pid
+          # Wait up to ~15s for /health to return 200
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3030/health > /dev/null 2>&1; then
+              echo "server up after ${i} tries"
+              break
+            fi
+            sleep 0.5
+          done
+          curl -fsS http://localhost:3030/health || {
+            echo "server failed to start"; cat /tmp/mcp-server.log; exit 1;
+          }
+
+      - name: Run Siren compatibility test
+        run: npm run mcp:test --prefix packages/mcp-multilingual-intent
+
+      - name: Run IDE integration demos (capture output)
+        run: npm run demos:capture --prefix packages/mcp-multilingual-intent
+
+      - name: Check committed demo-output.txt is up to date
+        run: |
+          # Fail the job if the committed landing-page artifact drifts from
+          # what the demos actually produce. To fix: run
+          # `npm run demos:capture --prefix packages/mcp-multilingual-intent`
+          # locally and commit the updated file.
+          if ! git diff --exit-code --stat \
+            packages/mcp-multilingual-intent/landing/demo-output.txt; then
+            echo "::error::demo-output.txt is out of date. Run 'npm run demos:capture --prefix packages/mcp-multilingual-intent' and commit the result."
+            exit 1
+          fi
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/mcp-server.pid ]; then
+            kill "$(cat /tmp/mcp-server.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload demo output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-demo-output
+          path: packages/mcp-multilingual-intent/landing/demo-output.txt
+          retention-days: 7
+
+  # ============================================
+  # Job 10: Performance Benchmarks (main branch only)
   # ============================================
   benchmarks:
     name: Performance Benchmarks

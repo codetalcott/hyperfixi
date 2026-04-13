@@ -19,7 +19,9 @@
     "mcp": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api",
     "mcp:verbose": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api --verbose",
     "mcp:http": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api --http 8080",
-    "mcp:test": "tsx examples/mcp-test.ts"
+    "mcp:test": "tsx examples/mcp-test.ts",
+    "demos": "tsx examples/integration-demos.ts",
+    "demos:capture": "mkdir -p landing && tsx examples/integration-demos.ts > landing/demo-output.txt"
   },
   "keywords": [
     "mcp",
