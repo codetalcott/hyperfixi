@@ -10,6 +10,8 @@
  * compatible, fail fast on any deviation.
  */
 
+export {};
+
 const BASE = process.env.MCP_BASE_URL ?? 'http://localhost:3030/api';
 
 interface TestResult {

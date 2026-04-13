@@ -1,0 +1,121 @@
+@lokascript/mcp-multilingual-intent — IDE integration demos
+Server: http://localhost:3030/api
+
+╔═════════════════════════════╗
+║  Demo 1/3 — Claude Desktop  ║
+╚═════════════════════════════╝
+Scenario: Japanese prompt → multilingual voice/UI command
+Target language: JA
+Domain: voice
+
+Inputs:
+  EN  click submit
+  JA  送信 を クリック
+
+Parsed outputs (from MCP parse_multilingual_intent):
+  field        │ EN                               │ JA
+  ─────────────┼──────────────────────────────────┼─────────────────────────────────
+  action       │ click                            │ click
+  domain       │ voice                            │ voice
+  confidence   │ 1.00                             │ 1.00
+  explicit     │ [click patient:submit]           │ [click patient:送信]
+
+Assertions:
+  ✓ action is language-neutral (EN=click, JA=click)
+  ✓ domain classification agrees (both → voice)
+  ✓ role keys match byte-for-byte: [click patient]
+  ✓ LSE schema is identical; role values preserve user-authored identifiers ({"patient":"送信"})
+
+MCP tool call (what the IDE sends):
+  {
+    "tool": "action__parse_multilingual_intent",
+    "arguments": {
+      "text": "送信 を クリック",
+      "language": "ja",
+      "domain": "voice"
+    }
+  }
+
+╔═════════════════════╗
+║  Demo 2/3 — Cursor  ║
+╚═════════════════════╝
+Scenario: Arabic (RTL) prompt → language-neutral intent JSON
+Target language: AR
+Domain: voice
+
+Inputs:
+  EN  click submit
+  AR  انقر على إرسال
+
+Parsed outputs (from MCP parse_multilingual_intent):
+  field        │ EN                               │ AR
+  ─────────────┼──────────────────────────────────┼─────────────────────────────────
+  action       │ click                            │ click
+  domain       │ voice                            │ voice
+  confidence   │ 1.00                             │ 1.00
+  explicit     │ [click patient:submit]           │ [click patient:إرسال]
+
+Assertions:
+  ✓ action is language-neutral (EN=click, AR=click)
+  ✓ domain classification agrees (both → voice)
+  ✓ role keys match byte-for-byte: [click patient]
+  ✓ LSE schema is identical; role values preserve user-authored identifiers ({"patient":"إرسال"})
+  ℹ  Arabic input is RTL; the LSE bracketed form uses LTR syntax so the schema renders consistently across script directions
+
+MCP tool call (what the IDE sends):
+  {
+    "tool": "action__parse_multilingual_intent",
+    "arguments": {
+      "text": "انقر على إرسال",
+      "language": "ar",
+      "domain": "voice"
+    }
+  }
+
+╔═══════════════════════╗
+║  Demo 3/3 — Continue  ║
+╚═══════════════════════╝
+Scenario: Korean prompt → semantic-equivalent LSE (byte-for-byte match)
+Target language: KO
+Domain: voice
+
+Inputs:
+  EN  click submit
+  KO  제출 을 클릭
+
+Parsed outputs (from MCP parse_multilingual_intent):
+  field        │ EN                               │ KO
+  ─────────────┼──────────────────────────────────┼─────────────────────────────────
+  action       │ click                            │ click
+  domain       │ voice                            │ voice
+  confidence   │ 1.00                             │ 1.00
+  explicit     │ [click patient:submit]           │ [click patient:제출]
+
+Assertions:
+  ✓ action is language-neutral (EN=click, KO=click)
+  ✓ domain classification agrees (both → voice)
+  ✓ role keys match byte-for-byte: [click patient]
+  ✓ LSE schema is identical; role values preserve user-authored identifiers ({"patient":"제출"})
+
+MCP tool call (what the IDE sends):
+  {
+    "tool": "action__parse_multilingual_intent",
+    "arguments": {
+      "text": "제출 을 클릭",
+      "language": "ko",
+      "domain": "voice"
+    }
+  }
+
+╔═══════════╗
+║  Summary  ║
+╚═══════════╝
+  3/3 demos produced language-neutral semantic ASTs.
+
+All three demos demonstrate the core architectural claim:
+  A prompt in any supported language yields a semantic AST whose
+  action, domain, and role keys are byte-for-byte identical to the
+  English equivalent. Role values stay in the user's language.
+  The behavior layer is language-neutral by construction — not by
+  translation.
+
