@@ -8,7 +8,11 @@
  * 8 languages: EN, ES, JA, AR, KO, ZH, FR, TR
  */
 
-import { BaseTokenizer, getDefaultExtractors } from '@lokascript/framework';
+import {
+  BaseTokenizer,
+  getDefaultExtractors,
+  LatinExtendedIdentifierExtractor,
+} from '@lokascript/framework';
 import type {
   TokenKind,
   KeywordEntry,
@@ -121,6 +125,26 @@ function getBehaviorSpecExtractors(): ValueExtractor[] {
   ];
 }
 
+/**
+ * Variant for Latin-script languages with diacritics (es/fr/tr/etc.).
+ * Replaces the default ASCII identifier extractor with one that accepts the
+ * full Unicode letter range, so words like `característica` or `varsayalım`
+ * tokenize as a single identifier instead of splitting at the diacritic.
+ */
+function getLatinExtendedBehaviorSpecExtractors(): ValueExtractor[] {
+  const filtered = getDefaultExtractors().filter(
+    e => e.name !== 'identifier' && e.name !== 'unicode-identifier'
+  );
+  return [
+    new CSSSelectorExtractor(),
+    new URLExtractor(),
+    new DurationExtractor(),
+    new DimensionExtractor(),
+    new LatinExtendedIdentifierExtractor(),
+    ...filtered,
+  ];
+}
+
 /** Standard classifyToken logic shared by Latin-script tokenizers */
 function classifyLatinToken(token: string, keywords: Set<string>): TokenKind {
   if (keywords.has(token.toLowerCase())) return 'keyword';
@@ -210,7 +234,7 @@ export class SpanishBehaviorSpecTokenizer extends BaseTokenizer {
 
   constructor() {
     super();
-    this.registerExtractors(getBehaviorSpecExtractors());
+    this.registerExtractors(getLatinExtendedBehaviorSpecExtractors());
   }
 
   classifyToken(token: string): TokenKind {
@@ -479,7 +503,7 @@ export class FrenchBehaviorSpecTokenizer extends BaseTokenizer {
 
   constructor() {
     super();
-    this.registerExtractors(getBehaviorSpecExtractors());
+    this.registerExtractors(getLatinExtendedBehaviorSpecExtractors());
   }
 
   classifyToken(token: string): TokenKind {
@@ -512,7 +536,7 @@ export class TurkishBehaviorSpecTokenizer extends BaseTokenizer {
 
   constructor() {
     super();
-    this.registerExtractors(getBehaviorSpecExtractors());
+    this.registerExtractors(getLatinExtendedBehaviorSpecExtractors());
   }
 
   classifyToken(token: string): TokenKind {

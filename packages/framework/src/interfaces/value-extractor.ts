@@ -317,6 +317,38 @@ export class UnicodeIdentifierExtractor implements ValueExtractor {
 }
 
 /**
+ * Latin Extended identifier extractor — handles Latin-script languages with
+ * diacritics (Spanish ñ/á/é/í/ó/ú; French é/à/ù/ç; Turkish ç/ş/ı/ü/ğ/ö;
+ * Portuguese ã/õ; German ä/ö/ü/ß; etc).
+ *
+ * Use this in addition to (or instead of) the default `IdentifierExtractor`
+ * for any tokenizer whose language is Latin-script and may contain diacritic
+ * characters in identifiers. Without it, words like `añadir` tokenize as
+ * `["a", "ñadir"]` because the default ASCII extractor stops at `ñ` and the
+ * Unicode extractor only kicks in when a token *starts* with a non-ASCII
+ * character.
+ *
+ * Matches contiguous runs of `/[\p{L}\p{N}_-]/u` — any Unicode letter or
+ * number, plus underscore and hyphen.
+ */
+export class LatinExtendedIdentifierExtractor implements ValueExtractor {
+  readonly name = 'latin-extended-identifier';
+
+  canExtract(input: string, position: number): boolean {
+    return /\p{L}/u.test(input[position]);
+  }
+
+  extract(input: string, position: number): ExtractionResult | null {
+    let end = position;
+    while (end < input.length && /[\p{L}\p{N}_-]/u.test(input[end])) {
+      end++;
+    }
+    if (end === position) return null;
+    return { value: input.slice(position, end), length: end - position };
+  }
+}
+
+/**
  * Whitespace extractor - handles spaces, tabs, newlines.
  */
 export class WhitespaceExtractor implements ValueExtractor {
