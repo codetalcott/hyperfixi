@@ -22,6 +22,7 @@ import {
   TurkishSQLTokenizer,
   FrenchSQLTokenizer,
 } from '../tokenizers';
+import { COMMAND_KEYWORDS, MARKERS } from '../generators/sql-renderer';
 
 function buildInput(): DomainLintInput {
   return {
@@ -37,6 +38,10 @@ function buildInput(): DomainLintInput {
       zh: ChineseSQLTokenizer,
       tr: TurkishSQLTokenizer,
       fr: FrenchSQLTokenizer,
+    },
+    renderer: {
+      commandKeywords: COMMAND_KEYWORDS,
+      markers: MARKERS,
     },
   };
 }

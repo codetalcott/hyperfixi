@@ -20,23 +20,43 @@
  */
 
 import { runRules } from './rules';
-import type { DomainLintInput, LintResult } from './types';
+import type { DomainLintInput, LintFinding, LintResult, LintWaiver } from './types';
 
 export type {
   DomainLintInput,
   LintResult,
   LintFinding,
   LintRule,
+  LintWaiver,
   Severity,
   RendererTables,
 } from './types';
 export { formatResult, formatFinding } from './format';
 
+function matchesWaiver(finding: LintFinding, waiver: LintWaiver): boolean {
+  if (finding.rule !== waiver.rule) return false;
+  if (!waiver.matches) return true;
+  const ctx = finding.context ?? {};
+  for (const [key, expected] of Object.entries(waiver.matches)) {
+    if (ctx[key] !== expected) return false;
+  }
+  return true;
+}
+
+function applyWaivers(
+  findings: LintFinding[],
+  waivers: readonly LintWaiver[] | undefined
+): LintFinding[] {
+  if (!waivers || waivers.length === 0) return findings;
+  return findings.filter(f => !waivers.some(w => matchesWaiver(f, w)));
+}
+
 /**
  * Lint a domain against all enabled rules and return a structured result.
  */
 export function lintDomain(input: DomainLintInput): LintResult {
-  const findings = runRules(input);
+  const raw = runRules(input);
+  const findings = applyWaivers(raw, input.waivers);
   const errorCount = findings.filter(f => f.severity === 'error').length;
   const warningCount = findings.filter(f => f.severity === 'warning').length;
 
