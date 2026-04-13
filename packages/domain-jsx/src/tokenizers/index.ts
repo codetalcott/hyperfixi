@@ -49,6 +49,8 @@ export const EnglishJSXTokenizer = createSimpleTokenizer({
 
 export const SpanishJSXTokenizer = createSimpleTokenizer({
   language: 'es',
+  // Keep ñ, á, é, í, ó, ú identifiers intact (e.g. component/prop names).
+  customExtractors: [new LatinExtendedIdentifierExtractor()],
   keywords: [
     'elemento',
     'componente',
