@@ -69,6 +69,8 @@ export const EnglishSQLTokenizer: LanguageTokenizer = createSimpleTokenizer({
 
 export const SpanishSQLTokenizer: LanguageTokenizer = createSimpleTokenizer({
   language: 'es',
+  // Needed so ñ, á, é, í, ó, ú don't split identifiers (e.g. `añadir`).
+  customExtractors: [new LatinExtendedIdentifierExtractor()],
   keywords: [
     'seleccionar',
     'insertar',
