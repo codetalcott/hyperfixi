@@ -42,9 +42,9 @@ export const spanishProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: 'seleccionar' },
-    insert: { primary: 'insertar' },
-    update: { primary: 'actualizar' },
-    delete: { primary: 'eliminar' },
+    insert: { primary: 'insertar', alternatives: ['agregar', 'añadir'] },
+    update: { primary: 'actualizar', alternatives: ['cambiar', 'modificar'] },
+    delete: { primary: 'eliminar', alternatives: ['quitar', 'borrar'] },
     get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };
@@ -58,9 +58,9 @@ export const japaneseProfile: PatternGenLanguageProfile = {
   wordOrder: 'SOV',
   keywords: {
     select: { primary: '選択' },
-    insert: { primary: '挿入' },
-    update: { primary: '更新' },
-    delete: { primary: '削除' },
+    insert: { primary: '挿入', alternatives: ['追加'] },
+    update: { primary: '更新', alternatives: ['変更'] },
+    delete: { primary: '削除', alternatives: ['消去'] },
     get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
   roleMarkers: {
@@ -81,9 +81,9 @@ export const arabicProfile: PatternGenLanguageProfile = {
   wordOrder: 'VSO',
   keywords: {
     select: { primary: 'اختر' },
-    insert: { primary: 'أدخل' },
-    update: { primary: 'حدّث' },
-    delete: { primary: 'احذف' },
+    insert: { primary: 'أدخل', alternatives: ['أضف'] },
+    update: { primary: 'حدّث', alternatives: ['غيّر'] },
+    delete: { primary: 'احذف', alternatives: ['أزل'] },
     get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };
@@ -97,9 +97,9 @@ export const koreanProfile: PatternGenLanguageProfile = {
   wordOrder: 'SOV',
   keywords: {
     select: { primary: '선택' },
-    insert: { primary: '삽입' },
-    update: { primary: '갱신' },
-    delete: { primary: '삭제' },
+    insert: { primary: '삽입', alternatives: ['추가'] },
+    update: { primary: '갱신', alternatives: ['변경'] },
+    delete: { primary: '삭제', alternatives: ['제거'] },
     get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
   roleMarkers: {
@@ -116,9 +116,9 @@ export const chineseProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: '查询' },
-    insert: { primary: '插入' },
-    update: { primary: '更新' },
-    delete: { primary: '删除' },
+    insert: { primary: '插入', alternatives: ['添加'] },
+    update: { primary: '更新', alternatives: ['修改'] },
+    delete: { primary: '删除', alternatives: ['移除'] },
     get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };
@@ -132,9 +132,10 @@ export const turkishProfile: PatternGenLanguageProfile = {
   wordOrder: 'SOV',
   keywords: {
     select: { primary: 'seç' },
+    // `ekle` is already Turkish for "add" — no natural alias needed for INSERT.
     insert: { primary: 'ekle' },
-    update: { primary: 'güncelle' },
-    delete: { primary: 'sil' },
+    update: { primary: 'güncelle', alternatives: ['değiştir'] },
+    delete: { primary: 'sil', alternatives: ['kaldır'] },
     get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
   roleMarkers: {
@@ -151,9 +152,9 @@ export const frenchProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: 'sélectionner' },
-    insert: { primary: 'insérer' },
-    update: { primary: 'mettre-à-jour' },
-    delete: { primary: 'supprimer' },
+    insert: { primary: 'insérer', alternatives: ['ajouter'] },
+    update: { primary: 'mettre-à-jour', alternatives: ['modifier'] },
+    delete: { primary: 'supprimer', alternatives: ['enlever'] },
     get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };

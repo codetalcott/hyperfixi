@@ -649,6 +649,100 @@ describe('SQL Domain', () => {
       expect(node.action).toBe('delete');
     });
   });
+
+  // ===========================================================================
+  // Natural verb aliases — multilingual
+  // ===========================================================================
+  //
+  // For each language, every listed alternative keyword must compile to
+  // byte-identical SQL compared with the formal primary. Turkish INSERT has
+  // no alias — `ekle` is already the everyday word for "add".
+
+  describe('Natural verb aliases (multilingual)', () => {
+    // [lang, formalSource, naturalSource, expectedAction][]
+    const cases: Array<[string, string, string, string]> = [
+      // Spanish
+      ['es', 'insertar Alice en usuarios', 'agregar Alice en usuarios', 'insert'],
+      ['es', 'insertar Alice en usuarios', 'añadir Alice en usuarios', 'insert'],
+      [
+        'es',
+        'actualizar usuarios establecer active = true',
+        'cambiar usuarios establecer active = true',
+        'update',
+      ],
+      [
+        'es',
+        'actualizar usuarios establecer active = true',
+        'modificar usuarios establecer active = true',
+        'update',
+      ],
+      [
+        'es',
+        'eliminar de usuarios donde inactive = true',
+        'quitar de usuarios donde inactive = true',
+        'delete',
+      ],
+      [
+        'es',
+        'eliminar de usuarios donde inactive = true',
+        'borrar de usuarios donde inactive = true',
+        'delete',
+      ],
+
+      // Japanese (SOV — verb last)
+      ['ja', 'users に Alice 挿入', 'users に Alice 追加', 'insert'],
+      ['ja', 'users 設定 active = true 更新', 'users 設定 active = true 変更', 'update'],
+      ['ja', 'users から 削除', 'users から 消去', 'delete'],
+
+      // Arabic (VSO)
+      ['ar', 'أدخل Alice في users', 'أضف Alice في users', 'insert'],
+      ['ar', 'حدّث users عيّن active = true', 'غيّر users عيّن active = true', 'update'],
+      ['ar', 'احذف من users', 'أزل من users', 'delete'],
+
+      // Korean (SOV)
+      ['ko', 'users 에 Alice 삽입', 'users 에 Alice 추가', 'insert'],
+      ['ko', 'users 설정 active = true 갱신', 'users 설정 active = true 변경', 'update'],
+      ['ko', 'users 에서 삭제', 'users 에서 제거', 'delete'],
+
+      // Chinese (SVO)
+      ['zh', '插入 Alice 到 users', '添加 Alice 到 users', 'insert'],
+      ['zh', '更新 users 设置 active = true', '修改 users 设置 active = true', 'update'],
+      ['zh', '删除 从 users', '移除 从 users', 'delete'],
+
+      // Turkish (SOV) — no INSERT alias
+      [
+        'tr',
+        'users ayarla active = true güncelle',
+        'users ayarla active = true değiştir',
+        'update',
+      ],
+      ['tr', 'users den sil', 'users den kaldır', 'delete'],
+
+      // French (SVO)
+      ['fr', 'insérer Alice dans users', 'ajouter Alice dans users', 'insert'],
+      [
+        'fr',
+        'mettre-à-jour users définir active = true',
+        'modifier users définir active = true',
+        'update',
+      ],
+      ['fr', 'supprimer de users', 'enlever de users', 'delete'],
+    ];
+
+    it.each(cases)(
+      '[%s] natural "%s" compiles identically to formal "%s"',
+      (lang, formal, natural, expectedAction) => {
+        const formalResult = sql.compile(formal, lang);
+        const naturalResult = sql.compile(natural, lang);
+        expect(formalResult.ok).toBe(true);
+        expect(naturalResult.ok).toBe(true);
+        expect(naturalResult.code).toBe(formalResult.code);
+
+        const naturalNode = sql.parse(natural, lang);
+        expect(naturalNode.action).toBe(expectedAction);
+      }
+    );
+  });
 });
 
 // =============================================================================
