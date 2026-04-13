@@ -597,6 +597,58 @@ describe('SQL Domain', () => {
       expect(result.valid).toBe(false);
     });
   });
+
+  // ===========================================================================
+  // Natural verb aliases (English): add/change/remove → insert/update/delete
+  // ===========================================================================
+  //
+  // These are keyword alternatives on the existing mutation schemas — NOT new
+  // schemas. The natural verb and the formal SQL verb produce identical
+  // SemanticNodes and compile to identical SQL. Proves the cheap alias path
+  // before we spend effort on Shape-B schemas (new roles / lowering).
+
+  describe('Natural verb aliases (English)', () => {
+    it('add is an alias for insert', () => {
+      const formal = sql.compile('insert Alice into users', 'en');
+      const natural = sql.compile('add Alice into users', 'en');
+      expect(formal.ok).toBe(true);
+      expect(natural.ok).toBe(true);
+      expect(natural.code).toBe(formal.code);
+    });
+
+    it('add node action is still "insert"', () => {
+      const node = sql.parse('add Alice into users', 'en');
+      expect(node.action).toBe('insert');
+      expect(extractRoleValue(node, 'values')).toBe('Alice');
+      expect(extractRoleValue(node, 'destination')).toBe('users');
+    });
+
+    it('change is an alias for update', () => {
+      const formal = sql.compile('update users set active = true where id = 5', 'en');
+      const natural = sql.compile('change users set active = true where id = 5', 'en');
+      expect(formal.ok).toBe(true);
+      expect(natural.ok).toBe(true);
+      expect(natural.code).toBe(formal.code);
+    });
+
+    it('change node action is still "update"', () => {
+      const node = sql.parse('change users set active = true', 'en');
+      expect(node.action).toBe('update');
+    });
+
+    it('remove is an alias for delete', () => {
+      const formal = sql.compile('delete from users where inactive = true', 'en');
+      const natural = sql.compile('remove from users where inactive = true', 'en');
+      expect(formal.ok).toBe(true);
+      expect(natural.ok).toBe(true);
+      expect(natural.code).toBe(formal.code);
+    });
+
+    it('remove node action is still "delete"', () => {
+      const node = sql.parse('remove from users where inactive = true', 'en');
+      expect(node.action).toBe('delete');
+    });
+  });
 });
 
 // =============================================================================

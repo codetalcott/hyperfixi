@@ -20,9 +20,13 @@ export const englishProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: 'select' },
-    insert: { primary: 'insert' },
-    update: { primary: 'update' },
-    delete: { primary: 'delete' },
+    // Natural-language aliases for the mutation verbs. The pattern generator
+    // threads `alternatives` through to the keyword literal; both the formal
+    // and the natural verb parse into the same SemanticNode, so codegen stays
+    // untouched. Spike: English only.
+    insert: { primary: 'insert', alternatives: ['add'] },
+    update: { primary: 'update', alternatives: ['change'] },
+    delete: { primary: 'delete', alternatives: ['remove'] },
     get: { primary: 'get' },
   },
   // No roleMarkers needed — all markers come from schema markerOverride,
