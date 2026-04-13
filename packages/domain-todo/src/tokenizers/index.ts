@@ -5,30 +5,8 @@
  * framework's createSimpleTokenizer factory.
  */
 
-import { createSimpleTokenizer } from '@lokascript/framework';
-import type { LanguageTokenizer, ValueExtractor, ExtractionResult } from '@lokascript/framework';
-
-// =============================================================================
-// Latin Extended Identifier Extractor
-// Handles Latin-script languages with diacritics (French à; Turkish ş,ç,ü)
-// =============================================================================
-
-class LatinExtendedIdentifierExtractor implements ValueExtractor {
-  readonly name = 'latin-extended-identifier';
-
-  canExtract(input: string, position: number): boolean {
-    return /\p{L}/u.test(input[position]);
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    let end = position;
-    while (end < input.length && /[\p{L}\p{N}_-]/u.test(input[end])) {
-      end++;
-    }
-    if (end === position) return null;
-    return { value: input.slice(position, end), length: end - position };
-  }
-}
+import { createSimpleTokenizer, LatinExtendedIdentifierExtractor } from '@lokascript/framework';
+import type { LanguageTokenizer } from '@lokascript/framework';
 
 // =============================================================================
 // English

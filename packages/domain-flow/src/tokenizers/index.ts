@@ -11,7 +11,7 @@
  * - Latin extended identifiers (diacritics in Spanish)
  */
 
-import { createSimpleTokenizer } from '@lokascript/framework';
+import { createSimpleTokenizer, LatinExtendedIdentifierExtractor } from '@lokascript/framework';
 import type { LanguageTokenizer, ValueExtractor, ExtractionResult } from '@lokascript/framework';
 
 // =============================================================================
@@ -93,27 +93,6 @@ class DurationExtractor implements ValueExtractor {
       return { value: input.slice(position, end), length: end - position };
     }
 
-    return { value: input.slice(position, end), length: end - position };
-  }
-}
-
-// =============================================================================
-// Latin Extended Identifier Extractor (diacritics for Spanish)
-// =============================================================================
-
-class LatinExtendedIdentifierExtractor implements ValueExtractor {
-  readonly name = 'latin-extended-identifier';
-
-  canExtract(input: string, position: number): boolean {
-    return /\p{L}/u.test(input[position]);
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    let end = position;
-    while (end < input.length && /[\p{L}\p{N}_-]/u.test(input[end])) {
-      end++;
-    }
-    if (end === position) return null;
     return { value: input.slice(position, end), length: end - position };
   }
 }

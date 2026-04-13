@@ -6,41 +6,17 @@
  * plus a CSS selector extractor for DOM element references (#id, .class).
  */
 
-import { BaseTokenizer, getDefaultExtractors } from '@lokascript/framework';
+import {
+  BaseTokenizer,
+  getDefaultExtractors,
+  LatinExtendedIdentifierExtractor,
+} from '@lokascript/framework';
 import type {
   TokenKind,
   KeywordEntry,
   ValueExtractor,
   ExtractionResult,
 } from '@lokascript/framework';
-
-// =============================================================================
-// Latin Extended Identifier Extractor (Turkish, French, etc.)
-// =============================================================================
-
-/**
- * Extracts identifiers that mix ASCII and extended Latin characters
- * (e.g., Turkish ıİğĞüÜşŞçÇöÖ, French éèêëàâçô, etc.).
- *
- * The default IdentifierExtractor only handles [a-zA-Z0-9_], which causes
- * words like "varsayalım" to be split at the "ı" boundary. This extractor
- * uses Unicode \p{L} to handle all letter characters as a single word.
- */
-class LatinExtendedIdentifierExtractor implements ValueExtractor {
-  readonly name = 'latin-extended-identifier';
-
-  canExtract(input: string, position: number): boolean {
-    return /\p{L}/u.test(input[position]);
-  }
-
-  extract(input: string, position: number): ExtractionResult | null {
-    let end = position;
-    while (end < input.length && /[\p{L}\p{N}_-]/u.test(input[end])) {
-      end++;
-    }
-    return end > position ? { value: input.slice(position, end), length: end - position } : null;
-  }
-}
 
 /**
  * Get extractors for languages with extended Latin characters (Turkish, French).
