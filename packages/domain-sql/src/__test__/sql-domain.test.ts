@@ -556,6 +556,47 @@ describe('SQL Domain', () => {
       }
     });
   });
+
+  // ===========================================================================
+  // Natural: get (English spike)
+  // ===========================================================================
+
+  describe('Natural: get (English)', () => {
+    it('should parse simple get', () => {
+      const node = sql.parse('get users', 'en');
+      expect(node.action).toBe('get');
+      expect(extractRoleValue(node, 'source')).toBe('users');
+    });
+
+    it('should compile get to SELECT *', () => {
+      const result = sql.compile('get users', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users');
+    });
+
+    it('should compile get with where to SELECT ... WHERE', () => {
+      const result = sql.compile('get users where age > 18', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users WHERE age > 18');
+    });
+
+    it('should compile get with limit to SELECT ... LIMIT', () => {
+      const result = sql.compile('get users limit 10', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users LIMIT 10');
+    });
+
+    it('should compile get with where and limit in order', () => {
+      const result = sql.compile('get users where active = 1 limit 5', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users WHERE active = 1 LIMIT 5');
+    });
+
+    it('should fail validation without a subject', () => {
+      const result = sql.validate('get', 'en');
+      expect(result.valid).toBe(false);
+    });
+  });
 });
 
 // =============================================================================

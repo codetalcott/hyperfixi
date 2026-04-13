@@ -23,7 +23,25 @@ export interface RoleSpec {
   readonly required: boolean;
   readonly expectedTypes: Array<ExpectedType>;
   readonly default?: SemanticValue;
+  /**
+   * Ordering priority for SVO (Subject-Verb-Object) languages.
+   * **Higher values appear EARLIER** in the surface form (descending sort).
+   *
+   * Example — `select <columns> from <source> where <condition>`:
+   *   `columns: 2, source: 1, condition: 0`
+   *
+   * Pick values so the most "central" role is highest and optional / trailing
+   * clauses are lowest. When adding a role between two existing ones, bump all
+   * higher positions rather than using fractional numbers.
+   */
   readonly svoPosition?: number;
+  /**
+   * Ordering priority for SOV (Subject-Object-Verb) languages.
+   * **Higher values appear EARLIER** in the surface form (descending sort).
+   *
+   * Same convention as {@link svoPosition} — the verb is appended last by the
+   * pattern generator, so role positions order the pre-verb material.
+   */
   readonly sovPosition?: number;
   readonly markerOverride?: Record<string, string>;
   readonly renderOverride?: Record<string, string>;
