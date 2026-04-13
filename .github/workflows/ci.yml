@@ -328,6 +328,9 @@ jobs:
       - name: Verify reference data
         run: npm run verify:reference --prefix packages/core
 
+      - name: Lint domains (cross-file invariants)
+        run: npm run lint:domains
+
   # ============================================
   # Job 4: Unit Tests
   # ============================================
