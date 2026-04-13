@@ -53,6 +53,16 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     tr: 'sil',
     fr: 'supprimer',
   },
+  get: {
+    en: 'get',
+    es: 'obtener',
+    ja: '取得',
+    ar: 'اجلب',
+    ko: '가져오기',
+    zh: '获取',
+    tr: 'al',
+    fr: 'obtenir',
+  },
 };
 
 const MARKERS: Record<string, Record<string, string>> = {
@@ -77,6 +87,16 @@ const MARKERS: Record<string, Record<string, string>> = {
     zh: '设置',
     tr: 'ayarla',
     fr: 'définir',
+  },
+  limit: {
+    en: 'limit',
+    es: 'límite',
+    ja: '件数',
+    ar: 'حد',
+    ko: '제한',
+    zh: '限制',
+    tr: 'limit',
+    fr: 'limite',
   },
 };
 
@@ -173,6 +193,31 @@ function renderUpdate(node: SemanticNode, lang: string): string {
   return parts.join(' ');
 }
 
+function renderGet(node: SemanticNode, lang: string): string {
+  const source = extractRoleValue(node, 'source') || 'table';
+  const condition = extractRoleValue(node, 'condition');
+  const limit = extractRoleValue(node, 'limit');
+  const keyword = kw('get', lang);
+
+  const parts: string[] = [];
+
+  if (isSOV(lang)) {
+    // SOV: source from-marker [where-marker condition] [limit-marker N] verb
+    // Only SOV languages get a source marker in the `get` schema.
+    parts.push(source, mk('from', lang));
+    if (condition) parts.push(mk('where', lang), condition);
+    if (limit) parts.push(mk('limit', lang), limit);
+    parts.push(keyword);
+  } else {
+    // SVO / VSO: keyword source [where-marker condition] [limit-marker N]
+    parts.push(keyword, source);
+    if (condition) parts.push(mk('where', lang), condition);
+    if (limit) parts.push(mk('limit', lang), limit);
+  }
+
+  return parts.join(' ');
+}
+
 function renderDelete(node: SemanticNode, lang: string): string {
   const source = extractRoleValue(node, 'source') || 'table';
   const condition = extractRoleValue(node, 'condition');
@@ -215,6 +260,8 @@ export function renderSQL(node: SemanticNode, language: string): string {
       return renderUpdate(node, language);
     case 'delete':
       return renderDelete(node, language);
+    case 'get':
+      return renderGet(node, language);
     default:
       return `-- Unknown: ${node.action}`;
   }

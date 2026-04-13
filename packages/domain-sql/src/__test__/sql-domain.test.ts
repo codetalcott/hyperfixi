@@ -695,10 +695,12 @@ describe('SQL Domain', () => {
       ['ko', 'users 에서 조건 age > 18 가져오기', 'SELECT * FROM users WHERE age > 18'],
       ['ko', 'users 에서 제한 10 가져오기', 'SELECT * FROM users LIMIT 10'],
 
-      // Turkish (SOV) — verb last; `dan` marks the source (ablative suffix)
-      ['tr', 'users dan al', 'SELECT * FROM users'],
-      ['tr', 'users dan koşul age > 18 al', 'SELECT * FROM users WHERE age > 18'],
-      ['tr', 'users dan limit 10 al', 'SELECT * FROM users LIMIT 10'],
+      // Turkish (SOV) — verb last; `den` marks the source (ablative suffix,
+      // same as `select` schema — vowel harmony makes `dan`/`den` interchangeable
+      // for English identifiers, but we stay consistent across SQL commands)
+      ['tr', 'users den al', 'SELECT * FROM users'],
+      ['tr', 'users den koşul age > 18 al', 'SELECT * FROM users WHERE age > 18'],
+      ['tr', 'users den limit 10 al', 'SELECT * FROM users LIMIT 10'],
     ];
 
     it.each(cases)('[%s] "%s" compiles to %s', (lang, natural, expectedSQL) => {
@@ -1161,5 +1163,66 @@ describe('Render → Recompile Round-Trip', () => {
 
   it('should round-trip DELETE with compound WHERE across all 8 languages', () => {
     assertRoundTrip('delete from users where id = 1 and active = false');
+  });
+});
+
+// =============================================================================
+// Renderer: natural `get` command
+// =============================================================================
+//
+// `get` is Shape-B (intent-shaped, not SQL-shaped). Lowering to `select`
+// happens in the code generator, so the renderer sees a node with
+// action='get'. These tests pin that `renderGet` produces valid natural
+// phrasing that re-parses to the same compiled SQL (parse → render → parse
+// → compile round-trip).
+
+describe('SQL Renderer: natural `get`', () => {
+  let sql: MultilingualDSL;
+
+  beforeAll(() => {
+    sql = createSQLDSL();
+  });
+
+  // [lang, naturalInput] — parse, render back in same language, re-parse,
+  // compile; both compiled outputs must match.
+  const cases: Array<[string, string]> = [
+    ['en', 'get users'],
+    ['en', 'get users where age > 18'],
+    ['en', 'get users limit 10'],
+    ['en', 'get users where active = 1 limit 5'],
+    ['es', 'obtener usuarios'],
+    ['es', 'obtener usuarios donde age > 18'],
+    ['es', 'obtener usuarios límite 10'],
+    ['fr', 'obtenir users'],
+    ['fr', 'obtenir users où age > 18'],
+    ['zh', '获取 users'],
+    ['zh', '获取 users 条件 age > 18'],
+    ['ar', 'اجلب users'],
+    ['ar', 'اجلب users حيث age > 18'],
+    ['ja', 'users から 取得'],
+    ['ja', 'users から 条件 age > 18 取得'],
+    ['ja', 'users から 件数 10 取得'],
+    ['ko', 'users 에서 가져오기'],
+    ['ko', 'users 에서 조건 age > 18 가져오기'],
+    ['tr', 'users den al'],
+    ['tr', 'users den koşul age > 18 al'],
+  ];
+
+  it.each(cases)('[%s] round-trips: "%s"', (lang, natural) => {
+    const node1 = sql.parse(natural, lang);
+    expect(node1.action).toBe('get');
+
+    const rendered = renderSQL(node1, lang);
+    // Rendered text must be non-empty and preserve the get keyword for that lang
+    expect(rendered.length).toBeGreaterThan(0);
+
+    // Re-parse the rendered form; must still produce action='get'
+    const node2 = sql.parse(rendered, lang);
+    expect(node2.action).toBe('get');
+
+    // Both compile to byte-identical SQL
+    const sql1 = sqlCodeGenerator.generate(node1);
+    const sql2 = sqlCodeGenerator.generate(node2);
+    expect(sql2).toBe(sql1);
   });
 });
