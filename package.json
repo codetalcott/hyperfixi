@@ -25,6 +25,7 @@
     "test:coverage": "npm run test:coverage --workspaces",
     "lint": "npm run lint --workspaces",
     "lint:fix": "npm run lint:fix --workspaces",
+    "lint:domains": "for pkg in sql bdd behaviorspec flow jsx llm todo voice; do npm test --prefix packages/domain-$pkg -- --run lint || exit 1; done",
     "typecheck": "npm run typecheck --workspaces",
     "generate:language-assets": "npm run generate:language-assets --prefix packages/semantic",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
