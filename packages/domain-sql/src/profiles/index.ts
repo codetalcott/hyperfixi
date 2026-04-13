@@ -23,6 +23,7 @@ export const englishProfile: PatternGenLanguageProfile = {
     insert: { primary: 'insert' },
     update: { primary: 'update' },
     delete: { primary: 'delete' },
+    get: { primary: 'get' },
   },
   // No roleMarkers needed — all markers come from schema markerOverride,
   // and default position 'before' is correct for SVO English.
@@ -40,6 +41,7 @@ export const spanishProfile: PatternGenLanguageProfile = {
     insert: { primary: 'insertar' },
     update: { primary: 'actualizar' },
     delete: { primary: 'eliminar' },
+    get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };
 
@@ -55,6 +57,7 @@ export const japaneseProfile: PatternGenLanguageProfile = {
     insert: { primary: '挿入' },
     update: { primary: '更新' },
     delete: { primary: '削除' },
+    get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
   roleMarkers: {
     // '条件' (WHERE) acts as a prefix, not a postposition.
@@ -77,6 +80,7 @@ export const arabicProfile: PatternGenLanguageProfile = {
     insert: { primary: 'أدخل' },
     update: { primary: 'حدّث' },
     delete: { primary: 'احذف' },
+    get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };
 
@@ -92,6 +96,7 @@ export const koreanProfile: PatternGenLanguageProfile = {
     insert: { primary: '삽입' },
     update: { primary: '갱신' },
     delete: { primary: '삭제' },
+    get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
   roleMarkers: {
     condition: { primary: '조건', position: 'before' },
@@ -110,6 +115,7 @@ export const chineseProfile: PatternGenLanguageProfile = {
     insert: { primary: '插入' },
     update: { primary: '更新' },
     delete: { primary: '删除' },
+    get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };
 
@@ -125,6 +131,7 @@ export const turkishProfile: PatternGenLanguageProfile = {
     insert: { primary: 'ekle' },
     update: { primary: 'güncelle' },
     delete: { primary: 'sil' },
+    get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
   roleMarkers: {
     condition: { primary: 'koşul', position: 'before' },
@@ -143,6 +150,7 @@ export const frenchProfile: PatternGenLanguageProfile = {
     insert: { primary: 'insérer' },
     update: { primary: 'mettre-à-jour' },
     delete: { primary: 'supprimer' },
+    get: { primary: 'get' }, // English placeholder — spike is EN-only
   },
 };
 

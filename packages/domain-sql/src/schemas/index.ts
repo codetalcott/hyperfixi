@@ -216,7 +216,75 @@ export const deleteSchema = defineCommand({
 });
 
 // =============================================================================
+// GET (natural-language alias for SELECT — English-only spike)
+// =============================================================================
+//
+// Reads like intent ("get users where age > 18") rather than SQL literal.
+// Lowered to a `select` SemanticNode before codegen — see generators/natural-lowering.ts.
+// Roles reuse the `select` names (source, condition) so lowering only swaps `action`;
+// `limit` is additive and handled by an extended generateSelect().
+
+export const getSchema = defineCommand({
+  action: 'get',
+  description: 'Retrieve records (natural-language SELECT)',
+  category: 'query',
+  primaryRole: 'source',
+  roles: [
+    // Position ordering is descending: higher svoPosition = earlier in the
+    // surface form. For `get users where <cond> limit <N>`:
+    //   source (3) → condition (2) → limit (1)
+    defineRole({
+      role: 'source',
+      description: 'Collection to read from',
+      required: true,
+      expectedTypes: ['expression'],
+      svoPosition: 3,
+      sovPosition: 2,
+    }),
+    defineRole({
+      role: 'condition',
+      description: 'Filter predicate (WHERE clause)',
+      required: false,
+      expectedTypes: ['expression'],
+      greedy: true,
+      svoPosition: 2,
+      sovPosition: 0,
+      markerOverride: {
+        en: 'where',
+        // Non-English markers omitted for spike; profiles still need a keyword
+        // entry for `get` so pattern generation doesn't throw.
+        es: 'where',
+        ja: 'where',
+        ar: 'where',
+        ko: 'where',
+        zh: 'where',
+        tr: 'where',
+        fr: 'where',
+      },
+    }),
+    defineRole({
+      role: 'limit',
+      description: 'Maximum rows to return',
+      required: false,
+      expectedTypes: ['expression'],
+      svoPosition: 1,
+      sovPosition: 0,
+      markerOverride: {
+        en: 'limit',
+        es: 'limit',
+        ja: 'limit',
+        ar: 'limit',
+        ko: 'limit',
+        zh: 'limit',
+        tr: 'limit',
+        fr: 'limit',
+      },
+    }),
+  ],
+});
+
+// =============================================================================
 // All Schemas
 // =============================================================================
 
-export const allSchemas = [selectSchema, insertSchema, updateSchema, deleteSchema];
+export const allSchemas = [selectSchema, insertSchema, updateSchema, deleteSchema, getSchema];
