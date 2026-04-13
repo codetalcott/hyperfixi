@@ -4,12 +4,20 @@
 
 import type { DomainLintInput, LintFinding, LintRule } from '../types';
 import { schemaStructureRule } from './schema-rules';
+import { keywordCoverageRule } from './keyword-coverage';
+import { markerTokenizationRule } from './marker-tokenization';
 
 /**
- * All rules in execution order. Phase 1: R1+R2 only (schema structure).
- * Phase 2 adds R5-R7; phase 3 adds R8-R10.
+ * All rules in execution order.
+ *   Phase 1: schema structure (delegates to @lokascript/semantic)
+ *   Phase 2: keyword coverage + marker tokenization
+ *   Phase 3: extractor coverage, position ordering, renderer coherence (warnings)
  */
-export const ALL_RULES: readonly LintRule[] = [schemaStructureRule];
+export const ALL_RULES: readonly LintRule[] = [
+  schemaStructureRule,
+  keywordCoverageRule,
+  markerTokenizationRule,
+];
 
 export function runRules(input: DomainLintInput): LintFinding[] {
   const findings: LintFinding[] = [];
