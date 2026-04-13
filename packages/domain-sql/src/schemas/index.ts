@@ -247,7 +247,7 @@ export const getSchema = defineCommand({
       markerOverride: {
         ja: 'から',
         ko: '에서',
-        tr: 'dan',
+        tr: 'den',
       },
     }),
     defineRole({
