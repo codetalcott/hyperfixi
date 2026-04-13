@@ -240,6 +240,15 @@ export const getSchema = defineCommand({
       expectedTypes: ['expression'],
       svoPosition: 3,
       sovPosition: 2,
+      // SOV-only source particles. SVO/VSO languages say bare "get users"
+      // (natural English/Spanish/French/Arabic/Chinese); SOV languages need
+      // a grammatical link between the noun and the verb — `users から 取得`
+      // not `users 取得`. Matches `select`'s source markers for ja/ko/tr.
+      markerOverride: {
+        ja: 'から',
+        ko: '에서',
+        tr: 'dan',
+      },
     }),
     defineRole({
       role: 'condition',
