@@ -45,7 +45,7 @@ export const spanishProfile: PatternGenLanguageProfile = {
     insert: { primary: 'insertar', alternatives: ['agregar', 'añadir'] },
     update: { primary: 'actualizar', alternatives: ['cambiar', 'modificar'] },
     delete: { primary: 'eliminar', alternatives: ['quitar', 'borrar'] },
-    get: { primary: 'get' }, // English placeholder — spike is EN-only
+    get: { primary: 'obtener' },
   },
 };
 
@@ -61,7 +61,7 @@ export const japaneseProfile: PatternGenLanguageProfile = {
     insert: { primary: '挿入', alternatives: ['追加'] },
     update: { primary: '更新', alternatives: ['変更'] },
     delete: { primary: '削除', alternatives: ['消去'] },
-    get: { primary: 'get' }, // English placeholder — spike is EN-only
+    get: { primary: '取得' },
   },
   roleMarkers: {
     // '条件' (WHERE) acts as a prefix, not a postposition.
@@ -69,6 +69,8 @@ export const japaneseProfile: PatternGenLanguageProfile = {
     // Note: SET (設定) position is controlled via markerPosition on the schema
     // to avoid colliding with the INSERT schema's 'values' role.
     condition: { primary: '条件', position: 'before' },
+    // LIMIT: '件数' precedes its value the same way '条件' precedes its expression.
+    limit: { primary: '件数', position: 'before' },
   },
 };
 
@@ -84,7 +86,7 @@ export const arabicProfile: PatternGenLanguageProfile = {
     insert: { primary: 'أدخل', alternatives: ['أضف'] },
     update: { primary: 'حدّث', alternatives: ['غيّر'] },
     delete: { primary: 'احذف', alternatives: ['أزل'] },
-    get: { primary: 'get' }, // English placeholder — spike is EN-only
+    get: { primary: 'اجلب' },
   },
 };
 
@@ -100,10 +102,11 @@ export const koreanProfile: PatternGenLanguageProfile = {
     insert: { primary: '삽입', alternatives: ['추가'] },
     update: { primary: '갱신', alternatives: ['변경'] },
     delete: { primary: '삭제', alternatives: ['제거'] },
-    get: { primary: 'get' }, // English placeholder — spike is EN-only
+    get: { primary: '가져오기' },
   },
   roleMarkers: {
     condition: { primary: '조건', position: 'before' },
+    limit: { primary: '제한', position: 'before' },
   },
 };
 
@@ -119,7 +122,7 @@ export const chineseProfile: PatternGenLanguageProfile = {
     insert: { primary: '插入', alternatives: ['添加'] },
     update: { primary: '更新', alternatives: ['修改'] },
     delete: { primary: '删除', alternatives: ['移除'] },
-    get: { primary: 'get' }, // English placeholder — spike is EN-only
+    get: { primary: '获取' },
   },
 };
 
@@ -136,10 +139,11 @@ export const turkishProfile: PatternGenLanguageProfile = {
     insert: { primary: 'ekle' },
     update: { primary: 'güncelle', alternatives: ['değiştir'] },
     delete: { primary: 'sil', alternatives: ['kaldır'] },
-    get: { primary: 'get' }, // English placeholder — spike is EN-only
+    get: { primary: 'al' },
   },
   roleMarkers: {
     condition: { primary: 'koşul', position: 'before' },
+    limit: { primary: 'limit', position: 'before' },
   },
 };
 
@@ -155,7 +159,7 @@ export const frenchProfile: PatternGenLanguageProfile = {
     insert: { primary: 'insérer', alternatives: ['ajouter'] },
     update: { primary: 'mettre-à-jour', alternatives: ['modifier'] },
     delete: { primary: 'supprimer', alternatives: ['enlever'] },
-    get: { primary: 'get' }, // English placeholder — spike is EN-only
+    get: { primary: 'obtenir' },
   },
 };
 
