@@ -651,6 +651,64 @@ describe('SQL Domain', () => {
   });
 
   // ===========================================================================
+  // Natural: get (multilingual, Shape B — new schema + lowering)
+  // ===========================================================================
+
+  describe('Natural: get (multilingual)', () => {
+    // [lang, naturalSource, expectedSQL][]
+    // Note: Japanese, Korean, Turkish are SOV — verb comes last, markers are
+    // postpositions. Phrasings below are grammatically awkward SOV approximations;
+    // native-speaker refinement is a follow-up (see MEMORY: svoPosition gotcha).
+    const cases: Array<[string, string, string]> = [
+      // Spanish (SVO)
+      ['es', 'obtener usuarios', 'SELECT * FROM usuarios'],
+      ['es', 'obtener usuarios donde age > 18', 'SELECT * FROM usuarios WHERE age > 18'],
+      ['es', 'obtener usuarios límite 10', 'SELECT * FROM usuarios LIMIT 10'],
+      [
+        'es',
+        'obtener usuarios donde active = 1 límite 5',
+        'SELECT * FROM usuarios WHERE active = 1 LIMIT 5',
+      ],
+
+      // Chinese (SVO)
+      ['zh', '获取 users', 'SELECT * FROM users'],
+      ['zh', '获取 users 条件 age > 18', 'SELECT * FROM users WHERE age > 18'],
+      ['zh', '获取 users 限制 10', 'SELECT * FROM users LIMIT 10'],
+
+      // French (SVO)
+      ['fr', 'obtenir users', 'SELECT * FROM users'],
+      ['fr', 'obtenir users où age > 18', 'SELECT * FROM users WHERE age > 18'],
+      ['fr', 'obtenir users limite 10', 'SELECT * FROM users LIMIT 10'],
+
+      // Arabic (VSO) — verb first, same word order as SVO for our generator
+      ['ar', 'اجلب users', 'SELECT * FROM users'],
+      ['ar', 'اجلب users حيث age > 18', 'SELECT * FROM users WHERE age > 18'],
+      ['ar', 'اجلب users حد 10', 'SELECT * FROM users LIMIT 10'],
+
+      // Japanese (SOV) — verb last
+      ['ja', 'users 取得', 'SELECT * FROM users'],
+      ['ja', 'users 条件 age > 18 取得', 'SELECT * FROM users WHERE age > 18'],
+      ['ja', 'users 件数 10 取得', 'SELECT * FROM users LIMIT 10'],
+
+      // Korean (SOV) — verb last
+      ['ko', 'users 가져오기', 'SELECT * FROM users'],
+      ['ko', 'users 조건 age > 18 가져오기', 'SELECT * FROM users WHERE age > 18'],
+      ['ko', 'users 제한 10 가져오기', 'SELECT * FROM users LIMIT 10'],
+
+      // Turkish (SOV) — verb last
+      ['tr', 'users al', 'SELECT * FROM users'],
+      ['tr', 'users koşul age > 18 al', 'SELECT * FROM users WHERE age > 18'],
+      ['tr', 'users limit 10 al', 'SELECT * FROM users LIMIT 10'],
+    ];
+
+    it.each(cases)('[%s] "%s" compiles to %s', (lang, natural, expectedSQL) => {
+      const result = sql.compile(natural, lang);
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe(expectedSQL);
+    });
+  });
+
+  // ===========================================================================
   // Natural verb aliases — multilingual
   // ===========================================================================
   //
