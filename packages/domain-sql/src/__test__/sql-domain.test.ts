@@ -685,20 +685,20 @@ describe('SQL Domain', () => {
       ['ar', 'اجلب users حيث age > 18', 'SELECT * FROM users WHERE age > 18'],
       ['ar', 'اجلب users حد 10', 'SELECT * FROM users LIMIT 10'],
 
-      // Japanese (SOV) — verb last
-      ['ja', 'users 取得', 'SELECT * FROM users'],
-      ['ja', 'users 条件 age > 18 取得', 'SELECT * FROM users WHERE age > 18'],
-      ['ja', 'users 件数 10 取得', 'SELECT * FROM users LIMIT 10'],
+      // Japanese (SOV) — verb last; `から` marks the source (ablative particle)
+      ['ja', 'users から 取得', 'SELECT * FROM users'],
+      ['ja', 'users から 条件 age > 18 取得', 'SELECT * FROM users WHERE age > 18'],
+      ['ja', 'users から 件数 10 取得', 'SELECT * FROM users LIMIT 10'],
 
-      // Korean (SOV) — verb last
-      ['ko', 'users 가져오기', 'SELECT * FROM users'],
-      ['ko', 'users 조건 age > 18 가져오기', 'SELECT * FROM users WHERE age > 18'],
-      ['ko', 'users 제한 10 가져오기', 'SELECT * FROM users LIMIT 10'],
+      // Korean (SOV) — verb last; `에서` marks the source
+      ['ko', 'users 에서 가져오기', 'SELECT * FROM users'],
+      ['ko', 'users 에서 조건 age > 18 가져오기', 'SELECT * FROM users WHERE age > 18'],
+      ['ko', 'users 에서 제한 10 가져오기', 'SELECT * FROM users LIMIT 10'],
 
-      // Turkish (SOV) — verb last
-      ['tr', 'users al', 'SELECT * FROM users'],
-      ['tr', 'users koşul age > 18 al', 'SELECT * FROM users WHERE age > 18'],
-      ['tr', 'users limit 10 al', 'SELECT * FROM users LIMIT 10'],
+      // Turkish (SOV) — verb last; `dan` marks the source (ablative suffix)
+      ['tr', 'users dan al', 'SELECT * FROM users'],
+      ['tr', 'users dan koşul age > 18 al', 'SELECT * FROM users WHERE age > 18'],
+      ['tr', 'users dan limit 10 al', 'SELECT * FROM users LIMIT 10'],
     ];
 
     it.each(cases)('[%s] "%s" compiles to %s', (lang, natural, expectedSQL) => {
