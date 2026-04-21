@@ -28,6 +28,18 @@ let compileSyncFn: CompileFunction;
 let compileAsyncFn: CompileAsyncFunction;
 let getRuntimeFn: GetRuntimeFunction;
 
+// Injected ref to the hyperscript `config` object. Read with `logAllEnabled()`
+// at event-fire time so toggling `hyperscript.config.logAll` is immediate.
+let configRef: { logAll?: boolean } | null = null;
+function logAllEnabled(): boolean {
+  return configRef?.logAll === true;
+}
+
+/** Injected by hyperscript-api.ts so dom-processor can observe config.logAll. */
+export function setDOMProcessorConfig(cfg: { logAll?: boolean }): void {
+  configRef = cfg;
+}
+
 /**
  * Initialize the DOM processor with compile functions
  * Called from hyperscript-api.ts to avoid circular dependency
@@ -204,6 +216,12 @@ export function setupEventHandler(element: Element, ast: ASTNode, context: Execu
 
     // Add event listener
     const eventHandler = async (event: Event) => {
+      // Upstream _hyperscript 0.9.90 `config.logAll`: when true, log every
+      // handler that fires — matches htmx's logAll behavior.
+      if (logAllEnabled()) {
+        // eslint-disable-next-line no-console
+        console.log('[hyperfixi]', eventInfo.eventType, element, event);
+      }
       try {
         // Set event context
         context.locals.set('event', event);
@@ -220,6 +238,15 @@ export function setupEventHandler(element: Element, ast: ASTNode, context: Execu
     };
 
     element.addEventListener(eventInfo.eventType, eventHandler);
+    // Track the listener so `hyperfixi.cleanup(element)` can remove it later —
+    // required for morph/swap compat (upstream _hyperscript 0.9.90).
+    try {
+      const rt = getRuntimeFn?.();
+      rt?.trackListener?.(element, element, eventInfo.eventType, eventHandler);
+    } catch {
+      // Runtime may not be initialized in some test harnesses; listener still
+      // works, it just won't be cleaned up automatically.
+    }
     debug.event('Event handler attached:', eventInfo.eventType);
   } catch (error) {
     console.error('Error setting up event handler:', error);
@@ -335,20 +362,60 @@ function processHyperscriptAttributeSync(element: Element, hyperscriptCode: stri
 }
 
 /**
+ * Dispatch a lifecycle event on an element (upstream _hyperscript 0.9.90).
+ * Cancelable events return false if a handler called preventDefault, letting
+ * callers skip the associated work.
+ */
+function dispatchLifecycle(
+  element: Element,
+  name: string,
+  cancelable: boolean,
+  detail?: Record<string, unknown>
+): boolean {
+  const event = new CustomEvent(name, { bubbles: true, cancelable, detail });
+  const delivered = element.dispatchEvent(event);
+  // dispatchEvent returns false if cancelable and preventDefault() was called.
+  return delivered;
+}
+
+/**
  * Process a single hyperscript attribute on an element
  */
 export function processHyperscriptAttribute(element: Element, hyperscriptCode: string): void {
+  // Upstream _hyperscript 0.9.90 lifecycle: `hyperscript:before:init` is
+  // cancelable — if a listener calls preventDefault() we skip initialization.
+  const allowed = dispatchLifecycle(element, 'hyperscript:before:init', true, {
+    code: hyperscriptCode,
+  });
+  if (!allowed) return;
+
   // Detect language from element
   const lang = detectLanguage(element);
 
   // For non-English, use async multilingual path
   if (lang !== DEFAULT_LANGUAGE) {
-    void processHyperscriptAttributeAsync(element, hyperscriptCode, lang);
+    void processHyperscriptAttributeAsync(element, hyperscriptCode, lang).then(() => {
+      markPowered(element);
+      dispatchLifecycle(element, 'hyperscript:after:init', false, { code: hyperscriptCode });
+    });
     return;
   }
 
   // For English, use synchronous path
   processHyperscriptAttributeSync(element, hyperscriptCode);
+  markPowered(element);
+  dispatchLifecycle(element, 'hyperscript:after:init', false, { code: hyperscriptCode });
+}
+
+/**
+ * Mark an element as hyperscript-powered (upstream _hyperscript 0.9.90).
+ * Used by morph engines (idiomorph, htmx 4) to identify elements that need
+ * re-processing after a swap, and to avoid double-initialization.
+ */
+function markPowered(element: Element): void {
+  if (!element.hasAttribute('data-hyperscript-powered')) {
+    element.setAttribute('data-hyperscript-powered', '');
+  }
 }
 
 /**

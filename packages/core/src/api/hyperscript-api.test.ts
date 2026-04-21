@@ -3,7 +3,7 @@
  * Validates the public interface for compilation, execution, and utilities
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { hyperscript } from './hyperscript-api';
 
 describe('Hyperscript Public API', () => {
@@ -25,6 +25,7 @@ describe('Hyperscript Public API', () => {
       expect(typeof hyperscript.eval).toBe('function');
       expect(typeof hyperscript.validate).toBe('function');
       expect(typeof hyperscript.process).toBe('function');
+      expect(typeof hyperscript.cleanup).toBe('function');
       expect(typeof hyperscript.createContext).toBe('function');
       expect(typeof hyperscript.version).toBe('string');
       expect(typeof hyperscript.createRuntime).toBe('function');
@@ -343,6 +344,178 @@ describe('Hyperscript Public API', () => {
         // Processing detached element should not throw
         expect(() => hyperscript.process(detached)).not.toThrow();
       });
+    });
+  });
+
+  // ==========================================================================
+  // NEW: cleanup() method (upstream _hyperscript 0.9.90)
+  // ==========================================================================
+
+  describe('cleanup() method', () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('should return a number (count of cleanups performed)', () => {
+      const result = hyperscript.cleanup(container);
+      expect(typeof result).toBe('number');
+      expect(result).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should return 0 for an element with no registered cleanups', () => {
+      const pristine = document.createElement('div');
+      document.body.appendChild(pristine);
+      expect(hyperscript.cleanup(pristine)).toBe(0);
+    });
+
+    it('should clean up listeners registered via process()', () => {
+      container.innerHTML = `<button id="target" _="on click add .clicked to me">Click</button>`;
+      hyperscript.process(container);
+      const button = container.querySelector('#target') as HTMLElement;
+
+      const count = hyperscript.cleanup(button);
+      // At minimum, a click listener should be registered and cleaned up.
+      expect(count).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should recursively clean up descendants', () => {
+      container.innerHTML = `
+        <section>
+          <button id="a" _="on click add .a to me">A</button>
+          <button id="b" _="on mouseenter add .b to me">B</button>
+        </section>
+      `;
+      hyperscript.process(container);
+
+      const count = hyperscript.cleanup(container);
+      // Both buttons registered listeners; cleanup should cover both.
+      expect(count).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should dispatch `hyperscript:before:cleanup` and `hyperscript:after:cleanup`', () => {
+      container.innerHTML = `<button _="on click add .c to me">C</button>`;
+      hyperscript.process(container);
+
+      const before = vi.fn();
+      const after = vi.fn();
+      container.addEventListener('hyperscript:before:cleanup', before);
+      container.addEventListener('hyperscript:after:cleanup', after);
+
+      const count = hyperscript.cleanup(container);
+
+      expect(before).toHaveBeenCalledOnce();
+      expect(after).toHaveBeenCalledOnce();
+      const afterEvent = after.mock.calls[0][0] as CustomEvent<{ count: number }>;
+      expect(afterEvent.detail.count).toBe(count);
+    });
+
+    it('should remove the `data-hyperscript-powered` attribute after cleanup', () => {
+      const button = document.createElement('button');
+      button.setAttribute('_', 'on click add .x to me');
+      container.appendChild(button);
+      hyperscript.process(container);
+
+      expect(button.hasAttribute('data-hyperscript-powered')).toBe(true);
+      hyperscript.cleanup(button);
+      expect(button.hasAttribute('data-hyperscript-powered')).toBe(false);
+    });
+  });
+
+  // ==========================================================================
+  // NEW: lifecycle events on process() (upstream _hyperscript 0.9.90)
+  // ==========================================================================
+
+  describe('process() lifecycle events', () => {
+    let container: HTMLElement;
+
+    beforeEach(() => {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('should dispatch `hyperscript:before:init` and `hyperscript:after:init`', () => {
+      const button = document.createElement('button');
+      button.setAttribute('_', 'on click add .c to me');
+      container.appendChild(button);
+
+      const before = vi.fn();
+      const after = vi.fn();
+      button.addEventListener('hyperscript:before:init', before);
+      button.addEventListener('hyperscript:after:init', after);
+
+      hyperscript.process(container);
+
+      expect(before).toHaveBeenCalledOnce();
+      expect(after).toHaveBeenCalledOnce();
+    });
+
+    it('should skip initialization when `hyperscript:before:init` is canceled', () => {
+      const button = document.createElement('button');
+      button.setAttribute('_', 'on click add .c to me');
+      container.appendChild(button);
+
+      button.addEventListener('hyperscript:before:init', e => e.preventDefault());
+
+      hyperscript.process(container);
+
+      // Canceled init — the powered marker should NOT be set.
+      expect(button.hasAttribute('data-hyperscript-powered')).toBe(false);
+    });
+
+    it('should set `data-hyperscript-powered` on processed elements', () => {
+      const button = document.createElement('button');
+      button.setAttribute('_', 'on click add .c to me');
+      container.appendChild(button);
+
+      hyperscript.process(container);
+
+      expect(button.hasAttribute('data-hyperscript-powered')).toBe(true);
+    });
+  });
+
+  // ==========================================================================
+  // NEW: config.logAll (upstream _hyperscript 0.9.90)
+  // ==========================================================================
+
+  describe('config.logAll', () => {
+    it('should be defined and default to false', () => {
+      expect(hyperscript.config.logAll).toBe(false);
+    });
+
+    it('should log a line per event handler fired when true', () => {
+      const container = document.createElement('div');
+      const button = document.createElement('button');
+      button.setAttribute('_', 'on click add .c to me');
+      container.appendChild(button);
+      document.body.appendChild(container);
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      try {
+        hyperscript.process(container);
+        hyperscript.config.logAll = true;
+        button.dispatchEvent(new Event('click'));
+        expect(logSpy).toHaveBeenCalledWith(
+          '[hyperfixi]',
+          'click',
+          expect.anything(),
+          expect.anything()
+        );
+      } finally {
+        hyperscript.config.logAll = false;
+        logSpy.mockRestore();
+        document.body.removeChild(container);
+      }
     });
   });
 

@@ -336,6 +336,26 @@ export class RuntimeBase {
   }
 
   /**
+   * Track an event listener so it gets removed when the element is cleaned
+   * up (via `cleanup()` / `cleanupTree()` / DOM removal). Used by the DOM
+   * processor so that `hyperfixi.cleanup(elt)` can actually remove listeners
+   * attached to an element's `_=` handler — critical for morph/swap
+   * compatibility (upstream _hyperscript 0.9.90 style).
+   *
+   * The caller still calls `addEventListener` themselves — this just
+   * registers the removal callback.
+   */
+  trackListener(
+    element: Element,
+    target: EventTarget,
+    eventName: string,
+    handler: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void {
+    this.cleanupRegistry.registerListener(element, target, eventName, handler, options);
+  }
+
+  /**
    * Clean up resources for an element and all its descendants
    * @param element The root element
    * @returns Total number of cleanups performed

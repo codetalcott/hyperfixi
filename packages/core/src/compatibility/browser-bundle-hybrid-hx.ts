@@ -93,9 +93,40 @@ function enableHtmxCompatibility(options: HtmxCompatOptions = {}): void {
   // auto-initializes on DOMContentLoaded, so calling process() again
   // would double-process elements and break event handlers
 
+  // Upstream _hyperscript 0.9.90: listen for htmx 4's `htmx:after:process`
+  // event in addition to htmx 3's `htmx:load`. Both fire when htmx has
+  // finished inserting new content, so we re-process the target subtree
+  // to pick up any `_=` attributes on the morphed/swapped elements.
+  installHtmxLifecycleListeners();
+
   if (options.debug) {
     console.log('[hyperfixi-hx] htmx/fixi compatibility enabled');
   }
+}
+
+let htmxLifecycleHandler: ((e: Event) => void) | null = null;
+function installHtmxLifecycleListeners(): void {
+  if (htmxLifecycleHandler || typeof document === 'undefined') return;
+
+  htmxLifecycleHandler = (e: Event): void => {
+    // htmx 3 (`htmx:load`) and htmx 4 (`htmx:after:process`) both expose the
+    // settled element as either `event.target` or `event.detail.elt`.
+    const detail = (e as CustomEvent).detail as { elt?: Element } | undefined;
+    const target = detail?.elt ?? (e.target as Element | null);
+    if (target && typeof (target as Element).querySelector === 'function') {
+      hybridComplete.process(target);
+    }
+  };
+
+  document.addEventListener('htmx:load', htmxLifecycleHandler);
+  document.addEventListener('htmx:after:process', htmxLifecycleHandler);
+}
+
+function uninstallHtmxLifecycleListeners(): void {
+  if (!htmxLifecycleHandler || typeof document === 'undefined') return;
+  document.removeEventListener('htmx:load', htmxLifecycleHandler);
+  document.removeEventListener('htmx:after:process', htmxLifecycleHandler);
+  htmxLifecycleHandler = null;
 }
 
 /**
@@ -106,6 +137,7 @@ function disableHtmxCompatibility(): void {
     htmxProcessor.destroy();
     htmxProcessor = null;
   }
+  uninstallHtmxLifecycleListeners();
 }
 
 /**
