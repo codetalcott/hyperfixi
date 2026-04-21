@@ -294,6 +294,15 @@ export const commands: Record<string, CommandRef> = {
     availability: 'hybrid',
     examples: ['replace url /new-path'],
   },
+  scroll: {
+    name: 'scroll',
+    description:
+      'Scroll an element into view (upstream _hyperscript 0.9.90 replacement for `go to top of`)',
+    syntax: 'scroll to [top|bottom|middle|center|nearest] [of] target [smoothly|instantly]',
+    category: 'navigation',
+    availability: 'full',
+    examples: ['scroll to #top', 'scroll to bottom of #chat', 'scroll to me smoothly'],
+  },
 
   // Control Flow Commands
   if: {

@@ -125,8 +125,10 @@ describe('loadBehaviors', () => {
 
     expect(patterns.length).toBe(4);
     for (const pattern of patterns) {
-      // Every behavior source should start with "behavior" keyword
-      expect(pattern.rawCode).toMatch(/^behavior\s+\w+\(/);
+      // Every behavior source should start with "behavior" keyword.
+      // The name may be followed by `(params)` or whitespace — parameterless
+      // behaviors like `Resizable` are written `behavior Resizable\n`.
+      expect(pattern.rawCode).toMatch(/^behavior\s+\w+[\s(]/);
       // And end with "end"
       expect(pattern.rawCode.trimEnd()).toMatch(/\bend$/);
       // Feature should be 'behavior'
