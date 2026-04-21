@@ -182,6 +182,42 @@ describe('DefaultCommand (Standalone V2)', () => {
 
       expect(context.it).toBe('set-value');
     });
+
+    // Nullish-check semantics — matches upstream _hyperscript 0.9.90+
+    // Falsy-but-defined values (0, false, '') are preserved; only null/undefined trigger set.
+    describe('nullish-check semantics (upstream 0.9.90)', () => {
+      it('should NOT overwrite a variable set to 0', async () => {
+        context.locals.set('count', 0);
+        const result = await command.execute({ target: 'count', value: 42 }, context);
+        expect(result.wasSet).toBe(false);
+        expect(result.existingValue).toBe(0);
+      });
+
+      it('should NOT overwrite a variable set to false', async () => {
+        context.locals.set('flag', false);
+        const result = await command.execute({ target: 'flag', value: true }, context);
+        expect(result.wasSet).toBe(false);
+        expect(result.existingValue).toBe(false);
+      });
+
+      it('should NOT overwrite a variable set to an empty string', async () => {
+        context.locals.set('label', '');
+        const result = await command.execute({ target: 'label', value: 'fallback' }, context);
+        expect(result.wasSet).toBe(false);
+        expect(result.existingValue).toBe('');
+      });
+
+      it('should overwrite a variable set to null', async () => {
+        context.locals.set('maybe', null);
+        const result = await command.execute({ target: 'maybe', value: 'value' }, context);
+        expect(result.wasSet).toBe(true);
+      });
+
+      it('should overwrite when variable is undefined', async () => {
+        const result = await command.execute({ target: 'brand-new', value: 'value' }, context);
+        expect(result.wasSet).toBe(true);
+      });
+    });
   });
 
   // ========== execute - Attribute Defaults ==========
