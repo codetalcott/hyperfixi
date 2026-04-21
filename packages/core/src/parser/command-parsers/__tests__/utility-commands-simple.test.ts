@@ -506,6 +506,40 @@ describe('Utility Command Parsers (Non-Dispatch)', () => {
 
       expect(ctx.addError).toHaveBeenCalledWith('fetch requires a URL');
     });
+
+    // Upstream _hyperscript 0.9.90: `do not throw` opts out of throw-on-non-2xx.
+    it('should parse "fetch /url do not throw"', () => {
+      const tokens = createTokenStream(['/api/data', 'do', 'not', 'throw']);
+      const ctx = createFetchCtx(tokens);
+
+      const result = parseFetchCommand(ctx, createToken('fetch'));
+
+      expect(result.modifiers).toBeDefined();
+      expect(result.modifiers!.doNotThrow).toBeDefined();
+      expect((result.modifiers!.doNotThrow as any).value).toBe(true);
+    });
+
+    it('should parse "fetch /url as json do not throw" (after `as`)', () => {
+      const tokens = createTokenStream(['/api/data', 'as', 'json', 'do', 'not', 'throw']);
+      const ctx = createFetchCtx(tokens);
+
+      const result = parseFetchCommand(ctx, createToken('fetch'));
+
+      expect(result.modifiers).toBeDefined();
+      expect((result.modifiers!.as as any).name).toBe('json');
+      expect((result.modifiers!.doNotThrow as any).value).toBe(true);
+    });
+
+    it('should parse "fetch /url do not throw as json" (before `as`)', () => {
+      const tokens = createTokenStream(['/api/data', 'do', 'not', 'throw', 'as', 'json']);
+      const ctx = createFetchCtx(tokens);
+
+      const result = parseFetchCommand(ctx, createToken('fetch'));
+
+      expect(result.modifiers).toBeDefined();
+      expect((result.modifiers!.as as any).name).toBe('json');
+      expect((result.modifiers!.doNotThrow as any).value).toBe(true);
+    });
   });
 
   describe('parseTellCommand', () => {

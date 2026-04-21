@@ -317,8 +317,8 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
     modifiers['with'] = ctx.parsePrimary() as ExpressionNode;
   }
 
-  // Step 3: Parse 'as' and 'with' modifiers in any order
-  for (let i = 0; i < 2 && !ctx.isAtEnd(); i++) {
+  // Step 3: Parse 'as', 'with', and 'do not throw' modifiers in any order.
+  for (let i = 0; i < 3 && !ctx.isAtEnd(); i++) {
     if (ctx.check('as') && !modifiers['as']) {
       ctx.advance(); // consume 'as'
       // Skip optional articles: 'a' or 'an' (e.g., "as a Object", "as an Object")
@@ -337,6 +337,27 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
         modifiers['with'] = ctx.parsePrimary() as ExpressionNode;
       }
       continue;
+    }
+
+    // `do not throw` — suppresses the default throw-on-non-2xx behavior
+    // introduced in upstream _hyperscript 0.9.90.
+    if (ctx.check('do') && !modifiers['doNotThrow']) {
+      const n1 = ctx.peekAt(1);
+      const n2 = ctx.peekAt(2);
+      if (n1?.value === 'not' && n2?.value === 'throw') {
+        const doToken = ctx.advance(); // consume 'do'
+        ctx.advance(); // consume 'not'
+        const throwToken = ctx.advance(); // consume 'throw'
+        modifiers['doNotThrow'] = {
+          type: 'literal',
+          value: true,
+          start: doToken.start,
+          end: throwToken.end,
+          line: doToken.line,
+          column: doToken.column,
+        } as unknown as ExpressionNode;
+        continue;
+      }
     }
 
     break; // Not a fetch modifier — stop
