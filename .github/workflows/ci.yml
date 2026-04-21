@@ -46,18 +46,25 @@ jobs:
         run: npm ci
 
       # Build order based on dependency graph:
-      # 1. framework (no deps — semantic depends on it)
-      # 2. semantic (depends on framework)
-      # 3. core (depends on semantic)
-      # 4. patterns-reference (depends on semantic)
-      # 5. i18n (depends on core, semantic)
-      # 6. ast-toolkit (depends on core, patterns-reference)
-      # 7. aot-compiler (depends on core, semantic)
-      # 8. compilation-service (depends on aot-compiler, semantic)
-      # 9. mcp-server (depends on semantic, patterns-reference, compilation-service, ast-toolkit optional)
-      # 10. developer-tools
-      # 11. vite-plugin (depends on core)
-      # 12. language-server (depends on semantic, core, ast-toolkit - all optional)
+      # 1. intent (no deps — framework re-exports types from it)
+      # 2. framework (depends on intent)
+      # 3. semantic (depends on framework)
+      # 4. core (depends on semantic)
+      # 5. patterns-reference (depends on semantic)
+      # 6. i18n (depends on core, semantic)
+      # 7. ast-toolkit (depends on core, patterns-reference)
+      # 8. aot-compiler (depends on core, semantic)
+      # 9. compilation-service (depends on aot-compiler, semantic)
+      # 10. mcp-server (depends on semantic, patterns-reference, compilation-service, ast-toolkit optional)
+      # 11. developer-tools
+      # 12. vite-plugin (depends on core)
+      # 13. language-server (depends on semantic, core, ast-toolkit - all optional)
+      # NOTE: `intent-element` has no downstream build consumers — skipped
+      # here to keep the CI footprint small. Add it if you want CI to
+      # verify its build.
+      - name: Build intent package
+        run: npm run build --prefix packages/intent
+
       - name: Build framework package
         run: npm run build --prefix packages/framework
 
@@ -153,6 +160,7 @@ jobs:
         with:
           name: build-artifacts
           path: |
+            packages/intent/dist/
             packages/framework/dist/
             packages/domain-bdd/dist/
             packages/domain-sql/dist/
