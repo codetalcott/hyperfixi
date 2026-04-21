@@ -62,9 +62,11 @@ export type SupportedConversionType =
   | 'Date'
   | 'Float'
   | 'Fragment'
+  | 'FormEncoded'
   | 'HTML'
   | 'Int'
   | 'JSON'
+  | 'JSONString'
   | 'Number'
   | 'Object'
   | 'String'
@@ -212,14 +214,32 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  JSON: (value: unknown, _context: TypedExpressionContext): EvaluationResult<string> => {
+  // `as JSON` — parses a JSON string (upstream _hyperscript 0.9.90 semantics).
+  // Non-string inputs are returned unchanged (already structured data).
+  JSON: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown> => {
+    if (!isString(value)) return success(value, 'object');
+    try {
+      return success(JSON.parse(value as string), 'object');
+    } catch (error) {
+      return converterError(
+        'JSON',
+        'JSON_PARSE_FAILED',
+        errorMsg('Failed to parse value as JSON', error),
+        ['Check JSON syntax and escaping', 'Use `as JSONString` to stringify a value instead'],
+        'syntax-error'
+      );
+    }
+  },
+
+  // `as JSONString` — stringifies a value into JSON (old `as JSON` behavior).
+  JSONString: (value: unknown, _context: TypedExpressionContext): EvaluationResult<string> => {
     try {
       return success(JSON.stringify(value), 'string');
     } catch (error) {
       return converterError(
-        'JSON',
+        'JSONString',
         'JSON_STRINGIFY_FAILED',
-        errorMsg('Failed to convert value to JSON', error),
+        errorMsg('Failed to stringify value as JSON', error),
         [
           'Check for circular references',
           'Ensure all properties are serializable',
@@ -295,6 +315,37 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       );
     }
   },
+
+  // `as FormEncoded` — URL-encode key/value pairs (upstream 0.9.90). Migration
+  // path for the removed `as Values:Form`: `form as Values | FormEncoded`.
+  FormEncoded: (value: unknown, context: TypedExpressionContext): EvaluationResult<string> => {
+    try {
+      let values: unknown = value;
+      if (value instanceof HTMLElement) {
+        const extracted = enhancedConverters.Values(value, context);
+        if (!extracted.success) return extracted as EvaluationResult<string>;
+        values = extracted.value;
+      }
+      if (!isObject(values)) return success('', 'string');
+      const params = new URLSearchParams();
+      for (const [k, v] of Object.entries(values as Record<string, unknown>)) {
+        if (v === undefined || v === null) continue;
+        if (Array.isArray(v)) {
+          for (const item of v) params.append(k, String(item));
+        } else {
+          params.append(k, String(v));
+        }
+      }
+      return success(params.toString(), 'string');
+    } catch (error) {
+      return converterError(
+        'FormEncoded',
+        'FORM_ENCODE_FAILED',
+        errorMsg('Failed to URL-encode values', error),
+        ['Ensure input is a form element or plain object of scalar/array values']
+      );
+    }
+  },
 };
 
 // ============================================================================
@@ -346,9 +397,14 @@ export class AsExpression
         expectedOutput: { name: 'John', age: '25' },
       },
       {
-        input: '[1,2,3] as JSON',
-        description: 'Convert array to JSON string',
+        input: '[1,2,3] as JSONString',
+        description: 'Convert array to JSON string (upstream 0.9.90: use JSONString, not JSON)',
         expectedOutput: '[1,2,3]',
+      },
+      {
+        input: '\'{"a":1}\' as JSON',
+        description: 'Parse a JSON string (upstream 0.9.90: as JSON now parses)',
+        expectedOutput: { a: 1 },
       },
       {
         input: '"2023-12-25" as Date',
@@ -416,8 +472,9 @@ export class AsExpression
       },
       {
         title: 'Array to JSON serialization',
-        code: 'put items as JSON into storage',
-        explanation: 'Convert array to JSON string for storage',
+        code: 'put items as JSONString into storage',
+        explanation:
+          'Convert array to JSON string for storage (upstream 0.9.90: use `as JSONString`)',
         output: '"[1,2,3]"',
       },
       {
@@ -500,6 +557,8 @@ export class AsExpression
         obj: 'Object',
         date: 'Date',
         json: 'JSON',
+        jsonstring: 'JSONString',
+        formencoded: 'FormEncoded',
       };
 
       const aliasedType = typeAliases[lowerType];
