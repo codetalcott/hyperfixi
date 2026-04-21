@@ -309,8 +309,8 @@ you's innerHTML                   <span class="comment">-- Target element's cont
 
 &lt;form _="on submit
   set formData to me as Values
-  set jsonData to formData as JSON
-  put jsonData into #jsonOutput"&gt;   <span class="comment">-- Form to JSON conversion</span>
+  set jsonData to formData as JSONString
+  put jsonData into #jsonOutput"&gt;   <span class="comment">-- Form → JSON string (0.9.90: use `as JSONString`)</span>
 
 &lt;div _="on click
   set price to 123.456 as Fixed:2
@@ -323,12 +323,14 @@ you's innerHTML                   <span class="comment">-- Target element's cont
   end"&gt;                            <span class="comment">-- String to boolean conversion</span>
 
 <span class="comment">-- Type conversion patterns:</span>
-"42" as Int          → 42          <span class="comment">-- String to integer</span>
-42 as String         → "42"        <span class="comment">-- Number to string</span>
-obj as JSON          → "{...}"     <span class="comment">-- Object to JSON string</span>
-"true" as Boolean    → true        <span class="comment">-- String to boolean</span>
-form as Values       → {...}       <span class="comment">-- Form to data object</span>
-123.456 as Fixed:2   → "123.46"    <span class="comment">-- Number to fixed precision</span></div>
+"42" as Int             → 42          <span class="comment">-- String to integer</span>
+42 as String            → "42"        <span class="comment">-- Number to string</span>
+'{"a":1}' as JSON       → {a: 1}      <span class="comment">-- JSON string → value (0.9.90)</span>
+obj as JSONString       → "{...}"     <span class="comment">-- Value → JSON string (0.9.90)</span>
+"true" as Boolean       → true        <span class="comment">-- String to boolean</span>
+form as Values          → {...}       <span class="comment">-- Form to data object</span>
+form as Values | FormEncoded → "a=1"  <span class="comment">-- Form → url-encoded (0.9.90)</span>
+123.456 as Fixed:2      → "123.46"    <span class="comment">-- Number to fixed precision</span></div>
             <div class="output-block">
                 <h4>Interactive Test:</h4>
                 <input type="text" id="as-input" placeholder="Enter value" style="width: 70%; padding: 8px; margin-bottom: 10px;">

@@ -210,14 +210,18 @@ test.describe('HyperScript Compatibility Tests', () => {
       }
     });
 
-    test('JSON conversion', async () => {
+    // Upstream _hyperscript 0.9.90 flipped `as JSON` — it now parses instead
+    // of stringifies. `as JSONString` is the new stringify form. Comparing
+    // stringify output with `===` stays sound (both sides produce the same
+    // string); parse output would produce non-equal object references.
+    test('JSON conversion (stringify via as JSONString)', async () => {
       const testCases = [
         {
-          expr: 'obj as JSON',
+          expr: 'obj as JSONString',
           context: { locals: { obj: { foo: 'bar', num: 42 } } },
         },
         {
-          expr: 'arr as JSON',
+          expr: 'arr as JSONString',
           context: { locals: { arr: [1, 2, 3] } },
         },
       ];
