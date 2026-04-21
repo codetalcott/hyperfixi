@@ -82,19 +82,73 @@ export class GoCommand implements DecoratedCommand {
       return { result: 'back', type: 'back' };
     }
 
-    // Handle URL navigation
+    // Handle legacy `go to url <url>` syntax
     if (this.isUrlNavigation(args)) {
       const url = await this.navigateToUrl(args, context);
       return { result: url, type: 'url' };
     }
 
-    // Handle element scrolling
+    // Upstream _hyperscript 0.9.90: `go to <bare-url>` without the `url`
+    // keyword. Accepts paths starting with `/` or values with a URL scheme
+    // (http://, https://, mailto:, tel:, etc.). Leaves CSS selectors
+    // (`#id`, `.class`, bare identifiers) to the scroll branch below.
+    const bareUrl = this.findBareUrl(args);
+    if (bareUrl !== null) {
+      const url = await this.navigateToBareUrl(bareUrl, args);
+      return { result: url, type: 'url' };
+    }
+
+    // Handle element scrolling (also the deprecated `go to top of X` form —
+    // upstream prefers `scroll to top of X` as of 0.9.90, but both work).
     const element = await this.scrollToElement(args, context);
     return { result: element, type: 'scroll' };
   }
 
   private isUrlNavigation(args: unknown[]): boolean {
     return args.findIndex(arg => arg === 'url') !== -1;
+  }
+
+  /**
+   * Bare URL detection for `go to <url>` without the legacy `url` keyword.
+   * Matches absolute paths (`/foo`, `/`) and values with a URL scheme
+   * (`https://`, `mailto:`, `tel:`, `ftp:`, etc.). Does NOT match CSS
+   * selectors (`#id`, `.class`) — those remain scroll targets.
+   */
+  private isBareUrl(s: string): boolean {
+    if (s.startsWith('/')) return true;
+    return /^[a-z][a-z0-9+.-]*:/i.test(s);
+  }
+
+  /**
+   * Scan args for a bare URL, skipping the common `to` / `the` prefix
+   * keywords that the parser may include. Returns the first URL found; if
+   * the first non-keyword arg isn't a URL, returns null (it's a scroll
+   * target, not a URL).
+   */
+  private findBareUrl(args: unknown[]): string | null {
+    for (const a of args) {
+      if (a === 'to' || a === 'the') continue;
+      if (typeof a === 'string' && this.isBareUrl(a)) return a;
+      return null;
+    }
+    return null;
+  }
+
+  private async navigateToBareUrl(url: string, args: unknown[]): Promise<string> {
+    const inNewWindow = args.includes('new') && args.includes('window');
+
+    if (inNewWindow) {
+      if (typeof window !== 'undefined' && window.open) {
+        const newWindow = window.open(url, '_blank');
+        if (newWindow?.focus) newWindow.focus();
+      }
+    } else if (url.startsWith('#')) {
+      if (typeof window !== 'undefined') window.location.hash = url;
+    } else if (typeof window !== 'undefined') {
+      window.location.assign?.(url) ?? (window.location.href = url);
+    }
+
+    return url;
   }
 
   private async goBack(): Promise<void> {

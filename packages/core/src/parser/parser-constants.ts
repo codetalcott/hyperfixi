@@ -125,6 +125,7 @@ export const COMMANDS = new Set([
   'repeat',
   'replace', // htmx-like: replace url in history
   'return',
+  'scroll', // scroll to <target> (upstream _hyperscript 0.9.90)
   'send',
   'set',
   'settle',
