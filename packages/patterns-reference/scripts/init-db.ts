@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS code_examples (
   feature TEXT,
   engine TEXT DEFAULT NULL,
   source_url TEXT,
+  embedding BLOB,
+  embedding_source_hash TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -62,6 +64,8 @@ CREATE TABLE IF NOT EXISTS pattern_translations (
   verified_parses INTEGER DEFAULT 0,
   verified_executes INTEGER DEFAULT 0,
   role_alignment_score REAL,  -- Semantic role alignment with English (0-1)
+  embedding BLOB,
+  embedding_source_hash TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(code_example_id, language)
@@ -76,6 +80,8 @@ CREATE TABLE IF NOT EXISTS llm_examples (
   completion TEXT NOT NULL,
   quality_score REAL DEFAULT 0.8,
   usage_count INTEGER DEFAULT 0,
+  embedding BLOB,
+  embedding_source_hash TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

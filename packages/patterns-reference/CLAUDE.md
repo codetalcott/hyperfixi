@@ -45,7 +45,12 @@ npm run populate
 npm run db:init:force      # Initialize with 53 patterns
 npm run sync:translations  # Generate 689 translations
 npm run seed:llm           # Generate 212 LLM examples
+npm run embed              # Compute semantic embeddings for all three tables
 npm run validate:fix       # Validate and update verified_parses
+
+# If you already have a populated DB and only want to add embedding columns
+# without dropping the DB, use the idempotent migration:
+npm run migrate:embeddings
 
 # Development
 npm run typecheck          # TypeScript validation
@@ -62,6 +67,14 @@ After running `npm run populate`:
 | code_examples        | 53   | Patterns covering all hyperscript commands |
 | pattern_translations | 689  | 53 patterns × 13 languages                 |
 | llm_examples         | 212  | Few-shot examples with quality scores      |
+
+Each of these three tables also stores a semantic embedding (Float32 BLOB,
+mean-pooled + L2-normalized, default model `Snowflake/snowflake-arctic-embed-m-v2.0`)
+and an `embedding_source_hash` for idempotent re-embedding. The embeddings
+power `POST /api/patterns/semantic-search` in downstream docs sites. After
+running `npm run populate` (which now includes `npm run embed`), copy the
+refreshed `data/patterns.db` into each docs site's `data/` directory so
+Docker bakes the embedded DB into the image.
 
 ### Supported Languages (13)
 

@@ -32,7 +32,9 @@
     "db:init:force": "tsx scripts/init-db.ts --force",
     "sync:translations": "tsx scripts/sync-translations.ts",
     "seed:llm": "tsx scripts/seed-llm-examples.ts",
-    "populate": "npm run db:init:force && npm run sync:translations && npm run seed:llm && npm run db:fix-translations",
+    "embed": "tsx scripts/embed-patterns.ts",
+    "migrate:embeddings": "tsx scripts/migrate-add-embeddings.ts",
+    "populate": "npm run db:init:force && npm run sync:translations && npm run seed:llm && npm run db:fix-translations && npm run embed",
     "db:fix-translations": "tsx scripts/run-sql.ts scripts/fix-translations.sql",
     "populate:dry-run": "npm run db:init:force && tsx scripts/sync-translations.ts --dry-run && tsx scripts/seed-llm-examples.ts --dry-run",
     "validate": "tsx scripts/validate-all.ts",
@@ -68,6 +70,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/patterns-reference#readme",
   "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
     "@lokascript/semantic": "*",
     "better-sqlite3": "^12.6.2"
   },
