@@ -77,15 +77,42 @@ describe('Conversion Expressions', () => {
       });
     });
 
-    describe('JSON conversions', () => {
-      it('should convert to JSON string', async () => {
-        const obj = { key: 'value', num: 123 };
+    // Upstream _hyperscript 0.9.90 flipped `as JSON` semantics:
+    //   `as JSON`       — parses a JSON string into a value
+    //   `as JSONString` — stringifies a value into JSON (old `as JSON` behavior)
+    describe('JSON conversions (0.9.90 semantics)', () => {
+      it('should parse a JSON string with `as JSON`', async () => {
+        const jsonStr = '{"key":"value","num":123}';
+        const result = await conversionExpressions.as.evaluate(context, jsonStr, 'JSON');
+        expect(result).toEqual({ key: 'value', num: 123 });
+
+        const arrStr = '[1,2,3]';
+        const result2 = await conversionExpressions.as.evaluate(context, arrStr, 'JSON');
+        expect(result2).toEqual([1, 2, 3]);
+      });
+
+      it('should return non-string inputs unchanged from `as JSON`', async () => {
+        const obj = { already: 'parsed' };
         const result = await conversionExpressions.as.evaluate(context, obj, 'JSON');
+        expect(result).toBe(obj);
+
+        const result2 = await conversionExpressions.as.evaluate(context, [1, 2], 'JSON');
+        expect(result2).toEqual([1, 2]);
+      });
+
+      it('should stringify a value with `as JSONString`', async () => {
+        const obj = { key: 'value', num: 123 };
+        const result = await conversionExpressions.as.evaluate(context, obj, 'JSONString');
         expect(result).toBe('{"key":"value","num":123}');
 
         const arr = [1, 2, 3];
-        const result2 = await conversionExpressions.as.evaluate(context, arr, 'JSON');
+        const result2 = await conversionExpressions.as.evaluate(context, arr, 'JSONString');
         expect(result2).toBe('[1,2,3]');
+      });
+
+      it('should accept lowercase `jsonstring` alias', async () => {
+        const result = await conversionExpressions.as.evaluate(context, { a: 1 }, 'jsonstring');
+        expect(result).toBe('{"a":1}');
       });
 
       it('should convert to Object from JSON', async () => {
@@ -161,6 +188,27 @@ describe('Conversion Expressions', () => {
 
         // Restore original
         defaultConversions.Values = originalValues;
+      });
+
+      // Upstream 0.9.90 migration path: `as Values | FormEncoded`.
+      // Direct test of the FormEncoded converter on an already-extracted values
+      // object — pipe operator support is covered in its own test suite.
+      it('should URL-encode an object with `as FormEncoded`', async () => {
+        const values = { name: 'John Doe', age: '30' };
+        const result = await conversionExpressions.as.evaluate(context, values, 'FormEncoded');
+        expect(result).toBe('name=John+Doe&age=30');
+      });
+
+      it('should skip null/undefined fields when FormEncoding', async () => {
+        const values = { a: '1', b: null, c: undefined, d: '2' };
+        const result = await conversionExpressions.as.evaluate(context, values, 'FormEncoded');
+        expect(result).toBe('a=1&d=2');
+      });
+
+      it('should repeat key for array values when FormEncoding', async () => {
+        const values = { tag: ['foo', 'bar'] };
+        const result = await conversionExpressions.as.evaluate(context, values, 'FormEncoded');
+        expect(result).toBe('tag=foo&tag=bar');
       });
 
       it('should convert to Values:JSON string', async () => {

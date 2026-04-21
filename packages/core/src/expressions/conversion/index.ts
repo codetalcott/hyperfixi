@@ -101,11 +101,24 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     return date; // Return the date even if invalid - let the caller handle validation
   },
 
-  // JSON conversions
+  // JSON conversions (upstream _hyperscript 0.9.90 semantics):
+  //   `as JSON`       — parses a JSON string into a value (was: stringify)
+  //   `as JSONString` — stringifies a value into JSON
+  // For non-string inputs, `as JSON` returns the value unchanged (it's already
+  // structured data).
   JSON: (value: unknown) => {
+    if (!isString(value)) return value;
+    try {
+      return JSON.parse(value as string);
+    } catch {
+      return value;
+    }
+  },
+
+  JSONString: (value: unknown) => {
     try {
       return JSON.stringify(value);
-    } catch (error) {
+    } catch {
       return '{}';
     }
   },
@@ -171,9 +184,30 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     return {};
   },
 
+  // `as FormEncoded` — URL-encode key/value pairs. Upstream 0.9.90 migration
+  // path: the old `as Values:Form` becomes `as Values | FormEncoded`. Accepts
+  // either a plain object (already-extracted values) or a form element (extracts
+  // values first, matching `as Values | FormEncoded` semantics).
+  FormEncoded: (value: unknown, context?: ExecutionContext) => {
+    const values = value instanceof HTMLElement ? defaultConversions.Values(value, context) : value;
+    if (!isObject(values)) return '';
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(values as Record<string, unknown>)) {
+      if (v === undefined || v === null) continue;
+      if (Array.isArray(v)) {
+        for (const item of v) params.append(k, String(item));
+      } else {
+        params.append(k, String(v));
+      }
+    }
+    return params.toString();
+  },
+
+  // Deprecated compound types — kept working in 0.9.90+ for migration.
+  // New code should use `as Values | FormEncoded` / `as Values | JSONString`.
   'Values:Form': (value: unknown, context?: ExecutionContext) => {
     const values = defaultConversions.Values(value, context);
-    return new URLSearchParams(values as Record<string, string>).toString();
+    return defaultConversions.FormEncoded(values, context);
   },
 
   'Values:JSON': (value: unknown, context?: ExecutionContext) => {
@@ -348,6 +382,8 @@ export const asExpression: ExpressionImplementation = {
       obj: 'Object',
       date: 'Date',
       json: 'JSON',
+      jsonstring: 'JSONString',
+      formencoded: 'FormEncoded',
     };
 
     const aliasedType = typeAliases[lowerType];

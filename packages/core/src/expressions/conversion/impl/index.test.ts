@@ -337,12 +337,13 @@ describe('Enhanced Conversion Expressions', () => {
       });
     });
 
-    describe('JSON Conversions', () => {
-      it('should convert object to JSON string', async () => {
+    // Upstream _hyperscript 0.9.90: `as JSON` now parses, `as JSONString` stringifies.
+    describe('JSON Conversions (0.9.90 semantics)', () => {
+      it('should stringify object with `as JSONString`', async () => {
         const obj = { name: 'John', age: 30, active: true };
         const result = await expression.evaluate(context, {
           value: obj,
-          type: 'JSON',
+          type: 'JSONString',
         });
 
         expect(result.success).toBe(true);
@@ -352,17 +353,29 @@ describe('Enhanced Conversion Expressions', () => {
         }
       });
 
-      it('should convert array to JSON string', async () => {
+      it('should stringify array with `as JSONString`', async () => {
         const arr = [1, 2, 3, 'hello'];
         const result = await expression.evaluate(context, {
           value: arr,
-          type: 'JSON',
+          type: 'JSONString',
         });
 
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('[1,2,3,"hello"]');
           expect(result.type).toBe('string');
+        }
+      });
+
+      it('should parse a JSON string with `as JSON`', async () => {
+        const result = await expression.evaluate(context, {
+          value: '{"a":1,"b":[2,3]}',
+          type: 'JSON',
+        });
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toEqual({ a: 1, b: [2, 3] });
         }
       });
     });
@@ -1034,7 +1047,7 @@ describe('Enhanced Conversion Expressions', () => {
       const startTime = Date.now();
       const result = await asExpr.evaluate(context, {
         value: largeArray,
-        type: 'JSON',
+        type: 'JSONString',
       });
       const duration = Date.now() - startTime;
 

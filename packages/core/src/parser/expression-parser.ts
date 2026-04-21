@@ -295,26 +295,50 @@ const EXPR_AS_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerEntry
   [
     'as',
     leftAssoc(70, (left, _token, ctx) => {
-      const typeToken = ctx.advance();
-      if (!typeToken) {
-        throw new ExpressionParseError('Expected type after "as"');
-      }
-      // Handle parameterized types like "Fixed:2"
-      let typeName = typeToken.value;
-      if (ctx.peek()?.value === ':') {
-        ctx.advance(); // consume ':'
-        const paramToken = ctx.advance();
-        if (paramToken) {
-          typeName += ':' + paramToken.value;
+      const readTypeName = (): { name: string; end: number | undefined } => {
+        const typeToken = ctx.advance();
+        if (!typeToken) {
+          throw new ExpressionParseError('Expected type after "as"');
         }
-      }
-      return {
+        // Handle parameterized types like "Fixed:2"
+        let typeName = typeToken.value;
+        let end = typeToken.end;
+        if (ctx.peek()?.value === ':') {
+          ctx.advance(); // consume ':'
+          const paramToken = ctx.advance();
+          if (paramToken) {
+            typeName += ':' + paramToken.value;
+            end = paramToken.end;
+          }
+        }
+        return { name: typeName, end };
+      };
+
+      const first = readTypeName();
+      let node: Record<string, unknown> = {
         type: 'asExpression',
         expression: left,
-        targetType: typeName,
+        targetType: first.name,
         ...(left.start !== undefined && { start: left.start }),
-        end: typeToken.end,
+        end: first.end,
       };
+
+      // Pipe operator `|` chains conversions left-to-right (upstream 0.9.90).
+      // `form as Values | FormEncoded` parses as
+      // `(form as Values) as FormEncoded`.
+      while (ctx.peek()?.value === '|') {
+        ctx.advance(); // consume '|'
+        const next = readTypeName();
+        node = {
+          type: 'asExpression',
+          expression: node,
+          targetType: next.name,
+          ...(node.start !== undefined && { start: node.start }),
+          end: next.end,
+        };
+      }
+
+      return node as never;
     }) as BindingPowerEntry,
   ],
 ]);

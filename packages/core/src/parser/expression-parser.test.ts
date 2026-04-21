@@ -92,7 +92,8 @@ describe('Expression Parser Integration', () => {
       const obj = { foo: 'bar' };
       context.locals.set('obj', obj);
 
-      const result = await parseAndEvaluateExpression('obj as JSON', context);
+      // Upstream _hyperscript 0.9.90: `as JSONString` stringifies (was `as JSON`).
+      const result = await parseAndEvaluateExpression('obj as JSONString', context);
       expect(result).toBe('{"foo":"bar"}');
     });
   });
@@ -245,14 +246,45 @@ describe('Expression Parser Integration', () => {
       expect(await parseAndEvaluateExpression('42 as String', context)).toBe('42');
     });
 
-    it('should convert object to JSON', async () => {
+    it('should stringify object with `as JSONString`', async () => {
       context.locals.set('obj', { key: 'value' });
-      expect(await parseAndEvaluateExpression('obj as JSON', context)).toBe('{"key":"value"}');
+      // Upstream _hyperscript 0.9.90: `as JSONString` stringifies (was `as JSON`).
+      expect(await parseAndEvaluateExpression('obj as JSONString', context)).toBe(
+        '{"key":"value"}'
+      );
+    });
+
+    it('should parse JSON string with `as JSON`', async () => {
+      context.locals.set('jsonText', '{"key":"value"}');
+      const result = await parseAndEvaluateExpression('jsonText as JSON', context);
+      expect(result).toEqual({ key: 'value' });
     });
 
     it('should chain as with arithmetic', async () => {
       // (5 + 3) then convert to string
       expect(await parseAndEvaluateExpression('(5 + 3) as String', context)).toBe('8');
+    });
+
+    // Upstream _hyperscript 0.9.90: `expr as A | B` = `(expr as A) as B`.
+    // Migration path for removed `Values:Form` / `Values:JSON` compound types.
+    describe('pipe operator for conversion chaining', () => {
+      it('should chain `as Int | String` to produce a truncated string', async () => {
+        context.locals.set('raw', '42.9');
+        const result = await parseAndEvaluateExpression('raw as Int | String', context);
+        expect(result).toBe('42');
+      });
+
+      it('should chain `as JSONString | JSON` round-trip', async () => {
+        context.locals.set('obj', { a: 1, b: [2, 3] });
+        const result = await parseAndEvaluateExpression('obj as JSONString | JSON', context);
+        expect(result).toEqual({ a: 1, b: [2, 3] });
+      });
+
+      it('should chain three conversions left-to-right', async () => {
+        context.locals.set('n', 3.7);
+        const result = await parseAndEvaluateExpression('n as Int | String | Number', context);
+        expect(result).toBe(3);
+      });
     });
   });
 
