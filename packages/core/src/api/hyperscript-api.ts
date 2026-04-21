@@ -35,7 +35,11 @@ import {
   type SemanticAnalyzer,
 } from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
-import { process as processDOMElements, initializeDOMProcessor } from './dom-processor';
+import {
+  process as processDOMElements,
+  initializeDOMProcessor,
+  setDOMProcessorConfig,
+} from './dom-processor';
 import { DebugController } from '../debug/debug-controller';
 
 // =============================================================================
@@ -174,6 +178,14 @@ export interface HyperscriptConfig {
    * Default: 0.5
    */
   confidenceThreshold: number;
+
+  /**
+   * When true, logs every hyperscript event handler that fires. Matches
+   * htmx's `config.logAll` — useful for debugging user-visible behavior
+   * without reaching for breakpoints. Upstream _hyperscript 0.9.90.
+   * Default: false.
+   */
+  logAll: boolean;
 }
 
 /**
@@ -193,6 +205,7 @@ export const config: HyperscriptConfig = {
   semantic: true,
   language: 'en',
   confidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
+  logAll: false,
 };
 
 /**
@@ -352,6 +365,17 @@ export interface HyperscriptAPI {
    * Automatically detects language from element/document.
    */
   process(element: Element): void;
+
+  /**
+   * Clean up hyperscript resources (event listeners, observers, intervals,
+   * timeouts) for an element and all its descendants. Matches upstream
+   * _hyperscript 0.9.90's `cleanup()` API — call this before re-processing
+   * an element whose inline `_=` attribute changed, or after a morph/swap
+   * that replaced the element, to avoid listener/observer leaks.
+   *
+   * Returns the number of cleanups performed.
+   */
+  cleanup(element: Element): number;
 
   // ─────────────────────────────────────────────────────────────
   // CONTEXT
@@ -903,6 +927,9 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
 
 // Initialize DOM processor with compile functions and runtime
 initializeDOMProcessor(compileSync, compileAsync, getDefaultRuntime);
+// Share the hyperscript.config object so toggling `config.logAll` takes
+// effect on the next event (upstream _hyperscript 0.9.90).
+setDOMProcessorConfig(config);
 
 /**
  * Compiles and executes hyperscript code in a single call.
@@ -1081,6 +1108,28 @@ export const hyperscript: HyperscriptAPI = {
 
   // Process DOM elements
   process: processDOMElements,
+
+  // Clean up resources for an element and its descendants (upstream 0.9.90).
+  // Dispatches `hyperscript:before:cleanup` / `hyperscript:after:cleanup`
+  // around the actual cleanup so external code can observe the lifecycle.
+  cleanup: (element: Element) => {
+    element.dispatchEvent(
+      new CustomEvent('hyperscript:before:cleanup', { bubbles: true, cancelable: false })
+    );
+    const count = getDefaultRuntime().cleanupTree(element);
+    // Remove the powered marker once the listeners are gone.
+    if (element.hasAttribute?.('data-hyperscript-powered')) {
+      element.removeAttribute('data-hyperscript-powered');
+    }
+    element.dispatchEvent(
+      new CustomEvent('hyperscript:after:cleanup', {
+        bubbles: true,
+        cancelable: false,
+        detail: { count },
+      })
+    );
+    return count;
+  },
 
   // Create context (with optional parent)
   createContext: createContextWithParent,
