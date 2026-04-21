@@ -590,6 +590,146 @@ describe('FetchCommand', () => {
     });
   });
 
+  // Upstream _hyperscript 0.9.90: `fetch` throws on non-2xx by default.
+  // Opt out with `do not throw` or by asking for the raw `Response`.
+  describe('Throw-on-non-2xx (upstream 0.9.90)', () => {
+    it('should throw on 500 when throwOnError is true', async () => {
+      const input: FetchCommandInput = {
+        url: 'https://example.com/api',
+        responseType: 'json',
+        options: {},
+        throwOnError: true,
+      };
+
+      const mockResponse = createMockResponse(
+        { error: 'boom' },
+        {
+          status: 500,
+          statusText: 'Internal Server Error',
+        }
+      );
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const context = createMockContext();
+      await expect(command.execute(input, context)).rejects.toThrow(/HTTP 500/);
+    });
+
+    it('should throw on 404 when throwOnError is true', async () => {
+      const input: FetchCommandInput = {
+        url: 'https://example.com/missing',
+        responseType: 'text',
+        options: {},
+        throwOnError: true,
+      };
+
+      const mockResponse = createMockResponse('not found', {
+        status: 404,
+        statusText: 'Not Found',
+      });
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const context = createMockContext();
+      await expect(command.execute(input, context)).rejects.toThrow(/HTTP 404/);
+    });
+
+    it('should NOT throw on 200 when throwOnError is true', async () => {
+      const input: FetchCommandInput = {
+        url: 'https://example.com/ok',
+        responseType: 'json',
+        options: {},
+        throwOnError: true,
+      };
+
+      const mockResponse = createMockResponse({ ok: true });
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const context = createMockContext();
+      const result = await command.execute(input, context);
+      expect(result.data).toEqual({ ok: true });
+    });
+
+    it('should NOT throw on 500 when throwOnError is false (do not throw)', async () => {
+      const input: FetchCommandInput = {
+        url: 'https://example.com/api',
+        responseType: 'json',
+        options: {},
+        throwOnError: false,
+      };
+
+      const mockResponse = createMockResponse(
+        { error: 'boom' },
+        {
+          status: 500,
+          statusText: 'Internal Server Error',
+        }
+      );
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const context = createMockContext();
+      const result = await command.execute(input, context);
+      expect(result.status).toBe(500);
+      expect(result.data).toEqual({ error: 'boom' });
+    });
+
+    it('should attach the Response to the thrown error', async () => {
+      const input: FetchCommandInput = {
+        url: 'https://example.com/api',
+        responseType: 'json',
+        options: {},
+        throwOnError: true,
+      };
+
+      const mockResponse = createMockResponse(null, { status: 503, statusText: 'Unavailable' });
+      mockFetch.mockResolvedValue(mockResponse);
+
+      const context = createMockContext();
+      try {
+        await command.execute(input, context);
+        expect.fail('expected throw');
+      } catch (e) {
+        const err = e as Error & { response?: Response };
+        expect(err.response).toBe(mockResponse);
+      }
+    });
+  });
+
+  // Upstream _hyperscript 0.9.90: `parseInput` wires `throwOnError` from the
+  // `doNotThrow` modifier and the response type.
+  describe('parseInput wiring for throwOnError', () => {
+    it('should set throwOnError=true by default', async () => {
+      const urlNode = { type: 'literal', value: 'https://example.com' } as unknown as ASTNode;
+      const input = await command.parseInput(
+        { args: [urlNode], modifiers: {} },
+        createMockEvaluator('https://example.com'),
+        createMockContext()
+      );
+      expect(input.throwOnError).toBe(true);
+    });
+
+    it('should set throwOnError=false when doNotThrow modifier is present', async () => {
+      const urlNode = { type: 'literal', value: 'https://example.com' } as unknown as ASTNode;
+      const doNotThrowNode = { type: 'literal', value: true } as unknown as ExpressionNode;
+      const input = await command.parseInput(
+        { args: [urlNode], modifiers: { doNotThrow: doNotThrowNode } },
+        createMockEvaluator('https://example.com'),
+        createMockContext()
+      );
+      expect(input.throwOnError).toBe(false);
+    });
+
+    it('should set throwOnError=false when `as Response` escape is used', async () => {
+      const urlNode = { type: 'literal', value: 'https://example.com' } as unknown as ASTNode;
+      const asNode = { type: 'identifier', name: 'response' } as unknown as ExpressionNode;
+      const input = await command.parseInput(
+        { args: [urlNode], modifiers: { as: asNode } },
+        createMockEvaluator('https://example.com'),
+        createMockContext()
+      );
+      expect(input.responseType).toBe('response');
+      expect(input.throwOnError).toBe(false);
+    });
+  });
+
   describe('Lifecycle Events', () => {
     it('should dispatch fetch:beforeRequest event', async () => {
       const input: FetchCommandInput = {
