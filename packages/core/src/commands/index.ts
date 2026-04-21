@@ -64,6 +64,7 @@ export { createSendCommand as send } from './events/send';
 export { createGoCommand as go } from './navigation/go';
 export { createPushUrlCommand as pushUrl } from './navigation/push-url';
 export { createReplaceUrlCommand as replaceUrl } from './navigation/replace-url';
+export { createScrollCommand as scroll } from './navigation/scroll-to';
 
 // Control Flow Commands (factories)
 export { createIfCommand as if_ } from './control-flow/if';
@@ -161,6 +162,7 @@ export {
   createPushUrlCommand,
 } from './navigation/push-url';
 export { ReplaceUrlCommand, createReplaceUrlCommand } from './navigation/replace-url';
+export { ScrollCommand, createScrollCommand } from './navigation/scroll-to';
 
 // Control Flow Commands
 export {
@@ -238,6 +240,7 @@ export type { SendCommandInput } from './events/send';
 export type { GoCommandInput } from './navigation/go';
 export type { HistoryCommandInput, HistoryMode, PushUrlCommandInput } from './navigation/push-url';
 export type { ReplaceUrlCommandInput } from './navigation/replace-url';
+export type { ScrollCommandInput, ScrollCommandOutput } from './navigation/scroll-to';
 export type {
   ConditionalCommandInput,
   ConditionalCommandOutput,

@@ -61,6 +61,7 @@ import { createSendCommand } from '../commands/events/send';
 import { createGoCommand } from '../commands/navigation/go';
 import { createPushUrlCommand } from '../commands/navigation/push-url';
 import { createReplaceUrlCommand } from '../commands/navigation/replace-url';
+import { createScrollCommand } from '../commands/navigation/scroll-to';
 
 // Control Flow Commands (7)
 import { createIfCommand } from '../commands/control-flow/if';
@@ -206,10 +207,13 @@ export class Runtime extends RuntimeBase {
       registry.register(createTriggerCommand());
       registry.register(createSendCommand());
 
-      // Navigation Commands (3) - includes htmx-like push/replace url
+      // Navigation Commands (4) - includes htmx-like push/replace url and
+      // `scroll to` (upstream _hyperscript 0.9.90 replacement for the
+      // deprecated `go to top of X` scroll form)
       registry.register(createGoCommand());
       registry.register(createPushUrlCommand());
       registry.register(createReplaceUrlCommand());
+      registry.register(createScrollCommand());
 
       // Control Flow Commands (7)
       registry.register(createIfCommand());
