@@ -827,4 +827,124 @@ const result = await loadBehaviors(runtime);
 
 ---
 
+## Plugin System (v0.9.90 Phase 5)
+
+External packages — `@hyperfixi/reactivity`, `@hyperfixi/speech`, `@hyperfixi/components`, and community plugins — extend hyperfixi at runtime through the plugin contract. No parser fork required.
+
+### The plugin contract
+
+```typescript
+import type { HyperfixiPlugin } from '@hyperfixi/core';
+
+export const myPlugin: HyperfixiPlugin = {
+  name: 'my-plugin',
+  install({ commandRegistry, parserExtensions }) {
+    // 1. Tell the parser to recognize a new command keyword
+    parserExtensions.registerCommand('greet');
+
+    // 2. Register the command implementation with the runtime
+    commandRegistry.register({
+      name: 'greet',
+      async parseInput(raw, evaluator, context) {
+        return {};
+      },
+      async execute(input, context) {
+        console.log('hello from plugin');
+      },
+      validate() {
+        return true;
+      },
+    });
+  },
+};
+```
+
+Install at app startup:
+
+```typescript
+import { createRuntime, installPlugin } from '@hyperfixi/core';
+import { myPlugin } from 'my-plugin';
+
+const runtime = createRuntime();
+installPlugin(runtime, myPlugin);
+```
+
+### Extension points
+
+The `parserExtensions` context provides four registration methods:
+
+| Method                                                   | Purpose                                                                                         |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `registerCommand(name)`                                  | Adds a single-word command keyword so the parser accepts it at command position.                |
+| `registerCompoundOperator(token)`                        | Adds a multi-word token (e.g. `'sorted by'`) to the tokenizer so it emits as a single OPERATOR. |
+| `registerInfixOperator(token, leftBp, rightBp, handler)` | Adds a binary infix operator to the Pratt binding-power table.                                  |
+| `registerPrefixOperator(token, bp, handler)`             | Adds a prefix (NUD) operator to the Pratt table.                                                |
+
+Binding-power tiers (see `parser/pratt-parser.ts`):
+
+| Tier | BP  | Operators                                                     |
+| ---- | --- | ------------------------------------------------------------- |
+| 1    | 10  | `or`, `\|\|`                                                  |
+| 2    | 20  | `and`, `&&`                                                   |
+| 3    | 30  | `==`, `!=`, `<`, `>`, `<=`, `>=`, `is`, `matches`, `contains` |
+| 4    | 40  | `+`, `-`                                                      |
+| 5    | 50  | `*`, `/`, `%`, `mod`                                          |
+| 6    | 60  | `^`, `**` (right-assoc)                                       |
+| 7    | 70  | `as` (conversion)                                             |
+| 8    | 80  | `not`, `!`, unary `-`/`+`, `no`                               |
+| 9    | 85  | `first`, `last`                                               |
+| 10   | 90  | `'s`, `.`, `?.`, `[]`, `()`                                   |
+
+### Global registry — caveats
+
+The `ParserExtensionRegistry` is a **process-wide singleton**. The parser reads from module-level `Set`/`Map` instances, so plugin installations persist for the process lifetime. Two implications:
+
+1. **Multiple Runtimes share parser extensions.** If you create `runtime1` and `runtime2` in the same process and install a plugin via `runtime1`, the plugin's parser-side extensions are visible to `runtime2` as well. Command implementations, however, are per-runtime (stored in each `CommandRegistryV2`).
+
+2. **Tests can snapshot/restore.** For isolation in unit tests:
+
+   ```typescript
+   import { getParserExtensionRegistry } from '@hyperfixi/core';
+
+   const registry = getParserExtensionRegistry();
+   let baseline;
+   beforeEach(() => {
+     baseline = registry.snapshot();
+   });
+   afterEach(() => {
+     registry.restore(baseline);
+   });
+   ```
+
+### Example: custom infix operator
+
+```typescript
+import type { HyperfixiPlugin } from '@hyperfixi/core';
+
+export const powPlugin: HyperfixiPlugin = {
+  name: 'pow-plugin',
+  install({ parserExtensions }) {
+    // Right-associative exponentiation: 2 pow 3 pow 4 → 2 ** (3 ** 4)
+    parserExtensions.registerInfixOperator('pow', 61, 60, (left, _token, ctx) => ({
+      type: 'binaryExpression',
+      operator: 'pow',
+      left,
+      right: ctx.parseExpr(60),
+      start: (left as any).start,
+    }));
+    // Note: also register a runtime evaluator for the `pow` operator —
+    // parser extensions only shape the parse tree; execution dispatch
+    // lives in `parser/runtime.ts` or via a custom Runtime subclass.
+  },
+};
+```
+
+### Out of scope
+
+- **Removing extensions**: no `unregister` in the base contract. Plugins are install-once; use `snapshot()`/`restore()` for test isolation.
+- **Priority / ordering**: the last-registered handler wins for a given token. Plugins that override built-in operators will replace them — the baseline handler is lost until `restore()` is called.
+- **Runtime-dispatch hooks**: plugins register `CommandImplementation`s through `commandRegistry.register()` (unchanged from pre-Phase 5). For expression-level operators, plugins must ensure the runtime knows how to evaluate their custom AST node types — either by producing standard `binaryExpression` nodes that delegate to registered `logicalExpressions.<name>.evaluate()`, or by wrapping execution in a custom `Runtime` subclass.
+
+---
+
 For more examples and advanced usage patterns, see [EXAMPLES.md](./EXAMPLES.md).
