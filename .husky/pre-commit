@@ -1,1 +1,8 @@
 npx lint-staged
+
+# Verify CI workflow build order is in sync with workspace deps.
+# Runs only when the ci.yml workflow or a workspace package.json is staged —
+# most commits skip this entirely (zero cost).
+if git diff --cached --name-only | grep -qE '^(packages/[^/]+/package\.json|\.github/workflows/ci\.yml)$'; then
+  node scripts/check-ci-build-order.cjs || exit 1
+fi
