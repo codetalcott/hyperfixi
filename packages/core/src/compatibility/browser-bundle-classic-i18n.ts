@@ -51,6 +51,9 @@ import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createMakeCommand } from '../commands/dom/make';
 import { createEmptyCommand } from '../commands/dom/empty';
+import { createOpenCommand } from '../commands/dom/open';
+import { createCloseCommand } from '../commands/dom/close';
+import { createSelectCommand } from '../commands/dom/select';
 
 // ============================================================================
 // Control Flow Commands (9)
@@ -229,6 +232,9 @@ const runtimeExperimental = createMinimalRuntime(
     createShowCommand(),
     createMakeCommand(),
     createEmptyCommand(),
+    createOpenCommand(),
+    createCloseCommand(),
+    createSelectCommand(),
 
     // Control Flow (9)
     createIfCommand(),

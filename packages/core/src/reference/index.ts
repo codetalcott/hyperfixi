@@ -121,6 +121,31 @@ export const commands: Record<string, CommandRef> = {
     availability: 'lite-plus',
     examples: ['empty me', 'empty #list', 'empty .results'],
   },
+  open: {
+    name: 'open',
+    description: 'Open a dialog (showModal/show), details element, or popover',
+    syntax: 'open [target] [as modal|non-modal]',
+    category: 'dom',
+    availability: 'full',
+    examples: ['open #myDialog', 'open #myDialog as non-modal', 'open #details', 'open #popup'],
+  },
+  close: {
+    name: 'close',
+    description: 'Close a dialog, details element, or popover',
+    syntax: 'close [target]',
+    category: 'dom',
+    availability: 'full',
+    examples: ['close', 'close #myDialog', 'close #details'],
+  },
+  select: {
+    name: 'select',
+    description:
+      'Select the text in an <input>/<textarea>, or select the contents of a DOM element',
+    syntax: 'select [target]',
+    category: 'dom',
+    availability: 'full',
+    examples: ['select #search', 'select <textarea/>', 'select me'],
+  },
   focus: {
     name: 'focus',
     description: 'Focus an element (calls HTMLElement.focus())',

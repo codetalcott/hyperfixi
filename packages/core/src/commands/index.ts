@@ -36,6 +36,9 @@ export { createToggleCommand as toggle } from './dom/toggle';
 export { createPutCommand as put } from './dom/put';
 export { createMakeCommand as make } from './dom/make';
 export { createEmptyCommand as empty } from './dom/empty';
+export { createOpenCommand as open } from './dom/open';
+export { createCloseCommand as close } from './dom/close';
+export { createSelectCommand as select } from './dom/select';
 export { createSwapCommand as swap, createMorphCommand as morph } from './dom/swap';
 export { createProcessPartialsCommand as processPartialsCmd } from './dom/process-partials';
 
@@ -117,6 +120,9 @@ export { ToggleCommand, createToggleCommand } from './dom/toggle';
 export { PutCommand, createPutCommand } from './dom/put';
 export { MakeCommand, createMakeCommand } from './dom/make';
 export { EmptyCommand, createEmptyCommand } from './dom/empty';
+export { OpenCommand, createOpenCommand } from './dom/open';
+export { CloseCommand, createCloseCommand } from './dom/close';
+export { SelectCommand, createSelectCommand } from './dom/select';
 export { swapCommand, morphCommand, createSwapCommand, createMorphCommand } from './dom/swap';
 export {
   processPartialsCommand,
@@ -230,6 +236,9 @@ export type { ToggleCommandInput } from './dom/toggle';
 export type { PutCommandInput } from './dom/put';
 export type { MakeCommandInput } from './dom/make';
 export type { EmptyCommandInput } from './dom/empty';
+export type { OpenCommandInput, OpenDialogMode } from './dom/open';
+export type { CloseCommandInput } from './dom/close';
+export type { SelectCommandInput } from './dom/select';
 export type { SwapCommandInput, SwapStrategy } from './dom/swap';
 export type {
   ProcessPartialsCommandInput,
