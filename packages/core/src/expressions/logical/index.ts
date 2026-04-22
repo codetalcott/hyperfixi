@@ -731,6 +731,52 @@ export const endsWithExpression: ExpressionImplementation = {
   },
 };
 
+/**
+ * between expression — ternary comparator for `X is between A and B`.
+ *
+ * Semantics: inclusive on both bounds. Works on numbers and any values
+ * supported by JavaScript's comparison operators (>=, <=), including strings
+ * (lexicographic) and Dates. Bounds are auto-ordered: `X is between 10 and 5`
+ * behaves the same as `X is between 5 and 10`.
+ */
+export const betweenExpression: ExpressionImplementation = {
+  name: 'between',
+  category: 'Logical',
+  evaluatesTo: 'Boolean',
+  operators: ['is between', 'between'],
+
+  async evaluate(
+    context: ExecutionContext,
+    value: unknown,
+    min: unknown,
+    max?: unknown
+  ): Promise<boolean> {
+    const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
+    const startTime = tracking ? Date.now() : 0;
+
+    // Auto-order the bounds so callers don't have to worry about min/max
+    let lo: unknown = min;
+    let hi: unknown = max;
+    if (lo != null && hi != null && (lo as number) > (hi as number)) {
+      const swap = lo;
+      lo = hi;
+      hi = swap;
+    }
+
+    const result =
+      lo != null &&
+      hi != null &&
+      (value as number) >= (lo as number) &&
+      (value as number) <= (hi as number);
+    if (tracking) trackEvaluation(this, context, [value, min, max], result, startTime);
+    return result;
+  },
+
+  validate(args: unknown[]): string | null {
+    return validateArgCount(args, 3, 'between', 'value, min, max');
+  },
+};
+
 export const matchesExpression: EnhancedExpressionImplementation = {
   name: 'matches',
   category: 'Logical',
@@ -960,6 +1006,7 @@ export const logicalExpressions = {
   doesNotContain: doesNotContainExpression,
   startsWith: startsWithExpression,
   endsWith: endsWithExpression,
+  between: betweenExpression,
   matches: matchesExpression,
   has: hasExpression,
   doesNotHave: doesNotHaveExpression,

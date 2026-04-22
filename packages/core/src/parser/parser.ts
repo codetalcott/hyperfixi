@@ -177,6 +177,7 @@ export class Parser {
     'does not exist',
     'is empty',
     'is not empty',
+    'ignoring case', // postfix modifier on string comparators (v0.9.90)
   ]);
 
   constructor(tokens: Token[], options?: ParserOptions, originalInput?: string) {

@@ -349,6 +349,78 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
   ['is', leftAssoc(30) as BindingPowerEntry],
   ['matches', leftAssoc(30) as BindingPowerEntry],
   ['contains', leftAssoc(30) as BindingPowerEntry],
+  ['starts with', leftAssoc(30) as BindingPowerEntry],
+  ['ends with', leftAssoc(30) as BindingPowerEntry],
+  ['does not start with', leftAssoc(30) as BindingPowerEntry],
+  ['does not end with', leftAssoc(30) as BindingPowerEntry],
+
+  // `is between` / `is not between` — ternary: <left> is between <min> and <max>
+  // Bind tight enough that `and` on the RHS is consumed as the ternary delimiter
+  // (bp 31 > `and` operator's bp 20), not as a boolean conjunction.
+  [
+    'is between',
+    leftAssoc(30, (left, _token, ctx) => {
+      const min = ctx.parseExpr(31);
+      const next = ctx.peek();
+      if (!next || next.value.toLowerCase() !== 'and') {
+        throw new Error(
+          `between requires 'and' between min and max operands, got: ${next?.value ?? '<end>'}`
+        );
+      }
+      ctx.advance(); // consume 'and'
+      const max = ctx.parseExpr(31);
+      return {
+        type: 'betweenExpression',
+        value: left,
+        min,
+        max,
+        negated: false,
+        start: (left as any).start,
+        end: (max as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+  [
+    'is not between',
+    leftAssoc(30, (left, _token, ctx) => {
+      const min = ctx.parseExpr(31);
+      const next = ctx.peek();
+      if (!next || next.value.toLowerCase() !== 'and') {
+        throw new Error(
+          `between requires 'and' between min and max operands, got: ${next?.value ?? '<end>'}`
+        );
+      }
+      ctx.advance(); // consume 'and'
+      const max = ctx.parseExpr(31);
+      return {
+        type: 'betweenExpression',
+        value: left,
+        min,
+        max,
+        negated: true,
+        start: (left as any).start,
+        end: (max as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+
+  // `ignoring case` — postfix modifier on string comparators.
+  // bp 25 sits between `and` (20) and comparison operators (30), so:
+  //   `a is b ignoring case`       → (a is b).ignoringCase = true
+  //   `a is b ignoring case and c` → ((a is b).ignoringCase && c) — correct
+  // The LED annotates the left AST node and returns it; there's no RHS to parse.
+  [
+    'ignoring case',
+    {
+      infix: {
+        bp: [25, 26],
+        handler: (left, _token, _ctx) => {
+          (left as Record<string, unknown>).ignoringCase = true;
+          return left;
+        },
+      },
+    } as BindingPowerEntry,
+  ],
 
   // Tier 4: Addition/Subtraction (bp 40)
   ['+', { ...(leftAssoc(40) as BindingPowerEntry), ...(prefix(80) as BindingPowerEntry) }],

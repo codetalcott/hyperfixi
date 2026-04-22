@@ -400,6 +400,10 @@ export const COMPARISON_OPERATORS = new Set([
   'is not a',
   'is not an',
   'contains',
+  'starts with', // "str starts with prefix" (upstream _hyperscript 0.9.90)
+  'ends with', // "str ends with suffix" (upstream _hyperscript 0.9.90)
+  'does not start with',
+  'does not end with',
   'has', // "it has .class", "#element has .class"
   'have', // "I have .class" - grammatically correct first-person
   'does not contain',
@@ -414,6 +418,8 @@ export const COMPARISON_OPERATORS = new Set([
   'is not empty',
   'is in',
   'is not in',
+  'is between',
+  'is not between',
   'equals',
   'in',
   // English-style comparison operators
@@ -426,6 +432,10 @@ export const COMPARISON_OPERATORS = new Set([
   'is greater than or equal to',
   'is less than or equal to',
   'really equals',
+  // Postfix modifier on string comparators (upstream _hyperscript 0.9.90):
+  //   "name is 'alice' ignoring case"
+  //   "str starts with 'hi' ignoring case"
+  'ignoring case',
 ]);
 
 /**
