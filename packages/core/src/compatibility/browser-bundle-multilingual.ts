@@ -45,6 +45,9 @@ import { createToggleCommand } from '../commands/dom/toggle';
 import { createPutCommand } from '../commands/dom/put';
 import { createMakeCommand } from '../commands/dom/make';
 import { createEmptyCommand } from '../commands/dom/empty';
+import { createOpenCommand } from '../commands/dom/open';
+import { createCloseCommand } from '../commands/dom/close';
+import { createSelectCommand } from '../commands/dom/select';
 
 // Async Commands (2)
 import { createWaitCommand } from '../commands/async/wait';
@@ -217,6 +220,9 @@ const runtime = createMinimalRuntime(
     createPutCommand(),
     createMakeCommand(),
     createEmptyCommand(),
+    createOpenCommand(),
+    createCloseCommand(),
+    createSelectCommand(),
     // Async (2)
     createWaitCommand(),
     createFetchCommand(),

@@ -56,6 +56,9 @@ import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createMakeCommand } from '../commands/dom/make';
 import { createEmptyCommand } from '../commands/dom/empty';
+import { createOpenCommand } from '../commands/dom/open';
+import { createCloseCommand } from '../commands/dom/close';
+import { createSelectCommand } from '../commands/dom/select';
 
 // ============================================================================
 // Control Flow Commands (9)
@@ -148,7 +151,7 @@ const expressionEvaluator = new ConfigurableExpressionEvaluator([
 // Create runtime instance with classic commands (37 total) and custom expression evaluator
 const runtimeExperimental = createMinimalRuntime(
   [
-    // DOM (8) — + empty (v0.9.90)
+    // DOM (11) — + empty, open, close, select (v0.9.90)
     createAddCommand(),
     createRemoveCommand(),
     createToggleCommand(),
@@ -157,6 +160,9 @@ const runtimeExperimental = createMinimalRuntime(
     createShowCommand(),
     createMakeCommand(),
     createEmptyCommand(),
+    createOpenCommand(),
+    createCloseCommand(),
+    createSelectCommand(),
 
     // Control Flow (9)
     createIfCommand(),
@@ -246,9 +252,9 @@ const api = {
   attributeProcessor,
   version: '1.1.0-classic',
 
-  // Classic commands list (40) — + empty, focus, blur (v0.9.90)
+  // Classic commands list (43) — + empty, open, close, select, focus, blur (v0.9.90)
   commands: [
-    // DOM (8)
+    // DOM (11)
     'add',
     'remove',
     'toggle',
@@ -257,6 +263,9 @@ const api = {
     'show',
     'make',
     'empty',
+    'open',
+    'close',
+    'select',
     // Control Flow (9)
     'if',
     'unless',

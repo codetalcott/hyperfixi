@@ -38,6 +38,9 @@ import { createToggleCommand } from '../commands/dom/toggle';
 import { createPutCommand } from '../commands/dom/put';
 import { createMakeCommand } from '../commands/dom/make';
 import { createEmptyCommand } from '../commands/dom/empty';
+import { createOpenCommand } from '../commands/dom/open';
+import { createCloseCommand } from '../commands/dom/close';
+import { createSelectCommand } from '../commands/dom/select';
 import { createSwapCommand, createMorphCommand } from '../commands/dom/swap';
 import { createProcessPartialsCommand } from '../commands/dom/process-partials';
 
@@ -190,6 +193,9 @@ export class Runtime extends RuntimeBase {
       registry.register(createPutCommand());
       registry.register(createMakeCommand());
       registry.register(createEmptyCommand());
+      registry.register(createOpenCommand());
+      registry.register(createCloseCommand());
+      registry.register(createSelectCommand());
       registry.register(createSwapCommand());
       registry.register(createMorphCommand());
       registry.register(createProcessPartialsCommand());

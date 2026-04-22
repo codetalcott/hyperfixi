@@ -6,8 +6,8 @@
  * - createCommonExpressionEvaluator (5 expression categories)
  * - Only the 16 commands needed for standard functionality
  *
- * Commands included (19 standard):
- * - DOM: add, remove, toggle, show, hide, put, make, empty (8)
+ * Commands included (22 standard):
+ * - DOM: add, remove, toggle, show, hide, put, make, empty, open, close, select (11)
  * - Execution: focus, blur (2)
  * - Data: set, increment, decrement (3)
  * - Events: send, trigger (2)
@@ -33,8 +33,8 @@ import { createCommonExpressionEvaluator } from '../expressions/bundles/common-e
 import { createMinimalAttributeProcessor } from '../dom/minimal-attribute-processor';
 import { createContext, ensureContext } from '../core/context';
 
-// Import all 19 V2 standard commands (true tree-shaking!)
-// DOM Commands (8)
+// Import all 22 V2 standard commands (true tree-shaking!)
+// DOM Commands (11)
 import { createAddCommand } from '../commands/dom/add';
 import { createRemoveCommand } from '../commands/dom/remove';
 import { createToggleCommand } from '../commands/dom/toggle';
@@ -43,6 +43,9 @@ import { createHideCommand } from '../commands/dom/hide';
 import { createPutCommand } from '../commands/dom/put';
 import { createMakeCommand } from '../commands/dom/make';
 import { createEmptyCommand } from '../commands/dom/empty';
+import { createOpenCommand } from '../commands/dom/open';
+import { createCloseCommand } from '../commands/dom/close';
+import { createSelectCommand } from '../commands/dom/select';
 
 // Execution Commands (2) — v0.9.90 focus/blur
 import { createFocusCommand } from '../commands/execution/focus';
@@ -70,7 +73,7 @@ import { createLogCommand } from '../commands/utility/log';
 // Create runtime with ONLY the commands and expressions we need
 const runtime = createTreeShakeableRuntime(
   [
-    // DOM (8)
+    // DOM (11)
     createAddCommand(),
     createRemoveCommand(),
     createToggleCommand(),
@@ -79,6 +82,9 @@ const runtime = createTreeShakeableRuntime(
     createPutCommand(),
     createMakeCommand(),
     createEmptyCommand(),
+    createOpenCommand(),
+    createCloseCommand(),
+    createSelectCommand(),
     // Execution (2) — v0.9.90 focus/blur
     createFocusCommand(),
     createBlurCommand(),
@@ -135,7 +141,10 @@ const api = {
     'hide',
     'put',
     'make',
-    'empty', // DOM (8)
+    'empty',
+    'open',
+    'close',
+    'select', // DOM (11)
     'focus',
     'blur', // Execution (2)
     'set',

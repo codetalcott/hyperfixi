@@ -29,6 +29,9 @@ export const COMMAND_KEYWORDS = [
   'get',
   'make',
   'empty',
+  'open',
+  'close',
+  'select',
   'swap',
   'morph',
   'append',
@@ -240,6 +243,26 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'make',
     description: 'Creates a new element.',
     example: 'make a <div/> then put it after me',
+    category: 'command',
+  },
+  open: {
+    title: 'open',
+    description:
+      'Opens a dialog (showModal/show), details element, or popover. Accepts `as modal` / `as non-modal` for dialogs.',
+    example: 'open #myDialog\nopen #myDialog as non-modal\nopen #details',
+    category: 'command',
+  },
+  close: {
+    title: 'close',
+    description: 'Closes a dialog, details element, or popover.',
+    example: 'close #myDialog\nclose #details\nclose #popup',
+    category: 'command',
+  },
+  select: {
+    title: 'select',
+    description:
+      'Selects the text in an <input>/<textarea>, or selects the contents of any DOM element via Selection + Range.',
+    example: 'select #search\nselect <textarea/>',
     category: 'command',
   },
   swap: {
