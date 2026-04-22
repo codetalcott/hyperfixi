@@ -154,6 +154,11 @@ export const LOGICAL_KEYWORDS = [
   'true',
   'false',
   'null',
+  // v0.9.90 comparators
+  'starts with',
+  'ends with',
+  'between',
+  'ignoring case',
 ] as const;
 
 /**
@@ -697,6 +702,32 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'contains',
     description: 'Checks if element contains another.',
     example: 'if #list contains #item',
+    category: 'logical',
+  },
+  'starts with': {
+    title: 'starts with',
+    description: 'String prefix check (upstream _hyperscript 0.9.90).',
+    example: "if str starts with 'hello'\nif str does not start with 'world'",
+    category: 'logical',
+  },
+  'ends with': {
+    title: 'ends with',
+    description: 'String suffix check (upstream _hyperscript 0.9.90).',
+    example: "if str ends with '.com'\nif str does not end with '.js'",
+    category: 'logical',
+  },
+  between: {
+    title: 'between',
+    description:
+      'Inclusive range check: `X is between A and B` (upstream _hyperscript 0.9.90). Bounds are auto-ordered, so `between 10 and 5` works the same as `between 5 and 10`.',
+    example: 'if :count is between 1 and 10\nif :score is not between 0 and 100',
+    category: 'logical',
+  },
+  'ignoring case': {
+    title: 'ignoring case',
+    description:
+      'Postfix modifier that makes the preceding string comparator (`is`, `==`, `starts with`, `ends with`, `contains`) case-insensitive. No-op for non-string operands.',
+    example: "if name is 'Alice' ignoring case\nif str starts with 'hi' ignoring case",
     category: 'logical',
   },
   has: {

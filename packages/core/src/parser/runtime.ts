@@ -112,6 +112,9 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'binaryExpression':
       return evaluateBinaryExpression(node, context);
 
+    case 'betweenExpression':
+      return evaluateBetweenExpression(node, context);
+
     case 'unaryExpression':
       return evaluateUnaryExpression(node, context);
 
@@ -243,6 +246,12 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
   // Evaluate right side for other operators
   const right = await evaluateAST(node.right, context);
 
+  // `ignoring case` postfix modifier: lowercase string operands before dispatching
+  // to comparators. Non-string operands pass through unchanged.
+  const applyCI = (v: unknown): unknown => (typeof v === 'string' ? v.toLowerCase() : v);
+  const L = node.ignoringCase ? applyCI(left) : left;
+  const R = node.ignoringCase ? applyCI(right) : right;
+
   // Delegate to Phase 3 expression system based on operator
   switch (operator) {
     case '+':
@@ -269,14 +278,14 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return logicalExpressions.lessThanOrEqual.evaluate(context, left, right);
     case '==':
     case 'is':
-      return logicalExpressions.equals.evaluate(context, left, right);
+      return logicalExpressions.equals.evaluate(context, L, R);
     case '!=':
     case 'is not':
-      return logicalExpressions.notEquals.evaluate(context, left, right);
+      return logicalExpressions.notEquals.evaluate(context, L, R);
     case '===':
-      return logicalExpressions.strictEquals.evaluate(context, left, right);
+      return logicalExpressions.strictEquals.evaluate(context, L, R);
     case '!==':
-      return logicalExpressions.strictNotEquals.evaluate(context, left, right);
+      return logicalExpressions.strictNotEquals.evaluate(context, L, R);
 
     case 'as':
       // For 'as' conversion, right operand should be a string type name
@@ -291,11 +300,27 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return conversionExpressions.as.evaluate(context, left, typeName);
 
     case 'contains':
-      return logicalExpressions.contains.evaluate(context, left, right);
+      return logicalExpressions.contains.evaluate(context, L, R);
+
+    case 'starts with':
+      return logicalExpressions.startsWith.evaluate(context, L, R);
+
+    case 'ends with':
+      return logicalExpressions.endsWith.evaluate(context, L, R);
+
+    case 'does not start with': {
+      const r = await logicalExpressions.startsWith.evaluate(context, L, R);
+      return !r;
+    }
+
+    case 'does not end with': {
+      const r = await logicalExpressions.endsWith.evaluate(context, L, R);
+      return !r;
+    }
 
     case 'match':
     case 'matches':
-      return logicalExpressions.matches.evaluate(context, left, right);
+      return logicalExpressions.matches.evaluate(context, L, R);
 
     case 'in':
       // Simple 'in' operator - check if left exists in right
@@ -308,6 +333,20 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     default:
       throw new Error(`Unknown binary operator: ${operator}`);
   }
+}
+
+/**
+ * Evaluates `X is between A and B` / `X is not between A and B` ternary comparisons.
+ */
+async function evaluateBetweenExpression(node: any, context: ExecutionContext): Promise<boolean> {
+  const value = await evaluateAST(node.value, context);
+  const min = await evaluateAST(node.min, context);
+  const max = await evaluateAST(node.max, context);
+  // `ignoring case` applies when bounds are string (lexicographic) ranges
+  const ci = (v: unknown): unknown => (typeof v === 'string' ? v.toLowerCase() : v);
+  const [V, lo, hi] = node.ignoringCase ? [ci(value), ci(min), ci(max)] : [value, min, max];
+  const inRange = (await logicalExpressions.between.evaluate(context, V, lo, hi)) as boolean;
+  return node.negated ? !inRange : inRange;
 }
 
 /**
