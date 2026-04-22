@@ -35,6 +35,7 @@ export { createRemoveCommand as remove } from './dom/remove';
 export { createToggleCommand as toggle } from './dom/toggle';
 export { createPutCommand as put } from './dom/put';
 export { createMakeCommand as make } from './dom/make';
+export { createEmptyCommand as empty } from './dom/empty';
 export { createSwapCommand as swap, createMorphCommand as morph } from './dom/swap';
 export { createProcessPartialsCommand as processPartialsCmd } from './dom/process-partials';
 
@@ -80,6 +81,8 @@ export { createThrowCommand as throw_ } from './control-flow/throw';
 // Execution Commands (factories)
 export { createCallCommand as call } from './execution/call';
 export { createPseudoCommand as pseudo } from './execution/pseudo-command';
+export { createFocusCommand as focus } from './execution/focus';
+export { createBlurCommand as blur } from './execution/blur';
 
 // Content Commands (factories)
 export { createAppendCommand as append } from './content/append';
@@ -113,6 +116,7 @@ export { RemoveCommand, createRemoveCommand } from './dom/remove';
 export { ToggleCommand, createToggleCommand } from './dom/toggle';
 export { PutCommand, createPutCommand } from './dom/put';
 export { MakeCommand, createMakeCommand } from './dom/make';
+export { EmptyCommand, createEmptyCommand } from './dom/empty';
 export { swapCommand, morphCommand, createSwapCommand, createMorphCommand } from './dom/swap';
 export {
   processPartialsCommand,
@@ -180,6 +184,9 @@ export { ExitCommand, createExitCommand } from './control-flow/exit';
 
 // Execution Commands
 export { CallCommand, createCallCommand } from './execution/call';
+// Execution - v0.9.90
+export { FocusCommand, createFocusCommand } from './execution/focus';
+export { BlurCommand, createBlurCommand } from './execution/blur';
 
 // Content Commands
 export { AppendCommand, createAppendCommand } from './content/append';
@@ -222,6 +229,7 @@ export type { RemoveCommandInput } from './dom/remove';
 export type { ToggleCommandInput } from './dom/toggle';
 export type { PutCommandInput } from './dom/put';
 export type { MakeCommandInput } from './dom/make';
+export type { EmptyCommandInput } from './dom/empty';
 export type { SwapCommandInput, SwapStrategy } from './dom/swap';
 export type {
   ProcessPartialsCommandInput,
@@ -255,6 +263,8 @@ export type { HaltCommandInput } from './control-flow/halt';
 export type { ReturnCommandInput } from './control-flow/return';
 export type { ExitCommandInput } from './control-flow/exit';
 export type { CallCommandInput } from './execution/call';
+export type { FocusCommandInput } from './execution/focus';
+export type { BlurCommandInput } from './execution/blur';
 export type { AppendCommandInput } from './content/append';
 export type { TransitionCommandInput } from './animation/transition';
 export type { MeasureCommandInput } from './animation/measure';

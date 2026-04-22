@@ -363,6 +363,13 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       return targets;
     }`,
 
+  empty: `
+    case 'empty': {
+      const targets = await getTarget();
+      for (const el of targets) (el as HTMLElement).innerHTML = '';
+      return targets;
+    }`,
+
   return: `
     case 'return': {
       const value = cmd.args[0] ? await evaluate(cmd.args[0], ctx) : ctx.it;

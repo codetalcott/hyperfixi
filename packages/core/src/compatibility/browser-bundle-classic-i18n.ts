@@ -50,6 +50,7 @@ import { createPutCommand } from '../commands/dom/put';
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createMakeCommand } from '../commands/dom/make';
+import { createEmptyCommand } from '../commands/dom/empty';
 
 // ============================================================================
 // Control Flow Commands (9)
@@ -99,6 +100,8 @@ import { createTakeCommand } from '../commands/animation/take';
 import { createLogCommand } from '../commands/utility/log';
 import { createTellCommand } from '../commands/utility/tell';
 import { createCallCommand } from '../commands/execution/call';
+import { createFocusCommand } from '../commands/execution/focus';
+import { createBlurCommand } from '../commands/execution/blur';
 import { createCopyCommand } from '../commands/utility/copy';
 import { createPickCommand } from '../commands/utility/pick';
 import { createBeepCommand } from '../commands/utility/beep';
@@ -225,6 +228,7 @@ const runtimeExperimental = createMinimalRuntime(
     createHideCommand(),
     createShowCommand(),
     createMakeCommand(),
+    createEmptyCommand(),
 
     // Control Flow (9)
     createIfCommand(),
@@ -265,6 +269,10 @@ const runtimeExperimental = createMinimalRuntime(
     createCopyCommand(),
     createPickCommand(),
     createBeepCommand(),
+
+    // Execution (v0.9.90 focus/blur)
+    createFocusCommand(),
+    createBlurCommand(),
 
     // Advanced (2)
     createJsCommand(),

@@ -47,6 +47,7 @@ import { createRemoveCommand } from '../commands/dom/remove';
 import { createToggleCommand } from '../commands/dom/toggle';
 import { createPutCommand } from '../commands/dom/put';
 import { createMakeCommand } from '../commands/dom/make';
+import { createEmptyCommand } from '../commands/dom/empty';
 
 // Async Commands (2)
 import { createWaitCommand } from '../commands/async/wait';
@@ -77,9 +78,11 @@ import { createExitCommand } from '../commands/control-flow/exit';
 import { createUnlessCommand } from '../commands/control-flow/unless';
 import { createThrowCommand } from '../commands/control-flow/throw';
 
-// Execution Commands (2)
+// Execution Commands (4) — + focus/blur (v0.9.90)
 import { createCallCommand } from '../commands/execution/call';
 import { createPseudoCommand } from '../commands/execution/pseudo-command';
+import { createFocusCommand } from '../commands/execution/focus';
+import { createBlurCommand } from '../commands/execution/blur';
 
 // Content Commands (1)
 import { createAppendCommand } from '../commands/content/append';
@@ -213,6 +216,7 @@ const runtime = createMinimalRuntime(
     createToggleCommand(),
     createPutCommand(),
     createMakeCommand(),
+    createEmptyCommand(),
     // Async (2)
     createWaitCommand(),
     createFetchCommand(),
@@ -237,9 +241,11 @@ const runtime = createMinimalRuntime(
     createExitCommand(),
     createUnlessCommand(),
     createThrowCommand(),
-    // Execution (2)
+    // Execution (4)
     createCallCommand(),
     createPseudoCommand(),
+    createFocusCommand(),
+    createBlurCommand(),
     // Content (1)
     createAppendCommand(),
     // Animation (4)
