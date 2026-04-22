@@ -6,14 +6,14 @@
  * - createCommonExpressionEvaluator (5 expression categories)
  * - Only the 16 commands needed for standard functionality
  *
- * Commands included (22 standard):
- * - DOM: add, remove, toggle, show, hide, put, make, empty, open, close, select (11)
+ * Commands included (25 standard):
+ * - DOM: add, remove, toggle, show, hide, put, make, empty, open, close, select, reset (12)
  * - Execution: focus, blur (2)
- * - Data: set, increment, decrement (3)
+ * - Data: set, increment, decrement, clear (4)
  * - Events: send, trigger (2)
  * - Async: wait, fetch (2)
  * - Navigation: go (1)
- * - Utility: log (1)
+ * - Utility: log, breakpoint (2)
  *
  * Expression categories included (5 of 6):
  * - references: CSS selectors, me, you, it
@@ -46,15 +46,17 @@ import { createEmptyCommand } from '../commands/dom/empty';
 import { createOpenCommand } from '../commands/dom/open';
 import { createCloseCommand } from '../commands/dom/close';
 import { createSelectCommand } from '../commands/dom/select';
+import { createResetCommand } from '../commands/dom/reset';
 
 // Execution Commands (2) — v0.9.90 focus/blur
 import { createFocusCommand } from '../commands/execution/focus';
 import { createBlurCommand } from '../commands/execution/blur';
 
-// Data Commands (3)
+// Data Commands (4) — + clear (v0.9.90)
 import { createSetCommand } from '../commands/data/set';
 import { createIncrementCommand } from '../commands/data/increment';
 import { createDecrementCommand } from '../commands/data/decrement';
+import { createClearCommand } from '../commands/data/clear';
 
 // Event Commands (2)
 import { createSendCommand } from '../commands/events/send';
@@ -67,13 +69,14 @@ import { createFetchCommand } from '../commands/async/fetch';
 // Navigation Commands (1)
 import { createGoCommand } from '../commands/navigation/go';
 
-// Utility Commands (1)
+// Utility Commands (2) — + breakpoint (v0.9.90)
 import { createLogCommand } from '../commands/utility/log';
+import { createBreakpointCommand } from '../commands/utility/breakpoint';
 
 // Create runtime with ONLY the commands and expressions we need
 const runtime = createTreeShakeableRuntime(
   [
-    // DOM (11)
+    // DOM (12)
     createAddCommand(),
     createRemoveCommand(),
     createToggleCommand(),
@@ -85,13 +88,15 @@ const runtime = createTreeShakeableRuntime(
     createOpenCommand(),
     createCloseCommand(),
     createSelectCommand(),
+    createResetCommand(),
     // Execution (2) — v0.9.90 focus/blur
     createFocusCommand(),
     createBlurCommand(),
-    // Data (3)
+    // Data (4) — + clear (v0.9.90)
     createSetCommand(),
     createIncrementCommand(),
     createDecrementCommand(),
+    createClearCommand(),
     // Events (2)
     createSendCommand(),
     createTriggerCommand(),
@@ -100,8 +105,9 @@ const runtime = createTreeShakeableRuntime(
     createFetchCommand(),
     // Navigation (1)
     createGoCommand(),
-    // Utility (1)
+    // Utility (2) — + breakpoint (v0.9.90)
     createLogCommand(),
+    createBreakpointCommand(),
   ],
   {
     expressionEvaluator: createCommonExpressionEvaluator(),
@@ -144,18 +150,21 @@ const api = {
     'empty',
     'open',
     'close',
-    'select', // DOM (11)
+    'select',
+    'reset', // DOM (12)
     'focus',
     'blur', // Execution (2)
     'set',
     'increment',
-    'decrement', // Data (3)
+    'decrement',
+    'clear', // Data (4)
     'send',
     'trigger', // Events (2)
     'wait',
     'fetch', // Async (2)
     'go', // Navigation (1)
-    'log', // Utility (1)
+    'log',
+    'breakpoint', // Utility (2)
   ],
 
   /**

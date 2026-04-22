@@ -39,6 +39,7 @@ export { createEmptyCommand as empty } from './dom/empty';
 export { createOpenCommand as open } from './dom/open';
 export { createCloseCommand as close } from './dom/close';
 export { createSelectCommand as select } from './dom/select';
+export { createResetCommand as reset } from './dom/reset';
 export { createSwapCommand as swap, createMorphCommand as morph } from './dom/swap';
 export { createProcessPartialsCommand as processPartialsCmd } from './dom/process-partials';
 
@@ -52,6 +53,7 @@ export { createGetCommand as get } from './data/get';
 export { createIncrementCommand as increment } from './data/increment';
 export { createDecrementCommand as decrement } from './data/decrement';
 export { createDefaultCommand as defaultCmd } from './data/default';
+export { createClearCommand as clear } from './data/clear';
 
 // Utility Commands (factories)
 export { createLogCommand as log } from './utility/log';
@@ -59,6 +61,7 @@ export { createTellCommand as tell } from './utility/tell';
 export { createCopyCommand as copy } from './utility/copy';
 export { createPickCommand as pick } from './utility/pick';
 export { createBeepCommand as beep } from './utility/beep';
+export { createBreakpointCommand as breakpoint } from './utility/breakpoint';
 
 // Event Commands (factories)
 export { createTriggerCommand as trigger } from './events/trigger';
@@ -123,6 +126,7 @@ export { EmptyCommand, createEmptyCommand } from './dom/empty';
 export { OpenCommand, createOpenCommand } from './dom/open';
 export { CloseCommand, createCloseCommand } from './dom/close';
 export { SelectCommand, createSelectCommand } from './dom/select';
+export { ResetCommand, createResetCommand } from './dom/reset';
 export { swapCommand, morphCommand, createSwapCommand, createMorphCommand } from './dom/swap';
 export {
   processPartialsCommand,
@@ -190,7 +194,6 @@ export { ExitCommand, createExitCommand } from './control-flow/exit';
 
 // Execution Commands
 export { CallCommand, createCallCommand } from './execution/call';
-// Execution - v0.9.90
 export { FocusCommand, createFocusCommand } from './execution/focus';
 export { BlurCommand, createBlurCommand } from './execution/blur';
 
@@ -211,6 +214,7 @@ export { UnlessCommand, createUnlessCommand } from './control-flow/unless';
 
 // Data Commands - Phase 6-4
 export { DefaultCommand, createDefaultCommand } from './data/default';
+export { ClearCommand, createClearCommand } from './data/clear';
 
 // Execution Commands - Phase 6-4
 export { PseudoCommand, createPseudoCommand } from './execution/pseudo-command';
@@ -221,6 +225,7 @@ export { CopyCommand, createCopyCommand } from './utility/copy';
 export { PickCommand, createPickCommand } from './utility/pick';
 export { ThrowCommand, createThrowCommand } from './control-flow/throw';
 export { BeepCommand, createBeepCommand } from './utility/beep';
+export { BreakpointCommand, createBreakpointCommand } from './utility/breakpoint';
 export { InstallCommand, createInstallCommand } from './behaviors/install';
 
 // Final Commands - Phase 6-6
@@ -239,6 +244,9 @@ export type { EmptyCommandInput } from './dom/empty';
 export type { OpenCommandInput, OpenDialogMode } from './dom/open';
 export type { CloseCommandInput } from './dom/close';
 export type { SelectCommandInput } from './dom/select';
+export type { ResetCommandInput } from './dom/reset';
+export type { ClearCommandInput } from './data/clear';
+export type { BreakpointCommandInput } from './utility/breakpoint';
 export type { SwapCommandInput, SwapStrategy } from './dom/swap';
 export type {
   ProcessPartialsCommandInput,

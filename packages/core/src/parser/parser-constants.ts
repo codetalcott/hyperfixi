@@ -97,7 +97,9 @@ export const COMMANDS = new Set([
   'beep',
   'blur',
   'break',
+  'breakpoint',
   'call',
+  'clear',
   'close',
   'continue',
   'copy',
@@ -129,8 +131,10 @@ export const COMMANDS = new Set([
   'render',
   'repeat',
   'replace', // htmx-like: replace url in history
+  'reset',
   'return',
   'scroll', // scroll to <target> (upstream _hyperscript 0.9.90)
+  'select',
   'send',
   'set',
   'settle',
