@@ -163,5 +163,18 @@ export type {
   DebugEventListener as DebuggerEventListener,
 } from './debug/index';
 
+// ============================================================================
+// Plugin system (v0.9.90 Phase 5)
+// ============================================================================
+// External packages (@hyperfixi/reactivity, @hyperfixi/speech, etc.) extend
+// hyperfixi at runtime through the plugin contract. See docs/API.md.
+
+export {
+  ParserExtensionRegistry,
+  getParserExtensionRegistry,
+  type ParserExtensionSnapshot,
+} from './parser/extensions';
+export { installPlugin, type HyperfixiPlugin, type HyperfixiPluginContext } from './runtime/plugin';
+
 // Note: Default export removed in favor of named exports for better tree-shaking
 // Use: import { hyperscript } from '@hyperfixi/core' instead of import hyperfixi from '@hyperfixi/core'
