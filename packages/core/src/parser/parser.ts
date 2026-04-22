@@ -2285,6 +2285,23 @@ export class Parser {
     // Collect all event names (supports "on event1 or event2 or event3")
     const eventNames: string[] = [];
 
+    // `on first click ...` — upstream _hyperscript 0.9.90 alias for `.once`.
+    // Consume the `first` keyword before the event name; the flag is merged
+    // into `modifiers.once` after the modifier block is parsed below.
+    let firstOnceAlias = false;
+    if (this.check('first') && !this.checkIsCommand() && this.current + 1 < this.tokens.length) {
+      // Only treat `first` as the once-alias when it's immediately followed by
+      // something that could be an event name (identifier/event), never when
+      // it's followed by `of`/`in` etc. which would be a positional expression.
+      const peek2 = this.tokens[this.current + 1];
+      const peek2Value = peek2?.value?.toLowerCase();
+      if (peek2Value && peek2Value !== 'of' && peek2Value !== 'in' && peek2Value !== 'from') {
+        this.advance(); // consume 'first'
+        firstOnceAlias = true;
+        debug.parse(`🔧 parseEventHandler: Parsed 'first' as .once alias`);
+      }
+    }
+
     // Parse first event name
     const event = this.parseEventNameWithNamespace("Expected event name after 'on'");
     eventNames.push(event);
@@ -2411,6 +2428,12 @@ export class Parser {
       } else {
         this.addError(`Expected 'at' after '${modName}'`);
       }
+    }
+
+    // Merge the `on first <event>` alias into modifiers.once after the
+    // `.once`/`.prevent`/... block so both forms coexist consistently.
+    if (firstOnceAlias) {
+      modifiers.once = true;
     }
 
     if (Object.keys(modifiers).length > 0) {
