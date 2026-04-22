@@ -37,6 +37,8 @@
     "docs:dev": "npm run dev --workspace=apps/docs-site",
     "docs:build": "npm run build --workspace=apps/docs-site",
     "check:fresh": "./scripts/ensure-fresh.sh packages/framework packages/semantic packages/aot-compiler packages/compilation-service packages/mcp-server",
+    "check:ci-order": "node scripts/check-ci-build-order.cjs",
+    "check:ci-order:test": "node --test scripts/check-ci-build-order.test.cjs",
     "compatibility:monitor": "node scripts/compatibility-monitor.js",
     "compatibility:improve": "node scripts/improvement-workflow.js",
     "compatibility:cycle": "npm run compatibility:monitor && npm run compatibility:improve",

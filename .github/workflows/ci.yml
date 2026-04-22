@@ -264,6 +264,12 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
+      # Cheap guard: zero-dep node script that verifies ci.yml builds every
+      # workspace runtime dependency before its consumer. Runs before
+      # `npm ci` so drift fails fast without paying install cost.
+      - name: Verify CI build order
+        run: node scripts/check-ci-build-order.cjs
+
       - name: Install dependencies
         run: npm ci
 
