@@ -48,6 +48,7 @@ import { createEmptyCommand } from '../commands/dom/empty';
 import { createOpenCommand } from '../commands/dom/open';
 import { createCloseCommand } from '../commands/dom/close';
 import { createSelectCommand } from '../commands/dom/select';
+import { createResetCommand } from '../commands/dom/reset';
 
 // Async Commands (2)
 import { createWaitCommand } from '../commands/async/wait';
@@ -59,6 +60,7 @@ import { createGetCommand } from '../commands/data/get';
 import { createIncrementCommand } from '../commands/data/increment';
 import { createDecrementCommand } from '../commands/data/decrement';
 import { createDefaultCommand } from '../commands/data/default';
+import { createClearCommand } from '../commands/data/clear';
 
 // Event Commands (2)
 import { createTriggerCommand } from '../commands/events/trigger';
@@ -78,7 +80,7 @@ import { createExitCommand } from '../commands/control-flow/exit';
 import { createUnlessCommand } from '../commands/control-flow/unless';
 import { createThrowCommand } from '../commands/control-flow/throw';
 
-// Execution Commands (4) — + focus/blur (v0.9.90 Phase 1)
+// Execution Commands (4) — + focus/blur (v0.9.90)
 import { createCallCommand } from '../commands/execution/call';
 import { createPseudoCommand } from '../commands/execution/pseudo-command';
 import { createFocusCommand } from '../commands/execution/focus';
@@ -103,6 +105,7 @@ import { createTellCommand } from '../commands/utility/tell';
 import { createCopyCommand } from '../commands/utility/copy';
 import { createPickCommand } from '../commands/utility/pick';
 import { createBeepCommand } from '../commands/utility/beep';
+import { createBreakpointCommand } from '../commands/utility/breakpoint';
 
 // Behaviors (1)
 import { createInstallCommand } from '../commands/behaviors/install';
@@ -223,15 +226,17 @@ const runtime = createMinimalRuntime(
     createOpenCommand(),
     createCloseCommand(),
     createSelectCommand(),
+    createResetCommand(),
     // Async (2)
     createWaitCommand(),
     createFetchCommand(),
-    // Data (5)
+    // Data (6)
     createSetCommand(),
     createGetCommand(),
     createIncrementCommand(),
     createDecrementCommand(),
     createDefaultCommand(),
+    createClearCommand(),
     // Events (2)
     createTriggerCommand(),
     createSendCommand(),
@@ -262,12 +267,13 @@ const runtime = createMinimalRuntime(
     // Advanced (2)
     createJsCommand(),
     createAsyncCommand(),
-    // Utility (5)
+    // Utility (6)
     createLogCommand(),
     createTellCommand(),
     createCopyCommand(),
     createPickCommand(),
     createBeepCommand(),
+    createBreakpointCommand(),
     // Behaviors (1)
     createInstallCommand(),
     // Templates (1)

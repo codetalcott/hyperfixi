@@ -32,6 +32,7 @@ export const COMMAND_KEYWORDS = [
   'open',
   'close',
   'select',
+  'reset',
   'swap',
   'morph',
   'append',
@@ -77,6 +78,7 @@ export const COMMAND_KEYWORDS = [
   'copy',
   'pick',
   'beep',
+  'breakpoint',
   'js',
   'async',
 
@@ -88,6 +90,7 @@ export const COMMAND_KEYWORDS = [
   'increment',
   'decrement',
   'default',
+  'clear',
 
   // Behavior Commands
   'install',
@@ -263,6 +266,19 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     description:
       'Selects the text in an <input>/<textarea>, or selects the contents of any DOM element via Selection + Range.',
     example: 'select #search\nselect <textarea/>',
+    category: 'command',
+  },
+  reset: {
+    title: 'reset',
+    description: 'Resets a <form> to its default values (HTMLFormElement.reset()).',
+    example: 'reset #myForm\nreset <form/>',
+    category: 'command',
+  },
+  clear: {
+    title: 'clear',
+    description:
+      'Resets a variable to null, or clears the value of a form field (<input>, <textarea>, <select>). For arbitrary elements use `empty` instead.',
+    example: 'clear :count\nclear myVar\nclear #search',
     category: 'command',
   },
   swap: {
@@ -461,6 +477,12 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'beep',
     description: 'Highlights element for debugging.',
     example: 'beep! me\nbeep! #target',
+    category: 'command',
+  },
+  breakpoint: {
+    title: 'breakpoint',
+    description: 'Emits a `debugger;` statement — pauses in DevTools when attached.',
+    example: 'breakpoint\non click breakpoint',
     category: 'command',
   },
   js: {

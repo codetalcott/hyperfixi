@@ -59,6 +59,7 @@ import { createEmptyCommand } from '../commands/dom/empty';
 import { createOpenCommand } from '../commands/dom/open';
 import { createCloseCommand } from '../commands/dom/close';
 import { createSelectCommand } from '../commands/dom/select';
+import { createResetCommand } from '../commands/dom/reset';
 
 // ============================================================================
 // Control Flow Commands (9)
@@ -81,6 +82,7 @@ import { createGetCommand } from '../commands/data/get';
 import { createIncrementCommand } from '../commands/data/increment';
 import { createDecrementCommand } from '../commands/data/decrement';
 import { createDefaultCommand } from '../commands/data/default';
+import { createClearCommand } from '../commands/data/clear';
 
 // ============================================================================
 // Async Commands (2)
@@ -113,6 +115,7 @@ import { createBlurCommand } from '../commands/execution/blur';
 import { createCopyCommand } from '../commands/utility/copy';
 import { createPickCommand } from '../commands/utility/pick';
 import { createBeepCommand } from '../commands/utility/beep';
+import { createBreakpointCommand } from '../commands/utility/breakpoint';
 
 // ============================================================================
 // Advanced Commands (2)
@@ -151,7 +154,7 @@ const expressionEvaluator = new ConfigurableExpressionEvaluator([
 // Create runtime instance with classic commands (37 total) and custom expression evaluator
 const runtimeExperimental = createMinimalRuntime(
   [
-    // DOM (11) — + empty, open, close, select (v0.9.90)
+    // DOM (12) — + empty, open, close, select, reset (v0.9.90)
     createAddCommand(),
     createRemoveCommand(),
     createToggleCommand(),
@@ -163,6 +166,7 @@ const runtimeExperimental = createMinimalRuntime(
     createOpenCommand(),
     createCloseCommand(),
     createSelectCommand(),
+    createResetCommand(),
 
     // Control Flow (9)
     createIfCommand(),
@@ -175,12 +179,13 @@ const runtimeExperimental = createMinimalRuntime(
     createExitCommand(),
     createThrowCommand(),
 
-    // Data (5)
+    // Data (6) — + clear (v0.9.90)
     createSetCommand(),
     createGetCommand(),
     createIncrementCommand(),
     createDecrementCommand(),
     createDefaultCommand(),
+    createClearCommand(),
 
     // Async (2)
     createWaitCommand(),
@@ -196,13 +201,14 @@ const runtimeExperimental = createMinimalRuntime(
     createSettleCommand(),
     createTakeCommand(),
 
-    // Utility (6)
+    // Utility (7) — + breakpoint (v0.9.90)
     createLogCommand(),
     createTellCommand(),
     createCallCommand(),
     createCopyCommand(),
     createPickCommand(),
     createBeepCommand(),
+    createBreakpointCommand(),
 
     // Execution (v0.9.90 focus/blur)
     createFocusCommand(),
@@ -252,9 +258,9 @@ const api = {
   attributeProcessor,
   version: '1.1.0-classic',
 
-  // Classic commands list (43) — + empty, open, close, select, focus, blur (v0.9.90)
+  // Classic commands list (46) — + empty, open, close, select, reset, focus, blur, clear, breakpoint (v0.9.90)
   commands: [
-    // DOM (11)
+    // DOM (12)
     'add',
     'remove',
     'toggle',
@@ -266,6 +272,7 @@ const api = {
     'open',
     'close',
     'select',
+    'reset',
     // Control Flow (9)
     'if',
     'unless',
@@ -276,12 +283,13 @@ const api = {
     'return',
     'exit',
     'throw',
-    // Data (5)
+    // Data (6)
     'set',
     'get',
     'increment',
     'decrement',
     'default',
+    'clear',
     // Async (2)
     'wait',
     'fetch',
@@ -293,13 +301,14 @@ const api = {
     'measure',
     'settle',
     'take',
-    // Utility (6)
+    // Utility (7)
     'log',
     'tell',
     'call',
     'copy',
     'pick',
     'beep',
+    'breakpoint',
     // Execution (2)
     'focus',
     'blur',

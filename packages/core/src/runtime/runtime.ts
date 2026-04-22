@@ -41,6 +41,7 @@ import { createEmptyCommand } from '../commands/dom/empty';
 import { createOpenCommand } from '../commands/dom/open';
 import { createCloseCommand } from '../commands/dom/close';
 import { createSelectCommand } from '../commands/dom/select';
+import { createResetCommand } from '../commands/dom/reset';
 import { createSwapCommand, createMorphCommand } from '../commands/dom/swap';
 import { createProcessPartialsCommand } from '../commands/dom/process-partials';
 
@@ -48,11 +49,12 @@ import { createProcessPartialsCommand } from '../commands/dom/process-partials';
 import { createWaitCommand } from '../commands/async/wait';
 import { createFetchCommand } from '../commands/async/fetch';
 
-// Data Commands (4)
+// Data Commands (5) — + clear (v0.9.90)
 import { createSetCommand } from '../commands/data/set';
 import { createGetCommand } from '../commands/data/get';
 import { createIncrementCommand } from '../commands/data/increment';
 import { createDecrementCommand } from '../commands/data/decrement';
+import { createClearCommand } from '../commands/data/clear';
 
 // Utility Commands (1)
 import { createLogCommand } from '../commands/utility/log';
@@ -108,6 +110,7 @@ import { createCopyCommand } from '../commands/utility/copy';
 import { createPickCommand } from '../commands/utility/pick';
 import { createThrowCommand } from '../commands/control-flow/throw';
 import { createBeepCommand } from '../commands/utility/beep';
+import { createBreakpointCommand } from '../commands/utility/breakpoint';
 import { createInstallCommand } from '../commands/behaviors/install';
 
 // Final Commands - Phase 6-6 (2)
@@ -196,6 +199,7 @@ export class Runtime extends RuntimeBase {
       registry.register(createOpenCommand());
       registry.register(createCloseCommand());
       registry.register(createSelectCommand());
+      registry.register(createResetCommand());
       registry.register(createSwapCommand());
       registry.register(createMorphCommand());
       registry.register(createProcessPartialsCommand());
@@ -204,11 +208,12 @@ export class Runtime extends RuntimeBase {
       registry.register(createWaitCommand());
       registry.register(createFetchCommand());
 
-      // Data Commands (4)
+      // Data Commands (5) — + clear (v0.9.90)
       registry.register(createSetCommand());
       registry.register(createGetCommand());
       registry.register(createIncrementCommand());
       registry.register(createDecrementCommand());
+      registry.register(createClearCommand());
 
       // Utility Commands (1)
       registry.register(createLogCommand());
@@ -260,6 +265,7 @@ export class Runtime extends RuntimeBase {
       registry.register(createPickCommand());
       registry.register(createThrowCommand());
       registry.register(createBeepCommand());
+      registry.register(createBreakpointCommand());
       registry.register(createInstallCommand());
 
       // Phase 6-6 Commands (2)

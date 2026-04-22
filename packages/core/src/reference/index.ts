@@ -146,6 +146,31 @@ export const commands: Record<string, CommandRef> = {
     availability: 'full',
     examples: ['select #search', 'select <textarea/>', 'select me'],
   },
+  reset: {
+    name: 'reset',
+    description: 'Reset a <form> to its default values (HTMLFormElement.reset())',
+    syntax: 'reset [target]',
+    category: 'dom',
+    availability: 'full',
+    examples: ['reset', 'reset #myForm', 'reset <form/>'],
+  },
+  clear: {
+    name: 'clear',
+    description:
+      'Reset a variable to null, or clear the value of a form field (<input>, <textarea>, <select>)',
+    syntax: 'clear <var|target>',
+    category: 'data',
+    availability: 'full',
+    examples: ['clear :count', 'clear myVar', 'clear #search', 'clear <textarea/>'],
+  },
+  breakpoint: {
+    name: 'breakpoint',
+    description: 'Drop into the debugger (emits a debugger; statement)',
+    syntax: 'breakpoint',
+    category: 'utility',
+    availability: 'full',
+    examples: ['breakpoint', 'on click breakpoint'],
+  },
   focus: {
     name: 'focus',
     description: 'Focus an element (calls HTMLElement.focus())',
