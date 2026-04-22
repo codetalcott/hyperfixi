@@ -206,6 +206,16 @@ export interface ExecutionContext extends CoreExecutionContext {
     returning: boolean;
     async: boolean;
   };
+
+  /**
+   * Phase 5b: optional convenience for plugin commands to register per-element
+   * teardown without going through `runtime.getCleanupRegistry()`. Populated by
+   * runtime code paths that construct the execution context with a runtime
+   * reference available. Plugins that cannot rely on presence should fall back
+   * to calling `runtime.getCleanupRegistry().registerCustom(...)` via the
+   * `runtime` supplied in their `HyperfixiPluginContext.install` argument.
+   */
+  readonly registerCleanup?: (element: Element, cleanup: () => void, description?: string) => void;
 }
 
 /**

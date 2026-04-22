@@ -4,6 +4,7 @@
  */
 
 import type { ExecutionContext } from '../types/core';
+import { setGlobal } from '../parser/extensions';
 
 /**
  * Shared global variables Map across all execution contexts
@@ -135,7 +136,7 @@ export function setContextValue(
 
   // Set in appropriate scope
   if (isGlobal) {
-    context.globals.set(name, value);
+    setGlobal(context, name, value);
   } else {
     context.locals.set(name, value);
   }
@@ -289,7 +290,7 @@ export function restoreContext(context: ExecutionContext, snapshot: Record<strin
       if (!snapshotKeys.has(key)) context.globals.delete(key);
     }
     Object.entries(snapshot.globals).forEach(([key, value]) => {
-      context.globals.set(key, value);
+      setGlobal(context, key, value);
     });
   }
 

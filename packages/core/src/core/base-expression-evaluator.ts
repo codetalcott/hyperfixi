@@ -14,6 +14,7 @@ import type { ASTNode, ExecutionContext } from '../types/core';
 import type { ExecutionResult, ExecutionSignal } from '../types/result';
 import { ok, err } from '../types/result';
 import { debug } from '../utils/debug';
+import { getRegisteredNodeEvaluator } from '../parser/extensions';
 import {
   isElement,
   getElementProperty,
@@ -175,8 +176,14 @@ export class BaseExpressionEvaluator {
       case 'asExpression':
         return this.evaluateAsExpression(node as any, context);
 
-      default:
+      default: {
+        // Phase 5b: plugin-registered evaluators for custom AST node types.
+        const pluginEvaluator = getRegisteredNodeEvaluator(node.type);
+        if (pluginEvaluator) {
+          return pluginEvaluator(node, context);
+        }
         throw new Error(`Unsupported AST node type for evaluation: ${node.type}`);
+      }
     }
   }
 
