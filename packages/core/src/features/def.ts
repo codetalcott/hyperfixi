@@ -14,6 +14,7 @@ import type {
 import type { ContextMetadata } from '../types/context-types';
 import type { EvaluationResult } from '../types/command-types';
 import { parseAndEvaluateExpression } from '../parser/expression-parser';
+import { setGlobal } from '../parser/extensions';
 
 /** Maximum entries retained in history arrays to prevent memory leaks. */
 const MAX_HISTORY_SIZE = 1000;
@@ -1359,7 +1360,7 @@ export class DefFeature {
 
           // Store the value
           if (isGlobal && context.globals) {
-            context.globals.set(varName, value);
+            setGlobal(context, varName, value);
           } else {
             executionContext.locals?.set(varName, value);
           }

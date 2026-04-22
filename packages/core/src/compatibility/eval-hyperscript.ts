@@ -8,6 +8,7 @@ import { Parser } from '../parser/parser';
 import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
 import { COMMANDS } from '../parser/parser-constants';
+import { setGlobal } from '../parser/extensions';
 import type { ExecutionContext } from '../types/core';
 import type { SemanticAnalyzerInterface } from '../parser/types';
 import {
@@ -94,11 +95,11 @@ function convertContext(
     // Handle both Map and plain object globals
     if (hyperScriptContext.globals instanceof Map) {
       for (const [key, value] of hyperScriptContext.globals) {
-        context.globals.set(key, value);
+        setGlobal(context, key, value);
       }
     } else {
       for (const [key, value] of Object.entries(hyperScriptContext.globals)) {
-        context.globals.set(key, value);
+        setGlobal(context, key, value);
       }
     }
   }

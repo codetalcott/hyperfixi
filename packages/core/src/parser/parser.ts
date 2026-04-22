@@ -22,6 +22,7 @@ import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
 // Note: isDebugEnabled is used in semantic-integration.ts for debug event emission
 import { SemanticIntegrationAdapter, DEFAULT_CONFIDENCE_THRESHOLD } from './semantic-integration';
+import { getRegisteredFeature } from './extensions';
 
 // Phase 1 Refactoring: Import new helper modules
 import {
@@ -280,11 +281,22 @@ export class Parser {
         };
       }
 
-      // Check if this starts with init, on, def, or a comment (top-level features)
-      if (this.check('init') || this.check('on') || this.check('def') || this.checkComment()) {
+      // Check if this starts with init, on, def, a comment, or a plugin-registered
+      // top-level feature (Phase 5b — e.g. `live`, `when`, `bind` from @hyperfixi/reactivity).
+      const topToken = this.peek();
+      const topPluginFeature =
+        topToken && getRegisteredFeature(topToken.value) ? topToken.value : null;
+      if (
+        this.check('init') ||
+        this.check('on') ||
+        this.check('def') ||
+        this.checkComment() ||
+        topPluginFeature !== null
+      ) {
         const statements: ASTNode[] = [];
 
-        // Parse all top-level features (init blocks, event handlers, function defs), skipping comments
+        // Parse all top-level features (init blocks, event handlers, function defs,
+        // plugin features), skipping comments.
         while (!this.isAtEnd()) {
           // Skip any top-level comments
           if (this.checkComment()) {
@@ -312,6 +324,17 @@ export class Parser {
               statements.push(defFeature);
             }
           } else {
+            // Phase 5b: dispatch to plugin-registered top-level features.
+            const tok = this.peek();
+            const pluginParse = tok ? getRegisteredFeature(tok.value) : undefined;
+            if (pluginParse) {
+              const featureToken = this.advance();
+              const featureNode = pluginParse(this.getContext(), featureToken);
+              if (featureNode) {
+                statements.push(featureNode);
+              }
+              continue;
+            }
             // Not a feature we recognize, break out
             break;
           }

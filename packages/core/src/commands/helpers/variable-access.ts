@@ -14,6 +14,7 @@
 
 import type { ExecutionContext } from '../../types/base-types';
 import { isHTMLElement } from '../../utils/element-check';
+import { setGlobal } from '../../parser/extensions';
 
 /**
  * Convert any value to a number for arithmetic operations
@@ -149,11 +150,18 @@ export function setVariableValue(
 ): void {
   // If preferred scope is specified, handle it
   if (preferredScope === 'global') {
-    context.globals.set(name, value);
+    setGlobal(context, name, value);
     // Also set on window for browser globals
     if (typeof window !== 'undefined') {
       (window as any)[name] = value;
     }
+    return;
+  }
+
+  // Hyperscript convention: `$name` identifiers are globals, `:name` are locals.
+  // Route `$`-prefixed writes to globals even when no matching entry exists yet.
+  if (name.startsWith('$')) {
+    setGlobal(context, name, value);
     return;
   }
 
@@ -165,7 +173,7 @@ export function setVariableValue(
 
   // If variable exists in global scope, update it
   if (context.globals && context.globals.has(name)) {
-    context.globals.set(name, value);
+    setGlobal(context, name, value);
     // Also update on window if it exists there
     if (typeof window !== 'undefined' && name in window) {
       (window as any)[name] = value;
@@ -183,7 +191,7 @@ export function setVariableValue(
   if (typeof window !== 'undefined' && name in window) {
     (window as any)[name] = value;
     // Also store in globals for consistency
-    context.globals.set(name, value);
+    setGlobal(context, name, value);
     return;
   }
 

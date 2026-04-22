@@ -43,6 +43,13 @@ export interface HyperfixiPluginContext {
   commandRegistry: CommandRegistryV2;
   /** Parser extension registry for adding keywords, operators, and Pratt entries. */
   parserExtensions: ParserExtensionRegistry;
+  /**
+   * Phase 5b: the runtime being installed into. Plugins that need to register
+   * per-element teardowns (e.g. reactive effect cleanups) should close over
+   * this reference at install time and call
+   * `runtime.getCleanupRegistry().registerCustom(...)` during `execute()`.
+   */
+  runtime: Runtime;
 }
 
 /**
@@ -69,6 +76,7 @@ export function installPlugin(runtime: Runtime, plugin: HyperfixiPlugin): void {
   const ctx: HyperfixiPluginContext = {
     commandRegistry: runtime.getRegistry(),
     parserExtensions: getParserExtensionRegistry(),
+    runtime,
   };
   plugin.install(ctx);
 }

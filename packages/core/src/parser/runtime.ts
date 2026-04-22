@@ -4,6 +4,9 @@
  */
 
 import type { ASTNode, ExecutionContext } from '../types/core';
+import { getRegisteredNodeEvaluator } from './extensions';
+// Re-export setGlobal for backward-compatible access via the runtime module.
+export { setGlobal } from './extensions';
 
 // Import Phase 3 expression system
 import { referencesExpressions } from '../expressions/references/index';
@@ -136,8 +139,14 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'conditionalExpression':
       return evaluateConditionalExpression(node, context);
 
-    default:
+    default: {
+      // Phase 5b: plugin-registered evaluators for custom AST node types.
+      const pluginEvaluator = getRegisteredNodeEvaluator((node as any).type);
+      if (pluginEvaluator) {
+        return pluginEvaluator(node, context);
+      }
       throw new Error(`Unknown AST node type: ${(node as any).type}`);
+    }
   }
 }
 

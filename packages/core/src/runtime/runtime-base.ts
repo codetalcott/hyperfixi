@@ -372,6 +372,15 @@ export class RuntimeBase {
   }
 
   /**
+   * Phase 5b: access the cleanup registry. Plugins use this to register
+   * per-element teardowns that fire when the element is removed from the
+   * DOM or `cleanup(element)` is called explicitly.
+   */
+  getCleanupRegistry(): CleanupRegistry {
+    return this.cleanupRegistry;
+  }
+
+  /**
    * Destroy the runtime, cleaning up all resources
    */
   destroy(): void {

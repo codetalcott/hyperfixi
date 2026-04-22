@@ -23,6 +23,7 @@ import {
 import { setElementProperty, isPlainObject } from '../helpers/element-property-access';
 import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulation';
 import { isAttributeSyntax } from '../helpers/attribute-manipulation';
+import { setVariableValue } from '../helpers/variable-access';
 import {
   isPropertyTargetString,
   resolveAnyPropertyTarget,
@@ -198,7 +199,10 @@ export class SetCommand implements DecoratedCommand {
   async execute(input: SetCommandInput, context: TypedExecutionContext): Promise<SetCommandOutput> {
     switch (input.type) {
       case 'variable':
-        context.locals.set(input.name, input.value);
+        // Route through setVariableValue so `$name` globals go to context.globals
+        // (and notify registered plugin hooks), while `:name`/plain locals land in
+        // context.locals. Matches hyperscript scoping conventions.
+        setVariableValue(input.name, input.value, context);
         if (input.name === 'result' || input.name === 'it') {
           Object.assign(context, { [input.name]: input.value });
         }

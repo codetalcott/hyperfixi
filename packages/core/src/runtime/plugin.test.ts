@@ -16,7 +16,7 @@ import { Runtime } from './runtime';
 import { parse } from '../parser/parser';
 import { tokenize } from '../parser/tokenizer';
 import { installPlugin, type HyperfixiPlugin } from './plugin';
-import { getParserExtensionRegistry } from '../parser/extensions';
+import { getParserExtensionRegistry, setGlobal } from '../parser/extensions';
 import type { ASTNode } from '../types/base-types';
 import type { ExecutionContext } from '../types/core';
 
@@ -199,6 +199,184 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
 
       registry.restore(baseline);
       expect(registry.hasCommand('tempcmd')).toBe(before);
+    });
+  });
+
+  // ==========================================================================
+  // Phase 5b seam extensions (for @hyperfixi/reactivity and other plugins that
+  // need top-level feature parsing, custom AST evaluators, and global-write
+  // notifications).
+  // ==========================================================================
+
+  describe('Phase 5b — feature registration', () => {
+    it('parser dispatches top-level plugin features', () => {
+      const captured: Array<{ type: string; body: ASTNode[] }> = [];
+      const plugin: HyperfixiPlugin = {
+        name: 'track-plugin',
+        install({ parserExtensions }) {
+          parserExtensions.registerFeature('track', (ctx, _token) => {
+            const body = ctx.parseCommandListUntilEnd();
+            // consume terminating `end`
+            (ctx as any).match?.('end');
+            const node = { type: 'trackFeature', body } as unknown as ASTNode;
+            captured.push({ type: 'trackFeature', body });
+            return node;
+          });
+        },
+      };
+      installPlugin(new Runtime(), plugin);
+
+      const result = parse('track\n  toggle .active on me\nend');
+      expect(result.success).toBe(true);
+      expect(captured.length).toBe(1);
+      expect(captured[0].body.length).toBeGreaterThan(0);
+    });
+
+    it('registered features coexist with init/on/def in one script', () => {
+      const seen: string[] = [];
+      const plugin: HyperfixiPlugin = {
+        name: 'plug-coexist',
+        install({ parserExtensions }) {
+          parserExtensions.registerFeature('watchtag', (ctx, _token) => {
+            // Zero-arg feature: just emit a marker node.
+            seen.push('watchtag');
+            return { type: 'watchtagFeature' } as unknown as ASTNode;
+          });
+        },
+      };
+      installPlugin(new Runtime(), plugin);
+
+      const result = parse('watchtag\non click beep! end');
+      expect(result.success).toBe(true);
+      expect(seen).toEqual(['watchtag']);
+      // Result.node is a program containing both the watchtag feature and the on handler.
+      const stmts = (result.node as any).statements ?? (result.node as any).body ?? [];
+      expect(Array.isArray(stmts)).toBe(true);
+    });
+
+    it('hasFeature reflects registration', () => {
+      expect(registry.hasFeature('fff')).toBe(false);
+      const plugin: HyperfixiPlugin = {
+        name: 'f',
+        install({ parserExtensions }) {
+          parserExtensions.registerFeature('fff', () => ({ type: 'fffFeature' }) as ASTNode);
+        },
+      };
+      installPlugin(new Runtime(), plugin);
+      expect(registry.hasFeature('fff')).toBe(true);
+    });
+  });
+
+  describe('Phase 5b — node evaluator registration', () => {
+    it('runtime dispatches custom AST node type to plugin evaluator', async () => {
+      const calls: ASTNode[] = [];
+      const plugin: HyperfixiPlugin = {
+        name: 'eval-plugin',
+        install({ parserExtensions }) {
+          parserExtensions.registerNodeEvaluator('customThing', (node, _ctx) => {
+            calls.push(node);
+            return 42;
+          });
+        },
+      };
+      installPlugin(new Runtime(), plugin);
+
+      const runtime = new Runtime();
+      const el = document.createElement('div');
+      const ctx = createContext(el);
+      const node = { type: 'customThing', marker: 'hi' } as unknown as ASTNode;
+      const result = await runtime.execute(node, ctx);
+      expect(result).toBe(42);
+      expect(calls.length).toBe(1);
+      expect((calls[0] as any).marker).toBe('hi');
+    });
+
+    it('unknown node type still throws when no plugin registers it', async () => {
+      const runtime = new Runtime();
+      const el = document.createElement('div');
+      const ctx = createContext(el);
+      const node = { type: 'nobodyKnowsThis' } as unknown as ASTNode;
+      await expect(runtime.execute(node, ctx)).rejects.toThrow(/Unsupported AST node type/);
+    });
+  });
+
+  describe('Phase 5b — global write hook', () => {
+    it('fires on writes to $name globals', async () => {
+      const events: Array<[string, unknown]> = [];
+      const plugin: HyperfixiPlugin = {
+        name: 'watch-plugin',
+        install({ parserExtensions }) {
+          parserExtensions.registerGlobalWriteHook((name, value, _ctx) => {
+            events.push([name, value]);
+          });
+        },
+      };
+      installPlugin(new Runtime(), plugin);
+
+      const runtime = new Runtime();
+      const el = document.createElement('div');
+      const ctx = createContext(el);
+      const result = parse('set $foo to 42');
+      expect(result.success).toBe(true);
+      await runtime.execute(result.node!, ctx);
+      // setVariableValue routes `$`-prefixed names to globals; the hook sees the
+      // stored key (with prefix, matching how the global is read back).
+      expect(events.some(([n, v]) => n === '$foo' && v === 42)).toBe(true);
+    });
+
+    it('dispose fn removes the hook', () => {
+      const events: string[] = [];
+      const dispose = registry.registerGlobalWriteHook((name, _v, _ctx) => {
+        events.push(name);
+      });
+      const ctx = createContext(document.createElement('div'));
+      setGlobal(ctx, 'bar', 1);
+      expect(events).toEqual(['bar']);
+      dispose();
+      setGlobal(ctx, 'baz', 2);
+      expect(events).toEqual(['bar']);
+    });
+  });
+
+  describe('Phase 5b — HyperfixiPluginContext exposes runtime', () => {
+    it('install receives the runtime for cleanup registration', () => {
+      let capturedRuntime: Runtime | null = null;
+      const plugin: HyperfixiPlugin = {
+        name: 'rt-plugin',
+        install(ctx) {
+          capturedRuntime = ctx.runtime;
+        },
+      };
+      const runtime = new Runtime();
+      installPlugin(runtime, plugin);
+      expect(capturedRuntime).toBe(runtime);
+      expect(typeof runtime.getCleanupRegistry().registerCustom).toBe('function');
+    });
+  });
+
+  describe('Phase 5b — snapshot / restore for new seams', () => {
+    it('restores features, node evaluators, and global write hooks', () => {
+      const hookCalls: string[] = [];
+      const plugin: HyperfixiPlugin = {
+        name: 'snap-plugin',
+        install({ parserExtensions }) {
+          parserExtensions.registerFeature('ffsnap', () => ({ type: 'ffsnapFeature' }) as ASTNode);
+          parserExtensions.registerNodeEvaluator('snapNode', (_n, _c) => 'hi');
+          parserExtensions.registerGlobalWriteHook((name, _v, _c) => {
+            hookCalls.push(name);
+          });
+        },
+      };
+      installPlugin(new Runtime(), plugin);
+      expect(registry.hasFeature('ffsnap')).toBe(true);
+
+      registry.restore(baseline);
+      expect(registry.hasFeature('ffsnap')).toBe(false);
+
+      // After restore, the hook is gone — writes don't produce events.
+      const ctx = createContext(document.createElement('div'));
+      setGlobal(ctx, 'anything', 1);
+      expect(hookCalls).toEqual([]);
     });
   });
 });
