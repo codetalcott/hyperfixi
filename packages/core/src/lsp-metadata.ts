@@ -28,6 +28,7 @@ export const COMMAND_KEYWORDS = [
   'set',
   'get',
   'make',
+  'empty',
   'swap',
   'morph',
   'append',
@@ -64,6 +65,8 @@ export const COMMAND_KEYWORDS = [
   'throw',
   'halt',
   'exit',
+  'focus',
+  'blur',
 
   // Utility Commands
   'log',
@@ -367,6 +370,18 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'call',
     description: 'Calls a function or method.',
     example: 'call myFunction()\ncall element.focus()',
+    category: 'command',
+  },
+  focus: {
+    title: 'focus',
+    description: 'Focuses an element (calls HTMLElement.focus()).',
+    example: 'focus #search\nfocus on <input/>',
+    category: 'command',
+  },
+  blur: {
+    title: 'blur',
+    description: 'Removes focus from an element (calls HTMLElement.blur()).',
+    example: 'blur #search\nblur on <input/>',
     category: 'command',
   },
   return: {
@@ -683,9 +698,10 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   empty: {
     title: 'empty',
-    description: 'Checks if value is empty.',
-    example: 'if #input.value is empty',
-    category: 'logical',
+    description:
+      'As a command: removes all children from an element (empty #list). As a logical operator: checks if a value is empty (if #input.value is empty).',
+    example: 'empty #list\nif #input.value is empty',
+    category: 'command',
   },
   matches: {
     title: 'matches',

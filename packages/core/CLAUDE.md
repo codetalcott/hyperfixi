@@ -35,10 +35,21 @@ src/
 │   └── ast-helpers.ts  # AST node builders
 ├── runtime/            # Execution engine
 │   └── runtime.ts      # Main runtime (extends RuntimeBase)
-├── commands/           # Command implementations (legacy)
-├── commands-v2/        # Standalone command modules (tree-shakeable)
-│   ├── toggle.ts       # Example: toggle command
-│   └── index.ts        # Command registry
+├── commands/           # All command implementations (tree-shakeable factories)
+│   ├── dom/            # toggle, add, remove, show, hide, put, make, empty, swap, morph
+│   ├── execution/      # call, pseudo-command, focus, blur
+│   ├── data/           # set, get, increment, decrement, default
+│   ├── control-flow/   # if, unless, repeat, break, continue, halt, return, exit, throw
+│   ├── async/          # wait, fetch
+│   ├── events/         # send, trigger
+│   ├── navigation/     # go, push-url, replace-url, scroll-to
+│   ├── animation/      # transition, measure, settle, take
+│   ├── utility/        # log, tell, copy, pick, beep
+│   ├── advanced/       # js, async
+│   ├── content/        # append
+│   ├── templates/      # render
+│   ├── behaviors/      # install
+│   └── index.ts        # Named factory exports (tree-shakeable)
 ├── expressions/        # 6 expression categories
 │   ├── references/     # me, you, it, CSS selectors
 │   ├── logical/        # Comparisons, boolean logic
@@ -57,22 +68,29 @@ src/
 
 ## Command Pattern
 
-All 43 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
+All commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>` via the `@command`/`@meta` decorators:
 
 ```typescript
-// packages/core/src/commands-v2/increment.ts
-export class IncrementCommand implements CommandImplementation<IncrementInput, void, TypedExecutionContext> {
-  parseInput(node: CommandNode, ctx: TypedExecutionContext): IncrementInput { ... }
+// packages/core/src/commands/data/increment.ts
+@meta({ description: '...', syntax: [...], examples: [...], sideEffects: [...] })
+@command({ name: 'increment', category: 'data' })
+export class IncrementCommand implements DecoratedCommand {
+  async parseInput(raw, evaluator, context): Promise<IncrementInput> { ... }
   async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
 }
+
+export const createIncrementCommand = createFactory(IncrementCommand);
 ```
 
 ## Adding a New Command
 
-1. Create implementation in `src/commands-v2/{command}.ts`
-2. Register in `src/commands-v2/index.ts`
-3. Add parser support in `src/parser/commands/`
-4. Write tests in `src/commands-v2/{command}.test.ts`
+1. Create implementation in `src/commands/{category}/{name}.ts`
+2. Export a named factory in `src/commands/index.ts` and add the command name to the `COMMANDS` set in `src/parser/parser-constants.ts`
+3. Register the factory in the runtime entry points that need it (`src/runtime/runtime.ts` and any `src/compatibility/browser-bundle-*.ts` that should ship the command)
+4. Add parser support in `src/parser/command-parsers/{category}-commands.ts` only if the command needs non-generic parsing — simple commands use the default identifier-plus-args path
+5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
+6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
+7. Write tests in `src/commands/{category}/__tests__/{name}.test.ts`
 
 ## API v2 (Recommended)
 
@@ -93,15 +111,15 @@ See [docs/API.md](docs/API.md) for complete documentation.
 
 ## Important Files
 
-| File                         | Purpose                        |
-| ---------------------------- | ------------------------------ |
-| `src/runtime/runtime.ts`     | Main runtime                   |
-| `src/parser/parser.ts`       | Hyperscript parser             |
-| `src/commands-v2/`           | All 43 command implementations |
-| `src/registry/`              | Registry system                |
-| `src/api/hyperscript-api.ts` | API v2 implementation          |
-| `docs/API.md`                | API documentation              |
-| `docs/EXAMPLES.md`           | HTML-first patterns            |
+| File                         | Purpose                                   |
+| ---------------------------- | ----------------------------------------- |
+| `src/runtime/runtime.ts`     | Main runtime                              |
+| `src/parser/parser.ts`       | Hyperscript parser                        |
+| `src/commands/`              | All command implementations (by category) |
+| `src/registry/`              | Registry system                           |
+| `src/api/hyperscript-api.ts` | API v2 implementation                     |
+| `docs/API.md`                | API documentation                         |
+| `docs/EXAMPLES.md`           | HTML-first patterns                       |
 
 ## Browser Bundles
 

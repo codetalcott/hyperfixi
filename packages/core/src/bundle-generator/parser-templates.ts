@@ -245,7 +245,7 @@ const KEYWORDS = new Set([
   'repeat', 'times', 'for', 'each', 'while', 'until',
   'toggle', 'add', 'remove', 'put', 'set', 'get', 'call', 'return', 'append',
   'log', 'send', 'trigger', 'wait', 'settle', 'fetch', 'as',
-  'show', 'hide', 'take', 'increment', 'decrement', 'focus', 'blur', 'go', 'transition', 'over',
+  'show', 'hide', 'take', 'increment', 'decrement', 'focus', 'blur', 'empty', 'go', 'transition', 'over',
   'the', 'a', 'an', 'my', 'its', 'me', 'it', 'you',
   'first', 'last', 'next', 'previous', 'closest', 'parent',
   'true', 'false', 'null', 'undefined',
@@ -552,6 +552,7 @@ class HybridParser {
       decrement: () => this.parseIncDec('decrement'),
       focus: () => this.parseFocusBlur('focus'),
       blur: () => this.parseFocusBlur('blur'),
+      empty: () => this.parseEmpty(),
       go: () => this.parseGo(),
       return: () => this.parseReturn(),
       transition: () => this.parseTransition(),
@@ -810,6 +811,15 @@ class HybridParser {
     return { type: 'command', name, args: [], target };
   }
 
+  parseEmpty() {
+    this.expect('empty');
+    let target;
+    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+      target = this.parseExpression();
+    }
+    return { type: 'command', name: 'empty', args: [], target };
+  }
+
   parseGo() {
     this.expect('go');
     if (this.match('to')) this.advance();
@@ -889,7 +899,7 @@ class HybridParser {
   }
 
   isCommandKeyword(token) {
-    const cmds = ['toggle', 'add', 'remove', 'set', 'put', 'log', 'send', 'wait', 'show', 'hide', 'increment', 'decrement', 'focus', 'blur', 'go'];
+    const cmds = ['toggle', 'add', 'remove', 'set', 'put', 'log', 'send', 'wait', 'show', 'hide', 'increment', 'decrement', 'focus', 'blur', 'empty', 'go'];
     return cmds.includes(normalizeCommand(token.value));
   }
 

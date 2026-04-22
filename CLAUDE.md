@@ -18,8 +18,7 @@ packages/
 │   ├── src/
 │   │   ├── parser/           # Hyperscript parser with CommandNodeBuilder pattern
 │   │   ├── runtime/          # Runtime execution engine
-│   │   ├── commands/         # 43 command implementations
-│   │   ├── commands-v2/      # Standalone command modules (tree-shakeable)
+│   │   ├── commands/         # All command implementations (tree-shakeable factories)
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi.js)
 │
@@ -227,7 +226,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 All 43 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
 
 ```typescript
-// packages/core/src/commands-v2/increment.ts
+// packages/core/src/commands/data/increment.ts
 export class IncrementCommand implements CommandImplementation<IncrementInput, void, TypedExecutionContext> {
   parseInput(node: CommandNode, ctx: TypedExecutionContext): IncrementInput { ... }
   async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
@@ -355,10 +354,13 @@ window._hyperscript.behaviors.set(name, { name, parameters, eventHandlers, initB
 
 ### Adding a New Command
 
-1. Create implementation in `packages/core/src/commands-v2/`
-2. Register in `packages/core/src/commands-v2/index.ts`
-3. Add parser support in `packages/core/src/parser/commands/`
-4. Write tests in `packages/core/src/commands-v2/*.test.ts`
+1. Create implementation in `packages/core/src/commands/{category}/{name}.ts`
+2. Register a factory export in `packages/core/src/commands/index.ts` and add the command name to the `COMMANDS` set in `packages/core/src/parser/parser-constants.ts`
+3. Register the factory in the runtime entry points that should include it (`packages/core/src/runtime/runtime.ts` and any relevant `packages/core/src/compatibility/browser-bundle-*.ts`)
+4. Add parser support in `packages/core/src/parser/command-parsers/` (only if the command needs a non-generic parser — simple commands use the default identifier-plus-args parser)
+5. For lite/hybrid bundle coverage, add cases to `packages/core/src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
+6. Add reference/LSP entries in `packages/core/src/reference/index.ts` and `packages/core/src/lsp-metadata.ts`
+7. Write tests in `packages/core/src/commands/{category}/__tests__/{name}.test.ts`
 
 ### Adding i18n Language Support
 
@@ -604,7 +606,7 @@ See [TYPE_SAFETY_DESIGN.md](docs-internal/analysis/TYPE_SAFETY_DESIGN.md) for im
 | -------------------------------------------------------- | -------------------------------------------- |
 | `packages/core/src/runtime/runtime.ts`                   | Main runtime (extends RuntimeBase)           |
 | `packages/core/src/parser/parser.ts`                     | Hyperscript parser (~3000 lines)             |
-| `packages/core/src/commands-v2/`                         | All 43 command implementations               |
+| `packages/core/src/commands/`                            | All command implementations (by category)    |
 | `packages/core/src/registry/`                            | Registry system (commands, events, context)  |
 | `packages/core/src/registry/browser-types.ts`            | Browser-specific types                       |
 | `packages/core/src/api/hyperscript-api.ts`               | Main API implementation (v2)                 |

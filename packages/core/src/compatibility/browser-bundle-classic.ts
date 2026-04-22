@@ -55,6 +55,7 @@ import { createPutCommand } from '../commands/dom/put';
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createMakeCommand } from '../commands/dom/make';
+import { createEmptyCommand } from '../commands/dom/empty';
 
 // ============================================================================
 // Control Flow Commands (9)
@@ -104,6 +105,8 @@ import { createTakeCommand } from '../commands/animation/take';
 import { createLogCommand } from '../commands/utility/log';
 import { createTellCommand } from '../commands/utility/tell';
 import { createCallCommand } from '../commands/execution/call';
+import { createFocusCommand } from '../commands/execution/focus';
+import { createBlurCommand } from '../commands/execution/blur';
 import { createCopyCommand } from '../commands/utility/copy';
 import { createPickCommand } from '../commands/utility/pick';
 import { createBeepCommand } from '../commands/utility/beep';
@@ -145,7 +148,7 @@ const expressionEvaluator = new ConfigurableExpressionEvaluator([
 // Create runtime instance with classic commands (37 total) and custom expression evaluator
 const runtimeExperimental = createMinimalRuntime(
   [
-    // DOM (7)
+    // DOM (8) — + empty (v0.9.90)
     createAddCommand(),
     createRemoveCommand(),
     createToggleCommand(),
@@ -153,6 +156,7 @@ const runtimeExperimental = createMinimalRuntime(
     createHideCommand(),
     createShowCommand(),
     createMakeCommand(),
+    createEmptyCommand(),
 
     // Control Flow (9)
     createIfCommand(),
@@ -193,6 +197,10 @@ const runtimeExperimental = createMinimalRuntime(
     createCopyCommand(),
     createPickCommand(),
     createBeepCommand(),
+
+    // Execution (v0.9.90 focus/blur)
+    createFocusCommand(),
+    createBlurCommand(),
 
     // Advanced (2)
     createJsCommand(),
@@ -238,9 +246,9 @@ const api = {
   attributeProcessor,
   version: '1.1.0-classic',
 
-  // Classic commands list (37)
+  // Classic commands list (40) — + empty, focus, blur (v0.9.90)
   commands: [
-    // DOM (7)
+    // DOM (8)
     'add',
     'remove',
     'toggle',
@@ -248,6 +256,7 @@ const api = {
     'hide',
     'show',
     'make',
+    'empty',
     // Control Flow (9)
     'if',
     'unless',
@@ -282,6 +291,9 @@ const api = {
     'copy',
     'pick',
     'beep',
+    // Execution (2)
+    'focus',
+    'blur',
     // Advanced (2)
     'js',
     'async',

@@ -29,7 +29,7 @@ import { ExpressionEvaluator } from '../core/expression-evaluator';
 // This allows tree-shaking to eliminate it in browser builds where lazyLoad=false
 
 // Import all 48 V2 commands
-// DOM Commands (10) - includes htmx-like swap/morph/process-partials
+// DOM Commands (11) - includes htmx-like swap/morph/process-partials and v0.9.90 `empty`
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createAddCommand } from '../commands/dom/add';
@@ -37,6 +37,7 @@ import { createRemoveCommand } from '../commands/dom/remove';
 import { createToggleCommand } from '../commands/dom/toggle';
 import { createPutCommand } from '../commands/dom/put';
 import { createMakeCommand } from '../commands/dom/make';
+import { createEmptyCommand } from '../commands/dom/empty';
 import { createSwapCommand, createMorphCommand } from '../commands/dom/swap';
 import { createProcessPartialsCommand } from '../commands/dom/process-partials';
 
@@ -72,8 +73,10 @@ import { createHaltCommand } from '../commands/control-flow/halt';
 import { createReturnCommand } from '../commands/control-flow/return';
 import { createExitCommand } from '../commands/control-flow/exit';
 
-// Execution Commands (1)
+// Execution Commands (3) - includes v0.9.90 focus/blur
 import { createCallCommand } from '../commands/execution/call';
+import { createFocusCommand } from '../commands/execution/focus';
+import { createBlurCommand } from '../commands/execution/blur';
 
 // Content Commands (1)
 import { createAppendCommand } from '../commands/content/append';
@@ -178,7 +181,7 @@ export class Runtime extends RuntimeBase {
 
     // If no custom registry provided, register all 48 V2 commands
     if (!options.registry) {
-      // DOM Commands (10) - includes htmx-like swap/morph/process-partials
+      // DOM Commands (11) - includes htmx-like swap/morph/process-partials and v0.9.90 `empty`
       registry.register(createHideCommand());
       registry.register(createShowCommand());
       registry.register(createAddCommand());
@@ -186,6 +189,7 @@ export class Runtime extends RuntimeBase {
       registry.register(createToggleCommand());
       registry.register(createPutCommand());
       registry.register(createMakeCommand());
+      registry.register(createEmptyCommand());
       registry.register(createSwapCommand());
       registry.register(createMorphCommand());
       registry.register(createProcessPartialsCommand());
@@ -227,6 +231,10 @@ export class Runtime extends RuntimeBase {
       // Phase 6-2 Commands (4)
       registry.register(createCallCommand());
       registry.register(createAppendCommand());
+
+      // v0.9.90 focus/blur (Phase 1 of deferred features plan)
+      registry.register(createFocusCommand());
+      registry.register(createBlurCommand());
 
       // Phase 6-3 Commands (4)
       registry.register(createTransitionCommand());
