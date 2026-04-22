@@ -1362,6 +1362,34 @@ export class RuntimeBase {
       // Attach to HTMLElement targets
       for (const el of targets) {
         for (const evt of eventNames) {
+          // `on resize` on a plain HTMLElement is not a native DOM event —
+          // upstream _hyperscript 0.9.90 wires this via ResizeObserver so
+          // users can observe size changes of specific elements. We dispatch
+          // a synthetic CustomEvent('resize') so the handler's `event.detail`
+          // carries the ResizeObserverEntry for consumers that want it.
+          if (evt === 'resize' && typeof ResizeObserver !== 'undefined') {
+            const observer = new ResizeObserver(entries => {
+              for (const entry of entries) {
+                const synthetic = new CustomEvent('resize', {
+                  detail: entry,
+                  bubbles: false,
+                  cancelable: false,
+                });
+                // Flag so downstream listeners/tests can distinguish from native resize
+                (synthetic as Event & { synthetic?: boolean }).synthetic = true;
+                // Apply once semantics manually — ResizeObserver fires repeatedly.
+                eventHandler(synthetic);
+                if (listenerOptions?.once) {
+                  observer.disconnect();
+                  break;
+                }
+              }
+            });
+            observer.observe(el);
+            this.cleanupRegistry.registerCustom(el, () => observer.disconnect(), 'resize-observer');
+            continue;
+          }
+
           el.addEventListener(evt, eventHandler, listenerOptions);
           // Register for cleanup
           this.cleanupRegistry.registerListener(el, el, evt, eventHandler);
