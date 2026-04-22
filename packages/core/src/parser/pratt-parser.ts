@@ -422,6 +422,98 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
     } as BindingPowerEntry,
   ],
 
+  // Collection operators (upstream _hyperscript 0.9.90) — bp 28.
+  // Sits between `and` (20) and comparison (30) so:
+  //   `items where it is .active and other mapped to it.name`
+  // parses as two collection expressions joined by `and` — correct.
+  // `where`/`sorted by`/`mapped to` capture the RHS as an UNEVALUATED AST
+  // that the runtime re-evaluates per-element with `it` bound to each.
+  // `split by`/`joined by` evaluate RHS once as a separator value.
+  [
+    'where',
+    leftAssoc(28, (left, _token, ctx) => {
+      const predicate = ctx.parseExpr(29);
+      return {
+        type: 'collectionExpression',
+        operator: 'where',
+        collection: left,
+        right: predicate,
+        start: (left as any).start,
+        end: (predicate as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+  [
+    'sorted by',
+    leftAssoc(28, (left, _token, ctx) => {
+      const keyExpr = ctx.parseExpr(29);
+      // Optional trailing order keyword: asc | desc | ascending | descending
+      let order: 'asc' | 'desc' = 'asc';
+      const next = ctx.peek();
+      if (next && typeof next.value === 'string') {
+        const v = next.value.toLowerCase();
+        if (v === 'asc' || v === 'ascending') {
+          ctx.advance();
+          order = 'asc';
+        } else if (v === 'desc' || v === 'descending') {
+          ctx.advance();
+          order = 'desc';
+        }
+      }
+      return {
+        type: 'collectionExpression',
+        operator: 'sorted by',
+        collection: left,
+        right: keyExpr,
+        order,
+        start: (left as any).start,
+        end: (keyExpr as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+  [
+    'mapped to',
+    leftAssoc(28, (left, _token, ctx) => {
+      const expr = ctx.parseExpr(29);
+      return {
+        type: 'collectionExpression',
+        operator: 'mapped to',
+        collection: left,
+        right: expr,
+        start: (left as any).start,
+        end: (expr as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+  [
+    'split by',
+    leftAssoc(28, (left, _token, ctx) => {
+      const sep = ctx.parseExpr(29);
+      return {
+        type: 'collectionExpression',
+        operator: 'split by',
+        collection: left,
+        right: sep,
+        start: (left as any).start,
+        end: (sep as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+  [
+    'joined by',
+    leftAssoc(28, (left, _token, ctx) => {
+      const sep = ctx.parseExpr(29);
+      return {
+        type: 'collectionExpression',
+        operator: 'joined by',
+        collection: left,
+        right: sep,
+        start: (left as any).start,
+        end: (sep as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+
   // Tier 4: Addition/Subtraction (bp 40)
   ['+', { ...(leftAssoc(40) as BindingPowerEntry), ...(prefix(80) as BindingPowerEntry) }],
   ['-', { ...(leftAssoc(40) as BindingPowerEntry), ...(prefix(80) as BindingPowerEntry) }],

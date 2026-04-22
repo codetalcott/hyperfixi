@@ -436,6 +436,15 @@ export const COMPARISON_OPERATORS = new Set([
   //   "name is 'alice' ignoring case"
   //   "str starts with 'hi' ignoring case"
   'ignoring case',
+  // Collection operators (upstream _hyperscript 0.9.90).
+  // `where` is a single-word keyword already recognized by the identifier
+  // classifier — the Pratt table picks it up as an infix operator in
+  // expression contexts. Multi-word forms must be registered here so the
+  // tokenizer's compound-operator path emits them as single OPERATOR tokens.
+  'sorted by',
+  'mapped to',
+  'split by',
+  'joined by',
 ]);
 
 /**

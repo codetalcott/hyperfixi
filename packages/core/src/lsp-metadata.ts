@@ -168,6 +168,12 @@ export const LOGICAL_KEYWORDS = [
   'ends with',
   'between',
   'ignoring case',
+  // Collection operators (v0.9.90)
+  'where',
+  'sorted by',
+  'mapped to',
+  'split by',
+  'joined by',
 ] as const;
 
 /**
@@ -795,6 +801,42 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'has',
     description: 'Checks if element has a class/attribute.',
     example: 'if me has .active',
+    category: 'logical',
+  },
+
+  // Collection operators (upstream _hyperscript 0.9.90) — infix on arrays/strings.
+  // `where`/`sorted by`/`mapped to` evaluate their RHS per-element with `it` bound
+  // to the current element; `split by`/`joined by` take a separator value.
+  where: {
+    title: 'where',
+    description:
+      'Filter a collection by a per-element predicate. `it` is bound to each element during evaluation.',
+    example: 'set :actives to :items where it has .active\n:names where it starts with "A"',
+    category: 'logical',
+  },
+  'sorted by': {
+    title: 'sorted by',
+    description:
+      'Sort a collection by a per-element key expression. Optional trailing `asc` / `desc` / `ascending` / `descending`; default is ascending.',
+    example: 'set :byName to :users sorted by it.name\n:scores sorted by it desc',
+    category: 'logical',
+  },
+  'mapped to': {
+    title: 'mapped to',
+    description: 'Transform each element of a collection via a per-element expression.',
+    example: 'set :names to :users mapped to it.name\n:words mapped to it.toUpperCase()',
+    category: 'logical',
+  },
+  'split by': {
+    title: 'split by',
+    description: 'Split a string into an array by a separator.',
+    example: 'set :parts to "a,b,c" split by ","\n"hello" split by ""',
+    category: 'logical',
+  },
+  'joined by': {
+    title: 'joined by',
+    description: 'Join an array into a string with a separator.',
+    example: 'set :csv to :parts joined by ","\n(:names sorted by it) joined by " and "',
     category: 'logical',
   },
 } as const;

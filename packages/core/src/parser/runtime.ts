@@ -16,6 +16,13 @@ import { positionalExpressions } from '../expressions/positional/index';
 import { propertiesExpressions } from '../expressions/properties/index';
 import { specialExpressions as importedSpecialExpressions } from '../expressions/special/index';
 import { mathematicalExpressions } from '../expressions/mathematical/index';
+import {
+  evaluateWhere,
+  evaluateSortedBy,
+  evaluateMappedTo,
+  evaluateSplitBy,
+  evaluateJoinedBy,
+} from '../expressions/collection/index';
 
 // Create alias for backward compatibility - combine special and mathematical expressions
 const specialExpressions = {
@@ -118,6 +125,9 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'betweenExpression':
       return evaluateBetweenExpression(node, context);
 
+    case 'collectionExpression':
+      return evaluateCollectionExpression(node, context);
+
     case 'unaryExpression':
       return evaluateUnaryExpression(node, context);
 
@@ -172,8 +182,14 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
   const contextId = context.me ? `${(context.me as any)._hscriptId || 'default'}` : 'global';
   const cacheKey = `${contextId}:${name}`;
 
+  // `it` is loop-volatile: collection expressions (`where`, `sorted by`,
+  // `mapped to`) re-bind `it` per element, often within the same cache TTL
+  // window. Caching would return the same `it` value for every iteration.
+  // Similarly, `result` can change across command boundaries.
+  const skipCache = name === 'it' || name === 'its' || name === 'result';
+
   // Check cache first for frequently accessed identifiers
-  const cached = identifierCache.get(cacheKey);
+  const cached = skipCache ? undefined : identifierCache.get(cacheKey);
   const now = Date.now();
   if (cached && now - cached.timestamp < CACHE_TTL) {
     return cached.value;
@@ -216,7 +232,7 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
 
   // Cache the result for future lookups
   // Only cache primitive values and stable objects (not DOM elements which may change)
-  const shouldCache = typeof value !== 'function' && !(value instanceof Element);
+  const shouldCache = !skipCache && typeof value !== 'function' && !(value instanceof Element);
   if (shouldCache) {
     identifierCache.set(cacheKey, { value, timestamp: now });
   }
@@ -366,6 +382,49 @@ async function evaluateBetweenExpression(node: any, context: ExecutionContext): 
 }
 
 /**
+ * Evaluates collection expressions: `where`, `sorted by`, `mapped to`,
+ * `split by`, `joined by` (upstream _hyperscript 0.9.90).
+ *
+ * For `where` / `sorted by` / `mapped to` the RHS is an unevaluated AST node
+ * that must run per-element with `it` bound to the current element. We use
+ * context cloning rather than mutation so sibling expressions in the same
+ * execution don't see each other's `it` values.
+ */
+async function evaluateCollectionExpression(node: any, context: ExecutionContext): Promise<any> {
+  const collection = await evaluateAST(node.collection, context);
+
+  // Helper: evaluate the RHS AST with `it` bound to the given element.
+  const evalWithIt = async (astNode: any, it: unknown): Promise<unknown> => {
+    const elementContext = { ...context, it } as ExecutionContext;
+    return evaluateAST(astNode, elementContext);
+  };
+
+  switch (node.operator) {
+    case 'where':
+      return evaluateWhere(collection, node.right, evalWithIt);
+
+    case 'sorted by':
+      return evaluateSortedBy(collection, node.right, node.order ?? 'asc', evalWithIt);
+
+    case 'mapped to':
+      return evaluateMappedTo(collection, node.right, evalWithIt);
+
+    case 'split by': {
+      const sep = await evaluateAST(node.right, context);
+      return evaluateSplitBy(collection, sep);
+    }
+
+    case 'joined by': {
+      const sep = await evaluateAST(node.right, context);
+      return evaluateJoinedBy(collection, sep);
+    }
+
+    default:
+      throw new Error(`Unknown collection operator: ${node.operator}`);
+  }
+}
+
+/**
  * Evaluates unary expressions
  */
 async function evaluateUnaryExpression(node: any, context: ExecutionContext): Promise<any> {
@@ -479,11 +538,17 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
     }
   }
 
-  // Method calls
+  // Method calls — preserve `this` when the callee is a member expression.
+  // Without this, `it.toUpperCase()` evaluates callee to the unbound
+  // String.prototype.toUpperCase function and calling it throws.
   if (typeof callee === 'function') {
     const evaluatedArgs = await Promise.all(
       node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
     );
+    if (node.callee?.type === 'memberExpression' || node.callee?.type === 'propertyAccess') {
+      const thisArg = await evaluateAST(node.callee.object, context);
+      return callee.apply(thisArg, evaluatedArgs);
+    }
     return callee(...evaluatedArgs);
   }
 
