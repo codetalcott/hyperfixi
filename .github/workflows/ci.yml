@@ -8,6 +8,9 @@ on:
       - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
+      - 'examples/**'
+      - '.claude/**'
+      - '*.txt'
   pull_request:
     branches: [main, develop]
     paths-ignore:
@@ -15,6 +18,9 @@ on:
       - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
+      - 'examples/**'
+      - '.claude/**'
+      - '*.txt'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -435,6 +441,7 @@ jobs:
     name: Coverage Report
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     timeout-minutes: 20
 
     steps:
