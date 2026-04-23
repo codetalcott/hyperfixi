@@ -72,12 +72,21 @@ export type NodeEvaluatorFn = (
 export type GlobalWriteHook = (name: string, value: unknown, context: ExecutionContext) => void;
 
 /**
+ * Callback invoked on every global-variable read. Used by the reactivity
+ * plugin to record dependency subscriptions — when an effect reads `$foo`
+ * during evaluation, the plugin subscribes that effect to `foo` so writes
+ * trigger a re-run. Fire-and-forget; return value is ignored.
+ */
+export type GlobalReadHook = (name: string, context: ExecutionContext) => void;
+
+/**
  * Module-level storage for Phase 5b extension points. Kept here (not in
  * parser-constants.ts) because these hold functions, not string sets.
  */
 const FEATURE_REGISTRY = new Map<string, FeatureParseFn>();
 const NODE_EVALUATORS = new Map<string, NodeEvaluatorFn>();
 const GLOBAL_WRITE_HOOKS = new Set<GlobalWriteHook>();
+const GLOBAL_READ_HOOKS = new Set<GlobalReadHook>();
 
 /**
  * Look up a registered feature parse function. The parser calls this at the
@@ -104,6 +113,24 @@ export function getGlobalWriteHooks(): Iterable<GlobalWriteHook> {
 }
 
 /**
+ * Notify all registered read hooks that a `$name` global was just read.
+ * Called by identifier evaluators. No-op when no hooks are installed (common
+ * case); keep this check fast.
+ */
+export function notifyGlobalRead(name: string, context: ExecutionContext): void {
+  if (GLOBAL_READ_HOOKS.size === 0) return;
+  for (const hook of GLOBAL_READ_HOOKS) {
+    try {
+      hook(name, context);
+    } catch (err) {
+      if (typeof console !== 'undefined') {
+        console.error('[hyperfixi] globalReadHook threw:', err);
+      }
+    }
+  }
+}
+
+/**
  * Snapshot of the registry state so tests can roll back plugin installations.
  */
 export interface ParserExtensionSnapshot {
@@ -113,6 +140,7 @@ export interface ParserExtensionSnapshot {
   features: Array<[string, FeatureParseFn]>;
   nodeEvaluators: Array<[string, NodeEvaluatorFn]>;
   globalWriteHooks: GlobalWriteHook[];
+  globalReadHooks: GlobalReadHook[];
 }
 
 export class ParserExtensionRegistry {
@@ -224,6 +252,17 @@ export class ParserExtensionRegistry {
   }
 
   /**
+   * Register a hook invoked on every `$name` global-variable read. Used by
+   * the reactivity plugin to track dependencies — when an effect reads a
+   * global, subscribe that effect so writes trigger a re-run. Returns a
+   * disposer that removes the hook.
+   */
+  registerGlobalReadHook(hook: GlobalReadHook): () => void {
+    GLOBAL_READ_HOOKS.add(hook);
+    return () => GLOBAL_READ_HOOKS.delete(hook);
+  }
+
+  /**
    * Capture current state so a test can roll back plugin installations.
    * Intended for test isolation — do not use in production code.
    */
@@ -235,6 +274,7 @@ export class ParserExtensionRegistry {
       features: Array.from(FEATURE_REGISTRY.entries()),
       nodeEvaluators: Array.from(NODE_EVALUATORS.entries()),
       globalWriteHooks: Array.from(GLOBAL_WRITE_HOOKS),
+      globalReadHooks: Array.from(GLOBAL_READ_HOOKS),
     };
   }
 
@@ -256,6 +296,8 @@ export class ParserExtensionRegistry {
     for (const [k, v] of snapshot.nodeEvaluators) NODE_EVALUATORS.set(k, v);
     GLOBAL_WRITE_HOOKS.clear();
     for (const h of snapshot.globalWriteHooks) GLOBAL_WRITE_HOOKS.add(h);
+    GLOBAL_READ_HOOKS.clear();
+    for (const h of snapshot.globalReadHooks ?? []) GLOBAL_READ_HOOKS.add(h);
   }
 }
 

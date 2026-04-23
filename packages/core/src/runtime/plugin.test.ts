@@ -319,9 +319,10 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
       const result = parse('set $foo to 42');
       expect(result.success).toBe(true);
       await runtime.execute(result.node!, ctx);
-      // setVariableValue routes `$`-prefixed names to globals; the hook sees the
-      // stored key (with prefix, matching how the global is read back).
-      expect(events.some(([n, v]) => n === '$foo' && v === 42)).toBe(true);
+      // setVariableValue strips the `$` prefix when storing so reads via both
+      // `$foo` and `foo` resolve to the same global; the hook sees the stored
+      // key (bare `foo`).
+      expect(events.some(([n, v]) => n === 'foo' && v === 42)).toBe(true);
     });
 
     it('dispose fn removes the hook', () => {

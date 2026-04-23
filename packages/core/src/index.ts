@@ -164,17 +164,21 @@ export type {
 } from './debug/index';
 
 // ============================================================================
-// Plugin system (v0.9.90 Phase 5)
+// Plugin system (v0.9.90 Phase 5 + 5b)
 // ============================================================================
 // External packages (@hyperfixi/reactivity, @hyperfixi/speech, etc.) extend
 // hyperfixi at runtime through the plugin contract. See docs/API.md.
-
+export { installPlugin, type HyperfixiPlugin, type HyperfixiPluginContext } from './runtime/plugin';
 export {
   ParserExtensionRegistry,
   getParserExtensionRegistry,
+  setGlobal,
   type ParserExtensionSnapshot,
+  type FeatureParseFn,
+  type NodeEvaluatorFn,
+  type GlobalWriteHook,
+  type GlobalReadHook,
 } from './parser/extensions';
-export { installPlugin, type HyperfixiPlugin, type HyperfixiPluginContext } from './runtime/plugin';
 
 // Note: Default export removed in favor of named exports for better tree-shaking
 // Use: import { hyperscript } from '@hyperfixi/core' instead of import hyperfixi from '@hyperfixi/core'

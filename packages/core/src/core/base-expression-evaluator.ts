@@ -14,7 +14,7 @@ import type { ASTNode, ExecutionContext } from '../types/core';
 import type { ExecutionResult, ExecutionSignal } from '../types/result';
 import { ok, err } from '../types/result';
 import { debug } from '../utils/debug';
-import { getRegisteredNodeEvaluator } from '../parser/extensions';
+import { getRegisteredNodeEvaluator, notifyGlobalRead } from '../parser/extensions';
 import {
   isElement,
   getElementProperty,
@@ -366,7 +366,14 @@ export class BaseExpressionEvaluator {
       return context.locals.get(name);
     }
     if (context.globals?.has(name)) {
+      if (name.startsWith('$')) notifyGlobalRead(name.slice(1), context);
       return context.globals.get(name);
+    }
+    // Hyperscript convention: `$name` identifiers look up `name` in globals
+    // (matches how setVariableValue stores them).
+    if (name.startsWith('$') && context.globals?.has(name.slice(1))) {
+      notifyGlobalRead(name.slice(1), context);
+      return context.globals.get(name.slice(1));
     }
     if (context.variables?.has(name)) {
       return context.variables.get(name);
