@@ -243,5 +243,6 @@ export const en: Dictionary = {
     // String operations
     'starts with': 'starts with',
     'ends with': 'ends with',
+    'ignoring case': 'ignoring case',
   },
 };

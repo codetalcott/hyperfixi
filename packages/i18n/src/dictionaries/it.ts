@@ -199,5 +199,6 @@ export const it: Dictionary = {
     some: 'qualche',
     'starts with': 'inizia con',
     'ends with': 'finisce con',
+    'ignoring case': 'ignorando maiuscole',
   },
 };

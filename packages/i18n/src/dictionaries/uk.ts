@@ -225,6 +225,7 @@ export const ukrainianDictionary: Dictionary = {
     some: 'деякі',
     'starts with': 'починається_з',
     'ends with': 'закінчується_на',
+    'ignoring case': 'без_урахування_регістру',
   },
 };
 

@@ -199,5 +199,6 @@ export const de: Dictionary = {
     some: 'einige',
     'starts with': 'beginnt mit',
     'ends with': 'endet mit',
+    'ignoring case': 'ohne Groß-/Kleinschreibung',
   },
 };

@@ -225,6 +225,7 @@ export const malayDictionary: Dictionary = {
     some: 'beberapa',
     'starts with': 'bermula_dengan',
     'ends with': 'berakhir_dengan',
+    'ignoring case': 'abaikan_huruf_besar_kecil',
     length: 'panjang',
     index: 'indeks',
   },

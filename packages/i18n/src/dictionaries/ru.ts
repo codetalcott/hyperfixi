@@ -225,6 +225,7 @@ export const russianDictionary: Dictionary = {
     some: 'некоторые',
     'starts with': 'начинается_с',
     'ends with': 'заканчивается_на',
+    'ignoring case': 'без_учёта_регистра',
   },
 };
 

@@ -78,6 +78,7 @@ export const bengaliDictionary: Dictionary = {
     at: 'এ',
     in: 'এ',
     over: 'উপর',
+    between: 'মধ্যে',
     then: 'তারপর',
     and: 'এবং',
     end: 'শেষ',
@@ -172,6 +173,9 @@ export const bengaliDictionary: Dictionary = {
     length: 'দৈর্ঘ্য',
     index: 'সূচক',
     empty: 'খালি-করুন',
+    'starts with': 'দিয়ে_শুরু',
+    'ends with': 'দিয়ে_শেষ',
+    'ignoring case': 'কেস_উপেক্ষা',
   },
 };
 
