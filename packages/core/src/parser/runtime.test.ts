@@ -88,6 +88,33 @@ describe('Hyperscript Runtime Evaluator', () => {
       const result = await evaluateAST(ast.node!, context);
       expect(result).toBe(false);
     });
+
+    it('should evaluate `is` as equals', async () => {
+      const context = createMockHyperscriptContext();
+      const ast = parse('5 is 5');
+
+      expect(ast.success).toBe(true);
+      const result = await evaluateAST(ast.node!, context);
+      expect(result).toBe(true);
+    });
+
+    it('should evaluate `is not` as negated equals', async () => {
+      const context = createMockHyperscriptContext();
+      const ast = parse('5 is not 3');
+
+      expect(ast.success).toBe(true);
+      const result = await evaluateAST(ast.node!, context);
+      expect(result).toBe(true);
+    });
+
+    it('should evaluate `is not` returning false when values match', async () => {
+      const context = createMockHyperscriptContext();
+      const ast = parse('5 is not 5');
+
+      expect(ast.success).toBe(true);
+      const result = await evaluateAST(ast.node!, context);
+      expect(result).toBe(false);
+    });
   });
 
   describe('Member Expression Evaluation', () => {
