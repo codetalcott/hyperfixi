@@ -176,6 +176,10 @@ export const thaiDictionary: Dictionary = {
     'starts with': 'ขึ้นต้นด้วย',
     'ends with': 'ลงท้ายด้วย',
     'ignoring case': 'ไม่สนตัวพิมพ์',
+    'sorted by': 'เรียงตาม',
+    'mapped to': 'แปลงเป็น',
+    'split by': 'แยกด้วย',
+    'joined by': 'รวมด้วย',
   },
 };
 

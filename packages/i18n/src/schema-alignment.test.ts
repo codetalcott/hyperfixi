@@ -144,4 +144,37 @@ describe('Schema ↔ i18n alignment', () => {
       });
     });
   });
+
+  describe('Phase 3 collection ops (v0.9.90) are present in all complete languages', () => {
+    // Infix operators on arrays and strings — parsed as custom Pratt AST nodes
+    // by the core parser. `where` predates v0.9.90 and lives in `logical`; the
+    // four `<verb> by/to` forms live alongside `starts with` in `expressions`.
+    const PHASE_3_COLLECTIONS = [
+      'where',
+      'sorted by',
+      'mapped to',
+      'split by',
+      'joined by',
+    ] as const;
+
+    COMPLETE_LANGUAGES.forEach(code => {
+      const dict = dictionaries[code] as Dictionary | undefined;
+      if (!dict) return;
+
+      it(`${code}: has all Phase 3 collection ops (any category)`, () => {
+        const missing: string[] = [];
+        for (const op of PHASE_3_COLLECTIONS) {
+          if (!findInDictionary(dict, op)) {
+            missing.push(op);
+          }
+        }
+        expect(
+          missing,
+          `Missing Phase 3 collection ops in ${code}: ${missing.join(', ')}. ` +
+            `Add to packages/i18n/src/dictionaries/${code}.ts's \`expressions\` ` +
+            `category (or \`logical\` for \`where\`).`
+        ).toEqual([]);
+      });
+    });
+  });
 });

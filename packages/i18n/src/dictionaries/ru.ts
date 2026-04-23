@@ -226,6 +226,10 @@ export const russianDictionary: Dictionary = {
     'starts with': 'начинается_с',
     'ends with': 'заканчивается_на',
     'ignoring case': 'без_учёта_регистра',
+    'sorted by': 'сортировано_по',
+    'mapped to': 'преобразовано_в',
+    'split by': 'разделено_по',
+    'joined by': 'объединено_через',
   },
 };
 

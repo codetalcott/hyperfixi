@@ -226,6 +226,10 @@ export const ukrainianDictionary: Dictionary = {
     'starts with': 'починається_з',
     'ends with': 'закінчується_на',
     'ignoring case': 'без_урахування_регістру',
+    'sorted by': 'відсортовано_за',
+    'mapped to': 'перетворено_на',
+    'split by': 'розділено_за',
+    'joined by': "об'єднано_через",
   },
 };
 

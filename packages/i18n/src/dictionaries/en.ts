@@ -244,5 +244,11 @@ export const en: Dictionary = {
     'starts with': 'starts with',
     'ends with': 'ends with',
     'ignoring case': 'ignoring case',
+
+    // Collection operations (v0.9.90)
+    'sorted by': 'sorted by',
+    'mapped to': 'mapped to',
+    'split by': 'split by',
+    'joined by': 'joined by',
   },
 };

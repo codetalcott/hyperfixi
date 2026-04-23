@@ -200,5 +200,9 @@ export const pt: Dictionary = {
     'starts with': 'começa com',
     'ends with': 'termina com',
     'ignoring case': 'ignorando maiúsculas',
+    'sorted by': 'ordenado por',
+    'mapped to': 'mapeado para',
+    'split by': 'dividido por',
+    'joined by': 'unido por',
   },
 };

@@ -200,5 +200,9 @@ export const tr: Dictionary = {
     'starts with': 'ile başlar',
     'ends with': 'ile biter',
     'ignoring case': 'büyük küçük harf duyarsız',
+    'sorted by': 'göre sıralı',
+    'mapped to': 'ye dönüştürülmüş',
+    'split by': 'ile bölünmüş',
+    'joined by': 'ile birleştirilmiş',
   },
 };

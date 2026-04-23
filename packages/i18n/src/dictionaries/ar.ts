@@ -200,5 +200,9 @@ export const ar: Dictionary = {
     'starts with': 'يبدأ بـ',
     'ends with': 'ينتهي بـ',
     'ignoring case': 'مع تجاهل الحالة',
+    'sorted by': 'مرتب حسب',
+    'mapped to': 'محول إلى',
+    'split by': 'مقسم بواسطة',
+    'joined by': 'مدموج بواسطة',
   },
 };
