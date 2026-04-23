@@ -271,6 +271,7 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     case 'is':
       return logicalExpressions.equals.evaluate(context, left, right);
     case '!=':
+    case 'is not':
       return logicalExpressions.notEquals.evaluate(context, left, right);
     case '===':
       return logicalExpressions.strictEquals.evaluate(context, left, right);
