@@ -98,6 +98,14 @@ export const italianProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'focalizzare', normalized: 'focus' },
     blur: { primary: 'sfuocare', normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'svuotare', normalized: 'empty' },
+    open: { primary: 'aprire', normalized: 'open' },
+    close: { primary: 'chiudere', normalized: 'close' },
+    select: { primary: 'selezionare', normalized: 'select' },
+    clear: { primary: 'cancellare', normalized: 'clear' },
+    reset: { primary: 'reimpostare', normalized: 'reset' },
+    breakpoint: { primary: 'punto-interruzione', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'andare', alternatives: ['navigare', 'vai'], normalized: 'go' },
     // Async

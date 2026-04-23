@@ -83,6 +83,18 @@ export const en: Dictionary = {
 
     // Behaviors
     install: 'install',
+
+    // v0.9.90 Phase 1 — DOM / form state / debug
+    open: 'open',
+    close: 'close',
+    select: 'select',
+    clear: 'clear',
+    breakpoint: 'breakpoint',
+
+    // Other commands with schemas (backfill — pre-existing gaps surfaced by
+    // the schema-alignment test)
+    prepend: 'prepend',
+    clone: 'clone',
   },
 
   modifiers: {

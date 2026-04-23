@@ -83,6 +83,14 @@ export const bengaliProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'ফোকাস', alternatives: ['মনোযোগ'], normalized: 'focus' },
     blur: { primary: 'ঝাপসা', alternatives: ['ফোকাস_সরান'], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'খালি-করুন', normalized: 'empty' },
+    open: { primary: 'খুলুন', normalized: 'open' },
+    close: { primary: 'বন্ধ', normalized: 'close' },
+    select: { primary: 'নির্বাচন', normalized: 'select' },
+    clear: { primary: 'পরিষ্কার', normalized: 'clear' },
+    reset: { primary: 'রিসেট', normalized: 'reset' },
+    breakpoint: { primary: 'ব্রেকপয়েন্ট', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'ক্লিক', normalized: 'click' },
     hover: { primary: 'হোভার', alternatives: ['উপরে_রাখুন'], normalized: 'hover' },

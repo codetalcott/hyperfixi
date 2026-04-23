@@ -58,6 +58,11 @@ export const thaiDictionary: Dictionary = {
     pick: 'เลือก',
     render: 'แสดงผล',
     until: 'จนถึง',
+    breakpoint: 'จุดพัก',
+    clear: 'เคลียร์',
+    close: 'ปิด',
+    open: 'เปิด',
+    select: 'เลือก',
   },
 
   modifiers: {
@@ -88,6 +93,7 @@ export const thaiDictionary: Dictionary = {
     load: 'โหลด',
     focus: 'โฟกัส',
     blur: 'เบลอ',
+    reset: 'รีเซ็ต',
     keydown: 'กดคีย์',
     keyup: 'ปล่อยคีย์',
     mouseover: 'เมาส์เข้า',
@@ -165,6 +171,7 @@ export const thaiDictionary: Dictionary = {
     random: 'สุ่ม',
     length: 'ความยาว',
     index: 'ดัชนี',
+    empty: 'ล้าง',
   },
 };
 

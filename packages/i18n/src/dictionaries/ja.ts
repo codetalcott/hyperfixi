@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/ja.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const ja: Dictionary = {
   commands: {
-    // Event handling
     on: 'で',
     tell: '伝える',
     trigger: '引き金',
     send: '送る',
-
-    // DOM manipulation
     take: '取る',
     put: '置く',
     set: '設定',
@@ -20,8 +18,6 @@ export const ja: Dictionary = {
     toggle: '切り替え',
     hide: '隠す',
     show: '表示',
-
-    // Control flow
     if: 'もし',
     unless: 'でなければ',
     repeat: '繰り返し',
@@ -31,54 +27,41 @@ export const ja: Dictionary = {
     continue: '続ける',
     break: '中断',
     halt: '停止',
-
-    // Async
     wait: '待つ',
     fetch: '取得',
     call: '呼び出し',
     return: '戻る',
-
-    // Other commands
     make: '作る',
     log: '記録',
     throw: '投げる',
     catch: '捕まえる',
     measure: '測定',
     transition: '遷移',
-
-    // Data Commands
     increment: '増加',
     decrement: '減少',
     default: '既定',
-
-    // Navigation Commands
     go: '移動',
     pushUrl: 'URLプッシュ',
     replaceUrl: 'URL置換',
-
-    // Utility Commands
     copy: 'コピー',
     pick: '選択',
     beep: 'ビープ',
-
-    // Advanced Commands
     js: 'JS実行',
     async: '非同期',
     render: '描画',
-
-    // Animation Commands
     swap: '交換',
     morph: '変形',
     settle: '安定',
-
-    // Content Commands
     append: '末尾追加',
-
-    // Control Flow
     exit: '終了',
-
-    // Behaviors
     install: 'インストール',
+    breakpoint: 'ブレークポイント',
+    clear: 'クリア',
+    close: '閉じる',
+    open: '開く',
+    select: '選択',
+    clone: '複製',
+    prepend: '先頭追加',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const ja: Dictionary = {
     mouseover: 'マウス上',
     mouseout: 'マウス外',
     mousemove: 'マウス移動',
-
     keydown: 'キー押下',
     keyup: 'キー解放',
     keypress: 'キー押す',
-
     focus: 'フォーカス',
     blur: 'ぼかし',
     change: '変更',
     input: '入力',
     submit: '送信',
     reset: 'リセット',
-
     load: '読み込み',
     unload: '読み込み解除',
     resize: 'サイズ変更',
     scroll: 'スクロール',
-
     touchstart: 'タッチ開始',
     touchend: 'タッチ終了',
     touchmove: 'タッチ移動',
@@ -145,8 +124,8 @@ export const ja: Dictionary = {
     contains: '含む',
     includes: '含める',
     equals: '等しい',
-    has: 'ある', // existence verb (context-based)
-    have: 'ある', // same verb for first/third person
+    has: 'ある',
+    have: 'ある',
     then: 'それから',
     else: 'そうでなければ',
     otherwise: 'そうでなければ',
@@ -204,7 +183,6 @@ export const ja: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: '最初',
     last: '最後',
     next: '次',
@@ -212,19 +190,13 @@ export const ja: Dictionary = {
     prev: '前',
     at: 'で',
     random: 'ランダム',
-
-    // DOM Traversal
     closest: '最も近い',
     parent: '親',
     children: '子',
     within: '以内',
-
-    // Emptiness/Existence
     no: 'ない',
     empty: '空',
     some: 'いくつか',
-
-    // String operations
     'starts with': 'で始まる',
     'ends with': 'で終わる',
   },

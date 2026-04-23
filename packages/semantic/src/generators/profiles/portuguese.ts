@@ -79,6 +79,18 @@ export const portugueseProfile: LanguageProfile = {
     send: { primary: 'enviar', normalized: 'send' },
     focus: { primary: 'focar', normalized: 'focus' },
     blur: { primary: 'desfocar', normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'esvaziar', normalized: 'empty' },
+    open: { primary: 'abrir', normalized: 'open' },
+    close: { primary: 'fechar', normalized: 'close' },
+    select: { primary: 'selecionar', normalized: 'select' },
+    clear: { primary: 'limpar', normalized: 'clear' },
+    reset: { primary: 'redefinir', alternatives: ['resetar'], normalized: 'reset' },
+    breakpoint: {
+      primary: 'ponto-interrupção',
+      alternatives: ['ponto-interrupcao'],
+      normalized: 'breakpoint',
+    },
     go: { primary: 'ir', alternatives: ['navegar'], normalized: 'go' },
     wait: { primary: 'esperar', alternatives: ['aguardar'], normalized: 'wait' },
     fetch: { primary: 'buscar', normalized: 'fetch' },

@@ -112,6 +112,18 @@ export const turkishProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'odak', alternatives: ['odaklanma'], normalized: 'focus' },
     blur: { primary: 'bulanık', alternatives: ['bulanıklık', 'bulanik'], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'boşalt', alternatives: ['bosalt'], normalized: 'empty' },
+    open: { primary: 'aç', alternatives: ['ac'], normalized: 'open' },
+    close: { primary: 'kapat', normalized: 'close' },
+    select: { primary: 'vurgula', normalized: 'select' },
+    clear: { primary: 'temizle', normalized: 'clear' },
+    reset: { primary: 'sıfırla', alternatives: ['sifirla'], normalized: 'reset' },
+    breakpoint: {
+      primary: 'kesme-noktası',
+      alternatives: ['kesme-noktasi'],
+      normalized: 'breakpoint',
+    },
     // Common event names (for event handler patterns)
     click: {
       primary: 'tıklama',

@@ -97,6 +97,14 @@ export const hindiProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'फोकस', alternatives: ['केंद्रित'], normalized: 'focus' },
     blur: { primary: 'धुंधला', alternatives: ['फोकस_हटाएं'], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'खाली-करें', normalized: 'empty' },
+    open: { primary: 'खोलें', normalized: 'open' },
+    close: { primary: 'बंद-करें', normalized: 'close' },
+    select: { primary: 'चिह्नित-करें', normalized: 'select' },
+    clear: { primary: 'साफ़-करें', alternatives: ['साफ-करें'], normalized: 'clear' },
+    reset: { primary: 'रीसेट', normalized: 'reset' },
+    breakpoint: { primary: 'ब्रेकप्वाइंट', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'क्लिक', normalized: 'click' },
     hover: { primary: 'होवर', alternatives: ['ऊपर_रखें'], normalized: 'hover' },

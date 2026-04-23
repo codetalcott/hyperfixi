@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/zh.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const zh: Dictionary = {
   commands: {
-    // Event handling
     on: '当',
     tell: '告诉',
     trigger: '触发',
     send: '发送',
-
-    // DOM manipulation
     take: '获取',
     put: '放置',
     set: '设置',
@@ -20,8 +18,6 @@ export const zh: Dictionary = {
     toggle: '切换',
     hide: '隐藏',
     show: '显示',
-
-    // Control flow
     if: '如果',
     unless: '除非',
     repeat: '重复',
@@ -31,54 +27,41 @@ export const zh: Dictionary = {
     continue: '继续',
     break: '中断',
     halt: '停止',
-
-    // Async
     wait: '等待',
     fetch: '获取',
     call: '调用',
     return: '返回',
-
-    // Other commands
     make: '制作',
     log: '日志',
     throw: '抛出',
     catch: '捕获',
     measure: '测量',
     transition: '过渡',
-
-    // Data Commands
     increment: '增加',
     decrement: '减少',
     default: '默认',
-
-    // Navigation Commands
     go: '前往',
     pushUrl: '推送网址',
     replaceUrl: '替换网址',
-
-    // Utility Commands
     copy: '复制',
     pick: '选取',
     beep: '蜂鸣',
-
-    // Advanced Commands
     js: 'JS执行',
     async: '异步',
     render: '渲染',
-
-    // Animation Commands
     swap: '交换',
     morph: '变形',
     settle: '稳定',
-
-    // Content Commands
     append: '追加',
-
-    // Control Flow
     exit: '退出',
-
-    // Behaviors
     install: '安装',
+    breakpoint: '断点',
+    clear: '清除',
+    close: '关闭',
+    open: '打开',
+    select: '选择',
+    clone: '克隆',
+    prepend: '前置',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const zh: Dictionary = {
     mouseover: '鼠标悬停',
     mouseout: '鼠标移出',
     mousemove: '鼠标移动',
-
     keydown: '按键按下',
     keyup: '按键抬起',
     keypress: '按键',
-
     focus: '聚焦',
     blur: '失焦',
     change: '改变',
     input: '输入',
     submit: '提交',
     reset: '重置',
-
     load: '加载',
     unload: '卸载',
     resize: '调整大小',
     scroll: '滚动',
-
     touchstart: '触摸开始',
     touchend: '触摸结束',
     touchmove: '触摸移动',
@@ -145,8 +124,8 @@ export const zh: Dictionary = {
     contains: '包含',
     includes: '包括',
     equals: '等于',
-    has: '有', // universal "have"
-    have: '有', // same character for first/third person
+    has: '有',
+    have: '有',
     then: '那么',
     else: '否则',
     otherwise: '要不然',
@@ -174,13 +153,13 @@ export const zh: Dictionary = {
     null: '空',
     undefined: '未定义',
     it: '它',
-    its: '它的', // REVIEW: native speaker
+    its: '它的',
     me: '我',
     my: '我的',
     myself: '我自己',
-    you: '你', // REVIEW: native speaker
-    your: '你的', // REVIEW: native speaker
-    yourself: '你自己', // REVIEW: native speaker
+    you: '你',
+    your: '你的',
+    yourself: '你自己',
     element: '元素',
     target: '目标',
     detail: '详情',
@@ -204,7 +183,6 @@ export const zh: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: '第一个',
     last: '最后一个',
     next: '下一个',
@@ -212,19 +190,13 @@ export const zh: Dictionary = {
     prev: '上个',
     at: '在',
     random: '随机',
-
-    // DOM Traversal
     closest: '最近的',
     parent: '父级',
     children: '子级',
     within: '之内',
-
-    // Emptiness/Existence
     no: '没有',
     empty: '空的',
     some: '一些',
-
-    // String operations
     'starts with': '以开头',
     'ends with': '以结尾',
   },
