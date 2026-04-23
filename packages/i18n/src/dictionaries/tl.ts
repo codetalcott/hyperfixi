@@ -1,21 +1,14 @@
-/**
- * Tagalog Dictionary
- *
- * Tagalog translations for hyperscript keywords.
- * Tagalog is a VSO (Verb-Subject-Object) language with rich verbal morphology.
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const tagalogDictionary: Dictionary = {
   commands: {
-    // Event handling
     on: 'kapag',
     tell: 'sabihin',
     trigger: 'palitawin',
     send: 'ipadala',
-
-    // DOM manipulation
     take: 'kunin',
     put: 'ilagay',
     set: 'itakda',
@@ -25,8 +18,6 @@ export const tagalogDictionary: Dictionary = {
     toggle: 'palitan',
     hide: 'itago',
     show: 'ipakita',
-
-    // Control flow
     if: 'kung',
     unless: 'maliban_kung',
     repeat: 'ulitin',
@@ -36,63 +27,46 @@ export const tagalogDictionary: Dictionary = {
     continue: 'magpatuloy',
     break: 'itigil',
     halt: 'huminto',
-
-    // Async
     wait: 'maghintay',
     fetch: 'kuhanin_mula',
     call: 'tawagin',
     return: 'ibalik',
-
-    // Other commands
     make: 'gumawa',
     log: 'itala',
     throw: 'ihagis',
     catch: 'hulihin',
     measure: 'sukatin',
     transition: 'baguhin',
-
-    // Data Commands
     increment: 'dagdagan',
     decrement: 'bawasan',
     default: 'pamantayan',
-
-    // Navigation Commands
     go: 'pumunta',
     pushUrl: 'itulak_url',
     replaceUrl: 'palitan_url',
-
-    // Utility Commands
     copy: 'kopyahin',
     pick: 'pumili',
     beep: 'tunog',
-
-    // Advanced Commands
     js: 'js',
     async: 'sabay',
     render: 'ipakita',
-
-    // Animation Commands
     swap: 'palitan_pwesto',
     morph: 'baguhin_hugis',
     settle: 'ayusin',
-
-    // Content Commands
     append: 'idagdag_sa_dulo',
     prepend: 'idagdag_sa_simula',
-
-    // Control Flow
     exit: 'lumabas',
     else: 'kung_hindi',
-
-    // Focus Commands
     focus: 'ituon',
     blur: 'alisin_tuon',
-
-    // Behaviors
     install: 'ikabit',
     behavior: 'ugali',
     init: 'simulan',
     clone: 'kopyahin',
+    breakpoint: 'breakpoint',
+    clear: 'burahin',
+    close: 'isara',
+    open: 'buksan',
+    select: 'piliin',
   },
 
   modifiers: {
@@ -129,28 +103,23 @@ export const tagalogDictionary: Dictionary = {
     mouseover: 'mouseover',
     mouseout: 'mouseout',
     mousemove: 'mousemove',
-
     keydown: 'keydown',
     keyup: 'keyup',
     keypress: 'keypress',
-
     focus: 'focus',
     blur: 'blur',
     change: 'change',
     input: 'input',
     submit: 'submit',
     reset: 'reset',
-
     load: 'load',
     unload: 'unload',
     resize: 'resize',
     scroll: 'scroll',
-
     touchstart: 'touchstart',
     touchend: 'touchend',
     touchmove: 'touchmove',
     touchcancel: 'touchcancel',
-
     every: 'bawat',
   },
 
@@ -166,8 +135,8 @@ export const tagalogDictionary: Dictionary = {
     contains: 'naglalaman',
     includes: 'kasama',
     equals: 'katumbas',
-    has: 'may', // possession verb (context-based)
-    have: 'may', // same for first/third person in Tagalog
+    has: 'may',
+    have: 'may',
     then: 'pagkatapos',
     else: 'kung_hindi',
     otherwise: 'kung_hindi_man',
@@ -240,7 +209,6 @@ export const tagalogDictionary: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'una',
     last: 'huli',
     next: 'susunod',
@@ -248,27 +216,18 @@ export const tagalogDictionary: Dictionary = {
     prev: 'nakaraan',
     at: 'sa',
     random: 'random',
-
-    // DOM Traversal
     closest: 'pinakamalapit',
     parent: 'magulang',
     children: 'mga_anak',
     within: 'sa_loob_ng',
-
-    // Emptiness/Existence
     no: 'walang',
     empty: 'walang_laman',
     some: 'ilan',
-
-    // String operations
     'starts with': 'nagsisimula_sa',
     'ends with': 'nagtatapos_sa',
-
-    // Additional
     length: 'haba',
     index: 'indeks',
   },
 };
 
-// Default export alias
 export const tl = tagalogDictionary;

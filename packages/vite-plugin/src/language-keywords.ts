@@ -89,7 +89,6 @@ export const JAPANESE_KEYWORDS = new Set([
   '非表示にする',
   '設定',
   '設定する',
-  'セット',
   '増加',
   '増やす',
   'インクリメント',
@@ -102,7 +101,6 @@ export const JAPANESE_KEYWORDS = new Set([
   '送る',
   '送信',
   'もし',
-  '条件',
   'そうでなければ',
   'それ以外',
   '繰り返し',
@@ -120,7 +118,6 @@ export const JAPANESE_KEYWORDS = new Set([
  */
 export const KOREAN_KEYWORDS = new Set([
   '토글',
-  '전환',
   '추가',
   '제거',
   '삭제',
@@ -165,7 +162,7 @@ export const CHINESE_KEYWORDS = new Set([
   '否则',
   '重复',
   '等待',
-  '当',
+  '持续',
 ]);
 
 /**
@@ -173,13 +170,12 @@ export const CHINESE_KEYWORDS = new Set([
  * RTL script makes detection straightforward.
  */
 export const ARABIC_KEYWORDS = new Set([
-  'بدل',
   'بدّل',
+  'بدل',
   'غيّر',
   'غير',
   'أضف',
   'اضف',
-  'زِد',
   'احذف',
   'أزل',
   'امسح',
@@ -189,11 +185,15 @@ export const ARABIC_KEYWORDS = new Set([
   'اخف',
   'أخفِ',
   'اخفي',
+  'أخف',
   'اضبط',
   'عيّن',
   'حدد',
+  'زِد',
+  'زد',
   'ارفع',
   'أنقص',
+  'انقص',
   'قلل',
   'تشغيل',
   'أطلق',
@@ -213,14 +213,15 @@ export const ARABIC_KEYWORDS = new Set([
  */
 export const SPANISH_KEYWORDS = new Set([
   'alternar',
-  'cambiar',
   'conmutar',
+  'toggle',
   'agregar',
   'añadir',
   'quitar',
   'eliminar',
   'remover',
   'sacar',
+  'borrar',
   'mostrar',
   'enseñar',
   'ocultar',
@@ -241,6 +242,12 @@ export const SPANISH_KEYWORDS = new Set([
   'repetir',
   'esperar',
   'mientras',
+  'primero',
+  'primera',
+  'último',
+  'ultima',
+  'siguiente',
+  'anterior',
 ]);
 
 /**
@@ -249,7 +256,6 @@ export const SPANISH_KEYWORDS = new Set([
  */
 export const PORTUGUESE_KEYWORDS = new Set([
   'alternar',
-  'trocar',
   'adicionar',
   'acrescentar',
   'remover',
@@ -282,7 +288,6 @@ export const PORTUGUESE_KEYWORDS = new Set([
  */
 export const FRENCH_KEYWORDS = new Set([
   'basculer',
-  'permuter',
   'alterner',
   'ajouter',
   'supprimer',
@@ -329,8 +334,8 @@ export const GERMAN_KEYWORDS = new Set([
   'auslösen',
   'senden',
   'schicken',
-  'wenn',
   'falls',
+  'sofern',
   'sonst',
   'ansonsten',
   'wiederholen',
@@ -352,7 +357,6 @@ export const TURKISH_KEYWORDS = new Set([
   'göster',
   'gizle',
   'ayarla',
-  'yap',
   'belirle',
   'artır',
   'azalt',
@@ -362,7 +366,7 @@ export const TURKISH_KEYWORDS = new Set([
   'yoksa',
   'tekrarla',
   'bekle',
-  'iken',
+  'süresince',
 ]);
 
 /**
@@ -371,8 +375,6 @@ export const TURKISH_KEYWORDS = new Set([
  */
 export const INDONESIAN_KEYWORDS = new Set([
   'alihkan',
-  'ganti',
-  'tukar',
   'tambah',
   'tambahkan',
   'hapus',
@@ -407,9 +409,7 @@ export const INDONESIAN_KEYWORDS = new Set([
  */
 export const SWAHILI_KEYWORDS = new Set([
   'badilisha',
-  'geuza',
   'ongeza',
-  'weka',
   'ondoa',
   'futa',
   'toa',
@@ -417,9 +417,9 @@ export const SWAHILI_KEYWORDS = new Set([
   'ficha',
   'mficho',
   'seti',
+  'ongezeko',
   'punguza',
   'chochea',
-  'anzisha',
   'tuma',
   'peleka',
   'kama',
@@ -429,7 +429,7 @@ export const SWAHILI_KEYWORDS = new Set([
   'rudia',
   'subiri',
   'ngoja',
-  'wakati',
+  'kadri',
 ]);
 
 /**
@@ -439,7 +439,6 @@ export const SWAHILI_KEYWORDS = new Set([
 export const QUECHUA_KEYWORDS = new Set([
   't',
   'tikray',
-  'kutichiy',
   'yapay',
   'yapaykuy',
   'qichuy',
@@ -449,11 +448,12 @@ export const QUECHUA_KEYWORDS = new Set([
   'qawachiy',
   'pakay',
   'pakakuy',
-  'churay',
+  'churanay',
   'kamaykuy',
   'yapachiy',
   'pisiyachiy',
-  'qallarichiy',
+  'kuyuchiy',
+  'kichay',
   'kachay',
   'apachiy',
   'sichus',
@@ -472,7 +472,6 @@ export const QUECHUA_KEYWORDS = new Set([
 export const ITALIAN_KEYWORDS = new Set([
   'commutare',
   'alternare',
-  'cambiare',
   'aggiungere',
   'aggiungi',
   'rimuovere',
@@ -519,7 +518,6 @@ export const VIETNAMESE_KEYWORDS = new Set([
   'giấu',
   'gán',
   'thiết lập',
-  'đặt',
   'tăng',
   'tăng lên',
   'giảm',
@@ -559,10 +557,6 @@ export const POLISH_KEYWORDS = new Set([
   'zwiększ',
   'zwieksz',
   'zmniejsz',
-  'uzyskaj',
-  'pobierz',
-  'wywołaj',
-  'wywolaj',
   'wyzwól',
   'wyzwol',
   'wyślij',
@@ -609,8 +603,9 @@ export const RUSSIAN_KEYWORDS = new Set([
   'увеличь',
   'уменьшить',
   'уменьши',
-  'вызвать',
-  'вызови',
+  'инициировать',
+  'запустить',
+  'запусти',
   'отправить',
   'отправь',
   'если',
@@ -650,8 +645,9 @@ export const UKRAINIAN_KEYWORDS = new Set([
   'збільш',
   'зменшити',
   'зменш',
-  'викликати',
-  'виклич',
+  'ініціювати',
+  'запустити',
+  'запусти',
   'надіслати',
   'надішли',
   'якщо',
@@ -707,7 +703,6 @@ export const HINDI_KEYWORDS = new Set([
  */
 export const BENGALI_KEYWORDS = new Set([
   'টগল',
-  'পরিবর্তন',
   'যোগ',
   'যোগ করুন',
   'সরান',
@@ -732,7 +727,6 @@ export const BENGALI_KEYWORDS = new Set([
   'পুনরাবৃত্তি',
   'বার বার',
   'অপেক্ষা',
-  'থামুন',
   'যতক্ষণ',
 ]);
 
@@ -784,11 +778,11 @@ export const TL_KEYWORDS = new Set([
   'taasan',
   'bawasan',
   'ibaba',
+  'palitawin',
   'magpatugtog',
   'ipadala',
   'magpadala',
   'kung',
-  'kapag',
   'kung_hindi',
   'kundi',
   'ulitin',

@@ -60,9 +60,16 @@ export type ActionType =
   | 'on'
   | 'trigger'
   | 'send'
-  // DOM focus
+  // DOM focus / form state
   | 'focus'
   | 'blur'
+  | 'empty'
+  | 'open'
+  | 'close'
+  | 'select'
+  | 'clear'
+  | 'reset'
+  | 'breakpoint'
   // Navigation
   | 'go'
   // Async

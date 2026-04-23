@@ -87,6 +87,14 @@ export const vietnameseProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'tập trung', normalized: 'focus' },
     blur: { primary: 'mất tập trung', normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'làm-rỗng', normalized: 'empty' },
+    open: { primary: 'mở', normalized: 'open' },
+    close: { primary: 'đóng', normalized: 'close' },
+    select: { primary: 'đánh-dấu', normalized: 'select' },
+    clear: { primary: 'tẩy', normalized: 'clear' },
+    reset: { primary: 'đặt-lại', normalized: 'reset' },
+    breakpoint: { primary: 'điểm-dừng', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'nhấp', alternatives: ['bấm'], normalized: 'click' },
     hover: { primary: 'di chuột', alternatives: ['rê chuột'], normalized: 'hover' },

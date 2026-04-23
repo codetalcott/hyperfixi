@@ -174,6 +174,14 @@ export const ukrainianProfile: LanguageProfile = {
       normalized: 'blur',
       form: 'infinitive',
     },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'спорожнити', normalized: 'empty' },
+    open: { primary: 'відкрити', normalized: 'open' },
+    close: { primary: 'закрити', normalized: 'close' },
+    select: { primary: 'виділити', normalized: 'select' },
+    clear: { primary: 'очистити', normalized: 'clear' },
+    reset: { primary: 'скинути', normalized: 'reset' },
+    breakpoint: { primary: 'точка-зупинки', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'кліку', alternatives: ['клік', 'натисканні'], normalized: 'click' },
     hover: { primary: 'наведенні', alternatives: ['наведення'], normalized: 'hover' },

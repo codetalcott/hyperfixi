@@ -103,6 +103,14 @@ const NO_REQUIRED_ROLES_COMMANDS = new Set([
   'break', // Zero-arg control flow (exit loop)
   'exit', // Zero-arg control flow (exit handler)
   'beep', // Debug command — all roles optional
+  // Upstream _hyperscript 0.9.90 additions (Phase 1) — all take an optional patient
+  'empty',
+  'open',
+  'close',
+  'select',
+  'clear',
+  'reset',
+  'breakpoint', // Zero-arg debug command
 ]);
 
 /**

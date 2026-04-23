@@ -169,6 +169,14 @@ export const russianProfile: LanguageProfile = {
       form: 'infinitive',
     },
     blur: { primary: 'размыть', alternatives: ['размой'], normalized: 'blur', form: 'infinitive' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'опустошить', normalized: 'empty' },
+    open: { primary: 'открыть', normalized: 'open' },
+    close: { primary: 'закрыть', normalized: 'close' },
+    select: { primary: 'выделить', normalized: 'select' },
+    clear: { primary: 'очистить', normalized: 'clear' },
+    reset: { primary: 'сбросить', normalized: 'reset' },
+    breakpoint: { primary: 'точка-останова', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'клик', alternatives: ['клике', 'нажатии'], normalized: 'click' },
     hover: { primary: 'наведении', alternatives: ['наведение'], normalized: 'hover' },
