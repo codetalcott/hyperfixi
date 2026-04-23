@@ -1,21 +1,14 @@
-/**
- * Hindi Dictionary
- *
- * Translations for Hindi language support.
- * Uses imperative verb forms (common in software UIs).
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const hindiDictionary: Dictionary = {
   commands: {
-    // Event handling
     on: 'पर',
     tell: 'बताएं',
     trigger: 'ट्रिगर',
     send: 'भेजें',
-
-    // DOM manipulation
     take: 'लें',
     put: 'रखें',
     set: 'सेट',
@@ -25,8 +18,6 @@ export const hindiDictionary: Dictionary = {
     toggle: 'टॉगल',
     hide: 'छिपाएं',
     show: 'दिखाएं',
-
-    // Control flow
     if: 'अगर',
     unless: 'जब_तक_नहीं',
     repeat: 'दोहराएं',
@@ -36,65 +27,46 @@ export const hindiDictionary: Dictionary = {
     continue: 'जारी',
     break: 'रोकें',
     halt: 'रोकें',
-
-    // Async
     wait: 'प्रतीक्षा',
     fetch: 'लाएं',
     call: 'कॉल',
     return: 'लौटाएं',
-
-    // Other commands
     make: 'बनाएं',
     log: 'लॉग',
     throw: 'फेंकें',
     catch: 'पकड़ें',
     measure: 'मापें',
     transition: 'संक्रमण',
-
-    // Data Commands
     increment: 'बढ़ाएं',
     decrement: 'घटाएं',
     default: 'डिफ़ॉल्ट',
-
-    // Navigation Commands
     go: 'जाएं',
     pushUrl: 'url_जोड़ें',
     replaceUrl: 'url_बदलें',
-
-    // Utility Commands
     copy: 'कॉपी',
     pick: 'चुनें',
     beep: 'बीप',
-
-    // Advanced Commands
     js: 'जेएस',
     async: 'असिंक',
     render: 'रेंडर',
-
-    // Animation Commands
     swap: 'बदलें',
     morph: 'रूपांतर',
     settle: 'स्थिर',
-
-    // Content Commands
     append: 'जोड़ें_अंत',
-
-    // Control Flow
     exit: 'बाहर',
     else: 'वरना',
-
-    // Behaviors
     install: 'इंस्टॉल',
     init: 'प्रारंभ',
     behavior: 'व्यवहार',
-
-    // Focus
     focus: 'फोकस',
     blur: 'धुंधला',
-
-    // Clone
     clone: 'कॉपी',
     prepend: 'जोड़ें_शुरू',
+    breakpoint: 'ब्रेकप्वाइंट',
+    clear: 'साफ़-करें',
+    close: 'बंद-करें',
+    open: 'खोलें',
+    select: 'चुनें',
   },
 
   modifiers: {
@@ -127,23 +99,19 @@ export const hindiDictionary: Dictionary = {
     mouseover: 'माउस_ओवर',
     mouseout: 'माउस_आउट',
     mousemove: 'माउस_मूव',
-
     keydown: 'की_नीचे',
     keyup: 'की_ऊपर',
     keypress: 'की_प्रेस',
-
     focus: 'फोकस',
     blur: 'धुंधला',
     change: 'परिवर्तन',
     input: 'इनपुट',
     submit: 'जमा',
     reset: 'रीसेट',
-
     load: 'लोड',
     unload: 'अनलोड',
     resize: 'आकार_बदलें',
     scroll: 'स्क्रॉल',
-
     touchstart: 'टच_शुरू',
     touchend: 'टच_समाप्त',
     touchmove: 'टच_मूव',
@@ -166,8 +134,8 @@ export const hindiDictionary: Dictionary = {
     else: 'वरना',
     otherwise: 'अन्यथा',
     end: 'समाप्त',
-    has: 'है', // existence verb (context-based)
-    have: 'है', // same verb for first/third person
+    has: 'है',
+    have: 'है',
     isNot: 'नहीं_है',
     empty: 'खाली',
   },
@@ -241,7 +209,6 @@ export const hindiDictionary: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'पहला',
     last: 'अंतिम',
     next: 'अगला',
@@ -249,20 +216,16 @@ export const hindiDictionary: Dictionary = {
     prev: 'पिछ',
     at: 'पर',
     random: 'यादृच्छिक',
-
-    // DOM Traversal
     closest: 'निकटतम',
     parent: 'मूल',
     children: 'बच्चे',
     within: 'के_अंदर',
-
-    // Emptiness/Existence
     no: 'नहीं',
     empty: 'खाली',
     some: 'कुछ',
-
-    // String operations
     'starts with': 'से_शुरू',
     'ends with': 'पर_समाप्त',
   },
 };
+
+export const hi = hindiDictionary;

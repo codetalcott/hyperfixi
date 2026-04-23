@@ -1,21 +1,14 @@
-/**
- * Malay Dictionary
- *
- * Malay translations for hyperscript keywords.
- * Malay is an SVO (Subject-Verb-Object) language with prepositions.
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const malayDictionary: Dictionary = {
   commands: {
-    // Event handling
     on: 'apabila',
     tell: 'beritahu',
     trigger: 'cetuskan',
     send: 'hantar',
-
-    // DOM manipulation
     take: 'ambil',
     put: 'letak',
     set: 'tetapkan',
@@ -25,8 +18,6 @@ export const malayDictionary: Dictionary = {
     toggle: 'togol',
     hide: 'sembunyi',
     show: 'tunjuk',
-
-    // Control flow
     if: 'jika',
     unless: 'kecuali',
     repeat: 'ulang',
@@ -36,63 +27,46 @@ export const malayDictionary: Dictionary = {
     continue: 'teruskan',
     break: 'henti',
     halt: 'henti',
-
-    // Async
     wait: 'tunggu',
     fetch: 'ambil_dari',
     call: 'panggil',
     return: 'pulang',
-
-    // Other commands
     make: 'buat',
     log: 'catat',
     throw: 'lempar',
     catch: 'tangkap',
     measure: 'ukur',
     transition: 'peralihan',
-
-    // Data Commands
     increment: 'tambah_satu',
     decrement: 'kurang_satu',
     default: 'lalai',
-
-    // Navigation Commands
     go: 'pergi',
     pushUrl: 'tolak_url',
     replaceUrl: 'ganti_url',
-
-    // Utility Commands
     copy: 'salin',
     pick: 'pilih',
     beep: 'bunyi',
-
-    // Advanced Commands
     js: 'js',
     async: 'tak_segerak',
     render: 'papar',
-
-    // Animation Commands
     swap: 'tukar_tempat',
     morph: 'ubah_bentuk',
     settle: 'selesai',
-
-    // Content Commands
     append: 'tambah_hujung',
     prepend: 'tambah_mula',
-
-    // Control Flow
     exit: 'keluar',
     else: 'kalau_tidak',
-
-    // Focus Commands
     focus: 'fokus',
     blur: 'kabur',
-
-    // Behaviors
     install: 'pasang',
     behavior: 'kelakuan',
     init: 'mula',
     clone: 'klon',
+    breakpoint: 'titik-henti',
+    clear: 'padam',
+    close: 'tutup',
+    open: 'buka',
+    select: 'pilih',
   },
 
   modifiers: {
@@ -129,28 +103,23 @@ export const malayDictionary: Dictionary = {
     mouseover: 'mouseover',
     mouseout: 'mouseout',
     mousemove: 'mousemove',
-
     keydown: 'keydown',
     keyup: 'keyup',
     keypress: 'keypress',
-
     focus: 'focus',
     blur: 'blur',
     change: 'change',
     input: 'input',
     submit: 'submit',
     reset: 'reset',
-
     load: 'load',
     unload: 'unload',
     resize: 'resize',
     scroll: 'scroll',
-
     touchstart: 'touchstart',
     touchend: 'touchend',
     touchmove: 'touchmove',
     touchcancel: 'touchcancel',
-
     every: 'setiap',
   },
 
@@ -166,8 +135,8 @@ export const malayDictionary: Dictionary = {
     contains: 'mengandungi',
     includes: 'termasuk',
     equals: 'sama',
-    has: 'ada', // possession verb (context-based)
-    have: 'ada', // same for first/third person
+    has: 'ada',
+    have: 'ada',
     then: 'kemudian',
     else: 'kalau_tidak',
     otherwise: 'jika_tidak',
@@ -240,7 +209,6 @@ export const malayDictionary: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'pertama',
     last: 'terakhir',
     next: 'seterusnya',
@@ -248,27 +216,18 @@ export const malayDictionary: Dictionary = {
     prev: 'sebelum',
     at: 'di',
     random: 'rawak',
-
-    // DOM Traversal
     closest: 'terdekat',
     parent: 'induk',
     children: 'anak_anak',
     within: 'dalam',
-
-    // Emptiness/Existence
     no: 'tiada',
     empty: 'kosong',
     some: 'beberapa',
-
-    // String operations
     'starts with': 'bermula_dengan',
     'ends with': 'berakhir_dengan',
-
-    // Additional
     length: 'panjang',
     index: 'indeks',
   },
 };
 
-// Default export alias
 export const ms = malayDictionary;

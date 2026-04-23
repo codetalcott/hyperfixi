@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/sw.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const sw: Dictionary = {
   commands: {
-    // Event handling
     on: 'kwenye',
     tell: 'ambia',
     trigger: 'chochea',
     send: 'tuma',
-
-    // DOM manipulation
     take: 'chukua',
     put: 'weka',
     set: 'weka',
@@ -20,8 +18,6 @@ export const sw: Dictionary = {
     toggle: 'badilisha',
     hide: 'ficha',
     show: 'onyesha',
-
-    // Control flow
     if: 'kama',
     unless: 'isipokuwa',
     repeat: 'rudia',
@@ -31,54 +27,41 @@ export const sw: Dictionary = {
     continue: 'endelea',
     break: 'vunja',
     halt: 'simama',
-
-    // Async
     wait: 'ngoja',
     fetch: 'leta',
     call: 'ita',
     return: 'rudi',
-
-    // Other commands
     make: 'fanya',
     log: 'andika',
     throw: 'tupa',
     catch: 'shika',
     measure: 'pima',
     transition: 'mpito',
-
-    // Data Commands
     increment: 'ongeza',
     decrement: 'punguza',
     default: 'msingi',
-
-    // Navigation Commands
     go: 'nenda',
     pushUrl: 'sukumaUrl',
     replaceUrl: 'badilishaUrl',
-
-    // Utility Commands
     copy: 'nakili',
     pick: 'chagua',
     beep: 'lia',
-
-    // Advanced Commands
     js: 'js',
     async: 'sainkroni',
     render: 'chora',
-
-    // Animation Commands
     swap: 'badilishana',
     morph: 'badilishaUmbo',
     settle: 'tulia',
-
-    // Content Commands
     append: 'ongezaMwisho',
-
-    // Control Flow
     exit: 'toka',
-
-    // Behaviors
     install: 'sakinisha',
+    breakpoint: 'nukta-simama',
+    clear: 'futa',
+    close: 'funga',
+    open: 'fungua',
+    select: 'chagua',
+    clone: 'nakili',
+    prepend: 'tanguliza',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const sw: Dictionary = {
     mouseover: 'panya_juu',
     mouseout: 'panya_nje',
     mousemove: 'panya_sogea',
-
     keydown: 'kitufe_shuka',
     keyup: 'kitufe_juu',
     keypress: 'kitufe_bonyeza',
-
     focus: 'zingatia',
     blur: 'poteza_macho',
     change: 'badilisha',
     input: 'ingizo',
     submit: 'wasilisha',
     reset: 'weka_upya',
-
     load: 'pakia',
     unload: 'shuka',
     resize: 'badilisha_ukubwa',
     scroll: 'sogeza',
-
     touchstart: 'gusa_anza',
     touchend: 'gusa_mwisho',
     touchmove: 'gusa_sogea',
@@ -145,8 +124,8 @@ export const sw: Dictionary = {
     contains: 'ina',
     includes: 'pamoja',
     equals: 'sawa',
-    has: 'ana', // third-person: yeye ana
-    have: 'nina', // first-person: mimi nina
+    has: 'ana',
+    have: 'nina',
     then: 'kisha',
     else: 'sivyo',
     otherwise: 'vinginevyo',
@@ -174,13 +153,13 @@ export const sw: Dictionary = {
     null: 'tupu',
     undefined: 'haijafafanuliwa',
     it: 'hiyo',
-    its: 'yake', // REVIEW: native speaker
+    its: 'yake',
     me: 'mimi',
     my: 'yangu',
     myself: 'mimi mwenyewe',
-    you: 'wewe', // REVIEW: native speaker
-    your: 'yako', // REVIEW: native speaker
-    yourself: 'wewe mwenyewe', // REVIEW: native speaker
+    you: 'wewe',
+    your: 'yako',
+    yourself: 'wewe mwenyewe',
     element: 'kipengele',
     target: 'lengo',
     detail: 'maelezo',
@@ -204,7 +183,6 @@ export const sw: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'kwanza',
     last: 'mwisho',
     next: 'ijayo',
@@ -212,19 +190,13 @@ export const sw: Dictionary = {
     prev: 'awali',
     at: 'katika',
     random: 'nasibu',
-
-    // DOM Traversal
     closest: 'karibu_zaidi',
     parent: 'mzazi',
     children: 'watoto',
     within: 'ndani_ya',
-
-    // Emptiness/Existence
     no: 'hakuna',
     empty: 'tupu',
     some: 'baadhi',
-
-    // String operations
     'starts with': 'huanza na',
     'ends with': 'huisha na',
   },

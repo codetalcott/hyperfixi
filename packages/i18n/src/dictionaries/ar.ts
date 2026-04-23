@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/ar.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const ar: Dictionary = {
   commands: {
-    // Event handling
     on: 'على',
     tell: 'أخبر',
     trigger: 'تشغيل',
     send: 'أرسل',
-
-    // DOM manipulation
     take: 'خذ',
     put: 'ضع',
     set: 'اضبط',
@@ -20,8 +18,6 @@ export const ar: Dictionary = {
     toggle: 'بدل',
     hide: 'اخف',
     show: 'اظهر',
-
-    // Control flow
     if: 'إذا',
     unless: 'إلا إذا',
     repeat: 'كرر',
@@ -31,54 +27,41 @@ export const ar: Dictionary = {
     continue: 'واصل',
     break: 'توقف',
     halt: 'أوقف',
-
-    // Async
     wait: 'انتظر',
     fetch: 'احضر',
     call: 'استدع',
     return: 'ارجع',
-
-    // Other commands
     make: 'اصنع',
     log: 'سجل',
     throw: 'ارم',
     catch: 'التقط',
     measure: 'قس',
     transition: 'انتقال',
-
-    // Data Commands
     increment: 'زِد',
     decrement: 'أنقص',
     default: 'افتراضي',
-
-    // Navigation Commands
     go: 'اذهب',
     pushUrl: 'ادفع رابط',
     replaceUrl: 'استبدل رابط',
-
-    // Utility Commands
     copy: 'انسخ',
     pick: 'اختر',
     beep: 'صفّر',
-
-    // Advanced Commands
     js: 'جافاسكربت',
     async: 'متزامن',
     render: 'ارسم',
-
-    // Animation Commands
     swap: 'بدّل',
     morph: 'حوّل',
     settle: 'استقر',
-
-    // Content Commands
     append: 'ألحق',
-
-    // Control Flow
     exit: 'اخرج',
-
-    // Behaviors
     install: 'ثبّت',
+    breakpoint: 'نقطة-توقف',
+    clear: 'امسح',
+    close: 'أغلق',
+    open: 'افتح',
+    select: 'اختر',
+    clone: 'استنسخ',
+    prepend: 'سبق',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const ar: Dictionary = {
     mouseover: 'فأرة فوق',
     mouseout: 'فأرة خارج',
     mousemove: 'فأرة تحرك',
-
     keydown: 'مفتاح أسفل',
     keyup: 'مفتاح أعلى',
     keypress: 'مفتاح ضغط',
-
     focus: 'تركيز',
     blur: 'ضبابية',
     change: 'تغيير',
     input: 'إدخال',
     submit: 'إرسال',
     reset: 'إعادة تعيين',
-
     load: 'تحميل',
     unload: 'إلغاء تحميل',
     resize: 'تغيير حجم',
     scroll: 'تمرير',
-
     touchstart: 'بداية لمس',
     touchend: 'نهاية لمس',
     touchmove: 'تحرك لمس',
@@ -145,8 +124,8 @@ export const ar: Dictionary = {
     contains: 'يحتوي',
     includes: 'يشمل',
     equals: 'يساوي',
-    has: 'لديه', // third-person: he/it has
-    have: 'لدي', // first-person: I have
+    has: 'لديه',
+    have: 'لدي',
     then: 'ثم',
     else: 'وإلا',
     otherwise: 'خلاف ذلك',
@@ -174,13 +153,13 @@ export const ar: Dictionary = {
     null: 'فارغ',
     undefined: 'غير معرف',
     it: 'هو',
-    its: 'له', // REVIEW: native speaker
+    its: 'له',
     me: 'أنا',
     my: 'لي',
     myself: 'نفسي',
-    you: 'أنت', // REVIEW: native speaker
-    your: 'لك', // REVIEW: native speaker
-    yourself: 'نفسك', // REVIEW: native speaker
+    you: 'أنت',
+    your: 'لك',
+    yourself: 'نفسك',
     element: 'عنصر',
     target: 'هدف',
     detail: 'تفاصيل',
@@ -204,7 +183,6 @@ export const ar: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'أول',
     last: 'آخر',
     next: 'التالي',
@@ -212,19 +190,13 @@ export const ar: Dictionary = {
     prev: 'سابق',
     at: 'عند',
     random: 'عشوائي',
-
-    // DOM Traversal
     closest: 'الأقرب',
     parent: 'والد',
     children: 'أطفال',
     within: 'داخل',
-
-    // Emptiness/Existence
     no: 'لا يوجد',
     empty: 'فارغ',
     some: 'بعض',
-
-    // String operations
     'starts with': 'يبدأ بـ',
     'ends with': 'ينتهي بـ',
   },

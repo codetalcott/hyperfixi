@@ -1,21 +1,14 @@
-/**
- * Russian Dictionary
- *
- * Translations for Russian language support.
- * Uses infinitive verbs (common in software UIs).
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const russianDictionary: Dictionary = {
   commands: {
-    // Event handling
     on: 'при',
     tell: 'сказать',
     trigger: 'вызвать',
     send: 'отправить',
-
-    // DOM manipulation
     take: 'взять',
     put: 'положить',
     set: 'установить',
@@ -25,8 +18,6 @@ export const russianDictionary: Dictionary = {
     toggle: 'переключить',
     hide: 'скрыть',
     show: 'показать',
-
-    // Control flow
     if: 'если',
     unless: 'если_не',
     repeat: 'повторить',
@@ -36,65 +27,46 @@ export const russianDictionary: Dictionary = {
     continue: 'продолжить',
     break: 'прервать',
     halt: 'остановить',
-
-    // Async
     wait: 'ждать',
     fetch: 'загрузить',
     call: 'вызвать',
     return: 'вернуть',
-
-    // Other commands
     make: 'создать',
     log: 'записать',
     throw: 'бросить',
     catch: 'поймать',
     measure: 'измерить',
     transition: 'анимировать',
-
-    // Data Commands
     increment: 'увеличить',
     decrement: 'уменьшить',
     default: 'по_умолчанию',
-
-    // Navigation Commands
     go: 'перейти',
     pushUrl: 'добавить_url',
     replaceUrl: 'заменить_url',
-
-    // Utility Commands
     copy: 'копировать',
     pick: 'выбрать',
     beep: 'звук',
-
-    // Advanced Commands
     js: 'js',
     async: 'асинхронно',
     render: 'отобразить',
-
-    // Animation Commands
     swap: 'поменять',
     morph: 'трансформировать',
     settle: 'стабилизировать',
-
-    // Content Commands
     append: 'добавить_в_конец',
-
-    // Control Flow
     exit: 'выйти',
     else: 'иначе',
-
-    // Behaviors
     install: 'установить',
     init: 'инициализировать',
     behavior: 'поведение',
-
-    // Focus
     focus: 'сфокусировать',
     blur: 'размыть',
-
-    // Clone
     clone: 'клонировать',
     prepend: 'добавить_в_начало',
+    breakpoint: 'точка-останова',
+    clear: 'очистить',
+    close: 'закрыть',
+    open: 'открыть',
+    select: 'выбрать',
   },
 
   modifiers: {
@@ -127,23 +99,19 @@ export const russianDictionary: Dictionary = {
     mouseover: 'наведение',
     mouseout: 'уход',
     mousemove: 'движение_мыши',
-
     keydown: 'клавиша_вниз',
     keyup: 'клавиша_вверх',
     keypress: 'нажатие_клавиши',
-
     focus: 'фокус',
     blur: 'потеря_фокуса',
     change: 'изменение',
     input: 'ввод',
     submit: 'отправка',
     reset: 'сброс',
-
     load: 'загрузка',
     unload: 'выгрузка',
     resize: 'изменение_размера',
     scroll: 'прокрутка',
-
     touchstart: 'касание_начало',
     touchend: 'касание_конец',
     touchmove: 'касание_движение',
@@ -166,8 +134,8 @@ export const russianDictionary: Dictionary = {
     else: 'иначе',
     otherwise: 'в_противном_случае',
     end: 'конец',
-    has: 'имеет', // third-person: он/она имеет
-    have: 'имею', // first-person: я имею
+    has: 'имеет',
+    have: 'имею',
     isNot: 'не_есть',
     empty: 'пустой',
   },
@@ -241,7 +209,6 @@ export const russianDictionary: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'первый',
     last: 'последний',
     next: 'следующий',
@@ -249,20 +216,16 @@ export const russianDictionary: Dictionary = {
     prev: 'пред',
     at: 'в',
     random: 'случайный',
-
-    // DOM Traversal
     closest: 'ближайший',
     parent: 'родитель',
     children: 'дети',
     within: 'внутри',
-
-    // Emptiness/Existence
     no: 'нет',
     empty: 'пустой',
     some: 'некоторые',
-
-    // String operations
     'starts with': 'начинается_с',
     'ends with': 'заканчивается_на',
   },
 };
+
+export const ru = russianDictionary;

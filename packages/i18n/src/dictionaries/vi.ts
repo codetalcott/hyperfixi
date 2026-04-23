@@ -62,6 +62,11 @@ export const vi: Dictionary = {
     clone: 'sao chép',
     prepend: 'thêm đầu',
     else: 'không thì',
+    breakpoint: 'điểm-dừng',
+    clear: 'xóa',
+    close: 'đóng',
+    open: 'mở',
+    select: 'chọn',
   },
 
   modifiers: {
@@ -98,6 +103,7 @@ export const vi: Dictionary = {
     mouseleave: 'chuột rời',
     focus: 'tập trung',
     blur: 'mất tập trung',
+    reset: 'đặt-lại',
     load: 'tải',
     scroll: 'cuộn',
     resize: 'đổi kích thước',
@@ -191,5 +197,6 @@ export const vi: Dictionary = {
     parent: 'cha',
     children: 'con',
     closest: 'gần nhất',
+    empty: 'làm-rỗng',
   },
 };

@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/de.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const de: Dictionary = {
   commands: {
-    // Event handling
     on: 'bei',
     tell: 'sagen',
     trigger: 'auslösen',
     send: 'senden',
-
-    // DOM manipulation
     take: 'nehmen',
     put: 'setzen',
     set: 'festlegen',
@@ -20,8 +18,6 @@ export const de: Dictionary = {
     toggle: 'umschalten',
     hide: 'verstecken',
     show: 'zeigen',
-
-    // Control flow
     if: 'wenn',
     unless: 'wennnicht',
     repeat: 'wiederholen',
@@ -31,54 +27,41 @@ export const de: Dictionary = {
     continue: 'weiter',
     break: 'unterbrechen',
     halt: 'anhalten',
-
-    // Async
     wait: 'warten',
     fetch: 'holen',
     call: 'aufrufen',
     return: 'zurückgeben',
-
-    // Other commands
     make: 'erstellen',
     log: 'protokollieren',
     throw: 'werfen',
     catch: 'fangen',
     measure: 'messen',
     transition: 'übergang',
-
-    // Data Commands
     increment: 'erhöhen',
     decrement: 'verringern',
     default: 'standard',
-
-    // Navigation Commands
     go: 'gehen',
     pushUrl: 'urlHinzufügen',
     replaceUrl: 'urlErsetzen',
-
-    // Utility Commands
     copy: 'kopieren',
     pick: 'auswählen',
     beep: 'piepton',
-
-    // Advanced Commands
     js: 'js',
     async: 'asynchron',
     render: 'rendern',
-
-    // Animation Commands
     swap: 'tauschen',
     morph: 'verwandeln',
     settle: 'stabilisieren',
-
-    // Content Commands
     append: 'anhängen',
-
-    // Control Flow
     exit: 'beenden',
-
-    // Behaviors
     install: 'installieren',
+    breakpoint: 'haltepunkt',
+    clear: 'löschen',
+    close: 'schließen',
+    open: 'öffnen',
+    select: 'auswählen',
+    clone: 'klonen',
+    prepend: 'voranstellen',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const de: Dictionary = {
     mouseover: 'mausüber',
     mouseout: 'maushinaus',
     mousemove: 'mausbewegen',
-
     keydown: 'tasteunten',
     keyup: 'tasteoben',
     keypress: 'tastedrücken',
-
     focus: 'fokus',
     blur: 'unscharf',
     change: 'ändern',
     input: 'eingabe',
     submit: 'absenden',
     reset: 'zurücksetzen',
-
     load: 'laden',
     unload: 'entladen',
     resize: 'größeändern',
     scroll: 'scrollen',
-
     touchstart: 'berührungstart',
     touchend: 'berührungend',
     touchmove: 'berührungbewegen',
@@ -145,8 +124,8 @@ export const de: Dictionary = {
     contains: 'enthält',
     includes: 'beinhaltet',
     equals: 'gleicht',
-    has: 'hat', // third-person: es hat
-    have: 'habe', // first-person: ich habe
+    has: 'hat',
+    have: 'habe',
     then: 'dann',
     else: 'sonst',
     otherwise: 'andernfalls',
@@ -179,7 +158,7 @@ export const de: Dictionary = {
     my: 'mein',
     you: 'du',
     your: 'dein',
-    yourself: 'dich selbst', // REVIEW: native speaker
+    yourself: 'dich selbst',
     myself: 'ich selbst',
     element: 'element',
     target: 'ziel',
@@ -204,7 +183,6 @@ export const de: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'erste',
     last: 'letzte',
     next: 'nächste',
@@ -212,19 +190,13 @@ export const de: Dictionary = {
     prev: 'vorh',
     at: 'bei',
     random: 'zufällig',
-
-    // DOM Traversal
     closest: 'nächste',
     parent: 'elternteil',
     children: 'kinder',
     within: 'innerhalb',
-
-    // Emptiness/Existence
     no: 'kein',
     empty: 'leer',
     some: 'einige',
-
-    // String operations
     'starts with': 'beginnt mit',
     'ends with': 'endet mit',
   },

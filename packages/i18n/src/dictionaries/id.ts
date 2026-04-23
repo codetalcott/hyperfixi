@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/id.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const id: Dictionary = {
   commands: {
-    // Event handling
     on: 'pada',
     tell: 'katakan',
     trigger: 'picu',
     send: 'kirim',
-
-    // DOM manipulation
     take: 'ambil',
     put: 'taruh',
     set: 'atur',
@@ -20,8 +18,6 @@ export const id: Dictionary = {
     toggle: 'ganti',
     hide: 'sembunyikan',
     show: 'tampilkan',
-
-    // Control flow
     if: 'jika',
     unless: 'kecuali',
     repeat: 'ulangi',
@@ -31,54 +27,41 @@ export const id: Dictionary = {
     continue: 'lanjutkan',
     break: 'hentikan',
     halt: 'berhenti',
-
-    // Async
     wait: 'tunggu',
     fetch: 'ambil',
     call: 'panggil',
     return: 'kembali',
-
-    // Other commands
     make: 'buat',
     log: 'catat',
     throw: 'lempar',
     catch: 'tangkap',
     measure: 'ukur',
     transition: 'transisi',
-
-    // Data Commands
     increment: 'tambahkan',
     decrement: 'kurangi',
     default: 'bawaan',
-
-    // Navigation Commands
     go: 'pergi',
     pushUrl: 'tambahUrl',
     replaceUrl: 'gantiUrl',
-
-    // Utility Commands
     copy: 'salin',
     pick: 'pilih',
     beep: 'bunyi',
-
-    // Advanced Commands
     js: 'js',
     async: 'asinkron',
     render: 'tampilkan',
-
-    // Animation Commands
     swap: 'tukar',
     morph: 'ubah_bentuk',
     settle: 'stabil',
-
-    // Content Commands
     append: 'tambah_akhir',
-
-    // Control Flow
     exit: 'keluar',
-
-    // Behaviors
     install: 'pasang',
+    breakpoint: 'titik-henti',
+    clear: 'hapus',
+    close: 'tutup',
+    open: 'buka',
+    select: 'pilih',
+    clone: 'klon',
+    prepend: 'awali',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const id: Dictionary = {
     mouseover: 'mouse_atas',
     mouseout: 'mouse_luar',
     mousemove: 'gerak_mouse',
-
     keydown: 'tekan_tombol',
     keyup: 'lepas_tombol',
     keypress: 'pencet_tombol',
-
     focus: 'fokus',
     blur: 'blur',
     change: 'ubah',
     input: 'masukan',
     submit: 'kirim',
     reset: 'reset',
-
     load: 'muat',
     unload: 'bongkar',
     resize: 'ubah_ukuran',
     scroll: 'gulir',
-
     touchstart: 'mulai_sentuh',
     touchend: 'akhir_sentuh',
     touchmove: 'gerak_sentuh',
@@ -145,8 +124,8 @@ export const id: Dictionary = {
     contains: 'berisi',
     includes: 'termasuk',
     equals: 'sama',
-    has: 'punya', // possession verb (context-based)
-    have: 'punya', // same for first/third person
+    has: 'punya',
+    have: 'punya',
     then: 'lalu',
     else: 'lainnya',
     otherwise: 'sebaliknya',
@@ -174,13 +153,13 @@ export const id: Dictionary = {
     null: 'kosong',
     undefined: 'tidak_terdefinisi',
     it: 'itu',
-    its: 'miliknya', // REVIEW: native speaker
+    its: 'miliknya',
     me: 'saya',
     my: 'saya punya',
     myself: 'saya sendiri',
-    you: 'kamu', // REVIEW: native speaker - formal/informal
-    your: 'kamu punya', // REVIEW: native speaker
-    yourself: 'kamu sendiri', // REVIEW: native speaker
+    you: 'kamu',
+    your: 'kamu punya',
+    yourself: 'kamu sendiri',
     element: 'elemen',
     target: 'target',
     detail: 'detail',
@@ -204,7 +183,6 @@ export const id: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'pertama',
     last: 'terakhir',
     next: 'berikutnya',
@@ -212,19 +190,13 @@ export const id: Dictionary = {
     prev: 'sblm',
     at: 'di',
     random: 'acak',
-
-    // DOM Traversal
     closest: 'terdekat',
     parent: 'induk',
     children: 'anak_anak',
     within: 'dalam',
-
-    // Emptiness/Existence
     no: 'tidak_ada',
     empty: 'kosong',
     some: 'beberapa',
-
-    // String operations
     'starts with': 'dimulai dengan',
     'ends with': 'diakhiri dengan',
   },

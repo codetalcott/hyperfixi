@@ -58,6 +58,11 @@ export const bengaliDictionary: Dictionary = {
     pick: 'বাছুন',
     render: 'রেন্ডার',
     until: 'পর্যন্ত',
+    breakpoint: 'ব্রেকপয়েন্ট',
+    clear: 'পরিষ্কার',
+    close: 'বন্ধ',
+    open: 'খুলুন',
+    select: 'নির্বাচন',
   },
 
   modifiers: {
@@ -88,6 +93,7 @@ export const bengaliDictionary: Dictionary = {
     load: 'লোড',
     focus: 'ফোকাস',
     blur: 'ঝাপসা',
+    reset: 'রিসেট',
     keydown: 'কি-ডাউন',
     keyup: 'কি-আপ',
     mouseover: 'মাউস-ওভার',
@@ -165,6 +171,7 @@ export const bengaliDictionary: Dictionary = {
     random: 'এলোমেলো',
     length: 'দৈর্ঘ্য',
     index: 'সূচক',
+    empty: 'খালি-করুন',
   },
 };
 

@@ -80,6 +80,14 @@ export const chineseProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: '聚焦', normalized: 'focus' },
     blur: { primary: '失焦', normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: '清空', normalized: 'empty' },
+    open: { primary: '打开', normalized: 'open' },
+    close: { primary: '关闭', normalized: 'close' },
+    select: { primary: '选择', normalized: 'select' },
+    clear: { primary: '清除', normalized: 'clear' },
+    reset: { primary: '重置', normalized: 'reset' },
+    breakpoint: { primary: '断点', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: '点击', normalized: 'click' },
     hover: { primary: '悬停', alternatives: ['悬浮'], normalized: 'hover' },
