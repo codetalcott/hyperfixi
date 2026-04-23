@@ -139,7 +139,12 @@ export { TailwindExtension, type TailwindStrategy } from './extensions/tailwind'
 export {
   ParserExtensionRegistry,
   getParserExtensionRegistry,
+  setGlobal,
   type ParserExtensionSnapshot,
+  type FeatureParseFn,
+  type NodeEvaluatorFn,
+  type GlobalWriteHook,
+  type GlobalReadHook,
 } from './parser/extensions';
 export { installPlugin, type HyperfixiPlugin, type HyperfixiPluginContext } from './runtime/plugin';
 

@@ -160,8 +160,11 @@ export function setVariableValue(
 
   // Hyperscript convention: `$name` identifiers are globals, `:name` are locals.
   // Route `$`-prefixed writes to globals even when no matching entry exists yet.
+  // Store under the bare name (without `$`) so reads via `$name` and `name`
+  // find the same key (matches `evaluateGlobalVariable`'s lookup fallback).
   if (name.startsWith('$')) {
-    setGlobal(context, name, value);
+    const bare = name.slice(1);
+    setGlobal(context, bare, value);
     return;
   }
 

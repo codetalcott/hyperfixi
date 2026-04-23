@@ -4,7 +4,7 @@
  */
 
 import type { ASTNode, ExecutionContext } from '../types/core';
-import { getRegisteredNodeEvaluator } from './extensions';
+import { getRegisteredNodeEvaluator, notifyGlobalRead } from './extensions';
 // Re-export setGlobal for backward-compatible access via the runtime module.
 export { setGlobal } from './extensions';
 
@@ -196,6 +196,13 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
     value = context.locals.get(name);
   } else if (context.globals && context.globals.has(name)) {
     value = context.globals.get(name);
+    if (name.startsWith('$')) notifyGlobalRead(name.slice(1), context);
+  } else if (name.startsWith('$') && context.globals && context.globals.has(name.slice(1))) {
+    // Hyperscript convention: `$name` identifiers look up `name` in globals
+    // (matches how setVariableValue stores them). Covers both legacy parse
+    // paths (identifier with `$` prefix) and the newer `globalVariable` path.
+    value = context.globals.get(name.slice(1));
+    notifyGlobalRead(name.slice(1), context);
   } else if ((context as any)[name] !== undefined) {
     // Check if it's a property on the context object (for backward compatibility)
     value = (context as any)[name];
