@@ -199,5 +199,6 @@ export const tr: Dictionary = {
     some: 'bazı',
     'starts with': 'ile başlar',
     'ends with': 'ile biter',
+    'ignoring case': 'büyük küçük harf duyarsız',
   },
 };

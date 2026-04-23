@@ -117,4 +117,31 @@ describe('Schema ↔ i18n alignment', () => {
       });
     });
   });
+
+  describe('Phase 2 comparators (v0.9.90) are present in all complete languages', () => {
+    // Expression operators wired into the core Pratt parser. Unlike Phase 1
+    // commands, these live in the hand-written `expressions` category (or
+    // `modifiers` for `between`) rather than deriving from semantic profiles.
+    const PHASE_2_COMPARATORS = ['starts with', 'ends with', 'between', 'ignoring case'] as const;
+
+    COMPLETE_LANGUAGES.forEach(code => {
+      const dict = dictionaries[code] as Dictionary | undefined;
+      if (!dict) return;
+
+      it(`${code}: has all Phase 2 comparators (any category)`, () => {
+        const missing: string[] = [];
+        for (const op of PHASE_2_COMPARATORS) {
+          if (!findInDictionary(dict, op)) {
+            missing.push(op);
+          }
+        }
+        expect(
+          missing,
+          `Missing Phase 2 comparators in ${code}: ${missing.join(', ')}. ` +
+            `Add to packages/i18n/src/dictionaries/${code}.ts's \`expressions\` ` +
+            `category (or \`modifiers\` for \`between\`).`
+        ).toEqual([]);
+      });
+    });
+  });
 });

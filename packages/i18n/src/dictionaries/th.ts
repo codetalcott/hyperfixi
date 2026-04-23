@@ -78,6 +78,7 @@ export const thaiDictionary: Dictionary = {
     at: 'ที่',
     in: 'ใน',
     over: 'เหนือ',
+    between: 'ระหว่าง',
     then: 'แล้ว',
     and: 'และ',
     end: 'จบ',
@@ -172,6 +173,9 @@ export const thaiDictionary: Dictionary = {
     length: 'ความยาว',
     index: 'ดัชนี',
     empty: 'ล้าง',
+    'starts with': 'ขึ้นต้นด้วย',
+    'ends with': 'ลงท้ายด้วย',
+    'ignoring case': 'ไม่สนตัวพิมพ์',
   },
 };
 

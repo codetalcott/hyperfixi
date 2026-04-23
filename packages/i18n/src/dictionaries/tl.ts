@@ -225,6 +225,7 @@ export const tagalogDictionary: Dictionary = {
     some: 'ilan',
     'starts with': 'nagsisimula_sa',
     'ends with': 'nagtatapos_sa',
+    'ignoring case': 'huwag_pansinin_ang_case',
     length: 'haba',
     index: 'indeks',
   },

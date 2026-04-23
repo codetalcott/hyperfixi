@@ -199,5 +199,6 @@ export const sw: Dictionary = {
     some: 'baadhi',
     'starts with': 'huanza na',
     'ends with': 'huisha na',
+    'ignoring case': 'puuza herufi kubwa ndogo',
   },
 };

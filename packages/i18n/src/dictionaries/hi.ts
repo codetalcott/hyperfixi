@@ -225,6 +225,7 @@ export const hindiDictionary: Dictionary = {
     some: 'कुछ',
     'starts with': 'से_शुरू',
     'ends with': 'पर_समाप्त',
+    'ignoring case': 'केस_अनदेखा',
   },
 };
 

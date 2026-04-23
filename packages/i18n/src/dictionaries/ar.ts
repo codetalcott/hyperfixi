@@ -199,5 +199,6 @@ export const ar: Dictionary = {
     some: 'بعض',
     'starts with': 'يبدأ بـ',
     'ends with': 'ينتهي بـ',
+    'ignoring case': 'مع تجاهل الحالة',
   },
 };

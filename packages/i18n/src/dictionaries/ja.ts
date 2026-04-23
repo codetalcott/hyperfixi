@@ -199,5 +199,6 @@ export const ja: Dictionary = {
     some: 'いくつか',
     'starts with': 'で始まる',
     'ends with': 'で終わる',
+    'ignoring case': '大文字小文字を無視',
   },
 };

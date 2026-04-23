@@ -199,5 +199,6 @@ export const id: Dictionary = {
     some: 'beberapa',
     'starts with': 'dimulai dengan',
     'ends with': 'diakhiri dengan',
+    'ignoring case': 'abaikan kapital',
   },
 };

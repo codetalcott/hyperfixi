@@ -199,5 +199,6 @@ export const qu: Dictionary = {
     some: 'wakin',
     'starts with': 'qallarisqa wan',
     'ends with': 'tukusqa wan',
+    'ignoring case': 'hatun-huchuy qillqata-saqiy',
   },
 };

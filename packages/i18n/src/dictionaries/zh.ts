@@ -199,5 +199,6 @@ export const zh: Dictionary = {
     some: '一些',
     'starts with': '以开头',
     'ends with': '以结尾',
+    'ignoring case': '忽略大小写',
   },
 };
