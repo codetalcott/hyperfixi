@@ -200,5 +200,9 @@ export const id: Dictionary = {
     'starts with': 'dimulai dengan',
     'ends with': 'diakhiri dengan',
     'ignoring case': 'abaikan kapital',
+    'sorted by': 'diurutkan berdasarkan',
+    'mapped to': 'dipetakan ke',
+    'split by': 'dipisah oleh',
+    'joined by': 'digabung oleh',
   },
 };

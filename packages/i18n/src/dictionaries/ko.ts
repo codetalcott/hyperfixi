@@ -200,5 +200,9 @@ export const ko: Dictionary = {
     'starts with': '로시작',
     'ends with': '로끝나는',
     'ignoring case': '대소문자_무시',
+    'sorted by': '로_정렬',
+    'mapped to': '로_변환',
+    'split by': '로_분할',
+    'joined by': '로_결합',
   },
 };

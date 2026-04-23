@@ -200,5 +200,9 @@ export const zh: Dictionary = {
     'starts with': '以开头',
     'ends with': '以结尾',
     'ignoring case': '忽略大小写',
+    'sorted by': '按_排序',
+    'mapped to': '映射为',
+    'split by': '按_分割',
+    'joined by': '用_连接',
   },
 };

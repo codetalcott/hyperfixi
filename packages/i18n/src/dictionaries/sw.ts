@@ -200,5 +200,9 @@ export const sw: Dictionary = {
     'starts with': 'huanza na',
     'ends with': 'huisha na',
     'ignoring case': 'puuza herufi kubwa ndogo',
+    'sorted by': 'kupangwa kwa',
+    'mapped to': 'kubadilishwa kuwa',
+    'split by': 'kugawanywa kwa',
+    'joined by': 'kuunganishwa kwa',
   },
 };

@@ -226,6 +226,10 @@ export const hindiDictionary: Dictionary = {
     'starts with': 'से_शुरू',
     'ends with': 'पर_समाप्त',
     'ignoring case': 'केस_अनदेखा',
+    'sorted by': 'द्वारा_क्रमबद्ध',
+    'mapped to': 'में_परिवर्तित',
+    'split by': 'द्वारा_विभाजित',
+    'joined by': 'द्वारा_जुड़ा',
   },
 };
 

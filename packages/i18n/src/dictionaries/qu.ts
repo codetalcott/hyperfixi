@@ -200,5 +200,9 @@ export const qu: Dictionary = {
     'starts with': 'qallarisqa wan',
     'ends with': 'tukusqa wan',
     'ignoring case': 'hatun-huchuy qillqata-saqiy',
+    'sorted by': 'niqpi ruwasqa',
+    'mapped to': 'kay kaqman',
+    'split by': 'rakisqa',
+    'joined by': 'huñusqa',
   },
 };

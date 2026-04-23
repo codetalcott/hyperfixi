@@ -200,5 +200,9 @@ export const fr: Dictionary = {
     'starts with': 'commence par',
     'ends with': 'finit par',
     'ignoring case': 'en ignorant la casse',
+    'sorted by': 'trié par',
+    'mapped to': 'transformé en',
+    'split by': 'divisé par',
+    'joined by': 'joint par',
   },
 };

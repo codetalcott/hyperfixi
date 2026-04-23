@@ -200,5 +200,9 @@ export const ja: Dictionary = {
     'starts with': 'で始まる',
     'ends with': 'で終わる',
     'ignoring case': '大文字小文字を無視',
+    'sorted by': 'でソート',
+    'mapped to': 'に変換',
+    'split by': 'で分割',
+    'joined by': 'で結合',
   },
 };

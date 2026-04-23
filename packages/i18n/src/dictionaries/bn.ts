@@ -176,6 +176,10 @@ export const bengaliDictionary: Dictionary = {
     'starts with': 'দিয়ে_শুরু',
     'ends with': 'দিয়ে_শেষ',
     'ignoring case': 'কেস_উপেক্ষা',
+    'sorted by': 'দ্বারা_সাজানো',
+    'mapped to': 'তে_রূপান্তরিত',
+    'split by': 'দ্বারা_বিভক্ত',
+    'joined by': 'দ্বারা_যুক্ত',
   },
 };
 

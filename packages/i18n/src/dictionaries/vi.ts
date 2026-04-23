@@ -202,5 +202,9 @@ export const vi: Dictionary = {
     'starts with': 'bắt đầu bằng',
     'ends with': 'kết thúc bằng',
     'ignoring case': 'không phân biệt hoa thường',
+    'sorted by': 'sắp xếp theo',
+    'mapped to': 'ánh xạ thành',
+    'split by': 'tách bởi',
+    'joined by': 'nối bởi',
   },
 };
