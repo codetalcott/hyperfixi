@@ -84,6 +84,7 @@ export const vi: Dictionary = {
     in: 'trong',
     at: 'tại',
     of: 'của',
+    between: 'giữa',
     the: '',
     times: 'lần',
   },
@@ -198,5 +199,8 @@ export const vi: Dictionary = {
     children: 'con',
     closest: 'gần nhất',
     empty: 'làm-rỗng',
+    'starts with': 'bắt đầu bằng',
+    'ends with': 'kết thúc bằng',
+    'ignoring case': 'không phân biệt hoa thường',
   },
 };

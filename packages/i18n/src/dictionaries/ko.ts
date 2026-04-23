@@ -199,5 +199,6 @@ export const ko: Dictionary = {
     some: '일부',
     'starts with': '로시작',
     'ends with': '로끝나는',
+    'ignoring case': '대소문자_무시',
   },
 };

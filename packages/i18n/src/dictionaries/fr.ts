@@ -199,5 +199,6 @@ export const fr: Dictionary = {
     some: 'quelques',
     'starts with': 'commence par',
     'ends with': 'finit par',
+    'ignoring case': 'en ignorant la casse',
   },
 };
