@@ -214,7 +214,6 @@ export const ARABIC_KEYWORDS = new Set([
 export const SPANISH_KEYWORDS = new Set([
   'alternar',
   'conmutar',
-  'toggle',
   'agregar',
   'añadir',
   'quitar',

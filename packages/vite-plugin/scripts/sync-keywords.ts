@@ -89,11 +89,18 @@ function extractKeywordsFromProfile(profilePath: string): Set<string> | null {
   const content = fs.readFileSync(profilePath, 'utf-8');
   const keywords = new Set<string>();
 
+  // Non-distinctive values (English command names or TODO stubs) that must not
+  // be copied into a non-English detection set, because they'd match English
+  // source and produce false-positive language detection.
+  const ENGLISH_COMMAND_NAMES = new Set(DETECTION_KEYWORDS);
+  const isDistinctive = (value: string) =>
+    value !== 'TODO' && !ENGLISH_COMMAND_NAMES.has(value);
+
   // Parse keywords section using regex (simpler than full TS parsing)
   for (const keyword of DETECTION_KEYWORDS) {
     // Match: keyword: { primary: 'X', alternatives: ['Y', 'Z'] }
     const primaryMatch = content.match(new RegExp(`${keyword}:\\s*\\{[^}]*primary:\\s*['"]([^'"]+)['"]`));
-    if (primaryMatch && primaryMatch[1] !== 'TODO') {
+    if (primaryMatch && isDistinctive(primaryMatch[1])) {
       keywords.add(primaryMatch[1]);
     }
 
@@ -104,7 +111,7 @@ function extractKeywordsFromProfile(profilePath: string): Set<string> | null {
       if (alts) {
         for (const alt of alts) {
           const cleaned = alt.replace(/['"]/g, '');
-          if (cleaned !== 'TODO') {
+          if (isDistinctive(cleaned)) {
             keywords.add(cleaned);
           }
         }
