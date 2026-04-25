@@ -60,7 +60,7 @@ import {
  * Create a multilingual BDD DSL instance with all 8 supported languages.
  */
 export function createBDDDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'BDD',
     schemas: allSchemas,
     languages: [

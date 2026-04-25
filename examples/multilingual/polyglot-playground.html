@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polyglot Code Playground - Experiments</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles for Polyglot Playground */
+        body.example-page {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            max-width: 1400px;
+            padding: 40px 20px;
+            color: white;
+        }
+
+        header { text-align: center; margin-bottom: 40px; }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d9ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline { color: #a0aec0; font-size: 1.1rem; margin-bottom: 10px; }
+
+        .experiment-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: rgba(255,255,255,0.05);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-header h2 { font-size: 1.1rem; font-weight: 600; }
+        .panel-body { padding: 20px; }
+
+        .code-input {
+            width: 100%;
+            min-height: 120px;
+            background: #1e1e2e;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: var(--font-mono);
+            font-size: 15px;
+            color: #d4d4d4;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .code-input:focus { border-color: #a855f7; }
+        .code-input::placeholder { color: #666; }
+
+        .detected-lang {
+            margin-top: 15px;
+            padding: 12px 16px;
+            background: rgba(168, 85, 247, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lang-flag { font-size: 24px; }
+        .lang-info { flex: 1; }
+        .lang-name { font-weight: 600; color: #a855f7; }
+        .word-order { font-size: 0.85rem; color: #a0aec0; }
+
+        .execution-area {
+            margin-top: 20px;
+            padding: 20px;
+            background: #1e1e2e;
+            border-radius: 8px;
+        }
+
+        .exec-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .exec-target {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .demo-counter {
+            font-size: 48px;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .demo-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .demo-btn.inc { background: #10b981; color: white; }
+        .demo-btn.dec { background: #ef4444; color: white; }
+        .demo-btn:hover { transform: scale(1.1); }
+
+        .demo-box {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .demo-box.active {
+            transform: scale(1.15) rotate(5deg);
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .translations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .translation-card {
+            background: #1e1e2e;
+            border-radius: 8px;
+            overflow: hidden;
+            border-left: 4px solid;
+        }
+
+        .translation-card.svo { border-color: #3b82f6; }
+        .translation-card.sov { border-color: #ec4899; }
+        .translation-card.vso { border-color: #10b981; }
+
+        .translation-header {
+            background: rgba(255,255,255,0.05);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .translation-header .flag { font-size: 18px; }
+
+        .order-badge {
+            margin-left: auto;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .order-badge.svo { background: #3b82f6; }
+        .order-badge.sov { background: #ec4899; }
+        .order-badge.vso { background: #10b981; }
+
+        .translation-code {
+            padding: 12px 15px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: #d4d4d4;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .translation-code.rtl { direction: rtl; text-align: right; }
+
+        .examples-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .example-btn {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #d4d4d4;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover { background: rgba(168, 85, 247, 0.3); border-color: #a855f7; }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .info-box h3 { color: #60a5fa; margin-bottom: 10px; }
+        .info-box p { color: #a0aec0; line-height: 1.6; }
+
+        .status-msg {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .status-msg.success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-msg.error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        .back-link {
+            display: inline-block;
+            color: #a0aec0;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover { background: rgba(255,255,255,0.2); color: white; }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container" style="background: transparent; box-shadow: none;">
+        <header>
+            <a href="../index.html" class="back-link">← Back to Gallery</a>
+            <h1>Polyglot Code Playground</h1>
+            <p class="tagline">Write hyperscript in ANY language, see it execute live</p>
+            <span class="experiment-badge">EXPERIMENT</span>
+        </header>
+
+        <div class="main-grid">
+            <!-- Input Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span style="font-size: 1.3rem;">✍️</span>
+                    <h2>Write Code (Any Language)</h2>
+                </div>
+                <div class="panel-body">
+                    <textarea id="code-input" class="code-input" placeholder="Type hyperscript in any language..."></textarea>
+
+                    <div class="examples-bar">
+                        <button class="example-btn" data-code="on click increment #count">increment</button>
+                        <button class="example-btn" data-code="on click toggle .active on #toggle-box">toggle</button>
+                        <button class="example-btn" data-code="on click decrement #count">decrement</button>
+                        <button class="example-btn" data-code="on click add .active to #toggle-box">add class</button>
+                        <button class="example-btn" data-code="on click remove .active from #toggle-box">remove class</button>
+                    </div>
+
+                    <div class="detected-lang" id="detected-lang">
+                        <span class="lang-flag" id="detected-flag">🇺🇸</span>
+                        <div class="lang-info">
+                            <div class="lang-name" id="detected-name">English</div>
+                            <div class="word-order" id="detected-order">Word Order: SVO</div>
+                        </div>
+                    </div>
+
+                    <div id="status-area"></div>
+
+                    <div class="execution-area">
+                        <div class="exec-label">Interactive Targets (click elements or use code)</div>
+                        <div class="exec-target">
+                            <button class="demo-btn dec" _="on click decrement #count">−</button>
+                            <div class="demo-counter" id="count">0</div>
+                            <button class="demo-btn inc" _="on click increment #count">+</button>
+                        </div>
+                        <div class="exec-target" style="margin-top: 15px;">
+                            <div class="demo-box" id="toggle-box" _="on click toggle .active">Click</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translations Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span style="font-size: 1.3rem;">🌍</span>
+                    <h2>Grammar Transformations</h2>
+                </div>
+                <div class="panel-body">
+                    <div class="translations-grid" id="translations-grid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>How This Works</h3>
+            <p>
+                LokaScript's grammar transformation system understands <strong>semantic roles</strong> (action, patient, event)
+                rather than just keywords. When you write code in Japanese (SOV order: Object-Verb), it recognizes the pattern
+                and can transform it to English (SVO order: Verb-Object) for execution. The demo elements above use real
+                hyperscript via the <code>_=""</code> attribute - try clicking them, then try writing code to control them.
+            </p>
+        </div>
+    </div>
+
+    <!-- Load LokaScript -->
+    <script src="../bundle-loader.js"></script>
+    <script src="https://unpkg.com/@lokascript/i18n@2.3.0/dist/lokascript-i18n.min.js"></script>
+
+    <script>
+        const languages = [
+            { code: 'en', name: 'English', flag: '🇺🇸', order: 'SVO', rtl: false },
+            { code: 'ja', name: '日本語', flag: '🇯🇵', order: 'SOV', rtl: false },
+            { code: 'ko', name: '한국어', flag: '🇰🇷', order: 'SOV', rtl: false },
+            { code: 'zh', name: '中文', flag: '🇨🇳', order: 'SVO', rtl: false },
+            { code: 'ar', name: 'العربية', flag: '🇸🇦', order: 'VSO', rtl: true },
+            { code: 'tr', name: 'Türkçe', flag: '🇹🇷', order: 'SOV', rtl: false },
+            { code: 'es', name: 'Español', flag: '🇪🇸', order: 'SVO', rtl: false },
+        ];
+
+        function updateTranslations(englishCode) {
+            const grid = document.getElementById('translations-grid');
+            const translate = window.LokaScriptI18n?.translate;
+
+            let html = '';
+            for (const lang of languages) {
+                let translated = englishCode;
+                try {
+                    if (lang.code !== 'en' && translate) {
+                        translated = translate(englishCode, 'en', lang.code);
+                    }
+                } catch (e) {
+                    translated = `${englishCode} (error: ${e.message})`;
+                }
+
+                const orderClass = lang.order.toLowerCase();
+                const rtlClass = lang.rtl ? 'rtl' : '';
+
+                html += `
+                    <div class="translation-card ${orderClass}">
+                        <div class="translation-header">
+                            <span class="flag">${lang.flag}</span>
+                            <span>${lang.name}</span>
+                            <span class="order-badge ${orderClass}">${lang.order}</span>
+                        </div>
+                        <div class="translation-code ${rtlClass}">${escapeHtml(translated)}</div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        function showStatus(message, type) {
+            const area = document.getElementById('status-area');
+            area.innerHTML = `<div class="status-msg ${type}">${message}</div>`;
+            setTimeout(() => { area.innerHTML = ''; }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Dynamically execute hyperscript on an element
+        function executeHyperscript(code, targetSelector) {
+            if (!window.hyperfixi) {
+                showStatus('LokaScript runtime not loaded', 'error');
+                return;
+            }
+
+            try {
+                // Create a temporary element with the hyperscript
+                const tempBtn = document.createElement('button');
+                tempBtn.style.display = 'none';
+                tempBtn.setAttribute('_', code);
+                document.body.appendChild(tempBtn);
+
+                // Initialize hyperscript on the element
+                if (window.hyperfixi.processNode) {
+                    window.hyperfixi.processNode(tempBtn);
+                }
+
+                // Trigger click to execute
+                tempBtn.click();
+
+                // Clean up
+                setTimeout(() => tempBtn.remove(), 100);
+
+                showStatus('Code executed successfully', 'success');
+            } catch (e) {
+                showStatus(`Execution error: ${e.message}`, 'error');
+                console.error(e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('code-input');
+
+            // Example buttons
+            document.querySelectorAll('.example-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const code = btn.dataset.code;
+                    input.value = code;
+                    updateTranslations(code);
+                    executeHyperscript(code);
+                });
+            });
+
+            // Execute on Enter (with Ctrl/Cmd)
+            input.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    const code = input.value.trim();
+                    if (code) {
+                        updateTranslations(code);
+                        executeHyperscript(code);
+                    }
+                }
+            });
+
+            // Live translation on input
+            let debounceTimer;
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const code = input.value.trim();
+                    if (code) {
+                        updateTranslations(code);
+                    }
+                }, 300);
+            });
+
+            // Initial state
+            updateTranslations('on click increment #count');
+            input.value = 'on click increment #count';
+
+            console.log('LokaScript loaded:', !!window.hyperfixi);
+            console.log('LokaScript i18n loaded:', !!window.LokaScriptI18n);
+        });
+    </script>
+</body>
+</html>

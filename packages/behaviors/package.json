@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/behaviors",
-  "version": "2.1.0",
+  "version": "2.3.1",
   "description": "Reusable hyperscript behaviors for LokaScript",
   "type": "module",
   "main": "./dist/index.js",
@@ -56,7 +56,43 @@
     "./removable.browser.js": "./dist/removable.browser.global.js",
     "./toggleable.browser.js": "./dist/toggleable.browser.global.js",
     "./sortable.browser.js": "./dist/sortable.browser.global.js",
+    "./clipboard": {
+      "types": "./dist/behaviors/clipboard.d.ts",
+      "import": "./dist/behaviors/clipboard.js",
+      "require": "./dist/behaviors/clipboard.cjs"
+    },
+    "./autodismiss": {
+      "types": "./dist/behaviors/autodismiss.d.ts",
+      "import": "./dist/behaviors/autodismiss.js",
+      "require": "./dist/behaviors/autodismiss.cjs"
+    },
+    "./clickoutside": {
+      "types": "./dist/behaviors/clickoutside.d.ts",
+      "import": "./dist/behaviors/clickoutside.js",
+      "require": "./dist/behaviors/clickoutside.cjs"
+    },
+    "./focustrap": {
+      "types": "./dist/behaviors/focustrap.d.ts",
+      "import": "./dist/behaviors/focustrap.js",
+      "require": "./dist/behaviors/focustrap.cjs"
+    },
+    "./scrollreveal": {
+      "types": "./dist/behaviors/scrollreveal.d.ts",
+      "import": "./dist/behaviors/scrollreveal.js",
+      "require": "./dist/behaviors/scrollreveal.cjs"
+    },
+    "./tabs": {
+      "types": "./dist/behaviors/tabs.d.ts",
+      "import": "./dist/behaviors/tabs.js",
+      "require": "./dist/behaviors/tabs.cjs"
+    },
     "./resizable.browser.js": "./dist/resizable.browser.global.js",
+    "./clipboard.browser.js": "./dist/clipboard.browser.global.js",
+    "./autodismiss.browser.js": "./dist/autodismiss.browser.global.js",
+    "./clickoutside.browser.js": "./dist/clickoutside.browser.global.js",
+    "./focustrap.browser.js": "./dist/focustrap.browser.global.js",
+    "./scrollreveal.browser.js": "./dist/scrollreveal.browser.global.js",
+    "./tabs.browser.js": "./dist/tabs.browser.global.js",
     "./all.browser.js": "./dist/all.browser.global.js",
     "./core.browser.js": "./dist/core.browser.global.js"
   },
@@ -92,6 +128,12 @@
     "resizable",
     "removable",
     "toggleable",
+    "clipboard",
+    "autodismiss",
+    "clickoutside",
+    "focustrap",
+    "scrollreveal",
+    "tabs",
     "ui-components"
   ],
   "license": "MIT",

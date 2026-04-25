@@ -17,20 +17,19 @@ import type {
   CompiledHandler,
   FallbackScript,
   EventHandlerNode,
-  CommandNode,
+  PreRenderResult,
 } from '../types/aot-types.js';
 import { HTMLScanner, VueScanner, SvelteScanner, JSXScanner } from '../scanner/html-scanner.js';
 import { Analyzer } from './analyzer.js';
 import { OptimizationPipeline } from '../optimizations/index.js';
+import { preRenderInitBlock } from '../optimizations/init-prerender.js';
 import { ExpressionCodegen, sanitizeIdentifier } from '../transforms/expression-transforms.js';
 import { EventHandlerCodegen } from '../transforms/event-transforms.js';
 import {
   isExplicitSyntax,
   parseExplicit,
-  jsonToSemanticNode,
-  type SemanticNode,
-  type EventHandlerSemanticNode,
-  type SemanticValue,
+  fromProtocolJSON,
+  semanticNodeToRuntimeAST,
 } from '@lokascript/framework';
 
 // =============================================================================
@@ -168,7 +167,7 @@ export class AOTCompiler {
     if (isExplicitSyntax(code)) {
       try {
         const node = parseExplicit(code);
-        ast = this.semanticNodeToAOT(node);
+        ast = semanticNodeToRuntimeAST(node) as ASTNode;
         if (debug) {
           console.log(`[aot] Parsed explicit syntax: "${code}"`);
         }
@@ -184,8 +183,8 @@ export class AOTCompiler {
     if (this.looksLikeJSON(code)) {
       try {
         const json = JSON.parse(code.trim());
-        const node = jsonToSemanticNode(json);
-        ast = this.semanticNodeToAOT(node);
+        const node = fromProtocolJSON(json);
+        ast = semanticNodeToRuntimeAST(node) as ASTNode;
         if (debug) {
           console.log(`[aot] Parsed JSON input: "${code.slice(0, 80)}..."`);
         }
@@ -468,68 +467,6 @@ export class AOTCompiler {
     return ast;
   }
 
-  /**
-   * Convert a framework SemanticNode to an AOT ASTNode.
-   * Handles the simple cases produced by explicit/JSON parsing.
-   */
-  private semanticNodeToAOT(node: SemanticNode): ASTNode {
-    if (node.kind === 'event-handler') {
-      const eh = node as EventHandlerSemanticNode;
-      const eventValue = eh.roles.get('event');
-      const eventName = eventValue && 'value' in eventValue ? String(eventValue.value) : 'click';
-      return {
-        type: 'event',
-        event: eventName,
-        modifiers: {},
-        body: (eh.body ?? []).map((child: SemanticNode) => this.semanticNodeToAOT(child)),
-      } as EventHandlerNode;
-    }
-
-    // Command node
-    const roles: Record<string, ASTNode> = {};
-    const args: ASTNode[] = [];
-
-    for (const [roleName, value] of node.roles) {
-      const astValue = this.semanticValueToAOT(value);
-      roles[roleName] = astValue;
-      args.push(astValue);
-    }
-
-    return {
-      type: 'command',
-      name: node.action,
-      args,
-      roles,
-    } as CommandNode;
-  }
-
-  /**
-   * Convert a SemanticValue to an ASTNode.
-   */
-  private semanticValueToAOT(value: SemanticValue): ASTNode {
-    switch (value.type) {
-      case 'selector':
-        return { type: 'selector', value: value.value as string };
-      case 'reference':
-        return { type: 'identifier', value: value.value as string };
-      case 'literal': {
-        const lit = value as { value: unknown; dataType?: string };
-        if (lit.dataType === 'duration') {
-          // Parse duration to ms
-          const str = String(lit.value);
-          const match = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(str);
-          if (match) {
-            const ms = match[2] === 's' ? parseFloat(match[1]) * 1000 : parseFloat(match[1]);
-            return { type: 'literal', value: ms };
-          }
-        }
-        return { type: 'literal', value: lit.value as string | number | boolean | null };
-      }
-      default:
-        return { type: 'literal', value: String((value as { value?: unknown }).value ?? '') };
-    }
-  }
-
   // ===========================================================================
   // ANALYSIS
   // ===========================================================================
@@ -539,6 +476,78 @@ export class AOTCompiler {
    */
   analyze(ast: ASTNode): AnalysisResult {
     return this.analyzer.analyze(ast);
+  }
+
+  // ===========================================================================
+  // INIT PRE-RENDERING
+  // ===========================================================================
+
+  /**
+   * Pre-render pure init block commands into an HTML template at build time.
+   *
+   * Analyzes init block commands for purity (static DOM writes with literal
+   * values targeting #id selectors) and applies them directly to the HTML.
+   * Impure commands are preserved for normal runtime execution.
+   *
+   * @param html - The HTML template string
+   * @param initCommands - Parsed commands from an init block
+   * @returns Modified HTML, remaining impure commands, and count of pre-rendered commands
+   */
+  preRenderInit(html: string, initCommands: ASTNode[]): PreRenderResult {
+    return preRenderInitBlock(html, initCommands);
+  }
+
+  /**
+   * Extract init blocks from HTML, pre-render pure commands, and return modified HTML.
+   * This is a higher-level convenience that combines extraction, parsing, and pre-rendering.
+   *
+   * @param html - The HTML template string
+   * @param options - Compile options (language, etc.)
+   * @returns Modified HTML with pre-rendered init effects and compilation results
+   */
+  preRenderInitBlocks(
+    html: string,
+    options: CompileOptions = {}
+  ): { html: string; preRenderedCount: number; remainingScripts: ExtractedScript[] } {
+    const scripts = this.extract(html, 'template.html');
+    let modifiedHtml = html;
+    let totalPreRendered = 0;
+    const remainingScripts: ExtractedScript[] = [];
+
+    for (const script of scripts) {
+      // Parse the script to AST
+      const ast = this.parse(script.code, {
+        ...options,
+        language: script.language ?? options.language ?? 'en',
+      });
+      if (!ast) {
+        remainingScripts.push(script);
+        continue;
+      }
+
+      // Extract init block body (top-level event handler with 'init' event)
+      const eventNode = ast as EventHandlerNode;
+      if (eventNode.type === 'event' && eventNode.event === 'init' && eventNode.body) {
+        const result = preRenderInitBlock(modifiedHtml, eventNode.body);
+        modifiedHtml = result.html;
+        totalPreRendered += result.preRenderedCount;
+
+        // If there are remaining commands, keep a modified script
+        if (result.remainingInitCommands.length > 0) {
+          remainingScripts.push(script);
+        }
+        // If all commands were pre-rendered, the script is fully consumed
+      } else {
+        // Not an init block — keep as-is
+        remainingScripts.push(script);
+      }
+    }
+
+    return {
+      html: modifiedHtml,
+      preRenderedCount: totalPreRendered,
+      remainingScripts,
+    };
   }
 
   // ===========================================================================
@@ -716,8 +725,8 @@ export class AOTCompiler {
   compileExplicit(code: string, options: CompileOptions = {}): CompilationResult {
     try {
       const ast = isExplicitSyntax(code)
-        ? this.semanticNodeToAOT(parseExplicit(code))
-        : this.semanticNodeToAOT(jsonToSemanticNode(JSON.parse(code.trim())));
+        ? (semanticNodeToRuntimeAST(parseExplicit(code)) as ASTNode)
+        : (semanticNodeToRuntimeAST(fromProtocolJSON(JSON.parse(code.trim()))) as ASTNode);
 
       return this.compileAST(ast, options);
     } catch (error) {

@@ -1,0 +1,169 @@
+[
+  {
+    "id": "try-001",
+    "description": "try with catch and finally",
+    "jsonInput": {
+      "kind": "command",
+      "action": "try",
+      "roles": {},
+      "body": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+          }
+        }
+      ],
+      "catchBranch": [
+        {
+          "kind": "command",
+          "action": "show",
+          "roles": { "patient": { "type": "selector", "value": "#error-message" } }
+        }
+      ],
+      "finallyBranch": [
+        {
+          "kind": "command",
+          "action": "remove",
+          "roles": { "patient": { "type": "selector", "value": ".loading" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedCatchLength": 1,
+    "expectedFinallyLength": 1
+  },
+  {
+    "id": "try-002",
+    "description": "try with catch only (no finally)",
+    "jsonInput": {
+      "kind": "command",
+      "action": "try",
+      "roles": {},
+      "body": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/data", "dataType": "string" }
+          }
+        }
+      ],
+      "catchBranch": [
+        {
+          "kind": "command",
+          "action": "log",
+          "roles": {
+            "patient": { "type": "literal", "value": "fetch failed", "dataType": "string" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedCatchLength": 1,
+    "noFinally": true
+  },
+  {
+    "id": "try-003",
+    "description": "try with finally only (no catch) — guaranteed cleanup",
+    "jsonInput": {
+      "kind": "command",
+      "action": "try",
+      "roles": {},
+      "body": [
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": { "patient": { "type": "selector", "value": ".active" } }
+        }
+      ],
+      "finallyBranch": [
+        {
+          "kind": "command",
+          "action": "remove",
+          "roles": { "patient": { "type": "selector", "value": ".loading" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "noCatch": true,
+    "expectedFinallyLength": 1
+  },
+  {
+    "id": "try-004",
+    "description": "try with multiple commands in each branch",
+    "jsonInput": {
+      "kind": "command",
+      "action": "try",
+      "roles": {},
+      "body": [
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": { "patient": { "type": "selector", "value": ".loading" } }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+          }
+        }
+      ],
+      "catchBranch": [
+        {
+          "kind": "command",
+          "action": "show",
+          "roles": { "patient": { "type": "selector", "value": "#error" } }
+        },
+        {
+          "kind": "command",
+          "action": "log",
+          "roles": {
+            "patient": { "type": "reference", "value": "it" }
+          }
+        }
+      ],
+      "finallyBranch": [
+        {
+          "kind": "command",
+          "action": "remove",
+          "roles": { "patient": { "type": "selector", "value": ".loading" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedCatchLength": 2,
+    "expectedFinallyLength": 1
+  },
+  {
+    "id": "try-005",
+    "description": "try with annotation",
+    "jsonInput": {
+      "kind": "command",
+      "action": "try",
+      "roles": {},
+      "body": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/data", "dataType": "string" }
+          }
+        }
+      ],
+      "catchBranch": [
+        {
+          "kind": "command",
+          "action": "log",
+          "roles": { "patient": { "type": "reference", "value": "it" } }
+        }
+      ],
+      "annotations": [{ "name": "timeout", "value": "30s" }]
+    },
+    "expectedRoundTrip": true,
+    "expectedCatchLength": 1,
+    "expectedAnnotationCount": 1
+  }
+]

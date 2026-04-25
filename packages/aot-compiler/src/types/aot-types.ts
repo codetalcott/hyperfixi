@@ -86,7 +86,8 @@ export type ASTNode =
   | RepeatNode
   | ForEachNode
   | WhileNode
-  | SequenceNode;
+  | SequenceNode
+  | BatchedClassOpsNode;
 
 /**
  * Event handler node.
@@ -215,6 +216,36 @@ export interface SequenceNode extends BaseASTNode {
   type: 'sequence';
   commands: ASTNode[];
   _unrolled?: boolean;
+}
+
+/**
+ * Batched class operations node (produced by class-batching optimization).
+ *
+ * Merges consecutive classList.add/remove/toggle calls on the same target
+ * into a single compound operation, reducing DOM mutations.
+ */
+export interface BatchedClassOpsNode extends BaseASTNode {
+  type: 'batchedClassOps';
+  /** Resolved target expression (e.g. '_ctx.me', 'document.querySelector(...)') */
+  target: string;
+  /** Class names to add via classList.add() */
+  adds: string[];
+  /** Class names to remove via classList.remove() */
+  removes: string[];
+  /** Class names to toggle via classList.toggle() */
+  toggles: string[];
+}
+
+/**
+ * Result from pre-rendering init blocks at build time.
+ */
+export interface PreRenderResult {
+  /** Modified HTML with pre-rendered init effects applied */
+  html: string;
+  /** Init commands that could not be pre-rendered (impure/dynamic) */
+  remainingInitCommands: ASTNode[];
+  /** Number of commands that were successfully pre-rendered */
+  preRenderedCount: number;
 }
 
 /**

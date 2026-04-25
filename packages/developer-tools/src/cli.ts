@@ -16,6 +16,7 @@ import { createProject, createComponent, createTemplate } from './generator';
 import { analyzeProject, analyzeFile } from './analyzer';
 import { startDevServer } from './dev-server';
 import { buildProject } from './builder';
+import { InventoryServer, extractSnippetsFromProject } from './inventory';
 import type { ScaffoldOptions, ProjectConfig } from './types';
 
 const program = new Command();
@@ -186,6 +187,61 @@ program
       }
     } catch (error) {
       spinner.fail('Analysis failed');
+      console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+      process.exit(1);
+    }
+  });
+
+/**
+ * Template inventory command
+ */
+program
+  .command('inventory [path]')
+  .alias('scan')
+  .description('Scan project for hyperscript and htmx usage, serve interactive report')
+  .option('-p, --port <port>', 'Server port', '4200')
+  .option('--no-open', "Don't open browser automatically")
+  .option('--no-watch', "Don't watch for file changes")
+  .option('-i, --include <patterns...>', 'Additional file glob patterns to include')
+  .option('-e, --exclude <patterns...>', 'Additional file glob patterns to exclude')
+  .option('-j, --json', 'Output JSON to stdout instead of starting server')
+  .action(async (targetPath: string = '.', options: any) => {
+    const resolvedPath = path.resolve(targetPath);
+
+    if (options.json) {
+      // Non-interactive mode: scan and dump JSON
+      const spinner = ora('Scanning templates...').start();
+      try {
+        const snippets = await extractSnippetsFromProject(resolvedPath, {
+          include: options.include,
+          exclude: options.exclude,
+        });
+        spinner.stop();
+        console.log(JSON.stringify(snippets, null, 2));
+      } catch (error) {
+        spinner.fail('Scan failed');
+        console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+        process.exit(1);
+      }
+      return;
+    }
+
+    const spinner = ora('Scanning templates...').start();
+    try {
+      const server = new InventoryServer({
+        projectDir: resolvedPath,
+        port: parseInt(options.port, 10),
+        open: options.open !== false,
+        watch: options.watch !== false,
+        include: options.include,
+        exclude: options.exclude,
+      });
+
+      await server.start();
+      spinner.succeed(`Template inventory ready`);
+      console.log(chalk.gray('\nPress Ctrl+C to stop'));
+    } catch (error) {
+      spinner.fail('Failed to start inventory server');
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
       process.exit(1);
     }

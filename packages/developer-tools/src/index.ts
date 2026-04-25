@@ -92,10 +92,26 @@ export {
 } from './debugger/index';
 export type { DebugEvent, DebugEventType, DebugMessage } from './debugger/index';
 
+// Export debug overlay (browser-side interactive debugger)
+export { DebugOverlay } from './debug-overlay/overlay';
+export { ElementHighlighter } from './debug-overlay/element-highlighter';
+
 // Quick start functions
 export { quickStartAnalyzer } from './quick-start/analyzer';
 export { quickStartBuilder } from './quick-start/builder';
 export { quickStartGenerator } from './quick-start/generator';
+
+// Export inventory
+export { InventoryServer, extractSnippetsFromProject, extractSnippetsFromFile } from './inventory';
+export { updateSnippetInFile, StaleFileError, ContentMismatchError } from './inventory';
+export type {
+  Snippet,
+  SnippetCategory,
+  GroupBy,
+  InventorySummary,
+  InventoryConfig,
+  ExtractorOptions,
+} from './inventory';
 
 // Version
 export const version = '0.1.0';

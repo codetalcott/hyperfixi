@@ -69,7 +69,13 @@ export type ToggleCommandInput =
       duration?: number;
       untilEvent?: string;
     }
-  | { type: 'css-property'; property: 'display' | 'visibility' | 'opacity'; targets: HTMLElement[] }
+  | {
+      type: 'css-property';
+      property: 'display' | 'visibility' | 'opacity';
+      targets: HTMLElement[];
+      duration?: number;
+      untilEvent?: string;
+    }
   | { type: 'property'; target: PropertyTarget }
   | { type: 'dialog'; mode: 'modal' | 'non-modal'; targets: HTMLDialogElement[] }
   | { type: 'details'; targets: HTMLDetailsElement[] }
@@ -239,6 +245,68 @@ export class ToggleCommand implements DecoratedCommand {
     const propertyTarget = await resolveAnyPropertyTarget(firstArg, evaluator, context);
     if (propertyTarget) {
       return { type: 'property', target: propertyTarget };
+    }
+
+    // CSS property syntax: toggle *display on #target
+    // Traditional parser: firstArg = { type: 'selector', value: '*display' } — all in one token
+    // Semantic parser:    firstArg = { type: 'selector', value: '*' } — drops 'display' entirely
+    // Handle before evaluateFirstArg which would try querySelectorAll('*display')
+    if (
+      firstArg.type === 'selector' &&
+      typeof (firstArg as any).value === 'string' &&
+      (firstArg as any).value.startsWith('*')
+    ) {
+      let expression = (firstArg as any).value as string;
+      let argsConsumed = 1;
+      // Semantic parser may split '*display' — check if next arg has the property name
+      if (expression === '*' && raw.args.length > 1 && raw.args[1].type === 'identifier') {
+        expression = '*' + ((raw.args[1] as any).name as string);
+        argsConsumed = 2;
+      }
+      // Semantic parser may drop property name entirely — recover from modifier value
+      // The semantic parser puts destination (#target) in modifiers.on, but may have
+      // put the property name there instead. Check if modifiers.on looks like a CSS property.
+      if (expression === '*' && raw.modifiers?.on) {
+        const modOnName = (raw.modifiers.on as any)?.name as string | undefined;
+        if (modOnName && ['display', 'visibility', 'opacity'].includes(modOnName)) {
+          expression = '*' + modOnName;
+          // Target was lost — fall back to context element
+          const { duration, untilEvent } = await parseTemporalModifiers(
+            raw.modifiers,
+            evaluator,
+            context
+          );
+          const property = parseToggleableCSSProperty(expression);
+          if (property) {
+            const me = context.me as HTMLElement;
+            return {
+              type: 'css-property',
+              property,
+              targets: me ? [me] : [],
+              duration,
+              untilEvent,
+            };
+          }
+        }
+      }
+      const property = parseToggleableCSSProperty(expression);
+      if (property) {
+        const { duration, untilEvent } = await parseTemporalModifiers(
+          raw.modifiers,
+          evaluator,
+          context
+        );
+        const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
+        const targets = await resolveTargetsFromArgs(
+          raw.args.slice(argsConsumed),
+          evaluator,
+          context,
+          'toggle',
+          resolveOpts,
+          raw.modifiers
+        );
+        return { type: 'css-property', property, targets, duration, untilEvent };
+      }
     }
 
     const { duration, untilEvent } = await parseTemporalModifiers(

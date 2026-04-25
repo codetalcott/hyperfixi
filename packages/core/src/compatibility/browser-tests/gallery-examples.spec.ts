@@ -1,38 +1,46 @@
 import { test, expect } from '@playwright/test';
 
 const EXAMPLES_TO_TEST = [
-  // Basics
-  '/examples/basics/01-hello-world.html',
-  '/examples/basics/02-toggle-class.html',
-  '/examples/basics/03-show-hide.html',
-  '/examples/basics/04-input-mirror.html',
-  '/examples/basics/05-counter.html',
-  // Landing Page Examples (from hyperscript.org)
-  '/examples/landing-page/color-cycling.html',
-  '/examples/landing-page/send-events.html',
-  '/examples/landing-page/async-fetch.html',
-  '/examples/landing-page/js-interop.html',
-  '/examples/landing-page/tell-command.html',
-  '/examples/landing-page/clipboard-copy.html',
-  // Intermediate
-  '/examples/intermediate/01-form-validation.html',
-  '/examples/intermediate/02-fetch-data.html',
-  '/examples/intermediate/03-fade-effects.html',
-  '/examples/intermediate/04-tabs.html',
-  '/examples/intermediate/05-modal.html',
-  '/examples/intermediate/06-native-dialog.html',
-  '/examples/intermediate/07-dialog-toggle.html',
-  // Advanced
-  '/examples/advanced/01-color-cycling.html',
-  // NOTE: 02-draggable.html skipped - parser bug with `wait for ... from document` inside nested blocks in behaviors
+  // Events & DOM
+  '/examples/events-and-dom/hello-world.html',
+  '/examples/events-and-dom/show-hide.html',
+  '/examples/events-and-dom/input-mirror.html',
+  '/examples/events-and-dom/counter.html',
+  '/examples/events-and-dom/send-events.html',
+  '/examples/events-and-dom/tell-command.html',
+  // Toggle & State
+  '/examples/toggle-and-state/toggle-class.html',
+  // Animation
+  '/examples/animation/color-cycling.html',
+  '/examples/animation/color-cycling-simple.html',
+  // Fetch & Async
+  '/examples/fetch-and-async/async-fetch.html',
+  '/examples/fetch-and-async/fetch-data.html',
+  // JS Interop
+  '/examples/js-interop/js-interop.html',
+  '/examples/js-interop/clipboard-copy.html',
+  // Forms
+  '/examples/forms/form-validation.html',
+  // Animation
+  '/examples/animation/fade-effects.html',
+  // Navigation
+  '/examples/navigation/tabs.html',
+  // Dialogs
+  '/examples/dialogs/modal.html',
+  '/examples/dialogs/native-dialog.html',
+  '/examples/dialogs/dialog-toggle.html',
+  // Drag & Drop
+  // NOTE: draggable.html skipped - parser bug with `wait for ... from document` inside nested blocks in behaviors
   // Specifically: `wait for pointermove from document` inside `repeat...end` inside `on...end` inside `behavior...end`
   // Error: "Expected 'end' to close behavior definition" - the `from` keyword conflicts with behavior parsing
-  '/examples/advanced/03-sortable-list.html',
+  '/examples/drag-and-drop/sortable-list.html',
 ];
 
 test.describe('Gallery Examples @gallery', () => {
   for (const example of EXAMPLES_TO_TEST) {
-    const isBasic = example.startsWith('/examples/basics/');
+    const isBasic =
+      example.startsWith('/examples/events-and-dom/') ||
+      example.startsWith('/examples/toggle-and-state/');
     const tagSuffix = isBasic ? ' @quick' : '';
     test(`${example} loads without JS errors${tagSuffix}`, async ({ page }) => {
       const errors: string[] = [];

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AOT Compiled Output Test</title>
+  <style>
+    .active { background: lightgreen; }
+    .visible { opacity: 1; }
+    .hidden { display: none; }
+    .highlighted { border: 2px solid gold; }
+    .selected { color: blue; }
+  </style>
+</head>
+<body>
+  <h1>AOT Compiled Output Test</h1>
+
+  <!-- Test 1: Single toggle -->
+  <button id="btn-toggle">Toggle Active</button>
+
+  <!-- Test 2: Batched class add (simulates 3 adds batched into one) -->
+  <button id="btn-batch-add">Batch Add</button>
+
+  <!-- Test 3: Mixed batch (add + remove + toggle) -->
+  <div id="target-mixed" class="hidden">Mixed Target</div>
+  <button id="btn-mixed">Mixed Batch</button>
+
+  <!-- Test 4: Explicit target -->
+  <div id="explicit-target">Explicit Target</div>
+  <button id="btn-explicit">Add to Explicit</button>
+
+  <!-- Test 5: Show/Hide -->
+  <div id="content-box" style="display:none;">Visible Content</div>
+  <button id="btn-show">Show</button>
+  <button id="btn-hide">Hide</button>
+
+  <!-- Test 6: Pre-rendered init (already applied to HTML) -->
+  <div id="pre-rendered" class="active visible">Pre-rendered content</div>
+
+  <script>
+    // Minimal AOT runtime mock (subset of @hyperfixi/aot-compiler/runtime)
+    const _rt = {
+      ready(fn) {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', fn);
+        } else {
+          fn();
+        }
+      },
+      createContext(event, el) {
+        return { me: el, event, it: null, result: null };
+      },
+      HALT: Symbol('HALT'),
+      EXIT: Symbol('EXIT'),
+    };
+
+    // ============================================================
+    // AOT-compiled handlers (what the compiler produces)
+    // ============================================================
+
+    // Handler 1: on click toggle .active (single command)
+    function _handler_click_toggle_1(_event) {
+      const _ctx = _rt.createContext(_event, this);
+      _ctx.me.classList.toggle('active');
+    }
+
+    // Handler 2: Batched add .active, .visible, .highlighted
+    // This is what class-batching optimization produces
+    function _handler_click_batchAdd_2(_event) {
+      const _ctx = _rt.createContext(_event, this);
+      _ctx.me.classList.add('active', 'visible', 'highlighted');
+    }
+
+    // Handler 3: Mixed batch — add .visible, remove .hidden, toggle .selected
+    function _handler_click_mixed_3(_event) {
+      const _ctx = _rt.createContext(_event, this);
+      const target = document.getElementById('target-mixed');
+      target.classList.add('visible');
+      target.classList.remove('hidden');
+      target.classList.toggle('selected');
+    }
+
+    // Handler 4: Batched add on explicit #id target (compiled from same-target batching)
+    function _handler_click_explicit_4(_event) {
+      const _ctx = _rt.createContext(_event, this);
+      document.getElementById('explicit-target').classList.add('active', 'highlighted');
+    }
+
+    // Handler 5a: Show
+    function _handler_click_show_5(_event) {
+      const _ctx = _rt.createContext(_event, this);
+      document.getElementById('content-box').style.display = '';
+    }
+
+    // Handler 5b: Hide
+    function _handler_click_hide_6(_event) {
+      const _ctx = _rt.createContext(_event, this);
+      document.getElementById('content-box').style.display = 'none';
+    }
+
+    // Bind handlers
+    _rt.ready(() => {
+      document.getElementById('btn-toggle').addEventListener('click', _handler_click_toggle_1);
+      document.getElementById('btn-batch-add').addEventListener('click', _handler_click_batchAdd_2);
+      document.getElementById('btn-mixed').addEventListener('click', _handler_click_mixed_3);
+      document.getElementById('btn-explicit').addEventListener('click', _handler_click_explicit_4);
+      document.getElementById('btn-show').addEventListener('click', _handler_click_show_5);
+      document.getElementById('btn-hide').addEventListener('click', _handler_click_hide_6);
+    });
+  </script>
+</body>
+</html>

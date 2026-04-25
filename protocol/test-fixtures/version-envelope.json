@@ -1,0 +1,123 @@
+[
+  {
+    "id": "ver-001",
+    "description": "Versioned envelope with two nodes",
+    "jsonInput": {
+      "lseVersion": "1.2",
+      "nodes": [
+        {
+          "kind": "command",
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".highlight" }
+          }
+        }
+      ]
+    },
+    "expectedVersion": "1.2",
+    "expectedNodeCount": 2,
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ver-002",
+    "description": "Versioned envelope with features list",
+    "jsonInput": {
+      "lseVersion": "1.2",
+      "features": ["diagnostics", "version-header"],
+      "nodes": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+          }
+        }
+      ]
+    },
+    "expectedVersion": "1.2",
+    "expectedFeatures": ["diagnostics", "version-header"],
+    "expectedNodeCount": 1,
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ver-003",
+    "description": "Versioned envelope with empty nodes array",
+    "jsonInput": {
+      "lseVersion": "1.2",
+      "nodes": []
+    },
+    "expectedVersion": "1.2",
+    "expectedNodeCount": 0,
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ver-004",
+    "description": "Versioned envelope with three-part version number",
+    "jsonInput": {
+      "lseVersion": "1.2.0",
+      "nodes": [
+        {
+          "kind": "command",
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active" }
+          }
+        }
+      ]
+    },
+    "expectedVersion": "1.2.0",
+    "expectedNodeCount": 1,
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ver-005",
+    "description": "Versioned envelope with diagnostics on a node",
+    "jsonInput": {
+      "lseVersion": "1.2",
+      "features": ["diagnostics"],
+      "nodes": [
+        {
+          "kind": "command",
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "literal", "value": "hello", "dataType": "string" }
+          },
+          "diagnostics": [
+            {
+              "level": "error",
+              "message": "toggle.patient expects type [selector], got 'literal'",
+              "code": "SCHEMA_VALUE_TYPE_MISMATCH"
+            }
+          ]
+        }
+      ]
+    },
+    "expectedVersion": "1.2",
+    "expectedFeatures": ["diagnostics"],
+    "expectedNodeCount": 1,
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ver-006",
+    "description": "Version header in streaming format",
+    "streamingInput": "#!lse 1.2\n[toggle patient:.active]\n[add patient:.highlight]",
+    "expectedVersion": "1.2",
+    "expectedNodeCount": 2
+  },
+  {
+    "id": "ver-007",
+    "description": "Version header treated as comment by v1.0/v1.1 parsers",
+    "streamingInput": "#!lse 1.2\n[toggle patient:.active]",
+    "v1Fallback": {
+      "description": "v1.0/v1.1 parsers ignore #!lse line as a comment, parse remaining lines",
+      "expectedNodeCount": 1
+    }
+  }
+]

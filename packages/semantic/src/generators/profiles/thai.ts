@@ -84,6 +84,14 @@ export const thaiProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'โฟกัส', alternatives: [], normalized: 'focus' },
     blur: { primary: 'เบลอ', alternatives: [], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'ล้าง', alternatives: ['ทำให้ว่าง'], normalized: 'empty' },
+    open: { primary: 'เปิด', normalized: 'open' },
+    close: { primary: 'ปิด', normalized: 'close' },
+    select: { primary: 'ทำเครื่องหมาย', normalized: 'select' },
+    clear: { primary: 'เคลียร์', normalized: 'clear' },
+    reset: { primary: 'รีเซ็ต', normalized: 'reset' },
+    breakpoint: { primary: 'จุดพัก', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: 'คลิก', normalized: 'click' },
     hover: { primary: 'โฮเวอร์', alternatives: ['วางเมาส์'], normalized: 'hover' },

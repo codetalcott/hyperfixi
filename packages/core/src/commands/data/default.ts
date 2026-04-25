@@ -128,7 +128,9 @@ export class DefaultCommand implements DecoratedCommand {
   ): DefaultCommandOutput {
     const existingValue = getVariableValue(name, context);
 
-    if (existingValue !== undefined) {
+    // Nullish check (matches upstream _hyperscript 0.9.90+): only null/undefined
+    // are considered "missing". Preserves falsy values like 0, false, ''.
+    if (existingValue != null) {
       return { target: name, value, wasSet: false, existingValue, targetType: 'variable' };
     }
 

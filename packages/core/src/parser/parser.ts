@@ -22,6 +22,7 @@ import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
 // Note: isDebugEnabled is used in semantic-integration.ts for debug event emission
 import { SemanticIntegrationAdapter, DEFAULT_CONFIDENCE_THRESHOLD } from './semantic-integration';
+import { getRegisteredFeature } from './extensions';
 
 // Phase 1 Refactoring: Import new helper modules
 import {
@@ -94,6 +95,14 @@ import * as asyncCommands from './command-parsers/async-commands';
 import * as utilityCommands from './command-parsers/utility-commands';
 import * as variableCommands from './command-parsers/variable-commands';
 
+// Phase 2.2: Pratt parser for expression parsing
+import {
+  PARSER_TABLE,
+  STOP_TOKENS as PRATT_STOP_TOKENS,
+  STOP_DELIMITERS as PRATT_STOP_DELIMITERS,
+  type BindingPowerFragment,
+} from './pratt-parser';
+
 // Use core types for consistency
 export type ParseResult = CoreParseResult;
 // Re-export ParseError from ./types
@@ -147,11 +156,20 @@ export class Parser {
   private tokens: Token[];
   private current: number = 0;
   private error: LocalParseError | undefined;
+  private errors: LocalParseError[] = [];
   private warnings: ParseWarning[] = [];
   private keywordResolver?: KeywordResolver;
   private semanticAdapter?: SemanticIntegrationAdapter;
   private originalInput?: string;
   private registryIntegration?: any; // From ParserOptions - typed as 'any' to avoid circular dependency
+
+  /**
+   * Selective memoization cache for Pratt expression parsing (Phase 6.1).
+   * Caches expression results keyed by `${tokenPosition}:${minBp}`.
+   * Stores both the parsed node and the end token position for replay.
+   * Cleared at the start of each top-level parse() call.
+   */
+  private prattCache = new Map<string, { node: ASTNode; endPos: number }>();
 
   // Postfix unary operators that do NOT take a right operand
   private static readonly POSTFIX_UNARY_OPERATORS = new Set([
@@ -159,6 +177,7 @@ export class Parser {
     'does not exist',
     'is empty',
     'is not empty',
+    'ignoring case', // postfix modifier on string comparators (v0.9.90)
   ]);
 
   constructor(tokens: Token[], options?: ParserOptions, originalInput?: string) {
@@ -205,6 +224,17 @@ export class Parser {
   }
 
   parse(): ParseResult {
+    // Clear Pratt expression cache for this parse (Phase 6.1)
+    this.prattCache.clear();
+    const result = this.parseInternal();
+    // Attach accumulated errors for resilient parsing
+    if (this.errors.length > 0) {
+      result.errors = [...this.errors];
+    }
+    return result;
+  }
+
+  private parseInternal(): ParseResult {
     try {
       // Handle empty input
       if (this.tokens.length === 0) {
@@ -252,11 +282,22 @@ export class Parser {
         };
       }
 
-      // Check if this starts with init, on, def, or a comment (top-level features)
-      if (this.check('init') || this.check('on') || this.check('def') || this.checkComment()) {
+      // Check if this starts with init, on, def, a comment, or a plugin-registered
+      // top-level feature (Phase 5b — e.g. `live`, `when`, `bind` from @hyperfixi/reactivity).
+      const topToken = this.peek();
+      const topPluginFeature =
+        topToken && getRegisteredFeature(topToken.value) ? topToken.value : null;
+      if (
+        this.check('init') ||
+        this.check('on') ||
+        this.check('def') ||
+        this.checkComment() ||
+        topPluginFeature !== null
+      ) {
         const statements: ASTNode[] = [];
 
-        // Parse all top-level features (init blocks, event handlers, function defs), skipping comments
+        // Parse all top-level features (init blocks, event handlers, function defs,
+        // plugin features), skipping comments.
         while (!this.isAtEnd()) {
           // Skip any top-level comments
           if (this.checkComment()) {
@@ -284,6 +325,17 @@ export class Parser {
               statements.push(defFeature);
             }
           } else {
+            // Phase 5b: dispatch to plugin-registered top-level features.
+            const tok = this.peek();
+            const pluginParse = tok ? getRegisteredFeature(tok.value) : undefined;
+            if (pluginParse) {
+              const featureToken = this.advance();
+              const featureNode = pluginParse(this.getContext(), featureToken);
+              if (featureNode) {
+                statements.push(featureNode);
+              }
+              continue;
+            }
             // Not a feature we recognize, break out
             break;
           }
@@ -481,24 +533,178 @@ export class Parser {
   }
 
   private parseExpression(): ASTNode {
-    return this.parseAssignment();
+    return this.parseExpressionPratt(0);
   }
 
+  // ============================================================================
+  // Phase 2.2: Pratt Expression Parser
+  // Replaces the cascading parseAssignment → parseLogicalOr → ... → parseUnary chain.
+  // ============================================================================
+
+  /** The binding power table for expression parsing. */
+  private static readonly PRATT_TABLE: BindingPowerFragment = PARSER_TABLE;
+
+  /**
+   * Pratt expression parser — the core ~30 line loop.
+   * Replaces 9 cascading precedence methods with a single data-driven loop.
+   *
+   * @param minBp - Minimum binding power to continue parsing infix operators
+   */
+  private parseExpressionPratt(minBp: number): ASTNode {
+    // Phase 6.1: Selective memoization — cache hits replay the result and skip tokens
+    const cacheKey = `${this.current}:${minBp}`;
+    const cached = this.prattCache.get(cacheKey);
+    if (cached) {
+      this.current = cached.endPos;
+      return cached.node;
+    }
+    const startPos = this.current;
+
+    // --- NUD (prefix / atom) ---
+    if (this.isAtEnd()) {
+      this.addError('Unexpected end of expression');
+      return this.createErrorNode();
+    }
+
+    const firstToken = this.peek();
+    const prefixEntry = Parser.PRATT_TABLE.get(firstToken.value);
+    let left: ASTNode;
+
+    if (prefixEntry?.prefix) {
+      const token = this.advance();
+
+      // Handle missing operand for prefix operators
+      if (this.isAtEnd()) {
+        this.addError(`Expected expression after '${token.value}' operator`);
+        return this.createErrorNode();
+      }
+
+      left = prefixEntry.prefix.handler(token, this.makePrattContext());
+    } else {
+      // Fallback: parseCall → parsePrimary chain for atoms
+      left = this.parseCall();
+    }
+
+    // --- LED (infix) loop ---
+    while (!this.isAtEnd()) {
+      const nextToken = this.peek();
+
+      // Check infix table FIRST — operators like 'in' are both stop tokens
+      // and comparison operators; the Pratt table takes priority.
+      const infixEntry = Parser.PRATT_TABLE.get(nextToken.value);
+      if (!infixEntry?.infix) {
+        // Not an operator — check stop tokens and delimiters
+        if (PRATT_STOP_TOKENS.has(nextToken.value) || PRATT_STOP_DELIMITERS.has(nextToken.value)) {
+          break;
+        }
+        break; // Unknown token and not a stop token — can't continue infix loop
+      }
+
+      const [leftBp] = infixEntry.infix.bp;
+      if (leftBp < minBp) break;
+
+      // Special case: '=' followed by '>' is arrow function syntax (not assignment)
+      if (nextToken.value === '=') {
+        if (this.current + 1 < this.tokens.length && this.tokens[this.current + 1].value === '>') {
+          this.advance(); // consume '='
+          this.advance(); // consume '>'
+          this.addError(
+            'Arrow functions (=>) are not supported in hyperscript. ' +
+              'Use "js ... end" blocks for JavaScript callbacks.'
+          );
+          // Recovery: try to parse and discard the arrow body
+          if (!this.isAtEnd()) {
+            try {
+              this.parseExpressionPratt(0);
+            } catch {
+              /* recovery */
+            }
+          }
+          return this.createErrorNode();
+        }
+      }
+
+      // Special case: check for double operators (e.g., '++', '+-', '**')
+      if (nextToken.value === '+' || nextToken.value === '-') {
+        const afterOp =
+          this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+        if (afterOp && (afterOp.value === '+' || afterOp.value === '-')) {
+          this.addError(`Invalid operator combination: ${nextToken.value}${afterOp.value}`);
+          return left;
+        }
+      }
+      if (nextToken.value === '*' || nextToken.value === '/' || nextToken.value === '%') {
+        const afterOp =
+          this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+        if (
+          afterOp &&
+          (afterOp.value === '*' ||
+            afterOp.value === '/' ||
+            afterOp.value === '%' ||
+            afterOp.value === '+' ||
+            afterOp.value === '-')
+        ) {
+          if (nextToken.value === '*' && afterOp.value === '*') {
+            this.addError(`Unexpected token: ${afterOp.value}`);
+          } else {
+            this.addError(`Invalid operator combination: ${nextToken.value}${afterOp.value}`);
+          }
+          return left;
+        }
+      }
+
+      const opToken = this.advance();
+
+      // Check for missing right operand
+      if (this.isAtEnd() && !Parser.POSTFIX_UNARY_OPERATORS.has(opToken.value)) {
+        this.addError(`Expected expression after '${opToken.value}' operator`);
+        return left;
+      }
+
+      left = infixEntry.infix.handler(left, opToken, this.makePrattContext());
+    }
+
+    // Phase 6.1: Cache the result for this position and binding power
+    this.prattCache.set(cacheKey, { node: left, endPos: this.current });
+
+    return left;
+  }
+
+  /** Create a PrattContext adapter that bridges the Pratt interface to the Parser's internal state. */
+  private makePrattContext() {
+    const self = this;
+    return {
+      peek: () => (self.current < self.tokens.length ? self.tokens[self.current] : undefined),
+      advance: () => {
+        const token = self.tokens[self.current];
+        self.current++;
+        return token;
+      },
+      parseExpr: (bp: number) => self.parseExpressionPratt(bp),
+      isStopToken: () => {
+        const t = self.tokens[self.current];
+        if (!t) return true;
+        return PRATT_STOP_TOKENS.has(t.value) || PRATT_STOP_DELIMITERS.has(t.value);
+      },
+      atEnd: () => self.current >= self.tokens.length,
+    };
+  }
+
+  // ============================================================================
+  // Legacy expression chain methods (kept for reference, no longer called)
+  // These will be removed in a follow-up cleanup.
+  // ============================================================================
+
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseAssignment(): ASTNode {
     let expr = this.parseLogicalOr();
-
-    // Right associative - assignment operators associate right-to-left
     if (this.match('=')) {
-      // Detect arrow function syntax: identifier => expression
-      // The tokenizer produces '=' and '>' as separate tokens ('=>' is not a two-char operator).
-      // Note: '>=' is a single token so match('=') won't fire on it.
       if (this.check('>')) {
-        this.advance(); // consume '>'
+        this.advance();
         this.addError(
           'Arrow functions (=>) are not supported in hyperscript. ' +
             'Use "js ... end" blocks for JavaScript callbacks.'
         );
-        // Recovery: try to parse and discard the arrow body
         if (!this.isAtEnd()) {
           try {
             this.parseExpression();
@@ -508,42 +714,38 @@ export class Parser {
         }
         return this.createErrorNode();
       }
-
       const operator = this.previous().value;
-      const right = this.parseAssignment(); // Recursive call for right associativity
+      const right = this.parseAssignment();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseLogicalOr(): ASTNode {
     let expr = this.parseLogicalAnd();
-
     while (this.match('or')) {
       const operator = this.previous().value;
       const right = this.parseLogicalAnd();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseLogicalAnd(): ASTNode {
     let expr = this.parseEquality();
-
     while (this.match('and')) {
       const operator = this.previous().value;
       const right = this.parseEquality();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseEquality(): ASTNode {
     let expr = this.parseComparison();
-
     while (
       this.matchComparisonOperator() ||
       this.match(
@@ -560,71 +762,55 @@ export class Parser {
       )
     ) {
       const operator = this.previous().value;
-
-      // Handle postfix unary operators (no right operand)
       if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
-        expr = this.createUnaryExpression(operator, expr, false); // false = postfix
+        expr = this.createUnaryExpression(operator, expr, false);
         continue;
       }
-
       const right = this.parseComparison();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseComparison(): ASTNode {
     let expr = this.parseAddition();
-
     while (this.matchComparisonOperator()) {
       const operator = this.previous().value;
-
-      // Handle postfix unary operators (no right operand)
       if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
-        expr = this.createUnaryExpression(operator, expr, false); // false = postfix
+        expr = this.createUnaryExpression(operator, expr, false);
         continue;
       }
-
       const right = this.parseAddition();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseAddition(): ASTNode {
     let expr = this.parseMultiplication();
-
     while (this.match('+', '-') || this.matchOperator('+') || this.matchOperator('-')) {
       const operator = this.previous().value;
-
-      // Check for double operators like '++' or '+-'
       if (this.check('+') || this.check('-')) {
         this.addError(`Invalid operator combination: ${operator}${this.peek().value}`);
         return expr;
       }
-
-      // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return expr;
       }
-
       const right = this.parseMultiplication();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseMultiplication(): ASTNode {
     let expr = this.parseUnary();
-
     while (this.match('*', '/', '%', 'mod')) {
       const operator = this.previous().value;
-
-      // Check for double operators
       if (
         this.check('*') ||
         this.check('/') ||
@@ -633,7 +819,6 @@ export class Parser {
         this.check('-')
       ) {
         const nextOp = this.peek().value;
-        // Special handling for ** which should be "Unexpected token"
         if (operator === '*' && nextOp === '*') {
           this.addError(`Unexpected token: ${nextOp}`);
         } else {
@@ -641,38 +826,27 @@ export class Parser {
         }
         return expr;
       }
-
-      // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return expr;
       }
-
       const right = this.parseUnary();
       expr = this.createBinaryExpression(operator, expr, right);
     }
-
     return expr;
   }
 
+  /* istanbul ignore next -- legacy: superseded by Pratt parser */
   private parseUnary(): ASTNode {
-    // Handle single-word unary operators
     if (this.match('not', 'no', 'exists', 'some', '-', '+')) {
       const operator = this.previous().value;
-
-      // Only flag as missing operand if this starts a complex expression and lacks proper context
-      // Valid unary: "-5", "not true", "no value", "+number", "exists value", "some array"
-      // Invalid: "5 + + 3" (handled elsewhere), standalone "+" (handled below)
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return this.createErrorNode();
       }
-
       const expr = this.parseUnary();
       return this.createUnaryExpression(operator, expr, true);
     }
-
-    // Handle multi-word unary operator: "does not exist"
     if (
       this.check('does') &&
       this.current + 1 < this.tokens.length &&
@@ -680,19 +854,16 @@ export class Parser {
       this.current + 2 < this.tokens.length &&
       this.tokens[this.current + 2].value === 'exist'
     ) {
-      this.advance(); // consume 'does'
-      this.advance(); // consume 'not'
-      this.advance(); // consume 'exist'
-
+      this.advance();
+      this.advance();
+      this.advance();
       if (this.isAtEnd()) {
         this.addError(`Expected expression after 'does not exist' operator`);
         return this.createErrorNode();
       }
-
       const expr = this.parseUnary();
       return this.createUnaryExpression('does not exist', expr, true);
     }
-
     return this.parseImplicitBinary();
   }
 
@@ -738,8 +909,15 @@ export class Parser {
           } else {
             // For simple commands, check if it takes non-selector arguments (like wait with time)
             const commandName = (expr as IdentifierNode).name.toLowerCase();
-            if (commandName === 'wait' && this.checkTimeExpression()) {
-              // wait with time expression should be a command
+            if (
+              commandName === 'wait' &&
+              (this.checkTimeExpression() ||
+                this.checkNumber() ||
+                this.checkIdentifier() ||
+                this.checkContextVar() ||
+                this.check('('))
+            ) {
+              // wait with time/variable/expression should be a command
               const command = this.createCommandFromIdentifier(expr as IdentifierNode);
               if (command) {
                 expr = command;
@@ -2131,6 +2309,23 @@ export class Parser {
     // Collect all event names (supports "on event1 or event2 or event3")
     const eventNames: string[] = [];
 
+    // `on first click ...` — upstream _hyperscript 0.9.90 alias for `.once`.
+    // Consume the `first` keyword before the event name; the flag is merged
+    // into `modifiers.once` after the modifier block is parsed below.
+    let firstOnceAlias = false;
+    if (this.check('first') && !this.checkIsCommand() && this.current + 1 < this.tokens.length) {
+      // Only treat `first` as the once-alias when it's immediately followed by
+      // something that could be an event name (identifier/event), never when
+      // it's followed by `of`/`in` etc. which would be a positional expression.
+      const peek2 = this.tokens[this.current + 1];
+      const peek2Value = peek2?.value?.toLowerCase();
+      if (peek2Value && peek2Value !== 'of' && peek2Value !== 'in' && peek2Value !== 'from') {
+        this.advance(); // consume 'first'
+        firstOnceAlias = true;
+        debug.parse(`🔧 parseEventHandler: Parsed 'first' as .once alias`);
+      }
+    }
+
     // Parse first event name
     const event = this.parseEventNameWithNamespace("Expected event name after 'on'");
     eventNames.push(event);
@@ -2257,6 +2452,12 @@ export class Parser {
       } else {
         this.addError(`Expected 'at' after '${modName}'`);
       }
+    }
+
+    // Merge the `on first <event>` alias into modifiers.once after the
+    // `.once`/`.prevent`/... block so both forms coexist consistently.
+    if (firstOnceAlias) {
+      modifiers.once = true;
     }
 
     if (Object.keys(modifiers).length > 0) {
@@ -2551,10 +2752,8 @@ export class Parser {
         // Parse event handler manually (not using parseEventHandler which is for top-level)
         const handlerPos = this.getPosition();
 
-        // Get event name (current token after match consumed 'on')
-        const eventToken = this.peek();
-        const eventName = eventToken.value;
-        this.advance(); // Now advance past the event name
+        // Get event name — supports namespaced events like clickoutside:activate
+        const eventName = this.parseEventNameWithNamespace("Expected event name after 'on'");
 
         // Capture parameter list if present: (clientX, clientY)
         const eventArgs: string[] = [];
@@ -2609,49 +2808,9 @@ export class Parser {
           }
         }
 
-        // Parse commands until we hit 'end'
-        const handlerCommands: CommandNode[] = [];
-        while (!this.isAtEnd() && !this.check('end')) {
-          if (this.checkIsCommand() || this.isCommand(this.peek().value)) {
-            this.advance(); // Consume command token
-
-            // Save error state (following parseCommandSequence pattern)
-            const savedError = this.error;
-
-            try {
-              const cmd = this.parseCommand();
-
-              // Restore error state if command parsing added an error
-              // This allows us to continue parsing even if a command has issues
-              if (this.error && this.error !== savedError) {
-                this.error = savedError;
-              }
-
-              handlerCommands.push(cmd);
-
-              // Skip any unexpected tokens until next command or 'end'
-              // (handles edge cases like extra whitespace tokens)
-              while (
-                !this.isAtEnd() &&
-                !this.check('end') &&
-                !this.checkIsCommand() &&
-                !this.isCommand(this.peek().value)
-              ) {
-                this.advance();
-              }
-            } catch (error) {
-              // If command parsing throws, restore error state and exit
-              this.error = savedError;
-              break;
-            }
-          } else {
-            // Not a command token - should be at 'end' or something's wrong
-            if (!this.check('end')) {
-              this.addError(`Unexpected token in event handler: ${this.peek().value}`);
-            }
-            break;
-          }
-        }
+        // Parse commands using the same method as repeat/for blocks,
+        // which properly handles nested end tokens from if...end, repeat...end, etc.
+        const handlerCommands = this.parseCommandListUntilEnd();
 
         // Create event handler node with captured target and args
         const handlerNode: EventHandlerNode = {
@@ -2667,9 +2826,6 @@ export class Parser {
         };
 
         eventHandlers.push(handlerNode);
-
-        // Expect 'end' after event handler body
-        this.consume('end', "Expected 'end' after event handler body");
       } else if (this.match('init')) {
         // Parse init block
         const initCommands = this.parseCommandBlock(['end']);
@@ -2788,7 +2944,43 @@ export class Parser {
         // No more commands
         break;
       } else {
-        this.addError(`Expected command, got: ${this.peek().value}`);
+        // Resilient parsing: create error node and synchronize to next command boundary
+        const errorToken = this.peek();
+        const errorPos = this.getPosition();
+        const errorMessage = `Expected command, got: ${errorToken.value}`;
+
+        // Accumulate as a parse error
+        this.addError(errorMessage);
+
+        // Create error command node with diagnostic
+        const errorNode = astHelpers.createErrorCommandNode(
+          errorPos,
+          errorMessage,
+          errorToken.value
+        ) as CommandNode;
+        commands.push(errorNode);
+
+        // Synchronize: skip tokens until next command boundary (then, end, on, or a command token)
+        this.synchronizeToCommandBoundary();
+
+        // If at end, done
+        if (this.isAtEnd()) break;
+
+        // Check for 'then' separator and continue to next command
+        if (this.match('then')) continue;
+
+        // Check for 'end' or 'on' — these stop the sequence
+        if (this.check('end') || this.check('on')) break;
+
+        // If next is a command, continue parsing
+        if (
+          this.checkIsCommand() ||
+          (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))
+        ) {
+          continue;
+        }
+
+        // Nothing recognizable — stop
         break;
       }
     }
@@ -3051,7 +3243,10 @@ export class Parser {
         column: commandToken.column,
       };
       const result = this.parseCompoundCommand(identifierNode);
-      return result || (this.createErrorNode() as unknown as CommandNode);
+      return (
+        result ||
+        (astHelpers.createPartialCommandNode(lowerName, this.getPosition()) as CommandNode)
+      );
     }
 
     const args: ASTNode[] = [];
@@ -3817,6 +4012,32 @@ export class Parser {
       column: Math.max(1, column),
       position: Math.max(0, position),
     };
+
+    // Accumulate errors for resilient parsing
+    this.errors.push(this.error);
+  }
+
+  /**
+   * Synchronize to the next command boundary after a parse error.
+   * Skips tokens until: `then`, `end`, `on`, a known command, or end-of-input.
+   */
+  private synchronizeToCommandBoundary(): void {
+    while (!this.isAtEnd()) {
+      const token = this.peek();
+
+      // Command boundary delimiters
+      if (token.value === 'then' || token.value === 'end' || token.value === 'on') {
+        return;
+      }
+
+      // Known command token
+      if (this.checkIsCommand() || (this.isCommand(token.value) && !this.isKeyword(token.value))) {
+        return;
+      }
+
+      debug.parse('⚠️  synchronize: Skipping token:', token.value);
+      this.advance();
+    }
   }
 
   private parseAttributeOrArrayLiteral(): ASTNode {

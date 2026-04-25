@@ -7,6 +7,9 @@
       "include": "#comments"
     },
     {
+      "include": "#possessives"
+    },
+    {
       "include": "#strings"
     },
     {
@@ -218,6 +221,15 @@
         {
           "name": "keyword.operator.assignment.hyperscript",
           "match": "="
+        }
+      ]
+    },
+    "possessives": {
+      "patterns": [
+        {
+          "name": "keyword.operator.possessive.hyperscript",
+          "comment": "Possessive 's — must match before single-quote string rule",
+          "match": "'s\\b"
         }
       ]
     },

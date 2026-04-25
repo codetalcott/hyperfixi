@@ -12,7 +12,7 @@ import { extractRoleValue } from '@lokascript/framework';
 // Keyword Tables
 // =============================================================================
 
-const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
+export const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
   select: {
     en: 'select',
     es: 'seleccionar',
@@ -53,9 +53,19 @@ const COMMAND_KEYWORDS: Record<string, Record<string, string>> = {
     tr: 'sil',
     fr: 'supprimer',
   },
+  get: {
+    en: 'get',
+    es: 'obtener',
+    ja: '取得',
+    ar: 'اجلب',
+    ko: '가져오기',
+    zh: '获取',
+    tr: 'al',
+    fr: 'obtenir',
+  },
 };
 
-const MARKERS: Record<string, Record<string, string>> = {
+export const MARKERS: Record<string, Record<string, string>> = {
   from: { en: 'from', es: 'de', ja: 'から', ar: 'من', ko: '에서', zh: '从', tr: 'den', fr: 'de' },
   into: { en: 'into', es: 'en', ja: 'に', ar: 'في', ko: '에', zh: '到', tr: 'e', fr: 'dans' },
   where: {
@@ -77,6 +87,16 @@ const MARKERS: Record<string, Record<string, string>> = {
     zh: '设置',
     tr: 'ayarla',
     fr: 'définir',
+  },
+  limit: {
+    en: 'limit',
+    es: 'límite',
+    ja: '件数',
+    ar: 'حد',
+    ko: '제한',
+    zh: '限制',
+    tr: 'limit',
+    fr: 'limite',
   },
 };
 
@@ -111,11 +131,12 @@ function renderSelect(node: SemanticNode, lang: string): string {
   const parts: string[] = [];
 
   if (isSOV(lang)) {
-    // SOV: source marker columns keyword [condition-marker condition]
-    parts.push(source, mk('from', lang), columns, keyword);
+    // SOV: source marker columns [condition-marker condition] keyword (verb last)
+    parts.push(source, mk('from', lang), columns);
     if (condition) {
       parts.push(mk('where', lang), condition);
     }
+    parts.push(keyword);
   } else {
     // SVO / VSO: keyword columns marker source [marker condition]
     parts.push(keyword, columns, mk('from', lang), source);
@@ -149,15 +170,15 @@ function renderUpdate(node: SemanticNode, lang: string): string {
   const parts: string[] = [];
 
   if (isSOV(lang)) {
-    // SOV: source [values set-marker] keyword [condition-marker condition]
+    // SOV: source [set-marker values] [condition-marker condition] keyword (verb last)
     parts.push(source);
     if (values) {
       parts.push(mk('set', lang), values);
     }
-    parts.push(keyword);
     if (condition) {
       parts.push(mk('where', lang), condition);
     }
+    parts.push(keyword);
   } else {
     // SVO / VSO: keyword source [marker values] [marker condition]
     parts.push(keyword, source);
@@ -172,6 +193,31 @@ function renderUpdate(node: SemanticNode, lang: string): string {
   return parts.join(' ');
 }
 
+function renderGet(node: SemanticNode, lang: string): string {
+  const source = extractRoleValue(node, 'source') || 'table';
+  const condition = extractRoleValue(node, 'condition');
+  const limit = extractRoleValue(node, 'limit');
+  const keyword = kw('get', lang);
+
+  const parts: string[] = [];
+
+  if (isSOV(lang)) {
+    // SOV: source from-marker [where-marker condition] [limit-marker N] verb
+    // Only SOV languages get a source marker in the `get` schema.
+    parts.push(source, mk('from', lang));
+    if (condition) parts.push(mk('where', lang), condition);
+    if (limit) parts.push(mk('limit', lang), limit);
+    parts.push(keyword);
+  } else {
+    // SVO / VSO: keyword source [where-marker condition] [limit-marker N]
+    parts.push(keyword, source);
+    if (condition) parts.push(mk('where', lang), condition);
+    if (limit) parts.push(mk('limit', lang), limit);
+  }
+
+  return parts.join(' ');
+}
+
 function renderDelete(node: SemanticNode, lang: string): string {
   const source = extractRoleValue(node, 'source') || 'table';
   const condition = extractRoleValue(node, 'condition');
@@ -180,11 +226,12 @@ function renderDelete(node: SemanticNode, lang: string): string {
   const parts: string[] = [];
 
   if (isSOV(lang)) {
-    // SOV: source marker keyword [condition-marker condition]
-    parts.push(source, mk('from', lang), keyword);
+    // SOV: source marker [condition-marker condition] keyword (verb last)
+    parts.push(source, mk('from', lang));
     if (condition) {
       parts.push(mk('where', lang), condition);
     }
+    parts.push(keyword);
   } else {
     // SVO / VSO: keyword marker source [marker condition]
     parts.push(keyword, mk('from', lang), source);
@@ -213,6 +260,8 @@ export function renderSQL(node: SemanticNode, language: string): string {
       return renderUpdate(node, language);
     case 'delete':
       return renderDelete(node, language);
+    case 'get':
+      return renderGet(node, language);
     default:
       return `-- Unknown: ${node.action}`;
   }

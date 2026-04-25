@@ -95,19 +95,26 @@ export const COMMANDS = new Set([
   'append',
   'async',
   'beep',
+  'blur',
   'break',
+  'breakpoint',
   'call',
+  'clear',
+  'close',
   'continue',
   'copy',
   'decrement',
   'default',
+  'empty',
   'exit',
   'fetch',
+  'focus',
   'for',
   'get',
   'go',
   'halt',
   'hide',
+  'open',
   'if',
   'increment',
   'install',
@@ -124,7 +131,10 @@ export const COMMANDS = new Set([
   'render',
   'repeat',
   'replace', // htmx-like: replace url in history
+  'reset',
   'return',
+  'scroll', // scroll to <target> (upstream _hyperscript 0.9.90)
+  'select',
   'send',
   'set',
   'settle',
@@ -390,6 +400,10 @@ export const COMPARISON_OPERATORS = new Set([
   'is not a',
   'is not an',
   'contains',
+  'starts with', // "str starts with prefix" (upstream _hyperscript 0.9.90)
+  'ends with', // "str ends with suffix" (upstream _hyperscript 0.9.90)
+  'does not start with',
+  'does not end with',
   'has', // "it has .class", "#element has .class"
   'have', // "I have .class" - grammatically correct first-person
   'does not contain',
@@ -404,6 +418,8 @@ export const COMPARISON_OPERATORS = new Set([
   'is not empty',
   'is in',
   'is not in',
+  'is between',
+  'is not between',
   'equals',
   'in',
   // English-style comparison operators
@@ -416,6 +432,19 @@ export const COMPARISON_OPERATORS = new Set([
   'is greater than or equal to',
   'is less than or equal to',
   'really equals',
+  // Postfix modifier on string comparators (upstream _hyperscript 0.9.90):
+  //   "name is 'alice' ignoring case"
+  //   "str starts with 'hi' ignoring case"
+  'ignoring case',
+  // Collection operators (upstream _hyperscript 0.9.90).
+  // `where` is a single-word keyword already recognized by the identifier
+  // classifier — the Pratt table picks it up as an infix operator in
+  // expression contexts. Multi-word forms must be registered here so the
+  // tokenizer's compound-operator path emits them as single OPERATOR tokens.
+  'sorted by',
+  'mapped to',
+  'split by',
+  'joined by',
 ]);
 
 /**

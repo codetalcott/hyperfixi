@@ -13,6 +13,8 @@ export type {
   MorphologicalNormalizer,
   SuffixRule,
   PrefixRule,
+  ConjugationEnding,
+  NormalizerConfig,
 } from '@lokascript/framework';
 
-export { noChange, normalized } from '@lokascript/framework';
+export { noChange, normalized, BaseMorphologicalNormalizer } from '@lokascript/framework';

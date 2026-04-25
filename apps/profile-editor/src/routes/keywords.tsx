@@ -60,7 +60,7 @@ export const keywordRoutes = new Elysia({ prefix: '/profiles' })
     let saved = 0;
     for (const field of metadataFields) {
       if (data[field] !== undefined) {
-        const currentVal = String((profile as Record<string, unknown>)[field] ?? '');
+        const currentVal = String((profile as unknown as Record<string, unknown>)[field] ?? '');
         if (data[field] !== currentVal) {
           const value = field === 'usesSpaces' ? data[field] === 'true' : data[field];
           saveEdit(code, 'metadata', field, JSON.stringify(currentVal), JSON.stringify(value));

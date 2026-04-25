@@ -42,6 +42,13 @@ export interface RoleSpec {
    * Maps language code to the rendering preposition.
    */
   readonly renderOverride?: Record<string, string>;
+
+  /**
+   * Restricts which selector subtypes are valid for this role (v1.2).
+   * Only meaningful when expectedTypes includes 'selector'.
+   * If omitted, all selector kinds are accepted.
+   */
+  readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
 }
 
 /**
@@ -122,6 +129,7 @@ export const toggleSchema: CommandSchema = {
       description: 'The class or attribute to toggle',
       required: true,
       expectedTypes: ['selector'],
+      selectorKinds: ['class', 'attribute'],
       svoPosition: 1,
       sovPosition: 2,
     },
@@ -1275,6 +1283,162 @@ export const blurSchema: CommandSchema = {
   ],
 };
 
+/**
+ * Empty command: clears innerHTML of an element (upstream _hyperscript 0.9.90).
+ *
+ * Patterns:
+ * - EN: empty #container
+ * - ES: vaciar #container
+ */
+export const emptySchema: CommandSchema = {
+  action: 'empty',
+  description: 'Remove all children from an element (sets innerHTML to empty)',
+  category: 'dom-content',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The element to empty (defaults to me)',
+      required: false,
+      expectedTypes: ['selector', 'reference'],
+      default: { type: 'reference', value: 'me' },
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+  ],
+};
+
+/**
+ * Open command: opens a <dialog>, <details> element, or popover (upstream 0.9.90).
+ * Optional `as modal` / `as non-modal` variant uses the `style` role.
+ *
+ * Patterns:
+ * - EN: open #confirm-dialog
+ * - EN: open #confirm-dialog as modal
+ */
+export const openSchema: CommandSchema = {
+  action: 'open',
+  description: 'Open a dialog, details element, or popover',
+  category: 'dom-content',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The element to open (defaults to me)',
+      required: false,
+      expectedTypes: ['selector', 'reference'],
+      default: { type: 'reference', value: 'me' },
+      svoPosition: 2,
+      sovPosition: 2,
+    },
+    {
+      role: 'style',
+      description: 'Open-mode variant (modal / non-modal) for <dialog>',
+      required: false,
+      expectedTypes: ['literal', 'expression'],
+      svoPosition: 1,
+      sovPosition: 1,
+      markerOverride: { en: 'as' },
+    },
+  ],
+};
+
+/**
+ * Close command: closes a <dialog>, <details> element, or popover (upstream 0.9.90).
+ */
+export const closeSchema: CommandSchema = {
+  action: 'close',
+  description: 'Close a dialog, details element, or popover',
+  category: 'dom-content',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The element to close (defaults to me)',
+      required: false,
+      expectedTypes: ['selector', 'reference'],
+      default: { type: 'reference', value: 'me' },
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+  ],
+};
+
+/**
+ * Select command: selects text contents of an <input>/<textarea>, or DOM element content (upstream 0.9.90).
+ */
+export const selectSchema: CommandSchema = {
+  action: 'select',
+  description: 'Select the contents of a text field or DOM element',
+  category: 'dom-content',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The element whose contents to select (defaults to me)',
+      required: false,
+      expectedTypes: ['selector', 'reference'],
+      default: { type: 'reference', value: 'me' },
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+  ],
+};
+
+/**
+ * Clear command: clears a variable or an input-element's value (upstream 0.9.90).
+ */
+export const clearSchema: CommandSchema = {
+  action: 'clear',
+  description: 'Clear a variable, local, or input element',
+  category: 'variable',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The variable or element to clear (defaults to me)',
+      required: false,
+      expectedTypes: ['selector', 'reference', 'expression'],
+      default: { type: 'reference', value: 'me' },
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+  ],
+};
+
+/**
+ * Reset command: resets a <form> element to its default values (upstream 0.9.90).
+ */
+export const resetSchema: CommandSchema = {
+  action: 'reset',
+  description: 'Reset a <form> element to its default values',
+  category: 'dom-content',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The form element to reset (defaults to me)',
+      required: false,
+      expectedTypes: ['selector', 'reference'],
+      default: { type: 'reference', value: 'me' },
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+  ],
+};
+
+/**
+ * Breakpoint command: drops into the debugger (emits a `debugger;` statement).
+ * Zero-arg. Upstream 0.9.90.
+ */
+export const breakpointSchema: CommandSchema = {
+  action: 'breakpoint',
+  description: 'Drop into the debugger',
+  category: 'control-flow',
+  primaryRole: 'patient',
+  roles: [],
+};
+
 // =============================================================================
 // Batch 4 - Advanced Commands
 // =============================================================================
@@ -1780,6 +1944,13 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   clone: cloneSchema,
   focus: focusSchema,
   blur: blurSchema,
+  empty: emptySchema,
+  open: openSchema,
+  close: closeSchema,
+  select: selectSchema,
+  clear: clearSchema,
+  reset: resetSchema,
+  breakpoint: breakpointSchema,
   // Batch 4 - Advanced
   call: callSchema,
   return: returnSchema,

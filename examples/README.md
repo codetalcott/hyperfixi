@@ -9,31 +9,59 @@ The Example Gallery is an organized, interactive tutorial that teaches hyperscri
 - ✅ **Runs in isolation** - Can be opened and tested independently
 - ✅ **Fully documented** - Includes code explanation and concepts
 - ✅ **Interactive** - Try it live in your browser
-- ✅ **Progressively structured** - Organized by difficulty level
+- ✅ **Feature-organized** - Grouped by functionality and pattern type
 
 ## 📂 Directory Structure
 
 ```
 examples/
-├── index.html              # Gallery home page (start here!)
-├── basics/                 # Fundamental patterns (5 examples)
-│   ├── 01-hello-world.html
-│   ├── 02-toggle-class.html
-│   ├── 03-show-hide.html
-│   ├── 04-input-mirror.html
-│   └── 05-counter.html
-├── intermediate/           # Moderate complexity (5 examples)
-│   ├── 01-form-validation.html
-│   ├── 02-fetch-data.html
-│   ├── 03-fade-effects.html
-│   ├── 04-tabs.html
-│   └── 05-modal.html
-└── advanced/               # Complex patterns (5+ examples)
-    ├── 01-color-cycling.html
-    ├── 02-draggable.html
-    ├── 03-sortable-list.html
-    ├── 04-infinite-scroll.html
-    └── 05-state-machine.html
+├── index.html                  # Gallery home page (start here!)
+├── animation/                  # CSS transitions, color cycling, view transitions
+│   ├── color-cycling.html
+│   ├── color-cycling-simple.html
+│   ├── color-cycling-debug.html
+│   ├── fade-effects.html
+│   └── view-transitions.html
+├── dialogs/                    # Modal dialogs and native <dialog> element
+│   ├── modal.html
+│   ├── native-dialog.html
+│   ├── dialog-toggle.html
+│   └── smart-element-toggle.html
+├── drag-and-drop/              # Draggable elements and sortable lists
+│   ├── draggable.html
+│   └── sortable-list.html
+├── events-and-dom/             # Event handling and basic DOM manipulation
+│   ├── hello-world.html
+│   ├── show-hide.html
+│   ├── input-mirror.html
+│   ├── counter.html
+│   ├── send-events.html
+│   └── tell-command.html
+├── fetch-and-async/            # AJAX/fetch requests and async patterns
+│   ├── fetch-data.html
+│   ├── async-fetch.html
+│   └── infinite-scroll.html
+├── forms/                      # Form validation and processing
+│   ├── form-validation.html
+│   └── partial-validation.html
+├── js-interop/                 # JavaScript interoperability
+│   ├── js-interop.html
+│   └── clipboard-copy.html
+├── navigation/                 # Tabs, history, boosted links
+│   ├── tabs.html
+│   ├── history-navigation.html
+│   ├── boosted-links.html
+│   └── fragments/
+├── swap-and-morph/             # Content swapping and DOM morphing
+│   ├── swap-morph.html
+│   ├── morph-comparison.html
+│   ├── multi-target-swaps.html
+│   └── test-property-access.html
+├── toggle-and-state/           # Toggle patterns and state management
+│   ├── toggle-class.html
+│   └── toggle-attributes.html
+├── multilingual/               # Live grammar transformation demo
+└── gallery/                    # Feature showcase
 ```
 
 ## 🚀 Getting Started
@@ -60,7 +88,7 @@ Each example is self-contained and can be opened directly:
 
 ```bash
 # Example: Open the counter example
-open http://localhost:3000/examples/basics/05-counter.html
+open http://localhost:3000/examples/events-and-dom/counter.html
 ```
 
 ## 📚 Learning Path
@@ -113,7 +141,7 @@ Build sophisticated interactions:
 
 ### 🌈 Color Cycling (Advanced)
 
-**File:** `advanced/01-color-cycling.html`
+**File:** `animation/color-cycling.html`
 
 Demonstrates:
 
@@ -135,7 +163,7 @@ end
 
 ### 🖱️ Draggable Elements (Advanced)
 
-**File:** `advanced/02-draggable.html`
+**File:** `drag-and-drop/draggable.html`
 
 Demonstrates:
 
@@ -182,7 +210,7 @@ Perfect for testing multiple patterns together!
 
    ```bash
    # Create new example
-   touch examples/basics/06-my-example.html
+   touch examples/events-and-dom/my-example.html
    ```
 
 2. **Use existing template** - Copy structure from similar example
@@ -216,7 +244,7 @@ Perfect for testing multiple patterns together!
       <!-- Code Explanation -->
       <!-- Navigation -->
     </div>
-    <script src="../../packages/core/dist/lokascript-browser.js"></script>
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
   </body>
 </html>
 ```
@@ -271,19 +299,19 @@ Perfect for testing multiple patterns together!
 
 ### Want to learn about `fetch`?
 
-→ See: `intermediate/02-fetch-data.html`
+→ See: `fetch-and-async/fetch-data.html`
 
 ### Need drag-and-drop?
 
-→ See: `advanced/02-draggable.html` or `advanced/03-sortable-list.html`
+→ See: `drag-and-drop/draggable.html` or `drag-and-drop/sortable-list.html`
 
 ### Looking for form validation?
 
-→ See: `intermediate/01-form-validation.html`
+→ See: `forms/form-validation.html`
 
 ### Want smooth animations?
 
-→ See: `intermediate/03-fade-effects.html` or `advanced/01-color-cycling.html`
+→ See: `animation/fade-effects.html` or `animation/color-cycling.html`
 
 ## 💡 Pro Tips
 

@@ -5,9 +5,9 @@ import { describe, it, expect } from 'vitest';
 import { listResources, readResource } from '../resources/index.js';
 
 describe('listResources', () => {
-  it('returns 8 resources', () => {
+  it('returns 9 resources', () => {
     const resources = listResources();
-    expect(resources).toHaveLength(8);
+    expect(resources).toHaveLength(9);
   });
 
   it('includes commands reference', () => {
@@ -265,10 +265,12 @@ describe('readResource - error handling', () => {
 });
 
 describe('resource URIs', () => {
-  it('uses hyperscript:// protocol', () => {
+  it('uses hyperscript:// or lse:// protocol', () => {
     const resources = listResources();
     resources.forEach(resource => {
-      expect(resource.uri.startsWith('hyperscript://')).toBe(true);
+      expect(resource.uri.startsWith('hyperscript://') || resource.uri.startsWith('lse://')).toBe(
+        true
+      );
     });
   });
 

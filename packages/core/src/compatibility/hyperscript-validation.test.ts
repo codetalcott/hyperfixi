@@ -77,8 +77,9 @@ describe('_hyperscript Compatibility Validation', () => {
       expect(result).toBe('10.49');
     });
 
-    it('should convert objects to JSON', async () => {
-      const result = await evalHyperScript('obj as JSON', {
+    // Upstream _hyperscript 0.9.90: `as JSONString` stringifies (was `as JSON`).
+    it('should stringify objects with `as JSONString`', async () => {
+      const result = await evalHyperScript('obj as JSONString', {
         locals: { obj: { foo: 'bar' } },
       });
       expect(result).toBe('{"foo":"bar"}');

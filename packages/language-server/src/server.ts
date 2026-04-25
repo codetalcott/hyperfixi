@@ -33,7 +33,9 @@ import {
   CodeActionParams,
   DidChangeConfigurationNotification,
   Location,
+  Range,
   TextEdit,
+  WorkspaceEdit,
   DocumentFormattingParams,
 } from 'vscode-languageserver/node.js';
 
@@ -47,16 +49,14 @@ import {
   getCommandsForMode,
   HYPERSCRIPT_COMMANDS,
 } from './command-tiers.js';
-import {
-  isHtmlDocument,
-  extractHyperscriptRegions,
-  offsetToPosition,
-  findRegionAtPosition,
-  findLineInRegion,
-  findCharInLine,
-} from './extraction.js';
-import { getWordAtPosition, escapeRegExp, findNextNonEmptyLine } from './utils.js';
+import { isHtmlDocument, extractHyperscriptRegions, findRegionAtPosition } from './extraction.js';
+import { getWordAtPosition, findNextNonEmptyLine } from './utils.js';
 import { formatHyperscript } from './formatting.js';
+import { runSimpleDiagnostics } from './simple-diagnostics.js';
+import { getSymbolTable, invalidateSymbolTable } from './symbol-table.js';
+
+// Localized descriptions for completions and hover (Phase 7.3)
+import { getCommandDescription } from './localized-descriptions.js';
 
 // =============================================================================
 // Optional Package Imports
@@ -88,8 +88,9 @@ try {
   fromCoreASTFn = core.fromCoreAST;
   // Interchange-aware LSP module (replaces deprecated @lokascript/ast-toolkit)
   interchangeLSP = await import('@hyperfixi/core/ast-utils');
+  console.error('[lokascript-ls] @hyperfixi/core loaded — AST parsing + interchange LSP enabled');
 } catch {
-  console.error('[lokascript-ls] @hyperfixi/core not available');
+  console.error('[lokascript-ls] @hyperfixi/core not available — diagnostics and hover degraded');
 }
 
 // Try to import LSP metadata from core (canonical keyword/hover docs source)
@@ -100,6 +101,28 @@ try {
     '[lokascript-ls] @hyperfixi/core/lsp-metadata not available - using fallback keywords'
   );
 }
+
+// Try to import framework IR for LSE bracket notation in hover
+let frameworkIR: {
+  fromInterchangeNode: (n: any) => any;
+  renderExplicit: (n: any) => string;
+} | null = null;
+try {
+  const fw = await import('@lokascript/framework');
+  frameworkIR = { fromInterchangeNode: fw.fromInterchangeNode, renderExplicit: fw.renderExplicit };
+  console.error(
+    '[lokascript-ls] @lokascript/framework loaded — LSE bracket notation in hover enabled'
+  );
+} catch {
+  console.error(
+    '[lokascript-ls] @lokascript/framework not available — hover will omit LSE bracket notation'
+  );
+}
+
+// Log capability summary
+console.error(
+  `[lokascript-ls] capabilities: core=${!!parseFunction}, interchange=${!!interchangeLSP}, metadata=${!!lspMetadata}, framework=${!!frameworkIR}`
+);
 
 // =============================================================================
 // Fallback Constants (used when @hyperfixi/core/lsp-metadata is unavailable)
@@ -248,6 +271,91 @@ const FALLBACK_HOVER_DOCS: Record<string, { title: string; description: string; 
       description: 'Alias for it - the result of the last expression.',
       example: 'call myFunction() then log result',
     },
+    increment: {
+      title: 'increment',
+      description: 'Increases a numeric value by 1 (or a specified amount).',
+      example: 'increment #count',
+    },
+    decrement: {
+      title: 'decrement',
+      description: 'Decreases a numeric value by 1 (or a specified amount).',
+      example: 'decrement #count',
+    },
+    append: {
+      title: 'append',
+      description: 'Appends content to an element.',
+      example: 'append "<li>item</li>" to #list',
+    },
+    prepend: {
+      title: 'prepend',
+      description: 'Prepends content to an element.',
+      example: 'prepend "<li>first</li>" to #list',
+    },
+    take: {
+      title: 'take',
+      description: 'Takes a class from sibling elements (exclusive toggle).',
+      example: 'take .active from .tabs',
+    },
+    transition: {
+      title: 'transition',
+      description: 'Applies a CSS transition to an element.',
+      example: 'transition opacity to 0 over 500ms',
+    },
+    settle: {
+      title: 'settle',
+      description: 'Waits for CSS transitions to complete.',
+      example: 'add .fade then settle',
+    },
+    halt: {
+      title: 'halt',
+      description: 'Stops the current event from propagating.',
+      example: 'halt the event',
+    },
+    throw: {
+      title: 'throw',
+      description: 'Throws an error.',
+      example: 'throw "Something went wrong"',
+    },
+    return: {
+      title: 'return',
+      description: 'Returns a value from a function or behavior.',
+      example: 'return 42',
+    },
+    install: {
+      title: 'install',
+      description: 'Installs a behavior on an element.',
+      example: 'install Draggable(snap: true)',
+    },
+    default: {
+      title: 'default',
+      description: 'Sets a variable to a value only if it is not already set.',
+      example: 'default :count to 0',
+    },
+    then: {
+      title: 'then',
+      description: 'Chains commands together sequentially.',
+      example: 'add .active then wait 1s then remove .active',
+    },
+    end: {
+      title: 'end',
+      description: 'Closes a block (event handler, behavior, if, repeat).',
+      example: 'on click\\n  toggle .active\\nend',
+    },
+    async: {
+      title: 'async',
+      description: 'Runs a command asynchronously without blocking.',
+      example: 'async fetch /api/data',
+    },
+    tell: {
+      title: 'tell',
+      description: 'Sets the default target for subsequent commands.',
+      example: 'tell #modal then add .visible',
+    },
+    copy: {
+      title: 'copy',
+      description: 'Copies text to the clipboard.',
+      example: 'copy "Hello" to the clipboard',
+    },
   };
 
 const FALLBACK_EVENT_NAMES = [
@@ -373,6 +481,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
       },
       definitionProvider: true,
       referencesProvider: true,
+      renameProvider: { prepareProvider: true },
       documentFormattingProvider: true,
     },
   };
@@ -577,21 +686,50 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     }
   }
 
-  // Try AST-based analysis via interchange format (works in both modes)
-  if (diagnostics.length === 0 && interchangeLSP && parseFunction && fromCoreASTFn) {
+  // AST-based analysis via interchange format (works in both modes)
+  // Always runs when core is available — produces parse errors + complexity diagnostics
+  if (parseFunction && fromCoreASTFn) {
     try {
-      const ast = parseFunction(code);
-      if (ast) {
-        const interchange = fromCoreASTFn(ast);
-        const nodes = interchange.type === 'event' ? [interchange] : [interchange];
-        const astDiagnostics = interchangeLSP.interchangeToLSPDiagnostics(nodes, { source: brand });
-        diagnostics.push(...astDiagnostics);
+      const parseResult = parseFunction(code);
+
+      // Surface parse errors as diagnostics
+      if (parseResult.errors?.length) {
+        for (const err of parseResult.errors) {
+          diagnostics.push({
+            range: {
+              start: {
+                line: Math.max(0, (err.line ?? 1) - 1),
+                character: Math.max(0, err.column ?? 0),
+              },
+              end: {
+                line: Math.max(0, (err.line ?? 1) - 1),
+                character: Math.max(0, err.column ?? 0) + 10,
+              },
+            },
+            severity: DiagnosticSeverity.Error,
+            code: 'parse-error',
+            source: brand,
+            message: err.message,
+          });
+        }
+      }
+
+      // Convert partial/full AST to interchange for complexity diagnostics
+      if (parseResult.node && interchangeLSP) {
+        const interchange = fromCoreASTFn(parseResult.node);
+        if (interchange && interchange.type !== 'literal') {
+          const nodes = Array.isArray(interchange) ? interchange : [interchange];
+          const astDiagnostics = interchangeLSP.interchangeToLSPDiagnostics(nodes, {
+            source: brand,
+          });
+          diagnostics.push(...astDiagnostics);
+        }
       }
     } catch (parseError: any) {
       diagnostics.push({
         range: {
           start: { line: 0, character: 0 },
-          end: { line: 0, character: code.length },
+          end: { line: 0, character: Math.min(code.length, 80) },
         },
         severity: DiagnosticSeverity.Error,
         code: 'parse-error',
@@ -601,63 +739,15 @@ async function getDiagnostics(code: string, language: string): Promise<Diagnosti
     }
   }
 
-  // Fallback: simple pattern-based analysis
+  // Simple pattern-based analysis (quote/bracket validation)
+  // Always runs — the state machine handles possessives, escaped quotes, etc.
+  // correctly, unlike the Chevrotain grammar which produces false positives
   if (diagnostics.length === 0) {
     const simpleDiagnostics = runSimpleDiagnostics(code, language);
-    // Update source to match current branding
     diagnostics.push(...simpleDiagnostics.map(d => ({ ...d, source: brand })));
   }
 
   return diagnostics.slice(0, globalSettings.maxDiagnostics);
-}
-
-function runSimpleDiagnostics(code: string, _language: string): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  const lines = code.split('\n');
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Unmatched quotes
-    const singleQuotes = (line.match(/'/g) || []).length;
-    const doubleQuotes = (line.match(/"/g) || []).length;
-
-    if (singleQuotes % 2 !== 0) {
-      diagnostics.push({
-        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
-        severity: DiagnosticSeverity.Error,
-        code: 'unmatched-quote',
-        source: 'lokascript',
-        message: 'Unmatched single quote',
-      });
-    }
-
-    if (doubleQuotes % 2 !== 0) {
-      diagnostics.push({
-        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
-        severity: DiagnosticSeverity.Error,
-        code: 'unmatched-quote',
-        source: 'lokascript',
-        message: 'Unmatched double quote',
-      });
-    }
-  }
-
-  // Check for unbalanced parentheses/brackets
-  const openParens = (code.match(/\(/g) || []).length;
-  const closeParens = (code.match(/\)/g) || []).length;
-
-  if (openParens !== closeParens) {
-    diagnostics.push({
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
-      severity: DiagnosticSeverity.Error,
-      code: 'unbalanced-parens',
-      source: 'lokascript',
-      message: `Unbalanced parentheses: ${openParens} open, ${closeParens} close`,
-    });
-  }
-
-  return diagnostics;
 }
 
 // =============================================================================
@@ -749,6 +839,12 @@ function getContextualCompletions(context: string, language: string): Completion
   const isCommandAvailable = (cmd: string) =>
     availableCommands.includes(cmd as (typeof availableCommands)[number]);
 
+  // Phase 7.3: Localized detail/documentation for commands
+  const getDetail = (command: string, fallback: string): string => {
+    const desc = getCommandDescription(command, effectiveLanguage);
+    return desc?.detail ?? fallback;
+  };
+
   switch (context) {
     case 'event':
       // Use canonical event names from @hyperfixi/core/lsp-metadata, with fallback
@@ -768,55 +864,71 @@ function getContextualCompletions(context: string, language: string): Completion
         {
           label: getKeyword('toggle'),
           kind: CompletionItemKind.Method,
-          detail: 'Toggle class/visibility',
+          detail: getDetail('toggle', 'Toggle class/visibility'),
           insertText: `${getKeyword('toggle')} .\${1:class}`,
         },
         {
           label: getKeyword('add'),
           kind: CompletionItemKind.Method,
-          detail: 'Add class/attribute',
+          detail: getDetail('add', 'Add class/attribute'),
           insertText: `${getKeyword('add')} .\${1:class} to \${2:me}`,
         },
         {
           label: getKeyword('remove'),
           kind: CompletionItemKind.Method,
-          detail: 'Remove class/element',
+          detail: getDetail('remove', 'Remove class/element'),
           insertText: `${getKeyword('remove')} .\${1:class} from \${2:me}`,
         },
-        { label: getKeyword('show'), kind: CompletionItemKind.Method, detail: 'Show element' },
-        { label: getKeyword('hide'), kind: CompletionItemKind.Method, detail: 'Hide element' },
+        {
+          label: getKeyword('show'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('show', 'Show element'),
+        },
+        {
+          label: getKeyword('hide'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('hide', 'Hide element'),
+        },
         {
           label: getKeyword('put'),
           kind: CompletionItemKind.Method,
-          detail: 'Set content',
+          detail: getDetail('put', 'Set content'),
           insertText: `${getKeyword('put')} \${1:value} into \${2:target}`,
         },
         {
           label: getKeyword('set'),
           kind: CompletionItemKind.Method,
-          detail: 'Set variable',
+          detail: getDetail('set', 'Set variable'),
           insertText: `${getKeyword('set')} \${1:variable} to \${2:value}`,
         },
         {
           label: getKeyword('fetch'),
           kind: CompletionItemKind.Method,
-          detail: 'HTTP request',
+          detail: getDetail('fetch', 'HTTP request'),
           insertText: `${getKeyword('fetch')} \${1:/api/endpoint}`,
         },
         {
           label: getKeyword('wait'),
           kind: CompletionItemKind.Method,
-          detail: 'Pause execution',
+          detail: getDetail('wait', 'Pause execution'),
           insertText: `${getKeyword('wait')} \${1:1s}`,
         },
         {
           label: getKeyword('send'),
           kind: CompletionItemKind.Method,
-          detail: 'Dispatch event',
+          detail: getDetail('send', 'Dispatch event'),
           insertText: `${getKeyword('send')} \${1:eventName} to \${2:target}`,
         },
-        { label: getKeyword('trigger'), kind: CompletionItemKind.Method, detail: 'Trigger event' },
-        { label: getKeyword('log'), kind: CompletionItemKind.Method, detail: 'Console log' },
+        {
+          label: getKeyword('trigger'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('trigger', 'Trigger event'),
+        },
+        {
+          label: getKeyword('log'),
+          kind: CompletionItemKind.Method,
+          detail: getDetail('log', 'Console log'),
+        },
         { label: getKeyword('if'), kind: CompletionItemKind.Keyword, detail: 'Conditional' },
         { label: getKeyword('repeat'), kind: CompletionItemKind.Keyword, detail: 'Loop' }
       );
@@ -860,6 +972,25 @@ function getContextualCompletions(context: string, language: string): Completion
           }
         );
       }
+      // Role markers (prepositions used after commands)
+      completions.push(
+        { label: getKeyword('to'), kind: CompletionItemKind.Keyword, detail: 'Target destination' },
+        { label: getKeyword('from'), kind: CompletionItemKind.Keyword, detail: 'Source element' },
+        {
+          label: getKeyword('into'),
+          kind: CompletionItemKind.Keyword,
+          detail: 'Insert destination',
+        },
+        { label: getKeyword('on'), kind: CompletionItemKind.Keyword, detail: 'Target element' },
+        { label: getKeyword('with'), kind: CompletionItemKind.Keyword, detail: 'Options/data' },
+        { label: getKeyword('by'), kind: CompletionItemKind.Keyword, detail: 'Amount/method' },
+        { label: getKeyword('as'), kind: CompletionItemKind.Keyword, detail: 'Type/format' },
+        {
+          label: getKeyword('then'),
+          kind: CompletionItemKind.Keyword,
+          detail: 'Chain next command',
+        }
+      );
       break;
 
     case 'expression':
@@ -947,8 +1078,14 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
       const word = getWordAtPosition(currentLine, found.localChar);
       if (!word) return null;
 
-      const doc = getHoverDocumentation(word.text, globalSettings.language);
+      let doc = getHoverDocumentation(word.text, globalSettings.language);
       if (!doc) return null;
+
+      // Append LSE bracket notation if we can parse the full region
+      const lse = tryGetLSE(found.region.code);
+      if (lse) {
+        doc += `\n\n**LSE:** \`${lse}\``;
+      }
 
       // Map range back to document coordinates
       const startChar = found.localLine === 0 ? found.region.startChar + word.start : word.start;
@@ -971,8 +1108,14 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     const word = getWordAtPosition(currentLine, position.character);
     if (!word) return null;
 
-    const doc = getHoverDocumentation(word.text, globalSettings.language);
+    let doc = getHoverDocumentation(word.text, globalSettings.language);
     if (!doc) return null;
+
+    // Append LSE bracket notation if we can parse the full line/block
+    const lse = tryGetLSE(text);
+    if (lse) {
+      doc += `\n\n**LSE:** \`${lse}\``;
+    }
 
     return {
       contents: { kind: MarkupKind.Markdown, value: doc },
@@ -986,6 +1129,24 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     return null;
   }
 });
+
+/**
+ * Try to parse hyperscript code and render as LSE bracket notation.
+ * Returns null if parsing or rendering fails (non-fatal).
+ */
+function tryGetLSE(code: string): string | null {
+  if (!interchangeLSP || !parseFunction || !fromCoreASTFn || !frameworkIR) return null;
+  try {
+    const parseResult = parseFunction(code);
+    if (!parseResult.node) return null;
+    const interchange = fromCoreASTFn(parseResult.node);
+    if (!interchange) return null;
+    const semanticNode = frameworkIR.fromInterchangeNode(interchange);
+    return frameworkIR.renderExplicit(semanticNode);
+  } catch {
+    return null;
+  }
+}
 
 function getHoverDocumentation(word: string, language: string): string | null {
   const wordLower = word.toLowerCase();
@@ -1002,7 +1163,8 @@ function getHoverDocumentation(word: string, language: string): string | null {
   const doc = docs[canonicalKey];
   if (!doc) return null;
 
-  // Build hover content
+  // Build hover content — use localized description if available (Phase 7.3)
+  const localizedDesc = getCommandDescription(canonicalKey, language);
   let content = `**${doc.title}**`;
 
   // Show the user's keyword with the canonical form for reference
@@ -1010,7 +1172,9 @@ function getHoverDocumentation(word: string, language: string): string | null {
     content = `**${word}** (${canonicalKey})`;
   }
 
-  content += `\n\n${doc.description}`;
+  // Use localized documentation if available, otherwise fall back to English
+  const description = localizedDesc?.documentation ?? doc.description;
+  content += `\n\n${description}`;
   content += `\n\n\`\`\`hyperscript\n${doc.example}\n\`\`\``;
 
   // Add translations in multilingual modes
@@ -1157,154 +1321,8 @@ function resolveCanonicalKeyword(word: string, _language: string): string {
 }
 
 // =============================================================================
-// Go to Definition
+// Symbol Table Helpers
 // =============================================================================
-
-connection.onDefinition((params: TextDocumentPositionParams): Location | Location[] | null => {
-  try {
-    const document = documents.get(params.textDocument.uri);
-    if (!document) return null;
-
-    const text = document.getText();
-    const uri = document.uri;
-    const position = params.position;
-
-    // Get the word at the current position
-    let targetWord: string | null = null;
-
-    if (isHtmlDocument(uri, text)) {
-      // Find if cursor is inside a hyperscript region
-      const regions = extractHyperscriptRegions(text);
-      const found = findRegionAtPosition(regions, position.line, position.character);
-
-      if (!found) {
-        return null;
-      }
-
-      // Get the line within the region
-      const regionLines = found.region.code.split('\n');
-      const currentLine = regionLines[found.localLine];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, found.localChar);
-      if (!word) return null;
-
-      targetWord = word.text;
-    } else {
-      // Pure hyperscript file
-      const lines = text.split('\n');
-      const currentLine = lines[position.line];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, position.character);
-      if (!word) return null;
-
-      targetWord = word.text;
-    }
-
-    if (!targetWord) return null;
-
-    // Search for definitions in the document
-    const locations: Location[] = [];
-
-    // Get multilingual variants for behavior/def keywords
-    const behaviorVariants = getKeywordVariants('behavior');
-    const defVariants = getKeywordVariants('def');
-
-    // Pattern for behavior definitions: behavior Name
-    const behaviorPattern = new RegExp(
-      `\\b(${behaviorVariants.join('|')})\\s+(${escapeRegExp(targetWord)})\\b`,
-      'gi'
-    );
-
-    // Pattern for function definitions: def functionName
-    const defPattern = new RegExp(
-      `\\b(${defVariants.join('|')})\\s+(${escapeRegExp(targetWord)})\\b`,
-      'gi'
-    );
-
-    // Search in all hyperscript regions if HTML, or the entire file
-    if (isHtmlDocument(uri, text)) {
-      const regions = extractHyperscriptRegions(text);
-
-      for (const region of regions) {
-        // Search for behavior definitions
-        for (const match of region.code.matchAll(behaviorPattern)) {
-          const matchLine = findLineInRegion(region.code, match.index ?? 0);
-          const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-          locations.push({
-            uri: params.textDocument.uri,
-            range: {
-              start: {
-                line: region.startLine + matchLine,
-                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-              },
-              end: {
-                line: region.startLine + matchLine,
-                character:
-                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-              },
-            },
-          });
-        }
-
-        // Search for function definitions
-        for (const match of region.code.matchAll(defPattern)) {
-          const matchLine = findLineInRegion(region.code, match.index ?? 0);
-          const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-          locations.push({
-            uri: params.textDocument.uri,
-            range: {
-              start: {
-                line: region.startLine + matchLine,
-                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-              },
-              end: {
-                line: region.startLine + matchLine,
-                character:
-                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-              },
-            },
-          });
-        }
-      }
-    } else {
-      // Pure hyperscript file - search entire text
-      // Search for behavior definitions
-      for (const match of text.matchAll(behaviorPattern)) {
-        const pos = offsetToPosition(text, match.index ?? 0);
-        locations.push({
-          uri: params.textDocument.uri,
-          range: {
-            start: pos,
-            end: { line: pos.line, character: pos.character + match[0].length },
-          },
-        });
-      }
-
-      // Search for function definitions
-      for (const match of text.matchAll(defPattern)) {
-        const pos = offsetToPosition(text, match.index ?? 0);
-        locations.push({
-          uri: params.textDocument.uri,
-          range: {
-            start: pos,
-            end: { line: pos.line, character: pos.character + match[0].length },
-          },
-        });
-      }
-    }
-
-    if (locations.length === 0) return null;
-    if (locations.length === 1) return locations[0]!;
-    return locations;
-  } catch (error) {
-    connection.console.error(`Go to Definition error: ${error}`);
-    return null;
-  }
-});
 
 /**
  * Helper: Get all localized variants for a given canonical keyword
@@ -1336,6 +1354,51 @@ function getKeywordVariants(eng: string): string[] {
   return variants;
 }
 
+/** Get the cached symbol table for a document, extracting regions as needed. */
+function getDocSymbolTable(document: { uri: string; version: number; getText(): string }) {
+  const text = document.getText();
+  const uri = document.uri;
+  const regions = isHtmlDocument(uri, text)
+    ? extractHyperscriptRegions(text)
+    : [{ code: text, startLine: 0, startChar: 0, endLine: 0, endChar: 0, type: 'script' as const }];
+  return { table: getSymbolTable(uri, document.version, regions, getKeywordVariants), uri };
+}
+
+/** Convert a SymbolLocation to an LSP Location. */
+function symbolLocToLocation(
+  uri: string,
+  loc: { line: number; character: number; length: number }
+): Location {
+  return {
+    uri,
+    range: {
+      start: { line: loc.line, character: loc.character },
+      end: { line: loc.line, character: loc.character + loc.length },
+    },
+  };
+}
+
+// =============================================================================
+// Go to Definition
+// =============================================================================
+
+connection.onDefinition((params: TextDocumentPositionParams): Location | Location[] | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const { table, uri } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry || entry.definitions.length === 0) return null;
+
+    const locations = entry.definitions.map(loc => symbolLocToLocation(uri, loc));
+    return locations.length === 1 ? locations[0]! : locations;
+  } catch (error) {
+    connection.console.error(`Go to Definition error: ${error}`);
+    return null;
+  }
+});
+
 // =============================================================================
 // Find References
 // =============================================================================
@@ -1345,86 +1408,81 @@ connection.onReferences((params): Location[] | null => {
     const document = documents.get(params.textDocument.uri);
     if (!document) return null;
 
-    const text = document.getText();
-    const uri = document.uri;
-    const position = params.position;
+    const { table, uri } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry) return null;
 
-    // Get the word at the current position
-    let targetWord: string | null = null;
+    // Include both definitions and usages
+    const allLocs = [...entry.definitions, ...entry.usages];
+    if (allLocs.length === 0) return null;
 
-    if (isHtmlDocument(uri, text)) {
-      const regions = extractHyperscriptRegions(text);
-      const found = findRegionAtPosition(regions, position.line, position.character);
-
-      if (!found) return null;
-
-      const regionLines = found.region.code.split('\n');
-      const currentLine = regionLines[found.localLine];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, found.localChar);
-      if (!word) return null;
-
-      targetWord = word.text;
-    } else {
-      const lines = text.split('\n');
-      const currentLine = lines[position.line];
-      if (!currentLine) return null;
-
-      const word = getWordAtPosition(currentLine, position.character);
-      if (!word) return null;
-
-      targetWord = word.text;
-    }
-
-    if (!targetWord) return null;
-
-    // Search for all references (word boundaries)
-    const locations: Location[] = [];
-
-    // Pattern to find all occurrences of the word
-    const wordPattern = new RegExp(`\\b${escapeRegExp(targetWord)}\\b`, 'gi');
-
-    if (isHtmlDocument(uri, text)) {
-      const regions = extractHyperscriptRegions(text);
-
-      for (const region of regions) {
-        for (const match of region.code.matchAll(wordPattern)) {
-          const matchLine = findLineInRegion(region.code, match.index ?? 0);
-          const matchChar = findCharInLine(region.code, match.index ?? 0);
-
-          locations.push({
-            uri: params.textDocument.uri,
-            range: {
-              start: {
-                line: region.startLine + matchLine,
-                character: matchLine === 0 ? region.startChar + matchChar : matchChar,
-              },
-              end: {
-                line: region.startLine + matchLine,
-                character:
-                  (matchLine === 0 ? region.startChar + matchChar : matchChar) + match[0].length,
-              },
-            },
-          });
-        }
-      }
-    } else {
-      for (const match of text.matchAll(wordPattern)) {
-        const pos = offsetToPosition(text, match.index ?? 0);
-        locations.push({
-          uri: params.textDocument.uri,
-          range: {
-            start: pos,
-            end: { line: pos.line, character: pos.character + match[0].length },
-          },
-        });
-      }
-    }
-
-    return locations.length > 0 ? locations : null;
+    return allLocs.map(loc => symbolLocToLocation(uri, loc));
   } catch (error) {
     connection.console.error(`Find References error: ${error}`);
+    return null;
+  }
+});
+
+// =============================================================================
+// Rename
+// =============================================================================
+
+connection.onPrepareRename((params): { range: Range; placeholder: string } | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const { table } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry) return null;
+
+    // Find the specific location the cursor is on
+    const allLocs = [...entry.definitions, ...entry.usages];
+    for (const loc of allLocs) {
+      if (
+        loc.line === params.position.line &&
+        params.position.character >= loc.character &&
+        params.position.character < loc.character + loc.length
+      ) {
+        return {
+          range: {
+            start: { line: loc.line, character: loc.character },
+            end: { line: loc.line, character: loc.character + loc.length },
+          },
+          placeholder: entry.name,
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    connection.console.error(`Prepare Rename error: ${error}`);
+    return null;
+  }
+});
+
+connection.onRenameRequest((params): WorkspaceEdit | null => {
+  try {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const { table, uri } = getDocSymbolTable(document);
+    const entry = table.symbolAt(params.position.line, params.position.character);
+    if (!entry) return null;
+
+    const allLocs = [...entry.definitions, ...entry.usages];
+    if (allLocs.length === 0) return null;
+
+    const edits: TextEdit[] = allLocs.map(loc => ({
+      range: {
+        start: { line: loc.line, character: loc.character },
+        end: { line: loc.line, character: loc.character + loc.length },
+      },
+      newText: params.newName,
+    }));
+
+    return { changes: { [uri]: edits } };
+  } catch (error) {
+    connection.console.error(`Rename error: ${error}`);
     return null;
   }
 });

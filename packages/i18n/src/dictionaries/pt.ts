@@ -1,20 +1,14 @@
-// packages/i18n/src/dictionaries/pt.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
-/**
- * Portuguese (Português) dictionary for hyperscript keywords.
- * Brazilian Portuguese variant.
- */
 export const pt: Dictionary = {
   commands: {
-    // Event handling
     on: 'em',
     tell: 'dizer',
     trigger: 'disparar',
     send: 'enviar',
-
-    // DOM manipulation
     take: 'pegar',
     put: 'colocar',
     set: 'definir',
@@ -24,10 +18,8 @@ export const pt: Dictionary = {
     toggle: 'alternar',
     hide: 'esconder',
     show: 'mostrar',
-
-    // Control flow
     if: 'se',
-    unless: 'a_menos', // REVIEW: native speaker - multi-word
+    unless: 'a_menos',
     repeat: 'repetir',
     for: 'para',
     while: 'enquanto',
@@ -35,54 +27,41 @@ export const pt: Dictionary = {
     continue: 'continuar',
     break: 'parar',
     halt: 'interromper',
-
-    // Async
     wait: 'esperar',
     fetch: 'buscar',
     call: 'chamar',
     return: 'retornar',
-
-    // Other commands
     make: 'fazer',
     log: 'registrar',
     throw: 'lançar',
     catch: 'capturar',
     measure: 'medir',
     transition: 'transição',
-
-    // Data Commands
     increment: 'incrementar',
     decrement: 'decrementar',
     default: 'padrão',
-
-    // Navigation Commands
     go: 'ir',
     pushUrl: 'pushUrl',
     replaceUrl: 'substituirUrl',
-
-    // Utility Commands
     copy: 'copiar',
     pick: 'escolher',
     beep: 'apitar',
-
-    // Advanced Commands
     js: 'js',
     async: 'assíncrono',
     render: 'renderizar',
-
-    // Animation Commands
     swap: 'trocar',
     morph: 'transformar',
     settle: 'estabilizar',
-
-    // Content Commands
     append: 'anexar',
-
-    // Control Flow
     exit: 'sair',
-
-    // Behaviors
     install: 'instalar',
+    breakpoint: 'ponto-interrupção',
+    clear: 'limpar',
+    close: 'fechar',
+    open: 'abrir',
+    select: 'selecionar',
+    clone: 'clonar',
+    prepend: 'preceder',
   },
 
   modifiers: {
@@ -114,23 +93,19 @@ export const pt: Dictionary = {
     mouseover: 'mouseSobre',
     mouseout: 'mouseFora',
     mousemove: 'mouseMover',
-
     keydown: 'teclaBaixo',
     keyup: 'teclaCima',
     keypress: 'teclaPressionar',
-
     focus: 'foco',
     blur: 'desfoque',
     change: 'mudança',
     input: 'entrada',
     submit: 'envio',
     reset: 'reiniciar',
-
     load: 'carregar',
     unload: 'descarregar',
     resize: 'redimensionar',
     scroll: 'rolar',
-
     touchstart: 'toqueInício',
     touchend: 'toqueFim',
     touchmove: 'toqueMover',
@@ -149,11 +124,11 @@ export const pt: Dictionary = {
     contains: 'contém',
     includes: 'inclui',
     equals: 'igual',
-    has: 'tem', // third-person: ele/ela tem
-    have: 'tenho', // first-person: eu tenho
+    has: 'tem',
+    have: 'tenho',
     then: 'então',
     else: 'senão',
-    otherwise: 'caso_contrário', // REVIEW: native speaker
+    otherwise: 'caso_contrário',
     end: 'fim',
   },
 
@@ -181,10 +156,10 @@ export const pt: Dictionary = {
     its: 'seu',
     me: 'eu',
     my: 'meu',
-    myself: 'eu mesmo', // REVIEW: native speaker
+    myself: 'eu mesmo',
     you: 'você',
     your: 'seu',
-    yourself: 'você mesmo', // REVIEW: native speaker
+    yourself: 'você mesmo',
     element: 'elemento',
     target: 'alvo',
     detail: 'detalhe',
@@ -208,7 +183,6 @@ export const pt: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'primeiro',
     last: 'último',
     next: 'próximo',
@@ -216,20 +190,19 @@ export const pt: Dictionary = {
     prev: 'ant',
     at: 'em',
     random: 'aleatório',
-
-    // DOM Traversal
-    closest: 'mais_próximo', // REVIEW: native speaker - multi-word
+    closest: 'mais_próximo',
     parent: 'pai',
     children: 'filhos',
     within: 'dentro',
-
-    // Emptiness/Existence
     no: 'nenhum',
     empty: 'vazio',
     some: 'algum',
-
-    // String operations
     'starts with': 'começa com',
     'ends with': 'termina com',
+    'ignoring case': 'ignorando maiúsculas',
+    'sorted by': 'ordenado por',
+    'mapped to': 'mapeado para',
+    'split by': 'dividido por',
+    'joined by': 'unido por',
   },
 };

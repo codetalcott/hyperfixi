@@ -45,6 +45,7 @@ import { createSendCommand } from '../commands/events/send';
 
 // Navigation Commands (1)
 import { createGoCommand } from '../commands/navigation/go';
+import { createScrollCommand } from '../commands/navigation/scroll-to';
 
 // Control Flow Commands (7)
 import { createIfCommand } from '../commands/control-flow/if';
@@ -177,8 +178,9 @@ export class RuntimeExperimental extends RuntimeBase {
       registry.register(createTriggerCommand());
       registry.register(createSendCommand());
 
-      // Navigation Commands (1)
+      // Navigation Commands (2)
       registry.register(createGoCommand());
+      registry.register(createScrollCommand());
 
       // Control Flow Commands (7)
       registry.register(createIfCommand());

@@ -73,7 +73,7 @@ import { flowCodeGenerator } from './generators/flow-generator.js';
  * Create a multilingual FlowScript DSL instance with all 8 supported languages.
  */
 export function createFlowDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'FlowScript',
     schemas: allSchemas,
     languages: [
@@ -141,6 +141,13 @@ export function createFlowDSL(): MultilingualDSL {
 // Re-export schemas for consumers who want to extend
 export { allSchemas, fetchSchema, pollSchema, streamSchema, submitSchema, transformSchema };
 export {
+  enterSchema,
+  followSchema,
+  performSchema,
+  captureSchema,
+  hateoasSchemas,
+} from './schemas/hateoas-schemas.js';
+export {
   englishProfile,
   spanishProfile,
   japaneseProfile,
@@ -168,7 +175,28 @@ export {
   TurkishFlowTokenizer,
   FrenchFlowTokenizer,
 } from './tokenizers/index.js';
-export type { FlowSpec, FlowAction } from './types.js';
+export type { FlowSpec, FlowAction, WorkflowSpec, WorkflowStep } from './types.js';
+export { toWorkflowSpec, toSirenGrailSteps } from './generators/workflow-generator.js';
+
+// =============================================================================
+// Runtime: HATEOAS Workflow Execution + MCP Server
+// =============================================================================
+
+export {
+  executeWorkflow,
+  createWorkflowExecutor,
+  toSirenSteps,
+} from './runtime/workflow-executor.js';
+export type { WorkflowResult, ExecuteWorkflowOptions } from './runtime/workflow-executor.js';
+
+export {
+  McpWorkflowServer,
+  createMcpWorkflowServer,
+  actionsToTools,
+  linksToTools,
+  entityToTools,
+} from './runtime/mcp-workflow-server.js';
+export type { McpWorkflowServerConfig } from './runtime/mcp-workflow-server.js';
 
 // =============================================================================
 // Domain Scan Config (for AOT / Vite plugin integration)

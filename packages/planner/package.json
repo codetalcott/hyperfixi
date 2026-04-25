@@ -1,0 +1,44 @@
+{
+  "name": "@lokascript/planner",
+  "version": "2.3.1",
+  "description": "BFS planner over affordance graphs — cost-aware planning with preconditions, effects, and template parameters",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "typecheck": "tsc --noEmit"
+  },
+  "author": "LokaScript Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/planner"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true,
+  "sideEffects": false
+}

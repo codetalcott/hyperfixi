@@ -16,7 +16,7 @@ test.describe('Draggable Example (02-draggable.html) @comprehensive', () => {
       errors.push('PageError: ' + err.message);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/02-draggable.html`, {
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/draggable.html`, {
       waitUntil: 'domcontentloaded',
       timeout: 10000,
     });
@@ -35,7 +35,7 @@ test.describe('Draggable Example (02-draggable.html) @comprehensive', () => {
   });
 
   test('should render draggable items with correct styling', async ({ page }) => {
-    await page.goto(`${BASE_URL}/examples/advanced/02-draggable.html`, {
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/draggable.html`, {
       waitUntil: 'domcontentloaded',
       timeout: 10000,
     });
@@ -62,7 +62,7 @@ test.describe('Draggable Example (02-draggable.html) @comprehensive', () => {
   });
 
   test('should drag item1 and update its position', async ({ page }) => {
-    await page.goto(`${BASE_URL}/examples/advanced/02-draggable.html`, {
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/draggable.html`, {
       waitUntil: 'domcontentloaded',
       timeout: 10000,
     });
@@ -103,7 +103,7 @@ test.describe('Draggable Example (02-draggable.html) @comprehensive', () => {
   });
 
   test('should add .dragging class during drag', async ({ page }) => {
-    await page.goto(`${BASE_URL}/examples/advanced/02-draggable.html`, {
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/draggable.html`, {
       waitUntil: 'domcontentloaded',
       timeout: 10000,
     });
@@ -141,7 +141,7 @@ test.describe('Draggable Example (02-draggable.html) @comprehensive', () => {
   // This appears to be a behavior runtime limitation, not a parser issue
   // Parser correctly handles nested "from document" syntax (verified by first 2 drags working)
   test.skip('should drag all three items independently', async ({ page }) => {
-    await page.goto(`${BASE_URL}/examples/advanced/02-draggable.html`, {
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/draggable.html`, {
       waitUntil: 'domcontentloaded',
       timeout: 10000,
     });

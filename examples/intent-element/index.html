@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>&lt;lse-intent&gt; Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { margin-bottom: 0.5rem; }
+    p.subtitle { color: #666; margin-bottom: 2rem; }
+    section { margin-bottom: 2rem; padding: 1.5rem; border: 1px solid #ddd; border-radius: 8px; }
+    section h2 { margin-bottom: 0.5rem; font-size: 1.1rem; }
+    section p { color: #555; margin-bottom: 1rem; font-size: 0.9rem; }
+    button { padding: 0.5rem 1rem; border: 1px solid #999; border-radius: 4px; background: #f5f5f5; cursor: pointer; font-size: 0.9rem; }
+    button:hover { background: #e5e5e5; }
+    .active { background: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
+    .highlighted { background: #fff3cd !important; border-color: #ffc107 !important; }
+    #sidebar { padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s; }
+    #sidebar.active { border-color: #4caf50; background: #e8f5e9; }
+    #status { margin-top: 0.5rem; font-size: 0.85rem; color: #999; }
+    code { background: #f0f0f0; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; }
+    pre { background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0; font-size: 0.8rem; }
+    .event-log { max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; background: #1e1e1e; color: #d4d4d4; padding: 0.75rem; border-radius: 4px; margin-top: 1rem; }
+    .event-log .ok { color: #6a9955; }
+    .event-log .warn { color: #dcdcaa; }
+    .event-log .err { color: #f44747; }
+  </style>
+</head>
+<body>
+  <h1>&lt;lse-intent&gt; Demo</h1>
+  <p class="subtitle">Browser custom element that validates LSE protocol JSON and executes it via the hyperfixi runtime.</p>
+
+  <!-- ─── Example 1: trigger="click" — declarative click trigger ────── -->
+  <section>
+    <h2>1. <code>trigger="click"</code> — Toggle <code>.active</code> on <code>#sidebar</code></h2>
+    <p>No JavaScript wiring. The <code>trigger="click"</code> attribute attaches a click listener automatically; clicking anywhere inside the element fires <code>evalLSENode()</code>.</p>
+
+    <lse-intent id="demo-toggle" trigger="click">
+      <script type="application/lse+json">
+        {
+          "action": "toggle",
+          "roles": {
+            "patient": { "type": "selector", "value": ".active" },
+            "destination": { "type": "selector", "value": "#sidebar" }
+          }
+        }
+      </script>
+      <button slot="trigger">Toggle Sidebar</button>
+      <span slot="error" style="display:none; color:red;">Interaction unavailable</span>
+    </lse-intent>
+
+    <div id="sidebar">Sidebar content — toggles <code>.active</code></div>
+    <div id="status"></div>
+  </section>
+
+  <!-- ─── Example 2: trigger via JSON sugar (no attribute) ──────────── -->
+  <section>
+    <h2>2. JSON <code>trigger.event</code> sugar — Add <code>.highlighted</code></h2>
+    <p>No <code>trigger</code> attribute. The element reads the JSON wire-format <code>trigger.event</code> field and auto-wires to that event. This matches the protocol wire format spec and is the most LLM-friendly form.</p>
+
+    <lse-intent id="demo-add">
+      <script type="application/lse+json">
+        {
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".highlighted" },
+            "destination": { "type": "selector", "value": "#target-box" }
+          },
+          "trigger": { "event": "click" }
+        }
+      </script>
+      <button slot="trigger">Highlight Box</button>
+      <span slot="error" style="display:none; color:red;">Interaction unavailable</span>
+    </lse-intent>
+
+    <div id="target-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
+      Target box — gets <code>.highlighted</code>
+    </div>
+  </section>
+
+  <!-- ─── Example 2b: trigger="manual" — caller-driven ──────────────── -->
+  <section>
+    <h2>2b. <code>trigger="manual"</code> — caller invokes <code>refresh()</code></h2>
+    <p>The element prepares the node but never fires automatically. Useful when you want full control over when execution happens.</p>
+
+    <lse-intent id="demo-manual" trigger="manual">
+      <script type="application/lse+json">
+        {
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".manual-fired" },
+            "destination": { "type": "selector", "value": "#manual-box" }
+          }
+        }
+      </script>
+    </lse-intent>
+
+    <button onclick="document.getElementById('demo-manual').refresh()">Fire manually</button>
+    <div id="manual-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
+      Manual-fired box — gets <code>.manual-fired</code>
+    </div>
+    <style>
+      .manual-fired { background: #cce5ff !important; border-color: #0066cc !important; }
+    </style>
+  </section>
+
+  <!-- ─── Example 2c: trigger="submit" — form-driven ────────────────── -->
+  <section>
+    <h2>2c. <code>trigger="submit"</code> — fire on form submit</h2>
+    <p>The element listens on the closest ancestor <code>&lt;form&gt;</code> and calls <code>preventDefault()</code> so the form never navigates.</p>
+
+    <form onsubmit="return false">
+      <input type="text" placeholder="Type anything then press Enter" style="padding: 0.5rem; margin-right: 0.5rem;">
+      <button type="submit">Submit</button>
+      <lse-intent trigger="submit">
+        <script type="application/lse+json">
+          {
+            "action": "add",
+            "roles": {
+              "patient": { "type": "selector", "value": ".submitted" },
+              "destination": { "type": "selector", "value": "#submit-box" }
+            }
+          }
+        </script>
+      </lse-intent>
+    </form>
+    <div id="submit-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
+      Submit box — gets <code>.submitted</code> on form submit
+    </div>
+    <style>
+      .submitted { background: #d4edda !important; border-color: #28a745 !important; }
+    </style>
+  </section>
+
+  <!-- ─── Example 2d: trigger="intersect" — fires on scroll into view  -->
+  <section>
+    <h2>2d. <code>trigger="intersect"</code> — fire when scrolled into view</h2>
+    <p>Uses <code>IntersectionObserver</code>. The element fires once when it first scrolls into view (one-shot). Scroll down to trigger.</p>
+
+    <div style="height: 300px; background: repeating-linear-gradient(45deg, #f9f9f9 0 10px, #f0f0f0 10px 20px); display: flex; align-items: center; justify-content: center; color: #999;">
+      Scroll down ↓
+    </div>
+
+    <lse-intent trigger="intersect">
+      <script type="application/lse+json">
+        {
+          "action": "add",
+          "roles": {
+            "patient": { "type": "selector", "value": ".seen" },
+            "destination": { "type": "selector", "value": "#intersect-box" }
+          }
+        }
+      </script>
+    </lse-intent>
+    <div id="intersect-box" style="padding: 1rem; border: 2px solid #ccc; border-radius: 4px; margin-top: 0.5rem; transition: all 0.2s;">
+      Intersect box — gets <code>.seen</code> when scrolled into view
+    </div>
+    <style>
+      .seen { background: #fff3cd !important; border-color: #ffc107 !important; }
+    </style>
+  </section>
+
+  <!-- ─── Example 3: Validation only (no runtime) ──────────────────── -->
+  <section>
+    <h2>3. Validation-only (invalid JSON)</h2>
+    <p>This element has malformed JSON — it should show the error slot and fire <code>lse:error</code>.</p>
+
+    <lse-intent id="demo-invalid">
+      <script type="application/lse+json">
+        { not valid json! }
+      </script>
+      <span slot="error" style="display:none; color:red; font-weight:bold;">Error: Invalid JSON detected</span>
+    </lse-intent>
+  </section>
+
+  <!-- ─── Example 4: Missing action (protocol validation) ──────────── -->
+  <section>
+    <h2>4. Protocol validation (missing <code>action</code>)</h2>
+    <p>Valid JSON, but missing the required <code>action</code> field.</p>
+
+    <lse-intent id="demo-missing-action">
+      <script type="application/lse+json">
+        { "roles": { "patient": { "type": "selector", "value": ".active" } } }
+      </script>
+      <span slot="error" style="display:none; color:red; font-weight:bold;">Error: Protocol validation failed</span>
+    </lse-intent>
+  </section>
+
+  <!-- ─── Event Log ─────────────────────────────────────────────────── -->
+  <section>
+    <h2>Event Log</h2>
+    <p>All <code>lse:*</code> events bubble to the document. Watch the lifecycle here.</p>
+    <div class="event-log" id="event-log"></div>
+  </section>
+
+  <!-- ─── Scripts ───────────────────────────────────────────────────── -->
+  <!--
+    Register event log listeners BEFORE loading the intent-element IIFE.
+    When the IIFE calls customElements.define(), all existing <lse-intent>
+    elements upgrade synchronously and fire lse:validated (+ lse:executed
+    for trigger="load") immediately. If the document listener is registered
+    after the IIFE, these initial events are missed.
+  -->
+  <script>
+    // Event log
+    const log = document.getElementById('event-log');
+    function logEvent(type, detail) {
+      const cls = type === 'lse:executed' ? 'ok' : type === 'lse:error' ? 'err' : 'warn';
+      const msg = type === 'lse:error'
+        ? detail.diagnostics?.map(d => `[${d.code}] ${d.message}`).join('; ')
+        : type === 'lse:executed'
+          ? `result=${JSON.stringify(detail.result)}`
+          : `node.action=${detail.node?.action}`;
+      const line = document.createElement('div');
+      line.className = cls;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${type}: ${msg}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+    document.addEventListener('lse:validated', e => logEvent('lse:validated', e.detail));
+    document.addEventListener('lse:executed', e => logEvent('lse:executed', e.detail));
+    document.addEventListener('lse:error', e => logEvent('lse:error', e.detail));
+  </script>
+
+  <!-- Load hyperfixi runtime (provides window.hyperfixi + evalLSENode) -->
+  <script src="../../packages/core/dist/hyperfixi.js"></script>
+  <!-- Load intent-element IIFE (auto-registers <lse-intent>) -->
+  <script src="../../packages/intent-element/dist/intent-element.iife.global.js"></script>
+
+  <script>
+    // Status update for demo 1 — watches the sidebar's class list.
+    const sidebar = document.getElementById('sidebar');
+    const status = document.getElementById('status');
+    new MutationObserver(() => {
+      status.textContent = sidebar.classList.contains('active')
+        ? 'Status: sidebar is .active'
+        : 'Status: sidebar is inactive';
+    }).observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+  </script>
+</body>
+</html>

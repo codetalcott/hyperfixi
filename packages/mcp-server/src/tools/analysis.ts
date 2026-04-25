@@ -15,7 +15,7 @@ export const analysisTools: Tool[] = [
   {
     name: 'analyze_complexity',
     description:
-      'Calculate code complexity metrics (cyclomatic, cognitive, Halstead) for hyperscript',
+      'Calculate numeric complexity scores for hyperscript: cyclomatic, cognitive, and Halstead metrics. Use for code review when deciding if code is too complex.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -30,7 +30,7 @@ export const analysisTools: Tool[] = [
   {
     name: 'analyze_metrics',
     description:
-      'Perform comprehensive code analysis including patterns, code smells, and quality metrics',
+      'Detect code smells and quality issues in hyperscript. Returns patterns, problems (too many commands, missing error handling), and quality scores. More detailed than analyze_complexity.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -44,7 +44,8 @@ export const analysisTools: Tool[] = [
   },
   {
     name: 'explain_code',
-    description: 'Generate natural language explanation of hyperscript code',
+    description:
+      'Generate a plain English explanation of hyperscript code for humans. Use when a user asks "what does this code do?" Supports beginner/intermediate/expert audience levels.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -68,7 +69,8 @@ export const analysisTools: Tool[] = [
   },
   {
     name: 'recognize_intent',
-    description: 'Analyze hyperscript code to understand its purpose and classify common patterns',
+    description:
+      'Classify what hyperscript code does: returns intent labels (dom-manipulation, form-handling, data-fetching, animation, etc.) with confidence scores. Use to categorize code purpose, not measure quality.',
     inputSchema: {
       type: 'object',
       properties: {

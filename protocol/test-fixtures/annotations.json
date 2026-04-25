@@ -1,0 +1,123 @@
+[
+  {
+    "id": "ann-001",
+    "description": "Single annotation with value on a command node",
+    "jsonInput": {
+      "kind": "command",
+      "action": "fetch",
+      "roles": {
+        "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+      },
+      "annotations": [{ "name": "timeout", "value": "5s" }]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ann-002",
+    "description": "Multiple annotations preserve order",
+    "jsonInput": {
+      "kind": "command",
+      "action": "fetch",
+      "roles": {
+        "source": { "type": "literal", "value": "/api/data", "dataType": "string" }
+      },
+      "annotations": [
+        { "name": "retry", "value": "3" },
+        { "name": "timeout", "value": "10s" },
+        { "name": "cache", "value": "60s" }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "annotationOrder": ["retry", "timeout", "cache"]
+  },
+  {
+    "id": "ann-003",
+    "description": "Annotation with no value (flag-style)",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" }
+      },
+      "annotations": [{ "name": "deprecated" }]
+    },
+    "expectedRoundTrip": true,
+    "noAnnotationValue": true
+  },
+  {
+    "id": "ann-004",
+    "description": "Annotations on event-handler node",
+    "jsonInput": {
+      "kind": "event-handler",
+      "action": "on",
+      "roles": {
+        "event": { "type": "literal", "value": "click", "dataType": "string" }
+      },
+      "body": [
+        {
+          "kind": "command",
+          "action": "toggle",
+          "roles": { "patient": { "type": "selector", "value": ".active" } }
+        }
+      ],
+      "annotations": [{ "name": "doc", "value": "Toggle active state on click" }]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ann-005",
+    "description": "Annotations on compound node",
+    "jsonInput": {
+      "kind": "compound",
+      "action": "compound",
+      "chainType": "then",
+      "statements": [
+        {
+          "kind": "command",
+          "action": "add",
+          "roles": { "patient": { "type": "selector", "value": ".loading" } }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": { "source": { "type": "literal", "value": "/api/users", "dataType": "string" } }
+        }
+      ],
+      "annotations": [{ "name": "permission", "value": "admin" }]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "ann-006",
+    "description": "Node without annotations round-trips cleanly (no annotations field emitted)",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" }
+      }
+    },
+    "expectedRoundTrip": true,
+    "noAnnotations": true
+  },
+  {
+    "id": "ann-007",
+    "description": "Annotations coexist with diagnostics on same command node",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": "#button", "selectorKind": "id" }
+      },
+      "diagnostics": [
+        {
+          "level": "error",
+          "message": "toggle.patient expects selector kind [class, attribute], got 'id'",
+          "code": "SCHEMA_SELECTOR_KIND_MISMATCH"
+        }
+      ],
+      "annotations": [{ "name": "deprecated", "value": "use .toggle-btn instead" }]
+    },
+    "expectedRoundTrip": true
+  }
+]

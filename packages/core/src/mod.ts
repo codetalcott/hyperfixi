@@ -130,6 +130,25 @@ export { createWebWorkerFeature } from './features/webworker';
 export { TailwindExtension, type TailwindStrategy } from './extensions/tailwind';
 
 // ============================================================================
+// Plugin system (v0.9.90 Phase 5)
+// ============================================================================
+// External packages (@hyperfixi/reactivity, @hyperfixi/speech, etc.) extend
+// hyperfixi at runtime through the plugin contract. See docs/API.md for the
+// recommended pattern.
+
+export {
+  ParserExtensionRegistry,
+  getParserExtensionRegistry,
+  setGlobal,
+  type ParserExtensionSnapshot,
+  type FeatureParseFn,
+  type NodeEvaluatorFn,
+  type GlobalWriteHook,
+  type GlobalReadHook,
+} from './parser/extensions';
+export { installPlugin, type HyperfixiPlugin, type HyperfixiPluginContext } from './runtime/plugin';
+
+// ============================================================================
 // Core Runtime and Utilities
 // ============================================================================
 

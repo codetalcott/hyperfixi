@@ -1,0 +1,41 @@
+{
+  "name": "@lokascript/domain-toolkit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lint rules for @lokascript/domain-* packages. Checks schema structure + cross-file invariants (profile ↔ tokenizer ↔ schema ↔ renderer agreement).",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup && npm run build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist --noEmit false",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lokascript/framework": "*",
+    "@lokascript/intent": "*",
+    "@lokascript/semantic": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ]
+}

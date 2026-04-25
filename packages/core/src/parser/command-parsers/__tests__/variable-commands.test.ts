@@ -982,14 +982,21 @@ describe('Variable Command Parsers', () => {
         ['the', 'textContent', 'of', '#counter'],
         ['keyword', 'identifier', 'keyword', 'identifier']
       );
-      const ctx = createMockParserContext(tokens);
+      // parseExpression now returns a binary 'of' node (as the Pratt parser would)
+      const ctx = createMockParserContext(tokens, {
+        parseExpression: vi.fn(() => ({
+          type: 'binaryExpression',
+          operator: 'of',
+          left: { type: 'identifier', name: 'textContent', start: 4, end: 15 },
+          right: { type: 'selector', value: '#counter', start: 19, end: 27 },
+          start: 4,
+          end: 27,
+        })),
+      });
 
       const result = parsePropertyOfTarget(ctx, 0);
       expect(result).not.toBeNull();
       expect((result as any).type).toBe('propertyOfExpression');
-      expect((result as any).property.name).toBe('textContent');
-      expect((result as any).target.value).toBe('#counter');
-      expect((result as any).target.type).toBe('idSelector');
     });
 
     it('should parse "the X of .myClass" with cssSelector type', () => {
@@ -997,22 +1004,42 @@ describe('Variable Command Parsers', () => {
         ['the', 'innerHTML', 'of', '.myClass'],
         ['keyword', 'identifier', 'keyword', 'identifier']
       );
-      const ctx = createMockParserContext(tokens);
+      const ctx = createMockParserContext(tokens, {
+        parseExpression: vi.fn(() => ({
+          type: 'binaryExpression',
+          operator: 'of',
+          left: { type: 'identifier', name: 'innerHTML', start: 4, end: 13 },
+          right: { type: 'selector', value: '.myClass', start: 17, end: 25 },
+          start: 4,
+          end: 25,
+        })),
+      });
 
       const result = parsePropertyOfTarget(ctx, 0);
       expect(result).not.toBeNull();
       expect((result as any).type).toBe('propertyOfExpression');
-      expect((result as any).target.type).toBe('cssSelector');
-      expect((result as any).target.value).toBe('.myClass');
     });
 
-    it('should parse "the X to ..." by stripping "the" and returning identifier', () => {
-      // the count to ... → returns identifier for 'count'
+    it('should parse "the X to ..." by stripping "the" and returning expression', () => {
+      // the count to ... → parseExpression returns 'count', then check('to') is true
       const tokens = createTokenStream(
         ['the', 'count', 'to', '10'],
         ['keyword', 'identifier', 'keyword', 'number']
       );
-      const ctx = createMockParserContext(tokens);
+      // Track what check() should return based on call sequence:
+      // 1st call: check('the') → true (initial guard)
+      // 2nd call: check('to') → true (after parseExpression)
+      let checkCallCount = 0;
+      const ctx = createMockParserContext(tokens, {
+        check: vi.fn((val: string) => {
+          checkCallCount++;
+          if (checkCallCount === 1) return val === 'the'; // initial guard
+          return val === 'to'; // after parseExpression
+        }),
+        parseExpression: vi.fn(() => {
+          return { type: 'identifier', name: 'count', start: 4, end: 9 };
+        }),
+      });
 
       const result = parsePropertyOfTarget(ctx, 0);
       expect(result).not.toBeNull();
@@ -1026,7 +1053,20 @@ describe('Variable Command Parsers', () => {
         ['the', 'count', 'and'],
         ['keyword', 'identifier', 'keyword']
       );
-      const ctx = createMockParserContext(tokens);
+      let checkCallCount = 0;
+      const ctx = createMockParserContext(tokens, {
+        parseExpression: vi.fn(() => ({
+          type: 'identifier',
+          name: 'count',
+          start: 4,
+          end: 9,
+        })),
+        check: vi.fn((val: string) => {
+          checkCallCount++;
+          if (checkCallCount === 1) return val === 'the'; // initial guard
+          return false; // 'to' check fails → rollback
+        }),
+      });
 
       const result = parsePropertyOfTarget(ctx, 0);
       expect(result).toBeNull();

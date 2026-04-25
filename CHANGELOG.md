@@ -7,7 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Changes for next release go here._
+Tracks upstream `_hyperscript` 0.9.90 features across 9 phases + i18n catch-up, plus 4 new standalone plugin packages.
+
+### Added
+
+#### Core language (upstream \_hyperscript 0.9.90 compat)
+
+- **9 new commands**: `focus`, `blur`, `empty`, `open`, `close`, `select`, `clear`, `reset`, `breakpoint` — covers DOM focus management, form state, window control, and debugger integration.
+- **4 comparator expressions**: `X starts with Y`, `X ends with Y`, `X is between A and B`, and the postfix `... ignoring case` modifier for case-insensitive string comparison. `between` is inclusive and auto-orders bounds.
+- **5 collection infix operators**: `collection where <pred>`, `collection sorted by <key>`, `collection mapped to <expr>`, `string split by <sep>`, `array joined by <sep>`. `where`/`sorted by`/`mapped to` bind `it` per element for inline predicates/keys.
+- **Event modifiers**: `on first <event>` alias for `.once`, plus synthetic `on resize` for HTMLElements backed by `ResizeObserver` (browser standard `resize` is window-only).
+
+#### Plugin system
+
+- **`HyperfixiPlugin` public API**: `installPlugin(plugin)` on Runtime, `ParserExtensionRegistry` singleton with snapshot/restore for test isolation. Five plugin seams: `registerFeature`, `registerNodeEvaluator`, `registerGlobalWriteHook`, `registerGlobalReadHook`, and `HyperfixiPluginContext.runtime`. `$name` globals canonicalized to bare-key storage across `setVariableValue` and both identifier evaluators.
+
+#### New plugin packages
+
+- **`@hyperfixi/speech`**: Voice I/O via Web Speech API — `speak "text"`, `ask "question"`, `answer into #target`.
+- **`@hyperfixi/reactivity`**: Reactive signals — `live { ... }` blocks, `bind` expressions, `when X changes`, `^name` reactive reads. Microtask-flushed scheduler with cycle guard and auto-stop on element disconnect.
+- **`@hyperfixi/components`** (v1): Custom Element registration from `<template component="tag">` / `<script type="text/hyperscript-template" component="tag">`. Slot substitution, `${expr}` interpolation, `@if`/`@repeat` directives. v1 is stamp-once; reactive re-render deferred to v2.
+- **`@hyperfixi/intercept`**: Service-worker request interception with 5 cache strategies (`network-first`, `cache-first`, `stale-while-revalidate`, `network-only`, `cache-only`), precache manifests, offline fallback. Companion SW script emitted as `dist/intercept-sw.js`.
+
+#### Internationalization (i18n)
+
+- Phase 1 commands translated across all 23 COMPLETE_LANGUAGES (7 new schemas in `@lokascript/semantic`: `empty`, `open`, `close`, `select`, `clear`, `reset`, `breakpoint`).
+- Phase 2 comparators (`starts with`, `ends with`, `between`, `ignoring case`) translated across all 23 languages (with `starts with`/`ends with`/`between` backfills in bn, th, vi).
+- Phase 3 collection ops (`sorted by`, `mapped to`, `split by`, `joined by`) translated across all 23 languages (`where` predated this release).
+- New `packages/i18n/src/schema-alignment.test.ts` — guards drift: every `CommandSchema` must have an `en.ts` entry, Phase 1/2/3 operators must exist across all complete dictionaries.
+
+### Fixed
+
+- **Runtime**: `it`/`its`/`result` identifier cache no longer returns stale values across loop iterations — required for Phase 3 collection operators that rebind `it` per element (16 ms TTL cache had masked all Phase 3 tests before fix).
+- **Runtime**: method-call `this` binding preserved on member callees — `items mapped to it.toUpperCase()` no longer throws "called on null or undefined". Uses `.apply(thisArg, args)` for member expressions.
+- **Parser**: `is not` binary operator now routes to `notEquals.evaluate` — pre-existing gap where tokens parsed but runtime dispatch threw `Unknown binary operator: is not`.
+
+## [2.3.0] - 2026-03-17
+
+### Added
+
+- **Lazy behavior resolver**: `install X` just works — behaviors resolve on demand without manual registration
+- **Hyperscript-native behaviors**: Behaviors defined as hyperscript source strings via patterns-reference schemas
+- **Dynamic class selectors**: `.{varName}` syntax in `toggle`, `add`, and `remove` resolves variables as CSS class names
+- **Variable/expression durations**: `wait` command now accepts variable and expression durations (e.g., `wait feedbackDuration ms`)
+- **Behavior schema sources**: Single source of truth for behavior schemas in patterns-reference
+
+### Fixed
+
+- **Parser**: `js()` single-quote parsing, `set the X.Y` dotted property chains (e.g., `event.detail.result`), improved `set` error messages
+- **Parser**: Namespaced events (`custom:activate`) and `trigger`/`on` inside `repeat` blocks in behaviors
+- **Parser**: Adjacent dot after keywords treated as property access, not CSS selector
+- **Behaviors**: Clipboard `wait feedbackDuration`, AutoDismiss wait timing, Removable confirm dialog
+- **Browser**: Resolver bundle timing and Playwright test stability
+- **CI**: Behaviors package added to build pipeline, artifact upload, and pre-publish-check build order
+
+## [2.2.1] - 2026-03-16
+
+### Fixed
+
+- Parser: adjacent dot after keywords treated as property access, not CSS selector
+- Dependency updates (build-tools group)
+
+## [2.2.0] - 2026-03-15
+
+### Fixed
+
+- Dependency security: resolved 27 of 33 Dependabot vulnerabilities
+- CI: copy examples gallery into repo, remove external clone dependency
+- CI: suppress already-published errors in publish dry run
 
 ## [2.1.0] - 2026-02-20
 
@@ -116,8 +183,13 @@ _Synchronized version release. See git history for details._
 - npm access token stored in GitHub Secrets
 - 2FA recommended for npm organization
 
-[Unreleased]: https://github.com/codetalcott/lokascript/compare/v1.4.0...HEAD
-[1.4.0]: https://github.com/codetalcott/lokascript/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/codetalcott/lokascript/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/codetalcott/lokascript/compare/v1.0.0...v1.2.0
-[1.0.0]: https://github.com/codetalcott/lokascript/releases/tag/v1.0.0
+[Unreleased]: https://github.com/codetalcott/hyperfixi/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/codetalcott/hyperfixi/compare/v2.2.1...v2.3.0
+[2.2.1]: https://github.com/codetalcott/hyperfixi/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/codetalcott/hyperfixi/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/codetalcott/hyperfixi/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/codetalcott/hyperfixi/compare/v1.4.0...v2.0.0
+[1.4.0]: https://github.com/codetalcott/hyperfixi/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/codetalcott/hyperfixi/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/codetalcott/hyperfixi/compare/v1.0.0...v1.2.0
+[1.0.0]: https://github.com/codetalcott/hyperfixi/releases/tag/v1.0.0

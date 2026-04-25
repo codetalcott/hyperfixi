@@ -199,6 +199,76 @@ describe('GoCommand', () => {
       expect(assignSpy).toHaveBeenCalledWith('/page');
       expect(output.result).toBe('/page');
     });
+
+    // Upstream _hyperscript 0.9.90: `go to /path` and `go to "https://..."`
+    // without the legacy `url` keyword.
+    describe('bare URL (upstream 0.9.90)', () => {
+      it('should navigate to a bare absolute path', async () => {
+        const context = createMockContext();
+        const assignSpy = vi.fn();
+        global.window.location = { assign: assignSpy } as any;
+
+        const input = { args: ['to', '/users/42'] };
+        const output = await command.execute(input, context);
+
+        expect(assignSpy).toHaveBeenCalledWith('/users/42');
+        expect(output.type).toBe('url');
+        expect(output.result).toBe('/users/42');
+      });
+
+      it('should navigate to a bare https:// URL', async () => {
+        const context = createMockContext();
+        const assignSpy = vi.fn();
+        global.window.location = { assign: assignSpy } as any;
+
+        const input = { args: ['to', 'https://example.com/x'] };
+        const output = await command.execute(input, context);
+
+        expect(assignSpy).toHaveBeenCalledWith('https://example.com/x');
+        expect(output.type).toBe('url');
+      });
+
+      it('should navigate to a bare mailto: URL', async () => {
+        const context = createMockContext();
+        const assignSpy = vi.fn();
+        global.window.location = { assign: assignSpy } as any;
+
+        const input = { args: ['to', 'mailto:x@example.com'] };
+        const output = await command.execute(input, context);
+
+        expect(assignSpy).toHaveBeenCalledWith('mailto:x@example.com');
+        expect(output.type).toBe('url');
+      });
+
+      it('should open bare URL in a new window', async () => {
+        const context = createMockContext();
+        const openSpy = vi.fn(() => ({ focus: vi.fn() }));
+        global.window.open = openSpy as any;
+
+        const input = { args: ['to', '/dashboard', 'in', 'new', 'window'] };
+        const output = await command.execute(input, context);
+
+        expect(openSpy).toHaveBeenCalledWith('/dashboard', '_blank');
+        expect(output.type).toBe('url');
+      });
+
+      it('should leave CSS id selectors to the scroll branch (`go to #foo`)', async () => {
+        const context = createMockContext();
+        const element = document.createElement('div');
+        element.id = 'section';
+        document.body.appendChild(element);
+        const scrollSpy = vi.fn();
+        element.scrollIntoView = scrollSpy;
+
+        const input = { args: ['to', '#section'] };
+        const output = await command.execute(input, context);
+
+        expect(output.type).toBe('scroll');
+        expect(scrollSpy).toHaveBeenCalled();
+
+        document.body.removeChild(element);
+      });
+    });
   });
 
   describe('execute - element scrolling', () => {

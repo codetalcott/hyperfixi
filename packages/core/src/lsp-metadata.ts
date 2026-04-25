@@ -28,6 +28,11 @@ export const COMMAND_KEYWORDS = [
   'set',
   'get',
   'make',
+  'empty',
+  'open',
+  'close',
+  'select',
+  'reset',
   'swap',
   'morph',
   'append',
@@ -64,6 +69,8 @@ export const COMMAND_KEYWORDS = [
   'throw',
   'halt',
   'exit',
+  'focus',
+  'blur',
 
   // Utility Commands
   'log',
@@ -71,6 +78,7 @@ export const COMMAND_KEYWORDS = [
   'copy',
   'pick',
   'beep',
+  'breakpoint',
   'js',
   'async',
 
@@ -82,6 +90,7 @@ export const COMMAND_KEYWORDS = [
   'increment',
   'decrement',
   'default',
+  'clear',
 
   // Behavior Commands
   'install',
@@ -154,6 +163,17 @@ export const LOGICAL_KEYWORDS = [
   'true',
   'false',
   'null',
+  // v0.9.90 comparators
+  'starts with',
+  'ends with',
+  'between',
+  'ignoring case',
+  // Collection operators (v0.9.90)
+  'where',
+  'sorted by',
+  'mapped to',
+  'split by',
+  'joined by',
 ] as const;
 
 /**
@@ -237,6 +257,39 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'make',
     description: 'Creates a new element.',
     example: 'make a <div/> then put it after me',
+    category: 'command',
+  },
+  open: {
+    title: 'open',
+    description:
+      'Opens a dialog (showModal/show), details element, or popover. Accepts `as modal` / `as non-modal` for dialogs.',
+    example: 'open #myDialog\nopen #myDialog as non-modal\nopen #details',
+    category: 'command',
+  },
+  close: {
+    title: 'close',
+    description: 'Closes a dialog, details element, or popover.',
+    example: 'close #myDialog\nclose #details\nclose #popup',
+    category: 'command',
+  },
+  select: {
+    title: 'select',
+    description:
+      'Selects the text in an <input>/<textarea>, or selects the contents of any DOM element via Selection + Range.',
+    example: 'select #search\nselect <textarea/>',
+    category: 'command',
+  },
+  reset: {
+    title: 'reset',
+    description: 'Resets a <form> to its default values (HTMLFormElement.reset()).',
+    example: 'reset #myForm\nreset <form/>',
+    category: 'command',
+  },
+  clear: {
+    title: 'clear',
+    description:
+      'Resets a variable to null, or clears the value of a form field (<input>, <textarea>, <select>). For arbitrary elements use `empty` instead.',
+    example: 'clear :count\nclear myVar\nclear #search',
     category: 'command',
   },
   swap: {
@@ -369,6 +422,18 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: 'call myFunction()\ncall element.focus()',
     category: 'command',
   },
+  focus: {
+    title: 'focus',
+    description: 'Focuses an element (calls HTMLElement.focus()).',
+    example: 'focus #search\nfocus on <input/>',
+    category: 'command',
+  },
+  blur: {
+    title: 'blur',
+    description: 'Removes focus from an element (calls HTMLElement.blur()).',
+    example: 'blur #search\nblur on <input/>',
+    category: 'command',
+  },
   return: {
     title: 'return',
     description: 'Returns a value from a function.',
@@ -423,6 +488,12 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     title: 'beep',
     description: 'Highlights element for debugging.',
     example: 'beep! me\nbeep! #target',
+    category: 'command',
+  },
+  breakpoint: {
+    title: 'breakpoint',
+    description: 'Emits a `debugger;` statement — pauses in DevTools when attached.',
+    example: 'breakpoint\non click breakpoint',
     category: 'command',
   },
   js: {
@@ -683,9 +754,10 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
   },
   empty: {
     title: 'empty',
-    description: 'Checks if value is empty.',
-    example: 'if #input.value is empty',
-    category: 'logical',
+    description:
+      'As a command: removes all children from an element (empty #list). As a logical operator: checks if a value is empty (if #input.value is empty).',
+    example: 'empty #list\nif #input.value is empty',
+    category: 'command',
   },
   matches: {
     title: 'matches',
@@ -699,10 +771,72 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: 'if #list contains #item',
     category: 'logical',
   },
+  'starts with': {
+    title: 'starts with',
+    description: 'String prefix check (upstream _hyperscript 0.9.90).',
+    example: "if str starts with 'hello'\nif str does not start with 'world'",
+    category: 'logical',
+  },
+  'ends with': {
+    title: 'ends with',
+    description: 'String suffix check (upstream _hyperscript 0.9.90).',
+    example: "if str ends with '.com'\nif str does not end with '.js'",
+    category: 'logical',
+  },
+  between: {
+    title: 'between',
+    description:
+      'Inclusive range check: `X is between A and B` (upstream _hyperscript 0.9.90). Bounds are auto-ordered, so `between 10 and 5` works the same as `between 5 and 10`.',
+    example: 'if :count is between 1 and 10\nif :score is not between 0 and 100',
+    category: 'logical',
+  },
+  'ignoring case': {
+    title: 'ignoring case',
+    description:
+      'Postfix modifier that makes the preceding string comparator (`is`, `==`, `starts with`, `ends with`, `contains`) case-insensitive. No-op for non-string operands.',
+    example: "if name is 'Alice' ignoring case\nif str starts with 'hi' ignoring case",
+    category: 'logical',
+  },
   has: {
     title: 'has',
     description: 'Checks if element has a class/attribute.',
     example: 'if me has .active',
+    category: 'logical',
+  },
+
+  // Collection operators (upstream _hyperscript 0.9.90) — infix on arrays/strings.
+  // `where`/`sorted by`/`mapped to` evaluate their RHS per-element with `it` bound
+  // to the current element; `split by`/`joined by` take a separator value.
+  where: {
+    title: 'where',
+    description:
+      'Filter a collection by a per-element predicate. `it` is bound to each element during evaluation.',
+    example: 'set :actives to :items where it has .active\n:names where it starts with "A"',
+    category: 'logical',
+  },
+  'sorted by': {
+    title: 'sorted by',
+    description:
+      'Sort a collection by a per-element key expression. Optional trailing `asc` / `desc` / `ascending` / `descending`; default is ascending.',
+    example: 'set :byName to :users sorted by it.name\n:scores sorted by it desc',
+    category: 'logical',
+  },
+  'mapped to': {
+    title: 'mapped to',
+    description: 'Transform each element of a collection via a per-element expression.',
+    example: 'set :names to :users mapped to it.name\n:words mapped to it.toUpperCase()',
+    category: 'logical',
+  },
+  'split by': {
+    title: 'split by',
+    description: 'Split a string into an array by a separator.',
+    example: 'set :parts to "a,b,c" split by ","\n"hello" split by ""',
+    category: 'logical',
+  },
+  'joined by': {
+    title: 'joined by',
+    description: 'Join an array into a string with a separator.',
+    example: 'set :csv to :parts joined by ","\n(:names sorted by it) joined by " and "',
     category: 'logical',
   },
 } as const;

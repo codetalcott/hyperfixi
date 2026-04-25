@@ -7,25 +7,23 @@
 
 import type { LanguagePattern } from '../types';
 
-// Import from subdirectories for tree-shaking
-import { getTogglePatternsForLanguage } from './toggle/index';
-import { getTakePatternsForLanguage } from './take/index';
-import { getPutPatternsForLanguage } from './put/index';
-import { getEventHandlerPatternsForLanguage } from './event-handler/index';
-import { getGrammarTransformedPatternsForLanguage } from './grammar-transformed/index';
-
-// Import multilingual command patterns
-import { getAddPatternsForLanguage } from './add/index';
-import { getRemovePatternsForLanguage } from './remove/index';
-import { getShowPatternsForLanguage } from './show/index';
-import { getHidePatternsForLanguage } from './hide/index';
-import { getSetPatternsForLanguage } from './set/index';
-import { getGetPatternsForLanguage } from './get/index';
-import { getIncrementPatternsForLanguage } from './increment/index';
-import { getDecrementPatternsForLanguage } from './decrement/index';
-import { getAppendPatternsForLanguage } from './append/index';
-import { getPrependPatternsForLanguage } from './prepend/index';
-import { getTriggerPatternsForLanguage } from './trigger/index';
+// Consolidated command pattern files (Phase 3.2)
+import { getTogglePatternsForLanguage } from './toggle';
+import { getTakePatternsForLanguage } from './take';
+import { getPutPatternsForLanguage } from './put';
+import { getEventHandlerPatternsForLanguage } from './event-handler';
+import { getGrammarTransformedPatternsForLanguage } from './grammar-transformed';
+import { getAddPatternsForLanguage } from './add';
+import { getRemovePatternsForLanguage } from './remove';
+import { getShowPatternsForLanguage } from './show';
+import { getHidePatternsForLanguage } from './hide';
+import { getSetPatternsForLanguage } from './set';
+import { getGetPatternsForLanguage } from './get';
+import { getIncrementPatternsForLanguage } from './increment';
+import { getDecrementPatternsForLanguage } from './decrement';
+import { getAppendPatternsForLanguage } from './append';
+import { getPrependPatternsForLanguage } from './prepend';
+import { getTriggerPatternsForLanguage } from './trigger';
 
 // Import English-only patterns
 import { getEnglishOnlyPatterns } from './languages/en';

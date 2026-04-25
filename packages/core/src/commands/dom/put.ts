@@ -137,9 +137,29 @@ export class PutCommand implements DecoratedCommand {
         const obj = (targetArg as any).object,
           prop = (targetArg as any).property;
         if (obj?.type === 'selector') targetSelector = obj.value;
-        else if (obj?.type === 'identifier') targetSelector = obj.name;
+        else if (obj?.type === 'identifier') {
+          const objName = obj.name;
+          // Context references (my, me, its, your) resolve to context elements
+          if (objName === 'my' || objName === 'me' || objName === 'I') {
+            if (context.me && prop?.name) {
+              return {
+                value,
+                targets: [context.me as HTMLElement],
+                position: 'replace',
+                memberPath: prop.name,
+              };
+            }
+          } else if (objName === 'its' || objName === 'it') {
+            // `it` often holds the result of a previous command (e.g., fetch result)
+            // For member access like it.property, evaluate the full expression
+            const ev = await evaluator.evaluate(targetArg, context);
+            if (typeof ev === 'string') targetSelector = ev;
+          } else {
+            targetSelector = objName;
+          }
+        }
         if (targetSelector && prop?.name) memberPath = prop.name;
-        else {
+        else if (!targetSelector && !memberPath) {
           const ev = await evaluator.evaluate(targetArg, context);
           if (typeof ev === 'string') targetSelector = ev;
         }

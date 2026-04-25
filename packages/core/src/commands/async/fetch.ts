@@ -63,6 +63,14 @@ export interface FetchCommandInput {
   url: string;
   responseType: string;
   options: RequestInit;
+  /**
+   * Throw on non-2xx responses (upstream _hyperscript 0.9.90 default when
+   * parsed from hyperscript source). Suppressed by `do not throw`, and
+   * automatically skipped when the caller asks for the raw `Response` via
+   * `as Response`. Optional for programmatic callers so existing fixtures
+   * keep their old (non-throwing) behavior unless they opt in explicitly.
+   */
+  throwOnError?: boolean;
 }
 
 export interface FetchCommandOutput {
@@ -106,7 +114,12 @@ export class FetchCommand implements DecoratedCommand {
     const responseType = this.parseResponseType(raw.modifiers.as);
     const options = await this.parseRequestOptions(raw.modifiers.with, evaluator, context);
 
-    return { url, responseType, options };
+    // Throw on non-2xx unless the user opts out via `do not throw`, or asks
+    // for the raw `Response` (they'll inspect `.ok`/`.status` themselves).
+    const doNotThrow = !!raw.modifiers.doNotThrow;
+    const throwOnError = !doNotThrow && responseType !== 'response';
+
+    return { url, responseType, options, throwOnError };
   }
 
   async execute(
@@ -159,6 +172,20 @@ export class FetchCommand implements DecoratedCommand {
         response = detail.response;
       }
 
+      // Upstream _hyperscript 0.9.90: throw on non-2xx by default. Bypass with
+      // `do not throw` or by asking for the raw Response via `as Response`.
+      if (input.throwOnError && !response.ok) {
+        const err = new Error(
+          `Fetch failed for ${url}: HTTP ${response.status} ${response.statusText}`.trim()
+        ) as Error & { response?: Response; isFetchStatusError?: boolean };
+        // Attach the response + marker so the outer catch preserves this
+        // error instead of re-wrapping it (the marker check works with
+        // mock Responses too — `instanceof Response` doesn't in tests).
+        err.response = response;
+        err.isFetchStatusError = true;
+        throw err;
+      }
+
       const data = await this.handleResponse(response, responseType, context);
 
       if (context.me) this.dispatchEvent(context.me, 'fetch:afterRequest', { result: data });
@@ -185,6 +212,14 @@ export class FetchCommand implements DecoratedCommand {
         });
       if (error instanceof Error && error.name === 'AbortError')
         throw new Error(`Fetch aborted for ${url}`);
+      // Preserve status-code errors thrown above — re-wrapping would drop the
+      // attached `.response` reference that callers use to inspect the status.
+      if (
+        error instanceof Error &&
+        (error as Error & { isFetchStatusError?: boolean }).isFetchStatusError === true
+      ) {
+        throw error;
+      }
       throw new Error(
         `Fetch failed for ${url}: ${error instanceof Error ? error.message : String(error)}`
       );

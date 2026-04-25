@@ -1,0 +1,63 @@
+[
+  {
+    "id": "expr-001",
+    "description": "Expression value round-trips via fromJSON/toJSON",
+    "jsonInput": {
+      "kind": "command",
+      "action": "if",
+      "roles": {
+        "condition": { "type": "expression", "raw": "x > 0" }
+      },
+      "thenBranch": [
+        {
+          "kind": "command",
+          "action": "toggle",
+          "roles": { "patient": { "type": "selector", "value": ".active" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedExpressionRaw": "x > 0"
+  },
+  {
+    "id": "expr-002",
+    "description": "Expression value with complex raw string preserves exactly",
+    "jsonInput": {
+      "kind": "command",
+      "action": "if",
+      "roles": {
+        "condition": { "type": "expression", "raw": "a.b.c == 'hello' && d > 0" }
+      },
+      "thenBranch": [
+        {
+          "kind": "command",
+          "action": "show",
+          "roles": { "patient": { "type": "selector", "value": "#result" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedExpressionRaw": "a.b.c == 'hello' && d > 0"
+  },
+  {
+    "id": "expr-003",
+    "description": "Expression value in while loop condition",
+    "jsonInput": {
+      "kind": "command",
+      "action": "repeat",
+      "roles": {
+        "condition": { "type": "expression", "raw": "counter < 10" }
+      },
+      "loopVariant": "while",
+      "loopBody": [
+        {
+          "kind": "command",
+          "action": "increment",
+          "roles": { "destination": { "type": "reference", "value": "it" } }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedExpressionRaw": "counter < 10"
+  }
+]

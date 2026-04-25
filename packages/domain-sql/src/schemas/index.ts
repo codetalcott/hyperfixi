@@ -49,6 +49,7 @@ export const selectSchema = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: {
@@ -120,15 +121,17 @@ export const updateSchema = defineCommand({
       required: true,
       expectedTypes: ['expression'],
       svoPosition: 2,
-      sovPosition: 1,
+      sovPosition: 2,
     }),
     defineRole({
       role: 'values',
       description: 'SET clause assignments',
       required: true,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 1,
-      sovPosition: 2,
+      sovPosition: 1,
+      markerPosition: 'before',
       markerOverride: {
         en: 'set',
         es: 'establecer',
@@ -145,6 +148,7 @@ export const updateSchema = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: {
@@ -194,6 +198,7 @@ export const deleteSchema = defineCommand({
       description: 'WHERE clause condition',
       required: false,
       expectedTypes: ['expression'],
+      greedy: true,
       svoPosition: 0,
       sovPosition: 0,
       markerOverride: {
@@ -211,7 +216,82 @@ export const deleteSchema = defineCommand({
 });
 
 // =============================================================================
+// GET (natural-language alias for SELECT — English-only spike)
+// =============================================================================
+//
+// Reads like intent ("get users where age > 18") rather than SQL literal.
+// Lowered to a `select` SemanticNode before codegen — see generators/natural-lowering.ts.
+// Roles reuse the `select` names (source, condition) so lowering only swaps `action`;
+// `limit` is additive and handled by an extended generateSelect().
+
+export const getSchema = defineCommand({
+  action: 'get',
+  description: 'Retrieve records (natural-language SELECT)',
+  category: 'query',
+  primaryRole: 'source',
+  roles: [
+    // Position ordering is descending: higher svoPosition = earlier in the
+    // surface form. For `get users where <cond> limit <N>`:
+    //   source (3) → condition (2) → limit (1)
+    defineRole({
+      role: 'source',
+      description: 'Collection to read from',
+      required: true,
+      expectedTypes: ['expression'],
+      svoPosition: 3,
+      sovPosition: 2,
+      // SOV-only source particles. SVO/VSO languages say bare "get users"
+      // (natural English/Spanish/French/Arabic/Chinese); SOV languages need
+      // a grammatical link between the noun and the verb — `users から 取得`
+      // not `users 取得`. Matches `select`'s source markers for ja/ko/tr.
+      markerOverride: {
+        ja: 'から',
+        ko: '에서',
+        tr: 'den',
+      },
+    }),
+    defineRole({
+      role: 'condition',
+      description: 'Filter predicate (WHERE clause)',
+      required: false,
+      expectedTypes: ['expression'],
+      greedy: true,
+      svoPosition: 2,
+      sovPosition: 0,
+      markerOverride: {
+        en: 'where',
+        es: 'donde',
+        ja: '条件',
+        ar: 'حيث',
+        ko: '조건',
+        zh: '条件',
+        tr: 'koşul',
+        fr: 'où',
+      },
+    }),
+    defineRole({
+      role: 'limit',
+      description: 'Maximum rows to return',
+      required: false,
+      expectedTypes: ['expression'],
+      svoPosition: 1,
+      sovPosition: 0,
+      markerOverride: {
+        en: 'limit',
+        es: 'límite',
+        ja: '件数',
+        ar: 'حد',
+        ko: '제한',
+        zh: '限制',
+        tr: 'limit',
+        fr: 'limite',
+      },
+    }),
+  ],
+});
+
+// =============================================================================
 // All Schemas
 // =============================================================================
 
-export const allSchemas = [selectSchema, insertSchema, updateSchema, deleteSchema];
+export const allSchemas = [selectSchema, insertSchema, updateSchema, deleteSchema, getSchema];

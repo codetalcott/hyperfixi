@@ -13,7 +13,7 @@
  *     on click follow siren link 'next'">Next</a>
  */
 
-import { getCurrentEntity } from '../siren-client';
+import { getCurrentEntity, getConditionState } from '../siren-client';
 
 export interface SirenAffordanceConfig {
   /** The DOM element to show/hide */
@@ -22,6 +22,8 @@ export interface SirenAffordanceConfig {
   action?: string;
   /** Show when this link rel exists on the current entity */
   link?: string;
+  /** Set aria-disabled when this condition is not met */
+  precondition?: string;
 }
 
 export interface SirenAffordanceInstance {
@@ -38,7 +40,7 @@ export interface SirenAffordanceInstance {
  * display based on whether the named action or link exists on the current entity.
  */
 export function createSirenAffordance(config: SirenAffordanceConfig): SirenAffordanceInstance {
-  const { element, action, link } = config;
+  const { element, action, link, precondition } = config;
 
   function update(): void {
     const entity = getCurrentEntity();
@@ -53,16 +55,38 @@ export function createSirenAffordance(config: SirenAffordanceConfig): SirenAffor
     element.style.display = visible ? '' : 'none';
   }
 
+  function updatePrecondition(): void {
+    if (!precondition) return;
+    const met = getConditionState().has(precondition);
+    if (met) {
+      element.removeAttribute('aria-disabled');
+    } else {
+      element.setAttribute('aria-disabled', 'true');
+    }
+  }
+
   // Hidden until first entity loads
   element.style.display = 'none';
 
-  const listener = () => update();
-  document.addEventListener('siren:entity', listener);
+  const entityListener = () => update();
+  document.addEventListener('siren:entity', entityListener);
+
+  const conditionsListener = precondition ? () => updatePrecondition() : null;
+  if (conditionsListener) {
+    document.addEventListener('siren:conditions', conditionsListener);
+    updatePrecondition();
+  }
 
   return {
     destroy() {
-      document.removeEventListener('siren:entity', listener);
+      document.removeEventListener('siren:entity', entityListener);
+      if (conditionsListener) {
+        document.removeEventListener('siren:conditions', conditionsListener);
+      }
     },
-    update,
+    update() {
+      update();
+      updatePrecondition();
+    },
   };
 }

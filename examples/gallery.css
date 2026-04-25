@@ -160,9 +160,37 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Site navigation bar — links back to docs site */
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+}
+
+.site-nav a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  color: var(--color-text);
+}
+
+.site-nav-home {
+  margin-right: auto;
+}
+
 /* Gallery index page */
 body.gallery-index {
-  padding: var(--space-12) var(--space-6);
+  padding: 0 0 var(--space-12);
+}
+
+body.gallery-index > .container {
+  padding: var(--space-8) var(--space-6) 0;
 }
 
 /* Example pages */

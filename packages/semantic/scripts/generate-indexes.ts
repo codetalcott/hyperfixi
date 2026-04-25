@@ -383,7 +383,13 @@ function generatePatternIndex(command: string): void {
     `    case '${l.code}':\n      return ${l.funcName}();`
   ).join('\n');
 
-  const languageArray = languages.map(l => `'${l.code}'`).join(', ');
+  const varName = `${command.replace(/-/g, '')}PatternLanguages`;
+  const items = languages.map(l => `'${l.code}'`);
+  const singleLine = `export const ${varName} = [${items.join(', ')}];`;
+  const PRINT_WIDTH = 100;
+  const languageArrayDecl = singleLine.length <= PRINT_WIDTH
+    ? singleLine
+    : `export const ${varName} = [\n${items.map(i => `  ${i},`).join('\n')}\n];`;
 
   const content = `/**
  * ${cmdPascal} Command Patterns
@@ -414,7 +420,7 @@ ${reExports}
 /**
  * Languages that have hand-crafted ${command} patterns.
  */
-export const ${command.replace(/-/g, '')}PatternLanguages = [${languageArray}];
+${languageArrayDecl}
 `;
 
   fs.writeFileSync(path.join(dir, 'index.ts'), content);

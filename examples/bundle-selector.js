@@ -23,7 +23,7 @@
   const BUNDLES = {
     'browser': {
       name: 'Full Bundle',
-      file: 'lokascript-browser.js',
+      file: 'hyperfixi-browser.js',
       size: '203 KB',
       description: 'Complete bundle with semantic parser, all commands, i18n support',
       features: ['43 commands', 'semantic parser', 'i18n', 'debug tools'],
@@ -31,7 +31,7 @@
     },
     'hybrid-complete': {
       name: 'Hybrid Complete',
-      file: 'lokascript-hybrid-complete.js',
+      file: 'hyperfixi-hybrid-complete.js',
       size: '7.3 KB',
       description: 'Full AST parser with blocks, expressions, event modifiers',
       features: ['21 commands', 'full parser', 'blocks', 'i18n aliases'],
@@ -39,7 +39,7 @@
     },
     'hybrid-hx': {
       name: 'Hybrid HX',
-      file: 'lokascript-hybrid-hx.js',
+      file: 'hyperfixi-hybrid-hx.js',
       size: '9.5 KB',
       description: 'Hybrid Complete + htmx attribute compatibility',
       features: ['21 commands', 'htmx attrs', 'hx-on:*', 'lifecycle events'],
@@ -47,7 +47,7 @@
     },
     'lite': {
       name: 'Lite Bundle',
-      file: 'lokascript-lite.js',
+      file: 'hyperfixi-lite.js',
       size: '1.9 KB',
       description: 'Minimal bundle for simple interactions',
       features: ['8 commands', 'regex parser', 'basic events'],
@@ -613,6 +613,12 @@
    * Initialize
    */
   function init() {
+    // Don't show bundle selector on production docs sites
+    const host = window.location.hostname;
+    if (host.includes('hyperfixi') || host.includes('lokascript') || host.includes('fly.dev')) {
+      return;
+    }
+
     createPanel();
 
     // Run basic test after a delay

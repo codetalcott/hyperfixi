@@ -1,0 +1,54 @@
+[
+  {
+    "id": "uni-001",
+    "description": "Selector value containing CJK characters round-trips",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".活性" }
+      }
+    },
+    "expectedRoundTrip": true,
+    "expectedSelectorValue": ".活性"
+  },
+  {
+    "id": "uni-002",
+    "description": "Literal string value with Arabic Unicode preserves exactly",
+    "jsonInput": {
+      "kind": "command",
+      "action": "show",
+      "roles": {
+        "patient": { "type": "literal", "value": "مرحبا", "dataType": "string" }
+      }
+    },
+    "expectedRoundTrip": true,
+    "expectedLiteralValue": "مرحبا"
+  },
+  {
+    "id": "uni-003",
+    "description": "Selector with Cyrillic characters",
+    "jsonInput": {
+      "kind": "command",
+      "action": "add",
+      "roles": {
+        "patient": { "type": "selector", "value": ".активный" }
+      }
+    },
+    "expectedRoundTrip": true,
+    "expectedSelectorValue": ".активный"
+  },
+  {
+    "id": "uni-004",
+    "description": "Reference values use ASCII only (regression guard)",
+    "jsonInput": {
+      "kind": "command",
+      "action": "get",
+      "roles": {
+        "source": { "type": "reference", "value": "result" }
+      }
+    },
+    "expectedRoundTrip": true,
+    "expectedReferenceValue": "result"
+  }
+]

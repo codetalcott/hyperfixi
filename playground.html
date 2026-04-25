@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperFixi Playground</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #1a1a2e; color: #e0e0e0;
+    height: 100vh; display: flex; flex-direction: column;
+  }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 1rem; background: #16213e; border-bottom: 1px solid #0f3460;
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 1rem; font-weight: 600; color: #e94560; }
+  header .controls { display: flex; gap: 0.5rem; align-items: center; }
+
+  select, button {
+    padding: 0.35rem 0.75rem; border-radius: 4px; border: 1px solid #0f3460;
+    background: #1a1a2e; color: #e0e0e0; font-size: 0.8rem; cursor: pointer;
+  }
+
+  button:hover { background: #0f3460; }
+  button.primary { background: #e94560; border-color: #e94560; color: white; font-weight: 600; }
+  button.primary:hover { background: #c73652; }
+
+  .status { font-size: 0.75rem; color: #888; }
+  .status.loaded { color: #10b981; }
+  .status.error { color: #e94560; }
+
+  main {
+    flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; background: #0f3460; min-height: 0;
+  }
+
+  .panel { display: flex; flex-direction: column; background: #1a1a2e; min-height: 0; }
+  .panel-header {
+    padding: 0.4rem 0.75rem; background: #16213e; font-size: 0.75rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #888;
+    flex-shrink: 0;
+  }
+
+  textarea {
+    flex: 1; padding: 0.75rem; border: none; background: #1a1a2e; color: #e0e0e0;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.85rem; line-height: 1.6; resize: none; outline: none;
+    tab-size: 2;
+  }
+
+  .preview-frame {
+    flex: 1; padding: 1rem; overflow: auto; background: white; color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .preview-frame button {
+    background: #f0f0f0; color: #333; border: 1px solid #ccc;
+    padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem;
+  }
+  .preview-frame button:hover { background: #e0e0e0; }
+
+  .preview-frame .active {
+    background: #0066cc; color: white; border-color: #0055aa; border-radius: 4px;
+  }
+
+  .error-banner {
+    display: none; padding: 0.75rem 1rem; background: #2d1b1b;
+    border-bottom: 1px solid #e94560; color: #f87171; font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  .error-banner.visible { display: block; }
+
+  @media (max-width: 700px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>HyperFixi Playground</h1>
+  <div class="controls">
+    <select id="examples" aria-label="Example selector">
+      <option value="toggle">Toggle</option>
+      <option value="counter">Counter</option>
+      <option value="showhide">Show / Hide</option>
+      <option value="input">Input Mirror</option>
+      <option value="color">Color Cycle</option>
+      <option value="tabs">Tabs</option>
+    </select>
+    <button class="primary" id="run-btn">Run</button>
+    <button id="reset-btn">Reset</button>
+    <span class="status" id="status">Loading...</span>
+  </div>
+</header>
+
+<div class="error-banner" id="error-banner"></div>
+
+<main>
+  <div class="panel">
+    <div class="panel-header">HTML + Hyperscript</div>
+    <textarea id="editor" spellcheck="false" aria-label="Code editor"></textarea>
+  </div>
+  <div class="panel">
+    <div class="panel-header">Preview</div>
+    <div class="preview-frame" id="preview"></div>
+  </div>
+</main>
+
+<script>
+const EXAMPLES = {
+  toggle: `<button _="on click toggle .active on me">Toggle Active</button>
+
+<style>.active { background: #0066cc; color: white; border-radius: 4px; }</style>`,
+
+  counter: `<button _="on click set my.count to (my.count or 0) + 1 then put 'Clicks: ' + my.count into me">
+  Clicks: 0
+</button>`,
+
+  showhide: `<button _="on click toggle @hidden on #message">Show / Hide</button>
+<p id="message">Hello from HyperFixi.</p>`,
+
+  input: `<input type="text" placeholder="Type here..."
+       _="on input put my value into #mirror" />
+<p id="mirror" style="color: #666; font-style: italic;"></p>`,
+
+  color: `<button _="on pointerdown
+  repeat until event pointerup
+    set rand to Math.random() * 360
+    transition *background-color to \`hsl(\${rand} 100% 90%)\` over 250ms
+  end">Hold to cycle colors</button>`,
+
+  tabs: `<div>
+  <button _="on click add .active to me then remove .active from .tab-btn in closest parent <div/> except me then show #panel-a then hide .panel in closest parent <div/> except #panel-a" class="tab-btn active">Tab A</button>
+  <button _="on click add .active to me then remove .active from .tab-btn in closest parent <div/> except me then show #panel-b then hide .panel in closest parent <div/> except #panel-b" class="tab-btn">Tab B</button>
+</div>
+
+<div id="panel-a" class="panel">Content for Tab A</div>
+<div id="panel-b" class="panel" hidden>Content for Tab B</div>
+
+<style>
+  .tab-btn { margin-right: 0.25rem; }
+  .tab-btn.active { background: #0066cc; color: white; border-radius: 4px 4px 0 0; }
+  .panel { padding: 1rem; border: 1px solid #ccc; border-radius: 0 4px 4px 4px; }
+</style>`
+};
+
+const editor = document.getElementById('editor');
+const preview = document.getElementById('preview');
+const exampleSelect = document.getElementById('examples');
+const statusEl = document.getElementById('status');
+const errorBanner = document.getElementById('error-banner');
+
+function loadExample(name) {
+  editor.value = EXAMPLES[name] || EXAMPLES.toggle;
+  runCode();
+}
+
+function runCode() {
+  errorBanner.classList.remove('visible');
+  const code = editor.value;
+
+  // Clear preview and insert new HTML
+  preview.innerHTML = code;
+
+  // Process hyperscript attributes in the new content
+  try {
+    if (window.hyperfixi) {
+      // Re-process all elements with _= attributes in the preview
+      preview.querySelectorAll('[_]').forEach(el => {
+        window.hyperfixi.processNode(el);
+      });
+    } else if (window._hyperscript) {
+      window._hyperscript.processNode(preview);
+    }
+  } catch (e) {
+    errorBanner.textContent = 'Error: ' + e.message;
+    errorBanner.classList.add('visible');
+  }
+}
+
+// Wire up controls
+document.getElementById('run-btn').addEventListener('click', runCode);
+document.getElementById('reset-btn').addEventListener('click', () => {
+  loadExample(exampleSelect.value);
+});
+exampleSelect.addEventListener('change', () => {
+  loadExample(exampleSelect.value);
+});
+
+// Ctrl+Enter / Cmd+Enter to run
+editor.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runCode();
+  }
+});
+
+// Load default example
+loadExample('toggle');
+</script>
+
+<!-- Load HyperFixi from CDN -->
+<script
+  src="https://unpkg.com/@hyperfixi/core/dist/hyperfixi-hybrid-complete.js"
+  onload="document.getElementById('status').textContent = 'hyperfixi-hybrid-complete.js loaded'; document.getElementById('status').className = 'status loaded'; setTimeout(() => { if (document.getElementById('preview').querySelector('[_]')) { try { var p = document.getElementById('preview'); if (window.hyperfixi) { p.querySelectorAll('[_]').forEach(el => window.hyperfixi.processNode(el)); } else if (window._hyperscript) { window._hyperscript.processNode(p); } } catch(e) {} } }, 100);"
+  onerror="document.getElementById('status').textContent = 'CDN load failed — try again online'; document.getElementById('status').className = 'status error';"
+></script>
+
+</body>
+</html>

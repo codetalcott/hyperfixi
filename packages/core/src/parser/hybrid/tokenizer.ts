@@ -187,6 +187,14 @@ export function tokenize(code: string): Token[] {
       continue;
     }
 
+    // Attribute reference @name (tokenize as selector to reuse existing parser paths)
+    if (code[pos] === '@') {
+      pos++;
+      while (pos < code.length && /[\w-]/.test(code[pos])) pos++;
+      tokens.push({ type: 'selector', value: code.slice(start, pos), pos: start });
+      continue;
+    }
+
     // CSS selectors: #id, .class (but NOT event modifiers like .once, .prevent, .stop, .debounce, .throttle)
     if (code[pos] === '#' || code[pos] === '.') {
       // Check if this is an event modifier (. followed by modifier keyword)

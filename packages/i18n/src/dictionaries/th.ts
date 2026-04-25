@@ -1,8 +1,5 @@
-/**
- * Thai Dictionary
- *
- * Thai translations for hyperscript keywords.
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
@@ -53,7 +50,21 @@ export const thaiDictionary: Dictionary = {
     clone: 'คัดลอก',
     swap: 'สลับที่',
     morph: 'แปลงร่าง',
+    beep: 'บี๊บ',
+    break: 'ขัดจังหวะ',
+    copy: 'คัดลอก',
+    exit: 'ออก',
+    js: 'เจเอส',
+    pick: 'เลือก',
+    render: 'แสดงผล',
+    until: 'จนถึง',
+    breakpoint: 'จุดพัก',
+    clear: 'เคลียร์',
+    close: 'ปิด',
+    open: 'เปิด',
+    select: 'เลือก',
   },
+
   modifiers: {
     to: 'ไปยัง',
     from: 'จาก',
@@ -67,12 +78,14 @@ export const thaiDictionary: Dictionary = {
     at: 'ที่',
     in: 'ใน',
     over: 'เหนือ',
+    between: 'ระหว่าง',
     then: 'แล้ว',
     and: 'และ',
     end: 'จบ',
     until: 'จนถึง',
     of: 'ของ',
   },
+
   events: {
     click: 'คลิก',
     change: 'เปลี่ยนแปลง',
@@ -81,6 +94,7 @@ export const thaiDictionary: Dictionary = {
     load: 'โหลด',
     focus: 'โฟกัส',
     blur: 'เบลอ',
+    reset: 'รีเซ็ต',
     keydown: 'กดคีย์',
     keyup: 'ปล่อยคีย์',
     mouseover: 'เมาส์เข้า',
@@ -89,6 +103,7 @@ export const thaiDictionary: Dictionary = {
     resize: 'ปรับขนาด',
     every: 'ทุก',
   },
+
   logical: {
     if: 'ถ้า',
     when: 'เมื่อ',
@@ -99,14 +114,17 @@ export const thaiDictionary: Dictionary = {
     or: 'หรือ',
     is: 'เป็น',
     exists: 'มีอยู่',
-    has: 'มี', // possession verb (context-based)
-    have: 'มี', // same for first/third person
+    has: 'มี',
+    have: 'มี',
     empty: 'ว่าง',
     true: 'จริง',
     false: 'เท็จ',
     null: 'ว่าง',
     undefined: 'ไม่กำหนด',
+    end: 'จบ',
+    then: 'แล้ว',
   },
+
   temporal: {
     now: 'ตอนนี้',
     seconds: 'วินาที',
@@ -118,6 +136,7 @@ export const thaiDictionary: Dictionary = {
     s: 'วิ',
     ms: 'มว',
   },
+
   values: {
     me: 'ฉัน',
     my: 'ของฉัน',
@@ -127,7 +146,10 @@ export const thaiDictionary: Dictionary = {
     event: 'เหตุการณ์',
     target: 'เป้าหมาย',
     body: 'บอดี้',
+    you: 'คุณ',
+    your: 'ของคุณ',
   },
+
   attributes: {
     class: 'คลาส',
     id: 'ไอดี',
@@ -138,6 +160,7 @@ export const thaiDictionary: Dictionary = {
     disabled: 'ปิดใช้งาน',
     checked: 'เลือกแล้ว',
   },
+
   expressions: {
     first: 'แรก',
     last: 'สุดท้าย',
@@ -149,8 +172,15 @@ export const thaiDictionary: Dictionary = {
     random: 'สุ่ม',
     length: 'ความยาว',
     index: 'ดัชนี',
+    empty: 'ล้าง',
+    'starts with': 'ขึ้นต้นด้วย',
+    'ends with': 'ลงท้ายด้วย',
+    'ignoring case': 'ไม่สนตัวพิมพ์',
+    'sorted by': 'เรียงตาม',
+    'mapped to': 'แปลงเป็น',
+    'split by': 'แยกด้วย',
+    'joined by': 'รวมด้วย',
   },
 };
 
-// Default export alias
 export const th = thaiDictionary;

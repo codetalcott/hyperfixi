@@ -17,23 +17,22 @@ import {
 export type { Token } from '../types/core';
 
 // ============================================================================
-// PHASE 5: Simplified TokenKind Enum (10 values vs 24 TokenType values)
+// TokenKind Enum — the sole token classification system
 // ============================================================================
 // TokenKind represents lexical categories - what the token IS structurally.
-// TokenType represents semantic categories - what the token MEANS in hyperscript.
-// The parser uses predicates (token-predicates.ts) for semantic classification.
+// The parser uses predicates (token-predicates.ts) for semantic classification
+// (e.g., is this identifier a command? a keyword? an event name?).
+// Phase 8 complete: TokenType enum removed, all call sites use TokenKind.
 
 /**
- * Simplified lexical token categories.
+ * Lexical token categories.
  *
  * This enum represents pure lexical categories without semantic classification.
- * The tokenizer can output both TokenKind (lexical) and TokenType (semantic)
- * during the migration period.
+ * Semantic classification is handled by predicate functions in token-predicates.ts.
  *
  * @example
- * // 'toggle' has:
- * //   kind: TokenKind.IDENTIFIER (it's a word-like token)
- * //   type: TokenType.COMMAND (it's semantically a command)
+ * // 'toggle' has kind: TokenKind.IDENTIFIER (it's a word-like token)
+ * // The parser uses isCommand(token) to determine it's semantically a command
  */
 export enum TokenKind {
   /** Any word-like token (commands, keywords, events, identifiers, context vars) */
@@ -58,111 +57,7 @@ export enum TokenKind {
   UNKNOWN = 'unknown',
 }
 
-/**
- * Map TokenType to TokenKind for dual-output mode.
- * This enables gradual migration from semantic to lexical classification.
- */
-export function getTokenKind(tokenType: TokenType): TokenKind {
-  switch (tokenType) {
-    // All word-like tokens map to IDENTIFIER
-    case TokenType.KEYWORD:
-    case TokenType.COMMAND:
-    case TokenType.EXPRESSION:
-    case TokenType.CONTEXT_VAR:
-    case TokenType.GLOBAL_VAR:
-    case TokenType.EVENT:
-    case TokenType.IDENTIFIER:
-      return TokenKind.IDENTIFIER;
-
-    // Literals
-    case TokenType.STRING:
-      return TokenKind.STRING;
-    case TokenType.NUMBER:
-      return TokenKind.NUMBER;
-    case TokenType.BOOLEAN:
-      return TokenKind.IDENTIFIER; // Booleans are lexically identifiers with value 'true', 'false', etc.
-    case TokenType.TEMPLATE_LITERAL:
-      return TokenKind.TEMPLATE;
-
-    // Selectors
-    case TokenType.CSS_SELECTOR:
-    case TokenType.ID_SELECTOR:
-    case TokenType.CLASS_SELECTOR:
-    case TokenType.QUERY_REFERENCE:
-      return TokenKind.SELECTOR;
-
-    // Operators
-    case TokenType.OPERATOR:
-    case TokenType.LOGICAL_OPERATOR:
-    case TokenType.COMPARISON_OPERATOR:
-      return TokenKind.OPERATOR;
-
-    // Special types
-    case TokenType.TIME_EXPRESSION:
-      return TokenKind.TIME;
-    case TokenType.COMMENT:
-      return TokenKind.COMMENT;
-    case TokenType.SYMBOL:
-      return TokenKind.SYMBOL;
-
-    // Objects and arrays are complex - treat as unknown for now
-    case TokenType.OBJECT_LITERAL:
-    case TokenType.ARRAY_LITERAL:
-    case TokenType.UNKNOWN:
-    default:
-      return TokenKind.UNKNOWN;
-  }
-}
-
-// ============================================================================
-// LEGACY: TokenType Enum (24 values) - Will be deprecated after migration
-// ============================================================================
-
-// Token types based on hyperscript language elements
-// Note: Reduced from 28 to 24 values by removing unused types (FEATURE, PROPERTY_ACCESS, WHITESPACE, NEWLINE)
-export enum TokenType {
-  // Language elements
-  KEYWORD = 'keyword',
-  COMMAND = 'command',
-  EXPRESSION = 'expression',
-
-  // Literals
-  STRING = 'string',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  TEMPLATE_LITERAL = 'template_literal',
-
-  // Selectors and references
-  CSS_SELECTOR = 'css_selector',
-  ID_SELECTOR = 'id_selector',
-  CLASS_SELECTOR = 'class_selector',
-  QUERY_REFERENCE = 'query_reference',
-
-  // Context variables
-  CONTEXT_VAR = 'context_var',
-  GLOBAL_VAR = 'global_var',
-
-  // Events
-  EVENT = 'event',
-
-  // Operators
-  OPERATOR = 'operator',
-  LOGICAL_OPERATOR = 'logical_operator',
-  COMPARISON_OPERATOR = 'comparison_operator',
-
-  // Special constructs
-  TIME_EXPRESSION = 'time_expression',
-  OBJECT_LITERAL = 'object_literal',
-  ARRAY_LITERAL = 'array_literal',
-  SYMBOL = 'symbol',
-
-  // Structural
-  COMMENT = 'comment',
-
-  // Unknown
-  IDENTIFIER = 'identifier',
-  UNKNOWN = 'unknown',
-}
+// TokenType enum removed in Phase 8 — all classification is now via TokenKind + predicates
 
 // Sets are imported from parser-constants.ts (single source of truth)
 // Local aliases for tokenizer-specific sets
@@ -170,79 +65,8 @@ const KEYWORDS = TOKENIZER_KEYWORDS;
 const MATHEMATICAL_OPERATORS = new Set(['+', '-', '*', '/', 'mod']);
 const TIME_UNITS = new Set(['ms', 's', 'seconds', 'minutes', 'hours', 'days']);
 
-// ============================================================================
-// FEATURE FLAGS - For gradual migration to predicate-based classification
-// ============================================================================
-
-/**
- * When enabled, the tokenizer returns IDENTIFIER for all word-like tokens
- * instead of classifying them as COMMAND, KEYWORD, EVENT, CONTEXT_VAR, etc.
- *
- * This defers semantic classification to the parser, which uses predicate
- * functions from token-predicates.ts for context-aware classification.
- *
- * Benefits:
- * - Cleaner separation between lexical and semantic analysis
- * - Parser can make context-dependent classification decisions
- * - Enables migration to simplified TokenKind enum
- *
- * @see token-predicates.ts for predicate functions
- */
-let DEFER_IDENTIFIER_CLASSIFICATION = false;
-
-/**
- * Enable deferred identifier classification (for testing/migration)
- */
-export function enableDeferredClassification(): void {
-  DEFER_IDENTIFIER_CLASSIFICATION = true;
-}
-
-/**
- * Disable deferred identifier classification (default behavior)
- */
-export function disableDeferredClassification(): void {
-  DEFER_IDENTIFIER_CLASSIFICATION = false;
-}
-
-/**
- * Check if deferred classification is enabled
- */
-export function isDeferredClassificationEnabled(): boolean {
-  return DEFER_IDENTIFIER_CLASSIFICATION;
-}
-
-// ============================================================================
-// PHASE 5: Dual Output Mode (TokenType + TokenKind)
-// ============================================================================
-
-/**
- * When enabled, tokens include both `type` (TokenType) and `kind` (TokenKind).
- * This allows gradual migration to TokenKind-based predicates.
- *
- * When disabled (default), tokens only include `type` for backward compatibility.
- */
-let EMIT_TOKEN_KIND = false;
-
-/**
- * Enable dual output mode (emit both type and kind)
- */
-export function enableDualOutput(): void {
-  EMIT_TOKEN_KIND = true;
-}
-
-/**
- * Disable dual output mode (default behavior)
- */
-export function disableDualOutput(): void {
-  EMIT_TOKEN_KIND = false;
-}
-
-/**
- * Check if dual output mode is enabled
- */
-export function isDualOutputEnabled(): boolean {
-  return EMIT_TOKEN_KIND;
-}
+// Feature flags removed in Phase 8 — deferred classification and dual output are no longer needed.
+// All tokens use TokenKind exclusively; semantic classification is via predicates.
 
 export interface Tokenizer {
   input: string;
@@ -307,7 +131,7 @@ export function tokenize(input: string): Token[] {
         const start = tokenizer.position;
         advance(tokenizer); // consume apostrophe
         advance(tokenizer); // consume 's'
-        addToken(tokenizer, TokenType.OPERATOR, "'s", start);
+        addToken(tokenizer, TokenKind.OPERATOR, "'s", start);
       } else {
         // Tokenize as string
         tokenizeString(tokenizer);
@@ -348,7 +172,7 @@ export function tokenize(input: string): Token[] {
         const start = tokenizer.position;
         advance(tokenizer); // consume first '.'
         advance(tokenizer); // consume second '.'
-        addToken(tokenizer, TokenType.OPERATOR, '..', start);
+        addToken(tokenizer, TokenKind.OPERATOR, '..', start);
         continue;
       }
 
@@ -396,7 +220,15 @@ export function tokenize(input: string): Token[] {
         prevToken.value === ',' ||
         prevToken.value === ';';
 
-      if (isCSSSelectorContext && isAlpha(peek(tokenizer))) {
+      // Adjacent dot (no whitespace) is always property access, not a CSS selector.
+      // e.g., `previous.innerText` = dot access, `previous .active` = CSS selector
+      const isAdjacentToPrev = prevToken && prevToken.end === tokenizer.position;
+
+      if (
+        isCSSSelectorContext &&
+        !isAdjacentToPrev &&
+        (isAlpha(peek(tokenizer)) || peek(tokenizer) === '{')
+      ) {
         tokenizeCSSSelector(tokenizer);
         continue;
       }
@@ -411,14 +243,14 @@ export function tokenize(input: string): Token[] {
 
     // Handle object literals - emit individual tokens for proper parsing
     if (char === '{') {
-      addToken(tokenizer, TokenType.OPERATOR, '{');
+      addToken(tokenizer, TokenKind.OPERATOR, '{');
       advance(tokenizer);
       continue;
     }
 
     // Handle closing brace for objects
     if (char === '}') {
-      addToken(tokenizer, TokenType.OPERATOR, '}');
+      addToken(tokenizer, TokenKind.OPERATOR, '}');
       advance(tokenizer);
       continue;
     }
@@ -430,33 +262,32 @@ export function tokenize(input: string): Token[] {
       // Check for event handler condition syntax
       const isEventCondition =
         prevToken &&
-        (prevToken.kind === TokenType.EVENT ||
-          (prevToken.kind === TokenType.IDENTIFIER && DOM_EVENTS.has(prevToken.value))) &&
+        prevToken.kind === TokenKind.IDENTIFIER &&
+        DOM_EVENTS.has(prevToken.value) &&
         tokenizer.tokens.length >= 2 &&
         tokenizer.tokens[tokenizer.tokens.length - 2]?.value === 'on';
 
       const isMemberAccess =
         prevToken &&
-        (prevToken.kind === TokenType.IDENTIFIER ||
-          prevToken.kind === TokenType.CONTEXT_VAR ||
+        (prevToken.kind === TokenKind.IDENTIFIER ||
           prevToken.value === ')' ||
           prevToken.value === ']') &&
         !isEventCondition; // Don't treat as member access if it's an event condition
 
       if (isMemberAccess) {
         // Treat as member access operator
-        addToken(tokenizer, TokenType.OPERATOR, '[');
+        addToken(tokenizer, TokenKind.OPERATOR, '[');
         advance(tokenizer);
       } else {
         // Treat as array literal or event condition bracket
         if (isEventCondition) {
           // For event conditions, just add the bracket as a simple token
-          addToken(tokenizer, TokenType.SYMBOL, '[');
+          addToken(tokenizer, TokenKind.SYMBOL, '[');
           advance(tokenizer);
         } else {
           // For array literals, tokenize individual brackets instead of whole array
           // This allows the parser to handle array structure properly
-          addToken(tokenizer, TokenType.OPERATOR, '[');
+          addToken(tokenizer, TokenKind.OPERATOR, '[');
           advance(tokenizer);
         }
       }
@@ -465,7 +296,7 @@ export function tokenize(input: string): Token[] {
 
     // Handle closing bracket for arrays
     if (char === ']') {
-      addToken(tokenizer, TokenType.OPERATOR, ']');
+      addToken(tokenizer, TokenKind.OPERATOR, ']');
       advance(tokenizer);
       continue;
     }
@@ -505,7 +336,7 @@ export function tokenize(input: string): Token[] {
     }
 
     // Unknown character - consume it
-    addToken(tokenizer, TokenType.UNKNOWN, char);
+    addToken(tokenizer, TokenKind.UNKNOWN, char);
     advance(tokenizer);
   }
 
@@ -562,7 +393,7 @@ function skipWhitespace(tokenizer: Tokenizer): void {
 
 function addToken(
   tokenizer: Tokenizer,
-  type: TokenType,
+  kind: TokenKind,
   value: string,
   start?: number,
   end?: number
@@ -584,9 +415,8 @@ function addToken(
     tokenColumn = start - lastNewlinePos;
   }
 
-  // Phase 8: TokenKind-only output - semantic classification moved to predicates
   const token: import('../types/core').Token = {
-    kind: getTokenKind(type),
+    kind,
     value,
     start: tokenStart,
     end: tokenEnd,
@@ -629,7 +459,7 @@ function tokenizeComment(tokenizer: Tokenizer): void {
     value += advance(tokenizer);
   }
 
-  addToken(tokenizer, TokenType.COMMENT, '--' + value, start);
+  addToken(tokenizer, TokenKind.COMMENT, '--' + value, start);
 }
 
 function tokenizeString(tokenizer: Tokenizer): void {
@@ -650,7 +480,7 @@ function tokenizeString(tokenizer: Tokenizer): void {
     }
   }
 
-  addToken(tokenizer, TokenType.STRING, value, start);
+  addToken(tokenizer, TokenKind.STRING, value, start);
 }
 
 function tokenizeTemplateLiteral(tokenizer: Tokenizer): void {
@@ -704,13 +534,26 @@ function tokenizeTemplateLiteral(tokenizer: Tokenizer): void {
     );
   }
 
-  addToken(tokenizer, TokenType.TEMPLATE_LITERAL, value, start);
+  addToken(tokenizer, TokenKind.TEMPLATE, value, start);
 }
 
 function tokenizeCSSSelector(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   const prefix = advance(tokenizer); // # or .
   let value = prefix;
+
+  // Dynamic class/id selector: .{varName} or #{varName}
+  // Produces a selector token like ".{cls}" that is resolved at runtime
+  if (tokenizer.position < tokenizer.input.length && tokenizer.input[tokenizer.position] === '{') {
+    value += advance(tokenizer); // consume '{'
+    while (tokenizer.position < tokenizer.input.length) {
+      const ch = tokenizer.input[tokenizer.position];
+      value += advance(tokenizer);
+      if (ch === '}') break;
+    }
+    addToken(tokenizer, TokenKind.SELECTOR, value, start);
+    return;
+  }
 
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
@@ -721,8 +564,7 @@ function tokenizeCSSSelector(tokenizer: Tokenizer): void {
     }
   }
 
-  const type = prefix === '#' ? TokenType.ID_SELECTOR : TokenType.CLASS_SELECTOR;
-  addToken(tokenizer, type, value, start);
+  addToken(tokenizer, TokenKind.SELECTOR, value, start);
 }
 
 function tokenizeQueryReference(tokenizer: Tokenizer): void {
@@ -746,7 +588,7 @@ function tokenizeQueryReference(tokenizer: Tokenizer): void {
     }
   }
 
-  addToken(tokenizer, TokenType.QUERY_REFERENCE, value, start);
+  addToken(tokenizer, TokenKind.SELECTOR, value, start);
 }
 
 function tokenizeSymbol(tokenizer: Tokenizer): void {
@@ -762,7 +604,7 @@ function tokenizeSymbol(tokenizer: Tokenizer): void {
     }
   }
 
-  addToken(tokenizer, TokenType.SYMBOL, value, start);
+  addToken(tokenizer, TokenKind.SYMBOL, value, start);
 }
 
 function tokenizeOperator(tokenizer: Tokenizer): void {
@@ -775,7 +617,7 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
     value = "'s";
     advance(tokenizer); // consume apostrophe
     advance(tokenizer); // consume 's'
-    addToken(tokenizer, TokenType.OPERATOR, value, start);
+    addToken(tokenizer, TokenKind.OPERATOR, value, start);
     return;
   }
 
@@ -798,17 +640,8 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
     value = advance(tokenizer);
   }
 
-  // Determine the correct token type
-  let type = TokenType.OPERATOR;
-  if (COMPARISON_OPERATORS.has(value)) {
-    type = TokenType.COMPARISON_OPERATOR;
-  } else if (['&&', '||'].includes(value)) {
-    type = TokenType.LOGICAL_OPERATOR;
-  } else if (MATHEMATICAL_OPERATORS.has(value)) {
-    type = TokenType.OPERATOR;
-  }
-
-  addToken(tokenizer, type, value, start);
+  // All operators (comparison, logical, mathematical) map to TokenKind.OPERATOR
+  addToken(tokenizer, TokenKind.OPERATOR, value, start);
 }
 
 function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
@@ -891,11 +724,11 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
   }
 
   if (TIME_UNITS.has(unit)) {
-    addToken(tokenizer, TokenType.TIME_EXPRESSION, value + unit, start);
+    addToken(tokenizer, TokenKind.TIME, value + unit, start);
   } else {
     // Reset position if not a time unit
     tokenizer.position = unitStart;
-    addToken(tokenizer, TokenType.NUMBER, value, start);
+    addToken(tokenizer, TokenKind.NUMBER, value, start);
   }
 }
 
@@ -958,7 +791,7 @@ function tokenizeGlobalVariable(tokenizer: Tokenizer): void {
     }
   }
 
-  addToken(tokenizer, TokenType.GLOBAL_VAR, value, start);
+  addToken(tokenizer, TokenKind.IDENTIFIER, value, start);
 }
 
 function tryTokenizeCompoundOperator(
@@ -979,10 +812,7 @@ function tryTokenizeCompoundOperator(
   const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
   if (
     prevToken &&
-    (prevToken.kind === 'identifier' ||
-      prevToken.kind === 'id_selector' ||
-      prevToken.kind === 'class_selector' ||
-      prevToken.kind === 'context_var')
+    (prevToken.kind === TokenKind.IDENTIFIER || prevToken.kind === TokenKind.SELECTOR)
   ) {
     const nextChar =
       tokenizer.position < tokenizer.input.length ? tokenizer.input[tokenizer.position] : '';
@@ -1025,13 +855,13 @@ function tryTokenizeCompoundOperator(
     // Try to build longest possible compound operator
     const longestCompound = tryBuildLongestCompound(tokenizer, lowerFirst, lowerNext);
     if (longestCompound) {
-      addToken(tokenizer, TokenType.COMPARISON_OPERATOR, longestCompound, start);
+      addToken(tokenizer, TokenKind.OPERATOR, longestCompound, start);
       return true;
     }
 
     // Check two-word operators
     if (COMPARISON_OPERATORS.has(compound)) {
-      addToken(tokenizer, TokenType.COMPARISON_OPERATOR, compound, start);
+      addToken(tokenizer, TokenKind.OPERATOR, compound, start);
       return true;
     }
   }
@@ -1039,7 +869,7 @@ function tryTokenizeCompoundOperator(
   // Check single-word operators
   if (COMPARISON_OPERATORS.has(lowerFirst)) {
     tokenizer.position = originalPosition; // Reset position
-    addToken(tokenizer, TokenType.COMPARISON_OPERATOR, firstWord, start);
+    addToken(tokenizer, TokenKind.OPERATOR, firstWord, start);
     return true;
   }
 
@@ -1104,7 +934,7 @@ function tryBuildCompoundPreposition(
         const lowerFourth = fourthWord.toLowerCase();
         if (lowerFourth === 'of') {
           const compound = `at the ${lowerThird} of`;
-          addToken(tokenizer, TokenType.KEYWORD, compound, start);
+          addToken(tokenizer, TokenKind.IDENTIFIER, compound, start);
           return true;
         }
       }
@@ -1135,7 +965,7 @@ function tryBuildCompoundPreposition(
       const lowerThird = thirdWord.toLowerCase();
       if (lowerThird === 'of') {
         const compound = `at ${lowerSecond} of`;
-        addToken(tokenizer, TokenType.KEYWORD, compound, start);
+        addToken(tokenizer, TokenKind.IDENTIFIER, compound, start);
         return true;
       }
       // Didn't match pattern, reset
@@ -1147,92 +977,32 @@ function tryBuildCompoundPreposition(
   return false;
 }
 
-function classifyIdentifier(value: string): TokenType {
+/**
+ * Classify a word-like token into its lexical TokenKind.
+ *
+ * Word-like operators (and, or, not, is, mod, include, etc.) are classified as
+ * OPERATOR so the expression parser can handle precedence. Everything else is
+ * IDENTIFIER — the parser uses predicates for semantic classification.
+ */
+function classifyIdentifier(value: string): TokenKind {
   const lowerValue = value.toLowerCase();
 
-  // ============================================================================
-  // DEFERRED CLASSIFICATION MODE
-  // When enabled, return IDENTIFIER for semantic tokens (commands, keywords, etc.)
-  // Parser uses token-predicates.ts for context-aware classification instead.
-  //
-  // We still classify:
-  // - BOOLEAN literals (true, false, null, undefined) - literal values
-  // - LOGICAL_OPERATOR (and, or, not) - needed for expression precedence
-  // - COMPARISON_OPERATOR - needed for expression parsing
-  // - OPERATOR - structural operators
-  // ============================================================================
-  if (DEFER_IDENTIFIER_CLASSIFICATION) {
-    // Operators still need classification for expression parsing
-    if (lowerValue === 'include' || lowerValue === 'includes') {
-      return TokenType.COMPARISON_OPERATOR;
-    }
-    if (LOGICAL_OPERATORS.has(lowerValue)) {
-      return TokenType.LOGICAL_OPERATOR;
-    }
-    if (MATHEMATICAL_OPERATORS.has(value) || MATHEMATICAL_OPERATORS.has(lowerValue)) {
-      return TokenType.OPERATOR;
-    }
-    if (COMPARISON_OPERATORS.has(lowerValue)) {
-      return TokenType.COMPARISON_OPERATOR;
-    }
-    // Boolean literals are values, not identifiers
-    if (['true', 'false', 'null', 'undefined'].includes(lowerValue)) {
-      return TokenType.BOOLEAN;
-    }
-    // Everything else becomes IDENTIFIER - parser will classify semantically
-    return TokenType.IDENTIFIER;
-  }
-
-  // ============================================================================
-  // LEGACY CLASSIFICATION MODE (default)
-  // Full semantic classification at tokenization time
-  // ============================================================================
-
-  // Special case for include/includes to ensure they're treated as comparison operators
+  // Word-like operators need OPERATOR kind for expression parsing
   if (lowerValue === 'include' || lowerValue === 'includes') {
-    return TokenType.COMPARISON_OPERATOR;
+    return TokenKind.OPERATOR;
   }
-
-  // Check more specific types first
   if (LOGICAL_OPERATORS.has(lowerValue)) {
-    return TokenType.LOGICAL_OPERATOR;
+    return TokenKind.OPERATOR;
   }
-
   if (MATHEMATICAL_OPERATORS.has(value) || MATHEMATICAL_OPERATORS.has(lowerValue)) {
-    return TokenType.OPERATOR;
+    return TokenKind.OPERATOR;
   }
-
   if (COMPARISON_OPERATORS.has(lowerValue)) {
-    return TokenType.COMPARISON_OPERATOR;
+    return TokenKind.OPERATOR;
   }
 
-  // Special case: 'I' (uppercase only) is a _hyperscript alias for 'me'
-  // We check the original value to avoid conflict with lowercase 'i' used in loops
-  if (value === 'I') {
-    return TokenType.CONTEXT_VAR;
-  }
-
-  if (CONTEXT_VARS.has(lowerValue)) {
-    return TokenType.CONTEXT_VAR;
-  }
-
-  if (COMMANDS.has(lowerValue)) {
-    return TokenType.COMMAND;
-  }
-
-  if (DOM_EVENTS.has(lowerValue)) {
-    return TokenType.EVENT;
-  }
-
-  if (['true', 'false', 'null', 'undefined'].includes(lowerValue)) {
-    return TokenType.BOOLEAN; // Using BOOLEAN for all literal values including null/undefined
-  }
-
-  if (KEYWORDS.has(lowerValue)) {
-    return TokenType.KEYWORD;
-  }
-
-  return TokenType.IDENTIFIER;
+  // Everything else is lexically an identifier — parser classifies semantically
+  return TokenKind.IDENTIFIER;
 }
 
 // Helper functions

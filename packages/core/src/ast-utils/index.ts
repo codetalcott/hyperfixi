@@ -132,4 +132,5 @@ export type {
   LSPCompletionItem,
   LSPCompletionItemKind,
   LSPHoverInfo,
+  LSPHoverOptions,
 } from './interchange/index.js';

@@ -37,6 +37,12 @@ import {
 
 // MCP Prompts (Layer 2)
 import { getLLMPromptDefinitions, renderLLMPrompt } from './prompts/index.js';
+import {
+  getDebugPromptDefinitions,
+  renderDebugPrompt,
+  isDebugPrompt,
+} from './prompts/debug-prompts.js';
+import { getLSEPromptDefinitions, renderLSEPrompt, isLSEPrompt } from './prompts/lse-prompts.js';
 
 // MCP Sampling tools (Layer 3)
 import { samplingTools, handleSamplingTool } from './tools/llm-sampling.js';
@@ -46,6 +52,27 @@ import { dispatcherTools, handleDispatcherTool } from './tools/dispatcher.js';
 
 // IR conversion tools (explicit ↔ JSON)
 import { irTools, handleIRTool } from './tools/ir-tools.js';
+
+// Debug tools (AI-assisted debugging)
+import { debugTools, handleDebugTool } from './tools/debug-tools.js';
+
+// Template inventory tools
+import { inventoryTools, handleInventoryTool } from './tools/inventory.js';
+
+// Training data tools (LLM ↔ LSE)
+import { trainingDataTools, handleTrainingDataTool } from './tools/training-data.js';
+
+// Feedback loop tools (LLM ↔ LSE)
+import { feedbackTools, handleFeedbackTool } from './tools/feedback-tools.js';
+
+// LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
+import { lsePipelineTools, handleLsePipelineTool } from './tools/lse-pipeline.js';
+
+// GRAIL tools (condition/affordance workflow)
+import { grailTools, handleGrailTool } from './tools/grail-tools.js';
+
+// LSE correction tool (stateless LLM-driven generation + self-correction)
+import { lseCorrectionTools, handleLseCorrectionTool } from './tools/lse-correction.js';
 
 const registry = createDomainRegistry();
 
@@ -89,6 +116,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...samplingTools,
       ...dispatcherTools,
       ...irTools,
+      ...debugTools,
+      ...inventoryTools,
+      ...trainingDataTools,
+      ...feedbackTools,
+      ...lsePipelineTools,
+      ...grailTools,
+      ...lseCorrectionTools,
     ],
   };
 });
@@ -177,8 +211,14 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     return handleDispatcherTool(name, args as Record<string, unknown>, registry);
   }
 
-  // IR conversion tools (explicit ↔ JSON)
-  if (name === 'convert_format' || name === 'validate_explicit') {
+  // IR conversion tools (explicit ↔ JSON, protocol validation, envelopes)
+  if (
+    name === 'convert_format' ||
+    name === 'validate_explicit' ||
+    name === 'validate_protocol' ||
+    name === 'to_envelope' ||
+    name === 'from_envelope'
+  ) {
     return handleIRTool(name, args as Record<string, unknown>);
   }
 
@@ -213,9 +253,45 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
     name === 'ask_claude' ||
     name === 'summarize_content' ||
     name === 'analyze_content' ||
-    name === 'translate_content'
+    name === 'translate_content' ||
+    name === 'execute_llm'
   ) {
-    return handleSamplingTool(name, args as Record<string, unknown>, server);
+    return handleSamplingTool(name, args as Record<string, unknown>, server, registry);
+  }
+
+  // Debug tools (AI-assisted debugging)
+  if (name.startsWith('debug_')) {
+    return handleDebugTool(name, args as Record<string, unknown>);
+  }
+
+  // Template inventory tools
+  if (name === 'scan_inventory' || name === 'query_inventory') {
+    return handleInventoryTool(name, args as Record<string, unknown>);
+  }
+
+  // Training data tools (LLM ↔ LSE)
+  if (name === 'generate_training_data') {
+    return handleTrainingDataTool(name, args as Record<string, unknown>);
+  }
+
+  // Feedback loop tools (LLM ↔ LSE)
+  if (name === 'lse_validate_and_feedback' || name === 'lse_pattern_stats') {
+    return handleFeedbackTool(name, args as Record<string, unknown>);
+  }
+
+  // LSE pipeline tools (LLM round-trip: hyperscript ↔ LSE)
+  if (name === 'lse_from_hyperscript' || name === 'lse_to_hyperscript') {
+    return handleLsePipelineTool(name, args as Record<string, unknown>);
+  }
+
+  // GRAIL tools (condition/affordance workflow)
+  if (name.startsWith('grail_')) {
+    return handleGrailTool(name, args as Record<string, unknown>);
+  }
+
+  // LSE correction tool (stateless generation + self-correction loop)
+  if (name === 'lse_generate_with_correction') {
+    return handleLseCorrectionTool(name, args as Record<string, unknown>);
   }
 
   // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
@@ -234,12 +310,26 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 // =============================================================================
 
 server.setRequestHandler(ListPromptsRequestSchema, async () => {
-  return { prompts: getLLMPromptDefinitions() };
+  return {
+    prompts: [
+      ...getLLMPromptDefinitions(),
+      ...getDebugPromptDefinitions(),
+      ...getLSEPromptDefinitions(),
+    ],
+  };
 });
 
 server.setRequestHandler(GetPromptRequestSchema, async request => {
   const { name, arguments: promptArgs } = request.params;
-  return renderLLMPrompt(name, (promptArgs ?? {}) as Record<string, string>);
+  const typedArgs = (promptArgs ?? {}) as Record<string, string>;
+
+  if (isDebugPrompt(name)) {
+    return renderDebugPrompt(name, typedArgs);
+  }
+  if (isLSEPrompt(name)) {
+    return renderLSEPrompt(name, typedArgs);
+  }
+  return renderLLMPrompt(name, typedArgs);
 });
 
 // =============================================================================

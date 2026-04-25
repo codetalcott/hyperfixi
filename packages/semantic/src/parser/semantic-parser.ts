@@ -14,6 +14,7 @@ import type {
   ActionType,
   LanguagePattern,
   LanguageToken,
+  Diagnostic,
 } from '../types';
 import {
   createCommandNode,
@@ -31,9 +32,51 @@ import {
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage, tryGetProfile } from '../registry';
 import { patternMatcher } from './pattern-matcher';
-import { eventNameTranslations } from '../patterns/event-handler/shared';
+import { eventNameTranslations } from '../patterns/event-handler';
 import { render as renderExplicitFn } from '../explicit/renderer';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
+
+// =============================================================================
+// Parse Error with Diagnostics (Phase 3.4)
+// =============================================================================
+
+/**
+ * Error thrown when semantic parsing fails.
+ * Contains structured diagnostics from each fallback stage.
+ */
+export class SemanticParseError extends Error {
+  readonly diagnostics: readonly Diagnostic[];
+  readonly language: string;
+  readonly input: string;
+
+  constructor(
+    message: string,
+    language: string,
+    input: string,
+    diagnostics: readonly Diagnostic[]
+  ) {
+    super(message);
+    this.name = 'SemanticParseError';
+    this.language = language;
+    this.input = input;
+    this.diagnostics = diagnostics;
+  }
+}
+
+/** Helper to create a parse diagnostic */
+function parseDiagnostic(
+  message: string,
+  severity: 'error' | 'warning' | 'info',
+  code?: string
+): Diagnostic {
+  return { message, severity, source: 'semantic-parser', ...(code && { code }) };
+}
+
+/** Attach diagnostics to a semantic node */
+function withDiagnostics<T extends SemanticNode>(node: T, diagnostics: Diagnostic[]): T {
+  if (diagnostics.length === 0) return node;
+  return { ...node, diagnostics } as T;
+}
 
 // =============================================================================
 // Semantic Parser Implementation
@@ -42,11 +85,15 @@ import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 export class SemanticParserImpl implements ISemanticParser {
   /**
    * Parse input in the specified language to a semantic node.
+   * Accumulates diagnostics from each fallback stage (Phase 3.4).
    */
   parse(input: string, language: string): SemanticNode {
     // Extract standalone event modifiers (once, debounced, throttled) from input
     const { modifiers, remainingInput } = this.extractStandaloneModifiers(input, language);
     const parseInput = remainingInput || input;
+
+    // Diagnostics accumulator (Phase 3.4)
+    const diagnostics: Diagnostic[] = [];
 
     // Tokenize the input
     const tokens = tokenizeInternal(parseInput, language);
@@ -55,48 +102,109 @@ export class SemanticParserImpl implements ISemanticParser {
     const patterns = getPatternsForLanguage(language);
 
     if (patterns.length === 0) {
-      throw new Error(`No patterns available for language: ${language}`);
+      throw new SemanticParseError(
+        `No patterns available for language: ${language}`,
+        language,
+        parseInput,
+        [
+          parseDiagnostic(
+            `No patterns registered for language '${language}'`,
+            'error',
+            'no-patterns'
+          ),
+        ]
+      );
     }
 
     // Sort patterns by priority (descending)
     const sortedPatterns = [...patterns].sort((a, b) => b.priority - a.priority);
 
-    // Try to match event handler patterns first (they wrap commands)
+    // Stage 1: Try event handler patterns first (they wrap commands)
     const eventPatterns = sortedPatterns.filter(p => p.command === 'on');
     const eventMatch = patternMatcher.matchBest(tokens, eventPatterns);
 
     if (eventMatch) {
+      diagnostics.push(
+        parseDiagnostic(
+          `event pattern matched: ${eventMatch.pattern.id} (confidence: ${eventMatch.confidence.toFixed(2)})`,
+          'info',
+          'pattern-match'
+        )
+      );
       const handler = this.buildEventHandler(eventMatch, tokens, language);
-      return modifiers ? this.applyModifiers(handler, modifiers) : handler;
+      const result = modifiers ? this.applyModifiers(handler, modifiers) : handler;
+      return withDiagnostics(result, diagnostics);
     }
+    diagnostics.push(
+      parseDiagnostic(
+        `event patterns: ${eventPatterns.length} tried, no match`,
+        'info',
+        'stage-event'
+      )
+    );
 
-    // Try command patterns
+    // Stage 2: Try command patterns
     const commandPatterns = sortedPatterns.filter(p => p.command !== 'on');
     const commandMatch = patternMatcher.matchBest(tokens, commandPatterns);
 
     if (commandMatch) {
-      return this.buildCommand(commandMatch, language);
+      diagnostics.push(
+        parseDiagnostic(
+          `command pattern matched: ${commandMatch.pattern.id} (confidence: ${commandMatch.confidence.toFixed(2)})`,
+          'info',
+          'pattern-match'
+        )
+      );
+      return withDiagnostics(this.buildCommand(commandMatch, language), diagnostics);
     }
+    diagnostics.push(
+      parseDiagnostic(
+        `command patterns: ${commandPatterns.length} tried, no match`,
+        'info',
+        'stage-command'
+      )
+    );
 
-    // Try SOV event trigger extraction: detect embedded event keywords
-    // (e.g., "クリック で" in JA, "클릭 에" in KO, "tıklama de" in TR)
-    // and extract them to parse the remaining tokens as command body
+    // Stage 3: Try SOV event trigger extraction
     const sovResult = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
     if (sovResult) {
-      return modifiers
+      diagnostics.push(parseDiagnostic('SOV event extraction succeeded', 'info', 'stage-sov'));
+      const result = modifiers
         ? this.applyModifiers(sovResult as EventHandlerSemanticNode, modifiers)
         : sovResult;
+      return withDiagnostics(result, diagnostics);
     }
+    diagnostics.push(
+      parseDiagnostic('SOV event extraction: no event keyword found', 'info', 'stage-sov')
+    );
 
-    // Fallback: try parsing as multi-command compound (no event wrapper).
-    // This handles patterns like "put X into Y then set Z to W" that have
-    // then-keywords but no event trigger (e.g., custom events not in KNOWN_EVENTS).
+    // Stage 4: Fallback compound command parsing
     const compoundResult = this.tryCompoundCommandParsing(tokens, commandPatterns, language);
     if (compoundResult) {
-      return compoundResult;
+      diagnostics.push(
+        parseDiagnostic('compound command parsing succeeded', 'info', 'stage-compound')
+      );
+      return withDiagnostics(compoundResult, diagnostics);
     }
+    diagnostics.push(
+      parseDiagnostic(
+        'compound parsing: no then-keywords or no command matches',
+        'info',
+        'stage-compound'
+      )
+    );
 
-    throw new Error(`Could not parse input in ${language}: ${parseInput}`);
+    // All stages failed
+    diagnostics.push(
+      parseDiagnostic(`all parse stages exhausted for "${parseInput}"`, 'error', 'parse-failed')
+    );
+
+    throw new SemanticParseError(
+      `Could not parse input in ${language}: ${parseInput}`,
+      language,
+      parseInput,
+      diagnostics
+    );
   }
 
   /**
@@ -1415,4 +1523,45 @@ export function fromExplicit(input: string, targetLang: string): string {
 export function roundTrip(input: string, language: string): string {
   const explicit = toExplicit(input, language);
   return fromExplicit(explicit, language);
+}
+
+// =============================================================================
+// Language Auto-Detection (Phase 5.1)
+// =============================================================================
+
+import { detectLanguage, type LanguageDetectionResult } from './language-detector';
+
+export interface AutoDetectParseResult {
+  /** The parsed semantic node */
+  readonly node: SemanticNode;
+  /** The detected language code */
+  readonly language: string;
+  /** Detection confidence (0-1) */
+  readonly confidence: number;
+  /** Full detection result */
+  readonly detection: LanguageDetectionResult;
+}
+
+/**
+ * Parse hyperscript input with automatic language detection.
+ *
+ * Uses Nearley-based detection (Phase 5.1) to determine the input
+ * language, then parses with the detected language.
+ *
+ * @param input - Hyperscript code in any supported language
+ * @param registeredLanguages - Optional set of languages to limit detection to
+ * @returns Parsed node with detected language metadata
+ */
+export function parseAutoDetect(
+  input: string,
+  registeredLanguages?: ReadonlySet<string>
+): AutoDetectParseResult {
+  const detection = detectLanguage(input, registeredLanguages);
+  const node = parse(input, detection.language);
+  return {
+    node,
+    language: detection.language,
+    confidence: detection.confidence,
+    detection,
+  };
 }

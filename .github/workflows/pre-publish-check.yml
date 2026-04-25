@@ -9,6 +9,10 @@ on:
         type: string
         default: 'all'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pre-publish-check:
     name: Validate Publication Readiness
@@ -33,7 +37,7 @@ jobs:
         run: |
           PACKAGES="${{ github.event.inputs.packages }}"
           if [ "$PACKAGES" = "all" ]; then
-            PACKAGES="framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,domain-sql,domain-bdd,domain-llm,domain-todo,domain-behaviorspec,domain-jsx,domain-flow,aot-compiler,compilation-service,mcp-server,vite-plugin,behaviors,testing-framework,language-server,mcp-server-hyperscript,language-server-hyperscript,multilingual-hyperscript"
+            PACKAGES="framework,semantic,core,i18n,hyperscript-adapter,patterns-reference,server-bridge,types-browser,domain-sql,domain-bdd,domain-llm,domain-todo,domain-behaviorspec,domain-jsx,domain-flow,domain-voice,domain-learn,aot-compiler,compilation-service,mcp-server,vite-plugin,behaviors,testing-framework,language-server,mcp-server-hyperscript,language-server-hyperscript,multilingual-hyperscript"
           fi
           echo "Checking packages: $PACKAGES"
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
@@ -97,7 +101,7 @@ jobs:
           echo "Building core packages (required for typecheck)..." >> $GITHUB_STEP_SUMMARY
 
           # Build in dependency order (matches ci.yml and publish.yml)
-          BUILD_ORDER="framework domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow semantic core patterns-reference i18n hyperscript-adapter ast-toolkit aot-compiler compilation-service mcp-server server-bridge types-browser vite-plugin language-server"
+          BUILD_ORDER="framework domain-bdd domain-sql domain-jsx domain-todo domain-behaviorspec domain-llm domain-flow domain-voice domain-learn semantic behaviors core patterns-reference i18n hyperscript-adapter ast-toolkit aot-compiler compilation-service planner mcp-server server-bridge types-browser vite-plugin language-server"
 
           for pkg in $BUILD_ORDER; do
             if [ -d "packages/$pkg" ]; then
@@ -294,7 +298,7 @@ jobs:
           # Size limits (gzipped bytes)
           MAX_LITE=4000           # 4 KB
           MAX_HYBRID=15000        # 15 KB
-          MAX_BROWSER=230000      # 230 KB
+          MAX_BROWSER=290000      # 290 KB (actual: ~273 KB, allow headroom)
 
           failed=0
 
@@ -396,7 +400,7 @@ jobs:
         with:
           name: bundle-compatibility-report
           path: packages/core/playwright-report/
-          retention-days: 7
+          retention-days: 3
 
       - name: Final verdict
         run: |

@@ -7,6 +7,17 @@ import { debug } from '../utils/debug';
 import type { ExecutionContext, TypedExecutionContext, ASTNode } from '../types/base-types';
 import { tokenize } from './tokenizer';
 import type { Token } from './tokenizer';
+import {
+  mergeFragments,
+  CORE_FRAGMENT,
+  PARSER_COMPARISON_FRAGMENT,
+  STOP_TOKENS as PRATT_STOP_TOKENS,
+  STOP_DELIMITERS as PRATT_STOP_DELIMITERS,
+  type BindingPowerFragment,
+  type BindingPowerEntry,
+  leftAssoc,
+  prefix,
+} from './pratt-parser';
 // Phase 7: Import token predicates for full TokenType removal
 import {
   isIdentifierLike,
@@ -170,7 +181,7 @@ function parseArguments(state: ParseState): ASTNode[] {
   const args: ASTNode[] = [];
   let currentToken = peek(state);
   while (currentToken && currentToken.value !== ')') {
-    const arg = parseLogicalExpression(state);
+    const arg = prattParseExpr(state, 0);
     args.push(arg);
     currentToken = peek(state);
     if (currentToken && currentToken.value === ',') {
@@ -258,7 +269,7 @@ function parseExpression(tokens: Token[]): ASTNode {
     throw new ExpressionParseError('Empty expression');
   }
 
-  const ast = parseLogicalExpression(state);
+  const ast = prattParseExpr(state, 0);
 
   // Ensure we've consumed all tokens
   if (state.position < tokens.length) {
@@ -271,269 +282,190 @@ function parseExpression(tokens: Token[]): ASTNode {
   return ast;
 }
 
-/**
- * Parse logical expressions (and, or, not) with proper operator precedence
- * Handles standard logical precedence: and (4) before or (3)
- */
-function parseLogicalExpression(state: ParseState): ASTNode {
-  return parseLogicalExpressionWithPrecedence(state, 3); // Start with lowest logical precedence (or)
-}
+// =============================================================================
+// Pratt Expression Parser (Phase 2.2b)
+// Replaces ~250 lines of precedence climbing with a single data-driven loop.
+// =============================================================================
 
 /**
- * Precedence climbing for logical expressions
- * Precedence levels:
- * - OR (or): 3
- * - AND (and): 4
- * - NOT (not): handled separately as unary
+ * Expression-parser binding power table.
+ * Extends CORE + PARSER_COMPARISON with a custom 'as' handler for parameterized types.
  */
-function parseLogicalExpressionWithPrecedence(state: ParseState, minPrecedence: number): ASTNode {
-  let left = parseComparisonExpression(state);
-
-  while (state.position < state.tokens.length) {
-    const token = state.tokens[state.position];
-
-    if (isLogicalOperator(token) && isLogicalBinaryOperator(token.value)) {
-      const operator = token.value;
-      const precedence = getLogicalOperatorPrecedence(operator);
-
-      // Stop if this operator has lower precedence than minimum required
-      if (precedence < minPrecedence) {
-        break;
-      }
-
-      state.position++; // consume operator
-
-      // All logical operators are left-associative, so use precedence + 1
-      const nextMinPrecedence = precedence + 1;
-      const right = parseLogicalExpressionWithPrecedence(state, nextMinPrecedence);
-
-      left = {
-        type: 'binaryExpression',
-        operator,
-        left,
-        right,
-        ...(left.start !== undefined && { start: left.start }),
-        ...(right.end !== undefined && { end: right.end }),
-      };
-    } else {
-      break;
-    }
-  }
-
-  return left;
-}
-
-/**
- * Check if operator is a binary logical operator
- */
-function isLogicalBinaryOperator(operator: string): boolean {
-  return ['and', 'or', '&&', '||'].includes(operator);
-}
-
-/**
- * Get logical operator precedence
- */
-function getLogicalOperatorPrecedence(operator: string): number {
-  switch (operator) {
-    case 'or':
-    case '||':
-      return 3;
-    case 'and':
-    case '&&':
-      return 4;
-    default:
-      return 0;
-  }
-}
-
-/**
- * Parse comparison expressions (>, <, ==, etc.)
- */
-function parseComparisonExpression(state: ParseState): ASTNode {
-  let left = parseArithmeticExpression(state);
-
-  while (state.position < state.tokens.length) {
-    const token = state.tokens[state.position];
-
-    if (
-      isComparisonOperator(token) ||
-      (isKeyword(token) && ['is', 'equals'].includes(token.value))
-    ) {
-      const operator = token.value;
-      state.position++; // consume operator
-
-      // Handle unary operators that don't need a right operand
-      if (['exists', 'does not exist', 'is empty', 'is not empty'].includes(operator)) {
-        left = {
-          type: 'unaryExpression',
-          operator,
-          operand: left,
-          ...(left.start !== undefined && { start: left.start }),
-          end: token.end,
-        };
-      }
-      // Handle multi-word operators like "is not"
-      else if (operator === 'is' && peek(state)?.value === 'not') {
-        state.position++; // consume 'not'
-        const right = parseArithmeticExpression(state);
-        left = {
-          type: 'binaryExpression',
-          operator: 'is not',
-          left,
-          right,
-          ...(left.start !== undefined && { start: left.start }),
-          ...(right.end !== undefined && { end: right.end }),
-        };
-      } else {
-        const right = parseArithmeticExpression(state);
-        left = {
-          type: 'binaryExpression',
-          operator,
-          left,
-          right,
-          ...(left.start !== undefined && { start: left.start }),
-          ...(right.end !== undefined && { end: right.end }),
-        };
-      }
-    } else {
-      break;
-    }
-  }
-
-  return left;
-}
-
-/**
- * Parse arithmetic expressions (+, -, *, /, %) with proper operator precedence
- * Handles standard math precedence: multiplication/division (7) before addition/subtraction (6)
- */
-function parseArithmeticExpression(state: ParseState): ASTNode {
-  return parseArithmeticExpressionWithPrecedence(state, 6); // Start with lowest math precedence
-}
-
-/**
- * Precedence climbing for arithmetic expressions
- * Precedence levels:
- * - Addition/Subtraction (+, -): 6
- * - Multiplication/Division/Modulo (*, /, mod): 7
- * - Exponentiation (^, **): 8
- */
-function parseArithmeticExpressionWithPrecedence(
-  state: ParseState,
-  minPrecedence: number
-): ASTNode {
-  let left = parseAsExpression(state);
-
-  while (state.position < state.tokens.length) {
-    const token = state.tokens[state.position];
-
-    if (isBasicOperator(token) && isArithmeticOperator(token.value)) {
-      const operator = token.value;
-      const precedence = getArithmeticOperatorPrecedence(operator);
-
-      // Stop if this operator has lower precedence than minimum required
-      if (precedence < minPrecedence) {
-        break;
-      }
-
-      state.position++; // consume operator
-
-      // For right-associative operators (like ^), use same precedence
-      // For left-associative operators, use precedence + 1 to ensure left-to-right
-      const nextMinPrecedence = isRightAssociative(operator) ? precedence : precedence + 1;
-      const right = parseArithmeticExpressionWithPrecedence(state, nextMinPrecedence);
-
-      left = {
-        type: 'binaryExpression',
-        operator,
-        left,
-        right,
-        ...(left.start !== undefined && { start: left.start }),
-        ...(right.end !== undefined && { end: right.end }),
-      };
-    } else {
-      break;
-    }
-  }
-
-  return left;
-}
-
-/**
- * Check if operator is arithmetic
- */
-function isArithmeticOperator(operator: string): boolean {
-  return ['+', '-', '*', '/', '%', '^', '**', 'mod'].includes(operator);
-}
-
-/**
- * Get arithmetic operator precedence
- */
-function getArithmeticOperatorPrecedence(operator: string): number {
-  switch (operator) {
-    case '+':
-    case '-':
-      return 6;
-    case '*':
-    case '/':
-    case '%':
-    case 'mod':
-      return 7;
-    case '^':
-    case '**':
-      return 8;
-    default:
-      return 0;
-  }
-}
-
-/**
- * Check if operator is right-associative
- */
-function isRightAssociative(operator: string): boolean {
-  return ['^', '**'].includes(operator); // Exponentiation is right-associative
-}
-
-/**
- * Parse 'as' type conversion expressions
- */
-function parseAsExpression(state: ParseState): ASTNode {
-  let left = parsePossessiveExpression(state);
-
-  while (state.position < state.tokens.length) {
-    const token = state.tokens[state.position];
-
-    if (isKeyword(token) && token.value === 'as') {
-      state.position++; // consume 'as'
-
-      const typeToken = advance(state);
-      if (!typeToken) {
-        throw new ExpressionParseError('Expected type after "as"');
-      }
-
-      // Handle parameterized types like "Fixed:2"
-      let typeName = typeToken.value;
-      if (peek(state)?.value === ':') {
-        state.position++; // consume ':'
-        const paramToken = advance(state);
-        if (paramToken) {
-          typeName += ':' + paramToken.value;
+const EXPR_AS_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerEntry>([
+  [
+    'as',
+    leftAssoc(70, (left, _token, ctx) => {
+      const readTypeName = (): { name: string; end: number | undefined } => {
+        const typeToken = ctx.advance();
+        if (!typeToken) {
+          throw new ExpressionParseError('Expected type after "as"');
         }
-      }
+        // Handle parameterized types like "Fixed:2"
+        let typeName = typeToken.value;
+        let end = typeToken.end;
+        if (ctx.peek()?.value === ':') {
+          ctx.advance(); // consume ':'
+          const paramToken = ctx.advance();
+          if (paramToken) {
+            typeName += ':' + paramToken.value;
+            end = paramToken.end;
+          }
+        }
+        return { name: typeName, end };
+      };
 
-      left = {
+      const first = readTypeName();
+      let node: Record<string, unknown> = {
         type: 'asExpression',
         expression: left,
-        targetType: typeName,
+        targetType: first.name,
         ...(left.start !== undefined && { start: left.start }),
-        end: typeToken.end,
+        end: first.end,
       };
-    } else {
+
+      // Pipe operator `|` chains conversions left-to-right (upstream 0.9.90).
+      // `form as Values | FormEncoded` parses as
+      // `(form as Values) as FormEncoded`.
+      while (ctx.peek()?.value === '|') {
+        ctx.advance(); // consume '|'
+        const next = readTypeName();
+        node = {
+          type: 'asExpression',
+          expression: node,
+          targetType: next.name,
+          ...(node.start !== undefined && { start: node.start }),
+          end: next.end,
+        };
+      }
+
+      return node as never;
+    }) as BindingPowerEntry,
+  ],
+]);
+
+/** Positional prefix fragment for expression-parser (first/last with argument handling). */
+const EXPR_POSITIONAL_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerEntry>([
+  [
+    'first',
+    prefix(85, (token, ctx) => {
+      const nextToken = ctx.peek();
+      if (nextToken) {
+        const operand = ctx.parseExpr(85);
+        return {
+          type: 'positionalExpression',
+          operator: token.value,
+          argument: operand,
+          start: token.start,
+          ...(operand.end !== undefined && { end: operand.end }),
+        };
+      }
+      return {
+        type: 'positionalExpression',
+        operator: token.value,
+        argument: null,
+        start: token.start,
+        end: token.end,
+      };
+    }) as BindingPowerEntry,
+  ],
+  [
+    'last',
+    prefix(85, (token, ctx) => {
+      const nextToken = ctx.peek();
+      if (nextToken) {
+        const operand = ctx.parseExpr(85);
+        return {
+          type: 'positionalExpression',
+          operator: token.value,
+          argument: operand,
+          start: token.start,
+          ...(operand.end !== undefined && { end: operand.end }),
+        };
+      }
+      return {
+        type: 'positionalExpression',
+        operator: token.value,
+        argument: null,
+        start: token.start,
+        end: token.end,
+      };
+    }) as BindingPowerEntry,
+  ],
+]);
+
+const EXPR_TABLE = mergeFragments(
+  CORE_FRAGMENT,
+  PARSER_COMPARISON_FRAGMENT,
+  EXPR_AS_FRAGMENT,
+  EXPR_POSITIONAL_FRAGMENT
+);
+
+/**
+ * Pratt expression parser for standalone expression evaluation.
+ * Replaces the cascading parseLogicalExpression → parseComparisonExpression →
+ * parseArithmeticExpression → parseAsExpression chain.
+ *
+ * @param state - Parser state (tokens + position)
+ * @param minBp - Minimum binding power to continue parsing infix operators
+ */
+function prattParseExpr(state: ParseState, minBp: number): ASTNode {
+  // --- NUD (prefix / atom) ---
+  const firstToken = peek(state);
+  if (!firstToken) {
+    throw new ExpressionParseError('Unexpected end of expression');
+  }
+
+  const prefixEntry = EXPR_TABLE.get(firstToken.value);
+  let left: ASTNode;
+
+  if (prefixEntry?.prefix) {
+    advance(state); // consume the prefix operator
+
+    // Create a PrattContext adapter for the handler
+    const ctx = makePrattCtx(state);
+    left = prefixEntry.prefix.handler(firstToken, ctx);
+  } else {
+    // Fallback: possessive chain → primary expression (atoms + postfix)
+    left = parsePossessiveExpression(state);
+  }
+
+  // --- LED (infix) loop ---
+  while (state.position < state.tokens.length) {
+    const nextToken = state.tokens[state.position];
+
+    // Check infix table first (handles 'in' dual role)
+    const infixEntry = EXPR_TABLE.get(nextToken.value);
+    if (!infixEntry?.infix) {
+      // Not an operator — stop at delimiters
+      if (PRATT_STOP_DELIMITERS.has(nextToken.value)) break;
       break;
     }
+
+    const [leftBp] = infixEntry.infix.bp;
+    if (leftBp < minBp) break;
+
+    advance(state); // consume the infix operator
+
+    const ctx = makePrattCtx(state);
+    left = infixEntry.infix.handler(left, nextToken, ctx);
   }
 
   return left;
+}
+
+/** Create a PrattContext adapter that bridges ParseState to the Pratt handler interface. */
+function makePrattCtx(state: ParseState) {
+  return {
+    peek: () => peek(state),
+    advance: () => advance(state)!,
+    parseExpr: (bp: number) => prattParseExpr(state, bp),
+    isStopToken: () => {
+      const t = peek(state);
+      if (!t) return true;
+      return PRATT_STOP_TOKENS.has(t.value) || PRATT_STOP_DELIMITERS.has(t.value);
+    },
+    atEnd: () => state.position >= state.tokens.length,
+  };
 }
 
 /**
@@ -735,7 +667,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
           continue;
         }
 
-        const endIndex = parseLogicalExpression(state);
+        const endIndex = prattParseExpr(state, 0);
         const closeToken = advance(state);
         if (!closeToken || closeToken.value !== ']') {
           throw new ExpressionParseError('Expected closing bracket after range');
@@ -751,7 +683,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       }
 
       // Parse potential start index
-      const startIndex = parseLogicalExpression(state);
+      const startIndex = prattParseExpr(state, 0);
 
       // Check for '..' after start index
       const afterStart = peek(state);
@@ -773,7 +705,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         }
 
         // Parse end index for [start..end]
-        const endIndex = parseLogicalExpression(state);
+        const endIndex = prattParseExpr(state, 0);
         const closeToken = advance(state);
         if (!closeToken || closeToken.value !== ']') {
           throw new ExpressionParseError('Expected closing bracket after range');
@@ -843,99 +775,14 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     throw new ExpressionParseError('Unexpected end of expression');
   }
 
-  // Handle unary operators (not, no, !, -, +)
-  if (isLogicalOperator(token) && (token.value === 'not' || token.value === 'no')) {
-    advance(state); // consume 'not' or 'no'
-    const operand = parsePrimaryExpression(state);
-    return {
-      type: 'unaryExpression',
-      operator: token.value,
-      operand,
-      start: token.start,
-      ...(operand.end !== undefined && { end: operand.end }),
-    };
-  }
-
-  // Handle positional expressions (first, last) - these can take arguments
-  if (isIdentifier(token) && (token.value === 'first' || token.value === 'last')) {
-    const operatorToken = advance(state)!; // consume 'first' or 'last'
-
-    // Check if there's an argument (like '.test-item' in 'first .test-item')
-    const nextToken = peek(state);
-    if (
-      nextToken &&
-      (isClassSelector(nextToken) ||
-        isIdSelector(nextToken) ||
-        isQueryReference(nextToken) ||
-        isIdentifier(nextToken) ||
-        // Handle case where tokenizer split '.test-item' into '.' + 'test-item'
-        (isBasicOperator(nextToken) && nextToken.value === '.'))
-    ) {
-      // Special handling for dot followed by identifier (CSS class selector)
-      if (isBasicOperator(nextToken) && nextToken.value === '.') {
-        advance(state); // consume '.'
-        const identifierToken = peek(state);
-        if (identifierToken && isIdentifier(identifierToken)) {
-          advance(state); // consume identifier
-          // Create a synthetic class selector argument
-          const argument = {
-            type: 'cssSelector',
-            selectorType: 'class',
-            selector: '.' + identifierToken.value,
-            start: nextToken.start,
-            end: identifierToken.end,
-          };
-          return {
-            type: 'positionalExpression',
-            operator: operatorToken.value,
-            argument,
-            start: operatorToken.start,
-            end: argument.end,
-          };
-        }
-      } else {
-        // Parse the argument expression normally
-        const argument = parsePrimaryExpression(state);
-        return {
-          type: 'positionalExpression',
-          operator: operatorToken.value,
-          argument,
-          start: operatorToken.start,
-          ...(argument.end !== undefined && { end: argument.end }),
-        };
-      }
-    }
-
-    // No argument - just the positional expression on its own (operates on context.it)
-    return {
-      type: 'positionalExpression',
-      operator: operatorToken.value,
-      argument: null,
-      start: operatorToken.start,
-      end: operatorToken.end,
-    };
-  }
-
-  // Handle unary minus, plus, and negation operators
-  if (
-    isBasicOperator(token) &&
-    (token.value === '-' || token.value === '+' || token.value === '!')
-  ) {
-    advance(state); // consume operator
-    const operand = parsePrimaryExpression(state);
-    return {
-      type: 'unaryExpression',
-      operator: token.value,
-      operand,
-      start: token.start,
-      ...(operand.end !== undefined && { end: operand.end }),
-    };
-  }
+  // NOTE: Unary prefix operators (not, no, !, -, +) and positional expressions
+  // (first, last) are now handled by the Pratt NUD phase in prattParseExpr().
+  // parsePrimaryExpression is only reached for atoms (literals, identifiers, selectors, etc.)
 
   // Parenthesized expressions
   if (token.value === '(') {
     state.position++; // consume '('
-    const expr = parseLogicalExpression(state);
+    const expr = prattParseExpr(state, 0);
     const closeToken = advance(state);
     if (!closeToken || closeToken.value !== ')') {
       throw new ExpressionParseError('Expected closing parenthesis');
@@ -1086,7 +933,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
       }
 
       // Parse value
-      const value = parseLogicalExpression(state);
+      const value = prattParseExpr(state, 0);
 
       properties.push({ key, value });
 
@@ -1196,7 +1043,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
 
         // Parse array elements
         do {
-          elements.push(parseLogicalExpression(state));
+          elements.push(prattParseExpr(state, 0));
 
           if (peek(state)?.value === ',') {
             advance(state); // consume ','
@@ -1218,7 +1065,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
         };
       } else {
         // Handle as bracket expression [expr]
-        const expr = parseLogicalExpression(state);
+        const expr = prattParseExpr(state, 0);
         const closeToken = advance(state);
         if (!closeToken || closeToken.value !== ']') {
           throw new ExpressionParseError('Expected closing bracket');

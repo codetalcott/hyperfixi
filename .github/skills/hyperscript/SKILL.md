@@ -1,174 +1,164 @@
 ---
-name: hyperscript-developer
-version: 1.3.0
-description: Write hyperscript code for interactive web UIs. Use when user asks for toggles, modals, form validation, loading states, or other DOM interactions.
+name: hyperscript-i18n
+description: 'Adds multilingual support to the original _hyperscript runtime (hyperscript.org) via the @lokascript/hyperscript-adapter preprocessor. Use when user has an existing _hyperscript project and wants to write code in non-English languages.'
 ---
 
-# HyperFixi Hyperscript Developer
+# \_hyperscript Multilingual Adapter
 
-You are an expert at writing hyperscript code for interactive web interfaces. Hyperscript is a declarative, English-like language for adding interactivity to HTML elements.
+Add 24-language support to the original `_hyperscript` runtime via the `@lokascript/hyperscript-adapter` preprocessor plugin. Existing English code works unchanged -- the adapter only translates non-English `_="..."` attributes before the standard parser runs.
 
-## When to Use This Skill
+## When to Use
 
-**Use hyperscript for:**
+- User has an existing `_hyperscript` project and wants multilingual support
+- User wants to write `_hyperscript` in their native language (Spanish, Japanese, Arabic, etc.)
+- User asks about integrating LokaScript i18n with original `_hyperscript`
+- User needs bundle recommendations for `_hyperscript` + adapter
 
-- Toggles, show/hide, accordions
-- Modal dialogs, dropdowns, tabs
-- Form validation and submission
-- Loading states and animations
-- Debounced search, infinite scroll
-- Any DOM manipulation triggered by user events
+**For HyperFixi's own semantic engine**, see the `hyperfixi-developer` skill instead.
 
-**Do NOT use hyperscript for:**
+## Workflow
 
-- Complex state management (use React/Vue/Svelte)
-- Heavy computation or data processing
-- Server-side logic
-- More than ~10 commands in one handler
+### 1. Choose the Right Bundle
 
-## Workflow (Follow This Order)
+| Bundle                                  | Size      | Languages                        | Use When                             |
+| --------------------------------------- | --------- | -------------------------------- | ------------------------------------ |
+| `hyperscript-i18n-{lang}.global.js`     | 85-101 KB | Single language                  | Most projects -- one target audience |
+| `hyperscript-i18n-western.global.js`    | 146 KB    | es, pt, fr, de                   | Western European audience            |
+| `hyperscript-i18n-east-asian.global.js` | 146 KB    | ja, ko, zh                       | East Asian audience                  |
+| `hyperscript-i18n.global.js`            | 568 KB    | All 24                           | Full multilingual support            |
+| `hyperscript-i18n-lite.global.js`       | 2 KB      | (needs external semantic bundle) | Minimal footprint                    |
 
-### 1. Understand the Task
-
-Before writing code, identify:
-
-- What DOM elements are involved?
-- What events trigger the behavior?
-- What should happen when triggered?
-
-### 2. Find the Right Command
-
-If `@lokascript/mcp-server` is connected (multilingual support), use `suggest_command` with the task description:
+Use `get_bundle_config` with `runtime: "hyperscript"` for a recommendation:
 
 ```
-suggest_command({ task: "show a modal when button is clicked" })
+get_bundle_config({ runtime: "hyperscript", languages: ["es", "ja"], commands: ["toggle", "add"] })
 ```
 
-Otherwise, consult the [Commands Reference](./references/commands.md).
-
-### 3. Write the Code
-
-Hyperscript goes in `_="..."` attributes:
+### 2. Add the Scripts
 
 ```html
-<button _="on click toggle .active on #menu">Menu</button>
-<input _="on input put my value into #preview" />
-<form _="on submit.prevent fetch /api/save put 'Saved!' into #status"></form>
+<!-- 1. Original _hyperscript (from hyperscript.org) -->
+<script src="https://unpkg.com/hyperscript.org"></script>
+
+<!-- 2. Adapter bundle (auto-registers on load) -->
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@2/dist/hyperscript-i18n-es.global.js"></script>
 ```
 
-**Key syntax:**
+### 3. Set the Language
 
-- `on <event>` - Event handler
-- `me` - Current element
-- `it` - Last result
-- `:var` - Local variable
-- `#id` / `.class` - Selectors
+The adapter resolves language in order:
 
-### 4. Validate Before Returning
-
-**ALWAYS validate your code** before returning it to the user.
-
-If MCP server is connected:
-
-```
-validate_hyperscript({ code: "on click toggle .active" })
-```
-
-If validation fails, use `get_diagnostics` for detailed error locations.
-
-## Quick Reference
-
-| Need             | Command                                |
-| ---------------- | -------------------------------------- |
-| Show/hide        | `show #el`, `hide me`, `toggle .class` |
-| Add/remove class | `add .highlight`, `remove .error`      |
-| Set content      | `put "text" into #el`                  |
-| Set variable     | `set :count to 0`                      |
-| HTTP request     | `fetch /api as json`                   |
-| Delay            | `wait 500ms`                           |
-| Loop             | `repeat 5 times ... end`               |
-| Conditional      | `if :x > 0 ... else ... end`           |
-
-See [commands.md](./references/commands.md) for full reference.
-
-## Event Modifiers
+1. `data-lang` attribute on the element
+2. `data-hyperscript-lang` on nearest ancestor
+3. `<html lang="...">` on the document
+4. `defaultLanguage` plugin option
 
 ```html
-<!-- Prevent default -->
-<form _="on submit.prevent ...">
-  <!-- Run once -->
-  <button _="on click.once ...">
-    <!-- Debounce -->
-    <input _="on input.debounce(300ms) ..." />
+<!-- Per-element -->
+<button _="on click alternar .active en me" data-lang="es">Toggle</button>
 
-    <!-- Key combinations -->
-    <input _="on keydown.enter submit closest form" />
-    <input _="on keydown.ctrl.s.prevent call save()" />
-  </button>
-</form>
+<!-- Document-wide -->
+<html lang="es">
+  <button _="on click alternar .active en me">Toggle</button>
+</html>
 ```
 
-See [events.md](./references/events.md) for full reference.
+### 4. Validate the Translation
 
-## Common Mistakes (Avoid These)
+Use `translate_to_english` to preview what the adapter produces:
 
-1. **Using `click` on forms** - Use `submit` event instead
+```
+translate_to_english({ code: "alternar .active en me", sourceLanguage: "es" })
+  => { english: "toggle .active on me", confidence: 0.95 }
+```
 
-   ```html
-   <!-- Bad -->
-   <form _="on click ...">
-     <!-- Good -->
-     <form _="on submit.prevent ..."></form>
-   </form>
-   ```
+## Integration Patterns
 
-2. **Forgetting `.prevent`** - Form submissions navigate away by default
+### Browser (CDN)
 
-3. **Complex logic in attributes** - If code exceeds 5 lines, consider JavaScript
+```html
+<script src="https://unpkg.com/hyperscript.org"></script>
+<script src="https://unpkg.com/@lokascript/hyperscript-adapter@2/dist/hyperscript-i18n-es.global.js"></script>
+```
 
-4. **Not validating code** - Always use `validate_hyperscript` before returning
+### Node.js / Bundlers
 
-5. **Missing selectors** - Verify `#id` and `.class` exist in DOM
+```javascript
+import { hyperscriptI18n } from '@lokascript/hyperscript-adapter';
 
-## MCP Tools Available
+_hyperscript.use(
+  hyperscriptI18n({
+    defaultLanguage: 'ja',
+    confidenceThreshold: 0.6,
+    debug: true,
+  })
+);
+```
 
-When `@lokascript/mcp-server` is connected:
+### Programmatic Translation
 
-| Tool                    | When to Use                           |
-| ----------------------- | ------------------------------------- |
-| `suggest_command`       | Find the right command for a task     |
-| `get_examples`          | Get few-shot examples for user's task |
-| `validate_hyperscript`  | **Always use before returning code**  |
-| `get_diagnostics`       | Get detailed errors with line numbers |
-| `translate_hyperscript` | Convert between 24 languages          |
-| `explain_code`          | Explain existing hyperscript to user  |
+```javascript
+import { preprocess } from '@lokascript/hyperscript-adapter';
 
-## Multilingual Support
+const english = preprocess('トグル .active', 'ja');
+_hyperscript(english); // runs "toggle .active"
+```
 
-LokaScript supports 24 languages with native word order:
+## Confidence Thresholds
 
-| Language | Example                         |
-| -------- | ------------------------------- |
-| English  | `on click toggle .active`       |
-| Spanish  | `en clic alternar .active`      |
-| Japanese | `クリック で .active を トグル` |
-| Korean   | `클릭 시 .active 를 토글`       |
-| Arabic   | `بدّل .active عند نقر`          |
+SOV/VSO languages produce lower confidence scores. Tune per-language:
 
-Use `translate_hyperscript` to convert between languages.
+```javascript
+_hyperscript.use(
+  hyperscriptI18n({
+    confidenceThreshold: {
+      es: 0.7, // SVO -- tight gating
+      ja: 0.1, // SOV -- more permissive
+      ko: 0.05,
+      tr: 0.1,
+      ar: 0.3, // VSO
+      '*': 0.5, // default
+    },
+  })
+);
+```
 
-## Debugging
+If confidence is below the threshold, the original text passes through unchanged to the standard parser.
 
-If code doesn't work:
+## Common Mistakes
 
-1. Use `validate_hyperscript` to check syntax
-2. Add `log` command: `on click log me then toggle .active`
-3. Check browser console for errors
-4. Verify selectors exist in DOM
+1. **Forgetting the base script** -- the adapter is a plugin, not a replacement; load `_hyperscript` first
+2. **Wrong language code** -- use ISO codes (`es`, not `spa`; `ja`, not `jpn`)
+3. **Missing `data-lang`** -- without language hints, the adapter can't translate
+4. **SOV confidence too strict** -- Japanese/Korean/Turkish need lower thresholds than SVO languages
+5. **Using `_hyperscript("code")` programmatically** -- the plugin only intercepts DOM attributes; use `preprocess()` for programmatic calls
+6. **Translating feature declarations** -- `def` and `worker` must stay in English; command bodies inside them translate normally
 
-## Bundled References
+## Limitations
 
-- [Commands Reference](./references/commands.md) - All hyperscript commands
-- [Expressions Guide](./references/expressions.md) - Variables, selectors, comparisons
-- [Events Reference](./references/events.md) - Event handling and modifiers
-- [Common Patterns](./references/patterns.md) - Copy-paste examples
+- **Feature declarations** (`def`, `worker`) -- keep in English; `behavior` is supported
+- **Standalone expressions** -- boolean expressions outside command context don't translate
+- **~85% command coverage** -- matches HyperFixi's semantic pattern coverage of original `_hyperscript`
+
+## Troubleshooting
+
+| Issue                               | Cause                                                   | Fix                                                                     |
+| ----------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| "Translation unchanged" warning     | Wrong lang code, missing bundle, or unsupported command | Check `data-lang` matches ISO code; verify bundle includes the language |
+| SOV languages not translating       | Confidence threshold too high                           | Lower to `{ ja: 0.1, ko: 0.05 }`                                        |
+| Programmatic `_hyperscript()` fails | Plugin only intercepts DOM attributes                   | Use `preprocess(code, lang)` instead                                    |
+
+## MCP Tools
+
+| Tool                       | When to Use                                                  |
+| -------------------------- | ------------------------------------------------------------ |
+| `get_bundle_config`        | Get adapter bundle recommendation (`runtime: "hyperscript"`) |
+| `translate_to_english`     | Preview what the adapter translates to                       |
+| `parse_multilingual`       | Parse code in any language with confidence scores            |
+| `validate_hyperscript`     | Validate code syntax (any language)                          |
+| `explain_in_language`      | Explain what code does, with translations                    |
+| `list_supported_languages` | List all 24 languages with metadata                          |
+
+## References
+
+- [Adapter Setup Guide](./references/adapter-setup.md) -- Detailed integration for Django, Flask, Rails, etc.

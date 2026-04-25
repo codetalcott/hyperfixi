@@ -1,0 +1,45 @@
+{
+  "name": "@lokascript/explicit-syntax",
+  "version": "1.2.0",
+  "description": "Reference parser for the LokaScript Explicit Syntax (LSE) protocol",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "lokascript",
+    "lse",
+    "hyperscript",
+    "protocol",
+    "parser",
+    "explicit-syntax"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codetalcott/hyperfixi",
+    "directory": "protocol/typescript"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.0.17"
+  }
+}

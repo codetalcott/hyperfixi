@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LokaScript Multilingual Intent MCP Server</title>
+    <style>
+      :root {
+        --bg: #16213e;
+        --card: #1e1e2e;
+        --accent: #6366f1;
+        --accent2: #a78bfa;
+        --success: #10b981;
+        --warn: #f59e0b;
+        --err: #f87171;
+        --text: #e0e0e0;
+        --dim: #9ca3af;
+        --border: rgba(99, 102, 241, 0.3);
+        --mono: 'SF Mono', Menlo, Consolas, monospace;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e, var(--bg));
+        color: var(--text);
+        padding: 40px 20px;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+      .container { max-width: 920px; margin: 0 auto; }
+
+      /* Hero */
+      header { text-align: center; margin-bottom: 3rem; }
+      h1 {
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .tagline { color: var(--dim); font-size: 1rem; margin-bottom: 1rem; }
+      .hero-stat {
+        display: inline-flex; gap: 2rem; margin-top: 0.5rem;
+        font-size: 0.85rem; color: var(--accent2);
+      }
+      .hero-stat span { white-space: nowrap; }
+
+      /* Status banner */
+      .status {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 0.5rem;
+      }
+      .status.ok { background: rgba(16,185,129,0.1); border: 1px solid var(--success); color: var(--success); }
+      .status.off { background: rgba(248,113,113,0.1); border: 1px solid var(--err); color: var(--err); }
+      .status .dot {
+        width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      }
+      .status.ok .dot { background: var(--success); }
+      .status.off .dot { background: var(--err); }
+
+      /* Cards */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .card h2 {
+        margin-bottom: 1rem; font-size: 1.15rem; color: var(--accent2);
+      }
+      .card p { color: var(--dim); margin-bottom: 1rem; font-size: 0.9rem; }
+
+      /* Interactive demo */
+      .demo-row {
+        display: grid; grid-template-columns: 1fr auto; gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .demo-row input, .demo-row select {
+        padding: 0.6rem 0.75rem;
+        background: #0f0f1e; border: 2px solid #3d3d4d; border-radius: 6px;
+        color: var(--text); font-family: var(--mono); font-size: 0.9rem;
+      }
+      .demo-row input:focus, .demo-row select:focus {
+        outline: none; border-color: var(--accent);
+      }
+      .demo-row select { cursor: pointer; }
+      button.run {
+        padding: 0.6rem 1.2rem;
+        background: var(--accent); color: #fff; border: none; border-radius: 6px;
+        cursor: pointer; font-size: 0.85rem; font-weight: 500;
+        transition: background 0.2s;
+      }
+      button.run:hover { background: var(--accent2); }
+      button.run:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      /* Try-it-live example grid — curated click-to-run cards */
+      .try-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .try-item {
+        background: #252535; border: 1px solid #3d3d4d; border-radius: 10px;
+        padding: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem;
+      }
+      .try-head {
+        display: flex; align-items: center; gap: 0.4rem;
+        font-size: 0.78rem; color: var(--dim);
+      }
+      .try-head .flag { font-size: 1.1rem; }
+      .try-head .tl { color: var(--text); font-weight: 500; }
+      .try-head .td {
+        padding: 1px 7px; border-radius: 8px; font-size: 0.7rem;
+        font-family: var(--mono); background: var(--accent); color: #fff;
+      }
+      .try-head .tt {
+        padding: 1px 7px; border-radius: 8px; font-size: 0.7rem;
+        font-family: var(--mono); background: #3d3d4d; color: var(--accent2);
+        margin-left: auto;
+      }
+      .try-input {
+        background: #0f0f1e; border-radius: 5px; padding: 0.55rem 0.7rem;
+        font-family: var(--mono); font-size: 0.82rem; color: var(--accent2);
+        border-left: 3px solid var(--accent);
+        word-break: break-word;
+      }
+      .try-input.rtl { direction: rtl; text-align: right; border-left: none; border-right: 3px solid var(--accent); }
+      button.run-try {
+        align-self: flex-start; font-size: 0.8rem; padding: 0.4rem 0.9rem;
+      }
+      pre.try-out {
+        background: #0a0a14; border-radius: 5px; padding: 0.7rem;
+        font-family: var(--mono); font-size: 0.75rem; color: #a5d8ff;
+        overflow-x: auto; white-space: pre; line-height: 1.45;
+        border-left: 3px solid var(--success); margin: 0;
+      }
+      pre.try-out.error { border-left-color: var(--err); color: var(--err); }
+
+      details.byo {
+        margin-top: 1.25rem; padding-top: 1rem;
+        border-top: 1px solid #3d3d4d;
+      }
+      details.byo summary {
+        cursor: pointer; color: var(--accent2); font-size: 0.9rem;
+        font-weight: 500; padding: 0.25rem 0;
+      }
+      details.byo summary:hover { color: var(--text); }
+      details.byo[open] summary { margin-bottom: 0.5rem; }
+
+      /* JSON output */
+      pre.output {
+        background: #0a0a14; border-radius: 6px; padding: 1rem;
+        font-family: var(--mono); font-size: 0.8rem; color: #a5d8ff;
+        overflow-x: auto; line-height: 1.5; white-space: pre;
+        border-left: 3px solid var(--success);
+        min-height: 4em;
+      }
+      pre.output.error { border-left-color: var(--err); color: var(--err); }
+
+      /* Example cards grid */
+      .examples { display: grid; gap: 1rem; }
+      .example {
+        background: #252535; border-radius: 10px; overflow: hidden;
+        border: 1px solid #3d3d4d;
+      }
+      .example-header {
+        background: #2d2d3d; padding: 0.75rem 1rem;
+        display: flex; align-items: center; gap: 0.5rem;
+        font-size: 0.85rem; border-bottom: 1px solid #3d3d4d;
+      }
+      .example-header .flag { font-size: 1.2rem; }
+      .example-header .label { color: #fff; font-weight: 500; }
+      .example-header .badge {
+        margin-left: auto; padding: 2px 8px; border-radius: 10px;
+        font-size: 0.7rem; font-weight: 600;
+      }
+      .badge-same { background: var(--success); color: #fff; }
+      .badge-domain { background: var(--accent); color: #fff; }
+      .badge-rtl { background: var(--warn); color: #000; }
+      .example-body { padding: 1rem; }
+      .example-body .input-line {
+        font-family: var(--mono); font-size: 0.85rem; color: var(--accent2);
+        margin-bottom: 0.5rem;
+      }
+      .example-body .input-line.rtl { direction: rtl; text-align: right; }
+      .example-body .arrow { color: var(--dim); font-size: 0.8rem; margin-bottom: 0.5rem; }
+      .example-body pre {
+        background: #0a0a14; border-radius: 4px; padding: 0.75rem;
+        font-family: var(--mono); font-size: 0.75rem; color: #a5d8ff;
+        overflow-x: auto; white-space: pre;
+      }
+
+      /* Install tabs */
+      .tabs {
+        display: flex; gap: 0; margin-bottom: 0;
+      }
+      .tab {
+        padding: 0.5rem 1rem; background: #2d2d3d; color: var(--dim);
+        border: 1px solid #3d3d4d; border-bottom: none;
+        cursor: pointer; font-size: 0.8rem; font-weight: 500;
+        border-radius: 6px 6px 0 0; transition: all 0.2s;
+      }
+      .tab.active { background: #0a0a14; color: var(--accent2); border-color: var(--accent); }
+      .tab-content {
+        display: none; background: #0a0a14; border: 1px solid #3d3d4d;
+        border-radius: 0 6px 6px 6px; padding: 1rem;
+      }
+      .tab-content.active { display: block; }
+      .tab-content pre {
+        font-family: var(--mono); font-size: 0.78rem; color: #a5d8ff;
+        white-space: pre; overflow-x: auto; line-height: 1.5;
+      }
+      .tab-content .note {
+        margin-top: 0.75rem; font-size: 0.8rem; color: var(--dim);
+      }
+
+      /* Architecture */
+      .arch {
+        font-family: var(--mono); font-size: 0.75rem; color: var(--dim);
+        background: #0a0a14; border-radius: 6px; padding: 1rem;
+        overflow-x: auto; white-space: pre; line-height: 1.4;
+      }
+      .arch .hi { color: var(--accent2); }
+
+      /* Footer */
+      footer {
+        text-align: center; margin-top: 2rem; padding-top: 1.5rem;
+        border-top: 1px solid var(--border); color: var(--dim); font-size: 0.8rem;
+      }
+      footer a { color: var(--accent2); text-decoration: none; }
+      footer a:hover { text-decoration: underline; }
+
+      @media (max-width: 640px) {
+        .demo-row { grid-template-columns: 1fr; }
+        .hero-stat { flex-direction: column; gap: 0.25rem; }
+        .try-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Multilingual Intent MCP Server</h1>
+        <p class="tagline">
+          Your LLM coding agent now parses 24 languages natively.
+          Same intent, any language, identical output.
+        </p>
+        <div class="hero-stat">
+          <span>24 languages</span>
+          <span>8 domains</span>
+          <span>5 MCP tools</span>
+          <span>376 ms test suite</span>
+        </div>
+      </header>
+
+      <!-- Server status -->
+      <div class="status off" id="status">
+        <span class="dot"></span>
+        <span id="status-text">Checking server...</span>
+      </div>
+
+      <!-- Live demo -->
+      <div class="card">
+        <h2>Try it live</h2>
+        <p>
+          Click any example below to send it to the MCP server in real time.
+          Each card shows a <strong>representative intent</strong> (what an LLM agent would
+          say in natural language) and the <strong>expected tool</strong>. Output renders inline
+          so you can confirm the server parses, classifies, or compiles correctly.
+        </p>
+
+        <div class="try-grid">
+          <!-- 1. EN SQL compile -->
+          <div class="try-item" data-lang="en" data-tool="compile"
+               data-text="select name from users">
+            <div class="try-head">
+              <span class="flag">&#x1F1EC;&#x1F1E7;</span>
+              <span class="tl">English</span>
+              <span class="td">sql</span>
+              <span class="tt">compile</span>
+            </div>
+            <div class="try-input">select name from users</div>
+            <button class="run run-try" onclick="runTryItem(this)">Compile &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
+
+          <!-- 2. JA SQL compile — same output, different language -->
+          <div class="try-item" data-lang="ja" data-tool="compile"
+               data-text="users から name 選択">
+            <div class="try-head">
+              <span class="flag">&#x1F1EF;&#x1F1F5;</span>
+              <span class="tl">Japanese</span>
+              <span class="td">sql</span>
+              <span class="tt">compile</span>
+            </div>
+            <div class="try-input">users から name 選択</div>
+            <button class="run run-try" onclick="runTryItem(this)">Compile &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
+
+          <!-- 3. AR SQL compile — RTL, identifiers preserved -->
+          <div class="try-item" data-lang="ar" data-tool="compile"
+               data-text="اختر الاسم من المستخدمين">
+            <div class="try-head">
+              <span class="flag">&#x1F1F8;&#x1F1E6;</span>
+              <span class="tl">Arabic</span>
+              <span class="td">sql</span>
+              <span class="tt">compile</span>
+            </div>
+            <div class="try-input rtl">اختر الاسم من المستخدمين</div>
+            <button class="run run-try" onclick="runTryItem(this)">Compile &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
+
+          <!-- 4. EN BehaviorSpec detect — different domain -->
+          <div class="try-item" data-lang="en" data-tool="detect"
+               data-text="given page /home when click #submit then url contains /success">
+            <div class="try-head">
+              <span class="flag">&#x1F1EC;&#x1F1E7;</span>
+              <span class="tl">English</span>
+              <span class="td">behaviorspec</span>
+              <span class="tt">detect</span>
+            </div>
+            <div class="try-input">given page /home when click #submit then url contains /success</div>
+            <button class="run run-try" onclick="runTryItem(this)">Detect domain &rarr;</button>
+            <pre class="try-out" hidden></pre>
+          </div>
+        </div>
+
+        <details class="byo">
+          <summary>Or type your own input</summary>
+          <p style="font-size:0.85rem;color:var(--dim);margin:0.5rem 0 0.75rem;">
+            What the server understands: natural-language commands for one of 8 domains.
+            SQL needs a verb + table/columns (<code>select name from users</code>).
+            BDD/BehaviorSpec uses <code>given</code>/<code>when</code>/<code>then</code>.
+            Todo uses <code>add X to Y</code>. JSX uses <code>element X with attr Y</code>.
+            See the <a href="#tools-table" style="color:var(--accent2);">tools table</a>
+            for full schemas.
+          </p>
+          <div class="demo-row">
+            <input type="text" id="input" value="select name from users"
+                   placeholder="e.g. select name from users" />
+            <select id="lang">
+              <option value="en">EN</option>
+              <option value="ja">JA</option>
+              <option value="es">ES</option>
+              <option value="ar">AR</option>
+              <option value="ko">KO</option>
+              <option value="zh">ZH</option>
+              <option value="tr">TR</option>
+              <option value="fr">FR</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <button class="run" onclick="runTool('parse')">Parse intent</button>
+            <button class="run" onclick="runTool('detect')">Detect domain</button>
+            <button class="run" onclick="runTool('compile')">Compile</button>
+            <button class="run" onclick="runTool('examples')">Pattern examples</button>
+          </div>
+          <pre class="output" id="output">Click a button above to call the MCP server with your input.</pre>
+        </details>
+      </div>
+
+      <!-- Three examples -->
+      <div class="card">
+        <h2>Same intent, three languages, identical output</h2>
+        <p>
+          Each input below describes the same SQL query in a different language.
+          The MCP server normalizes all three to the same compiled SQL.
+          This is the core value: <strong>prompt_in_japanese === prompt_in_english</strong> for behavior.
+        </p>
+        <div class="examples">
+          <!-- English -->
+          <div class="example">
+            <div class="example-header">
+              <span class="flag">&#x1F1EC;&#x1F1E7;</span>
+              <span class="label">English (SVO)</span>
+              <span class="badge badge-same">BASELINE</span>
+            </div>
+            <div class="example-body">
+              <div class="input-line">select name from users</div>
+              <div class="arrow">compile_auto &rarr;</div>
+              <pre>{ "domain": "sql", "ok": true, "code": "SELECT name FROM users" }</pre>
+            </div>
+          </div>
+          <!-- Japanese -->
+          <div class="example">
+            <div class="example-header">
+              <span class="flag">&#x1F1EF;&#x1F1F5;</span>
+              <span class="label">Japanese (SOV)</span>
+              <span class="badge badge-same">IDENTICAL OUTPUT</span>
+            </div>
+            <div class="example-body">
+              <div class="input-line">users から name 選択</div>
+              <div class="arrow">compile_auto &rarr;</div>
+              <pre>{ "domain": "sql", "ok": true, "code": "SELECT name FROM users" }</pre>
+            </div>
+          </div>
+          <!-- Arabic -->
+          <div class="example">
+            <div class="example-header">
+              <span class="flag">&#x1F1F8;&#x1F1E6;</span>
+              <span class="label">Arabic (VSO, RTL)</span>
+              <span class="badge badge-rtl">RTL NATIVE</span>
+            </div>
+            <div class="example-body">
+              <div class="input-line rtl">اختر الاسم من المستخدمين</div>
+              <div class="arrow">compile_auto &rarr;</div>
+              <pre>{ "domain": "sql", "ok": true, "code": "SELECT الاسم FROM المستخدمين" }</pre>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top:1rem;font-size:0.8rem;color:var(--dim);">
+          SQL keywords (SELECT, FROM) normalize to standard SQL.
+          Identifiers (column/table names) stay in the input language &mdash;
+          Arabic identifiers are preserved, not transliterated.
+          The semantic structure (action + roles) is identical across all three.
+        </p>
+      </div>
+
+      <!-- Domain auto-detection -->
+      <div class="card">
+        <h2>Auto-detect across 8 domains</h2>
+        <p>
+          The <code>detect_domain</code> tool classifies natural-language input to the correct domain
+          without a hint. Domain-specific patterns (SQL has FROM/WHERE, BDD has given/when/then)
+          are scored by confidence; the highest match wins.
+        </p>
+        <div class="examples">
+          <div class="example">
+            <div class="example-header">
+              <span class="flag">&#x1F4CA;</span>
+              <span class="label">SQL query</span>
+              <span class="badge badge-domain">sql 0.71</span>
+            </div>
+            <div class="example-body">
+              <div class="input-line">select name from users</div>
+              <div class="arrow">detect_domain &rarr; <strong>sql</strong> (confidence: 0.71)</div>
+            </div>
+          </div>
+          <div class="example">
+            <div class="example-header">
+              <span class="flag">&#x1F9EA;</span>
+              <span class="label">Behavior spec</span>
+              <span class="badge badge-domain">behaviorspec 1.00</span>
+            </div>
+            <div class="example-body">
+              <div class="input-line">given page /home when click #submit then url contains /success</div>
+              <div class="arrow">detect_domain &rarr; <strong>behaviorspec</strong> (confidence: 1.00)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Install configs -->
+      <div class="card">
+        <h2>Install in your LLM agent</h2>
+        <p>
+          Start the server (<code>npm run dev --prefix packages/mcp-multilingual-intent</code>),
+          then configure your agent to connect via <code>siren-mcp</code>.
+        </p>
+        <div class="tabs">
+          <div class="tab active" onclick="showTab('claude')">Claude Desktop</div>
+          <div class="tab" onclick="showTab('cursor')">Cursor</div>
+          <div class="tab" onclick="showTab('continue')">Continue</div>
+        </div>
+        <div class="tab-content active" id="tab-claude">
+          <pre>{
+  "mcpServers": {
+    "lokascript-multilingual-intent": {
+      "command": "node",
+      "args": [
+        "/path/to/siren-grail/packages/siren-agent/bin/siren-mcp.mjs",
+        "http://localhost:3030/api"
+      ]
+    }
+  }
+}</pre>
+          <div class="note">
+            Save to <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS).
+            Restart Claude Desktop after editing.
+          </div>
+        </div>
+        <div class="tab-content" id="tab-cursor">
+          <pre>// .cursor/mcp.json (project-level) or global settings
+{
+  "mcpServers": {
+    "lokascript-multilingual-intent": {
+      "command": "node",
+      "args": [
+        "/path/to/siren-grail/packages/siren-agent/bin/siren-mcp.mjs",
+        "http://localhost:3030/api"
+      ]
+    }
+  }
+}</pre>
+          <div class="note">
+            Cursor reads MCP configs from <code>.cursor/mcp.json</code> in your project root
+            or from global settings. Restart Cursor after editing.
+          </div>
+        </div>
+        <div class="tab-content" id="tab-continue">
+          <pre>// .continue/config.json — experimental MCP support
+{
+  "experimental": {
+    "modelContextProtocolServers": [
+      {
+        "transport": {
+          "type": "stdio",
+          "command": "node",
+          "args": [
+            "/path/to/siren-grail/packages/siren-agent/bin/siren-mcp.mjs",
+            "http://localhost:3030/api"
+          ]
+        }
+      }
+    ]
+  }
+}</pre>
+          <div class="note">
+            Continue's MCP support is experimental. See
+            <a href="https://docs.continue.dev/customize/context-providers#model-context-protocol" target="_blank">Continue MCP docs</a> for the latest config format.
+          </div>
+        </div>
+      </div>
+
+      <!-- Architecture -->
+      <div class="card">
+        <h2>How it works</h2>
+        <pre class="arch"><span class="hi">LLM Agent</span>                    <span class="hi">siren-mcp</span>                    <span class="hi">Hono Siren API</span>
+(Claude, Cursor, etc.)         (bridge)                       (this server)
+        |                          |                              |
+        |  MCP tools/call          |                              |
+        |  action__parse_...  ---->|                              |
+        |                          |  POST /api/parse  ---------> |
+        |                          |                              |---> @lokascript/framework
+        |                          |                              |     DomainRegistry
+        |                          |                              |     CrossDomainDispatcher
+        |                          |                              |
+        |                          |  <--- Siren JSON ----------- |
+        |  <--- MCP result --------|                              |
+        |                          |                              |
+        |  (tools stay stable)     |  (stateless, no rebuild)     |</pre>
+      </div>
+
+      <!-- Tools reference -->
+      <div class="card" id="tools-table">
+        <h2>MCP tools exposed</h2>
+        <table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid #3d3d4d;text-align:left;">
+              <th style="padding:0.5rem;color:#fff;">Tool</th>
+              <th style="padding:0.5rem;color:#fff;">What it does</th>
+              <th style="padding:0.5rem;color:#fff;">Required input</th>
+            </tr>
+          </thead>
+          <tbody style="color:var(--dim);">
+            <tr style="border-bottom:1px solid #2d2d3d;">
+              <td style="padding:0.5rem;font-family:var(--mono);color:var(--accent2);font-size:0.75rem;">action__parse_multilingual_intent</td>
+              <td style="padding:0.5rem;">Parse text &rarr; semantic AST (action + roles + confidence). Auto-detects domain.</td>
+              <td style="padding:0.5rem;font-family:var(--mono);">text</td>
+            </tr>
+            <tr style="border-bottom:1px solid #2d2d3d;">
+              <td style="padding:0.5rem;font-family:var(--mono);color:var(--accent2);font-size:0.75rem;">action__detect_domain</td>
+              <td style="padding:0.5rem;">Classify input to one of 8 domains. Pure classification, no compilation.</td>
+              <td style="padding:0.5rem;font-family:var(--mono);">text</td>
+            </tr>
+            <tr style="border-bottom:1px solid #2d2d3d;">
+              <td style="padding:0.5rem;font-family:var(--mono);color:var(--accent2);font-size:0.75rem;">action__compile_auto</td>
+              <td style="padding:0.5rem;">Detect + compile in one call. Returns SQL, Playwright test, JSX, etc.</td>
+              <td style="padding:0.5rem;font-family:var(--mono);">text</td>
+            </tr>
+            <tr style="border-bottom:1px solid #2d2d3d;">
+              <td style="padding:0.5rem;font-family:var(--mono);color:var(--accent2);font-size:0.75rem;">action__get_pattern_examples</td>
+              <td style="padding:0.5rem;">RAG lookup &mdash; few-shot examples from the patterns database for LLM context.</td>
+              <td style="padding:0.5rem;font-family:var(--mono);">prompt</td>
+            </tr>
+            <tr>
+              <td style="padding:0.5rem;font-family:var(--mono);color:var(--accent2);font-size:0.75rem;">action__list_supported_languages</td>
+              <td style="padding:0.5rem;">Enumerate all supported language codes.</td>
+              <td style="padding:0.5rem;font-family:var(--mono);">&mdash;</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Reproducible IDE integration demo output (regenerated by CI) -->
+      <div class="card">
+        <h2>Proof: JA / AR / KO produce the same semantic AST as English</h2>
+        <p>
+          The block below is the raw output of
+          <code>npm run demos</code> &mdash; three scripted scenarios
+          (Claude Desktop / Cursor / Continue), regenerated in CI on every
+          push. Role values stay in the user&rsquo;s language; action, domain,
+          and role keys are byte-for-byte identical.
+        </p>
+        <pre id="demo-output" style="background:#0f0f1e;border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:var(--mono);font-size:0.78rem;color:var(--text);overflow:auto;max-height:560px;line-height:1.45;white-space:pre;">Loading&hellip;</pre>
+        <p style="margin-top:0.75rem;font-size:0.8rem;">
+          Source:
+          <a href="demo-output.txt" style="color:var(--accent2);">demo-output.txt</a>
+          &middot; generated by
+          <code>examples/integration-demos.ts</code>
+        </p>
+        <script>
+          (function loadDemoOutput() {
+            fetch('demo-output.txt', { cache: 'no-cache' })
+              .then(r => (r.ok ? r.text() : Promise.reject(r.status)))
+              .then(t => { document.getElementById('demo-output').textContent = t; })
+              .catch(err => {
+                document.getElementById('demo-output').textContent =
+                  '(demo-output.txt not yet generated — run `npm run demos:capture` in packages/mcp-multilingual-intent)';
+              });
+          })();
+        </script>
+      </div>
+
+      <footer>
+        <a href="https://github.com/codetalcott/hyperfixi/tree/main/packages/mcp-multilingual-intent">GitHub</a>
+        &middot;
+        <a href="https://github.com/codetalcott/hyperfixi/tree/main/packages/mcp-multilingual-intent/README.md">README</a>
+        &middot;
+        Built on <a href="https://github.com/codetalcott/hyperfixi">HyperFixi</a>
+        / <a href="https://lokascript.dev">LokaScript</a>
+      </footer>
+    </div>
+
+    <script>
+      const API = 'http://localhost:3030/api';
+      const inputEl = document.getElementById('input');
+      const langEl = document.getElementById('lang');
+      const outputEl = document.getElementById('output');
+      const statusEl = document.getElementById('status');
+      const statusText = document.getElementById('status-text');
+
+      let serverUp = false;
+
+      async function checkServer() {
+        try {
+          const r = await fetch(API.replace('/api', '/health'), { signal: AbortSignal.timeout(2000) });
+          if (r.ok) {
+            serverUp = true;
+            statusEl.className = 'status ok';
+            statusText.textContent = 'Server running on localhost:3030 — live demo active';
+          } else { markDown(); }
+        } catch { markDown(); }
+      }
+      function markDown() {
+        serverUp = false;
+        statusEl.className = 'status off';
+        statusText.textContent = 'Server not running — start with: npm run dev --prefix packages/mcp-multilingual-intent';
+      }
+
+      function setExample(text, lang) {
+        inputEl.value = text;
+        langEl.value = lang;
+      }
+
+      async function runTryItem(btn) {
+        const item = btn.closest('.try-item');
+        const text = item.dataset.text;
+        const lang = item.dataset.lang;
+        const tool = item.dataset.tool;
+        const out = item.querySelector('.try-out');
+
+        if (!serverUp) {
+          out.hidden = false;
+          out.className = 'try-out error';
+          out.textContent = 'Server not running. Start with:\n  npm run dev --prefix packages/mcp-multilingual-intent';
+          return;
+        }
+
+        const endpoints = {
+          parse: { path: '/parse', body: { text, language: lang } },
+          detect: { path: '/detect', body: { text, language: lang } },
+          compile: { path: '/compile', body: { text, language: lang } },
+          examples: { path: '/examples', body: { prompt: text, language: lang, limit: 5 } },
+        };
+        const ep = endpoints[tool];
+
+        out.hidden = false;
+        out.className = 'try-out';
+        out.textContent = 'Calling server...';
+        btn.disabled = true;
+
+        try {
+          const r = await fetch(API + ep.path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ep.body),
+          });
+          const data = await r.json();
+          const result = data.properties?.result ?? data.properties?.error ?? data;
+          out.textContent = JSON.stringify(result, null, 2);
+          out.className = r.ok ? 'try-out' : 'try-out error';
+        } catch (err) {
+          out.textContent = 'Request failed: ' + (err.message || err);
+          out.className = 'try-out error';
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function runTool(tool) {
+        if (!serverUp) {
+          outputEl.textContent = 'Server is not running.\nStart it with:\n  npm run dev --prefix packages/mcp-multilingual-intent';
+          outputEl.className = 'output error';
+          return;
+        }
+        const text = inputEl.value.trim();
+        if (!text) { outputEl.textContent = 'Enter some text first.'; return; }
+        const lang = langEl.value;
+
+        const endpoints = {
+          parse: { path: '/parse', body: { text, language: lang } },
+          detect: { path: '/detect', body: { text, language: lang } },
+          compile: { path: '/compile', body: { text, language: lang } },
+          examples: { path: '/examples', body: { prompt: text, language: lang, limit: 5 } },
+        };
+        const ep = endpoints[tool];
+
+        outputEl.textContent = 'Calling server...';
+        outputEl.className = 'output';
+
+        try {
+          const r = await fetch(API + ep.path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ep.body),
+          });
+          const data = await r.json();
+          const result = data.properties?.result ?? data.properties?.error ?? data;
+          outputEl.textContent = JSON.stringify(result, null, 2);
+          outputEl.className = r.ok ? 'output' : 'output error';
+        } catch (err) {
+          outputEl.textContent = 'Request failed: ' + (err.message || err);
+          outputEl.className = 'output error';
+        }
+      }
+
+      function showTab(name) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`.tab-content#tab-${name}`).classList.add('active');
+        event.target.classList.add('active');
+      }
+
+      checkServer();
+      setInterval(checkServer, 15000);
+    </script>
+  </body>
+</html>

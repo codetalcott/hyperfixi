@@ -38,7 +38,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const errorCollector = createErrorCollector(page);
       errorCollector.attach();
 
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -50,7 +50,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('color box element exists and is styled correctly', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -69,7 +69,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const errorCollector = createErrorCollector(page);
       errorCollector.attach();
 
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -115,7 +115,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const errorCollector = createErrorCollector(page);
       errorCollector.attach();
 
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -157,7 +157,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('release restores color to initial', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -192,7 +192,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('hyperscript is parsed and compiled without errors', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -223,7 +223,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       page.on('pageerror', err => pageErrors.push(err.message));
 
       // This tests the *background-color syntax specifically
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -254,7 +254,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
         }
       });
 
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -288,7 +288,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const pageErrors: string[] = [];
       page.on('pageerror', err => pageErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/color-cycling.html`, {
+      await page.goto(`${BASE_URL}/examples/animation/color-cycling-simple.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -332,7 +332,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const pageErrors: string[] = [];
       page.on('pageerror', err => pageErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/send-events.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/send-events.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -345,7 +345,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('send button triggers event on form', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/send-events.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/send-events.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -371,7 +371,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('form flashes on event receipt', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/send-events.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/send-events.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -406,7 +406,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const pageErrors: string[] = [];
       page.on('pageerror', err => pageErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+      await page.goto(`${BASE_URL}/examples/fetch-and-async/async-fetch.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -419,7 +419,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('wait and send event works', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+      await page.goto(`${BASE_URL}/examples/fetch-and-async/async-fetch.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -447,7 +447,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('fetch JSON data works', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+      await page.goto(`${BASE_URL}/examples/fetch-and-async/async-fetch.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -467,7 +467,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('fetch JSON with property access works', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+      await page.goto(`${BASE_URL}/examples/fetch-and-async/async-fetch.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -505,7 +505,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const pageErrors: string[] = [];
       page.on('pageerror', err => pageErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/js-interop.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -524,7 +524,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       page.on('pageerror', err => pageErrors.push(err.message));
       page.on('console', msg => consoleMessages.push(`${msg.type()}: ${msg.text()}`));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/js-interop.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -559,7 +559,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       page.on('pageerror', err => pageErrors.push(err.message));
       page.on('console', msg => consoleLogs.push(`[${msg.type()}] ${msg.text()}`));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/js-interop.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -584,7 +584,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('browser API access works', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/js-interop.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -615,7 +615,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const pageErrors: string[] = [];
       page.on('pageerror', err => pageErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/tell-command.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -637,7 +637,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       });
       page.on('pageerror', err => consoleErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/tell-command.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -660,7 +660,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('clear highlights button works', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/tell-command.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -689,7 +689,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       });
       page.on('pageerror', err => consoleErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/tell-command.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -716,7 +716,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
     });
 
     test('open all details works', async ({ page }) => {
-      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/tell-command.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -745,7 +745,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       });
       page.on('pageerror', err => consoleErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+      await page.goto(`${BASE_URL}/examples/events-and-dom/tell-command.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -830,7 +830,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const pageErrors: string[] = [];
       page.on('pageerror', err => pageErrors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/clipboard-copy.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -846,7 +846,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       // Grant clipboard permissions
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/clipboard-copy.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -876,7 +876,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       // Grant clipboard permissions
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/clipboard-copy.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -902,7 +902,7 @@ test.describe('Landing Page Examples @comprehensive', () => {
       // Grant clipboard permissions
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+      await page.goto(`${BASE_URL}/examples/js-interop/clipboard-copy.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });

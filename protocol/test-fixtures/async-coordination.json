@@ -1,0 +1,127 @@
+[
+  {
+    "id": "async-001",
+    "description": "all — wait for multiple concurrent fetches",
+    "jsonInput": {
+      "kind": "command",
+      "action": "all",
+      "roles": {},
+      "asyncVariant": "all",
+      "asyncBody": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/user", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/prefs", "dataType": "string" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedAsyncVariant": "all",
+    "expectedAsyncBodyLength": 2
+  },
+  {
+    "id": "async-002",
+    "description": "race — first result wins",
+    "jsonInput": {
+      "kind": "command",
+      "action": "race",
+      "roles": {},
+      "asyncVariant": "race",
+      "asyncBody": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/cache/data", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/data", "dataType": "string" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedAsyncVariant": "race",
+    "expectedAsyncBodyLength": 2
+  },
+  {
+    "id": "async-003",
+    "description": "all with three concurrent operations",
+    "jsonInput": {
+      "kind": "command",
+      "action": "all",
+      "roles": {},
+      "asyncVariant": "all",
+      "asyncBody": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/users", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/posts", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/comments", "dataType": "string" }
+          }
+        }
+      ]
+    },
+    "expectedRoundTrip": true,
+    "expectedAsyncVariant": "all",
+    "expectedAsyncBodyLength": 3
+  },
+  {
+    "id": "async-004",
+    "description": "all with annotation",
+    "jsonInput": {
+      "kind": "command",
+      "action": "all",
+      "roles": {},
+      "asyncVariant": "all",
+      "asyncBody": [
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/user", "dataType": "string" }
+          }
+        },
+        {
+          "kind": "command",
+          "action": "fetch",
+          "roles": {
+            "source": { "type": "literal", "value": "/api/settings", "dataType": "string" }
+          }
+        }
+      ],
+      "annotations": [{ "name": "timeout", "value": "10s" }]
+    },
+    "expectedRoundTrip": true,
+    "expectedAsyncVariant": "all",
+    "expectedAsyncBodyLength": 2,
+    "expectedAnnotationCount": 1
+  }
+]

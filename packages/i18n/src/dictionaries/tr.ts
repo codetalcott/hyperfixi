@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/tr.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const tr: Dictionary = {
   commands: {
-    // Event handling
     on: 'üzerinde',
     tell: 'söyle',
     trigger: 'tetikle',
     send: 'gönder',
-
-    // DOM manipulation
     take: 'al',
     put: 'koy',
     set: 'ayarla',
@@ -20,8 +18,6 @@ export const tr: Dictionary = {
     toggle: 'değiştir',
     hide: 'gizle',
     show: 'göster',
-
-    // Control flow
     if: 'eğer',
     unless: 'değilse',
     repeat: 'tekrarla',
@@ -31,54 +27,41 @@ export const tr: Dictionary = {
     continue: 'devam',
     break: 'dur',
     halt: 'durdur',
-
-    // Async
     wait: 'bekle',
     fetch: 'getir',
     call: 'çağır',
     return: 'dön',
-
-    // Other commands
     make: 'yap',
     log: 'kaydet',
     throw: 'fırlat',
     catch: 'yakala',
     measure: 'ölç',
     transition: 'geçiş',
-
-    // Data Commands
     increment: 'artır',
     decrement: 'azalt',
     default: 'varsayılan',
-
-    // Navigation Commands
     go: 'git',
     pushUrl: 'urlEkle',
     replaceUrl: 'urlDeğiştir',
-
-    // Utility Commands
     copy: 'kopyala',
     pick: 'seç',
     beep: 'bip',
-
-    // Advanced Commands
     js: 'js',
     async: 'asenkron',
     render: 'render',
-
-    // Animation Commands
     swap: 'takas',
     morph: 'dönüştür',
     settle: 'sabitlen',
-
-    // Content Commands
     append: 'ekle',
-
-    // Control Flow
     exit: 'çık',
-
-    // Behaviors
     install: 'kur',
+    breakpoint: 'kesme-noktası',
+    clear: 'temizle',
+    close: 'kapat',
+    open: 'aç',
+    select: 'seç',
+    clone: 'klonla',
+    prepend: 'başınaekle',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const tr: Dictionary = {
     mouseover: 'fare_üstü',
     mouseout: 'fare_dışı',
     mousemove: 'fare_hareket',
-
     keydown: 'tuş_bas',
     keyup: 'tuş_bırak',
     keypress: 'tuş_basım',
-
     focus: 'odak',
     blur: 'bulanık',
     change: 'değişim',
     input: 'giriş',
     submit: 'gönder',
     reset: 'sıfırla',
-
     load: 'yükle',
     unload: 'yükle_kaldır',
     resize: 'boyut_değiştir',
     scroll: 'kaydır',
-
     touchstart: 'dokunma_başla',
     touchend: 'dokunma_bitir',
     touchmove: 'dokunma_hareket',
@@ -134,8 +113,8 @@ export const tr: Dictionary = {
   },
 
   logical: {
-    when: 'iken', // REVIEW: native speaker - could also be 'durumunda' (in case of) or 'olduğunda' (when it happens)
-    where: 'nerede', // REVIEW: native speaker - element filter context
+    when: 'iken',
+    where: 'nerede',
     and: 've',
     or: 'veya',
     not: 'değil',
@@ -145,8 +124,8 @@ export const tr: Dictionary = {
     contains: 'içerir',
     includes: 'dahil',
     equals: 'eşittir',
-    has: 'var', // existence marker (context-based)
-    have: 'var', // same for first/third person in Turkish
+    has: 'var',
+    have: 'var',
     then: 'sonra',
     else: 'yoksa',
     otherwise: 'aksi_halde',
@@ -174,13 +153,13 @@ export const tr: Dictionary = {
     null: 'boş',
     undefined: 'tanımsız',
     it: 'o',
-    its: 'onun', // REVIEW: native speaker
+    its: 'onun',
     me: 'ben',
     my: 'benim',
     myself: 'kendim',
-    you: 'sen', // REVIEW: native speaker - formal/informal
-    your: 'senin', // REVIEW: native speaker - formal/informal
-    yourself: 'kendin', // REVIEW: native speaker
+    you: 'sen',
+    your: 'senin',
+    yourself: 'kendin',
     element: 'öğe',
     target: 'hedef',
     detail: 'detay',
@@ -204,7 +183,6 @@ export const tr: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'ilk',
     last: 'son',
     next: 'sonraki',
@@ -212,20 +190,19 @@ export const tr: Dictionary = {
     prev: 'önc',
     at: 'de',
     random: 'rastgele',
-
-    // DOM Traversal
     closest: 'en_yakın',
     parent: 'ebeveyn',
     children: 'çocuklar',
     within: 'içinde',
-
-    // Emptiness/Existence
     no: 'yok',
     empty: 'boş',
     some: 'bazı',
-
-    // String operations
     'starts with': 'ile başlar',
     'ends with': 'ile biter',
+    'ignoring case': 'büyük küçük harf duyarsız',
+    'sorted by': 'göre sıralı',
+    'mapped to': 'ye dönüştürülmüş',
+    'split by': 'ile bölünmüş',
+    'joined by': 'ile birleştirilmiş',
   },
 };

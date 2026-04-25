@@ -20,6 +20,7 @@ export const AVAILABLE_COMMANDS = [
   'put',
   'append',
   'take',
+  'empty',
   // Data/variables
   'set',
   'get',

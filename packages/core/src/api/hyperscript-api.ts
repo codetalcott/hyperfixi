@@ -35,7 +35,12 @@ import {
   type SemanticAnalyzer,
 } from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
-import { process as processDOMElements, initializeDOMProcessor } from './dom-processor';
+import {
+  process as processDOMElements,
+  initializeDOMProcessor,
+  setDOMProcessorConfig,
+} from './dom-processor';
+import { DebugController } from '../debug/debug-controller';
 
 // =============================================================================
 // Constants
@@ -173,6 +178,14 @@ export interface HyperscriptConfig {
    * Default: 0.5
    */
   confidenceThreshold: number;
+
+  /**
+   * When true, logs every hyperscript event handler that fires. Matches
+   * htmx's `config.logAll` — useful for debugging user-visible behavior
+   * without reaching for breakpoints. Upstream _hyperscript 0.9.90.
+   * Default: false.
+   */
+  logAll: boolean;
 }
 
 /**
@@ -192,6 +205,7 @@ export const config: HyperscriptConfig = {
   semantic: true,
   language: 'en',
   confidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
+  logAll: false,
 };
 
 /**
@@ -279,10 +293,13 @@ export interface CompileResult {
   /** Compilation errors (present if ok=false) */
   errors?: CompileError[];
 
+  /** LSE SemanticNode representation (when available) */
+  lse?: unknown;
+
   /** Metadata about the compilation */
   meta: {
     /** Which parser was used */
-    parser: 'semantic' | 'traditional';
+    parser: 'semantic' | 'traditional' | 'lse';
     /** Confidence score if semantic parser was used */
     confidence?: number;
     /** Language detected/used */
@@ -349,6 +366,17 @@ export interface HyperscriptAPI {
    */
   process(element: Element): void;
 
+  /**
+   * Clean up hyperscript resources (event listeners, observers, intervals,
+   * timeouts) for an element and all its descendants. Matches upstream
+   * _hyperscript 0.9.90's `cleanup()` API — call this before re-processing
+   * an element whose inline `_=` attribute changed, or after a morph/swap
+   * that replaced the element, to avoid listener/observer leaks.
+   *
+   * Returns the number of cleanups performed.
+   */
+  cleanup(element: Element): number;
+
   // ─────────────────────────────────────────────────────────────
   // CONTEXT
   // ─────────────────────────────────────────────────────────────
@@ -382,6 +410,78 @@ export interface HyperscriptAPI {
   unregisterHooks(name: string): boolean;
   getRegisteredHooks(): string[];
 
+  /** Interactive step-through debugger */
+  debug: DebugController;
+
+  // ─────────────────────────────────────────────────────────────
+  // LSE (LokaScript Explicit Syntax)
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Execute LSE bracket syntax directly.
+   * Requires @lokascript/framework as a peer dependency.
+   *
+   * @example
+   * ```typescript
+   * await hyperscript.evalLSE('[toggle patient:.active]', button);
+   * await hyperscript.evalLSE('[add patient:.highlight destination:#output]');
+   * ```
+   */
+  evalLSE(lse: string, element?: Element): Promise<unknown>;
+
+  /**
+   * Execute a pre-parsed SemanticNode directly.
+   * Use this when you already have a SemanticNode (e.g. from `fromProtocolJSON`),
+   * rather than bracket syntax. Avoids re-parsing.
+   * Requires @lokascript/framework as a peer dependency.
+   *
+   * @example
+   * ```typescript
+   * import { fromProtocolJSON } from '@lokascript/intent';
+   * const node = fromProtocolJSON(json);
+   * await hyperscript.evalLSENode(node, button);
+   * ```
+   */
+  evalLSENode(
+    node: import('@lokascript/framework').SemanticNode,
+    element?: Element
+  ): Promise<unknown>;
+
+  /**
+   * Compile LSE bracket syntax to an executable AST.
+   * Returns a CompileResult with parser='lse' and the SemanticNode in `lse`.
+   *
+   * @example
+   * ```typescript
+   * const result = await hyperscript.compileLSE('[toggle patient:.active]');
+   * if (result.ok) await hyperscript.execute(result.ast!);
+   * ```
+   */
+  compileLSE(lse: string): Promise<CompileResult>;
+
+  /**
+   * Convert natural language hyperscript to LSE bracket syntax.
+   * Requires @lokascript/semantic for non-English languages.
+   *
+   * @example
+   * ```typescript
+   * const lse = await hyperscript.toLSE('toggle .active');
+   * // "[toggle patient:.active]"
+   * ```
+   */
+  toLSE(code: string, language?: string): Promise<string>;
+
+  /**
+   * Convert LSE bracket syntax to natural language hyperscript.
+   *
+   * @example
+   * ```typescript
+   * const en = await hyperscript.fromLSE('[toggle patient:.active]', 'en');
+   * // "toggle .active"
+   * ```
+   */
+  fromLSE(lse: string, language: string): Promise<string>;
+
   // ─────────────────────────────────────────────────────────────
   // CACHE
   // ─────────────────────────────────────────────────────────────
@@ -400,6 +500,20 @@ export interface HyperscriptAPI {
 // Lazy initialization to avoid loading all 43 commands at import time
 // Runtime is only created when first API call is made
 let _defaultRuntime: Runtime | null = null;
+let _debugController: DebugController | null = null;
+
+/**
+ * Get the singleton DebugController, creating it lazily.
+ * Automatically registers its hooks with the default runtime.
+ */
+function getDebugController(): DebugController {
+  if (!_debugController) {
+    _debugController = new DebugController();
+    // Wire the debug hooks into the runtime
+    getDefaultRuntime().registerHooks('__debugger', _debugController.hooks);
+  }
+  return _debugController;
+}
 
 /**
  * Get the default runtime instance, creating it lazily if needed
@@ -450,6 +564,128 @@ function isExecutionContext(value: unknown): value is ExecutionContext {
  */
 function hasMe(value: unknown): value is { me?: HTMLElement } {
   return typeof value === 'object' && value !== null && 'me' in value;
+}
+
+// ============================================================================
+// LSE Execution
+// ============================================================================
+
+/**
+ * Execute a pre-parsed SemanticNode directly, skipping bracket-syntax parsing.
+ * Used by <lse-intent> and other consumers that already hold a SemanticNode.
+ */
+async function evalLSENode(
+  node: import('@lokascript/framework').SemanticNode,
+  element?: Element
+): Promise<unknown> {
+  const { semanticNodeToRuntimeAST } = await import('../lse/index');
+  const ast = await semanticNodeToRuntimeAST(node);
+  const executionContext = element ? createContext(element as HTMLElement) : createContext();
+  return await getDefaultRuntime().execute(ast as ASTNode, executionContext);
+}
+
+/**
+ * Parse LSE bracket syntax and execute directly.
+ * Uses dynamic import to load @lokascript/framework — zero cost when unused.
+ */
+async function evalLSECode(lse: string, element?: Element): Promise<unknown> {
+  if (typeof lse !== 'string' || lse.trim().length === 0) {
+    throw new Error('LSE code must be a non-empty string');
+  }
+
+  // Dynamic import keeps framework out of the bundle when unused
+  const { parseExplicit, semanticNodeToRuntimeAST } = await import('../lse/index');
+  const node = await parseExplicit(lse);
+  const ast = await semanticNodeToRuntimeAST(node);
+
+  const executionContext = element ? createContext(element as HTMLElement) : createContext();
+
+  return await getDefaultRuntime().execute(ast as ASTNode, executionContext);
+}
+
+/**
+ * Compile LSE bracket syntax to a CompileResult.
+ */
+async function compileLSECode(lse: string): Promise<CompileResult> {
+  const start = performance.now();
+
+  if (typeof lse !== 'string' || lse.trim().length === 0) {
+    return {
+      ok: false,
+      errors: [{ message: 'LSE code must be a non-empty string', line: 0, column: 0 }],
+      meta: { parser: 'lse', language: 'explicit', timeMs: performance.now() - start },
+    };
+  }
+
+  try {
+    const { parseExplicit, semanticNodeToRuntimeAST } = await import('../lse/index');
+    const node = await parseExplicit(lse, { collectDiagnostics: true });
+    const ast = await semanticNodeToRuntimeAST(node);
+
+    // Check for error-level diagnostics
+    const errors = node.diagnostics?.filter((d: { severity: string }) => d.severity === 'error');
+    const hasErrors = errors && errors.length > 0;
+
+    return {
+      ok: !hasErrors,
+      ast: hasErrors ? undefined : (ast as ASTNode),
+      lse: node,
+      ...(hasErrors
+        ? {
+            errors: errors.map((d: { message: string }) => ({
+              message: d.message,
+              line: 0,
+              column: 0,
+            })),
+          }
+        : {}),
+      meta: {
+        parser: 'lse',
+        language: 'explicit',
+        timeMs: performance.now() - start,
+      },
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      errors: [{ message: (e as Error).message, line: 0, column: 0 }],
+      meta: { parser: 'lse', language: 'explicit', timeMs: performance.now() - start },
+    };
+  }
+}
+
+/**
+ * Convert natural language to LSE bracket syntax.
+ * Uses semantic parser for language detection and rendering.
+ */
+async function toLSECode(code: string, language?: string): Promise<string> {
+  const lang = language || DEFAULT_LANGUAGE;
+
+  // For English: parse with core parser, convert to SemanticNode, render as LSE
+  // For other languages: use semantic parser
+  const { parseSemantic } = await import('@lokascript/semantic');
+  const { renderExplicit } = await import('../lse/index');
+
+  const result = parseSemantic(code, lang);
+  if (!result || !result.node) {
+    throw new Error(`Failed to parse "${code}" as ${lang} hyperscript`);
+  }
+
+  return await renderExplicit(result.node);
+}
+
+/**
+ * Convert LSE bracket syntax to natural language.
+ * Uses semantic renderer.
+ */
+async function fromLSECode(lse: string, language: string): Promise<string> {
+  const { render } = await import('@lokascript/semantic');
+  const { parseExplicit } = await import('../lse/index');
+
+  const node = await parseExplicit(lse);
+  // Cast needed: framework and semantic SemanticNode types are structurally
+  // compatible but TypeScript sees them as nominally distinct
+  return render(node as Parameters<typeof render>[0], language);
 }
 
 // ============================================================================
@@ -691,6 +927,9 @@ async function compileAsync(code: string, options?: NewCompileOptions): Promise<
 
 // Initialize DOM processor with compile functions and runtime
 initializeDOMProcessor(compileSync, compileAsync, getDefaultRuntime);
+// Share the hyperscript.config object so toggling `config.logAll` takes
+// effect on the next event (upstream _hyperscript 0.9.90).
+setDOMProcessorConfig(config);
 
 /**
  * Compiles and executes hyperscript code in a single call.
@@ -870,6 +1109,28 @@ export const hyperscript: HyperscriptAPI = {
   // Process DOM elements
   process: processDOMElements,
 
+  // Clean up resources for an element and its descendants (upstream 0.9.90).
+  // Dispatches `hyperscript:before:cleanup` / `hyperscript:after:cleanup`
+  // around the actual cleanup so external code can observe the lifecycle.
+  cleanup: (element: Element) => {
+    element.dispatchEvent(
+      new CustomEvent('hyperscript:before:cleanup', { bubbles: true, cancelable: false })
+    );
+    const count = getDefaultRuntime().cleanupTree(element);
+    // Remove the powered marker once the listeners are gone.
+    if (element.hasAttribute?.('data-hyperscript-powered')) {
+      element.removeAttribute('data-hyperscript-powered');
+    }
+    element.dispatchEvent(
+      new CustomEvent('hyperscript:after:cleanup', {
+        bubbles: true,
+        cancelable: false,
+        detail: { count },
+      })
+    );
+    return count;
+  },
+
   // Create context (with optional parent)
   createContext: createContextWithParent,
 
@@ -891,9 +1152,21 @@ export const hyperscript: HyperscriptAPI = {
     return getDefaultRuntime().getRegisteredHooks();
   },
 
+  // LSE execution
+  evalLSE: evalLSECode,
+  evalLSENode,
+  compileLSE: compileLSECode,
+  toLSE: toLSECode,
+  fromLSE: fromLSECode,
+
   // Cache management
   clearCache: () => astCache.clear(),
   getCacheStats: () => astCache.getStats(),
+
+  // Interactive step-through debugger (lazy-initialized)
+  get debug(): DebugController {
+    return getDebugController();
+  },
 };
 
 // Export as _hyperscript for official _hyperscript API compatibility

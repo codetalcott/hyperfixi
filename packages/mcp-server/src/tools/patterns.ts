@@ -14,7 +14,8 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 export const patternTools: Tool[] = [
   {
     name: 'get_examples',
-    description: 'Get hyperscript examples relevant to a task for few-shot learning',
+    description:
+      'Get hyperscript code examples matching a natural language task description (e.g., "toggle a class on click"). Returns working code with quality scores. Best for generating new code by example.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -38,7 +39,8 @@ export const patternTools: Tool[] = [
   },
   {
     name: 'search_patterns',
-    description: 'Search the pattern database for hyperscript examples',
+    description:
+      'Search the pattern database by keyword or category filter (class-manipulation, visibility, async, validation, etc.). Unlike get_examples which takes task descriptions, this searches pattern names and content.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -61,7 +63,8 @@ export const patternTools: Tool[] = [
   },
   {
     name: 'translate_hyperscript',
-    description: 'Translate hyperscript between languages',
+    description:
+      'Translate hyperscript keywords between any of 24 languages via pattern substitution. Preserves selectors and values. For higher-fidelity translation with grammar transformation, use translate_code instead.',
     inputSchema: {
       type: 'object',
       properties: {

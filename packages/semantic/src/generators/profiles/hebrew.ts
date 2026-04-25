@@ -87,6 +87,14 @@ export const hebrewProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'מקד', alternatives: ['התמקד'], normalized: 'focus' },
     blur: { primary: 'טשטש', alternatives: ['הסר מיקוד'], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'רוקן', normalized: 'empty' },
+    open: { primary: 'פתח', normalized: 'open' },
+    close: { primary: 'סגור', normalized: 'close' },
+    select: { primary: 'סמן', normalized: 'select' },
+    clear: { primary: 'נקה', normalized: 'clear' },
+    reset: { primary: 'אפס', normalized: 'reset' },
+    breakpoint: { primary: 'נקודת-עצירה', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'לך', alternatives: ['נווט'], normalized: 'go' },
     // Async

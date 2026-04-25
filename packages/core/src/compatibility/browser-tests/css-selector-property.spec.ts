@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('CSS Selector Property Access @comprehensive', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://127.0.0.1:3000/examples/htmx-like/test-property-access.html');
+    await page.goto('http://127.0.0.1:3000/examples/swap-and-morph/test-property-access.html');
     await page.waitForLoadState('domcontentloaded');
     // Wait for HyperFixi to load
     await page.waitForFunction(() => typeof (window as any).hyperfixi !== 'undefined');

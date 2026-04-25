@@ -15,10 +15,12 @@
  *   alternando → alternar (gerund)
  *   escondido → esconder (past participle)
  *   muestra → mostrar (3rd person present)
+ *
+ * Phase 3.1: Migrated to BaseMorphologicalNormalizer.
  */
 
-import type { MorphologicalNormalizer, NormalizationResult, ConjugationType } from './types';
-import { noChange, normalized } from './types';
+import type { ConjugationEnding } from './types';
+import { BaseMorphologicalNormalizer } from './types';
 
 /**
  * Check if a character is a Spanish-specific letter (accented characters and ñ).
@@ -28,45 +30,9 @@ function isSpanishSpecificLetter(char: string): boolean {
 }
 
 /**
- * Check if a word looks like a Spanish verb.
- * Spanish verbs end in -ar, -er, or -ir, or have Spanish-specific characters.
- */
-function looksLikeSpanishVerb(word: string): boolean {
-  const lower = word.toLowerCase();
-  // Check for infinitive endings
-  if (lower.endsWith('ar') || lower.endsWith('er') || lower.endsWith('ir')) return true;
-  // Check for common conjugation endings
-  if (lower.endsWith('ando') || lower.endsWith('iendo')) return true;
-  if (lower.endsWith('ado') || lower.endsWith('ido')) return true;
-  // Check for reflexive -se ending
-  if (lower.endsWith('arse') || lower.endsWith('erse') || lower.endsWith('irse')) return true;
-  // Check for Spanish-specific characters
-  for (const char of word) {
-    if (isSpanishSpecificLetter(char)) return true;
-  }
-  return false;
-}
-
-/**
- * Reflexive pronoun patterns that can be attached to verbs.
- */
-const REFLEXIVE_SUFFIXES = ['se', 'me', 'te', 'nos', 'os'];
-
-/**
- * Reflexive pronouns that appear before conjugated verbs.
- * Note: These are handled at the tokenizer level, not here.
- */
-// const REFLEXIVE_PREFIXES = ['me', 'te', 'se', 'nos', 'os'];
-
-/**
  * -AR verb conjugation endings mapped to infinitive reconstruction.
  */
-const AR_ENDINGS: readonly {
-  ending: string;
-  stem: string;
-  confidence: number;
-  type: ConjugationType;
-}[] = [
+const AR_ENDINGS: readonly ConjugationEnding[] = [
   // Gerund (-ando)
   { ending: 'ando', stem: 'ar', confidence: 0.88, type: 'gerund' },
   // Past participle (-ado)
@@ -113,12 +79,7 @@ const AR_ENDINGS: readonly {
 /**
  * -ER verb conjugation endings.
  */
-const ER_ENDINGS: readonly {
-  ending: string;
-  stem: string;
-  confidence: number;
-  type: ConjugationType;
-}[] = [
+const ER_ENDINGS: readonly ConjugationEnding[] = [
   // Gerund (-iendo)
   { ending: 'iendo', stem: 'er', confidence: 0.88, type: 'gerund' },
   // Past participle (-ido)
@@ -160,12 +121,7 @@ const ER_ENDINGS: readonly {
 /**
  * -IR verb conjugation endings.
  */
-const IR_ENDINGS: readonly {
-  ending: string;
-  stem: string;
-  confidence: number;
-  type: ConjugationType;
-}[] = [
+const IR_ENDINGS: readonly ConjugationEnding[] = [
   // Gerund (-iendo)
   { ending: 'iendo', stem: 'ir', confidence: 0.88, type: 'gerund' },
   // Past participle (-ido)
@@ -213,113 +169,38 @@ const ALL_ENDINGS = [...AR_ENDINGS, ...ER_ENDINGS, ...IR_ENDINGS].sort(
 
 /**
  * Spanish morphological normalizer.
+ * Extends BaseMorphologicalNormalizer with Spanish-specific script detection.
  */
-export class SpanishMorphologicalNormalizer implements MorphologicalNormalizer {
-  readonly language = 'es';
+export class SpanishMorphologicalNormalizer extends BaseMorphologicalNormalizer {
+  constructor() {
+    super({
+      language: 'es',
+      minWordLength: 3,
+      minStemLength: 2,
+      endings: ALL_ENDINGS,
+      reflexiveSuffixes: ['se', 'me', 'te', 'nos', 'os'],
+      infinitiveEndings: ['ar', 'er', 'ir'],
+    });
+  }
 
   /**
    * Check if a word might be a Spanish verb that can be normalized.
    */
   isNormalizable(word: string): boolean {
     if (word.length < 3) return false;
-    return looksLikeSpanishVerb(word);
-  }
-
-  /**
-   * Normalize a Spanish word to its infinitive form.
-   */
-  normalize(word: string): NormalizationResult {
     const lower = word.toLowerCase();
-
-    // Check if this is already an infinitive (no change needed)
-    if (lower.endsWith('ar') || lower.endsWith('er') || lower.endsWith('ir')) {
-      // If it's a simple infinitive, return as-is with 1.0 confidence
-      // (unless it's a reflexive like "mostrarse")
-      if (
-        !REFLEXIVE_SUFFIXES.some(
-          s => lower.endsWith(s + 'ar') || lower.endsWith(s + 'er') || lower.endsWith(s + 'ir')
-        )
-      ) {
-        return noChange(word);
-      }
+    // Check for infinitive endings
+    if (lower.endsWith('ar') || lower.endsWith('er') || lower.endsWith('ir')) return true;
+    // Check for common conjugation endings
+    if (lower.endsWith('ando') || lower.endsWith('iendo')) return true;
+    if (lower.endsWith('ado') || lower.endsWith('ido')) return true;
+    // Check for reflexive -se ending
+    if (lower.endsWith('arse') || lower.endsWith('erse') || lower.endsWith('irse')) return true;
+    // Check for Spanish-specific characters
+    for (const char of word) {
+      if (isSpanishSpecificLetter(char)) return true;
     }
-
-    // Try reflexive verb normalization first (highest priority)
-    const reflexiveResult = this.tryReflexiveNormalization(lower);
-    if (reflexiveResult) return reflexiveResult;
-
-    // Try standard conjugation normalization
-    const conjugationResult = this.tryConjugationNormalization(lower);
-    if (conjugationResult) return conjugationResult;
-
-    // No normalization needed
-    return noChange(word);
-  }
-
-  /**
-   * Try to normalize a reflexive verb.
-   * Reflexive verbs end with -se, -me, -te, -nos, -os attached to infinitive.
-   *
-   * Examples:
-   *   mostrarse → mostrar
-   *   ocultarse → ocultar
-   *   esconderse → esconder
-   */
-  private tryReflexiveNormalization(word: string): NormalizationResult | null {
-    for (const suffix of REFLEXIVE_SUFFIXES) {
-      if (word.endsWith(suffix)) {
-        const withoutReflexive = word.slice(0, -suffix.length);
-
-        // Check if this looks like an infinitive
-        if (
-          withoutReflexive.endsWith('ar') ||
-          withoutReflexive.endsWith('er') ||
-          withoutReflexive.endsWith('ir')
-        ) {
-          // It's a reflexive infinitive (e.g., mostrarse → mostrar)
-          return normalized(withoutReflexive, 0.88, {
-            removedSuffixes: [suffix],
-            conjugationType: 'reflexive',
-          });
-        }
-
-        // Try to normalize the remaining part as a conjugated verb
-        const innerResult = this.tryConjugationNormalization(withoutReflexive);
-        if (innerResult && innerResult.stem !== withoutReflexive) {
-          // It's a reflexive conjugated form (e.g., muestrase → mostrar)
-          return normalized(innerResult.stem, innerResult.confidence * 0.95, {
-            removedSuffixes: [suffix, ...(innerResult.metadata?.removedSuffixes || [])],
-            conjugationType: 'reflexive',
-          });
-        }
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Try to normalize a conjugated verb to its infinitive.
-   */
-  private tryConjugationNormalization(word: string): NormalizationResult | null {
-    for (const rule of ALL_ENDINGS) {
-      if (word.endsWith(rule.ending)) {
-        const stemBase = word.slice(0, -rule.ending.length);
-
-        // Must have a meaningful stem (at least 2 characters)
-        if (stemBase.length < 2) continue;
-
-        // Reconstruct infinitive
-        const infinitive = stemBase + rule.stem;
-
-        return normalized(infinitive, rule.confidence, {
-          removedSuffixes: [rule.ending],
-          conjugationType: rule.type,
-        });
-      }
-    }
-
-    return null;
+    return false;
   }
 }
 

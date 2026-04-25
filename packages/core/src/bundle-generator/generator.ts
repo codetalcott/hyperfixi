@@ -222,10 +222,31 @@ function evaluatePositional(node: ASTNode, ctx: Context): Element | null {
   switch (node.position) {
     case 'first': return elements[0] || null;
     case 'last': return elements[elements.length - 1] || null;
-    case 'next': return ctx.me.nextElementSibling;
-    case 'previous': return ctx.me.previousElementSibling;
-    case 'closest': return target.value ? ctx.me.closest(target.value) : null;
-    case 'parent': return ctx.me.parentElement;
+    case 'next': {
+      if (selector) {
+        let el = ctx.me.nextElementSibling;
+        while (el) { if (el.matches(selector)) return el; el = el.nextElementSibling; }
+        return null;
+      }
+      return ctx.me.nextElementSibling;
+    }
+    case 'previous': {
+      if (selector) {
+        let el = ctx.me.previousElementSibling;
+        while (el) { if (el.matches(selector)) return el; el = el.previousElementSibling; }
+        return null;
+      }
+      return ctx.me.previousElementSibling;
+    }
+    case 'closest': return selector ? ctx.me.closest(selector) : null;
+    case 'parent': {
+      if (selector) {
+        let el = ctx.me.parentElement;
+        while (el) { if (el.matches(selector)) return el; el = el.parentElement; }
+        return null;
+      }
+      return ctx.me.parentElement;
+    }
     default: return elements[0] || null;
   }
 }

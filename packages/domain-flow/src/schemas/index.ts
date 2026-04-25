@@ -294,7 +294,27 @@ export const transformSchema = defineCommand({
 });
 
 // =============================================================================
+// HATEOAS Schemas (re-exported from dedicated file)
+// =============================================================================
+
+export {
+  enterSchema,
+  followSchema,
+  performSchema,
+  captureSchema,
+  hateoasSchemas,
+} from './hateoas-schemas.js';
+import { hateoasSchemas } from './hateoas-schemas.js';
+
+// =============================================================================
 // All Schemas
 // =============================================================================
 
-export const allSchemas = [fetchSchema, pollSchema, streamSchema, submitSchema, transformSchema];
+export const allSchemas = [
+  fetchSchema,
+  pollSchema,
+  streamSchema,
+  submitSchema,
+  transformSchema,
+  ...hateoasSchemas,
+];

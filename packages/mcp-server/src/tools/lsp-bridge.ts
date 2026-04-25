@@ -12,7 +12,9 @@ let astToolkit: any = null;
 try {
   astToolkit = await import('@hyperfixi/core/ast-utils');
 } catch {
-  // core/ast-utils not available
+  console.error(
+    '[mcp:lsp-bridge] @hyperfixi/core/ast-utils not available — AST-based diagnostics disabled'
+  );
 }
 
 // Try to import parse function from core
@@ -21,7 +23,7 @@ try {
   const core = await import('@hyperfixi/core');
   parseFunction = core.parse;
 } catch {
-  // core not available
+  console.error('[mcp:lsp-bridge] @hyperfixi/core not available — parse-based analysis disabled');
 }
 
 // Try to import semantic package for multilingual support
@@ -29,8 +31,29 @@ let semanticPackage: any = null;
 try {
   semanticPackage = await import('@lokascript/semantic');
 } catch {
-  // semantic not available - will use English-only fallback
+  console.error(
+    '[mcp:lsp-bridge] @lokascript/semantic not available — multilingual support disabled'
+  );
 }
+
+// Try to import framework IR for LSE rendering in hover
+let frameworkIR: {
+  fromInterchangeNode: (n: any) => any;
+  renderExplicit: (n: any) => string;
+} | null = null;
+try {
+  const fw = await import('@lokascript/framework');
+  frameworkIR = { fromInterchangeNode: fw.fromInterchangeNode, renderExplicit: fw.renderExplicit };
+} catch {
+  console.error(
+    '[mcp:lsp-bridge] @lokascript/framework not available — LSE bracket notation in hover disabled'
+  );
+}
+
+// Log capability summary
+console.error(
+  `[mcp:lsp-bridge] capabilities: ast=${!!astToolkit}, parse=${!!parseFunction}, semantic=${!!semanticPackage}, framework=${!!frameworkIR}`
+);
 
 // Import error fixes registry
 import { getFixesForDiagnostic } from './error-fixes.js';
@@ -829,12 +852,22 @@ async function getHoverInfo(
   character: number,
   language: string
 ): Promise<CallToolResult> {
-  // Try AST-based hover first
-  if (astToolkit && parseFunction) {
+  // Try AST-based hover first (interchange format with optional LSE bracket notation)
+  if (astToolkit && parseFunction && astToolkit.fromCoreAST && astToolkit.interchangeToLSPHover) {
     try {
       const ast = parseFunction(code);
-      if (ast && astToolkit.astToLSPHover) {
-        const hover = astToolkit.astToLSPHover(ast, { line, character });
+      if (ast) {
+        const interchange = astToolkit.fromCoreAST(ast);
+        const nodes = Array.isArray(interchange) ? interchange : [interchange];
+
+        // Build renderLSE callback if framework is available
+        const hoverOptions: Record<string, unknown> = {};
+        if (frameworkIR) {
+          hoverOptions.renderLSE = (node: any) =>
+            frameworkIR!.renderExplicit(frameworkIR!.fromInterchangeNode(node));
+        }
+
+        const hover = astToolkit.interchangeToLSPHover(nodes, { line, character }, hoverOptions);
         if (hover) {
           return {
             content: [{ type: 'text', text: JSON.stringify({ ...hover, language }, null, 2) }],

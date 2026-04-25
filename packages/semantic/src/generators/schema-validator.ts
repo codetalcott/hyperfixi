@@ -103,6 +103,14 @@ const NO_REQUIRED_ROLES_COMMANDS = new Set([
   'break', // Zero-arg control flow (exit loop)
   'exit', // Zero-arg control flow (exit handler)
   'beep', // Debug command — all roles optional
+  // Upstream _hyperscript 0.9.90 additions (Phase 1) — all take an optional patient
+  'empty',
+  'open',
+  'close',
+  'select',
+  'clear',
+  'reset',
+  'breakpoint', // Zero-arg debug command
 ]);
 
 /**
@@ -150,6 +158,22 @@ export function validateCommandSchema(schema: CommandSchema): SchemaValidationRe
           role.role
         )
       );
+    }
+  }
+
+  // Check selectorKinds consistency (v1.2)
+  for (const role of schema.roles) {
+    if (role.selectorKinds && role.selectorKinds.length > 0) {
+      if (!role.expectedTypes.includes('selector')) {
+        items.push(
+          createSchemaValidationItem(
+            SchemaErrorCodes.SELECTOR_KINDS_WITHOUT_SELECTOR_TYPE,
+            'warning',
+            { role: role.role },
+            role.role
+          )
+        );
+      }
     }
   }
 
@@ -394,6 +418,94 @@ export function getValidationStats(validations: Map<string, SchemaValidationResu
     notes,
     byCode,
   };
+}
+
+// =============================================================================
+// Value-Level Type Constraint Validation (v1.2)
+// =============================================================================
+
+/**
+ * A parsed role value to validate against schema constraints.
+ */
+export interface RoleValue {
+  /** The semantic role name */
+  role: string;
+  /** The value type (selector, literal, reference, expression, flag) */
+  type: string;
+  /** For selector values, the selector kind */
+  selectorKind?: 'id' | 'class' | 'attribute' | 'element' | 'complex';
+}
+
+/**
+ * A diagnostic produced by value-level validation.
+ */
+export interface TypeConstraintDiagnostic {
+  /** Diagnostic level */
+  level: 'error' | 'warning';
+  /** The role that failed validation */
+  role: string;
+  /** Human-readable message */
+  message: string;
+  /** Machine-readable code */
+  code: string;
+}
+
+/**
+ * Validate parsed role values against a command schema's type constraints.
+ *
+ * This is a post-parse validation step: after values are classified by the
+ * parser, this function checks them against the schema's expectedTypes and
+ * selectorKinds constraints.
+ *
+ * @param schema - The command schema to validate against
+ * @param values - The parsed role values
+ * @returns Array of diagnostics (empty if all values pass)
+ */
+export function validateRoleValues(
+  schema: CommandSchema,
+  values: RoleValue[]
+): TypeConstraintDiagnostic[] {
+  const diagnostics: TypeConstraintDiagnostic[] = [];
+
+  for (const value of values) {
+    const roleSpec = schema.roles.find(r => r.role === value.role);
+    if (!roleSpec) continue; // Unknown role — not a type constraint issue
+
+    // Check value type against expectedTypes
+    if (
+      roleSpec.expectedTypes.length > 0 &&
+      !roleSpec.expectedTypes.includes(value.type as never)
+    ) {
+      // 'expression' is a wildcard — it accepts any type in the framework
+      if (!roleSpec.expectedTypes.includes('expression' as never)) {
+        diagnostics.push({
+          level: 'error',
+          role: value.role,
+          message: `${schema.action}.${value.role} expects type [${roleSpec.expectedTypes.join(', ')}], got '${value.type}'`,
+          code: SchemaErrorCodes.VALUE_TYPE_MISMATCH,
+        });
+      }
+    }
+
+    // Check selector kind constraint
+    if (
+      value.type === 'selector' &&
+      value.selectorKind &&
+      roleSpec.selectorKinds &&
+      roleSpec.selectorKinds.length > 0
+    ) {
+      if (!roleSpec.selectorKinds.includes(value.selectorKind)) {
+        diagnostics.push({
+          level: 'error',
+          role: value.role,
+          message: `${schema.action}.${value.role} expects selector kind [${roleSpec.selectorKinds.join(', ')}], got '${value.selectorKind}'`,
+          code: SchemaErrorCodes.SELECTOR_KIND_MISMATCH,
+        });
+      }
+    }
+  }
+
+  return diagnostics;
 }
 
 // =============================================================================

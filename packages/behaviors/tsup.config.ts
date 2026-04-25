@@ -13,6 +13,12 @@ export default defineConfig([
       'src/behaviors/toggleable.ts',
       'src/behaviors/sortable.ts',
       'src/behaviors/resizable.ts',
+      'src/behaviors/clipboard.ts',
+      'src/behaviors/autodismiss.ts',
+      'src/behaviors/clickoutside.ts',
+      'src/behaviors/focustrap.ts',
+      'src/behaviors/scrollreveal.ts',
+      'src/behaviors/tabs.ts',
     ],
     format: ['cjs', 'esm'],
     dts: true,
@@ -27,6 +33,12 @@ export default defineConfig([
       'toggleable.browser': 'src/behaviors/toggleable.ts',
       'sortable.browser': 'src/behaviors/sortable.ts',
       'resizable.browser': 'src/behaviors/resizable.ts',
+      'clipboard.browser': 'src/behaviors/clipboard.ts',
+      'autodismiss.browser': 'src/behaviors/autodismiss.ts',
+      'clickoutside.browser': 'src/behaviors/clickoutside.ts',
+      'focustrap.browser': 'src/behaviors/focustrap.ts',
+      'scrollreveal.browser': 'src/behaviors/scrollreveal.ts',
+      'tabs.browser': 'src/behaviors/tabs.ts',
       'all.browser': 'src/index.ts',
     },
     format: ['iife'],
@@ -38,6 +50,17 @@ export default defineConfig([
   {
     entry: {
       'core.browser': 'src/core-bundle.ts',
+    },
+    format: ['iife'],
+    globalName: 'HyperFixiBehaviors',
+    sourcemap: true,
+    minify: true,
+  },
+  // Resolver bundle — lazy compilation of behaviors on demand
+  // Include after hyperfixi.js: <script src="hyperfixi-behaviors.js"></script>
+  {
+    entry: {
+      'resolver.browser': 'src/browser-resolver-bundle.ts',
     },
     format: ['iife'],
     globalName: 'HyperFixiBehaviors',

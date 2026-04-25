@@ -13,6 +13,7 @@
  *     --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true
  */
 
+import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -813,6 +814,7 @@ function updatePatternIndex(code: string, _name: string, command: string): void 
   }
 
   fs.writeFileSync(filePath, content);
+  execSync(`npx prettier --write "${filePath}"`, { stdio: 'ignore' });
   console.log(`  Updated: ${filePath}`);
 }
 

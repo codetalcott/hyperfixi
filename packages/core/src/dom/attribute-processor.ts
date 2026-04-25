@@ -328,6 +328,16 @@ export class AttributeProcessor {
       return;
     }
 
+    // Mark as processed BEFORE the async compile+execute to prevent
+    // double-registration from MutationObserver race conditions.
+    // When an element with _="..." is appended to the DOM, both the
+    // MutationObserver and an explicit processNode() call may invoke
+    // processElementAsync concurrently. Without early marking, both
+    // calls pass the processedElements check and register duplicate
+    // event handlers (e.g., toggle fires twice, canceling itself).
+    this.processedElements.add(element);
+    this.processedCount++;
+
     try {
       debug.parse('ATTR: Processing element with code:', hyperscriptCode);
 
@@ -355,10 +365,6 @@ export class AttributeProcessor {
       // This ensures behavior installation is complete before continuing
       debug.parse('ATTR: Executing compiled AST');
       await hyperscript.execute(compilationResult.ast!, context);
-
-      // Mark as processed
-      this.processedElements.add(element);
-      this.processedCount++;
 
       // Dispatch load event on the element after successful processing
       this.dispatchLoadEvent(element);

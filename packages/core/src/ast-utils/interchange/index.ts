@@ -49,4 +49,5 @@ export type {
   CompletionItem as LSPCompletionItem,
   CompletionItemKind as LSPCompletionItemKind,
   HoverInfo as LSPHoverInfo,
+  HoverOptions as LSPHoverOptions,
 } from './lsp';

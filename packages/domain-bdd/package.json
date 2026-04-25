@@ -1,8 +1,9 @@
 {
   "name": "@lokascript/domain-bdd",
-  "version": "2.1.0",
+  "version": "2.3.1",
   "description": "Multilingual BDD specification domain built on @lokascript/framework — Given/When/Then in 4 languages, compiles to Playwright tests",
   "type": "module",
+  "sideEffects": false,
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,6 +26,7 @@
     "@lokascript/framework": "*"
   },
   "devDependencies": {
+    "@lokascript/domain-toolkit": "*",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",

@@ -1,0 +1,62 @@
+{
+  "name": "@hyperfixi/speech",
+  "version": "2.3.1",
+  "description": "Speech Synthesis and prompt() plugin for hyperfixi — adds `speak`, `ask`, and `answer` commands (upstream _hyperscript 0.9.90).",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup && npm run build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist --noEmit false",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hyperfixi/core": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "happy-dom": "^20.9.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "keywords": [
+    "hyperfixi",
+    "hyperscript",
+    "speech-synthesis",
+    "prompt",
+    "plugin",
+    "_hyperscript",
+    "v0.9.90"
+  ],
+  "author": "LokaScript Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/speech"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

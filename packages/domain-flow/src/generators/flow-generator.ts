@@ -92,6 +92,24 @@ export function toFlowSpec(node: SemanticNode, language: string): FlowSpec {
       base.transformFn = extractRoleValue(node, 'instrument') || undefined;
       break;
     }
+    case 'enter': {
+      base.url = extractRoleValue(node, 'source') || undefined;
+      break;
+    }
+    case 'follow': {
+      base.linkRel = extractRoleValue(node, 'patient') || undefined;
+      break;
+    }
+    case 'perform': {
+      base.actionName = extractRoleValue(node, 'patient') || undefined;
+      base.dataSource = extractRoleValue(node, 'source') || undefined;
+      break;
+    }
+    case 'capture': {
+      base.captureAs = extractRoleValue(node, 'destination') || undefined;
+      base.capturePath = extractRoleValue(node, 'patient') || undefined;
+      break;
+    }
   }
 
   return base;
@@ -237,6 +255,54 @@ function generateTransform(node: SemanticNode): string {
 }
 
 // =============================================================================
+// HATEOAS Command JS Generators
+// =============================================================================
+
+function generateEnter(node: SemanticNode): string {
+  const url = extractRoleValue(node, 'source') || '/';
+  return [
+    `// HATEOAS: Connect to entry point`,
+    `const agent = new SirenAgent('${escapeStr(url)}');`,
+    `await agent.start();`,
+  ].join('\n');
+}
+
+function generateFollow(node: SemanticNode): string {
+  const rel = extractRoleValue(node, 'patient') || 'self';
+  return [
+    `// HATEOAS: Follow link relation '${escapeStr(rel)}'`,
+    `await agent.followLink('${escapeStr(rel)}');`,
+  ].join('\n');
+}
+
+function generatePerform(node: SemanticNode): string {
+  const action = extractRoleValue(node, 'patient') || '';
+  const dataSource = extractRoleValue(node, 'source');
+  const lines = [`// HATEOAS: Execute action '${escapeStr(action)}'`];
+
+  if (dataSource) {
+    lines.push(
+      `const data = Object.fromEntries(new FormData(document.querySelector('${escapeStr(dataSource)}')));`
+    );
+    lines.push(`await agent.executeAction('${escapeStr(action)}', data);`);
+  } else {
+    lines.push(`await agent.executeAction('${escapeStr(action)}');`);
+  }
+
+  return lines.join('\n');
+}
+
+function generateCapture(node: SemanticNode): string {
+  const varName = extractRoleValue(node, 'destination') || 'captured';
+  const path = extractRoleValue(node, 'patient');
+
+  if (path) {
+    return `const ${varName} = agent.currentEntity.properties?.['${escapeStr(path)}'];`;
+  }
+  return `const ${varName} = agent.currentEntity.properties;`;
+}
+
+// =============================================================================
 // Public Code Generator
 // =============================================================================
 
@@ -257,6 +323,14 @@ export const flowCodeGenerator: CodeGenerator = {
         return generateSubmit(node);
       case 'transform':
         return generateTransform(node);
+      case 'enter':
+        return generateEnter(node);
+      case 'follow':
+        return generateFollow(node);
+      case 'perform':
+        return generatePerform(node);
+      case 'capture':
+        return generateCapture(node);
       default:
         throw new Error(`Unknown FlowScript command: ${node.action}`);
     }

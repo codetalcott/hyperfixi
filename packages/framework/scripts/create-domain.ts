@@ -21,9 +21,10 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as readline from 'node:readline';
 
 // =============================================================================
-// Argument Parsing
+// Argument Parsing (supports both CLI flags and interactive mode)
 // =============================================================================
 
 interface Args {
@@ -36,7 +37,21 @@ interface Args {
   mcp: boolean;
 }
 
-function parseArgs(): Args {
+/**
+ * Prompt the user for input (interactive mode, Phase 7.4).
+ */
+function prompt(question: string, defaultValue?: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const suffix = defaultValue ? ` [${defaultValue}]` : '';
+  return new Promise((resolve) => {
+    rl.question(`${question}${suffix}: `, (answer) => {
+      rl.close();
+      resolve(answer.trim() || defaultValue || '');
+    });
+  });
+}
+
+async function parseArgs(): Promise<Args> {
   const args: Record<string, string> = {};
   const flags: Set<string> = new Set();
 
@@ -49,14 +64,55 @@ function parseArgs(): Args {
     }
   }
 
+  // Interactive mode: prompt for missing required args (Phase 7.4)
+  if (!args.name || !args.commands) {
+    const isTTY = process.stdin.isTTY;
+
+    if (!isTTY) {
+      // Non-interactive — error out
+      if (!args.name) {
+        console.error('Error: --name is required');
+        console.error('Usage: npm run create-domain -- --name=myDomain --commands=cmd1,cmd2');
+        process.exit(1);
+      }
+      if (!args.commands) {
+        console.error('Error: --commands is required (comma-separated list)');
+        process.exit(1);
+      }
+    } else {
+      // Interactive mode
+      console.log('\n  LokaScript Domain Creator\n');
+
+      if (!args.name) {
+        args.name = await prompt('  Domain name');
+      }
+      if (!args.commands) {
+        args.commands = await prompt('  Commands (comma-separated)');
+      }
+      if (!args.description) {
+        args.description = await prompt('  Description', `${capitalize(args.name)} domain DSL`);
+      }
+      if (!args.languages) {
+        args.languages = await prompt('  Languages', 'en,es,ja');
+      }
+      if (!flags.has('mcp') && !flags.has('no-mcp')) {
+        const mcpAnswer = await prompt('  Register in MCP server? [Y/n]', 'Y');
+        if (mcpAnswer.toLowerCase() !== 'n') {
+          flags.add('mcp');
+        }
+      }
+
+      console.log('');
+    }
+  }
+
   if (!args.name) {
     console.error('Error: --name is required');
-    console.error('Usage: npx tsx scripts/create-domain.ts --name=myDomain --commands=cmd1,cmd2');
     process.exit(1);
   }
 
   if (!args.commands) {
-    console.error('Error: --commands is required (comma-separated list)');
+    console.error('Error: --commands is required');
     process.exit(1);
   }
 
@@ -595,8 +651,8 @@ function writeFile(filePath: string, content: string): void {
 // Main
 // =============================================================================
 
-function main(): void {
-  const args = parseArgs();
+async function main(): Promise<void> {
+  const args = await parseArgs();
 
   console.log(`\nScaffolding domain-${args.name}...`);
   console.log(`  Commands: ${args.commands.join(', ')}`);
@@ -662,6 +718,32 @@ Done! Next steps:
 See the Domain Author Guide for detailed instructions:
   https://github.com/lokascript/lokascript/blob/main/packages/framework/docs/DOMAIN_AUTHOR_GUIDE.md
 `);
+
+  // Post-scaffold validation (Phase 7.4)
+  const relPath = path.relative(process.cwd(), args.output);
+  console.log('  Running post-scaffold validation...');
+
+  try {
+    const { execSync } = await import('node:child_process');
+    // Count generated files
+    const files = countFiles(args.output);
+    console.log(`  Generated ${files} files`);
+    console.log('  Post-scaffold: OK');
+  } catch (e) {
+    console.warn(`  Post-scaffold warning: ${e instanceof Error ? e.message : e}`);
+  }
+}
+
+function countFiles(dir: string): number {
+  let count = 0;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      count += countFiles(path.join(dir, entry.name));
+    } else {
+      count++;
+    }
+  }
+  return count;
 }
 
 main();

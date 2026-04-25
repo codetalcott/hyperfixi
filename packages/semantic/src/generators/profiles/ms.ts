@@ -84,6 +84,14 @@ export const malayProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'fokus', normalized: 'focus' },
     blur: { primary: 'kabur', normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'kosongkan', normalized: 'empty' },
+    open: { primary: 'buka', normalized: 'open' },
+    close: { primary: 'tutup', normalized: 'close' },
+    select: { primary: 'tandai', normalized: 'select' },
+    clear: { primary: 'bersihkan', normalized: 'clear' },
+    reset: { primary: 'set-semula', alternatives: ['reset'], normalized: 'reset' },
+    breakpoint: { primary: 'titik-henti', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'pergi', alternatives: ['pindah'], normalized: 'go' },
     // Async

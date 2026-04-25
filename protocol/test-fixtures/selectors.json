@@ -1,0 +1,78 @@
+[
+  {
+    "id": "sel-001",
+    "description": "ID selector (#)",
+    "input": "[add patient:.active destination:#output]",
+    "expected": {
+      "kind": "command",
+      "action": "add",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" },
+        "destination": { "type": "selector", "value": "#output" }
+      }
+    }
+  },
+  {
+    "id": "sel-002",
+    "description": "Class selector (.)",
+    "input": "[toggle patient:.highlight]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".highlight" }
+      }
+    }
+  },
+  {
+    "id": "sel-003",
+    "description": "Attribute selector ([])",
+    "input": "[add patient:[data-active] destination:#output]",
+    "expected": {
+      "kind": "command",
+      "action": "add",
+      "roles": {
+        "patient": { "type": "selector", "value": "[data-active]" },
+        "destination": { "type": "selector", "value": "#output" }
+      }
+    }
+  },
+  {
+    "id": "sel-004",
+    "description": "ARIA selector (@)",
+    "input": "[set destination:@role patient:button]",
+    "expected": {
+      "kind": "command",
+      "action": "set",
+      "roles": {
+        "destination": { "type": "selector", "value": "@role" },
+        "patient": { "type": "literal", "value": "button", "dataType": "string" }
+      }
+    }
+  },
+  {
+    "id": "sel-005",
+    "description": "Wildcard selector (*)",
+    "input": "[remove patient:*hidden]",
+    "expected": {
+      "kind": "command",
+      "action": "remove",
+      "roles": {
+        "patient": { "type": "selector", "value": "*hidden" }
+      }
+    }
+  },
+  {
+    "id": "sel-006",
+    "description": "Multiple selector types together",
+    "input": "[add patient:.active destination:#container]",
+    "expected": {
+      "kind": "command",
+      "action": "add",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" },
+        "destination": { "type": "selector", "value": "#container" }
+      }
+    }
+  }
+]

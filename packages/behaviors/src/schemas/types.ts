@@ -100,8 +100,20 @@ export interface LokaScriptInstance {
 /**
  * Typed window interface for behavior auto-registration.
  * Avoids `(window as any)` casts throughout the codebase.
+ * Checks both `window.lokascript` and `window.hyperfixi` for the runtime instance.
  */
 export interface LokaScriptWindow {
   lokascript?: LokaScriptInstance;
-  __lokascript_behaviors_ready?: Promise<void> | undefined;
+  hyperfixi?: LokaScriptInstance;
+  __hyperfixi_behaviors_ready?: Promise<void> | undefined;
+}
+
+/**
+ * Resolve the LokaScript runtime from window globals.
+ * Checks both `window.lokascript` and `window.hyperfixi`.
+ */
+export function resolveRuntime(): LokaScriptInstance | null {
+  if (typeof window === 'undefined') return null;
+  const win = window as unknown as LokaScriptWindow;
+  return win.lokascript || win.hyperfixi || null;
 }

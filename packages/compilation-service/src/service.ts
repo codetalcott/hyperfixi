@@ -17,6 +17,8 @@ import type {
   ComponentResponse,
   DiffRequest,
   DiffResponse,
+  GenerateRequest,
+  GenerateResponse,
   ServiceOptions,
   SemanticJSON,
   SemanticJSONValue,
@@ -548,6 +550,166 @@ export class CompilationService {
       operations: result.operations,
       summary: result.summary,
       diagnostics,
+    };
+  }
+
+  /**
+   * Generate a target-specific output from LSE (bracket syntax or protocol JSON).
+   *
+   * Accepts LSE produced by an LLM (via `lse_generate_with_correction` MCP tool),
+   * validates it, and renders to the requested target format.
+   *
+   * Targets:
+   * - 'js'             — compiled JavaScript (default)
+   * - 'react'          — React component
+   * - 'vue'            — Vue component
+   * - 'svelte'         — Svelte component
+   * - 'intent-element' — HTML snippet with embedded `<lse-intent>` JSON
+   */
+  async generate(request: GenerateRequest): Promise<GenerateResponse> {
+    const { lse, target = 'js', task } = request;
+    const diagnostics: Diagnostic[] = [];
+
+    const isJSON = lse.trimStart().startsWith('{');
+
+    // ── intent-element: validate via @lokascript/intent, render HTML ───────
+    if (target === 'intent-element') {
+      try {
+        const { parseExplicit, toProtocolJSON, validateProtocolJSON, fromProtocolJSON } =
+          await import('@lokascript/framework');
+
+        let node: import('@lokascript/framework').SemanticNode | null = null;
+
+        if (isJSON) {
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(lse);
+          } catch {
+            return {
+              ok: false,
+              diagnostics: [
+                { severity: 'error', code: 'INVALID_JSON', message: 'LSE is not valid JSON' },
+              ],
+            };
+          }
+          const protoDiags = validateProtocolJSON(parsed as Record<string, unknown>);
+          for (const d of protoDiags) {
+            diagnostics.push({
+              severity: d.severity as 'error' | 'warning' | 'info',
+              code: d.code,
+              message: d.message,
+            });
+          }
+          if (!protoDiags.some(d => d.severity === 'error')) {
+            node = fromProtocolJSON(parsed as Parameters<typeof fromProtocolJSON>[0]);
+          }
+        } else {
+          try {
+            node = parseExplicit(lse);
+          } catch (e) {
+            return {
+              ok: false,
+              diagnostics: [
+                {
+                  severity: 'error',
+                  code: 'PARSE_ERROR',
+                  message: e instanceof Error ? e.message : String(e),
+                },
+              ],
+            };
+          }
+        }
+
+        if (!node) {
+          return { ok: false, diagnostics };
+        }
+
+        const protocol = toProtocolJSON(node);
+        const protocolStr = JSON.stringify(protocol, null, 2);
+        const taskComment = task ? `<!-- Task: ${task.replace(/-->/g, '-\\->')} -->\n` : '';
+
+        // Infer a declarative trigger attribute from the node.
+        //
+        // - event-handler nodes carry their event name in roles.get('event')
+        //   as a literal (wire-format trigger sugar is unwrapped into this
+        //   shape by fromProtocolJSON). Emit trigger="<event>".
+        // - Everything else gets trigger="load" — the element fires
+        //   validation+execution on connect. This matches the default
+        //   behavior and is the safest choice when no event is specified.
+        let triggerAttr = 'load';
+        if (node.kind === 'event-handler') {
+          const eventValue = node.roles.get('event');
+          if (
+            eventValue &&
+            eventValue.type === 'literal' &&
+            typeof eventValue.value === 'string' &&
+            eventValue.value.length > 0
+          ) {
+            triggerAttr = eventValue.value;
+          }
+        }
+        const escapedTrigger = triggerAttr.replace(/"/g, '&quot;');
+
+        const output = [
+          `${taskComment}<lse-intent trigger="${escapedTrigger}">`,
+          `  <script type="application/lse+json">`,
+          protocolStr
+            .split('\n')
+            .map(l => `    ${l}`)
+            .join('\n'),
+          `  </script>`,
+          `</lse-intent>`,
+        ].join('\n');
+
+        const semanticJSON = nodeToSemanticJSON(node);
+
+        return { ok: true, output, protocol: semanticJSON, diagnostics };
+      } catch (e) {
+        return {
+          ok: false,
+          diagnostics: [
+            {
+              severity: 'error',
+              code: 'INTERNAL_ERROR',
+              message: e instanceof Error ? e.message : String(e),
+            },
+          ],
+        };
+      }
+    }
+
+    // ── framework targets: delegate to existing pipeline ───────────────────
+
+    const componentTargets = ['react', 'vue', 'svelte'] as const;
+    type ComponentTarget = (typeof componentTargets)[number];
+
+    if ((componentTargets as readonly string[]).includes(target)) {
+      const componentRequest: ComponentRequest = isJSON
+        ? { semantic: JSON.parse(lse) as SemanticJSON }
+        : { explicit: lse };
+      const result = this.generateComponent({
+        ...componentRequest,
+        framework: target as ComponentTarget,
+      });
+      return {
+        ok: result.ok,
+        output: result.component?.code,
+        protocol: result.semantic,
+        diagnostics: result.diagnostics,
+      };
+    }
+
+    // ── js (default): compile to JavaScript ────────────────────────────────
+
+    const compileRequest: CompileRequest = isJSON
+      ? { semantic: JSON.parse(lse) as SemanticJSON }
+      : { explicit: lse };
+    const result = this.compile(compileRequest);
+    return {
+      ok: result.ok,
+      output: result.js,
+      protocol: result.semantic,
+      diagnostics: result.diagnostics,
     };
   }
 

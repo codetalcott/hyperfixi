@@ -1121,13 +1121,24 @@ Provides navigation functionality including URL navigation, element scrolling, a
 **Syntax:**
 
 ```hyperscript
-go [to] url <url> [in new window] | go [to] [position] [of] <target> [offset] [behavior] | go back
+go [to] <url> [in new window]       — URL navigation (bare URL, upstream 0.9.90)
+go [to] url <url> [in new window]   — legacy URL form, still supported
+go [to] [position] [of] <target> [offset] [behavior]
+go back
 ```
+
+**Note (upstream 0.9.90):** prefer `scroll to <target>` over `go to top of <target>`; prefer
+bare URLs (`go to /path` or `go to "https://..."`) over `go to url "..."`. Both old
+forms still work.
 
 **Examples:**
 
 ```hyperscript
-go to url "https://example.com"
+go to "https://example.com"    -- bare URL (upstream 0.9.90, preferred)
+```
+
+```hyperscript
+go to /users/42                -- bare path
 ```
 
 ```hyperscript
@@ -1135,11 +1146,11 @@ go back
 ```
 
 ```hyperscript
-go to top of <#header/>
+scroll to top of <#header/>    -- upstream 0.9.90 replacement for `go to top of`
 ```
 
 ```hyperscript
-go to url "https://example.com" in new window
+go to "https://example.com" in new window
 ```
 
 ```hyperscript

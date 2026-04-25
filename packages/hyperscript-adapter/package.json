@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/hyperscript-adapter",
-  "version": "2.1.0",
+  "version": "2.3.1",
   "description": "Multilingual adapter plugin for original _hyperscript — write hyperscript in 24 languages",
   "type": "module",
   "main": "dist/index.cjs",

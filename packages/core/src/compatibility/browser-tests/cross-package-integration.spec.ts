@@ -20,7 +20,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       page.on('pageerror', err => errors.push(err.message));
 
       // Navigate to a test page that loads the browser bundle
-      await page.goto(`${BASE_URL}/examples/basics/02-toggle-class.html`, {
+      await page.goto(`${BASE_URL}/examples/toggle-and-state/toggle-class.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -54,7 +54,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       page.on('pageerror', err => errors.push(err.message));
 
       // Navigate to an htmx-like example which demonstrates htmx features
-      await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
+      await page.goto(`${BASE_URL}/examples/swap-and-morph/swap-morph.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -88,7 +88,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       const errors: string[] = [];
       page.on('pageerror', err => errors.push(err.message));
 
-      await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
+      await page.goto(`${BASE_URL}/examples/swap-and-morph/swap-morph.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -322,7 +322,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       page.on('pageerror', err => errors.push(err.message));
 
       // Navigate to htmx example page which uses both htmx-style attributes and hyperscript
-      await page.goto(`${BASE_URL}/examples/htmx-like/01-swap-morph.html`, {
+      await page.goto(`${BASE_URL}/examples/swap-and-morph/swap-morph.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -385,7 +385,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       page.on('pageerror', err => errors.push(err.message));
 
       // Navigate to a page that uses the browser bundle
-      await page.goto(`${BASE_URL}/examples/basics/02-toggle-class.html`, {
+      await page.goto(`${BASE_URL}/examples/toggle-and-state/toggle-class.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });
@@ -419,7 +419,7 @@ test.describe('Cross-Package Integration @comprehensive', () => {
       page.on('pageerror', err => errors.push(err.message));
 
       // Navigate to htmx example page
-      await page.goto(`${BASE_URL}/examples/htmx-like/05-boosted-links.html`, {
+      await page.goto(`${BASE_URL}/examples/navigation/boosted-links.html`, {
         waitUntil: 'domcontentloaded',
         timeout: 10000,
       });

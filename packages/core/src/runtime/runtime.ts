@@ -29,7 +29,7 @@ import { ExpressionEvaluator } from '../core/expression-evaluator';
 // This allows tree-shaking to eliminate it in browser builds where lazyLoad=false
 
 // Import all 48 V2 commands
-// DOM Commands (10) - includes htmx-like swap/morph/process-partials
+// DOM Commands (11) - includes htmx-like swap/morph/process-partials and v0.9.90 `empty`
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createAddCommand } from '../commands/dom/add';
@@ -37,6 +37,11 @@ import { createRemoveCommand } from '../commands/dom/remove';
 import { createToggleCommand } from '../commands/dom/toggle';
 import { createPutCommand } from '../commands/dom/put';
 import { createMakeCommand } from '../commands/dom/make';
+import { createEmptyCommand } from '../commands/dom/empty';
+import { createOpenCommand } from '../commands/dom/open';
+import { createCloseCommand } from '../commands/dom/close';
+import { createSelectCommand } from '../commands/dom/select';
+import { createResetCommand } from '../commands/dom/reset';
 import { createSwapCommand, createMorphCommand } from '../commands/dom/swap';
 import { createProcessPartialsCommand } from '../commands/dom/process-partials';
 
@@ -44,11 +49,12 @@ import { createProcessPartialsCommand } from '../commands/dom/process-partials';
 import { createWaitCommand } from '../commands/async/wait';
 import { createFetchCommand } from '../commands/async/fetch';
 
-// Data Commands (4)
+// Data Commands (5) — + clear (v0.9.90)
 import { createSetCommand } from '../commands/data/set';
 import { createGetCommand } from '../commands/data/get';
 import { createIncrementCommand } from '../commands/data/increment';
 import { createDecrementCommand } from '../commands/data/decrement';
+import { createClearCommand } from '../commands/data/clear';
 
 // Utility Commands (1)
 import { createLogCommand } from '../commands/utility/log';
@@ -61,6 +67,7 @@ import { createSendCommand } from '../commands/events/send';
 import { createGoCommand } from '../commands/navigation/go';
 import { createPushUrlCommand } from '../commands/navigation/push-url';
 import { createReplaceUrlCommand } from '../commands/navigation/replace-url';
+import { createScrollCommand } from '../commands/navigation/scroll-to';
 
 // Control Flow Commands (7)
 import { createIfCommand } from '../commands/control-flow/if';
@@ -71,8 +78,10 @@ import { createHaltCommand } from '../commands/control-flow/halt';
 import { createReturnCommand } from '../commands/control-flow/return';
 import { createExitCommand } from '../commands/control-flow/exit';
 
-// Execution Commands (1)
+// Execution Commands (3) - includes v0.9.90 focus/blur
 import { createCallCommand } from '../commands/execution/call';
+import { createFocusCommand } from '../commands/execution/focus';
+import { createBlurCommand } from '../commands/execution/blur';
 
 // Content Commands (1)
 import { createAppendCommand } from '../commands/content/append';
@@ -101,6 +110,7 @@ import { createCopyCommand } from '../commands/utility/copy';
 import { createPickCommand } from '../commands/utility/pick';
 import { createThrowCommand } from '../commands/control-flow/throw';
 import { createBeepCommand } from '../commands/utility/beep';
+import { createBreakpointCommand } from '../commands/utility/breakpoint';
 import { createInstallCommand } from '../commands/behaviors/install';
 
 // Final Commands - Phase 6-6 (2)
@@ -177,7 +187,7 @@ export class Runtime extends RuntimeBase {
 
     // If no custom registry provided, register all 48 V2 commands
     if (!options.registry) {
-      // DOM Commands (10) - includes htmx-like swap/morph/process-partials
+      // DOM Commands (11) - includes htmx-like swap/morph/process-partials and v0.9.90 `empty`
       registry.register(createHideCommand());
       registry.register(createShowCommand());
       registry.register(createAddCommand());
@@ -185,6 +195,11 @@ export class Runtime extends RuntimeBase {
       registry.register(createToggleCommand());
       registry.register(createPutCommand());
       registry.register(createMakeCommand());
+      registry.register(createEmptyCommand());
+      registry.register(createOpenCommand());
+      registry.register(createCloseCommand());
+      registry.register(createSelectCommand());
+      registry.register(createResetCommand());
       registry.register(createSwapCommand());
       registry.register(createMorphCommand());
       registry.register(createProcessPartialsCommand());
@@ -193,11 +208,12 @@ export class Runtime extends RuntimeBase {
       registry.register(createWaitCommand());
       registry.register(createFetchCommand());
 
-      // Data Commands (4)
+      // Data Commands (5) — + clear (v0.9.90)
       registry.register(createSetCommand());
       registry.register(createGetCommand());
       registry.register(createIncrementCommand());
       registry.register(createDecrementCommand());
+      registry.register(createClearCommand());
 
       // Utility Commands (1)
       registry.register(createLogCommand());
@@ -206,10 +222,13 @@ export class Runtime extends RuntimeBase {
       registry.register(createTriggerCommand());
       registry.register(createSendCommand());
 
-      // Navigation Commands (3) - includes htmx-like push/replace url
+      // Navigation Commands (4) - includes htmx-like push/replace url and
+      // `scroll to` (upstream _hyperscript 0.9.90 replacement for the
+      // deprecated `go to top of X` scroll form)
       registry.register(createGoCommand());
       registry.register(createPushUrlCommand());
       registry.register(createReplaceUrlCommand());
+      registry.register(createScrollCommand());
 
       // Control Flow Commands (7)
       registry.register(createIfCommand());
@@ -223,6 +242,10 @@ export class Runtime extends RuntimeBase {
       // Phase 6-2 Commands (4)
       registry.register(createCallCommand());
       registry.register(createAppendCommand());
+
+      // v0.9.90 focus/blur (Phase 1 of deferred features plan)
+      registry.register(createFocusCommand());
+      registry.register(createBlurCommand());
 
       // Phase 6-3 Commands (4)
       registry.register(createTransitionCommand());
@@ -242,6 +265,7 @@ export class Runtime extends RuntimeBase {
       registry.register(createPickCommand());
       registry.register(createThrowCommand());
       registry.register(createBeepCommand());
+      registry.register(createBreakpointCommand());
       registry.register(createInstallCommand());
 
       // Phase 6-6 Commands (2)

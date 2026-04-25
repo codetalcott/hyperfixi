@@ -98,7 +98,7 @@ describe('siren-client', () => {
     });
 
     it('dispatches siren:blocked on 409', async () => {
-      const blockedEntity: SirenEntity = {
+      const blockedEntity = {
         properties: { message: 'Payment required' },
         actions: [{ name: 'pay', href: '/orders/1/pay', method: 'POST' }],
       };
@@ -115,6 +115,9 @@ describe('siren-client', () => {
       expect(detail.message).toBe('Payment required');
       expect(detail.offeredActions).toHaveLength(1);
       expect(detail.offeredActions[0].name).toBe('pay');
+      // Non-GRAIL 409 — no blockedCondition
+      expect(detail.blockedAction).toBeNull();
+      expect(detail.blockedCondition).toBeNull();
 
       document.removeEventListener('siren:blocked', handler);
     });

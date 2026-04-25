@@ -97,7 +97,16 @@ export {
   searchPatterns,
   getAllPatterns,
   getPatternStats,
+  getBehaviorPatterns,
 } from './api/patterns';
+
+// Behavior Loader
+export { loadBehaviors } from './api/behavior-loader';
+export type {
+  BehaviorRuntime,
+  LoadBehaviorsOptions,
+  LoadBehaviorsResult,
+} from './api/behavior-loader';
 
 // Translations
 export {

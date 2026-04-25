@@ -124,8 +124,12 @@ export function toCoreAST(node: InterchangeNode): CoreNode {
         ...nodePos(node),
       };
 
+    case 'error':
+      // Error nodes don't roundtrip — produce a placeholder
+      return { type: 'literal', value: null, raw: 'null', ...POS };
+
     default: {
-      // Exhaustive check — all 16 types should be handled above
+      // Exhaustive check — all types should be handled above
       const _exhaustive: never = node;
       return { type: 'literal', value: null, raw: 'null', ...POS };
     }

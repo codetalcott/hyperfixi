@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/es.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const es: Dictionary = {
   commands: {
-    // Event handling
     on: 'en',
     tell: 'decir',
     trigger: 'disparar',
     send: 'enviar',
-
-    // DOM manipulation
     take: 'tomar',
     put: 'poner',
     set: 'establecer',
@@ -20,8 +18,6 @@ export const es: Dictionary = {
     toggle: 'alternar',
     hide: 'ocultar',
     show: 'mostrar',
-
-    // Control flow
     if: 'si',
     unless: 'menos',
     repeat: 'repetir',
@@ -31,54 +27,41 @@ export const es: Dictionary = {
     continue: 'continuar',
     break: 'romper',
     halt: 'detener',
-
-    // Async
     wait: 'esperar',
     fetch: 'buscar',
     call: 'llamar',
     return: 'retornar',
-
-    // Other commands
     make: 'hacer',
     log: 'registrar',
     throw: 'lanzar',
     catch: 'atrapar',
     measure: 'medir',
     transition: 'transición',
-
-    // Data Commands
     increment: 'incrementar',
     decrement: 'decrementar',
     default: 'predeterminar',
-
-    // Navigation Commands
     go: 'ir',
     pushUrl: 'pushUrl',
     replaceUrl: 'reemplazarUrl',
-
-    // Utility Commands
     copy: 'copiar',
     pick: 'escoger',
     beep: 'pitido',
-
-    // Advanced Commands
     js: 'js',
     async: 'asíncrono',
     render: 'renderizar',
-
-    // Animation Commands
     swap: 'intercambiar',
     morph: 'transformar',
     settle: 'estabilizar',
-
-    // Content Commands
     append: 'añadir',
-
-    // Control Flow
     exit: 'salir',
-
-    // Behaviors
     install: 'instalar',
+    breakpoint: 'punto-interrupción',
+    clear: 'limpiar',
+    close: 'cerrar',
+    open: 'abrir',
+    select: 'seleccionar',
+    clone: 'clonar',
+    prepend: 'anteponer',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const es: Dictionary = {
     mouseover: 'ratónencima',
     mouseout: 'ratónfuera',
     mousemove: 'ratónmover',
-
     keydown: 'teclaabajo',
     keyup: 'teclaarriba',
     keypress: 'teclapresar',
-
     focus: 'enfocar',
     blur: 'desenfocar',
     change: 'cambiar',
     input: 'entrada',
     submit: 'enviar',
     reset: 'reiniciar',
-
     load: 'cargar',
     unload: 'descargar',
     resize: 'redimensionar',
     scroll: 'desplazar',
-
     touchstart: 'toqueempezar',
     touchend: 'toqueterminar',
     touchmove: 'toquemover',
@@ -145,8 +124,8 @@ export const es: Dictionary = {
     contains: 'contiene',
     includes: 'incluye',
     equals: 'iguala',
-    has: 'tiene', // third-person: él/ella tiene
-    have: 'tengo', // first-person: yo tengo
+    has: 'tiene',
+    have: 'tengo',
     then: 'entonces',
     else: 'sino',
     otherwise: 'delocontrario',
@@ -179,7 +158,7 @@ export const es: Dictionary = {
     my: 'mi',
     you: 'tu',
     your: 'tu',
-    yourself: 'ti mismo', // REVIEW: native speaker
+    yourself: 'ti mismo',
     myself: 'yo mismo',
     element: 'elemento',
     target: 'objetivo',
@@ -204,7 +183,6 @@ export const es: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'primero',
     last: 'último',
     next: 'siguiente',
@@ -212,20 +190,19 @@ export const es: Dictionary = {
     prev: 'ant',
     at: 'en',
     random: 'aleatorio',
-
-    // DOM Traversal
     closest: 'máscercano',
     parent: 'padre',
     children: 'hijos',
     within: 'dentro',
-
-    // Emptiness/Existence
     no: 'ningún',
     empty: 'vacío',
     some: 'algún',
-
-    // String operations
     'starts with': 'empieza con',
     'ends with': 'termina con',
+    'ignoring case': 'ignorando mayúsculas',
+    'sorted by': 'ordenado por',
+    'mapped to': 'transformado a',
+    'split by': 'dividido por',
+    'joined by': 'unido por',
   },
 };

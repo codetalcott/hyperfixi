@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/monorepo",
-  "version": "2.1.0",
+  "version": "2.3.1",
   "description": "LokaScript monorepo - multilingual hyperscript engine with 24-language support",
   "private": true,
   "type": "module",
@@ -25,7 +25,9 @@
     "test:coverage": "npm run test:coverage --workspaces",
     "lint": "npm run lint --workspaces",
     "lint:fix": "npm run lint:fix --workspaces",
+    "lint:domains": "for pkg in sql bdd behaviorspec flow jsx learn llm todo voice; do npm test --prefix packages/domain-$pkg -- --run lint || exit 1; done",
     "typecheck": "npm run typecheck --workspaces",
+    "generate:language-assets": "npm run generate:language-assets --prefix packages/semantic",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
     "clean:test": "rm -rf packages/*/coverage packages/*/html packages/*/playwright-report packages/*/test-results packages/*/.vitest clients/*/coverage",
     "bootstrap": "npm install",
@@ -36,6 +38,8 @@
     "docs:dev": "npm run dev --workspace=apps/docs-site",
     "docs:build": "npm run build --workspace=apps/docs-site",
     "check:fresh": "./scripts/ensure-fresh.sh packages/framework packages/semantic packages/aot-compiler packages/compilation-service packages/mcp-server",
+    "check:ci-order": "node scripts/check-ci-build-order.cjs",
+    "check:ci-order:test": "node --test scripts/check-ci-build-order.test.cjs",
     "compatibility:monitor": "node scripts/compatibility-monitor.js",
     "compatibility:improve": "node scripts/improvement-workflow.js",
     "compatibility:cycle": "npm run compatibility:monitor && npm run compatibility:improve",
@@ -54,6 +58,7 @@
     "packages:list": "node scripts/list-packages.cjs",
     "packages:list:public": "node scripts/list-packages.cjs --public",
     "packages:list:private": "node scripts/list-packages.cjs --private",
+    "create-domain": "npx tsx packages/framework/scripts/create-domain.ts",
     "rebuild": "npm run build && npm run typecheck",
     "rebuild:full": "./scripts/rebuild-all.sh",
     "rebuild:clean": "./scripts/rebuild-all.sh --clean",
@@ -77,9 +82,14 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "tar": "^7.5.7",
+    "tar": "^7.5.11",
     "esbuild": "^0.25.11",
-    "hono": "^4.11.7"
+    "hono": "^4.12.14",
+    "minimatch": "^10.2.3",
+    "serialize-javascript": "^7.0.3",
+    "yauzl": "^3.2.1",
+    "basic-ftp": "^5.3.0",
+    "follow-redirects": "^1.16.0"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [

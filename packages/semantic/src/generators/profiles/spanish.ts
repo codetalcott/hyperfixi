@@ -11,6 +11,7 @@ export const spanishProfile: LanguageProfile = {
   code: 'es',
   name: 'Spanish',
   nativeName: 'Español',
+  regions: ['western', 'priority'],
   direction: 'ltr',
   script: 'latin',
   wordOrder: 'SVO',
@@ -88,6 +89,17 @@ export const spanishProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'enfocar', alternatives: ['enfoque'], normalized: 'focus' },
     blur: { primary: 'desenfocar', alternatives: ['desenfoque'], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    open: { primary: 'abrir', normalized: 'open' },
+    close: { primary: 'cerrar', normalized: 'close' },
+    select: { primary: 'seleccionar', normalized: 'select' },
+    clear: { primary: 'limpiar', normalized: 'clear' },
+    reset: { primary: 'reiniciar', alternatives: ['restablecer'], normalized: 'reset' },
+    breakpoint: {
+      primary: 'punto-interrupción',
+      alternatives: ['punto-interrupcion'],
+      normalized: 'breakpoint',
+    },
     // Common event names (for event handler patterns)
     click: { primary: 'clic', alternatives: ['hacer clic', 'click'], normalized: 'click' },
     hover: { primary: 'sobrevolar', alternatives: ['pasar por encima'], normalized: 'hover' },

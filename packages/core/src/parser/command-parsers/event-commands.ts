@@ -150,41 +150,19 @@ export function parseTriggerCommand(
     }
   }
 
-  // Continue parsing remaining args (on, target, etc.)
-  while (!isCommandBoundary(ctx)) {
-    allArgs.push(ctx.parsePrimary());
-  }
+  // Parse optional target: "on <target>" (trigger) or "to <target>" (send)
+  // Must check explicitly rather than delegating to parsePrimary(),
+  // because parsePrimary() interprets 'on' as event handler start.
+  const finalArgs: ASTNode[] = [...allArgs];
 
-  // Find the 'on' or 'to' keyword (trigger uses 'on', send uses 'to')
-  let operationIndex = -1;
-  let operationKeyword = 'on';
-  for (let i = 0; i < allArgs.length; i++) {
-    const arg = allArgs[i];
-    const argRecord = arg as Record<string, unknown>;
-    const argValue = (argRecord.name as string) || (argRecord.value as string);
-    if (
-      (arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
-      (argValue === 'on' || argValue === 'to')
-    ) {
-      operationIndex = i;
-      operationKeyword = argValue;
-      break;
+  if (ctx.check('on') || ctx.check('to')) {
+    const keyword = ctx.advance().value; // consume 'on' or 'to'
+    finalArgs.push(ctx.createIdentifier(keyword));
+
+    // Parse target expression(s)
+    while (!isCommandBoundary(ctx)) {
+      finalArgs.push(ctx.parsePrimary());
     }
-  }
-
-  const finalArgs: ASTNode[] = [];
-
-  if (operationIndex === -1) {
-    // No "on" or "to" keyword found - use all args as-is
-    finalArgs.push(...allArgs);
-  } else {
-    // Restructure: event + keyword + target
-    const eventArgs = allArgs.slice(0, operationIndex);
-    const targetArgs = allArgs.slice(operationIndex + 1);
-
-    finalArgs.push(...eventArgs);
-    finalArgs.push(ctx.createIdentifier(operationKeyword));
-    finalArgs.push(...targetArgs);
   }
 
   // Use CommandNodeBuilder for consistent node construction

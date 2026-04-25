@@ -1,3 +1,10 @@
+# Examples: exclude non-test content (vite projects, playground, experiments)
+/examples/vite-plugin-test/
+/examples/vite-plugin-multilingual/
+/examples/playground/
+/examples/experiments/
+/examples/dictionary-editor/
+
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -100,11 +107,15 @@ deno.lock
 # Monorepo specific
 lerna-debug.log*
 
-# Debug files (hyperfixi specific)
-debug*.js
-debug*.ts
-debug*.mjs
-debug*.html
+# Debug files (hyperfixi specific — generated bundles at root/dist, not src)
+/debug*.js
+/debug*.ts
+/debug*.mjs
+/debug*.html
+# Nested debug files (temporary session artifacts anywhere in the tree)
+**/debug-*.test.ts
+**/debug-*.spec.ts
+**/debug-*.html
 
 # Data files
 *.db
@@ -173,6 +184,7 @@ packages/*/html/
 !**/test-runner.html
 !**/test-dashboard.html
 !**/test-measure-css-properties.html
+!examples/**/test-*.html
 
 # MCP server files
 mcp-server-hyperscript/dist/
@@ -248,6 +260,7 @@ clients/python-client/sdist/
 clients/python-client/var/
 clients/python-client/wheels/
 clients/python-client/*.egg-info/
+protocol/python/src/*.egg-info/
 clients/python-client/.installed.cfg
 clients/python-client/*.egg
 

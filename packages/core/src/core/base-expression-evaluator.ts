@@ -14,6 +14,7 @@ import type { ASTNode, ExecutionContext } from '../types/core';
 import type { ExecutionResult, ExecutionSignal } from '../types/result';
 import { ok, err } from '../types/result';
 import { debug } from '../utils/debug';
+import { getRegisteredNodeEvaluator, notifyGlobalRead } from '../parser/extensions';
 import {
   isElement,
   getElementProperty,
@@ -172,8 +173,17 @@ export class BaseExpressionEvaluator {
       case 'attributeAccess':
         return this.evaluateAttributeAccess(node as any, context);
 
-      default:
+      case 'asExpression':
+        return this.evaluateAsExpression(node as any, context);
+
+      default: {
+        // Phase 5b: plugin-registered evaluators for custom AST node types.
+        const pluginEvaluator = getRegisteredNodeEvaluator(node.type);
+        if (pluginEvaluator) {
+          return pluginEvaluator(node, context);
+        }
         throw new Error(`Unsupported AST node type for evaluation: ${node.type}`);
+      }
     }
   }
 
@@ -356,7 +366,14 @@ export class BaseExpressionEvaluator {
       return context.locals.get(name);
     }
     if (context.globals?.has(name)) {
+      if (name.startsWith('$')) notifyGlobalRead(name.slice(1), context);
       return context.globals.get(name);
+    }
+    // Hyperscript convention: `$name` identifiers look up `name` in globals
+    // (matches how setVariableValue stores them).
+    if (name.startsWith('$') && context.globals?.has(name.slice(1))) {
+      notifyGlobalRead(name.slice(1), context);
+      return context.globals.get(name.slice(1));
     }
     if (context.variables?.has(name)) {
       return context.variables.get(name);
@@ -656,6 +673,21 @@ export class BaseExpressionEvaluator {
       return accessAttribute(context.me as Element, node.attributeName);
     }
     return `@${node.attributeName}`;
+  }
+
+  /**
+   * Evaluate 'as' type conversion expressions (e.g., `x as Int`, `value as String`)
+   */
+  protected async evaluateAsExpression(
+    node: { expression: any; targetType: string },
+    context: ExecutionContext
+  ): Promise<unknown> {
+    const value = await this.evaluate(node.expression, context);
+    const asExpr = this.expressionRegistry.get('as');
+    if (asExpr) {
+      return asExpr.evaluate(context, value, node.targetType);
+    }
+    throw new Error(`Conversion type 'as' not registered`);
   }
 
   /**

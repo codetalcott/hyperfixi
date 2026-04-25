@@ -1,0 +1,79 @@
+[
+  {
+    "id": "basic-001",
+    "description": "Toggle with class selector",
+    "input": "[toggle patient:.active]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" }
+      }
+    }
+  },
+  {
+    "id": "basic-002",
+    "description": "Command with two selector roles",
+    "input": "[toggle patient:.active destination:#button]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" },
+        "destination": { "type": "selector", "value": "#button" }
+      }
+    }
+  },
+  {
+    "id": "basic-003",
+    "description": "Add command with selector roles",
+    "input": "[add patient:.highlight destination:#output]",
+    "expected": {
+      "kind": "command",
+      "action": "add",
+      "roles": {
+        "patient": { "type": "selector", "value": ".highlight" },
+        "destination": { "type": "selector", "value": "#output" }
+      }
+    }
+  },
+  {
+    "id": "basic-004",
+    "description": "Custom domain roles (no schema)",
+    "input": "[deploy destination:production source:main manner:rolling]",
+    "expected": {
+      "kind": "command",
+      "action": "deploy",
+      "roles": {
+        "destination": { "type": "literal", "value": "production", "dataType": "string" },
+        "source": { "type": "literal", "value": "main", "dataType": "string" },
+        "manner": { "type": "literal", "value": "rolling", "dataType": "string" }
+      }
+    }
+  },
+  {
+    "id": "basic-005",
+    "description": "Fetch with URL and format",
+    "input": "[fetch source:/api/users responseType:json]",
+    "expected": {
+      "kind": "command",
+      "action": "fetch",
+      "roles": {
+        "source": { "type": "literal", "value": "/api/users", "dataType": "string" },
+        "responseType": { "type": "literal", "value": "json", "dataType": "string" }
+      }
+    }
+  },
+  {
+    "id": "basic-006",
+    "description": "Command name is lowercased",
+    "input": "[Toggle patient:.active]",
+    "expected": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active" }
+      }
+    }
+  }
+]

@@ -300,6 +300,137 @@ describe('PatternMatcher', () => {
         expect(result).not.toBeNull();
         expect(result?.captured.has('patient')).toBe(true);
       });
+
+      it('should stop greedy role inside group at parent verb keyword (SOV WHERE)', () => {
+        // SOV pattern: [source] から [columns] [GROUP: 条件 condition(greedy)] 選択
+        // Input: users から name 条件 age > 18 選択
+        // The greedy condition role must stop at 選択 (the verb keyword outside the group)
+        const schema = defineCommand({
+          action: 'select',
+          roles: [
+            defineRole({
+              role: 'columns',
+              required: true,
+              expectedTypes: ['expression'],
+              svoPosition: 2,
+              sovPosition: 1,
+            }),
+            defineRole({
+              role: 'source',
+              required: true,
+              expectedTypes: ['expression'],
+              svoPosition: 1,
+              sovPosition: 2,
+              markerOverride: { ja: 'から' },
+            }),
+            defineRole({
+              role: 'condition',
+              required: false,
+              expectedTypes: ['expression'],
+              greedy: true,
+              svoPosition: 0,
+              sovPosition: 0,
+              markerOverride: { ja: '条件' },
+            }),
+          ],
+        });
+
+        const profile: PatternGenLanguageProfile = {
+          code: 'ja',
+          wordOrder: 'SOV',
+          keywords: {
+            select: { primary: '選択' },
+          },
+          roleMarkers: {
+            condition: { primary: '条件', position: 'before' },
+          },
+        };
+
+        const pattern = generatePattern(schema, profile);
+
+        // Input: users から name 条件 age > 18 選択
+        const tokens = createMockTokenStream([
+          createToken({ kind: 'identifier', value: 'users', position: createPosition(0, 5) }),
+          createToken({ kind: 'keyword', value: 'から', position: createPosition(6, 8) }),
+          createToken({ kind: 'identifier', value: 'name', position: createPosition(9, 13) }),
+          createToken({ kind: 'keyword', value: '条件', position: createPosition(14, 16) }),
+          createToken({ kind: 'identifier', value: 'age', position: createPosition(17, 20) }),
+          createToken({ kind: 'operator', value: '>', position: createPosition(21, 22) }),
+          createToken({ kind: 'literal', value: '18', position: createPosition(23, 25) }),
+          createToken({ kind: 'keyword', value: '選択', position: createPosition(26, 28) }),
+        ]);
+
+        const result = matcher.matchPattern(tokens, pattern);
+
+        expect(result).not.toBeNull();
+        expect(result?.captured.has('source')).toBe(true);
+        expect(result?.captured.get('source')).toMatchObject({ raw: 'users' });
+        expect(result?.captured.has('columns')).toBe(true);
+        expect(result?.captured.get('columns')).toMatchObject({ raw: 'name' });
+        expect(result?.captured.has('condition')).toBe(true);
+        expect(result?.captured.get('condition')).toMatchObject({ raw: 'age > 18' });
+      });
+
+      it('should match SOV pattern without optional greedy group', () => {
+        // Same schema but input has no WHERE clause
+        // Input: users から name 選択
+        const schema = defineCommand({
+          action: 'select',
+          roles: [
+            defineRole({
+              role: 'columns',
+              required: true,
+              expectedTypes: ['expression'],
+              svoPosition: 2,
+              sovPosition: 1,
+            }),
+            defineRole({
+              role: 'source',
+              required: true,
+              expectedTypes: ['expression'],
+              svoPosition: 1,
+              sovPosition: 2,
+              markerOverride: { ja: 'から' },
+            }),
+            defineRole({
+              role: 'condition',
+              required: false,
+              expectedTypes: ['expression'],
+              greedy: true,
+              svoPosition: 0,
+              sovPosition: 0,
+              markerOverride: { ja: '条件' },
+            }),
+          ],
+        });
+
+        const profile: PatternGenLanguageProfile = {
+          code: 'ja',
+          wordOrder: 'SOV',
+          keywords: {
+            select: { primary: '選択' },
+          },
+          roleMarkers: {
+            condition: { primary: '条件', position: 'before' },
+          },
+        };
+
+        const pattern = generatePattern(schema, profile);
+
+        const tokens = createMockTokenStream([
+          createToken({ kind: 'identifier', value: 'users', position: createPosition(0, 5) }),
+          createToken({ kind: 'keyword', value: 'から', position: createPosition(6, 8) }),
+          createToken({ kind: 'identifier', value: 'name', position: createPosition(9, 13) }),
+          createToken({ kind: 'keyword', value: '選択', position: createPosition(14, 16) }),
+        ]);
+
+        const result = matcher.matchPattern(tokens, pattern);
+
+        expect(result).not.toBeNull();
+        expect(result?.captured.has('source')).toBe(true);
+        expect(result?.captured.has('columns')).toBe(true);
+        expect(result?.captured.has('condition')).toBe(false);
+      });
     });
   });
 

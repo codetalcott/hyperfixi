@@ -13,7 +13,7 @@ import type { ParserContext } from '../parser-types';
 import type { ASTNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
-import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
+import { consumeOptionalKeyword, isCommandBoundary } from '../helpers/parsing-helpers';
 import {
   createArrayLiteral,
   createObjectLiteral,
@@ -27,16 +27,21 @@ import { isIdentifierLike } from '../token-predicates';
  * Parse wait command
  *
  * Syntax:
- *   - wait <time>
+ *   - wait <time>                                    (literal: wait 2s)
+ *   - wait <expression>                              (variable/expression: wait delay, wait (x * 2))
  *   - wait for <event> [from <target>]
  *   - wait for <event1> or <event2> [from <target>]
  *   - wait for <event>(<param1>, <param2>) [from <target>]
  *
  * This command waits for either a time duration or event(s) to occur.
+ * Time expressions accept any expression evaluating to a number (ms) or time string ('2s').
  * Supports multiple events with 'or' and optional event parameters.
  *
  * Examples:
  *   - wait 1s
+ *   - wait delay                                     (variable holding ms or time string)
+ *   - wait $timeout                                  (context variable)
+ *   - wait (baseDelay * 2)                           (parenthesized expression)
  *   - wait for click
  *   - wait for click or keydown from <button/>
  *   - wait for custom(value, index) from the window
@@ -50,11 +55,18 @@ import { isIdentifierLike } from '../token-predicates';
 export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
 
-  // Check if this is a simple time-based wait (e.g., "wait 1s")
-  // Phase 4: Using predicate methods
-  if (ctx.checkTimeExpression() || ctx.checkLiteral()) {
-    // Simple wait with time
-    const timeExpr = ctx.parsePrimary();
+  // Check if this is a time/expression-based wait (e.g., "wait 1s", "wait delay", "wait (x * 2)")
+  // Accepts any expression that evaluates to a number (ms) or time string ('2s').
+  // Must exclude 'for' (event syntax) and command boundaries (then, end, else, other commands).
+  const isExpressionStart =
+    ctx.checkTimeExpression() ||
+    ctx.checkLiteral() ||
+    ctx.checkContextVar() ||
+    ctx.check('(') ||
+    (ctx.checkIdentifierLike() && !ctx.check('for') && !isCommandBoundary(ctx));
+  if (isExpressionStart) {
+    // Parse as full expression to support compound forms like `delay * 2`
+    const timeExpr = ctx.parseExpression();
     args.push(timeExpr);
 
     return CommandNodeBuilder.from(commandToken)

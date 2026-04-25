@@ -317,8 +317,8 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
     modifiers['with'] = ctx.parsePrimary() as ExpressionNode;
   }
 
-  // Step 3: Parse 'as' and 'with' modifiers in any order
-  for (let i = 0; i < 2 && !ctx.isAtEnd(); i++) {
+  // Step 3: Parse 'as', 'with', and 'do not throw' modifiers in any order.
+  for (let i = 0; i < 3 && !ctx.isAtEnd(); i++) {
     if (ctx.check('as') && !modifiers['as']) {
       ctx.advance(); // consume 'as'
       // Skip optional articles: 'a' or 'an' (e.g., "as a Object", "as an Object")
@@ -337,6 +337,27 @@ export function parseFetchCommand(ctx: ParserContext, commandToken: Token): Comm
         modifiers['with'] = ctx.parsePrimary() as ExpressionNode;
       }
       continue;
+    }
+
+    // `do not throw` — suppresses the default throw-on-non-2xx behavior
+    // introduced in upstream _hyperscript 0.9.90.
+    if (ctx.check('do') && !modifiers['doNotThrow']) {
+      const n1 = ctx.peekAt(1);
+      const n2 = ctx.peekAt(2);
+      if (n1?.value === 'not' && n2?.value === 'throw') {
+        const doToken = ctx.advance(); // consume 'do'
+        ctx.advance(); // consume 'not'
+        const throwToken = ctx.advance(); // consume 'throw'
+        modifiers['doNotThrow'] = {
+          type: 'literal',
+          value: true,
+          start: doToken.start,
+          end: throwToken.end,
+          line: doToken.line,
+          column: doToken.column,
+        } as unknown as ExpressionNode;
+        continue;
+      }
     }
 
     break; // Not a fetch modifier — stop
@@ -431,6 +452,98 @@ function parseFetchNakedNamedArgs(ctx: ParserContext): ASTNode {
  * @param identifierNode - The command identifier node
  * @returns CommandNode representing the js command
  */
+
+/**
+ * Scan raw input to find the `end` keyword that terminates a js() block,
+ * respecting JavaScript strings (single, double, template) and comments.
+ * This avoids the tokenizer's possessive-detection logic which mishandles
+ * single-quoted strings inside JS code.
+ */
+function findJsEndBoundary(ctx: ParserContext, startPos: number): number {
+  const input = ctx.getInputSlice(startPos);
+  if (!input) {
+    // Fallback: return startPos so the caller gets an empty body
+    return startPos;
+  }
+
+  let i = 0;
+  while (i < input.length) {
+    const ch = input[i];
+
+    // Skip single-quoted strings
+    if (ch === "'" || ch === '\u2019' || ch === '\u2018') {
+      i++;
+      while (i < input.length && input[i] !== ch) {
+        if (input[i] === '\\') i++; // skip escaped char
+        i++;
+      }
+      i++; // closing quote
+      continue;
+    }
+
+    // Skip double-quoted strings
+    if (ch === '"') {
+      i++;
+      while (i < input.length && input[i] !== '"') {
+        if (input[i] === '\\') i++;
+        i++;
+      }
+      i++;
+      continue;
+    }
+
+    // Skip template literals
+    if (ch === '`') {
+      i++;
+      while (i < input.length && input[i] !== '`') {
+        if (input[i] === '\\') i++;
+        i++;
+      }
+      i++;
+      continue;
+    }
+
+    // Skip single-line comments
+    if (ch === '/' && i + 1 < input.length && input[i + 1] === '/') {
+      i += 2;
+      while (i < input.length && input[i] !== '\n') i++;
+      continue;
+    }
+
+    // Skip multi-line comments
+    if (ch === '/' && i + 1 < input.length && input[i + 1] === '*') {
+      i += 2;
+      while (
+        i < input.length &&
+        !(input[i] === '*' && i + 1 < input.length && input[i + 1] === '/')
+      )
+        i++;
+      i += 2; // skip */
+      continue;
+    }
+
+    // Check for 'end' at a word boundary
+    if (
+      (ch === 'e' || ch === 'E') &&
+      i + 3 <= input.length &&
+      input.slice(i, i + 3).toLowerCase() === 'end'
+    ) {
+      // Verify word boundary before: start of input or non-alphanumeric
+      const before = i === 0 || !/[a-zA-Z0-9_]/.test(input[i - 1]);
+      // Verify word boundary after: end of input or non-alphanumeric
+      const after = i + 3 >= input.length || !/[a-zA-Z0-9_]/.test(input[i + 3]);
+      if (before && after) {
+        return startPos + i;
+      }
+    }
+
+    i++;
+  }
+
+  // 'end' not found — return end of input (caller will report error)
+  return startPos + input.length;
+}
+
 export function parseJsCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
   const parameters: string[] = [];
 
@@ -451,15 +564,20 @@ export function parseJsCommand(ctx: ParserContext, identifierNode: IdentifierNod
   // Record the start position of JS code (current token's start)
   const jsCodeStart = ctx.peek().start;
 
-  // Skip tokens until 'end' keyword to find the end position
-  while (!ctx.check(KEYWORDS.END) && !ctx.isAtEnd()) {
+  // Find 'end' keyword by scanning raw input, respecting JS strings and comments.
+  // The tokenizer processes js() body as hyperscript, which breaks on single-quoted
+  // strings (possessive detection), template literals, and other JS constructs.
+  // Raw scanning avoids these issues entirely.
+  const jsCodeEnd = findJsEndBoundary(ctx, jsCodeStart);
+
+  // Advance the token stream past the 'end' keyword.
+  // Tokens were already created by the tokenizer, so skip them until we reach
+  // or pass the 'end' position, then consume 'end'.
+  while (!ctx.isAtEnd() && !ctx.check(KEYWORDS.END)) {
+    // Safety: if current token starts at or after jsCodeEnd, the 'end' must be next
+    if (ctx.peek().start >= jsCodeEnd) break;
     ctx.advance();
   }
-
-  // Get the 'end' token's start position to know where JS code ends
-  const endToken = ctx.peek();
-  const jsCodeEnd = endToken.start;
-
   ctx.consume(KEYWORDS.END, 'Expected end after js code body');
 
   // Extract raw JavaScript code from original input (preserves regex, whitespace, etc.)

@@ -1,21 +1,14 @@
-/**
- * Ukrainian Dictionary
- *
- * Translations for Ukrainian language support.
- * Uses infinitive verbs (common in software UIs).
- */
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const ukrainianDictionary: Dictionary = {
   commands: {
-    // Event handling
     on: 'при',
     tell: 'сказати',
     trigger: 'викликати',
     send: 'надіслати',
-
-    // DOM manipulation
     take: 'взяти',
     put: 'покласти',
     set: 'встановити',
@@ -25,8 +18,6 @@ export const ukrainianDictionary: Dictionary = {
     toggle: 'перемкнути',
     hide: 'сховати',
     show: 'показати',
-
-    // Control flow
     if: 'якщо',
     unless: 'якщо_не',
     repeat: 'повторити',
@@ -36,65 +27,46 @@ export const ukrainianDictionary: Dictionary = {
     continue: 'продовжити',
     break: 'перервати',
     halt: 'зупинити',
-
-    // Async
     wait: 'чекати',
     fetch: 'завантажити',
     call: 'викликати',
     return: 'повернути',
-
-    // Other commands
     make: 'створити',
     log: 'записати',
     throw: 'кинути',
     catch: 'зловити',
     measure: 'виміряти',
     transition: 'анімувати',
-
-    // Data Commands
     increment: 'збільшити',
     decrement: 'зменшити',
     default: 'за_замовчуванням',
-
-    // Navigation Commands
     go: 'перейти',
     pushUrl: 'додати_url',
     replaceUrl: 'замінити_url',
-
-    // Utility Commands
     copy: 'копіювати',
     pick: 'вибрати',
     beep: 'звук',
-
-    // Advanced Commands
     js: 'js',
     async: 'асинхронно',
     render: 'відобразити',
-
-    // Animation Commands
     swap: 'поміняти',
     morph: 'трансформувати',
     settle: 'стабілізувати',
-
-    // Content Commands
     append: 'додати_в_кінець',
-
-    // Control Flow
     exit: 'вийти',
     else: 'інакше',
-
-    // Behaviors
     install: 'встановити',
     init: 'ініціалізувати',
     behavior: 'поведінка',
-
-    // Focus
     focus: 'сфокусувати',
     blur: 'розфокусувати',
-
-    // Clone
     clone: 'клонувати',
     prepend: 'додати_на_початок',
+    breakpoint: 'точка-зупинки',
+    clear: 'очистити',
+    close: 'закрити',
+    open: 'відкрити',
+    select: 'вибрати',
   },
 
   modifiers: {
@@ -127,23 +99,19 @@ export const ukrainianDictionary: Dictionary = {
     mouseover: 'наведення',
     mouseout: 'відведення',
     mousemove: 'рух_миші',
-
     keydown: 'клавіша_вниз',
     keyup: 'клавіша_вгору',
     keypress: 'натискання_клавіші',
-
     focus: 'фокус',
     blur: 'розфокус',
     change: 'зміна',
     input: 'введення',
     submit: 'надсилання',
     reset: 'скидання',
-
     load: 'завантаження',
     unload: 'вивантаження',
     resize: 'зміна_розміру',
     scroll: 'прокрутка',
-
     touchstart: 'дотик_початок',
     touchend: 'дотик_кінець',
     touchmove: 'дотик_рух',
@@ -166,8 +134,8 @@ export const ukrainianDictionary: Dictionary = {
     else: 'інакше',
     otherwise: 'в_іншому_випадку',
     end: 'кінець',
-    has: 'має', // third-person: він/вона має
-    have: 'маю', // first-person: я маю
+    has: 'має',
+    have: 'маю',
     isNot: 'не_є',
     empty: 'порожній',
   },
@@ -241,7 +209,6 @@ export const ukrainianDictionary: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: 'перший',
     last: 'останній',
     next: 'наступний',
@@ -249,20 +216,21 @@ export const ukrainianDictionary: Dictionary = {
     prev: 'попер',
     at: 'в',
     random: 'випадковий',
-
-    // DOM Traversal
     closest: 'найближчий',
     parent: 'батьківський',
     children: 'діти',
     within: 'всередині',
-
-    // Emptiness/Existence
     no: 'ні',
     empty: 'порожній',
     some: 'деякі',
-
-    // String operations
     'starts with': 'починається_з',
     'ends with': 'закінчується_на',
+    'ignoring case': 'без_урахування_регістру',
+    'sorted by': 'відсортовано_за',
+    'mapped to': 'перетворено_на',
+    'split by': 'розділено_за',
+    'joined by': "об'єднано_через",
   },
 };
+
+export const uk = ukrainianDictionary;

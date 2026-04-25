@@ -11,6 +11,7 @@ export const arabicProfile: LanguageProfile = {
   code: 'ar',
   name: 'Arabic',
   nativeName: 'العربية',
+  regions: ['priority'],
   direction: 'rtl',
   script: 'arabic',
   wordOrder: 'VSO',
@@ -90,6 +91,14 @@ export const arabicProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'تركيز', alternatives: ['ركز'], normalized: 'focus' },
     blur: { primary: 'ضبابية', alternatives: ['شوش'], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: 'إفراغ', normalized: 'empty' },
+    open: { primary: 'افتح', normalized: 'open' },
+    close: { primary: 'أغلق', normalized: 'close' },
+    select: { primary: 'ظلل', normalized: 'select' },
+    clear: { primary: 'نظّف', normalized: 'clear' },
+    reset: { primary: 'إعادة-ضبط', alternatives: ['أعد-تعيين'], normalized: 'reset' },
+    breakpoint: { primary: 'نقطة-توقف', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'اذهب', normalized: 'go' },
     // Async

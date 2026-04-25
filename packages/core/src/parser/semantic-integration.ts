@@ -232,6 +232,11 @@ export class SemanticIntegrationAdapter {
     if (/\btell\b/.test(lowerInput)) {
       return true; // Contains tell command
     }
+    // CSS property syntax (*display, *visibility, *opacity) — the semantic parser
+    // doesn't recognize *property as a single token and drops the property name
+    if (/\*[a-zA-Z]/.test(input)) {
+      return true;
+    }
     return false;
   }
 

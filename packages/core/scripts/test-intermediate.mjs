@@ -17,7 +17,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/04-tabs.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/navigation/tabs.html?bundle=hybrid-complete`);
       await page.waitForTimeout(500);
 
       // Check Overview is initially active
@@ -45,7 +45,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/01-form-validation.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/forms/form-validation.html?bundle=hybrid-complete`);
       await page.waitForTimeout(500);
 
       const emailInput = page.locator('#email');
@@ -75,7 +75,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/01-form-validation.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/forms/form-validation.html?bundle=hybrid-complete`);
       await page.waitForTimeout(500);
 
       const passwordInput = page.locator('#password');
@@ -105,7 +105,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/01-form-validation.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/forms/form-validation.html?bundle=hybrid-complete`);
       await page.waitForTimeout(500);
 
       // Fill password first
@@ -139,7 +139,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/02-fetch-data.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/fetch-and-async/fetch-data.html?bundle=hybrid-complete`);
       await page.waitForTimeout(1000);
 
       // Just check page loaded and hyperfixi initialized
@@ -160,7 +160,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/05-modal.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/dialogs/modal.html?bundle=hybrid-complete`);
       await page.waitForTimeout(500);
 
       // Click open modal button
@@ -184,7 +184,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/07-dialog-toggle.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/dialogs/dialog-toggle.html?bundle=hybrid-complete`);
       await page.waitForTimeout(500);
 
       const hasHyperfixi = await page.evaluate(() => typeof window.hyperfixi !== 'undefined');
@@ -202,7 +202,7 @@ async function testIntermediate() {
     page.on('pageerror', e => errors.push(e.message));
 
     try {
-      await page.goto(`${BASE_URL}/examples/intermediate/03-fade-effects.html?bundle=hybrid-complete`);
+      await page.goto(`${BASE_URL}/examples/animation/fade-effects.html?bundle=hybrid-complete`);
       await page.waitForTimeout(500);
 
       const hasHyperfixi = await page.evaluate(() => typeof window.hyperfixi !== 'undefined');

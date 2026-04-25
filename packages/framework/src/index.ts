@@ -71,6 +71,12 @@ export type {
   TokenStream,
   LanguageTokenizer,
   LanguagePattern,
+  // v1.2 types
+  Annotation,
+  ProtocolDiagnostic,
+  AsyncVariant,
+  MatchArm,
+  LSEEnvelope,
 } from './core/types';
 
 export type { CommandSchema, RoleSpec } from './schema';
@@ -135,14 +141,34 @@ export {
   createLoopNode,
   extractValue,
   extractRoleValue,
+  // v1.2 factories
+  createTryNode,
+  createAsyncNode,
+  createMatchNode,
 } from './core/types';
 
 export { defineCommand, defineRole } from './schema';
 export { createSimpleTokenizer } from './core/tokenization/base-tokenizer';
 export type { SimpleTokenizerConfig } from './core/tokenization/base-tokenizer';
 
+// Morphological normalization base class and types
+export { BaseMorphologicalNormalizer } from './core/tokenization/morphology/base-normalizer';
+export type {
+  ConjugationEnding,
+  NormalizerConfig,
+} from './core/tokenization/morphology/base-normalizer';
+
 // IR (Intermediate Representation) — explicit syntax, JSON conversion, reference validation
 export * from './ir';
+
+// LLM Prompt Generation — auto-generate system prompts from CommandSchema[]
+export * from './prompts';
+
+// Training Data Generation — synthesize (natural_language, LSE) pairs from schemas
+export * from './training';
+
+// Feedback Loop — structured errors, disambiguation, pattern tracking
+export * from './feedback';
 
 // Multi-statement parser
 export { createMultiStatementParser, accumulateBlocks } from './parsing/multi-statement';

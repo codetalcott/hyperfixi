@@ -8,6 +8,7 @@ Complete API documentation for LokaScript.
   - [API v2 Methods (Recommended)](#api-v2-methods-recommended)
   - [Legacy Methods (Deprecated)](#legacy-methods-deprecated)
 - [HTML Integration](#html-integration)
+- [Behaviors](#behaviors)
 - [Types](#types)
 - [Context Management](#context-management)
 - [Runtime Configuration](#runtime-configuration)
@@ -702,6 +703,247 @@ Re-process an element (and descendants) after dynamic HTML insertion:
 container.innerHTML = '<div _="on click log \'hello\'">New</div>';
 lokascript.processNode(container);
 ```
+
+---
+
+## Behaviors
+
+Behaviors are reusable hyperscript components that encapsulate event handlers and state. Define once, install on any element.
+
+### Quick Start (Browser)
+
+Include the resolver bundle after the core — all standard behaviors resolve on demand:
+
+```html
+<script src="hyperfixi.js"></script>
+<script src="resolver.browser.global.js"></script>
+
+<button _="install Toggleable">Toggle me</button>
+<button _="install Toggleable(cls: 'highlighted')">Custom class</button>
+<div _="install Draggable" style="position: absolute">Drag me</div>
+```
+
+The resolver compiles behavior source strings on first use. Bundle size: ~3.8 KB gzipped.
+
+### Available Behaviors
+
+| Behavior       | Parameters                                        | Description                 |
+| -------------- | ------------------------------------------------- | --------------------------- |
+| `Toggleable`   | `cls` (default: "active"), `target`               | Toggle CSS class on click   |
+| `Removable`    | `triggerEl`, `confirm`, `effect`                  | Remove element on click     |
+| `AutoDismiss`  | `delay` (default: 5000), `effect`                 | Auto-remove after delay     |
+| `Clipboard`    | `text`, `source`, `feedback`, `feedbackDuration`  | Copy to clipboard on click  |
+| `Draggable`    | `dragHandle`                                      | Pointer-based drag and drop |
+| `ClickOutside` | `active`                                          | Fire event on outside click |
+| `ScrollReveal` | `cls`, `threshold`, `once`                        | Reveal on viewport entry    |
+| `Tabs`         | `orientation`, `activeTab`, `wrap`, `activeClass` | ARIA tabs with keyboard nav |
+
+### Defining Custom Behaviors
+
+```html
+<script type="text/hyperscript">
+  behavior MyBehavior(param1, param2)
+    init
+      if param1 is undefined
+        set param1 to "default"
+      end
+    end
+    on click
+      toggle .{param1} on me
+    end
+  end
+</script>
+
+<div _="install MyBehavior(param1: 'highlighted')">Click me</div>
+```
+
+### Dynamic Class Selectors
+
+Use `.{varName}` to reference variables as class names in `toggle`, `add`, and `remove`:
+
+```hyperscript
+behavior Highlighter(cls)
+  on click
+    toggle .{cls} on me
+  end
+end
+```
+
+The `{cls}` is resolved from the behavior's parameter context at runtime.
+
+### Behavior Resolver Hook
+
+The runtime supports a `resolve` callback on `behaviorAPI` for lazy behavior loading:
+
+```javascript
+// Register a custom resolver
+window._hyperscript.behaviors.resolve = name => {
+  const source = myBehaviorSources[name];
+  if (!source) return false;
+
+  const result = window.hyperfixi.compileSync(source, { traditional: true });
+  if (!result.ok) return false;
+
+  window._hyperscript.behaviors.set(name, {
+    name: result.ast.name,
+    parameters: result.ast.parameters,
+    eventHandlers: result.ast.eventHandlers,
+    initBlock: result.ast.initBlock,
+  });
+  return true;
+};
+```
+
+The resolver is called when `install X` encounters an undefined behavior. If it returns `true`, installation proceeds normally.
+
+### Programmatic Registration
+
+```javascript
+// Compile and execute a behavior definition
+const result = hyperscript.compileSync(
+  `
+  behavior MyBehavior()
+    on click add .clicked to me
+  end
+`,
+  { traditional: true }
+);
+await hyperscript.execute(result.ast);
+
+// Now install it on elements
+await hyperscript.eval('install MyBehavior', element);
+```
+
+### Loading from Patterns Reference
+
+The `@hyperfixi/patterns-reference` package stores behavior definitions in a queryable database with multilingual translations:
+
+```javascript
+import { loadBehaviors } from '@hyperfixi/patterns-reference';
+
+const result = await loadBehaviors(runtime);
+// result.loaded: ['behavior-toggleable', 'behavior-draggable', ...]
+```
+
+---
+
+## Plugin System (v0.9.90 Phase 5)
+
+External packages — `@hyperfixi/reactivity`, `@hyperfixi/speech`, `@hyperfixi/components`, and community plugins — extend hyperfixi at runtime through the plugin contract. No parser fork required.
+
+### The plugin contract
+
+```typescript
+import type { HyperfixiPlugin } from '@hyperfixi/core';
+
+export const myPlugin: HyperfixiPlugin = {
+  name: 'my-plugin',
+  install({ commandRegistry, parserExtensions }) {
+    // 1. Tell the parser to recognize a new command keyword
+    parserExtensions.registerCommand('greet');
+
+    // 2. Register the command implementation with the runtime
+    commandRegistry.register({
+      name: 'greet',
+      async parseInput(raw, evaluator, context) {
+        return {};
+      },
+      async execute(input, context) {
+        console.log('hello from plugin');
+      },
+      validate() {
+        return true;
+      },
+    });
+  },
+};
+```
+
+Install at app startup:
+
+```typescript
+import { createRuntime, installPlugin } from '@hyperfixi/core';
+import { myPlugin } from 'my-plugin';
+
+const runtime = createRuntime();
+installPlugin(runtime, myPlugin);
+```
+
+### Extension points
+
+The `parserExtensions` context provides four registration methods:
+
+| Method                                                   | Purpose                                                                                         |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `registerCommand(name)`                                  | Adds a single-word command keyword so the parser accepts it at command position.                |
+| `registerCompoundOperator(token)`                        | Adds a multi-word token (e.g. `'sorted by'`) to the tokenizer so it emits as a single OPERATOR. |
+| `registerInfixOperator(token, leftBp, rightBp, handler)` | Adds a binary infix operator to the Pratt binding-power table.                                  |
+| `registerPrefixOperator(token, bp, handler)`             | Adds a prefix (NUD) operator to the Pratt table.                                                |
+
+Binding-power tiers (see `parser/pratt-parser.ts`):
+
+| Tier | BP  | Operators                                                     |
+| ---- | --- | ------------------------------------------------------------- |
+| 1    | 10  | `or`, `\|\|`                                                  |
+| 2    | 20  | `and`, `&&`                                                   |
+| 3    | 30  | `==`, `!=`, `<`, `>`, `<=`, `>=`, `is`, `matches`, `contains` |
+| 4    | 40  | `+`, `-`                                                      |
+| 5    | 50  | `*`, `/`, `%`, `mod`                                          |
+| 6    | 60  | `^`, `**` (right-assoc)                                       |
+| 7    | 70  | `as` (conversion)                                             |
+| 8    | 80  | `not`, `!`, unary `-`/`+`, `no`                               |
+| 9    | 85  | `first`, `last`                                               |
+| 10   | 90  | `'s`, `.`, `?.`, `[]`, `()`                                   |
+
+### Global registry — caveats
+
+The `ParserExtensionRegistry` is a **process-wide singleton**. The parser reads from module-level `Set`/`Map` instances, so plugin installations persist for the process lifetime. Two implications:
+
+1. **Multiple Runtimes share parser extensions.** If you create `runtime1` and `runtime2` in the same process and install a plugin via `runtime1`, the plugin's parser-side extensions are visible to `runtime2` as well. Command implementations, however, are per-runtime (stored in each `CommandRegistryV2`).
+
+2. **Tests can snapshot/restore.** For isolation in unit tests:
+
+   ```typescript
+   import { getParserExtensionRegistry } from '@hyperfixi/core';
+
+   const registry = getParserExtensionRegistry();
+   let baseline;
+   beforeEach(() => {
+     baseline = registry.snapshot();
+   });
+   afterEach(() => {
+     registry.restore(baseline);
+   });
+   ```
+
+### Example: custom infix operator
+
+```typescript
+import type { HyperfixiPlugin } from '@hyperfixi/core';
+
+export const powPlugin: HyperfixiPlugin = {
+  name: 'pow-plugin',
+  install({ parserExtensions }) {
+    // Right-associative exponentiation: 2 pow 3 pow 4 → 2 ** (3 ** 4)
+    parserExtensions.registerInfixOperator('pow', 61, 60, (left, _token, ctx) => ({
+      type: 'binaryExpression',
+      operator: 'pow',
+      left,
+      right: ctx.parseExpr(60),
+      start: (left as any).start,
+    }));
+    // Note: also register a runtime evaluator for the `pow` operator —
+    // parser extensions only shape the parse tree; execution dispatch
+    // lives in `parser/runtime.ts` or via a custom Runtime subclass.
+  },
+};
+```
+
+### Out of scope
+
+- **Removing extensions**: no `unregister` in the base contract. Plugins are install-once; use `snapshot()`/`restore()` for test isolation.
+- **Priority / ordering**: the last-registered handler wins for a given token. Plugins that override built-in operators will replace them — the baseline handler is lost until `restore()` is called.
+- **Runtime-dispatch hooks**: plugins register `CommandImplementation`s through `commandRegistry.register()` (unchanged from pre-Phase 5). For expression-level operators, plugins must ensure the runtime knows how to evaluate their custom AST node types — either by producing standard `binaryExpression` nodes that delegate to registered `logicalExpressions.<name>.evaluate()`, or by wrapping execution in a custom `Runtime` subclass.
 
 ---
 

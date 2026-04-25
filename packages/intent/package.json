@@ -1,0 +1,65 @@
+{
+  "name": "@lokascript/intent",
+  "version": "2.3.1",
+  "description": "Universal UI intent protocol — LSE types, bracket syntax, and protocol JSON. Zero dependencies.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup && npm run build:types",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "lse",
+    "intent",
+    "semantic",
+    "dsl",
+    "ir",
+    "protocol",
+    "browser",
+    "hyperscript",
+    "lokascript"
+  ],
+  "author": "LokaScript Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/intent"
+  },
+  "bugs": {
+    "url": "https://github.com/codetalcott/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/intent#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

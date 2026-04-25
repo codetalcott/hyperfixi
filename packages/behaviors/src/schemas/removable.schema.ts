@@ -25,7 +25,7 @@ export const removableSchema: BehaviorSchema = {
       description: 'Element that triggers removal (e.g., a close button)',
     },
     {
-      name: 'confirm',
+      name: 'confirmRemoval',
       type: 'boolean',
       optional: true,
       default: false,
@@ -45,15 +45,18 @@ export const removableSchema: BehaviorSchema = {
     { name: 'removable:removed', description: 'Fired after removal' },
   ],
   source: `
-behavior Removable(triggerEl, confirm, effect)
+behavior Removable(triggerEl, confirmRemoval, effect)
   init
     if triggerEl is undefined
       set triggerEl to me
     end
   end
   on click from triggerEl
-    if confirm
-      if not window.confirm("Are you sure?")
+    if confirmRemoval
+      js(me)
+        if (!window.confirm("Are you sure?")) return "cancel";
+      end
+      if it is "cancel"
         halt
       end
     end

@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/mcp-server",
-  "version": "2.1.0",
+  "version": "2.3.1",
   "description": "Model Context Protocol server for HyperFixi hyperscript development",
   "type": "module",
   "main": "dist/index.js",
@@ -39,9 +39,12 @@
   "dependencies": {
     "@hyperfixi/patterns-reference": "*",
     "@lokascript/compilation-service": "*",
+    "@lokascript/domain-config": "*",
     "@lokascript/framework": "*",
+    "@lokascript/planner": "*",
     "@lokascript/semantic": "*",
-    "@modelcontextprotocol/sdk": "^1.25.0"
+    "@modelcontextprotocol/sdk": "^1.25.0",
+    "yaml": "^2.8.3"
   },
   "peerDependencies": {
     "@hyperfixi/core": "*",
@@ -50,11 +53,12 @@
     "@lokascript/compilation-service": "*",
     "@lokascript/domain-bdd": "*",
     "@lokascript/domain-behaviorspec": "*",
-    "@lokascript/domain-jsx": "*",
     "@lokascript/domain-flow": "*",
+    "@lokascript/domain-jsx": "*",
     "@lokascript/domain-llm": "*",
     "@lokascript/domain-sql": "*",
     "@lokascript/domain-todo": "*",
+    "@lokascript/domain-voice": "*",
     "@lokascript/framework": "*",
     "@lokascript/semantic": "*"
   },
@@ -95,6 +99,9 @@
     "@lokascript/domain-todo": {
       "optional": true
     },
+    "@lokascript/domain-voice": {
+      "optional": true
+    },
     "@hyperfixi/server-bridge": {
       "optional": true
     }
@@ -106,11 +113,12 @@
     "@lokascript/compilation-service": "*",
     "@lokascript/domain-bdd": "*",
     "@lokascript/domain-behaviorspec": "*",
-    "@lokascript/domain-jsx": "*",
     "@lokascript/domain-flow": "*",
+    "@lokascript/domain-jsx": "*",
     "@lokascript/domain-llm": "*",
     "@lokascript/domain-sql": "*",
     "@lokascript/domain-todo": "*",
+    "@lokascript/domain-voice": "*",
     "@lokascript/framework": "*",
     "@lokascript/semantic": "*",
     "@types/node": "^20.0.0",

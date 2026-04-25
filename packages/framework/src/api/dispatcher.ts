@@ -156,11 +156,22 @@ export class CrossDomainDispatcher {
 
     if (candidates.length === 0) return null;
 
-    // Sort by confidence descending, break ties by priority order
-    candidates.sort((a, b) => {
-      if (b.confidence !== a.confidence) return b.confidence - a.confidence;
-      return this.getPriorityIndex(a.domain) - this.getPriorityIndex(b.domain);
-    });
+    // Sort by priority first, then confidence within each priority tier.
+    // Simpler schemas (fewer roles) often score higher confidence than more
+    // specific ones — e.g., voice's "select [patient:greedy]" gets 1.0 while
+    // sql's "select [columns] from [source]" gets 0.71 for the same input.
+    // Priority ordering ensures domain specificity wins when both match.
+    if (this.priority.length > 0) {
+      candidates.sort((a, b) => {
+        const pa = this.getPriorityIndex(a.domain);
+        const pb = this.getPriorityIndex(b.domain);
+        if (pa !== pb) return pa - pb;
+        return b.confidence - a.confidence;
+      });
+    } else {
+      // No priority configured: pure confidence ordering
+      candidates.sort((a, b) => b.confidence - a.confidence);
+    }
 
     return candidates[0];
   }

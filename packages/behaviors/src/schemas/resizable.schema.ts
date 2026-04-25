@@ -14,13 +14,6 @@ export const resizableSchema: BehaviorSchema = {
   description: 'Makes elements resizable by dragging',
   parameters: [
     {
-      name: 'handle',
-      type: 'selector',
-      optional: true,
-      default: 'me',
-      description: 'CSS selector for the resize handle (defaults to the element itself)',
-    },
-    {
       name: 'minWidth',
       type: 'number',
       optional: true,
@@ -55,15 +48,8 @@ export const resizableSchema: BehaviorSchema = {
     { name: 'resizable:end', description: 'Fired when resize completes' },
   ],
   source: `
-behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
-  init
-    if no handle set handle to me
-    if no minWidth set minWidth to 50
-    if no minHeight set minHeight to 50
-    if no maxWidth set maxWidth to 9999
-    if no maxHeight set maxHeight to 9999
-  end
-  on pointerdown(clientX, clientY) from handle
+behavior Resizable
+  on pointerdown(clientX, clientY) from me
     halt the event
     trigger resizable:start
     measure width
@@ -73,15 +59,11 @@ behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
     set startX to clientX
     set startY to clientY
     repeat until event pointerup from document
-      wait for pointermove(clientX, clientY) or
-               pointerup from document
-      set newWidth to startWidth + (clientX - startX)
-      set newHeight to startHeight + (clientY - startY)
-      if newWidth < minWidth set newWidth to minWidth
-      if newWidth > maxWidth set newWidth to maxWidth
-      if newHeight < minHeight set newHeight to minHeight
-      if newHeight > maxHeight set newHeight to maxHeight
-      add { width: \${newWidth}px; height: \${newHeight}px; }
+      wait for pointermove(clientX, clientY) from document
+      set newWidth to startWidth + clientX - startX
+      set newHeight to startHeight + clientY - startY
+      set my style.width to newWidth + "px"
+      set my style.height to newHeight + "px"
       trigger resizable:resize
     end
     trigger resizable:end

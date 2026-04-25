@@ -66,7 +66,7 @@ import { llmCodeGenerator } from './generators/llm-generator.js';
  * Create a multilingual LLM DSL instance with all 8 supported languages.
  */
 export function createLLMDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'LLM',
     schemas: allSchemas,
     languages: [

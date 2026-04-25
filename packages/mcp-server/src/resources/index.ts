@@ -14,6 +14,7 @@ import {
   getAdapterGuide,
   getAdapterCompatibility,
   getSetupGuide,
+  getLSEProtocolSpec,
 } from './content.js';
 
 // =============================================================================
@@ -74,6 +75,13 @@ export function listResources(): Resource[] {
         'Structured decision tree for choosing between LokaScript and original _hyperscript adapter, and selecting the right bundle.',
       mimeType: 'application/json',
     },
+    {
+      uri: 'lse://protocol/spec',
+      name: 'LSE Protocol Specification',
+      description:
+        'Quick reference for LokaScript Explicit Syntax (LSE) — bracket syntax, value types, JSON wire format.',
+      mimeType: 'text/markdown',
+    },
   ];
 }
 
@@ -128,6 +136,9 @@ export function readResource(uri: string): {
           },
         ],
       };
+
+    case 'lse://protocol/spec':
+      return { contents: [{ uri, mimeType: 'text/markdown', text: getLSEProtocolSpec() }] };
 
     default:
       throw new Error(`Unknown resource: ${uri}`);

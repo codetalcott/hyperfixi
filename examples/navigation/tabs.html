@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04: Tab Navigation - Examples</title>
+    <link rel="stylesheet" href="../gallery.css">
+    <style>
+        /* Example-specific styles */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--color-border, #e4e4e7);
+            margin-bottom: 20px;
+            gap: 5px;
+        }
+
+        .tab {
+            background: var(--color-surface, #f4f4f5);
+            color: var(--color-text-muted, #71717a);
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            border: 2px solid transparent;
+            border-bottom: none;
+        }
+
+        .tab:hover {
+            background: #e4e4e7;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: var(--color-accent, #6366f1);
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-box {
+            background: var(--panel-blue-bg);
+            color: var(--panel-blue-fg);
+            padding: 30px;
+            border-radius: 12px;
+            min-height: 150px;
+            text-align: left;
+        }
+
+        .content-box h3 {
+            margin: 0 0 15px 0;
+            color: inherit;
+        }
+
+        .content-box p {
+            margin: 10px 0;
+            line-height: 1.6;
+            color: inherit;
+        }
+
+        .content-box.panel-orange {
+            background: var(--panel-orange-bg);
+            color: var(--panel-orange-fg);
+        }
+
+        .content-box.panel-green {
+            background: var(--panel-green-bg);
+            color: var(--panel-green-fg);
+        }
+
+        .icon {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="example-page">
+    <div class="page-container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Navigation</strong> / Tab Navigation
+        </div>
+
+        <h1>Tab Navigation</h1>
+
+        <div class="description">
+            <strong>Create tabbed interfaces without JavaScript frameworks</strong><br>
+            Learn how to build accessible tab navigation using hyperscript's class manipulation
+            and event delegation. Perfect for organizing content into sections!
+        </div>
+
+        <div>
+            <span class="tag">show/hide</span>
+            <span class="tag">add/remove classes</span>
+            <span class="tag">event delegation</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <h2>Product Features</h2>
+
+            <div class="tabs">
+                <button
+                    class="tab active"
+                    data-tab="overview"
+                    _="on click
+                       remove .active from .tab
+                       add .active to me
+                       remove .active from .tab-content
+                       add .active to #overview"
+                >
+                    <span class="icon">📋</span> Overview
+                </button>
+
+                <button
+                    class="tab"
+                    data-tab="features"
+                    _="on click
+                       remove .active from .tab
+                       add .active to me
+                       remove .active from .tab-content
+                       add .active to #features"
+                >
+                    <span class="icon">⚡</span> Features
+                </button>
+
+                <button
+                    class="tab"
+                    data-tab="pricing"
+                    _="on click
+                       remove .active from .tab
+                       add .active to me
+                       remove .active from .tab-content
+                       add .active to #pricing"
+                >
+                    <span class="icon">💰</span> Pricing
+                </button>
+
+                <button
+                    class="tab"
+                    data-tab="support"
+                    _="on click
+                       remove .active from .tab
+                       add .active to me
+                       remove .active from .tab-content
+                       add .active to #support"
+                >
+                    <span class="icon">💬</span> Support
+                </button>
+            </div>
+
+            <div id="overview" class="tab-content active">
+                <div class="content-box">
+                    <h3>📋 Product Overview</h3>
+                    <p>
+                        <strong>HyperFixi</strong> is a modern, TypeScript-powered implementation
+                        of the hyperscript language with 100% pattern compatibility.
+                    </p>
+                    <p>
+                        Built for developers who want the simplicity of declarative HTML
+                        attributes combined with the power of a complete programming language.
+                    </p>
+                    <p>
+                        ✨ Zero dependencies • 📦 Tiny bundle size • 🚀 Lightning fast
+                    </p>
+                </div>
+            </div>
+
+            <div id="features" class="tab-content">
+                <div class="content-box panel-orange">
+                    <h3>⚡ Key Features</h3>
+                    <p>🎯 <strong>100% Pattern Coverage:</strong> All 77 hyperscript patterns implemented</p>
+                    <p>📘 <strong>TypeScript Support:</strong> Full type safety and IntelliSense</p>
+                    <p>🔧 <strong>Enhanced Commands:</strong> Extended functionality beyond standard hyperscript</p>
+                    <p>🎨 <strong>Modern API:</strong> Clean, intuitive interface for developers</p>
+                    <p>🧪 <strong>Well Tested:</strong> Comprehensive test suite with 440+ passing tests</p>
+                </div>
+            </div>
+
+            <div id="pricing" class="tab-content">
+                <div class="content-box panel-green">
+                    <h3>💰 Pricing</h3>
+                    <p><strong>Open Source - FREE Forever!</strong></p>
+                    <p>
+                        HyperFixi is completely free and open source under the MIT license.
+                        No restrictions, no limits, no paid tiers.
+                    </p>
+                    <p>
+                        ✅ Unlimited projects<br>
+                        ✅ Commercial use allowed<br>
+                        ✅ Full access to all features<br>
+                        ✅ Community support<br>
+                        ✅ Regular updates
+                    </p>
+                </div>
+            </div>
+
+            <div id="support" class="tab-content">
+                <div class="content-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <h3>💬 Support & Community</h3>
+                    <p>
+                        <strong>Need help?</strong> We've got you covered!
+                    </p>
+                    <p>
+                        📚 <strong>Documentation:</strong> Comprehensive guides and examples<br>
+                        💡 <strong>GitHub Issues:</strong> Report bugs or request features<br>
+                        👥 <strong>Community:</strong> Join our growing community<br>
+                        📧 <strong>Email:</strong> Direct support for critical issues
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+
+        <h3>Tab Buttons:</h3>
+        <div class="code">
+&lt;button <span class="keyword">class</span>=<span class="string">"tab active"</span>
+        <span class="keyword">_</span>=<span class="string">"on click
+           remove .active from .tab
+           add .active to me
+           remove .active from .tab-content
+           add .active to #overview"</span>&gt;
+  Overview
+&lt;/button&gt;
+        </div>
+
+        <h3>Tab Content:</h3>
+        <div class="code">
+&lt;div <span class="keyword">id</span>=<span class="string">"overview"</span> <span class="keyword">class</span>=<span class="string">"tab-content active"</span>&gt;
+  Content for Overview tab
+&lt;/div&gt;
+
+&lt;div <span class="keyword">id</span>=<span class="string">"features"</span> <span class="keyword">class</span>=<span class="string">"tab-content"</span>&gt;
+  Content for Features tab
+&lt;/div&gt;
+        </div>
+
+        <h3>CSS for Active States:</h3>
+        <div class="code">
+<span class="comment">/* Hide inactive content */</span>
+<span class="keyword">.tab-content</span> {
+  <span class="keyword">display</span>: none;
+}
+
+<span class="comment">/* Show active content */</span>
+<span class="keyword">.tab-content.active</span> {
+  <span class="keyword">display</span>: block;
+}
+
+<span class="comment">/* Style active tab */</span>
+<span class="keyword">.tab.active</span> {
+  <span class="keyword">background</span>: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  <span class="keyword">color</span>: white;
+}
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>remove .active from .tab</code> - Deactivates all tab buttons</li>
+                <li><code>add .active to me</code> - Activates the clicked tab</li>
+                <li><code>remove .active from .tab-content</code> - Hides all content panels</li>
+                <li><code>add .active to #overview</code> - Shows the corresponding content</li>
+            </ul>
+
+            <h3>Key Concepts:</h3>
+            <ul>
+                <li><strong>Class Management:</strong> Use <code>.active</code> class to control state</li>
+                <li><strong>CSS Selectors:</strong> Target multiple elements with class selectors</li>
+                <li><strong>Self-reference:</strong> <code>me</code> refers to clicked element</li>
+                <li><strong>Sequential Commands:</strong> Execute multiple state changes in order</li>
+            </ul>
+
+            <h3>Advanced Tab Patterns:</h3>
+            <div class="code">
+<span class="comment">&lt;!-- Keyboard navigation --&gt;</span>
+&lt;div <span class="keyword">class</span>=<span class="string">"tabs"</span>
+     <span class="keyword">_</span>=<span class="string">"on keydown[key=='ArrowRight']
+        get next .tab
+        if it exists then click it end
+        on keydown[key=='ArrowLeft']
+        get previous .tab
+        if it exists then click it end"</span>&gt;
+
+<span class="comment">&lt;!-- Auto-switch tabs --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click
+         repeat 3 times
+           wait 2s
+           get next .tab or first .tab
+           click it
+         end"</span>&gt;
+  Auto Demo
+&lt;/button&gt;
+
+<span class="comment">&lt;!-- Tab with URL hash --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click
+         remove .active from .tab
+         add .active to me
+         set window.location.hash to '#overview'"</span>&gt;
+  Overview
+&lt;/button&gt;
+            </div>
+
+            <h3>Common Use Cases:</h3>
+            <ul>
+                <li><strong>Product Pages:</strong> Features, specs, reviews sections</li>
+                <li><strong>Settings Panels:</strong> Account, privacy, notifications</li>
+                <li><strong>Documentation:</strong> API reference, guides, examples</li>
+                <li><strong>Dashboards:</strong> Analytics, reports, activity feeds</li>
+                <li><strong>Forms:</strong> Multi-step forms with sections</li>
+            </ul>
+
+            <h3>Accessibility Tips:</h3>
+            <ul>
+                <li>Use <code>role="tablist"</code>, <code>role="tab"</code>, and <code>role="tabpanel"</code></li>
+                <li>Add <code>aria-selected="true/false"</code> to active/inactive tabs</li>
+                <li>Implement keyboard navigation (Arrow keys, Home, End)</li>
+                <li>Use <code>aria-controls</code> to link tabs to panels</li>
+                <li>Ensure focus management when switching tabs</li>
+            </ul>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Add keyboard navigation with arrow keys</li>
+                <li>Implement URL hash routing (#tab-name)</li>
+                <li>Add transitions/animations when switching tabs</li>
+                <li>Create vertical tabs instead of horizontal</li>
+                <li>Add close button to remove tabs dynamically</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="02-fetch-data.html">← Previous: Fetch Data</a>
+            <a href="05-modal.html">Next: Modal Dialog →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../prism-loader.js"></script>
+</body>
+</html>

@@ -7,6 +7,7 @@
  */
 
 import { CrossDomainDispatcher, type DomainRegistry } from '@lokascript/framework';
+import { DOMAIN_PRIORITY } from '@lokascript/domain-config';
 import { getString, getNumber, jsonResponse, errorResponse } from './utils.js';
 
 // =============================================================================
@@ -20,7 +21,10 @@ let dispatcher: CrossDomainDispatcher | null = null;
 
 function getDispatcher(registry: DomainRegistry): CrossDomainDispatcher {
   if (!dispatcher) {
-    dispatcher = new CrossDomainDispatcher(registry, { minConfidence: 0.5 });
+    dispatcher = new CrossDomainDispatcher(registry, {
+      minConfidence: 0.5,
+      priority: DOMAIN_PRIORITY,
+    });
   }
   return dispatcher;
 }
@@ -41,7 +45,7 @@ export const dispatcherTools = [
   {
     name: 'detect_domain',
     description:
-      'Auto-detect which registered domain handles the input. Tries all domains (sql, bdd, jsx, todo, behaviorspec, llm, flow) and returns the best match by confidence score.',
+      'Auto-detect which registered domain handles the input. Tries all domains (sql, bdd, jsx, todo, behaviorspec, llm, flow, voice) and returns the best match by confidence score.',
     inputSchema: {
       type: 'object' as const,
       properties: {

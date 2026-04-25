@@ -11,6 +11,7 @@ export const japaneseProfile: LanguageProfile = {
   code: 'ja',
   name: 'Japanese',
   nativeName: '日本語',
+  regions: ['east-asian', 'priority'],
   direction: 'ltr',
   script: 'cjk',
   wordOrder: 'SOV',
@@ -103,6 +104,14 @@ export const japaneseProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: 'フォーカス', alternatives: ['集中'], normalized: 'focus' },
     blur: { primary: 'ぼかし', alternatives: ['フォーカス解除', 'ブラー'], normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: '空に', alternatives: ['空にする'], normalized: 'empty' },
+    open: { primary: '開く', alternatives: ['オープン'], normalized: 'open' },
+    close: { primary: '閉じる', alternatives: ['クローズ'], normalized: 'close' },
+    select: { primary: '選ぶ', alternatives: ['セレクト'], normalized: 'select' },
+    clear: { primary: 'クリア', alternatives: ['消去'], normalized: 'clear' },
+    reset: { primary: 'リセット', alternatives: ['再設定'], normalized: 'reset' },
+    breakpoint: { primary: 'ブレークポイント', normalized: 'breakpoint' },
     // Navigation
     go: { primary: '移動', alternatives: ['行く', 'ナビゲート'], normalized: 'go' },
     // Async

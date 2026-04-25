@@ -59,13 +59,19 @@ export const ENGLISH_COMMANDS: Set<string> = new Set([
   'append',
   'async',
   'beep',
+  'blur', // v0.9.90 phase 1
   'break',
+  'breakpoint', // v0.9.90 phase 1
   'call',
+  'clear', // v0.9.90 phase 1
+  'close', // v0.9.90 phase 1
   'continue',
   'decrement',
   'default',
+  'empty', // v0.9.90 phase 1
   'exit',
   'fetch',
+  'focus', // v0.9.90 phase 1
   'for',
   'get',
   'go',
@@ -79,6 +85,7 @@ export const ENGLISH_COMMANDS: Set<string> = new Set([
   'make',
   'measure',
   'morph',
+  'open', // v0.9.90 phase 1
   'pick',
   'process',
   'push',
@@ -87,7 +94,9 @@ export const ENGLISH_COMMANDS: Set<string> = new Set([
   'render',
   'repeat',
   'replace',
+  'reset', // v0.9.90 phase 1
   'return',
+  'select', // v0.9.90 phase 1
   'send',
   'set',
   'settle',

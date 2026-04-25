@@ -35,6 +35,11 @@ export { createRemoveCommand as remove } from './dom/remove';
 export { createToggleCommand as toggle } from './dom/toggle';
 export { createPutCommand as put } from './dom/put';
 export { createMakeCommand as make } from './dom/make';
+export { createEmptyCommand as empty } from './dom/empty';
+export { createOpenCommand as open } from './dom/open';
+export { createCloseCommand as close } from './dom/close';
+export { createSelectCommand as select } from './dom/select';
+export { createResetCommand as reset } from './dom/reset';
 export { createSwapCommand as swap, createMorphCommand as morph } from './dom/swap';
 export { createProcessPartialsCommand as processPartialsCmd } from './dom/process-partials';
 
@@ -48,6 +53,7 @@ export { createGetCommand as get } from './data/get';
 export { createIncrementCommand as increment } from './data/increment';
 export { createDecrementCommand as decrement } from './data/decrement';
 export { createDefaultCommand as defaultCmd } from './data/default';
+export { createClearCommand as clear } from './data/clear';
 
 // Utility Commands (factories)
 export { createLogCommand as log } from './utility/log';
@@ -55,6 +61,7 @@ export { createTellCommand as tell } from './utility/tell';
 export { createCopyCommand as copy } from './utility/copy';
 export { createPickCommand as pick } from './utility/pick';
 export { createBeepCommand as beep } from './utility/beep';
+export { createBreakpointCommand as breakpoint } from './utility/breakpoint';
 
 // Event Commands (factories)
 export { createTriggerCommand as trigger } from './events/trigger';
@@ -64,6 +71,7 @@ export { createSendCommand as send } from './events/send';
 export { createGoCommand as go } from './navigation/go';
 export { createPushUrlCommand as pushUrl } from './navigation/push-url';
 export { createReplaceUrlCommand as replaceUrl } from './navigation/replace-url';
+export { createScrollCommand as scroll } from './navigation/scroll-to';
 
 // Control Flow Commands (factories)
 export { createIfCommand as if_ } from './control-flow/if';
@@ -79,6 +87,8 @@ export { createThrowCommand as throw_ } from './control-flow/throw';
 // Execution Commands (factories)
 export { createCallCommand as call } from './execution/call';
 export { createPseudoCommand as pseudo } from './execution/pseudo-command';
+export { createFocusCommand as focus } from './execution/focus';
+export { createBlurCommand as blur } from './execution/blur';
 
 // Content Commands (factories)
 export { createAppendCommand as append } from './content/append';
@@ -112,6 +122,11 @@ export { RemoveCommand, createRemoveCommand } from './dom/remove';
 export { ToggleCommand, createToggleCommand } from './dom/toggle';
 export { PutCommand, createPutCommand } from './dom/put';
 export { MakeCommand, createMakeCommand } from './dom/make';
+export { EmptyCommand, createEmptyCommand } from './dom/empty';
+export { OpenCommand, createOpenCommand } from './dom/open';
+export { CloseCommand, createCloseCommand } from './dom/close';
+export { SelectCommand, createSelectCommand } from './dom/select';
+export { ResetCommand, createResetCommand } from './dom/reset';
 export { swapCommand, morphCommand, createSwapCommand, createMorphCommand } from './dom/swap';
 export {
   processPartialsCommand,
@@ -161,6 +176,7 @@ export {
   createPushUrlCommand,
 } from './navigation/push-url';
 export { ReplaceUrlCommand, createReplaceUrlCommand } from './navigation/replace-url';
+export { ScrollCommand, createScrollCommand } from './navigation/scroll-to';
 
 // Control Flow Commands
 export {
@@ -178,6 +194,8 @@ export { ExitCommand, createExitCommand } from './control-flow/exit';
 
 // Execution Commands
 export { CallCommand, createCallCommand } from './execution/call';
+export { FocusCommand, createFocusCommand } from './execution/focus';
+export { BlurCommand, createBlurCommand } from './execution/blur';
 
 // Content Commands
 export { AppendCommand, createAppendCommand } from './content/append';
@@ -196,6 +214,7 @@ export { UnlessCommand, createUnlessCommand } from './control-flow/unless';
 
 // Data Commands - Phase 6-4
 export { DefaultCommand, createDefaultCommand } from './data/default';
+export { ClearCommand, createClearCommand } from './data/clear';
 
 // Execution Commands - Phase 6-4
 export { PseudoCommand, createPseudoCommand } from './execution/pseudo-command';
@@ -206,6 +225,7 @@ export { CopyCommand, createCopyCommand } from './utility/copy';
 export { PickCommand, createPickCommand } from './utility/pick';
 export { ThrowCommand, createThrowCommand } from './control-flow/throw';
 export { BeepCommand, createBeepCommand } from './utility/beep';
+export { BreakpointCommand, createBreakpointCommand } from './utility/breakpoint';
 export { InstallCommand, createInstallCommand } from './behaviors/install';
 
 // Final Commands - Phase 6-6
@@ -220,6 +240,13 @@ export type { RemoveCommandInput } from './dom/remove';
 export type { ToggleCommandInput } from './dom/toggle';
 export type { PutCommandInput } from './dom/put';
 export type { MakeCommandInput } from './dom/make';
+export type { EmptyCommandInput } from './dom/empty';
+export type { OpenCommandInput, OpenDialogMode } from './dom/open';
+export type { CloseCommandInput } from './dom/close';
+export type { SelectCommandInput } from './dom/select';
+export type { ResetCommandInput } from './dom/reset';
+export type { ClearCommandInput } from './data/clear';
+export type { BreakpointCommandInput } from './utility/breakpoint';
 export type { SwapCommandInput, SwapStrategy } from './dom/swap';
 export type {
   ProcessPartialsCommandInput,
@@ -238,6 +265,7 @@ export type { SendCommandInput } from './events/send';
 export type { GoCommandInput } from './navigation/go';
 export type { HistoryCommandInput, HistoryMode, PushUrlCommandInput } from './navigation/push-url';
 export type { ReplaceUrlCommandInput } from './navigation/replace-url';
+export type { ScrollCommandInput, ScrollCommandOutput } from './navigation/scroll-to';
 export type {
   ConditionalCommandInput,
   ConditionalCommandOutput,
@@ -252,6 +280,8 @@ export type { HaltCommandInput } from './control-flow/halt';
 export type { ReturnCommandInput } from './control-flow/return';
 export type { ExitCommandInput } from './control-flow/exit';
 export type { CallCommandInput } from './execution/call';
+export type { FocusCommandInput } from './execution/focus';
+export type { BlurCommandInput } from './execution/blur';
 export type { AppendCommandInput } from './content/append';
 export type { TransitionCommandInput } from './animation/transition';
 export type { MeasureCommandInput } from './animation/measure';

@@ -8,14 +8,17 @@
 
 import type { SemanticNode, CodeGenerator } from '@lokascript/framework';
 import { extractRoleValue } from '@lokascript/framework';
+import { NATURAL_LOWERINGS } from './natural-lowering';
 
 function generateSelect(node: SemanticNode): string {
   const columnsStr = extractRoleValue(node, 'columns') || '*';
   const sourceStr = extractRoleValue(node, 'source') || 'table';
   const conditionStr = extractRoleValue(node, 'condition');
+  const limitStr = extractRoleValue(node, 'limit');
 
   let sql = `SELECT ${columnsStr} FROM ${sourceStr}`;
   if (conditionStr) sql += ` WHERE ${conditionStr}`;
+  if (limitStr) sql += ` LIMIT ${limitStr}`;
   return sql;
 }
 
@@ -50,17 +53,19 @@ function generateDelete(node: SemanticNode): string {
  */
 export const sqlCodeGenerator: CodeGenerator = {
   generate(node: SemanticNode): string {
-    switch (node.action) {
+    const lower = NATURAL_LOWERINGS[node.action];
+    const effective = lower ? lower(node) : node;
+    switch (effective.action) {
       case 'select':
-        return generateSelect(node);
+        return generateSelect(effective);
       case 'insert':
-        return generateInsert(node);
+        return generateInsert(effective);
       case 'update':
-        return generateUpdate(node);
+        return generateUpdate(effective);
       case 'delete':
-        return generateDelete(node);
+        return generateDelete(effective);
       default:
-        throw new Error(`Unknown SQL command: ${node.action}`);
+        throw new Error(`Unknown SQL command: ${effective.action}`);
     }
   },
 };

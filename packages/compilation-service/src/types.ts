@@ -238,6 +238,47 @@ export interface ComponentResponse {
 }
 
 // =============================================================================
+// Generate Types (LSE → target output)
+// =============================================================================
+
+/**
+ * Generate request — converts LSE to a target-specific output.
+ *
+ * Accepts LSE in bracket syntax or protocol JSON, then renders to the requested target.
+ * Use the `lse_generate_with_correction` MCP tool to produce the LSE via LLM; then
+ * POST the result here to get the final artifact.
+ */
+export interface GenerateRequest {
+  /** LSE attempt — bracket syntax `[command role:value ...]` or protocol JSON string */
+  lse: string;
+  /**
+   * Output target (default 'js'):
+   * - 'js'             — compiled JavaScript
+   * - 'react'          — React component
+   * - 'vue'            — Vue component
+   * - 'svelte'         — Svelte component
+   * - 'intent-element' — HTML snippet with `<lse-intent>` and embedded JSON
+   */
+  target?: 'js' | 'react' | 'vue' | 'svelte' | 'intent-element';
+  /** Optional task description — included as a comment in intent-element output */
+  task?: string;
+}
+
+/**
+ * Generate response.
+ */
+export interface GenerateResponse {
+  /** Whether generation succeeded */
+  ok: boolean;
+  /** Rendered output (JS, JSX, Vue SFC, Svelte, or HTML snippet) */
+  output?: string;
+  /** Normalized protocol JSON (always present on success) */
+  protocol?: SemanticJSON;
+  /** Diagnostics from parsing and validation */
+  diagnostics: Diagnostic[];
+}
+
+// =============================================================================
 // Diff Types
 // =============================================================================
 

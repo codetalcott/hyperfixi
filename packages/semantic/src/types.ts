@@ -18,6 +18,9 @@ export type {
 
 import type { SemanticRole } from './types/grammar-types';
 
+// Re-export Diagnostic from framework for structured error reporting (Phase 3.4)
+export type { Diagnostic, DiagnosticSeverity } from '@lokascript/framework';
+
 // =============================================================================
 // Action Types
 // =============================================================================
@@ -57,9 +60,16 @@ export type ActionType =
   | 'on'
   | 'trigger'
   | 'send'
-  // DOM focus
+  // DOM focus / form state
   | 'focus'
   | 'blur'
+  | 'empty'
+  | 'open'
+  | 'close'
+  | 'select'
+  | 'clear'
+  | 'reset'
+  | 'breakpoint'
   // Navigation
   | 'go'
   // Async
@@ -109,7 +119,8 @@ export type SemanticValue =
   | SelectorValue
   | ReferenceValue
   | PropertyPathValue
-  | ExpressionValue;
+  | ExpressionValue
+  | FlagValue;
 
 /**
  * Expected value types for role tokens.
@@ -146,6 +157,16 @@ export interface ExpressionValue {
   readonly raw: string;
 }
 
+/**
+ * A boolean flag value — present (+flag) or negated (~flag).
+ * Used in declarative domains for no-value attributes like primary-key, not-null.
+ */
+export interface FlagValue {
+  readonly type: 'flag';
+  readonly name: string;
+  readonly enabled: boolean;
+}
+
 // =============================================================================
 // Semantic Nodes
 // =============================================================================
@@ -159,6 +180,8 @@ export interface SemanticNode {
   readonly action: ActionType;
   readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly metadata?: SemanticMetadata;
+  /** Structured diagnostics from parsing stages (Phase 3.4) */
+  readonly diagnostics?: readonly import('@lokascript/framework').Diagnostic[];
 }
 
 /**

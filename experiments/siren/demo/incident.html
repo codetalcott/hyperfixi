@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Response — Siren+GRAIL Demo</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Incident Response Demo</h1>
+  <p class="subtitle">GRAIL workflow: alert → acknowledge → classify → assign → investigate → mitigate → verify+notify → postmortem → resolve — <a href="orders.html" style="color:var(--accent)">← Orders demo</a></p>
+
+  <!-- Incident Selector -->
+  <div class="card">
+    <h2>Select Incident</h2>
+    <div style="display:flex;gap:0.5rem;align-items:center">
+      <select id="incident-select">
+        <option value="">Loading incidents...</option>
+      </select>
+      <button id="btn-load" class="primary">Load</button>
+      <button id="btn-refresh">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Entity Display -->
+  <div class="card" id="entity-card" style="display:none">
+    <h2 id="incident-title">Incident Details</h2>
+    <div id="entity-container"></div>
+
+    <!-- Actions with form fields -->
+    <div id="actions-container" class="actions"></div>
+
+    <!-- Field inputs for actions that need data -->
+    <div id="fields-container" style="margin-top:1rem;display:none">
+      <div class="field-group">
+        <label for="field-severity">Severity</label>
+        <select id="field-severity" name="severity">
+          <option value="p1">P1 — Critical</option>
+          <option value="p2">P2 — High</option>
+          <option value="p3">P3 — Medium</option>
+          <option value="p4">P4 — Low</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="field-owner">Owner</label>
+        <input type="text" id="field-owner" name="owner" placeholder="oncall@example.com">
+      </div>
+      <div class="field-group">
+        <label for="field-notes">Investigation Notes / Postmortem</label>
+        <textarea id="field-notes" name="notes" placeholder="Enter notes..."></textarea>
+      </div>
+    </div>
+
+    <!-- Blocked message -->
+    <div id="blocked-msg" class="message message-blocked" style="display:none"></div>
+
+    <!-- Plan UI -->
+    <div id="plan-container" class="plan-container"></div>
+    <button id="btn-pursue" class="primary" style="display:none;margin-top:0.5rem">Pursue Plan</button>
+
+    <!-- Conditions -->
+    <div id="conditions-container" class="conditions"></div>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="card">
+    <h2>Activity Log</h2>
+    <div id="log-container" class="log">
+      <div class="log-entry">Ready — start the incident server: cd projects/grail-domains && python -m domains.incident_response.server</div>
+    </div>
+  </div>
+</div>
+
+<!-- Load siren browser bundle -->
+<script src="/dist/siren.browser.global.js"></script>
+<script type="module">
+import { initDemo } from './siren-demo.js';
+
+const SERVER = 'http://localhost:8091';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const demo = initDemo({
+    serverUrl: SERVER,
+    entityContainer: document.getElementById('entity-container'),
+    actionsContainer: document.getElementById('actions-container'),
+    conditionsContainer: document.getElementById('conditions-container'),
+    planContainer: document.getElementById('plan-container'),
+    logContainer: document.getElementById('log-container'),
+  });
+
+  const entityCard = document.getElementById('entity-card');
+  const incidentTitle = document.getElementById('incident-title');
+  const blockedMsg = document.getElementById('blocked-msg');
+  const btnPursue = document.getElementById('btn-pursue');
+  const fieldsContainer = document.getElementById('fields-container');
+  const incidentSelect = document.getElementById('incident-select');
+
+  // Show entity card and fields on load
+  document.addEventListener('siren:entity', (e) => {
+    entityCard.style.display = '';
+    blockedMsg.style.display = 'none';
+    btnPursue.style.display = 'none';
+
+    const entity = e.detail.entity;
+    const title = entity.properties?.title || 'Incident';
+    const severity = entity.properties?.severity || '';
+    incidentTitle.textContent = severity
+      ? `${title} [${severity.toUpperCase()}]`
+      : title;
+
+    // Show fields container if there are actions that need input
+    const needsInput = (entity.actions || []).some(a =>
+      a.fields && a.fields.length > 0
+    );
+    fieldsContainer.style.display = needsInput ? '' : 'none';
+  });
+
+  // Show blocked message and pursue button
+  let lastBlockedAction = null;
+  document.addEventListener('siren:blocked', (e) => {
+    blockedMsg.textContent = e.detail.message;
+    blockedMsg.style.display = '';
+    lastBlockedAction = e.detail.blockedAction;
+  });
+
+  document.addEventListener('siren:plan', (e) => {
+    if (e.detail.steps.length > 0) {
+      btnPursue.style.display = '';
+      btnPursue.textContent = `Pursue (${e.detail.steps.length} steps, cost ${e.detail.totalCost})`;
+    }
+  });
+
+  // Pursue button
+  btnPursue.addEventListener('click', async () => {
+    if (!lastBlockedAction) return;
+    btnPursue.disabled = true;
+    btnPursue.textContent = 'Pursuing...';
+    try {
+      const result = await demo.pursue(lastBlockedAction);
+      if (result.status === 'success') {
+        blockedMsg.style.display = 'none';
+        btnPursue.style.display = 'none';
+      } else {
+        blockedMsg.textContent = `Pursuit failed: ${result.reason}`;
+      }
+    } catch (err) {
+      demo.log(`Pursuit error: ${err.message}`);
+    } finally {
+      btnPursue.disabled = false;
+    }
+  });
+
+  // Load incident list
+  async function loadIncidentList() {
+    try {
+      const response = await fetch(`${SERVER}/incidents`, {
+        headers: { Accept: 'application/json' },
+      });
+      const data = await response.json();
+      incidentSelect.innerHTML = '';
+
+      const entities = data.entities || [];
+      if (entities.length === 0) {
+        incidentSelect.innerHTML = '<option value="">No incidents found</option>';
+        return;
+      }
+
+      for (const sub of entities) {
+        const opt = document.createElement('option');
+        const href = sub.href || sub.links?.[0]?.href || '';
+        opt.value = href;
+        const props = sub.properties || {};
+        opt.textContent = `${props.title || 'Incident'} — ${props.status || 'unknown'}`;
+        incidentSelect.appendChild(opt);
+      }
+      demo.log(`Loaded ${entities.length} incidents`);
+    } catch (err) {
+      incidentSelect.innerHTML = `<option value="">Error: ${err.message}</option>`;
+      demo.log(`Failed to load incidents: ${err.message}`);
+    }
+  }
+
+  // Load selected incident
+  document.getElementById('btn-load').addEventListener('click', async () => {
+    const href = incidentSelect.value;
+    if (!href) return;
+    const url = new URL(href, SERVER).href;
+    await demo.fetchEntity(url);
+  });
+
+  document.getElementById('btn-refresh').addEventListener('click', loadIncidentList);
+
+  // Initial load
+  await loadIncidentList();
+});
+</script>
+
+</body>
+</html>

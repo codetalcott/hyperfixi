@@ -11,6 +11,7 @@ export const koreanProfile: LanguageProfile = {
   code: 'ko',
   name: 'Korean',
   nativeName: '한국어',
+  regions: ['east-asian', 'priority'],
   direction: 'ltr',
   script: 'hangul',
   wordOrder: 'SOV',
@@ -82,6 +83,14 @@ export const koreanProfile: LanguageProfile = {
     // DOM focus
     focus: { primary: '포커스', normalized: 'focus' },
     blur: { primary: '블러', normalized: 'blur' },
+    // Phase 1 (v0.9.90): DOM / form state / debug
+    empty: { primary: '비우기', normalized: 'empty' },
+    open: { primary: '열기', normalized: 'open' },
+    close: { primary: '닫기', normalized: 'close' },
+    select: { primary: '고르기', normalized: 'select' },
+    clear: { primary: '지우기', normalized: 'clear' },
+    reset: { primary: '재설정', normalized: 'reset' },
+    breakpoint: { primary: '중단점', normalized: 'breakpoint' },
     // Common event names (for event handler patterns)
     click: { primary: '클릭', normalized: 'click' },
     hover: { primary: '호버', normalized: 'hover' },

@@ -20,9 +20,14 @@ export const englishProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: 'select' },
-    insert: { primary: 'insert' },
-    update: { primary: 'update' },
-    delete: { primary: 'delete' },
+    // Natural-language aliases for the mutation verbs. The pattern generator
+    // threads `alternatives` through to the keyword literal; both the formal
+    // and the natural verb parse into the same SemanticNode, so codegen stays
+    // untouched. Spike: English only.
+    insert: { primary: 'insert', alternatives: ['add'] },
+    update: { primary: 'update', alternatives: ['change'] },
+    delete: { primary: 'delete', alternatives: ['remove'] },
+    get: { primary: 'get' },
   },
   // No roleMarkers needed — all markers come from schema markerOverride,
   // and default position 'before' is correct for SVO English.
@@ -37,9 +42,10 @@ export const spanishProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: 'seleccionar' },
-    insert: { primary: 'insertar' },
-    update: { primary: 'actualizar' },
-    delete: { primary: 'eliminar' },
+    insert: { primary: 'insertar', alternatives: ['agregar', 'añadir'] },
+    update: { primary: 'actualizar', alternatives: ['cambiar', 'modificar'] },
+    delete: { primary: 'eliminar', alternatives: ['quitar', 'borrar'] },
+    get: { primary: 'obtener' },
   },
 };
 
@@ -52,15 +58,19 @@ export const japaneseProfile: PatternGenLanguageProfile = {
   wordOrder: 'SOV',
   keywords: {
     select: { primary: '選択' },
-    insert: { primary: '挿入' },
-    update: { primary: '更新' },
-    delete: { primary: '削除' },
+    insert: { primary: '挿入', alternatives: ['追加'] },
+    update: { primary: '更新', alternatives: ['変更'] },
+    delete: { primary: '削除', alternatives: ['消去'] },
+    get: { primary: '取得' },
   },
   roleMarkers: {
-    // Only condition needs explicit position override.
     // '条件' (WHERE) acts as a prefix, not a postposition.
     // source (から) and destination (に) use default SOV 'after' position.
+    // Note: SET (設定) position is controlled via markerPosition on the schema
+    // to avoid colliding with the INSERT schema's 'values' role.
     condition: { primary: '条件', position: 'before' },
+    // LIMIT: '件数' precedes its value the same way '条件' precedes its expression.
+    limit: { primary: '件数', position: 'before' },
   },
 };
 
@@ -73,9 +83,10 @@ export const arabicProfile: PatternGenLanguageProfile = {
   wordOrder: 'VSO',
   keywords: {
     select: { primary: 'اختر' },
-    insert: { primary: 'أدخل' },
-    update: { primary: 'حدّث' },
-    delete: { primary: 'احذف' },
+    insert: { primary: 'أدخل', alternatives: ['أضف'] },
+    update: { primary: 'حدّث', alternatives: ['غيّر'] },
+    delete: { primary: 'احذف', alternatives: ['أزل'] },
+    get: { primary: 'اجلب' },
   },
 };
 
@@ -88,12 +99,14 @@ export const koreanProfile: PatternGenLanguageProfile = {
   wordOrder: 'SOV',
   keywords: {
     select: { primary: '선택' },
-    insert: { primary: '삽입' },
-    update: { primary: '갱신' },
-    delete: { primary: '삭제' },
+    insert: { primary: '삽입', alternatives: ['추가'] },
+    update: { primary: '갱신', alternatives: ['변경'] },
+    delete: { primary: '삭제', alternatives: ['제거'] },
+    get: { primary: '가져오기' },
   },
   roleMarkers: {
     condition: { primary: '조건', position: 'before' },
+    limit: { primary: '제한', position: 'before' },
   },
 };
 
@@ -106,9 +119,10 @@ export const chineseProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: '查询' },
-    insert: { primary: '插入' },
-    update: { primary: '更新' },
-    delete: { primary: '删除' },
+    insert: { primary: '插入', alternatives: ['添加'] },
+    update: { primary: '更新', alternatives: ['修改'] },
+    delete: { primary: '删除', alternatives: ['移除'] },
+    get: { primary: '获取' },
   },
 };
 
@@ -121,12 +135,15 @@ export const turkishProfile: PatternGenLanguageProfile = {
   wordOrder: 'SOV',
   keywords: {
     select: { primary: 'seç' },
+    // `ekle` is already Turkish for "add" — no natural alias needed for INSERT.
     insert: { primary: 'ekle' },
-    update: { primary: 'güncelle' },
-    delete: { primary: 'sil' },
+    update: { primary: 'güncelle', alternatives: ['değiştir'] },
+    delete: { primary: 'sil', alternatives: ['kaldır'] },
+    get: { primary: 'al' },
   },
   roleMarkers: {
     condition: { primary: 'koşul', position: 'before' },
+    limit: { primary: 'limit', position: 'before' },
   },
 };
 
@@ -139,9 +156,10 @@ export const frenchProfile: PatternGenLanguageProfile = {
   wordOrder: 'SVO',
   keywords: {
     select: { primary: 'sélectionner' },
-    insert: { primary: 'insérer' },
-    update: { primary: 'mettre-à-jour' },
-    delete: { primary: 'supprimer' },
+    insert: { primary: 'insérer', alternatives: ['ajouter'] },
+    update: { primary: 'mettre-à-jour', alternatives: ['modifier'] },
+    delete: { primary: 'supprimer', alternatives: ['enlever'] },
+    get: { primary: 'obtenir' },
   },
 };
 

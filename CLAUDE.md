@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **8100+ tests** passing across all suites
 - **203 KB** browser bundle (gzipped, 39% reduction from original)
-- **~85%** compatibility with official \_hyperscript
+- **\_hyperscript compatible** — tested via gallery examples, bundle compatibility matrix, and command/expression browser tests (Playwright)
 
 ## Monorepo Structure
 
@@ -18,8 +18,7 @@ packages/
 │   ├── src/
 │   │   ├── parser/           # Hyperscript parser with CommandNodeBuilder pattern
 │   │   ├── runtime/          # Runtime execution engine
-│   │   ├── commands/         # 43 command implementations
-│   │   ├── commands-v2/      # Standalone command modules (tree-shakeable)
+│   │   ├── commands/         # All command implementations (tree-shakeable factories)
 │   │   └── expressions/      # 6 expression categories (references, logical, etc.)
 │   └── dist/                 # Built bundles (hyperfixi.js)
 │
@@ -53,15 +52,28 @@ packages/
 ├── aot-compiler/    # Ahead-of-time compiler (hyperscript → JS, semantic → JS)
 ├── server-bridge/   # Server-side route extraction from HTML
 │
-├── domain-sql/      # SQL DSL (4 languages: en, es, ja, ar)
-├── domain-bdd/      # BDD/Gherkin DSL (4 languages)
+├── domain-sql/      # SQL DSL (8 languages: en, es, ja, ar, ko, zh, tr, fr)
+├── domain-bdd/      # BDD/Gherkin DSL (8 languages)
 ├── domain-behaviorspec/  # Interaction testing DSL (8 languages)
 ├── domain-jsx/      # JSX/React DSL (8 languages)
-├── domain-llm/      # LLM prompt DSL (4 languages)
+├── domain-llm/      # LLM prompt DSL (8 languages)
 ├── domain-todo/     # Todo management DSL (8 languages)
-├── domain-flow/     # Reactive data flow DSL (4 languages: en, es, ja, ar)
+├── domain-flow/     # Reactive data flow DSL (8 languages)
+├── domain-voice/    # Voice/accessibility commands DSL (8 languages)
+├── domain-learn/    # Language learning DSL (10 languages)
 │
-└── [other packages: smart-bundling, developer-tools, testing-framework, etc.]
+├── patterns-reference/  # Queryable patterns database with multilingual translations
+├── language-server/     # LSP implementation for LokaScript/hyperscript (21 languages)
+├── behaviors/           # Reusable hyperscript behaviors (draggable, sortable, etc.)
+├── types-browser/       # TypeScript type definitions for browser globals
+│
+├── mcp-server-hyperscript/      # MCP server for original _hyperscript (zero HyperFixi deps)
+├── language-server-hyperscript/ # LSP for original _hyperscript
+├── multilingual-hyperscript/    # Multilingual plugin for original _hyperscript (24 languages)
+├── vscode-extension/            # VSCode extension for LokaScript
+├── vscode-extension-hyperscript/ # VSCode extension for original _hyperscript
+│
+└── [other packages: smart-bundling, developer-tools, testing-framework, ast-toolkit, etc.]
 
 examples/
 ├── multilingual/   # Live grammar transformation demo
@@ -214,7 +226,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 All 43 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
 
 ```typescript
-// packages/core/src/commands-v2/increment.ts
+// packages/core/src/commands/data/increment.ts
 export class IncrementCommand implements CommandImplementation<IncrementInput, void, TypedExecutionContext> {
   parseInput(node: CommandNode, ctx: TypedExecutionContext): IncrementInput { ... }
   async execute(input: IncrementInput, ctx: TypedExecutionContext): Promise<void> { ... }
@@ -306,12 +318,49 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 - Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.3 KB), hybrid-hx (9.5 KB), minimal (58 KB), standard (63 KB), browser (203 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
+### Using Behaviors (Browser)
+
+Include the resolver bundle after core — all standard behaviors resolve on demand:
+
+```html
+<script src="hyperfixi.js"></script>
+<script src="resolver.browser.global.js"></script>
+<!-- install Toggleable, Draggable, etc. just work -->
+<button _="install Toggleable(cls: 'highlighted')">Toggle</button>
+```
+
+Behaviors are hyperscript source strings compiled on first use. The resolver bundle is 3.8 KB gzipped.
+
+### Dynamic Class Selectors
+
+`.{varName}` resolves a variable as a CSS class name in `toggle`, `add`, and `remove`:
+
+```hyperscript
+behavior MyBehavior(cls)
+  on click toggle .{cls} on me
+end
+```
+
+### Behavior Resolver Hook
+
+External code can register a resolver for custom behaviors:
+
+```javascript
+window._hyperscript.behaviors.resolve = name => {
+  /* compile & register, return true */
+};
+window._hyperscript.behaviors.set(name, { name, parameters, eventHandlers, initBlock });
+```
+
 ### Adding a New Command
 
-1. Create implementation in `packages/core/src/commands-v2/`
-2. Register in `packages/core/src/commands-v2/index.ts`
-3. Add parser support in `packages/core/src/parser/commands/`
-4. Write tests in `packages/core/src/commands-v2/*.test.ts`
+1. Create implementation in `packages/core/src/commands/{category}/{name}.ts`
+2. Register a factory export in `packages/core/src/commands/index.ts` and add the command name to the `COMMANDS` set in `packages/core/src/parser/parser-constants.ts`
+3. Register the factory in the runtime entry points that should include it (`packages/core/src/runtime/runtime.ts` and any relevant `packages/core/src/compatibility/browser-bundle-*.ts`)
+4. Add parser support in `packages/core/src/parser/command-parsers/` (only if the command needs a non-generic parser — simple commands use the default identifier-plus-args parser)
+5. For lite/hybrid bundle coverage, add cases to `packages/core/src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
+6. Add reference/LSP entries in `packages/core/src/reference/index.ts` and `packages/core/src/lsp-metadata.ts`
+7. Write tests in `packages/core/src/commands/{category}/__tests__/{name}.test.ts`
 
 ### Adding i18n Language Support
 
@@ -557,7 +606,7 @@ See [TYPE_SAFETY_DESIGN.md](docs-internal/analysis/TYPE_SAFETY_DESIGN.md) for im
 | -------------------------------------------------------- | -------------------------------------------- |
 | `packages/core/src/runtime/runtime.ts`                   | Main runtime (extends RuntimeBase)           |
 | `packages/core/src/parser/parser.ts`                     | Hyperscript parser (~3000 lines)             |
-| `packages/core/src/commands-v2/`                         | All 43 command implementations               |
+| `packages/core/src/commands/`                            | All command implementations (by category)    |
 | `packages/core/src/registry/`                            | Registry system (commands, events, context)  |
 | `packages/core/src/registry/browser-types.ts`            | Browser-specific types                       |
 | `packages/core/src/api/hyperscript-api.ts`               | Main API implementation (v2)                 |
@@ -608,11 +657,12 @@ hyperfixi({
 
 ### Core Bundles
 
-| Bundle                                         | Global                  | Size (gzip) | Use Case                 |
-| ---------------------------------------------- | ----------------------- | ----------- | ------------------------ |
-| `packages/core/dist/hyperfixi.js`              | `window.hyperfixi`      | 203.5 KB    | Full bundle with parser  |
-| `packages/core/dist/hyperfixi-multilingual.js` | `window.hyperfixi`      | 64.3 KB     | Multilingual (no parser) |
-| `packages/i18n/dist/lokascript-i18n.min.js`    | `window.LokaScriptI18n` | 35.0 KB     | Grammar transformation   |
+| Bundle                                               | Global                  | Size (gzip) | Use Case                             |
+| ---------------------------------------------------- | ----------------------- | ----------- | ------------------------------------ |
+| `packages/core/dist/hyperfixi.js`                    | `window.hyperfixi`      | 203.5 KB    | Full bundle with parser              |
+| `packages/behaviors/dist/resolver.browser.global.js` | `HyperFixiBehaviors`    | 3.8 KB      | Lazy behavior resolver (8 behaviors) |
+| `packages/core/dist/hyperfixi-multilingual.js`       | `window.hyperfixi`      | 64.3 KB     | Multilingual (no parser)             |
+| `packages/i18n/dist/lokascript-i18n.min.js`          | `window.LokaScriptI18n` | 35.0 KB     | Grammar transformation               |
 
 > **Note**: As of v2.0.0, the primary bundles are `hyperfixi-*.js`. Backward-compatible aliases (`lokascript-*.js`) are provided but will be removed in v3.0.0. See [MIGRATION.md](MIGRATION.md).
 

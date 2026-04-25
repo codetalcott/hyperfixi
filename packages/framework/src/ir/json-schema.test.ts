@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { validateSemanticJSON, jsonToSemanticNode, semanticNodeToJSON } from './json-schema';
 import type { SemanticJSON } from './types';
-import { createCommandNode, createSelector, createLiteral, createReference } from '../core/types';
+import {
+  createCommandNode,
+  createSelector,
+  createLiteral,
+  createReference,
+  createFlag,
+} from '../core/types';
 
 describe('validateSemanticJSON', () => {
   it('validates a correct input', () => {
@@ -205,6 +211,53 @@ describe('semanticNodeToJSON', () => {
     });
     const json = semanticNodeToJSON(node);
     expect(json.roles.destination).toEqual({ type: 'reference', value: 'me' });
+  });
+});
+
+describe('flag support in JSON', () => {
+  it('validates flag type as valid', () => {
+    const input: SemanticJSON = {
+      action: 'column',
+      roles: {
+        'primary-key': { type: 'flag', value: true },
+      },
+    };
+    expect(validateSemanticJSON(input)).toEqual([]);
+  });
+
+  it('converts flag JSON to FlagValue', () => {
+    const input: SemanticJSON = {
+      action: 'column',
+      roles: {
+        name: { type: 'literal', value: 'id' },
+        'primary-key': { type: 'flag', value: true },
+      },
+    };
+    const node = jsonToSemanticNode(input);
+    expect(node.roles.get('primary-key')).toEqual({
+      type: 'flag',
+      name: 'true',
+      enabled: true,
+    });
+  });
+
+  it('converts FlagValue to JSON', () => {
+    const node = createCommandNode('column', {
+      name: createLiteral('id', 'string'),
+      'primary-key': createFlag('primary-key', true),
+      'not-null': createFlag('not-null', true),
+    });
+    const json = semanticNodeToJSON(node);
+    expect(json.roles['primary-key']).toEqual({ type: 'flag', value: true });
+    expect(json.roles['not-null']).toEqual({ type: 'flag', value: true });
+  });
+
+  it('converts disabled FlagValue to JSON', () => {
+    const node = createCommandNode('field', {
+      nullable: createFlag('nullable', false),
+    });
+    const json = semanticNodeToJSON(node);
+    expect(json.roles.nullable).toEqual({ type: 'flag', value: false });
   });
 });
 

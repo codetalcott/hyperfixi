@@ -50,6 +50,11 @@ import { createPutCommand } from '../commands/dom/put';
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createMakeCommand } from '../commands/dom/make';
+import { createEmptyCommand } from '../commands/dom/empty';
+import { createOpenCommand } from '../commands/dom/open';
+import { createCloseCommand } from '../commands/dom/close';
+import { createSelectCommand } from '../commands/dom/select';
+import { createResetCommand } from '../commands/dom/reset';
 
 // ============================================================================
 // Control Flow Commands (9)
@@ -72,6 +77,7 @@ import { createGetCommand } from '../commands/data/get';
 import { createIncrementCommand } from '../commands/data/increment';
 import { createDecrementCommand } from '../commands/data/decrement';
 import { createDefaultCommand } from '../commands/data/default';
+import { createClearCommand } from '../commands/data/clear';
 
 // ============================================================================
 // Async Commands (2)
@@ -99,9 +105,12 @@ import { createTakeCommand } from '../commands/animation/take';
 import { createLogCommand } from '../commands/utility/log';
 import { createTellCommand } from '../commands/utility/tell';
 import { createCallCommand } from '../commands/execution/call';
+import { createFocusCommand } from '../commands/execution/focus';
+import { createBlurCommand } from '../commands/execution/blur';
 import { createCopyCommand } from '../commands/utility/copy';
 import { createPickCommand } from '../commands/utility/pick';
 import { createBeepCommand } from '../commands/utility/beep';
+import { createBreakpointCommand } from '../commands/utility/breakpoint';
 
 // ============================================================================
 // Advanced Commands (2)
@@ -225,6 +234,11 @@ const runtimeExperimental = createMinimalRuntime(
     createHideCommand(),
     createShowCommand(),
     createMakeCommand(),
+    createEmptyCommand(),
+    createOpenCommand(),
+    createCloseCommand(),
+    createSelectCommand(),
+    createResetCommand(),
 
     // Control Flow (9)
     createIfCommand(),
@@ -237,12 +251,13 @@ const runtimeExperimental = createMinimalRuntime(
     createExitCommand(),
     createThrowCommand(),
 
-    // Data (5)
+    // Data (6)
     createSetCommand(),
     createGetCommand(),
     createIncrementCommand(),
     createDecrementCommand(),
     createDefaultCommand(),
+    createClearCommand(),
 
     // Async (2)
     createWaitCommand(),
@@ -258,13 +273,18 @@ const runtimeExperimental = createMinimalRuntime(
     createSettleCommand(),
     createTakeCommand(),
 
-    // Utility (6)
+    // Utility (7)
     createLogCommand(),
     createTellCommand(),
     createCallCommand(),
     createCopyCommand(),
     createPickCommand(),
     createBeepCommand(),
+    createBreakpointCommand(),
+
+    // Execution (v0.9.90 focus/blur)
+    createFocusCommand(),
+    createBlurCommand(),
 
     // Advanced (2)
     createJsCommand(),

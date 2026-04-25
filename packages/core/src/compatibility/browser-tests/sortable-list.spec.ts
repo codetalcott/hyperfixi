@@ -12,7 +12,7 @@ test.describe('Sortable List Example', () => {
       errors.push(`PAGE: ${err.message}`);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/03-sortable-list.html`);
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/sortable-list.html`);
     await page.waitForTimeout(2000);
 
     const items = await page.locator('.sortable-item').count();
@@ -26,7 +26,7 @@ test.describe('Sortable List Example', () => {
       errors.push(err.message);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/03-sortable-list.html`);
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/sortable-list.html`);
     await page.waitForTimeout(2000);
 
     const result = await page.evaluate(async () => {
@@ -64,7 +64,7 @@ test.describe('Sortable List Example', () => {
       errors.push(err.message);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/03-sortable-list.html`);
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/sortable-list.html`);
     await page.waitForTimeout(2000);
 
     const result = await page.evaluate(async () => {
@@ -147,7 +147,7 @@ test.describe('Sortable List Example', () => {
       errors.push(err.message);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/03-sortable-list.html`);
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/sortable-list.html`);
     await page.waitForTimeout(2000);
 
     const result = await page.evaluate(async () => {
@@ -192,7 +192,7 @@ test.describe('Sortable List Example', () => {
       errors.push(err.message);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/03-sortable-list.html`);
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/sortable-list.html`);
     await page.waitForTimeout(2000);
 
     const before = await page.locator('.sortable-item').count();
@@ -210,7 +210,7 @@ test.describe('Sortable List Example', () => {
       errors.push(err.message);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/03-sortable-list.html`);
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/sortable-list.html`);
     await page.waitForTimeout(2000);
 
     const result = await page.evaluate(async () => {
@@ -289,7 +289,7 @@ test.describe('Sortable List Example', () => {
       errors.push(err.message);
     });
 
-    await page.goto(`${BASE_URL}/examples/advanced/03-sortable-list.html`);
+    await page.goto(`${BASE_URL}/examples/drag-and-drop/sortable-list.html`);
     await page.waitForTimeout(2000);
 
     const result = await page.evaluate(async () => {

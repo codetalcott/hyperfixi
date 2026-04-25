@@ -69,7 +69,7 @@ import { sqlCodeGenerator } from './generators/sql-generator';
  * Create a multilingual SQL DSL instance with all 8 supported languages.
  */
 export function createSQLDSL(): MultilingualDSL {
-  return createMultilingualDSL({
+  return /*#__PURE__*/ createMultilingualDSL({
     name: 'SQL',
     schemas: allSchemas,
     languages: [

@@ -225,14 +225,41 @@ function evaluatePositional(node: ASTNode, ctx: Context): Element | null {
       return elements[0] || null;
     case 'last':
       return elements[elements.length - 1] || null;
-    case 'next':
+    case 'next': {
+      if (selector) {
+        let el = ctx.me.nextElementSibling;
+        while (el) {
+          if (el.matches(selector)) return el;
+          el = el.nextElementSibling;
+        }
+        return null;
+      }
       return ctx.me.nextElementSibling;
-    case 'previous':
+    }
+    case 'previous': {
+      if (selector) {
+        let el = ctx.me.previousElementSibling;
+        while (el) {
+          if (el.matches(selector)) return el;
+          el = el.previousElementSibling;
+        }
+        return null;
+      }
       return ctx.me.previousElementSibling;
+    }
     case 'closest':
-      return target.value ? ctx.me.closest(target.value) : null;
-    case 'parent':
+      return selector ? ctx.me.closest(selector) : null;
+    case 'parent': {
+      if (selector) {
+        let el = ctx.me.parentElement;
+        while (el) {
+          if (el.matches(selector)) return el;
+          el = el.parentElement;
+        }
+        return null;
+      }
       return ctx.me.parentElement;
+    }
     default:
       return elements[0] || null;
   }
@@ -250,7 +277,12 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
 
   const getClassName = (node: any): string => {
     if (!node) return '';
-    if (node.type === 'selector') return node.value.slice(1);
+    if (node.type === 'selector') {
+      // @hidden → pass through as "@hidden" for attribute detection
+      if (node.value.startsWith('@')) return node.value;
+      // .class / #id → strip prefix
+      return node.value.slice(1);
+    }
     if (node.type === 'string' || node.type === 'literal') {
       const val = node.value;
       return typeof val === 'string' && val.startsWith('.') ? val.slice(1) : String(val);
@@ -280,25 +312,43 @@ async function executeCommand(cmd: CommandNode, ctx: Context): Promise<any> {
 
   switch (cmd.name) {
     case 'toggle': {
-      const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
+      const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
-      for (const el of targets) el.classList.toggle(className);
+      if (raw.startsWith('@')) {
+        const attr = raw.slice(1);
+        for (const el of targets) {
+          if (el.hasAttribute(attr)) el.removeAttribute(attr);
+          else el.setAttribute(attr, '');
+        }
+      } else {
+        for (const el of targets) el.classList.toggle(raw);
+      }
       ctx.it = targets.length === 1 ? targets[0] : targets;
       return ctx.it;
     }
 
     case 'add': {
-      const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
+      const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
-      for (const el of targets) el.classList.add(className);
+      if (raw.startsWith('@')) {
+        const attr = raw.slice(1);
+        for (const el of targets) el.setAttribute(attr, '');
+      } else {
+        for (const el of targets) el.classList.add(raw);
+      }
       ctx.it = targets.length === 1 ? targets[0] : targets;
       return ctx.it;
     }
 
     case 'removeClass': {
-      const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
+      const raw = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
       const targets = await getTarget();
-      for (const el of targets) el.classList.remove(className);
+      if (raw.startsWith('@')) {
+        const attr = raw.slice(1);
+        for (const el of targets) el.removeAttribute(attr);
+      } else {
+        for (const el of targets) el.classList.remove(raw);
+      }
       ctx.it = targets.length === 1 ? targets[0] : targets;
       return ctx.it;
     }

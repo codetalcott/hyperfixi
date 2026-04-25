@@ -196,6 +196,8 @@ export class RuntimeBase {
   private autoCleanupObserver: MutationObserver | null = null;
   /** Registry integration for context providers and event sources */
   protected registryIntegration: RegistryIntegration | null = null;
+  /** Accumulated runtime warnings from error-diagnosed nodes (resilient parsing) */
+  protected runtimeWarnings: string[] = [];
 
   constructor(options: RuntimeBaseOptions) {
     this.options = {
@@ -240,6 +242,8 @@ export class RuntimeBase {
     this.behaviorAPI = {
       has: (name: string) => this.behaviorRegistry.has(name),
       get: (name: string) => this.behaviorRegistry.get(name),
+      set: (name: string, definition: any) => this.behaviorRegistry.set(name, definition),
+      resolve: null as ((name: string) => boolean) | null,
       install: async (
         behaviorName: string,
         element: HTMLElement,
@@ -332,6 +336,26 @@ export class RuntimeBase {
   }
 
   /**
+   * Track an event listener so it gets removed when the element is cleaned
+   * up (via `cleanup()` / `cleanupTree()` / DOM removal). Used by the DOM
+   * processor so that `hyperfixi.cleanup(elt)` can actually remove listeners
+   * attached to an element's `_=` handler — critical for morph/swap
+   * compatibility (upstream _hyperscript 0.9.90 style).
+   *
+   * The caller still calls `addEventListener` themselves — this just
+   * registers the removal callback.
+   */
+  trackListener(
+    element: Element,
+    target: EventTarget,
+    eventName: string,
+    handler: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void {
+    this.cleanupRegistry.registerListener(element, target, eventName, handler, options);
+  }
+
+  /**
    * Clean up resources for an element and all its descendants
    * @param element The root element
    * @returns Total number of cleanups performed
@@ -345,6 +369,15 @@ export class RuntimeBase {
    */
   getCleanupStats(): ReturnType<CleanupRegistry['getStats']> {
     return this.cleanupRegistry.getStats();
+  }
+
+  /**
+   * Phase 5b: access the cleanup registry. Plugins use this to register
+   * per-element teardowns that fire when the element is removed from the
+   * DOM or `cleanup(element)` is called explicitly.
+   */
+  getCleanupRegistry(): CleanupRegistry {
+    return this.cleanupRegistry;
   }
 
   /**
@@ -368,6 +401,21 @@ export class RuntimeBase {
   }
 
   /**
+   * Check if an AST node has error-severity diagnostics (resilient parsing).
+   */
+  private hasErrorDiagnostics(node: ASTNode): boolean {
+    const diagnostics = node.diagnostics as Array<{ severity: string }> | undefined;
+    return !!diagnostics?.some(d => d.severity === 'error');
+  }
+
+  /**
+   * Get accumulated runtime warnings from error-diagnosed nodes.
+   */
+  getWarnings(): readonly string[] {
+    return this.runtimeWarnings;
+  }
+
+  /**
    * Main Entry Point: Execute an AST node
    */
   async execute(node: ASTNode, context: ExecutionContext): Promise<unknown> {
@@ -387,6 +435,14 @@ export class RuntimeBase {
     }
 
     try {
+      // Resilient parsing: skip error-diagnosed nodes
+      if (this.hasErrorDiagnostics(node)) {
+        const diag = (node.diagnostics as readonly { message: string }[] | undefined)?.[0];
+        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${diag?.message || 'unknown error'}`);
+        this.runtimeWarnings.push(diag?.message || 'Skipped error node');
+        return undefined;
+      }
+
       switch (node.type) {
         case 'command': {
           // Use Result-based execution when enabled (~12-18% faster)
@@ -650,6 +706,14 @@ export class RuntimeBase {
     let lastResult: unknown = undefined;
 
     for (const command of commands) {
+      // Resilient parsing: skip error-diagnosed nodes
+      if (this.hasErrorDiagnostics(command)) {
+        const diag = (command.diagnostics as readonly { message: string }[] | undefined)?.[0];
+        debug.runtime(`⚠️ RUNTIME: Skipping error node: ${diag?.message || 'unknown error'}`);
+        this.runtimeWarnings.push(diag?.message || 'Skipped error node');
+        continue;
+      }
+
       // For commands, use Result-based execution
       if (command.type === 'command') {
         const result = await this.processCommandWithResult(command as CommandNode, context);
@@ -938,12 +1002,27 @@ export class RuntimeBase {
       parameters?: string[];
       eventHandlers?: EventHandlerNode[];
       initBlock?: ASTNode;
+      imperativeInstaller?: (element: HTMLElement, parameters: Record<string, any>) => void;
     },
     _context: ExecutionContext
   ): Promise<void> {
     const { name, parameters, eventHandlers, initBlock } = node;
-    this.behaviorRegistry.set(name, { name, parameters, eventHandlers, initBlock });
-    debug.runtime(`RUNTIME BASE: Registered behavior '${name}'`);
+    const imperativeInstaller = (node as any).imperativeInstaller;
+
+    if (typeof imperativeInstaller === 'function') {
+      // Imperative behavior: store the installer function directly
+      this.behaviorRegistry.set(name, {
+        name,
+        parameters,
+        type: 'imperative',
+        install: imperativeInstaller,
+      });
+      debug.runtime(`RUNTIME BASE: Registered imperative behavior '${name}'`);
+    } else {
+      // Hyperscript behavior: store AST for event-handler-based installation
+      this.behaviorRegistry.set(name, { name, parameters, eventHandlers, initBlock });
+      debug.runtime(`RUNTIME BASE: Registered behavior '${name}'`);
+    }
   }
 
   protected async installBehaviorOnElement(
@@ -952,8 +1031,23 @@ export class RuntimeBase {
     parameters: Record<string, any>
   ): Promise<void> {
     debug.runtime(`BEHAVIOR: installBehaviorOnElement called: ${behaviorName}`);
-    const behavior = this.behaviorRegistry.get(behaviorName);
-    if (!behavior) throw new Error(`Behavior "${behaviorName}" not found`);
+    let behavior = this.behaviorRegistry.get(behaviorName);
+    if (!behavior) {
+      // Try resolver before throwing
+      if (this.behaviorAPI.resolve && this.behaviorAPI.resolve(behaviorName)) {
+        behavior = this.behaviorRegistry.get(behaviorName);
+      }
+      if (!behavior) throw new Error(`Behavior "${behaviorName}" not found`);
+    }
+
+    // Imperative behavior: call the installer directly and return
+    if (behavior.type === 'imperative' && typeof behavior.install === 'function') {
+      debug.runtime(`BEHAVIOR: Installing imperative behavior '${behaviorName}'`);
+      behavior.install(element, parameters);
+      debug.runtime(`BEHAVIOR: Finished installing imperative behavior '${behaviorName}'`);
+      return;
+    }
+
     debug.runtime(
       `BEHAVIOR: Found behavior, eventHandlers count: ${behavior.eventHandlers?.length || 0}`
     );
@@ -1277,6 +1371,34 @@ export class RuntimeBase {
       // Attach to HTMLElement targets
       for (const el of targets) {
         for (const evt of eventNames) {
+          // `on resize` on a plain HTMLElement is not a native DOM event —
+          // upstream _hyperscript 0.9.90 wires this via ResizeObserver so
+          // users can observe size changes of specific elements. We dispatch
+          // a synthetic CustomEvent('resize') so the handler's `event.detail`
+          // carries the ResizeObserverEntry for consumers that want it.
+          if (evt === 'resize' && typeof ResizeObserver !== 'undefined') {
+            const observer = new ResizeObserver(entries => {
+              for (const entry of entries) {
+                const synthetic = new CustomEvent('resize', {
+                  detail: entry,
+                  bubbles: false,
+                  cancelable: false,
+                });
+                // Flag so downstream listeners/tests can distinguish from native resize
+                (synthetic as Event & { synthetic?: boolean }).synthetic = true;
+                // Apply once semantics manually — ResizeObserver fires repeatedly.
+                eventHandler(synthetic);
+                if (listenerOptions?.once) {
+                  observer.disconnect();
+                  break;
+                }
+              }
+            });
+            observer.observe(el);
+            this.cleanupRegistry.registerCustom(el, () => observer.disconnect(), 'resize-observer');
+            continue;
+          }
+
           el.addEventListener(evt, eventHandler, listenerOptions);
           // Register for cleanup
           this.cleanupRegistry.registerListener(el, el, evt, eventHandler);

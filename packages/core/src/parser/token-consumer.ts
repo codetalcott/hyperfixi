@@ -4,7 +4,6 @@
  */
 
 import type { ASTNode, Token } from '../types/core';
-import type { TokenType } from './tokenizer';
 import { COMMAND_TERMINATORS, KEYWORDS } from './parser-constants';
 
 /**
@@ -14,7 +13,7 @@ import { COMMAND_TERMINATORS, KEYWORDS } from './parser-constants';
 export interface ParserInterface {
   isAtEnd(): boolean;
   check(value: string): boolean;
-  checkTokenType(type: TokenType): boolean;
+  checkTokenType(type: string): boolean;
   advance(): Token;
   peek(): Token;
   parsePrimary(): ASTNode;

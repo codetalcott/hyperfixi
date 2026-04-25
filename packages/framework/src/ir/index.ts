@@ -32,10 +32,46 @@ export type {
 export { DEFAULT_REFERENCES, isValidReference } from './references';
 
 // Explicit syntax parser
-export { parseExplicit, isExplicitSyntax } from './explicit-parser';
+export {
+  parseExplicit,
+  parseCompound,
+  parseDocument,
+  isExplicitSyntax,
+  isCompoundSyntax,
+  isDocumentSyntax,
+} from './explicit-parser';
 
 // Explicit syntax renderer
-export { renderExplicit } from './explicit-renderer';
+export { renderExplicit, renderDocument } from './explicit-renderer';
 
-// JSON schema conversion
+// JSON schema conversion (deprecated — use fromProtocolJSON/validateProtocolJSON/toProtocolJSON)
 export { jsonToSemanticNode, validateSemanticJSON, semanticNodeToJSON } from './json-schema';
+
+// Protocol full-fidelity wire format
+export type {
+  ProtocolNodeJSON,
+  ProtocolValueJSON,
+  ProtocolNodeKind,
+  ProtocolChainType,
+  // v1.2 sub-types
+  ProtocolDiagnosticJSON,
+  AnnotationJSON,
+  MatchArmJSON,
+  LSEEnvelopeJSON,
+} from './types';
+export {
+  toProtocolJSON,
+  fromProtocolJSON,
+  validateProtocolJSON,
+  // v1.2 envelope
+  toEnvelopeJSON,
+  fromEnvelopeJSON,
+  isEnvelope,
+} from './protocol-json';
+
+// Interchange AST → SemanticNode converter
+export { fromInterchangeNode, convertValue, renderExpr } from './from-interchange';
+
+// SemanticNode → Runtime AST converter (for core runtime execution)
+export { semanticNodeToRuntimeAST, semanticValueToAST } from './to-runtime-ast';
+export type { RuntimeASTNode, RuntimeCommandNode, RuntimeEventNode } from './to-runtime-ast';

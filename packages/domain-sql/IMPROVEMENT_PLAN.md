@@ -2,8 +2,8 @@
 
 ## Review Summary
 
-**Current State:** 32 tests passing, 0 type errors, ~755 lines of source.
-Solid proof-of-concept demonstrating framework generality across 4 languages (EN, ES, JA, AR) with SVO, SOV, and VSO word orders.
+**Current State:** 100 tests passing, 0 type errors, 8 languages (EN, ES, JA, AR, KO, ZH, TR, FR).
+Full multilingual SQL DSL with SVO, SOV, and VSO word orders including WHERE clause support in all languages.
 
 ### Bug Fixed
 
@@ -11,15 +11,15 @@ Solid proof-of-concept demonstrating framework generality across 4 languages (EN
 
 ### Gaps vs. Sibling Domains (BDD & JSX)
 
-| Feature                                | BDD           | JSX           | SQL           | Priority |
-| -------------------------------------- | ------------- | ------------- | ------------- | -------- |
-| Languages supported                    | 8             | 8             | 4             | High     |
-| Natural language renderer              | `renderBDD()` | `renderJSX()` | None          | High     |
-| MCP translate with renderer            | Yes           | Yes           | Stub only     | High     |
-| Test count                             | 95+           | 90+           | 32            | Medium   |
-| Compilation output assertions (non-EN) | N/A           | All 8 langs   | EN only       | Medium   |
-| Role value content assertions          | Yes           | Yes           | Presence only | Medium   |
-| Edge case tests                        | Yes           | Yes           | Minimal       | Low      |
+| Feature                                | BDD           | JSX           | SQL            | Priority |
+| -------------------------------------- | ------------- | ------------- | -------------- | -------- |
+| Languages supported                    | 8             | 8             | 8 ✅           | Done     |
+| Natural language renderer              | `renderBDD()` | `renderJSX()` | None           | High     |
+| MCP translate with renderer            | Yes           | Yes           | Stub only      | High     |
+| Test count                             | 95+           | 90+           | 100 ✅         | Done     |
+| Compilation output assertions (non-EN) | N/A           | All 8 langs   | All 8 langs ✅ | Done     |
+| Role value content assertions          | Yes           | Yes           | Yes ✅         | Done     |
+| Edge case tests                        | Yes           | Yes           | Minimal        | Low      |
 
 ---
 
@@ -58,9 +58,11 @@ Update `packages/mcp-server/src/tools/sql-domain.ts`:
 
 ---
 
-## Phase 2: Expand Language Support (High Priority)
+## Phase 2: Expand Language Support ✅ COMPLETE
 
-Add 4 additional languages to match BDD/JSX: **Korean (SOV), Chinese (SVO), Turkish (SOV), French (SVO)**.
+Added 4 additional languages: **Korean (SOV), Chinese (SVO), Turkish (SOV), French (SVO)**.
+All 8 languages now support full parsing + compilation including WHERE clauses.
+SOV WHERE clauses (JA, KO, TR) required a framework-level fix to propagate parent stop markers into greedy roles inside optional groups (see `pattern-matcher.ts` `parentStopMarkers` parameter).
 
 ### 2a. Per Language: Profile + Tokenizer + Schema Markers
 
@@ -186,4 +188,4 @@ Low priority, but if useful:
 4. **Phase 3d-3f** — Advanced test cases (~1 hour)
 5. **Phase 4** — Polish (optional, as-needed)
 
-**Target end state:** 8 languages, 80+ tests, full renderer, complete MCP integration.
+**Target end state:** 8 languages ✅, 100+ tests ✅, full renderer, complete MCP integration.

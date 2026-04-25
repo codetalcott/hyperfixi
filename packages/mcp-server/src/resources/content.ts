@@ -759,3 +759,172 @@ export function getSetupGuide(): object {
     ],
   };
 }
+
+// =============================================================================
+// LSE Protocol Reference (for LLM ↔ LSE integration)
+// =============================================================================
+
+export function getLSEProtocolSpec(): string {
+  return `# LokaScript Explicit Syntax (LSE) Quick Reference
+
+## Syntax
+
+\`\`\`
+[command role1:value1 role2:value2 +flag1 ~flag2]
+\`\`\`
+
+| Element | Syntax | Example |
+|---------|--------|---------|
+| Command | first token (lowercased) | \`toggle\`, \`fetch\`, \`add\` |
+| Role pair | \`name:value\` | \`patient:.active\` |
+| Enabled flag | \`+name\` | \`+primary-key\` |
+| Disabled flag | \`~name\` | \`~nullable\` |
+| String literal | \`"..."\` or \`'...'\` | \`patient:"hello world"\` |
+| Selector | \`#id\` \`.class\` \`[attr]\` \`@aria\` \`*wild\` | \`destination:#button\` |
+| Boolean | \`true\` / \`false\` | \`goal:true\` |
+| Number | digits with optional decimal | \`quantity:5\` |
+| Duration | number + suffix | \`delay:500ms\`, \`timeout:2s\` |
+| Reference | built-in name | \`destination:me\`, \`source:it\` |
+| Nested body | bracket command in value | \`body:[toggle patient:.active]\` |
+| Compound | chain operator between commands | \`[add ...] then [fetch ...]\` |
+
+## Value Classification Priority (first match wins)
+
+1. **Selector** — starts with \`#\`, \`.\`, \`[\`, \`@\`, \`*\`
+2. **String** — starts with \`"\` or \`'\`
+3. **Boolean** — exact: \`true\` or \`false\`
+4. **Reference** — \`me\`, \`you\`, \`it\`, \`result\`, \`event\`, \`target\`, \`body\`
+5. **Duration** — number + \`ms\`/\`s\`/\`m\`/\`h\`
+6. **Number** — integer or decimal
+7. **Plain** — fallback (any non-whitespace)
+
+## Node Kinds
+
+Every node has a \`kind\` field:
+
+| Kind | Required Fields | Description |
+|------|----------------|-------------|
+| \`command\` | \`kind\`, \`action\`, \`roles\` | Single command (also encodes conditionals and loops via v1.1 fields) |
+| \`event-handler\` | \`kind\`, \`action\`, \`roles\`, \`body\` | Event handler with body commands |
+| \`compound\` | \`kind\`, \`action\`, \`statements\` | Chained commands with \`chainType\` (\`then\`/\`and\`/\`async\`/\`sequential\`) |
+
+## Value Types
+
+| Type | JSON Shape | Notes |
+|------|-----------|-------|
+| \`selector\` | \`{ "type": "selector", "value": ".active", "selectorKind?": "class" }\` | \`selectorKind\`: id, class, attribute, element, complex (optional) |
+| \`literal\` | \`{ "type": "literal", "value": "hello", "dataType": "string" }\` | \`dataType\`: string, number, boolean, duration |
+| \`reference\` | \`{ "type": "reference", "value": "me" }\` | Built-in: me, you, it, result, event, target, body |
+| \`expression\` | \`{ "type": "expression", "raw": "x > 0" }\` | Nested syntax or raw expressions |
+| \`property-path\` | \`{ "type": "property-path", "value": "event.detail" }\` | Dotted property access |
+| \`flag\` | \`{ "type": "flag", "name": "primary-key", "enabled": true }\` | \`+flag\` = enabled, \`~flag\` = disabled |
+
+## JSON Wire Format — Full-Fidelity
+
+Lossless round-trip format with \`kind\` field. Used for tool-to-tool interchange.
+
+### Command
+\`\`\`json
+{
+  "kind": "command",
+  "action": "toggle",
+  "roles": {
+    "patient": { "type": "selector", "value": ".active" },
+    "destination": { "type": "selector", "value": "#button" }
+  }
+}
+\`\`\`
+
+### Event Handler
+\`\`\`json
+{
+  "kind": "event-handler",
+  "action": "on",
+  "roles": { "event": { "type": "literal", "value": "click", "dataType": "string" } },
+  "body": [
+    { "kind": "command", "action": "toggle", "roles": { "patient": { "type": "selector", "value": ".active" } } }
+  ]
+}
+\`\`\`
+
+### Compound
+\`\`\`json
+{
+  "kind": "compound",
+  "action": "compound",
+  "chainType": "then",
+  "statements": [
+    { "kind": "command", "action": "add", "roles": { "patient": { "type": "selector", "value": ".loading" } } },
+    { "kind": "command", "action": "fetch", "roles": { "source": { "type": "literal", "value": "/api/data", "dataType": "string" } } }
+  ]
+}
+\`\`\`
+
+## Control Flow (v1.1)
+
+### Conditional
+A command node with \`thenBranch\` and optional \`elseBranch\` arrays:
+\`\`\`
+[if condition:"x > 0" then:[toggle patient:.active] else:[remove patient:.active]]
+\`\`\`
+\`\`\`json
+{
+  "kind": "command",
+  "action": "if",
+  "roles": { "condition": { "type": "expression", "raw": "x > 0" } },
+  "thenBranch": [
+    { "kind": "command", "action": "toggle", "roles": { "patient": { "type": "selector", "value": ".active" } } }
+  ],
+  "elseBranch": [
+    { "kind": "command", "action": "remove", "roles": { "patient": { "type": "selector", "value": ".active" } } }
+  ]
+}
+\`\`\`
+
+### Loop
+A command node with \`loopVariant\`, \`loopBody\`, and optional \`loopVariable\`/\`indexVariable\`:
+\`\`\`
+[repeat source:#items loopVariant:for loopVariable:item body:[add patient:.active]]
+\`\`\`
+\`\`\`json
+{
+  "kind": "command",
+  "action": "repeat",
+  "roles": { "source": { "type": "selector", "value": "#items" } },
+  "loopVariant": "for",
+  "loopBody": [
+    { "kind": "command", "action": "add", "roles": { "patient": { "type": "selector", "value": ".active" } } }
+  ],
+  "loopVariable": "item"
+}
+\`\`\`
+
+Loop variants: \`forever\`, \`times\`, \`for\`, \`while\`, \`until\`.
+
+## JSON Wire Format — LLM-Simplified
+
+Compact format optimized for LLM generation. Omits \`kind\`, uses flat \`trigger\` for event handlers.
+
+\`\`\`json
+{
+  "action": "toggle",
+  "roles": { "patient": { "type": "selector", "value": ".active" } },
+  "trigger": { "event": "click" }
+}
+\`\`\`
+
+| Difference | Full-Fidelity | LLM-Simplified |
+|-----------|--------------|----------------|
+| \`kind\` field | Required | Absent |
+| Event handlers | \`event-handler\` kind with \`body\` | \`trigger\` field on command |
+| Compound | \`statements\` array | Not supported |
+| Expression values | \`{ "raw": "..." }\` | \`{ "value": "..." }\` |
+| Flag values | \`{ "name": "x", "enabled": true }\` | \`{ "value": true }\` |
+
+## Event Handlers (Bracket Syntax)
+
+\`\`\`
+[on event:click body:[toggle patient:.active]]
+\`\`\`
+`;
+}

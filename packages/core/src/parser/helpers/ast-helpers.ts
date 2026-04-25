@@ -9,6 +9,7 @@
  */
 
 import type { ASTNode } from '../../types/core';
+import type { ParseDiagnostic } from '../../types/base-types';
 import type {
   Position,
   IdentifierNode,
@@ -352,6 +353,49 @@ export function createErrorNode(pos: Position): IdentifierNode {
   return {
     type: 'identifier',
     name: '__ERROR__',
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
+ * Create an error command node with diagnostics for resilient parsing.
+ * The runtime skips these nodes and logs warnings instead of crashing.
+ */
+export function createErrorCommandNode(pos: Position, message: string, source?: string): ASTNode {
+  const diagnostic: ParseDiagnostic = {
+    message,
+    severity: 'error',
+    code: 'parse-error',
+    line: pos.line,
+    column: pos.column,
+    ...(source && { source }),
+  };
+  return {
+    type: 'command',
+    name: '__ERROR__',
+    args: [],
+    diagnostics: [diagnostic],
+    start: pos.start,
+    end: pos.end,
+    line: pos.line,
+    column: pos.column,
+  };
+}
+
+/**
+ * Create a partial command node that preserves the command name for incomplete parses.
+ * Used when a command parser returns null (e.g., user is mid-typing "toggle" with no arguments yet).
+ * The LSP uses the name to offer command-specific argument completions.
+ */
+export function createPartialCommandNode(name: string, pos: Position): ASTNode {
+  return {
+    type: 'command',
+    name,
+    args: [],
+    partial: true,
     start: pos.start,
     end: pos.end,
     line: pos.line,

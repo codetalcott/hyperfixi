@@ -52,8 +52,28 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
       return convertCommand(node);
     case 'CommandSequence':
       return convertCommandSequence(node);
+    case 'Program': {
+      const statements = (node.statements ?? []) as CoreNode[];
+      if (statements.length === 0) {
+        return { type: 'literal', value: null, ...pos(node) };
+      }
+      if (statements.length === 1) {
+        return fromCoreAST(statements[0]);
+      }
+      // Multiple top-level features — convert first; LSP processes one region at a time
+      return fromCoreAST(statements[0]);
+    }
     case 'block':
       return convertBlock(node);
+
+    // Error nodes from resilient parsing
+    case 'errorCommand':
+      return {
+        type: 'error' as const,
+        message: (node.message as string) ?? 'Parse error',
+        token: (node.token as string) ?? undefined,
+        ...pos(node),
+      };
 
     // Expression types
     case 'literal':
@@ -171,6 +191,17 @@ function convertEventHandler(node: CoreNode): EventNode {
 function convertCommand(node: CoreNode): InterchangeNode {
   const name = node.name as string;
 
+  // Convert __ERROR__ command nodes to proper ErrorNode
+  if (name === '__ERROR__') {
+    return {
+      type: 'error' as const,
+      message:
+        ((node as Record<string, unknown>).diagnostics as Array<{ message: string }>)?.[0]
+          ?.message ?? 'Parse error',
+      ...pos(node),
+    };
+  }
+
   if (name === 'if' || name === 'unless') {
     return convertIfCommand(node);
   }
@@ -193,6 +224,7 @@ function convertCommand(node: CoreNode): InterchangeNode {
     ...(target ? { target } : {}),
     ...(modifiers && Object.keys(modifiers).length > 0 ? { modifiers } : {}),
     ...(roles ? { roles } : {}),
+    ...(node.partial ? { partial: true } : {}),
     ...pos(node),
   } as CommandNode;
 }

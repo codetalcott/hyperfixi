@@ -18,13 +18,6 @@ export const sortableSchema: BehaviorSchema = {
   description: 'Makes child elements reorderable via drag-and-drop',
   parameters: [
     {
-      name: 'handle',
-      type: 'selector',
-      optional: true,
-      default: 'none',
-      description: 'CSS selector for drag handles within items',
-    },
-    {
       name: 'dragClass',
       type: 'string',
       optional: true,
@@ -42,27 +35,26 @@ export const sortableSchema: BehaviorSchema = {
   ],
   requirements: ['Users must handle DOM reordering in sortable:move event handlers'],
   source: `
-behavior Sortable(handle, dragClass)
+behavior Sortable(dragClass)
   init
-    if no dragClass set dragClass to "sorting"
+    if dragClass is undefined
+      set dragClass to "sorting"
+    end
   end
-  on pointerdown(target, clientY) from me
-    set item to closest <li/> in target
-    if no item exit
-    if handle
-      set handleEl to target.closest(handle)
-      if no handleEl exit
+  on pointerdown(clientY) from me
+    set item to the closest <li/> to the target
+    if item is null
+      exit
     end
     halt the event
-    add dragClass to item
+    add .{dragClass} to item
     trigger sortable:start on me
     repeat until event pointerup from document
       wait for pointermove(clientY) from document
       trigger sortable:move on me
     end
-    remove dragClass from item
+    remove .{dragClass} from item
     trigger sortable:end on me
   end
-end
-`.trim(),
+end`.trim(),
 };

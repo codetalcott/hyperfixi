@@ -14,6 +14,13 @@ import Database from 'better-sqlite3';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, resolve } from 'path';
 
+// Import behavior schemas as single source of truth
+import { removableSchema } from '../../behaviors/src/schemas/removable.schema';
+import { draggableSchema } from '../../behaviors/src/schemas/draggable.schema';
+import { sortableSchema } from '../../behaviors/src/schemas/sortable.schema';
+import { resizableSchema } from '../../behaviors/src/schemas/resizable.schema';
+import type { BehaviorSchema } from '../../behaviors/src/schemas/types';
+
 // =============================================================================
 // Configuration
 // =============================================================================
@@ -205,6 +212,43 @@ interface SeedExample {
   description: string;
   feature: string;
   engine?: string | null;
+}
+
+/**
+ * Generate seed entries for behavior patterns from @hyperfixi/behaviors schemas.
+ * This ensures patterns-reference always matches the canonical behavior source.
+ */
+const BEHAVIOR_SCHEMAS: { schema: BehaviorSchema; description: string }[] = [
+  {
+    schema: removableSchema,
+    description:
+      'Removes element on click with optional confirmation and fade effect. Use: install Removable(confirmRemoval: true, effect: "fade")',
+  },
+  {
+    schema: draggableSchema,
+    description:
+      'Makes element draggable with pointer events. Use: install Draggable(dragHandle: ".titlebar")',
+  },
+  {
+    schema: sortableSchema,
+    description:
+      'Makes child elements reorderable via drag-and-drop. Use: install Sortable(handle: ".drag-handle")',
+  },
+  {
+    schema: resizableSchema,
+    description:
+      'Makes elements resizable by dragging. Use: install Resizable(minWidth: 100, minHeight: 100)',
+  },
+];
+
+function behaviorSeedEntries(): SeedExample[] {
+  return BEHAVIOR_SCHEMAS.map(({ schema, description }) => ({
+    id: `behavior-${schema.name.toLowerCase()}`,
+    title: `${schema.name} Behavior`,
+    raw_code: schema.source,
+    description,
+    feature: 'behavior',
+  }));
 }
 
 const SEED_EXAMPLES: SeedExample[] = [
@@ -494,7 +538,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'if-condition',
     title: 'If Condition',
-    raw_code: 'on click if I match .active then remove .active else add .active',
+    raw_code: 'on click if I match .active then remove .active else add .active end',
     description: 'Conditional execution based on state',
     feature: 'control-flow',
   },
@@ -655,7 +699,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'tabs-aria',
     title: 'Accessible Tabs',
-    raw_code: 'on click set @aria-selected to "true" on me set @aria-selected to "false" on .tab',
+    raw_code: 'on click set @aria-selected to "false" on .tab set @aria-selected to "true" on me',
     description: 'Tab navigation with ARIA attributes',
     feature: 'ui-components',
   },
@@ -954,8 +998,8 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'fetch-error-handling',
     title: 'Fetch With Error Handling',
-    raw_code: 'on click fetch /api/data catch error put error.message into #error end put it into #result',
-    description: 'Handle fetch errors gracefully',
+    raw_code: 'on click fetch /api/data as json then if it.error put it.error into #error else put it.data into #result end',
+    description: 'Handle API errors by checking response body',
     feature: 'async',
   },
 
@@ -1058,7 +1102,7 @@ const SEED_EXAMPLES: SeedExample[] = [
   {
     id: 'announce-screen-reader',
     title: 'Screen Reader Announcement',
-    raw_code: 'on success put message into #sr-announce set @role to "alert" on #sr-announce',
+    raw_code: 'on success put event.detail.message into #sr-announce set @role to "alert" on #sr-announce',
     description: 'Announce message to screen readers',
     feature: 'accessibility',
   },
@@ -1138,6 +1182,12 @@ const SEED_EXAMPLES: SeedExample[] = [
     feature: 'hyperfixi-extensions',
     engine: 'lokascript',
   },
+
+  // ==========================================================================
+  // Behavior Definitions — Installable via `install BehaviorName(params)`
+  // Sources imported from @hyperfixi/behaviors schemas (single source of truth)
+  // ==========================================================================
+  ...behaviorSeedEntries(),
 ];
 
 // Language word orders

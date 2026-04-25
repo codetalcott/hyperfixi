@@ -222,7 +222,7 @@ describe('Async Command Parsers', () => {
 
         const ctx = createTrackingContext(tokens, {
           checkTimeExpression: vi.fn(() => true),
-          parsePrimary: vi.fn(() => timeNode),
+          parseExpression: vi.fn(() => timeNode),
         });
 
         const commandToken = createToken('wait', 'identifier', 0);
@@ -234,6 +234,105 @@ describe('Async Command Parsers', () => {
         expect(result.args).toHaveLength(1);
         expect(result.isBlocking).toBe(true);
         expect(result.args[0]).toBe(timeNode);
+      });
+    });
+
+    describe('Variable/expression-based wait', () => {
+      it('should parse wait with identifier variable', () => {
+        // "wait delay" -- identifier token
+        const tokens = createTokenStream(['delay'], ['identifier']);
+        const identNode = {
+          type: 'identifier',
+          name: 'delay',
+          start: 0,
+          end: 5,
+          line: 1,
+          column: 1,
+        } as ASTNode;
+
+        const ctx = createTrackingContext(tokens, {
+          parseExpression: vi.fn(() => identNode),
+        });
+
+        const commandToken = createToken('wait', 'identifier', 0);
+        const result = parseWaitCommand(ctx, commandToken);
+
+        expect(result.type).toBe('command');
+        expect(result.name).toBe('wait');
+        expect(result.args).toHaveLength(1);
+        expect(result.isBlocking).toBe(true);
+        expect(result.args[0]).toBe(identNode);
+      });
+
+      it('should parse wait with context variable', () => {
+        // "wait $timeout" -- context_var token
+        const tokens = createTokenStream(['$timeout'], ['context_var']);
+        const ctxVarNode = {
+          type: 'contextVariable',
+          name: '$timeout',
+          start: 0,
+          end: 8,
+          line: 1,
+          column: 1,
+        } as ASTNode;
+
+        const ctx = createTrackingContext(tokens, {
+          checkContextVar: vi.fn(() => true),
+          parseExpression: vi.fn(() => ctxVarNode),
+        });
+
+        const commandToken = createToken('wait', 'identifier', 0);
+        const result = parseWaitCommand(ctx, commandToken);
+
+        expect(result.type).toBe('command');
+        expect(result.name).toBe('wait');
+        expect(result.args).toHaveLength(1);
+        expect(result.args[0]).toBe(ctxVarNode);
+      });
+
+      it('should parse wait with parenthesized expression', () => {
+        // "wait (delay * 2)" -- starts with '('
+        const tokens = createTokenStream(
+          ['(', 'delay', '*', '2', ')'],
+          ['operator', 'identifier', 'operator', 'number', 'operator']
+        );
+        const binaryNode = {
+          type: 'binaryExpression',
+          operator: '*',
+          start: 0,
+          end: 11,
+          line: 1,
+          column: 1,
+        } as ASTNode;
+
+        const ctx = createTrackingContext(tokens, {
+          parseExpression: vi.fn(() => binaryNode),
+        });
+
+        const commandToken = createToken('wait', 'identifier', 0);
+        const result = parseWaitCommand(ctx, commandToken);
+
+        expect(result.type).toBe('command');
+        expect(result.name).toBe('wait');
+        expect(result.args).toHaveLength(1);
+        expect(result.args[0]).toBe(binaryNode);
+      });
+
+      it('should still fall through to event parsing when no expression token is found', () => {
+        // "wait for click" -- 'for' is not a time/literal/identifier/contextVar/paren
+        const tokens = createTokenStream(['for', 'click'], ['identifier', 'identifier']);
+
+        const ctx = createTrackingContext(tokens);
+
+        const commandToken = createToken('wait', 'identifier', 0);
+        const result = parseWaitCommand(ctx, commandToken);
+
+        expect(result.name).toBe('wait');
+        const eventList = result.args[0] as any;
+        expect(eventList.type).toBe('arrayLiteral');
+        expect(
+          eventList.elements[0].properties.find((p: any) => p.key.name === 'name').value.value
+        ).toBe('click');
       });
     });
 

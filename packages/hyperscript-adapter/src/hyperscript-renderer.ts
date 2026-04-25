@@ -127,6 +127,9 @@ function renderValue(value: SemanticValue): string {
 
     case 'expression':
       return value.raw;
+
+    case 'flag':
+      return value.enabled ? `+${value.name}` : `~${value.name}`;
   }
 }
 

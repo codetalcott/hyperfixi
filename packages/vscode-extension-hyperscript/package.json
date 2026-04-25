@@ -1,8 +1,8 @@
 {
   "name": "hyperscript-vscode",
   "displayName": "_hyperscript Language Support",
-  "description": "Language support for _hyperscript — syntax highlighting, completions, hover docs, diagnostics, and formatting",
-  "version": "2.1.0",
+  "description": "Language support for _hyperscript — syntax highlighting, completions, hover docs, diagnostics, formatting, and interactive debugging",
+  "version": "2.2.0",
   "publisher": "hyperscript-tools",
   "engines": {
     "vscode": "^1.85.0"
@@ -10,16 +10,19 @@
   "categories": [
     "Programming Languages",
     "Linters",
-    "Snippets"
+    "Snippets",
+    "Debuggers"
   ],
   "keywords": [
     "hyperscript",
     "_hyperscript",
     "htmx",
-    "html"
+    "html",
+    "debugger"
   ],
   "activationEvents": [
-    "onLanguage:html"
+    "onLanguage:html",
+    "onDebugResolve:hyperfixi"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -57,6 +60,47 @@
         }
       }
     ],
+    "commands": [
+      {
+        "command": "hyperscript.restartServer",
+        "title": "_hyperscript: Restart Language Server"
+      },
+      {
+        "command": "hyperscript.debug.connect",
+        "title": "_hyperscript: Connect Debugger",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "hyperscript.debug.disconnect",
+        "title": "_hyperscript: Disconnect Debugger",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "hyperscript.debug.continue",
+        "title": "_hyperscript: Continue",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "hyperscript.debug.pause",
+        "title": "_hyperscript: Pause",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "hyperscript.debug.stepOver",
+        "title": "_hyperscript: Step Over",
+        "icon": "$(debug-step-over)"
+      },
+      {
+        "command": "hyperscript.debug.stepInto",
+        "title": "_hyperscript: Step Into",
+        "icon": "$(debug-step-into)"
+      },
+      {
+        "command": "hyperscript.debug.stepOut",
+        "title": "_hyperscript: Step Out",
+        "icon": "$(debug-step-out)"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "_hyperscript",
@@ -75,13 +119,80 @@
           ],
           "default": "off",
           "description": "Traces the communication between VS Code and the language server"
+        },
+        "hyperscript.debug.url": {
+          "type": "string",
+          "default": "ws://localhost:9229",
+          "description": "WebSocket URL for the HyperFixi debug server"
+        },
+        "hyperscript.debug.autoConnect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically connect to debug server on extension activation"
+        },
+        "hyperscript.debug.verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Log all execution snapshots to the output channel (verbose mode)"
         }
       }
     },
-    "commands": [
+    "debuggers": [
       {
-        "command": "hyperscript.restartServer",
-        "title": "_hyperscript: Restart Language Server"
+        "type": "hyperfixi",
+        "label": "HyperFixi",
+        "languages": [
+          "html",
+          "hyperscript"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL of the page with hyperscript",
+                "default": "http://localhost:3000"
+              },
+              "webSocketUrl": {
+                "type": "string",
+                "description": "WebSocket URL for the debug server",
+                "default": "ws://localhost:9229"
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "webSocketUrl": {
+                "type": "string",
+                "description": "WebSocket URL for the debug server",
+                "default": "ws://localhost:9229"
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "HyperFixi: Debug Page",
+            "description": "Launch a debug session connected to a HyperFixi debug server",
+            "body": {
+              "type": "hyperfixi",
+              "request": "launch",
+              "name": "Debug HyperFixi",
+              "url": "http://localhost:3000",
+              "webSocketUrl": "ws://localhost:9229"
+            }
+          },
+          {
+            "label": "HyperFixi: Attach",
+            "description": "Attach to a running HyperFixi debug session",
+            "body": {
+              "type": "hyperfixi",
+              "request": "attach",
+              "name": "Attach to HyperFixi",
+              "webSocketUrl": "ws://localhost:9229"
+            }
+          }
+        ]
       }
     ]
   },
@@ -90,16 +201,19 @@
     "compile": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode",
     "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
-    "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@hyperfixi/core --external:@lokascript/semantic --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
+    "bundle:server": "node build-server.mjs",
     "package": "vsce package --no-dependencies",
-    "publish": "vsce publish --no-dependencies"
+    "publish": "vsce publish --no-dependencies",
+    "dev:install": "npm run compile && npm run bundle:server && node scripts/dev-install.mjs"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^9.0.1",
+    "ws": "^8.0.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "@vscode/vsce": "^2.0.0",

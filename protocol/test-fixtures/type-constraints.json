@@ -1,0 +1,97 @@
+[
+  {
+    "id": "tc-001",
+    "description": "Diagnostics on command node — selector kind mismatch",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": "#button", "selectorKind": "id" }
+      },
+      "diagnostics": [
+        {
+          "level": "error",
+          "message": "toggle.patient expects selector kind [class, attribute], got 'id'",
+          "code": "SCHEMA_SELECTOR_KIND_MISMATCH"
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "tc-002",
+    "description": "Diagnostics on command node — value type mismatch",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "literal", "value": "hello", "dataType": "string" }
+      },
+      "diagnostics": [
+        {
+          "level": "error",
+          "message": "toggle.patient expects type [selector], got 'literal'",
+          "code": "SCHEMA_VALUE_TYPE_MISMATCH"
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "tc-003",
+    "description": "No diagnostics when constraints pass",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "selector", "value": ".active", "selectorKind": "class" }
+      }
+    },
+    "expectedRoundTrip": true,
+    "noDiagnostics": true
+  },
+  {
+    "id": "tc-004",
+    "description": "Multiple diagnostics on same node",
+    "jsonInput": {
+      "kind": "command",
+      "action": "toggle",
+      "roles": {
+        "patient": { "type": "literal", "value": "hello", "dataType": "string" },
+        "destination": { "type": "literal", "value": "world", "dataType": "string" }
+      },
+      "diagnostics": [
+        {
+          "level": "error",
+          "message": "toggle.patient expects type [selector], got 'literal'",
+          "code": "SCHEMA_VALUE_TYPE_MISMATCH"
+        },
+        {
+          "level": "error",
+          "message": "toggle.destination expects type [selector, reference], got 'literal'",
+          "code": "SCHEMA_VALUE_TYPE_MISMATCH"
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  },
+  {
+    "id": "tc-005",
+    "description": "Warning-level diagnostic",
+    "jsonInput": {
+      "kind": "command",
+      "action": "add",
+      "roles": {
+        "patient": { "type": "selector", "value": "*wild" }
+      },
+      "diagnostics": [
+        {
+          "level": "warning",
+          "message": "Wildcard selectors may match unexpectedly",
+          "code": "SCHEMA_SELECTOR_KIND_MISMATCH"
+        }
+      ]
+    },
+    "expectedRoundTrip": true
+  }
+]

@@ -1,16 +1,14 @@
-// packages/i18n/src/dictionaries/ko.ts
+// Generated/merged from semantic profiles — hand-written entries are preserved
+// To add derived entries, update the semantic profile and run: npm run generate:language-assets
 
 import { Dictionary } from '../types';
 
 export const ko: Dictionary = {
   commands: {
-    // Event handling
     on: '에',
     tell: '말하다',
     trigger: '트리거',
     send: '보내다',
-
-    // DOM manipulation
     take: '가져오다',
     put: '넣다',
     set: '설정',
@@ -20,8 +18,6 @@ export const ko: Dictionary = {
     toggle: '토글',
     hide: '숨기다',
     show: '보이다',
-
-    // Control flow
     if: '만약',
     unless: '아니면',
     repeat: '반복',
@@ -31,54 +27,41 @@ export const ko: Dictionary = {
     continue: '계속',
     break: '중단',
     halt: '정지',
-
-    // Async
     wait: '대기',
     fetch: '가져오기',
     call: '호출',
     return: '반환',
-
-    // Other commands
     make: '만들다',
     log: '로그',
     throw: '던지다',
     catch: '잡다',
     measure: '측정',
     transition: '전환',
-
-    // Data Commands
     increment: '증가',
     decrement: '감소',
     default: '기본값',
-
-    // Navigation Commands
     go: '이동',
     pushUrl: 'URL푸시',
     replaceUrl: 'URL교체',
-
-    // Utility Commands
     copy: '복사',
     pick: '선택',
     beep: '비프',
-
-    // Advanced Commands
     js: 'JS실행',
     async: '비동기',
     render: '렌더링',
-
-    // Animation Commands
     swap: '교환',
     morph: '변형',
     settle: '안정',
-
-    // Content Commands
     append: '추가',
-
-    // Control Flow
     exit: '종료',
-
-    // Behaviors
     install: '설치',
+    breakpoint: '중단점',
+    clear: '지우기',
+    close: '닫기',
+    open: '열기',
+    select: '선택',
+    clone: '복제',
+    prepend: '앞에추가',
   },
 
   modifiers: {
@@ -110,23 +93,19 @@ export const ko: Dictionary = {
     mouseover: '마우스오버',
     mouseout: '마우스아웃',
     mousemove: '마우스무브',
-
     keydown: '키다운',
     keyup: '키업',
     keypress: '키프레스',
-
     focus: '포커스',
     blur: '블러',
     change: '변경',
     input: '입력',
     submit: '제출',
     reset: '리셋',
-
     load: '로드',
     unload: '언로드',
     resize: '리사이즈',
     scroll: '스크롤',
-
     touchstart: '터치시작',
     touchend: '터치종료',
     touchmove: '터치이동',
@@ -145,8 +124,8 @@ export const ko: Dictionary = {
     contains: '포함',
     includes: '포함하다',
     equals: '같다',
-    has: '있다', // existence verb (context-based)
-    have: '있다', // same verb for first/third person
+    has: '있다',
+    have: '있다',
     then: '그러면',
     else: '아니면',
     otherwise: '그렇지않으면',
@@ -174,13 +153,13 @@ export const ko: Dictionary = {
     null: '널',
     undefined: '정의안됨',
     it: '그것',
-    its: '그것의', // REVIEW: native speaker
+    its: '그것의',
     me: '나',
     my: '내',
     myself: '나자신',
-    you: '너', // REVIEW: native speaker - formal/informal
-    your: '네', // REVIEW: native speaker - formal/informal
-    yourself: '너자신', // REVIEW: native speaker
+    you: '너',
+    your: '네',
+    yourself: '너자신',
     element: '요소',
     target: '대상',
     detail: '세부',
@@ -204,7 +183,6 @@ export const ko: Dictionary = {
   },
 
   expressions: {
-    // Positional
     first: '첫번째',
     last: '마지막',
     next: '다음',
@@ -212,20 +190,19 @@ export const ko: Dictionary = {
     prev: '이전',
     at: '에서',
     random: '무작위',
-
-    // DOM Traversal
     closest: '가장가까운',
     parent: '부모',
     children: '자식',
     within: '이내',
-
-    // Emptiness/Existence
     no: '없음',
     empty: '비어있는',
     some: '일부',
-
-    // String operations
     'starts with': '로시작',
     'ends with': '로끝나는',
+    'ignoring case': '대소문자_무시',
+    'sorted by': '로_정렬',
+    'mapped to': '로_변환',
+    'split by': '로_분할',
+    'joined by': '로_결합',
   },
 };

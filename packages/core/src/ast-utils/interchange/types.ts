@@ -49,7 +49,8 @@ export type InterchangeNode =
   | RepeatNode
   | ForEachNode
   | WhileNode
-  | PositionalNode;
+  | PositionalNode
+  | ErrorNode;
 
 /**
  * Base fields shared by all nodes. Not used directly — use InterchangeNode.
@@ -134,6 +135,12 @@ export interface PositionalNode extends BaseNode {
   readonly target?: InterchangeNode;
 }
 
+export interface ErrorNode extends BaseNode {
+  readonly type: 'error';
+  readonly message: string;
+  readonly token?: string;
+}
+
 // =============================================================================
 // COMMAND & EVENT NODES
 // =============================================================================
@@ -146,6 +153,8 @@ export interface CommandNode extends BaseNode {
   readonly modifiers?: Record<string, unknown>;
   /** Semantic roles from the semantic parser (patient, destination, source, etc.). */
   readonly roles?: Readonly<Record<string, InterchangeNode>>;
+  /** True when the command was incompletely parsed (mid-typing). */
+  readonly partial?: boolean;
 }
 
 export interface EventNode extends BaseNode {

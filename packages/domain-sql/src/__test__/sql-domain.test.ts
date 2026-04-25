@@ -60,10 +60,11 @@ describe('SQL Domain', () => {
       expect(extractRoleValue(node, 'source')).toBe('users');
     });
 
-    it('should parse SELECT with WHERE', () => {
+    it('should parse SELECT with WHERE and capture full condition', () => {
       const node = sql.parse('select name from users where age > 18', 'en');
       expect(node.action).toBe('select');
       expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'condition')).toBe('age > 18');
     });
 
     it('should compile SELECT to exact SQL', () => {
@@ -72,13 +73,25 @@ describe('SQL Domain', () => {
       expect(result.code).toBe('SELECT name FROM users');
     });
 
-    it('should compile SELECT with WHERE to SQL', () => {
+    it('should compile SELECT with WHERE to exact SQL', () => {
       const result = sql.compile('select name from users where age > 18', 'en');
       expect(result.ok).toBe(true);
-      // Framework captures single token per role, so WHERE clause may be partial
-      expect(result.code).toContain('SELECT');
-      expect(result.code).toContain('FROM');
-      expect(result.code).toContain('WHERE');
+      expect(result.code).toBe('SELECT name FROM users WHERE age > 18');
+    });
+
+    it('should capture compound WHERE with AND', () => {
+      const result = sql.compile('select name from users where age > 18 and active = true', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT name FROM users WHERE age > 18 and active = true');
+    });
+
+    it('should capture compound WHERE with OR', () => {
+      const result = sql.compile(
+        'select name from users where role = admin or role = editor',
+        'en'
+      );
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE role = admin or role = editor');
     });
 
     it('should parse INSERT', () => {
@@ -109,26 +122,34 @@ describe('SQL Domain', () => {
       expect(result.code).toContain('SET');
     });
 
-    it('should parse UPDATE with WHERE', () => {
-      // Multi-token expressions after SET may consume tokens that prevent WHERE capture.
-      // This is a known framework limitation with single-token role capture.
-      const node = sql.parse('update users set name where id', 'en');
+    it('should parse UPDATE with WHERE and capture full expressions', () => {
+      const node = sql.parse('update users set name = Bob where id = 1', 'en');
       expect(node.action).toBe('update');
       expect(node.roles.has('source')).toBe(true);
       expect(node.roles.has('values')).toBe(true);
+      expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'values')).toBe('name = Bob');
+      expect(extractRoleValue(node, 'condition')).toBe('id = 1');
     });
 
-    it('should parse DELETE', () => {
+    it('should compile UPDATE with WHERE to exact SQL', () => {
+      const result = sql.compile('update users set name = Bob where id = 1', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('UPDATE users SET name = Bob WHERE id = 1');
+    });
+
+    it('should parse DELETE with WHERE and capture full condition', () => {
       const node = sql.parse('delete from users where id = 1', 'en');
       expect(node.action).toBe('delete');
       expect(node.roles.has('source')).toBe(true);
+      expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'condition')).toBe('id = 1');
     });
 
-    it('should compile DELETE to SQL', () => {
+    it('should compile DELETE with WHERE to exact SQL', () => {
       const result = sql.compile('delete from users where id = 1', 'en');
       expect(result.ok).toBe(true);
-      expect(result.code).toContain('DELETE FROM');
-      expect(result.code).toContain('WHERE');
+      expect(result.code).toBe('DELETE FROM users WHERE id = 1');
     });
 
     it('should validate correct query', () => {
@@ -172,10 +193,17 @@ describe('SQL Domain', () => {
       expect(result.code).toBe('SELECT nombre FROM usuarios');
     });
 
-    it('should parse Spanish SELECT with WHERE', () => {
+    it('should parse Spanish SELECT with WHERE and capture full condition', () => {
       const node = sql.parse('seleccionar nombre de usuarios donde edad > 18', 'es');
       expect(node.action).toBe('select');
       expect(node.roles.has('condition')).toBe(true);
+      expect(extractRoleValue(node, 'condition')).toBe('edad > 18');
+    });
+
+    it('should compile Spanish SELECT with WHERE to exact SQL', () => {
+      const result = sql.compile('seleccionar nombre de usuarios donde edad > 18', 'es');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT nombre FROM usuarios WHERE edad > 18');
     });
 
     it('should parse Spanish INSERT', () => {
@@ -441,6 +469,67 @@ describe('SQL Domain', () => {
   });
 
   // ===========================================================================
+  // Cross-Language WHERE Clause
+  // ===========================================================================
+
+  describe('Cross-Language WHERE Clause', () => {
+    it('should compile Spanish SELECT with WHERE', () => {
+      const result = sql.compile('seleccionar nombre de usuarios donde edad > 18', 'es');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('edad > 18');
+    });
+
+    it('should compile French SELECT with WHERE', () => {
+      const result = sql.compile('sélectionner name de users où age > 18', 'fr');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile Arabic SELECT with WHERE (VSO)', () => {
+      const result = sql.compile('اختر name من users حيث age > 18', 'ar');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile Chinese SELECT with WHERE', () => {
+      const result = sql.compile('查询 name 从 users 条件 age > 18', 'zh');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile Japanese SELECT with WHERE (SOV)', () => {
+      const result = sql.compile('users から name 条件 age > 18 選択', 'ja');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile Korean SELECT with WHERE (SOV)', () => {
+      const result = sql.compile('users 에서 name 조건 age > 18 선택', 'ko');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile Turkish SELECT with WHERE (SOV)', () => {
+      const result = sql.compile('users den name koşul age > 18 seç', 'tr');
+      expect(result.ok).toBe(true);
+      expect(result.code).toContain('WHERE');
+      expect(result.code).toContain('age > 18');
+    });
+
+    it('should compile DELETE with compound WHERE', () => {
+      const result = sql.compile('delete from users where id = 1 and active = false', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('DELETE FROM users WHERE id = 1 and active = false');
+    });
+  });
+
+  // ===========================================================================
   // Error Handling
   // ===========================================================================
 
@@ -466,6 +555,253 @@ describe('SQL Domain', () => {
         expect(result.valid).toBe(false);
       }
     });
+  });
+
+  // ===========================================================================
+  // Natural: get (English spike)
+  // ===========================================================================
+
+  describe('Natural: get (English)', () => {
+    it('should parse simple get', () => {
+      const node = sql.parse('get users', 'en');
+      expect(node.action).toBe('get');
+      expect(extractRoleValue(node, 'source')).toBe('users');
+    });
+
+    it('should compile get to SELECT *', () => {
+      const result = sql.compile('get users', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users');
+    });
+
+    it('should compile get with where to SELECT ... WHERE', () => {
+      const result = sql.compile('get users where age > 18', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users WHERE age > 18');
+    });
+
+    it('should compile get with limit to SELECT ... LIMIT', () => {
+      const result = sql.compile('get users limit 10', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users LIMIT 10');
+    });
+
+    it('should compile get with where and limit in order', () => {
+      const result = sql.compile('get users where active = 1 limit 5', 'en');
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe('SELECT * FROM users WHERE active = 1 LIMIT 5');
+    });
+
+    it('should fail validation without a subject', () => {
+      const result = sql.validate('get', 'en');
+      expect(result.valid).toBe(false);
+    });
+  });
+
+  // ===========================================================================
+  // Natural verb aliases (English): add/change/remove → insert/update/delete
+  // ===========================================================================
+  //
+  // These are keyword alternatives on the existing mutation schemas — NOT new
+  // schemas. The natural verb and the formal SQL verb produce identical
+  // SemanticNodes and compile to identical SQL. Proves the cheap alias path
+  // before we spend effort on Shape-B schemas (new roles / lowering).
+
+  describe('Natural verb aliases (English)', () => {
+    it('add is an alias for insert', () => {
+      const formal = sql.compile('insert Alice into users', 'en');
+      const natural = sql.compile('add Alice into users', 'en');
+      expect(formal.ok).toBe(true);
+      expect(natural.ok).toBe(true);
+      expect(natural.code).toBe(formal.code);
+    });
+
+    it('add node action is still "insert"', () => {
+      const node = sql.parse('add Alice into users', 'en');
+      expect(node.action).toBe('insert');
+      expect(extractRoleValue(node, 'values')).toBe('Alice');
+      expect(extractRoleValue(node, 'destination')).toBe('users');
+    });
+
+    it('change is an alias for update', () => {
+      const formal = sql.compile('update users set active = true where id = 5', 'en');
+      const natural = sql.compile('change users set active = true where id = 5', 'en');
+      expect(formal.ok).toBe(true);
+      expect(natural.ok).toBe(true);
+      expect(natural.code).toBe(formal.code);
+    });
+
+    it('change node action is still "update"', () => {
+      const node = sql.parse('change users set active = true', 'en');
+      expect(node.action).toBe('update');
+    });
+
+    it('remove is an alias for delete', () => {
+      const formal = sql.compile('delete from users where inactive = true', 'en');
+      const natural = sql.compile('remove from users where inactive = true', 'en');
+      expect(formal.ok).toBe(true);
+      expect(natural.ok).toBe(true);
+      expect(natural.code).toBe(formal.code);
+    });
+
+    it('remove node action is still "delete"', () => {
+      const node = sql.parse('remove from users where inactive = true', 'en');
+      expect(node.action).toBe('delete');
+    });
+  });
+
+  // ===========================================================================
+  // Natural: get (multilingual, Shape B — new schema + lowering)
+  // ===========================================================================
+
+  describe('Natural: get (multilingual)', () => {
+    // [lang, naturalSource, expectedSQL][]
+    // Note: Japanese, Korean, Turkish are SOV — verb comes last, markers are
+    // postpositions. Phrasings below are grammatically awkward SOV approximations;
+    // native-speaker refinement is a follow-up (see MEMORY: svoPosition gotcha).
+    const cases: Array<[string, string, string]> = [
+      // Spanish (SVO)
+      ['es', 'obtener usuarios', 'SELECT * FROM usuarios'],
+      ['es', 'obtener usuarios donde age > 18', 'SELECT * FROM usuarios WHERE age > 18'],
+      ['es', 'obtener usuarios límite 10', 'SELECT * FROM usuarios LIMIT 10'],
+      [
+        'es',
+        'obtener usuarios donde active = 1 límite 5',
+        'SELECT * FROM usuarios WHERE active = 1 LIMIT 5',
+      ],
+
+      // Chinese (SVO)
+      ['zh', '获取 users', 'SELECT * FROM users'],
+      ['zh', '获取 users 条件 age > 18', 'SELECT * FROM users WHERE age > 18'],
+      ['zh', '获取 users 限制 10', 'SELECT * FROM users LIMIT 10'],
+
+      // French (SVO)
+      ['fr', 'obtenir users', 'SELECT * FROM users'],
+      ['fr', 'obtenir users où age > 18', 'SELECT * FROM users WHERE age > 18'],
+      ['fr', 'obtenir users limite 10', 'SELECT * FROM users LIMIT 10'],
+
+      // Arabic (VSO) — verb first, same word order as SVO for our generator
+      ['ar', 'اجلب users', 'SELECT * FROM users'],
+      ['ar', 'اجلب users حيث age > 18', 'SELECT * FROM users WHERE age > 18'],
+      ['ar', 'اجلب users حد 10', 'SELECT * FROM users LIMIT 10'],
+
+      // Japanese (SOV) — verb last; `から` marks the source (ablative particle)
+      ['ja', 'users から 取得', 'SELECT * FROM users'],
+      ['ja', 'users から 条件 age > 18 取得', 'SELECT * FROM users WHERE age > 18'],
+      ['ja', 'users から 件数 10 取得', 'SELECT * FROM users LIMIT 10'],
+
+      // Korean (SOV) — verb last; `에서` marks the source
+      ['ko', 'users 에서 가져오기', 'SELECT * FROM users'],
+      ['ko', 'users 에서 조건 age > 18 가져오기', 'SELECT * FROM users WHERE age > 18'],
+      ['ko', 'users 에서 제한 10 가져오기', 'SELECT * FROM users LIMIT 10'],
+
+      // Turkish (SOV) — verb last; `den` marks the source (ablative suffix,
+      // same as `select` schema — vowel harmony makes `dan`/`den` interchangeable
+      // for English identifiers, but we stay consistent across SQL commands)
+      ['tr', 'users den al', 'SELECT * FROM users'],
+      ['tr', 'users den koşul age > 18 al', 'SELECT * FROM users WHERE age > 18'],
+      ['tr', 'users den limit 10 al', 'SELECT * FROM users LIMIT 10'],
+    ];
+
+    it.each(cases)('[%s] "%s" compiles to %s', (lang, natural, expectedSQL) => {
+      const result = sql.compile(natural, lang);
+      expect(result.ok).toBe(true);
+      expect(result.code).toBe(expectedSQL);
+    });
+  });
+
+  // ===========================================================================
+  // Natural verb aliases — multilingual
+  // ===========================================================================
+  //
+  // For each language, every listed alternative keyword must compile to
+  // byte-identical SQL compared with the formal primary. Turkish INSERT has
+  // no alias — `ekle` is already the everyday word for "add".
+
+  describe('Natural verb aliases (multilingual)', () => {
+    // [lang, formalSource, naturalSource, expectedAction][]
+    const cases: Array<[string, string, string, string]> = [
+      // Spanish
+      ['es', 'insertar Alice en usuarios', 'agregar Alice en usuarios', 'insert'],
+      ['es', 'insertar Alice en usuarios', 'añadir Alice en usuarios', 'insert'],
+      [
+        'es',
+        'actualizar usuarios establecer active = true',
+        'cambiar usuarios establecer active = true',
+        'update',
+      ],
+      [
+        'es',
+        'actualizar usuarios establecer active = true',
+        'modificar usuarios establecer active = true',
+        'update',
+      ],
+      [
+        'es',
+        'eliminar de usuarios donde inactive = true',
+        'quitar de usuarios donde inactive = true',
+        'delete',
+      ],
+      [
+        'es',
+        'eliminar de usuarios donde inactive = true',
+        'borrar de usuarios donde inactive = true',
+        'delete',
+      ],
+
+      // Japanese (SOV — verb last)
+      ['ja', 'users に Alice 挿入', 'users に Alice 追加', 'insert'],
+      ['ja', 'users 設定 active = true 更新', 'users 設定 active = true 変更', 'update'],
+      ['ja', 'users から 削除', 'users から 消去', 'delete'],
+
+      // Arabic (VSO)
+      ['ar', 'أدخل Alice في users', 'أضف Alice في users', 'insert'],
+      ['ar', 'حدّث users عيّن active = true', 'غيّر users عيّن active = true', 'update'],
+      ['ar', 'احذف من users', 'أزل من users', 'delete'],
+
+      // Korean (SOV)
+      ['ko', 'users 에 Alice 삽입', 'users 에 Alice 추가', 'insert'],
+      ['ko', 'users 설정 active = true 갱신', 'users 설정 active = true 변경', 'update'],
+      ['ko', 'users 에서 삭제', 'users 에서 제거', 'delete'],
+
+      // Chinese (SVO)
+      ['zh', '插入 Alice 到 users', '添加 Alice 到 users', 'insert'],
+      ['zh', '更新 users 设置 active = true', '修改 users 设置 active = true', 'update'],
+      ['zh', '删除 从 users', '移除 从 users', 'delete'],
+
+      // Turkish (SOV) — no INSERT alias
+      [
+        'tr',
+        'users ayarla active = true güncelle',
+        'users ayarla active = true değiştir',
+        'update',
+      ],
+      ['tr', 'users den sil', 'users den kaldır', 'delete'],
+
+      // French (SVO)
+      ['fr', 'insérer Alice dans users', 'ajouter Alice dans users', 'insert'],
+      [
+        'fr',
+        'mettre-à-jour users définir active = true',
+        'modifier users définir active = true',
+        'update',
+      ],
+      ['fr', 'supprimer de users', 'enlever de users', 'delete'],
+    ];
+
+    it.each(cases)(
+      '[%s] natural "%s" compiles identically to formal "%s"',
+      (lang, formal, natural, expectedAction) => {
+        const formalResult = sql.compile(formal, lang);
+        const naturalResult = sql.compile(natural, lang);
+        expect(formalResult.ok).toBe(true);
+        expect(naturalResult.ok).toBe(true);
+        expect(naturalResult.code).toBe(formalResult.code);
+
+        const naturalNode = sql.parse(natural, lang);
+        expect(naturalNode.action).toBe(expectedAction);
+      }
+    );
   });
 });
 
@@ -564,6 +900,59 @@ describe('SQL Renderer', () => {
       const rendered = renderSQL(node, 'fr');
       expect(rendered).toContain('sélectionner');
       expect(rendered).toContain('de');
+    });
+  });
+
+  describe('Renderer WHERE Clause', () => {
+    it('should render SELECT with WHERE to English', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render SELECT with WHERE to Spanish', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'es');
+      expect(rendered).toContain('donde');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render SELECT with WHERE to Japanese (SOV)', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'ja');
+      expect(rendered).toContain('条件');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render SELECT with WHERE to Arabic', () => {
+      const node = sql.parse('select name from users where age > 18', 'en');
+      const rendered = renderSQL(node, 'ar');
+      expect(rendered).toContain('حيث');
+      expect(rendered).toContain('age > 18');
+    });
+
+    it('should render UPDATE with WHERE to English', () => {
+      const node = sql.parse('update users set name = Bob where id = 1', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('id = 1');
+      expect(rendered).toContain('set');
+      expect(rendered).toContain('name = Bob');
+    });
+
+    it('should render DELETE with WHERE to English', () => {
+      const node = sql.parse('delete from users where id = 1', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('id = 1');
+    });
+
+    it('should render compound WHERE to English', () => {
+      const node = sql.parse('select name from users where age > 18 and active = true', 'en');
+      const rendered = renderSQL(node, 'en');
+      expect(rendered).toContain('where');
+      expect(rendered).toContain('age > 18 and active = true');
     });
   });
 
@@ -707,5 +1096,133 @@ describe('Compilation Equivalence', () => {
       expect(result.ok).toBe(true);
       expect(result.code).toContain('DELETE FROM');
     }
+  });
+});
+
+// =============================================================================
+// Render → Recompile Round-Trip Equivalence
+// =============================================================================
+
+describe('Render → Recompile Round-Trip', () => {
+  let sql: MultilingualDSL;
+  const LANGS = ['en', 'es', 'fr', 'zh', 'ja', 'ko', 'tr', 'ar'] as const;
+
+  beforeAll(() => {
+    sql = createSQLDSL();
+  });
+
+  /**
+   * Parse input in English, render to all 8 languages, recompile each,
+   * and assert all produce identical SQL output.
+   */
+  function assertRoundTrip(input: string) {
+    const node = sql.parse(input, 'en');
+    const baseResult = sql.compile(input, 'en');
+    expect(baseResult.ok).toBe(true);
+    const baseSQL = baseResult.code!;
+
+    for (const lang of LANGS) {
+      const surface = renderSQL(node, lang);
+      const recompiled = sql.compile(surface, lang);
+      expect(recompiled.ok, `${lang}: failed to recompile "${surface}"`).toBe(true);
+      expect(recompiled.code, `${lang}: SQL mismatch for "${surface}"`).toBe(baseSQL);
+    }
+  }
+
+  it('should round-trip SELECT across all 8 languages', () => {
+    assertRoundTrip('select name from users');
+  });
+
+  it('should round-trip SELECT with WHERE across all 8 languages', () => {
+    assertRoundTrip('select name from users where age > 18');
+  });
+
+  it('should round-trip SELECT with compound WHERE across all 8 languages', () => {
+    assertRoundTrip('select name from users where age > 18 and active = true');
+  });
+
+  it('should round-trip INSERT across all 8 languages', () => {
+    assertRoundTrip('insert Alice into users');
+  });
+
+  it('should round-trip UPDATE across all 8 languages', () => {
+    assertRoundTrip('update users set name = Bob');
+  });
+
+  it('should round-trip UPDATE with WHERE across all 8 languages', () => {
+    assertRoundTrip('update users set name = Bob where id = 1');
+  });
+
+  it('should round-trip DELETE across all 8 languages', () => {
+    assertRoundTrip('delete from users');
+  });
+
+  it('should round-trip DELETE with WHERE across all 8 languages', () => {
+    assertRoundTrip('delete from users where id = 1');
+  });
+
+  it('should round-trip DELETE with compound WHERE across all 8 languages', () => {
+    assertRoundTrip('delete from users where id = 1 and active = false');
+  });
+});
+
+// =============================================================================
+// Renderer: natural `get` command
+// =============================================================================
+//
+// `get` is Shape-B (intent-shaped, not SQL-shaped). Lowering to `select`
+// happens in the code generator, so the renderer sees a node with
+// action='get'. These tests pin that `renderGet` produces valid natural
+// phrasing that re-parses to the same compiled SQL (parse → render → parse
+// → compile round-trip).
+
+describe('SQL Renderer: natural `get`', () => {
+  let sql: MultilingualDSL;
+
+  beforeAll(() => {
+    sql = createSQLDSL();
+  });
+
+  // [lang, naturalInput] — parse, render back in same language, re-parse,
+  // compile; both compiled outputs must match.
+  const cases: Array<[string, string]> = [
+    ['en', 'get users'],
+    ['en', 'get users where age > 18'],
+    ['en', 'get users limit 10'],
+    ['en', 'get users where active = 1 limit 5'],
+    ['es', 'obtener usuarios'],
+    ['es', 'obtener usuarios donde age > 18'],
+    ['es', 'obtener usuarios límite 10'],
+    ['fr', 'obtenir users'],
+    ['fr', 'obtenir users où age > 18'],
+    ['zh', '获取 users'],
+    ['zh', '获取 users 条件 age > 18'],
+    ['ar', 'اجلب users'],
+    ['ar', 'اجلب users حيث age > 18'],
+    ['ja', 'users から 取得'],
+    ['ja', 'users から 条件 age > 18 取得'],
+    ['ja', 'users から 件数 10 取得'],
+    ['ko', 'users 에서 가져오기'],
+    ['ko', 'users 에서 조건 age > 18 가져오기'],
+    ['tr', 'users den al'],
+    ['tr', 'users den koşul age > 18 al'],
+  ];
+
+  it.each(cases)('[%s] round-trips: "%s"', (lang, natural) => {
+    const node1 = sql.parse(natural, lang);
+    expect(node1.action).toBe('get');
+
+    const rendered = renderSQL(node1, lang);
+    // Rendered text must be non-empty and preserve the get keyword for that lang
+    expect(rendered.length).toBeGreaterThan(0);
+
+    // Re-parse the rendered form; must still produce action='get'
+    const node2 = sql.parse(rendered, lang);
+    expect(node2.action).toBe('get');
+
+    // Both compile to byte-identical SQL
+    const sql1 = sqlCodeGenerator.generate(node1);
+    const sql2 = sqlCodeGenerator.generate(node2);
+    expect(sql2).toBe(sql1);
   });
 });

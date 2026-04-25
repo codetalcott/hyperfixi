@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Selector Property Access Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .test-box { border: 1px solid #ccc; padding: 15px; margin: 15px 0; border-radius: 8px; }
+    .test-box h3 { margin-top: 0; color: #333; }
+    button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    input { padding: 8px; width: 300px; margin: 10px 0; }
+    .result { background: #f5f5f5; padding: 10px; margin-top: 10px; font-family: monospace; min-height: 20px; }
+    #debug { background: #fffbeb; padding: 10px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; margin-top: 20px; }
+    code { background: #e5e5e5; padding: 2px 6px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>CSS Selector Property Access Test</h1>
+  <p>Testing different patterns for accessing element properties in hyperscript</p>
+
+  <div class="test-box">
+    <h3>Test Input</h3>
+    <input type="text" id="test-input" placeholder="Type a value here">
+  </div>
+
+  <div class="test-box">
+    <h3>Pattern 1: <code>#test-input.value</code></h3>
+    <button id="btn1" _="on click put #test-input.value into #result1">Test Dot Notation</button>
+    <div id="result1" class="result"></div>
+  </div>
+
+  <div class="test-box">
+    <h3>Pattern 2: <code>#test-input's value</code></h3>
+    <button id="btn2" _="on click put #test-input's value into #result2">Test Possessive</button>
+    <div id="result2" class="result"></div>
+  </div>
+
+  <div class="test-box">
+    <h3>Pattern 3: <code>the value of #test-input</code></h3>
+    <button id="btn3" _="on click put the value of #test-input into #result3">Test "the X of Y"</button>
+    <div id="result3" class="result"></div>
+  </div>
+
+  <div class="test-box">
+    <h3>Pattern 4: <code>document.getElementById('test-input').value</code></h3>
+    <button id="btn4" _="on click put document.getElementById('test-input').value into #result4">Test getElementById</button>
+    <div id="result4" class="result"></div>
+  </div>
+
+  <div class="test-box">
+    <h3>Pattern 5: <code>first &lt;#test-input/&gt;'s value</code></h3>
+    <button id="btn5" _="on click put first <#test-input/>'s value into #result5">Test Query Ref Possessive</button>
+    <div id="result5" class="result"></div>
+  </div>
+
+  <div id="debug"></div>
+
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script>
+    // Debug: log what hyperfixi provides
+    const debug = document.getElementById('debug');
+
+    function logDebug(msg) {
+      debug.textContent += msg + '\n';
+      console.log(msg);
+    }
+
+    logDebug('=== HyperFixi Property Access Debug ===');
+    logDebug('hyperfixi loaded: ' + (typeof window.lokascript !== 'undefined'));
+
+    if (window.lokascript) {
+      logDebug('Available exports: ' + Object.keys(window.lokascript).join(', '));
+
+      // Test parsing each pattern
+      const patterns = [
+        'put #test-input.value into #result1',
+        "put #test-input's value into #result2",
+        'put the value of #test-input into #result3',
+        "put document.getElementById('test-input').value into #result4",
+        "put first <#test-input/>'s value into #result5"
+      ];
+
+      patterns.forEach((pattern, i) => {
+        try {
+          const result = window.lokascript.compile(pattern);
+          logDebug(`\n=== AST for ${pattern.substring(0, 40)}... ===`);
+          logDebug(JSON.stringify(result, null, 2));
+        } catch (e) {
+          logDebug(`\n=== ERROR parsing pattern ${i + 1} ===`);
+          logDebug(e.message);
+        }
+      });
+    }
+
+    logDebug('\n=== Page Ready ===');
+  </script>
+</body>
+</html>

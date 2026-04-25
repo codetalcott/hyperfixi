@@ -23,6 +23,7 @@ import {
 import { setElementProperty, isPlainObject } from '../helpers/element-property-access';
 import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulation';
 import { isAttributeSyntax } from '../helpers/attribute-manipulation';
+import { setVariableValue } from '../helpers/variable-access';
 import {
   isPropertyTargetString,
   resolveAnyPropertyTarget,
@@ -183,7 +184,12 @@ export class SetCommand implements DecoratedCommand {
 
     // Default: variable assignment
     if (typeof firstValue !== 'string') {
-      throw new Error('set command target must be a string or object literal');
+      // Provide a more helpful error when a member expression chain evaluated to null/undefined
+      const isMember = firstArg?.type === 'memberExpression' || firstArg?.type === 'propertyAccess';
+      const hint = isMember
+        ? ` (a property chain evaluated to ${firstValue === null ? 'null' : typeof firstValue} — check that all intermediate objects exist)`
+        : '';
+      throw new Error(`set command target must be a string or object literal${hint}`);
     }
 
     const value = await this.extractValue(raw, evaluator, context);
@@ -193,7 +199,10 @@ export class SetCommand implements DecoratedCommand {
   async execute(input: SetCommandInput, context: TypedExecutionContext): Promise<SetCommandOutput> {
     switch (input.type) {
       case 'variable':
-        context.locals.set(input.name, input.value);
+        // Route through setVariableValue so `$name` globals go to context.globals
+        // (and notify registered plugin hooks), while `:name`/plain locals land in
+        // context.locals. Matches hyperscript scoping conventions.
+        setVariableValue(input.name, input.value, context);
         if (input.name === 'result' || input.name === 'it') {
           Object.assign(context, { [input.name]: input.value });
         }
