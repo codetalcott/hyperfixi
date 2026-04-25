@@ -140,6 +140,9 @@ jobs:
       - name: Build mcp-server package
         run: npm run build --prefix packages/mcp-server
 
+      - name: Build mcp-multilingual-intent package
+        run: npm run build --prefix packages/mcp-multilingual-intent
+
       - name: Build developer-tools package
         run: npm run build --prefix packages/developer-tools
 
@@ -196,6 +199,7 @@ jobs:
             packages/compilation-service/dist/
             packages/planner/dist/
             packages/mcp-server/dist/
+            packages/mcp-multilingual-intent/dist/
             packages/developer-tools/dist/
             packages/server-bridge/dist/
             packages/vite-plugin/dist/
@@ -415,6 +419,9 @@ jobs:
 
       - name: Test mcp-server
         run: npm test --prefix packages/mcp-server
+
+      - name: Test mcp-multilingual-intent
+        run: npm test --prefix packages/mcp-multilingual-intent -- --run
 
       - name: Test domain-bdd
         run: npm test --prefix packages/domain-bdd
