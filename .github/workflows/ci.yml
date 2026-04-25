@@ -104,6 +104,9 @@ jobs:
       - name: Build semantic package
         run: npm run build --prefix packages/semantic
 
+      - name: Build domain-toolkit package
+        run: npm run build --prefix packages/domain-toolkit
+
       - name: Build behaviors package
         run: npm run build --prefix packages/behaviors
 
@@ -177,6 +180,7 @@ jobs:
             packages/domain-flow/dist/
             packages/domain-voice/dist/
             packages/domain-learn/dist/
+            packages/domain-toolkit/dist/
             packages/semantic/dist/
             packages/i18n/dist/
             packages/core/dist/
