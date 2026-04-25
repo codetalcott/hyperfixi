@@ -7,6 +7,7 @@
  */
 
 import { CrossDomainDispatcher, type DomainRegistry } from '@lokascript/framework';
+import { DOMAIN_PRIORITY } from '@lokascript/domain-config';
 import { getString, getNumber, jsonResponse, errorResponse } from './utils.js';
 
 // =============================================================================
@@ -22,10 +23,7 @@ function getDispatcher(registry: DomainRegistry): CrossDomainDispatcher {
   if (!dispatcher) {
     dispatcher = new CrossDomainDispatcher(registry, {
       minConfidence: 0.5,
-      // Domains with more specific schemas should win over generic catch-all domains
-      // when confidence scores are close. voice/flow have broad patterns that match
-      // inputs intended for sql/bdd/todo/jsx.
-      priority: ['sql', 'bdd', 'behaviorspec', 'jsx', 'todo', 'llm', 'flow', 'voice'],
+      priority: DOMAIN_PRIORITY,
     });
   }
   return dispatcher;
