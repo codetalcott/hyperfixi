@@ -107,6 +107,9 @@ jobs:
       - name: Build domain-toolkit package
         run: npm run build --prefix packages/domain-toolkit
 
+      - name: Build domain-config package
+        run: npm run build --prefix packages/domain-config
+
       - name: Build behaviors package
         run: npm run build --prefix packages/behaviors
 
@@ -181,6 +184,7 @@ jobs:
             packages/domain-voice/dist/
             packages/domain-learn/dist/
             packages/domain-toolkit/dist/
+            packages/domain-config/dist/
             packages/semantic/dist/
             packages/i18n/dist/
             packages/core/dist/
