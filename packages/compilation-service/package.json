@@ -38,7 +38,7 @@
     "hono": "^4.11.7"
   },
   "devDependencies": {
-    "@hono/node-server": "^1.13.0",
+    "@hono/node-server": "^2.0.0",
     "@hyperfixi/aot-compiler": "*",
     "@lokascript/semantic": "*",
     "@types/node": "^20.11.0",
