@@ -504,7 +504,19 @@ export class Parser {
 
       // Check for unexpected tokens after parsing
       if (!this.isAtEnd()) {
-        this.addError(`Unexpected token: ${this.peek().value}`);
+        // If we parsed an expression and the next token is itself a value-like
+        // token (number, string, identifier), the user almost certainly forgot
+        // an operator (e.g. `5 3` should be `5 + 3`, `5 * 3`, etc.). Surface a
+        // targeted hint instead of the generic "unexpected token" message.
+        const next = this.peek();
+        const valueLikeKinds = ['number', 'string', 'identifier'];
+        if (ast && valueLikeKinds.includes(next.kind)) {
+          this.addError(
+            `Unexpected token: ${next.value} (missing operator between values? expected one of +, -, *, /, etc.)`
+          );
+        } else {
+          this.addError(`Unexpected token: ${next.value}`);
+        }
         return {
           success: false,
           node: ast || this.createErrorNode(),
