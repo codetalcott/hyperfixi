@@ -610,13 +610,12 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse "as" type conversion', () => {
       expectAST('value as Int', {
-        type: 'binaryExpression',
-        operator: 'as',
-        left: {
+        type: 'asExpression',
+        expression: {
           type: 'identifier',
           name: 'value',
         },
-        right: {
+        targetType: {
           type: 'identifier',
           name: 'Int',
         },
@@ -727,14 +726,13 @@ describe('Hyperscript AST Parser', () => {
   describe('Complex Real-World Examples', () => {
     it('should parse form processing expression', () => {
       expectAST('closest <form/> as Values', {
-        type: 'binaryExpression',
-        operator: 'as',
-        left: {
+        type: 'asExpression',
+        expression: {
           type: 'callExpression',
           callee: { type: 'identifier', name: 'closest' },
           arguments: [{ type: 'selector', value: 'form' }],
         },
-        right: {
+        targetType: {
           type: 'identifier',
           name: 'Values',
         },
@@ -743,15 +741,14 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse property chain with conversion', () => {
       expectAST('my data-value as Int', {
-        type: 'binaryExpression',
-        operator: 'as',
-        left: {
+        type: 'asExpression',
+        expression: {
           type: 'memberExpression',
           object: { type: 'identifier', name: 'me' },
           property: { type: 'identifier', name: 'data-value' },
           computed: false,
         },
-        right: {
+        targetType: {
           type: 'identifier',
           name: 'Int',
         },
