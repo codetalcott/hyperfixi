@@ -495,13 +495,27 @@ export class TypedEventSourceFeatureImplementation {
         };
       }
 
-      const parsed = this.inputSchema.parse(input);
+      // Operate on the raw input shape. The lightweight validator's
+      // `.parse()` does not honor `.default()` on nested fields and would
+      // throw for valid inputs that omit optional sub-config (e.g.
+      // source.retry.maxAttempts), masking the specific custom error codes
+      // below.
+      const data = input as Partial<EventSourceInput>;
 
-      // Enhanced validation logic for remaining checks
-      const data = parsed as EventSourceInput;
+      // Require a source URL (empty `source: {}` is invalid)
+      if (!data.source || typeof data.source.url !== 'string' || !data.source.url) {
+        errors.push({
+          type: 'invalid-input',
+          code: 'missing-eventsource-url',
+          message: 'Source configuration must include an EventSource URL',
+          path: 'source.url',
+          suggestions: [],
+        });
+        suggestions.push('Provide an EventSource URL (e.g., "https://api.example.com/events")');
+      }
 
       // Validate EventSource URL
-      if (data.source) {
+      if (data.source && typeof data.source.url === 'string' && data.source.url) {
         if (!this.isValidEventSourceURL(data.source.url)) {
           errors.push({
             type: 'invalid-input',
