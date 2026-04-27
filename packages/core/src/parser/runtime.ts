@@ -122,6 +122,9 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'binaryExpression':
       return evaluateBinaryExpression(node, context);
 
+    case 'asExpression':
+      return evaluateAsExpressionNode(node, context);
+
     case 'betweenExpression':
       return evaluateBetweenExpression(node, context);
 
@@ -321,15 +324,7 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
 
     case 'as':
       // For 'as' conversion, right operand should be a string type name
-      const typeName =
-        typeof right === 'string'
-          ? right
-          : right?.type === 'identifier'
-            ? right.name
-            : right?.type === 'literal'
-              ? right.value
-              : String(right);
-      return conversionExpressions.as.evaluate(context, left, typeName);
+      return conversionExpressions.as.evaluate(context, left, normalizeAsTargetType(right));
 
     case 'contains':
       return logicalExpressions.contains.evaluate(context, L, R);
@@ -365,6 +360,33 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     default:
       throw new Error(`Unknown binary operator: ${operator}`);
   }
+}
+
+/**
+ * Normalize an `as` target type to a string. The Pratt parser emits `targetType`
+ * as an AST node ({ type: 'identifier', name: 'Int' }); the standalone
+ * expression-parser fragment emits a raw string ('Int', 'Fixed:2'). The downstream
+ * conversion evaluator requires a string. See feedback memory for details.
+ */
+function normalizeAsTargetType(target: unknown): string {
+  if (typeof target === 'string') return target;
+  if (target && typeof target === 'object') {
+    const t = target as { name?: unknown; value?: unknown };
+    if (typeof t.name === 'string') return t.name;
+    if (typeof t.value === 'string') return t.value;
+  }
+  return String(target);
+}
+
+/**
+ * Evaluates the `asExpression` AST node ({ expression, targetType }) emitted by
+ * the Pratt parser. Mirrors the runtime path in expression-parser.ts and
+ * base-expression-evaluator.ts for the same node shape.
+ */
+async function evaluateAsExpressionNode(node: any, context: ExecutionContext): Promise<unknown> {
+  const value = await evaluateAST(node.expression, context);
+  const typeName = normalizeAsTargetType(node.targetType);
+  return conversionExpressions.as.evaluate(context, value, typeName);
 }
 
 /**

@@ -157,8 +157,7 @@ describe('Hyperscript Runtime Evaluator', () => {
 
       expect(ast.success).toBe(true);
       const result = await evaluateAST(ast.node!, context);
-      // For now, accept string conversion working (parser integration success)
-      expect(result).toBe('123'); // Will be 123 when full conversion system is integrated
+      expect(result).toBe(123);
     });
 
     it('should handle operator precedence correctly', async () => {
