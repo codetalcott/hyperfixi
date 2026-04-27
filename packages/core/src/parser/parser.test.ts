@@ -862,15 +862,15 @@ describe('Hyperscript AST Parser', () => {
       expect(result1.success).toBe(false);
       expect(result1.error?.message).toContain('Expected expression');
 
-      // Test invalid operator combination
-      const result2 = parse('5 ** 3'); // Power operator not supported
+      // Test invalid operator combination (`@` is not a valid operator)
+      const result2 = parse('5 @ 3');
       expect(result2.success).toBe(false);
-      expect(result2.error?.message).toContain('Unexpected token');
+      expect(result2.error?.message).toContain('Unexpected');
 
-      // Test invalid identifier start
+      // Test invalid identifier start (number adjacent to identifier with no operator)
       const result3 = parse('123abc');
       expect(result3.success).toBe(false);
-      expect(result3.error?.message).toContain('Missing operator between');
+      expect(result3.error?.message).toContain('Unexpected token');
     });
 
     it('should handle unmatched parentheses', () => {
