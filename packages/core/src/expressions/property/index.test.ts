@@ -26,6 +26,7 @@ function createMockElement(
 ): HTMLElement {
   const element = {
     nodeType: 1,
+    tagName: 'DIV',
     id: properties.id || 'test-element',
     className: properties.className || 'test-class',
     textContent: properties.textContent || 'Test Content',
