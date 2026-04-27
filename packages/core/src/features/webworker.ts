@@ -494,13 +494,27 @@ export class TypedWebWorkerFeatureImplementation {
         };
       }
 
-      const parsed = this.inputSchema.parse(input);
+      // Operate on the raw input shape. The lightweight validator's
+      // `.parse()` does not honor `.default()` on nested fields and would
+      // throw for valid inputs that omit optional sub-config (e.g.
+      // messaging.queue.maxSize), masking the specific custom error codes
+      // below.
+      const data = input as Partial<WebWorkerInput>;
 
-      // Enhanced validation logic for remaining checks
-      const data = parsed as WebWorkerInput;
+      // Require a worker script (empty `worker: {}` is invalid)
+      if (!data.worker || typeof data.worker.script !== 'string' || !data.worker.script) {
+        errors.push({
+          type: 'invalid-input',
+          code: 'missing-worker-script',
+          message: 'Worker configuration must include a script URL or inline source',
+          path: 'worker.script',
+          suggestions: [],
+        });
+        suggestions.push('Provide a worker script URL (e.g., "./worker.js") or inline script');
+      }
 
       // Validate worker script
-      if (data.worker) {
+      if (data.worker && typeof data.worker.script === 'string' && data.worker.script) {
         if (!data.worker.inline && !this.isValidWorkerScript(data.worker.script)) {
           errors.push({
             type: 'invalid-input',
