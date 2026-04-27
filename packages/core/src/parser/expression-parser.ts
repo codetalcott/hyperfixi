@@ -344,53 +344,60 @@ const EXPR_AS_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerEntry
 ]);
 
 /** Positional prefix fragment for expression-parser (first/last with argument handling). */
+/**
+ * Build a positional prefix handler (`first` / `last`) that scopes its operand
+ * to a *primary* expression so trailing possessives apply to the positional
+ * result rather than being eaten by it.
+ *
+ * `first .test-item's textContent` parses as `(first .test-item)'s textContent`,
+ * not `first (.test-item's textContent)` — which would degenerate to picking
+ * the first character of the textContent string.
+ *
+ * Calling `ctx.parseExpr(85)` here fell through to `parsePossessiveExpression`
+ * (the NUD fallback in `prattParseExpr`), which is not bp-aware and consumed
+ * the whole possessive chain. We instead call `ctx.parsePrimary()` and then
+ * re-attach any trailing `'s` chain on the outside.
+ */
+function makePositionalHandler(_bp: number) {
+  return (token: Token, ctx: any) => {
+    const nextToken = ctx.peek();
+    if (!nextToken) {
+      return {
+        type: 'positionalExpression',
+        operator: token.value,
+        argument: null,
+        start: token.start,
+        end: token.end,
+      };
+    }
+    const operand = ctx.parsePrimary() as ASTNode;
+    let node: ASTNode = {
+      type: 'positionalExpression',
+      operator: token.value,
+      argument: operand,
+      start: token.start,
+      ...(operand.end !== undefined && { end: operand.end }),
+    } as ASTNode;
+
+    // Re-attach trailing possessive so `(first X)'s prop` parses correctly.
+    while (ctx.checkPossessive()) {
+      ctx.advance(); // consume 's
+      const property = ctx.parsePrimary() as ASTNode;
+      node = {
+        type: 'possessiveExpression',
+        object: node,
+        property,
+        ...(node.start !== undefined && { start: node.start }),
+        ...(property.end !== undefined && { end: property.end }),
+      } as ASTNode;
+    }
+    return node;
+  };
+}
+
 const EXPR_POSITIONAL_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerEntry>([
-  [
-    'first',
-    prefix(85, (token, ctx) => {
-      const nextToken = ctx.peek();
-      if (nextToken) {
-        const operand = ctx.parseExpr(85);
-        return {
-          type: 'positionalExpression',
-          operator: token.value,
-          argument: operand,
-          start: token.start,
-          ...(operand.end !== undefined && { end: operand.end }),
-        };
-      }
-      return {
-        type: 'positionalExpression',
-        operator: token.value,
-        argument: null,
-        start: token.start,
-        end: token.end,
-      };
-    }) as BindingPowerEntry,
-  ],
-  [
-    'last',
-    prefix(85, (token, ctx) => {
-      const nextToken = ctx.peek();
-      if (nextToken) {
-        const operand = ctx.parseExpr(85);
-        return {
-          type: 'positionalExpression',
-          operator: token.value,
-          argument: operand,
-          start: token.start,
-          ...(operand.end !== undefined && { end: operand.end }),
-        };
-      }
-      return {
-        type: 'positionalExpression',
-        operator: token.value,
-        argument: null,
-        start: token.start,
-        end: token.end,
-      };
-    }) as BindingPowerEntry,
-  ],
+  ['first', prefix(85, makePositionalHandler(85)) as BindingPowerEntry],
+  ['last', prefix(85, makePositionalHandler(85)) as BindingPowerEntry],
 ]);
 
 const EXPR_TABLE = mergeFragments(
@@ -459,12 +466,19 @@ function makePrattCtx(state: ParseState) {
     peek: () => peek(state),
     advance: () => advance(state)!,
     parseExpr: (bp: number) => prattParseExpr(state, bp),
+    /** Parse a primary expression (atoms only) — no possessive chaining. */
+    parsePrimary: () => parsePrimaryExpression(state),
     isStopToken: () => {
       const t = peek(state);
       if (!t) return true;
       return PRATT_STOP_TOKENS.has(t.value) || PRATT_STOP_DELIMITERS.has(t.value);
     },
     atEnd: () => state.position >= state.tokens.length,
+    /** Check whether the current token is the possessive `'s` operator. */
+    checkPossessive: () => {
+      const t = peek(state);
+      return t ? isPossessive(t) : false;
+    },
   };
 }
 
