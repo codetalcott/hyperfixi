@@ -195,6 +195,10 @@ describe('Enhanced Context System Integration', () => {
         targetEnvironment: 'backend',
         framework: { name: 'express' },
         typeSafety: 'strict',
+        // The lightweight validator does not honor schema-level `.default()`
+        // (same root cause as #196/#197); pass the documented default
+        // explicitly. The frontend input above does the same.
+        outputFormat: 'hyperscript',
       };
 
       const frontendResult = await generateHyperscript(
