@@ -382,7 +382,6 @@ jobs:
       # kills the process after 5 minutes and treats exit code 124 (timeout)
       # as success, since the tests themselves completed.
       - name: Test core
-        continue-on-error: true # Known pre-existing failures in behaviors/sockets/parser tests. Track: https://github.com/codetalcott/hyperfixi/issues/177
         run: |
           timeout 300 npm test --prefix packages/core || {
             EXIT=$?
