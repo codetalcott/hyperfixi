@@ -361,9 +361,23 @@ export class TypedBehaviorsFeatureImplementation {
       // Initialize behavior system config first
       const config = await this.initializeConfig(input);
 
-      // Validate input using enhanced pattern
-      // Skip validation during initialization - validation can be called explicitly via validate() method
-      // This allows behaviors to be initialized with any configuration and validated separately if needed
+      // Minimum precondition: behavior must be present with a non-empty name.
+      // Full validation is opt-in via enableStrictValidation so that non-DOM
+      // event types and other custom configurations don't break initialization
+      // unless explicitly requested.
+      if (!input.behavior || typeof input.behavior.name !== 'string' || !input.behavior.name) {
+        return {
+          success: false,
+          error: {
+            type: 'validation-error',
+            code: 'missing-behavior-name',
+            message: 'Behavior definition must include a non-empty name',
+            path: 'behavior.name',
+            suggestions: ['Provide a behavior name (e.g., "tooltip", "draggable_item")'],
+          },
+        };
+      }
+
       if (input.enableStrictValidation) {
         const validation = this.validate(input);
         if (!validation.isValid) {
@@ -490,15 +504,35 @@ export class TypedBehaviorsFeatureImplementation {
         };
       }
 
-      const parsed = this.inputSchema.parse(input);
+      // Validate against the raw input. The lightweight validator's
+      // `.parse()` does not honor `.default()` on nested fields and would
+      // throw for valid inputs that omit optional sub-config (e.g. socket
+      // reconnect.maxAttempts), masking the specific custom error codes
+      // below. The custom checks operate on the partial input shape.
+      const data = input as Partial<BehaviorsInput>;
       const errors: ValidationError[] = [];
       const suggestions: string[] = [];
 
-      // Enhanced validation logic
-      const data = parsed as BehaviorsInput;
+      // Require a non-empty behavior name (test: "should handle
+      // initialization failures gracefully" passes `behavior: {}`).
+      if (!data.behavior || typeof data.behavior.name !== 'string' || !data.behavior.name) {
+        errors.push({
+          type: 'validation-error',
+          code: 'missing-behavior-name',
+          message: 'Behavior definition must include a non-empty name',
+          path: 'behavior.name',
+          suggestions: [],
+        });
+        suggestions.push('Provide a behavior name (e.g., "tooltip", "draggable_item")');
+      }
 
       // Validate behavior name
-      if (data.behavior && !/^[a-zA-Z_$][a-zA-Z0-9_$-]*$/.test(data.behavior.name)) {
+      if (
+        data.behavior &&
+        typeof data.behavior.name === 'string' &&
+        data.behavior.name &&
+        !/^[a-zA-Z_$][a-zA-Z0-9_$-]*$/.test(data.behavior.name)
+      ) {
         errors.push({
           type: 'validation-error',
           code: 'invalid-behavior-name',
