@@ -149,7 +149,9 @@ describe('fixi-compat', () => {
       expect(result).toContain("fetch '/api/users'");
       expect(result).toContain('as html');
       expect(result).toContain('on click');
-      expect(result).toContain('swap me with it'); // outerHTML
+      // Translator emits `set X's outerHTML to it` for outerHTML swaps
+      // (commit 1b661c4d — `swap` was a non-existent command).
+      expect(result).toContain("set me's outerHTML to it");
     });
 
     it('translates fixi POST request', () => {
@@ -172,7 +174,8 @@ describe('fixi-compat', () => {
         swap: 'innerHTML',
       };
       const result = translateToHyperscript(config, button);
-      expect(result).toContain('swap innerHTML of #result with it');
+      // Translator emits `put it into <target>` for innerHTML swaps.
+      expect(result).toContain('put it into #result');
     });
   });
 
@@ -194,7 +197,7 @@ describe('fixi-compat', () => {
 
       const result = processor.manualProcess(button);
       expect(result).toContain("fetch '/api/data'");
-      expect(result).toContain('swap innerHTML of #output with it');
+      expect(result).toContain('put it into #output');
     });
 
     it('detects fixi vs htmx elements', () => {
