@@ -114,7 +114,12 @@ export abstract class ContextBase<TInput, TOutput> implements TypedContextImplem
             parsed.error?.errors.map((err: any) => ({
               type: 'type-mismatch' as const,
               message: `Invalid ${this.category.toLowerCase()} context input: ${err.message}`,
-              path: err.path?.join('.') || 'root',
+              // The lightweight validator returns `path` already joined as a
+              // dot-string; the legacy zod path was an array of segments.
+              // Accept either shape.
+              path: Array.isArray(err.path)
+                ? err.path.join('.') || 'root'
+                : (err.path as string) || 'root',
               suggestions: [],
             })) || [],
           suggestions: this.generateValidationSuggestions(parsed.error!),
