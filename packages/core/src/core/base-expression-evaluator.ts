@@ -676,18 +676,35 @@ export class BaseExpressionEvaluator {
   }
 
   /**
-   * Evaluate 'as' type conversion expressions (e.g., `x as Int`, `value as String`)
+   * Evaluate 'as' type conversion expressions (e.g., `x as Int`, `value as String`).
+   *
+   * `targetType` may arrive as a string (from the standalone expression-parser
+   * fragment, which reads parameterized types like `Fixed:2` directly) or as
+   * an AST node (from the Pratt parser, which calls `parseExpr` for the type
+   * and emits e.g. `{ type: 'identifier', name: 'Int' }`). The downstream
+   * `asExpression` evaluator requires a string, so normalize here.
    */
   protected async evaluateAsExpression(
-    node: { expression: any; targetType: string },
+    node: { expression: any; targetType: unknown },
     context: ExecutionContext
   ): Promise<unknown> {
     const value = await this.evaluate(node.expression, context);
     const asExpr = this.expressionRegistry.get('as');
     if (asExpr) {
-      return asExpr.evaluate(context, value, node.targetType);
+      const targetType = this.normalizeAsTargetType(node.targetType);
+      return asExpr.evaluate(context, value, targetType);
     }
     throw new Error(`Conversion type 'as' not registered`);
+  }
+
+  private normalizeAsTargetType(target: unknown): string {
+    if (typeof target === 'string') return target;
+    if (target && typeof target === 'object') {
+      const t = target as { name?: unknown; value?: unknown };
+      if (typeof t.name === 'string') return t.name;
+      if (typeof t.value === 'string') return t.value;
+    }
+    return String(target);
   }
 
   /**
