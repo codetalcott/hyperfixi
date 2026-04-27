@@ -522,7 +522,7 @@ describe('Reference Expressions', () => {
       });
 
       it('should handle computed style for its possessor', async () => {
-        context.result = testElement;
+        context.it = testElement;
         const itsComputedHeightResult = await referenceExpressions.possessiveStyleRef.evaluate(
           context,
           'its',
@@ -648,7 +648,7 @@ describe('Reference Expressions', () => {
       });
 
       it('should handle computed style for it reference', async () => {
-        context.result = testElement;
+        context.it = testElement;
         const computedHeightOfItResult = await referenceExpressions.ofStyleRef.evaluate(
           context,
           'computed-height',
