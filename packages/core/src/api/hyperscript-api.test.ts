@@ -217,7 +217,10 @@ describe('Hyperscript Public API', () => {
       const context = hyperscript.createContext();
       await hyperscript.eval('x = 42', context);
 
-      expect(context.variables?.get('x')).toBe(42);
+      // The runtime stores assigned variables in `context.locals`; the legacy
+      // `context.variables` Map (on ExtendedExecutionContext) is unused by the
+      // current runtime — see types/core.ts.
+      expect(context.locals?.get('x')).toBe(42);
 
       const result = await hyperscript.eval('x + 8', context);
       expect(result).toBe(50);
