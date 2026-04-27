@@ -492,12 +492,26 @@ export class TypedSocketsFeatureImplementation {
         };
       }
 
-      const parsed = this.inputSchema.parse(input);
+      // Operate on the raw input shape. The lightweight validator's
+      // `.parse()` does not honor `.default()` on nested fields and would
+      // throw for valid inputs that omit optional sub-config (e.g.
+      // socket.reconnect.maxAttempts), masking the specific custom error
+      // codes below.
+      const data = input as Partial<SocketsInput>;
       const errors: ValidationError[] = [];
       const suggestions: string[] = [];
 
-      // Enhanced validation logic
-      const data = parsed as SocketsInput;
+      // Require a socket URL (empty `socket: {}` is invalid)
+      if (!data.socket || typeof data.socket.url !== 'string' || !data.socket.url) {
+        errors.push({
+          type: 'invalid-input',
+          code: 'missing-websocket-url',
+          message: 'Socket configuration must include a WebSocket URL',
+          path: 'socket.url',
+          suggestions: [],
+        });
+        suggestions.push('Provide a WebSocket URL (e.g., "wss://api.example.com/ws")');
+      }
 
       // Validate WebSocket URL
       if (data.socket?.url) {
