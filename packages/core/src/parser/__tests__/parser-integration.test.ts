@@ -633,9 +633,12 @@ describe('Parser Integration Tests', () => {
       const node = parseOk('set :num to val as Int');
       const args = getArgs(node);
       const value = args[2];
+      // The Pratt parser emits `asExpression` (not `binaryExpression`) for
+      // type conversions; runtime evaluators dispatch on `case 'asExpression'`.
+      // See commit bb89811e for the rationale (smaller blast radius than
+      // refactoring the 4+ runtime files that already key on this shape).
       expect(value).toMatchObject({
-        type: 'binaryExpression',
-        operator: 'as',
+        type: 'asExpression',
       });
     });
   });

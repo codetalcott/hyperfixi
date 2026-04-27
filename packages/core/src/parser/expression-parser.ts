@@ -1823,10 +1823,26 @@ async function evaluatePropertyAccess(node: any, context: ExecutionContext): Pro
  */
 async function evaluateAsExpression(node: any, context: ExecutionContext): Promise<any> {
   const value = await evaluateASTNode(node.expression, context);
-  const targetType = node.targetType;
+  const targetType = normalizeAsTargetType(node.targetType);
 
   // Use our legacy conversion system which directly returns the converted value
   return await conversionExpressions.as.evaluate(context, value, targetType);
+}
+
+/**
+ * Normalize an `as` target type to a string. The Pratt parser emits the type
+ * as an AST node ({ type: 'identifier', name: 'Int' }) while the standalone
+ * expression-parser fragment emits it as a raw string ('Int', 'Fixed:2').
+ * The downstream `asExpression` evaluator requires a string.
+ */
+function normalizeAsTargetType(target: unknown): string {
+  if (typeof target === 'string') return target;
+  if (target && typeof target === 'object') {
+    const t = target as { name?: unknown; value?: unknown };
+    if (typeof t.name === 'string') return t.name;
+    if (typeof t.value === 'string') return t.value;
+  }
+  return String(target);
 }
 
 /**
