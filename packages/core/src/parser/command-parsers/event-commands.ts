@@ -150,19 +150,21 @@ export function parseTriggerCommand(
     }
   }
 
-  // Parse optional target: "on <target>" (trigger) or "to <target>" (send)
-  // Must check explicitly rather than delegating to parsePrimary(),
-  // because parsePrimary() interprets 'on' as event handler start.
+  // Parse remaining tokens up to a command boundary, treating 'on'/'to' as
+  // structural identifiers rather than expression operands. Must check 'on'/'to'
+  // explicitly rather than delegating to parsePrimary(), because parsePrimary()
+  // interprets 'on' as event handler start. Without this loop, malformed inputs
+  // (e.g. `trigger arg1 arg2`) would leave trailing tokens for the parent
+  // parser to choke on; the doc-comment contract above promises we collect them.
   const finalArgs: ASTNode[] = [...allArgs];
 
-  if (ctx.check('on') || ctx.check('to')) {
-    const keyword = ctx.advance().value; // consume 'on' or 'to'
-    finalArgs.push(ctx.createIdentifier(keyword));
-
-    // Parse target expression(s)
-    while (!isCommandBoundary(ctx)) {
-      finalArgs.push(ctx.parsePrimary());
+  while (!isCommandBoundary(ctx)) {
+    if (ctx.check('on') || ctx.check('to')) {
+      const keyword = ctx.advance().value;
+      finalArgs.push(ctx.createIdentifier(keyword));
+      continue;
     }
+    finalArgs.push(ctx.parsePrimary());
   }
 
   // Use CommandNodeBuilder for consistent node construction
