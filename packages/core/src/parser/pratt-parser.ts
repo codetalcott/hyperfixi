@@ -251,8 +251,12 @@ export function unaryHandler(token: Token, ctx: PrattContext): ASTNode {
     type: 'unaryExpression',
     operator: token.value,
     operand,
+    argument: operand,
+    prefix: true,
     start: token.start,
     end: (operand as any).end,
+    line: token.line,
+    column: token.column,
   };
 }
 
@@ -270,13 +274,19 @@ export function leftAssoc(bp: number, handler?: InfixHandler): Pick<BindingPower
       bp: [bp, bp + 1],
       handler:
         handler ??
-        ((left, token, ctx) => ({
-          type: 'binaryExpression',
-          operator: token.value,
-          left,
-          right: ctx.parseExpr(bp + 1),
-          start: (left as any).start,
-        })),
+        ((left, token, ctx) => {
+          const right = ctx.parseExpr(bp + 1);
+          return {
+            type: 'binaryExpression',
+            operator: token.value,
+            left,
+            right,
+            start: (left as any).start,
+            end: (right as any).end ?? token.end,
+            line: (left as any).line ?? token.line,
+            column: (left as any).column ?? token.column,
+          };
+        }),
     },
   };
 }
@@ -291,13 +301,19 @@ export function rightAssoc(bp: number, handler?: InfixHandler): Pick<BindingPowe
       bp: [bp + 1, bp],
       handler:
         handler ??
-        ((left, token, ctx) => ({
-          type: 'binaryExpression',
-          operator: token.value,
-          left,
-          right: ctx.parseExpr(bp),
-          start: (left as any).start,
-        })),
+        ((left, token, ctx) => {
+          const right = ctx.parseExpr(bp);
+          return {
+            type: 'binaryExpression',
+            operator: token.value,
+            left,
+            right,
+            start: (left as any).start,
+            end: (right as any).end ?? token.end,
+            line: (left as any).line ?? token.line,
+            column: (left as any).column ?? token.column,
+          };
+        }),
     },
   };
 }
@@ -312,12 +328,20 @@ export function prefix(bp: number, handler?: PrefixHandler): Pick<BindingPowerEn
       bp,
       handler:
         handler ??
-        ((token, ctx) => ({
-          type: 'unaryExpression',
-          operator: token.value,
-          operand: ctx.parseExpr(bp),
-          start: token.start,
-        })),
+        ((token, ctx) => {
+          const operand = ctx.parseExpr(bp);
+          return {
+            type: 'unaryExpression',
+            operator: token.value,
+            operand,
+            argument: operand,
+            prefix: true,
+            start: token.start,
+            end: (operand as any).end ?? token.end,
+            line: token.line,
+            column: token.column,
+          };
+        }),
     },
   };
 }
@@ -531,12 +555,18 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
   // Tier 7: Type conversion (bp 70)
   [
     'as',
-    leftAssoc(70, (left, _token, ctx) => ({
-      type: 'asExpression',
-      expression: left,
-      targetType: ctx.parseExpr(71),
-      start: (left as any).start,
-    })) as BindingPowerEntry,
+    leftAssoc(70, (left, token, ctx) => {
+      const targetType = ctx.parseExpr(71);
+      return {
+        type: 'asExpression',
+        expression: left,
+        targetType,
+        start: (left as any).start,
+        end: (targetType as any).end ?? token.end,
+        line: (left as any).line ?? token.line,
+        column: (left as any).column ?? token.column,
+      };
+    }) as BindingPowerEntry,
   ],
 
   // Tier 8: Unary prefix (bp 80)
