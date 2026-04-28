@@ -10,16 +10,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "elysia": "^1.2.0",
     "@elysiajs/html": "^1.1.0",
     "@elysiajs/static": "^1.1.0",
-    "@kitajs/html": "^4.2.0",
     "@hyperfixi/patterns-reference": "*",
-    "@lokascript/semantic": "*"
+    "@kitajs/html": "^4.2.0",
+    "@lokascript/semantic": "*",
+    "elysia": "^1.2.0"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "typescript": "^5.0.0",
-    "@kitajs/ts-html-plugin": "^4.1.0"
+    "@kitajs/ts-html-plugin": "^4.1.0",
+    "bun-types": "^1.3.13",
+    "typescript": "^5.0.0"
   }
 }
