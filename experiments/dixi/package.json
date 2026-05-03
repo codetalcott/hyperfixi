@@ -1,0 +1,25 @@
+{
+  "name": "dixi-js",
+  "version": "0.0.1",
+  "description": "i18n for fixi-family attribute names — write fixi/moxi declarations in your language.",
+  "main": "dixi.js",
+  "files": [
+    "dixi.js",
+    "dixi.min.js",
+    "locales/",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "0BSD",
+  "author": "Wm Talcott",
+  "keywords": [
+    "fixi",
+    "moxi",
+    "i18n",
+    "internationalization",
+    "hypermedia",
+    "html",
+    "attributes"
+  ],
+  "homepage": "https://github.com/codetalcott/dixi"
+}

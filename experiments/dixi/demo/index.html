@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>dixi — M1 demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  section { border: 1px solid #ddd; padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 6px; }
+  h2 { margin: 0 0 .5rem; font-size: 1.05rem; }
+  button { font-size: 1rem; padding: .4rem .8rem; cursor: pointer; }
+  .target { margin-top: .75rem; padding: .5rem; background: #f6f8fa; border-radius: 4px; min-height: 1.5em; }
+  pre { font-size: .75rem; background: #f0f0f0; padding: .25rem .5rem; border-radius: 3px; margin: .25rem 0; }
+  code { background: #eef; padding: 1px 4px; border-radius: 3px; }
+</style>
+
+<!-- Load order: dixi + locales BEFORE the fixi-family processor. -->
+<script src="../dixi.js"></script>
+<script src="../locales/en.js"></script>
+<script>
+  // M1 inline locale registration — proves the rewrite mechanism works
+  // even before locales/es.js ships.
+  window.dixi.register('es', {
+    attrs: {
+      'fx-acción': 'fx-action',
+      'fx-método': 'fx-method',
+      'fx-disparador': 'fx-trigger',
+      'fx-objetivo': 'fx-target',
+      'fx-intercambio': 'fx-swap',
+    },
+    values: { clic: 'click' },
+  });
+</script>
+<!-- Real fixi.js from unpkg, pinned. This is the actual target the library is
+     built to compose with; the demo runs against it end-to-end. -->
+<script src="https://unpkg.com/fixi-js@0.9.4/fixi.js"></script>
+</head>
+<body>
+
+<h1>dixi M1 demo</h1>
+<p>Two buttons. The English one uses canonical <code>fx-*</code> attributes (regression check —
+adding dixi shouldn't break anything). The Spanish one uses localized attribute names that get
+rewritten on the fly. Open DevTools → Elements to watch the rewrite.</p>
+
+<section>
+  <h2>English (canonical, no-op)</h2>
+  <button
+    fx-action="./fragments/hello.html"
+    fx-trigger="click"
+    fx-target="#target-en"
+    fx-swap="innerHTML">Load</button>
+  <div id="target-en" class="target">— empty —</div>
+  <pre>No rewrite expected. dixi sees lang="en" and skips.</pre>
+</section>
+
+<section lang="es">
+  <h2>Spanish (rewrite via inline-registered locale)</h2>
+  <button
+    fx-acción="./fragments/hola.html"
+    fx-disparador="clic"
+    fx-objetivo="#target-es"
+    fx-intercambio="innerHTML">Cargar</button>
+  <div id="target-es" class="target">— vacío —</div>
+  <pre>fx-acción → fx-action, fx-disparador="clic" → fx-trigger="click", ...</pre>
+</section>
+
+<section>
+  <h2>Dynamically inserted (MutationObserver path)</h2>
+  <button id="inject">Inject a Spanish fx-* button</button>
+  <div id="injected"></div>
+  <script>
+    document.getElementById('inject').addEventListener('click', () => {
+      var wrap = document.createElement('div');
+      wrap.setAttribute('lang', 'es');
+      wrap.innerHTML =
+        '<button fx-acción="./fragments/hola.html" fx-disparador="clic" ' +
+        'fx-objetivo="#injected-target" fx-intercambio="innerHTML">Recién inyectado</button>' +
+        '<div id="injected-target" class="target">— vacío —</div>';
+      document.getElementById('injected').appendChild(wrap);
+    });
+  </script>
+</section>
+
+</body>
+</html>
