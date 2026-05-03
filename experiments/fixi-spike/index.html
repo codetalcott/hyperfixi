@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>fx-i18n spike</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  section { border: 1px solid #ddd; padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 6px; }
+  h2 { margin: 0 0 .5rem; font-size: 1.05rem; }
+  button { font-size: 1rem; padding: .4rem .8rem; cursor: pointer; }
+  .target { margin-top: .75rem; padding: .5rem; background: #f6f8fa; border-radius: 4px; min-height: 1.5em; font-size: .9rem; }
+  pre { font-size: .75rem; background: #f0f0f0; padding: .25rem .5rem; border-radius: 3px; overflow-x: auto; margin: .25rem 0; }
+  .rtl { direction: rtl; }
+  code { background: #eef; padding: 1px 4px; border-radius: 3px; }
+</style>
+
+<!-- Load order matters: fx-i18n FIRST, fixi processor SECOND. -->
+<script src="./fx-i18n.js"></script>
+<script src="../../packages/core/dist/hyperfixi-hx.js"></script>
+</head>
+<body>
+
+<h1>fx-i18n spike</h1>
+<p>Each button below is authored with localized <code>fx-*</code> attributes. The
+<code>fx-i18n.js</code> hook rewrites them to canonical English before
+<code>hyperfixi-hx</code> sees them, so the original processor needs zero awareness
+of the localized vocabulary. Open DevTools → Elements to watch the rewrite, and
+DevTools → Network to see the fetch fire.</p>
+
+<section>
+  <h2>Spanish (Latin script)</h2>
+  <button
+    fx-acción="./fragments/es.html"
+    fx-método="GET"
+    fx-disparador="clic"
+    fx-objetivo="#target-es"
+    fx-intercambio="innerHTML">Cargar fragmento</button>
+  <div id="target-es" class="target">— vacío —</div>
+  <pre>fx-acción → fx-action, fx-método → fx-method, fx-disparador="clic" → fx-trigger="click", ...</pre>
+</section>
+
+<section>
+  <h2>Japanese (CJK script)</h2>
+  <button
+    fx-アクション="./fragments/ja.html"
+    fx-メソッド="GET"
+    fx-トリガー="クリック"
+    fx-ターゲット="#target-ja"
+    fx-スワップ="innerHTML">フラグメント読込</button>
+  <div id="target-ja" class="target">— 空 —</div>
+  <pre>fx-アクション → fx-action, fx-トリガー="クリック" → fx-trigger="click", ...</pre>
+</section>
+
+<section class="rtl">
+  <h2>Arabic (RTL script)</h2>
+  <button
+    fx-إجراء="./fragments/ar.html"
+    fx-طريقة="GET"
+    fx-محفز="نقر"
+    fx-هدف="#target-ar"
+    fx-تبديل="innerHTML">تحميل الجزء</button>
+  <div id="target-ar" class="target">— فارغ —</div>
+  <pre dir="ltr">fx-إجراء → fx-action, fx-محفز="نقر" → fx-trigger="click", ...</pre>
+</section>
+
+<section>
+  <h2>Dynamically inserted (MutationObserver path)</h2>
+  <button id="inject">Inject a Spanish fx-* button</button>
+  <div id="injected"></div>
+  <pre>Validates that attributes added after page load are also rewritten.</pre>
+  <script>
+    document.getElementById('inject').addEventListener('click', () => {
+      document.getElementById('injected').innerHTML =
+        '<button fx-acción="./fragments/es.html" fx-disparador="clic" ' +
+        'fx-objetivo="#injected-target" fx-intercambio="innerHTML">Recién inyectado</button>' +
+        '<div id="injected-target" class="target">— vacío —</div>';
+    });
+  </script>
+</section>
+
+</body>
+</html>
