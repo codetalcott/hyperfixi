@@ -22,6 +22,17 @@ const BUNDLE_ALIASES = {
   'hyperfixi-multilingual.js': 'lokascript-multilingual.js',
 };
 
+// In-era aliases for older hyperfixi-browser-* / hyperfixi-hybrid-hx names that
+// pre-date the current canonical naming. Several test HTMLs, bundle-loader, and
+// the bundle-compatibility spec still reference these. Will be removed in v3.0.0.
+const HYPERFIXI_LEGACY_ALIASES = {
+  'hyperfixi.js': 'hyperfixi-browser.js',
+  'hyperfixi-hx.js': 'hyperfixi-hybrid-hx.js',
+  'hyperfixi-minimal.js': 'hyperfixi-browser-minimal.js',
+  'hyperfixi-standard.js': 'hyperfixi-browser-standard.js',
+  'hyperfixi-classic-i18n.js': 'hyperfixi-browser-classic-i18n.js',
+};
+
 const distDir = path.join(__dirname, '..', 'dist');
 
 console.log('Creating backward compatibility aliases...');
@@ -30,26 +41,31 @@ console.log('');
 let aliasCount = 0;
 let missingCount = 0;
 
-for (const [primary, alias] of Object.entries(BUNDLE_ALIASES)) {
-  const src = path.join(distDir, primary);
-  const dest = path.join(distDir, alias);
+function createAliases(map) {
+  for (const [primary, alias] of Object.entries(map)) {
+    const src = path.join(distDir, primary);
+    const dest = path.join(distDir, alias);
 
-  if (fs.existsSync(src)) {
-    // Copy main bundle
-    fs.copyFileSync(src, dest);
-    aliasCount++;
-    console.log(`  ${alias} -> ${primary}`);
+    if (fs.existsSync(src)) {
+      // Copy main bundle
+      fs.copyFileSync(src, dest);
+      aliasCount++;
+      console.log(`  ${alias} -> ${primary}`);
 
-    // Copy source map if exists
-    const mapSrc = src + '.map';
-    const mapDest = dest + '.map';
-    if (fs.existsSync(mapSrc)) {
-      fs.copyFileSync(mapSrc, mapDest);
+      // Copy source map if exists
+      const mapSrc = src + '.map';
+      const mapDest = dest + '.map';
+      if (fs.existsSync(mapSrc)) {
+        fs.copyFileSync(mapSrc, mapDest);
+      }
+    } else {
+      missingCount++;
     }
-  } else {
-    missingCount++;
   }
 }
+
+createAliases(BUNDLE_ALIASES);
+createAliases(HYPERFIXI_LEGACY_ALIASES);
 
 console.log('');
 console.log(`Created ${aliasCount} backward-compat aliases.`);
@@ -57,6 +73,6 @@ if (missingCount > 0) {
   console.log(`Skipped ${missingCount} bundles (not built).`);
 }
 console.log('');
-console.log('These lokascript-*.js aliases will be removed in v3.0.0');
+console.log('These lokascript-*.js and hyperfixi-browser-*.js aliases will be removed in v3.0.0');
 console.log('See MIGRATION.md for upgrade instructions');
 console.log('');
