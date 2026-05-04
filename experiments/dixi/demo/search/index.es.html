@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Documentación de HyperFixi — demo dixi M2.5</title>
+<link rel="stylesheet" href="search.css">
+
+<!-- dixi rewrites localized fx-* and on-* attributes before fixi/moxi see them -->
+<script src="../../dixi.js"></script>
+<script src="../../locales/es.js"></script>
+
+<script src="https://unpkg.com/fixi-js@0.9.4/fixi.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/bigskysoftware/moxi@6760e60/moxi.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <button class="toggle" on-clic="document.body.classList.toggle('sidebar-collapsed')" aria-label="Mostrar/ocultar barra lateral">☰</button>
+  <h1>Documentación de HyperFixi</h1>
+  <nav class="locales" aria-label="Idioma">
+    <a href="index.en.html">EN</a>
+    <a href="index.es.html" class="current">ES</a>
+    <a href="index.ja.html">JA</a>
+    <a href="index.ar.html">AR</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="search">
+      <input type="search" placeholder="Buscar documentación..."
+        on-entrada="let v = event.target.value.toLowerCase(); for (let li of q('.doc-item')) li.hidden = v &amp;&amp; !li.textContent.toLowerCase().includes(v);">
+    </div>
+    <ul class="doc-list">
+      <li class="doc-item"><button fx-acción="docs/about.html"           fx-objetivo="#content" fx-intercambio="innerHTML">Acerca de</button></li>
+      <li class="doc-item"><button fx-acción="docs/architecture.html"    fx-objetivo="#content" fx-intercambio="innerHTML">Arquitectura</button></li>
+      <li class="doc-item"><button fx-acción="docs/bundles.html"         fx-objetivo="#content" fx-intercambio="innerHTML">Paquetes</button></li>
+      <li class="doc-item"><button fx-acción="docs/api-v2.html"          fx-objetivo="#content" fx-intercambio="innerHTML">API v2</button></li>
+      <li class="doc-item"><button fx-acción="docs/examples-dom.html"    fx-objetivo="#content" fx-intercambio="innerHTML">Ejemplos DOM</button></li>
+      <li class="doc-item"><button fx-acción="docs/examples-events.html" fx-objetivo="#content" fx-intercambio="innerHTML">Ejemplos de eventos</button></li>
+      <li class="doc-item"><button fx-acción="docs/semantic-intro.html"  fx-objetivo="#content" fx-intercambio="innerHTML">Nodos semánticos</button></li>
+      <li class="doc-item"><button fx-acción="docs/vite-quick.html"      fx-objetivo="#content" fx-intercambio="innerHTML">Plugin de Vite</button></li>
+    </ul>
+  </aside>
+
+  <main class="content" id="content">
+    <p class="placeholder">Selecciona un documento de la barra lateral para leerlo aquí.</p>
+  </main>
+</div>
+
+</body>
+</html>

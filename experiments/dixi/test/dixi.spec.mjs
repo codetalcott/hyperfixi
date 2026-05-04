@@ -1,117 +1,171 @@
 /*
- * M2 acceptance test for dixi.
- * Run a static server at the monorepo root, then `node test/dixi.spec.mjs`.
+ * dixi acceptance test — runs against http-server at the monorepo root.
+ *
+ *   npx http-server . -p 8765 -c-1 -s &
+ *   node experiments/dixi/test/dixi.spec.mjs
+ *
+ * Phase A: M2 button demo (Latin/CJK/RTL, rewrite + fetch + swap, injection).
+ * Phase B: M2.5 search demo per-locale (search filter, sidebar toggle via moxi,
+ *          fx-* doc loading, and on-* rewriting).
  */
 import { chromium } from 'playwright';
 
-const URL =
-  process.env.DIXI_DEMO_URL || 'http://127.0.0.1:8765/experiments/dixi/demo/index.html';
+const BASE = process.env.DIXI_BASE_URL || 'http://127.0.0.1:8765';
+const BUTTON_DEMO = `${BASE}/experiments/dixi/demo/index.html`;
+const SEARCH_DEMO = locale => `${BASE}/experiments/dixi/demo/search/index.${locale}.html`;
 
 const browser = await chromium.launch();
-const page = await (await browser.newContext()).newPage();
+const failures = [];
+const log = msg => console.log(msg);
 
-const errors = [];
-const requests = [];
-page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
-page.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text()}`); });
-page.on('request', r => requests.push(`${r.method()} ${r.url()}`));
+const grab = (page, sel) =>
+  page.evaluate(s => {
+    const el = document.querySelector(s);
+    return el ? Object.fromEntries([...el.attributes].map(a => [a.name, a.value])) : null;
+  }, sel);
 
-await page.goto(URL, { waitUntil: 'domcontentloaded' });
-await page.waitForLoadState('networkidle');
+// ---------------------------------------------------------------------------
+// Phase A — M2 button demo
+// ---------------------------------------------------------------------------
+async function phaseA() {
+  log('\n=== Phase A: M2 button demo ===');
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const errors = [];
+  const requests = [];
+  page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+  page.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text()}`); });
+  page.on('request', r => requests.push(`${r.method()} ${r.url()}`));
 
-await page.evaluate(() => {
-  window.__dxEvents = [];
-  document.addEventListener('dx:rewrote', e =>
-    window.__dxEvents.push((e.detail.root && (e.detail.root.id || e.detail.root.tagName)) || '?')
-  );
-});
+  await page.goto(BUTTON_DEMO, { waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => {
+    window.__dxEvents = [];
+    document.addEventListener('dx:rewrote', () => window.__dxEvents.push(1));
+  });
 
-const grab = sel => page.evaluate(s => {
-  const el = document.querySelector(s);
-  return el ? Object.fromEntries([...el.attributes].map(a => [a.name, a.value])) : null;
-}, sel);
+  const initial = {
+    en: await grab(page, 'section:nth-of-type(1) button'),
+    es: await grab(page, 'section[lang="es"] button'),
+    ja: await grab(page, 'section[lang="ja"] button'),
+    ar: await grab(page, 'section[lang="ar"] button'),
+  };
 
-const initial = {
-  en: await grab('section:nth-of-type(1) button'),
-  es: await grab('section[lang="es"] button'),
-  ja: await grab('section[lang="ja"] button'),
-  ar: await grab('section[lang="ar"] button'),
-};
-console.log('--- Static buttons after dixi rewrite ---');
-console.log(JSON.stringify(initial, null, 2));
+  requests.length = 0;
+  const clickAndRead = async (sel, target) => {
+    await page.click(sel);
+    await page.waitForTimeout(800);
+    return (await page.textContent(target)).trim();
+  };
 
-requests.length = 0;
+  const enSwap = await clickAndRead('section:nth-of-type(1) button', '#target-en');
+  const esSwap = await clickAndRead('section[lang="es"] button', '#target-es');
+  const jaSwap = await clickAndRead('section[lang="ja"] button', '#target-ja');
+  const arSwap = await clickAndRead('section[lang="ar"] button', '#target-ar');
 
-const click = async (sel, fragment) => {
-  await page.click(sel);
+  await page.click('#inject');
+  await page.waitForTimeout(150);
+  const injected = await grab(page, '#injected button');
+  await page.click('#injected button');
   await page.waitForTimeout(800);
-  return (await page.textContent(fragment)).trim();
-};
+  const injectedSwap = (await page.textContent('#injected-target')).trim();
+  const dxEventsFired = await page.evaluate(() => (window.__dxEvents || []).length);
 
-const enSwap = await click('section:nth-of-type(1) button', '#target-en');
-const esSwap = await click('section[lang="es"] button', '#target-es');
-const jaSwap = await click('section[lang="ja"] button', '#target-ja');
-const arSwap = await click('section[lang="ar"] button', '#target-ar');
+  const checks = [
+    [() => initial.en && initial.en['fx-action'] && !initial.en['fx-acción'], 'A: English canonical button modified (regression)'],
+    [() => initial.es && initial.es['fx-action'] && initial.es['fx-trigger'] === 'click' && !initial.es['fx-acción'], 'A: Spanish button not rewritten'],
+    [() => initial.ja && initial.ja['fx-action'] && initial.ja['fx-trigger'] === 'click' && !initial.ja['fx-アクション'], 'A: Japanese button not rewritten'],
+    [() => initial.ar && initial.ar['fx-action'] && initial.ar['fx-trigger'] === 'click' && !initial.ar['fx-إجراء'], 'A: Arabic button not rewritten'],
+    [() => requests.some(r => r.includes('hello.html')), 'A: English fetch missed'],
+    [() => requests.some(r => r.includes('hola.html')), 'A: Spanish fetch missed'],
+    [() => requests.some(r => r.includes('konnichiwa.html')), 'A: Japanese fetch missed'],
+    [() => requests.some(r => r.includes('marhaba.html')), 'A: Arabic fetch missed'],
+    [() => enSwap.includes('Hello'), 'A: English swap missed'],
+    [() => esSwap.includes('Hola'), 'A: Spanish swap missed'],
+    [() => jaSwap.includes('こんにちは'), 'A: Japanese swap missed'],
+    [() => arSwap.includes('مرحبا'), 'A: Arabic swap missed'],
+    [() => injected && injected['fx-action'] && !injected['fx-acción'], 'A: Injected button not rewritten'],
+    [() => injectedSwap.includes('Hola'), 'A: Injected swap missed'],
+    [() => dxEventsFired >= 1, 'A: dx:rewrote never fired'],
+    [() => errors.length === 0, `A: ${errors.length} runtime errors`],
+  ];
+  for (const [t, msg] of checks) if (!t()) failures.push(msg);
+  log(`  ${checks.length - failures.filter(f => f.startsWith('A:')).length}/${checks.length} checks passed`);
+  await ctx.close();
+}
 
-await page.click('#inject');
-await page.waitForTimeout(150);
-const injected = await grab('#injected button');
-await page.click('#injected button');
-await page.waitForTimeout(800);
-const injectedSwap = (await page.textContent('#injected-target')).trim();
+// ---------------------------------------------------------------------------
+// Phase B — M2.5 search demo, per locale
+// ---------------------------------------------------------------------------
+async function phaseB(locale) {
+  log(`\n=== Phase B: search demo (${locale}) ===`);
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(`${locale} pageerror: ${e.message}`));
+  page.on('console', m => { if (m.type() === 'error') errors.push(`${locale} console.error: ${m.text()}`); });
 
-const dxEventsFired = await page.evaluate(() => (window.__dxEvents || []).length);
+  await page.goto(SEARCH_DEMO(locale), { waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('networkidle');
 
-console.log('\n--- Injected button after rewrite ---');
-console.log(JSON.stringify(injected, null, 2));
-console.log('\n--- Network during clicks ---');
-requests.filter(r => r.includes('fragments/')).forEach(r => console.log('  ' + r));
-console.log('\n--- Errors ---');
-console.log(errors.length ? errors.join('\n') : '(none)');
-console.log('\n--- dx:rewrote events fired:', dxEventsFired);
+  // Post-rewrite: every locale's elements should have CANONICAL attributes.
+  const toggleAttrs = await grab(page, 'header .toggle');
+  const inputAttrs = await grab(page, '.search input');
+  const firstItemAttrs = await grab(page, '.doc-item:first-child button');
+  const itemCount = await page.locator('.doc-item').count();
 
-const checks = [
-  // English regression: not rewritten, still canonical
-  [() => initial.en && initial.en['fx-action'] && !initial.en['fx-acción'],
-    'English canonical button was modified (regression)'],
+  // Search filter: typing 'v2' should leave only 1 item visible (API v2).
+  await page.fill('.search input', 'v2');
+  await page.waitForTimeout(150);
+  const visibleAfterFilter = await page.locator('.doc-item:not([hidden])').count();
 
-  // Per-locale rewrite checks
-  [() => initial.es && initial.es['fx-action'] && initial.es['fx-trigger'] === 'click' && !initial.es['fx-acción'],
-    'Spanish localized button was NOT rewritten'],
-  [() => initial.ja && initial.ja['fx-action'] && initial.ja['fx-trigger'] === 'click' && !initial.ja['fx-アクション'],
-    'Japanese localized button was NOT rewritten'],
-  [() => initial.ar && initial.ar['fx-action'] && initial.ar['fx-trigger'] === 'click' && !initial.ar['fx-إجراء'],
-    'Arabic localized button was NOT rewritten'],
+  // Clear search → all 8 visible again.
+  await page.fill('.search input', '');
+  await page.waitForTimeout(150);
+  const visibleAfterClear = await page.locator('.doc-item:not([hidden])').count();
 
-  // Network: each click should fire its expected fragment
-  [() => requests.some(r => r.includes('hello.html')),     'English click did not fetch hello.html'],
-  [() => requests.some(r => r.includes('hola.html')),      'Spanish click did not fetch hola.html'],
-  [() => requests.some(r => r.includes('konnichiwa.html')), 'Japanese click did not fetch konnichiwa.html'],
-  [() => requests.some(r => r.includes('marhaba.html')),    'Arabic click did not fetch marhaba.html'],
+  // Sidebar toggle: clicking adds class, clicking again removes it.
+  await page.click('header .toggle');
+  await page.waitForTimeout(150);
+  const collapsedAfter1 = await page.evaluate(() => document.body.classList.contains('sidebar-collapsed'));
+  await page.click('header .toggle');
+  await page.waitForTimeout(150);
+  const collapsedAfter2 = await page.evaluate(() => document.body.classList.contains('sidebar-collapsed'));
 
-  // Swaps actually mutated each target
-  [() => enSwap.includes('Hello'),      'English target did not swap'],
-  [() => esSwap.includes('Hola'),       'Spanish target did not swap'],
-  [() => jaSwap.includes('こんにちは'),    'Japanese target did not swap'],
-  [() => arSwap.includes('مرحبا'),       'Arabic target did not swap'],
+  // Click the 4th item (API v2 in all locales) → fragment swaps in.
+  await page.click('.doc-item:nth-child(4) button');
+  await page.waitForTimeout(800);
+  const contentText = (await page.textContent('#content')).trim();
 
-  // MutationObserver path still works
-  [() => injected && injected['fx-action'] && !injected['fx-acción'],
-    'Dynamically-injected Spanish button was NOT rewritten'],
-  [() => injectedSwap.includes('Hola'),  'Injected target did not swap'],
+  const tag = `B[${locale}]:`;
+  const checks = [
+    [() => itemCount === 8, `${tag} expected 8 doc-list items, got ${itemCount}`],
+    [() => toggleAttrs && toggleAttrs['on-click'] !== undefined, `${tag} toggle button missing on-click after rewrite`],
+    [() => inputAttrs && inputAttrs['on-input'] !== undefined, `${tag} search input missing on-input after rewrite`],
+    [() => firstItemAttrs && firstItemAttrs['fx-action'] && firstItemAttrs['fx-target'] === '#content', `${tag} first doc item missing canonical fx-* after rewrite`],
+    [() => visibleAfterFilter === 1, `${tag} search 'v2' should show 1 item, got ${visibleAfterFilter}`],
+    [() => visibleAfterClear === 8, `${tag} clearing search should show 8 items, got ${visibleAfterClear}`],
+    [() => collapsedAfter1 === true, `${tag} sidebar toggle did not add 'sidebar-collapsed' class`],
+    [() => collapsedAfter2 === false, `${tag} sidebar toggle did not remove 'sidebar-collapsed' class on 2nd click`],
+    [() => contentText.includes('API v2 reference'), `${tag} clicking API v2 did not load fragment ('${contentText.slice(0, 60)}...')`],
+    [() => errors.length === 0, `${tag} ${errors.length} runtime errors`],
+  ];
+  for (const [t, msg] of checks) if (!t()) failures.push(msg);
+  const passed = checks.filter(([t]) => t()).length;
+  log(`  ${passed}/${checks.length} checks passed`);
+  await ctx.close();
+}
 
-  // Event API
-  [() => dxEventsFired >= 1,             'dx:rewrote event never fired'],
-  [() => errors.length === 0,            `${errors.length} runtime error(s) captured`],
-];
-
-const failures = checks.filter(([test]) => !test()).map(([, msg]) => msg);
-
+// ---------------------------------------------------------------------------
+// Run both phases
+// ---------------------------------------------------------------------------
+await phaseA();
+for (const locale of ['en', 'es', 'ja', 'ar']) await phaseB(locale);
 await browser.close();
 
 if (failures.length) {
-  console.log('\n--- M2 FAIL ---');
-  failures.forEach(f => console.log(' • ' + f));
+  log('\n--- FAIL ---');
+  failures.forEach(f => log(' • ' + f));
   process.exit(1);
 }
-console.log('\n--- M2 PASS ---  4 locales × (rewrite + fetch + swap) + injection');
+log('\n--- PASS ---  M2 button demo + M2.5 search demo × 4 locales');

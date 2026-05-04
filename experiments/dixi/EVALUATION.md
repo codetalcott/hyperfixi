@@ -1,0 +1,107 @@
+# dixi M2.5 evaluation — prospective value to international users
+
+> Written after building and exercising the docs-search demo at
+> [`demo/search/`](demo/search/) (4 locales × en/es/ja/ar, fixi + moxi, 8 real
+> doc fragments). All technical acceptance criteria passed; this document
+> records honest observations on whether the **mechanism** translates into
+> developer **value**.
+
+## What we built
+
+A polished docs viewer with:
+
+- 8 real hyperfixi doc fragments hand-converted from `docs/` and `packages/*/docs/`
+- A search-and-filter sidebar (moxi `on-input` doing client-side substring filter)
+- A collapsible sidebar (moxi `on-click` toggling a body class)
+- Document loading via fixi (`fx-action` swapping fragments into `#content`)
+- Four parallel locale files: `index.en.html`, `index.es.html`, `index.ja.html`, `index.ar.html`
+- A 10-line dixi.js extension that generically rewrites `on-<localized-event>[.modifiers]` to `on-<canonical>` using the existing per-locale `values` map
+
+**Sizes:** dixi.js minified+gzipped is **956 B** (under the 1KB family-ethos budget). Per-locale data: 299–376 B gzipped.
+
+**Test:** 56 checks across both demos pass — Phase A (M2 four-button demo): 16/16; Phase B (M2.5 search demo) × 4 locales: 10/10 each.
+
+## Observations from the exercise
+
+### 1. The literal diff between locale files is small and clean
+
+`diff index.en.html index.es.html` shows exactly what you'd hope:
+
+- `<html lang>` and `<title>` change
+- A comment changes
+- The locale `<script>` tag swaps
+- Visible UI text translates
+- Attribute _names_ swap (`fx-action` → `fx-acción`, `on-input` → `on-entrada`, etc.)
+
+**Zero behavioral code changes.** The JS body inside `on-input="..."` stays identical across all four locales. The fragment URLs stay identical. The CSS selectors stay identical. dixi did its job: the _shape_ of the page is preserved; only the _vocabulary_ changes.
+
+### 2. The four scripts compose without surprises
+
+Latin / CJK / RTL all work the same way. The Arabic file adds `dir="rtl"` to `<html>` and the existing `inline-end` / `inline-start` CSS logical properties handle the layout flip automatically. dixi resolution worked uniformly across all four scripts.
+
+### 3. moxi and fixi cohabit cleanly
+
+The same demo uses both attribute systems on the same page. dixi's generic `on-*` rule (one Pass-2 loop in `normalizeElement`) handles moxi's attribute names without per-attribute hardcoding. This validates the broader claim that dixi is a _fixi-family_ utility, not a fixi-only one.
+
+## What's gained
+
+For an international developer **authoring** a fixi+moxi page in their language:
+
+- **Locality of behavior preserved** — the entire page is one file, declarations live with markup, no build step. The fixi family's core promise survives translation.
+- **Shape-preserving translation** — diffing two locale versions shows the change is mechanical and reviewable. Code reviewers can audit a localization change in seconds.
+- **Genuine multi-script reach** — the same mechanism handles Latin, CJK, and RTL with no script-specific code paths. RTL "just works" because we lean on the family's existing `dir="rtl"` and CSS logical properties.
+- **Composable across the family** — dixi works for fixi _and_ moxi _and_ (presumably) ssexi with no per-library code.
+- **Tiny on the wire** — 956 B core + ~350 B per loaded locale is in the right neighborhood for the family's minimalism ethos.
+
+The clearest **persona** the demo supports: a _senior developer who reads English fluently but is teaching juniors or non-anglophone team members_. The localized page lets the senior dev meet their team where they are without forking the page logic.
+
+## What's lost or neutral
+
+These are real and worth flagging up-front in any M3 README:
+
+- **JS bodies stay English.** dixi translates attribute _names_. The expression inside `on-input="event.target.value.toLowerCase()..."` is plain JavaScript and stays in English forever. A Spanish developer reading the demo source still has to mentally context-switch into English JS for any logic. (Translating JS bodies would require something like `@lokascript/hyperscript-adapter`'s preprocessor, which is a different and much heavier mechanism.)
+- **Vocabulary divergence within a team.** If half the team writes `fx-acción` and half writes `fx-action`, code review and cross-team grep both get harder. Linting could enforce one or the other, but no such linter exists yet.
+- **Debugging asymmetry.** DevTools, error messages, MutationObserver traces, and fixi's own internal events all surface _canonical_ (English) attribute names — because that's what fixi sees post-rewrite. A Spanish developer authoring `fx-acción` will see `fx-action` everywhere in the inspector. This is unavoidable given the architecture but it's a real cognitive cost.
+- **Doc-content asymmetry.** This demo's doc fragments are English. A _fully_ localized site would also translate the doc bodies. dixi solves the _authoring_ layer only; it doesn't help with content. Be honest about this in marketing.
+- **Mojibake risk.** If a file is saved as anything other than UTF-8, attribute names with diacritics or non-Latin characters silently break. This is a real-world Windows / legacy-build-pipeline hazard.
+- **Vocabulary choices are best-effort.** We picked `fx-acción` (with the diacritic), `fx-objetivo`, `fx-intercambio`. A native Spanish-speaking developer might prefer `fx-accion` (no diacritic for typeability), or `fx-destino` instead of `fx-objetivo`. We don't have native-speaker review yet.
+- **Adds dependency for a cohort of unknown size.** Every dixi-using page now has _three_ JS dependencies (dixi, locale data, plus fixi/moxi) where it might otherwise have one. Whether the value justifies the dependency for any given team is a judgment call.
+
+## Go/no-go indicators for M3
+
+The exercise confirms the **mechanism works**. It does not confirm that international developers **want** this. We're at the limit of what internal evaluation can tell us; the next signals must come from outside.
+
+**Cheap external signals to gather before committing to M3 (recommended):**
+
+1. **Deploy the M2.5 demo as a public landing page** (GitHub Pages). One day of work; the artifact already exists.
+2. **Post to one or two venues**: a `fixiproject` discussion, `r/htmx`, the htmx Discord, or Mastodon/Bluesky tagging Carson Gross. Frame as "I built this small thing, would anyone find it useful?" — not as a launch.
+3. **Watch for**: any reply at all from a non-English-native developer; any fork of the repo; any "we'd use this" reply. Two weeks is plenty.
+4. **Flag for vocabulary review**: identify two native speakers per language (es, ja, ar to start) and ask: "would you actually write `fx-acción` in your code, or do you prefer English?" Their answer matters more than ours.
+
+**Strong "go" signal:** any non-English-native developer says "I want to use this in a real project."
+
+**Strong "no" signal:** silence + native speakers saying "we'd just write English."
+
+**Ambiguous:** generic "cool" reactions. Not enough to invest in 21 more locales.
+
+## Recommendation
+
+**Do M2.5+: deploy the demo, gather signal, then decide on M3.**
+
+This is cheaper than committing to M3 directly:
+
+- M3 as-planned costs ~1-2 weeks (21 locales × 50-entry hand-authoring, full README, npm publish, outreach).
+- Soft-launching M2.5 costs ~1 day (GitHub Pages config + a post or two).
+- The signal we gather in 1-2 weeks then tells us whether to commit or shelve.
+
+If the soft-launch produces "I want to use this" reactions: proceed to M3 with confidence. If it produces silence or "just write English": pivot — possibly to a different home for the multilingual machinery (the original portfolio framing) rather than abandon entirely.
+
+The artifact is real, working, and shippable today. The next investment should be in _measurement_, not more building.
+
+## Appendix: links
+
+- Live demo (when deployed): TBD
+- M2.5 plan: [~/.claude/plans/please-research-the-feasibility-curious-crystal.md](../../../.claude/plans/please-research-the-feasibility-curious-crystal.md)
+- M3 plan (full launch): [~/.claude/plans/dixi-js-launch.md](../../../.claude/plans/dixi-js-launch.md)
+- Demo entry points: [`demo/search/index.en.html`](demo/search/index.en.html) · [`.es`](demo/search/index.es.html) · [`.ja`](demo/search/index.ja.html) · [`.ar`](demo/search/index.ar.html)
+- Test: [`test/dixi.spec.mjs`](test/dixi.spec.mjs)

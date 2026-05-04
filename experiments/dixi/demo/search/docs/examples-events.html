@@ -1,0 +1,49 @@
+<h2>Event handling examples</h2>
+
+<h3>Once modifier</h3>
+
+<p>Execute an event handler only one time:</p>
+
+<pre><code>&lt;button _="on click.once add .clicked to me then put 'Clicked once!' into me"&gt;
+  Click me (works only once)
+&lt;/button&gt;</code></pre>
+
+<h3>Prevent default</h3>
+
+<p>Prevent form submission:</p>
+
+<pre><code>&lt;form _="on submit.prevent log 'Form submission prevented'"&gt;
+  &lt;input type="text" name="username" /&gt;
+  &lt;button type="submit"&gt;Submit&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<p>Prevent link navigation in favor of an inline interaction:</p>
+
+<pre><code>&lt;a href="/page" _="on click.prevent toggle .expanded on #details"&gt;
+  Toggle Details
+&lt;/a&gt;
+&lt;div id="details" style="display: none;"&gt;Additional details&lt;/div&gt;</code></pre>
+
+<h3>Stop propagation</h3>
+
+<p>Stop a click from bubbling to a parent handler:</p>
+
+<pre><code>&lt;div _="on click add .parent-clicked to me"&gt;
+  Parent div
+  &lt;button _="on click.stop add .button-clicked to me"&gt;
+    Click me (won't trigger parent)
+  &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+<h3>Debounce and throttle</h3>
+
+<p>Debounce a search input by 300ms so each keystroke restarts the timer:</p>
+
+<pre><code>&lt;input type="search" _="on input.debounce(300)
+  fetch /search?q=${my.value} as html
+  then put it into #results" /&gt;
+&lt;div id="results"&gt;&lt;/div&gt;</code></pre>
+
+<p>Throttle scroll events so the handler fires at most every 100ms:</p>
+
+<pre><code>&lt;div _="on scroll.throttle(100) add .scrolled to me"&gt;...&lt;/div&gt;</code></pre>

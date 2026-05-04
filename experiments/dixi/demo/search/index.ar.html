@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>وثائق HyperFixi — عرض dixi M2.5</title>
+<link rel="stylesheet" href="search.css">
+
+<!-- dixi يعيد كتابة أسماء سمات fx-* و on-* المعربة قبل أن تقرأها fixi/moxi -->
+<script src="../../dixi.js"></script>
+<script src="../../locales/ar.js"></script>
+
+<script src="https://unpkg.com/fixi-js@0.9.4/fixi.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/bigskysoftware/moxi@6760e60/moxi.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <button class="toggle" on-نقر="document.body.classList.toggle('sidebar-collapsed')" aria-label="تبديل الشريط الجانبي">☰</button>
+  <h1>وثائق HyperFixi</h1>
+  <nav class="locales" aria-label="اللغة">
+    <a href="index.en.html">EN</a>
+    <a href="index.es.html">ES</a>
+    <a href="index.ja.html">JA</a>
+    <a href="index.ar.html" class="current">AR</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="search">
+      <input type="search" placeholder="البحث في المستندات..."
+        on-إدخال="let v = event.target.value.toLowerCase(); for (let li of q('.doc-item')) li.hidden = v &amp;&amp; !li.textContent.toLowerCase().includes(v);">
+    </div>
+    <ul class="doc-list">
+      <li class="doc-item"><button fx-إجراء="docs/about.html"           fx-هدف="#content" fx-تبديل="innerHTML">نظرة عامة</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/architecture.html"    fx-هدف="#content" fx-تبديل="innerHTML">البنية</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/bundles.html"         fx-هدف="#content" fx-تبديل="innerHTML">الحزم</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/api-v2.html"          fx-هدف="#content" fx-تبديل="innerHTML">واجهة برمجة v2</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/examples-dom.html"    fx-هدف="#content" fx-تبديل="innerHTML">أمثلة DOM</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/examples-events.html" fx-هدف="#content" fx-تبديل="innerHTML">أمثلة الأحداث</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/semantic-intro.html"  fx-هدف="#content" fx-تبديل="innerHTML">العقد الدلالية</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/vite-quick.html"      fx-هدف="#content" fx-تبديل="innerHTML">إضافة Vite</button></li>
+    </ul>
+  </aside>
+
+  <main class="content" id="content">
+    <p class="placeholder">اختر مستندًا من الشريط الجانبي لقراءته هنا.</p>
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<h2>Semantic nodes</h2>
+
+<p>A <strong>semantic node</strong> is a language-independent representation of a hyperscript command. It captures the <em>meaning</em> using universal semantic roles from linguistics, rather than the surface syntax of any particular language.</p>
+
+<p>This enables:</p>
+
+<ul>
+  <li><strong>True multilingual support:</strong> parse from any language, render to any language.</li>
+  <li><strong>Meaning preservation:</strong> translations maintain semantic equivalence.</li>
+  <li><strong>Runtime optimization:</strong> commands can be analyzed at the semantic level.</li>
+</ul>
+
+<h3>Node structure</h3>
+
+<pre><code>interface SemanticNode {
+  kind: 'command' | 'event-handler' | 'conditional' | 'compound' | 'loop';
+  action: string;                       // The verb: 'toggle', 'add', 'set', etc.
+  roles: Map&lt;SemanticRole, SemanticValue&gt;;
+  metadata?: {
+    sourceText?: string;
+    confidence?: number;
+    sourceLanguage?: string;
+    patternId?: string;
+  };
+}</code></pre>
+
+<h3>Node types</h3>
+
+<table>
+  <thead><tr><th>Kind</th><th>Description</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>command</code></td><td>Single command</td><td><code>toggle .active</code></td></tr>
+    <tr><td><code>event-handler</code></td><td>Event listener with body</td><td><code>on click toggle .active</code></td></tr>
+    <tr><td><code>conditional</code></td><td>If/else block</td><td><code>if x show #y else hide #y end</code></td></tr>
+    <tr><td><code>compound</code></td><td>Then-chained commands</td><td><code>toggle .a then put 'x' into #y</code></td></tr>
+    <tr><td><code>loop</code></td><td>Repeat/while/for blocks</td><td><code>repeat 3 times toggle .active end</code></td></tr>
+  </tbody>
+</table>
+
+<p>Each role's value is a <code>SemanticValue</code> — a selector, literal, reference (<code>me</code>/<code>you</code>/<code>it</code>), property path, or expression.</p>

@@ -42,6 +42,7 @@
   function normalizeElement(elt) {
     var dict = dictFor(elt);
     if (!dict) return;
+    // Pass 1: explicit fx-* attribute renames + fx-trigger value translation
     var renames = [];
     for (var i = 0; i < elt.attributes.length; i++) {
       var a = elt.attributes[i];
@@ -53,6 +54,23 @@
       elt.removeAttribute(oldName);
       var newVal = (canon === 'fx-trigger' && dict.values[val]) ? dict.values[val] : val;
       elt.setAttribute(canon, newVal);
+    }
+    // Pass 2: generic on-<event>[.modifiers] rewrite using the values map
+    // (moxi-family inline handlers — on-clic.prevent → on-click.prevent)
+    var onRenames = [];
+    for (var k = 0; k < elt.attributes.length; k++) {
+      var b = elt.attributes[k];
+      if (b.name.indexOf('on-') !== 0) continue;
+      var suffix = b.name.slice(3);
+      var dot = suffix.indexOf('.');
+      var ev = dot < 0 ? suffix : suffix.slice(0, dot);
+      var rest = dot < 0 ? '' : suffix.slice(dot);
+      var canonEv = dict.values[ev];
+      if (canonEv && canonEv !== ev) onRenames.push([b.name, 'on-' + canonEv + rest, b.value]);
+    }
+    for (var m = 0; m < onRenames.length; m++) {
+      elt.removeAttribute(onRenames[m][0]);
+      elt.setAttribute(onRenames[m][1], onRenames[m][2]);
     }
   }
 

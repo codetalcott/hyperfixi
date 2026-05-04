@@ -1,0 +1,163 @@
+/* dixi search demo — shared styles across all four locales */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1c1c1c;
+  background: #fafafa;
+}
+
+/* --- top bar --- */
+header.top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .75rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+header.top h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+header.top .toggle {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: .25rem .55rem;
+}
+header.top .toggle:hover { background: #f0f0f0; }
+header.top nav.locales {
+  margin-inline-start: auto;
+  display: flex;
+  gap: .5rem;
+  font-size: .85rem;
+}
+header.top nav.locales a {
+  text-decoration: none;
+  color: #555;
+  padding: .25rem .5rem;
+  border-radius: 4px;
+}
+header.top nav.locales a:hover { background: #f0f0f0; color: #000; }
+header.top nav.locales a.current { background: #1c1c1c; color: #fff; }
+
+/* --- layout --- */
+.layout {
+  display: flex;
+  height: calc(100vh - 50px);
+}
+aside.sidebar {
+  flex: 0 0 260px;
+  border-inline-end: 1px solid #e0e0e0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: flex-basis .2s ease;
+}
+body.sidebar-collapsed aside.sidebar {
+  flex: 0 0 0;
+  border-inline-end: 0;
+}
+main.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.75rem;
+  background: #fff;
+}
+
+/* --- search box --- */
+.search {
+  padding: .75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+.search input {
+  width: 100%;
+  font-size: .9rem;
+  padding: .4rem .6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fafafa;
+}
+.search input:focus { outline: 2px solid #4a90e2; outline-offset: -1px; background: #fff; }
+
+/* --- doc list --- */
+ul.doc-list {
+  list-style: none;
+  margin: 0;
+  padding: .25rem 0;
+  overflow-y: auto;
+  flex: 1;
+}
+ul.doc-list li[hidden] { display: none; }
+ul.doc-list button {
+  display: block;
+  width: 100%;
+  text-align: start;
+  background: transparent;
+  border: 0;
+  border-inline-start: 3px solid transparent;
+  padding: .45rem .9rem;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+ul.doc-list button:hover { background: #f4f4f4; }
+ul.doc-list button:focus-visible { outline: 2px solid #4a90e2; outline-offset: -2px; }
+
+/* --- content pane typography --- */
+main.content h2 {
+  margin-top: 0;
+  font-size: 1.4rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: .35rem;
+}
+main.content h3 {
+  margin-top: 1.5rem;
+  font-size: 1.05rem;
+}
+main.content code {
+  background: #f0f2f5;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: .9em;
+}
+main.content pre {
+  background: #f6f8fa;
+  border: 1px solid #e8eaed;
+  border-radius: 4px;
+  padding: .65rem .85rem;
+  overflow-x: auto;
+}
+main.content pre code {
+  background: transparent;
+  padding: 0;
+  font-size: .85rem;
+}
+main.content table {
+  border-collapse: collapse;
+  margin: .5rem 0;
+}
+main.content th, main.content td {
+  border: 1px solid #e0e0e0;
+  padding: .35rem .65rem;
+  text-align: start;
+}
+main.content th { background: #f6f8fa; }
+
+main.content > .placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+/* --- RTL adjustments --- */
+[dir="rtl"] header.top nav.locales { margin-inline-start: auto; }
+[dir="rtl"] ul.doc-list button { border-inline-start: 3px solid transparent; }
