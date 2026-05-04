@@ -22,15 +22,11 @@ window.dixi.register('ja', {
     ブラー: 'blur',
     初期化: 'init',
   },
+  // Built-in modifiers limited to prevent/stop/once (industry convention is
+  // English elsewhere; see EVALUATION.md). Extend via dixiCfg.extend if needed.
   modifiers: {
     防止: 'prevent',
     停止: 'stop',
-    阻止: 'halt',
     一度: 'once',
-    自身: 'self',
-    外側: 'outside',
-    捕捉: 'capture',
-    受動: 'passive',
-    // .cc kept as-is
   },
 });

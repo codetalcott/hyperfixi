@@ -19,7 +19,7 @@ The viewer has:
 - Four parallel locale files: `index.en.html`, `index.es.html`, `index.ja.html`, `index.ar.html`
 - A 10-line dixi.js extension that generically rewrites `on-<localized-event>[.modifiers]` to `on-<canonical>` using the existing per-locale `values` map
 
-**Sizes (post-M2.6, with full moxi coverage including modifiers):** dixi.js minified+gzipped is **1020 B** (just under the 1KB family-ethos ceiling, with no headroom for further additions). Per-locale data: 505–573 B gzipped — slightly over the aspirational 500B mark but family-comparable (paxi itself is 600B). The whole demo, including all eight fragments and CSS, is ~30 KB unminified.
+**Sizes (post-M2.6 with the convention-aligned modifier trim):** dixi.js minified+gzipped is **1004 B** (just under the 1KB family-ethos ceiling). Per-locale data: 524 B (es), 545 B (ar), 602 B (ja) gzipped — slightly over the aspirational 500B but family-comparable (paxi itself is 600B). The whole demo including 8 fragments + CSS is ~30 KB unminified.
 
 **Test:** 80 checks across both demos pass — Phase A (M2 four-button demo): 16/16; Phase B (M2.5 search demo + M2.6 moxi-completion fixtures) × 4 locales: 16/16 each. Filter discriminator is `ssexi` — a proper noun that's stable across all locales because library names don't translate.
 
@@ -68,8 +68,34 @@ These are real and worth flagging up-front in any M3 README:
 - **Debugging asymmetry.** DevTools, error messages, MutationObserver traces, and fixi's own internal events all surface _canonical_ (English) attribute names — because that's what fixi sees post-rewrite. A Spanish developer authoring `fx-acción` will see `fx-action` everywhere in the inspector. This is unavoidable given the architecture but it's a real cognitive cost.
 - **Doc-content asymmetry.** This demo's doc fragments are English. A _fully_ localized site would also translate the doc bodies. dixi solves the _authoring_ layer only; it doesn't help with content. Be honest about this in marketing.
 - **Mojibake risk.** If a file is saved as anything other than UTF-8, attribute names with diacritics or non-Latin characters silently break. This is a real-world Windows / legacy-build-pipeline hazard.
-- **Vocabulary choices are best-effort.** We picked `fx-acción` (with the diacritic), `fx-objetivo`, `fx-intercambio`. A native Spanish-speaking developer might prefer `fx-accion` (no diacritic for typeability), or `fx-destino` instead of `fx-objetivo`. The M2.6 modifier translations (`prevenir`/`detener`/`una-vez`/etc.) need native review even more — modifier semantics are subtler than attribute names. We don't have native-speaker review yet.
+- **Vocabulary choices are best-effort.** We picked `fx-acción` (with the diacritic), `fx-objetivo`, `fx-intercambio`. A native Spanish-speaking developer might prefer `fx-accion` (no diacritic for typeability), or `fx-destino` instead of `fx-objetivo`. We don't have native-speaker review yet — see the _modifier convention_ subsection below for how research informed our scope choices.
 - **Adds dependency for a cohort of unknown size.** Every dixi-using page now has _three_ JS dependencies (dixi, locale data, plus fixi/moxi) where it might otherwise have one. Whether the value justifies the dependency for any given team is a judgment call.
+
+## Modifier translation convention (research finding)
+
+After the M2.6 implementation we audited how the wider community handles modifier names in localized docs. Findings:
+
+- **Vue.js docs (Spanish, Japanese, Korean) keep `.prevent`/`.stop`/`.once`/`.self`/`.capture`/`.passive` in English** — they translate the explanatory prose around them, not the modifier syntax itself. Korean Vue docs are particularly explicit about treating modifier names as untranslatable technical terms.
+- **htmx docs aren't translated** in any language; the modifier vocabulary (`once`, `delay`, `throttle`, `changed`, `from`, `consume`, `queue`) is English-only.
+- **MDN translations of `preventDefault` / `stopPropagation`** keep the method names English; only the descriptive text translates.
+
+The pattern is consistent across the closest analogs to dixi's surface: **modifier syntax is treated as code, not vocabulary**. This is a meaningful precedent — it suggests even users who _want_ localized fx-\* attributes will likely write `.prevent`/`.stop` in English because that's what every tutorial shows them.
+
+In response, dixi's built-in modifier coverage is deliberately limited to the **everyday three** that have natural translations and clear semantic equivalence in target languages:
+
+- `prevent` (es: `prevenir`, ja: `防止`, ar: `منع`)
+- `stop` (es: `detener`, ja: `停止`, ar: `إيقاف`)
+- `once` (es: `una-vez`, ja: `一度`, ar: `مرة`)
+
+The technical or compound modifiers — `halt`, `self`, `outside`, `capture`, `passive`, `cc` — are **not** in the built-in maps. Reasons:
+
+- **`halt`** is a moxi-specific compound (= `prevent` + `stop`). No target language has a single word that distinctively translates it; native words for `halt` overlap directly with `stop` (Spanish `detener`, Japanese `停止`, Arabic `إيقاف` — same as our `stop` translations). Translating it would create vocabulary divergence inside one locale.
+- **`self`, `outside`, `capture`, `passive`** are technical DOM-event concepts. Vue keeps these English/loanword across all its translations.
+- **`cc`** (camelCase shortcut for custom-element event names) is too short and English-anchored to translate idiomatically.
+
+Users who _do_ want any of these translated can opt in via `window.dixiCfg.extend.<locale>.modifiers`. The mechanism is in place; only the default vocabulary is conservative.
+
+This trim brings dixi into line with the broader hypermedia ecosystem's convention while preserving the most-likely-to-be-used modifier coverage. **For Arabic specifically, no MDN or Vue translations exist** as a reference base — the three Arabic modifier choices are the most natural single-word translations available, but warrant native review more than ES/JA do.
 
 ## Go/no-go indicators for M3
 

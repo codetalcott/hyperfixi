@@ -22,15 +22,11 @@ window.dixi.register('ar', {
     ضبابية: 'blur',
     تهيئة: 'init',
   },
+  // Built-in modifiers limited to prevent/stop/once (industry convention is
+  // English elsewhere; see EVALUATION.md). Extend via dixiCfg.extend if needed.
   modifiers: {
     منع: 'prevent',
     إيقاف: 'stop',
-    حجب: 'halt',
     مرة: 'once',
-    ذاتي: 'self',
-    خارج: 'outside',
-    التقاط: 'capture',
-    سلبي: 'passive',
-    // .cc kept as-is
   },
 });

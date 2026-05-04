@@ -22,15 +22,11 @@ window.dixi.register('es', {
     desenfoque: 'blur',
     iniciar: 'init',
   },
+  // Built-in modifiers limited to prevent/stop/once (industry convention is
+  // English elsewhere; see EVALUATION.md). Extend via dixiCfg.extend if needed.
   modifiers: {
     prevenir: 'prevent',
     detener: 'stop',
-    parar: 'halt',
     'una-vez': 'once',
-    mismo: 'self',
-    fuera: 'outside',
-    captura: 'capture',
-    pasivo: 'passive',
-    // .cc kept as-is — too short to translate idiomatically
   },
 });
