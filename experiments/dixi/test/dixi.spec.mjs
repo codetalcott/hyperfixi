@@ -95,8 +95,15 @@ async function phaseA() {
 }
 
 // ---------------------------------------------------------------------------
-// Phase B — M2.5 search demo, per locale
+// Phase B — M2.5 search demo + M2.6 moxi-completion fixtures, per locale
 // ---------------------------------------------------------------------------
+const FIXTURES = {
+  en: { mod: 'on-click.prevent.once', live: 'live', ignore: 'mx-ignore' },
+  es: { mod: 'on-clic.prevenir.una-vez', live: 'vivo', ignore: 'mx-ignorar' },
+  ja: { mod: 'on-クリック.防止.一度', live: 'ライブ', ignore: 'mx-無視' },
+  ar: { mod: 'on-نقر.منع.مرة', live: 'حي', ignore: 'mx-تجاهل' },
+};
+
 async function phaseB(locale) {
   log(`\n=== Phase B: search demo (${locale}) ===`);
   const ctx = await browser.newContext();
@@ -138,6 +145,12 @@ async function phaseB(locale) {
   await page.waitForTimeout(800);
   const contentText = (await page.textContent('#content')).trim();
 
+  // M2.6: verify modifier + live + mx-ignore rewriting on hidden fixtures.
+  const modBtn = await grab(page, '#m26-mod-btn');
+  const liveEl = await grab(page, '#m26-live-out');
+  const ignored = await grab(page, '#m26-ignored');
+  const f = FIXTURES[locale];
+
   const tag = `B[${locale}]:`;
   const checks = [
     [() => itemCount === 8, `${tag} expected 8 doc-list items, got ${itemCount}`],
@@ -149,6 +162,21 @@ async function phaseB(locale) {
     [() => collapsedAfter1 === true, `${tag} sidebar toggle did not add 'sidebar-collapsed' class`],
     [() => collapsedAfter2 === false, `${tag} sidebar toggle did not remove 'sidebar-collapsed' class on 2nd click`],
     [() => contentText.includes('moxi'), `${tag} clicking moxi.js did not load fragment ('${contentText.slice(0, 60)}...')`],
+
+    // M2.6 — moxi-completion: modifier chain, live attr, mx-ignore attr
+    [() => modBtn && modBtn['on-click.prevent.once'] !== undefined,
+      `${tag} canonical on-click.prevent.once missing after rewrite`],
+    [() => modBtn && (locale === 'en' || modBtn[f.mod] === undefined),
+      `${tag} localized ${f.mod} should be gone after rewrite`],
+    [() => liveEl && liveEl.live !== undefined,
+      `${tag} canonical 'live' attr missing after rewrite`],
+    [() => liveEl && (locale === 'en' || liveEl[f.live] === undefined),
+      `${tag} localized '${f.live}' should be gone after rewrite`],
+    [() => ignored && ignored['mx-ignore'] !== undefined,
+      `${tag} canonical 'mx-ignore' attr missing after rewrite`],
+    [() => ignored && (locale === 'en' || ignored[f.ignore] === undefined),
+      `${tag} localized '${f.ignore}' should be gone after rewrite`],
+
     [() => errors.length === 0, `${tag} ${errors.length} runtime errors`],
   ];
   for (const [t, msg] of checks) if (!t()) failures.push(msg);

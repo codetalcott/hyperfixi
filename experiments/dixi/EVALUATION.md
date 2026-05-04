@@ -19,9 +19,9 @@ The viewer has:
 - Four parallel locale files: `index.en.html`, `index.es.html`, `index.ja.html`, `index.ar.html`
 - A 10-line dixi.js extension that generically rewrites `on-<localized-event>[.modifiers]` to `on-<canonical>` using the existing per-locale `values` map
 
-**Sizes:** dixi.js minified+gzipped is **956 B** (under the 1KB family-ethos budget). Per-locale data: 299–376 B gzipped. The whole demo, including all eight fragments and CSS, is 30 KB unminified — well under the family's "less is more" ethos.
+**Sizes (post-M2.6, with full moxi coverage including modifiers):** dixi.js minified+gzipped is **1020 B** (just under the 1KB family-ethos ceiling, with no headroom for further additions). Per-locale data: 505–573 B gzipped — slightly over the aspirational 500B mark but family-comparable (paxi itself is 600B). The whole demo, including all eight fragments and CSS, is ~30 KB unminified.
 
-**Test:** 56 checks across both demos pass — Phase A (M2 four-button demo): 16/16; Phase B (M2.5 search demo) × 4 locales: 10/10 each. Filter discriminator is `ssexi` — a proper noun that's stable across all locales because library names don't translate.
+**Test:** 80 checks across both demos pass — Phase A (M2 four-button demo): 16/16; Phase B (M2.5 search demo + M2.6 moxi-completion fixtures) × 4 locales: 16/16 each. Filter discriminator is `ssexi` — a proper noun that's stable across all locales because library names don't translate.
 
 **Drop-in path:** to make this an actual deployable replacement for fixiproject.org's docs, swap the eight `fx-action="docs/<name>.html"` URLs for the canonical fixiproject paths (`fixi.html`, `moxi.html`, etc.). The fragment files become unnecessary in that scenario; fixi swaps in the real pages directly.
 
@@ -63,12 +63,12 @@ The clearest **persona** the demo supports: a _senior developer who reads Englis
 
 These are real and worth flagging up-front in any M3 README:
 
-- **JS bodies stay English.** dixi translates attribute _names_. The expression inside `on-input="event.target.value.toLowerCase()..."` is plain JavaScript and stays in English forever. A Spanish developer reading the demo source still has to mentally context-switch into English JS for any logic. (Translating JS bodies would require something like `@lokascript/hyperscript-adapter`'s preprocessor, which is a different and much heavier mechanism.)
+- **JS bodies stay English.** dixi translates attribute _names_ — including event names and modifiers (`on-clic.prevenir.una-vez` → `on-click.prevent.once` after M2.6). The JavaScript expression inside `on-input="event.target.value.toLowerCase()..."` stays in English forever. A Spanish developer reading the demo source still has to mentally context-switch into English JS for any logic. (Translating JS bodies would require something like `@lokascript/hyperscript-adapter`'s preprocessor, which is a different and much heavier mechanism.)
 - **Vocabulary divergence within a team.** If half the team writes `fx-acción` and half writes `fx-action`, code review and cross-team grep both get harder. Linting could enforce one or the other, but no such linter exists yet.
 - **Debugging asymmetry.** DevTools, error messages, MutationObserver traces, and fixi's own internal events all surface _canonical_ (English) attribute names — because that's what fixi sees post-rewrite. A Spanish developer authoring `fx-acción` will see `fx-action` everywhere in the inspector. This is unavoidable given the architecture but it's a real cognitive cost.
 - **Doc-content asymmetry.** This demo's doc fragments are English. A _fully_ localized site would also translate the doc bodies. dixi solves the _authoring_ layer only; it doesn't help with content. Be honest about this in marketing.
 - **Mojibake risk.** If a file is saved as anything other than UTF-8, attribute names with diacritics or non-Latin characters silently break. This is a real-world Windows / legacy-build-pipeline hazard.
-- **Vocabulary choices are best-effort.** We picked `fx-acción` (with the diacritic), `fx-objetivo`, `fx-intercambio`. A native Spanish-speaking developer might prefer `fx-accion` (no diacritic for typeability), or `fx-destino` instead of `fx-objetivo`. We don't have native-speaker review yet.
+- **Vocabulary choices are best-effort.** We picked `fx-acción` (with the diacritic), `fx-objetivo`, `fx-intercambio`. A native Spanish-speaking developer might prefer `fx-accion` (no diacritic for typeability), or `fx-destino` instead of `fx-objetivo`. The M2.6 modifier translations (`prevenir`/`detener`/`una-vez`/etc.) need native review even more — modifier semantics are subtler than attribute names. We don't have native-speaker review yet.
 - **Adds dependency for a cohort of unknown size.** Every dixi-using page now has _three_ JS dependencies (dixi, locale data, plus fixi/moxi) where it might otherwise have one. Whether the value justifies the dependency for any given team is a judgment call.
 
 ## Go/no-go indicators for M3
@@ -80,7 +80,7 @@ The exercise confirms the **mechanism works**. It does not confirm that internat
 1. **Deploy the M2.5 demo as a public landing page** (GitHub Pages). One day of work; the artifact already exists.
 2. **Post to one or two venues**: a `fixiproject` discussion, `r/htmx`, the htmx Discord, or Mastodon/Bluesky tagging Carson Gross. Frame as "I built this small thing, would anyone find it useful?" — not as a launch.
 3. **Watch for**: any reply at all from a non-English-native developer; any fork of the repo; any "we'd use this" reply. Two weeks is plenty.
-4. **Flag for vocabulary review**: identify two native speakers per language (es, ja, ar to start) and ask: "would you actually write `fx-acción` in your code, or do you prefer English?" Their answer matters more than ours.
+4. **Flag for vocabulary review**: identify two native speakers per language (es, ja, ar to start) and ask: "would you actually write `fx-acción` and `on-clic.prevenir` in your code, or do you prefer English?" Their answer matters more than ours — particularly for modifiers, which are abstract enough that English may be the natural default even for non-anglophone devs.
 
 **Strong "go" signal:** any non-English-native developer says "I want to use this in a real project."
 

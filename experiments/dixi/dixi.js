@@ -36,6 +36,7 @@
     return {
       attrs: Object.assign({}, base.attrs, ext.attrs || {}),
       values: Object.assign({}, base.values, ext.values || {}),
+      modifiers: Object.assign({}, base.modifiers || {}, ext.modifiers || {}),
     };
   }
 
@@ -55,18 +56,20 @@
       var newVal = (canon === 'fx-trigger' && dict.values[val]) ? dict.values[val] : val;
       elt.setAttribute(canon, newVal);
     }
-    // Pass 2: generic on-<event>[.modifiers] rewrite using the values map
-    // (moxi-family inline handlers — on-clic.prevent → on-click.prevent)
+    // Pass 2: generic on-<event>[.<modifier>...] rewrite (moxi-family).
+    // Translates the event name via the values map and each dot-separated
+    // modifier via the modifiers map, independently.
+    var mods = dict.modifiers || {};
     var onRenames = [];
     for (var k = 0; k < elt.attributes.length; k++) {
       var b = elt.attributes[k];
       if (b.name.indexOf('on-') !== 0) continue;
-      var suffix = b.name.slice(3);
-      var dot = suffix.indexOf('.');
-      var ev = dot < 0 ? suffix : suffix.slice(0, dot);
-      var rest = dot < 0 ? '' : suffix.slice(dot);
-      var canonEv = dict.values[ev];
-      if (canonEv && canonEv !== ev) onRenames.push([b.name, 'on-' + canonEv + rest, b.value]);
+      var parts = b.name.slice(3).split('.');
+      var ev = parts[0];
+      var canonEv = dict.values[ev] || ev;
+      var canonParts = parts.slice(1).map(function (p) { return mods[p] || p; });
+      var newName = 'on-' + canonEv + (canonParts.length ? '.' + canonParts.join('.') : '');
+      if (newName !== b.name) onRenames.push([b.name, newName, b.value]);
     }
     for (var m = 0; m < onRenames.length; m++) {
       elt.removeAttribute(onRenames[m][0]);
@@ -87,6 +90,7 @@
     registry[normLang(locale)] = {
       attrs: (data && data.attrs) || {},
       values: (data && data.values) || {},
+      modifiers: (data && data.modifiers) || {},
     };
   }
 
