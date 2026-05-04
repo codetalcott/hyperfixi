@@ -2,44 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>dixi — M1 demo</title>
+<title>dixi — M2 demo</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
   section { border: 1px solid #ddd; padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 6px; }
+  section[lang="ar"] { direction: rtl; }
   h2 { margin: 0 0 .5rem; font-size: 1.05rem; }
   button { font-size: 1rem; padding: .4rem .8rem; cursor: pointer; }
   .target { margin-top: .75rem; padding: .5rem; background: #f6f8fa; border-radius: 4px; min-height: 1.5em; }
-  pre { font-size: .75rem; background: #f0f0f0; padding: .25rem .5rem; border-radius: 3px; margin: .25rem 0; }
+  pre { font-size: .75rem; background: #f0f0f0; padding: .25rem .5rem; border-radius: 3px; margin: .25rem 0; white-space: pre-wrap; }
   code { background: #eef; padding: 1px 4px; border-radius: 3px; }
+  section[lang="ar"] pre { direction: ltr; text-align: left; }
 </style>
 
 <!-- Load order: dixi + locales BEFORE the fixi-family processor. -->
 <script src="../dixi.js"></script>
 <script src="../locales/en.js"></script>
-<script>
-  // M1 inline locale registration — proves the rewrite mechanism works
-  // even before locales/es.js ships.
-  window.dixi.register('es', {
-    attrs: {
-      'fx-acción': 'fx-action',
-      'fx-método': 'fx-method',
-      'fx-disparador': 'fx-trigger',
-      'fx-objetivo': 'fx-target',
-      'fx-intercambio': 'fx-swap',
-    },
-    values: { clic: 'click' },
-  });
-</script>
-<!-- Real fixi.js from unpkg, pinned. This is the actual target the library is
-     built to compose with; the demo runs against it end-to-end. -->
+<script src="../locales/es.js"></script>
+<script src="../locales/ja.js"></script>
+<script src="../locales/ar.js"></script>
 <script src="https://unpkg.com/fixi-js@0.9.4/fixi.js"></script>
 </head>
 <body>
 
-<h1>dixi M1 demo</h1>
-<p>Two buttons. The English one uses canonical <code>fx-*</code> attributes (regression check —
-adding dixi shouldn't break anything). The Spanish one uses localized attribute names that get
-rewritten on the fly. Open DevTools → Elements to watch the rewrite.</p>
+<h1>dixi M2 demo</h1>
+<p>Four buttons. The English one uses canonical <code>fx-*</code> attributes (regression check).
+The Spanish, Japanese, and Arabic ones use localized attribute names that get rewritten on the fly
+by their respective external locale files. Open DevTools → Elements to watch the rewrite, and
+DevTools → Network to see the fetches.</p>
 
 <section>
   <h2>English (canonical, no-op)</h2>
@@ -53,14 +43,45 @@ rewritten on the fly. Open DevTools → Elements to watch the rewrite.</p>
 </section>
 
 <section lang="es">
-  <h2>Spanish (rewrite via inline-registered locale)</h2>
+  <h2>Spanish (Latin script)</h2>
   <button
     fx-acción="./fragments/hola.html"
     fx-disparador="clic"
     fx-objetivo="#target-es"
     fx-intercambio="innerHTML">Cargar</button>
   <div id="target-es" class="target">— vacío —</div>
-  <pre>fx-acción → fx-action, fx-disparador="clic" → fx-trigger="click", ...</pre>
+  <pre>fx-acción → fx-action
+fx-disparador="clic" → fx-trigger="click"
+fx-objetivo → fx-target
+fx-intercambio → fx-swap</pre>
+</section>
+
+<section lang="ja">
+  <h2>Japanese (CJK script)</h2>
+  <button
+    fx-アクション="./fragments/konnichiwa.html"
+    fx-トリガー="クリック"
+    fx-ターゲット="#target-ja"
+    fx-スワップ="innerHTML">読み込み</button>
+  <div id="target-ja" class="target">— 空 —</div>
+  <pre>fx-アクション → fx-action
+fx-トリガー="クリック" → fx-trigger="click"
+fx-ターゲット → fx-target
+fx-スワップ → fx-swap</pre>
+</section>
+
+<section lang="ar">
+  <h2>Arabic (RTL script)</h2>
+  <button
+    fx-إجراء="./fragments/marhaba.html"
+    fx-محفز="نقر"
+    fx-هدف="#target-ar"
+    fx-تبديل="innerHTML">تحميل</button>
+  <div id="target-ar" class="target">— فارغ —</div>
+  <pre>fx-إجراء → fx-action
+fx-محفز="نقر" → fx-trigger="click"
+fx-هدف → fx-target
+fx-تبديل → fx-swap</pre>
 </section>
 
 <section>
