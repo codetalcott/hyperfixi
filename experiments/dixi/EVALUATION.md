@@ -8,18 +8,22 @@
 
 ## What we built
 
-A polished docs viewer with:
+A polished docs viewer for the **Fixi Project itself** — content is a localized presentation of fixiproject.org's own pages. The demo is structured so it could **drop straight into fixiproject.org's site** as a multilingual docs interface, replacing the existing static pages with a search-and-filter UI in any of the four supported scripts.
 
-- 8 real hyperfixi doc fragments hand-converted from `docs/` and `packages/*/docs/`
+The viewer has:
+
+- 8 doc fragments hand-converted (BSD-0 sourced) from fixiproject.org's pages: about, the libraries tour, fixi.js, moxi.js, paxi.js, ssexi.js, rexi.js, demos. Each fragment carries a small attribution footer linking back to the canonical page.
 - A search-and-filter sidebar (moxi `on-input` doing client-side substring filter)
 - A collapsible sidebar (moxi `on-click` toggling a body class)
 - Document loading via fixi (`fx-action` swapping fragments into `#content`)
 - Four parallel locale files: `index.en.html`, `index.es.html`, `index.ja.html`, `index.ar.html`
 - A 10-line dixi.js extension that generically rewrites `on-<localized-event>[.modifiers]` to `on-<canonical>` using the existing per-locale `values` map
 
-**Sizes:** dixi.js minified+gzipped is **956 B** (under the 1KB family-ethos budget). Per-locale data: 299–376 B gzipped.
+**Sizes:** dixi.js minified+gzipped is **956 B** (under the 1KB family-ethos budget). Per-locale data: 299–376 B gzipped. The whole demo, including all eight fragments and CSS, is 30 KB unminified — well under the family's "less is more" ethos.
 
-**Test:** 56 checks across both demos pass — Phase A (M2 four-button demo): 16/16; Phase B (M2.5 search demo) × 4 locales: 10/10 each.
+**Test:** 56 checks across both demos pass — Phase A (M2 four-button demo): 16/16; Phase B (M2.5 search demo) × 4 locales: 10/10 each. Filter discriminator is `ssexi` — a proper noun that's stable across all locales because library names don't translate.
+
+**Drop-in path:** to make this an actual deployable replacement for fixiproject.org's docs, swap the eight `fx-action="docs/<name>.html"` URLs for the canonical fixiproject paths (`fixi.html`, `moxi.html`, etc.). The fragment files become unnecessary in that scenario; fixi swaps in the real pages directly.
 
 ## Observations from the exercise
 
@@ -88,11 +92,15 @@ The exercise confirms the **mechanism works**. It does not confirm that internat
 
 **Do M2.5+: deploy the demo, gather signal, then decide on M3.**
 
+The content swap to fixiproject.org's own pages strengthens the pitch substantially. We're no longer asking Carson and the fixi-family audience "imagine a tool I built, in your language" — we're showing them "your own docs, in your language." The artifact is now a credible candidate to **drop into fixiproject.org as a multilingual docs landing page**, with one configuration change (swap the 8 fragment URLs for canonical page paths).
+
 This is cheaper than committing to M3 directly:
 
 - M3 as-planned costs ~1-2 weeks (21 locales × 50-entry hand-authoring, full README, npm publish, outreach).
 - Soft-launching M2.5 costs ~1 day (GitHub Pages config + a post or two).
 - The signal we gather in 1-2 weeks then tells us whether to commit or shelve.
+
+The most concrete soft-launch path: **open a GitHub issue or discussion at `bigskysoftware/the-fixi-project`** showing the live demo and offering to PR a multilingual docs landing page if there's interest. This puts the artifact in front of exactly the right person (Carson Gross), uses fixi's own content as the demonstration, and frames the ask as "would you find this useful?" rather than "please adopt my tool."
 
 If the soft-launch produces "I want to use this" reactions: proceed to M3 with confidence. If it produces silence or "just write English": pivot — possibly to a different home for the multilingual machinery (the original portfolio framing) rather than abandon entirely.
 

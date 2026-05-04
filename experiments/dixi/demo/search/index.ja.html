@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>HyperFixi ドキュメント — dixi M2.5 デモ</title>
+<title>Fixi Project — dixi M2.5 デモ</title>
 <link rel="stylesheet" href="search.css">
 
 <!-- dixi が fx-* と on-* の日本語属性名を fixi/moxi が読む前に正規化する -->
@@ -16,7 +16,7 @@
 
 <header class="top">
   <button class="toggle" on-クリック="document.body.classList.toggle('sidebar-collapsed')" aria-label="サイドバーの開閉">☰</button>
-  <h1>HyperFixi ドキュメント</h1>
+  <h1>Fixi Project</h1>
   <nav class="locales" aria-label="言語">
     <a href="index.en.html">EN</a>
     <a href="index.es.html">ES</a>
@@ -32,14 +32,14 @@
         on-入力="let v = event.target.value.toLowerCase(); for (let li of q('.doc-item')) li.hidden = v &amp;&amp; !li.textContent.toLowerCase().includes(v);">
     </div>
     <ul class="doc-list">
-      <li class="doc-item"><button fx-アクション="docs/about.html"           fx-ターゲット="#content" fx-スワップ="innerHTML">概要</button></li>
-      <li class="doc-item"><button fx-アクション="docs/architecture.html"    fx-ターゲット="#content" fx-スワップ="innerHTML">アーキテクチャ</button></li>
-      <li class="doc-item"><button fx-アクション="docs/bundles.html"         fx-ターゲット="#content" fx-スワップ="innerHTML">バンドル</button></li>
-      <li class="doc-item"><button fx-アクション="docs/api-v2.html"          fx-ターゲット="#content" fx-スワップ="innerHTML">API v2</button></li>
-      <li class="doc-item"><button fx-アクション="docs/examples-dom.html"    fx-ターゲット="#content" fx-スワップ="innerHTML">DOM の例</button></li>
-      <li class="doc-item"><button fx-アクション="docs/examples-events.html" fx-ターゲット="#content" fx-スワップ="innerHTML">イベントの例</button></li>
-      <li class="doc-item"><button fx-アクション="docs/semantic-intro.html"  fx-ターゲット="#content" fx-スワップ="innerHTML">セマンティックノード</button></li>
-      <li class="doc-item"><button fx-アクション="docs/vite-quick.html"      fx-ターゲット="#content" fx-スワップ="innerHTML">Vite プラグイン</button></li>
+      <li class="doc-item"><button fx-アクション="docs/about.html" fx-ターゲット="#content" fx-スワップ="innerHTML">概要</button></li>
+      <li class="doc-item"><button fx-アクション="docs/tour.html"  fx-ターゲット="#content" fx-スワップ="innerHTML">ライブラリ</button></li>
+      <li class="doc-item"><button fx-アクション="docs/fixi.html"  fx-ターゲット="#content" fx-スワップ="innerHTML">fixi.js</button></li>
+      <li class="doc-item"><button fx-アクション="docs/moxi.html"  fx-ターゲット="#content" fx-スワップ="innerHTML">moxi.js</button></li>
+      <li class="doc-item"><button fx-アクション="docs/paxi.html"  fx-ターゲット="#content" fx-スワップ="innerHTML">paxi.js</button></li>
+      <li class="doc-item"><button fx-アクション="docs/ssexi.html" fx-ターゲット="#content" fx-スワップ="innerHTML">ssexi.js</button></li>
+      <li class="doc-item"><button fx-アクション="docs/rexi.html"  fx-ターゲット="#content" fx-スワップ="innerHTML">rexi.js</button></li>
+      <li class="doc-item"><button fx-アクション="docs/demos.html" fx-ターゲット="#content" fx-スワップ="innerHTML">デモ</button></li>
     </ul>
   </aside>
 

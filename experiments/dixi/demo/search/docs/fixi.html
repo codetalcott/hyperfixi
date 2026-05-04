@@ -1,0 +1,42 @@
+<h2>fixi.js</h2>
+
+<p><code>fixi.js</code> (3.4 KB raw / 1.2 KB Brotli) is a miniature take on htmx. It enables HTML elements to trigger HTTP requests on user events and insert the response anywhere in the document — declaratively, with no scripting required.</p>
+
+<h3>Attributes</h3>
+
+<table>
+  <thead><tr><th>Attribute</th><th>Purpose</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td><code>fx-action</code></td><td>Request URL</td><td>required</td></tr>
+    <tr><td><code>fx-method</code></td><td>HTTP verb</td><td><code>GET</code></tr>
+    <tr><td><code>fx-trigger</code></td><td>DOM event that triggers the request</td><td>element-dependent</td></tr>
+    <tr><td><code>fx-target</code></td><td>CSS selector for the swap target</td><td>the element itself</td></tr>
+    <tr><td><code>fx-swap</code></td><td>Insertion mechanism</td><td><code>outerHTML</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Lifecycle events</h3>
+
+<ol>
+  <li><code>fx:init</code> — before element setup (cancelable)</li>
+  <li><code>fx:inited</code> — after wiring complete</li>
+  <li><code>fx:config</code> — request triggered, before sending (mutate <code>cfg</code>)</li>
+  <li><code>fx:before</code> — immediately before <code>fetch()</code></li>
+  <li><code>fx:after</code> — response received, before swap</li>
+  <li><code>fx:swapped</code> — content inserted, transitions complete</li>
+  <li><code>fx:error</code> — fetch() exception</li>
+  <li><code>fx:finally</code> — after every request</li>
+</ol>
+
+<h3>Example</h3>
+
+<pre><code>&lt;button fx-action="/profile"
+        fx-target="#panel"
+        fx-swap="innerHTML"&gt;
+  Load profile
+&lt;/button&gt;
+&lt;output id="panel"&gt;&lt;/output&gt;</code></pre>
+
+<p>Clicking triggers a <code>GET</code> to <code>/profile</code>; the response replaces the contents of <code>#panel</code>.</p>
+
+<p class="attribution">Adapted from <a href="https://fixiproject.org/fixi.html" target="_blank" rel="noopener">fixiproject.org/fixi.html</a>.</p>

@@ -1,36 +1,28 @@
-<h2>About HyperFixi</h2>
+<h2>The Fixi Project</h2>
 
-<p>HyperFixi is a <strong>fully-featured hyperscript implementation</strong> with two key additions:</p>
-
-<ol>
-  <li><strong>Modern architecture:</strong> tree-shakeable modules, TypeScript types, configurable bundles (2 KB – 200 KB).</li>
-  <li><strong>Optional multilingual support:</strong> hyperscript in 24 languages with native word order and grammar.</li>
-</ol>
-
-<p>The core engine (<code>@hyperfixi/*</code>) is a complete hyperscript runtime and parser that works independently. The multilingual features (<code>@lokascript/*</code>) are opt-in for projects that need them.</p>
-
-<h3>Why multilingual?</h3>
-
-<p>Hyperscript's readability is its key selling point. But that readability assumes you think in English. The multilingual layer makes <code>on click toggle .active</code> feel equally natural in other languages by mapping to native word order:</p>
-
-<ul>
-  <li><strong>English (SVO):</strong> <code>on click toggle .active</code></li>
-  <li><strong>Japanese (SOV):</strong> <code>クリック で .active を トグル</code></li>
-  <li><strong>Arabic (VSO):</strong> <code>بدّل .active عند النقر</code></li>
-</ul>
-
-<p>This requires language-specific patterns for each command. The multilingual packages are <strong>fully optional</strong> — use core hyperscript without them, or load only the languages you need.</p>
-
-<h3>Current status</h3>
+<p>A collection of small web libraries offering lightweight takes on established tools — inspired by HTMX, Hyperscript, and Idiomorph. Each library is sharply focused, and they're designed to compose.</p>
 
 <table>
-  <thead><tr><th>Package</th><th>Tests</th><th>Status</th></tr></thead>
+  <thead><tr><th>Library</th><th>Brotli</th><th>Purpose</th></tr></thead>
   <tbody>
-    <tr><td><code>@hyperfixi/core</code></td><td>5700 passing</td><td>Stable</td></tr>
-    <tr><td><code>@lokascript/semantic</code></td><td>3553 passing</td><td>Stable</td></tr>
-    <tr><td><code>@lokascript/i18n</code></td><td>470 passing</td><td>Stable</td></tr>
-    <tr><td><code>@hyperfixi/vite-plugin</code></td><td>163 passing</td><td>Stable</td></tr>
+    <tr><td><code>fixi.js</code></td><td>1.2 KB</td><td>Supercharged HTML — element-driven HTTP requests + DOM swaps</td></tr>
+    <tr><td><code>moxi.js</code></td><td>1.8 KB</td><td>Inline scripting + DOM-based reactivity</td></tr>
+    <tr><td><code>paxi.js</code></td><td>0.6 KB</td><td>DOM morphing that preserves focus and form state</td></tr>
+    <tr><td><code>ssexi.js</code></td><td>1.4 KB</td><td>Streaming HTML over Server-Sent Events</td></tr>
+    <tr><td><code>rexi.js</code></td><td>1.4 KB</td><td>Ergonomic <code>fetch()</code> wrappers</td></tr>
   </tbody>
 </table>
 
-<p><strong>24 languages:</strong> Arabic, Bengali, Chinese, English, French, German, Hebrew, Hindi, Indonesian, Italian, Japanese, Korean, Malay, Polish, Portuguese, Quechua, Russian, Spanish, Swahili, Tagalog, Thai, Turkish, Ukrainian, Vietnamese.</p>
+<h3>Install</h3>
+
+<p>The all-in-one bundle is 4.5 KB compressed:</p>
+
+<pre><code>&lt;script src="https://cdn.jsdelivr.net/npm/the-fixi-project@0.1.1/dist/the-fixi-project.min.js"&gt;&lt;/script&gt;</code></pre>
+
+<p>Or via npm:</p>
+
+<pre><code>npm install the-fixi-project</code></pre>
+
+<p>All five libraries are <strong>BSD-0 Licensed</strong> and published on GitHub.</p>
+
+<p class="attribution">Adapted from <a href="https://fixiproject.org/" target="_blank" rel="noopener">fixiproject.org</a>.</p>

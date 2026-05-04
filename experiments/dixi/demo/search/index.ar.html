@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<title>وثائق HyperFixi — عرض dixi M2.5</title>
+<title>مشروع Fixi — عرض dixi M2.5</title>
 <link rel="stylesheet" href="search.css">
 
 <!-- dixi يعيد كتابة أسماء سمات fx-* و on-* المعربة قبل أن تقرأها fixi/moxi -->
@@ -16,7 +16,7 @@
 
 <header class="top">
   <button class="toggle" on-نقر="document.body.classList.toggle('sidebar-collapsed')" aria-label="تبديل الشريط الجانبي">☰</button>
-  <h1>وثائق HyperFixi</h1>
+  <h1>مشروع Fixi</h1>
   <nav class="locales" aria-label="اللغة">
     <a href="index.en.html">EN</a>
     <a href="index.es.html">ES</a>
@@ -32,14 +32,14 @@
         on-إدخال="let v = event.target.value.toLowerCase(); for (let li of q('.doc-item')) li.hidden = v &amp;&amp; !li.textContent.toLowerCase().includes(v);">
     </div>
     <ul class="doc-list">
-      <li class="doc-item"><button fx-إجراء="docs/about.html"           fx-هدف="#content" fx-تبديل="innerHTML">نظرة عامة</button></li>
-      <li class="doc-item"><button fx-إجراء="docs/architecture.html"    fx-هدف="#content" fx-تبديل="innerHTML">البنية</button></li>
-      <li class="doc-item"><button fx-إجراء="docs/bundles.html"         fx-هدف="#content" fx-تبديل="innerHTML">الحزم</button></li>
-      <li class="doc-item"><button fx-إجراء="docs/api-v2.html"          fx-هدف="#content" fx-تبديل="innerHTML">واجهة برمجة v2</button></li>
-      <li class="doc-item"><button fx-إجراء="docs/examples-dom.html"    fx-هدف="#content" fx-تبديل="innerHTML">أمثلة DOM</button></li>
-      <li class="doc-item"><button fx-إجراء="docs/examples-events.html" fx-هدف="#content" fx-تبديل="innerHTML">أمثلة الأحداث</button></li>
-      <li class="doc-item"><button fx-إجراء="docs/semantic-intro.html"  fx-هدف="#content" fx-تبديل="innerHTML">العقد الدلالية</button></li>
-      <li class="doc-item"><button fx-إجراء="docs/vite-quick.html"      fx-هدف="#content" fx-تبديل="innerHTML">إضافة Vite</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/about.html" fx-هدف="#content" fx-تبديل="innerHTML">نظرة عامة</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/tour.html"  fx-هدف="#content" fx-تبديل="innerHTML">المكتبات</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/fixi.html"  fx-هدف="#content" fx-تبديل="innerHTML">fixi.js</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/moxi.html"  fx-هدف="#content" fx-تبديل="innerHTML">moxi.js</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/paxi.html"  fx-هدف="#content" fx-تبديل="innerHTML">paxi.js</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/ssexi.html" fx-هدف="#content" fx-تبديل="innerHTML">ssexi.js</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/rexi.html"  fx-هدف="#content" fx-تبديل="innerHTML">rexi.js</button></li>
+      <li class="doc-item"><button fx-إجراء="docs/demos.html" fx-هدف="#content" fx-تبديل="innerHTML">عروض</button></li>
     </ul>
   </aside>
 

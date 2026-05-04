@@ -1,0 +1,31 @@
+<h2>ssexi.js</h2>
+
+<p><code>ssexi.js</code> extends fixi with Server-Sent Events support, enabling long-lived HTTP streams where servers push HTML to browsers. ssexi <strong>adds no new attributes of its own</strong>; it integrates with fixi's existing request system and treats responses with <code>Content-Type: text/event-stream</code> as live streams.</p>
+
+<h3>How it works with fixi</h3>
+
+<p>Rather than introducing new markup, ssexi leverages fixi's established attributes. Incoming SSE messages are swapped into elements using the standard <code>fx-target</code> and <code>fx-swap</code> properties. Existing fixi functionality — modifiers, lifecycle events, transitions — applies without learning new syntax.</p>
+
+<h3>Lifecycle events</h3>
+
+<ul>
+  <li><code>fx:sse:open</code> — stream detected and starting</li>
+  <li><code>fx:sse:message</code> — fires before each swap</li>
+  <li><code>fx:sse:swapped</code> — after insertion, useful for auto-scroll</li>
+  <li><code>fx:sse:close</code> — stream ended normally</li>
+  <li><code>fx:sse:error</code> — error during streaming</li>
+</ul>
+
+<p>Custom event names (non-JSON SSE events) trigger <code>fx:sse:&lt;eventName&gt;</code> events.</p>
+
+<h3>Example</h3>
+
+<p>A live-updating feed that appends each message:</p>
+
+<pre><code>&lt;div fx-trigger="fx:init"
+     fx-action="/feed"
+     fx-swap="beforeend"&gt;&lt;/div&gt;</code></pre>
+
+<p>The server responds with <code>text/event-stream</code>, emitting <code>data:</code> messages that append to the div as they arrive.</p>
+
+<p class="attribution">Adapted from <a href="https://fixiproject.org/ssexi.html" target="_blank" rel="noopener">fixiproject.org/ssexi.html</a>.</p>

@@ -1,0 +1,41 @@
+<h2>moxi.js</h2>
+
+<p><code>moxi.js</code> is the client-side scripting component of the fixi project — a small companion that lets you write inline JavaScript handlers and DOM-reactive expressions without ceremony.</p>
+
+<h3>Attributes</h3>
+
+<ul>
+  <li><code>on-&lt;event&gt;</code> — runs JavaScript when the named event fires on the element.</li>
+  <li><code>live</code> — re-evaluates JavaScript when DOM or form state changes.</li>
+</ul>
+
+<h3>Modifiers</h3>
+
+<p>Handlers chain modifiers via dots: <code>on-click.prevent.stop="…"</code></p>
+
+<ul>
+  <li><code>.prevent</code> / <code>.stop</code> / <code>.halt</code> — control event propagation</li>
+  <li><code>.once</code> — fires only on first occurrence</li>
+  <li><code>.self</code> — skip events bubbled from descendants</li>
+  <li><code>.outside</code> — fires only for events outside the element</li>
+  <li><code>.capture</code> / <code>.passive</code> — addEventListener options</li>
+  <li><code>.cc</code> — convert event name to camelCase (web components)</li>
+</ul>
+
+<h3>Globals</h3>
+
+<ul>
+  <li><code>q(x)</code> — query selector returning a proxy with collection methods</li>
+  <li><code>wait(x)</code> — promise resolving after milliseconds or a named event</li>
+  <li><code>transition(fn)</code> — wraps in the View Transition API</li>
+  <li><code>trigger</code> / <code>debounce</code> — handler-scoped helpers</li>
+</ul>
+
+<h3>Example</h3>
+
+<pre><code>&lt;input id="name" placeholder="type your name"&gt;
+&lt;output live="this.innerText = q('#name').value
+  ? 'hello ' + q('#name').value : ''"&gt;&lt;/output&gt;
+&lt;button on-click="q('#name').value = ''"&gt;clear&lt;/button&gt;</code></pre>
+
+<p class="attribution">Adapted from <a href="https://fixiproject.org/moxi.html" target="_blank" rel="noopener">fixiproject.org/moxi.html</a>.</p>

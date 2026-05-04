@@ -114,8 +114,9 @@ async function phaseB(locale) {
   const firstItemAttrs = await grab(page, '.doc-item:first-child button');
   const itemCount = await page.locator('.doc-item').count();
 
-  // Search filter: typing 'v2' should leave only 1 item visible (API v2).
-  await page.fill('.search input', 'v2');
+  // Search filter: 'ssexi' should leave only 1 item visible (ssexi.js item).
+  // Library names are proper nouns and stay 'ssexi.js' across all locales.
+  await page.fill('.search input', 'ssexi');
   await page.waitForTimeout(150);
   const visibleAfterFilter = await page.locator('.doc-item:not([hidden])').count();
 
@@ -132,7 +133,7 @@ async function phaseB(locale) {
   await page.waitForTimeout(150);
   const collapsedAfter2 = await page.evaluate(() => document.body.classList.contains('sidebar-collapsed'));
 
-  // Click the 4th item (API v2 in all locales) → fragment swaps in.
+  // Click the 4th item (moxi.js in all locales) → fragment swaps in.
   await page.click('.doc-item:nth-child(4) button');
   await page.waitForTimeout(800);
   const contentText = (await page.textContent('#content')).trim();
@@ -143,11 +144,11 @@ async function phaseB(locale) {
     [() => toggleAttrs && toggleAttrs['on-click'] !== undefined, `${tag} toggle button missing on-click after rewrite`],
     [() => inputAttrs && inputAttrs['on-input'] !== undefined, `${tag} search input missing on-input after rewrite`],
     [() => firstItemAttrs && firstItemAttrs['fx-action'] && firstItemAttrs['fx-target'] === '#content', `${tag} first doc item missing canonical fx-* after rewrite`],
-    [() => visibleAfterFilter === 1, `${tag} search 'v2' should show 1 item, got ${visibleAfterFilter}`],
+    [() => visibleAfterFilter === 1, `${tag} search 'ssexi' should show 1 item, got ${visibleAfterFilter}`],
     [() => visibleAfterClear === 8, `${tag} clearing search should show 8 items, got ${visibleAfterClear}`],
     [() => collapsedAfter1 === true, `${tag} sidebar toggle did not add 'sidebar-collapsed' class`],
     [() => collapsedAfter2 === false, `${tag} sidebar toggle did not remove 'sidebar-collapsed' class on 2nd click`],
-    [() => contentText.includes('API v2 reference'), `${tag} clicking API v2 did not load fragment ('${contentText.slice(0, 60)}...')`],
+    [() => contentText.includes('moxi'), `${tag} clicking moxi.js did not load fragment ('${contentText.slice(0, 60)}...')`],
     [() => errors.length === 0, `${tag} ${errors.length} runtime errors`],
   ];
   for (const [t, msg] of checks) if (!t()) failures.push(msg);

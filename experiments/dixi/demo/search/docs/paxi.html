@@ -1,0 +1,29 @@
+<h2>paxi.js</h2>
+
+<p><code>paxi.js</code> (0.6 KB Brotli) is a tiny morphing library that swaps HTML into the DOM by reconciling the old tree with the new one rather than replacing wholesale. This preserves focus, caret position, scroll offset, and form data during updates.</p>
+
+<h3>API</h3>
+
+<p>paxi adds <strong>no new attributes of its own</strong>. Integration points are:</p>
+
+<ul>
+  <li><code>fx-swap="morph"</code> on a fixi-powered element to enable morphing for that swap.</li>
+  <li><code>window.morph(target, html)</code> for standalone use outside fixi — works with HTML from any source: local state, JSON APIs, WebSocket messages.</li>
+</ul>
+
+<p>Loaded alongside fixi, paxi automatically registers as the <code>morph</code> swap strategy. You can set morphing as the default app-wide via <code>fixiCfg</code>.</p>
+
+<h3>Example</h3>
+
+<p>Reload a profile section while preserving an in-progress nickname input:</p>
+
+<pre><code>&lt;button fx-action="/profile" fx-target="#profile" fx-swap="morph"&gt;
+  Reload profile
+&lt;/button&gt;
+&lt;form id="profile"&gt;
+  &lt;input id="nickname" placeholder="text survives the swap"&gt;
+&lt;/form&gt;</code></pre>
+
+<p>ID-keyed reconciliation preserves the input's value, focus, and selection across the swap.</p>
+
+<p class="attribution">Adapted from <a href="https://fixiproject.org/paxi.html" target="_blank" rel="noopener">fixiproject.org/paxi.html</a>.</p>

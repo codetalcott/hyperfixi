@@ -158,6 +158,18 @@ main.content > .placeholder {
   font-style: italic;
 }
 
+main.content .attribution {
+  margin-top: 1.5rem;
+  padding-top: .6rem;
+  border-top: 1px solid #eee;
+  font-size: .8rem;
+  color: #888;
+}
+main.content .attribution a { color: #666; }
+
+main.content dl dt { margin-top: .5rem; }
+main.content dl dd { margin: .15rem 0 .35rem 1.25rem; }
+
 /* --- RTL adjustments --- */
 [dir="rtl"] header.top nav.locales { margin-inline-start: auto; }
 [dir="rtl"] ul.doc-list button { border-inline-start: 3px solid transparent; }

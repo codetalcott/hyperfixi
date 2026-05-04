@@ -1,0 +1,26 @@
+<h2>rexi.js</h2>
+
+<p><code>rexi.js</code> is a fluent wrapper around the browser's <code>fetch()</code> API for making JSON API calls from JavaScript. Unlike fixi (which handles server-driven HTML swaps via attributes), rexi targets <em>scripting</em> contexts with a chainable, promise-based interface.</p>
+
+<h3>API</h3>
+
+<p>Six HTTP-verb shortcuts: <code>get()</code>, <code>head()</code>, <code>post()</code>, <code>put()</code>, <code>patch()</code>, and <code>del()</code> (delete is a reserved keyword). Each follows <code>verb(url, body?, opts?)</code> with intelligent body normalization for FormData, HTML form elements, plain objects (sent as JSON), strings, and other standard types.</p>
+
+<h3>Differences from native <code>fetch()</code></h3>
+
+<ul>
+  <li>Decorated promises with chainable parsers — <code>.json()</code>, <code>.text()</code>, <code>.html()</code>, <code>.blob()</code> — eliminating the double-await dance.</li>
+  <li>Non-2xx responses throw errors carrying <code>.status</code> and <code>.response</code>.</li>
+  <li>Automatic body normalization based on input type.</li>
+  <li>Built-in lifecycle events <code>rexi:before</code> / <code>rexi:after</code> for global request interception.</li>
+</ul>
+
+<h3>Example</h3>
+
+<pre><code>let user = await get("/api/me").json()
+await post("/api/login", document.forms.login)
+await post("/api/users", { name: "Ada" })</code></pre>
+
+<p>Form submission auto-detects the form element and serializes appropriately. Plain objects are JSON-encoded by default.</p>
+
+<p class="attribution">Adapted from <a href="https://fixiproject.org/rexi.html" target="_blank" rel="noopener">fixiproject.org/rexi.html</a>.</p>
