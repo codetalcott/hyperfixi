@@ -1,18 +1,20 @@
 /**
  * `intercept "<scope>" ... end` — top-level feature parser + evaluator.
  *
- * Grammar (v1 — string-literal URLs only):
+ * Grammar (v2.1):
  *
- *   intercept "<scope>"
- *     precache "<url>"[, "<url>"]* [as "<version>"]
- *     on "<pattern>"[, "<pattern>"]* use <strategy>
+ *   intercept <scope>
+ *     precache <url>[, <url>]* [as "<version>"]
+ *     on <pattern>[, <pattern>]* use <strategy>
  *     on ...                                       (any number)
- *     offline fallback "<url>"
+ *     offline fallback <url>
  *   end
  *
- * Upstream (`_hyperscript/src/ext/intercept.js`) also supports naked paths
- * via `consumeNakedPath` — deferred to v2. String literals are unambiguous
- * and cover the same use cases.
+ * Where `<scope>`, `<url>`, `<pattern>` accept either a quoted string
+ * (`"/api/*"`) or a naked path (`/api/*`). Naked paths are reassembled from
+ * the underlying token stream within the intercept block — `/`, identifiers,
+ * `.`, `*`, `-`, `_`. Path consumption stops at clause keywords (`as`, `use`,
+ * `end`, `precache`, `on`, `offline`, `fallback`) and at the `,` separator.
  *
  * The entire config is built at parse time (no runtime expressions). The
  * evaluator just hands the config to `registerSW()` which takes care of
@@ -87,6 +89,88 @@ function consumeString(ctx: ParserCtx, role: string): string {
   return unquote(tok.value);
 }
 
+/**
+ * Operator tokens that can appear inside a naked path. Anything else (notably
+ * `,`) ends the path and lets the surrounding clause continue.
+ */
+const PATH_OPERATORS = new Set(['/', '.', '*', '-', '_']);
+
+/**
+ * Identifier tokens that signal the end of a naked path — these are clause
+ * keywords or block terminators, never path components.
+ */
+const PATH_STOP_IDENTS = new Set(['as', 'use', 'end', 'precache', 'on', 'offline', 'fallback']);
+
+/**
+ * Consume either a quoted string or a naked path token sequence and return
+ * the URL/pattern as a single string. Naked paths look like `/api/*` —
+ * a sequence of `/`, identifiers, `.`, `*`, `-`, `_` reassembled by their
+ * raw token values.
+ *
+ * Two stop conditions:
+ *   1. **Adjacency** — once consumption starts, the path continues only as
+ *      long as the next token is positioned immediately after the previous
+ *      one (no whitespace gap). Whitespace ends the path. This lets paths
+ *      contain identifiers that happen to share names with clause keywords
+ *      (e.g., `/offline.html`) without prematurely terminating.
+ *   2. **First-token guard** — if the very first token is itself a clause
+ *      keyword (`as`, `use`, `end`, `precache`, `on`, `offline`, `fallback`),
+ *      we stop immediately so the surrounding parser can dispatch to the
+ *      correct clause handler.
+ */
+function consumeStringOrPath(ctx: ParserCtx, role: string): string {
+  const first = ctx.peek();
+  if (first.kind === 'string') {
+    ctx.advance();
+    return unquote(first.value);
+  }
+
+  let path = '';
+  let consumed = false;
+  let lastEnd: number | undefined;
+
+  while (!ctx.isAtEnd()) {
+    const tok = ctx.peek();
+
+    // Adjacency: once we've started, demand contiguous tokens. Tokens with
+    // unspecified positions degrade gracefully (treated as adjacent).
+    if (consumed && lastEnd !== undefined && tok.start !== undefined && tok.start !== lastEnd) {
+      break;
+    }
+
+    if (tok.kind === 'identifier') {
+      if (!consumed && PATH_STOP_IDENTS.has(tok.value.toLowerCase())) break;
+      path += tok.value;
+      ctx.advance();
+      consumed = true;
+      lastEnd = tok.end;
+      continue;
+    }
+    if (tok.kind === 'operator') {
+      if (!PATH_OPERATORS.has(tok.value)) break;
+      path += tok.value;
+      ctx.advance();
+      consumed = true;
+      lastEnd = tok.end;
+      continue;
+    }
+    if (tok.kind === 'number') {
+      path += tok.value;
+      ctx.advance();
+      consumed = true;
+      lastEnd = tok.end;
+      continue;
+    }
+    break;
+  }
+  if (!consumed) {
+    throw new Error(
+      `intercept: expected a quoted string or naked path (${role}), got ${first.kind} '${first.value}'`
+    );
+  }
+  return path;
+}
+
 /** Consume a comma (operator token). */
 function matchComma(ctx: ParserCtx): boolean {
   return ctx.matchOperator(',');
@@ -100,8 +184,8 @@ export function parseInterceptFeature(ctxAny: unknown, tokenAny: unknown): ASTNo
   const ctx = ctxAny as ParserCtx;
   const startToken = tokenAny as ParseToken;
 
-  // Scope — required first argument.
-  const scope = consumeString(ctx, 'scope');
+  // Scope — required first argument. Accepts string or naked path.
+  const scope = consumeStringOrPath(ctx, 'scope');
 
   const config: InterceptConfig = {
     scope,
@@ -142,10 +226,12 @@ export function parseInterceptFeature(ctxAny: unknown, tokenAny: unknown): ASTNo
 
 function parsePrecacheClause(ctx: ParserCtx, config: InterceptConfig): void {
   const urls: string[] = [];
-  urls.push(consumeString(ctx, 'precache URL'));
-  while (matchComma(ctx)) urls.push(consumeString(ctx, 'precache URL'));
+  urls.push(consumeStringOrPath(ctx, 'precache URL'));
+  while (matchComma(ctx)) urls.push(consumeStringOrPath(ctx, 'precache URL'));
 
   let version: string | null = null;
+  // The version is always quoted — naked paths don't make sense here, and
+  // restricting to strings keeps the grammar unambiguous after `as`.
   if (ctx.match('as')) version = consumeString(ctx, 'precache version');
 
   config.precache = { urls, version };
@@ -153,8 +239,8 @@ function parsePrecacheClause(ctx: ParserCtx, config: InterceptConfig): void {
 
 function parseRouteClause(ctx: ParserCtx, config: InterceptConfig): void {
   const patterns: string[] = [];
-  patterns.push(consumeString(ctx, 'route pattern'));
-  while (matchComma(ctx)) patterns.push(consumeString(ctx, 'route pattern'));
+  patterns.push(consumeStringOrPath(ctx, 'route pattern'));
+  while (matchComma(ctx)) patterns.push(consumeStringOrPath(ctx, 'route pattern'));
 
   if (!ctx.match('use')) {
     throw new Error("intercept: expected 'use' after route patterns");
@@ -168,7 +254,7 @@ function parseOfflineClause(ctx: ParserCtx, config: InterceptConfig): void {
   if (!ctx.match('fallback')) {
     throw new Error("intercept: expected 'fallback' after 'offline'");
   }
-  config.offlineFallback = consumeString(ctx, 'offline fallback URL');
+  config.offlineFallback = consumeStringOrPath(ctx, 'offline fallback URL');
 }
 
 function consumeStrategy(ctx: ParserCtx): Strategy {

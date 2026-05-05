@@ -68,4 +68,70 @@ describe('caret-var storage', () => {
     expect(r.readCaret(parent, 'pinned')).toBe('yes');
     expect(r.readCaret(child, 'pinned')).toBe('yes'); // inherits
   });
+
+  describe('dom-scope="isolated" boundary', () => {
+    it('read stops at an isolation boundary that does not define the var', () => {
+      const outer = document.createElement('div');
+      const boundary = document.createElement('article');
+      boundary.setAttribute('dom-scope', 'isolated');
+      const inner = document.createElement('span');
+      outer.appendChild(boundary);
+      boundary.appendChild(inner);
+
+      r.writeCaret(outer, 'theme', 'dark');
+      // Inner can't see outer's theme — boundary blocks the walk.
+      expect(r.readCaret(inner, 'theme')).toBeUndefined();
+      expect(r.readCaret(boundary, 'theme')).toBeUndefined();
+      // Outer itself is unaffected.
+      expect(r.readCaret(outer, 'theme')).toBe('dark');
+    });
+
+    it('boundary itself can define the var (read returns boundary value)', () => {
+      const outer = document.createElement('div');
+      const boundary = document.createElement('article');
+      boundary.setAttribute('dom-scope', 'isolated');
+      const inner = document.createElement('span');
+      outer.appendChild(boundary);
+      boundary.appendChild(inner);
+
+      r.writeCaret(outer, 'theme', 'dark');
+      r.writeCaret(boundary, 'theme', 'light', boundary);
+      // Inner sees boundary's local theme; outer's is shadowed.
+      expect(r.readCaret(inner, 'theme')).toBe('light');
+      expect(r.readCaret(boundary, 'theme')).toBe('light');
+      expect(r.readCaret(outer, 'theme')).toBe('dark');
+    });
+
+    it('write from inside boundary falls back to lookupRoot when no owner is reachable', () => {
+      const outer = document.createElement('div');
+      const boundary = document.createElement('article');
+      boundary.setAttribute('dom-scope', 'isolated');
+      const inner = document.createElement('span');
+      outer.appendChild(boundary);
+      boundary.appendChild(inner);
+
+      // Outer has count, but inner is inside the boundary — write from inner
+      // should NOT reach outer; it should land on inner (lookupRoot fallback).
+      r.writeCaret(outer, 'count', 99);
+      r.writeCaret(inner, 'count', 1);
+      expect(r.readCaret(inner, 'count')).toBe(1);
+      // Inner's value is on inner itself; outer's stays.
+      expect(r.readCaret(outer, 'count')).toBe(99);
+    });
+
+    it('two sibling boundaries hold independent ^var state', () => {
+      const root = document.createElement('div');
+      const a = document.createElement('article');
+      a.setAttribute('dom-scope', 'isolated');
+      const b = document.createElement('article');
+      b.setAttribute('dom-scope', 'isolated');
+      root.appendChild(a);
+      root.appendChild(b);
+
+      r.writeCaret(a, 'count', 1);
+      r.writeCaret(b, 'count', 2);
+      expect(r.readCaret(a, 'count')).toBe(1);
+      expect(r.readCaret(b, 'count')).toBe(2);
+    });
+  });
 });

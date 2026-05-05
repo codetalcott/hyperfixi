@@ -24,7 +24,7 @@
  * componentsPlugin.scan(document);
  * ```
  *
- * v2 scope:
+ * v2.1 scope:
  *   - `<template component="tag-name">` scan + customElements.define
  *   - `${attrs.name}` and `${^var}` interpolation (kebab-case attribute →
  *     camelCase prop, with Number/Boolean coercion)
@@ -33,16 +33,23 @@
  *   - Per-instance init script — `<template _="set ^count to 0">` (or `_=`
  *     on the upstream `<script type="text/hyperscript-template">` form) runs
  *     once on each instance via the runtime's standard init mechanism
+ *   - `attrs` available as a hyperscript local inside the init script — so
+ *     `_="set ^user to attrs.data as JSON"` works (descendants don't see
+ *     attrs; copy via ^vars during init if needed)
  *   - `<slot/>` + `<slot name="X"/>` substitution from instantiation children
+ *   - `#if` / `#for` / `#else` / `#end` template directives
+ *   - `dom-scope="isolated"` boundary auto-set on each instance — nested
+ *     components don't leak `^var` reads/writes through each other
+ *   - `<style>` blocks lifted into <head> wrapped in `@scope (tag-name)` so
+ *     styles only apply within instances of that tag
  *   - disconnectedCallback fires CleanupRegistry teardown
  *   - MutationObserver watches for dynamically-added templates
  *
- * v2.1 plans (deferred):
- *   - `attrs.X` available inside hyperscript expressions (currently only
- *     resolves inside `${...}` interpolation)
- *   - `#if` / `#for` / `#else` / `#end` template directives
- *   - Style scoping (@scope (tag-name) ...)
- *   - dom-scope isolation for `^var` boundaries
+ * v2.2+ deferred:
+ *   - `#continue` directive in `#for` loops
+ *   - Reactive array mutation auto-tracking (matches upstream's known limit)
+ *   - Full parent-scope hyperscript evaluation of attribute values (today
+ *     `attrs.X` returns the raw string; users `as JSON` to parse)
  */
 
 import type { HyperfixiPlugin, HyperfixiPluginContext } from '@hyperfixi/core';

@@ -13,6 +13,7 @@ import { Runtime, installPlugin, getParserExtensionRegistry } from '@hyperfixi/c
 import { reactivityPlugin, reactive } from '@hyperfixi/reactivity';
 import { componentsPlugin, registerTemplateComponent } from './index';
 import { _resetRegisteredForTest } from './register';
+import { _resetInjectedStylesForTest } from './scope-css';
 
 /** Drain microtasks + the setTimeout queue so reactive effects settle. */
 async function settle(): Promise<void> {
@@ -34,12 +35,14 @@ describe('@hyperfixi/components — integration', () => {
   beforeEach(() => {
     baseline = registry.snapshot();
     _resetRegisteredForTest();
+    _resetInjectedStylesForTest();
   });
 
   afterEach(() => {
     registry.restore(baseline);
     // Clean up any test-added elements from <body>.
     document.body.innerHTML = '';
+    _resetInjectedStylesForTest();
   });
 
   it('registers a template component and stamps its content on instantiation', () => {
@@ -301,6 +304,84 @@ describe('@hyperfixi/components — integration', () => {
       expect(instance.innerHTML).toContain('Clicks: 3');
     });
 
+    it('init script can read attrs.X as a hyperscript local', async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.setAttribute('_', 'set ^title to attrs.title');
+      tmpl.innerHTML = '<h3>${^title}</h3>';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      instance.setAttribute('title', 'Hello, attrs!');
+      document.body.appendChild(instance);
+      await settle();
+
+      expect(instance.innerHTML).toContain('Hello, attrs!');
+    });
+
+    it("descendants' _= attributes do not see attrs (design choice — copy via ^vars)", async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      // Init copies attrs.label into ^label so descendants can read it.
+      tmpl.setAttribute('_', 'set ^label to attrs.label');
+      tmpl.innerHTML = '<button _="on click set my textContent to ^label">click</button>';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      instance.setAttribute('label', 'Saved!');
+      document.body.appendChild(instance);
+      await settle();
+
+      const button = instance.querySelector('button')!;
+      button.click();
+      await settle();
+      expect(button.textContent).toBe('Saved!');
+    });
+
+    it("nested components don't leak ^vars across the dom-scope boundary", async () => {
+      const outerTag = uniqueTag('outer-counter');
+      const innerTag = uniqueTag('inner-counter');
+
+      const outerTmpl = document.createElement('template');
+      outerTmpl.setAttribute('component', outerTag);
+      outerTmpl.setAttribute('_', 'set ^count to 99');
+      outerTmpl.innerHTML = `<span class="outer">outer:\${^count}</span><${innerTag}></${innerTag}>`;
+      document.body.appendChild(outerTmpl);
+
+      const innerTmpl = document.createElement('template');
+      innerTmpl.setAttribute('component', innerTag);
+      // Note: NO init script — inner doesn't define ^count.
+      innerTmpl.innerHTML = '<span class="inner">inner:${^count}</span>';
+      document.body.appendChild(innerTmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const outer = document.createElement(outerTag);
+      document.body.appendChild(outer);
+      await settle();
+
+      // Outer renders with count=99.
+      expect(outer.querySelector('.outer')!.textContent).toBe('outer:99');
+      // Inner doesn't define ^count and the boundary blocks the walk —
+      // ${^count} resolves to undefined, which renders as empty string.
+      expect(outer.querySelector('.inner')!.textContent).toBe('inner:');
+    });
+
     it('isolated state: each instance has its own ^var storage', async () => {
       const tag = uniqueTag();
       const tmpl = document.createElement('template');
@@ -329,6 +410,70 @@ describe('@hyperfixi/components — integration', () => {
 
       expect(a.querySelector('.readout')!.textContent).toBe('2');
       expect(b.querySelector('.readout')!.textContent).toBe('0');
+    });
+  });
+
+  describe('v2.1: scoped CSS (@scope lifting)', () => {
+    it('lifts <style> blocks out of the template into <head> wrapped in @scope', () => {
+      const tag = uniqueTag();
+      document.body.innerHTML = `
+        <template component="${tag}">
+          <style>.btn { color: red; }</style>
+          <button class="btn">click</button>
+        </template>
+      `;
+      const runtime = new Runtime();
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const headStyle = document.head.querySelector(`style[data-component="${tag}"]`);
+      expect(headStyle).toBeTruthy();
+      expect(headStyle!.textContent).toContain(`@scope (${tag})`);
+      expect(headStyle!.textContent).toContain('.btn { color: red; }');
+
+      // Instance HTML should not include the original <style>.
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+      expect(instance.innerHTML).not.toContain('<style');
+      expect(instance.innerHTML).toContain('<button');
+    });
+
+    it('dedupes head injection when the same component is registered twice', () => {
+      const tag = uniqueTag();
+      document.body.innerHTML = `
+        <template component="${tag}"><style>.x{color:red}</style><p>p</p></template>
+      `;
+      const runtime = new Runtime();
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+      componentsPlugin.scan(document); // second scan — already registered
+
+      const matches = document.head.querySelectorAll(`style[data-component="${tag}"]`);
+      expect(matches.length).toBe(1);
+    });
+
+    it('emits distinct head styles for distinct components', () => {
+      const a = uniqueTag('hf-a');
+      const b = uniqueTag('hf-b');
+      document.body.innerHTML = `
+        <template component="${a}"><style>.a{}</style><p/></template>
+        <template component="${b}"><style>.b{}</style><p/></template>
+      `;
+      const runtime = new Runtime();
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      expect(document.head.querySelector(`style[data-component="${a}"]`)).toBeTruthy();
+      expect(document.head.querySelector(`style[data-component="${b}"]`)).toBeTruthy();
+    });
+
+    it('does nothing when the template has no <style>', () => {
+      const tag = uniqueTag();
+      document.body.innerHTML = `<template component="${tag}"><p>plain</p></template>`;
+      const runtime = new Runtime();
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+      expect(document.head.querySelector(`style[data-component="${tag}"]`)).toBeNull();
     });
   });
 

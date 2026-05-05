@@ -1442,6 +1442,14 @@ const SEED_EXAMPLES: SeedExample[] = [
     engine: 'both',
   },
   {
+    id: 'component-with-attrs',
+    title: 'Component: Attrs Into ^var',
+    raw_code: '<script type="text/hyperscript-template" component="user-card" _="set ^user to attrs.data as JSON">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
+    description: 'Component reading attrs.data (JSON-encoded) into ^user via init script',
+    feature: 'components',
+    engine: 'both',
+  },
+  {
     id: 'component-with-slots',
     title: 'Component: Default And Named Slots',
     raw_code: '<script type="text/hyperscript-template" component="my-layout">\n  <header><slot name="title"/></header>\n  <main><slot/></main>\n  <footer><slot name="footer"/></footer>\n</script>',
@@ -1453,12 +1461,12 @@ const SEED_EXAMPLES: SeedExample[] = [
   // ==========================================================================
   // Service Workers — intercept (declarative caching DSL)
   // Runs in HyperFixi when @hyperfixi/intercept plugin is installed.
-  // Note: HyperFixi v1 of intercept requires string-literal URLs (not naked paths).
+  // Both naked paths and quoted URLs are accepted (v2.1+).
   // ==========================================================================
   {
     id: 'intercept-cache-strategies',
     title: 'Intercept: Cache Strategies',
-    raw_code: 'intercept "/" precache "/", "/style.css", "/app.js" as "v1" on "/api/*" use network-first on "*.css", "*.js" use cache-first on "*" use stale-while-revalidate offline fallback "/offline.html" end',
+    raw_code: 'intercept / precache /, /style.css, /app.js as "v1" on /api/* use network-first on *.css, *.js use cache-first on * use stale-while-revalidate offline fallback /offline.html end',
     description: 'Service worker DSL with precaching, per-route strategies, and offline fallback',
     feature: 'service-workers',
     engine: 'both',

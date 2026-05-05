@@ -323,14 +323,25 @@ export class Reactive {
   // ---------------------------------------------------------------------------
 
   /**
+   * Whether `el` is a `dom-scope="isolated"` boundary. Walks of `^var`
+   * lookups stop at boundary elements that don't define the var, so nested
+   * components don't accidentally read or write each other's state.
+   */
+  private isIsolationBoundary(el: Element): boolean {
+    return typeof el.getAttribute === 'function' && el.getAttribute('dom-scope') === 'isolated';
+  }
+
+  /**
    * Walk up the DOM tree from `lookupRoot`, returning the first element whose
-   * state has `name` defined. Returns `null` if no owner is found.
+   * state has `name` defined. Stops at any `dom-scope="isolated"` boundary
+   * that doesn't itself define the var. Returns `null` if no owner is found.
    */
   private findCaretOwner(lookupRoot: Element, name: string): Element | null {
     let el: Element | null = lookupRoot;
     while (el) {
       const state = this.elementState.get(el);
       if (state && state.caretVars.has(name)) return el;
+      if (this.isIsolationBoundary(el)) return null;
       el = el.parentElement;
     }
     return null;
@@ -339,12 +350,10 @@ export class Reactive {
   /**
    * Read a DOM-scoped variable. Walks up from `lookupRoot`, tracking each
    * element visited as an `element` dep (so writes at any ancestor notify
-   * dependent effects).
+   * dependent effects). Stops at any `dom-scope="isolated"` boundary that
+   * doesn't itself define the var.
    */
   readCaret(lookupRoot: Element, name: string): unknown {
-    // Track every element in the lookup chain as a dep — that way writes at
-    // any ancestor notify. Stop at the resolver to avoid tracking unrelated
-    // ancestors.
     let el: Element | null = lookupRoot;
     while (el) {
       this.trackElement(el, name);
@@ -352,6 +361,7 @@ export class Reactive {
       if (state && state.caretVars.has(name)) {
         return state.caretVars.get(name);
       }
+      if (this.isIsolationBoundary(el)) return undefined;
       el = el.parentElement;
     }
     return undefined;

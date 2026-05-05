@@ -14,20 +14,23 @@
  *     to the host element so the runtime processes it once via its standard
  *     init mechanism
  *
- * Deferred to v2.1+:
- *   - `attrs.X` available inside hyperscript expressions (currently only
- *     resolves inside `${...}` interpolation)
- *   - Style scoping (@scope)
- *   - Isolated dom-scope attribute for `^var` boundaries
- *   - `#if` / `#for` / `#else` / `#end` template directives (Track 2B)
+ * v2.1 additions:
+ *   - `attrs` injected as a hyperscript local inside the init script
+ *   - `dom-scope="isolated"` set on each instance host
+ *   - `<style>` blocks lifted into <head> as `@scope (tag-name) { ... }`
+ *
+ * Deferred (v2.2+):
+ *   - Reactive re-render of attrs (today attrs values are read at first
+ *     render; mutating an attribute on the host doesn't re-render)
  */
 
 import type { RuntimeLike } from './types';
 import { substituteSlots } from './slots';
 import { createAttrsProxy } from './attrs';
 import { reactive } from '@hyperfixi/reactivity';
-import { hyperscript } from '@hyperfixi/core';
+import { hyperscript, createContext } from '@hyperfixi/core';
 import { parseTemplate, renderTemplate, type TemplateNode } from './template-ast';
+import { extractStyles, injectScopedStyles } from './scope-css';
 
 /**
  * Module-level registry of tag names already defined. `customElements.define`
@@ -131,8 +134,16 @@ export function registerTemplateComponent(
   }
   REGISTERED.add(tagName);
 
-  const { html: templateSource, init: initSource } = readTemplate(templateEl);
+  const { html: rawTemplateSource, init: initSource } = readTemplate(templateEl);
   const runtime = options.runtime;
+
+  // Lift `<style>` blocks out of the template, scope them to this tag, and
+  // inject into <head>. The cleaned HTML (without the `<style>` blocks) is
+  // what each instance stamps. Idempotent — calling registerTemplateComponent
+  // a second time for the same tag is a no-op above; the style injection has
+  // its own data-component dedup so re-extraction is harmless either way.
+  const { html: templateSource, styles } = extractStyles(rawTemplateSource);
+  injectScopedStyles(tagName, styles);
 
   // Parse the template AST once at registration time. Each instance reuses
   // this AST and re-renders against its own scope.
@@ -145,6 +156,14 @@ export function registerTemplateComponent(
     connectedCallback() {
       if (this._initialized) return;
       this._initialized = true;
+
+      // Mark this instance as a `^var` isolation boundary so descendant
+      // caret-var reads/writes don't walk past it into the parent scope.
+      // Set BEFORE init runs so the init's own `set ^X to Y` writes land
+      // here (findCaretOwner stops at the boundary if no owner is found).
+      if (!this.hasAttribute('dom-scope')) {
+        this.setAttribute('dom-scope', 'isolated');
+      }
 
       // Capture slot content (innerHTML) BEFORE we stamp the template, so
       // children written in the page get inserted into `<slot/>` placeholders.
@@ -165,9 +184,18 @@ export function registerTemplateComponent(
       // Run init `_=` once via hyperscript.eval. We do NOT put it on the host
       // as an attribute — that would cause every subsequent reactive re-render
       // (which calls hyperscript.process(this)) to re-run init and reset state.
+      //
+      // We build the context manually so we can pre-populate `attrs` as a
+      // local. That makes the upstream pattern `set ^user to attrs.data`
+      // work — `attrs` is then resolvable as a hyperscript identifier inside
+      // the init script. (Descendants' `_=` attributes go through the
+      // standard process path and don't see `attrs` — by design; if you need
+      // attrs values in descendants, copy them into `^vars` during init.)
       if (initSource) {
         try {
-          void hyperscript.eval(initSource, this);
+          const initCtx = createContext(this);
+          initCtx.locals.set('attrs', attrs);
+          void hyperscript.eval(initSource, initCtx);
         } catch (err) {
           if (typeof console !== 'undefined') {
             console.error('[@hyperfixi/components] init script failed:', err);

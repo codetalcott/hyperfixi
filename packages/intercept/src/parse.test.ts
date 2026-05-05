@@ -145,9 +145,56 @@ describe('parseInterceptFeature', () => {
     });
   });
 
-  it('rejects a naked-path scope (v1 requires string literals)', () => {
-    const r = parse('intercept /\nend');
-    expect(r.success).toBe(false);
+  it('accepts a naked-path scope (v2.1)', () => {
+    const node = getFeature('intercept /\nend');
+    expect(node.config.scope).toBe('/');
+  });
+
+  it('parses precache with naked paths', () => {
+    const node = getFeature('intercept /\n  precache /, /style.css, /app.js as "v1"\nend');
+    expect(node.config.precache).toEqual({
+      urls: ['/', '/style.css', '/app.js'],
+      version: 'v1',
+    });
+  });
+
+  it('parses a route with naked-path patterns', () => {
+    const node = getFeature('intercept /\n  on /api/*, *.css use network-first\nend');
+    expect(node.config.routes).toEqual([
+      { patterns: ['/api/*', '*.css'], strategy: 'network-first' },
+    ]);
+  });
+
+  it('parses offline fallback with a naked path', () => {
+    const node = getFeature('intercept /\n  offline fallback /offline.html\nend');
+    expect(node.config.offlineFallback).toBe('/offline.html');
+  });
+
+  it('mixes quoted and naked paths in a single clause', () => {
+    const node = getFeature('intercept /\n  precache /, "/index.html", /style.css\nend');
+    expect(node.config.precache?.urls).toEqual(['/', '/index.html', '/style.css']);
+  });
+
+  it('parses a full upstream-canonical config with naked paths', () => {
+    const node = getFeature(
+      'intercept /\n' +
+        '  precache /, /style.css, /app.js as "v1"\n' +
+        '  on /api/* use network-first\n' +
+        '  on *.css, *.js use cache-first\n' +
+        '  on * use stale-while-revalidate\n' +
+        '  offline fallback /offline.html\n' +
+        'end'
+    );
+    expect(node.config).toEqual({
+      scope: '/',
+      precache: { urls: ['/', '/style.css', '/app.js'], version: 'v1' },
+      routes: [
+        { patterns: ['/api/*'], strategy: 'network-first' },
+        { patterns: ['*.css', '*.js'], strategy: 'cache-first' },
+        { patterns: ['*'], strategy: 'stale-while-revalidate' },
+      ],
+      offlineFallback: '/offline.html',
+    });
   });
 
   it('rejects intercept without a terminating end', () => {
