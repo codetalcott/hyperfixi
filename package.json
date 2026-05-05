@@ -89,7 +89,8 @@
     "serialize-javascript": "^7.0.3",
     "yauzl": "^3.2.1",
     "basic-ftp": "^5.3.0",
-    "follow-redirects": "^1.16.0"
+    "follow-redirects": "^1.16.0",
+    "axios": "^1.16.0"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
