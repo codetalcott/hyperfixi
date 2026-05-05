@@ -235,8 +235,8 @@
     "typecheck": "tsc --noEmit",
     "generate:grammar": "npx tsx scripts/generate-grammar.ts",
     "bundle:server": "esbuild ../language-server/src/server.ts --bundle --format=esm --outfile=dist/server.mjs --platform=node --external:@hyperfixi/core --alias:@lokascript/semantic=../../packages/semantic/src/index.ts --alias:@hyperfixi/core/lsp-metadata=../../packages/core/src/lsp-metadata.ts --banner:js=\"import {createRequire} from 'module';const require=createRequire(import.meta.url);\"",
-    "package": "vsce package --no-dependencies",
-    "publish": "vsce publish --no-dependencies"
+    "package": "npx --yes @vscode/vsce@^3.9.1 package --no-dependencies",
+    "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",
@@ -248,7 +248,6 @@
     "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "@vscode/vsce": "^3.9.1",
     "@lokascript/semantic": "*",
     "tsx": "^4.0.0"
   },

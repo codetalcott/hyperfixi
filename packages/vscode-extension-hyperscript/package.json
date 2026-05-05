@@ -202,8 +202,8 @@
     "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
     "bundle:server": "node build-server.mjs",
-    "package": "vsce package --no-dependencies",
-    "publish": "vsce publish --no-dependencies",
+    "package": "npx --yes @vscode/vsce@^3.9.1 package --no-dependencies",
+    "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies",
     "dev:install": "npm run compile && npm run bundle:server && node scripts/dev-install.mjs"
   },
   "dependencies": {
@@ -216,7 +216,6 @@
     "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "@vscode/vsce": "^3.9.1",
     "tsx": "^4.0.0"
   },
   "repository": {
