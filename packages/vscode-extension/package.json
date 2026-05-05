@@ -237,7 +237,7 @@
     "@types/node": "^20.0.0",
     "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0",
+    "typescript": "^6.0.3",
     "@vscode/vsce": "^3.9.1",
     "@lokascript/semantic": "*",
     "tsx": "^4.0.0"
