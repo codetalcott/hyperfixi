@@ -11,13 +11,19 @@
  * - 'lokascript': Full LokaScript extensions
  * - 'auto': Detect based on available packages
  *
- * This wrapper forces 'hyperscript' mode by setting the
- * HYPERSCRIPT_LS_DEFAULT_MODE environment variable before the
- * language server module initializes.
+ * This wrapper forces 'hyperscript' mode via HYPERSCRIPT_LS_DEFAULT_MODE.
+ * A dynamic import (not a static `import` declaration) is required: ESM
+ * hoists static imports above sibling statements, which would cause the
+ * underlying server to read the env var before it was set.
  */
 
-// Set the default mode before importing the server
 process.env.HYPERSCRIPT_LS_DEFAULT_MODE = 'hyperscript';
 
-// The language server starts itself on import (module-level execution)
-import '@lokascript/language-server';
+// Indirection through a variable specifier: the underlying server is a
+// side-effect-only entry point (no exports), so its emitted .d.ts isn't a
+// module. TypeScript only enforces the "is a module" check on dynamic
+// imports with literal-string specifiers, not variable specifiers.
+const serverModule = '@lokascript/language-server';
+await import(serverModule);
+
+export {};
