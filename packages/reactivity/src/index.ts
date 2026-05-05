@@ -27,7 +27,7 @@
 
 import type { HyperfixiPlugin, HyperfixiPluginContext } from '@hyperfixi/core';
 import { reactive } from './signals';
-import { parseCaretPrefix, evaluateCaretVar } from './caret-var';
+import { parseCaretPrefix, evaluateCaretVar, type CaretVarNode } from './caret-var';
 import { parseLiveFeature, makeEvaluateLiveFeature } from './live';
 import { parseWhenFeature, makeEvaluateWhenFeature } from './when';
 import { parseBindFeature, makeEvaluateBindFeature } from './bind';
@@ -76,14 +76,36 @@ export const reactivityPlugin: HyperfixiPlugin = {
     );
     parserExtensions.registerNodeEvaluator('caretVar', evaluateCaretVar as never);
 
+    // Caret-var write: lets the core `set` command dispatch `set ^X to Y`
+    // through `reactive.writeCaret`. Resolves `on <target>` clauses via the
+    // shared globalThis expression-evaluator hook below.
+    parserExtensions.registerNodeWriter('caretVar', async (node, value, ctx) => {
+      const n = node as CaretVarNode;
+      const context = ctx as { me?: Element | null };
+      const anchor: Element | null = context.me ?? null;
+      if (!anchor) return;
+      let target: Element | undefined;
+      if (n.onTarget) {
+        const resolver = (globalThis as Record<string, unknown>)
+          .__hyperfixi_reactivity_eval_expr as
+          | ((node: unknown, ctx: unknown) => Promise<unknown>)
+          | undefined;
+        if (resolver) {
+          const resolved = await resolver(n.onTarget, ctx);
+          if (resolved instanceof Element) target = resolved;
+        }
+      }
+      reactive.writeCaret(anchor, n.name, value, target);
+    });
+
     // Global-write hook: notify the reactive graph whenever `$name` is set.
-    parserExtensions.registerGlobalWriteHook((name, _value, _context) => {
+    parserExtensions.registerGlobalWriteHook((name: string, _value: unknown, _context: unknown) => {
       reactive.notifyGlobal(name);
     });
 
     // Global-read hook: track the read against the current effect (if any)
     // so effects re-run when the global changes.
-    parserExtensions.registerGlobalReadHook((name, _context) => {
+    parserExtensions.registerGlobalReadHook((name: string, _context: unknown) => {
       reactive.trackGlobal(name);
     });
 

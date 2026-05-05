@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Runtime } from '@hyperfixi/core';
+import { Runtime, hyperscript } from '@hyperfixi/core';
 import { parse } from '@hyperfixi/core';
 import { getParserExtensionRegistry, installPlugin } from '@hyperfixi/core';
 import type { ExecutionContext } from '@hyperfixi/core/src/types/core';
@@ -161,6 +161,102 @@ describe('@hyperfixi/reactivity — integration', () => {
   });
 
   describe('^name DOM-scoped vars', () => {
+    it('writes a caret var via `set ^X to Y`', async () => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const ctx = createContext(host);
+
+      const r = parse('set ^count to 5');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(5);
+
+      document.body.removeChild(host);
+    });
+
+    it('mutates a caret var via `increment ^X`', async () => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const ctx = createContext(host);
+
+      reactive.writeCaret(host, 'count', 10, host);
+
+      const r = parse('increment ^count');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(11);
+
+      await runtime.execute(r.node!, ctx);
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(12);
+
+      document.body.removeChild(host);
+    });
+
+    it('hyperscript.process binds click handler that increments ^count', async () => {
+      // Tests the components-style flow: build DOM, hyperscript.process binds
+      // _= attributes, simulate click, verify ^count updated.
+      const host = document.createElement('div');
+      host.innerHTML = '<button _="on click increment ^count">+</button>';
+      document.body.appendChild(host);
+
+      reactive.writeCaret(host, 'count', 0, host);
+
+      hyperscript.process(host);
+      // Settle whatever async parsing/binding happens.
+      await settle();
+
+      const button = host.querySelector('button')!;
+      button.click();
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(1);
+
+      button.click();
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(2);
+
+      button.click();
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(3);
+
+      document.body.removeChild(host);
+    });
+
+    it("simulates click-counter: button increments host's ^count", async () => {
+      // Mirrors the @hyperfixi/components click-counter scenario: a button
+      // inside a host element runs `increment ^count`. The host owns ^count.
+      const host = document.createElement('div');
+      const button = document.createElement('button');
+      host.appendChild(button);
+      document.body.appendChild(host);
+
+      // Init: host owns ^count
+      const initCtx = createContext(host);
+      const initRes = parse('set ^count to 0');
+      expect(initRes.success).toBe(true);
+      await runtime.execute(initRes.node!, initCtx);
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(0);
+
+      // Click handler: button executes `increment ^count` with me=button
+      const clickCtx = createContext(button);
+      const clickRes = parse('increment ^count');
+      expect(clickRes.success).toBe(true);
+
+      await runtime.execute(clickRes.node!, clickCtx);
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(1);
+
+      await runtime.execute(clickRes.node!, clickCtx);
+      await runtime.execute(clickRes.node!, clickCtx);
+      await settle();
+      expect(reactive.readCaret(host, 'count')).toBe(3);
+
+      document.body.removeChild(host);
+    });
+
     it('reads an inherited caret var', async () => {
       const parent = document.createElement('div');
       const child = document.createElement('span');
