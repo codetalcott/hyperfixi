@@ -394,8 +394,13 @@ function resolveMode(settings: ServerSettings): ResolvedMode {
   if (settings.mode === 'hyperscript-i18n') return 'hyperscript-i18n';
   if (settings.mode === 'lokascript') return 'lokascript';
 
-  // 'auto' mode: detect based on available packages
-  return semanticPackage ? 'lokascript' : 'hyperscript';
+  // 'auto' mode: detect based on available packages.
+  // Probe a known export rather than the namespace itself — bundled builds
+  // (e.g. vscode-extension-hyperscript) replace @lokascript/semantic with an
+  // empty `export {}` shim, which is a truthy namespace object but exposes
+  // no API. Without this guard the shimmed bundle would auto-resolve to
+  // 'lokascript' and then crash on the first multilingual code path.
+  return semanticPackage?.getRegisteredLanguages ? 'lokascript' : 'hyperscript';
 }
 
 /**
