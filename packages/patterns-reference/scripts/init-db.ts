@@ -1184,6 +1184,287 @@ const SEED_EXAMPLES: SeedExample[] = [
   },
 
   // ==========================================================================
+  // Templates & Rendering — render command, make, template literals
+  // ==========================================================================
+  {
+    id: 'render-template-with-data',
+    title: 'Render Template With Data',
+    raw_code: 'on click render #user-list with users: $data then put it into #container',
+    description: 'Render a named template element with data, then insert the HTML into the DOM',
+    feature: 'templates',
+  },
+  {
+    id: 'make-toast-element',
+    title: 'Make Toast Element',
+    raw_code: 'on click make a <div.toast/> then put \'Saved!\' into it then put it at end of body',
+    description: 'Create a new element, populate its content, and append it to the document',
+    feature: 'templates',
+  },
+  {
+    id: 'template-literal-interpolation',
+    title: 'Template Literal Interpolation',
+    raw_code: 'on click set my innerHTML to `<li>${$item.name}</li>`',
+    description: 'Use backtick template literals to interpolate values into HTML',
+    feature: 'templates',
+  },
+  {
+    id: 'template-literal-list-build',
+    title: 'Build HTML List From Items',
+    raw_code: 'on click set $html to "" then for item in $items set $html to $html + `<li>${item.name}</li>` end then set #list.innerHTML to $html',
+    description: 'Build an HTML list by iterating items and concatenating template literals',
+    feature: 'templates',
+  },
+
+  // ==========================================================================
+  // Morphing — morph command, focus/state-preserving DOM updates
+  // ==========================================================================
+  {
+    id: 'morph-fetch-result',
+    title: 'Morph Fetched HTML',
+    raw_code: 'on click fetch /api/items then morph #list to it',
+    description: 'Fetch HTML and morph the DOM in place, preserving focus and form state',
+    feature: 'morphing',
+  },
+  {
+    id: 'morph-with-template',
+    title: 'Morph Rendered Template',
+    raw_code: 'on click render #row with row: $data then morph #target to it',
+    description: 'Render a template then morph it into the target element',
+    feature: 'morphing',
+  },
+  {
+    id: 'morph-form-update',
+    title: 'Morph Form Without Losing Focus',
+    raw_code: 'on submit fetch /api/save then morph closest <form/> to it',
+    description: 'Morph a form after submit so users keep focus, scroll position, and unsaved values',
+    feature: 'morphing',
+  },
+
+  // ==========================================================================
+  // Realtime — eventsource (SSE), socket (WebSocket), worker (Web Worker)
+  // ==========================================================================
+  {
+    id: 'eventsource-basic',
+    title: 'Server-Sent Events Source',
+    raw_code: 'eventsource ChatStream from /events on message put it into #messages end',
+    description: 'Subscribe to a server-sent events endpoint and append messages to the DOM',
+    feature: 'realtime',
+    engine: 'both',
+  },
+  {
+    id: 'socket-basic',
+    title: 'WebSocket Listener',
+    raw_code: 'socket ChatSocket ws://localhost:8080 on message put it into #chat end',
+    description: 'Open a WebSocket and route incoming messages into the DOM',
+    feature: 'realtime',
+    engine: 'both',
+  },
+  {
+    id: 'socket-send',
+    title: 'Send To Named Socket',
+    raw_code: 'on click send "hello" to ChatSocket',
+    description: 'Send a message to a previously-declared WebSocket from a click handler',
+    feature: 'realtime',
+  },
+  {
+    id: 'worker-basic',
+    title: 'Web Worker Definition',
+    raw_code: 'worker Calculator def add(a, b) return a + b end end',
+    description: 'Define a Web Worker in hyperscript and call its methods like a normal object',
+    feature: 'realtime',
+    engine: 'both',
+  },
+
+  // ==========================================================================
+  // Async (modern fetch) — headers, method/body, FormData, do not throw
+  // ==========================================================================
+  {
+    id: 'fetch-with-headers',
+    title: 'Fetch With Auth Header',
+    raw_code: 'on click fetch /api/me with headers:{Authorization:`Bearer ${$token}`} as JSON then put it.name into me',
+    description: 'Fetch with custom headers and parse the response as JSON',
+    feature: 'async',
+  },
+  {
+    id: 'fetch-with-method-body',
+    title: 'POST With Method And Body',
+    raw_code: 'on click fetch /api/users with method:"POST", body:"name=Joe"',
+    description: 'POST to an endpoint by passing method and body as fetch options',
+    feature: 'async',
+  },
+  {
+    id: 'fetch-formdata',
+    title: 'Submit Form As FormData',
+    raw_code: 'on submit fetch /api/submit with method:"POST", body:(closest <form/> as FormData)',
+    description: 'Serialize the closest form as FormData and POST it',
+    feature: 'async',
+  },
+  {
+    id: 'fetch-do-not-throw',
+    title: 'Fetch Without Throwing',
+    raw_code: 'on click fetch /api/users as JSON do not throw then if it set $users to it end',
+    description: 'Fetch without throwing on errors; check the result before using it',
+    feature: 'async',
+  },
+
+  // ==========================================================================
+  // Events (extras) — tell, send/receive custom events, key is syntax
+  // ==========================================================================
+  {
+    id: 'tell-other-element',
+    title: 'Tell Another Element',
+    raw_code: 'on click tell #panel add .open then wait 200ms then add .visible',
+    description: 'Run a sequence of commands on another element using tell',
+    feature: 'events',
+  },
+  {
+    id: 'send-event-to-form',
+    title: 'Send Custom Event To Form',
+    raw_code: 'on click send hello to <form/>',
+    description: 'Dispatch a custom event named hello to all form elements',
+    feature: 'events',
+  },
+  {
+    id: 'on-custom-event-receive',
+    title: 'Receive Custom Event',
+    raw_code: 'on hello put \'Got it!\' into me',
+    description: 'Receive a custom event and update the receiving element\'s content',
+    feature: 'events',
+  },
+  {
+    id: 'keydown-key-is-syntax',
+    title: 'Key Filter With `is`',
+    raw_code: 'on keyup[key is \'Escape\'] clear me',
+    description: 'Filter keyboard events using the modern `is` comparison syntax',
+    feature: 'events',
+  },
+
+  // ==========================================================================
+  // Debugging — breakpoint, beep!
+  // ==========================================================================
+  {
+    id: 'breakpoint-command',
+    title: 'Breakpoint In Handler',
+    raw_code: 'on click breakpoint then set $x to 42',
+    description: 'Pause execution at a breakpoint and inspect state in the HDB debugger',
+    feature: 'debugging',
+  },
+  {
+    id: 'beep-debug-expression',
+    title: 'Beep Debug Expression',
+    raw_code: 'on click set $x to beep! my value',
+    description: 'Use beep! to debug-print an expression result without altering control flow',
+    feature: 'debugging',
+  },
+
+  // ==========================================================================
+  // DOM (extras) — pick, take ... for (canonical tabs idiom)
+  // ==========================================================================
+  {
+    id: 'pick-text-range',
+    title: 'Pick Text Range',
+    raw_code: 'on click pick characters 0 to 5 of #note',
+    description: 'Select a text range within an input or contenteditable using the pick command',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'take-class-from-siblings',
+    title: 'Take Class From Siblings (Tabs)',
+    raw_code: 'on click take .active from .tab-button for me',
+    description: 'Take a class from sibling elements and apply it to the current one (canonical tabs idiom)',
+    feature: 'dom-manipulation',
+  },
+
+  // ==========================================================================
+  // Reactivity — live, when X changes, bind, reactive arrays
+  // Runs in HyperFixi when @hyperfixi/reactivity plugin is installed
+  // ==========================================================================
+  {
+    id: 'live-derived-value',
+    title: 'Live Derived Value',
+    raw_code: 'live put `Count: ${$count}` into me',
+    description: 'Reactively update content whenever the dependent variable changes',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'when-value-changes',
+    title: 'When Computed Value Changes',
+    raw_code: 'when (#price\'s value * #qty\'s value) changes put \'$\' + it into me',
+    description: 'React to changes in computed values; `it` holds the new value',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'bind-two-way',
+    title: 'Two-Way Bind',
+    raw_code: 'bind my value to #other-input\'s value',
+    description: 'Two-way bind two values so changes in either propagate to the other',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'reactive-array-push',
+    title: 'Reactive Array Mutation',
+    raw_code: 'on click call $items.push(`item ${$items.length + 1}`)',
+    description: 'Mutate a reactive array; live blocks observing it re-render automatically',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+
+  // ==========================================================================
+  // Components — <script type="text/hyperscript-template"> custom elements
+  // Static + slots run in HyperFixi today via @hyperfixi/components.
+  // Reactive ^var state and #if/#for directives need Components v2 (in progress).
+  // ==========================================================================
+  {
+    id: 'component-hello-world',
+    title: 'Component: Hello World',
+    raw_code: '<script type="text/hyperscript-template" component="hello-world">\n  <span>Hello World</span>\n</script>',
+    description: 'Define a custom element via a hyperscript-template script tag',
+    feature: 'components',
+    engine: 'both',
+  },
+  {
+    id: 'component-click-counter',
+    title: 'Component: Click Counter',
+    raw_code: '<script type="text/hyperscript-template" component="click-counter" _="set ^count to 0">\n  <button _="on click increment ^count">+</button>\n  <span>Clicks: ${^count}</span>\n</script>',
+    description: 'Component with isolated DOM-scoped state (^count) that re-renders on change',
+    feature: 'components',
+    engine: 'both',
+  },
+  {
+    id: 'component-with-conditional',
+    title: 'Component: Conditional Rendering',
+    raw_code: '<script type="text/hyperscript-template" component="user-card" _="set ^user to {name: \'Demo\', admin: true}">\n  <h3>${^user.name}</h3>\n  #if ^user.admin\n    <span class="badge">admin</span>\n  #end\n</script>',
+    description: 'Component using ^var state and the #if directive for conditional rendering',
+    feature: 'components',
+    engine: 'both',
+  },
+  {
+    id: 'component-with-slots',
+    title: 'Component: Default And Named Slots',
+    raw_code: '<script type="text/hyperscript-template" component="my-layout">\n  <header><slot name="title"/></header>\n  <main><slot/></main>\n  <footer><slot name="footer"/></footer>\n</script>',
+    description: 'Component with default and named slots for content projection',
+    feature: 'components',
+    engine: 'both',
+  },
+
+  // ==========================================================================
+  // Service Workers — intercept (declarative caching DSL)
+  // Runs in HyperFixi when @hyperfixi/intercept plugin is installed.
+  // Note: HyperFixi v1 of intercept requires string-literal URLs (not naked paths).
+  // ==========================================================================
+  {
+    id: 'intercept-cache-strategies',
+    title: 'Intercept: Cache Strategies',
+    raw_code: 'intercept "/" precache "/", "/style.css", "/app.js" as "v1" on "/api/*" use network-first on "*.css", "*.js" use cache-first on "*" use stale-while-revalidate offline fallback "/offline.html" end',
+    description: 'Service worker DSL with precaching, per-route strategies, and offline fallback',
+    feature: 'service-workers',
+    engine: 'both',
+  },
+
+  // ==========================================================================
   // Behavior Definitions — Installable via `install BehaviorName(params)`
   // Sources imported from @hyperfixi/behaviors schemas (single source of truth)
   // ==========================================================================
