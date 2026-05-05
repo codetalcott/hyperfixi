@@ -157,3 +157,126 @@ export function runSimpleDiagnostics(code: string, _language: string = 'en'): Di
 
   return diagnostics;
 }
+
+// =============================================================================
+// Template Directive Diagnostics (v2 components)
+// =============================================================================
+//
+// These regexes mirror @hyperfixi/components/src/template-ast.ts so the LSP
+// validates the same shapes the runtime accepts. Directives are line-oriented:
+// each must occupy its own line modulo surrounding whitespace.
+
+const DIRECTIVE_IF = /^#if\b/;
+const DIRECTIVE_FOR = /^#for\b/;
+const DIRECTIVE_ELSE = /^#else\s*$/;
+const DIRECTIVE_END = /^#end\s*$/;
+const DIRECTIVE_CONTINUE = /^#continue\s*$/;
+const DIRECTIVE_FOR_FORM = /^#for\s+([A-Za-z_$][\w$]*)\s+in\s+.+$/;
+
+interface OpenBlock {
+  kind: 'if' | 'for';
+  line: number;
+  hasElse: boolean;
+}
+
+/**
+ * Validate template directive structure inside `<template component>` bodies.
+ *
+ * Reports:
+ * - `#end` without a matching `#if`/`#for`
+ * - `#else` outside of `#if`/`#for`, or a second `#else` in the same block
+ * - `#continue` outside of `#for`
+ * - `#for` missing the `<name> in <expr>` form
+ * - unclosed `#if`/`#for` at end of region
+ */
+export function runDirectiveDiagnostics(code: string): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const lines = code.split('\n');
+  const stack: OpenBlock[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const trimmed = raw.trim();
+    if (!trimmed.startsWith('#')) continue;
+
+    const indent = raw.indexOf(trimmed.charAt(0));
+    const range = {
+      start: { line: i, character: Math.max(0, indent) },
+      end: { line: i, character: raw.length },
+    };
+
+    if (DIRECTIVE_IF.test(trimmed)) {
+      stack.push({ kind: 'if', line: i, hasElse: false });
+    } else if (DIRECTIVE_FOR.test(trimmed)) {
+      if (!DIRECTIVE_FOR_FORM.test(trimmed)) {
+        diagnostics.push({
+          range,
+          severity: DiagnosticSeverity.Error,
+          code: 'directive-malformed-for',
+          source: 'lokascript',
+          message: '#for must be `#for <name> in <expr>`',
+        });
+      }
+      stack.push({ kind: 'for', line: i, hasElse: false });
+    } else if (DIRECTIVE_ELSE.test(trimmed)) {
+      const top = stack[stack.length - 1];
+      if (!top) {
+        diagnostics.push({
+          range,
+          severity: DiagnosticSeverity.Error,
+          code: 'directive-stray-else',
+          source: 'lokascript',
+          message: '#else outside of #if or #for block',
+        });
+      } else if (top.hasElse) {
+        diagnostics.push({
+          range,
+          severity: DiagnosticSeverity.Error,
+          code: 'directive-duplicate-else',
+          source: 'lokascript',
+          message: 'duplicate #else in this block',
+        });
+      } else {
+        top.hasElse = true;
+      }
+    } else if (DIRECTIVE_END.test(trimmed)) {
+      if (stack.length === 0) {
+        diagnostics.push({
+          range,
+          severity: DiagnosticSeverity.Error,
+          code: 'directive-stray-end',
+          source: 'lokascript',
+          message: '#end without matching #if or #for',
+        });
+      } else {
+        stack.pop();
+      }
+    } else if (DIRECTIVE_CONTINUE.test(trimmed)) {
+      const inFor = stack.some(b => b.kind === 'for');
+      if (!inFor) {
+        diagnostics.push({
+          range,
+          severity: DiagnosticSeverity.Error,
+          code: 'directive-stray-continue',
+          source: 'lokascript',
+          message: '#continue outside of #for block',
+        });
+      }
+    }
+  }
+
+  for (const open of stack) {
+    diagnostics.push({
+      range: {
+        start: { line: open.line, character: 0 },
+        end: { line: open.line, character: lines[open.line]?.length ?? 0 },
+      },
+      severity: DiagnosticSeverity.Error,
+      code: 'directive-unclosed',
+      source: 'lokascript',
+      message: `Unclosed #${open.kind} — missing #end`,
+    });
+  }
+
+  return diagnostics;
+}

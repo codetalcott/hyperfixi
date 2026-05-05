@@ -15,7 +15,13 @@ import { escapeRegExp } from './utils.js';
 // Types
 // =============================================================================
 
-export type SymbolKind = 'behavior' | 'function' | 'variable' | 'event';
+export type SymbolKind =
+  | 'behavior'
+  | 'function'
+  | 'variable'
+  | 'event'
+  | 'caretVar'
+  | 'componentAttr';
 
 export interface SymbolLocation {
   /** Line in the overall document (0-based). */
@@ -29,8 +35,13 @@ export interface SymbolLocation {
 export interface SymbolEntry {
   name: string;
   kind: SymbolKind;
-  /** 'global' for behaviors/functions/$vars, 'local' for :vars */
-  scope: 'global' | 'local';
+  /**
+   * - 'global' — behaviors, functions, $vars
+   * - 'local'  — :vars (per-handler scope)
+   * - 'caret'  — ^vars (DOM-scoped, walks ancestors until a `dom-scope` boundary)
+   * - 'attr'   — attrs.X (per-component-instance, read from HTML attributes)
+   */
+  scope: 'global' | 'local' | 'caret' | 'attr';
   /** Where this symbol is defined. */
   definitions: SymbolLocation[];
   /** Where this symbol is referenced (excluding definitions). */
@@ -83,7 +94,18 @@ export function buildSymbolTable(
   // Function calls: word followed by (
   const funcCallPat = /\b(\w+)\s*\(/g;
 
-  function getOrCreate(name: string, kind: SymbolKind, scope: 'global' | 'local'): SymbolEntry {
+  // Caret vars: `^name` — both reads and writes share the same prefix. A write
+  // is any occurrence preceded by `set` (with optional whitespace). All other
+  // occurrences count as reads. Owner-tracked at runtime, but for LSP purposes
+  // we treat `set ^name` as a definition site and bare `^name` as usage.
+  // Captures the name without the `^` so symbol lookups remain stable.
+  const caretWritePat = new RegExp(`\\b(${setKws.join('|')})\\s+\\^([A-Za-z_]\\w*)`, 'gi');
+  const caretRefPat = /\^([A-Za-z_]\w*)/g;
+  // Component attrs: `attrs.name` reads. We don't track writes (rare and
+  // discouraged by upstream — attrs is essentially read-only from hyperscript).
+  const attrsRefPat = /\battrs\.([A-Za-z_]\w*)/g;
+
+  function getOrCreate(name: string, kind: SymbolKind, scope: SymbolEntry['scope']): SymbolEntry {
     let entry = symbols.get(name);
     if (!entry) {
       entry = { name, kind, scope, definitions: [], usages: [] };
@@ -144,11 +166,16 @@ export function buildSymbolTable(
 
   // Track which variable offsets are definitions (to avoid double-counting as usages)
   const defVarOffsets = new Map<HyperscriptRegion, Set<number>>();
+  // Same idea for caret-var write sites — recorded so subsequent caretRefPat
+  // matches at the same offset are skipped.
+  const caretDefOffsets = new Map<HyperscriptRegion, Set<number>>();
 
   for (const region of regions) {
     const code = region.code;
     const regionDefOffsets = new Set<number>();
     defVarOffsets.set(region, regionDefOffsets);
+    const regionCaretDefOffsets = new Set<number>();
+    caretDefOffsets.set(region, regionCaretDefOffsets);
 
     // --- Definitions ---
 
@@ -234,6 +261,65 @@ export function buildSymbolTable(
       const scope = varName.startsWith('$') ? 'global' : 'local';
       const entry = getOrCreate(varName, 'variable', scope);
       addLocation(entry, 'use', region, localLine, localChar, varName.length);
+    }
+
+    // Caret-var writes: `set ^name to ...` — symbol name is stored with the
+    // caret prefix so it doesn't collide with `:name`/`$name` entries.
+    for (const m of code.matchAll(caretWritePat)) {
+      const name = m[2]!;
+      // Offset of the `^` in the original source — that's what we'll skip when
+      // scanning for reads, so that the same occurrence isn't double-counted.
+      const caretOffset = (m.index ?? 0) + m[0].lastIndexOf('^');
+      const localLine = findLocalLine(code, caretOffset);
+      const localChar = findLocalChar(code, caretOffset);
+      const symbolName = `^${name}`;
+      addLocation(
+        getOrCreate(symbolName, 'caretVar', 'caret'),
+        'def',
+        region,
+        localLine,
+        localChar,
+        symbolName.length
+      );
+      regionCaretDefOffsets.add(caretOffset);
+    }
+
+    // Caret-var reads: every other `^name` occurrence.
+    for (const m of code.matchAll(caretRefPat)) {
+      const caretOffset = m.index ?? 0;
+      if (regionCaretDefOffsets.has(caretOffset)) continue;
+      const name = m[1]!;
+      const localLine = findLocalLine(code, caretOffset);
+      const localChar = findLocalChar(code, caretOffset);
+      const symbolName = `^${name}`;
+      addLocation(
+        getOrCreate(symbolName, 'caretVar', 'caret'),
+        'use',
+        region,
+        localLine,
+        localChar,
+        symbolName.length
+      );
+    }
+
+    // Component attrs reads: `attrs.foo`. The dot-prefixed name is what users
+    // hover; the symbol entry is keyed on the camelCase property name.
+    for (const m of code.matchAll(attrsRefPat)) {
+      const name = m[1]!;
+      // Offset of `attrs` so the symbolAt() lookup hits the entire `attrs.foo`
+      // span (we record length to cover both the keyword and the property).
+      const attrsStart = m.index ?? 0;
+      const localLine = findLocalLine(code, attrsStart);
+      const localChar = findLocalChar(code, attrsStart);
+      const fullLength = m[0].length;
+      addLocation(
+        getOrCreate(`attrs.${name}`, 'componentAttr', 'attr'),
+        'use',
+        region,
+        localLine,
+        localChar,
+        fullLength
+      );
     }
 
     // Function calls: name( — skip keywords

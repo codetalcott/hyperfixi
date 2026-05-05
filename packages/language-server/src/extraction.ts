@@ -93,6 +93,53 @@ export function extractHyperscriptRegions(content: string): HyperscriptRegion[] 
     });
   }
 
+  // Extract <template component="tag-name">...</template> bodies. These contain
+  // template directives (#if, #for, ...) and ${...} interpolation rather than
+  // raw hyperscript. Tracked separately so completion/hover can route directive
+  // tokens correctly.
+  //
+  // The `<script type="text/hyperscript-template" component="..."> ... </script>`
+  // upstream form is also captured, since it carries the same body syntax.
+  const templateRegex =
+    /<template\s+[^>]*\bcomponent=["']([^"']+)["'][^>]*>([\s\S]*?)<\/template>/gi;
+  while ((match = templateRegex.exec(fullContent)) !== null) {
+    const tag = match[1];
+    const body = match[2];
+    const bodyStart = match.index + match[0].indexOf('>') + 1;
+    const bodyEnd = match.index + match[0].lastIndexOf('</template>');
+    const startPos = offsetToPosition(content, bodyStart);
+    const endPos = offsetToPosition(content, bodyEnd);
+    regions.push({
+      code: body,
+      startLine: startPos.line,
+      startChar: startPos.character,
+      endLine: endPos.line,
+      endChar: endPos.character,
+      type: 'template',
+      componentTag: tag,
+    });
+  }
+
+  const templateScriptRegex =
+    /<script\s+[^>]*\btype=["']text\/hyperscript-template["'][^>]*\bcomponent=["']([^"']+)["'][^>]*>([\s\S]*?)<\/script>/gi;
+  while ((match = templateScriptRegex.exec(fullContent)) !== null) {
+    const tag = match[1];
+    const body = match[2];
+    const bodyStart = match.index + match[0].indexOf('>') + 1;
+    const bodyEnd = match.index + match[0].lastIndexOf('</script>');
+    const startPos = offsetToPosition(content, bodyStart);
+    const endPos = offsetToPosition(content, bodyEnd);
+    regions.push({
+      code: body,
+      startLine: startPos.line,
+      startChar: startPos.character,
+      endLine: endPos.line,
+      endChar: endPos.character,
+      type: 'template',
+      componentTag: tag,
+    });
+  }
+
   return regions;
 }
 

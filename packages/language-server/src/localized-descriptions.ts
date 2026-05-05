@@ -68,6 +68,46 @@ const DESCRIPTIONS: Record<string, DescriptionMap> = {
     },
     go: { detail: 'Navigate', documentation: 'Navigates to a URL or page location.' },
     throw: { detail: 'Throw error', documentation: 'Throws an error with a specified message.' },
+
+    // v2 / v2.1 component + reactive (English only — localized translations
+    // can be added as language coverage rolls out).
+    '^': {
+      detail: 'Reactive variable (^var)',
+      documentation:
+        'Reads or writes a DOM-scoped reactive variable. `^name` walks ancestors until it finds an owner, or stops at the nearest `dom-scope="isolated"` boundary.',
+    },
+    attrs: {
+      detail: 'Component attributes',
+      documentation:
+        'Proxy over the component element\'s HTML attributes. `attrs.fooBar` reads `foo-bar="..."`, with number/boolean coercion. Available inside `<template _="...">` init scripts and `${...}` interpolation.',
+    },
+    'dom-scope': {
+      detail: 'Reactive scope boundary',
+      documentation:
+        '`dom-scope="isolated"` on a host element bounds `^var` lookup. Set automatically on `<template component>` instances; set manually for ad-hoc isolation.',
+    },
+    '#if': {
+      detail: 'Conditional template block',
+      documentation:
+        'Line-oriented template directive. Renders the contained block when the condition is truthy. Optional `#else` branch; closes with `#end`.',
+    },
+    '#else': {
+      detail: 'Alternative branch',
+      documentation: 'Else branch of a `#if`, or empty-collection fallback for a `#for`.',
+    },
+    '#end': {
+      detail: 'Close directive block',
+      documentation: 'Closes the most recent `#if` or `#for`. Must occupy its own line.',
+    },
+    '#for': {
+      detail: 'Iteration template block',
+      documentation:
+        '`#for <name> in <expr>` iterates over `<expr>` with `<name>` bound to each element. Optional `#else` branch fires when the collection is empty.',
+    },
+    '#continue': {
+      detail: 'Skip iteration',
+      documentation: 'Skip to the next iteration of the enclosing `#for`. Available v2.1+.',
+    },
   },
 
   ja: {

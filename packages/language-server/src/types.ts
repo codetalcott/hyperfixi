@@ -5,7 +5,14 @@
  */
 
 /**
- * Represents a hyperscript region extracted from an HTML document
+ * Represents a hyperscript or template region extracted from an HTML document.
+ *
+ * - 'attribute' — `_="..."` on any element (hyperscript)
+ * - 'script'    — `<script type="text/hyperscript">...` block (hyperscript)
+ * - 'template'  — body of `<template component="...">` containing `#if`/`#for`
+ *                directives + `${...}` interpolation. Not raw hyperscript;
+ *                directives are line-oriented and interpolation expressions
+ *                run in component scope (`attrs`, `^var`).
  */
 export interface HyperscriptRegion {
   code: string;
@@ -13,7 +20,13 @@ export interface HyperscriptRegion {
   startChar: number;
   endLine: number;
   endChar: number;
-  type: 'attribute' | 'script';
+  type: 'attribute' | 'script' | 'template';
+  /**
+   * Tag name from the `component` attribute when `type === 'template'`. Useful
+   * for downstream tools that want to associate the region with its custom
+   * element registration.
+   */
+  componentTag?: string;
 }
 
 /**

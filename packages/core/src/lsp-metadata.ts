@@ -131,6 +131,34 @@ export const FEATURE_KEYWORDS = [
 export const BLOCK_KEYWORDS = ['then', 'end', 'from', 'to', 'into', 'with', 'as', 'in'] as const;
 
 /**
+ * Template directive keywords (v2). Line-oriented directives that appear inside
+ * `<template component="...">` bodies. Tokens include the leading `#` so they
+ * round-trip cleanly through hover/completion lookups.
+ *
+ * @since 2.0
+ */
+export const DIRECTIVE_KEYWORDS = ['#if', '#else', '#end', '#for', '#continue'] as const;
+
+/**
+ * Component-scope identifiers (v2 / v2.1). Visible inside component init
+ * scripts and template interpolation.
+ *
+ * - `attrs`     — proxy over the component's HTML attributes
+ * - `dom-scope` — host attribute (`isolated`) marking a `^var` boundary
+ *
+ * @since 2.0
+ */
+export const COMPONENT_KEYWORDS = ['attrs', 'dom-scope'] as const;
+
+/**
+ * Reactive prefix sigils (v2). `^name` reads/writes a DOM-scoped inherited
+ * variable resolved by walking ancestors from the current element.
+ *
+ * @since 2.0
+ */
+export const REACTIVE_SIGILS = ['^'] as const;
+
+/**
  * Positional expression keywords
  */
 export const POSITIONAL_KEYWORDS = [
@@ -186,6 +214,8 @@ export const ALL_KEYWORDS = [
   ...BLOCK_KEYWORDS,
   ...POSITIONAL_KEYWORDS,
   ...LOGICAL_KEYWORDS,
+  ...DIRECTIVE_KEYWORDS,
+  ...COMPONENT_KEYWORDS,
 ] as const;
 
 // =============================================================================
@@ -196,7 +226,16 @@ export interface HoverDoc {
   title: string;
   description: string;
   example: string;
-  category: 'command' | 'reference' | 'feature' | 'block' | 'positional' | 'logical';
+  category:
+    | 'command'
+    | 'reference'
+    | 'feature'
+    | 'block'
+    | 'positional'
+    | 'logical'
+    | 'directive'
+    | 'component'
+    | 'reactive';
   since?: string;
 }
 
@@ -839,6 +878,84 @@ export const HOVER_DOCS: Record<string, HoverDoc> = {
     example: 'set :csv to :parts joined by ","\n(:names sorted by it) joined by " and "',
     category: 'logical',
   },
+
+  // Template Directives (v2). Line-oriented directives in <template component>
+  // bodies. Bracketed by `#end`. See @hyperfixi/components/src/template-ast.ts.
+  '#if': {
+    title: '#if',
+    description:
+      'Template directive — conditionally render a block. The condition is evaluated against the component scope (with `attrs` and `^var` available). Pair with `#end`; optional `#else` branch.',
+    example:
+      '<template component="my-greet">\n  #if attrs.name\n    <p>Hello, ${attrs.name}!</p>\n  #else\n    <p>Hello, stranger.</p>\n  #end\n</template>',
+    category: 'directive',
+    since: '2.0',
+  },
+  '#else': {
+    title: '#else',
+    description:
+      'Alternative branch of a template `#if`, or fallback for an empty `#for` collection.',
+    example: '#for item in attrs.items\n  <li>${item}</li>\n#else\n  <p>No items.</p>\n#end',
+    category: 'directive',
+    since: '2.0',
+  },
+  '#end': {
+    title: '#end',
+    description: 'Closes a template `#if` or `#for` block. Required and must occupy its own line.',
+    example: '#if ^count > 0\n  <span>${^count}</span>\n#end',
+    category: 'directive',
+    since: '2.0',
+  },
+  '#for': {
+    title: '#for',
+    description:
+      'Template directive — iterate over an iterable. The bound name is visible inside the block. Provide an optional `#else` branch that renders when the collection is empty.',
+    example:
+      '#for user in attrs.users\n  <li>${user.name}</li>\n#else\n  <li>No users yet.</li>\n#end',
+    category: 'directive',
+    since: '2.0',
+  },
+  '#continue': {
+    title: '#continue',
+    description:
+      'Skip to the next iteration of the enclosing `#for` block. Deferred in v2.0; landing in v2.1+.',
+    example:
+      '#for item in attrs.items\n  #if item.hidden\n    #continue\n  #end\n  <li>${item.name}</li>\n#end',
+    category: 'directive',
+    since: '2.1',
+  },
+
+  // Component scope (v2 / v2.1). Visible inside component init scripts and
+  // template interpolation expressions.
+  attrs: {
+    title: 'attrs',
+    description:
+      'Proxy over the component element\'s HTML attributes. Reading `attrs.fooBar` returns the value of the `foo-bar="..."` attribute, coerced to number/boolean when the value parses cleanly. Available as a hyperscript local inside `<template _="...">` init scripts and inside `${...}` template interpolation.',
+    example:
+      '<template component="my-counter" _="set ^count to attrs.initialCount">\n  <span>${^count}</span>\n</template>\n<my-counter initial-count="5"></my-counter>',
+    category: 'component',
+    since: '2.0',
+  },
+  'dom-scope': {
+    title: 'dom-scope',
+    description:
+      'Host attribute that bounds `^var` lookup. `dom-scope="isolated"` on a component instance prevents descendants\' `^var` reads from walking past it into the parent scope. Set automatically on each `<template component>` instance — set it manually on a regular element to create your own boundary.',
+    example: '<my-counter dom-scope="isolated"></my-counter>\n<div dom-scope="isolated">...</div>',
+    category: 'component',
+    since: '2.1',
+  },
+
+  // Reactive sigil (v2). `^name` reads/writes a DOM-scoped inherited variable.
+  // The renderer wraps reads in a tracked dependency, so writes anywhere in the
+  // ancestor chain re-render dependent templates.
+  '^': {
+    title: '^var',
+    description:
+      'Reactive prefix — `^name` reads from (or writes to) the nearest ancestor that has `name` set. `set ^name to value` writes through to the owner; if no owner is found, the write lands at the current `dom-scope` boundary. Tracked: any reactive effect that reads `^name` re-runs when it changes.',
+    example:
+      'set ^count to 0\nincrement ^count\nlog ^count\n-- target a specific element\nset ^user to attrs.data on closest .root',
+    category: 'reactive',
+    since: '2.0',
+  },
 } as const;
 
 // =============================================================================
@@ -944,5 +1061,7 @@ export type FeatureKeyword = (typeof FEATURE_KEYWORDS)[number];
 export type BlockKeyword = (typeof BLOCK_KEYWORDS)[number];
 export type PositionalKeyword = (typeof POSITIONAL_KEYWORDS)[number];
 export type LogicalKeyword = (typeof LOGICAL_KEYWORDS)[number];
+export type DirectiveKeyword = (typeof DIRECTIVE_KEYWORDS)[number];
+export type ComponentKeyword = (typeof COMPONENT_KEYWORDS)[number];
 export type AllKeyword = (typeof ALL_KEYWORDS)[number];
 export type EventName = (typeof EVENT_NAMES)[number];

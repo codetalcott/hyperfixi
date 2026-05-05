@@ -52,7 +52,7 @@ import {
 import { isHtmlDocument, extractHyperscriptRegions, findRegionAtPosition } from './extraction.js';
 import { getWordAtPosition, findNextNonEmptyLine } from './utils.js';
 import { formatHyperscript } from './formatting.js';
-import { runSimpleDiagnostics } from './simple-diagnostics.js';
+import { runSimpleDiagnostics, runDirectiveDiagnostics } from './simple-diagnostics.js';
 import { getSymbolTable, invalidateSymbolTable } from './symbol-table.js';
 
 // Localized descriptions for completions and hover (Phase 7.3)
@@ -541,7 +541,16 @@ async function validateDocument(document: TextDocument): Promise<void> {
     const regions = extractHyperscriptRegions(text);
 
     for (const region of regions) {
-      const diagnostics = await getDiagnostics(region.code, globalSettings.language);
+      // Template regions contain `#if`/`#for` directives + ${...}, not raw
+      // hyperscript. Run only the directive structure validator over them so
+      // we don't surface bogus parse errors against template HTML.
+      const diagnostics =
+        region.type === 'template'
+          ? runDirectiveDiagnostics(region.code).map(d => ({
+              ...d,
+              source: getBranding(resolvedMode),
+            }))
+          : await getDiagnostics(region.code, globalSettings.language);
 
       // Map diagnostics back to document positions
       for (const diag of diagnostics) {
@@ -784,18 +793,144 @@ connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] =
       }
     }
 
+    // Template regions: directive snippets at `#` prefix; ${...} expressions
+    // also get caret/attrs completions. Outside of those triggers, offer no
+    // suggestions (the body is HTML, not hyperscript).
+    if (found.region.type === 'template') {
+      const currentLine = regionLines[found.localLine] ?? '';
+      const linePrefix = currentLine.slice(0, found.localChar);
+      if (/^\s*#\w*$/.test(linePrefix)) {
+        return getDirectiveCompletions();
+      }
+      // Inside ${...} or after `^`/`attrs.` we still want sigil completions.
+      const sigilContext = inferContext(beforeCursor);
+      if (sigilContext === 'caret') {
+        return getCaretVarCompletions(document);
+      }
+      if (sigilContext === 'attrs-property') {
+        return getAttrsCompletions();
+      }
+      return [];
+    }
+
     const context = inferContext(beforeCursor);
+    if (context === 'caret') return getCaretVarCompletions(document);
+    if (context === 'attrs-property') return getAttrsCompletions();
     return getContextualCompletions(context, language);
   } else {
     // Pure hyperscript file
     const offset = document.offsetAt(position);
     const beforeCursor = text.slice(0, offset);
     const context = inferContext(beforeCursor);
+    if (context === 'caret') return getCaretVarCompletions(document);
+    if (context === 'attrs-property') return getAttrsCompletions();
     return getContextualCompletions(context, language);
   }
 });
 
+/**
+ * Return completion items for template directives (`#if`, `#for`, etc.).
+ *
+ * Used inside `<template component>` bodies. The snippets include placeholder
+ * arguments and the matching `#end` so users can type `#i<TAB>` and get a
+ * complete block.
+ */
+function getDirectiveCompletions(): CompletionItem[] {
+  return [
+    {
+      label: '#if',
+      kind: CompletionItemKind.Snippet,
+      detail: 'Conditional template block',
+      insertText: '#if ${1:condition}\n  ${2}\n#end',
+    },
+    {
+      label: '#if/#else',
+      kind: CompletionItemKind.Snippet,
+      detail: 'Conditional with else branch',
+      insertText: '#if ${1:condition}\n  ${2}\n#else\n  ${3}\n#end',
+    },
+    {
+      label: '#for',
+      kind: CompletionItemKind.Snippet,
+      detail: 'Iteration template block',
+      insertText: '#for ${1:item} in ${2:collection}\n  ${3}\n#end',
+    },
+    {
+      label: '#else',
+      kind: CompletionItemKind.Keyword,
+      detail: 'Else branch',
+    },
+    {
+      label: '#end',
+      kind: CompletionItemKind.Keyword,
+      detail: 'Close #if or #for block',
+    },
+    {
+      label: '#continue',
+      kind: CompletionItemKind.Keyword,
+      detail: 'Skip to next #for iteration (v2.1+)',
+    },
+  ];
+}
+
+/**
+ * Caret-var completions sourced from the document's symbol table. Falls back
+ * to a single `^name` snippet when the document has no `^var` definitions yet.
+ */
+function getCaretVarCompletions(document: TextDocument): CompletionItem[] {
+  const items: CompletionItem[] = [];
+  try {
+    const { table } = getDocSymbolTable(document);
+    for (const [name, entry] of table.symbols) {
+      if (entry.kind !== 'caretVar') continue;
+      // Strip the leading `^` for the label so VS Code's filtering against
+      // the just-typed `^foo` works correctly. The `insertText` keeps the
+      // bare name since the `^` is already in the buffer.
+      const bare = name.startsWith('^') ? name.slice(1) : name;
+      items.push({
+        label: bare,
+        kind: CompletionItemKind.Variable,
+        detail: 'Reactive variable (^var)',
+        insertText: bare,
+      });
+    }
+  } catch {
+    /* fall through to default */
+  }
+  if (items.length === 0) {
+    items.push({
+      label: 'name',
+      kind: CompletionItemKind.Snippet,
+      detail: 'New reactive variable',
+      insertText: '${1:name}',
+    });
+  }
+  return items;
+}
+
+/**
+ * Component attrs completions. We can't enumerate the actual attribute names
+ * statically, so this is a snippet placeholder. A future pass could parse the
+ * surrounding `<template component>` and list known kebab→camel attrs.
+ */
+function getAttrsCompletions(): CompletionItem[] {
+  return [
+    {
+      label: 'attribute',
+      kind: CompletionItemKind.Snippet,
+      detail: 'Component attribute (attrs.X)',
+      insertText: '${1:propertyName}',
+    },
+  ];
+}
+
 function inferContext(beforeCursor: string): string {
+  // Caret-var: cursor right after `^` or after `^name` (partial). Tested
+  // against the raw beforeCursor (not trimmed) so `^` at end of input wins.
+  if (/\^\w*$/.test(beforeCursor)) return 'caret';
+  // attrs.: cursor right after `attrs.` or partial `attrs.foo`.
+  if (/\battrs\.\w*$/.test(beforeCursor)) return 'attrs-property';
+
   const trimmed = beforeCursor.trim();
 
   if (/\bon\s*$/.test(trimmed)) return 'event';
@@ -1078,17 +1213,30 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
       const word = getWordAtPosition(currentLine, found.localChar);
       if (!word) return null;
 
-      let doc = getHoverDocumentation(word.text, globalSettings.language);
+      // Try sigil-extended lookup first so `^count` and `#if` resolve to their
+      // dedicated docs.
+      const expanded = expandSigilPrefix(currentLine, word);
+      let lookupText = expanded?.text ?? word.text;
+      let lookupStart = expanded?.start ?? word.start;
+      let doc = getHoverDocumentation(lookupText, globalSettings.language);
+      if (!doc) {
+        // Fall back to the bare word for backward compatibility.
+        lookupText = word.text;
+        lookupStart = word.start;
+        doc = getHoverDocumentation(lookupText, globalSettings.language);
+      }
       if (!doc) return null;
 
-      // Append LSE bracket notation if we can parse the full region
-      const lse = tryGetLSE(found.region.code);
-      if (lse) {
-        doc += `\n\n**LSE:** \`${lse}\``;
+      // Skip LSE rendering for template regions (HTML body, not hyperscript).
+      if (found.region.type !== 'template') {
+        const lse = tryGetLSE(found.region.code);
+        if (lse) {
+          doc += `\n\n**LSE:** \`${lse}\``;
+        }
       }
 
       // Map range back to document coordinates
-      const startChar = found.localLine === 0 ? found.region.startChar + word.start : word.start;
+      const startChar = found.localLine === 0 ? found.region.startChar + lookupStart : lookupStart;
       const endChar = found.localLine === 0 ? found.region.startChar + word.end : word.end;
 
       return {
@@ -1108,7 +1256,15 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     const word = getWordAtPosition(currentLine, position.character);
     if (!word) return null;
 
-    let doc = getHoverDocumentation(word.text, globalSettings.language);
+    const expanded = expandSigilPrefix(currentLine, word);
+    let lookupText = expanded?.text ?? word.text;
+    let lookupStart = expanded?.start ?? word.start;
+    let doc = getHoverDocumentation(lookupText, globalSettings.language);
+    if (!doc) {
+      lookupText = word.text;
+      lookupStart = word.start;
+      doc = getHoverDocumentation(lookupText, globalSettings.language);
+    }
     if (!doc) return null;
 
     // Append LSE bracket notation if we can parse the full line/block
@@ -1120,7 +1276,7 @@ connection.onHover((params: TextDocumentPositionParams): Hover | null => {
     return {
       contents: { kind: MarkupKind.Markdown, value: doc },
       range: {
-        start: { line: position.line, character: word.start },
+        start: { line: position.line, character: lookupStart },
         end: { line: position.line, character: word.end },
       },
     };
@@ -1148,7 +1304,46 @@ function tryGetLSE(code: string): string | null {
   }
 }
 
+/**
+ * Expand the word at a cursor position to include a `^` or `#` sigil sitting
+ * directly to its left. Returns null if the character isn't a known sigil.
+ *
+ * Used so that hovering on `count` in `^count` resolves to the `^` doc, and
+ * hovering on `if` in `#if` resolves to the `#if` doc.
+ */
+function expandSigilPrefix(
+  line: string,
+  word: { text: string; start: number; end: number }
+): { text: string; start: number } | null {
+  if (word.start === 0) return null;
+  const prev = line[word.start - 1];
+  if (prev !== '^' && prev !== '#') return null;
+  return { text: prev + word.text, start: word.start - 1 };
+}
+
 function getHoverDocumentation(word: string, language: string): string | null {
+  // Sigil-prefixed lookups (handled before canonicalization since `^name`/
+  // `#if` aren't canonical keywords in the multilingual sense).
+  const docsPre = lspMetadata?.HOVER_DOCS ?? FALLBACK_HOVER_DOCS;
+  if (word.startsWith('^')) {
+    // Generic caret-var doc — same hover for any `^name`.
+    if (docsPre['^']) {
+      return formatHoverEntry(docsPre['^'], word, language);
+    }
+  }
+  if (word.startsWith('#')) {
+    const direct = docsPre[word.toLowerCase()];
+    if (direct) {
+      return formatHoverEntry(direct, word, language);
+    }
+  }
+  // `attrs.foo` → `attrs` doc.
+  if (word.startsWith('attrs.')) {
+    if (docsPre.attrs) {
+      return formatHoverEntry(docsPre.attrs, 'attrs', language);
+    }
+  }
+
   const wordLower = word.toLowerCase();
 
   // In multilingual modes: resolve to canonical keyword for doc lookup
@@ -1185,6 +1380,25 @@ function getHoverDocumentation(word: string, language: string): string | null {
     }
   }
 
+  return content;
+}
+
+/**
+ * Render a hover doc entry with the same shape as the canonical path, but
+ * skipping multilingual canonicalization (used for sigil-prefixed forms like
+ * `^var` and `#if` that don't translate).
+ */
+function formatHoverEntry(
+  doc: { title: string; description: string; example: string },
+  displayName: string,
+  _language: string
+): string {
+  let content = `**${doc.title}**`;
+  if (displayName !== doc.title) {
+    content = `**${displayName}** (${doc.title})`;
+  }
+  content += `\n\n${doc.description}`;
+  content += `\n\n\`\`\`hyperscript\n${doc.example}\n\`\`\``;
   return content;
 }
 
