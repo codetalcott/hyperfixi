@@ -197,14 +197,15 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile && npm run bundle:server",
+    "vscode:prepublish": "npm run generate:grammar && npm run compile && npm run bundle:server",
     "compile": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode",
     "watch": "esbuild src/extension.ts --bundle --format=cjs --outfile=dist/extension.js --platform=node --external:vscode --watch",
     "typecheck": "tsc --noEmit",
+    "generate:grammar": "npx tsx ../vscode-extension/scripts/generate-grammar.ts",
     "bundle:server": "node build-server.mjs",
     "package": "npx --yes @vscode/vsce@^3.9.1 package --no-dependencies",
     "publish": "npx --yes @vscode/vsce@^3.9.1 publish --no-dependencies",
-    "dev:install": "npm run compile && npm run bundle:server && node scripts/dev-install.mjs"
+    "dev:install": "npm run generate:grammar && npm run compile && npm run bundle:server && node scripts/dev-install.mjs"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",

@@ -146,7 +146,7 @@
         {
           "name": "keyword.operator.logical.hyperscript",
           "comment": "Logical operators in 21 languages",
-          "match": "\\b(chaymantawan|além disso|hinallataq|également|contains|vilevile|matches|neither|también|exists|também|además|existe|ayrıca|hem de|empty|aussi|sowie|serta|anche|vacío|vacio|değil|degil|auch|juga|oraz|veya|and|not|nor|und|dan|ima|pia|or|is|no|et|es|na|at|ve|và|e|i|y|o)\\b|وأيضاً|أيضاً|এবং|וגם|そして|그리고|และ|并且|而且|גם|और|また|또한|та|和|と|및|и|і"
+          "match": "\\b(toa-kila-kitu|chaymantawan|walang-laman|alisin-laman|além disso|hinallataq|également|kosongkan|contains|svuotare|opróżnij|oproznij|esvaziar|vilevile|làm-rỗng|matches|neither|ch'usaq|también|exists|leeren|também|además|existe|ayrıca|hem de|boşalt|bosalt|empty|aussi|vider|sowie|serta|anche|vacío|vacio|mwaga|değil|degil|auch|juga|oraz|veya|and|not|nor|und|dan|ima|pia|or|is|no|et|es|na|at|ve|và|e|i|y|o)\\b|опустошить|спорожнити|খালি-করুন|खाली-करें|ทำให้ว่าง|وأيضاً|أيضاً|إفراغ|רוקן|空にする|ล้าง|এবং|וגם|そして|그리고|비우기|และ|并且|而且|清空|גם|और|また|空に|또한|та|和|と|및|и|і"
         },
         {
           "name": "keyword.other.hyperscript",
