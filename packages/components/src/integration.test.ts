@@ -10,8 +10,16 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Runtime, installPlugin, getParserExtensionRegistry } from '@hyperfixi/core';
+import { reactivityPlugin, reactive } from '@hyperfixi/reactivity';
 import { componentsPlugin, registerTemplateComponent } from './index';
 import { _resetRegisteredForTest } from './register';
+
+/** Drain microtasks + the setTimeout queue so reactive effects settle. */
+async function settle(): Promise<void> {
+  for (let i = 0; i < 20; i++) await Promise.resolve();
+  await new Promise<void>(resolve => setTimeout(resolve, 0));
+  for (let i = 0; i < 20; i++) await Promise.resolve();
+}
 
 // Unique tag suffix per-test to avoid collision with customElements registry.
 let _counter = 0;
@@ -161,6 +169,274 @@ describe('@hyperfixi/components — integration', () => {
     const instance = document.createElement(tag);
     document.body.appendChild(instance);
     expect(instance.innerHTML).toContain('direct');
+  });
+
+  describe('v2: reactive ^var rendering', () => {
+    it("interpolates ${^var} from the host element's caret-var storage", async () => {
+      const tag = uniqueTag();
+      document.body.innerHTML = `
+        <template component="${tag}">
+          <span class="readout">Count: \${^count}</span>
+        </template>
+      `;
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+
+      // Seed ^count on the host directly (no init script in this test).
+      reactive.writeCaret(instance, 'count', 7, instance);
+      await settle();
+
+      expect(instance.innerHTML).toContain('Count: 7');
+    });
+
+    it('re-renders when a tracked ^var is updated', async () => {
+      const tag = uniqueTag();
+      document.body.innerHTML = `
+        <template component="${tag}">
+          <span class="readout">Count: \${^count}</span>
+        </template>
+      `;
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+
+      reactive.writeCaret(instance, 'count', 0, instance);
+      await settle();
+      expect(instance.innerHTML).toContain('Count: 0');
+
+      reactive.writeCaret(instance, 'count', 42, instance);
+      await settle();
+      expect(instance.innerHTML).toContain('Count: 42');
+    });
+
+    it('runs an init script from `_=` on <template>', async () => {
+      const tag = uniqueTag();
+      // The init script seeds ^count to 5 once on connectedCallback.
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.setAttribute('_', 'set ^count to 5');
+      tmpl.innerHTML = '<span class="readout">v=${^count}</span>';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+      await settle();
+
+      // After init runs and effect re-renders, ^count = 5 should appear.
+      expect(instance.innerHTML).toContain('v=5');
+    });
+
+    it('preserves init script from <script type="text/hyperscript-template" _="...">', async () => {
+      const tag = uniqueTag();
+      const script = document.createElement('script');
+      script.setAttribute('type', 'text/hyperscript-template');
+      script.setAttribute('component', tag);
+      script.setAttribute('_', 'set ^value to "hello"');
+      script.textContent = '<span class="readout">${^value}</span>';
+      document.body.appendChild(script);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+      await settle();
+
+      expect(instance.innerHTML).toContain('hello');
+    });
+
+    it('full click-counter scenario: init + button click + reactive re-render', async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.setAttribute('_', 'set ^count to 0');
+      tmpl.innerHTML =
+        '<button _="on click increment ^count">+</button>' +
+        '<span class="readout">Clicks: ${^count}</span>';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+      await settle();
+
+      // Initial render after init: count = 0
+      expect(instance.innerHTML).toContain('Clicks: 0');
+
+      // Simulate clicks. Re-query the button after each settle — the
+      // reactive re-render replaces innerHTML, so the previous reference
+      // is detached. Settle between clicks — rapid synchronous clicks race
+      // with the async hyperscript event handler chain (a pre-existing
+      // runtime behavior, not specific to components).
+      instance.querySelector('button')!.click();
+      await settle();
+      expect(instance.innerHTML).toContain('Clicks: 1');
+
+      instance.querySelector('button')!.click();
+      await settle();
+      expect(instance.innerHTML).toContain('Clicks: 2');
+
+      instance.querySelector('button')!.click();
+      await settle();
+      expect(instance.innerHTML).toContain('Clicks: 3');
+    });
+
+    it('isolated state: each instance has its own ^var storage', async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.setAttribute('_', 'set ^count to 0');
+      tmpl.innerHTML =
+        '<button _="on click increment ^count">+</button>' +
+        '<span class="readout">${^count}</span>';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const a = document.createElement(tag);
+      const b = document.createElement(tag);
+      document.body.appendChild(a);
+      document.body.appendChild(b);
+      await settle();
+
+      a.querySelector('button')!.click();
+      await settle();
+      a.querySelector('button')!.click();
+      await settle();
+
+      expect(a.querySelector('.readout')!.textContent).toBe('2');
+      expect(b.querySelector('.readout')!.textContent).toBe('0');
+    });
+  });
+
+  describe('v2: template directives (#if / #for / #else / #end)', () => {
+    it('renders #if branch when condition is truthy', async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.innerHTML =
+        '<header>${attrs.title}</header>\n' +
+        '#if attrs.showBadge\n' +
+        '  <span class="badge">VIP</span>\n' +
+        '#end';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const a = document.createElement(tag);
+      a.setAttribute('title', 'Hello');
+      a.setAttribute('show-badge', 'true');
+      document.body.appendChild(a);
+      await settle();
+      expect(a.innerHTML).toContain('Hello');
+      expect(a.innerHTML).toContain('VIP');
+
+      const b = document.createElement(tag);
+      b.setAttribute('title', 'Hi');
+      // show-badge omitted → coerces falsy
+      document.body.appendChild(b);
+      await settle();
+      expect(b.innerHTML).toContain('Hi');
+      expect(b.innerHTML).not.toContain('VIP');
+    });
+
+    it('renders #else branch when #if condition is falsy', async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.innerHTML =
+        '#if attrs.online\n' +
+        '  <span class="status">online</span>\n' +
+        '#else\n' +
+        '  <span class="status">offline</span>\n' +
+        '#end';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const offline = document.createElement(tag);
+      document.body.appendChild(offline);
+      await settle();
+      expect(offline.innerHTML).toContain('offline');
+      expect(offline.innerHTML).not.toContain('>online<');
+    });
+
+    it('renders #for over an iterable from a ^var', async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.setAttribute('_', 'set ^items to ["alpha","beta","gamma"]');
+      tmpl.innerHTML =
+        '<ul>\n' + '#for item in ^items\n' + '  <li>${item}</li>\n' + '#end\n' + '</ul>';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+      await settle();
+      expect(instance.innerHTML).toContain('<li>alpha</li>');
+      expect(instance.innerHTML).toContain('<li>beta</li>');
+      expect(instance.innerHTML).toContain('<li>gamma</li>');
+    });
+
+    it('renders #for #else when iterable is empty', async () => {
+      const tag = uniqueTag();
+      const tmpl = document.createElement('template');
+      tmpl.setAttribute('component', tag);
+      tmpl.setAttribute('_', 'set ^items to []');
+      tmpl.innerHTML =
+        '<ul>\n' +
+        '#for item in ^items\n' +
+        '  <li>${item}</li>\n' +
+        '#else\n' +
+        '  <li class="empty">no items</li>\n' +
+        '#end\n' +
+        '</ul>';
+      document.body.appendChild(tmpl);
+
+      const runtime = new Runtime();
+      installPlugin(runtime, reactivityPlugin);
+      installPlugin(runtime, componentsPlugin);
+      componentsPlugin.scan(document);
+
+      const instance = document.createElement(tag);
+      document.body.appendChild(instance);
+      await settle();
+      expect(instance.innerHTML).toContain('no items');
+    });
   });
 
   it('watch() registers dynamically-added templates', async () => {

@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hyperfixi/core": "*"
+    "@hyperfixi/core": "*",
+    "@hyperfixi/reactivity": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

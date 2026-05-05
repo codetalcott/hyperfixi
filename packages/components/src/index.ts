@@ -24,17 +24,23 @@
  * componentsPlugin.scan(document);
  * ```
  *
- * v1 scope:
+ * v2 scope:
  *   - `<template component="tag-name">` scan + customElements.define
- *   - `${attrs.name}` interpolation (kebab-case attribute → camelCase prop,
- *     with Number/Boolean coercion)
+ *   - `${attrs.name}` and `${^var}` interpolation (kebab-case attribute →
+ *     camelCase prop, with Number/Boolean coercion)
+ *   - `^var` reads tracked via @hyperfixi/reactivity; the template re-stamps
+ *     when any tracked `^var` changes
+ *   - Per-instance init script — `<template _="set ^count to 0">` (or `_=`
+ *     on the upstream `<script type="text/hyperscript-template">` form) runs
+ *     once on each instance via the runtime's standard init mechanism
  *   - `<slot/>` + `<slot name="X"/>` substitution from instantiation children
  *   - disconnectedCallback fires CleanupRegistry teardown
  *   - MutationObserver watches for dynamically-added templates
  *
- * v2 plans (deferred):
- *   - Reactive re-render (Phase 7 reactivity integration for ${^var})
- *   - Full render-command reuse (`@if` / `@repeat` directives inside templates)
+ * v2.1 plans (deferred):
+ *   - `attrs.X` available inside hyperscript expressions (currently only
+ *     resolves inside `${...}` interpolation)
+ *   - `#if` / `#for` / `#else` / `#end` template directives
  *   - Style scoping (@scope (tag-name) ...)
  *   - dom-scope isolation for `^var` boundaries
  */

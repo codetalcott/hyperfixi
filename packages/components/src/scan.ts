@@ -30,15 +30,17 @@ export function scanAndRegister(
     if (registerTemplateComponent(t as HTMLTemplateElement, options)) count++;
   });
 
-  // <script type="text/hyperscript-template" component="tag-name">
+  // <script type="text/hyperscript-template" component="tag-name" _="init script">
   // Upstream uses this form; we support it for compat. Convert to a
-  // synthetic HTMLTemplateElement so register code is shared.
+  // synthetic HTMLTemplateElement so register code is shared. Init scripts
+  // (`_=`) are preserved so they run once per instance.
   const scripts = root.querySelectorAll('script[type="text/hyperscript-template"][component]');
   scripts.forEach(s => {
     const fake = document.createElement('template');
-    // Copy attributes we care about.
     const componentAttr = s.getAttribute('component');
     if (componentAttr) fake.setAttribute('component', componentAttr);
+    const initScript = s.getAttribute('_');
+    if (initScript) fake.setAttribute('data-init', initScript);
     fake.innerHTML = s.textContent ?? '';
     if (registerTemplateComponent(fake, options)) count++;
   });
@@ -74,6 +76,8 @@ export function watchForTemplates(options: ScanOptions = {}): () => void {
           const fake = document.createElement('template');
           const componentAttr = el.getAttribute('component');
           if (componentAttr) fake.setAttribute('component', componentAttr);
+          const initScript = el.getAttribute('_');
+          if (initScript) fake.setAttribute('data-init', initScript);
           fake.innerHTML = el.textContent ?? '';
           registerTemplateComponent(fake, options);
         }
