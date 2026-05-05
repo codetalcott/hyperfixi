@@ -7,6 +7,7 @@
 
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -17,6 +18,17 @@ export interface NumericTargetRawInput {
 }
 
 /**
+ * Plugin-defined write target (e.g. `^count` from @hyperfixi/reactivity).
+ * The parser captures the current value via the standard expression evaluator;
+ * `execute` computes the new value and dispatches the write through `writer`.
+ */
+export interface NumericCustomWrite {
+  node: ASTNode;
+  writer: NodeWriterFn;
+  currentValue: number;
+}
+
+/**
  * Typed input after parsing
  */
 export interface NumericTargetInput {
@@ -24,6 +36,8 @@ export interface NumericTargetInput {
   property?: string;
   scope?: 'global' | 'local';
   amount: number;
+  /** When set, increment/decrement should read+write through the plugin writer. */
+  customWrite?: NumericCustomWrite;
 }
 
 /**
@@ -61,6 +75,7 @@ export async function parseNumericTargetInput(
   const targetArg = raw.args[0];
   let target: string | number;
   let extractedScope: 'global' | 'local' | undefined;
+  let customWrite: NumericCustomWrite | undefined;
 
   // Extract variable name AND scope from AST node without fully evaluating
   const nodeType = getNodeType(targetArg);
@@ -73,11 +88,27 @@ export async function parseNumericTargetInput(
   } else if (nodeType === 'literal') {
     target = (targetArg as any).value;
   } else {
-    const evaluated = await evaluator.evaluate(targetArg, context);
-    if (Array.isArray(evaluated) && evaluated.length > 0) {
-      target = evaluated[0];
+    // Plugin-defined write target — e.g. `increment ^count` routes through
+    // the reactivity plugin's caretVar writer. We read the current value via
+    // the standard expression evaluator and let `execute` dispatch the write.
+    const writer = getRegisteredNodeWriter(nodeType);
+    if (writer) {
+      const currentRaw = await evaluator.evaluate(targetArg, context);
+      const currentValue =
+        typeof currentRaw === 'number'
+          ? currentRaw
+          : currentRaw == null
+            ? 0
+            : Number(currentRaw) || 0;
+      target = currentValue;
+      customWrite = { node: targetArg, writer, currentValue };
     } else {
-      target = evaluated as string | number;
+      const evaluated = await evaluator.evaluate(targetArg, context);
+      if (Array.isArray(evaluated) && evaluated.length > 0) {
+        target = evaluated[0];
+      } else {
+        target = evaluated as string | number;
+      }
     }
   }
 
@@ -106,5 +137,6 @@ export async function parseNumericTargetInput(
     target,
     amount,
     ...(scope && { scope }),
+    ...(customWrite && { customWrite }),
   };
 }

@@ -80,11 +80,25 @@ export type GlobalWriteHook = (name: string, value: unknown, context: ExecutionC
 export type GlobalReadHook = (name: string, context: ExecutionContext) => void;
 
 /**
+ * Writer for a custom AST-node assignment target. Registered by plugins so
+ * commands like `set` and `increment` can dispatch writes to plugin-defined
+ * targets (e.g. `set ^count to 0` writes to a caret-var via the reactivity
+ * plugin). The writer receives the target node, the value to assign, and the
+ * execution context. Returns nothing.
+ */
+export type NodeWriterFn = (
+  node: ASTNode,
+  value: unknown,
+  context: ExecutionContext
+) => void | Promise<void>;
+
+/**
  * Module-level storage for Phase 5b extension points. Kept here (not in
  * parser-constants.ts) because these hold functions, not string sets.
  */
 const FEATURE_REGISTRY = new Map<string, FeatureParseFn>();
 const NODE_EVALUATORS = new Map<string, NodeEvaluatorFn>();
+const NODE_WRITERS = new Map<string, NodeWriterFn>();
 const GLOBAL_WRITE_HOOKS = new Set<GlobalWriteHook>();
 const GLOBAL_READ_HOOKS = new Set<GlobalReadHook>();
 
@@ -102,6 +116,16 @@ export function getRegisteredFeature(name: string): FeatureParseFn | undefined {
  */
 export function getRegisteredNodeEvaluator(type: string): NodeEvaluatorFn | undefined {
   return NODE_EVALUATORS.get(type);
+}
+
+/**
+ * Look up a registered node writer. The `set` command (and any other
+ * assignment-style command) consults this when its target is a custom AST
+ * node type — if a writer is registered, the command delegates the write
+ * instead of failing with "target must be a string or object literal".
+ */
+export function getRegisteredNodeWriter(type: string): NodeWriterFn | undefined {
+  return NODE_WRITERS.get(type);
 }
 
 /**
@@ -139,6 +163,7 @@ export interface ParserExtensionSnapshot {
   prattEntries: Array<[string, BindingPowerEntry]>;
   features: Array<[string, FeatureParseFn]>;
   nodeEvaluators: Array<[string, NodeEvaluatorFn]>;
+  nodeWriters: Array<[string, NodeWriterFn]>;
   globalWriteHooks: GlobalWriteHook[];
   globalReadHooks: GlobalReadHook[];
 }
@@ -242,6 +267,16 @@ export class ParserExtensionRegistry {
   }
 
   /**
+   * Register a writer for a custom AST-node assignment target. Used by plugins
+   * that introduce new write targets — e.g. the reactivity plugin registers a
+   * writer for `caretVar` so `set ^count to 42` flows through `reactive.writeCaret`
+   * instead of failing in the `set` command.
+   */
+  registerNodeWriter(nodeType: string, fn: NodeWriterFn): void {
+    NODE_WRITERS.set(nodeType, fn);
+  }
+
+  /**
    * Register a hook invoked on every `$name` global-variable write. Used by
    * the reactivity plugin to notify dependent effects. Returns a disposer
    * that removes the hook.
@@ -273,6 +308,7 @@ export class ParserExtensionRegistry {
       prattEntries: Array.from(PARSER_TABLE.entries()).map(([k, v]) => [k, { ...v }]),
       features: Array.from(FEATURE_REGISTRY.entries()),
       nodeEvaluators: Array.from(NODE_EVALUATORS.entries()),
+      nodeWriters: Array.from(NODE_WRITERS.entries()),
       globalWriteHooks: Array.from(GLOBAL_WRITE_HOOKS),
       globalReadHooks: Array.from(GLOBAL_READ_HOOKS),
     };
@@ -294,6 +330,8 @@ export class ParserExtensionRegistry {
     for (const [k, v] of snapshot.features) FEATURE_REGISTRY.set(k, v);
     NODE_EVALUATORS.clear();
     for (const [k, v] of snapshot.nodeEvaluators) NODE_EVALUATORS.set(k, v);
+    NODE_WRITERS.clear();
+    for (const [k, v] of snapshot.nodeWriters ?? []) NODE_WRITERS.set(k, v);
     GLOBAL_WRITE_HOOKS.clear();
     for (const h of snapshot.globalWriteHooks) GLOBAL_WRITE_HOOKS.add(h);
     GLOBAL_READ_HOOKS.clear();

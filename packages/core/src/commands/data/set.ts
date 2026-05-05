@@ -36,6 +36,7 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+import { getRegisteredNodeWriter, type NodeWriterFn } from '../../parser/extensions';
 
 /** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
@@ -49,7 +50,8 @@ export type SetCommandInput =
       container: Record<string, unknown>;
       property: string;
       value: unknown;
-    };
+    }
+  | { type: 'node-write'; node: ASTNode; value: unknown; writer: NodeWriterFn };
 
 /** Output from SetCommand execution */
 export interface SetCommandOutput {
@@ -80,6 +82,19 @@ export class SetCommand implements DecoratedCommand {
 
     const firstArg = raw.args[0] as Record<string, unknown>;
     const argName = (firstArg?.name || firstArg?.value) as string | undefined;
+
+    // Plugin-defined write targets — e.g. `set ^count to 0` routes through
+    // the reactivity plugin's caretVar writer. Dispatch BEFORE evaluating
+    // firstArg so the writer can interpret the raw AST node (the target
+    // value at this point hasn't been written yet).
+    const firstArgType = firstArg?.type as string | undefined;
+    if (firstArgType) {
+      const writer = getRegisteredNodeWriter(firstArgType);
+      if (writer) {
+        const value = await this.extractValue(raw, evaluator, context);
+        return { type: 'node-write', node: firstArg as ASTNode, value, writer };
+      }
+    }
 
     // Unified PropertyTarget resolution: handles propertyOfExpression, propertyAccess, possessiveExpression
     const propertyTarget = await resolveAnyPropertyTarget(
@@ -241,6 +256,15 @@ export class SetCommand implements DecoratedCommand {
         input.container[input.property] = input.value;
         Object.assign(context, { it: input.value });
         return { target: input.property, value: input.value, targetType: 'property' };
+
+      case 'node-write':
+        await input.writer(input.node, input.value, context);
+        Object.assign(context, { it: input.value });
+        return {
+          target: (input.node as { name?: string }).name ?? '',
+          value: input.value,
+          targetType: 'variable',
+        };
 
       default:
         throw new Error(`Unknown input type: ${(input as { type: string }).type}`);

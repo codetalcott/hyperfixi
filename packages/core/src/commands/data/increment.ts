@@ -85,7 +85,21 @@ export class NumericModifyCommand implements DecoratedCommand {
    * Execute the numeric modification command
    */
   async execute(input: NumericModifyInput, context: TypedExecutionContext): Promise<number> {
-    const { target, property, scope, amount = 1, operation = 'increment' } = input;
+    const { target, property, scope, amount = 1, operation = 'increment', customWrite } = input;
+
+    // Plugin-defined write target (e.g. `increment ^count` via the reactivity
+    // plugin). Compute the new value from the captured currentValue and route
+    // the write through the registered NodeWriter.
+    if (customWrite) {
+      const delta = isFinite(amount) ? amount : 1;
+      const newValue =
+        operation === 'increment'
+          ? customWrite.currentValue + delta
+          : customWrite.currentValue - delta;
+      await customWrite.writer(customWrite.node, newValue, context);
+      Object.assign(context, { it: newValue });
+      return newValue;
+    }
 
     // Get current value using shared helper
     const currentValue = getCurrentNumericValue(target, property, scope, context);
