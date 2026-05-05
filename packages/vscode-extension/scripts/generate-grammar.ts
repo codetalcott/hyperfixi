@@ -262,6 +262,10 @@ function generateGrammar(mode: GrammarMode): object {
     scopeName: 'source.hyperscript',
     patterns: [
       { include: '#comments' },
+      // Possessive `'s` (e.g. `#counter's textContent`, `me's parentNode`) must
+      // be tokenized before #strings, otherwise the `'` opens a single-quoted
+      // string scope that swallows the rest of the line.
+      { include: '#possessives' },
       { include: '#strings' },
       { include: '#numbers' },
       // v2 directives go before #event-handlers so `#if`/`#for` etc. don't get
@@ -288,6 +292,15 @@ function generateGrammar(mode: GrammarMode): object {
           {
             name: 'comment.line.double-dash.hyperscript',
             match: '--.*$',
+          },
+        ],
+      },
+      possessives: {
+        patterns: [
+          {
+            name: 'keyword.operator.possessive.hyperscript',
+            comment: "Possessive 's — must match before single-quote string rule",
+            match: "'s\\b",
           },
         ],
       },
