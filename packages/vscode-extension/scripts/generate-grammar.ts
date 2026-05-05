@@ -250,10 +250,19 @@ function generateGrammar(): object {
       { include: '#comments' },
       { include: '#strings' },
       { include: '#numbers' },
+      // v2 directives go before #event-handlers so `#if`/`#for` etc. don't get
+      // mis-tokenized; they're line-anchored so they don't false-match in prose.
+      { include: '#directives' },
       { include: '#event-handlers' },
       { include: '#commands' },
       { include: '#keywords' },
       { include: '#selectors' },
+      // Component scope (`attrs`, `attrs.X`) before #variables so `attrs.foo`
+      // is tokenized as a unit rather than `attrs` + `.foo`.
+      { include: '#component-scope' },
+      // Reactive vars (`^name`) before #operators so the `^` isn't first
+      // matched as bitwise XOR.
+      { include: '#reactive-vars' },
       { include: '#variables' },
       { include: '#references' },
       { include: '#operators' },
@@ -405,6 +414,59 @@ function generateGrammar(): object {
             name: 'keyword.other.particle.korean.hyperscript',
             comment: 'Korean particles for role marking',
             match: '을|를|에|에서|의|로|으로',
+          },
+        ],
+      },
+      // v2 template directives. Line-anchored to mirror the runtime parser
+      // (@hyperfixi/components/src/template-ast.ts:28-31). Surface inside
+      // <template component> bodies via the injection grammar; standalone
+      // hyperscript files won't typically contain them, but they don't hurt.
+      directives: {
+        patterns: [
+          {
+            name: 'keyword.control.directive.if.hyperscript',
+            match: '^\\s*#if\\b',
+          },
+          {
+            name: 'keyword.control.directive.for.hyperscript',
+            match: '^\\s*#for\\b',
+          },
+          {
+            name: 'keyword.control.directive.else.hyperscript',
+            match: '^\\s*#else\\s*$',
+          },
+          {
+            name: 'keyword.control.directive.end.hyperscript',
+            match: '^\\s*#end\\s*$',
+          },
+          {
+            name: 'keyword.control.directive.continue.hyperscript',
+            match: '^\\s*#continue\\s*$',
+          },
+        ],
+      },
+      // v2 reactive variables: `^name`. Distinct scope from `:locals` and
+      // `$globals` so themes can color them differently.
+      'reactive-vars': {
+        patterns: [
+          {
+            name: 'variable.other.reactive.hyperscript',
+            match: '\\^[A-Za-z_][A-Za-z0-9_]*',
+          },
+        ],
+      },
+      // v2 component scope: `attrs.propertyName`. Tokenized as a single unit
+      // so `attrs` lights up as a support variable and the property name as a
+      // distinct property scope.
+      'component-scope': {
+        patterns: [
+          {
+            match: '\\b(attrs)(\\.)([A-Za-z_][A-Za-z0-9_]*)',
+            captures: {
+              '1': { name: 'support.variable.component.hyperscript' },
+              '2': { name: 'punctuation.accessor.hyperscript' },
+              '3': { name: 'variable.other.property.hyperscript' },
+            },
           },
         ],
       },

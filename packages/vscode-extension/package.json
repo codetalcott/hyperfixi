@@ -62,6 +62,16 @@
         }
       }
     ],
+    "snippets": [
+      {
+        "language": "hyperscript",
+        "path": "./snippets/hyperscript.code-snippets"
+      },
+      {
+        "language": "html",
+        "path": "./snippets/hyperscript.code-snippets"
+      }
+    ],
     "commands": [
       {
         "command": "lokascript.restartServer",

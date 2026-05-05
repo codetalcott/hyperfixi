@@ -8,7 +8,16 @@
       "include": "#hyperscript-attribute"
     },
     {
+      "include": "#hyperscript-attribute-single"
+    },
+    {
       "include": "#hyperscript-script-tag"
+    },
+    {
+      "include": "#template-component-body"
+    },
+    {
+      "include": "#script-template-body"
     }
   ],
   "repository": {
@@ -61,6 +70,89 @@
         "3": { "name": "punctuation.definition.tag.end.html" }
       },
       "name": "meta.embedded.block.hyperscript",
+      "contentName": "meta.embedded.inline.hyperscript",
+      "patterns": [{ "include": "source.hyperscript" }]
+    },
+    "template-component-body": {
+      "comment": "v2 component template body — line-oriented #if/#for directives + ${...} interpolation. We don't include the full hyperscript scope since the body is HTML; just inject directive recognition and interpolation expressions.",
+      "begin": "(?i)(<)(template)(\\s+[^>]*\\bcomponent=(\"[^\"]+\"|'[^']+')[^>]*)(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.template.html" },
+        "3": { "patterns": [{ "include": "text.html.basic#tag-stuff" }] },
+        "5": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "end": "(</)(template)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.template.html" },
+        "3": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "name": "meta.embedded.block.template-component.hyperscript",
+      "patterns": [
+        { "include": "#template-directives" },
+        { "include": "#template-interpolation" },
+        { "include": "text.html.basic" }
+      ]
+    },
+    "script-template-body": {
+      "comment": "Upstream form: <script type=\"text/hyperscript-template\" component=\"...\">. Same body shape as template-component-body.",
+      "begin": "(<)(script)\\s+[^>]*\\btype=(\"text/hyperscript-template\"|'text/hyperscript-template')[^>]*\\bcomponent=(\"[^\"]+\"|'[^']+')[^>]*(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "3": { "name": "string.quoted.html" },
+        "4": { "name": "string.quoted.html" },
+        "5": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "end": "(</)(script)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.html" },
+        "2": { "name": "entity.name.tag.script.html" },
+        "3": { "name": "punctuation.definition.tag.end.html" }
+      },
+      "name": "meta.embedded.block.template-component.hyperscript",
+      "patterns": [
+        { "include": "#template-directives" },
+        { "include": "#template-interpolation" },
+        { "include": "text.html.basic" }
+      ]
+    },
+    "template-directives": {
+      "patterns": [
+        {
+          "name": "keyword.control.directive.if.hyperscript",
+          "match": "^\\s*#if\\b.*$"
+        },
+        {
+          "name": "keyword.control.directive.for.hyperscript",
+          "match": "^\\s*#for\\b.*$"
+        },
+        {
+          "name": "keyword.control.directive.else.hyperscript",
+          "match": "^\\s*#else\\s*$"
+        },
+        {
+          "name": "keyword.control.directive.end.hyperscript",
+          "match": "^\\s*#end\\s*$"
+        },
+        {
+          "name": "keyword.control.directive.continue.hyperscript",
+          "match": "^\\s*#continue\\s*$"
+        }
+      ]
+    },
+    "template-interpolation": {
+      "comment": "${...} interpolation inside template bodies. The expression scope is hyperscript so ^var, attrs.X, etc. highlight correctly.",
+      "begin": "\\$\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.template-expression.begin.hyperscript" }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.template-expression.end.hyperscript" }
+      },
+      "name": "meta.template.expression.hyperscript",
       "contentName": "meta.embedded.inline.hyperscript",
       "patterns": [{ "include": "source.hyperscript" }]
     }

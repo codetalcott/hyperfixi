@@ -1,0 +1,74 @@
+{
+  "Component template (v2)": {
+    "scope": "html",
+    "prefix": ["template-component", "tcomp"],
+    "description": "Scaffold a <template component> with init script and body",
+    "body": [
+      "<template component=\"${1:my-component}\" _=\"set ^${2:state} to ${3:0}\">",
+      "  ${4:<div>Content here</div>}",
+      "</template>"
+    ]
+  },
+
+  "Directive: #if": {
+    "scope": "html,hyperscript",
+    "prefix": ["#if", "if-directive"],
+    "description": "Conditional template block",
+    "body": ["#if ${1:condition}", "  ${2}", "#end"]
+  },
+
+  "Directive: #if / #else": {
+    "scope": "html,hyperscript",
+    "prefix": ["#ife", "if-else-directive"],
+    "description": "Conditional template block with #else branch",
+    "body": ["#if ${1:condition}", "  ${2}", "#else", "  ${3}", "#end"]
+  },
+
+  "Directive: #for": {
+    "scope": "html,hyperscript",
+    "prefix": ["#for", "for-directive"],
+    "description": "Iteration template block",
+    "body": ["#for ${1:item} in ${2:collection}", "  ${3}", "#end"]
+  },
+
+  "Directive: #for / #else": {
+    "scope": "html,hyperscript",
+    "prefix": ["#fore", "for-else-directive"],
+    "description": "Iteration template block with empty-collection fallback",
+    "body": [
+      "#for ${1:item} in ${2:collection}",
+      "  ${3}",
+      "#else",
+      "  ${4:<p>No items.</p>}",
+      "#end"
+    ]
+  },
+
+  "Reactive write (^var)": {
+    "scope": "hyperscript,html",
+    "prefix": ["set^", "set-caret", "^set"],
+    "description": "Write to a reactive variable (DOM-scoped)",
+    "body": ["set ^${1:name} to ${2:value}"]
+  },
+
+  "Reactive read (^var)": {
+    "scope": "hyperscript,html",
+    "prefix": ["^read", "caret-read"],
+    "description": "Read a reactive variable",
+    "body": ["^${1:name}"]
+  },
+
+  "Component attribute (attrs)": {
+    "scope": "hyperscript,html",
+    "prefix": ["attrs."],
+    "description": "Read a component attribute",
+    "body": ["attrs.${1:propertyName}"]
+  },
+
+  "DOM scope boundary": {
+    "scope": "html",
+    "prefix": ["dom-scope", "scope-isolated"],
+    "description": "Mark an element as a ^var lookup boundary",
+    "body": ["dom-scope=\"isolated\""]
+  }
+}

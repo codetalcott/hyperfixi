@@ -34,5 +34,41 @@
       log 'Hello ' + name
     end
   </script>
+
+  <!-- ============================================================ -->
+  <!-- v2 / v2.1 component features — for visual smoke testing       -->
+  <!-- ============================================================ -->
+
+  <!-- Init script reads `attrs.X` and writes a reactive `^var` -->
+  <template component="my-counter" _="set ^count to attrs.initialCount">
+    <button _="on click increment ^count">
+      Count: ${^count}
+    </button>
+    #if ^count > 10
+      <span class="warn">High!</span>
+    #else
+      <span class="ok">OK</span>
+    #end
+  </template>
+
+  <!-- Iteration with #for, plus #else for empty fallback -->
+  <template component="my-list" _="set ^items to ['a', 'b', 'c']">
+    <ul>
+      #for item in ^items
+        <li>${item}</li>
+      #else
+        <li>No items.</li>
+      #end
+    </ul>
+  </template>
+
+  <!-- Manual dom-scope boundary (^vars don't leak past this) -->
+  <div dom-scope="isolated" _="set ^localFlag to true">
+    <button _="if ^localFlag then add .on to me">Toggle local</button>
+  </div>
+
+  <!-- Component instances -->
+  <my-counter initial-count="5"></my-counter>
+  <my-list></my-list>
 </body>
 </html>
