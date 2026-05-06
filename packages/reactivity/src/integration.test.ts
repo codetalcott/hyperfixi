@@ -339,5 +339,110 @@ describe('@hyperfixi/reactivity — integration', () => {
 
       document.body.removeChild(parent);
     });
+
+    it('reads `^name on <target>` end-to-end via parser + runtime', async () => {
+      const a = document.createElement('div');
+      const b = document.createElement('div');
+      b.id = 'caret-target';
+      document.body.appendChild(a);
+      document.body.appendChild(b);
+
+      reactive.writeCaret(b, 'count', 99, b);
+
+      const ctx = createContext(a);
+      // me=a, but we want to read ^count from b via `on`.
+      const r = parse('set :v to ^count on #caret-target');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      expect(ctx.locals.get('v')).toBe(99);
+
+      document.body.removeChild(a);
+      document.body.removeChild(b);
+    });
+  });
+
+  describe('local hooks (cross-handler propagation)', () => {
+    it('a `set :foo` from elsewhere triggers an effect that read `:foo`', async () => {
+      const el = document.createElement('div');
+      document.body.appendChild(el);
+      const ctx = createContext(el);
+      ctx.locals.set('foo', 'initial');
+
+      // Effect tracking the local read via the runtime path (so localReadHook fires).
+      let lastSeen: unknown = undefined;
+      const stop = reactive.createEffect(
+        async () => await runtime.execute(parse('set :v to :foo').node!, ctx),
+        () => {
+          lastSeen = ctx.locals.get('v');
+        },
+        el
+      );
+      await settle();
+      expect(lastSeen).toBe('initial');
+
+      // Programmatic `set :foo to ...` from a SEPARATE parse+execute (same context.me).
+      // Without local hooks this would be silent; with them, the effect re-runs.
+      await runtime.execute(parse('set :foo to "updated"').node!, ctx);
+      await settle();
+      expect(lastSeen).toBe('updated');
+
+      stop();
+      document.body.removeChild(el);
+    });
+  });
+
+  describe('coverage gaps', () => {
+    it('bind effects tear down when the owning element is cleaned up', async () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = 'a';
+      document.body.appendChild(input);
+      const ctx = createContext(input);
+      ctx.globals.set('x', 'a');
+
+      const r = parse('bind $x to me');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      // Tear down the element via the cleanup registry.
+      runtime.cleanup(input);
+      document.body.removeChild(input);
+
+      // Programmatic var write must NOT touch the (cleaned-up) DOM. If the
+      // var→DOM effect were still alive, input.value would become 'b'.
+      ctx.globals.set('x', 'b');
+      reactive.notifyGlobal('x');
+      await settle();
+      expect(input.value).toBe('a');
+    });
+
+    it('long-lived bind survives 200 user-input events', async () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = '';
+      document.body.appendChild(input);
+      const ctx = createContext(input);
+      ctx.globals.set('x', '');
+
+      const r = parse('bind $x to me');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      // 200 separate user-input events. Without the cycle-counter reset (from
+      // the previous PR), the DOM→var effect would halt at lifetime trigger #101
+      // and the global would freeze.
+      for (let i = 0; i < 200; i++) {
+        input.value = `v${i}`;
+        input.dispatchEvent(new Event('input'));
+        await settle();
+      }
+      expect(ctx.globals.get('x')).toBe('v199');
+
+      document.body.removeChild(input);
+    });
   });
 });

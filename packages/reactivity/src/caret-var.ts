@@ -28,6 +28,18 @@ interface CaretVarRuntime {
 }
 
 /**
+ * Coerce a runtime-evaluated `on <target>` result to a single Element.
+ * Selector expressions resolve to an array of matched elements; bare
+ * `me`/`it`/`you`/identifier references resolve to single Elements. Take the
+ * first element of an array, or the value itself if it's already an Element.
+ */
+function coerceToElement(value: unknown): Element | null {
+  if (value instanceof Element) return value;
+  if (Array.isArray(value) && value[0] instanceof Element) return value[0];
+  return null;
+}
+
+/**
  * Pratt prefix handler for `^`. Consumes the following identifier token and
  * an optional `on <expr>` clause.
  */
@@ -80,7 +92,8 @@ export function makeEvaluateCaretVar(
 
     if (n.onTarget) {
       const resolved = await runtime.execute(n.onTarget, context);
-      if (resolved instanceof Element) anchor = resolved;
+      const el = coerceToElement(resolved);
+      if (el) anchor = el;
     }
 
     if (!anchor) return undefined;
@@ -104,7 +117,8 @@ export function makeWriteCaretVar(
     let target: Element | undefined;
     if (n.onTarget) {
       const resolved = await runtime.execute(n.onTarget, context);
-      if (resolved instanceof Element) target = resolved;
+      const el = coerceToElement(resolved);
+      if (el) target = el;
     }
     reactive.writeCaret(anchor, n.name, value, target);
   };

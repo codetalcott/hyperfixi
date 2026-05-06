@@ -144,14 +144,13 @@ export function makeEvaluateBindFeature(runtime: {
     const writeVar = (value: unknown): void => {
       if (varSide!.isGlobal) {
         context.globals?.set(varSide!.name, value);
-        // Notify the reactive graph so the var→DOM effect sees the change.
+        // Bypass the global-write hook (we're touching the Map directly), so
+        // notify the reactive graph manually for the var→DOM effect.
         reactive.notifyGlobal(varSide!.name);
       } else {
         context.locals?.set(varSide!.name, value);
-        // Note: locals have no core-side write hook today, so a programmatic
-        // `set :foo to ...` elsewhere will not trigger reactivity. Within bind
-        // itself we wire DOM→var→DOM via element-scoped notify so the bind's
-        // own roundtrip is reactive.
+        // Same rationale for locals — direct Map write skips the localWriteHook,
+        // so we notify the element-scoped subscription set directly.
         reactive.notifyElement(owner, varSide!.name);
       }
     };
@@ -168,9 +167,9 @@ export function makeEvaluateBindFeature(runtime: {
       owner
     );
 
-    // Effect 2: var → DOM (fires on programmatic var writes for globals;
-    // for locals, only the bind's own DOM→var path notifies, since core has
-    // no localWriteHook).
+    // Effect 2: var → DOM (fires on programmatic var writes — for globals
+    // via the core's globalWriteHook, for locals via the localWriteHook the
+    // reactivity plugin registers).
     const stopVarToDom = reactive.createEffect(
       () => {
         if (varSide!.isGlobal) reactive.trackGlobal(varSide!.name);

@@ -80,6 +80,20 @@ export type GlobalWriteHook = (name: string, value: unknown, context: ExecutionC
 export type GlobalReadHook = (name: string, context: ExecutionContext) => void;
 
 /**
+ * Callback invoked on every local-variable write (e.g. `set :foo to 42`).
+ * Mirror-image of `GlobalWriteHook` — used by the reactivity plugin to notify
+ * effects subscribed to per-element local state. Fire-and-forget.
+ */
+export type LocalWriteHook = (name: string, value: unknown, context: ExecutionContext) => void;
+
+/**
+ * Callback invoked on every local-variable read. Mirror-image of
+ * `GlobalReadHook` — used by the reactivity plugin to track dependencies on
+ * `:name` reads. Fire-and-forget.
+ */
+export type LocalReadHook = (name: string, context: ExecutionContext) => void;
+
+/**
  * Writer for a custom AST-node assignment target. Registered by plugins so
  * commands like `set` and `increment` can dispatch writes to plugin-defined
  * targets (e.g. `set ^count to 0` writes to a caret-var via the reactivity
@@ -101,6 +115,8 @@ const NODE_EVALUATORS = new Map<string, NodeEvaluatorFn>();
 const NODE_WRITERS = new Map<string, NodeWriterFn>();
 const GLOBAL_WRITE_HOOKS = new Set<GlobalWriteHook>();
 const GLOBAL_READ_HOOKS = new Set<GlobalReadHook>();
+const LOCAL_WRITE_HOOKS = new Set<LocalWriteHook>();
+const LOCAL_READ_HOOKS = new Set<LocalReadHook>();
 
 /**
  * Look up a registered feature parse function. The parser calls this at the
@@ -155,6 +171,49 @@ export function notifyGlobalRead(name: string, context: ExecutionContext): void 
 }
 
 /**
+ * Iterate registered local-write hooks. Intended for internal use by
+ * `setVariableValue` / any other path that mutates `context.locals`.
+ */
+export function getLocalWriteHooks(): Iterable<LocalWriteHook> {
+  return LOCAL_WRITE_HOOKS;
+}
+
+/**
+ * Notify all registered hooks that a `:name` local was just written. No-op
+ * when no hooks are installed (common case); keep this check fast.
+ */
+export function notifyLocalWrite(name: string, value: unknown, context: ExecutionContext): void {
+  if (LOCAL_WRITE_HOOKS.size === 0) return;
+  for (const hook of LOCAL_WRITE_HOOKS) {
+    try {
+      hook(name, value, context);
+    } catch (err) {
+      if (typeof console !== 'undefined') {
+        console.error('[hyperfixi] localWriteHook threw:', err);
+      }
+    }
+  }
+}
+
+/**
+ * Notify all registered hooks that a `:name` local was just read. Called by
+ * identifier evaluators in both the explicit `scope === 'local'` branch and
+ * the implicit-scope fallback. No-op when no hooks are installed.
+ */
+export function notifyLocalRead(name: string, context: ExecutionContext): void {
+  if (LOCAL_READ_HOOKS.size === 0) return;
+  for (const hook of LOCAL_READ_HOOKS) {
+    try {
+      hook(name, context);
+    } catch (err) {
+      if (typeof console !== 'undefined') {
+        console.error('[hyperfixi] localReadHook threw:', err);
+      }
+    }
+  }
+}
+
+/**
  * Snapshot of the registry state so tests can roll back plugin installations.
  */
 export interface ParserExtensionSnapshot {
@@ -166,6 +225,8 @@ export interface ParserExtensionSnapshot {
   nodeWriters: Array<[string, NodeWriterFn]>;
   globalWriteHooks: GlobalWriteHook[];
   globalReadHooks: GlobalReadHook[];
+  localWriteHooks: LocalWriteHook[];
+  localReadHooks: LocalReadHook[];
 }
 
 export class ParserExtensionRegistry {
@@ -298,6 +359,26 @@ export class ParserExtensionRegistry {
   }
 
   /**
+   * Register a hook invoked on every `:name` local-variable write. Mirror-image
+   * of `registerGlobalWriteHook` — used by the reactivity plugin to notify
+   * effects subscribed to per-element local state. Returns a disposer.
+   */
+  registerLocalWriteHook(hook: LocalWriteHook): () => void {
+    LOCAL_WRITE_HOOKS.add(hook);
+    return () => LOCAL_WRITE_HOOKS.delete(hook);
+  }
+
+  /**
+   * Register a hook invoked on every `:name` local-variable read. Mirror-image
+   * of `registerGlobalReadHook` — used by the reactivity plugin to track
+   * dependencies on local reads. Returns a disposer.
+   */
+  registerLocalReadHook(hook: LocalReadHook): () => void {
+    LOCAL_READ_HOOKS.add(hook);
+    return () => LOCAL_READ_HOOKS.delete(hook);
+  }
+
+  /**
    * Capture current state so a test can roll back plugin installations.
    * Intended for test isolation — do not use in production code.
    */
@@ -311,6 +392,8 @@ export class ParserExtensionRegistry {
       nodeWriters: Array.from(NODE_WRITERS.entries()),
       globalWriteHooks: Array.from(GLOBAL_WRITE_HOOKS),
       globalReadHooks: Array.from(GLOBAL_READ_HOOKS),
+      localWriteHooks: Array.from(LOCAL_WRITE_HOOKS),
+      localReadHooks: Array.from(LOCAL_READ_HOOKS),
     };
   }
 
@@ -336,6 +419,10 @@ export class ParserExtensionRegistry {
     for (const h of snapshot.globalWriteHooks) GLOBAL_WRITE_HOOKS.add(h);
     GLOBAL_READ_HOOKS.clear();
     for (const h of snapshot.globalReadHooks ?? []) GLOBAL_READ_HOOKS.add(h);
+    LOCAL_WRITE_HOOKS.clear();
+    for (const h of snapshot.localWriteHooks ?? []) LOCAL_WRITE_HOOKS.add(h);
+    LOCAL_READ_HOOKS.clear();
+    for (const h of snapshot.localReadHooks ?? []) LOCAL_READ_HOOKS.add(h);
   }
 }
 

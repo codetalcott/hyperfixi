@@ -47,6 +47,18 @@ when $a or $b changes
 end
 ```
 
+**Init behavior**: the body fires once on initial evaluation if the watched expression has a non-null/non-undefined value, then on every subsequent change (`Object.is` semantics). If you need pure change-only semantics, gate the body on a sentinel:
+
+```hyperscript
+when $x changes
+  if not :primed
+    set :primed to true
+    exit
+  end
+  log 'x actually changed'
+end
+```
+
 ## `bind`
 
 ```hyperscript
@@ -70,7 +82,7 @@ Auto-detected property by element type:
 
 To override, bind directly to a property expression (not yet supported in v1).
 
-Both `$globals` and `:locals` are accepted on the var side. Locals are reactive only within the bind's own DOM↔var roundtrip — programmatic `set :foo to ...` elsewhere will not propagate until the core exposes a local-write hook.
+Both `$globals` and `:locals` are accepted on the var side. Local writes propagate through the localWriteHook keyed off `context.me`, so a `set :foo to ...` from any handler running on the same `me` element will update the bound DOM property.
 
 ## `^name` — DOM-scoped variables
 

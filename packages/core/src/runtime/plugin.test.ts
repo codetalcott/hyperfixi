@@ -380,4 +380,128 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
       expect(hookCalls).toEqual([]);
     });
   });
+
+  describe('local hooks — :name reads and writes', () => {
+    it('registerLocalWriteHook fires on `set :x to 1`', async () => {
+      const events: Array<[string, unknown]> = [];
+      registry.registerLocalWriteHook((name, value, _ctx) => {
+        events.push([name, value]);
+      });
+
+      const runtime = new Runtime();
+      const ctx = createContext(document.createElement('div'));
+      const result = parse('set :x to 1');
+      expect(result.success).toBe(true);
+      await runtime.execute(result.node!, ctx);
+
+      // The local was newly created, so this hits the "create new local" path
+      // (line 202 in variable-access.ts) — the hook still fires there.
+      expect(events).toEqual([['x', 1]]);
+    });
+
+    it('registerLocalWriteHook fires on update of an existing local', async () => {
+      const events: Array<[string, unknown]> = [];
+      registry.registerLocalWriteHook((name, value, _ctx) => {
+        events.push([name, value]);
+      });
+
+      const runtime = new Runtime();
+      const ctx = createContext(document.createElement('div'));
+      ctx.locals.set('x', 0);
+
+      const result = parse('set :x to 99');
+      expect(result.success).toBe(true);
+      await runtime.execute(result.node!, ctx);
+
+      expect(events).toEqual([['x', 99]]);
+    });
+
+    it('registerLocalReadHook fires on :x reads', async () => {
+      const reads: string[] = [];
+      registry.registerLocalReadHook((name, _ctx) => {
+        reads.push(name);
+      });
+
+      const runtime = new Runtime();
+      const ctx = createContext(document.createElement('div'));
+      ctx.locals.set('x', 42);
+
+      // Read :x by setting another local from it.
+      const result = parse('set :y to :x');
+      expect(result.success).toBe(true);
+      await runtime.execute(result.node!, ctx);
+
+      expect(reads).toContain('x');
+      expect(ctx.locals.get('y')).toBe(42);
+    });
+
+    it('registerLocalWriteHook does NOT fire on `set $x to 1` (scope discrimination)', async () => {
+      const events: string[] = [];
+      registry.registerLocalWriteHook((name, _v, _c) => {
+        events.push(name);
+      });
+
+      const runtime = new Runtime();
+      const ctx = createContext(document.createElement('div'));
+      const result = parse('set $x to 1');
+      expect(result.success).toBe(true);
+      await runtime.execute(result.node!, ctx);
+
+      expect(events).toEqual([]);
+    });
+
+    it('dispose fn removes the local-write hook', async () => {
+      const events: string[] = [];
+      const dispose = registry.registerLocalWriteHook((name, _v, _c) => {
+        events.push(name);
+      });
+
+      const runtime = new Runtime();
+      const ctx = createContext(document.createElement('div'));
+      await runtime.execute(parse('set :a to 1').node!, ctx);
+      expect(events).toEqual(['a']);
+
+      dispose();
+      await runtime.execute(parse('set :b to 2').node!, ctx);
+      expect(events).toEqual(['a']);
+    });
+
+    it('snapshot/restore round-trips local hook sets', async () => {
+      const calls: string[] = [];
+      registry.registerLocalWriteHook((name, _v, _c) => {
+        calls.push(name);
+      });
+
+      const runtime = new Runtime();
+      const ctx = createContext(document.createElement('div'));
+      await runtime.execute(parse('set :a to 1').node!, ctx);
+      expect(calls).toEqual(['a']);
+
+      // Restore baseline (which had no hooks). The hook should be gone.
+      registry.restore(baseline);
+      await runtime.execute(parse('set :b to 2').node!, ctx);
+      expect(calls).toEqual(['a']);
+    });
+  });
+
+  describe('global read hook — ::name regression', () => {
+    it('fires on explicit-global `::name` reads (was silent before)', async () => {
+      const reads: string[] = [];
+      registry.registerGlobalReadHook((name, _c) => {
+        reads.push(name);
+      });
+
+      const runtime = new Runtime();
+      const ctx = createContext(document.createElement('div'));
+      ctx.globals.set('x', 7);
+
+      // ::x routes through the `scope === 'global'` branch in evaluateIdentifier.
+      const result = parse('set :y to ::x');
+      expect(result.success).toBe(true);
+      await runtime.execute(result.node!, ctx);
+
+      expect(reads).toContain('x');
+      expect(ctx.locals.get('y')).toBe(7);
+    });
+  });
 });

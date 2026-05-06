@@ -14,7 +14,7 @@
 
 import type { ExecutionContext } from '../../types/base-types';
 import { isHTMLElement } from '../../utils/element-check';
-import { setGlobal } from '../../parser/extensions';
+import { setGlobal, notifyLocalWrite } from '../../parser/extensions';
 
 /**
  * Convert any value to a number for arithmetic operations
@@ -171,6 +171,7 @@ export function setVariableValue(
   // If variable exists in local scope, update it
   if (context.locals && context.locals.has(name)) {
     context.locals.set(name, value);
+    notifyLocalWrite(name, value, context);
     return;
   }
 
@@ -200,6 +201,7 @@ export function setVariableValue(
 
   // Create new local variable
   context.locals.set(name, value);
+  notifyLocalWrite(name, value, context);
 }
 
 /**

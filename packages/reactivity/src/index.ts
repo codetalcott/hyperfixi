@@ -110,6 +110,22 @@ export const reactivityPlugin: HyperfixiPlugin & { version: string } = {
     parserExtensions.registerGlobalReadHook((name: string, _context: unknown) => {
       reactive.trackGlobal(name);
     });
+
+    // Local hooks — analogous to globals, but keyed by `context.me` so each
+    // element holds independent state. A `set :foo to ...` running in a
+    // handler with `me=button1` notifies effects subscribed to (button1, 'foo');
+    // a `set :foo` in a different `me` won't reach them. This matches how
+    // locals already work — they're never cross-context — and lets two
+    // components hold independent `:foo` state without interference.
+    parserExtensions.registerLocalWriteHook((name: string, _value: unknown, context) => {
+      const owner = (context as { me?: Element | null }).me ?? null;
+      if (owner) reactive.notifyElement(owner, name);
+    });
+
+    parserExtensions.registerLocalReadHook((name: string, context) => {
+      const owner = (context as { me?: Element | null }).me ?? null;
+      if (owner) reactive.trackElement(owner, name);
+    });
   },
 };
 

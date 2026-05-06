@@ -14,7 +14,11 @@ import type { ASTNode, ExecutionContext } from '../types/core';
 import type { ExecutionResult, ExecutionSignal } from '../types/result';
 import { ok, err } from '../types/result';
 import { debug } from '../utils/debug';
-import { getRegisteredNodeEvaluator, notifyGlobalRead } from '../parser/extensions';
+import {
+  getRegisteredNodeEvaluator,
+  notifyGlobalRead,
+  notifyLocalRead,
+} from '../parser/extensions';
 import {
   isElement,
   getElementProperty,
@@ -346,6 +350,7 @@ export class BaseExpressionEvaluator {
     // If explicit scope is specified, ONLY check that scope
     if (scope === 'local') {
       if (context.locals?.has(name)) {
+        notifyLocalRead(name, context);
         return context.locals.get(name);
       }
       return undefined;
@@ -353,6 +358,7 @@ export class BaseExpressionEvaluator {
 
     if (scope === 'global') {
       if (context.globals?.has(name)) {
+        notifyGlobalRead(name, context);
         return context.globals.get(name);
       }
       if (typeof window !== 'undefined' && name in window) {
@@ -363,6 +369,7 @@ export class BaseExpressionEvaluator {
 
     // No explicit scope - use normal resolution order
     if (context.locals?.has(name)) {
+      notifyLocalRead(name, context);
       return context.locals.get(name);
     }
     if (context.globals?.has(name)) {
