@@ -22,7 +22,7 @@ hyperfixi/
 │   └── ...             # 18 more packages
 ├── apps/
 │   ├── docs-site/      # This documentation
-│   └── patterns-browser/  # Pattern testing
+│   └── profile-editor/ # Language profile editor
 └── examples/           # Live demos
 ```
 
