@@ -47,6 +47,45 @@ describe('@hyperfixi/reactivity — integration', () => {
     registry.restore(baseline);
   });
 
+  describe('install idempotency', () => {
+    it('installing the plugin twice does not duplicate global-write hooks', async () => {
+      // Install a second time — should be a no-op thanks to the hasFeature guard.
+      installPlugin(runtime, reactivityPlugin);
+
+      const el = document.createElement('div');
+      document.body.appendChild(el);
+      const ctx = createContext(el);
+      ctx.globals.set('count', 0);
+
+      let runs = 0;
+      const r = parse('live\n  set $mirror to $count\nend');
+      expect(r.success).toBe(true);
+      // Wrap the live body in our own counter via a wrapping effect.
+      const stop = reactive.createEffect(
+        () => {
+          reactive.trackGlobal('count');
+          return ctx.globals.get('count');
+        },
+        () => {
+          runs++;
+        },
+        el
+      );
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      const baselineRuns = runs;
+      ctx.globals.set('count', 1);
+      reactive.notifyGlobal('count');
+      await settle();
+      // Exactly one additional run despite the duplicate install attempt.
+      expect(runs).toBe(baselineRuns + 1);
+
+      stop();
+      document.body.removeChild(el);
+    });
+  });
+
   describe('live', () => {
     it('re-runs the body when a tracked global changes', async () => {
       // The live body sets $total from $price; changing $price should re-run
@@ -130,6 +169,31 @@ describe('@hyperfixi/reactivity — integration', () => {
       input.dispatchEvent(new Event('input'));
       await settle();
       expect(ctx.globals.get('greeting')).toBe('typed');
+
+      document.body.removeChild(input);
+    });
+
+    it('two-way binds a local var (`:name`) to an input value', async () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = 'initial';
+      document.body.appendChild(input);
+      const ctx = createContext(input);
+      ctx.locals.set('greeting', 'pending');
+
+      const r = parse('bind :greeting to me');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      // DOM → var on init (DOM wins).
+      expect(ctx.locals.get('greeting')).toBe('initial');
+
+      // User input updates the local via DOM→var effect.
+      input.value = 'typed';
+      input.dispatchEvent(new Event('input'));
+      await settle();
+      expect(ctx.locals.get('greeting')).toBe('typed');
 
       document.body.removeChild(input);
     });

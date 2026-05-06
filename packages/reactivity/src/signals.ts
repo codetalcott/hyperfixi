@@ -18,6 +18,26 @@
 
 export type DepKind = 'global' | 'element' | 'dom';
 
+/**
+ * Whether reactive debug logging is enabled. Mirrors the core convention:
+ * `localStorage.setItem('hyperfixi:debug', '*')` enables, anything else (or no
+ * `localStorage`) disables. Cheap call — no caching, since users toggle this
+ * interactively in the console.
+ */
+function debugEnabled(): boolean {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('hyperfixi:debug') !== null;
+  } catch {
+    return false;
+  }
+}
+
+function debugWarn(message: string, err: unknown): void {
+  if (!debugEnabled()) return;
+  if (typeof console === 'undefined') return;
+  console.warn(`[@hyperfixi/reactivity] ${message}`, err);
+}
+
 export interface Dep {
   readonly key: string;
   readonly kind: DepKind;
@@ -26,15 +46,19 @@ export interface Dep {
 }
 
 const globalDepKey = (name: string): string => `global:${name}`;
-const elementDepKey = (el: Element, name: string): string =>
-  `element:${(el as any)._reactiveId ?? assignReactiveId(el)}:${name}`;
-const domDepKey = (el: Element, prop: string): string =>
-  `dom:${(el as any)._reactiveId ?? assignReactiveId(el)}:${prop}`;
+const elementDepKey = (el: Element, name: string): string => `element:${reactiveIdFor(el)}:${name}`;
+const domDepKey = (el: Element, prop: string): string => `dom:${reactiveIdFor(el)}:${prop}`;
 
+// WeakMap-based id assignment so we don't monkey-patch DOM nodes. Ids are
+// per-process and only used to construct stable string keys for an effect's
+// per-effect dependency dedup map.
+const _reactiveIds = new WeakMap<Element, number>();
 let _idCounter = 0;
-function assignReactiveId(el: Element): number {
+function reactiveIdFor(el: Element): number {
+  const existing = _reactiveIds.get(el);
+  if (existing !== undefined) return existing;
   const id = ++_idCounter;
-  (el as any)._reactiveId = id;
+  _reactiveIds.set(el, id);
   return id;
 }
 
@@ -68,8 +92,10 @@ export class Effect {
       if (value !== undefined && value !== null) {
         await this.handler(value);
       }
-    } catch {
-      // Swallow — expression evaluation failed during initial read.
+    } catch (err) {
+      // Swallow — expression evaluation failed during initial read. Surface
+      // via debug log so users diagnosing "my effect never fires" can see why.
+      debugWarn('effect.initialize failed', err);
     }
   }
 
@@ -100,8 +126,9 @@ export class Effect {
       if (Object.is(value, this.lastValue)) return;
       this.lastValue = value;
       await this.handler(value);
-    } catch {
+    } catch (err) {
       // Swallow — expression/handler errors don't break the microtask flush.
+      debugWarn('effect.run failed', err);
     }
   }
 
@@ -392,19 +419,23 @@ export class Reactive {
   }
 
   private async flush(): Promise<void> {
-    this.scheduled = false;
-    const batch = Array.from(this.pending);
-    this.pending.clear();
-    for (const e of batch) {
-      if (!e.stopped) await e.run();
+    try {
+      while (this.pending.size > 0) {
+        const batch = Array.from(this.pending);
+        this.pending.clear();
+        for (const e of batch) {
+          if (e.stopped) continue;
+          await e.run();
+          // If the effect's run did not synchronously re-schedule itself, its
+          // trigger count is reset. Self-rescheduling (a real cycle) keeps the
+          // counter climbing toward the 100 cap. Long-lived effects that fire
+          // sporadically (e.g. user-input bindings) stay alive forever.
+          if (!this.pending.has(e)) e.resetTriggerCount();
+        }
+      }
+    } finally {
+      this.scheduled = false;
     }
-    // Note: trigger-count reset across flushes is tricky because the handler's
-    // schedule() call can queue a follow-up flush that runs BEFORE this flush's
-    // `pending.size === 0` check (due to microtask ordering). We rely on real
-    // user interactions being few-per-second and the cycle guard halting at
-    // 100 back-to-back runs — good enough for v1. A future refinement could
-    // track "triggered during own run" to distinguish cycles from legitimate
-    // cascades.
   }
 }
 

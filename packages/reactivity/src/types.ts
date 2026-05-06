@@ -28,3 +28,19 @@ export interface ExecutionContext {
   registerCleanup?: (element: Element, cleanup: () => void, description?: string) => void;
   [k: string]: unknown;
 }
+
+/**
+ * Structural shape of the parser context surfaced to feature parse functions
+ * (`registerFeature(...)`). The hyperfixi parser passes its own `ParserContext`
+ * — we declare just the methods our feature parsers actually call, so we don't
+ * couple to the full core interface.
+ */
+export interface FeatureParserCtx {
+  match(expected: string | string[]): boolean;
+  check(expected: string | string[]): boolean;
+  consume(expected: string, message: string): unknown;
+  isAtEnd(): boolean;
+  parseExpression(): ASTNode;
+  parseCommandListUntilEnd(): ASTNode[];
+  getPosition(): { start: number; end: number; line?: number; column?: number };
+}

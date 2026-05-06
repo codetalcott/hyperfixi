@@ -6,7 +6,7 @@
  * given dep only re-run that watcher.
  */
 
-import type { ASTNode, ExecutionContext } from './types';
+import type { ASTNode, ExecutionContext, FeatureParserCtx } from './types';
 import { reactive } from './signals';
 
 export interface WhenFeatureNode extends ASTNode {
@@ -15,18 +15,8 @@ export interface WhenFeatureNode extends ASTNode {
   body: ASTNode[];
 }
 
-type ParserCtx = {
-  match(expected: string | string[]): boolean;
-  check(expected: string | string[]): boolean;
-  consume(expected: string, message: string): unknown;
-  isAtEnd(): boolean;
-  parseExpression(): ASTNode;
-  parseCommandListUntilEnd(): ASTNode[];
-  getPosition(): { start: number; end: number; line?: number; column?: number };
-};
-
 export function parseWhenFeature(ctx: unknown, token: unknown): ASTNode {
-  const pctx = ctx as ParserCtx;
+  const pctx = ctx as FeatureParserCtx;
   const watched: ASTNode[] = [pctx.parseExpression()];
   while (pctx.match('or')) {
     watched.push(pctx.parseExpression());

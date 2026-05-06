@@ -14,13 +14,17 @@
  * name)` which walks the DOM tree for the owner and records deps as it goes.
  */
 
-import type { ASTNode } from './types';
+import type { ASTNode, ExecutionContext } from './types';
 import { reactive } from './signals';
 
 export interface CaretVarNode extends ASTNode {
   type: 'caretVar';
   name: string;
   onTarget: ASTNode | null;
+}
+
+interface CaretVarRuntime {
+  execute(node: ASTNode, ctx: ExecutionContext): Promise<unknown>;
 }
 
 /**
@@ -59,28 +63,49 @@ export function parseCaretPrefix(token: unknown, ctx: unknown): ASTNode {
 }
 
 /**
- * Node evaluator for `caretVar`. Walks up from the resolved anchor element,
- * tracking every element visited so that writes at any ancestor notify
- * dependent effects.
+ * Build a node evaluator for `caretVar` bound to a specific runtime. The
+ * evaluator walks up from the resolved anchor element, tracking every element
+ * visited so writes at any ancestor notify dependent effects.
+ *
+ * Capturing `runtime` via a factory closure (matching live/when/bind) keeps
+ * the evaluator independent of any module-scope state.
  */
-export async function evaluateCaretVar(node: ASTNode, ctx: unknown): Promise<unknown> {
-  const n = node as CaretVarNode;
-  const context = ctx as { me?: Element | null };
-  let anchor: Element | null = context.me ?? null;
+export function makeEvaluateCaretVar(
+  runtime: CaretVarRuntime
+): (node: ASTNode, ctx: unknown) => Promise<unknown> {
+  return async function evaluateCaretVar(node, ctx) {
+    const n = node as CaretVarNode;
+    const context = ctx as ExecutionContext;
+    let anchor: Element | null = (context.me as Element | null) ?? null;
 
-  if (n.onTarget) {
-    // Re-entering the evaluator via onTarget: we don't have direct access to
-    // the core's evaluateExpression here. The onTarget is typically a simple
-    // `me` reference or identifier; if it's a literal element, use it. The
-    // full dispatch is deferred to the plugin install, which injects a
-    // resolver — see index.ts.
-    const resolver = (globalThis as any).__hyperfixi_reactivity_eval_expr;
-    if (resolver) {
-      const resolved = await resolver(n.onTarget, ctx);
+    if (n.onTarget) {
+      const resolved = await runtime.execute(n.onTarget, context);
       if (resolved instanceof Element) anchor = resolved;
     }
-  }
 
-  if (!anchor) return undefined;
-  return reactive.readCaret(anchor, n.name);
+    if (!anchor) return undefined;
+    return reactive.readCaret(anchor, n.name);
+  };
+}
+
+/**
+ * Build a node writer for `caretVar` bound to a specific runtime. Used by the
+ * core `set` command via `parserExtensions.registerNodeWriter`.
+ */
+export function makeWriteCaretVar(
+  runtime: CaretVarRuntime
+): (node: ASTNode, value: unknown, ctx: unknown) => Promise<void> {
+  return async function writeCaretVar(node, value, ctx) {
+    const n = node as CaretVarNode;
+    const context = ctx as ExecutionContext;
+    const anchor: Element | null = (context.me as Element | null) ?? null;
+    if (!anchor) return;
+
+    let target: Element | undefined;
+    if (n.onTarget) {
+      const resolved = await runtime.execute(n.onTarget, context);
+      if (resolved instanceof Element) target = resolved;
+    }
+    reactive.writeCaret(anchor, n.name, value, target);
+  };
 }

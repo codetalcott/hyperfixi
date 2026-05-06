@@ -1,9 +1,12 @@
 /**
  * `bind X [to|and|with] Y` — two-way binding.
  *
- * Creates two effects:
- *   1. Y → X: read Y, write X (Y wins on init)
- *   2. X → Y: read X, write Y (runs when X changes after init)
+ * Creates two effects (registration order is load-bearing — both initialize
+ * via `queueMicrotask` and run in registration order):
+ *   1. DOM → var: read DOM, write var. DOM "wins" on init.
+ *   2. var → DOM: read var, write DOM. Fires on programmatic var writes
+ *      after init. On its own initial run, var === DOM (Effect 1 just synced
+ *      them), so the write is a no-op.
  *
  * Auto-detects the DOM property by element type:
  *   - INPUT[type=checkbox]              → `checked`
@@ -16,7 +19,7 @@
  * `bind $state to #el's value`.
  */
 
-import type { ASTNode, ExecutionContext } from './types';
+import type { ASTNode, ExecutionContext, FeatureParserCtx } from './types';
 import { reactive } from './signals';
 
 export interface BindFeatureNode extends ASTNode {
@@ -25,16 +28,8 @@ export interface BindFeatureNode extends ASTNode {
   right: ASTNode;
 }
 
-type ParserCtx = {
-  match(expected: string | string[]): boolean;
-  check(expected: string | string[]): boolean;
-  isAtEnd(): boolean;
-  parseExpression(): ASTNode;
-  getPosition(): { start: number; end: number; line?: number; column?: number };
-};
-
 export function parseBindFeature(ctx: unknown, token: unknown): ASTNode {
-  const pctx = ctx as ParserCtx;
+  const pctx = ctx as FeatureParserCtx;
   const left = pctx.parseExpression();
   // Accept any of `to` / `and` / `with` as the separator.
   if (!(pctx.match('to') || pctx.match('and') || pctx.match('with'))) {
@@ -153,8 +148,11 @@ export function makeEvaluateBindFeature(runtime: {
         reactive.notifyGlobal(varSide!.name);
       } else {
         context.locals?.set(varSide!.name, value);
-        // Locals are per-context; a rudimentary notify via trackElement/
-        // notifyElement could be added later if locals-in-bind is needed.
+        // Note: locals have no core-side write hook today, so a programmatic
+        // `set :foo to ...` elsewhere will not trigger reactivity. Within bind
+        // itself we wire DOM→var→DOM via element-scoped notify so the bind's
+        // own roundtrip is reactive.
+        reactive.notifyElement(owner, varSide!.name);
       }
     };
 
@@ -170,7 +168,9 @@ export function makeEvaluateBindFeature(runtime: {
       owner
     );
 
-    // Effect 2: var → DOM (fires on programmatic var writes)
+    // Effect 2: var → DOM (fires on programmatic var writes for globals;
+    // for locals, only the bind's own DOM→var path notifies, since core has
+    // no localWriteHook).
     const stopVarToDom = reactive.createEffect(
       () => {
         if (varSide!.isGlobal) reactive.trackGlobal(varSide!.name);
@@ -191,24 +191,52 @@ export function makeEvaluateBindFeature(runtime: {
 }
 
 /**
- * Is this AST node a var reference we can bind to? Identifiers starting with
- * `$` or `:` are symbols; plain identifiers may also be symbols depending on
- * hyperfixi's parser conventions.
+ * Is this AST node a var reference we can bind to?
+ *
+ * The hyperfixi parser emits `identifier` nodes for both globals and locals,
+ * but with different shapes:
+ *   - `$foo` → `{ type: 'identifier', name: '$foo' }` (no scope field)
+ *   - `:foo` → `{ type: 'identifier', name: 'foo', scope: 'local' }`
+ *   - `::foo` → `{ type: 'identifier', name: 'foo', scope: 'global' }`
+ *
+ * We accept all three. The legacy `$`-prefix sniff stays as a fallback because
+ * `parseExpression` doesn't always set `scope`.
  */
 function isVarRef(node: ASTNode): boolean {
   if (!node) return false;
-  if (node.type === 'identifier') {
-    const name = (node.name as string) ?? '';
-    return name.startsWith('$') || name.startsWith(':');
-  }
-  return false;
+  if (node.type !== 'identifier') return false;
+  const scope = node.scope as string | undefined;
+  if (scope === 'local' || scope === 'global') return true;
+  const name = (node.name as string) ?? '';
+  return name.startsWith('$') || name.startsWith(':');
 }
 
 function varRefInfo(node: ASTNode): { name: string; isGlobal: boolean } {
   const rawName = (node.name as string) ?? '';
-  const isGlobal = rawName.startsWith('$');
-  // Strip `$` prefix so the name matches how globals are stored
-  // (setVariableValue strips `$` before calling setGlobal).
-  const name = isGlobal ? rawName.slice(1) : rawName;
+  const scope = node.scope as string | undefined;
+  // Prefer the parser-emitted scope marker. Fall back to prefix sniffing for
+  // shapes where scope isn't set (e.g. `$foo` arriving as bare identifier
+  // with name '$foo').
+  let isGlobal: boolean;
+  let name: string;
+  if (scope === 'global') {
+    isGlobal = true;
+    name = rawName;
+  } else if (scope === 'local') {
+    isGlobal = false;
+    name = rawName;
+  } else if (rawName.startsWith('$')) {
+    isGlobal = true;
+    name = rawName.slice(1);
+  } else if (rawName.startsWith(':')) {
+    isGlobal = false;
+    name = rawName.slice(1);
+  } else {
+    isGlobal = false;
+    name = rawName;
+  }
+  if (!name) {
+    throw new Error('bind: variable reference has empty name');
+  }
   return { name, isGlobal };
 }

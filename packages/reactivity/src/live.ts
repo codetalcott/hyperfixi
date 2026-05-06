@@ -10,7 +10,7 @@
  * read performed during body execution.
  */
 
-import type { ASTNode, ExecutionContext } from './types';
+import type { ASTNode, ExecutionContext, FeatureParserCtx } from './types';
 import { reactive } from './signals';
 
 export interface LiveFeatureNode extends ASTNode {
@@ -18,21 +18,12 @@ export interface LiveFeatureNode extends ASTNode {
   body: ASTNode[];
 }
 
-type ParserCtx = {
-  match(expected: string | string[]): boolean;
-  check(expected: string | string[]): boolean;
-  consume(expected: string, message: string): unknown;
-  isAtEnd(): boolean;
-  parseCommandListUntilEnd(): ASTNode[];
-  getPosition(): { start: number; end: number; line?: number; column?: number };
-};
-
 /**
  * Parse `live ... end`. The `live` keyword has already been consumed by the
  * parser dispatcher; we parse the body and expect a trailing `end`.
  */
 export function parseLiveFeature(ctx: unknown, token: unknown): ASTNode {
-  const pctx = ctx as ParserCtx;
+  const pctx = ctx as FeatureParserCtx;
   const body = pctx.parseCommandListUntilEnd();
   // parseCommandListUntilEnd stops when it sees `end` (but doesn't consume it).
   if (!pctx.isAtEnd() && pctx.check('end')) pctx.match('end');

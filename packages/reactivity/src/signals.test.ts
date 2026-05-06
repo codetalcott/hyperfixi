@@ -168,6 +168,86 @@ describe('signals.ts — Reactive core', () => {
     });
   });
 
+  describe('cycle counter reset across flushes', () => {
+    it('long-lived effect survives many separate notifies', async () => {
+      let calls = 0;
+      const counter = { v: 0 };
+      r.createEffect(
+        () => {
+          r.trackGlobal('x');
+          return counter.v;
+        },
+        _v => {
+          calls++;
+        },
+        null
+      );
+      await tick();
+      expect(calls).toBe(1);
+
+      // 200 separate notifications, each in its own flush. The cycle counter
+      // must reset between them or the effect halts at ~100.
+      for (let i = 1; i <= 200; i++) {
+        counter.v = i;
+        r.notifyGlobal('x');
+        await tick();
+      }
+      // Initial run + 200 notifications.
+      expect(calls).toBe(201);
+    });
+  });
+
+  describe('re-entrant flush batching', () => {
+    it('cascading writes inside a handler fire each effect once per outer write', async () => {
+      const xStore = { v: 0 };
+      const yStore = { v: 0 };
+      let aRuns = 0;
+      let bRuns = 0;
+
+      // Effect A reads x; on change, writes y.
+      r.createEffect(
+        () => {
+          r.trackGlobal('x');
+          return xStore.v;
+        },
+        v => {
+          aRuns++;
+          yStore.v = (v as number) * 10;
+          r.notifyGlobal('y');
+        },
+        null
+      );
+      // Effect B reads y; on change, increments bRuns.
+      r.createEffect(
+        () => {
+          r.trackGlobal('y');
+          return yStore.v;
+        },
+        _v => {
+          bRuns++;
+        },
+        null
+      );
+
+      await tick();
+      // Initial pass: A reads 0 (handler skipped due to undefined-guard? Actually 0 fires).
+      // Both effects' handlers fire on init for the truthy/non-undefined initial values.
+      expect(aRuns).toBe(1);
+      expect(bRuns).toBe(1);
+
+      xStore.v = 5;
+      r.notifyGlobal('x');
+      await tick();
+      await tick();
+
+      // A re-runs once (x changed 0 → 5), then synchronously notifies y.
+      // B re-runs once for the y change (0 → 50). No duplicate runs.
+      expect(aRuns).toBe(2);
+      expect(bRuns).toBe(2);
+      expect(yStore.v).toBe(50);
+    });
+  });
+
   describe('stop()', () => {
     it('removes an effect from subscription sets', async () => {
       let calls = 0;
