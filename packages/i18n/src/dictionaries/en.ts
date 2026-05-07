@@ -95,6 +95,11 @@ export const en: Dictionary = {
     // the schema-alignment test)
     prepend: 'prepend',
     clone: 'clone',
+    // Navigation/DOM commands added in core (Dec 2025 / Apr 2026)
+    scroll: 'scroll',
+    push: 'push',
+    replace: 'replace',
+    process: 'process',
   },
 
   modifiers: {

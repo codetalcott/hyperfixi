@@ -99,6 +99,10 @@ export const koreanProfile: LanguageProfile = {
     change: { primary: '변경', normalized: 'change' },
     // Navigation
     go: { primary: '이동', normalized: 'go' },
+    scroll: { primary: '스크롤', normalized: 'scroll' },
+    push: { primary: '푸시', normalized: 'push' },
+    replace: { primary: '교체', alternatives: ['바꾸기'], normalized: 'replace' },
+    process: { primary: '처리', normalized: 'process' },
     // Async
     wait: { primary: '대기', normalized: 'wait' },
     fetch: { primary: '패치', normalized: 'fetch' }, // loanword to avoid collision with get

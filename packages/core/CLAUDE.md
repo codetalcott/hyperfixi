@@ -91,6 +91,12 @@ export const createIncrementCommand = createFactory(IncrementCommand);
 5. For lite/hybrid bundle coverage, add cases to `src/bundle-generator/templates.ts`, `parser-templates.ts`, and `template-capabilities.ts`
 6. Add reference/LSP entries in `src/reference/index.ts` and `src/lsp-metadata.ts`
 7. Write tests in `src/commands/{category}/__tests__/{name}.test.ts`
+8. If the command should be available multilingually, sync `packages/semantic/`:
+   - Add the action to the `ActionType` union in `packages/semantic/src/types.ts`
+   - Add a schema (with `markerOverride` for any required keyword markers) to `packages/semantic/src/generators/command-schemas.ts` and append it to the `commandSchemas` registry
+   - Add keyword entries (`primary`, optional `alternatives`, `normalized`) to all 24 language profiles in `packages/semantic/src/generators/profiles/*.ts`. Research each translation against `packages/i18n/src/dictionaries/` (which often already has it) and the existing profile's verb-form convention (infinitive vs. imperative vs. base). Avoid hyphens — many tokenizers split on them; prefer underscores for compounds.
+   - Run `npm run sync-keywords --prefix packages/vite-plugin` to propagate keyword sets
+   - Add tests in `packages/semantic/test/` — full role-extraction assertions for priority languages (en, es, ja, ar, ko) plus `canParse`-only smoke tests for the rest. SOV-language inputs (ja, ko, bn, hi, qu, tr) put roles before the verb (`<patient> url <verb>`); VSO/SVO put the verb first.
 
 ## API v2 (Recommended)
 

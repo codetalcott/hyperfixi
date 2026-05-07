@@ -101,6 +101,10 @@ export const arabicProfile: LanguageProfile = {
     breakpoint: { primary: 'نقطة-توقف', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'اذهب', normalized: 'go' },
+    scroll: { primary: 'مرر', alternatives: ['تمرير'], normalized: 'scroll' },
+    push: { primary: 'ادفع', alternatives: ['دفع'], normalized: 'push' },
+    replace: { primary: 'استبدل_عنوان', alternatives: ['أعد_تعيين_عنوان'], normalized: 'replace' },
+    process: { primary: 'عالج', alternatives: ['معالجة'], normalized: 'process' },
     // Async
     wait: { primary: 'انتظر', normalized: 'wait' },
     fetch: { primary: 'احضر', alternatives: ['جلب'], normalized: 'fetch' },

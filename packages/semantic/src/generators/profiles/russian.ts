@@ -190,6 +190,30 @@ export const russianProfile: LanguageProfile = {
       normalized: 'go',
       form: 'infinitive',
     },
+    scroll: {
+      primary: 'прокрутить',
+      alternatives: ['прокрути'],
+      normalized: 'scroll',
+      form: 'infinitive',
+    },
+    push: {
+      primary: 'втолкнуть',
+      alternatives: ['толкнуть'],
+      normalized: 'push',
+      form: 'infinitive',
+    },
+    replace: {
+      primary: 'заменить',
+      alternatives: ['замени'],
+      normalized: 'replace',
+      form: 'infinitive',
+    },
+    process: {
+      primary: 'обработать',
+      alternatives: ['обработай'],
+      normalized: 'process',
+      form: 'infinitive',
+    },
     // Async
     wait: {
       primary: 'ждать',

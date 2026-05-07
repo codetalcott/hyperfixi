@@ -94,6 +94,10 @@ export const malayProfile: LanguageProfile = {
     breakpoint: { primary: 'titik-henti', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'pergi', alternatives: ['pindah'], normalized: 'go' },
+    scroll: { primary: 'tatal', alternatives: ['skrol'], normalized: 'scroll' },
+    push: { primary: 'tolak', alternatives: ['push'], normalized: 'push' },
+    replace: { primary: 'ganti_url', alternatives: ['gantikan_url'], normalized: 'replace' },
+    process: { primary: 'proses', normalized: 'process' },
     // Async
     wait: { primary: 'tunggu', normalized: 'wait' },
     fetch: { primary: 'ambil_dari', alternatives: ['muat'], normalized: 'fetch' },

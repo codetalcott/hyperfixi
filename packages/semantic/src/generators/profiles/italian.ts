@@ -108,6 +108,10 @@ export const italianProfile: LanguageProfile = {
     breakpoint: { primary: 'punto-interruzione', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'andare', alternatives: ['navigare', 'vai'], normalized: 'go' },
+    scroll: { primary: 'scorrere', alternatives: ['scroll'], normalized: 'scroll' },
+    push: { primary: 'spingere', alternatives: ['push'], normalized: 'push' },
+    replace: { primary: 'sostituire', normalized: 'replace' },
+    process: { primary: 'elaborare', alternatives: ['processare'], normalized: 'process' },
     // Async
     wait: { primary: 'aspettare', alternatives: ['attendere'], normalized: 'wait' },
     fetch: { primary: 'recuperare', normalized: 'fetch' },

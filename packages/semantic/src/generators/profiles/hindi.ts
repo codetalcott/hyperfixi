@@ -113,6 +113,10 @@ export const hindiProfile: LanguageProfile = {
     change: { primary: 'बदलाव', alternatives: ['परिवर्तन'], normalized: 'change' },
     // Navigation
     go: { primary: 'जाएं', alternatives: ['जा'], normalized: 'go' },
+    scroll: { primary: 'स्क्रॉल', normalized: 'scroll' },
+    push: { primary: 'धकेलें', alternatives: ['पुश'], normalized: 'push' },
+    replace: { primary: 'बदलें_यूआरएल', alternatives: ['प्रतिस्थापित'], normalized: 'replace' },
+    process: { primary: 'संसाधित', alternatives: ['प्रसंस्कृत'], normalized: 'process' },
     // Async
     wait: { primary: 'प्रतीक्षा', alternatives: ['रुकें'], normalized: 'wait' },
     fetch: { primary: 'लाएं', alternatives: [], normalized: 'fetch' },

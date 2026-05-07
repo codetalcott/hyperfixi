@@ -72,6 +72,11 @@ export type ActionType =
   | 'breakpoint'
   // Navigation
   | 'go'
+  | 'scroll'
+  | 'push'
+  | 'replace'
+  // DOM partials
+  | 'process'
   // Async
   | 'wait'
   | 'fetch'

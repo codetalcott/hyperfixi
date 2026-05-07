@@ -195,6 +195,30 @@ export const ukrainianProfile: LanguageProfile = {
       normalized: 'go',
       form: 'infinitive',
     },
+    scroll: {
+      primary: 'прокрутити',
+      alternatives: ['прокрути'],
+      normalized: 'scroll',
+      form: 'infinitive',
+    },
+    push: {
+      primary: 'штовхнути',
+      alternatives: ['заштовхнути'],
+      normalized: 'push',
+      form: 'infinitive',
+    },
+    replace: {
+      primary: 'замінити',
+      alternatives: ['заміни'],
+      normalized: 'replace',
+      form: 'infinitive',
+    },
+    process: {
+      primary: 'обробити',
+      alternatives: ['обробляти'],
+      normalized: 'process',
+      form: 'infinitive',
+    },
     // Async
     wait: {
       primary: 'чекати',

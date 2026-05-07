@@ -97,6 +97,10 @@ export const hebrewProfile: LanguageProfile = {
     breakpoint: { primary: 'נקודת-עצירה', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'לך', alternatives: ['נווט'], normalized: 'go' },
+    scroll: { primary: 'גלול', normalized: 'scroll' },
+    push: { primary: 'דחוף', alternatives: ['הוסף-להיסטוריה'], normalized: 'push' },
+    replace: { primary: 'החלף_כתובת', alternatives: ['שנה_כתובת'], normalized: 'replace' },
+    process: { primary: 'עבד', alternatives: ['עיבוד'], normalized: 'process' },
     // Async
     wait: { primary: 'חכה', alternatives: ['המתן'], normalized: 'wait' },
     fetch: { primary: 'הבא', alternatives: ['טען'], normalized: 'fetch' },

@@ -99,6 +99,10 @@ export const bengaliProfile: LanguageProfile = {
     change: { primary: 'পরিবর্তন', normalized: 'change' },
     // Navigation
     go: { primary: 'যান', alternatives: ['যাও'], normalized: 'go' },
+    scroll: { primary: 'স্ক্রোল', normalized: 'scroll' },
+    push: { primary: 'পুশ', alternatives: ['ঠেলুন'], normalized: 'push' },
+    replace: { primary: 'প্রতিস্থাপন', normalized: 'replace' },
+    process: { primary: 'প্রসেস', alternatives: ['প্রক্রিয়া'], normalized: 'process' },
     // Async
     wait: { primary: 'অপেক্ষা', normalized: 'wait' },
     fetch: { primary: 'আনুন', alternatives: [], normalized: 'fetch' },

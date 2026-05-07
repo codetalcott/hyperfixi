@@ -100,6 +100,10 @@ export const thaiProfile: LanguageProfile = {
     change: { primary: 'เปลี่ยน', alternatives: ['เปลี่ยนแปลง'], normalized: 'change' },
     // Navigation
     go: { primary: 'ไป', alternatives: ['ไปที่'], normalized: 'go' },
+    scroll: { primary: 'เลื่อน', normalized: 'scroll' },
+    push: { primary: 'ดัน', alternatives: ['ผลัก'], normalized: 'push' },
+    replace: { primary: 'แทนที่', alternatives: ['เปลี่ยน-url'], normalized: 'replace' },
+    process: { primary: 'ประมวลผล', alternatives: ['จัดการ'], normalized: 'process' },
     // Async
     wait: { primary: 'รอ', alternatives: [], normalized: 'wait' },
     fetch: { primary: 'ดึงข้อมูล', alternatives: [], normalized: 'fetch' },

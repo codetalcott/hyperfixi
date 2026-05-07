@@ -107,13 +107,16 @@ export const spanishProfile: LanguageProfile = {
     input: { primary: 'entrada', alternatives: ['introducir'], normalized: 'input' },
     change: { primary: 'cambio', alternatives: ['cambiar'], normalized: 'change' },
     load: { primary: 'carga', normalized: 'load' },
-    scroll: { primary: 'desplazamiento', normalized: 'scroll' },
+    scroll: { primary: 'desplazar', alternatives: ['desplazamiento'], normalized: 'scroll' },
     keydown: { primary: 'tecla abajo', normalized: 'keydown' },
     keyup: { primary: 'tecla arriba', normalized: 'keyup' },
     mouseover: { primary: 'ratón encima', alternatives: ['raton encima'], normalized: 'mouseover' },
     mouseout: { primary: 'ratón fuera', alternatives: ['raton fuera'], normalized: 'mouseout' },
     // Navigation
     go: { primary: 'ir', alternatives: ['navegar'], normalized: 'go' },
+    push: { primary: 'empujar', alternatives: ['push'], normalized: 'push' },
+    replace: { primary: 'reemplazar', alternatives: ['sustituir'], normalized: 'replace' },
+    process: { primary: 'procesar', normalized: 'process' },
     // Async
     wait: { primary: 'esperar', normalized: 'wait' },
     fetch: { primary: 'buscar', alternatives: ['recuperar'], normalized: 'fetch' },

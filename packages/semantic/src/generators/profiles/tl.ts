@@ -94,6 +94,10 @@ export const tagalogProfile: LanguageProfile = {
     breakpoint: { primary: 'breakpoint', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'pumunta', alternatives: ['punta'], normalized: 'go' },
+    scroll: { primary: 'iscroll', alternatives: ['mag_scroll'], normalized: 'scroll' },
+    push: { primary: 'itulak', alternatives: ['ipush'], normalized: 'push' },
+    replace: { primary: 'palitan_url', alternatives: ['ireplace'], normalized: 'replace' },
+    process: { primary: 'iproseso', alternatives: ['proseso'], normalized: 'process' },
     // Async
     wait: { primary: 'maghintay', alternatives: ['hintay'], normalized: 'wait' },
     fetch: { primary: 'kuhanin_mula', alternatives: ['kunin_mula'], normalized: 'fetch' },

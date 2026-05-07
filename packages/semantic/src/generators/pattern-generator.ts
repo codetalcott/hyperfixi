@@ -564,17 +564,20 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
 
   // Use override marker if available, otherwise use default
   if (overrideMarker !== undefined) {
-    // Command-specific marker override
+    // Command-specific marker override. Multi-word markers (e.g. "partials in",
+    // "with title") split into one literal token per word so the matcher
+    // consumes them sequentially.
+    const markerWords = overrideMarker ? overrideMarker.split(/\s+/).filter(Boolean) : [];
     const position = defaultMarker?.position ?? 'before';
     if (position === 'before') {
-      if (overrideMarker) {
-        tokens.push({ type: 'literal', value: overrideMarker });
+      for (const word of markerWords) {
+        tokens.push({ type: 'literal', value: word });
       }
       tokens.push(roleValueToken);
     } else {
       tokens.push(roleValueToken);
-      if (overrideMarker) {
-        tokens.push({ type: 'literal', value: overrideMarker });
+      for (const word of markerWords) {
+        tokens.push({ type: 'literal', value: word });
       }
     }
   } else if (defaultMarker) {

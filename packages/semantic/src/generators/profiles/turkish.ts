@@ -136,6 +136,10 @@ export const turkishProfile: LanguageProfile = {
     change: { primary: 'değişiklik', alternatives: ['değişim', 'degisim'], normalized: 'change' },
     // Navigation
     go: { primary: 'git', normalized: 'go' },
+    scroll: { primary: 'kaydır', alternatives: ['kaydir'], normalized: 'scroll' },
+    push: { primary: 'itele', alternatives: ['push'], normalized: 'push' },
+    replace: { primary: 'değiştir_url', alternatives: ['degistir_url'], normalized: 'replace' },
+    process: { primary: 'işle', alternatives: ['isle'], normalized: 'process' },
     // Async
     wait: { primary: 'bekle', normalized: 'wait' },
     fetch: { primary: 'getir', normalized: 'fetch' },

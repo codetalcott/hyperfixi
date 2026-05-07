@@ -96,6 +96,10 @@ export const chineseProfile: LanguageProfile = {
     change: { primary: '改变', alternatives: ['变化'], normalized: 'change' },
     // Navigation
     go: { primary: '前往', normalized: 'go' },
+    scroll: { primary: '滚动', normalized: 'scroll' },
+    push: { primary: '推送', normalized: 'push' },
+    replace: { primary: '替换', normalized: 'replace' },
+    process: { primary: '处理', normalized: 'process' },
     // Async
     wait: { primary: '等待', normalized: 'wait' },
     fetch: { primary: '抓取', normalized: 'fetch' },

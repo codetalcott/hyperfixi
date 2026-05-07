@@ -114,6 +114,10 @@ export const japaneseProfile: LanguageProfile = {
     breakpoint: { primary: 'ブレークポイント', normalized: 'breakpoint' },
     // Navigation
     go: { primary: '移動', alternatives: ['行く', 'ナビゲート'], normalized: 'go' },
+    scroll: { primary: 'スクロール', normalized: 'scroll' },
+    push: { primary: 'プッシュ', normalized: 'push' },
+    replace: { primary: '置換', alternatives: ['置き換え'], normalized: 'replace' },
+    process: { primary: '処理', normalized: 'process' },
     // Async
     wait: { primary: '待つ', alternatives: ['待機'], normalized: 'wait' },
     fetch: { primary: 'フェッチ', normalized: 'fetch' },

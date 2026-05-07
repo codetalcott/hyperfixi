@@ -1869,6 +1869,182 @@ export const pickSchema: CommandSchema = {
 };
 
 /**
+ * Scroll command: scrolls to a target element.
+ *
+ * Patterns:
+ * - EN: scroll to #target
+ * - ES: desplazar a #target
+ * - JA: #target に スクロール
+ *
+ * Position modifiers (top/bottom/middle/center/nearest) and behavior flags
+ * (smoothly/instantly) are accepted by the core parser as trailing tokens
+ * but are not modeled here yet — the simple "scroll to <target>" form is the
+ * gold path. Add as optional roles if/when tests demand it.
+ */
+export const scrollSchema: CommandSchema = {
+  action: 'scroll',
+  description: 'Scroll the viewport to a target element',
+  category: 'navigation',
+  primaryRole: 'destination',
+  roles: [
+    {
+      role: 'destination',
+      description: 'The element to scroll to',
+      required: true,
+      expectedTypes: ['selector', 'reference'],
+      svoPosition: 1,
+      sovPosition: 1,
+      markerOverride: { en: 'to' },
+    },
+  ],
+};
+
+/**
+ * `url` is a globally-recognized tech acronym; we use it as the marker
+ * keyword across all 24 supported languages to keep the parser surface
+ * consistent with the core hyperscript grammar (`push url <X>`).
+ */
+const URL_MARKER_ALL_LANGS: Record<string, string> = {
+  en: 'url',
+  es: 'url',
+  pt: 'url',
+  fr: 'url',
+  de: 'url',
+  it: 'url',
+  ja: 'url',
+  ko: 'url',
+  zh: 'url',
+  ar: 'url',
+  he: 'url',
+  hi: 'url',
+  bn: 'url',
+  tr: 'url',
+  ru: 'url',
+  uk: 'url',
+  pl: 'url',
+  id: 'url',
+  vi: 'url',
+  th: 'url',
+  ms: 'url',
+  tl: 'url',
+  sw: 'url',
+  qu: 'url',
+};
+
+/**
+ * `partials in` is a hyperscript-specific marker (no native translation in any
+ * language); we use the English form across all 24 languages.
+ */
+const PARTIALS_IN_MARKER_ALL_LANGS: Record<string, string> = {
+  en: 'partials in',
+  es: 'partials in',
+  pt: 'partials in',
+  fr: 'partials in',
+  de: 'partials in',
+  it: 'partials in',
+  ja: 'partials in',
+  ko: 'partials in',
+  zh: 'partials in',
+  ar: 'partials in',
+  he: 'partials in',
+  hi: 'partials in',
+  bn: 'partials in',
+  tr: 'partials in',
+  ru: 'partials in',
+  uk: 'partials in',
+  pl: 'partials in',
+  id: 'partials in',
+  vi: 'partials in',
+  th: 'partials in',
+  ms: 'partials in',
+  tl: 'partials in',
+  sw: 'partials in',
+  qu: 'partials in',
+};
+
+/**
+ * Push command: pushes a URL onto the browser history.
+ *
+ * Patterns:
+ * - EN: push url "/page/2"
+ * - ES: empujar url "/page/2"
+ *
+ * The literal `url` keyword is a required marker that disambiguates from any
+ * other use of `push` and matches the core parser's required-keyword grammar.
+ */
+export const pushSchema: CommandSchema = {
+  action: 'push',
+  description: 'Push a URL onto the browser history',
+  category: 'navigation',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The URL to push (after the `url` keyword)',
+      required: true,
+      expectedTypes: ['literal', 'expression'],
+      svoPosition: 1,
+      sovPosition: 1,
+      markerOverride: URL_MARKER_ALL_LANGS,
+    },
+  ],
+};
+
+/**
+ * Replace command: replaces the current entry in browser history.
+ *
+ * Patterns:
+ * - EN: replace url "/new-path"
+ * - ES: reemplazar url "/new-path"
+ *
+ * Same shape as push — the literal `url` keyword is required.
+ */
+export const replaceSchema: CommandSchema = {
+  action: 'replace',
+  description: 'Replace the current browser history entry with a URL',
+  category: 'navigation',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The URL to replace with (after the `url` keyword)',
+      required: true,
+      expectedTypes: ['literal', 'expression'],
+      svoPosition: 1,
+      sovPosition: 1,
+      markerOverride: URL_MARKER_ALL_LANGS,
+    },
+  ],
+};
+
+/**
+ * Process command: processes hx-partial markup in HTML content.
+ *
+ * Patterns:
+ * - EN: process partials in it
+ *
+ * Both `partials` and `in` are required marker keywords. The multi-word
+ * marker is split into separate literal tokens by the pattern generator.
+ */
+export const processSchema: CommandSchema = {
+  action: 'process',
+  description: 'Process hx-partial markup in HTML content',
+  category: 'dom-content',
+  primaryRole: 'patient',
+  roles: [
+    {
+      role: 'patient',
+      description: 'The HTML content (string, element, or response) to process',
+      required: true,
+      expectedTypes: ['literal', 'reference', 'expression'],
+      svoPosition: 1,
+      sovPosition: 1,
+      markerOverride: PARTIALS_IN_MARKER_ALL_LANGS,
+    },
+  ],
+};
+
+/**
  * Render command: renders a template with variables.
  * Syntax: render <template> / render <template> with <variables>
  */
@@ -1940,6 +2116,10 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   continue: continueSchema,
   // Batch 3 - DOM & Navigation
   go: goSchema,
+  scroll: scrollSchema,
+  push: pushSchema,
+  replace: replaceSchema,
+  process: processSchema,
   transition: transitionSchema,
   clone: cloneSchema,
   focus: focusSchema,

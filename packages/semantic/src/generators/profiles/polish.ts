@@ -187,6 +187,30 @@ export const polishProfile: LanguageProfile = {
       normalized: 'go',
       form: 'imperative',
     },
+    scroll: {
+      primary: 'przewiń',
+      alternatives: ['przewin'],
+      normalized: 'scroll',
+      form: 'imperative',
+    },
+    push: {
+      primary: 'wepchnij',
+      alternatives: ['push'],
+      normalized: 'push',
+      form: 'imperative',
+    },
+    replace: {
+      primary: 'nadpisz',
+      alternatives: ['zamień_url', 'zamien_url'],
+      normalized: 'replace',
+      form: 'imperative',
+    },
+    process: {
+      primary: 'przetwórz',
+      alternatives: ['przetworz'],
+      normalized: 'process',
+      form: 'imperative',
+    },
     // Async
     wait: { primary: 'czekaj', alternatives: ['poczekaj'], normalized: 'wait', form: 'imperative' },
     fetch: {

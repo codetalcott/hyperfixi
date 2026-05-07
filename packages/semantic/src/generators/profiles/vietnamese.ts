@@ -103,6 +103,10 @@ export const vietnameseProfile: LanguageProfile = {
     change: { primary: 'thay đổi', alternatives: ['đổi'], normalized: 'change' },
     // Navigation
     go: { primary: 'đi đến', alternatives: ['đi'], normalized: 'go' },
+    scroll: { primary: 'cuộn', normalized: 'scroll' },
+    push: { primary: 'đẩy', alternatives: ['push'], normalized: 'push' },
+    replace: { primary: 'thay_thế', alternatives: ['thay_the'], normalized: 'replace' },
+    process: { primary: 'xử_lý', alternatives: ['xu_ly'], normalized: 'process' },
     // Async
     wait: { primary: 'chờ', alternatives: ['đợi'], normalized: 'wait' },
     fetch: { primary: 'tải', normalized: 'fetch' },
