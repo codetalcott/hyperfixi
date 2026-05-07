@@ -48,7 +48,7 @@ export const resizableSchema: BehaviorSchema = {
     { name: 'resizable:end', description: 'Fired when resize completes' },
   ],
   source: `
-behavior Resizable
+behavior Resizable(minWidth, minHeight, maxWidth, maxHeight)
   on pointerdown(clientX, clientY) from me
     halt the event
     trigger resizable:start
@@ -62,6 +62,10 @@ behavior Resizable
       wait for pointermove(clientX, clientY) from document
       set newWidth to startWidth + clientX - startX
       set newHeight to startHeight + clientY - startY
+      if newWidth < minWidth then set newWidth to minWidth end
+      if newWidth > maxWidth then set newWidth to maxWidth end
+      if newHeight < minHeight then set newHeight to minHeight end
+      if newHeight > maxHeight then set newHeight to maxHeight end
       set my style.width to newWidth + "px"
       set my style.height to newHeight + "px"
       trigger resizable:resize
