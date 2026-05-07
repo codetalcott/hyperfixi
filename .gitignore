@@ -121,6 +121,7 @@ lerna-debug.log*
 *.db
 *.sqlite
 *.sqlite3
+!packages/patterns-reference/data/patterns.db
 
 # Generated files
 /src/generated/
