@@ -106,6 +106,7 @@ jobs:
           npm run build --prefix packages/mcp-server-hyperscript
           npm run build --prefix packages/language-server-hyperscript
           npm run build --prefix packages/multilingual-hyperscript
+          npm run build --prefix packages/hyperscript-tools-i18n
 
       - name: Run tests
         run: |
@@ -144,7 +145,8 @@ jobs:
                      framework server-bridge types-browser aot-compiler \
                      domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                      compilation-service behaviors testing-framework language-server \
-                     mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript; do
+                     mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
+                     hyperscript-tools-i18n; do
             if [ -f "packages/$pkg/package.json" ]; then
               # Use npm pkg set to avoid registry lookups (safe for unpublished packages)
               (cd "packages/$pkg" && npm pkg set version="$VERSION")
@@ -171,7 +173,8 @@ jobs:
                         domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                         compilation-service mcp-server vite-plugin \
                         behaviors testing-framework language-server \
-                        mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript"
+                        mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
+                        hyperscript-tools-i18n"
 
           for pkg in $ALL_PACKAGES; do
             [ ! -f "packages/$pkg/package.json" ] && continue
@@ -256,7 +259,8 @@ jobs:
                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                        compilation-service mcp-server vite-plugin \
                        behaviors testing-framework language-server \
-                       mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript; do
+                       mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
+                       hyperscript-tools-i18n; do
               [ -f "packages/$pkg/package.json" ] || continue
               IS_PRIVATE=$(node -p "require('./packages/$pkg/package.json').private || false")
               [ "$IS_PRIVATE" = "true" ] && continue
