@@ -425,6 +425,48 @@ function extractBlockCommands(block: CoreNode | undefined): InterchangeNode[] {
 // =============================================================================
 
 /**
+ * Marker-keyword sets for commands whose generic-parser args contain literal
+ * marker words (e.g. `scroll to <target>` puts `to` and `<target>` both into
+ * args). These mirror the runtime command parsers' skip lists so the inferred
+ * roles point at the real value, not the marker.
+ */
+const SCROLL_MARKERS: ReadonlySet<string> = new Set([
+  'to',
+  'of',
+  'the',
+  'top',
+  'bottom',
+  'middle',
+  'center',
+  'nearest',
+  'left',
+  'right',
+  'smoothly',
+  'instantly',
+]);
+const URL_MARKERS: ReadonlySet<string> = new Set(['url']);
+const PARTIALS_IN_MARKERS: ReadonlySet<string> = new Set(['partials', 'in']);
+
+/**
+ * Return the first arg that isn't a marker identifier from the given set.
+ * Identifier args carry the marker word in `name` (or `value` as a fallback).
+ */
+function firstNonMarkerArg(
+  args: InterchangeNode[],
+  markers: ReadonlySet<string>
+): InterchangeNode | undefined {
+  for (const a of args) {
+    if (a.type === 'identifier') {
+      const ident = a as { name?: unknown; value?: unknown };
+      const word = typeof ident.name === 'string' ? ident.name : ident.value;
+      if (typeof word === 'string' && markers.has(word)) continue;
+    }
+    return a;
+  }
+  return undefined;
+}
+
+/**
  * Infer semantic roles from the core parser's positional args and modifiers.
  *
  * The core parser produces commands with positional args and modifier objects
@@ -534,6 +576,29 @@ function inferRoles(
     case 'trigger': {
       if (args[0]) roles.patient = args[0];
       if (target) roles.destination = target;
+      break;
+    }
+
+    // scroll [to] [position] target [smoothly|instantly]  →  destination=target
+    // Marker keywords end up as identifier args from the generic command parser.
+    case 'scroll': {
+      const t = firstNonMarkerArg(args, SCROLL_MARKERS);
+      if (t) roles.destination = t;
+      break;
+    }
+
+    // push|replace url <X>  →  patient=X (the URL is preceded by the literal `url` marker)
+    case 'push':
+    case 'replace': {
+      const t = firstNonMarkerArg(args, URL_MARKERS);
+      if (t) roles.patient = t;
+      break;
+    }
+
+    // process partials in <X>  →  patient=X
+    case 'process': {
+      const t = firstNonMarkerArg(args, PARTIALS_IN_MARKERS);
+      if (t) roles.patient = t;
       break;
     }
 

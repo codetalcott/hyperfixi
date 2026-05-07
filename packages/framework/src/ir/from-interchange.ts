@@ -429,6 +429,43 @@ export function renderExpr(node: INode): string {
 // =============================================================================
 
 /**
+ * Marker-keyword sets — mirror the runtime command parsers' skip lists so the
+ * inferred roles point at the real value, not the literal marker word.
+ */
+const SCROLL_MARKERS: ReadonlySet<string> = new Set([
+  'to',
+  'of',
+  'the',
+  'top',
+  'bottom',
+  'middle',
+  'center',
+  'nearest',
+  'left',
+  'right',
+  'smoothly',
+  'instantly',
+]);
+const URL_MARKERS: ReadonlySet<string> = new Set(['url']);
+const PARTIALS_IN_MARKERS: ReadonlySet<string> = new Set(['partials', 'in']);
+
+/**
+ * Return the first arg that isn't a marker identifier from the given set.
+ * Identifier args carry the marker word in `name` (or `value` as a fallback).
+ */
+function firstNonMarkerArg(args: INode[], markers: ReadonlySet<string>): INode | undefined {
+  for (const a of args) {
+    if (a.type === 'identifier') {
+      const ident = a as { name?: unknown; value?: unknown };
+      const word = typeof ident.name === 'string' ? ident.name : ident.value;
+      if (typeof word === 'string' && markers.has(word)) continue;
+    }
+    return a;
+  }
+  return undefined;
+}
+
+/**
  * Infer semantic roles from command name, positional args, modifiers, and target.
  * Mirrors the heuristics in core's from-core.ts inferRoles() function.
  */
@@ -523,6 +560,28 @@ function inferRoles(
 
     case 'log': {
       if (args[0]) roles.patient = convertValue(args[0]);
+      break;
+    }
+
+    // scroll [to] [position] target [smoothly|instantly]  →  destination=target
+    case 'scroll': {
+      const t = firstNonMarkerArg(args, SCROLL_MARKERS);
+      if (t) roles.destination = convertValue(t);
+      break;
+    }
+
+    // push|replace url <X>  →  patient=X
+    case 'push':
+    case 'replace': {
+      const t = firstNonMarkerArg(args, URL_MARKERS);
+      if (t) roles.patient = convertValue(t);
+      break;
+    }
+
+    // process partials in <X>  →  patient=X
+    case 'process': {
+      const t = firstNonMarkerArg(args, PARTIALS_IN_MARKERS);
+      if (t) roles.patient = convertValue(t);
       break;
     }
 

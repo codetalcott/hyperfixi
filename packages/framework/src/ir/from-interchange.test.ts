@@ -427,6 +427,89 @@ describe('fromInterchangeNode: command conversion', () => {
     });
   });
 
+  it('infers destination role for scroll, skipping `to` marker', () => {
+    const node = fromInterchangeNode({
+      type: 'command',
+      name: 'scroll',
+      args: [
+        { type: 'identifier', value: 'to', name: 'to' },
+        { type: 'selector', value: '#target' },
+      ],
+    });
+
+    expect(node.action).toBe('scroll');
+    expect(node.roles.get('destination')).toEqual({
+      type: 'selector',
+      value: '#target',
+      selectorKind: 'id',
+    });
+    expect(node.roles.has('patient')).toBe(false);
+  });
+
+  it('infers destination for scroll across position/behavior markers', () => {
+    const node = fromInterchangeNode({
+      type: 'command',
+      name: 'scroll',
+      args: [
+        { type: 'identifier', value: 'to', name: 'to' },
+        { type: 'identifier', value: 'bottom', name: 'bottom' },
+        { type: 'identifier', value: 'of', name: 'of' },
+        { type: 'selector', value: '#chat' },
+        { type: 'identifier', value: 'smoothly', name: 'smoothly' },
+      ],
+    });
+
+    expect(node.roles.get('destination')).toEqual({
+      type: 'selector',
+      value: '#chat',
+      selectorKind: 'id',
+    });
+  });
+
+  it('infers patient role for push, skipping `url` marker', () => {
+    const node = fromInterchangeNode({
+      type: 'command',
+      name: 'push',
+      args: [
+        { type: 'identifier', value: 'url', name: 'url' },
+        { type: 'literal', value: '/page/2' },
+      ],
+    });
+
+    expect(node.action).toBe('push');
+    expect(node.roles.get('patient')).toEqual({ type: 'literal', value: '/page/2' });
+  });
+
+  it('infers patient role for replace, skipping `url` marker', () => {
+    const node = fromInterchangeNode({
+      type: 'command',
+      name: 'replace',
+      args: [
+        { type: 'identifier', value: 'url', name: 'url' },
+        { type: 'literal', value: '/new' },
+      ],
+    });
+
+    expect(node.action).toBe('replace');
+    expect(node.roles.get('patient')).toEqual({ type: 'literal', value: '/new' });
+  });
+
+  it('infers patient role for process, skipping `partials in` markers', () => {
+    const node = fromInterchangeNode({
+      type: 'command',
+      name: 'process',
+      args: [
+        { type: 'identifier', value: 'partials', name: 'partials' },
+        { type: 'identifier', value: 'in', name: 'in' },
+        { type: 'identifier', value: 'it' },
+      ],
+    });
+
+    expect(node.action).toBe('process');
+    // `it` is in DEFAULT_REFERENCES → wrapped as a reference value
+    expect(node.roles.get('patient')).toEqual({ type: 'reference', value: 'it' });
+  });
+
   it('wraps bare expression nodes as get command', () => {
     const node = fromInterchangeNode({
       type: 'binary',

@@ -541,6 +541,90 @@ describe('fromCoreAST', () => {
       );
       expect((result as any).roles).toBeUndefined();
     });
+
+    it('infers destination role for scroll, skipping `to` marker', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'scroll',
+          args: [
+            coreNode('identifier', { name: 'to' }),
+            coreNode('selector', { value: '#target' }),
+          ],
+        })
+      );
+      expect((result as any).roles).toBeDefined();
+      expect((result as any).roles.destination).toEqual({
+        type: 'selector',
+        value: '#target',
+      });
+      expect((result as any).roles.patient).toBeUndefined();
+    });
+
+    it('infers destination for scroll across position/behavior markers', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'scroll',
+          args: [
+            coreNode('identifier', { name: 'to' }),
+            coreNode('identifier', { name: 'bottom' }),
+            coreNode('identifier', { name: 'of' }),
+            coreNode('selector', { value: '#chat' }),
+            coreNode('identifier', { name: 'smoothly' }),
+          ],
+        })
+      );
+      expect((result as any).roles.destination).toEqual({
+        type: 'selector',
+        value: '#chat',
+      });
+    });
+
+    it('infers patient role for push, skipping `url` marker', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'push',
+          args: [
+            coreNode('identifier', { name: 'url' }),
+            coreNode('literal', { value: '/page/2' }),
+          ],
+        })
+      );
+      expect((result as any).roles.patient).toEqual({
+        type: 'literal',
+        value: '/page/2',
+      });
+    });
+
+    it('infers patient role for replace, skipping `url` marker', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'replace',
+          args: [coreNode('identifier', { name: 'url' }), coreNode('literal', { value: '/new' })],
+        })
+      );
+      expect((result as any).roles.patient).toEqual({
+        type: 'literal',
+        value: '/new',
+      });
+    });
+
+    it('infers patient role for process, skipping `partials in` markers', () => {
+      const result = fromCoreAST(
+        coreNode('command', {
+          name: 'process',
+          args: [
+            coreNode('identifier', { name: 'partials' }),
+            coreNode('identifier', { name: 'in' }),
+            coreNode('contextReference', { name: 'it' }),
+          ],
+        })
+      );
+      // contextReference is converted to identifier {value: 'it'} by fromCoreAST
+      expect((result as any).roles.patient).toEqual({
+        type: 'identifier',
+        value: 'it',
+      });
+    });
   });
 
   describe('if command nodes', () => {
