@@ -15,6 +15,18 @@ export interface CommandSchema {
   readonly category: string;
   readonly hasBody?: boolean;
   readonly notes?: string;
+  /**
+   * Identifier tokens that may appear in the core parser's positional `args`
+   * but are not bound to any role — e.g., scroll's `top|bottom|smoothly`.
+   * These are skipped when scanning args for role values.
+   */
+  readonly argSkipTokens?: ReadonlyArray<string>;
+  /**
+   * Which role consumes the core parser's `target` field (the trailing
+   * `on X` / `to X` / `from X` captured separately from args). Defaults to
+   * `'destination'`. Set to `'source'` for commands like `remove .x from #y`.
+   */
+  readonly targetRole?: SemanticRole;
 }
 
 export interface RoleSpec {
@@ -43,11 +55,37 @@ export interface RoleSpec {
    * pattern generator, so role positions order the pre-verb material.
    */
   readonly sovPosition?: number;
+  /**
+   * Per-language primary marker keyword for this role.
+   *
+   * - Non-empty string (e.g., `'to'`) — the canonical marker.
+   * - Empty string `''` — explicitly no marker (bare positional arg).
+   * - Multi-word strings (e.g., `'partials in'`) — match consecutive identifier tokens.
+   * - `undefined` — the language profile's default marker for the role applies.
+   *
+   * For roles that accept multiple alternate markers (e.g., `put`'s
+   * `into|before|after`), declare the alternates separately in {@link markerVariants}.
+   */
   readonly markerOverride?: Record<string, string>;
+  /**
+   * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
+   * Used by schema-driven role inference to recognize any of the listed markers as
+   * signaling this role; the matched marker is recorded in {@link methodCarrier} if set.
+   *
+   * Pattern-generation consumers typically read only `markerOverride`; this field is
+   * specifically for bridge-side inference (see `inferRolesFromSchema`).
+   */
+  readonly markerVariants?: Record<string, readonly string[]>;
   readonly renderOverride?: Record<string, string>;
   readonly markerPosition?: 'before' | 'after';
   readonly greedy?: boolean;
   readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
+  /**
+   * When this role's marker has alternates (via {@link markerVariants}), the
+   * matched marker keyword is recorded as a literal in the role named here.
+   * Used by `put` to expose `into|before|after` as the `method` role.
+   */
+  readonly methodCarrier?: SemanticRole;
 }
 
 /**

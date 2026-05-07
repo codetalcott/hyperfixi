@@ -36,6 +36,14 @@ export interface RoleSpec {
    */
   readonly markerOverride?: Record<string, string>;
   /**
+   * Additional alternate marker keywords for this role, beyond {@link markerOverride}.
+   * Used by schema-driven role inference (e.g., from `@lokascript/intent`) to
+   * recognize any of the listed markers as signaling this role.
+   * The pattern generator and other semantic consumers read only `markerOverride`;
+   * this field is specifically for bridge-side inference (`inferRolesFromSchema`).
+   */
+  readonly markerVariants?: Record<string, readonly string[]>;
+  /**
    * Override the rendering preposition for this role, separate from the parsing marker.
    * Used when the parsing grammar differs from the rendered output
    * (e.g., "go to /home" parses with 'to' but renders as "go /home").
@@ -49,6 +57,13 @@ export interface RoleSpec {
    * If omitted, all selector kinds are accepted.
    */
   readonly selectorKinds?: ReadonlyArray<'id' | 'class' | 'attribute' | 'element' | 'complex'>;
+
+  /**
+   * When this role's marker has alternates (via {@link markerVariants}), the
+   * matched marker keyword is recorded as a literal in the role named here.
+   * Used by `put` to expose `into|before|after` as the `method` role.
+   */
+  readonly methodCarrier?: SemanticRole;
 }
 
 /**
@@ -82,6 +97,19 @@ export interface CommandSchema {
   readonly hasBody?: boolean;
   /** Notes about special handling */
   readonly notes?: string;
+  /**
+   * Identifier tokens that may appear in the core parser's positional `args`
+   * but are not bound to any role — e.g., scroll's `top|bottom|smoothly`.
+   * These are skipped when scanning args for role values during schema-driven
+   * role inference.
+   */
+  readonly argSkipTokens?: ReadonlyArray<string>;
+  /**
+   * Which role consumes the core parser's `target` field (the trailing
+   * `on X` / `to X` / `from X` captured separately from args). Defaults to
+   * `'destination'`. Set to `'source'` for commands like `remove .x from #y`.
+   */
+  readonly targetRole?: SemanticRole;
 
   // Runtime error documentation (optional for backward compatibility)
 
@@ -216,6 +244,8 @@ export const removeSchema: CommandSchema = {
   description: 'Remove a class or attribute from an element',
   category: 'dom-class',
   primaryRole: 'patient',
+  // Trailing `from X` is captured by the core parser as `target`; map it to source.
+  targetRole: 'source',
   roles: [
     {
       role: 'patient',
@@ -280,6 +310,11 @@ export const putSchema: CommandSchema = {
       svoPosition: 2,
       sovPosition: 2, // SOV: destination comes second (に/에/a marker)
       markerOverride: { en: 'into' }, // "put 'hello' into #output"
+      // `before` / `after` are alternate position markers; the matched marker
+      // is recorded as a literal in the `method` role (a derived role with no
+      // surface form of its own — populated by schema-driven role inference).
+      markerVariants: { en: ['before', 'after'] },
+      methodCarrier: 'method',
     },
   ],
   // Runtime error documentation
@@ -1886,6 +1921,22 @@ export const scrollSchema: CommandSchema = {
   description: 'Scroll the viewport to a target element',
   category: 'navigation',
   primaryRole: 'destination',
+  // Position/behavior keywords appear in the parser's args alongside the target;
+  // schema-driven role inference skips them when scanning for the destination.
+  // Mirrors the runtime command's skip set in core/commands/navigation/scroll-to.ts.
+  argSkipTokens: [
+    'of',
+    'the',
+    'top',
+    'bottom',
+    'middle',
+    'center',
+    'nearest',
+    'left',
+    'right',
+    'smoothly',
+    'instantly',
+  ],
   roles: [
     {
       role: 'destination',

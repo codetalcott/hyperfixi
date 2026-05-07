@@ -86,6 +86,10 @@ export { createDiagnosticCollector, fromError, filterBySeverity } from './diagno
 export type { CommandSchema, RoleSpec } from './schema';
 export { defineCommand, defineRole, getRoleSpec } from './schema';
 
+// Schema-driven role inference
+export type { ValueAdapter } from './inference/infer-roles';
+export { inferRolesFromSchema } from './inference/infer-roles';
+
 // IR: references
 export { DEFAULT_REFERENCES, isValidReference } from './ir/references';
 

@@ -280,6 +280,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@lokascript/intent": "*",
     "@lokascript/semantic": "*",
     "morphlex": "^1.0.5",
     "tslib": "^2.8.1"

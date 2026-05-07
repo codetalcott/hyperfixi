@@ -18,6 +18,8 @@ import type {
   WhileNode,
   EventModifiers,
 } from './types';
+import { inferRolesFromSchema, type ValueAdapter } from '@lokascript/intent';
+import { getSchema } from '@lokascript/semantic';
 
 // The core parser AST is untyped from our perspective — we only need
 // the structural shape, not the exact imports (avoiding circular deps).
@@ -425,54 +427,14 @@ function extractBlockCommands(block: CoreNode | undefined): InterchangeNode[] {
 // =============================================================================
 
 /**
- * Marker-keyword sets for commands whose generic-parser args contain literal
- * marker words (e.g. `scroll to <target>` puts `to` and `<target>` both into
- * args). These mirror the runtime command parsers' skip lists so the inferred
- * roles point at the real value, not the marker.
- */
-const SCROLL_MARKERS: ReadonlySet<string> = new Set([
-  'to',
-  'of',
-  'the',
-  'top',
-  'bottom',
-  'middle',
-  'center',
-  'nearest',
-  'left',
-  'right',
-  'smoothly',
-  'instantly',
-]);
-const URL_MARKERS: ReadonlySet<string> = new Set(['url']);
-const PARTIALS_IN_MARKERS: ReadonlySet<string> = new Set(['partials', 'in']);
-
-/**
- * Return the first arg that isn't a marker identifier from the given set.
- * Identifier args carry the marker word in `name` (or `value` as a fallback).
- */
-function firstNonMarkerArg(
-  args: InterchangeNode[],
-  markers: ReadonlySet<string>
-): InterchangeNode | undefined {
-  for (const a of args) {
-    if (a.type === 'identifier') {
-      const ident = a as { name?: unknown; value?: unknown };
-      const word = typeof ident.name === 'string' ? ident.name : ident.value;
-      if (typeof word === 'string' && markers.has(word)) continue;
-    }
-    return a;
-  }
-  return undefined;
-}
-
-/**
  * Infer semantic roles from the core parser's positional args and modifiers.
  *
  * The core parser produces commands with positional args and modifier objects
- * but no named roles. This heuristic maps them based on command name conventions.
+ * but no named roles. Known commands have explicit cases below. Unknown
+ * commands fall through to schema-driven inference (`inferRolesFromSchema`),
+ * which consults each command's `CommandSchema` from `@lokascript/semantic`.
  *
- * Returns null if no roles can be inferred (unknown command or insufficient args).
+ * Returns null if no roles can be inferred (no schema and no explicit case).
  */
 function inferRoles(
   name: string,
@@ -483,7 +445,14 @@ function inferRoles(
   const roles: Record<string, InterchangeNode> = {};
 
   switch (name) {
+    // The cases below are NOT yet schema-driven because the semantic schema's
+    // role names differ from what the bridge has shipped (e.g., schema says
+    // `patient`, bridge has shipped `destination` for `increment`). Migrating
+    // would change downstream consumers' expected role keys. Tracked for
+    // follow-up audit; see plan file in /Users/williamtalcott/.claude/plans/.
+
     // set :var to value  →  destination=:var, patient=value
+    // Stays here for the legacy positional form `set :var value` (no `to`).
     case 'set': {
       if (args[0]) roles.destination = args[0];
       const toVal = modifiers?.to;
@@ -495,30 +464,8 @@ function inferRoles(
       break;
     }
 
-    // put value into/before/after target  →  patient=value, destination=target
-    case 'put': {
-      if (args[0]) roles.patient = args[0];
-      // Find the modifier that indicates position (into, before, after)
-      if (modifiers) {
-        for (const key of ['into', 'before', 'after'] as const) {
-          const val = modifiers[key];
-          if (val && typeof val === 'object' && 'type' in (val as object)) {
-            roles.destination = val as InterchangeNode;
-            roles.method = { type: 'literal', value: key };
-            break;
-          }
-        }
-        if (typeof modifiers.position === 'string') {
-          roles.method = { type: 'literal', value: modifiers.position };
-        }
-      }
-      if (!roles.destination && target) {
-        roles.destination = target;
-      }
-      break;
-    }
-
     // increment/decrement :var [by amount]  →  destination=:var, quantity=amount
+    // Schema says role 'patient'; bridge has shipped 'destination'.
     case 'increment':
     case 'decrement': {
       if (args[0]) roles.destination = args[0];
@@ -532,6 +479,7 @@ function inferRoles(
     }
 
     // fetch url [as format]  →  source=url, responseType=format
+    // Schema's responseType has no markerOverride; bridge needs the `as` marker.
     case 'fetch': {
       if (args[0]) roles.source = args[0];
       const asVal = modifiers?.as;
@@ -544,34 +492,15 @@ function inferRoles(
     }
 
     // wait duration  →  duration=arg
+    // Schema says role 'patient'; bridge has shipped 'duration'.
     case 'wait':
     case 'settle': {
       if (args[0]) roles.duration = args[0];
       break;
     }
 
-    // toggle .class [on target]  →  patient=.class, destination=target
-    case 'toggle': {
-      if (args[0]) roles.patient = args[0];
-      if (target) roles.destination = target;
-      break;
-    }
-
-    // add .class [to target]  →  patient=.class, destination=target
-    case 'add': {
-      if (args[0]) roles.patient = args[0];
-      if (target) roles.destination = target;
-      break;
-    }
-
-    // remove .class [from target]  →  patient=.class, source=target
-    case 'remove': {
-      if (args[0]) roles.patient = args[0];
-      if (target) roles.source = target;
-      break;
-    }
-
     // send eventName [to target]  →  patient=eventName, destination=target
+    // Schema says role 'event'; bridge has shipped 'patient'.
     case 'send':
     case 'trigger': {
       if (args[0]) roles.patient = args[0];
@@ -579,32 +508,45 @@ function inferRoles(
       break;
     }
 
-    // scroll [to] [position] target [smoothly|instantly]  →  destination=target
-    // Marker keywords end up as identifier args from the generic command parser.
-    case 'scroll': {
-      const t = firstNonMarkerArg(args, SCROLL_MARKERS);
-      if (t) roles.destination = t;
-      break;
+    default: {
+      // Fall back to schema-driven role inference (Option 4 — scroll, push,
+      // replace, process and any future command without an explicit case).
+      const schema = getSchema(name as Parameters<typeof getSchema>[0]);
+      if (!schema) return null;
+      const inferred = inferRolesFromSchema(
+        schema,
+        args,
+        modifiers as Readonly<Record<string, unknown>> | undefined,
+        target,
+        INTERCHANGE_ADAPTER
+      );
+      return Object.keys(inferred).length > 0
+        ? (inferred as Readonly<Record<string, InterchangeNode>>)
+        : null;
     }
-
-    // push|replace url <X>  →  patient=X (the URL is preceded by the literal `url` marker)
-    case 'push':
-    case 'replace': {
-      const t = firstNonMarkerArg(args, URL_MARKERS);
-      if (t) roles.patient = t;
-      break;
-    }
-
-    // process partials in <X>  →  patient=X
-    case 'process': {
-      const t = firstNonMarkerArg(args, PARTIALS_IN_MARKERS);
-      if (t) roles.patient = t;
-      break;
-    }
-
-    default:
-      return null;
   }
 
   return Object.keys(roles).length > 0 ? roles : null;
 }
+
+/**
+ * Adapter for `inferRolesFromSchema` operating on InterchangeNode values.
+ * Identifier args carry the keyword in `name` (or `value` as a fallback for
+ * contextReference-converted nodes). String modifier values are wrapped as
+ * literal nodes; object modifier values pass through unchanged.
+ */
+const INTERCHANGE_ADAPTER: ValueAdapter<InterchangeNode, InterchangeNode> = {
+  getIdentifierName(node: InterchangeNode): string | undefined {
+    if (node.type !== 'identifier') return undefined;
+    const ident = node as { name?: unknown; value?: unknown };
+    if (typeof ident.name === 'string' && ident.name !== '') return ident.name;
+    if (typeof ident.value === 'string') return ident.value;
+    return undefined;
+  },
+  convertValue(node: InterchangeNode): InterchangeNode {
+    return node;
+  },
+  createLiteralValue(text: string): InterchangeNode {
+    return { type: 'literal', value: text };
+  },
+};

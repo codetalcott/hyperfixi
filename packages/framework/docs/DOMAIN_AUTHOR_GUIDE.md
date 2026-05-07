@@ -121,10 +121,14 @@ export const createSchema = defineCommand({
 **Key concepts:**
 
 - `primaryRole` — the main argument (appears right after the keyword in SVO)
-- `svoPosition` — order in SVO languages (1 = closest to keyword)
+- `svoPosition` — order in SVO languages (lower = earlier in surface form, matching the pattern generator's sort)
 - `markerOverride` — the preposition/particle before this role per language
   - SVO: `create "mydb" as database` → "as" marks the `type` role
   - SOV: `"mydb" を データベース として 作成` → "として" marks the `type` role
+- `markerVariants` (optional) — additional alternate marker keywords for the same role; used when a role accepts multiple synonymous markers (e.g., `put`'s `into|before|after`). Pattern generators read only the primary `markerOverride`; this field is consumed by schema-driven role inference (`inferRolesFromSchema` in `@lokascript/intent`).
+- `methodCarrier` (optional) — when this role's marker has alternates, records the matched marker as a literal in the named sibling role. `put`'s destination role uses `methodCarrier: 'method'` to expose which positional keyword fired (`into` / `before` / `after`).
+- `argSkipTokens` (CommandSchema, optional) — identifier tokens that may appear in the parser's positional `args` but aren't bound to any role (e.g., scroll's `top|bottom|smoothly`). Schema-driven role inference skips these when scanning for a role's value.
+- `targetRole` (CommandSchema, optional) — which role consumes the parser's trailing `target` field (the `on X` / `from X` / etc. captured separately from args). Defaults to `'destination'`. Set to `'source'` for commands like `remove`.
 
 ### 3. Fill In Language Profiles
 
