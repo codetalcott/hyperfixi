@@ -65,6 +65,7 @@
     "build": "tsup && npm run build:types",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
     "dev": "tsup --watch",
+    "pretest": "../../scripts/ensure-fresh.sh ../intent",
     "test": "vitest",
     "test:run": "vitest run",
     "test:watch": "vitest watch",
