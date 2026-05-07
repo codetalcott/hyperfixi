@@ -24,8 +24,11 @@ AST rewriting — just a single override on `runtime.getScript()`.
 file, produce per-language HTML with translated `_=` attributes, ship them
 alongside.
 
-Both packages are MIT, namespace-neutral, and have zero dependency on any
-HyperFixi or LokaScript runtime.
+Both packages are MIT-licensed, namespace-neutral wrappers over the
+LokaScript runtime (also MIT). The adapter logic lives at
+`@lokascript/hyperscript-adapter`; the `@hyperscript-tools/*` wrappers exist
+so CDN URLs and integration code stay neutral. No HyperFixi runtime is
+involved.
 
 ---
 

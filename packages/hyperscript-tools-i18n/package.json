@@ -25,7 +25,9 @@
     "build": "tsup src/index.ts src/cli.ts src/eleventy.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts src/cli.ts src/eleventy.ts --format esm --dts --watch",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/*.test.mjs"
+    "pretest": "../../scripts/ensure-fresh.sh ../i18n . && npm run build --silent",
+    "test": "node --test test/*.test.mjs",
+    "test:check": "node --test --test-reporter=spec test/*.test.mjs 2>&1 | tail -10"
   },
   "keywords": [
     "hyperscript",
@@ -42,7 +44,7 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/i18n": "*"
+    "@lokascript/i18n": "^2.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -51,7 +53,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"

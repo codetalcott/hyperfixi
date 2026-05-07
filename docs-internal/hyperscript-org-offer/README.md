@@ -5,25 +5,25 @@ whichever sub-doc you need.
 
 ## Status
 
-| Step | Artifact                                                                                              | Status                                                                             |
-| ---- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 1    | `@hyperscript-tools/multilingual` self-contained (vendors 31 adapter bundles into its own dist)       | ✅ done in monorepo                                                                |
-| 2    | `@hyperscript-tools/i18n` package (CLI + Eleventy plugin + programmatic API)                          | ✅ done in monorepo                                                                |
-| 3a   | lokascript-docs patterns page: language chip grid + live-execution toggle + translations.json refresh | 📄 patch description ready: [lokascript-docs-patch.md](./lokascript-docs-patch.md) |
-| 3b   | hyperfixi-docs patterns page: verify engine showcase                                                  | 📄 verification doc ready: [hyperfixi-docs-patch.md](./hyperfixi-docs-patch.md)    |
-| 4    | Drop-in integration guide for hyperscript.org's audience (lives on lokascript.org)                    | 📄 ready: [integration-guide.md](./integration-guide.md)                           |
-| 5    | Carson hand-off message                                                                               | 📄 ready (two variants): [carson-handoff.md](./carson-handoff.md)                  |
+| Step | Artifact                                                                                                                     | Status                                                                          |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1    | `@hyperscript-tools/multilingual` self-contained (vendors 31 adapter bundles into its own dist)                              | ✅ done in monorepo                                                             |
+| 2    | `@hyperscript-tools/i18n` package (CLI + Eleventy plugin + programmatic API)                                                 | ✅ done in monorepo                                                             |
+| 3a   | lokascript-docs patterns page: language chip grid + live-execution toggle (in shared partial, gated by `enableTranslations`) | ✅ landed in `_hyper_min` commit `80214fd`                                      |
+| 3b   | hyperfixi-docs patterns page: verify engine showcase                                                                         | 📄 verification doc ready: [hyperfixi-docs-patch.md](./hyperfixi-docs-patch.md) |
+| 4    | Drop-in integration guide for hyperscript.org's audience (lives on lokascript.org)                                           | 📄 ready: [integration-guide.md](./integration-guide.md)                        |
+| 5    | Carson hand-off message                                                                                                      | 📄 ready (two variants): [carson-handoff.md](./carson-handoff.md)               |
 
 ## What's done in the monorepo (no further code work required)
 
 - [`packages/multilingual-hyperscript/`](../../packages/multilingual-hyperscript/) — wrapper now copies all 31 adapter bundles into its own `dist/` via [`scripts/copy-bundles.mjs`](../../packages/multilingual-hyperscript/scripts/copy-bundles.mjs). `npm pack --dry-run` confirms 1.2 MB tarball, 35 files. CDN URLs (`unpkg.com/@hyperscript-tools/multilingual/dist/...`) will resolve cleanly once published.
 - [`packages/hyperscript-tools-i18n/`](../../packages/hyperscript-tools-i18n/) — new package. Re-exports `@lokascript/i18n` translation API, ships a CLI (`npx @hyperscript-tools/i18n translate <html> --langs ja,es,ko --out <dir>`) and an Eleventy plugin entry. Verified end-to-end on a fixture across SVO, SOV, VSO word orders.
 
-## What's outside the monorepo (you apply the patches)
+## What's outside the monorepo
 
-- `~/projects/_hyper_min/sites/lokascript-docs/` — apply [lokascript-docs-patch.md](./lokascript-docs-patch.md). Touches `src/patterns/index.njk` only. Pre-flight: `node scripts/export-patterns.js` to refresh translations.
+- `~/projects/_hyper_min/` — chip strip + live-execution toggle landed in commit `80214fd` (shared partial at `packages/layouts/includes/patterns-page.njk`, gated by `enableTranslations`).
 - `~/projects/_hyper_min/sites/hyperfixi-docs/` — verification only per [hyperfixi-docs-patch.md](./hyperfixi-docs-patch.md). No required edits.
-- New page on lokascript.org: copy [integration-guide.md](./integration-guide.md) into the site's content (path your call — the hand-off message currently links to `https://lokascript.org/integration-guide`; update if you pick a different URL).
+- **Pending:** new page on lokascript.org carrying [integration-guide.md](./integration-guide.md). The Carson hand-off message currently links to `https://lokascript.org/integration-guide`; update if you pick a different URL.
 
 ## Decisions baked in
 

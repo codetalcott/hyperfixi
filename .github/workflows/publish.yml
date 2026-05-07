@@ -114,6 +114,7 @@ jobs:
           npm test --prefix packages/semantic -- --run
           npm test --prefix packages/i18n -- --run
           npm test --prefix packages/hyperscript-adapter -- --run
+          npm test --prefix packages/hyperscript-tools-i18n
           npm test --prefix packages/compilation-service -- --run
           npm test --prefix packages/mcp-server -- --run
 
