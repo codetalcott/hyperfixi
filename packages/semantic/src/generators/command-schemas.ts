@@ -575,10 +575,10 @@ export const waitSchema: CommandSchema = {
   action: 'wait',
   description: 'Wait for a duration or event',
   category: 'async',
-  primaryRole: 'patient',
+  primaryRole: 'duration',
   roles: [
     {
-      role: 'patient',
+      role: 'duration',
       description: 'Duration or event to wait for',
       required: true,
       expectedTypes: ['literal', 'expression'],
@@ -614,6 +614,7 @@ export const fetchSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression'], // json/text/html are identifiers → expression type
       svoPosition: 2,
       sovPosition: 2,
+      markerOverride: { en: 'as' }, // "fetch /api as json" — needed by schema-driven role inference
     },
     {
       role: 'method',

@@ -1008,7 +1008,7 @@ describe('fromCoreAST', () => {
       expect(result.roles.destination).toEqual({ type: 'selector', value: '#box' });
     });
 
-    it('infers increment roles: destination + quantity', () => {
+    it('infers increment roles: patient + quantity', () => {
       const result = fromCoreAST(
         coreNode('command', {
           name: 'increment',
@@ -1017,7 +1017,7 @@ describe('fromCoreAST', () => {
         })
       ) as any;
 
-      expect(result.roles.destination).toEqual({
+      expect(result.roles.patient).toEqual({
         type: 'variable',
         name: ':count',
         scope: 'local',
@@ -1033,7 +1033,7 @@ describe('fromCoreAST', () => {
         })
       ) as any;
 
-      expect(result.roles.destination).toEqual({ type: 'variable', name: ':hp', scope: 'local' });
+      expect(result.roles.patient).toEqual({ type: 'variable', name: ':hp', scope: 'local' });
       expect(result.roles.quantity).toBeUndefined();
     });
 
@@ -1121,7 +1121,7 @@ describe('fromCoreAST', () => {
       expect(result.roles.source).toEqual({ type: 'selector', value: '#box' });
     });
 
-    it('infers send roles: patient + destination', () => {
+    it('infers send roles: event + destination', () => {
       const result = fromCoreAST(
         coreNode('command', {
           name: 'send',
@@ -1130,7 +1130,7 @@ describe('fromCoreAST', () => {
         })
       ) as any;
 
-      expect(result.roles.patient).toEqual({ type: 'literal', value: 'myEvent' });
+      expect(result.roles.event).toEqual({ type: 'literal', value: 'myEvent' });
       expect(result.roles.destination).toEqual({ type: 'selector', value: '#other' });
     });
 

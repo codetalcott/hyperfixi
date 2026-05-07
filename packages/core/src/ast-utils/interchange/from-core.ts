@@ -445,14 +445,11 @@ function inferRoles(
   const roles: Record<string, InterchangeNode> = {};
 
   switch (name) {
-    // The cases below are NOT yet schema-driven because the semantic schema's
-    // role names differ from what the bridge has shipped (e.g., schema says
-    // `patient`, bridge has shipped `destination` for `increment`). Migrating
-    // would change downstream consumers' expected role keys. Tracked for
-    // follow-up audit; see plan file in /Users/williamtalcott/.claude/plans/.
-
     // set :var to value  →  destination=:var, patient=value
-    // Stays here for the legacy positional form `set :var value` (no `to`).
+    //
+    // Stays here only for the legacy positional form `set :var value` (no `to`)
+    // — schema-driven inference handles the canonical `set :var to value` form
+    // correctly, but doesn't model the marker-less positional fallback.
     case 'set': {
       if (args[0]) roles.destination = args[0];
       const toVal = modifiers?.to;
@@ -461,50 +458,6 @@ function inferRoles(
       } else if (args[1]) {
         roles.patient = args[1];
       }
-      break;
-    }
-
-    // increment/decrement :var [by amount]  →  destination=:var, quantity=amount
-    // Schema says role 'patient'; bridge has shipped 'destination'.
-    case 'increment':
-    case 'decrement': {
-      if (args[0]) roles.destination = args[0];
-      const byVal = modifiers?.by;
-      if (byVal && typeof byVal === 'object' && 'type' in (byVal as object)) {
-        roles.quantity = byVal as InterchangeNode;
-      } else if (args[1]) {
-        roles.quantity = args[1];
-      }
-      break;
-    }
-
-    // fetch url [as format]  →  source=url, responseType=format
-    // Schema's responseType has no markerOverride; bridge needs the `as` marker.
-    case 'fetch': {
-      if (args[0]) roles.source = args[0];
-      const asVal = modifiers?.as;
-      if (asVal && typeof asVal === 'object' && 'type' in (asVal as object)) {
-        roles.responseType = asVal as InterchangeNode;
-      } else if (typeof asVal === 'string') {
-        roles.responseType = { type: 'identifier', value: asVal, name: asVal };
-      }
-      break;
-    }
-
-    // wait duration  →  duration=arg
-    // Schema says role 'patient'; bridge has shipped 'duration'.
-    case 'wait':
-    case 'settle': {
-      if (args[0]) roles.duration = args[0];
-      break;
-    }
-
-    // send eventName [to target]  →  patient=eventName, destination=target
-    // Schema says role 'event'; bridge has shipped 'patient'.
-    case 'send':
-    case 'trigger': {
-      if (args[0]) roles.patient = args[0];
-      if (target) roles.destination = target;
       break;
     }
 

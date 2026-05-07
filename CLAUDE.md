@@ -229,7 +229,7 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 
 ### Command Pattern
 
-All 43 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
+All 57 commands use `CommandImplementation<TInput, TOutput, TypedExecutionContext>`:
 
 ```typescript
 // packages/core/src/commands/data/increment.ts

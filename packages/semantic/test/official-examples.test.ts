@@ -101,7 +101,7 @@ describe('Official Examples - Tier 1 (Core)', () => {
 
       const node = parse('wait 1s', 'en');
       expect(node.action).toBe('wait');
-      expect(node.roles.get('patient')?.value).toBe('1s');
+      expect(node.roles.get('duration')?.value).toBe('1s');
     });
 
     it('wait 2s', () => {

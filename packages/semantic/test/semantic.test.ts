@@ -383,8 +383,8 @@ describe('Explicit Mode', () => {
   });
 
   it('should parse duration values', () => {
-    const node = parseExplicit('[wait patient:500ms]');
-    expect(node.roles.get('patient')?.value).toBe('500ms');
+    const node = parseExplicit('[wait duration:500ms]');
+    expect(node.roles.get('duration')?.value).toBe('500ms');
   });
 
   it('should parse nested body syntax', () => {
