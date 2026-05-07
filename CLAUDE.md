@@ -163,6 +163,12 @@ npm run test:check --prefix packages/i18n
 > **Agent/CI tip:** Use `npm run test:check` for compact pass/fail output.
 > Use `npm test` for full verbose output during debugging.
 
+#### Stale-dist auto-rebuild
+
+Both `npm test --prefix packages/<X>` and `npm run test:check` auto-rebuild any workspace dependency whose `src/` is newer than its `dist/` (via [scripts/ensure-fresh.sh](scripts/ensure-fresh.sh)). Per-package `pretest` hooks cover the first path; [scripts/test-check-all.sh](scripts/test-check-all.sh) runs `ensure-fresh` upfront for the second (npm pre/post hooks don't fire for `:check` variants). Manual escape hatch: `npm run check:fresh`.
+
+When you add a new internal-dep relationship between workspace packages, add the dep to the consumer's `pretest` in its `package.json` so its `dist/` stays fresh during tests.
+
 ### Live Testing
 
 ```bash
