@@ -236,7 +236,7 @@
     "@typescript-eslint/parser": "^6.21.0",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
-    "better-sqlite3": "^12.6.2",
+    "better-sqlite3": "^12.9.0",
     "esbuild": "^0.28.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.0.0",
