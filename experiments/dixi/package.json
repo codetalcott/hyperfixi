@@ -10,6 +10,10 @@
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "gen": "node scripts/gen-locales.mjs",
+    "test": "node test/dixi.spec.mjs"
+  },
   "license": "0BSD",
   "author": "Wm Talcott",
   "keywords": [

@@ -139,3 +139,4 @@ The artifact is real, working, and shippable today. The next investment should b
 - M3 plan (full launch): [~/.claude/plans/dixi-js-launch.md](../../../.claude/plans/dixi-js-launch.md)
 - Demo entry points: [`demo/search/index.en.html`](demo/search/index.en.html) · [`.es`](demo/search/index.es.html) · [`.ja`](demo/search/index.ja.html) · [`.ar`](demo/search/index.ar.html)
 - Test: [`test/dixi.spec.mjs`](test/dixi.spec.mjs)
+- Locale generator: [`scripts/gen-locales.mjs`](scripts/gen-locales.mjs) + [`scripts/fx-vocab.mjs`](scripts/fx-vocab.mjs) — derives event-name vocabulary from `@lokascript/semantic` profiles; emits 24 locale files with native-speaker-reviewed status flagged per locale.

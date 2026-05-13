@@ -1,29 +1,36 @@
-// Spanish (es) locale for dixi.
-// Vocabulary cross-checked against packages/semantic/src/generators/profiles/spanish.ts.
-// Best-effort; modifier translations especially would benefit from native review.
+// AUTO-GENERATED — do not edit by hand.
+// Source: packages/semantic/src/generators/profiles/spanish.ts (event vocab)
+//         experiments/dixi/scripts/fx-vocab.mjs (fx-*/modifier vocab)
+// Regenerate: cd experiments/dixi && npm run gen
+//
+// Attribution: event-name vocabulary derived from @lokascript/semantic profiles.
 window.dixi.register('es', {
   attrs: {
-    // fixi
     'fx-acción': 'fx-action',
     'fx-método': 'fx-method',
     'fx-disparador': 'fx-trigger',
     'fx-objetivo': 'fx-target',
     'fx-intercambio': 'fx-swap',
-    // moxi
     vivo: 'live',
     'mx-ignorar': 'mx-ignore',
   },
   values: {
     clic: 'click',
+    'hacer clic': 'click',
     cambio: 'change',
-    envío: 'submit',
+    cambiar: 'change',
+    'envío': 'submit',
+    envio: 'submit',
+    someter: 'submit',
     entrada: 'input',
+    introducir: 'input',
+    enfocar: 'focus',
     enfoque: 'focus',
+    desenfocar: 'blur',
     desenfoque: 'blur',
     iniciar: 'init',
+    inicializar: 'init',
   },
-  // Built-in modifiers limited to prevent/stop/once (industry convention is
-  // English elsewhere; see EVALUATION.md). Extend via dixiCfg.extend if needed.
   modifiers: {
     prevenir: 'prevent',
     detener: 'stop',
