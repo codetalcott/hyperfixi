@@ -59,6 +59,54 @@ export function getCustomResponseType(name: string): FetchResponseTypeConfig | u
   return customResponseTypes.get(name.toLowerCase());
 }
 
+// ============================================================================
+// Throw-On Pattern Registry (upstream _hyperscript `config.fetchThrowsOn` parity)
+// ============================================================================
+
+/**
+ * Status-code patterns that trigger a throw when `throwOnError` is set.
+ * Defaults match `!response.ok` semantics (4xx and 5xx). Patterns are tested
+ * against the stringified status code so callers can match specific codes
+ * (e.g., `/^418$/`) or broader ranges (`/^[45]\d{2}$/`).
+ *
+ * Mirrors upstream `config.fetchThrowsOn` from
+ * `_hyperscript/src/parsetree/commands/basic.js:644-665`.
+ */
+const DEFAULT_FETCH_THROWS_ON: RegExp[] = [/^4\d{2}$/, /^5\d{2}$/];
+let fetchThrowsOnPatterns: RegExp[] = [...DEFAULT_FETCH_THROWS_ON];
+
+/**
+ * Replace the default throw-on patterns. Pass an empty array to disable
+ * status-based throwing entirely. The `do not throw` modifier on
+ * `fetch <url> do not throw` continues to bypass this check.
+ *
+ * @example
+ * // Only throw on 418 I'm a Teapot:
+ * registerFetchThrowsOn([/^418$/]);
+ *
+ * // Throw on every 4xx but not 5xx:
+ * registerFetchThrowsOn([/^4\d{2}$/]);
+ */
+export function registerFetchThrowsOn(patterns: RegExp[]): void {
+  fetchThrowsOnPatterns = patterns.slice();
+}
+
+/**
+ * Restore the default throw-on patterns (4xx + 5xx). Useful in test teardown.
+ */
+export function resetFetchThrowsOn(): void {
+  fetchThrowsOnPatterns = [...DEFAULT_FETCH_THROWS_ON];
+}
+
+/**
+ * Returns true when the status code matches any registered throw pattern.
+ * Used internally by FetchCommand; exported for testing.
+ */
+export function shouldThrowOnStatus(status: number): boolean {
+  const statusStr = String(status);
+  return fetchThrowsOnPatterns.some(p => p.test(statusStr));
+}
+
 export interface FetchCommandInput {
   url: string;
   responseType: string;
@@ -174,7 +222,9 @@ export class FetchCommand implements DecoratedCommand {
 
       // Upstream _hyperscript 0.9.90: throw on non-2xx by default. Bypass with
       // `do not throw` or by asking for the raw Response via `as Response`.
-      if (input.throwOnError && !response.ok) {
+      // Status patterns are configurable via registerFetchThrowsOn(); defaults
+      // match `!response.ok` (4xx and 5xx).
+      if (input.throwOnError && shouldThrowOnStatus(response.status)) {
         const err = new Error(
           `Fetch failed for ${url}: HTTP ${response.status} ${response.statusText}`.trim()
         ) as Error & { response?: Response; isFetchStatusError?: boolean };

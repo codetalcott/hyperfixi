@@ -11,7 +11,14 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { FetchCommand, createFetchCommand, type FetchCommandInput } from './fetch';
+import {
+  FetchCommand,
+  createFetchCommand,
+  type FetchCommandInput,
+  registerFetchThrowsOn,
+  resetFetchThrowsOn,
+  shouldThrowOnStatus,
+} from './fetch';
 import type { TypedExecutionContext } from '../../types/core';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
@@ -951,6 +958,121 @@ describe('FetchCommand', () => {
 
       expect(typeof result.duration).toBe('number');
       expect(result.duration).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  // ============================================================================
+  // fetchThrowsOn pattern registry (Phase A2 Phase 3 — upstream config parity)
+  // ============================================================================
+
+  describe('fetchThrowsOn pattern registry', () => {
+    afterEach(() => {
+      // Restore defaults so tests stay isolated.
+      resetFetchThrowsOn();
+    });
+
+    describe('shouldThrowOnStatus (helper)', () => {
+      it('default patterns throw on 4xx', () => {
+        expect(shouldThrowOnStatus(404)).toBe(true);
+        expect(shouldThrowOnStatus(418)).toBe(true);
+      });
+
+      it('default patterns throw on 5xx', () => {
+        expect(shouldThrowOnStatus(500)).toBe(true);
+        expect(shouldThrowOnStatus(503)).toBe(true);
+      });
+
+      it('default patterns do NOT throw on 2xx/3xx', () => {
+        expect(shouldThrowOnStatus(200)).toBe(false);
+        expect(shouldThrowOnStatus(204)).toBe(false);
+        expect(shouldThrowOnStatus(301)).toBe(false);
+        expect(shouldThrowOnStatus(304)).toBe(false);
+      });
+
+      it('custom patterns override defaults', () => {
+        registerFetchThrowsOn([/^418$/]);
+        expect(shouldThrowOnStatus(418)).toBe(true);
+        expect(shouldThrowOnStatus(404)).toBe(false); // no longer throws
+        expect(shouldThrowOnStatus(500)).toBe(false); // no longer throws
+      });
+
+      it('empty patterns disable throwing entirely', () => {
+        registerFetchThrowsOn([]);
+        expect(shouldThrowOnStatus(500)).toBe(false);
+        expect(shouldThrowOnStatus(418)).toBe(false);
+      });
+
+      it('reset restores defaults', () => {
+        registerFetchThrowsOn([/^418$/]);
+        expect(shouldThrowOnStatus(500)).toBe(false);
+        resetFetchThrowsOn();
+        expect(shouldThrowOnStatus(500)).toBe(true);
+      });
+    });
+
+    describe('integration with FetchCommand', () => {
+      it('throws on 500 by default when throwOnError set', async () => {
+        const input: FetchCommandInput = {
+          url: 'https://example.com',
+          responseType: 'text',
+          options: {},
+          throwOnError: true,
+        };
+        const mockResponse = createMockResponse('Server Error', { status: 500 });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const context = createMockContext();
+        await expect(command.execute(input, context)).rejects.toThrow(/500/);
+      });
+
+      it('custom pattern lets 500 pass through silently', async () => {
+        registerFetchThrowsOn([/^418$/]); // only throw on 418
+
+        const input: FetchCommandInput = {
+          url: 'https://example.com',
+          responseType: 'text',
+          options: {},
+          throwOnError: true,
+        };
+        const mockResponse = createMockResponse('Server Error', { status: 500 });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const context = createMockContext();
+        const result = await command.execute(input, context);
+        expect(result.status).toBe(500);
+      });
+
+      it('custom pattern still throws on the configured code', async () => {
+        registerFetchThrowsOn([/^418$/]);
+
+        const input: FetchCommandInput = {
+          url: 'https://example.com',
+          responseType: 'text',
+          options: {},
+          throwOnError: true,
+        };
+        const mockResponse = createMockResponse("I'm a teapot", { status: 418 });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const context = createMockContext();
+        await expect(command.execute(input, context)).rejects.toThrow(/418/);
+      });
+
+      it('throwOnError=false bypasses the registry entirely', async () => {
+        // Even if a pattern matches, no-throw modifier short-circuits.
+        const input: FetchCommandInput = {
+          url: 'https://example.com',
+          responseType: 'text',
+          options: {},
+          throwOnError: false,
+        };
+        const mockResponse = createMockResponse('Not Found', { status: 404 });
+        mockFetch.mockResolvedValue(mockResponse);
+
+        const context = createMockContext();
+        const result = await command.execute(input, context);
+        expect(result.status).toBe(404);
+      });
     });
   });
 });
