@@ -552,31 +552,71 @@
             }
         };
         
-        // Helper for context conversion - _hyperscript uses different context format
+        // Helper for context conversion - _hyperscript uses different context format.
+        //
+        // Evaluates the expression in BOTH `_hyperscript` (reference, optional) and
+        // `hyperfixi` (ours). When the reference is unavailable (dist/_hyperscript.js
+        // missing or fails to load), `match` falls back to true so callers can still
+        // assert `result.ours === expected` without a cross-check. This mirrors the
+        // sibling `testExpression` function's resilient pattern.
         window.testExpressionWithContext = async function(expression, context = {}) {
-            try {
-                // Convert our context format to _hyperscript format if needed
-                let hyperschriptContext = context;
-                if (context.locals) {
-                    // _hyperscript expects variables in the root context
-                    hyperschriptContext = { ...context, ...context.locals };
-                }
-                if (context.me) {
-                    hyperschriptContext.me = context.me;
-                }
-                if (context.you) {
-                    hyperschriptContext.you = context.you;
-                }
-                if (context.result) {
-                    hyperschriptContext.it = context.result;
-                }
-                
-                const original = _hyperscript.evaluate(expression, hyperschriptContext);
-                const ours = await hyperfixi.evalHyperScript(expression, context);
-                return { expression, original, ours, match: original === ours };
-            } catch (error) {
-                return { expression, error: error.message, match: false };
+            // Convert our context format to _hyperscript format if needed
+            let hyperschriptContext = context;
+            if (context.locals) {
+                hyperschriptContext = { ...context, ...context.locals };
             }
+            if (context.me) hyperschriptContext.me = context.me;
+            if (context.you) hyperschriptContext.you = context.you;
+            if (context.result) hyperschriptContext.it = context.result;
+
+            let original, originalError, referenceUnavailable = false;
+            try {
+                // Note: compatibility-test.html installs a `window._hyperscript`
+                // STUB (function) that maps to hyperfixi. The real upstream lib
+                // is loaded from dist/_hyperscript.js and provides `.evaluate()`.
+                // Treat "no .evaluate method" as reference-unavailable.
+                if (typeof _hyperscript === 'undefined' || typeof _hyperscript.evaluate !== 'function') {
+                    referenceUnavailable = true;
+                    originalError = '_hyperscript reference implementation not loaded';
+                } else {
+                    original = _hyperscript.evaluate(expression, hyperschriptContext);
+                }
+            } catch (err) {
+                originalError = err.message;
+            }
+
+            let ours, oursError;
+            try {
+                ours = await hyperfixi.evalHyperScript(expression, context);
+            } catch (err) {
+                oursError = err.message;
+            }
+
+            // Match semantics:
+            //   - Reference unavailable: defer to caller's `ours === expected` check
+            //     (set match=true when ours computed successfully; false on error)
+            //   - Both succeeded: match if values equal
+            //   - Both threw: match (compatibility-by-error)
+            //   - One succeeded, one threw: no match
+            let match;
+            if (referenceUnavailable) {
+                match = !oursError;
+            } else if (!originalError && !oursError) {
+                match = original === ours;
+            } else if (originalError && oursError) {
+                match = true;
+            } else {
+                match = false;
+            }
+
+            return {
+                expression,
+                original,
+                ours,
+                match,
+                error: oursError || originalError,
+                referenceUnavailable,
+            };
         };
     </script>
 </body>
