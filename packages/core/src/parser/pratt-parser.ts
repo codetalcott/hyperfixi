@@ -662,6 +662,41 @@ export const PROPERTY_FRAGMENT: BindingPowerFragment = new Map<string, BindingPo
 ]);
 
 /**
+ * Builds the infix handler for `is a` / `is an` / `is not a` / `is not an`.
+ *
+ * Mirrors upstream `_hyperscript`'s ComparisonOperator: the RHS is consumed as a
+ * single IDENTIFIER token used as a *type-name string* (NOT evaluated as an
+ * expression), followed by an optional `!` modifier disallowing null. Produces
+ * a dedicated `typeCheckExpression` AST node handled in evaluateAST.
+ */
+function makeTypeCheckHandler(negated: boolean): InfixHandler {
+  return (left, _token, ctx) => {
+    const typeToken = ctx.advance();
+    if (!typeToken || !typeToken.value) {
+      throw new Error(
+        `Type check requires a type name after 'is ${negated ? 'not ' : ''}a/an', got: <end>`
+      );
+    }
+    // Optional `!` modifier — when present, null/undefined fail the check.
+    let nullOk = true;
+    const peeked = ctx.peek();
+    if (peeked && peeked.value === '!') {
+      ctx.advance();
+      nullOk = false;
+    }
+    return {
+      type: 'typeCheckExpression',
+      value: left,
+      typeName: typeToken.value,
+      nullOk,
+      negated,
+      start: (left as any).start,
+      end: typeToken.end,
+    } as unknown as ASTNode;
+  };
+}
+
+/**
  * Parser-specific comparison fragment — extends CORE_FRAGMENT with all comparison
  * operators from the existing parser (multi-word operators, postfix operators, etc.).
  * These are tokenized as single tokens by the tokenizer's compound operator handling.
@@ -673,12 +708,22 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
 
   // Multi-word comparison operators (tokenized as single tokens)
   ['is not', leftAssoc(30) as BindingPowerEntry],
-  ['is a', leftAssoc(30) as BindingPowerEntry],
-  ['is an', leftAssoc(30) as BindingPowerEntry],
-  ['is not a', leftAssoc(30) as BindingPowerEntry],
-  ['is not an', leftAssoc(30) as BindingPowerEntry],
+  ['am', leftAssoc(30) as BindingPowerEntry], // upstream alias for `is`
   ['is in', leftAssoc(30) as BindingPowerEntry],
   ['is not in', leftAssoc(30) as BindingPowerEntry],
+
+  // DOM ordering (upstream _hyperscript precedes/follows). Use compareDocumentPosition.
+  ['precedes', leftAssoc(30) as BindingPowerEntry],
+  ['does not precede', leftAssoc(30) as BindingPowerEntry],
+  ['follows', leftAssoc(30) as BindingPowerEntry],
+  ['does not follow', leftAssoc(30) as BindingPowerEntry],
+
+  // Type checks — RHS is a type-name identifier (NOT evaluated), with optional
+  // `!` modifier disallowing null. Mirrors upstream ComparisonOperator handling.
+  ['is a', leftAssoc(30, makeTypeCheckHandler(false)) as BindingPowerEntry],
+  ['is an', leftAssoc(30, makeTypeCheckHandler(false)) as BindingPowerEntry],
+  ['is not a', leftAssoc(30, makeTypeCheckHandler(true)) as BindingPowerEntry],
+  ['is not an', leftAssoc(30, makeTypeCheckHandler(true)) as BindingPowerEntry],
 
   // English-style comparison operators
   ['has', leftAssoc(30) as BindingPowerEntry],
@@ -689,6 +734,17 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
   ['equals', leftAssoc(30) as BindingPowerEntry],
   ['does not contain', leftAssoc(30) as BindingPowerEntry],
   ['does not include', leftAssoc(30) as BindingPowerEntry],
+
+  // English-form comparison aliases (upstream parity)
+  ['is equal to', leftAssoc(30) as BindingPowerEntry],
+  ['is not equal to', leftAssoc(30) as BindingPowerEntry],
+  ['is really equal to', leftAssoc(30) as BindingPowerEntry],
+  ['is not really equal to', leftAssoc(30) as BindingPowerEntry],
+  ['really equals', leftAssoc(30) as BindingPowerEntry],
+  ['is greater than', leftAssoc(30) as BindingPowerEntry],
+  ['is less than', leftAssoc(30) as BindingPowerEntry],
+  ['is greater than or equal to', leftAssoc(30) as BindingPowerEntry],
+  ['is less than or equal to', leftAssoc(30) as BindingPowerEntry],
 
   // Equality-level keywords from parseEquality
   ['in', leftAssoc(30) as BindingPowerEntry],

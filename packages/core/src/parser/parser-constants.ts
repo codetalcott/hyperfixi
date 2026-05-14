@@ -395,10 +395,16 @@ export const COMPARISON_OPERATORS = new Set([
   '>=',
   'is',
   'is not',
+  'am', // upstream alias for `is` (e.g., `if I am .active`)
   'is a',
   'is an',
   'is not a',
   'is not an',
+  // DOM ordering — upstream _hyperscript precedes/follows
+  'precedes',
+  'does not precede',
+  'follows',
+  'does not follow',
   'contains',
   'starts with', // "str starts with prefix" (upstream _hyperscript 0.9.90)
   'ends with', // "str ends with suffix" (upstream _hyperscript 0.9.90)

@@ -128,6 +128,9 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'betweenExpression':
       return evaluateBetweenExpression(node, context);
 
+    case 'typeCheckExpression':
+      return evaluateTypeCheckExpression(node, context);
+
     case 'collectionExpression':
       return evaluateCollectionExpression(node, context);
 
@@ -304,22 +307,33 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return extractValue(specialExpressions.modulo.evaluate(context as any, { left, right }));
 
     case '>':
+    case 'is greater than':
       return logicalExpressions.greaterThan.evaluate(context, left, right);
     case '<':
+    case 'is less than':
       return logicalExpressions.lessThan.evaluate(context, left, right);
     case '>=':
+    case 'is greater than or equal to':
       return logicalExpressions.greaterThanOrEqual.evaluate(context, left, right);
     case '<=':
+    case 'is less than or equal to':
       return logicalExpressions.lessThanOrEqual.evaluate(context, left, right);
     case '==':
     case 'is':
+    case 'am': // upstream alias for `is` (e.g., `if I am .active`)
+    case 'equals':
+    case 'is equal to':
       return logicalExpressions.equals.evaluate(context, L, R);
     case '!=':
     case 'is not':
+    case 'is not equal to':
       return logicalExpressions.notEquals.evaluate(context, L, R);
     case '===':
+    case 'really equals':
+    case 'is really equal to':
       return logicalExpressions.strictEquals.evaluate(context, L, R);
     case '!==':
+    case 'is not really equal to':
       return logicalExpressions.strictNotEquals.evaluate(context, L, R);
 
     case 'as':
@@ -350,16 +364,48 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return logicalExpressions.matches.evaluate(context, L, R);
 
     case 'in':
-      // Simple 'in' operator - check if left exists in right
-      return Array.isArray(right) ? right.includes(left) : left in right;
+    case 'is in':
+      return isIn(left, right);
+
+    case 'is not in':
+      return !isIn(left, right);
 
     case 'of':
       // Simple 'of' operator - get property/index of object/array
       return right && typeof right === 'object' ? right[left] : undefined;
 
+    // DOM ordering (upstream _hyperscript): precedes/follows via compareDocumentPosition.
+    // null/undefined or non-Node operands → false (true for the negated forms).
+    case 'precedes':
+      return docPosMatches(left, right, Node.DOCUMENT_POSITION_FOLLOWING);
+    case 'does not precede':
+      return !docPosMatches(left, right, Node.DOCUMENT_POSITION_FOLLOWING);
+    case 'follows':
+      return docPosMatches(left, right, Node.DOCUMENT_POSITION_PRECEDING);
+    case 'does not follow':
+      return !docPosMatches(left, right, Node.DOCUMENT_POSITION_PRECEDING);
+
     default:
       throw new Error(`Unknown binary operator: ${operator}`);
   }
+}
+
+/**
+ * Shared `in` / `is in` containment check. Mirrors the inline behavior previously
+ * coded into the `'in'` case: array.includes, string.includes, or `key in object`.
+ */
+function isIn(item: unknown, container: unknown): boolean {
+  if (Array.isArray(container)) return container.includes(item);
+  if (typeof container === 'string') return container.includes(String(item));
+  return container != null && typeof container === 'object' && (item as any) in (container as any);
+}
+
+/**
+ * Shared bitmask check for `precedes`/`follows` and their negations. Non-Node
+ * operands (including null/undefined) yield false; callers negate as needed.
+ */
+function docPosMatches(a: unknown, b: unknown, mask: number): boolean {
+  return a instanceof Node && b instanceof Node && (a.compareDocumentPosition(b) & mask) !== 0;
 }
 
 /**
@@ -401,6 +447,34 @@ async function evaluateBetweenExpression(node: any, context: ExecutionContext): 
   const [V, lo, hi] = node.ignoringCase ? [ci(value), ci(min), ci(max)] : [value, min, max];
   const inRange = (await logicalExpressions.between.evaluate(context, V, lo, hi)) as boolean;
   return node.negated ? !inRange : inRange;
+}
+
+/**
+ * Evaluates `X is a Type` / `X is an Type` / `X is not a Type` / `X is not an Type`
+ * with optional `!` modifier disallowing null.
+ *
+ * Mirrors upstream `_hyperscript`'s `runtime.typeCheck`: compares against the
+ * `Object.prototype.toString` tag, then falls back to `instanceof` against the
+ * named global constructor (`globalThis[typeName]`).
+ */
+async function evaluateTypeCheckExpression(node: any, context: ExecutionContext): Promise<boolean> {
+  const value = await evaluateAST(node.value, context);
+  const typeName = String(node.typeName);
+  const nullOk = node.nullOk !== false;
+
+  const matches = typeCheck(value, typeName, nullOk);
+  return node.negated ? !matches : matches;
+}
+
+function typeCheck(value: unknown, typeName: string, nullOk: boolean): boolean {
+  // Match upstream _hyperscript exactly: nullOk short-circuits, but
+  // a falsy nullOk still falls through to the toString tag check so
+  // `null is a Null!` correctly returns true.
+  if (value == null && nullOk) return true;
+  const tag = Object.prototype.toString.call(value).slice(8, -1);
+  if (tag === typeName) return true;
+  const ctor = (globalThis as any)[typeName];
+  return typeof ctor === 'function' && value instanceof ctor;
 }
 
 /**
