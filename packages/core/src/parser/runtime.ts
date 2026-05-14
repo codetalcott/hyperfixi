@@ -16,6 +16,7 @@ import { positionalExpressions } from '../expressions/positional/index';
 import { propertiesExpressions } from '../expressions/properties/index';
 import { specialExpressions as importedSpecialExpressions } from '../expressions/special/index';
 import { mathematicalExpressions } from '../expressions/mathematical/index';
+import { isElement, getElementProperty } from '../expressions/property-access-utils';
 import {
   evaluateWhere,
   evaluateSortedBy,
@@ -23,6 +24,11 @@ import {
   evaluateSplitBy,
   evaluateJoinedBy,
 } from '../expressions/collection/index';
+// Used by `templateLiteral` for recursive ${expr} / $(expr) interpolation.
+// expression-parser.ts does NOT import from this file, so the dependency is
+// acyclic. Replace with canonical `parse() + evaluateAST()` once the three
+// evaluator paths are consolidated.
+import { parseAndEvaluateExpression } from './expression-parser';
 
 // Create alias for backward compatibility - combine special and mathematical expressions
 const specialExpressions = {
@@ -157,6 +163,27 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 
     case 'conditionalExpression':
       return evaluateConditionalExpression(node, context);
+
+    // Node types ported from expression-parser.ts evaluator (the older path).
+    // These are produced by the canonical parser (parser.ts) but were previously
+    // only handled by the legacy `evaluateASTNode` switch — calling them via
+    // the canonical Pratt path would throw `Unknown AST node type`.
+    //
+    // NOTE: `propertyAccess`, `optionalChain`, and `positionalExpression` from
+    // pratt-parser's PROPERTY_FRAGMENT/POSITIONAL_FRAGMENT are NOT reached via
+    // the canonical PARSER_TABLE (parser.ts:557). The parser produces
+    // `memberExpression` for `obj.prop`. If those fragments ever ship in the
+    // canonical table, ports should mirror the equivalents in expression-parser.ts.
+    case 'arrayLiteral':
+      return evaluateArrayLiteralNode(node, context);
+    case 'objectLiteral':
+      return evaluateObjectLiteralNode(node, context);
+    case 'attributeAccess':
+      return evaluateAttributeAccessNode(node, context);
+    case 'propertyOfExpression':
+      return evaluatePropertyOfExpressionNode(node, context);
+    case 'templateLiteral':
+      return evaluateTemplateLiteralNode(node, context);
 
     default: {
       // Phase 5b: plugin-registered evaluators for custom AST node types.
@@ -343,6 +370,10 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     case 'contains':
       return logicalExpressions.contains.evaluate(context, L, R);
 
+    case 'does not contain':
+    case 'does not include':
+      return logicalExpressions.doesNotContain.evaluate(context, L, R);
+
     case 'starts with':
       return logicalExpressions.startsWith.evaluate(context, L, R);
 
@@ -475,6 +506,175 @@ function typeCheck(value: unknown, typeName: string, nullOk: boolean): boolean {
   if (tag === typeName) return true;
   const ctor = (globalThis as any)[typeName];
   return typeof ctor === 'function' && value instanceof ctor;
+}
+
+// ===========================================================================
+// Node-type evaluators ported from expression-parser.ts
+//
+// Each helper has the same shape as its `evaluateXxx` counterpart in
+// expression-parser.ts, with `evaluateASTNode` → `evaluateAST` rewired. Keep
+// in sync until the two evaluator paths are consolidated; cite the source
+// line for traceability.
+// ===========================================================================
+
+/** Mirrors expression-parser.ts:evaluateArrayLiteral (L2066). */
+async function evaluateArrayLiteralNode(node: any, context: ExecutionContext): Promise<unknown[]> {
+  const elements: unknown[] = [];
+  for (const el of node.elements) {
+    elements.push(await evaluateAST(el, context));
+  }
+  return elements;
+}
+
+/** Mirrors expression-parser.ts:evaluateObjectLiteral (L2119). */
+async function evaluateObjectLiteralNode(
+  node: any,
+  context: ExecutionContext
+): Promise<Record<string, unknown>> {
+  const result: Record<string, unknown> = {};
+  for (const property of node.properties) {
+    let key: string;
+    if (property.key.type === 'identifier') {
+      key = property.key.name;
+    } else if (property.key.type === 'literal' && property.key.valueType === 'string') {
+      key = property.key.value;
+    } else {
+      key = String(await evaluateAST(property.key, context));
+    }
+    result[key] = await evaluateAST(property.value, context);
+  }
+  return result;
+}
+
+/** Mirrors expression-parser.ts:evaluateAttributeAccess (L1975). */
+async function evaluateAttributeAccessNode(node: any, context: ExecutionContext): Promise<unknown> {
+  const attributeName = node.attributeName;
+  if (context.me && context.me instanceof Element) {
+    return context.me.getAttribute(attributeName);
+  }
+  return `@${attributeName}`;
+}
+
+/**
+ * Mirrors expression-parser.ts:evaluatePropertyOfExpression (L1719). Handles the
+ * `the X of Y` and `values of Y` patterns. For DOM elements, uses the
+ * `getElementProperty` helper that backs the `its` expression.
+ */
+async function evaluatePropertyOfExpressionNode(
+  node: any,
+  context: ExecutionContext
+): Promise<unknown> {
+  const propertyNode = node.property;
+  if (propertyNode?.type !== 'identifier') {
+    throw new Error('Property name must be an identifier in "the X of Y" pattern');
+  }
+  const propertyName: string = propertyNode.name;
+
+  const target = await evaluateAST(node.target, context);
+  if (target == null) {
+    throw new Error(`Cannot access property "${propertyName}" of ${target}`);
+  }
+
+  if (isElement(target)) {
+    return getElementProperty(target, propertyName);
+  }
+
+  const value = (target as any)[propertyName];
+  return typeof value === 'function' ? value.bind(target) : value;
+}
+
+/**
+ * Mirrors expression-parser.ts:evaluateTemplateLiteral (L2385). Interpolates
+ * `$var`, `${expr}`, and `$(expr)` patterns. Recursive `${expr}` evaluation
+ * delegates to `parseAndEvaluateExpression` to avoid duplicating the full
+ * expression parser inside this module.
+ */
+async function evaluateTemplateLiteralNode(node: any, context: ExecutionContext): Promise<string> {
+  let template: string = node.value;
+
+  // First pass: $variable / $1 / $window.foo
+  template = await replaceAsync(
+    template,
+    /\$([a-zA-Z_$][a-zA-Z0-9_.$]*|\d+)/g,
+    async (_match, varName) => {
+      try {
+        if (/^\d+$/.test(varName)) return varName;
+        if (varName.includes('.')) {
+          const parts = varName.split('.');
+          let value: any = resolveTemplateVariable(parts[0], context);
+          for (let i = 1; i < parts.length; i++) {
+            if (value == null) break;
+            value = value[parts[i]];
+          }
+          return String(value ?? '');
+        }
+        const value = resolveTemplateVariable(varName, context);
+        return String(value ?? '');
+      } catch {
+        return '';
+      }
+    }
+  );
+
+  // Second pass: ${expr} / $(expr)
+  template = await replaceAsync(
+    template,
+    /\$(?:\{([^}]+)\}|\(([^)]+)\))/g,
+    async (_match, braceExpr, parenExpr) => {
+      const expr = braceExpr || parenExpr;
+      try {
+        const result = await parseAndEvaluateExpression(expr, context);
+        return String(result);
+      } catch {
+        return 'undefined';
+      }
+    }
+  );
+
+  return template;
+}
+
+/** Mirrors expression-parser.ts:resolveVariable (L2471). */
+function resolveTemplateVariable(varName: string, context: ExecutionContext): unknown {
+  if (context.locals?.has(varName)) return context.locals.get(varName);
+  if (varName === 'me' && context.me) return context.me;
+  if (varName === 'you' && context.you) return context.you;
+  if (varName === 'it' && context.it) return context.it;
+  if (varName === 'result' && context.result) return context.result;
+  if (typeof window !== 'undefined' && varName === 'window') return window;
+  if (context.globals?.has(varName)) return context.globals.get(varName);
+  return undefined;
+}
+
+/** Mirrors expression-parser.ts:replaceAsyncBatch (L2498). */
+async function replaceAsync(
+  str: string,
+  regex: RegExp,
+  replacer: (match: string, ...args: any[]) => Promise<string>
+): Promise<string> {
+  const matches: Array<{ index: number; length: number; replacement: string }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(str)) !== null) {
+    matches.push({
+      index: m.index,
+      length: m[0].length,
+      replacement: await replacer(m[0], ...m.slice(1)),
+    });
+  }
+  let result = str;
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const { index, length, replacement } = matches[i];
+    result = result.substring(0, index) + replacement + result.substring(index + length);
+  }
+  return result;
+}
+
+/** Mirrors expression-parser.ts:toTypedContext (L77). */
+function toTypedContext(context: ExecutionContext): any {
+  return {
+    ...context,
+    evaluationHistory: (context as unknown as Record<string, unknown>).evaluationHistory ?? [],
+  };
 }
 
 /**
