@@ -78,6 +78,8 @@ export function parseCompoundCommand(
       return parseJsCommand(ctx, identifierNode);
     case 'tell':
       return parseTellCommand(ctx, identifierNode);
+    case 'pick':
+      return parsePickCommand(ctx, identifierNode);
     case 'swap':
     case 'morph':
       return domCommands.parseSwapCommand(ctx, identifierNode);
@@ -693,4 +695,170 @@ export function parseTellCommand(ctx: ParserContext, identifierNode: IdentifierN
     .withArgs(target, ...commands)
     .endingAt(ctx.getPosition())
     .build();
+}
+
+/**
+ * Parse pick command (upstream _hyperscript 5 variants + legacy hyperfixi forms)
+ *
+ * Variants:
+ *   - pick first <count> [of|from] <expr>       — first N elements
+ *   - pick last <count> [of|from] <expr>        — last N elements
+ *   - pick random [<count>] [of|from] <expr>    — random N (single if no count)
+ *   - pick item(s)|character(s) [at|from] <i> [to|.. <j>|end] [inclusive|exclusive] [of|from] <expr>
+ *     — slice range (default exclusive end like Array.slice)
+ *   - pick match|matches of <regex>[|<flags>] [of|from] <expr> — regex single/all
+ *
+ * Legacy fallback (hyperfixi):
+ *   - pick from <expr>                          — single random element
+ *   - pick <a>, <b>, <c>                        — single random from inline items
+ *
+ * The variant is recorded as a literal node in modifiers.variant; supporting
+ * data goes into modifiers.count / modifiers.from / modifiers.rangeStart /
+ * modifiers.rangeEnd / modifiers.rangeMode / modifiers.regex / modifiers.flags.
+ */
+export function parsePickCommand(ctx: ParserContext, identifierNode: IdentifierNode): CommandNode {
+  const builder = CommandNodeBuilder.fromIdentifier(identifierNode);
+
+  // Optional "the": `pick the first 3 of arr`
+  consumeOptionalKeyword(ctx, KEYWORDS.THE);
+
+  const variantToken = ctx.peek();
+  const variantName = variantToken.value;
+
+  // Helper: build a literal-value modifier node (variant tags).
+  const makeStringLiteral = (value: string): ExpressionNode =>
+    ({
+      type: 'literal',
+      value,
+      start: identifierNode.start,
+      end: identifierNode.end,
+    }) as unknown as ExpressionNode;
+
+  // Helper: consume `of` or `from` and parse the source expression.
+  const consumeSource = (): ASTNode => {
+    if (!ctx.match('of', 'from')) {
+      throw new Error(`pick: expected 'of' or 'from' before source expression`);
+    }
+    return ctx.parseExpression();
+  };
+
+  // --- Variant: first N ---
+  if (variantName === 'first') {
+    ctx.advance();
+    // parsePrimary keeps the count tight (just a literal or identifier) so the
+    // trailing `of <expr>` isn't swallowed as a binary expression — `of` is a
+    // registered Pratt operator and parseExpression would consume it.
+    const count = ctx.parsePrimary();
+    const source = consumeSource();
+    return builder
+      .withArgs(source)
+      .withModifier('variant', makeStringLiteral('first'))
+      .withModifier('count', count as ExpressionNode)
+      .endingAt(ctx.getPosition())
+      .build();
+  }
+
+  // --- Variant: last N ---
+  if (variantName === 'last') {
+    ctx.advance();
+    const count = ctx.parsePrimary();
+    const source = consumeSource();
+    return builder
+      .withArgs(source)
+      .withModifier('variant', makeStringLiteral('last'))
+      .withModifier('count', count as ExpressionNode)
+      .endingAt(ctx.getPosition())
+      .build();
+  }
+
+  // --- Variant: random [N] ---
+  if (variantName === 'random') {
+    ctx.advance();
+    // Optional count: present iff next token is a NUMBER literal (or, in
+    // practice, any literal expression — we check for `of`/`from` as the
+    // source-separator instead of probing token kind, which keeps us decoupled
+    // from token-kind naming).
+    let countNode: ExpressionNode | undefined;
+    if (!ctx.check('of') && !ctx.check('from')) {
+      countNode = ctx.parsePrimary() as ExpressionNode;
+    }
+    const source = consumeSource();
+    const b = builder.withArgs(source).withModifier('variant', makeStringLiteral('random'));
+    if (countNode) b.withModifier('count', countNode);
+    return b.endingAt(ctx.getPosition()).build();
+  }
+
+  // --- Variant: item(s) / character(s) — range slice ---
+  if (
+    variantName === 'item' ||
+    variantName === 'items' ||
+    variantName === 'character' ||
+    variantName === 'characters'
+  ) {
+    ctx.advance();
+    // Optional `at` / `from` preceding the start index.
+    ctx.match('at', 'from');
+
+    // Start: `start` keyword → 0, else tight primary expression.
+    let rangeStart: ExpressionNode;
+    if (ctx.match('start')) {
+      rangeStart = makeStringLiteral('start');
+    } else {
+      rangeStart = ctx.parsePrimary() as ExpressionNode;
+    }
+
+    // Optional `to <end>` or `..<end>` — end can be `end` keyword too.
+    let rangeEnd: ExpressionNode | undefined;
+    let endIsEndKeyword = false;
+    if (ctx.match('to') || ctx.match('..')) {
+      if (ctx.match('end')) {
+        endIsEndKeyword = true;
+      } else {
+        rangeEnd = ctx.parsePrimary() as ExpressionNode;
+      }
+    }
+
+    // Modes: default = include start, exclude end (Array.slice semantics).
+    // `inclusive` → include end too; `exclusive` → exclude start.
+    let mode = 'default';
+    if (ctx.match('inclusive')) mode = 'inclusive';
+    else if (ctx.match('exclusive')) mode = 'exclusive';
+
+    const source = consumeSource();
+    const b = builder
+      .withArgs(source)
+      .withModifier('variant', makeStringLiteral('range'))
+      .withModifier('rangeStart', rangeStart)
+      .withModifier('rangeMode', makeStringLiteral(mode));
+    if (endIsEndKeyword) {
+      b.withModifier('rangeEnd', makeStringLiteral('end'));
+    } else if (rangeEnd) {
+      b.withModifier('rangeEnd', rangeEnd);
+    }
+    return b.endingAt(ctx.getPosition()).build();
+  }
+
+  // --- Variants: match / matches (regex) ---
+  if (variantName === 'match' || variantName === 'matches') {
+    ctx.advance();
+    ctx.match('of'); // optional separator before the regex
+    const regex = ctx.parsePrimary() as ExpressionNode;
+
+    let flags: string | undefined;
+    if (ctx.matchOperator('|')) {
+      flags = ctx.advance().value;
+    }
+
+    const source = consumeSource();
+    const b = builder
+      .withArgs(source)
+      .withModifier('variant', makeStringLiteral(variantName === 'match' ? 'match' : 'matches'))
+      .withModifier('regex', regex);
+    if (flags) b.withModifier('flags', makeStringLiteral(flags));
+    return b.endingAt(ctx.getPosition()).build();
+  }
+
+  // --- Legacy fallback: `pick from <expr>` or `pick a, b, c` ---
+  // Reuse the regular parser for backward compatibility.
+  return parseRegularCommand(ctx, identifierNode);
 }

@@ -231,7 +231,7 @@ describe('PickCommand', () => {
 
       expect(output.selectedIndex).toBeGreaterThanOrEqual(0);
       expect(output.selectedIndex).toBeLessThan(3);
-      expect(output.selectedItem).toBe(input.items![output.selectedIndex]);
+      expect(output.selectedItem).toBe(input.items![output.selectedIndex!]);
     });
 
     it('should handle single-item array', async () => {

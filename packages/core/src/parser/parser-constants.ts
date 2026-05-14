@@ -169,6 +169,9 @@ export const COMPOUND_COMMANDS = new Set([
   'measure',
   'js',
   'tell', // tell <target> <command> [<command> ...]
+  // pick: 5 variants from upstream _hyperscript (first/last/random/range/match)
+  // — keyword-driven, can't be parsed by the generic identifier-plus-args path.
+  'pick',
   // htmx-like commands with complex argument patterns
   'swap', // swap [strategy] of <target> with <content> [using view transition]
   'morph', // morph [over] <target> with <content>
