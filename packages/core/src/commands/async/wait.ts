@@ -258,6 +258,13 @@ export class WaitCommand implements DecoratedCommand {
     conditions: (WaitTimeInput | WaitEventInput)[],
     context: TypedExecutionContext
   ): Promise<{ result: Event | number; winningCondition: WaitTimeInput | WaitEventInput | null }> {
+    // AbortController coordinates listener cleanup: when the race resolves,
+    // we abort to remove every event listener registered by losing conditions.
+    // Without this, a `wait for click or 50ms` where the timer wins leaks the
+    // click listener until the event eventually fires (or never).
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
     const promises = conditions.map(c => {
       if (c.type === 'time') {
         return waitForTime(c.milliseconds).then(() => ({
@@ -266,12 +273,17 @@ export class WaitCommand implements DecoratedCommand {
         }));
       }
       const target = c.target ?? context.me ?? document;
-      return waitForEvent(target, c.eventName).then(res => ({
+      return waitForEvent(target, c.eventName, undefined, signal).then(res => ({
         result: res.event as Event,
         winningCondition: c,
       }));
     });
-    return Promise.race(promises);
+
+    try {
+      return await Promise.race(promises);
+    } finally {
+      abortController.abort();
+    }
   }
 }
 

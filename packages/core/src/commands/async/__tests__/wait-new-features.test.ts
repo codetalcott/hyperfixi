@@ -373,6 +373,96 @@ describe('WaitCommand - Race Conditions', () => {
       expect(output.duration).toBeGreaterThanOrEqual(45);
       expect(output.duration).toBeLessThan(100);
     });
+
+    // Phase A2 Phase 1: parity-verification gap tests for 3-way races and
+    // listener cleanup. Existing tests above already cover event-wins,
+    // time-wins, event+event, and duration tracking; these supplement.
+
+    it('should handle 3-way race: event + event + time, first event wins', async () => {
+      const context = createMockContext();
+      const element = context.me;
+
+      const waitPromise = command.execute(
+        {
+          type: 'race',
+          conditions: [
+            { type: 'event', eventName: 'click', target: element },
+            { type: 'event', eventName: 'keydown', target: element },
+            { type: 'time', milliseconds: 500 },
+          ],
+        },
+        context
+      );
+
+      setTimeout(() => {
+        element.dispatchEvent(new Event('keydown'));
+      }, 10);
+
+      const output = await waitPromise;
+      expect(output.type).toBe('event');
+      expect((output.result as Event).type).toBe('keydown');
+      expect(output.duration).toBeLessThan(100);
+    });
+
+    it('should handle 3-way race: time wins when no events fire', async () => {
+      const context = createMockContext();
+      const element = context.me;
+
+      const waitPromise = command.execute(
+        {
+          type: 'race',
+          conditions: [
+            { type: 'event', eventName: 'click', target: element },
+            { type: 'event', eventName: 'keydown', target: element },
+            { type: 'time', milliseconds: 50 },
+          ],
+        },
+        context
+      );
+
+      const output = await waitPromise;
+      expect(output.type).toBe('time');
+      expect(output.result).toBe(50);
+    });
+
+    it('should not leave dangling listeners after race resolves via time', async () => {
+      const context = createMockContext();
+      const element = context.me;
+
+      // Spy on addEventListener / removeEventListener calls
+      const addSpy = vi.spyOn(element, 'addEventListener');
+      const removeSpy = vi.spyOn(element, 'removeEventListener');
+
+      const waitPromise = command.execute(
+        {
+          type: 'race',
+          conditions: [
+            { type: 'event', eventName: 'click', target: element },
+            { type: 'event', eventName: 'keydown', target: element },
+            { type: 'time', milliseconds: 30 },
+          ],
+        },
+        context
+      );
+
+      await waitPromise;
+      // Allow one tick for cleanup to run if it's queued in a microtask.
+      await Promise.resolve();
+
+      const addedEvents = addSpy.mock.calls.map(call => call[0]);
+      const removedEvents = removeSpy.mock.calls.map(call => call[0]);
+
+      // Every listener that was added during the race should also be removed.
+      // `waitForEvent` registers a single listener per condition with { once: true },
+      // which auto-removes when the event fires — but in this test no event
+      // fires, so the helper is responsible for explicit cleanup on cancel.
+      for (const eventName of addedEvents) {
+        expect(removedEvents).toContain(eventName);
+      }
+
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
+    });
   });
 
   // validate method removed in decorator refactor

@@ -37,17 +37,21 @@ export interface AnimationWaitResult {
 // ============================================================================
 
 /**
- * Wait for a single event with optional timeout
+ * Wait for a single event with optional timeout and cancellation.
  *
  * @param target - Event target to listen on
  * @param eventName - Event name to wait for
  * @param timeout - Optional timeout in milliseconds
- * @returns Promise resolving with event or timeout result
+ * @param signal - Optional AbortSignal — when aborted, removes the listener
+ *   and resolves with `{cancelled: true}`. Used by race coordinators to clean
+ *   up losing listeners.
+ * @returns Promise resolving with event or timeout/cancelled result
  */
 export function waitForEvent<T extends Event = Event>(
   target: EventTarget,
   eventName: string,
-  timeout?: number
+  timeout?: number,
+  signal?: AbortSignal
 ): Promise<EventWaitResult<T>> {
   if (!target) {
     return Promise.reject(new Error('waitForEvent: no target provided'));
@@ -56,9 +60,14 @@ export function waitForEvent<T extends Event = Event>(
   return new Promise(resolve => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
+    const onAbort = () => {
+      finish({ event: null, timedOut: false, cancelled: true });
+    };
+
     const cleanup = () => {
       target.removeEventListener(eventName, handler);
       if (timeoutId) clearTimeout(timeoutId);
+      if (signal) signal.removeEventListener('abort', onAbort);
     };
 
     const finish = createGuardedFinisher<EventWaitResult<T>>(cleanup, resolve);
@@ -67,7 +76,14 @@ export function waitForEvent<T extends Event = Event>(
       finish({ event: event as T, timedOut: false, cancelled: false });
     };
 
+    // Short-circuit if already aborted before we even attach.
+    if (signal?.aborted) {
+      resolve({ event: null, timedOut: false, cancelled: true });
+      return;
+    }
+
     target.addEventListener(eventName, handler);
+    if (signal) signal.addEventListener('abort', onAbort);
 
     if (timeout !== undefined && timeout > 0) {
       timeoutId = setTimeout(() => {
