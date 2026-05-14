@@ -132,7 +132,7 @@ describe('MorphCommand (Standalone V2)', () => {
       );
 
       expect(input.targets).toHaveLength(1);
-      expect(input.targets[0].id).toBe('target');
+      expect(input.targets![0].id).toBe('target');
       expect(input.content).toBe('<div>New content</div>');
       expect(input.strategy).toBe('morph');
     });
@@ -162,7 +162,7 @@ describe('MorphCommand (Standalone V2)', () => {
       );
 
       expect(input.targets).toHaveLength(1);
-      expect(input.targets[0].id).toBe('outer');
+      expect(input.targets![0].id).toBe('outer');
       expect(input.content).toBe('<span>Replaced</span>');
       expect(input.strategy).toBe('morphOuter');
     });
@@ -223,7 +223,7 @@ describe('MorphCommand (Standalone V2)', () => {
       );
 
       expect(input.targets).toHaveLength(1);
-      expect(input.targets[0].id).toBe('fallback');
+      expect(input.targets![0].id).toBe('fallback');
       expect(input.content).toBe('<p>Fallback content</p>');
     });
 
@@ -251,7 +251,7 @@ describe('MorphCommand (Standalone V2)', () => {
       );
 
       expect(input.targets).toHaveLength(1);
-      expect(input.targets[0].id).toBe('case-test');
+      expect(input.targets![0].id).toBe('case-test');
     });
   });
 
@@ -343,7 +343,7 @@ describe('MorphCommand (Standalone V2)', () => {
       );
 
       expect(input.targets).toHaveLength(1);
-      expect(input.targets[0].id).toBe('real-target');
+      expect(input.targets![0].id).toBe('real-target');
       expect(input.content).toBe('<div>Content from variable</div>');
     });
 

@@ -542,7 +542,7 @@ describe('MorphCommand', () => {
       );
 
       expect(input.targets).toHaveLength(1);
-      expect(input.targets[0].id).toBe('target');
+      expect(input.targets![0].id).toBe('target');
     });
 
     it('should accept HTMLElement as target directly', async () => {

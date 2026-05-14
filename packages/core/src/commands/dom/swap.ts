@@ -45,12 +45,27 @@ export type { SwapStrategy } from '../../lib/swap-executor';
 // Types
 // ============================================================================
 
+/**
+ * SwapCommand input. The optional `variant` distinguishes two modes:
+ *
+ *   - Absent / 'dom' → htmx-style DOM swap (default): targets/content/strategy
+ *   - 'variable' → upstream `_hyperscript` value swap (setters.js:210-252):
+ *     exchanges two local variables by name
+ *
+ * Kept as a single interface (rather than a union) so existing callers that
+ * read `.targets` / `.strategy` directly don't need narrowing.
+ */
 export interface SwapCommandInput {
-  targets: HTMLElement[];
-  content: string | HTMLElement | null;
-  strategy: SwapStrategy;
+  variant?: 'dom' | 'variable';
+  // DOM-swap fields
+  targets?: HTMLElement[];
+  content?: string | HTMLElement | null;
+  strategy?: SwapStrategy;
   morphOptions?: MorphOptions;
   useViewTransition?: boolean;
+  // Variable-swap fields (mutually exclusive with DOM fields)
+  leftName?: string;
+  rightName?: string;
 }
 
 // ============================================================================
@@ -135,6 +150,46 @@ export class SwapCommand implements DecoratedCommand {
     const ofIndex = argKeywords.findIndex(k => k === 'of');
     const deleteIndex = argKeywords.findIndex(k => k === 'delete');
     const usingIndex = argKeywords.findIndex(k => k === 'using');
+
+    // ------------------------------------------------------------------
+    // Variable swap disambiguation (upstream _hyperscript setters.js:210)
+    //
+    // `swap a with b` exchanges two local variable values when:
+    //   - args is exactly [identifier, 'with', identifier]
+    //   - no strategy/keyword tokens are present (`of`, `delete`, `using`,
+    //     `into`, `over`, no STRATEGY_KEYWORDS first)
+    //   - neither operand is a selector or attribute reference
+    //   - both operand names are not 'me'/'you'/'it'/'result' (those are
+    //     read-only context references — falling back to DOM swap)
+    //
+    // When unmatched, fall through to the existing DOM-swap handler below.
+    // ------------------------------------------------------------------
+    if (
+      args.length === 3 &&
+      withIndex === 1 &&
+      ofIndex === -1 &&
+      deleteIndex === -1 &&
+      usingIndex === -1
+    ) {
+      const left = args[0] as Record<string, unknown>;
+      const right = args[2] as Record<string, unknown>;
+      const leftIsIdent = left?.type === 'identifier' && typeof left.name === 'string';
+      const rightIsIdent = right?.type === 'identifier' && typeof right.name === 'string';
+      const RESERVED = new Set(['me', 'you', 'it', 'result', 'window', 'document']);
+      if (
+        leftIsIdent &&
+        rightIsIdent &&
+        !RESERVED.has((left.name as string).toLowerCase()) &&
+        !RESERVED.has((right.name as string).toLowerCase()) &&
+        !STRATEGY_KEYWORDS[(left.name as string).toLowerCase()]
+      ) {
+        return {
+          variant: 'variable',
+          leftName: left.name as string,
+          rightName: right.name as string,
+        };
+      }
+    }
 
     let useViewTransition = false;
     if (usingIndex !== -1) {
@@ -256,10 +311,39 @@ export class SwapCommand implements DecoratedCommand {
     };
   }
 
-  async execute(input: SwapCommandInput, _context: TypedExecutionContext): Promise<void> {
-    const { targets, content, strategy, morphOptions, useViewTransition } = input;
+  async execute(input: SwapCommandInput, context: TypedExecutionContext): Promise<void> {
+    // Variable swap (upstream _hyperscript setters.js): exchange two locals.
+    if (input.variant === 'variable') {
+      const { leftName, rightName } = input as { leftName: string; rightName: string };
+      const readVar = (name: string): unknown => {
+        if (context.locals?.has(name)) return context.locals.get(name);
+        if (context.globals?.has(name)) return context.globals.get(name);
+        return undefined;
+      };
+      const writeVar = (name: string, value: unknown): void => {
+        // Prefer the scope the variable already lives in so we don't shadow.
+        if (context.locals?.has(name)) {
+          context.locals.set(name, value);
+        } else if (context.globals?.has(name)) {
+          context.globals.set(name, value);
+        } else if (context.locals) {
+          // Neither side defined yet → default to locals (matches `set` behavior).
+          context.locals.set(name, value);
+        }
+      };
+      const leftValue = readVar(leftName);
+      const rightValue = readVar(rightName);
+      writeVar(leftName, rightValue);
+      writeVar(rightName, leftValue);
+      return;
+    }
 
-    await executeSwapWithTransition(targets, content, strategy, {
+    // DOM swap (htmx-style).
+    const { targets, content, strategy, morphOptions, useViewTransition } = input;
+    if (!targets || !strategy) {
+      throw new Error('[HyperFixi] swap: DOM swap requires targets and strategy');
+    }
+    await executeSwapWithTransition(targets, content ?? null, strategy, {
       morphOptions,
       useViewTransition,
     });
@@ -387,15 +471,19 @@ export class MorphCommand implements DecoratedCommand {
 
   async execute(input: SwapCommandInput, _context: TypedExecutionContext): Promise<void> {
     const { targets, content, strategy, morphOptions, useViewTransition } = input;
+    if (!targets || !strategy) {
+      throw new Error('[HyperFixi] morph: requires targets and strategy');
+    }
+    const safeContent = content ?? null;
 
     if (useViewTransition) {
-      await executeSwapWithTransition(targets, content, strategy, {
+      await executeSwapWithTransition(targets, safeContent, strategy, {
         morphOptions,
         useViewTransition,
       });
     } else {
       for (const target of targets) {
-        executeSwap(target, content, strategy, morphOptions);
+        executeSwap(target, safeContent, strategy, morphOptions);
       }
     }
   }
