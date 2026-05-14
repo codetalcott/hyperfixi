@@ -14,9 +14,6 @@ import {
   rightAssoc,
   prefix,
   CORE_FRAGMENT,
-  POSITIONAL_FRAGMENT,
-  PROPERTY_FRAGMENT,
-  FULL_TABLE,
   STOP_TOKENS,
   STOP_DELIMITERS,
   type BindingPowerFragment,
@@ -183,33 +180,6 @@ describe('CORE_FRAGMENT', () => {
     for (const op of ['not', '!', 'no']) {
       expect(CORE_FRAGMENT.get(op)?.prefix?.bp).toBe(80);
     }
-  });
-});
-
-describe('POSITIONAL_FRAGMENT', () => {
-  it('has first/last at tier 9', () => {
-    expect(POSITIONAL_FRAGMENT.get('first')?.prefix?.bp).toBe(85);
-    expect(POSITIONAL_FRAGMENT.get('last')?.prefix?.bp).toBe(85);
-  });
-});
-
-describe('PROPERTY_FRAGMENT', () => {
-  it('has . and ?. at tier 10', () => {
-    expect(PROPERTY_FRAGMENT.get('.')?.infix?.bp[0]).toBe(90);
-    expect(PROPERTY_FRAGMENT.get('?.')?.infix?.bp[0]).toBe(90);
-  });
-
-  it("has 's at tier 10 (highest)", () => {
-    expect(PROPERTY_FRAGMENT.get("'s")?.infix?.bp[0]).toBe(95);
-  });
-});
-
-describe('FULL_TABLE', () => {
-  it('contains all operators from all fragments', () => {
-    expect(FULL_TABLE.has('or')).toBe(true);
-    expect(FULL_TABLE.has('first')).toBe(true);
-    expect(FULL_TABLE.has('.')).toBe(true);
-    expect(FULL_TABLE.has("'s")).toBe(true);
   });
 });
 
@@ -385,65 +355,6 @@ describe('Pratt parser with right-associative operators', () => {
   });
 });
 
-describe('Pratt parser with property access', () => {
-  const table = mergeFragments(
-    new Map([['+', leftAssoc(40) as BindingPowerEntry]]),
-    PROPERTY_FRAGMENT
-  );
-
-  const parse = createPrattParser(table, primaryHandler);
-
-  it('parses x . y (property access)', () => {
-    const toks = tokens('x . y');
-    const pos = { value: 0 };
-    const result = parse(toks, pos);
-    expect(result.type).toBe('propertyAccess');
-    expect((result as any).object.name).toBe('x');
-    expect((result as any).property).toBe('y');
-  });
-
-  it('property access binds tighter than +: a . b + c → (a.b) + c', () => {
-    const toks = tokens('a . b + c');
-    const pos = { value: 0 };
-    const result = parse(toks, pos);
-    expect(result.type).toBe('binaryExpression');
-    expect((result as any).operator).toBe('+');
-    expect((result as any).left.type).toBe('propertyAccess');
-    expect((result as any).right.name).toBe('c');
-  });
-
-  it("parses possessive: x 's y", () => {
-    const toks = tokens("x 's y");
-    const pos = { value: 0 };
-    const result = parse(toks, pos);
-    expect(result.type).toBe('possessiveExpression');
-    expect((result as any).object.name).toBe('x');
-    expect((result as any).property).toBe('y');
-  });
-});
-
-describe('Pratt parser with positional prefix', () => {
-  const table = mergeFragments(CORE_FRAGMENT, POSITIONAL_FRAGMENT);
-  const parse = createPrattParser(table, primaryHandler);
-
-  it('parses first x', () => {
-    const toks = tokens('first x');
-    const pos = { value: 0 };
-    const result = parse(toks, pos);
-    expect(result.type).toBe('positionalExpression');
-    expect((result as any).position).toBe('first');
-    expect((result as any).operand.name).toBe('x');
-  });
-
-  it('parses last x', () => {
-    const toks = tokens('last x');
-    const pos = { value: 0 };
-    const result = parse(toks, pos);
-    expect(result.type).toBe('positionalExpression');
-    expect((result as any).position).toBe('last');
-  });
-});
-
 describe('Pratt parser with as (type conversion)', () => {
   const parse = createPrattParser(CORE_FRAGMENT, primaryHandler);
 
@@ -466,8 +377,8 @@ describe('Pratt parser with as (type conversion)', () => {
   });
 });
 
-describe('Complex expressions with FULL_TABLE', () => {
-  const parse = createPrattParser(FULL_TABLE, primaryHandler);
+describe('Complex expressions with CORE_FRAGMENT', () => {
+  const parse = createPrattParser(CORE_FRAGMENT, primaryHandler);
 
   it('parses full precedence chain: not a or b and c == d + e * f', () => {
     // Expected: (not a) or (b and (c == (d + (e * f))))

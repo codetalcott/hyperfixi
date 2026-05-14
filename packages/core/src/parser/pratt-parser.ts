@@ -576,92 +576,6 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
 ]);
 
 /**
- * Positional fragment — first/last prefix operators.
- * Included in positional+ bundle tiers.
- */
-export const POSITIONAL_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerEntry>([
-  // Tier 9: Positional prefix (bp 85)
-  [
-    'first',
-    prefix(85, (token, ctx) => ({
-      type: 'positionalExpression',
-      position: 'first',
-      operand: ctx.parseExpr(85),
-      start: token.start,
-    })) as BindingPowerEntry,
-  ],
-  [
-    'last',
-    prefix(85, (token, ctx) => ({
-      type: 'positionalExpression',
-      position: 'last',
-      operand: ctx.parseExpr(85),
-      start: token.start,
-    })) as BindingPowerEntry,
-  ],
-]);
-
-/**
- * Property access fragment — 's, ., ?., [], ()
- * Included in full bundle tiers.
- */
-export const PROPERTY_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerEntry>([
-  // Tier 10: Property access (bp 90)
-  [
-    '.',
-    {
-      infix: {
-        bp: [90, 91],
-        handler: (left, _token, ctx) => {
-          const propToken = ctx.advance();
-          return {
-            type: 'propertyAccess',
-            object: left,
-            property: propToken.value,
-            start: (left as any).start,
-          };
-        },
-      },
-    },
-  ],
-  [
-    '?.',
-    {
-      infix: {
-        bp: [90, 91],
-        handler: (left, _token, ctx) => {
-          const propToken = ctx.advance();
-          return {
-            type: 'optionalChain',
-            object: left,
-            property: propToken.value,
-            start: (left as any).start,
-          };
-        },
-      },
-    },
-  ],
-  [
-    "'s",
-    {
-      infix: {
-        bp: [95, 96],
-        handler: (left, _token, ctx) => {
-          // Possessive: constrain RHS to a single identifier (not recursive parse)
-          const propToken = ctx.advance();
-          return {
-            type: 'possessiveExpression',
-            object: left,
-            property: propToken.value,
-            start: (left as any).start,
-          };
-        },
-      },
-    },
-  ],
-]);
-
-/**
  * Builds the infix handler for `is a` / `is an` / `is not a` / `is not an`.
  *
  * Mirrors upstream `_hyperscript`'s ComparisonOperator: the RHS is consumed as a
@@ -835,15 +749,10 @@ export const ASSIGNMENT_FRAGMENT: BindingPowerFragment = new Map<string, Binding
 ]);
 
 /**
- * Full binding power table — merges all fragments.
- */
-export const FULL_TABLE = mergeFragments(CORE_FRAGMENT, POSITIONAL_FRAGMENT, PROPERTY_FRAGMENT);
-
-/**
  * Parser expression table — CORE + PARSER_COMPARISON + ASSIGNMENT.
- * Used by the Parser class for full expression parsing.
- * Does NOT include POSITIONAL or PROPERTY — those are handled by
- * parseCall() and parsePrimary() for now.
+ * Used by the Parser class for full expression parsing. Property access
+ * (`.`, `?.`, `'s`, `[]`) and positional prefixes (`first`, `last`) are
+ * handled directly in `parser.ts:parseCall()` / `parsePrimary()`.
  */
 export const PARSER_TABLE = mergeFragments(
   CORE_FRAGMENT,

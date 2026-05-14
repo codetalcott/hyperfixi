@@ -168,12 +168,6 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     // These are produced by the canonical parser (parser.ts) but were previously
     // only handled by the legacy `evaluateASTNode` switch — calling them via
     // the canonical Pratt path would throw `Unknown AST node type`.
-    //
-    // NOTE: `propertyAccess`, `optionalChain`, and `positionalExpression` from
-    // pratt-parser's PROPERTY_FRAGMENT/POSITIONAL_FRAGMENT are NOT reached via
-    // the canonical PARSER_TABLE (parser.ts:557). The parser produces
-    // `memberExpression` for `obj.prop`. If those fragments ever ship in the
-    // canonical table, ports should mirror the equivalents in expression-parser.ts.
     case 'arrayLiteral':
       return evaluateArrayLiteralNode(node, context);
     case 'objectLiteral':
@@ -721,29 +715,72 @@ async function evaluateCollectionExpression(node: any, context: ExecutionContext
 }
 
 /**
- * Evaluates unary expressions
+ * Evaluates unary expressions.
+ *
+ * Handles both shapes:
+ *   - Pratt-parser: `{ operator, operand, prefix }` ([pratt-parser.ts:248-260])
+ *   - Legacy parser: `{ operator, argument }`
+ *
+ * Postfix unaries (`exists`, `does not exist`, `is empty`, `is not empty`) are
+ * produced as `unaryExpression` nodes by PARSER_COMPARISON_FRAGMENT
+ * ([pratt-parser.ts:715-770]).
  */
 async function evaluateUnaryExpression(node: any, context: ExecutionContext): Promise<any> {
-  const argument = await evaluateAST(node.argument, context);
-  const operator = node.operator;
+  const operandNode = node.operand ?? node.argument;
+  const value = await evaluateAST(operandNode, context);
 
-  switch (operator) {
+  switch (node.operator) {
     case 'not':
-      return logicalExpressions.not.evaluate(context, argument);
+    case '!':
+      return logicalExpressions.not.evaluate(context, value);
+
+    case 'no':
+      return logicalExpressions.no.evaluate(context, value);
 
     case '-':
-      return -argument;
+      return -value;
 
     case '+':
-      return +argument;
+      return +value;
+
+    case 'exists':
+    case 'some':
+      // `some` is upstream's truthy-non-empty check — same semantics as `exists`.
+      return logicalExpressions.exists.evaluate(context, value);
+
+    case 'does not exist':
+      return logicalExpressions.doesNotExist.evaluate(context, value);
+
+    case 'is empty':
+      return logicalExpressions.isEmpty.evaluate(context, value);
+
+    case 'is not empty':
+      return logicalExpressions.isNotEmpty.evaluate(context, value);
 
     default:
-      throw new Error(`Unknown unary operator: ${operator}`);
+      throw new Error(`Unknown unary operator: ${node.operator}`);
   }
 }
 
 /**
- * Evaluates member expressions using Phase 3 property expressions
+ * Evaluates `obj.prop` and `obj?.prop` (memberExpression nodes).
+ *
+ * Behavior matches upstream `_hyperscript` (`runtime.js:resolveProperty` /
+ * `#flatGet`):
+ *   - null/undefined object → returns `undefined` (does NOT throw)
+ *   - method extraction (e.g. `obj.method`) returns the unbound function.
+ *     `this` is bound at call time by `evaluateCallExpression` via `.apply()`.
+ *     Extracting a method and calling it later as a bare function loses `this`
+ *     — JavaScript-standard behavior.
+ *
+ * The `?.` form sets `node.optional = true` ([parser.ts:parseCall]); the
+ * runtime is already lenient on null so no extra check is needed today. The
+ * flag preserves intent if `.` is ever tightened to throw on null.
+ *
+ * NOTE: The legacy `expression-parser.ts:evaluatePropertyAccess` diverges — it
+ * throws on null and binds methods at access time. The canonical path here is
+ * correct per upstream; the legacy divergence is a known issue to be resolved
+ * by the planned evaluator-consolidation refactor.
  */
 async function evaluateMemberExpression(node: any, context: ExecutionContext): Promise<any> {
   const object = await evaluateAST(node.object, context);

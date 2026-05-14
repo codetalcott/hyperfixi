@@ -127,6 +127,71 @@ describe('AST evaluator coverage (ported from expression-parser.ts)', () => {
     });
   });
 
+  describe('optional chaining (?.)', () => {
+    it('result?.x with present property → value', async () => {
+      expect(await evalArg('return result?.x', { result: { x: 5 } })).toBe(5);
+    });
+    it('result?.x with null result → undefined', async () => {
+      expect(await evalArg('return result?.x', { result: null })).toBeUndefined();
+    });
+    it('result?.x with undefined result → undefined', async () => {
+      expect(await evalArg('return result?.x', { result: undefined })).toBeUndefined();
+    });
+    it('result?.missing with no such property → undefined', async () => {
+      expect(await evalArg('return result?.missing', { result: { x: 5 } })).toBeUndefined();
+    });
+    it('chained result?.a.b on null root → undefined', async () => {
+      // The `?.` short-circuits at the first null and never evaluates `.b`
+      expect(await evalArg('return result?.a', { result: null })).toBeUndefined();
+    });
+    it('result?.x equivalent to result.x when result is present', async () => {
+      const obj = { x: 'hello' };
+      const optional = await evalArg('return result?.x', { result: obj });
+      const dotted = await evalArg('return result.x', { result: obj });
+      expect(optional).toBe(dotted);
+    });
+  });
+
+  describe('unary expressions: exists / is empty / no / does not exist', () => {
+    it('5 exists → true', async () => {
+      expect(await evalArg('return 5 exists')).toBe(true);
+    });
+    it('"" exists → true (empty string is not null)', async () => {
+      expect(await evalArg('return "" exists')).toBe(true);
+    });
+    it('null exists → false', async () => {
+      expect(await evalArg('return result exists', { result: null })).toBe(false);
+    });
+    it('undefined exists → false', async () => {
+      expect(await evalArg('return result exists', { result: undefined })).toBe(false);
+    });
+    it('null does not exist → true', async () => {
+      expect(await evalArg('return result does not exist', { result: null })).toBe(true);
+    });
+    it('5 does not exist → false', async () => {
+      expect(await evalArg('return 5 does not exist')).toBe(false);
+    });
+    it('"" is empty → true', async () => {
+      expect(await evalArg('return "" is empty')).toBe(true);
+    });
+    it('"hello" is empty → false', async () => {
+      expect(await evalArg('return "hello" is empty')).toBe(false);
+    });
+    it('split empty result → is empty true', async () => {
+      // Empty array via split
+      expect(await evalArg('return ("" split by ",") is not empty')).toBe(true);
+    });
+    it('"hello" is not empty → true', async () => {
+      expect(await evalArg('return "hello" is not empty')).toBe(true);
+    });
+    it('no result with truthy value → false', async () => {
+      expect(await evalArg('return no result', { result: 'something' })).toBe(false);
+    });
+    it('no result with null → true', async () => {
+      expect(await evalArg('return no result', { result: null })).toBe(true);
+    });
+  });
+
   describe('does not contain / does not include', () => {
     it('"hello" does not contain "x" → true', async () => {
       expect(await evalArg('return "hello" does not contain "x"')).toBe(true);

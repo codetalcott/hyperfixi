@@ -1336,6 +1336,22 @@ export class Parser {
           "Expected property name after '.' - malformed member access"
         );
         expr = this.createMemberExpression(expr, this.createIdentifier(name.value), false);
+      } else if (this.match('?.')) {
+        // Optional chaining: `obj?.prop`. Tokenized as single `?.` operator
+        // ([tokenizer.ts:634]). Produces a memberExpression with `optional: true`
+        // so runtime can stay lenient (the canonical evaluator already returns
+        // undefined on null, but the flag preserves intent for future tightening
+        // of `.`).
+        const name = this.consumeIdentifier(
+          "Expected property name after '?.' - malformed optional access"
+        );
+        const memberNode = this.createMemberExpression(
+          expr,
+          this.createIdentifier(name.value),
+          false
+        );
+        (memberNode as Record<string, unknown>).optional = true;
+        expr = memberNode;
       } else if (this.match('[')) {
         const index = this.parseExpression();
         this.consume(']', "Expected ']' after array index");
