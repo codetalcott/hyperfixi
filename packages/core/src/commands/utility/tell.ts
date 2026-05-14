@@ -88,12 +88,20 @@ export class TellCommand implements DecoratedCommand {
     const commandResults: any[] = [];
 
     for (const targetElement of targetElements) {
-      // In hyperscript, within a tell block, `me` refers to the element being told
-      // This allows commands like `add .highlight` to operate on the target element
+      // In hyperscript, within a tell block, `me` refers to the element being told —
+      // this allows commands like `add .highlight` to operate on the target element.
+      //
+      // Divergence from upstream `_hyperscript`: upstream binds ONLY `you` to the
+      // current target (controlflow.js:454, `context.you = iterator.value[iterator.index]`).
+      // Hyperfixi binds BOTH `me` and `you`. This is intentionally more permissive —
+      // user code can reference either pronoun inside a tell block. Locked in by tests
+      // in __tests__/tell.test.ts ("should set me to..." and "should set you to..."
+      // plus the multi-target iteration test). Don't tighten without a migration plan
+      // for downstream callers.
       const tellContext: TypedExecutionContext = {
         ...context,
-        me: targetElement, // Replace me with target (per _hyperscript semantics)
-        you: targetElement, // Also set you for explicit reference
+        me: targetElement,
+        you: targetElement,
       };
 
       for (const cmd of commands) {

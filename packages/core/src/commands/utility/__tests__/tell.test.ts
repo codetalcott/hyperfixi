@@ -210,6 +210,68 @@ describe('TellCommand', () => {
       expect(result.targetElements).toContain(targetEl);
       expect(result.commandResults).toEqual(['result-value']);
     });
+
+    // Phase A2 Phase 2: parity-verification gap tests for multi-target iteration
+    // and pronoun-binding-during-iteration.
+
+    it('should iterate over multi-target arrays, binding me/you to each in turn', async () => {
+      const el1 = document.createElement('div');
+      el1.id = 'el1';
+      const el2 = document.createElement('div');
+      el2.id = 'el2';
+      const el3 = document.createElement('div');
+      el3.id = 'el3';
+
+      const seenMe: string[] = [];
+      const seenYou: string[] = [];
+      const cmdFn = vi.fn(async (ctx: TypedExecutionContext) => {
+        seenMe.push((ctx.me as HTMLElement).id);
+        seenYou.push((ctx.you as HTMLElement).id);
+        return 'ok';
+      });
+
+      const context = createMockContext();
+
+      await command.execute({ target: [el1, el2, el3], commands: [cmdFn] }, context);
+
+      expect(seenMe).toEqual(['el1', 'el2', 'el3']);
+      expect(seenYou).toEqual(['el1', 'el2', 'el3']);
+    });
+
+    it('should not leak its tell-context me/you into the outer context after iterating', async () => {
+      const el1 = document.createElement('div');
+      const el2 = document.createElement('div');
+
+      const cmdFn = vi.fn(async () => 'ok');
+      const context = createMockContext();
+      const originalMe = context.me;
+      const originalYou = context.you;
+
+      await command.execute({ target: [el1, el2], commands: [cmdFn] }, context);
+
+      expect(context.me).toBe(originalMe);
+      expect(context.you).toBe(originalYou);
+    });
+
+    it('binds BOTH me and you per upstream divergence (intentional)', async () => {
+      // Upstream _hyperscript binds only `you` (controlflow.js:454); hyperfixi
+      // binds BOTH for permissiveness. This test locks in the hyperfixi behavior;
+      // see comment in tell.ts:execute for rationale.
+      const targetEl = document.createElement('section');
+      const captured: { me?: unknown; you?: unknown } = {};
+
+      const cmdFn = vi.fn(async (ctx: TypedExecutionContext) => {
+        captured.me = ctx.me;
+        captured.you = ctx.you;
+        return 'ok';
+      });
+
+      const context = createMockContext();
+      await command.execute({ target: targetEl, commands: [cmdFn] }, context);
+
+      expect(captured.me).toBe(targetEl);
+      expect(captured.you).toBe(targetEl);
+    });
   });
 
   // ---------- 4. execute - command types ----------
