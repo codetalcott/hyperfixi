@@ -80,6 +80,8 @@ export function parseCompoundCommand(
       return parseTellCommand(ctx, identifierNode);
     case 'pick':
       return parsePickCommand(ctx, identifierNode);
+    case 'start':
+      return animationCommands.parseStartCommand(ctx, identifierNode);
     case 'swap':
     case 'morph':
       return domCommands.parseSwapCommand(ctx, identifierNode);

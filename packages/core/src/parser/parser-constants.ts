@@ -139,6 +139,10 @@ export const COMMANDS = new Set([
   'set',
   'settle',
   'show',
+  // `start` is currently a parse-prefix for `start view transition <body> end`
+  // (upstream _hyperscript animations.js:298-372). The parser dispatches to a
+  // dedicated parseStartCommand to handle the multi-word form.
+  'start',
   'swap', // htmx-like: DOM swapping with multiple strategies
   'take',
   'tell',
@@ -172,6 +176,8 @@ export const COMPOUND_COMMANDS = new Set([
   // pick: 5 variants from upstream _hyperscript (first/last/random/range/match)
   // — keyword-driven, can't be parsed by the generic identifier-plus-args path.
   'pick',
+  // start view transition [using <type>] <body> end (upstream animations.js)
+  'start',
   // htmx-like commands with complex argument patterns
   'swap', // swap [strategy] of <target> with <content> [using view transition]
   'morph', // morph [over] <target> with <content>

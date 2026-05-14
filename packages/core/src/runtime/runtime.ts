@@ -90,6 +90,7 @@ import { createAppendCommand } from '../commands/content/append';
 import { createTransitionCommand } from '../commands/animation/transition';
 import { createMeasureCommand } from '../commands/animation/measure';
 import { createSettleCommand } from '../commands/animation/settle';
+import { createStartViewTransitionCommand } from '../commands/animation/start-view-transition';
 
 // Advanced Commands - Phase 6-4 (2)
 import { createJsCommand } from '../commands/advanced/js';
@@ -251,6 +252,7 @@ export class Runtime extends RuntimeBase {
       registry.register(createTransitionCommand());
       registry.register(createMeasureCommand());
       registry.register(createSettleCommand());
+      registry.register(createStartViewTransitionCommand());
 
       // Phase 6-4 Commands (5)
       registry.register(createJsCommand());

@@ -219,3 +219,49 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
     .endingAt(ctx.getPosition())
     .build();
 }
+
+/**
+ * Parse `start view transition [using <type>] <body> end`.
+ *
+ * Mirrors upstream `_hyperscript` ViewTransitionCommand (animations.js:298-372):
+ * the body executes inside `document.startViewTransition()`. The body is a
+ * sequence of commands terminated by `end`.
+ *
+ * AST shape:
+ *   { name: 'start', args: <body commands>, modifiers: { transitionName?: literal } }
+ *
+ * The command implementation (commands/animation/start-view-transition.ts)
+ * reads modifiers.transitionName and executes each body command sequentially
+ * inside the view-transition callback. Currently only `start view transition`
+ * is recognized; the `start` keyword could fan out to other variants later.
+ */
+export function parseStartCommand(
+  ctx: ParserContext,
+  identifierNode: IdentifierNode
+): import('../../types/core').CommandNode {
+  if (!ctx.match('view')) {
+    throw new Error(
+      "start: expected 'view transition' (only `start view transition ... end` is supported)"
+    );
+  }
+  if (!ctx.match('transition')) {
+    throw new Error("start view: expected 'transition'");
+  }
+
+  const modifiers: Record<string, ExpressionNode> = {};
+
+  // Optional `using <name>` — sets the view-transition-name CSS property.
+  if (ctx.match('using')) {
+    const nameExpr = ctx.parsePrimary();
+    modifiers.transitionName = nameExpr as ExpressionNode;
+  }
+
+  // Body: sequence of commands terminated by `end`.
+  const body = ctx.parseCommandListUntilEnd();
+
+  return CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(...body)
+    .withModifiers(modifiers)
+    .endingAt(ctx.getPosition())
+    .build();
+}

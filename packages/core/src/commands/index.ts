@@ -98,6 +98,7 @@ export { createTransitionCommand as transition } from './animation/transition';
 export { createMeasureCommand as measure } from './animation/measure';
 export { createSettleCommand as settle } from './animation/settle';
 export { createTakeCommand as take } from './animation/take';
+export { createStartViewTransitionCommand as start } from './animation/start-view-transition';
 
 // Advanced Commands (factories)
 export { createJsCommand as js } from './advanced/js';
@@ -204,6 +205,10 @@ export { AppendCommand, createAppendCommand } from './content/append';
 export { TransitionCommand, createTransitionCommand } from './animation/transition';
 export { MeasureCommand, createMeasureCommand } from './animation/measure';
 export { SettleCommand, createSettleCommand } from './animation/settle';
+export {
+  StartViewTransitionCommand,
+  createStartViewTransitionCommand,
+} from './animation/start-view-transition';
 
 // Advanced Commands (Phase 6-4)
 export { JsCommand, createJsCommand } from './advanced/js';
