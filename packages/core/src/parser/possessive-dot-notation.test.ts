@@ -176,11 +176,7 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
     });
   });
 
-  // TODO(Phase ε): canonical parser rejects `my?.X` syntax. Special-case
-  // in parser.ts:1727 (`token.value === 'my' && !this.check('.')`) doesn't
-  // anticipate `?.`. Possessive + optional-chain needs a dedicated parser
-  // path.
-  describe.skip('optional chaining with possessive pronouns', () => {
+  describe('optional chaining with possessive pronouns', () => {
     it('should support my?.value optional chaining', async () => {
       const context = {
         me: { value: 'exists' },

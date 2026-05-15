@@ -1739,15 +1739,20 @@ export class Parser {
         return this.createIdentifier(token.value);
       }
 
-      // Handle "my", "its", "your" property access (but only for space syntax, not dot syntax)
-      // For dot syntax (my.prop), let it fall through to be handled by parseCall()
-      if (token.value === 'my' && !this.check('.')) {
+      // Handle "my", "its", "your" property access (but only for space syntax, not
+      // dot syntax). For `my.prop` / `my?.prop`, fall through so the outer
+      // expression parser handles member access — `evaluateIdentifier` aliases
+      // `my`/`its`/`your` to me/it/you (Q1.6).
+      // `?.` is tokenized as a single two-char operator (tokenizer.ts:634);
+      // `.` is its own token.
+      const nextIsDotChain = this.check('.') || this.check('?.');
+      if (token.value === 'my' && !nextIsDotChain) {
         return this.parseContextPropertyAccess('me');
       }
-      if (token.value === 'its' && !this.check('.')) {
+      if (token.value === 'its' && !nextIsDotChain) {
         return this.parseContextPropertyAccess('it');
       }
-      if (token.value === 'your' && !this.check('.')) {
+      if (token.value === 'your' && !nextIsDotChain) {
         return this.parseContextPropertyAccess('you');
       }
 
