@@ -24,11 +24,6 @@ import {
   evaluateSplitBy,
   evaluateJoinedBy,
 } from '../expressions/collection/index';
-// Used by `templateLiteral` for recursive ${expr} / $(expr) interpolation.
-// expression-parser.ts does NOT import from this file, so the dependency is
-// acyclic. Replace with canonical `parse() + evaluateAST()` once the three
-// evaluator paths are consolidated.
-import { parseAndEvaluateExpression } from './expression-parser';
 import { parse } from './parser';
 
 // Create alias for backward compatibility - combine special and mathematical expressions
@@ -631,8 +626,7 @@ async function evaluatePropertyOfExpressionNode(
 /**
  * Mirrors expression-parser.ts:evaluateTemplateLiteral (L2385). Interpolates
  * `$var`, `${expr}`, and `$(expr)` patterns. Recursive `${expr}` evaluation
- * delegates to `parseAndEvaluateExpression` to avoid duplicating the full
- * expression parser inside this module.
+ * delegates to the canonical `evaluateExpressionFromSource` (same module).
  */
 async function evaluateTemplateLiteralNode(node: any, context: ExecutionContext): Promise<string> {
   let template: string = node.value;
@@ -668,7 +662,7 @@ async function evaluateTemplateLiteralNode(node: any, context: ExecutionContext)
     async (_match, braceExpr, parenExpr) => {
       const expr = braceExpr || parenExpr;
       try {
-        const result = await parseAndEvaluateExpression(expr, context);
+        const result = await evaluateExpressionFromSource(expr, context);
         return String(result);
       } catch {
         return 'undefined';
