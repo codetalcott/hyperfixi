@@ -62,38 +62,6 @@ async function extractValue(result: any): Promise<any> {
   return result;
 }
 
-// ============================================================================
-// Performance Optimizations
-// ============================================================================
-
-/**
- * Identifier cache for frequently accessed values
- * Reduces redundant context lookups during high-frequency operations
- * Cache is frame-based (~16ms TTL) to balance performance with memory
- */
-interface IdentifierCacheEntry {
-  value: any;
-  timestamp: number;
-}
-
-const identifierCache = new Map<string, IdentifierCacheEntry>();
-const CACHE_TTL = 16; // ~1 frame at 60fps
-
-/**
- * Clear expired cache entries periodically
- */
-function clearExpiredCache() {
-  const now = Date.now();
-  for (const [key, entry] of identifierCache.entries()) {
-    if (now - entry.timestamp > CACHE_TTL) {
-      identifierCache.delete(key);
-    }
-  }
-}
-
-// Clear cache every 100ms to prevent memory buildup
-setInterval(clearExpiredCache, 100);
-
 /**
  * Evaluate any AST node. Inlines fast paths for the two most common shapes
  * (literal, identifier) before falling through to a per-type switch.
@@ -212,89 +180,52 @@ function evaluateLiteral(node: any): any {
 
 /**
  * Resolve an identifier (`me`, `it`, locals, globals, JS built-ins, etc.) to
- * its value. Caches non-mutable results to skip redundant lookups in hot loops.
+ * its value.
  */
 async function evaluateIdentifier(node: any, context: ExecutionContext): Promise<any> {
   const name = node.name;
 
-  // Generate cache key based on context and identifier
-  // Use context.me as unique identifier for the execution context
-  const contextId = context.me ? `${(context.me as any)._hscriptId || 'default'}` : 'global';
-  const cacheKey = `${contextId}:${name}`;
-
-  // `it` is loop-volatile: collection expressions (`where`, `sorted by`,
-  // `mapped to`) re-bind `it` per element, often within the same cache TTL
-  // window. Caching would return the same `it` value for every iteration.
-  // Similarly, `result` can change across command boundaries.
-  const skipCache = name === 'it' || name === 'its' || name === 'result';
-
-  // Check cache first for frequently accessed identifiers
-  const cached = skipCache ? undefined : identifierCache.get(cacheKey);
-  const now = Date.now();
-  if (cached && now - cached.timestamp < CACHE_TTL) {
-    return cached.value;
-  }
-
-  // Evaluate identifier
-  let value: any;
-  // Locals and globals are context-bound, so caching them across calls (when
-  // the cache key collapses contexts) returns stale values. Track whether
-  // the resolution came from per-context state so we can skip caching.
-  let fromMutableContext = false;
-
   // Context variables. Upstream aliases: `my`/`I` → me, `your`/`yourself` →
   // you, `its` → it. Matches `_hyperscript/src/core/runtime.js:resolveSymbol`.
   if (name === 'me' || name === 'my' || name === 'I') {
-    value = await referencesExpressions.me.evaluate(context);
-    fromMutableContext = true;
-  } else if (name === 'you' || name === 'your' || name === 'yourself') {
-    value = await referencesExpressions.you.evaluate(context);
-    fromMutableContext = true;
-  } else if (name === 'it' || name === 'its') {
-    value = await referencesExpressions.it.evaluate(context);
-  } else if (name === 'window') {
-    value = await referencesExpressions.window.evaluate(context);
-  } else if (name === 'document') {
-    value = await referencesExpressions.document.evaluate(context);
-  } else if (context.locals && context.locals.has(name)) {
-    // Check if identifier exists in context scope
-    value = context.locals.get(name);
-    fromMutableContext = true;
-  } else if (context.globals && context.globals.has(name)) {
-    value = context.globals.get(name);
+    return referencesExpressions.me.evaluate(context);
+  }
+  if (name === 'you' || name === 'your' || name === 'yourself') {
+    return referencesExpressions.you.evaluate(context);
+  }
+  if (name === 'it' || name === 'its') {
+    return referencesExpressions.it.evaluate(context);
+  }
+  if (name === 'window') {
+    return referencesExpressions.window.evaluate(context);
+  }
+  if (name === 'document') {
+    return referencesExpressions.document.evaluate(context);
+  }
+  if (context.locals && context.locals.has(name)) {
+    return context.locals.get(name);
+  }
+  if (context.globals && context.globals.has(name)) {
     if (name.startsWith('$')) notifyGlobalRead(name.slice(1), context);
-    fromMutableContext = true;
-  } else if (name.startsWith('$') && context.globals && context.globals.has(name.slice(1))) {
+    return context.globals.get(name);
+  }
+  if (name.startsWith('$') && context.globals && context.globals.has(name.slice(1))) {
     // Hyperscript convention: `$name` identifiers look up `name` in globals
     // (matches how setVariableValue stores them). Covers both legacy parse
     // paths (identifier with `$` prefix) and the newer `globalVariable` path.
-    value = context.globals.get(name.slice(1));
     notifyGlobalRead(name.slice(1), context);
-    fromMutableContext = true;
-  } else if ((context as any)[name] !== undefined) {
-    // Check if it's a property on the context object (for backward compatibility)
-    value = (context as any)[name];
-    fromMutableContext = true;
-  } else if (typeof globalThis !== 'undefined' && name in globalThis) {
+    return context.globals.get(name.slice(1));
+  }
+  if ((context as any)[name] !== undefined) {
+    // Property on the context object (backward compatibility).
+    return (context as any)[name];
+  }
+  if (typeof globalThis !== 'undefined' && name in globalThis) {
     // JS built-ins: `Date`, `Math`, `Object`, `JSON`, etc. Constructors are
     // picked up by `evaluateCallExpression`'s `node.isConstructor` branch.
-    value = (globalThis as Record<string, unknown>)[name];
-  } else {
-    // Default to undefined for unknown identifiers
-    value = undefined;
+    return (globalThis as Record<string, unknown>)[name];
   }
-
-  // Cache the result for future lookups. Only cache values that aren't
-  // context-bound — locals/globals/me/you change per execution context and
-  // the cache key doesn't disambiguate fully (multiple tests with
-  // context.me === null collapse to `global:<name>`).
-  const shouldCache =
-    !skipCache && !fromMutableContext && typeof value !== 'function' && !(value instanceof Element);
-  if (shouldCache) {
-    identifierCache.set(cacheKey, { value, timestamp: now });
-  }
-
-  return value;
+  return undefined;
 }
 
 /**
