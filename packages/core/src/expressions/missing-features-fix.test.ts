@@ -88,11 +88,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
         expect(result.getAttribute('data-index')).toBe('1');
       });
 
-      // TODO(Phase ε): canonical parser doesn't accept `first <identifier>` —
-      // positional expressions only chain off selectors/queryrefs currently.
-      // Requires expression-parser-style positional parser. See
-      // [feedback_keyword_args_force_custom_parser] in memory.
-      it.skip('should get first element from array', async () => {
+      it('should get first element from array', async () => {
         context.locals.set('testArray', ['first', 'second', 'third']);
         const result = await evaluateExpressionFromSource('first testArray', context);
         expect(result).toBe('first');
@@ -110,8 +106,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
         expect(result).toBeNull();
       });
 
-      // TODO(Phase ε): see note above on `first <identifier>`.
-      it.skip('should be null safe', async () => {
+      it('should be null safe', async () => {
         context.locals.set('nullValue', null);
         const result = await evaluateExpressionFromSource('first nullValue', context);
         expect(result).toBeNull();
@@ -127,8 +122,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
         expect(result.getAttribute('data-index')).toBe('5');
       });
 
-      // TODO(Phase ε): see note above on `first <identifier>`.
-      it.skip('should get last element from array', async () => {
+      it('should get last element from array', async () => {
         context.locals.set('testArray', ['first', 'second', 'third']);
         const result = await evaluateExpressionFromSource('last testArray', context);
         expect(result).toBe('third');
@@ -146,8 +140,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
         expect(result).toBeNull();
       });
 
-      // TODO(Phase ε): see note above on `first <identifier>`.
-      it.skip('should be null safe', async () => {
+      it('should be null safe', async () => {
         context.locals.set('nullValue', null);
         const result = await evaluateExpressionFromSource('last nullValue', context);
         expect(result).toBeNull();
@@ -265,8 +258,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
       document.body.appendChild(container);
     });
 
-    // TODO(Phase ε): same `first <identifier>` parser limitation as above.
-    it.skip('should combine positional expressions with conversions', async () => {
+    it('should combine positional expressions with conversions', async () => {
       // Test combining first/last with "as" conversions
       context.locals.set('numberStrings', ['1', '2', '3', '4', '5']);
 

@@ -1723,6 +1723,19 @@ export class Parser {
           // Not an ID selector, backtrack
           this.current = hashPos;
         }
+        // `first <identifier>` / `last <identifier>` / `first <literal>` —
+        // positional on bare identifiers and literals (e.g., `first arr`,
+        // `last nullValue`). Upstream supports this; the navigation parser
+        // accepts any primary as the source.
+        if (
+          !this.isAtEnd() &&
+          !this.checkBasicOperator() &&
+          !this.check('then') &&
+          !this.check('else') &&
+          !this.check('end')
+        ) {
+          return this.parseNavigationFunction(token.value);
+        }
         return this.createIdentifier(token.value);
       }
 
