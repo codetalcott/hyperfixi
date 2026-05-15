@@ -521,11 +521,9 @@ export const noExpression: ExpressionImplementation = {
     else if (value instanceof NodeList) result = value.length === 0;
     // Strings exist even when empty - not "no value"
     else if (isString(value)) result = false;
-    // DOM elements are real objects
-    else if (value instanceof Node || value instanceof Element) result = false;
-    // Objects with keys exist
-    else if (isObject(value)) result = Object.keys(value as object).length === 0;
-    // Numbers (including 0), true, etc. are values
+    // DOM elements and plain objects are real values (upstream `isEmpty`
+    // returns false for objects without a numeric `.length`). Numbers,
+    // true, Map, Set, etc. also exist.
     else result = false;
     if (tracking) trackEvaluation(this, context, [value], result, startTime);
     return result;

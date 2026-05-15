@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { tokenize } from './tokenizer';
-import { parseAndEvaluateExpression } from './expression-parser';
+import { evaluateExpressionFromSource } from './runtime';
 import { createMockHyperscriptContext } from '../test-setup';
 import type { ExecutionContext } from '../types/core';
 
@@ -30,64 +30,64 @@ describe('Existence Operators', () => {
 
   describe('No Operator', () => {
     it('should return true for null values', async () => {
-      const result = await parseAndEvaluateExpression('no nullValue', context);
+      const result = await evaluateExpressionFromSource('no nullValue', context);
       expect(result).toBe(true);
     });
 
     it('should return true for undefined values', async () => {
-      const result = await parseAndEvaluateExpression('no undefinedValue', context);
+      const result = await evaluateExpressionFromSource('no undefinedValue', context);
       expect(result).toBe(true);
     });
 
     it('should return false for empty string (string exists)', async () => {
       // Per official _hyperscript semantics, empty string is a real value (just empty)
-      const result = await parseAndEvaluateExpression('no emptyString', context);
+      const result = await evaluateExpressionFromSource('no emptyString', context);
       expect(result).toBe(false);
     });
 
     it('should return true for empty array (no elements)', async () => {
       // Empty arrays have no elements, so `no []` returns true
-      const result = await parseAndEvaluateExpression('no emptyArray', context);
+      const result = await evaluateExpressionFromSource('no emptyArray', context);
       expect(result).toBe(true);
     });
 
     it('should return false for empty object (object exists)', async () => {
       // Per official _hyperscript semantics, empty object is a real value (just empty)
-      const result = await parseAndEvaluateExpression('no emptyObject', context);
+      const result = await evaluateExpressionFromSource('no emptyObject', context);
       expect(result).toBe(false);
     });
 
     it('should return false for non-empty string', async () => {
-      const result = await parseAndEvaluateExpression('no nonEmptyString', context);
+      const result = await evaluateExpressionFromSource('no nonEmptyString', context);
       expect(result).toBe(false);
     });
 
     it('should return false for non-empty array', async () => {
-      const result = await parseAndEvaluateExpression('no nonEmptyArray', context);
+      const result = await evaluateExpressionFromSource('no nonEmptyArray', context);
       expect(result).toBe(false);
     });
 
     it('should return false for non-empty object', async () => {
-      const result = await parseAndEvaluateExpression('no nonEmptyObject', context);
+      const result = await evaluateExpressionFromSource('no nonEmptyObject', context);
       expect(result).toBe(false);
     });
 
     it('should return true for false boolean (false is "no value")', async () => {
       // Per official _hyperscript semantics, `no false` returns true
       // because false represents "no value" / absence of truthiness
-      const result = await parseAndEvaluateExpression('no falseValue', context);
+      const result = await evaluateExpressionFromSource('no falseValue', context);
       expect(result).toBe(true);
     });
 
     it('should return false for zero number (not empty)', async () => {
-      const result = await parseAndEvaluateExpression('no zeroValue', context);
+      const result = await evaluateExpressionFromSource('no zeroValue', context);
       expect(result).toBe(false);
     });
 
     it('should work with CSS selector expressions', async () => {
       // Add an empty NodeList to test with
       context.locals?.set('emptyNodeList', document.querySelectorAll('.nonexistent-class'));
-      const result = await parseAndEvaluateExpression('no emptyNodeList', context);
+      const result = await evaluateExpressionFromSource('no emptyNodeList', context);
       expect(result).toBe(true); // Empty NodeList
     });
   });
@@ -96,17 +96,17 @@ describe('Existence Operators', () => {
     // Based on context, 'some' might be the opposite of 'no'
     // Let's test this hypothesis
     it.skip('should return false for null values', async () => {
-      const result = await parseAndEvaluateExpression('some nullValue', context);
+      const result = await evaluateExpressionFromSource('some nullValue', context);
       expect(result).toBe(false);
     });
 
     it.skip('should return false for empty values', async () => {
-      const result = await parseAndEvaluateExpression('some emptyString', context);
+      const result = await evaluateExpressionFromSource('some emptyString', context);
       expect(result).toBe(false);
     });
 
     it.skip('should return true for non-empty values', async () => {
-      const result = await parseAndEvaluateExpression('some nonEmptyString', context);
+      const result = await evaluateExpressionFromSource('some nonEmptyString', context);
       expect(result).toBe(true);
     });
   });
@@ -116,12 +116,15 @@ describe('Existence Operators', () => {
       // Based on the documentation example: if no .tabs log 'No tabs found!'
       // We'll simulate this with a simpler example
       context.locals?.set('tabs', []);
-      const result = await parseAndEvaluateExpression('no tabs', context);
+      const result = await evaluateExpressionFromSource('no tabs', context);
       expect(result).toBe(true);
     });
 
     it('should work in complex expressions', async () => {
-      const result = await parseAndEvaluateExpression('no emptyArray and nonEmptyString', context);
+      const result = await evaluateExpressionFromSource(
+        'no emptyArray and nonEmptyString',
+        context
+      );
       // 'and' returns the last truthy value in JS-style semantics: true && 'hello' = 'hello'
       expect(result).toBe('hello');
     });

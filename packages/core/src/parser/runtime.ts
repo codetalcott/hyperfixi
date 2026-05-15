@@ -340,6 +340,10 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
   // Delegate to Phase 3 expression system based on operator
   switch (operator) {
     case '+':
+      // JS-native: `+` concatenates if either operand is a string.
+      if (typeof left === 'string' || typeof right === 'string') {
+        return String(left ?? '') + String(right ?? '');
+      }
       return extractValue(specialExpressions.addition.evaluate(context as any, { left, right }));
     case '-':
       return extractValue(specialExpressions.subtraction.evaluate(context as any, { left, right }));
