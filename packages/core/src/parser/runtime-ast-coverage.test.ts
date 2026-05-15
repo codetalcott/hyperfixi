@@ -377,4 +377,35 @@ describe('evaluateExpressionFromSource (canonical string→eval helper)', () => 
       expect(result).toEqual({ foo: 1 });
     });
   });
+
+  // Property names after `.` may shadow command keywords. JS allows any
+  // IdentifierName after a dot; canonical now does too.
+  describe('property names that shadow command keywords', () => {
+    it('reads `.open` from an object', async () => {
+      const result = await evaluateExpressionFromSource('obj.open', ctx({ obj: { open: true } }));
+      expect(result).toBe(true);
+    });
+
+    it('reads `<details>.open` from a real DOM element', async () => {
+      const el = document.createElement('details');
+      el.open = true;
+      const c = createContext();
+      (c as any).me = el;
+      const result = await evaluateExpressionFromSource('me.open', c);
+      expect(result).toBe(true);
+    });
+
+    it('reads `.close` from an object', async () => {
+      const result = await evaluateExpressionFromSource(
+        'obj.close',
+        ctx({ obj: { close: 'shut' } })
+      );
+      expect(result).toBe('shut');
+    });
+
+    it('reads `.if` from an object (extreme reserved-word case)', async () => {
+      const result = await evaluateExpressionFromSource('obj.if', ctx({ obj: { if: 1 } }));
+      expect(result).toBe(1);
+    });
+  });
 });

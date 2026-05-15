@@ -1401,8 +1401,12 @@ export class Parser {
       if (this.match('(')) {
         expr = this.finishCall(expr);
       } else if (this.match('.')) {
-        // Phase 8: Use predicate-based consume
-        const name = this.consumeIdentifier(
+        // Property names after `.` may shadow command keywords (e.g.,
+        // `<details>.open`, `dialog.close`, `obj.if`). Use the permissive
+        // identifier-like predicate so command/keyword tokens are accepted
+        // as property names — matches JS semantics where any IdentifierName
+        // is valid after a dot.
+        const name = this.consumeIdentifierLike(
           "Expected property name after '.' - malformed member access"
         );
         expr = this.createMemberExpression(expr, this.createIdentifier(name.value), false);
@@ -1412,7 +1416,7 @@ export class Parser {
         // so runtime can stay lenient (the canonical evaluator already returns
         // undefined on null, but the flag preserves intent for future tightening
         // of `.`).
-        const name = this.consumeIdentifier(
+        const name = this.consumeIdentifierLike(
           "Expected property name after '?.' - malformed optional access"
         );
         const memberNode = this.createMemberExpression(
