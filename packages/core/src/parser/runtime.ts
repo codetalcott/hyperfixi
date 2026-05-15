@@ -351,6 +351,9 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     case '%':
     case 'mod':
       return extractValue(specialExpressions.modulo.evaluate(context as any, { left, right }));
+    case '^':
+    case '**':
+      return Math.pow(Number(left), Number(right));
 
     case '>':
     case 'is greater than':
