@@ -36,6 +36,64 @@ const specialExpressions = {
   ...mathematicalExpressions,
 };
 
+// ============================================================================
+// Node shapes — minimal per-helper interfaces over ASTNode.
+// Each shape lists only the fields that helper reads. These narrow the
+// `(node: any)` parameters and catch typos at the call site without
+// committing to a full discriminated-union of every parser output.
+// ============================================================================
+
+type LiteralNode = ASTNode & { value: unknown };
+type IdentifierNode = ASTNode & { name: string };
+type BinaryNode = ASTNode & {
+  operator: string;
+  left: ASTNode;
+  right: ASTNode;
+  ignoringCase?: boolean;
+};
+type AsNode = ASTNode & { expression: ASTNode; targetType: unknown };
+type BetweenNode = ASTNode & {
+  value: ASTNode;
+  min: ASTNode;
+  max: ASTNode;
+  ignoringCase?: boolean;
+  negated?: boolean;
+};
+type TypeCheckNode = ASTNode & {
+  value: ASTNode;
+  typeName: string;
+  nullOk?: boolean;
+  negated?: boolean;
+};
+type ArrayLiteralNode = ASTNode & { elements: ASTNode[] };
+type ObjectLiteralNode = ASTNode & {
+  properties: Array<{ key: ASTNode & { valueType?: string }; value: ASTNode }>;
+};
+type AttributeAccessNode = ASTNode & { attributeName: string };
+type PropertyOfNode = ASTNode & { property: ASTNode; target: ASTNode };
+type TemplateLiteralNode = ASTNode & { value: string };
+type CollectionNode = ASTNode & {
+  operator: string;
+  collection: ASTNode;
+  right: ASTNode;
+  order?: 'asc' | 'desc';
+};
+type UnaryNode = ASTNode & { operator: string; operand?: ASTNode; argument?: ASTNode };
+type MemberNode = ASTNode & {
+  object: ASTNode;
+  property: ASTNode & { name?: string };
+  computed?: boolean;
+};
+type CallNode = ASTNode & {
+  callee: ASTNode & { type: string; name?: string; object?: ASTNode };
+  arguments: ASTNode[];
+  isConstructor?: boolean;
+};
+type SelectorNode = ASTNode & { value: unknown; fromQuery?: boolean };
+type PossessiveNode = ASTNode & { object: ASTNode; property: { name: string } };
+type EventHandlerNode = ASTNode & { event?: unknown; selector?: unknown; commands: ASTNode[] };
+type ConditionalNode = ASTNode & { test: ASTNode; consequent: ASTNode; alternate?: ASTNode };
+
 /**
  * Unwrap a `{ success, value, errors }` TypedResult returned by the
  * arithmetic registry. Non-TypedResult values pass through unchanged. Callers
@@ -66,69 +124,72 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 
   // Fast path for literals (most common after identifiers)
   if (node.type === 'literal') {
-    return (node as any).value;
+    return (node as LiteralNode).value;
   }
 
   // Fast path for identifiers (extremely common in expressions)
   if (node.type === 'identifier') {
-    return evaluateIdentifier(node, context);
+    return evaluateIdentifier(node as IdentifierNode, context);
   }
 
-  // Fall through to switch for complex node types
+  // Fall through to switch for complex node types. Each case casts to the
+  // helper's input shape — `node.type` already narrows what's there, but TS
+  // lacks a discriminated union over the full ASTNode set.
+  const n = node as any;
   switch (node.type) {
     case 'literal':
-      return evaluateLiteral(node);
+      return evaluateLiteral(n);
 
     case 'identifier':
-      return evaluateIdentifier(node, context);
+      return evaluateIdentifier(n, context);
 
     case 'binaryExpression':
-      return evaluateBinaryExpression(node, context);
+      return evaluateBinaryExpression(n, context);
 
     case 'asExpression':
-      return evaluateAsExpressionNode(node, context);
+      return evaluateAsExpressionNode(n, context);
 
     case 'betweenExpression':
-      return evaluateBetweenExpression(node, context);
+      return evaluateBetweenExpression(n, context);
 
     case 'typeCheckExpression':
-      return evaluateTypeCheckExpression(node, context);
+      return evaluateTypeCheckExpression(n, context);
 
     case 'collectionExpression':
-      return evaluateCollectionExpression(node, context);
+      return evaluateCollectionExpression(n, context);
 
     case 'unaryExpression':
-      return evaluateUnaryExpression(node, context);
+      return evaluateUnaryExpression(n, context);
 
     case 'memberExpression':
-      return evaluateMemberExpression(node, context);
+      return evaluateMemberExpression(n, context);
 
     case 'callExpression':
-      return evaluateCallExpression(node, context);
+      return evaluateCallExpression(n, context);
 
     case 'selector':
-      return evaluateSelector(node, context);
+      return evaluateSelector(n, context);
 
     case 'possessiveExpression':
-      return evaluatePossessiveExpression(node, context);
+      return evaluatePossessiveExpression(n, context);
 
     case 'eventHandler':
-      return evaluateEventHandler(node, context);
+      return evaluateEventHandler(n, context);
 
     case 'conditionalExpression':
-      return evaluateConditionalExpression(node, context);
+      return evaluateConditionalExpression(n, context);
 
     // Composite expression nodes produced by the canonical parser.
     case 'arrayLiteral':
-      return evaluateArrayLiteralNode(node, context);
+      return evaluateArrayLiteralNode(n, context);
     case 'objectLiteral':
-      return evaluateObjectLiteralNode(node, context);
+      return evaluateObjectLiteralNode(n, context);
     case 'attributeAccess':
-      return evaluateAttributeAccessNode(node, context);
+      return evaluateAttributeAccessNode(n, context);
     case 'propertyOfExpression':
-      return evaluatePropertyOfExpressionNode(node, context);
+      return evaluatePropertyOfExpressionNode(n, context);
     case 'templateLiteral':
-      return evaluateTemplateLiteralNode(node, context);
+      return evaluateTemplateLiteralNode(n, context);
 
     default: {
       // Allow plugins to register evaluators for custom AST node types.
@@ -163,7 +224,7 @@ export async function evaluateExpressionFromSource(
 /**
  * Evaluates literal nodes (numbers, strings, booleans)
  */
-function evaluateLiteral(node: any): any {
+function evaluateLiteral(node: LiteralNode): unknown {
   return node.value;
 }
 
@@ -171,7 +232,7 @@ function evaluateLiteral(node: any): any {
  * Resolve an identifier (`me`, `it`, locals, globals, JS built-ins, etc.) to
  * its value.
  */
-async function evaluateIdentifier(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContext): Promise<any> {
   const name = node.name;
 
   // Context variables. Upstream aliases: `my`/`I` → me, `your`/`yourself` →
@@ -222,19 +283,21 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
  * pattern `first/last .X in <root>`, short-circuit `and`/`or`, and delegates
  * the remaining operators to the logical/arithmetic registries.
  */
-async function evaluateBinaryExpression(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionContext): Promise<any> {
   const operator = node.operator;
+  const rightNode = node.right as any;
+  const leftNode = node.left as any;
 
   // Handle 'has'/'have' operator for CSS class checking (e.g., "me has .active" or "I have .active")
   if (operator === 'has' || operator === 'have') {
     const left = await evaluateAST(node.left, context);
     if (
       left instanceof Element &&
-      node.right.type === 'selector' &&
-      typeof node.right.value === 'string' &&
-      node.right.value.startsWith('.')
+      rightNode.type === 'selector' &&
+      typeof rightNode.value === 'string' &&
+      rightNode.value.startsWith('.')
     ) {
-      return left.classList.contains(node.right.value.slice(1));
+      return left.classList.contains(rightNode.value.slice(1));
     }
     return false;
   }
@@ -247,11 +310,11 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
   // or a `fromQuery:true` selector (`<.X/>`).
   if (operator === 'in' || operator === 'is in') {
     const posKind =
-      node.left?.type === 'callExpression' && node.left.callee?.type === 'identifier'
-        ? node.left.callee.name
+      leftNode?.type === 'callExpression' && leftNode.callee?.type === 'identifier'
+        ? leftNode.callee.name
         : null;
-    if ((posKind === 'first' || posKind === 'last') && Array.isArray(node.left.arguments)) {
-      const sourceArg = node.left.arguments[0];
+    if ((posKind === 'first' || posKind === 'last') && Array.isArray(leftNode.arguments)) {
+      const sourceArg = leftNode.arguments[0];
       if (sourceArg?.type === 'selector' && typeof sourceArg.value === 'string') {
         const root = await evaluateAST(node.right, context);
         if (root && typeof (root as any).querySelectorAll === 'function') {
@@ -449,7 +512,7 @@ function normalizeAsTargetType(target: unknown): string {
  * Evaluate the `asExpression` AST node (`{ expression, targetType }`) emitted
  * by the Pratt parser.
  */
-async function evaluateAsExpressionNode(node: any, context: ExecutionContext): Promise<unknown> {
+async function evaluateAsExpressionNode(node: AsNode, context: ExecutionContext): Promise<unknown> {
   const value = await evaluateAST(node.expression, context);
   const typeName = normalizeAsTargetType(node.targetType);
   return conversionExpressions.as.evaluate(context, value, typeName);
@@ -458,7 +521,10 @@ async function evaluateAsExpressionNode(node: any, context: ExecutionContext): P
 /**
  * Evaluates `X is between A and B` / `X is not between A and B` ternary comparisons.
  */
-async function evaluateBetweenExpression(node: any, context: ExecutionContext): Promise<boolean> {
+async function evaluateBetweenExpression(
+  node: BetweenNode,
+  context: ExecutionContext
+): Promise<boolean> {
   const value = await evaluateAST(node.value, context);
   const min = await evaluateAST(node.min, context);
   const max = await evaluateAST(node.max, context);
@@ -477,7 +543,10 @@ async function evaluateBetweenExpression(node: any, context: ExecutionContext): 
  * `Object.prototype.toString` tag, then falls back to `instanceof` against the
  * named global constructor (`globalThis[typeName]`).
  */
-async function evaluateTypeCheckExpression(node: any, context: ExecutionContext): Promise<boolean> {
+async function evaluateTypeCheckExpression(
+  node: TypeCheckNode,
+  context: ExecutionContext
+): Promise<boolean> {
   const value = await evaluateAST(node.value, context);
   const typeName = String(node.typeName);
   const nullOk = node.nullOk !== false;
@@ -503,7 +572,10 @@ function typeCheck(value: unknown, typeName: string, nullOk: boolean): boolean {
 // ===========================================================================
 
 /** Evaluate `[a, b, c]` array-literal nodes. */
-async function evaluateArrayLiteralNode(node: any, context: ExecutionContext): Promise<unknown[]> {
+async function evaluateArrayLiteralNode(
+  node: ArrayLiteralNode,
+  context: ExecutionContext
+): Promise<unknown[]> {
   const elements: unknown[] = [];
   for (const el of node.elements) {
     elements.push(await evaluateAST(el, context));
@@ -513,18 +585,19 @@ async function evaluateArrayLiteralNode(node: any, context: ExecutionContext): P
 
 /** Evaluate `{ k: v }` object-literal nodes. */
 async function evaluateObjectLiteralNode(
-  node: any,
+  node: ObjectLiteralNode,
   context: ExecutionContext
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {};
   for (const property of node.properties) {
+    const keyNode = property.key as any;
     let key: string;
-    if (property.key.type === 'identifier') {
-      key = property.key.name;
-    } else if (property.key.type === 'literal' && property.key.valueType === 'string') {
-      key = property.key.value;
+    if (keyNode.type === 'identifier') {
+      key = keyNode.name;
+    } else if (keyNode.type === 'literal' && keyNode.valueType === 'string') {
+      key = keyNode.value;
     } else {
-      key = String(await evaluateAST(property.key, context));
+      key = String(await evaluateAST(keyNode, context));
     }
     result[key] = await evaluateAST(property.value, context);
   }
@@ -532,7 +605,10 @@ async function evaluateObjectLiteralNode(
 }
 
 /** Resolve `@attr` on `me`. Returns `@attr` literal when there is no element. */
-async function evaluateAttributeAccessNode(node: any, context: ExecutionContext): Promise<unknown> {
+async function evaluateAttributeAccessNode(
+  node: AttributeAccessNode,
+  context: ExecutionContext
+): Promise<unknown> {
   const attributeName = node.attributeName;
   if (context.me && context.me instanceof Element) {
     return context.me.getAttribute(attributeName);
@@ -546,10 +622,10 @@ async function evaluateAttributeAccessNode(node: any, context: ExecutionContext)
  * expression.
  */
 async function evaluatePropertyOfExpressionNode(
-  node: any,
+  node: PropertyOfNode,
   context: ExecutionContext
 ): Promise<unknown> {
-  const propertyNode = node.property;
+  const propertyNode = node.property as any;
   if (propertyNode?.type !== 'identifier') {
     throw new Error('Property name must be an identifier in "the X of Y" pattern');
   }
@@ -573,7 +649,10 @@ async function evaluatePropertyOfExpressionNode(
  * Recursive `${expr}` / `$(expr)` evaluation delegates to
  * `evaluateExpressionFromSource`.
  */
-async function evaluateTemplateLiteralNode(node: any, context: ExecutionContext): Promise<string> {
+async function evaluateTemplateLiteralNode(
+  node: TemplateLiteralNode,
+  context: ExecutionContext
+): Promise<string> {
   let template: string = node.value;
 
   // First pass: $variable / $1 / $window.foo
@@ -662,11 +741,14 @@ async function replaceAsync(
  * context cloning rather than mutation so sibling expressions in the same
  * execution don't see each other's `it` values.
  */
-async function evaluateCollectionExpression(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateCollectionExpression(
+  node: CollectionNode,
+  context: ExecutionContext
+): Promise<any> {
   const collection = await evaluateAST(node.collection, context);
 
   // Helper: evaluate the RHS AST with `it` bound to the given element.
-  const evalWithIt = async (astNode: any, it: unknown): Promise<unknown> => {
+  const evalWithIt = async (astNode: ASTNode, it: unknown): Promise<unknown> => {
     const elementContext = { ...context, it } as ExecutionContext;
     return evaluateAST(astNode, elementContext);
   };
@@ -707,8 +789,11 @@ async function evaluateCollectionExpression(node: any, context: ExecutionContext
  * produced as `unaryExpression` nodes by PARSER_COMPARISON_FRAGMENT
  * ([pratt-parser.ts:715-770]).
  */
-async function evaluateUnaryExpression(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateUnaryExpression(node: UnaryNode, context: ExecutionContext): Promise<any> {
   const operandNode = node.operand ?? node.argument;
+  if (!operandNode) {
+    throw new Error(`Unary expression has no operand (operator: ${node.operator})`);
+  }
   const value = await evaluateAST(operandNode, context);
 
   switch (node.operator) {
@@ -759,7 +844,7 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
  * null so no extra check is needed today. The flag preserves intent if `.` is
  * ever tightened to throw on null.
  */
-async function evaluateMemberExpression(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateMemberExpression(node: MemberNode, context: ExecutionContext): Promise<any> {
   const object = await evaluateAST(node.object, context);
 
   if (node.computed) {
@@ -768,7 +853,7 @@ async function evaluateMemberExpression(node: any, context: ExecutionContext): P
     return object?.[property];
   } else {
     // Non-computed access: object.property
-    const propertyName = node.property.name;
+    const propertyName = node.property.name as string;
 
     // Handle attribute access (@attr → getAttribute)
     if (typeof propertyName === 'string' && propertyName.startsWith('@')) {
@@ -813,23 +898,21 @@ async function resolveCallArgs(
  * constructor invocations (`new Foo(...)`), and member-expression callees
  * (preserves `this` via `.apply`).
  */
-async function evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateCallExpression(node: CallNode, context: ExecutionContext): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
 
   // `new Foo(args)` — parser marks constructor invocations with
   // `isConstructor: true`. Handle before the per-function switch so JS
   // built-ins like `new Date()`, `new Map()`, `new Error()` work uniformly.
   if (node.isConstructor && typeof callee === 'function') {
-    const evaluatedArgs = await Promise.all(
-      node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
-    );
+    const evaluatedArgs = await Promise.all(node.arguments.map(arg => evaluateAST(arg, context)));
     return new (callee as new (...args: unknown[]) => unknown)(...evaluatedArgs);
   }
 
   // Identifier callees: positional builtins (which need raw-arg treatment for
   // closest/previous/next), then bare function references.
   if (node.callee.type === 'identifier') {
-    const funcName = node.callee.name;
+    const funcName = node.callee.name as string;
     const args = await resolveCallArgs(node.arguments, funcName, context);
 
     switch (funcName) {
@@ -855,10 +938,8 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
   // Without this, `it.toUpperCase()` evaluates callee to the unbound
   // String.prototype.toUpperCase function and calling it throws.
   if (typeof callee === 'function') {
-    const evaluatedArgs = await Promise.all(
-      node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
-    );
-    if (node.callee?.type === 'memberExpression') {
+    const evaluatedArgs = await Promise.all(node.arguments.map(arg => evaluateAST(arg, context)));
+    if (node.callee.type === 'memberExpression' && node.callee.object) {
       const thisArg = await evaluateAST(node.callee.object, context);
       return callee.apply(thisArg, evaluatedArgs);
     }
@@ -881,7 +962,7 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
  * broke `.class` callers asserting iterability. Aligning with upstream:
  * only `#id` selectors yield a single element.
  */
-async function evaluateSelector(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateSelector(node: SelectorNode, context: ExecutionContext): Promise<any> {
   const selector = node.value;
   const escaped = typeof selector === 'string' ? escapeClassColons(selector) : selector;
   const result = await referencesExpressions.elementWithSelector.evaluate(context, escaped);
@@ -921,7 +1002,10 @@ function escapeClassColons(selector: string): string {
 /**
  * Evaluate possessive expressions (`element's property`).
  */
-async function evaluatePossessiveExpression(node: any, context: ExecutionContext): Promise<any> {
+async function evaluatePossessiveExpression(
+  node: PossessiveNode,
+  context: ExecutionContext
+): Promise<any> {
   const object = await evaluateAST(node.object, context);
   const propertyName = node.property.name;
 
@@ -931,7 +1015,10 @@ async function evaluatePossessiveExpression(node: any, context: ExecutionContext
 /**
  * Evaluates event handler expressions
  */
-async function evaluateEventHandler(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateEventHandler(
+  node: EventHandlerNode,
+  context: ExecutionContext
+): Promise<any> {
   // Event handlers return a handler function
   return {
     event: node.event,
@@ -957,7 +1044,10 @@ async function evaluateEventHandler(node: any, context: ExecutionContext): Promi
 /**
  * Evaluates conditional expressions (if-then-else)
  */
-async function evaluateConditionalExpression(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateConditionalExpression(
+  node: ConditionalNode,
+  context: ExecutionContext
+): Promise<any> {
   const test = await evaluateAST(node.test, context);
 
   if (test) {
