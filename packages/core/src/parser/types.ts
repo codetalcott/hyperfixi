@@ -434,7 +434,7 @@ export const HYPERSCRIPT_KEYWORDS = new Set([
   'undefined',
 ]);
 
-// Note: Operator precedence is defined in expression-parser.ts via
-// getLogicalOperatorPrecedence() and getArithmeticOperatorPrecedence().
+// Note: Operator precedence is defined in pratt-parser.ts via the
+// PARSER_TABLE entries (leftAssoc/rightAssoc binding-power values).
 // Expression metadata objects also carry precedence values for tooling.
-// See packages/core/src/parser/expression-parser.ts for the authoritative source.
+// See packages/core/src/parser/pratt-parser.ts for the authoritative source.

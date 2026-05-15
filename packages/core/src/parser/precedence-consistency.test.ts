@@ -1,17 +1,16 @@
 /**
  * Operator Precedence Consistency Test
  *
- * Validates that operator precedence behaves correctly end-to-end.
- * This catches drift between the expression-parser's hard-coded precedence
- * (getLogicalOperatorPrecedence, getArithmeticOperatorPrecedence) and
- * expression metadata precedence values.
+ * Validates that operator precedence behaves correctly end-to-end. This
+ * catches drift between the parser's binding-power values and the
+ * precedence fields carried on expression metadata for tooling.
  *
- * Background: Precedence was previously defined in three places:
- * 1. OPERATOR_PRECEDENCE in types.ts (removed — was dead code)
- * 2. getLogicalOperatorPrecedence / getArithmeticOperatorPrecedence in expression-parser.ts
- * 3. Expression metadata objects (precedence fields in logical/index.ts, conversion/index.ts)
+ * Two sources of precedence live in the codebase today:
+ * 1. PARSER_TABLE entries in pratt-parser.ts (leftAssoc/rightAssoc bp values)
+ * 2. Expression metadata objects (precedence fields in logical/index.ts,
+ *    conversion/index.ts)
  *
- * Sources 2 and 3 serve different purposes (parser vs tooling) but must agree
+ * Source 1 drives runtime parsing; source 2 is for tooling. They must agree
  * on relative ordering. This test validates that agreement behaviorally.
  */
 

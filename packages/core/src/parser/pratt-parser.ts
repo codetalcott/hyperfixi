@@ -559,8 +559,8 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
       const targetType = ctx.parseExpr(71);
       // Support `Fixed:N` and similar parameterized type names. The pratt
       // parser stops at `:` (unknown infix), leaving it as the next token.
-      // Mirror legacy `expression-parser.ts` which treats the target type
-      // as an opaque string and includes the suffix.
+      // Treat the target type as an opaque string and include the suffix —
+      // `normalizeAsTargetType` in runtime.ts resolves the final string form.
       const peeked = ctx.peek();
       if (
         peeked &&
