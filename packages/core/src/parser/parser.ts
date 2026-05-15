@@ -2048,22 +2048,14 @@ export class Parser {
 
     this.advance(); // consume '('
 
-    // For now, only support empty argument list (constructor calls without arguments)
+    // Parse comma-separated argument expressions until ')'.
     const args: ASTNode[] = [];
-
-    // Parse arguments if any (simplified - just handle empty for now)
     if (!this.check(')')) {
-      // If there are arguments, we could parse them here
-      // For now, just consume tokens until closing paren
-      let depth = 1;
-      while (depth > 0 && !this.isAtEnd()) {
-        const token = this.advance();
-        if (token.value === '(') depth++;
-        if (token.value === ')') depth--;
-      }
-    } else {
-      this.advance(); // consume ')'
+      do {
+        args.push(this.parseExpression());
+      } while (this.match(','));
     }
+    this.consume(')', "Expected ')' after constructor arguments");
 
     // Create constructor call AST node (using callExpression type with constructor flag)
     return {

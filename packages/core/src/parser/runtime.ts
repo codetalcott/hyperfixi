@@ -283,6 +283,11 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
     // Check if it's a property on the context object (for backward compatibility)
     value = (context as any)[name];
     fromMutableContext = true;
+  } else if (typeof globalThis !== 'undefined' && name in globalThis) {
+    // JS built-ins: `Date`, `Math`, `Object`, `JSON`, etc. Mirrors legacy
+    // resolveVariable at expression-parser.ts:1387. Constructors are picked
+    // up by `evaluateCallExpression`'s `node.isConstructor` branch.
+    value = (globalThis as Record<string, unknown>)[name];
   } else {
     // Default to undefined for unknown identifiers
     value = undefined;
@@ -880,6 +885,16 @@ async function evaluateMemberExpression(node: any, context: ExecutionContext): P
  */
 async function evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
+
+  // `new Foo(args)` — parser marks constructor invocations with
+  // `isConstructor: true`. Handle before the per-function switch so JS
+  // built-ins like `new Date()`, `new Map()`, `new Error()` work uniformly.
+  if (node.isConstructor && typeof callee === 'function') {
+    const evaluatedArgs = await Promise.all(
+      node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
+    );
+    return new (callee as new (...args: unknown[]) => unknown)(...evaluatedArgs);
+  }
 
   // Handle special hyperscript functions that need raw identifiers as selectors
   if (node.callee.type === 'identifier') {

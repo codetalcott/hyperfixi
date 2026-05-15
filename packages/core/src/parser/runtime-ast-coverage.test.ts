@@ -354,4 +354,28 @@ describe('evaluateExpressionFromSource (canonical string→eval helper)', () => 
       expect(result).toBeNull();
     });
   });
+
+  // Phase ε.1: `new Foo(args)` honors the parser's `isConstructor` flag,
+  // and JS built-ins (Date, Math, JSON, etc.) resolve via globalThis.
+  describe('constructor call (ε.1)', () => {
+    it('new Date() returns a Date instance', async () => {
+      const result = await evaluateExpressionFromSource('new Date()', ctx());
+      expect(result).toBeInstanceOf(Date);
+    });
+
+    it('new Date(0) returns the epoch', async () => {
+      const result = await evaluateExpressionFromSource('new Date(0)', ctx());
+      expect((result as Date).getTime()).toBe(0);
+    });
+
+    it('Math.PI resolves via globalThis fallback', async () => {
+      const result = await evaluateExpressionFromSource('Math.PI', ctx());
+      expect(result).toBeCloseTo(Math.PI);
+    });
+
+    it('JSON.parse works as a method call', async () => {
+      const result = await evaluateExpressionFromSource('JSON.parse(\'{"foo":1}\')', ctx());
+      expect(result).toEqual({ foo: 1 });
+    });
+  });
 });
