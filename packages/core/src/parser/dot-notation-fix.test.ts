@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseAndEvaluateExpression } from './expression-parser';
+import { evaluateExpressionFromSource } from './runtime';
 import type { ExecutionContext } from '../types/core';
 
 describe('Dot Notation Property Access - TDD Fix', () => {
@@ -27,7 +27,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         async: false,
       };
 
-      const result = await parseAndEvaluateExpression('obj.prop', context);
+      const result = await evaluateExpressionFromSource('obj.prop', context);
       expect(result).toBe('value');
     });
 
@@ -53,7 +53,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         async: false,
       };
 
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         'me.className',
         context as unknown as ExecutionContext
       );
@@ -76,7 +76,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         async: false,
       };
 
-      const result = await parseAndEvaluateExpression('obj.nested.prop', context);
+      const result = await evaluateExpressionFromSource('obj.nested.prop', context);
       expect(result).toBe('deep-value');
     });
   });
@@ -101,14 +101,14 @@ describe('Dot Notation Property Access - TDD Fix', () => {
       };
 
       // Test dot notation
-      const dotResult = await parseAndEvaluateExpression(
+      const dotResult = await evaluateExpressionFromSource(
         'me.prop',
         context as unknown as ExecutionContext
       );
       expect(dotResult).toBe('dot-value');
 
       // Test possessive should still work
-      const possessiveResult = await parseAndEvaluateExpression(
+      const possessiveResult = await evaluateExpressionFromSource(
         'my otherProp',
         context as unknown as ExecutionContext
       );
@@ -134,7 +134,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
       };
 
       // Test string length property
-      const result = await parseAndEvaluateExpression('"hello".length', context);
+      const result = await evaluateExpressionFromSource('"hello".length', context);
       expect(result).toBe(5);
     });
 
@@ -154,10 +154,11 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         async: false,
       };
 
-      // Should throw error for null property access
-      await expect(parseAndEvaluateExpression('nullObj.prop', context)).rejects.toThrow(
-        /null|undefined/i
-      );
+      // Canonical (per design-doc Q2): silent-null member access returns
+      // undefined, doesn't throw. Matches upstream `_hyperscript` and modern
+      // JS optional-chaining intent.
+      const result = await evaluateExpressionFromSource('nullObj.prop', context);
+      expect(result).toBeUndefined();
     });
   });
 
@@ -179,7 +180,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
       };
 
       // Fixed: dot notation now works correctly
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         'me.className',
         context as unknown as ExecutionContext
       );
