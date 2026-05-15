@@ -154,9 +154,6 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'eventHandler':
       return evaluateEventHandler(node, context);
 
-    case 'command':
-      return evaluateCommand(node, context);
-
     case 'conditionalExpression':
       return evaluateConditionalExpression(node, context);
 
@@ -726,14 +723,6 @@ async function replaceAsync(
   return result;
 }
 
-/** Mirrors expression-parser.ts:toTypedContext (L77). */
-function toTypedContext(context: ExecutionContext): any {
-  return {
-    ...context,
-    evaluationHistory: (context as unknown as Record<string, unknown>).evaluationHistory ?? [],
-  };
-}
-
 /**
  * Evaluates collection expressions: `where`, `sorted by`, `mapped to`,
  * `split by`, `joined by` (upstream _hyperscript 0.9.90).
@@ -951,7 +940,7 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
     const evaluatedArgs = await Promise.all(
       node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
     );
-    if (node.callee?.type === 'memberExpression' || node.callee?.type === 'propertyAccess') {
+    if (node.callee?.type === 'memberExpression') {
       const thisArg = await evaluateAST(node.callee.object, context);
       return callee.apply(thisArg, evaluatedArgs);
     }
@@ -1045,28 +1034,6 @@ async function evaluateEventHandler(node: any, context: ExecutionContext): Promi
       for (const command of node.commands) {
         await evaluateAST(command, eventContext);
       }
-    },
-  };
-}
-
-/**
- * Evaluates command expressions
- */
-async function evaluateCommand(node: any, context: ExecutionContext): Promise<any> {
-  const commandName = node.name;
-  const args = await Promise.all(
-    (node.args || []).map((arg: ASTNode) => evaluateAST(arg, context))
-  );
-
-  // Use Phase 3 command system when available
-  // For now, return command descriptor
-  return {
-    type: 'command',
-    name: commandName,
-    args,
-    execute: async () => {
-      // Command execution logic will be implemented in Phase 4 command system
-      console.log(`Executing command: ${commandName}`, args);
     },
   };
 }
