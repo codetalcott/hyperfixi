@@ -13,7 +13,7 @@ import type {
 } from '../types/base-types';
 import type { ContextMetadata } from '../types/context-types';
 import type { EvaluationResult } from '../types/command-types';
-import { parseAndEvaluateExpression } from '../parser/expression-parser';
+import { evaluateExpressionFromSource } from '../parser/runtime';
 import { setGlobal } from '../parser/extensions';
 
 /** Maximum entries retained in history arrays to prevent memory leaks. */
@@ -1484,7 +1484,7 @@ export class DefFeature {
 
     // Try to parse and evaluate as an expression (handles 'i + j', 'value * 2', etc.)
     try {
-      const result = await parseAndEvaluateExpression(value, context);
+      const result = await evaluateExpressionFromSource(value, context);
       return result;
     } catch (error) {
       // If parsing/evaluation fails, return the literal string
