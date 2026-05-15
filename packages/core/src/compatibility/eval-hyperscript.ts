@@ -4,6 +4,7 @@
  */
 
 import { parseAndEvaluateExpression } from '../parser/expression-parser';
+import { evaluateExpressionFromSource } from '../parser/runtime';
 import { Parser } from '../parser/parser';
 import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
@@ -156,8 +157,8 @@ export async function evalHyperScript(
       // Use the new runtime system for commands with semantic parsing
       return await executeAsCommand(script, executionContext, language);
     } else {
-      // Use expression parser for expressions
-      const result = await parseAndEvaluateExpression(script, executionContext);
+      // Use canonical evaluator for expressions.
+      const result = await evaluateExpressionFromSource(script, executionContext);
       return result;
     }
   } catch (error) {

@@ -191,29 +191,28 @@ describe('Compat evaluator parity (legacy ↔ canonical)', () => {
     });
   });
 
-  describe('Documented divergences (Q2: silent-null vs throw)', () => {
-    it('null.x → canonical undefined, legacy throws', async () => {
+  // Q2 silent-null contract: after Phase δ migration, `evalHyperScript` routes
+  // through the canonical evaluator, so it also returns undefined (not throws)
+  // on null property access. Both sides now match.
+  describe('Silent-null member access (post-δ migration)', () => {
+    it('null.x → both undefined', async () => {
       const canonical = await evaluateExpressionFromSource(
         'nullVar.x',
         makeCanonicalCtx({ nullVar: null })
       );
+      const legacy = await evalHyperScript('nullVar.x', makeLegacyCtx({ nullVar: null }));
       expect(canonical).toBeUndefined();
-
-      await expect(
-        evalHyperScript('nullVar.x', makeLegacyCtx({ nullVar: null }))
-      ).rejects.toThrow();
+      expect(legacy).toBeUndefined();
     });
 
-    it('undefVar.x → canonical undefined, legacy throws', async () => {
+    it('undefVar.x → both undefined', async () => {
       const canonical = await evaluateExpressionFromSource(
         'undefVar.x',
         makeCanonicalCtx({ undefVar: undefined })
       );
+      const legacy = await evalHyperScript('undefVar.x', makeLegacyCtx({ undefVar: undefined }));
       expect(canonical).toBeUndefined();
-
-      await expect(
-        evalHyperScript('undefVar.x', makeLegacyCtx({ undefVar: undefined }))
-      ).rejects.toThrow();
+      expect(legacy).toBeUndefined();
     });
   });
 
