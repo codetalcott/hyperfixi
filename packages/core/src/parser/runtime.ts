@@ -379,7 +379,9 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
       );
     case '^':
     case '**':
-      return Math.pow(Number(left), Number(right));
+      return unwrapTypedResult(
+        await specialExpressions.power.evaluate(context as any, { left, right })
+      );
 
     case '>':
     case 'is greater than':

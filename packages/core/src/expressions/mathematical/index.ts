@@ -292,6 +292,50 @@ export class ModuloExpression implements BaseTypedExpression<number> {
 }
 
 // ============================================================================
+// Power Expression
+// ============================================================================
+
+export class PowerExpression implements BaseTypedExpression<number> {
+  public readonly name = 'power';
+  public readonly category: ExpressionCategory = 'Special';
+  public readonly syntax = 'left ** right';
+  public readonly outputType: EvaluationType = 'number';
+  public readonly metadata: ExpressionMetadata = { category: 'Special', complexity: 'simple' };
+
+  async evaluate(_context: TypedExpressionContext, input: unknown): Promise<TypedResult<number>> {
+    const validation = this.validate(input);
+    if (!validation.isValid) {
+      return { success: false, errors: validation.errors, suggestions: validation.suggestions };
+    }
+
+    try {
+      const { left, right } = input as { left: unknown; right: unknown };
+      const leftNum = toNumber(left, 'left operand');
+      const rightNum = toNumber(right, 'right operand');
+      const result = ensureFinite(Math.pow(leftNum, rightNum), 'power');
+
+      return { success: true, value: result, type: 'number' };
+    } catch (error) {
+      return {
+        success: false,
+        errors: [
+          createError(
+            'runtime-error',
+            `Power failed: ${error instanceof Error ? error.message : String(error)}`
+          ),
+        ],
+        suggestions: ['Ensure both operands are numeric'],
+      };
+    }
+  }
+
+  validate(input: unknown): ValidationResult {
+    const addExpr = new AdditionExpression();
+    return addExpr.validate(input);
+  }
+}
+
+// ============================================================================
 // Factory Functions
 // ============================================================================
 
@@ -315,6 +359,10 @@ export function createModuloExpression(): ModuloExpression {
   return new ModuloExpression();
 }
 
+export function createPowerExpression(): PowerExpression {
+  return new PowerExpression();
+}
+
 // ============================================================================
 // Expression Registry
 // ============================================================================
@@ -325,4 +373,5 @@ export const mathematicalExpressions = {
   multiplication: createMultiplicationExpression(),
   division: createDivisionExpression(),
   modulo: createModuloExpression(),
+  power: createPowerExpression(),
 } as const;
