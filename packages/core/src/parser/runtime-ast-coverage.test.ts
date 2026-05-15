@@ -34,7 +34,7 @@ async function evalArg(
   return evaluateAST(arg, ctx);
 }
 
-describe('AST evaluator coverage (ported from expression-parser.ts)', () => {
+describe('AST evaluator coverage', () => {
   describe('arrayLiteral', () => {
     it('[1, 2, 3] → [1,2,3]', async () => {
       expect(await evalArg('return [1, 2, 3]')).toEqual([1, 2, 3]);
@@ -125,9 +125,8 @@ describe('AST evaluator coverage (ported from expression-parser.ts)', () => {
     it('multiple ${...} interpolations', async () => {
       expect(await evalArg('return `${1+1} and ${2+2}`')).toBe('2 and 4');
     });
-    // Phase γ.1: template-literal interpolation now uses the canonical
-    // evaluator instead of the legacy `parseAndEvaluateExpression`.
-    // Verify canonical semantics for the recursive `${expr}` path.
+    // Template-literal interpolation routes through the canonical evaluator;
+    // verify silent-null and method-call semantics on the recursive `${expr}` path.
     it('${null.x} → "undefined" via canonical silent-null', async () => {
       const locals = new Map<string, unknown>([['nullVar', null]]);
       expect(await evalArg('return `[${nullVar.x}]`', { locals })).toBe('[undefined]');

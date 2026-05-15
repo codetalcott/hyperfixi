@@ -160,10 +160,7 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'conditionalExpression':
       return evaluateConditionalExpression(node, context);
 
-    // Node types ported from expression-parser.ts evaluator (the older path).
-    // These are produced by the canonical parser (parser.ts) but were previously
-    // only handled by the legacy `evaluateASTNode` switch — calling them via
-    // the canonical Pratt path would throw `Unknown AST node type`.
+    // Composite expression nodes produced by the canonical parser.
     case 'arrayLiteral':
       return evaluateArrayLiteralNode(node, context);
     case 'objectLiteral':
@@ -188,12 +185,8 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 
 /**
  * Parse and evaluate a hyperscript expression source string using the
- * canonical evaluator (upstream-faithful semantics: silent-null member
- * access, late-binding `this` on method extraction).
- *
- * Preferred over legacy `parseAndEvaluateExpression` (expression-parser.ts).
- * See ~/.claude/plans/evaluator-consolidation-design.md for the full
- * consolidation plan.
+ * canonical evaluator. Upstream-faithful semantics: silent-null member
+ * access, late-binding `this` on method extraction.
  */
 export async function evaluateExpressionFromSource(
   source: string,
@@ -578,12 +571,8 @@ function typeCheck(value: unknown, typeName: string, nullOk: boolean): boolean {
 }
 
 // ===========================================================================
-// Node-type evaluators ported from expression-parser.ts
-//
-// Each helper has the same shape as its `evaluateXxx` counterpart in
-// expression-parser.ts, with `evaluateASTNode` → `evaluateAST` rewired. Keep
-// in sync until the two evaluator paths are consolidated; cite the source
-// line for traceability.
+// Composite-expression node evaluators (arrayLiteral, objectLiteral,
+// attributeAccess, propertyOfExpression, templateLiteral).
 // ===========================================================================
 
 /** Mirrors expression-parser.ts:evaluateArrayLiteral (L2066). */

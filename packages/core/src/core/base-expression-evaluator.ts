@@ -685,11 +685,10 @@ export class BaseExpressionEvaluator {
   /**
    * Evaluate 'as' type conversion expressions (e.g., `x as Int`, `value as String`).
    *
-   * `targetType` may arrive as a string (from the standalone expression-parser
-   * fragment, which reads parameterized types like `Fixed:2` directly) or as
-   * an AST node (from the Pratt parser, which calls `parseExpr` for the type
-   * and emits e.g. `{ type: 'identifier', name: 'Int' }`). The downstream
-   * `asExpression` evaluator requires a string, so normalize here.
+   * `targetType` is an AST node from the canonical Pratt parser
+   * (`{ type: 'identifier', name: 'Int' }`, optionally with a `:N` suffix
+   * merged in for parameterized types like `Fixed:2`). Normalize to the
+   * string form the downstream `asExpression` evaluator expects.
    */
   protected async evaluateAsExpression(
     node: { expression: any; targetType: unknown },
