@@ -784,6 +784,30 @@ async function evaluateMemberExpression(node: any, context: ExecutionContext): P
 }
 
 /**
+ * `closest`/`previous`/`next` treat identifier and selector args as raw tag
+ * or selector strings (`closest section` → `closest('section')`). All other
+ * callees evaluate args normally.
+ */
+const RAW_ARG_BUILTINS = new Set(['closest', 'previous', 'next']);
+
+async function resolveCallArgs(
+  argNodes: ASTNode[],
+  funcName: string,
+  context: ExecutionContext
+): Promise<unknown[]> {
+  if (!RAW_ARG_BUILTINS.has(funcName)) {
+    return Promise.all(argNodes.map(arg => evaluateAST(arg, context)));
+  }
+  return Promise.all(
+    argNodes.map(arg => {
+      if (arg.type === 'identifier' && (arg as any).name) return (arg as any).name;
+      if (arg.type === 'selector' && (arg as any).value) return (arg as any).value;
+      return evaluateAST(arg, context);
+    })
+  );
+}
+
+/**
  * Evaluate a call expression. Special-cases positional builtins
  * (`closest`/`previous`/`next` accept raw identifier args as tag selectors),
  * constructor invocations (`new Foo(...)`), and member-expression callees
@@ -802,60 +826,26 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
     return new (callee as new (...args: unknown[]) => unknown)(...evaluatedArgs);
   }
 
-  // Handle special hyperscript functions that need raw identifiers as selectors
+  // Identifier callees: positional builtins (which need raw-arg treatment for
+  // closest/previous/next), then bare function references.
   if (node.callee.type === 'identifier') {
     const funcName = node.callee.name;
-
-    // For closest/previous/next, identifier args should be treated as tag selectors
-    if (['closest', 'previous', 'next'].includes(funcName)) {
-      const args = await Promise.all(
-        node.arguments.map((arg: ASTNode) => {
-          // If arg is an identifier, use the name as a tag selector
-          if (arg.type === 'identifier' && (arg as any).name) {
-            return (arg as any).name;
-          }
-          // If arg is a selector, use the value
-          if (arg.type === 'selector' && (arg as any).value) {
-            return (arg as any).value;
-          }
-          return evaluateAST(arg, context);
-        })
-      );
-
-      switch (funcName) {
-        case 'closest':
-          return referencesExpressions.closest.evaluate(context, ...args);
-        case 'previous':
-          return positionalExpressions.previous.evaluate(context, ...args);
-        case 'next':
-          return positionalExpressions.next.evaluate(context, ...args);
-      }
-    }
-
-    const args2 = await Promise.all(
-      node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
-    );
+    const args = await resolveCallArgs(node.arguments, funcName, context);
 
     switch (funcName) {
       case 'closest':
-        return referencesExpressions.closest.evaluate(context, ...args2);
-
-      case 'first':
-        return positionalExpressions.first.evaluate(context, ...args2);
-
-      case 'last':
-        return positionalExpressions.last.evaluate(context, ...args2);
-
-      case 'next':
-        return positionalExpressions.next.evaluate(context, ...args2);
-
+        return referencesExpressions.closest.evaluate(context, ...args);
       case 'previous':
-        return positionalExpressions.previous.evaluate(context, ...args2);
-
+        return positionalExpressions.previous.evaluate(context, ...args);
+      case 'next':
+        return positionalExpressions.next.evaluate(context, ...args);
+      case 'first':
+        return positionalExpressions.first.evaluate(context, ...args);
+      case 'last':
+        return positionalExpressions.last.evaluate(context, ...args);
       default:
-        // Regular function call
         if (typeof callee === 'function') {
-          return callee(...args2);
+          return callee(...args);
         }
         throw new Error(`Cannot call non-function: ${funcName}`);
     }
