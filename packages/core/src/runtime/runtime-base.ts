@@ -381,6 +381,21 @@ export class RuntimeBase {
   }
 
   /**
+   * Surface a runtime error via `console.error` when `enableErrorReporting`
+   * is on (the default). Embedders with their own error pipeline can disable
+   * the option to silence per-event-loop spam in hot paths (mutation
+   * observers, resize handlers, repeating event subscriptions).
+   */
+  protected logError(...args: unknown[]): void {
+    if (this.options.enableErrorReporting) console.error(...args);
+  }
+
+  /** Same as `logError` but uses `console.warn`. */
+  protected logWarn(...args: unknown[]): void {
+    if (this.options.enableErrorReporting) console.warn(...args);
+  }
+
+  /**
    * Destroy the runtime, cleaning up all resources
    */
   destroy(): void {
@@ -584,7 +599,7 @@ export class RuntimeBase {
         });
       } catch (e) {
         if (!isControlFlowError(e)) {
-          console.error(`Error executing command '${commandName}':`, e);
+          this.logError(`Error executing command '${commandName}':`, e);
         }
         throw e;
       }
@@ -592,9 +607,7 @@ export class RuntimeBase {
 
     // 3. Fallback / Error
     const errorMsg = `Unknown command: ${name}. Ensure it is registered in the Runtime options.`;
-    if (this.options.enableErrorReporting) {
-      console.warn(errorMsg);
-    }
+    this.logWarn(errorMsg);
     throw new Error(errorMsg);
   }
 
@@ -659,9 +672,7 @@ export class RuntimeBase {
     if (!this.registry.has(commandName)) {
       // Return error as exception (not a control flow signal)
       const errorMsg = `Unknown command: ${name}. Ensure it is registered in the Runtime options.`;
-      if (this.options.enableErrorReporting) {
-        console.warn(errorMsg);
-      }
+      this.logWarn(errorMsg);
       throw new Error(errorMsg);
     }
 
@@ -688,7 +699,7 @@ export class RuntimeBase {
         return err(signal);
       }
       // Real error - log and re-throw
-      console.error(`Error executing command '${commandName}':`, e);
+      this.logError(`Error executing command '${commandName}':`, e);
       throw e;
     }
   }
@@ -1231,7 +1242,7 @@ export class RuntimeBase {
         try {
           await this.execute({ type: 'program', commands }, eventContext);
         } catch (e) {
-          console.error(`[HyperFixi] Error executing commands for custom event '${event}':`, e);
+          this.logError(`[HyperFixi] Error executing commands for custom event '${event}':`, e);
         }
       };
 
@@ -1259,7 +1270,7 @@ export class RuntimeBase {
           `Custom event source '${customEventSource}' subscription ${subscription.id}`
         );
       } catch (error) {
-        console.error(
+        this.logError(
           `[HyperFixi] Failed to subscribe to custom event source '${customEventSource}':`,
           error
         );
@@ -1491,7 +1502,7 @@ export class RuntimeBase {
               break;
             }
           }
-          console.error(`COMMAND FAILED:`, e);
+          runtime.logError(`COMMAND FAILED:`, e);
           throw e;
         }
       }
@@ -1539,7 +1550,7 @@ export class RuntimeBase {
                 if (isControlFlowError(error)) {
                   if (error.isHalt || error.isExit || error.isReturn) break;
                 } else {
-                  console.error(`Error executing mutation handler command:`, error);
+                  this.logError(`Error executing mutation handler command:`, error);
                 }
               }
             }
@@ -1629,7 +1640,7 @@ export class RuntimeBase {
                 if (isControlFlowError(error)) {
                   if (error.isHalt || error.isExit || error.isReturn) break;
                 } else {
-                  console.error(`Error executing change handler command:`, error);
+                  this.logError(`Error executing change handler command:`, error);
                 }
               }
             }
