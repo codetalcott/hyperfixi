@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseAndEvaluateExpression } from './expression-parser';
+import { evaluateExpressionFromSource } from './runtime';
 import type { ExecutionContext } from '../types/core';
 
 // Standard test context
@@ -29,19 +29,19 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
   describe('Advanced Math Operations', () => {
     it('should handle exponentiation with ^ operator', async () => {
       // Test if exponentiation precedence is working
-      const result = await parseAndEvaluateExpression('2 ^ 3', context);
+      const result = await evaluateExpressionFromSource('2 ^ 3', context);
       expect(result).toBe(8);
     });
 
     it('should handle exponentiation with ** operator', async () => {
       // Test alternative exponentiation syntax
-      const result = await parseAndEvaluateExpression('2 ** 3', context);
+      const result = await evaluateExpressionFromSource('2 ** 3', context);
       expect(result).toBe(8);
     });
 
     it('should handle complex precedence with exponentiation', async () => {
       // Test: 2 + 3 ^ 2 should be 2 + 9 = 11
-      const result = await parseAndEvaluateExpression('2 + 3 ^ 2', context);
+      const result = await evaluateExpressionFromSource('2 + 3 ^ 2', context);
       expect(result).toBe(11);
     });
   });
@@ -54,37 +54,37 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
       };
 
       // Test template literal interpolation (must use backticks, not double quotes)
-      const result = await parseAndEvaluateExpression('`Hello ${name}!`', contextWithVar);
+      const result = await evaluateExpressionFromSource('`Hello ${name}!`', contextWithVar);
       expect(result).toBe('Hello world!');
     });
 
     it('should handle string concatenation with mixed types', async () => {
       // Test automatic type conversion in string concatenation
-      const result = await parseAndEvaluateExpression('"Count: " + 42', context);
+      const result = await evaluateExpressionFromSource('"Count: " + 42', context);
       expect(result).toBe('Count: 42');
     });
   });
 
   describe('Array and Collection Operations', () => {
     it('should handle array literal syntax', async () => {
-      const result = await parseAndEvaluateExpression('[1, 2, 3]', context);
+      const result = await evaluateExpressionFromSource('[1, 2, 3]', context);
       expect(result).toEqual([1, 2, 3]);
     });
 
     it('should handle array length property', async () => {
-      const result = await parseAndEvaluateExpression('[1, 2, 3].length', context);
+      const result = await evaluateExpressionFromSource('[1, 2, 3].length', context);
       expect(result).toBe(3);
     });
 
     it('should handle array indexing', async () => {
-      const result = await parseAndEvaluateExpression('[1, 2, 3][1]', context);
+      const result = await evaluateExpressionFromSource('[1, 2, 3][1]', context);
       expect(result).toBe(2);
     });
   });
 
   describe('Object Operations', () => {
     it('should handle object literal syntax', async () => {
-      const result = await parseAndEvaluateExpression('{name: "test", value: 42}', context);
+      const result = await evaluateExpressionFromSource('{name: "test", value: 42}', context);
       expect(result).toEqual({ name: 'test', value: 42 });
     });
 
@@ -94,7 +94,7 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
         locals: new Map([['obj', { name: 'test', value: 42 }]]),
       };
 
-      const result = await parseAndEvaluateExpression('obj.name', contextWithObj);
+      const result = await evaluateExpressionFromSource('obj.name', contextWithObj);
       expect(result).toBe('test');
     });
 
@@ -104,7 +104,7 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
         locals: new Map([['obj', { name: 'test', value: 42 }]]),
       };
 
-      const result = await parseAndEvaluateExpression('obj["name"]', contextWithObj);
+      const result = await evaluateExpressionFromSource('obj["name"]', contextWithObj);
       expect(result).toBe('test');
     });
   });
@@ -114,12 +114,12 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
     // This is marked as low priority in REMAINING_TEST_FIXES_PLAN.md
     it.skip('should handle null coalescing expressions', async () => {
       // Test null ?? 'default' pattern
-      const result = await parseAndEvaluateExpression('null ?? "default"', context);
+      const result = await evaluateExpressionFromSource('null ?? "default"', context);
       expect(result).toBe('default');
     });
 
     it.skip('should handle undefined coalescing', async () => {
-      const result = await parseAndEvaluateExpression('undefined ?? "default"', context);
+      const result = await evaluateExpressionFromSource('undefined ?? "default"', context);
       expect(result).toBe('default');
     });
 
@@ -129,24 +129,24 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
         locals: new Map([['myVar', 'exists']]),
       };
 
-      const result = await parseAndEvaluateExpression('myVar exists', contextWithVar);
+      const result = await evaluateExpressionFromSource('myVar exists', contextWithVar);
       expect(result).toBe(true);
     });
   });
 
   describe('Type Conversion Edge Cases', () => {
     it('should handle as Boolean conversion', async () => {
-      const result = await parseAndEvaluateExpression('"false" as Boolean', context);
+      const result = await evaluateExpressionFromSource('"false" as Boolean', context);
       expect(result).toBe(false);
     });
 
     it('should handle as Number conversion with edge cases', async () => {
-      const result = await parseAndEvaluateExpression('"42.5" as Number', context);
+      const result = await evaluateExpressionFromSource('"42.5" as Number', context);
       expect(result).toBe(42.5);
     });
 
     it('should handle as String conversion', async () => {
-      const result = await parseAndEvaluateExpression('42 as String', context);
+      const result = await evaluateExpressionFromSource('42 as String', context);
       expect(result).toBe('42');
     });
   });
@@ -162,7 +162,7 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
 
       const contextWithMe = { ...context, me: mockElement };
 
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         'me.className',
         contextWithMe as unknown as ExecutionContext
       );
@@ -180,7 +180,7 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
 
       const contextWithData = { ...context, me: mockData };
 
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         "my user's profile's name",
         contextWithData as unknown as ExecutionContext
       );
@@ -191,7 +191,7 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
   describe('Complex Expression Combinations', () => {
     it('should handle math with logical operations', async () => {
       // Test: (5 > 3) and (2 + 2 == 4)
-      const result = await parseAndEvaluateExpression('(5 > 3) and (2 + 2 == 4)', context);
+      const result = await evaluateExpressionFromSource('(5 > 3) and (2 + 2 == 4)', context);
       expect(result).toBe(true);
     });
 
@@ -208,7 +208,7 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
 
       // This might not be supported yet, but testing the pattern
       try {
-        const result = await parseAndEvaluateExpression(
+        const result = await evaluateExpressionFromSource(
           'condition ? valueA : valueB',
           contextWithVar
         );
@@ -224,14 +224,14 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
     it('should return undefined for undefined variables (graceful handling)', async () => {
       // Hyperscript returns undefined for unknown variables rather than throwing
       // This is more lenient than JavaScript strict mode
-      const result = await parseAndEvaluateExpression('undefinedVar', context);
+      const result = await evaluateExpressionFromSource('undefinedVar', context);
       expect(result).toBeUndefined();
     });
 
     it.skip('should return error result for division by zero', async () => {
       // Division by zero returns a TypedResult with success: false
       // rather than throwing, allowing for graceful error handling
-      const result = await parseAndEvaluateExpression('5 / 0', context);
+      const result = await evaluateExpressionFromSource('5 / 0', context);
       expect(result).toMatchObject({
         success: false,
         errors: expect.arrayContaining([
