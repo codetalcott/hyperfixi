@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { tokenize } from './tokenizer';
-import { parseAndEvaluateExpression } from './expression-parser';
+import { evaluateExpressionFromSource } from './runtime';
 import { createMockHyperscriptContext } from '../test-setup';
 import type { ExecutionContext } from '../types/core';
 
@@ -49,7 +49,7 @@ describe('Template Literals', () => {
     });
 
     it('should parse and evaluate basic template literal', async () => {
-      const result = await parseAndEvaluateExpression('`hello world`', context);
+      const result = await evaluateExpressionFromSource('`hello world`', context);
       expect(result).toBe('hello world');
     });
   });
@@ -69,17 +69,17 @@ describe('Template Literals', () => {
     });
 
     it('should parse and evaluate template literal with simple variable', async () => {
-      const result = await parseAndEvaluateExpression('`hello ${name}`', context);
+      const result = await evaluateExpressionFromSource('`hello ${name}`', context);
       expect(result).toBe('hello world');
     });
 
     it('should handle multiple variable interpolations', async () => {
-      const result = await parseAndEvaluateExpression('`${name} has ${count} items`', context);
+      const result = await evaluateExpressionFromSource('`${name} has ${count} items`', context);
       expect(result).toBe('world has 5 items');
     });
 
     it('should handle property access in interpolation', async () => {
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         '`Hello ${user.name}, age ${user.age}`',
         context
       );
@@ -89,12 +89,12 @@ describe('Template Literals', () => {
 
   describe('Template Literals with Expressions', () => {
     it('should handle mathematical expressions in interpolation', async () => {
-      const result = await parseAndEvaluateExpression('`total: ${count + 10}`', context);
+      const result = await evaluateExpressionFromSource('`total: ${count + 10}`', context);
       expect(result).toBe('total: 15');
     });
 
     it('should handle complex expressions in interpolation', async () => {
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         '`doubled: ${count * 2}, tripled: ${count * 3}`',
         context
       );
@@ -102,36 +102,36 @@ describe('Template Literals', () => {
     });
 
     it('should handle string concatenation in interpolation', async () => {
-      const result = await parseAndEvaluateExpression('`greeting: ${"hello " + name}`', context);
+      const result = await evaluateExpressionFromSource('`greeting: ${"hello " + name}`', context);
       expect(result).toBe('greeting: hello world');
     });
   });
 
   describe('Parenthesis Interpolation Syntax', () => {
     it('should handle $(expr) as alias for ${expr}', async () => {
-      const result = await parseAndEvaluateExpression('`total: $(count + 10)`', context);
+      const result = await evaluateExpressionFromSource('`total: $(count + 10)`', context);
       expect(result).toBe('total: 15');
     });
 
     it('should handle $(variable) syntax', async () => {
-      const result = await parseAndEvaluateExpression('`hello $(name)`', context);
+      const result = await evaluateExpressionFromSource('`hello $(name)`', context);
       expect(result).toBe('hello world');
     });
 
     it('should handle mixed $() and ${} in same template', async () => {
-      const result = await parseAndEvaluateExpression('`$(name) has ${count} items`', context);
+      const result = await evaluateExpressionFromSource('`$(name) has ${count} items`', context);
       expect(result).toBe('world has 5 items');
     });
 
     it('should handle property access in $()', async () => {
-      const result = await parseAndEvaluateExpression('`User: $(user.name)`', context);
+      const result = await evaluateExpressionFromSource('`User: $(user.name)`', context);
       expect(result).toBe('User: Alice');
     });
   });
 
   describe('Nested Template Literals', () => {
     it.skip('should handle escaped backticks', async () => {
-      const result = await parseAndEvaluateExpression('`code: \\`hello\\``', context);
+      const result = await evaluateExpressionFromSource('`code: \\`hello\\``', context);
       expect(result).toBe('code: `hello`');
     });
 
@@ -147,13 +147,13 @@ describe('Template Literals', () => {
     });
 
     it('should handle invalid variable references', async () => {
-      const result = await parseAndEvaluateExpression('`hello ${nonexistent}`', context);
+      const result = await evaluateExpressionFromSource('`hello ${nonexistent}`', context);
       expect(result).toBe('hello undefined');
     });
 
     // Aspirational: Parser gracefully handles errors instead of throwing
     it.skip('should handle syntax errors in interpolation expressions', async () => {
-      await expect(parseAndEvaluateExpression('`result: ${1 + }`', context)).rejects.toThrow();
+      await expect(evaluateExpressionFromSource('`result: ${1 + }`', context)).rejects.toThrow();
     });
   });
 });
