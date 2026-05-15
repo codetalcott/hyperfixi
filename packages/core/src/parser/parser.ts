@@ -72,9 +72,6 @@ import {
   isBasicOperator,
   isComparisonOperator,
 } from './token-predicates';
-import { CommandNodeBuilder } from './command-node-builder';
-import { TokenConsumer } from './token-consumer';
-
 // Phase 9-2: Import helper modules and types
 import type {
   // ParserContext, Position - Will be used in Phase 9-3 for command extraction
