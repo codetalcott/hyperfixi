@@ -45,6 +45,12 @@ export interface RepeatCommandInput {
   commands?: unknown;
   /** Else branch — executed when the loop completes with zero iterations */
   elseCommands?: unknown;
+  /**
+   * Bottom-tested flag. True for `repeat <body> until/while <expr> end`,
+   * where the body runs unconditionally before the first condition check
+   * (upstream `_hyperscript` controlflow.js:268-281).
+   */
+  bottomTested?: boolean;
   eventName?: string;
   eventTarget?: EventTarget;
 }
@@ -114,6 +120,13 @@ export class RepeatCommand implements DecoratedCommand {
     const firstArg = raw.args[0] as { type?: string; name?: string };
     const loopType = firstArg?.type === 'identifier' ? firstArg.name : null;
 
+    // Bottom-tested flag from parser (set when `repeat <body> until/while
+    // <expr> end` is used). Encoded as a modifier literal so it survives
+    // the args/modifier split without polluting the loop-type discriminant.
+    const bottomTested = raw.modifiers?.bottomTested
+      ? ((await evaluator.evaluate(raw.modifiers.bottomTested, context)) as boolean)
+      : false;
+
     // Parse based on loop type
     if (loopType === 'for' || raw.modifiers?.for) {
       const varArg = raw.args[1] as { value?: string; name?: string };
@@ -142,7 +155,7 @@ export class RepeatCommand implements DecoratedCommand {
     if (loopType === 'while' || raw.modifiers?.while) {
       const condition = raw.args[1] || raw.modifiers?.while;
       if (!condition) throw new Error('while loops require a condition');
-      return { type: 'while', condition, indexVariable, commands, elseCommands };
+      return { type: 'while', condition, indexVariable, commands, elseCommands, bottomTested };
     }
 
     if ((loopType === 'until' && raw.modifiers?.from) || loopType === 'until-event') {
@@ -168,7 +181,7 @@ export class RepeatCommand implements DecoratedCommand {
     if (loopType === 'until' || raw.modifiers?.until) {
       const condition = raw.args[1] || raw.modifiers?.until;
       if (!condition) throw new Error('until loops require a condition');
-      return { type: 'until', condition, indexVariable, commands, elseCommands };
+      return { type: 'until', condition, indexVariable, commands, elseCommands, bottomTested };
     }
 
     if (loopType === 'forever' || raw.modifiers?.forever) {
@@ -191,6 +204,7 @@ export class RepeatCommand implements DecoratedCommand {
       indexVariable,
       commands,
       elseCommands,
+      bottomTested,
       eventName,
       eventTarget,
     } = input;
@@ -229,6 +243,17 @@ export class RepeatCommand implements DecoratedCommand {
         break;
       default:
         throw new Error(`Unknown repeat type: ${type}`);
+    }
+
+    // Bottom-tested loops (`repeat <body> until/while <expr> end`) run the
+    // body unconditionally on iteration 0, then check the condition normally.
+    // Mirrors upstream _hyperscript controlflow.js:56-57 (bottomTested branch).
+    if (bottomTested) {
+      const originalShouldContinue = config.shouldContinue;
+      config.shouldContinue = async ctx => {
+        if (ctx.index === 0) return true;
+        return await originalShouldContinue(ctx);
+      };
     }
 
     // Execute loop using unified executor

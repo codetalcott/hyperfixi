@@ -10,7 +10,7 @@
  */
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
-import type { ASTNode, CommandNode, Token } from '../../types/core';
+import type { ASTNode, CommandNode, ExpressionNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { createBlock, createStringLiteral } from '../helpers/ast-helpers';
 import { debug } from '../../utils/debug';
@@ -236,14 +236,41 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
     }
   }
 
-  // Parse command block; method consumes 'end' if there's no 'else' branch.
-  const { commands, hasElse } = ctx.parseCommandListUntilEndOrElse();
-
-  // If `else` was hit, parse the else branch (runs when loop never iterated).
+  // Parse command block.
+  // - For bare `repeat` (loopType === 'forever') the body can terminate on
+  //   `end`, `else`, `until`, or `while` — the last two introduce a
+  //   bottom-tested loop (upstream `_hyperscript` controlflow.js:268-281).
+  // - For any leading type-keyword form, only `end` or `else` are allowed.
+  let commands: ASTNode[];
   let elseCommands: ASTNode[] | null = null;
-  if (hasElse) {
-    ctx.advance(); // consume 'else'
-    elseCommands = ctx.parseCommandListUntilEnd(); // consumes 'end'
+  let bottomTested = false;
+
+  if (loopType === KEYWORDS.FOREVER) {
+    const result = ctx.parseRepeatBody();
+    commands = result.commands;
+
+    if (result.terminator === 'else') {
+      ctx.advance(); // consume 'else'
+      elseCommands = ctx.parseCommandListUntilEnd(); // consumes 'end'
+    } else if (result.terminator === 'until' || result.terminator === 'while') {
+      // Bottom-tested loop: body always runs once before condition checked.
+      bottomTested = true;
+      loopType = result.terminator; // 'until' or 'while'
+      ctx.advance(); // consume 'until'/'while'
+      condition = ctx.parseExpression();
+      if (!ctx.check('end')) {
+        throw new Error('Expected "end" to close repeat block');
+      }
+      ctx.advance(); // consume 'end'
+    }
+    // else: terminator === 'end', already consumed by parseRepeatBody
+  } else {
+    const result = ctx.parseCommandListUntilEndOrElse();
+    commands = result.commands;
+    if (result.hasElse) {
+      ctx.advance(); // consume 'else'
+      elseCommands = ctx.parseCommandListUntilEnd(); // consumes 'end'
+    }
   }
 
   // Build args array based on loop type
@@ -290,10 +317,15 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
   }
 
   // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-  return CommandNodeBuilder.from(commandToken)
-    .withArgs(...args)
-    .endingAt(ctx.getPosition())
-    .build();
+  const builder = CommandNodeBuilder.from(commandToken).withArgs(...args);
+  if (bottomTested) {
+    builder.withModifier('bottomTested', {
+      type: 'literal',
+      value: true,
+      ...pos,
+    } as unknown as ExpressionNode);
+  }
+  return builder.endingAt(ctx.getPosition()).build();
 }
 
 /**

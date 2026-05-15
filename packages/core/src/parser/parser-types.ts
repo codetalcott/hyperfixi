@@ -385,12 +385,25 @@ export interface CommandParser {
   parseCommandListUntilEnd(): ASTNode[];
 
   /**
-   * Parse command list until 'end' OR 'else' keyword. Does NOT consume the
-   * terminator. Returns the parsed commands and a flag indicating whether
-   * `else` was hit (so callers can decide whether to parse an else branch).
+   * Parse command list until 'end' OR 'else' keyword. Consumes `end` if
+   * there is no else branch; leaves `else` for the caller to consume.
+   * Returns the parsed commands and a flag indicating whether `else` was
+   * hit (so callers can decide whether to parse an else branch).
    * Used by `repeat ... else ... end`.
    */
   parseCommandListUntilEndOrElse(): { commands: ASTNode[]; hasElse: boolean };
+
+  /**
+   * Parse a `repeat` body that may terminate on any of `end`, `else`,
+   * `until`, or `while`. Consumes `end` itself; for other terminators, the
+   * caller advances past the keyword and handles the trailing piece.
+   * Used by `parseRepeatCommand` to support bottom-tested loops
+   * (`repeat <body> until/while <expr> end`) alongside the regular and
+   * else-branch forms.
+   *
+   * @returns commands + terminator: `'end'`, `'else'`, `'until'`, or `'while'`
+   */
+  parseRepeatBody(): { commands: ASTNode[]; terminator: string };
 }
 
 /**

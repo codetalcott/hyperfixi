@@ -634,4 +634,86 @@ describe('RepeatCommand', () => {
       expect(executeSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('Bottom-tested loops (upstream _hyperscript parity)', () => {
+    it('should run body once even when until-condition is true from start', async () => {
+      // `repeat <body> until true end` — body always runs at least once.
+      // Top-tested until=true would skip the body entirely (since it stops
+      // when condition is true). Bottom-tested forces iteration 0 to run.
+      const context = createMockContext();
+      const bodySpy = vi.fn(async () => 'body-ran');
+      context.locals.set('_runtimeExecute', bodySpy);
+
+      const input: RepeatCommandInput = {
+        type: 'until',
+        condition: true, // primitive — evaluateCondition handles directly
+        commands: createMockBlock([{ type: 'command' }]),
+        bottomTested: true,
+      };
+
+      const output = await command.execute(input, context);
+
+      expect(bodySpy).toHaveBeenCalledTimes(1);
+      expect(output.iterations).toBe(1);
+    });
+
+    it('should NOT run body when bottomTested=false (top-tested) and until is true', async () => {
+      const context = createMockContext();
+      const bodySpy = vi.fn(async () => 'body-ran');
+      context.locals.set('_runtimeExecute', bodySpy);
+
+      const input: RepeatCommandInput = {
+        type: 'until',
+        condition: true,
+        commands: createMockBlock([{ type: 'command' }]),
+        // bottomTested is undefined / false
+      };
+
+      const output = await command.execute(input, context);
+
+      // Top-tested: until=true means stop immediately, so 0 iterations
+      expect(bodySpy).not.toHaveBeenCalled();
+      expect(output.iterations).toBe(0);
+    });
+
+    it('should run body once with bottom-tested while when condition is false', async () => {
+      // `repeat <body> while false end` — body once, then condition checked.
+      // Top-tested while=false would skip the body entirely. Bottom-tested
+      // forces iteration 0 to run, then stops because condition is false.
+      const context = createMockContext();
+      const bodySpy = vi.fn(async () => 'body-ran');
+      context.locals.set('_runtimeExecute', bodySpy);
+
+      const input: RepeatCommandInput = {
+        type: 'while',
+        condition: false,
+        commands: createMockBlock([{ type: 'command' }]),
+        bottomTested: true,
+      };
+
+      const output = await command.execute(input, context);
+
+      expect(bodySpy).toHaveBeenCalledTimes(1);
+      expect(output.iterations).toBe(1);
+    });
+
+    it('should be top-tested by default when bottomTested is undefined', async () => {
+      const context = createMockContext();
+      const bodySpy = vi.fn(async () => 'body-ran');
+      context.locals.set('_runtimeExecute', bodySpy);
+
+      const input: RepeatCommandInput = {
+        type: 'while',
+        condition: false,
+        commands: createMockBlock([{ type: 'command' }]),
+        // bottomTested NOT set
+      };
+
+      const output = await command.execute(input, context);
+
+      // while false from the start → 0 iterations
+      expect(bodySpy).not.toHaveBeenCalled();
+      expect(output.iterations).toBe(0);
+    });
+  });
 });

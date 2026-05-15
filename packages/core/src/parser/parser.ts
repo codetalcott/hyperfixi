@@ -1093,20 +1093,25 @@ export class Parser {
    *   repeat forever ... end
    */
   /**
-   * Parse a list of commands until we hit 'end' OR (optionally) 'else'.
-   * Returns the commands and whether the loop terminated on 'else'. Does NOT
-   * consume the terminator — caller does. Internal helper for both
-   * `parseCommandListUntilEnd` and `parseCommandListUntilEndOrElse`.
+   * Parse a list of commands until we hit 'end' OR any token in `extraStops`.
+   * Returns the commands and which stop keyword matched ('end' or one of
+   * extraStops). Does NOT consume the terminator — caller does. Internal
+   * helper shared by `parseCommandListUntilEnd`,
+   * `parseCommandListUntilEndOrElse`, and `parseRepeatBody`.
    */
-  private parseCommandListUntilTerminator(stopOnElse: boolean): {
+  private parseCommandListUntilTerminator(extraStops: readonly string[]): {
     commands: ASTNode[];
-    hitElse: boolean;
+    terminator: string;
   } {
     const commands: ASTNode[] = [];
-    let hitElse = false;
-    debug.parse('🔄 parseCommandListUntilTerminator: Starting (stopOnElse:', stopOnElse, ')');
+    const isStop = (): boolean => this.check('end') || extraStops.some(s => this.check(s));
+    debug.parse(
+      '🔄 parseCommandListUntilTerminator: Starting (extraStops:',
+      extraStops.join(','),
+      ')'
+    );
 
-    while (!this.isAtEnd() && !this.check('end') && !(stopOnElse && this.check('else'))) {
+    while (!this.isAtEnd() && !isStop()) {
       debug.parse(
         '📍 Loop iteration, current token:',
         this.peek().value,
@@ -1161,8 +1166,7 @@ export class Parser {
 
       while (
         !this.isAtEnd() &&
-        !this.check('end') &&
-        !(stopOnElse && this.check('else')) &&
+        !isStop() &&
         !this.checkIsCommand() &&
         !this.isCommand(this.peek().value) &&
         !this.check('then') &&
@@ -1185,18 +1189,26 @@ export class Parser {
       }
     }
 
-    if (stopOnElse && this.check('else')) {
-      hitElse = true;
+    let terminator = 'end';
+    for (const s of extraStops) {
+      if (this.check(s)) {
+        terminator = s;
+        break;
+      }
+    }
+    if (!this.check('end') && !extraStops.some(s => this.check(s))) {
+      // Ran off the end without finding any stop token
+      terminator = '';
     }
 
     debug.parse(
       '✅ parseCommandListUntilTerminator: parsed',
       commands.length,
-      'commands (hitElse:',
-      hitElse,
+      'commands (terminator:',
+      terminator,
       ')'
     );
-    return { commands, hitElse };
+    return { commands, terminator };
   }
 
   /**
@@ -1204,7 +1216,7 @@ export class Parser {
    * This is used by repeat blocks and other control flow structures
    */
   private parseCommandListUntilEnd(): ASTNode[] {
-    const { commands } = this.parseCommandListUntilTerminator(false);
+    const { commands } = this.parseCommandListUntilTerminator([]);
     debug.parse('🔍 After loop, checking for "end". Current token:', this.peek().value);
     if (this.check('end')) {
       debug.parse('✅ Found "end", consuming it');
@@ -1228,15 +1240,39 @@ export class Parser {
    * the caller then parses the else branch and its own 'end'.
    */
   private parseCommandListUntilEndOrElse(): { commands: ASTNode[]; hasElse: boolean } {
-    const { commands, hitElse } = this.parseCommandListUntilTerminator(true);
-    if (!hitElse) {
+    const { commands, terminator } = this.parseCommandListUntilTerminator(['else']);
+    const hasElse = terminator === 'else';
+    if (!hasElse) {
       if (this.check('end')) {
         this.advance();
       } else {
         throw new Error('Expected "end" to close repeat block');
       }
     }
-    return { commands, hasElse: hitElse };
+    return { commands, hasElse };
+  }
+
+  /**
+   * Parse a `repeat` body that may end in any of: `end`, `else`, `until`,
+   * `while`. Used by `parseRepeatCommand` to support all four upstream
+   * terminations including bottom-tested loops (`repeat <body> until/while
+   * <expr> end`). Consumes `end` itself; for other terminators, the caller
+   * advances past the keyword and handles the trailing piece.
+   *
+   * @returns commands + terminator (`'end'`, `'else'`, `'until'`, `'while'`)
+   */
+  private parseRepeatBody(): { commands: ASTNode[]; terminator: string } {
+    const { commands, terminator } = this.parseCommandListUntilTerminator([
+      'else',
+      'until',
+      'while',
+    ]);
+    if (terminator === 'end') {
+      this.advance(); // consume 'end'
+    } else if (terminator === '') {
+      throw new Error('Expected "end", "else", "until", or "while" to close repeat block');
+    }
+    return { commands, terminator };
   }
 
   private parseRepeatCommand(commandToken: Token): CommandNode {
@@ -4249,6 +4285,7 @@ export class Parser {
       parseCommandSequence: this.parseCommandSequence.bind(this),
       parseCommandListUntilEnd: this.parseCommandListUntilEnd.bind(this),
       parseCommandListUntilEndOrElse: this.parseCommandListUntilEndOrElse.bind(this),
+      parseRepeatBody: this.parseRepeatBody.bind(this),
 
       // Position Tracking (1 method)
       getPosition: this.getPosition.bind(this),

@@ -197,6 +197,35 @@ describe('Parser Integration Tests', () => {
       expect(blockCount).toBe(1);
     });
 
+    it('should parse bottom-tested repeat with until (upstream parity)', () => {
+      // `repeat forever <body> until <expr> end` — body runs once before check.
+      const node = parseOk('repeat forever add .ping until count > 10 end');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('repeat');
+      const args = getArgs(node);
+      // args[0] should now be 'until' (loopType promoted from forever)
+      expect((args[0] as { name?: string }).name).toBe('until');
+      // bottomTested should be set as a modifier
+      const modifiers = (node as unknown as { modifiers?: Record<string, unknown> }).modifiers;
+      expect(modifiers?.bottomTested).toBeDefined();
+    });
+
+    it('should parse bottom-tested repeat with while', () => {
+      const node = parseOk('repeat forever add .ping while count < 10 end');
+      const args = getArgs(node);
+      expect((args[0] as { name?: string }).name).toBe('while');
+      const modifiers = (node as unknown as { modifiers?: Record<string, unknown> }).modifiers;
+      expect(modifiers?.bottomTested).toBeDefined();
+    });
+
+    it('should NOT mark top-tested while as bottomTested', () => {
+      const node = parseOk('repeat while count < 10 add .ping end');
+      const args = getArgs(node);
+      expect((args[0] as { name?: string }).name).toBe('while');
+      const modifiers = (node as unknown as { modifiers?: Record<string, unknown> }).modifiers;
+      expect(modifiers?.bottomTested).toBeUndefined();
+    });
+
     it('should parse if block inside event handler', () => {
       const node = parseOk('on click if x > 5 then add .big end');
       expect(node.type).toBe('eventHandler');
