@@ -29,6 +29,7 @@ import {
 // acyclic. Replace with canonical `parse() + evaluateAST()` once the three
 // evaluator paths are consolidated.
 import { parseAndEvaluateExpression } from './expression-parser';
+import { parse } from './parser';
 
 // Create alias for backward compatibility - combine special and mathematical expressions
 const specialExpressions = {
@@ -188,6 +189,30 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
       throw new Error(`Unknown AST node type: ${(node as any).type}`);
     }
   }
+}
+
+/**
+ * Parse and evaluate a hyperscript expression source string using the
+ * canonical evaluator (upstream-faithful semantics: silent-null member
+ * access, late-binding `this` on method extraction).
+ *
+ * Preferred over legacy `parseAndEvaluateExpression` (expression-parser.ts).
+ * See ~/.claude/plans/evaluator-consolidation-design.md for the full
+ * consolidation plan.
+ */
+export async function evaluateExpressionFromSource(
+  source: string,
+  context: ExecutionContext
+): Promise<any> {
+  const result = parse(source);
+  if (!result.success || !result.node) {
+    const err = result.error ?? result.errors?.[0];
+    throw new Error(`Failed to parse expression: ${err?.message ?? 'unknown error'}`);
+  }
+  // `parse()` returns a single AST node for bare expressions (verified for
+  // literal/identifier/binary/member/call/selector/array/object/possessive
+  // shapes — see Phase α.1 spike).
+  return evaluateAST(result.node as ASTNode, context);
 }
 
 /**

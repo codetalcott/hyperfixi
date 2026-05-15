@@ -236,12 +236,26 @@ export class ExpressionParseError extends Error {
 }
 
 /**
- * Main entry point: Parse and evaluate a hyperscript expression from string
+ * Main entry point: Parse and evaluate a hyperscript expression from string.
+ *
+ * @deprecated Use `evaluateExpressionFromSource` from `./runtime` instead.
+ *   Legacy semantics: throws on null member access; binds methods at read
+ *   time. Canonical `evaluateExpressionFromSource` is upstream-faithful
+ *   (silent-null, late-bind) and preferred for all new code. Full migration
+ *   plan: ~/.claude/plans/evaluator-consolidation-design.md
  */
 export async function parseAndEvaluateExpression(
   expressionString: string,
   context: ExecutionContext
 ): Promise<any> {
+  // Env-gated sampled caller-stack telemetry. Flip
+  // HYPERFIXI_DEBUG_LEGACY_EVAL=1 to track who's still on the legacy path.
+  if (typeof process !== 'undefined' && process.env?.HYPERFIXI_DEBUG_LEGACY_EVAL) {
+    if (Math.random() < 0.01) {
+      // eslint-disable-next-line no-console
+      console.warn('[legacy-eval]', new Error().stack);
+    }
+  }
   try {
     // Step 1: Tokenize the input
     const tokens = tokenize(expressionString);

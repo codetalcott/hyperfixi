@@ -15,7 +15,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse } from './parser';
-import { evaluateAST } from './runtime';
+import { evaluateAST, evaluateExpressionFromSource } from './runtime';
 import { createContext } from '../core/context';
 
 async function evalArg(
@@ -208,5 +208,57 @@ describe('AST evaluator coverage (ported from expression-parser.ts)', () => {
     it('array does not contain present element → false', async () => {
       expect(await evalArg('return ("a,b,c" split by ",") does not contain "a"')).toBe(false);
     });
+  });
+});
+
+describe('evaluateExpressionFromSource (canonical string→eval helper)', () => {
+  const ctx = (locals: Record<string, unknown> = {}) => {
+    const c = createContext();
+    for (const [k, v] of Object.entries(locals)) c.locals.set(k, v);
+    return c;
+  };
+
+  it('evaluates arithmetic expressions', async () => {
+    expect(await evaluateExpressionFromSource('1 + 2', ctx())).toBe(3);
+    expect(await evaluateExpressionFromSource('2 * 3 + 4', ctx())).toBe(10);
+    expect(await evaluateExpressionFromSource('10 / 4', ctx())).toBe(2.5);
+  });
+
+  it('evaluates boolean expressions', async () => {
+    expect(await evaluateExpressionFromSource('true and false', ctx())).toBe(false);
+    expect(await evaluateExpressionFromSource('true or false', ctx())).toBe(true);
+    expect(await evaluateExpressionFromSource('5 > 3', ctx())).toBe(true);
+  });
+
+  it('evaluates literals', async () => {
+    expect(await evaluateExpressionFromSource('"hello"', ctx())).toBe('hello');
+    expect(await evaluateExpressionFromSource('42', ctx())).toBe(42);
+    expect(await evaluateExpressionFromSource('null', ctx())).toBeNull();
+  });
+
+  it('evaluates context locals', async () => {
+    expect(await evaluateExpressionFromSource('localA', ctx({ localA: 'bar' }))).toBe('bar');
+  });
+
+  it('canonical null-access is silent (returns undefined, does NOT throw)', async () => {
+    expect(await evaluateExpressionFromSource('nullVar.x', ctx({ nullVar: null }))).toBeUndefined();
+    expect(
+      await evaluateExpressionFromSource('undefVar.x', ctx({ undefVar: undefined }))
+    ).toBeUndefined();
+  });
+
+  it('handles optional chaining (?.)', async () => {
+    expect(
+      await evaluateExpressionFromSource('nullOptVar?.x', ctx({ nullOptVar: null }))
+    ).toBeUndefined();
+    expect(await evaluateExpressionFromSource('objOptVar?.x', ctx({ objOptVar: { x: 7 } }))).toBe(
+      7
+    );
+  });
+
+  it('throws on unparseable input', async () => {
+    await expect(evaluateExpressionFromSource('@@@', ctx())).rejects.toThrow(
+      /Failed to parse expression/
+    );
   });
 });
