@@ -37,28 +37,17 @@ const specialExpressions = {
 };
 
 /**
- * Helper to extract value from TypedResult objects
- * Mathematical expressions return { success: true, value: X } format
+ * Unwrap a `{ success, value, errors }` TypedResult returned by the
+ * arithmetic registry. Non-TypedResult values pass through unchanged. Callers
+ * are responsible for awaiting any wrapping Promise first.
  */
-async function extractValue(result: any): Promise<any> {
-  // If it's a Promise, await it first
-  if (result && typeof result.then === 'function') {
-    result = await result;
-  }
-
-  // If it's a TypedResult object, extract the value
+function unwrapTypedResult(result: any): any {
   if (result && typeof result === 'object' && 'success' in result && 'value' in result) {
-    if (result.success) {
-      return result.value;
-    } else {
-      // If the result failed, throw an error
-      const errors = result.errors || [];
-      const errorMessage = errors.length > 0 ? errors[0].message : 'Expression evaluation failed';
-      throw new Error(errorMessage);
-    }
+    if (result.success) return result.value;
+    const errors = result.errors || [];
+    const errorMessage = errors.length > 0 ? errors[0].message : 'Expression evaluation failed';
+    throw new Error(errorMessage);
   }
-
-  // Otherwise, return the result as-is
   return result;
 }
 
@@ -305,18 +294,26 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       if (typeof left === 'string' || typeof right === 'string') {
         return String(left ?? '') + String(right ?? '');
       }
-      return extractValue(specialExpressions.addition.evaluate(context as any, { left, right }));
+      return unwrapTypedResult(
+        await specialExpressions.addition.evaluate(context as any, { left, right })
+      );
     case '-':
-      return extractValue(specialExpressions.subtraction.evaluate(context as any, { left, right }));
+      return unwrapTypedResult(
+        await specialExpressions.subtraction.evaluate(context as any, { left, right })
+      );
     case '*':
-      return extractValue(
-        specialExpressions.multiplication.evaluate(context as any, { left, right })
+      return unwrapTypedResult(
+        await specialExpressions.multiplication.evaluate(context as any, { left, right })
       );
     case '/':
-      return extractValue(specialExpressions.division.evaluate(context as any, { left, right }));
+      return unwrapTypedResult(
+        await specialExpressions.division.evaluate(context as any, { left, right })
+      );
     case '%':
     case 'mod':
-      return extractValue(specialExpressions.modulo.evaluate(context as any, { left, right }));
+      return unwrapTypedResult(
+        await specialExpressions.modulo.evaluate(context as any, { left, right })
+      );
     case '^':
     case '**':
       return Math.pow(Number(left), Number(right));
