@@ -40,7 +40,7 @@
  * ```
  */
 
-import type { Plugin, ViteDevServer, HmrContext } from 'vite';
+import type { Plugin, ResolvedConfig, ViteDevServer, HmrContext } from 'vite';
 import type { HyperfixiPluginOptions, AggregatedUsage } from './types';
 import { Scanner } from './scanner';
 import { Aggregator } from './aggregator';
@@ -270,7 +270,7 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
     /**
      * Configure plugin based on Vite mode
      */
-    async configResolved(config) {
+    async configResolved(config: ResolvedConfig) {
       isDev = config.command === 'serve';
 
       if (options.debug) {
@@ -531,7 +531,7 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
         }
       }
     },
-  };
+  } as Plugin;
 }
 
 // Default export for convenience
