@@ -3,7 +3,6 @@
  * Provides evalHyperScript() function that matches the original _hyperscript API
  */
 
-import { parseAndEvaluateExpression } from '../parser/expression-parser';
 import { evaluateExpressionFromSource } from '../parser/runtime';
 import { Parser } from '../parser/parser';
 import { Runtime } from '../runtime/runtime';
@@ -265,7 +264,7 @@ export async function evalHyperScriptAsync(
   try {
     // Convert context and evaluate
     const executionContext = convertContext(context);
-    const result = await parseAndEvaluateExpression(expression, executionContext);
+    const result = await evaluateExpressionFromSource(expression, executionContext);
     return result;
   } catch (error) {
     // Match _hyperscript error handling behavior
