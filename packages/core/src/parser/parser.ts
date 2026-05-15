@@ -17,7 +17,12 @@ import type {
   BehaviorNode,
   DefNode,
 } from '../types/core';
-import type { ParseError as LocalParseError, KeywordResolver, ParserOptions } from './types';
+import type {
+  ParseError as LocalParseError,
+  KeywordResolver,
+  ParserOptions,
+  ParserRegistryIntegration,
+} from './types';
 import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
 // Note: isDebugEnabled is used in semantic-integration.ts for debug event emission
@@ -161,7 +166,7 @@ export class Parser {
   private keywordResolver?: KeywordResolver;
   private semanticAdapter?: SemanticIntegrationAdapter;
   private originalInput?: string;
-  private registryIntegration?: any; // From ParserOptions - typed as 'any' to avoid circular dependency
+  private registryIntegration?: ParserRegistryIntegration;
 
   /**
    * Selective memoization cache for Pratt expression parsing (Phase 6.1).

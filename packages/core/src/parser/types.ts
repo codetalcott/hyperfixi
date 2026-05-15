@@ -322,7 +322,19 @@ export interface ParserOptions {
    * });
    * ```
    */
-  registryIntegration?: any; // Typed as 'any' to avoid circular dependency with registry module
+  registryIntegration?: ParserRegistryIntegration;
+}
+
+/**
+ * Minimal structural view of the registry integration used by the parser
+ * when detecting custom event sources during `on <event>` parsing. Declared
+ * here as a duck-typed interface so parser/types.ts doesn't import the full
+ * `RegistryIntegration` class from the registry module (which would close an
+ * import cycle).
+ */
+export interface ParserRegistryIntegration {
+  hasEventSource(eventName: string): boolean;
+  getEventSource(eventName: string): { name: string } | undefined;
 }
 
 // ============================================================================
