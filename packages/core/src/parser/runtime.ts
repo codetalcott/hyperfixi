@@ -455,6 +455,11 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
 function isIn(item: unknown, container: unknown): boolean {
   if (Array.isArray(container)) return container.includes(item);
   if (typeof container === 'string') return container.includes(String(item));
+  // Identity / DOM containment — `<elem> is in <elem>` is true for the same
+  // node, and an element is in another that contains it.
+  if (item instanceof Node && container instanceof Node) {
+    return item === container || container.contains(item);
+  }
   return container != null && typeof container === 'object' && (item as any) in (container as any);
 }
 
@@ -938,7 +943,10 @@ async function evaluateSelector(node: any, context: ExecutionContext): Promise<a
   const selector = node.value;
   const result = await referencesExpressions.elementWithSelector.evaluate(context, selector);
 
-  if (typeof selector === 'string' && selector.startsWith('#')) {
+  // Bare `#id` unwraps to single element. `<#id/>` (query-form, marked by
+  // parser with `fromQuery: true`) always returns the collection — matches
+  // upstream's QueryRef → ElementCollection vs IdRef → getElementById.
+  if (!node.fromQuery && typeof selector === 'string' && selector.startsWith('#')) {
     if (Array.isArray(result)) return result[0] ?? null;
     return result;
   }

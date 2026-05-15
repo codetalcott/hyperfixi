@@ -1559,7 +1559,11 @@ export class Parser {
       const queryValue = this.previous().value;
       // Extract the selector from <.../>
       const selector = queryValue.slice(1, -2).trim(); // Remove < and /> and whitespace
-      return this.createSelector(selector);
+      const node = this.createSelector(selector);
+      // Mark as query-form so the evaluator returns the full collection even
+      // for `<#id/>` (upstream QueryRef → ElementCollection, not single element).
+      (node as any).fromQuery = true;
+      return node;
     }
 
     // Handle CSS selectors (#id, .class)

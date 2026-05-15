@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { parseAndEvaluateExpression } from '../parser/expression-parser';
+import { evaluateExpressionFromSource } from '../parser/runtime';
 import type { ExecutionContext } from '../types/core';
 
 describe('Advanced Pattern Coverage', () => {
@@ -63,12 +63,12 @@ describe('Advanced Pattern Coverage', () => {
 
   describe('Template Literals and Interpolation', () => {
     it('should handle template literals with variables', async () => {
-      const result = await parseAndEvaluateExpression('`Hello ${appName}`', context);
+      const result = await evaluateExpressionFromSource('`Hello ${appName}`', context);
       expect(result).toBe('Hello TestApp');
     });
 
     it('should handle template literals with complex expressions', async () => {
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         '`Version: ${version} - Theme: ${config.theme}`',
         context
       );
@@ -76,7 +76,7 @@ describe('Advanced Pattern Coverage', () => {
     });
 
     it.skip('should handle nested template literals', async () => {
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         '`App: ${`${appName} v${version}`}`',
         context
       );
@@ -85,82 +85,84 @@ describe('Advanced Pattern Coverage', () => {
 
     it('should handle template literals with function calls', async () => {
       // This tests advanced interpolation capabilities
-      const result = await parseAndEvaluateExpression('`Length: ${appName.length}`', context);
+      const result = await evaluateExpressionFromSource('`Length: ${appName.length}`', context);
       expect(result).toBe('Length: 7');
     });
   });
 
   describe('Deep Object Property Access', () => {
     it('should handle nested object property access', async () => {
-      expect(await parseAndEvaluateExpression('config.theme', context)).toBe('dark');
-      expect(await parseAndEvaluateExpression('config.features.search', context)).toBe(true);
-      expect(await parseAndEvaluateExpression('config.features.notifications', context)).toBe(
+      expect(await evaluateExpressionFromSource('config.theme', context)).toBe('dark');
+      expect(await evaluateExpressionFromSource('config.features.search', context)).toBe(true);
+      expect(await evaluateExpressionFromSource('config.features.notifications', context)).toBe(
         false
       );
     });
 
     it('should handle array access with object properties', async () => {
-      expect(await parseAndEvaluateExpression('config.users[0].name', context)).toBe('Alice');
-      expect(await parseAndEvaluateExpression('config.users[1].role', context)).toBe('user');
+      expect(await evaluateExpressionFromSource('config.users[0].name', context)).toBe('Alice');
+      expect(await evaluateExpressionFromSource('config.users[1].role', context)).toBe('user');
     });
 
     it('should handle computed property access', async () => {
       // This tests dynamic property access
-      const result = await parseAndEvaluateExpression('config.users[0]["name"]', context);
+      const result = await evaluateExpressionFromSource('config.users[0]["name"]', context);
       expect(result).toBe('Alice');
     });
 
     it('should handle method calls on nested objects', async () => {
-      const result = await parseAndEvaluateExpression('config.users.length', context);
+      const result = await evaluateExpressionFromSource('config.users.length', context);
       expect(result).toBe(2);
     });
   });
 
   describe('Advanced CSS Selector Patterns', () => {
+    // Q1.5: canonical returns iterable collection (Array) for `<...>/` query
+    // selectors, not NodeList. Assertions check iterability + length.
     it('should handle complex attribute selectors', async () => {
-      const result = await parseAndEvaluateExpression('<[data-id][class*="item"]/>', context);
-      expect(result).toBeInstanceOf(NodeList);
-      expect(result.length).toBe(3);
+      const result = await evaluateExpressionFromSource('<[data-id][class*="item"]/>', context);
+      const arr = Array.from(result as ArrayLike<unknown>);
+      expect(arr).toHaveLength(3);
     });
 
     it('should handle pseudo-class selectors', async () => {
-      const result = await parseAndEvaluateExpression('<.item:first-child/>', context);
-      expect(result).toBeInstanceOf(NodeList);
-      expect(result.length).toBe(1);
+      const result = await evaluateExpressionFromSource('<.item:first-child/>', context);
+      const arr = Array.from(result as ArrayLike<unknown>);
+      expect(arr).toHaveLength(1);
     });
 
     it('should handle descendant combinators', async () => {
-      const result = await parseAndEvaluateExpression('<.results .item/>', context);
-      expect(result).toBeInstanceOf(NodeList);
-      expect(result.length).toBe(3);
+      const result = await evaluateExpressionFromSource('<.results .item/>', context);
+      const arr = Array.from(result as ArrayLike<unknown>);
+      expect(arr).toHaveLength(3);
     });
 
     it('should handle attribute value selectors', async () => {
-      const result = await parseAndEvaluateExpression('<[data-id="2"]/>', context);
-      expect(result).toBeInstanceOf(NodeList);
-      expect(result.length).toBe(1);
+      const result = await evaluateExpressionFromSource('<[data-id="2"]/>', context);
+      const arr = Array.from(result as ArrayLike<unknown>);
+      expect(arr).toHaveLength(1);
     });
   });
 
   describe('Expression Composition and Chaining', () => {
     it('should handle chained property access', async () => {
-      const result = await parseAndEvaluateExpression('config.users[0].name.length', context);
+      const result = await evaluateExpressionFromSource('config.users[0].name.length', context);
       expect(result).toBe(5); // "Alice".length
     });
 
     it.skip('should handle property access on CSS selector results', async () => {
       // Note: This might not work exactly like this, but tests the concept
-      const result = await parseAndEvaluateExpression('my.querySelector("input").value', context);
+      const result = await evaluateExpressionFromSource('my.querySelector("input").value', context);
       expect(result).toBe('test query');
     });
 
     it('should handle possessive syntax with complex expressions', async () => {
-      const result = await parseAndEvaluateExpression("config's theme", context);
+      const result = await evaluateExpressionFromSource("config's theme", context);
       expect(result).toBe('dark');
     });
 
     it('should handle type conversion on complex expressions', async () => {
-      const result = await parseAndEvaluateExpression('config.users.length as String', context);
+      const result = await evaluateExpressionFromSource('config.users.length as String', context);
       expect(result).toBe('2');
     });
   });
@@ -168,21 +170,21 @@ describe('Advanced Pattern Coverage', () => {
   describe('Edge Cases and Error Handling', () => {
     it.skip('should handle null-safe property access', async () => {
       // This should not throw, but return null gracefully
-      const result = await parseAndEvaluateExpression('config.nonexistent.property', context);
+      const result = await evaluateExpressionFromSource('config.nonexistent.property', context);
       expect(result).toBe(null);
     });
 
     it.skip('should handle undefined variable gracefully', async () => {
-      const result = await parseAndEvaluateExpression('nonExistentVar', context);
+      const result = await evaluateExpressionFromSource('nonExistentVar', context);
       expect(result).toBe(null); // Changed expectation to match our null-returning behavior
     });
 
     it('should handle empty expressions', async () => {
-      await expect(parseAndEvaluateExpression('', context)).rejects.toThrow();
+      await expect(evaluateExpressionFromSource('', context)).rejects.toThrow();
     });
 
     it('should handle malformed expressions gracefully', async () => {
-      await expect(parseAndEvaluateExpression('(((', context)).rejects.toThrow();
+      await expect(evaluateExpressionFromSource('(((', context)).rejects.toThrow();
     });
   });
 
@@ -190,42 +192,42 @@ describe('Advanced Pattern Coverage', () => {
     it('should handle deeply nested expressions efficiently', async () => {
       const complexExpr =
         'config.features.search and config.users.length > 0 and appName.length > 3';
-      const result = await parseAndEvaluateExpression(complexExpr, context);
+      const result = await evaluateExpressionFromSource(complexExpr, context);
       expect(result).toBe(true);
     });
 
     it('should handle mixed expression types', async () => {
       const mixedExpr = '`Count: ${config.users.length}` + " - " + (config.theme as String)';
-      const result = await parseAndEvaluateExpression(mixedExpr, context);
+      const result = await evaluateExpressionFromSource(mixedExpr, context);
       expect(result).toBe('Count: 2 - dark');
     });
 
     it('should handle large template literals', async () => {
       const largeTemplate =
         '`App: ${appName}, Version: ${version}, Theme: ${config.theme}, Users: ${config.users.length}, Search: ${config.features.search}`';
-      const result = await parseAndEvaluateExpression(largeTemplate, context);
+      const result = await evaluateExpressionFromSource(largeTemplate, context);
       expect(result).toBe('App: TestApp, Version: 1.2.3, Theme: dark, Users: 2, Search: true');
     });
   });
 
   describe('Hyperscript-Specific Features', () => {
     it('should handle "in" operator with arrays', async () => {
-      const result = await parseAndEvaluateExpression('"Alice" in config.users[0].name', context);
+      const result = await evaluateExpressionFromSource('"Alice" in config.users[0].name', context);
       expect(result).toBe(true);
     });
 
     it('should handle "matches" operator', async () => {
-      const result = await parseAndEvaluateExpression('appName matches "Test.*"', context);
+      const result = await evaluateExpressionFromSource('appName matches "Test.*"', context);
       expect(result).toBe(true);
     });
 
     it('should handle "contains" operator', async () => {
-      const result = await parseAndEvaluateExpression('appName contains "Test"', context);
+      const result = await evaluateExpressionFromSource('appName contains "Test"', context);
       expect(result).toBe(true);
     });
 
     it('should handle multiple comparison operators', async () => {
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         'config.users.length > 1 and config.users.length < 5',
         context
       );

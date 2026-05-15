@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { parseAndEvaluateExpression } from '../parser/expression-parser';
+import { evaluateExpressionFromSource } from '../parser/runtime';
 import type { ExecutionContext } from '../types/core';
 
 describe('CSS References Fix - Official Test Patterns', () => {
@@ -48,7 +48,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
       // var value = evalHyperScript(".c1");
       // Array.from(value)[0].should.equal(div);
 
-      const result = await parseAndEvaluateExpression('.c1', context);
+      const result = await evaluateExpressionFromSource('.c1', context);
 
       // Should be iterable with Array.from()
       expect(result).toBeDefined();
@@ -61,7 +61,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
     });
 
     it('should return empty collection for non-existent class', async () => {
-      const result = await parseAndEvaluateExpression('.nonexistent', context);
+      const result = await evaluateExpressionFromSource('.nonexistent', context);
 
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(0);
@@ -75,14 +75,14 @@ describe('CSS References Fix - Official Test Patterns', () => {
       // var value = evalHyperScript("#d1");
       // value.should.equal(div);
 
-      const result = await parseAndEvaluateExpression('#d1', context);
+      const result = await evaluateExpressionFromSource('#d1', context);
 
       // Should return the element directly (not a collection)
       expect(result).toBe(testDiv);
     });
 
     it('should return null for non-existent ID', async () => {
-      const result = await parseAndEvaluateExpression('#nonexistent', context);
+      const result = await evaluateExpressionFromSource('#nonexistent', context);
       expect(result).toBeNull();
     });
   });
@@ -94,7 +94,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
       // var value = evalHyperScript("<.c1/>");
       // Array.from(value)[0].should.equal(div);
 
-      const result = await parseAndEvaluateExpression('<.c1/>', context);
+      const result = await evaluateExpressionFromSource('<.c1/>', context);
 
       // Should be iterable with Array.from()
       expect(result).toBeDefined();
@@ -107,7 +107,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
     });
 
     it('should work with ID query: <#d1/>', async () => {
-      const result = await parseAndEvaluateExpression('<#d1/>', context);
+      const result = await evaluateExpressionFromSource('<#d1/>', context);
 
       // Query references always return collections, even for IDs
       const arrayResult = Array.from(result);
@@ -116,7 +116,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
     });
 
     it('should work with element query: <div/>', async () => {
-      const result = await parseAndEvaluateExpression('<div/>', context);
+      const result = await evaluateExpressionFromSource('<div/>', context);
 
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(1);
@@ -132,7 +132,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
       testDiv2.textContent = 'Test Content 2';
       document.body.appendChild(testDiv2);
 
-      const result = await parseAndEvaluateExpression('.c1', context);
+      const result = await evaluateExpressionFromSource('.c1', context);
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(2);
       expect(arrayResult[0]).toBe(testDiv);
@@ -145,7 +145,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
       testDiv2.className = 'other';
       document.body.appendChild(testDiv2);
 
-      const result = await parseAndEvaluateExpression('<div/>', context);
+      const result = await evaluateExpressionFromSource('<div/>', context);
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(2);
     });
