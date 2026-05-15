@@ -203,12 +203,12 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
   });
 
   // ==========================================================================
-  // Phase 5b seam extensions (for @hyperfixi/reactivity and other plugins that
-  // need top-level feature parsing, custom AST evaluators, and global-write
-  // notifications).
+  // Plugin seam extensions (used by @hyperfixi/reactivity and other plugins
+  // that need top-level feature parsing, custom AST evaluators, and
+  // global-write notifications).
   // ==========================================================================
 
-  describe('Phase 5b — feature registration', () => {
+  describe('plugin seam — feature registration', () => {
     it('parser dispatches top-level plugin features', () => {
       const captured: Array<{ type: string; body: ASTNode[] }> = [];
       const plugin: HyperfixiPlugin = {
@@ -267,7 +267,7 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
     });
   });
 
-  describe('Phase 5b — node evaluator registration', () => {
+  describe('plugin seam — node evaluator registration', () => {
     it('runtime dispatches custom AST node type to plugin evaluator', async () => {
       const calls: ASTNode[] = [];
       const plugin: HyperfixiPlugin = {
@@ -300,7 +300,7 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
     });
   });
 
-  describe('Phase 5b — global write hook', () => {
+  describe('plugin seam — global write hook', () => {
     it('fires on writes to $name globals', async () => {
       const events: Array<[string, unknown]> = [];
       const plugin: HyperfixiPlugin = {
@@ -339,7 +339,7 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
     });
   });
 
-  describe('Phase 5b — HyperfixiPluginContext exposes runtime', () => {
+  describe('plugin seam — HyperfixiPluginContext exposes runtime', () => {
     it('install receives the runtime for cleanup registration', () => {
       let capturedRuntime: Runtime | null = null;
       const plugin: HyperfixiPlugin = {
@@ -355,7 +355,7 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
     });
   });
 
-  describe('Phase 5b — snapshot / restore for new seams', () => {
+  describe('plugin seam — snapshot / restore for new seams', () => {
     it('restores features, node evaluators, and global write hooks', () => {
       const hookCalls: string[] = [];
       const plugin: HyperfixiPlugin = {

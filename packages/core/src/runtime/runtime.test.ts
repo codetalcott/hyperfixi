@@ -291,16 +291,9 @@ describe('Hyperscript Runtime', () => {
         call[0]?.toString().includes('DUPLICATE REGISTRATION')
       );
 
-      // Track remaining duplicate registrations (to be migrated in future phases)
-      // Phase 2 complete: halt, break, continue removed ✅
-      // Phase 3 complete: pick, default removed ✅
-      // Phase 4 complete: return, throw removed ✅
-      // Phase 5 complete: if, unless removed ✅
-      // Phase 6 complete: async, call, js, tell removed ✅
-      // Phase 7 complete: measure, settle removed ✅
-      // Phase 8 complete: make, append removed ✅
-      // ALL DUPLICATES ELIMINATED! 🎉
-      const expectedDuplicates = 0; // All commands migrated to enhanced pattern!
+      // All V1 commands have been migrated to the V2 (enhanced) pattern, so
+      // no duplicate-registration warnings should be emitted at runtime init.
+      const expectedDuplicates = 0;
 
       if (duplicateWarnings.length > 0) {
         const commandNames = duplicateWarnings.map(w => {

@@ -1,25 +1,6 @@
 /**
- * Runtime - Clean V2 Implementation
- *
- * This runtime extends RuntimeBase and registers all 48 V2 commands from commands/.
- *
- * Key improvements over V1:
- * - Extends RuntimeBase (generic AST traversal)
- * - Uses CommandRegistryV2 (70% simpler adapter)
- * - Uses standalone commands (zero V1 dependencies)
- * - Registers 48 V2 commands by default
- * - Much smaller bundle size (~224 KB vs 366 KB V1 baseline, 39% reduction)
- * - 100% tree-shakeable architecture
- *
- * Phase 7: Runtime Consolidation
- * - Replaces legacy runtime.ts (2,972 lines) with clean V2 implementation
- * - Eliminates 3,945 lines of duplicate V1 code
- * - Single runtime architecture (no V1/V2 confusion)
- *
- * Phase 8: V1 Command Removal
- * - Archived all 122 V1 command files (44,158 lines)
- * - Promoted V2 commands to primary location
- * - Single command system (no V1/V2 confusion)
+ * Hyperscript runtime entry point. Extends `RuntimeBase` with the
+ * concrete command registry and the default set of 48 commands.
  */
 
 import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';

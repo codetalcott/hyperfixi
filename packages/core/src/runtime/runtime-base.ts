@@ -372,9 +372,9 @@ export class RuntimeBase {
   }
 
   /**
-   * Phase 5b: access the cleanup registry. Plugins use this to register
-   * per-element teardowns that fire when the element is removed from the
-   * DOM or `cleanup(element)` is called explicitly.
+   * Access the cleanup registry. Plugins use this to register per-element
+   * teardowns that fire when the element is removed from the DOM or
+   * `cleanup(element)` is called explicitly.
    */
   getCleanupRegistry(): CleanupRegistry {
     return this.cleanupRegistry;
@@ -891,7 +891,7 @@ export class RuntimeBase {
       }
     }
 
-    // Phase 3: Execute other statements
+    // Execute the remaining non-event-handler statements.
     for (const statement of otherStatements) {
       try {
         lastResult = await this.execute(statement, context);
