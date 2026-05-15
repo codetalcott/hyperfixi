@@ -4194,6 +4194,42 @@ export class Parser {
       };
     }
 
+    // CSS attribute-selector: [attr] / [attr="val"] / [attr~="val"] etc.
+    // Tokenizer keeps the bracket on the OUTSIDE; inside is identifier (with
+    // hyphens preserved) followed by either `]` or attr-op + string + `]`.
+    // Upstream supports these via `AttributeRefAccess`.
+    const ATTR_OPS = new Set(['=', '~=', '|=', '^=', '$=', '*=']);
+    const lookhead = this.tokens[this.current];
+    const lookhead2 = this.tokens[this.current + 1];
+    const isAttrSelector =
+      lookhead?.kind === 'identifier' &&
+      (lookhead2?.value === ']' ||
+        (lookhead2 &&
+          ATTR_OPS.has(lookhead2.value) &&
+          this.tokens[this.current + 2]?.kind === 'string'));
+    if (isAttrSelector) {
+      const attrName = this.advance().value;
+      let css = '[' + attrName;
+      if (this.check(']')) {
+        this.advance();
+        css += ']';
+      } else {
+        const op = this.advance().value;
+        const stringTok = this.advance();
+        // Tokenizer keeps surrounding quotes; strip them then re-quote with
+        // double quotes for canonical CSS.
+        const raw = stringTok.value;
+        const unquoted =
+          (raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))
+            ? raw.slice(1, -1)
+            : raw;
+        css += op + '"' + unquoted + '"';
+        this.consume(']', "Expected ']' after attribute selector");
+        css += ']';
+      }
+      return this.createSelector(css);
+    }
+
     // Otherwise, parse as array literal: [1, 2, 3]
     const elements: ASTNode[] = [];
 

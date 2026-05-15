@@ -53,17 +53,12 @@ describe('Advanced CSS Selectors - TDD Fix', () => {
       expect(result).toBeDefined();
     });
 
-    // TODO(Phase ε): legacy-only `attributeSelector`/`bracketExpression`
-    // AST type. Canonical parses `[X="Y"]` as array-literal containing a
-    // binary `=` expression. Needs canonical-side attribute-selector
-    // support before this test can be re-enabled.
-    it.skip('should parse attribute with value: [data-value="test"]', async () => {
+    it('should parse attribute with value: [data-value="test"]', async () => {
       const result = await evaluateExpressionFromSource('[data-value="test"]', context);
       expect(result).toBeDefined();
     });
 
-    // TODO(Phase ε): legacy-only attribute-selector AST. See note above.
-    it.skip('should parse attribute with multiple values: [class~="active"]', async () => {
+    it('should parse attribute with multiple values: [class~="active"]', async () => {
       const result = await evaluateExpressionFromSource('[class~="active"]', context);
       expect(result).toBeDefined();
     });
@@ -75,8 +70,7 @@ describe('Advanced CSS Selectors - TDD Fix', () => {
       expect(result).toBeDefined();
     });
 
-    // TODO(Phase ε): legacy-only attribute-selector AST.
-    it.skip('confirms attribute selectors are working', async () => {
+    it('confirms attribute selectors are working', async () => {
       const result = await evaluateExpressionFromSource('[data-value="test"]', context);
       expect(result).toBeDefined();
     });

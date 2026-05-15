@@ -105,11 +105,7 @@ describe('CSS Selector Enhancement (TDD)', () => {
     });
   });
 
-  // TODO(Phase ε): bracket attribute selectors `[X]` / `[X="Y"]` are legacy-only
-  // AST nodes (`attributeSelector`/`bracketExpression`). Canonical parser
-  // emits them as array literals, which then errors at the `=` binary
-  // operator. Phase ε will decide port-vs-obsolete per the design doc's Q1.
-  describe.skip('Bracket Attribute Selectors ([attr])', () => {
+  describe('Bracket Attribute Selectors ([attr])', () => {
     it('should return NodeList for simple attribute existence', async () => {
       const result = await evaluateExpressionFromSource('[data-testid]', context);
       expect(result.length).toBe(3);
