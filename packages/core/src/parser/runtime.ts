@@ -1,6 +1,9 @@
 /**
  * Hyperscript Runtime Expression Evaluator
- * Connects AST parser with Phase 3 expression evaluation system
+ *
+ * Canonical AST evaluator. Dispatches each AST node type to a focused helper
+ * and delegates operator/reference semantics to the per-category expression
+ * registries. Behavior mirrors upstream `_hyperscript/src/core/runtime.js`.
  */
 
 import type { ASTNode, ExecutionContext } from '../types/core';
@@ -8,7 +11,7 @@ import { getRegisteredNodeEvaluator, notifyGlobalRead } from './extensions';
 // Re-export setGlobal for backward-compatible access via the runtime module.
 export { setGlobal } from './extensions';
 
-// Import Phase 3 expression system
+// Expression-category registries — operators, references, conversions, etc.
 import { referencesExpressions } from '../expressions/references/index';
 import { logicalExpressions } from '../expressions/logical/index';
 import { conversionExpressions } from '../expressions/conversion/index';
@@ -26,7 +29,8 @@ import {
 } from '../expressions/collection/index';
 import { parse } from './parser';
 
-// Create alias for backward compatibility - combine special and mathematical expressions
+// Merged set used by binary-operator dispatch: arithmetic, math, and special
+// literal helpers live in two registries that share a flat lookup surface here.
 const specialExpressions = {
   ...importedSpecialExpressions,
   ...mathematicalExpressions,
@@ -91,8 +95,8 @@ function clearExpiredCache() {
 setInterval(clearExpiredCache, 100);
 
 /**
- * Evaluates an AST node using the Phase 3 expression system
- * Optimized with fast paths for common node types
+ * Evaluate any AST node. Inlines fast paths for the two most common shapes
+ * (literal, identifier) before falling through to a per-type switch.
  */
 export async function evaluateAST(node: ASTNode, context: ExecutionContext): Promise<any> {
   if (!node) {
@@ -170,7 +174,7 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
       return evaluateTemplateLiteralNode(node, context);
 
     default: {
-      // Phase 5b: plugin-registered evaluators for custom AST node types.
+      // Allow plugins to register evaluators for custom AST node types.
       const pluginEvaluator = getRegisteredNodeEvaluator((node as any).type);
       if (pluginEvaluator) {
         return pluginEvaluator(node, context);
@@ -194,9 +198,8 @@ export async function evaluateExpressionFromSource(
     const err = result.error ?? result.errors?.[0];
     throw new Error(`Failed to parse expression: ${err?.message ?? 'unknown error'}`);
   }
-  // `parse()` returns a single AST node for bare expressions (verified for
-  // literal/identifier/binary/member/call/selector/array/object/possessive
-  // shapes — see Phase α.1 spike).
+  // `parse()` returns a single AST node for bare expressions (literal,
+  // identifier, binary, member, call, selector, array, object, possessive).
   return evaluateAST(result.node as ASTNode, context);
 }
 
@@ -208,8 +211,8 @@ function evaluateLiteral(node: any): any {
 }
 
 /**
- * Evaluates identifier nodes using Phase 3 reference expressions
- * Optimized with caching for frequently accessed identifiers
+ * Resolve an identifier (`me`, `it`, locals, globals, JS built-ins, etc.) to
+ * its value. Caches non-mutable results to skip redundant lookups in hot loops.
  */
 async function evaluateIdentifier(node: any, context: ExecutionContext): Promise<any> {
   const name = node.name;
@@ -239,9 +242,8 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
   // the resolution came from per-context state so we can skip caching.
   let fromMutableContext = false;
 
-  // Handle context variables using Phase 3 reference expressions.
-  // Upstream aliases: `my`/`I` → me, `your`/`yourself` → you, `its` → it.
-  // Matches `_hyperscript/src/core/runtime/runtime.js:255` resolveSymbol.
+  // Context variables. Upstream aliases: `my`/`I` → me, `your`/`yourself` →
+  // you, `its` → it. Matches `_hyperscript/src/core/runtime.js:resolveSymbol`.
   if (name === 'me' || name === 'my' || name === 'I') {
     value = await referencesExpressions.me.evaluate(context);
     fromMutableContext = true;
@@ -274,9 +276,8 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
     value = (context as any)[name];
     fromMutableContext = true;
   } else if (typeof globalThis !== 'undefined' && name in globalThis) {
-    // JS built-ins: `Date`, `Math`, `Object`, `JSON`, etc. Mirrors legacy
-    // resolveVariable at expression-parser.ts:1387. Constructors are picked
-    // up by `evaluateCallExpression`'s `node.isConstructor` branch.
+    // JS built-ins: `Date`, `Math`, `Object`, `JSON`, etc. Constructors are
+    // picked up by `evaluateCallExpression`'s `node.isConstructor` branch.
     value = (globalThis as Record<string, unknown>)[name];
   } else {
     // Default to undefined for unknown identifiers
@@ -297,7 +298,9 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
 }
 
 /**
- * Evaluates binary expressions using Phase 3 logical expressions
+ * Evaluate a binary expression. Handles `has`/`have`, the scoped positional
+ * pattern `first/last .X in <root>`, short-circuit `and`/`or`, and delegates
+ * the remaining operators to the logical/arithmetic registries.
  */
 async function evaluateBinaryExpression(node: any, context: ExecutionContext): Promise<any> {
   const operator = node.operator;
@@ -318,10 +321,10 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
 
   // Scoped positional: `first .X in <root>` / `last .X in <root>` scopes
   // `querySelectorAll` to <root> instead of `document`, then applies
-  // first/last. Mirrors legacy `expression-parser.ts:1423-1466`. Canonical
-  // emits `binaryExpression('in', callExpression(first, [selector]), <root>)`
-  // for `first .X in me`; the call-expression wraps a `selector` arg
-  // (bare `.X`) or a `fromQuery:true` selector (`<.X/>`).
+  // first/last. Canonical emits
+  // `binaryExpression('in', callExpression(first, [selector]), <root>)` for
+  // `first .X in me`; the call-expression wraps a `selector` arg (bare `.X`)
+  // or a `fromQuery:true` selector (`<.X/>`).
   if (operator === 'in' || operator === 'is in') {
     const posKind =
       node.left?.type === 'callExpression' && node.left.callee?.type === 'identifier'
@@ -364,7 +367,7 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
   const L = node.ignoringCase ? applyCI(left) : left;
   const R = node.ignoringCase ? applyCI(right) : right;
 
-  // Delegate to Phase 3 expression system based on operator
+  // Dispatch the operator to the appropriate registry.
   switch (operator) {
     case '+':
       // JS-native: `+` concatenates if either operand is a string.
@@ -499,10 +502,10 @@ function docPosMatches(a: unknown, b: unknown, mask: number): boolean {
 }
 
 /**
- * Normalize an `as` target type to a string. The Pratt parser emits `targetType`
- * as an AST node ({ type: 'identifier', name: 'Int' }); the standalone
- * expression-parser fragment emits a raw string ('Int', 'Fixed:2'). The downstream
- * conversion evaluator requires a string. See feedback memory for details.
+ * Normalize an `as` target type to a string. The Pratt parser emits
+ * `targetType` as an AST node (`{ type: 'identifier', name: 'Int' }`); other
+ * paths emit a raw string (`'Int'`, `'Fixed:2'`). The downstream conversion
+ * evaluator requires a string.
  */
 function normalizeAsTargetType(target: unknown): string {
   if (typeof target === 'string') return target;
@@ -515,9 +518,8 @@ function normalizeAsTargetType(target: unknown): string {
 }
 
 /**
- * Evaluates the `asExpression` AST node ({ expression, targetType }) emitted by
- * the Pratt parser. Mirrors the runtime path in expression-parser.ts and
- * base-expression-evaluator.ts for the same node shape.
+ * Evaluate the `asExpression` AST node (`{ expression, targetType }`) emitted
+ * by the Pratt parser.
  */
 async function evaluateAsExpressionNode(node: any, context: ExecutionContext): Promise<unknown> {
   const value = await evaluateAST(node.expression, context);
@@ -572,7 +574,7 @@ function typeCheck(value: unknown, typeName: string, nullOk: boolean): boolean {
 // attributeAccess, propertyOfExpression, templateLiteral).
 // ===========================================================================
 
-/** Mirrors expression-parser.ts:evaluateArrayLiteral (L2066). */
+/** Evaluate `[a, b, c]` array-literal nodes. */
 async function evaluateArrayLiteralNode(node: any, context: ExecutionContext): Promise<unknown[]> {
   const elements: unknown[] = [];
   for (const el of node.elements) {
@@ -581,7 +583,7 @@ async function evaluateArrayLiteralNode(node: any, context: ExecutionContext): P
   return elements;
 }
 
-/** Mirrors expression-parser.ts:evaluateObjectLiteral (L2119). */
+/** Evaluate `{ k: v }` object-literal nodes. */
 async function evaluateObjectLiteralNode(
   node: any,
   context: ExecutionContext
@@ -601,7 +603,7 @@ async function evaluateObjectLiteralNode(
   return result;
 }
 
-/** Mirrors expression-parser.ts:evaluateAttributeAccess (L1975). */
+/** Resolve `@attr` on `me`. Returns `@attr` literal when there is no element. */
 async function evaluateAttributeAccessNode(node: any, context: ExecutionContext): Promise<unknown> {
   const attributeName = node.attributeName;
   if (context.me && context.me instanceof Element) {
@@ -611,9 +613,9 @@ async function evaluateAttributeAccessNode(node: any, context: ExecutionContext)
 }
 
 /**
- * Mirrors expression-parser.ts:evaluatePropertyOfExpression (L1719). Handles the
- * `the X of Y` and `values of Y` patterns. For DOM elements, uses the
- * `getElementProperty` helper that backs the `its` expression.
+ * Handle the `the X of Y` and `values of Y` patterns. For DOM elements,
+ * delegates to the `getElementProperty` helper that backs the `its`
+ * expression.
  */
 async function evaluatePropertyOfExpressionNode(
   node: any,
@@ -639,9 +641,9 @@ async function evaluatePropertyOfExpressionNode(
 }
 
 /**
- * Mirrors expression-parser.ts:evaluateTemplateLiteral (L2385). Interpolates
- * `$var`, `${expr}`, and `$(expr)` patterns. Recursive `${expr}` evaluation
- * delegates to the canonical `evaluateExpressionFromSource` (same module).
+ * Interpolate `$var`, `${expr}`, and `$(expr)` patterns in a template literal.
+ * Recursive `${expr}` / `$(expr)` evaluation delegates to
+ * `evaluateExpressionFromSource`.
  */
 async function evaluateTemplateLiteralNode(node: any, context: ExecutionContext): Promise<string> {
   let template: string = node.value;
@@ -688,7 +690,7 @@ async function evaluateTemplateLiteralNode(node: any, context: ExecutionContext)
   return template;
 }
 
-/** Mirrors expression-parser.ts:resolveVariable (L2471). */
+/** Resolve a `$var` reference inside a template literal. */
 function resolveTemplateVariable(varName: string, context: ExecutionContext): unknown {
   if (context.locals?.has(varName)) return context.locals.get(varName);
   if (varName === 'me' && context.me) return context.me;
@@ -700,7 +702,7 @@ function resolveTemplateVariable(varName: string, context: ExecutionContext): un
   return undefined;
 }
 
-/** Mirrors expression-parser.ts:replaceAsyncBatch (L2498). */
+/** Async-aware `String.replace`: each match's replacement may be a Promise. */
 async function replaceAsync(
   str: string,
   regex: RegExp,
@@ -815,7 +817,7 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
 }
 
 /**
- * Evaluates `obj.prop` and `obj?.prop` (memberExpression nodes).
+ * Evaluate `obj.prop` and `obj?.prop` (memberExpression nodes).
  *
  * Behavior matches upstream `_hyperscript` (`runtime.js:resolveProperty` /
  * `#flatGet`):
@@ -825,14 +827,9 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
  *     Extracting a method and calling it later as a bare function loses `this`
  *     — JavaScript-standard behavior.
  *
- * The `?.` form sets `node.optional = true` ([parser.ts:parseCall]); the
- * runtime is already lenient on null so no extra check is needed today. The
- * flag preserves intent if `.` is ever tightened to throw on null.
- *
- * NOTE: The legacy `expression-parser.ts:evaluatePropertyAccess` diverges — it
- * throws on null and binds methods at access time. The canonical path here is
- * correct per upstream; the legacy divergence is a known issue to be resolved
- * by the planned evaluator-consolidation refactor.
+ * The `?.` form sets `node.optional = true`; the runtime is already lenient on
+ * null so no extra check is needed today. The flag preserves intent if `.` is
+ * ever tightened to throw on null.
  */
 async function evaluateMemberExpression(node: any, context: ExecutionContext): Promise<any> {
   const object = await evaluateAST(node.object, context);
@@ -859,7 +856,10 @@ async function evaluateMemberExpression(node: any, context: ExecutionContext): P
 }
 
 /**
- * Evaluates call expressions using Phase 3 reference expressions
+ * Evaluate a call expression. Special-cases positional builtins
+ * (`closest`/`previous`/`next` accept raw identifier args as tag selectors),
+ * constructor invocations (`new Foo(...)`), and member-expression callees
+ * (preserves `this` via `.apply`).
  */
 async function evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
@@ -951,7 +951,7 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
 }
 
 /**
- * Evaluates CSS selector expressions using Phase 3 reference expressions.
+ * Evaluate CSS selector expressions.
  *
  * Upstream contract (`_hyperscript/src/parsetree/expressions/webliterals.js`):
  * - `#id`  → IdRef.resolve returns single element (getElementById).
@@ -981,9 +981,8 @@ async function evaluateSelector(node: any, context: ExecutionContext): Promise<a
 
 /**
  * CSS Selector class names containing colons (e.g., Tailwind's `lg:hidden`)
- * need backslash-escaping to distinguish from pseudo-classes. Mirrors
- * `expression-parser.ts:evaluateQueryReference`. Preserves recognized
- * pseudo-class names so `.btn:hover` still works.
+ * need backslash-escaping to distinguish from pseudo-classes. Preserves
+ * recognized pseudo-class names so `.btn:hover` still works.
  */
 const CSS_PSEUDO_CLASSES =
   'hover|active|focus|visited|link|focus-within|focus-visible|' +
@@ -1002,13 +1001,12 @@ function escapeClassColons(selector: string): string {
 }
 
 /**
- * Evaluates possessive expressions (element's property)
+ * Evaluate possessive expressions (`element's property`).
  */
 async function evaluatePossessiveExpression(node: any, context: ExecutionContext): Promise<any> {
   const object = await evaluateAST(node.object, context);
   const propertyName = node.property.name;
 
-  // Use Phase 3 property expression system
   return propertiesExpressions.possessive.evaluate(context, object, propertyName);
 }
 
