@@ -557,6 +557,24 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
     'as',
     leftAssoc(70, (left, token, ctx) => {
       const targetType = ctx.parseExpr(71);
+      // Support `Fixed:N` and similar parameterized type names. The pratt
+      // parser stops at `:` (unknown infix), leaving it as the next token.
+      // Mirror legacy `expression-parser.ts` which treats the target type
+      // as an opaque string and includes the suffix.
+      const peeked = ctx.peek();
+      if (
+        peeked &&
+        peeked.value === ':' &&
+        targetType &&
+        (targetType as any).type === 'identifier'
+      ) {
+        ctx.advance(); // consume ':'
+        const suffix = ctx.advance();
+        if (suffix && suffix.value !== undefined) {
+          (targetType as any).name = `${(targetType as any).name}:${suffix.value}`;
+          (targetType as any).end = suffix.end;
+        }
+      }
       return {
         type: 'asExpression',
         expression: left,

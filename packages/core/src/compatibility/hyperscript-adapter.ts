@@ -4,7 +4,7 @@
  */
 
 import type { ExecutionContext } from '../types/core';
-import { parseAndEvaluateExpression } from '../parser/expression-parser';
+import { evaluateExpressionFromSource } from '../parser/runtime';
 
 // Create a DOM element with hyperscript processing (simplified for testing)
 export function make(htmlString: string): HTMLElement {
@@ -112,8 +112,8 @@ export async function evalHyperScript(
       const result = await hyperscript.eval(expressionSource, context);
       return result;
     } else {
-      // Parse and evaluate as an expression using our integrated parser
-      const result = await parseAndEvaluateExpression(expressionSource, context);
+      // Parse and evaluate as an expression using the canonical evaluator.
+      const result = await evaluateExpressionFromSource(expressionSource, context);
       return result;
     }
   } catch (error) {
