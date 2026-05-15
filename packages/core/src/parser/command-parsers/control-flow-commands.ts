@@ -236,9 +236,15 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
     }
   }
 
-  // Parse command block until 'end'
-  // Use parseCommandList helper to handle the command sequence
-  const commands: ASTNode[] = ctx.parseCommandListUntilEnd();
+  // Parse command block; method consumes 'end' if there's no 'else' branch.
+  const { commands, hasElse } = ctx.parseCommandListUntilEndOrElse();
+
+  // If `else` was hit, parse the else branch (runs when loop never iterated).
+  let elseCommands: ASTNode[] | null = null;
+  if (hasElse) {
+    ctx.advance(); // consume 'else'
+    elseCommands = ctx.parseCommandListUntilEnd(); // consumes 'end'
+  }
 
   // Build args array based on loop type
   args.push({
@@ -277,6 +283,11 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
 
   // Add commands as a block
   args.push(createBlock(commands, { ...pos, end: pos.end || 0 }));
+
+  // Optional else branch (executed when loop completes with 0 iterations)
+  if (elseCommands !== null) {
+    args.push(createBlock(elseCommands, { ...pos, end: pos.end || 0 }));
+  }
 
   // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   return CommandNodeBuilder.from(commandToken)

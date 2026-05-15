@@ -1093,21 +1093,26 @@ export class Parser {
    *   repeat forever ... end
    */
   /**
-   * Parse a list of commands until we hit 'end' keyword
-   * This is used by repeat blocks and other control flow structures
+   * Parse a list of commands until we hit 'end' OR (optionally) 'else'.
+   * Returns the commands and whether the loop terminated on 'else'. Does NOT
+   * consume the terminator — caller does. Internal helper for both
+   * `parseCommandListUntilEnd` and `parseCommandListUntilEndOrElse`.
    */
-  private parseCommandListUntilEnd(): ASTNode[] {
+  private parseCommandListUntilTerminator(stopOnElse: boolean): {
+    commands: ASTNode[];
+    hitElse: boolean;
+  } {
     const commands: ASTNode[] = [];
-    debug.parse('🔄 parseCommandListUntilEnd: Starting to parse command list');
+    let hitElse = false;
+    debug.parse('🔄 parseCommandListUntilTerminator: Starting (stopOnElse:', stopOnElse, ')');
 
-    while (!this.isAtEnd() && !this.check('end')) {
+    while (!this.isAtEnd() && !this.check('end') && !(stopOnElse && this.check('else'))) {
       debug.parse(
         '📍 Loop iteration, current token:',
         this.peek().value,
         'kind:',
         this.peek().kind
       );
-      // Try to parse a command
       let parsedCommand = false;
 
       const isCommandToken = this.checkIsCommand();
@@ -1119,16 +1124,14 @@ export class Parser {
           isCommandToken ? '✅ Found COMMAND token:' : '✅ Found IDENTIFIER that is a command:',
           this.peek().value
         );
-        this.advance(); // consume the command token
+        this.advance();
 
-        // Save error state before parsing command
         const savedError = this.error;
         try {
           const cmd = this.parseCommand();
-          // Check if an error was added during parsing (even if no exception was thrown)
           if (this.error && this.error !== savedError) {
             debug.parse(
-              '⚠️  parseCommandListUntilEnd: Command parsing added error, restoring error state. Error was:',
+              '⚠️  parseCommandListUntilTerminator: Command parsing added error, restoring. Error was:',
               this.error.message
             );
             this.error = savedError;
@@ -1140,7 +1143,7 @@ export class Parser {
           }
         } catch (error) {
           debug.parse(
-            '⚠️  parseCommandListUntilEnd: Command parsing threw exception, restoring error state:',
+            '⚠️  parseCommandListUntilTerminator: Command parsing threw, restoring:',
             error instanceof Error ? error.message : String(error)
           );
           this.error = savedError;
@@ -1149,7 +1152,6 @@ export class Parser {
         debug.parse('❌ IDENTIFIER is not a command:', this.peek().value);
       }
 
-      // If we didn't parse a command, we might be at 'end' or hit an error
       if (!parsedCommand) {
         debug.parse('❌ No command parsed, breaking. Current token:', this.peek().value);
         break;
@@ -1157,11 +1159,10 @@ export class Parser {
 
       debug.parse('📍 After parsing command, current token:', this.peek().value);
 
-      // Skip any unexpected tokens until we find 'end', a command, or a separator
-      // This handles cases where command parsing doesn't consume all its arguments (like HSL colors)
       while (
         !this.isAtEnd() &&
         !this.check('end') &&
+        !(stopOnElse && this.check('else')) &&
         !this.checkIsCommand() &&
         !this.isCommand(this.peek().value) &&
         !this.check('then') &&
@@ -1169,25 +1170,42 @@ export class Parser {
         !this.check(',')
       ) {
         debug.parse('⚠️  Skipping unexpected token:', this.peek().value);
-        this.advance(); // skip the unexpected token
+        this.advance();
       }
 
-      // Handle optional separators between commands
       if (this.match('then', 'and', ',')) {
         debug.parse('✅ Found separator, continuing');
-        continue; // explicit separator, continue to next command
+        continue;
       } else if (this.checkIsCommand() || this.isCommand(this.peek().value)) {
         debug.parse('✅ Next token is a command, continuing without separator');
-        continue; // next token is a command, continue without separator
+        continue;
       } else {
         debug.parse('📍 No separator and no command, breaking. Current token:', this.peek().value);
-        // No separator and no command follows, we should be at 'end'
         break;
       }
     }
 
+    if (stopOnElse && this.check('else')) {
+      hitElse = true;
+    }
+
+    debug.parse(
+      '✅ parseCommandListUntilTerminator: parsed',
+      commands.length,
+      'commands (hitElse:',
+      hitElse,
+      ')'
+    );
+    return { commands, hitElse };
+  }
+
+  /**
+   * Parse a list of commands until we hit 'end' keyword
+   * This is used by repeat blocks and other control flow structures
+   */
+  private parseCommandListUntilEnd(): ASTNode[] {
+    const { commands } = this.parseCommandListUntilTerminator(false);
     debug.parse('🔍 After loop, checking for "end". Current token:', this.peek().value);
-    // Expect and consume 'end'
     if (this.check('end')) {
       debug.parse('✅ Found "end", consuming it');
       this.advance();
@@ -1200,9 +1218,25 @@ export class Parser {
       );
       throw new Error('Expected "end" to close repeat block');
     }
-
-    debug.parse('✅ parseCommandListUntilEnd: Successfully parsed', commands.length, 'commands');
     return commands;
+  }
+
+  /**
+   * Parse command list until 'end' OR 'else'. If terminated by 'end', the
+   * 'end' token is consumed (same as `parseCommandListUntilEnd`). If
+   * terminated by 'else', the 'else' is left for the caller to consume —
+   * the caller then parses the else branch and its own 'end'.
+   */
+  private parseCommandListUntilEndOrElse(): { commands: ASTNode[]; hasElse: boolean } {
+    const { commands, hitElse } = this.parseCommandListUntilTerminator(true);
+    if (!hitElse) {
+      if (this.check('end')) {
+        this.advance();
+      } else {
+        throw new Error('Expected "end" to close repeat block');
+      }
+    }
+    return { commands, hasElse: hitElse };
   }
 
   private parseRepeatCommand(commandToken: Token): CommandNode {
@@ -4214,6 +4248,7 @@ export class Parser {
       parseCommand: this.parseCommand.bind(this),
       parseCommandSequence: this.parseCommandSequence.bind(this),
       parseCommandListUntilEnd: this.parseCommandListUntilEnd.bind(this),
+      parseCommandListUntilEndOrElse: this.parseCommandListUntilEndOrElse.bind(this),
 
       // Position Tracking (1 method)
       getPosition: this.getPosition.bind(this),

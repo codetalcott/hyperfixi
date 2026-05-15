@@ -43,6 +43,8 @@ export interface RepeatCommandInput {
   count?: number;
   indexVariable?: string;
   commands?: unknown;
+  /** Else branch — executed when the loop completes with zero iterations */
+  elseCommands?: unknown;
   eventName?: string;
   eventTarget?: EventTarget;
 }
@@ -86,15 +88,25 @@ export class RepeatCommand implements DecoratedCommand {
       if (typeof indexValue === 'string') indexVariable = indexValue;
     }
 
-    // Extract commands block
+    // Extract commands block(s). The body is always the first 'block' arg
+    // scanning right-to-left. If a second block immediately precedes it (also
+    // scanning right-to-left), that's the body and the later one is the else.
     let commands: unknown = raw.modifiers?.block || raw.modifiers?.commands;
+    let elseCommands: unknown = undefined;
     if (!commands) {
+      const blocks: unknown[] = [];
       for (let i = raw.args.length - 1; i >= 0; i--) {
         const arg = raw.args[i] as unknown as { type?: string; commands?: unknown };
         if (arg?.type === 'block' && arg.commands) {
-          commands = arg;
-          break;
+          blocks.unshift(arg);
+          if (blocks.length === 2) break;
         }
+      }
+      if (blocks.length === 2) {
+        commands = blocks[0];
+        elseCommands = blocks[1];
+      } else if (blocks.length === 1) {
+        commands = blocks[0];
       }
     }
 
@@ -115,6 +127,7 @@ export class RepeatCommand implements DecoratedCommand {
         collection: Array.isArray(collection) ? collection : [collection],
         indexVariable,
         commands,
+        elseCommands,
       };
     }
 
@@ -123,13 +136,13 @@ export class RepeatCommand implements DecoratedCommand {
       const countValue = countArg ? await evaluator.evaluate(countArg, context) : undefined;
       const count = typeof countValue === 'number' ? countValue : parseInt(String(countValue), 10);
       if (isNaN(count)) throw new Error('times loops require a count number');
-      return { type: 'times', count, indexVariable, commands };
+      return { type: 'times', count, indexVariable, commands, elseCommands };
     }
 
     if (loopType === 'while' || raw.modifiers?.while) {
       const condition = raw.args[1] || raw.modifiers?.while;
       if (!condition) throw new Error('while loops require a condition');
-      return { type: 'while', condition, indexVariable, commands };
+      return { type: 'while', condition, indexVariable, commands, elseCommands };
     }
 
     if ((loopType === 'until' && raw.modifiers?.from) || loopType === 'until-event') {
@@ -142,17 +155,24 @@ export class RepeatCommand implements DecoratedCommand {
         if (target instanceof EventTarget) eventTarget = target;
         else if (target === 'document') eventTarget = document;
       }
-      return { type: 'until-event', eventName, eventTarget, indexVariable, commands };
+      return {
+        type: 'until-event',
+        eventName,
+        eventTarget,
+        indexVariable,
+        commands,
+        elseCommands,
+      };
     }
 
     if (loopType === 'until' || raw.modifiers?.until) {
       const condition = raw.args[1] || raw.modifiers?.until;
       if (!condition) throw new Error('until loops require a condition');
-      return { type: 'until', condition, indexVariable, commands };
+      return { type: 'until', condition, indexVariable, commands, elseCommands };
     }
 
     if (loopType === 'forever' || raw.modifiers?.forever) {
-      return { type: 'forever', indexVariable, commands };
+      return { type: 'forever', indexVariable, commands, elseCommands };
     }
 
     throw new Error('repeat command requires a loop type (for/times/while/until/forever)');
@@ -170,6 +190,7 @@ export class RepeatCommand implements DecoratedCommand {
       count,
       indexVariable,
       commands,
+      elseCommands,
       eventName,
       eventTarget,
     } = input;
@@ -219,6 +240,19 @@ export class RepeatCommand implements DecoratedCommand {
         iterCtx,
         this.executeCommands.bind(this)
       );
+
+      // Run else branch if loop completed naturally with zero iterations.
+      // Mirrors upstream _hyperscript controlflow.js:125 (didIterate flag).
+      if (result.iterations === 0 && !result.interrupted && elseCommands) {
+        const elseResult = await this.executeCommands(elseCommands, context);
+        Object.assign(context, { it: elseResult });
+        return {
+          type,
+          iterations: 0,
+          completed: true,
+          lastResult: elseResult,
+        };
+      }
 
       // Update context.it to last result
       Object.assign(context, { it: result.lastResult });

@@ -517,4 +517,121 @@ describe('RepeatCommand', () => {
       expect(executeSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('Else branch (upstream _hyperscript parity)', () => {
+    it('should run else branch when for-in collection is empty', async () => {
+      const context = createMockContext();
+      const bodySpy = vi.fn(async () => 'body');
+      const elseSpy = vi.fn(async () => 'else-ran');
+      context.locals.set('_runtimeExecute', async (cmd: any) =>
+        cmd.fromElse ? elseSpy() : bodySpy()
+      );
+
+      const input: RepeatCommandInput = {
+        type: 'for',
+        variable: 'item',
+        collection: [],
+        commands: createMockBlock([{ type: 'command' }]),
+        elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
+      };
+
+      const output = await command.execute(input, context);
+
+      expect(output.iterations).toBe(0);
+      expect(output.completed).toBe(true);
+      expect(output.lastResult).toBe('else-ran');
+      expect(bodySpy).not.toHaveBeenCalled();
+      expect(elseSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT run else branch when for-in collection has items', async () => {
+      const context = createMockContext();
+      const bodySpy = vi.fn(async () => 'body');
+      const elseSpy = vi.fn(async () => 'else-ran');
+      context.locals.set('_runtimeExecute', async (cmd: any) =>
+        cmd.fromElse ? elseSpy() : bodySpy()
+      );
+
+      const input: RepeatCommandInput = {
+        type: 'for',
+        variable: 'item',
+        collection: ['a', 'b'],
+        commands: createMockBlock([{ type: 'command' }]),
+        elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
+      };
+
+      const output = await command.execute(input, context);
+
+      expect(output.iterations).toBe(2);
+      expect(bodySpy).toHaveBeenCalledTimes(2);
+      expect(elseSpy).not.toHaveBeenCalled();
+    });
+
+    it('should run else branch when times count is zero', async () => {
+      const context = createMockContext();
+      const bodySpy = vi.fn(async () => 'body');
+      const elseSpy = vi.fn(async () => 'else-ran');
+      context.locals.set('_runtimeExecute', async (cmd: any) =>
+        cmd.fromElse ? elseSpy() : bodySpy()
+      );
+
+      const input: RepeatCommandInput = {
+        type: 'times',
+        count: 0,
+        commands: createMockBlock([{ type: 'command' }]),
+        elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
+      };
+
+      const output = await command.execute(input, context);
+
+      expect(output.iterations).toBe(0);
+      expect(bodySpy).not.toHaveBeenCalled();
+      expect(elseSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT run else branch when loop is interrupted by break on iteration 0', async () => {
+      // If the body throws BREAK on the first iteration (iterations still 0
+      // before increment), upstream treats it as "did iterate at least once"
+      // because it entered the body. Our implementation considers iterations
+      // to be 0 only when shouldContinue returns false from the start.
+      const context = createMockContext();
+      const elseSpy = vi.fn(async () => 'else-ran');
+      context.locals.set('_runtimeExecute', async (cmd: any) => {
+        if (cmd.fromElse) return elseSpy();
+        throw new Error('BREAK from body');
+      });
+
+      const input: RepeatCommandInput = {
+        type: 'forever',
+        commands: createMockBlock([{ type: 'command' }]),
+        elseCommands: createMockBlock([{ type: 'command', fromElse: true }]),
+      };
+
+      const output = await command.execute(input, context);
+
+      // Loop was interrupted via BREAK — the executor flag prevents the
+      // else branch from running even when iterations is 0.
+      expect(output.interrupted).toBe(true);
+      expect(elseSpy).not.toHaveBeenCalled();
+    });
+
+    it('should be a no-op when elseCommands is undefined and 0 iterations', async () => {
+      const context = createMockContext();
+      const executeSpy = vi.fn();
+      context.locals.set('_runtimeExecute', executeSpy);
+
+      const input: RepeatCommandInput = {
+        type: 'for',
+        variable: 'item',
+        collection: [],
+        commands: createMockBlock([{ type: 'command' }]),
+        // no elseCommands
+      };
+
+      const output = await command.execute(input, context);
+
+      expect(output.iterations).toBe(0);
+      expect(executeSpy).not.toHaveBeenCalled();
+    });
+  });
 });

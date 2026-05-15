@@ -140,6 +140,7 @@ function createControlFlowContext(tokens: Token[], overrides: Record<string, any
     })),
 
     parseCommandListUntilEnd: vi.fn(() => []),
+    parseCommandListUntilEndOrElse: vi.fn(() => ({ commands: [], hasElse: false })),
 
     checkIsCommand: vi.fn(() => false),
     isCommand: vi.fn(() => false),
@@ -552,6 +553,7 @@ describe('Control Flow Command Parsers', () => {
         })),
 
         parseCommandListUntilEnd: vi.fn(() => []),
+        parseCommandListUntilEndOrElse: vi.fn(() => ({ commands: [], hasElse: false })),
 
         checkIsCommand: vi.fn(() => false),
         isCommand: vi.fn(() => false),

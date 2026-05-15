@@ -175,6 +175,28 @@ describe('Parser Integration Tests', () => {
       expect(node.name).toBe('repeat');
     });
 
+    it('should parse repeat with else branch (upstream parity)', () => {
+      const node = parseOk('repeat for x in items add .row else add .empty end');
+      expect(node.type).toBe('command');
+      expect(node.name).toBe('repeat');
+      const args = getArgs(node);
+      // Last two args should be the body block and else block
+      const lastTwo = args.slice(-2);
+      expect(lastTwo.length).toBe(2);
+      expect((lastTwo[0] as { type?: string }).type).toBe('block');
+      expect((lastTwo[1] as { type?: string }).type).toBe('block');
+    });
+
+    it('should parse repeat without else (single body block)', () => {
+      const node = parseOk('repeat for x in items add .row end');
+      const args = getArgs(node);
+      const lastArg = args[args.length - 1] as { type?: string; commands?: unknown[] };
+      expect(lastArg.type).toBe('block');
+      // No second block — only one block in args
+      const blockCount = args.filter(a => (a as { type?: string }).type === 'block').length;
+      expect(blockCount).toBe(1);
+    });
+
     it('should parse if block inside event handler', () => {
       const node = parseOk('on click if x > 5 then add .big end');
       expect(node.type).toBe('eventHandler');

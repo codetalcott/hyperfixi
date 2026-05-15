@@ -383,6 +383,14 @@ export interface CommandParser {
 
   /** Parse command list until 'end' keyword */
   parseCommandListUntilEnd(): ASTNode[];
+
+  /**
+   * Parse command list until 'end' OR 'else' keyword. Does NOT consume the
+   * terminator. Returns the parsed commands and a flag indicating whether
+   * `else` was hit (so callers can decide whether to parse an else branch).
+   * Used by `repeat ... else ... end`.
+   */
+  parseCommandListUntilEndOrElse(): { commands: ASTNode[]; hasElse: boolean };
 }
 
 /**
