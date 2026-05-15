@@ -13,7 +13,7 @@
  * intentionally omitted; tests for them would exercise unreachable code.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { parse } from './parser';
 import { evaluateAST, evaluateExpressionFromSource } from './runtime';
 import { createContext } from '../core/context';
@@ -260,5 +260,87 @@ describe('evaluateExpressionFromSource (canonical string→eval helper)', () => 
     await expect(evaluateExpressionFromSource('@@@', ctx())).rejects.toThrow(
       /Failed to parse expression/
     );
+  });
+
+  // Q1.5 — Selector unwrap semantics.
+  // Upstream `_hyperscript` returns an iterable collection for class/query
+  // selectors and a single element for ID selectors. Canonical now matches.
+  describe('selector shape (Q1.5)', () => {
+    beforeEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('#id returns a single element', async () => {
+      const el = document.createElement('div');
+      el.id = 'd1';
+      document.body.appendChild(el);
+
+      const result = await evaluateExpressionFromSource('#d1', ctx());
+      expect(result).toBe(el);
+    });
+
+    it('#id returns null when not present', async () => {
+      const result = await evaluateExpressionFromSource('#missing', ctx());
+      expect(result).toBeNull();
+    });
+
+    it('.class returns an iterable collection', async () => {
+      const a = document.createElement('div');
+      a.className = 'c1';
+      const b = document.createElement('div');
+      b.className = 'c1';
+      document.body.append(a, b);
+
+      const result = await evaluateExpressionFromSource('.c1', ctx());
+      const arr = Array.from(result as ArrayLike<unknown>);
+      expect(arr).toHaveLength(2);
+      expect(arr[0]).toBe(a);
+      expect(arr[1]).toBe(b);
+    });
+
+    it('.class returns an empty iterable when no matches', async () => {
+      const result = await evaluateExpressionFromSource('.nonexistent', ctx());
+      const arr = Array.from(result as ArrayLike<unknown>);
+      expect(arr).toHaveLength(0);
+    });
+  });
+
+  // Q1.6 — Reference gating for me/you and possessive aliases.
+  // Upstream returns context.me/.you as-is (no instanceof gate) and aliases
+  // `my`/`I` → me, `your`/`yourself` → you, `its` → it.
+  describe('reference gating (Q1.6)', () => {
+    it('me returns context.me as-is (plain object)', async () => {
+      const c = createContext();
+      const mock = { className: 'hello' };
+      (c as any).me = mock;
+      const result = await evaluateExpressionFromSource('me.className', c);
+      expect(result).toBe('hello');
+    });
+
+    it('my aliases me in dot syntax', async () => {
+      const c = createContext();
+      (c as any).me = { textContent: 'world' };
+      const result = await evaluateExpressionFromSource('my.textContent', c);
+      expect(result).toBe('world');
+    });
+
+    it('its aliases it in dot syntax', async () => {
+      const c = createContext();
+      (c as any).it = { value: 42 };
+      const result = await evaluateExpressionFromSource('its.value', c);
+      expect(result).toBe(42);
+    });
+
+    it('your aliases you in dot syntax', async () => {
+      const c = createContext();
+      (c as any).you = { name: 'alice' };
+      const result = await evaluateExpressionFromSource('your.name', c);
+      expect(result).toBe('alice');
+    });
+
+    it('me returns null when context.me is unset', async () => {
+      const result = await evaluateExpressionFromSource('me', ctx());
+      expect(result).toBeNull();
+    });
   });
 });

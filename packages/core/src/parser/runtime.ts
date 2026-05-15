@@ -250,13 +250,14 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
   // Evaluate identifier
   let value: any;
 
-  // Handle context variables using Phase 3 reference expressions
-  // Note: 'I' is a _hyperscript alias for 'me' (case-sensitive to avoid conflict with loop var 'i')
-  if (name === 'me' || name === 'I') {
+  // Handle context variables using Phase 3 reference expressions.
+  // Upstream aliases: `my`/`I` → me, `your`/`yourself` → you, `its` → it.
+  // Matches `_hyperscript/src/core/runtime/runtime.js:255` resolveSymbol.
+  if (name === 'me' || name === 'my' || name === 'I') {
     value = await referencesExpressions.me.evaluate(context);
-  } else if (name === 'you') {
+  } else if (name === 'you' || name === 'your' || name === 'yourself') {
     value = await referencesExpressions.you.evaluate(context);
-  } else if (name === 'it') {
+  } else if (name === 'it' || name === 'its') {
     value = await referencesExpressions.it.evaluate(context);
   } else if (name === 'window') {
     value = await referencesExpressions.window.evaluate(context);
@@ -917,15 +918,25 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
 }
 
 /**
- * Evaluates CSS selector expressions using Phase 3 reference expressions
+ * Evaluates CSS selector expressions using Phase 3 reference expressions.
+ *
+ * Upstream contract (`_hyperscript/src/parsetree/expressions/webliterals.js`):
+ * - `#id`  → IdRef.resolve returns single element (getElementById).
+ * - `.cls` → ClassRef.resolve returns iterable ElementCollection.
+ * - `<q/>` → QueryRef.resolve returns iterable ElementCollection.
+ * - `[attr]` → AttributeRef-based selector returns collection.
+ *
+ * Canonical previously unwrapped all array results to first element, which
+ * broke `.class` callers asserting iterability. Aligning with upstream:
+ * only `#id` selectors yield a single element.
  */
 async function evaluateSelector(node: any, context: ExecutionContext): Promise<any> {
   const selector = node.value;
   const result = await referencesExpressions.elementWithSelector.evaluate(context, selector);
 
-  // If result is array, return first element to match hyperscript behavior
-  if (Array.isArray(result) && result.length > 0) {
-    return result[0];
+  if (typeof selector === 'string' && selector.startsWith('#')) {
+    if (Array.isArray(result)) return result[0] ?? null;
+    return result;
   }
 
   return result;

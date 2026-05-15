@@ -21,8 +21,11 @@ export const meExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Element',
 
-  async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
-    return context.me instanceof HTMLElement ? context.me : null;
+  // Upstream returns `context.me` as-is (no type gate) — see
+  // `_hyperscript/src/core/runtime/runtime.js:255`. Downstream DOM-method
+  // commands fail informatively at the call site if `me` is non-element.
+  async evaluate(context: ExecutionContext): Promise<unknown> {
+    return context.me ?? null;
   },
 
   validate: validateNoArgs,
@@ -33,8 +36,8 @@ export const youExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Element',
 
-  async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
-    return context.you instanceof HTMLElement ? context.you : null;
+  async evaluate(context: ExecutionContext): Promise<unknown> {
+    return context.you ?? null;
   },
 
   validate: validateNoArgs,
