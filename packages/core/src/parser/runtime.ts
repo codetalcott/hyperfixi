@@ -972,7 +972,8 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
  */
 async function evaluateSelector(node: any, context: ExecutionContext): Promise<any> {
   const selector = node.value;
-  const result = await referencesExpressions.elementWithSelector.evaluate(context, selector);
+  const escaped = typeof selector === 'string' ? escapeClassColons(selector) : selector;
+  const result = await referencesExpressions.elementWithSelector.evaluate(context, escaped);
 
   // Bare `#id` unwraps to single element. `<#id/>` (query-form, marked by
   // parser with `fromQuery: true`) always returns the collection — matches
@@ -983,6 +984,28 @@ async function evaluateSelector(node: any, context: ExecutionContext): Promise<a
   }
 
   return result;
+}
+
+/**
+ * CSS Selector class names containing colons (e.g., Tailwind's `lg:hidden`)
+ * need backslash-escaping to distinguish from pseudo-classes. Mirrors
+ * `expression-parser.ts:evaluateQueryReference`. Preserves recognized
+ * pseudo-class names so `.btn:hover` still works.
+ */
+const CSS_PSEUDO_CLASSES =
+  'hover|active|focus|visited|link|focus-within|focus-visible|' +
+  'first-child|last-child|only-child|nth-child|nth-last-child|nth-of-type|nth-last-of-type|' +
+  'first-of-type|last-of-type|only-of-type|empty|root|target|lang|dir|' +
+  'not|has|is|where|matches|' +
+  'before|after|first-letter|first-line|selection|placeholder|marker|backdrop|' +
+  'enabled|disabled|checked|indeterminate|required|optional|valid|invalid|in-range|out-of-range|read-only|read-write|' +
+  'default|defined|fullscreen|modal|picture-in-picture|autofill';
+const PSEUDO_CLASS_COLON_RE = new RegExp(
+  `(\\.[a-zA-Z0-9_-]+):(?!(${CSS_PSEUDO_CLASSES})(?![a-zA-Z0-9_-]))`,
+  'g'
+);
+function escapeClassColons(selector: string): string {
+  return selector.replace(PSEUDO_CLASS_COLON_RE, '$1\\:');
 }
 
 /**

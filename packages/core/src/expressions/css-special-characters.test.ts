@@ -59,10 +59,7 @@ describe('CSS Selectors with Special Characters', () => {
     });
   });
 
-  // TODO(Phase ε): canonical tokenizer splits `.foo:bar` into `.foo` + `:bar`
-  // (pseudo-class). Legacy treated colons inside class names as literal,
-  // matching some CSS frameworks (e.g., Tailwind). Phase ε decision territory.
-  describe.skip('Colon Class Names', () => {
+  describe('Colon Class Names', () => {
     it('should recognize .foo:bar as a class selector', async () => {
       const result = await evaluateExpressionFromSource('.foo:bar', context);
 
