@@ -321,6 +321,30 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     return false;
   }
 
+  // Scoped positional: `first .X in <root>` / `last .X in <root>` scopes
+  // `querySelectorAll` to <root> instead of `document`, then applies
+  // first/last. Mirrors legacy `expression-parser.ts:1423-1466`. Canonical
+  // emits `binaryExpression('in', callExpression(first, [selector]), <root>)`
+  // for `first .X in me`; the call-expression wraps a `selector` arg
+  // (bare `.X`) or a `fromQuery:true` selector (`<.X/>`).
+  if (operator === 'in' || operator === 'is in') {
+    const posKind =
+      node.left?.type === 'callExpression' && node.left.callee?.type === 'identifier'
+        ? node.left.callee.name
+        : null;
+    if ((posKind === 'first' || posKind === 'last') && Array.isArray(node.left.arguments)) {
+      const sourceArg = node.left.arguments[0];
+      if (sourceArg?.type === 'selector' && typeof sourceArg.value === 'string') {
+        const root = await evaluateAST(node.right, context);
+        if (root && typeof (root as any).querySelectorAll === 'function') {
+          const all = Array.from((root as Element).querySelectorAll(sourceArg.value));
+          if (all.length === 0) return null;
+          return posKind === 'first' ? all[0] : all[all.length - 1];
+        }
+      }
+    }
+  }
+
   const left = await evaluateAST(node.left, context);
 
   // Handle short-circuit evaluation for logical operators

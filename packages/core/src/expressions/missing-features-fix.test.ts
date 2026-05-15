@@ -147,11 +147,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
       });
     });
 
-    // TODO(Phase ε): scoped positional `first .X in me` returns the boolean
-    // result of an `is in` test in canonical, not the scoped first/last
-    // element. Legacy expression-parser.ts has dedicated handler at
-    // expression-parser.ts ~line 1430-1466. Canonical needs equivalent.
-    describe.skip('Scoped Positional with "in" operator', () => {
+    describe('Scoped Positional with "in" operator', () => {
       beforeEach(() => {
         // Add items outside the container to verify scoping works
         const outsideItem = document.createElement('div');
