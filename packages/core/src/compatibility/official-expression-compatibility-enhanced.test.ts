@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { parseAndEvaluateExpression } from '../parser/expression-parser';
+import { evaluateExpressionFromSource } from '../parser/runtime';
 import type { ExecutionContext } from '../types/core';
 
 describe('Enhanced Official Expression Compatibility Tests', () => {
@@ -73,18 +73,18 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       ];
 
       for (const test of tests) {
-        const result = await parseAndEvaluateExpression(test.expr, context);
+        const result = await evaluateExpressionFromSource(test.expr, context);
         expect(result).toBe(test.expected);
       }
     });
 
     it('should handle empty strings', async () => {
-      expect(await parseAndEvaluateExpression('""', context)).toBe('');
-      expect(await parseAndEvaluateExpression("''", context)).toBe('');
+      expect(await evaluateExpressionFromSource('""', context)).toBe('');
+      expect(await evaluateExpressionFromSource("''", context)).toBe('');
     });
 
     it('should handle string concatenation patterns', async () => {
-      const result = await parseAndEvaluateExpression('"Hello " + "World"', context);
+      const result = await evaluateExpressionFromSource('"Hello " + "World"', context);
       expect(result).toBe('Hello World');
     });
   });
@@ -102,14 +102,14 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       ];
 
       for (const test of tests) {
-        const result = await parseAndEvaluateExpression(test.expr, context);
+        const result = await evaluateExpressionFromSource(test.expr, context);
         expect(result).toBe(test.expected);
       }
     });
 
     it('should handle mod operator', async () => {
-      expect(await parseAndEvaluateExpression('17 mod 5', context)).toBe(2);
-      expect(await parseAndEvaluateExpression('20 mod 3', context)).toBe(2);
+      expect(await evaluateExpressionFromSource('17 mod 5', context)).toBe(2);
+      expect(await evaluateExpressionFromSource('20 mod 3', context)).toBe(2);
     });
   });
 
@@ -127,15 +127,15 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       ];
 
       for (const test of tests) {
-        const result = await parseAndEvaluateExpression(test.expr, context);
+        const result = await evaluateExpressionFromSource(test.expr, context);
         expect(result).toBe(test.expected);
       }
     });
 
     it('should handle logical precedence', async () => {
       // AND has higher precedence than OR
-      expect(await parseAndEvaluateExpression('true or false and false', context)).toBe(true);
-      expect(await parseAndEvaluateExpression('false and true or true', context)).toBe(true);
+      expect(await evaluateExpressionFromSource('true or false and false', context)).toBe(true);
+      expect(await evaluateExpressionFromSource('false and true or true', context)).toBe(true);
     });
   });
 
@@ -153,38 +153,38 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       ];
 
       for (const test of tests) {
-        const result = await parseAndEvaluateExpression(test.expr, context);
+        const result = await evaluateExpressionFromSource(test.expr, context);
         expect(result).toBe(test.expected);
       }
     });
 
     it('should handle string comparisons', async () => {
-      expect(await parseAndEvaluateExpression('"abc" < "def"', context)).toBe(true);
-      expect(await parseAndEvaluateExpression('"xyz" > "abc"', context)).toBe(true);
+      expect(await evaluateExpressionFromSource('"abc" < "def"', context)).toBe(true);
+      expect(await evaluateExpressionFromSource('"xyz" > "abc"', context)).toBe(true);
     });
   });
 
   describe('Context References (Official Test Patterns)', () => {
     it('should handle me/you/it/its references correctly', async () => {
       // Test 'me' reference
-      const meResult = await parseAndEvaluateExpression('me', context);
+      const meResult = await evaluateExpressionFromSource('me', context);
       expect(meResult).toBe(context.me);
 
       // Test 'you' reference
-      const youResult = await parseAndEvaluateExpression('you', context);
+      const youResult = await evaluateExpressionFromSource('you', context);
       expect(youResult).toBe(context.you);
 
       // Test 'it' reference
-      const itResult = await parseAndEvaluateExpression('it', context);
+      const itResult = await evaluateExpressionFromSource('it', context);
       expect(itResult).toBe(context.it);
     });
 
     it('should handle possessive references', async () => {
       // Test my/your/its possessive syntax
-      const myClass = await parseAndEvaluateExpression('my className', context);
+      const myClass = await evaluateExpressionFromSource('my className', context);
       expect(typeof myClass).toBe('string');
 
-      const itsValue = await parseAndEvaluateExpression('its value', context);
+      const itsValue = await evaluateExpressionFromSource('its value', context);
       expect(itsValue).toBe('john'); // Username input value
     });
   });
@@ -192,28 +192,26 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
   describe('CSS Selector References (Official Test Patterns)', () => {
     it('should handle CSS selector references correctly', async () => {
       // ID selector returns single element
-      const formById = await parseAndEvaluateExpression('#test-form', context);
+      const formById = await evaluateExpressionFromSource('#test-form', context);
       expect(formById).toBeInstanceOf(HTMLElement);
       expect(formById.id).toBe('test-form');
 
       // Class selector returns array
-      const formControls = await parseAndEvaluateExpression('.form-control', context);
+      const formControls = await evaluateExpressionFromSource('.form-control', context);
       expect(Array.isArray(formControls)).toBe(true);
       expect(formControls.length).toBe(3);
 
-      // Query reference returns NodeList
-      const queryControls = await parseAndEvaluateExpression('<.form-control/>', context);
-      expect(queryControls).toBeInstanceOf(NodeList);
+      // Q1.5: canonical returns iterable (Array), not NodeList.
+      const queryControls = await evaluateExpressionFromSource('<.form-control/>', context);
       expect(queryControls.length).toBe(3);
     });
 
     it('should handle attribute selectors', async () => {
-      const byTestId = await parseAndEvaluateExpression('[data-testid="username"]', context);
-      expect(byTestId).toBeInstanceOf(NodeList);
+      // Q1.5: canonical returns iterable (Array), not NodeList.
+      const byTestId = await evaluateExpressionFromSource('[data-testid="username"]', context);
       expect(byTestId.length).toBe(1);
 
-      const byType = await parseAndEvaluateExpression('<input[type="text"]/>', context);
-      expect(byType).toBeInstanceOf(NodeList);
+      const byType = await evaluateExpressionFromSource('<input[type="text"]/>', context);
       expect(byType.length).toBe(1);
     });
   });
@@ -230,18 +228,18 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       ];
 
       for (const test of tests) {
-        const result = await parseAndEvaluateExpression(test.expr, context);
+        const result = await evaluateExpressionFromSource(test.expr, context);
         expect(result).toBe(test.expected);
       }
     });
 
     it('should handle advanced type conversions', async () => {
       // Array conversion
-      const arrayResult = await parseAndEvaluateExpression('"a,b,c" as Array', context);
+      const arrayResult = await evaluateExpressionFromSource('"a,b,c" as Array', context);
       expect(Array.isArray(arrayResult)).toBe(true);
 
       // Date conversion
-      const dateResult = await parseAndEvaluateExpression('"2023-01-01" as Date', context);
+      const dateResult = await evaluateExpressionFromSource('"2023-01-01" as Date', context);
       expect(dateResult).toBeInstanceOf(Date);
     });
   });
@@ -249,21 +247,21 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
   describe('Variable References (Official Test Patterns)', () => {
     it('should handle local and global variable access', async () => {
       // Local variables
-      expect(await parseAndEvaluateExpression('username', context)).toBe('john');
-      expect(await parseAndEvaluateExpression('items', context)).toEqual([1, 2, 3, 4, 5]);
+      expect(await evaluateExpressionFromSource('username', context)).toBe('john');
+      expect(await evaluateExpressionFromSource('items', context)).toEqual([1, 2, 3, 4, 5]);
 
       // Object property access
-      expect(await parseAndEvaluateExpression('user.name', context)).toBe('John');
-      expect(await parseAndEvaluateExpression('user.email', context)).toBe('john@example.com');
+      expect(await evaluateExpressionFromSource('user.name', context)).toBe('John');
+      expect(await evaluateExpressionFromSource('user.email', context)).toBe('john@example.com');
 
       // Global variables
-      expect(await parseAndEvaluateExpression('app.name', context)).toBe('TestApp');
+      expect(await evaluateExpressionFromSource('app.name', context)).toBe('TestApp');
     });
 
     it('should handle array access and methods', async () => {
-      expect(await parseAndEvaluateExpression('items[0]', context)).toBe(1);
-      expect(await parseAndEvaluateExpression('items.length', context)).toBe(5);
-      expect(await parseAndEvaluateExpression('items.slice(1, 3)', context)).toEqual([2, 3]);
+      expect(await evaluateExpressionFromSource('items[0]', context)).toBe(1);
+      expect(await evaluateExpressionFromSource('items.length', context)).toBe(5);
+      expect(await evaluateExpressionFromSource('items.slice(1, 3)', context)).toEqual([2, 3]);
     });
   });
 
@@ -309,7 +307,7 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
 
       for (const pattern of patterns) {
         try {
-          await parseAndEvaluateExpression(pattern, context);
+          await evaluateExpressionFromSource(pattern, context);
           passedCount++;
         } catch (error) {
           console.warn(`Pattern failed: ${pattern}`, (error as Error).message);
