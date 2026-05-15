@@ -35,18 +35,47 @@ export interface RuntimeCommand {
 }
 
 /**
- * Command with optional parseInput() method
+ * Optional metadata shape attached to V2 command implementations.
+ * Commands may extend it freely; the registry only reads `aliases` and
+ * (via the parser) `name`.
+ */
+export interface CommandMetadata {
+  description?: string;
+  examples?: string[];
+  syntax?: string | string[];
+  aliases?: string[];
+  [extra: string]: unknown;
+}
+
+/**
+ * Raw input shape passed from the runtime to a command's `parseInput`.
+ * `modifiers` is heterogeneous because each modifier carries command-
+ * specific payload (AST node, string, boolean, etc.).
+ */
+export interface CommandRawInput {
+  args: ASTNode[];
+  modifiers: Record<string, unknown>;
+  commandName?: string;
+}
+
+/**
+ * Command with optional parseInput() method.
+ *
+ * `parseInput` returns the command-specific input shape; `execute`
+ * receives that shape. Both are typed as `unknown` here — concrete
+ * commands narrow them inside their own bodies. The registry doesn't
+ * need to know the shape, only that it round-trips through one command.
  */
 export interface CommandWithParseInput {
   name: string;
   parseInput?(
-    raw: { args: ASTNode[]; modifiers: Record<string, any>; commandName?: string },
+    raw: CommandRawInput,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
-  ): Promise<any>;
-  execute(input: any, context: TypedExecutionContext): Promise<unknown>;
+  ): Promise<unknown>;
+  execute(input: unknown, context: TypedExecutionContext): Promise<unknown>;
   validate?(input: unknown): ValidationResult<unknown>;
-  metadata?: any;
+  metadata?: CommandMetadata;
 }
 
 /**
@@ -151,14 +180,18 @@ export class CommandAdapterV2 implements RuntimeCommand {
   }
 
   get name(): string {
-    return this.impl.name || this.impl.metadata?.name;
+    const fromImpl = this.impl.name;
+    if (fromImpl) return fromImpl;
+    const fromMeta = this.impl.metadata?.name;
+    return typeof fromMeta === 'string' ? fromMeta : '';
   }
 
   get metadata() {
+    const syntax = this.impl.metadata?.syntax;
     return {
       description: this.impl.metadata?.description || '',
       examples: this.impl.metadata?.examples || [],
-      syntax: this.impl.metadata?.syntax || '',
+      syntax: Array.isArray(syntax) ? syntax.join(' | ') : syntax || '',
     };
   }
 
@@ -210,8 +243,9 @@ export class CommandAdapterV2 implements RuntimeCommand {
       // Convert to typed context
       const typedContext = ContextBridge.toTyped(context);
 
-      // Parse input arguments
-      let parsedInput: any;
+      // Parse input arguments. The shape is command-specific; the adapter
+      // treats it opaquely and the command's own execute() narrows it.
+      let parsedInput: unknown;
 
       // Check if command has parseInput() method (V2 commands)
       if (this.impl.parseInput && typeof this.impl.parseInput === 'function') {
@@ -268,10 +302,13 @@ export class CommandAdapterV2 implements RuntimeCommand {
         // Enhanced signature: execute(input, context)
         result = await this.impl.execute(parsedInput, typedContext);
       } else {
-        // Legacy signature: execute(context, ...args)
+        // Legacy signature: execute(context, ...args). The legacy path
+        // expects parsedInput to be an array of positional args; commands
+        // following this signature populate it accordingly.
+        const legacyArgs = Array.isArray(parsedInput) ? parsedInput : [parsedInput];
         result = await (
           this.impl.execute as (ctx: TypedExecutionContext, ...rest: unknown[]) => Promise<unknown>
-        )(typedContext, ...parsedInput);
+        )(typedContext, ...legacyArgs);
       }
 
       debug.command(`CommandAdapterV2: Command result:`, result);

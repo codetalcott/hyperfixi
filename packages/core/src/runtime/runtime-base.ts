@@ -180,14 +180,53 @@ export interface RuntimeBaseOptions {
   registryIntegration?: RegistryIntegrationOptions | boolean;
 }
 
+/**
+ * What the runtime stores in `behaviorRegistry`. Behaviors come in two
+ * shapes — imperative installers and hyperscript event-handler bundles —
+ * discriminated by the presence/value of `type`.
+ */
+export type BehaviorEntry =
+  | {
+      name: string;
+      /** Declared parameter names (positional). */
+      parameters: string[];
+      type: 'imperative';
+      install: (element: HTMLElement, parameters: Record<string, unknown>) => void | Promise<void>;
+    }
+  | {
+      name: string;
+      parameters: string[];
+      type?: undefined;
+      eventHandlers: EventHandlerNode[];
+      initBlock?: ASTNode;
+    };
+
+/**
+ * External shape of the behavior registry API exposed at `runtime.behaviorAPI`.
+ * Plugins (e.g. @hyperfixi/behaviors) attach a `resolve` hook to lazy-load
+ * behaviors on first lookup.
+ */
+export interface BehaviorAPI {
+  has(name: string): boolean;
+  get(name: string): BehaviorEntry | undefined;
+  set(name: string, definition: BehaviorEntry): void;
+  /** Optional lazy-load hook; returns true if a behavior was just registered. */
+  resolve: ((name: string) => boolean) | null;
+  install(
+    behaviorName: string,
+    element: HTMLElement,
+    parameters: Record<string, unknown>
+  ): Promise<void>;
+}
+
 export class RuntimeBase {
   protected options: RuntimeBaseOptions;
   protected registry: CommandRegistry;
   protected expressionEvaluator: BaseExpressionEvaluator;
   /** Behavior registry for programmatic behavior registration */
-  public behaviorRegistry: Map<string, any>;
-  public behaviorAPI: any;
-  protected globalVariables: Map<string, any>;
+  public behaviorRegistry: Map<string, BehaviorEntry>;
+  public behaviorAPI: BehaviorAPI;
+  protected globalVariables: Map<string, unknown>;
   /** Hook registry for runtime lifecycle hooks */
   protected hookRegistry: HookRegistry;
   /** Cleanup registry for tracking event listeners and observers */
@@ -240,15 +279,11 @@ export class RuntimeBase {
 
     // Create behavior API
     this.behaviorAPI = {
-      has: (name: string) => this.behaviorRegistry.has(name),
-      get: (name: string) => this.behaviorRegistry.get(name),
-      set: (name: string, definition: any) => this.behaviorRegistry.set(name, definition),
-      resolve: null as ((name: string) => boolean) | null,
-      install: async (
-        behaviorName: string,
-        element: HTMLElement,
-        parameters: Record<string, any>
-      ) => {
+      has: name => this.behaviorRegistry.has(name),
+      get: name => this.behaviorRegistry.get(name),
+      set: (name, definition) => this.behaviorRegistry.set(name, definition),
+      resolve: null,
+      install: async (behaviorName, element, parameters) => {
         return await this.installBehaviorOnElement(behaviorName, element, parameters);
       },
     };
@@ -444,7 +479,7 @@ export class RuntimeBase {
 
     // Inject self-reference for recursive execution (needed by control flow commands)
     if (!context.locals.has('_runtimeExecute')) {
-      context.locals.set('_runtimeExecute', (n: ASTNode, ctx?: any) =>
+      context.locals.set('_runtimeExecute', (n: ASTNode, ctx?: ExecutionContext) =>
         this.execute(n, ctx || context)
       );
     }
@@ -856,7 +891,10 @@ export class RuntimeBase {
   // Structure Executors (Program, Block, Sequence)
   // --------------------------------------------------------------------------
 
-  protected async executeProgram(node: any, context: ExecutionContext): Promise<unknown> {
+  protected async executeProgram(
+    node: ASTNode & { statements?: ASTNode[] },
+    context: ExecutionContext
+  ): Promise<unknown> {
     if (!node.statements || !Array.isArray(node.statements)) return;
 
     let lastResult: unknown = undefined;
@@ -864,9 +902,9 @@ export class RuntimeBase {
     // Separate statements into categories for proper execution order
     // Event handlers MUST be registered before init blocks run
     // This ensures that events sent during init are properly received
-    const eventHandlers: any[] = [];
-    const initBlocks: any[] = [];
-    const otherStatements: any[] = [];
+    const eventHandlers: ASTNode[] = [];
+    const initBlocks: ASTNode[] = [];
+    const otherStatements: ASTNode[] = [];
 
     for (const statement of node.statements) {
       if (statement.type === 'eventHandler') {
@@ -1017,8 +1055,8 @@ export class RuntimeBase {
     },
     _context: ExecutionContext
   ): Promise<void> {
-    const { name, parameters, eventHandlers, initBlock } = node;
-    const imperativeInstaller = (node as any).imperativeInstaller;
+    const { name, parameters = [], eventHandlers = [], initBlock } = node;
+    const imperativeInstaller = node.imperativeInstaller;
 
     if (typeof imperativeInstaller === 'function') {
       // Imperative behavior: store the installer function directly
@@ -1052,10 +1090,12 @@ export class RuntimeBase {
     }
 
     // Imperative behavior: call the installer directly and return
-    if (behavior.type === 'imperative' && typeof behavior.install === 'function') {
-      debug.runtime(`BEHAVIOR: Installing imperative behavior '${behaviorName}'`);
-      behavior.install(element, parameters);
-      debug.runtime(`BEHAVIOR: Finished installing imperative behavior '${behaviorName}'`);
+    if (behavior.type === 'imperative') {
+      if (typeof behavior.install === 'function') {
+        debug.runtime(`BEHAVIOR: Installing imperative behavior '${behaviorName}'`);
+        behavior.install(element, parameters);
+        debug.runtime(`BEHAVIOR: Finished installing imperative behavior '${behaviorName}'`);
+      }
       return;
     }
 
@@ -1223,15 +1263,17 @@ export class RuntimeBase {
         `BEHAVIOR: executeEventHandler - Using custom event source '${customEventSource}' for event '${event}'`
       );
 
-      // Create event handler that executes the commands
-      const customEventHandler = async (eventData: any) => {
+      // Create event handler that executes the commands. Custom event
+      // sources may emit arbitrary payloads (not just DOM `Event` instances),
+      // so eventData is opaque and assigned to `event` with a cast.
+      const customEventHandler = async (eventData: unknown) => {
         // Context Hydration
         const eventLocals = new Map(context.locals);
         const baseEventContext: ExecutionContext = {
           ...context,
           locals: eventLocals,
           it: eventData,
-          event: eventData,
+          event: eventData as Event | undefined,
         };
 
         // Enhance context with registered providers
@@ -1590,7 +1632,7 @@ export class RuntimeBase {
     if (this.isElement(watchTargetResult)) {
       watchTargetElements = [watchTargetResult];
     } else if (Array.isArray(watchTargetResult)) {
-      watchTargetElements = watchTargetResult.filter((el: any) => this.isElement(el));
+      watchTargetElements = watchTargetResult.filter((el: unknown) => this.isElement(el));
     }
 
     debug.runtime(
