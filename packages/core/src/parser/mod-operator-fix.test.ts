@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseAndEvaluateExpression } from './expression-parser';
+import { evaluateExpressionFromSource } from './runtime';
 import type { ExecutionContext } from '../types/core';
 
 const context: ExecutionContext = {
@@ -27,22 +27,22 @@ const context: ExecutionContext = {
 describe('Mod Operator - TDD Fix', () => {
   describe('Basic Mod Operations', () => {
     it('should handle basic modulo: 5 mod 3 = 2', async () => {
-      const result = await parseAndEvaluateExpression('5 mod 3', context);
+      const result = await evaluateExpressionFromSource('5 mod 3', context);
       expect(result).toBe(2);
     });
 
     it('should handle modulo with zero remainder: 6 mod 3 = 0', async () => {
-      const result = await parseAndEvaluateExpression('6 mod 3', context);
+      const result = await evaluateExpressionFromSource('6 mod 3', context);
       expect(result).toBe(0);
     });
 
     it('should handle modulo larger dividend: 17 mod 5 = 2', async () => {
-      const result = await parseAndEvaluateExpression('17 mod 5', context);
+      const result = await evaluateExpressionFromSource('17 mod 5', context);
       expect(result).toBe(2);
     });
 
     it('should handle modulo with decimals: 10.5 mod 3 ≈ 1.5', async () => {
-      const result = await parseAndEvaluateExpression('10.5 mod 3', context);
+      const result = await evaluateExpressionFromSource('10.5 mod 3', context);
       expect(result).toBeCloseTo(1.5, 5);
     });
   });
@@ -50,31 +50,31 @@ describe('Mod Operator - TDD Fix', () => {
   describe('Mod Operator Precedence', () => {
     it('should have same precedence as multiplication: 2 + 5 mod 3 = 4', async () => {
       // Should evaluate as: 2 + (5 mod 3) = 2 + 2 = 4
-      const result = await parseAndEvaluateExpression('2 + 5 mod 3', context);
+      const result = await evaluateExpressionFromSource('2 + 5 mod 3', context);
       expect(result).toBe(4);
     });
 
     it('should be left-associative: 10 mod 4 mod 3 = 2', async () => {
       // Should evaluate as: (10 mod 4) mod 3 = 2 mod 3 = 2
-      const result = await parseAndEvaluateExpression('10 mod 4 mod 3', context);
+      const result = await evaluateExpressionFromSource('10 mod 4 mod 3', context);
       expect(result).toBe(2);
     });
 
     it('should work with parentheses: (2 + 5) mod 3 = 1', async () => {
       // Should evaluate as: 7 mod 3 = 1
-      const result = await parseAndEvaluateExpression('(2 + 5) mod 3', context);
+      const result = await evaluateExpressionFromSource('(2 + 5) mod 3', context);
       expect(result).toBe(1);
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle mod by 1: 5 mod 1 = 0', async () => {
-      const result = await parseAndEvaluateExpression('5 mod 1', context);
+      const result = await evaluateExpressionFromSource('5 mod 1', context);
       expect(result).toBe(0);
     });
 
     it('should handle negative numbers: -7 mod 3 = -1', async () => {
-      const result = await parseAndEvaluateExpression('-7 mod 3', context);
+      const result = await evaluateExpressionFromSource('-7 mod 3', context);
       expect(result).toBe(-1); // JavaScript behavior
     });
   });
@@ -82,7 +82,7 @@ describe('Mod Operator - TDD Fix', () => {
   describe('Mod Operator Success Verification', () => {
     it('confirms mod operator is now working correctly', async () => {
       // Fixed! Now works properly
-      const result = await parseAndEvaluateExpression('5 mod 3', context);
+      const result = await evaluateExpressionFromSource('5 mod 3', context);
       expect(result).toBe(2);
     });
   });

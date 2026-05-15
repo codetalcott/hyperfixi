@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseAndEvaluateExpression } from './expression-parser';
+import { evaluateExpressionFromSource } from './runtime';
 import type { ExecutionContext } from '../types/core';
 
 const context: ExecutionContext = {
@@ -27,31 +27,31 @@ const context: ExecutionContext = {
 describe('Boolean Type Conversion - TDD Fix', () => {
   describe('String to Boolean Conversion', () => {
     it('should convert "false" as Boolean to false', async () => {
-      const result = await parseAndEvaluateExpression('"false" as Boolean', context);
+      const result = await evaluateExpressionFromSource('"false" as Boolean', context);
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
     });
 
     it('should convert "true" as Boolean to true', async () => {
-      const result = await parseAndEvaluateExpression('"true" as Boolean', context);
+      const result = await evaluateExpressionFromSource('"true" as Boolean', context);
       expect(result).toBe(true);
       expect(typeof result).toBe('boolean');
     });
 
     it('should convert "0" as Boolean to false', async () => {
-      const result = await parseAndEvaluateExpression('"0" as Boolean', context);
+      const result = await evaluateExpressionFromSource('"0" as Boolean', context);
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
     });
 
     it('should convert "" as Boolean to false', async () => {
-      const result = await parseAndEvaluateExpression('"" as Boolean', context);
+      const result = await evaluateExpressionFromSource('"" as Boolean', context);
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
     });
 
     it('should convert "hello" as Boolean to true', async () => {
-      const result = await parseAndEvaluateExpression('"hello" as Boolean', context);
+      const result = await evaluateExpressionFromSource('"hello" as Boolean', context);
       expect(result).toBe(true);
       expect(typeof result).toBe('boolean');
     });
@@ -59,19 +59,19 @@ describe('Boolean Type Conversion - TDD Fix', () => {
 
   describe('Number to Boolean Conversion', () => {
     it('should convert 0 as Boolean to false', async () => {
-      const result = await parseAndEvaluateExpression('0 as Boolean', context);
+      const result = await evaluateExpressionFromSource('0 as Boolean', context);
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
     });
 
     it('should convert 1 as Boolean to true', async () => {
-      const result = await parseAndEvaluateExpression('1 as Boolean', context);
+      const result = await evaluateExpressionFromSource('1 as Boolean', context);
       expect(result).toBe(true);
       expect(typeof result).toBe('boolean');
     });
 
     it('should convert 42 as Boolean to true', async () => {
-      const result = await parseAndEvaluateExpression('42 as Boolean', context);
+      const result = await evaluateExpressionFromSource('42 as Boolean', context);
       expect(result).toBe(true);
       expect(typeof result).toBe('boolean');
     });
@@ -79,19 +79,19 @@ describe('Boolean Type Conversion - TDD Fix', () => {
 
   describe('Other Type Conversions (Should Still Work)', () => {
     it('should still handle String conversion correctly', async () => {
-      const result = await parseAndEvaluateExpression('42 as String', context);
+      const result = await evaluateExpressionFromSource('42 as String', context);
       expect(result).toBe('42');
       expect(typeof result).toBe('string');
     });
 
     it('should still handle Number conversion correctly', async () => {
-      const result = await parseAndEvaluateExpression('"42.5" as Number', context);
+      const result = await evaluateExpressionFromSource('"42.5" as Number', context);
       expect(result).toBe(42.5);
       expect(typeof result).toBe('number');
     });
 
     it('should still handle Int conversion correctly', async () => {
-      const result = await parseAndEvaluateExpression('"42.9" as Int', context);
+      const result = await evaluateExpressionFromSource('"42.9" as Int', context);
       expect(result).toBe(42);
       expect(typeof result).toBe('number');
     });
@@ -104,7 +104,7 @@ describe('Boolean Type Conversion - TDD Fix', () => {
         locals: new Map([['nullVar', null]]),
       };
 
-      const result = await parseAndEvaluateExpression('nullVar as Boolean', contextWithNull);
+      const result = await evaluateExpressionFromSource('nullVar as Boolean', contextWithNull);
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
     });
@@ -115,7 +115,7 @@ describe('Boolean Type Conversion - TDD Fix', () => {
         locals: new Map([['undefinedVar', undefined]]),
       };
 
-      const result = await parseAndEvaluateExpression(
+      const result = await evaluateExpressionFromSource(
         'undefinedVar as Boolean',
         contextWithUndefined
       );
@@ -124,23 +124,23 @@ describe('Boolean Type Conversion - TDD Fix', () => {
     });
 
     it('should handle boolean literal as Boolean (passthrough)', async () => {
-      const result1 = await parseAndEvaluateExpression('true as Boolean', context);
+      const result1 = await evaluateExpressionFromSource('true as Boolean', context);
       expect(result1).toBe(true);
 
-      const result2 = await parseAndEvaluateExpression('false as Boolean', context);
+      const result2 = await evaluateExpressionFromSource('false as Boolean', context);
       expect(result2).toBe(false);
     });
   });
 
   describe('Case Sensitivity', () => {
     it('should handle boolean as lowercase alias', async () => {
-      const result = await parseAndEvaluateExpression('"false" as boolean', context);
+      const result = await evaluateExpressionFromSource('"false" as boolean', context);
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
     });
 
     it('should handle Bool as alias', async () => {
-      const result = await parseAndEvaluateExpression('"true" as Bool', context);
+      const result = await evaluateExpressionFromSource('"true" as Bool', context);
       expect(result).toBe(true);
       expect(typeof result).toBe('boolean');
     });
@@ -149,7 +149,7 @@ describe('Boolean Type Conversion - TDD Fix', () => {
   describe('Current Behavior Documentation', () => {
     it('documents Boolean conversion now working correctly', async () => {
       // Fixed: now correctly returns false (boolean) instead of "false" (string)
-      const result = await parseAndEvaluateExpression('"false" as Boolean', context);
+      const result = await evaluateExpressionFromSource('"false" as Boolean', context);
       expect(typeof result).toBe('boolean'); // Fixed behavior
       expect(result).toBe(false); // Fixed behavior - correctly boolean false
     });
