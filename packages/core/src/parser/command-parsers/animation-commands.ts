@@ -5,7 +5,6 @@
  * These functions use ParserContext for dependency injection, enabling
  * clean separation from the Parser class.
  *
- * Phase 9-3b: Command Extraction (Batch 2)
  * @module parser/command-parsers/animation-commands
  */
 
@@ -14,7 +13,6 @@ import type { ASTNode, ExpressionNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
 import { parseHyphenatedName } from '../helpers/parsing-helpers';
-// Phase 4: Import token predicates for direct token checks
 import { isIdentifierLike } from '../token-predicates';
 
 /**
@@ -39,8 +37,6 @@ import { isIdentifierLike } from '../token-predicates';
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'measure' identifier node
  * @returns CommandNode representing the measure command
- *
- * Phase 9-3b: Extracted from Parser.parseMeasureCommand
  */
 export function parseMeasureCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   // Parse measure command with multi-argument syntax
@@ -54,7 +50,6 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
 
   // Parse optional target (selector or expression)
   // If next token is a selector, identifier, or context var, parse it as target
-  // Phase 4: Using predicate methods instead of direct TokenType checks
   if (ctx.checkAnySelector() || ctx.checkContextVar() || ctx.match('<')) {
     // Parse the target element expression
     const target = ctx.parsePrimary();
@@ -68,7 +63,6 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
     // Check for CSS property shorthand: * followed by identifier
     if (ctx.match('*')) {
       // Next token should be the CSS property name
-      // Phase 4: Using predicate method
       if (ctx.checkIdentifierLike()) {
         const propName = ctx.advance();
         // Create identifier node with * prefix
@@ -82,12 +76,10 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
         } as IdentifierNode);
       }
     } else if (ctx.checkIdentifierLike()) {
-      // Phase 4: Combined IDENTIFIER/KEYWORD check into single predicate
       const property = ctx.parsePrimary();
       args.push(property);
     }
   } else if (ctx.checkIdentifierLike()) {
-    // Phase 4: Combined IDENTIFIER/KEYWORD check into single predicate
     // Just a property name without target: "measure width"
     const property = ctx.parsePrimary();
     args.push(property);
@@ -96,7 +88,6 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
   // Parse optional "and set <variable>" modifier
   if (ctx.match('and')) {
     if (ctx.match('set')) {
-      // Phase 4: Using predicate method for variable name check
       if (ctx.checkIdentifierLike()) {
         const variableName = ctx.advance();
         modifiers['set'] = {
@@ -111,7 +102,6 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
     }
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   const builder = CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition());
@@ -139,8 +129,6 @@ export function parseMeasureCommand(ctx: ParserContext, identifierNode: Identifi
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'transition' command token
  * @returns CommandNode representing the transition command
- *
- * Phase 9-3b: Extracted from Parser.parseTransitionCommand
  */
 export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
@@ -156,7 +144,6 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
   // Property can be:
   // - identifier (opacity, width, etc.)
   // - identifier with * prefix (*background-color)
-  // Phase 4: Using predicate for direct token check
   if (isIdentifierLike(firstToken) || firstToken.value === '*') {
     let propertyValue = '';
 
@@ -212,7 +199,6 @@ export function parseTransitionCommand(ctx: ParserContext, commandToken: Token) 
     modifiers['with'] = timingFunction as ExpressionNode;
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   return CommandNodeBuilder.from(commandToken)
     .withArgs(...args)
     .withModifiers(modifiers)

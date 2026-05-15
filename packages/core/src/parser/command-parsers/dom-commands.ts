@@ -5,7 +5,6 @@
  * These functions use ParserContext for dependency injection, enabling
  * clean separation from the Parser class.
  *
- * Phase 9-3b: Command Extraction (Batch 2)
  * @module parser/command-parsers/dom-commands
  */
 
@@ -38,8 +37,6 @@ import {
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'remove' identifier node
  * @returns CommandNode representing the remove command
- *
- * Phase 9-3b: Extracted from Parser.parseRemoveCommand
  */
 export function parseRemoveCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
@@ -88,8 +85,6 @@ export function parseRemoveCommand(ctx: ParserContext, identifierNode: Identifie
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'toggle' identifier node
  * @returns CommandNode representing the toggle command
- *
- * Phase 9-3b: Extracted from Parser.parseToggleCommand
  */
 export function parseToggleCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
@@ -172,8 +167,6 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'add' command token
  * @returns CommandNode representing the add command
- *
- * Phase 9-3b: Extracted from Parser.parseAddCommand
  */
 export function parseAddCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
@@ -230,8 +223,6 @@ export function parseAddCommand(ctx: ParserContext, commandToken: Token) {
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'put' identifier node
  * @returns CommandNode representing the put command, or null on error
- *
- * Phase 9-3b: Extracted from Parser.parsePutCommand
  */
 export function parsePutCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   // Parse the content expression (everything before operation keyword)

@@ -19,10 +19,9 @@ export type { Token } from '../types/core';
 // ============================================================================
 // TokenKind Enum — the sole token classification system
 // ============================================================================
-// TokenKind represents lexical categories - what the token IS structurally.
+// TokenKind represents lexical categories — what the token IS structurally.
 // The parser uses predicates (token-predicates.ts) for semantic classification
 // (e.g., is this identifier a command? a keyword? an event name?).
-// Phase 8 complete: TokenType enum removed, all call sites use TokenKind.
 
 /**
  * Lexical token categories.
@@ -57,16 +56,11 @@ export enum TokenKind {
   UNKNOWN = 'unknown',
 }
 
-// TokenType enum removed in Phase 8 — all classification is now via TokenKind + predicates
-
 // Sets are imported from parser-constants.ts (single source of truth)
 // Local aliases for tokenizer-specific sets
 const KEYWORDS = TOKENIZER_KEYWORDS;
 const MATHEMATICAL_OPERATORS = new Set(['+', '-', '*', '/', 'mod']);
 const TIME_UNITS = new Set(['ms', 's', 'seconds', 'minutes', 'hours', 'days']);
-
-// Feature flags removed in Phase 8 — deferred classification and dual output are no longer needed.
-// All tokens use TokenKind exclusively; semantic classification is via predicates.
 
 export interface Tokenizer {
   input: string;
@@ -115,7 +109,6 @@ export function tokenize(input: string): Token[] {
       // Check if this is possessive syntax (apostrophe followed by 's')
       const nextChar = peek(tokenizer, 1);
       const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-      // Phase 8: Use TokenKind for possessive detection instead of TokenType
       const isPossessive =
         nextChar === 's' &&
         prevToken &&
@@ -178,7 +171,6 @@ export function tokenize(input: string): Token[] {
 
       // Check if this is a CSS selector or a member access operator
       // It's a CSS selector if it's at the start or follows whitespace/operators
-      // Phase 8: Use TokenKind for CSS selector context detection
       const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
       // Keywords that can precede CSS selectors (not member access)
       const SELECTOR_CONTEXT_KEYWORDS = new Set([

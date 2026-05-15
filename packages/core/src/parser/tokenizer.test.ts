@@ -2,7 +2,6 @@
  * Test suite for Hyperscript Tokenizer
  * Tests lexical analysis and token classification
  *
- * Phase 8: Updated to use TokenKind (lexical) + predicates (semantic)
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

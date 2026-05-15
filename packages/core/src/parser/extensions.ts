@@ -107,7 +107,7 @@ export type NodeWriterFn = (
 ) => void | Promise<void>;
 
 /**
- * Module-level storage for Phase 5b extension points. Kept here (not in
+ * Module-level storage for plugin extension points. Kept here (not in
  * parser-constants.ts) because these hold functions, not string sets.
  */
 const FEATURE_REGISTRY = new Map<string, FeatureParseFn>();
@@ -438,9 +438,10 @@ export function getParserExtensionRegistry(): ParserExtensionRegistry {
 }
 
 /**
- * Phase 5b: centralized writer for `$name` globals. Routes through registered
- * GlobalWriteHook callbacks so plugins (e.g. @hyperfixi/reactivity) are notified
- * on every write. All core write paths for `$name` go through this helper.
+ * Centralized writer for `$name` globals. Routes through registered
+ * GlobalWriteHook callbacks so plugins (e.g. @hyperfixi/reactivity) are
+ * notified on every write. All core write paths for `$name` go through this
+ * helper.
  *
  * Kept here (not in parser/runtime.ts) so command helpers can depend on it
  * without pulling in the full expression evaluator graph.

@@ -1098,7 +1098,7 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse :variable in INCREMENT command', () => {
-      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // Note: increment is now transformed to `set` at parse time.
       // increment :counter by 1 → set :counter to (:counter + 1)
       const result = parse('increment :counter by 1');
       expect(result.success).toBe(true);
@@ -1123,7 +1123,7 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse :variable in arithmetic expressions', () => {
-      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // Note: increment is now transformed to `set` at parse time.
       // increment :sum by :amount → set :sum to (:sum + :amount)
       const result = parse('increment :sum by :amount');
       expect(result.success).toBe(true);
@@ -1251,7 +1251,7 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse ::variable in INCREMENT command', () => {
-      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // Note: increment is now transformed to `set` at parse time.
       // increment ::total by 5 → set ::total to (::total + 5)
       const result = parse('increment ::total by 5');
       expect(result.success).toBe(true);
@@ -1276,7 +1276,7 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse ::variable in arithmetic expressions', () => {
-      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // Note: increment is now transformed to `set` at parse time.
       // increment ::sum by ::amount → set ::sum to (::sum + ::amount)
       const result = parse('increment ::sum by ::amount');
       expect(result.success).toBe(true);
@@ -1353,7 +1353,7 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should handle mixed :local and ::global in same expression', () => {
-      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // Note: increment is now transformed to `set` at parse time.
       // increment ::globalSum by :localAmount → set ::globalSum to (::globalSum + :localAmount)
       const result = parse('increment ::globalSum by :localAmount');
       expect(result.success).toBe(true);

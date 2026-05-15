@@ -5,7 +5,6 @@
  * These functions use ParserContext for dependency injection, enabling
  * clean separation from the Parser class.
  *
- * Phase 9-3b: Command Extraction (Batch 2)
  * @module parser/command-parsers/utility-commands
  */
 
@@ -14,7 +13,6 @@ import type { ASTNode, Token, ExpressionNode, CommandNode } from '../../types/co
 import { CommandNodeBuilder } from '../command-node-builder';
 import { isKeyword, isCommandBoundary, consumeOptionalKeyword } from '../helpers/parsing-helpers';
 import { KEYWORDS } from '../parser-constants';
-// Phase 4: TokenType import removed - using predicate methods instead
 
 // Import command parsers from other modules for compound command routing
 import * as eventCommands from './event-commands';
@@ -49,8 +47,6 @@ import * as variableCommands from './variable-commands';
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The command identifier node
  * @returns CommandNode representing the command, or result of parseRegularCommand for unknown commands
- *
- * Phase 9-3b: Extracted from Parser.parseCompoundCommand
  */
 export function parseCompoundCommand(
   ctx: ParserContext,
@@ -111,14 +107,11 @@ export function parseCompoundCommand(
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The command identifier node
  * @returns CommandNode representing the command
- *
- * Phase 9-3b: Extracted from Parser.parseRegularCommand
  */
 export function parseRegularCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
   const args: ASTNode[] = [];
 
   // Parse command arguments (space-separated, not comma-separated)
-  // Phase 4: Using predicate methods instead of direct TokenType checks
   while (!isCommandBoundary(ctx, ['catch', 'finally'])) {
     // Include EVENT tokens to allow DOM event names as arguments (e.g., 'send reset to #element')
     // checkIdentifierLike() covers: IDENTIFIER, CONTEXT_VAR, KEYWORD, COMMAND, EVENT
@@ -137,7 +130,6 @@ export function parseRegularCommand(ctx: ParserContext, identifierNode: Identifi
     }
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
@@ -171,8 +163,6 @@ export function parseRegularCommand(ctx: ParserContext, identifierNode: Identifi
  * @param commandToken - The command token
  * @param commandName - The command name (for pattern lookup)
  * @returns CommandNode representing the multi-word command, or null if no pattern found
- *
- * Phase 9-3b: Extracted from Parser.parseMultiWordCommand
  */
 export function parseMultiWordCommand(
   ctx: ParserContext,
@@ -228,7 +218,6 @@ export function parseMultiWordCommand(
     }
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   const builder = CommandNodeBuilder.from(commandToken)
     .withArgs(...args)
     .endingAt(ctx.getPosition());
@@ -555,7 +544,6 @@ export function parseJsCommand(ctx: ParserContext, identifierNode: IdentifierNod
   if (ctx.match('(')) {
     while (!ctx.check(')') && !ctx.isAtEnd()) {
       // Collect parameter names as identifier strings
-      // Phase 4: Using predicate methods - checkIdentifierLike() covers both IDENTIFIER and CONTEXT_VAR
       if (ctx.checkIdentifierLike()) {
         parameters.push(ctx.advance().value);
       }

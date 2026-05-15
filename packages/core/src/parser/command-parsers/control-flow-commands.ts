@@ -5,7 +5,6 @@
  * These functions use ParserContext for dependency injection, enabling
  * clean separation from the Parser class.
  *
- * Phase 9-3b: Command Extraction (Batch 2)
  * @module parser/command-parsers/control-flow-commands
  */
 
@@ -16,7 +15,6 @@ import { createBlock, createStringLiteral } from '../helpers/ast-helpers';
 import { debug } from '../../utils/debug';
 import { KEYWORDS } from '../parser-constants';
 import { consumeOptionalKeyword } from '../helpers/parsing-helpers';
-// Phase 4: Import token predicates for direct token checks
 import { isIdentifierLike, isEvent } from '../token-predicates';
 
 /**
@@ -34,8 +32,6 @@ import { isIdentifierLike, isEvent } from '../token-predicates';
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'halt' identifier node
  * @returns CommandNode representing the halt command
- *
- * Phase 9-3b: Extracted from Parser.parseHaltCommand
  */
 export function parseHaltCommand(
   ctx: ParserContext,
@@ -108,8 +104,6 @@ export function parseHaltCommand(
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'repeat' command token
  * @returns CommandNode representing the repeat command
- *
- * Phase 9-3b: Extracted from Parser.parseRepeatCommand
  */
 export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): CommandNode {
   const args: ASTNode[] = [];
@@ -127,7 +121,6 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
     loopType = KEYWORDS.FOR;
 
     // Parse: for <identifier> in <expression>
-    // Phase 4: Using predicate for direct token check
     const identToken = ctx.peek();
     if (isIdentifierLike(identToken)) {
       variable = identToken.value;
@@ -164,7 +157,6 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
       });
       // Accept both IDENTIFIER and EVENT token types for the event name
       // (tokenizer marks known DOM events like 'mouseup', 'click' as EVENT type)
-      // Phase 4: Using predicates for direct token checks
       if (isIdentifierLike(eventToken) || isEvent(eventToken)) {
         eventName = eventToken.value;
         ctx.advance();
@@ -227,7 +219,6 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
   } else if (ctx.check(KEYWORDS.INDEX)) {
     ctx.advance(); // consume 'index'
     const indexToken = ctx.peek();
-    // Phase 4: Using predicate for direct token check
     if (isIdentifierLike(indexToken)) {
       indexVariable = indexToken.value;
       ctx.advance();
@@ -316,7 +307,6 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
     args.push(createBlock(elseCommands, { ...pos, end: pos.end || 0 }));
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   const builder = CommandNodeBuilder.from(commandToken).withArgs(...args);
   if (bottomTested) {
     builder.withModifier('bottomTested', {
@@ -352,8 +342,6 @@ export function parseRepeatCommand(ctx: ParserContext, commandToken: Token): Com
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'if' command token
  * @returns CommandNode representing the if command
- *
- * Phase 9-3b: Extracted from Parser.parseIfCommand
  */
 export function parseIfCommand(ctx: ParserContext, commandToken: Token): CommandNode {
   const args: ASTNode[] = [];
@@ -426,7 +414,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       }
 
       // When we find the FIRST command, check its line position
-      // Phase 4: Using predicate method
       if (ctx.checkIsCommand() || ctx.isCommand(tokenValue)) {
         // If first command is on a DIFFERENT line than if, it's multi-line
         // If first command is on the SAME line as if, it's single-line
@@ -458,7 +445,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     const maxIterations = 20; // Safety limit to prevent infinite loops
     let iterations = 0;
 
-    // Phase 4: Using predicate method
     while (
       !ctx.isAtEnd() &&
       !ctx.checkIsCommand() &&
@@ -508,7 +494,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     // Parse command block until 'else' or 'end'
     const thenCommands: ASTNode[] = [];
     while (!ctx.isAtEnd() && !ctx.check(KEYWORDS.ELSE) && !ctx.check(KEYWORDS.END)) {
-      // Phase 4: Using predicate method
       if (ctx.checkIsCommand() || ctx.isCommand(ctx.peek().value)) {
         ctx.advance(); // consume command token
         const cmd = ctx.parseCommand();
@@ -543,7 +528,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
       ctx.advance(); // consume 'else'
 
       // Check for 'else if' continuation (if is a KEYWORD token)
-      // Phase 4: Simplified check - ctx.check() already handles the KEYWORD case
       if (ctx.check(KEYWORDS.IF)) {
         // This is 'else if' - recursively parse as a nested if command
         // The nested if will consume its own 'end', which serves as the end for the entire chain
@@ -566,7 +550,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
         // Regular else block
         const elseCommands: ASTNode[] = [];
         while (!ctx.isAtEnd() && !ctx.check(KEYWORDS.END)) {
-          // Phase 4: Using predicate method
           if (ctx.checkIsCommand() || ctx.isCommand(ctx.peek().value)) {
             ctx.advance(); // consume command token
             const cmd = ctx.parseCommand();
@@ -598,7 +581,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
   } else {
     // Single-line form: if condition command
     // Parse exactly one command (no 'end' expected)
-    // Phase 4: Using predicate method
     if (ctx.checkIsCommand() || ctx.isCommand(ctx.peek().value)) {
       ctx.advance(); // consume command token
       const singleCommand = ctx.parseCommand();
@@ -617,7 +599,6 @@ export function parseIfCommand(ctx: ParserContext, commandToken: Token): Command
     }
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   return CommandNodeBuilder.from(commandToken)
     .withArgs(...args)
     .endingAt(ctx.getPosition())
@@ -658,7 +639,6 @@ export function parseForCommand(ctx: ParserContext, commandToken: Token): Comman
   }
 
   // Parse: <identifier> in <expression>
-  // Phase 4: Using predicate for direct token check
   const identToken = ctx.peek();
   if (isIdentifierLike(identToken)) {
     variable = identToken.value;
@@ -691,7 +671,6 @@ export function parseForCommand(ctx: ParserContext, commandToken: Token): Comman
   } else if (ctx.check(KEYWORDS.INDEX)) {
     ctx.advance(); // consume 'index'
     const indexToken = ctx.peek();
-    // Phase 4: Using predicate for direct token check
     if (isIdentifierLike(indexToken)) {
       indexVariable = indexToken.value;
       ctx.advance();

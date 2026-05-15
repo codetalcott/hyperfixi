@@ -4,7 +4,7 @@
  * Handles hyperscript's unique natural language syntax
  */
 
-// Phase 8: TokenType removed - parser now uses predicates exclusively
+// Token classification is fully predicate-based; there is no TokenType enum.
 import { tokenize } from './tokenizer';
 import type {
   Token,
@@ -29,7 +29,6 @@ import { debug } from '../utils/debug';
 import { SemanticIntegrationAdapter, DEFAULT_CONFIDENCE_THRESHOLD } from './semantic-integration';
 import { getRegisteredFeature } from './extensions';
 
-// Phase 1 Refactoring: Import new helper modules
 import {
   COMMANDS,
   COMPOUND_COMMANDS,
@@ -40,7 +39,7 @@ import {
   KEYWORDS,
 } from './parser-constants';
 
-// Phase 4: Import token predicates for decoupled classification
+// Token predicates: decoupled lexical+semantic classification.
 import {
   isCommand as isCommandPredicate,
   isKeyword as isKeywordPredicate,
@@ -55,7 +54,6 @@ import {
   isCommandTerminator,
   hasValue,
   hasValueIn,
-  // Phase 7: Specific type predicates for full TokenType removal
   isIdentifier,
   isString,
   isNumber,
@@ -72,9 +70,8 @@ import {
   isBasicOperator,
   isComparisonOperator,
 } from './token-predicates';
-// Phase 9-2: Import helper modules and types
+// AST node types and helpers.
 import type {
-  // ParserContext, Position - Will be used in Phase 9-3 for command extraction
   IdentifierNode,
   LiteralNode,
   BinaryExpressionNode,
@@ -84,11 +81,10 @@ import type {
   SelectorNode,
   PossessiveExpressionNode,
 } from './parser-types';
-// import * as tokenHelpers from './helpers/token-helpers'; // Will be used in Phase 9-3
 import * as astHelpers from './helpers/ast-helpers';
 import * as parsingHelpers from './helpers/parsing-helpers';
 
-// Phase 9-3a: Import command parser modules
+// Extracted per-category command parsers.
 import * as eventCommands from './command-parsers/event-commands';
 import * as controlFlowCommands from './command-parsers/control-flow-commands';
 import * as animationCommands from './command-parsers/animation-commands';
@@ -97,7 +93,7 @@ import * as asyncCommands from './command-parsers/async-commands';
 import * as utilityCommands from './command-parsers/utility-commands';
 import * as variableCommands from './command-parsers/variable-commands';
 
-// Phase 2.2: Pratt parser for expression parsing
+// Pratt parser for expression parsing.
 import {
   PARSER_TABLE,
   STOP_TOKENS as PRATT_STOP_TOKENS,
@@ -109,9 +105,6 @@ import {
 export type ParseResult = CoreParseResult;
 // Re-export ParseError from ./types
 export type { ParseError } from './types';
-
-// AST node types are now imported from parser-types.ts (Phase 9-2)
-// Multi-word patterns are now imported from parsing-helpers.ts (Phase 9-2 Day 6)
 
 /**
  * Parse a time expression string (e.g., "200ms", "1s", "2h") to milliseconds.
@@ -166,7 +159,7 @@ export class Parser {
   private registryIntegration?: ParserRegistryIntegration;
 
   /**
-   * Selective memoization cache for Pratt expression parsing (Phase 6.1).
+   * Selective memoization cache for Pratt expression parsing.
    * Caches expression results keyed by `${tokenPosition}:${minBp}`.
    * Stores both the parsed node and the end token position for replay.
    * Cleared at the start of each top-level parse() call.
@@ -226,7 +219,7 @@ export class Parser {
   }
 
   parse(): ParseResult {
-    // Clear Pratt expression cache for this parse (Phase 6.1)
+    // Clear Pratt expression cache for this parse
     this.prattCache.clear();
     const result = this.parseInternal();
     // Attach accumulated errors for resilient parsing
@@ -285,7 +278,7 @@ export class Parser {
       }
 
       // Check if this starts with init, on, def, a comment, or a plugin-registered
-      // top-level feature (Phase 5b — e.g. `live`, `when`, `bind` from @hyperfixi/reactivity).
+      // top-level feature (e.g. `live`, `when`, `bind` from @hyperfixi/reactivity).
       const topToken = this.peek();
       const topPluginFeature =
         topToken && getRegisteredFeature(topToken.value) ? topToken.value : null;
@@ -327,7 +320,7 @@ export class Parser {
               statements.push(defFeature);
             }
           } else {
-            // Phase 5b: dispatch to plugin-registered top-level features.
+            // Dispatch to plugin-registered top-level features.
             const tok = this.peek();
             const pluginParse = tok ? getRegisteredFeature(tok.value) : undefined;
             if (pluginParse) {
@@ -551,7 +544,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // Phase 2.2: Pratt Expression Parser
+  // Pratt Expression Parser
   // Replaces the cascading parseAssignment → parseLogicalOr → ... → parseUnary chain.
   // ============================================================================
 
@@ -565,7 +558,7 @@ export class Parser {
    * @param minBp - Minimum binding power to continue parsing infix operators
    */
   private parseExpressionPratt(minBp: number): ASTNode {
-    // Phase 6.1: Selective memoization — cache hits replay the result and skip tokens
+    // Selective memoization — cache hits replay the result and skip tokens
     const cacheKey = `${this.current}:${minBp}`;
     const cached = this.prattCache.get(cacheKey);
     if (cached) {
@@ -678,7 +671,7 @@ export class Parser {
       left = infixEntry.infix.handler(left, opToken, this.makePrattContext());
     }
 
-    // Phase 6.1: Cache the result for this position and binding power
+    // Cache the result for this position and binding power
     this.prattCache.set(cacheKey, { node: left, endPos: this.current });
 
     return left;
@@ -973,7 +966,7 @@ export class Parser {
     if (this.keywordResolver) {
       return this.keywordResolver.isCommand(name);
     }
-    // Phase 1 Refactoring: Use centralized command list
+    // Use centralized command list
     return CommandClassification.isCommand(name);
   }
 
@@ -982,7 +975,7 @@ export class Parser {
     if (this.keywordResolver) {
       return this.keywordResolver.isKeyword(name);
     }
-    // Phase 1 Refactoring: Use centralized keyword list
+    // Use centralized keyword list
     return CommandClassification.isKeyword(name);
   }
 
@@ -1037,7 +1030,7 @@ export class Parser {
   }
 
   private isCompoundCommand(commandName: string): boolean {
-    // Phase 1 Refactoring: Use centralized command list
+    // Use centralized command list
     return CommandClassification.isCompoundCommand(commandName);
   }
 
@@ -1046,19 +1039,17 @@ export class Parser {
   }
 
   private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // Phase 9-3b: Delegate to extracted DOM command parser
+    // Delegate to extracted DOM command parser
     return domCommands.parsePutCommand(this.getContext(), identifierNode);
   }
 
   private parseSetCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // Phase 9-3b: Delegate to extracted variable command parser
+    // Delegate to extracted variable command parser
     return variableCommands.parseSetCommand(this.getContext(), identifierNode);
   }
 
   /**
    * Parse halt command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseHaltCommand(identifierNode: IdentifierNode): CommandNode | null {
     return controlFlowCommands.parseHaltCommand(this.getContext(), identifierNode);
@@ -1066,8 +1057,6 @@ export class Parser {
 
   /**
    * Parse measure command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseMeasureCommand(identifierNode: IdentifierNode): CommandNode | null {
     return animationCommands.parseMeasureCommand(this.getContext(), identifierNode);
@@ -1075,8 +1064,6 @@ export class Parser {
 
   /**
    * Parse trigger command
-   *
-   * Phase 9-3a: Delegated to extracted command parser
    */
   private parseTriggerCommand(identifierNode: IdentifierNode): CommandNode | null {
     return eventCommands.parseTriggerCommand(this.getContext(), identifierNode);
@@ -1299,8 +1286,6 @@ export class Parser {
    */
   /**
    * Parse wait command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseWaitCommand(commandToken: Token): CommandNode {
     return asyncCommands.parseWaitCommand(this.getContext(), commandToken) as CommandNode;
@@ -1308,8 +1293,6 @@ export class Parser {
 
   /**
    * Parse install command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseInstallCommand(commandToken: Token): CommandNode {
     return asyncCommands.parseInstallCommand(this.getContext(), commandToken);
@@ -1332,8 +1315,6 @@ export class Parser {
    */
   /**
    * Parse transition command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseTransitionCommand(commandToken: Token): CommandNode {
     return animationCommands.parseTransitionCommand(this.getContext(), commandToken);
@@ -1348,8 +1329,6 @@ export class Parser {
    */
   /**
    * Parse add command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseAddCommand(commandToken: Token): CommandNode {
     return domCommands.parseAddCommand(this.getContext(), commandToken);
@@ -1371,8 +1350,6 @@ export class Parser {
 
   /**
    * Parse remove command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseRemoveCommand(identifierNode: IdentifierNode): CommandNode | null {
     return domCommands.parseRemoveCommand(this.getContext(), identifierNode);
@@ -1380,8 +1357,6 @@ export class Parser {
 
   /**
    * Parse toggle command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseToggleCommand(identifierNode: IdentifierNode): CommandNode | null {
     return domCommands.parseToggleCommand(this.getContext(), identifierNode);
@@ -1389,8 +1364,6 @@ export class Parser {
 
   /**
    * Parse regular command
-   *
-   * Phase 9-3b: Delegated to extracted command parser
    */
   private parseRegularCommand(identifierNode: IdentifierNode): CommandNode | null {
     return utilityCommands.parseRegularCommand(this.getContext(), identifierNode);
@@ -1441,7 +1414,7 @@ export class Parser {
         if (this.check('*')) {
           // Consume the * operator
           this.advance();
-          // Get the property name after * - Phase 8: Use predicate-based consume
+          // Get the property name after *
           const propertyToken = this.consumeIdentifier(
             'Expected property name after * in CSS property syntax'
           );
@@ -1451,7 +1424,7 @@ export class Parser {
           // Attribute reference: element's @data-attr
           propertyName = this.advance().value;
         } else {
-          // Normal property access - Phase 8: Use predicate-based consume
+          // Normal property access
           const property = this.consumeIdentifier('Expected property name after possessive');
           propertyName = property.value;
         }
@@ -2218,7 +2191,6 @@ export class Parser {
       // Catch-all: any identifier-like token (keywords, context vars, etc.)
       eventToken = this.advance();
     } else {
-      // Phase 8: Use predicate-based consume
       eventToken = this.consumeEvent(errorMessage);
     }
 
@@ -2834,7 +2806,6 @@ export class Parser {
 
     // 'behavior' keyword should already be consumed
     // Now expect behavior name (must start with uppercase)
-    // Phase 8: Use predicate-based consume
     const nameToken = this.consumeIdentifier("Expected behavior name after 'behavior' keyword");
     const behaviorName = nameToken.value;
 
@@ -3131,7 +3102,7 @@ export class Parser {
    * Returns null if this command doesn't use multi-word syntax
    */
   private parseMultiWordCommand(commandToken: Token, commandName: string): CommandNode | null {
-    // Phase 9-3b: Delegate to extracted utility command parser
+    // Delegate to extracted utility command parser
     return utilityCommands.parseMultiWordCommand(this.getContext(), commandToken, commandName);
   }
 
@@ -3634,7 +3605,6 @@ export class Parser {
       }
 
       // Standard JavaScript property access: my className, its value, your name
-      // Phase 8: Use predicate-based consume
       const contextLabels = { me: 'my', it: 'its', you: 'your' };
       const property = this.consumeIdentifier(
         `Expected property name after '${contextLabels[contextVar]}'`
@@ -3682,7 +3652,7 @@ export class Parser {
     return this.createCallExpression(callee, args);
   }
 
-  // Helper methods for AST node creation (Phase 9-2: using ast-helpers module)
+  // Helper methods for AST node creation (delegates to ast-helpers module)
   private createLiteral(value: unknown, raw: string): LiteralNode {
     return astHelpers.createLiteral(value, raw, this.getPosition());
   }
@@ -3801,7 +3771,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // PREDICATE-BASED TOKEN CHECKING (Phase 4)
+  // PREDICATE-BASED TOKEN CHECKING
   // These methods use token predicates for semantic classification,
   // enabling migration from TokenType enum checks to predicate functions.
   // ============================================================================
@@ -3905,7 +3875,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // SPECIFIC TYPE PREDICATE HELPERS (Phase 7)
+  // SPECIFIC TYPE PREDICATE HELPERS
   // These enable full TokenType removal from parser.ts
   // ============================================================================
 
@@ -3994,7 +3964,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // PREDICATE-BASED CONSUME METHODS (Phase 8)
+  // PREDICATE-BASED CONSUME METHODS
   // These replace consume(TokenType.X, ...) calls with predicate-based checks
   // ============================================================================
 
@@ -4042,7 +4012,7 @@ export class Parser {
 
   private peek(): Token {
     if (this.isAtEnd()) {
-      // Return a dummy EOF token - Phase 8: Use kind instead of type
+      // Return a dummy EOF token
       return { kind: 'unknown', value: '', start: 0, end: 0, line: 1, column: 1 };
     }
     return this.tokens[this.current];
@@ -4053,8 +4023,8 @@ export class Parser {
   }
 
   /**
-   * Consume a token with the expected string value
-   * Phase 8: Simplified to string-only - use consumeIdentifier/consumeEvent for type-based checks
+   * Consume a token with the expected string value. Use consumeIdentifier or
+   * consumeEvent for type-based checks.
    */
   private consume(expected: string, message: string): Token {
     if (this.check(expected)) {
@@ -4266,8 +4236,6 @@ export class Parser {
    * This method creates a ParserContext object that exposes parser functionality
    * to command parsers without exposing the Parser class internals.
    * All methods are bound to the Parser instance.
-   *
-   * Phase 9-3a: ParserContext Implementation
    */
   getContext(): import('./parser-types').ParserContext {
     const parser = this;
@@ -4276,14 +4244,14 @@ export class Parser {
       tokens: this.tokens,
       // Note: 'current' is added below via Object.defineProperty for getter/setter
 
-      // Token Navigation Methods (Phase 8: removed deprecated checkTokenType)
+      // Token Navigation Methods
       advance: this.advance.bind(this),
       peek: this.peek.bind(this),
       previous: this.previous.bind(this),
       consume: this.consume.bind(this),
       check: this.check.bind(this),
 
-      // Predicate-Based Token Checking (Phase 4)
+      // Predicate-Based Token Checking
       checkIdentifierLike: this.checkIdentifierLike.bind(this),
       checkSelector: this.checkSelector.bind(this),
       checkAnySelector: this.checkAnySelector.bind(this),
@@ -4295,7 +4263,6 @@ export class Parser {
       checkContextVar: this.checkContextVar.bind(this),
 
       match: this.match.bind(this),
-      // Phase 8: removed deprecated matchTokenType
       matchOperator: this.matchOperator.bind(this),
       isAtEnd: this.isAtEnd.bind(this),
 

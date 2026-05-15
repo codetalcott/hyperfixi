@@ -179,12 +179,11 @@ export interface MultiWordPattern {
 }
 
 // ============================================================================
-// Phase 2.4: Focused Sub-Interfaces
+// Focused Sub-Interfaces
 //
-// ParserContext is now a composition of focused sub-interfaces. Command parsers
-// can import the specific sub-interface they need for better dependency
-// visibility and simpler test mocks. ParserContext itself is unchanged for
-// backward compatibility — it extends all sub-interfaces.
+// ParserContext is composed of focused sub-interfaces. Command parsers can
+// import the specific sub-interface they need for better dependency
+// visibility and simpler test mocks. ParserContext extends all of them.
 // ============================================================================
 
 /**
@@ -300,8 +299,8 @@ export interface ASTFactory {
 /**
  * ExpressionParser — expression parsing methods.
  * The main entry point is `parseExpression()`; the individual precedence-level
- * methods are legacy (superseded by the Pratt parser in Phase 2.2) but kept
- * for backward compatibility.
+ * methods are legacy (superseded by the Pratt parser) but kept for backward
+ * compatibility.
  */
 export interface ExpressionParser {
   /** Parse a complete expression */

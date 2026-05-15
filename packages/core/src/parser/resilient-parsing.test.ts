@@ -1,5 +1,5 @@
 /**
- * Tests for Phase 2.3: Resilient Parsing
+ * Tests for resilient parsing.
  *
  * Validates that the parser continues after errors, produces error nodes with
  * diagnostics, and the runtime skips error-diagnosed nodes gracefully.

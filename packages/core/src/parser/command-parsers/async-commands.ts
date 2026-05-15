@@ -5,7 +5,6 @@
  * These functions use ParserContext for dependency injection, enabling
  * clean separation from the Parser class.
  *
- * Phase 9-3b: Command Extraction (Batch 2)
  * @module parser/command-parsers/async-commands
  */
 
@@ -20,7 +19,6 @@ import {
   createIdentifier,
   createLiteral,
 } from '../helpers/ast-helpers';
-// Phase 4: Import token predicates for direct token checks
 import { isIdentifierLike } from '../token-predicates';
 
 /**
@@ -49,8 +47,6 @@ import { isIdentifierLike } from '../token-predicates';
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'wait' command token
  * @returns CommandNode representing the wait command
- *
- * Phase 9-3b: Extracted from Parser.parseWaitCommand
  */
 export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
@@ -85,7 +81,6 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
 
     do {
       // Parse event name
-      // Phase 4: Using predicate for direct token check
       const eventToken = ctx.peek();
       if (!isIdentifierLike(eventToken)) {
         throw new Error('Expected event name after "for"');
@@ -99,7 +94,6 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
         ctx.advance(); // consume '('
 
         // Parse parameter list
-        // Phase 4: Using predicate for direct token check
         while (!ctx.isAtEnd() && !ctx.check(')')) {
           const paramToken = ctx.peek();
           if (isIdentifierLike(paramToken)) {
@@ -182,7 +176,6 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
     }
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   return CommandNodeBuilder.from(commandToken)
     .withArgs(...args)
     .blocking() // wait is a blocking command
@@ -206,14 +199,11 @@ export function parseWaitCommand(ctx: ParserContext, commandToken: Token) {
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'install' command token
  * @returns CommandNode representing the install command
- *
- * Phase 9-3b: Extracted from Parser.parseInstallCommand
  */
 export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
   const args: ASTNode[] = [];
 
   // Parse behavior name (identifier)
-  // Phase 4: Using predicate method
   if (!ctx.checkIdentifierLike()) {
     throw new Error('Expected behavior name after "install"');
   }
@@ -241,7 +231,6 @@ export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
       const checkpoint = ctx.savePosition();
       let paramName: string | undefined;
 
-      // Phase 4: Using predicate method
       if (ctx.checkIdentifierLike()) {
         const possibleName = ctx.peek().value;
         ctx.advance(); // consume identifier
@@ -297,7 +286,6 @@ export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
     }
   }
 
-  // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
   return CommandNodeBuilder.from(commandToken)
     .withArgs(...args)
     .endingAt(ctx.getPosition())

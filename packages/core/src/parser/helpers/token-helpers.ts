@@ -29,8 +29,8 @@ export interface TokenStreamState {
  * This interface defines the contract for token navigation that will be
  * provided through ParserContext to command parsers.
  *
- * Phase 8: Removed TokenType-based methods (checkTokenType, matchTokenType).
- * Use predicate-based methods (checkIdentifier, matchIdentifier, etc.) instead.
+ * Uses predicate-based methods (checkIdentifier, matchIdentifier, etc.) for
+ * semantic classification — no TokenType-based methods exist today.
  */
 export interface TokenNavigator {
   /** Consume and return the current token, advancing the position */
@@ -105,7 +105,7 @@ export function peekMatchesKind(
 export function peekAhead(tokens: Token[], current: number, offset: number = 1): Token {
   const index = current + offset;
   if (index >= tokens.length) {
-    // Return dummy EOF token - Phase 8: use kind instead of type
+    // Return dummy EOF token
     return {
       kind: 'unknown',
       value: '',
@@ -149,7 +149,6 @@ export function remainingTokens(tokens: Token[], current: number): number {
  */
 export function getTokenAt(tokens: Token[], index: number): Token {
   if (index < 0 || index >= tokens.length) {
-    // Phase 8: use kind instead of type
     return {
       kind: 'unknown',
       value: '',

@@ -1,11 +1,10 @@
 /**
- * Token Predicates (Phase 8: TokenKind-only)
+ * Token Predicates
  *
  * Provides predicate functions for token classification using TokenKind.
- * Semantic classification is done via value-based checks against keyword sets.
- *
- * This eliminates the need for TokenType - all tokens have lexical `kind` only.
- * The parser uses these predicates for context-aware semantic classification.
+ * Semantic classification is done via value-based checks against keyword
+ * sets. The parser uses these predicates for context-aware semantic
+ * classification — tokens have lexical `kind` only.
  */
 
 import type { Token } from '../types/core';

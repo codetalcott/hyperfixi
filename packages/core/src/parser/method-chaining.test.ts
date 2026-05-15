@@ -15,7 +15,6 @@ describe('Method Chaining', () => {
   it('should debug tokenization', () => {
     const tokens = tokenize('str.toUpperCase().toLowerCase()');
     // After fix, should have 9 tokens
-    // Phase 8: Tokens now use 'kind' instead of 'type'
     expect(tokens).toHaveLength(9);
     expect(tokens[0]).toMatchObject({ kind: 'identifier', value: 'str' });
     expect(tokens[1]).toMatchObject({ kind: 'operator', value: '.' });

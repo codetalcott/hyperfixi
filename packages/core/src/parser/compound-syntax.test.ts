@@ -2,7 +2,6 @@
  * Compound Syntax Unit Tests
  * Tests for multi-word keyword support in tokenizer and parser
  *
- * Phase 8: Updated to use TokenKind (lexical) classification
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -14,7 +13,6 @@ describe('Compound Syntax - Tokenizer', () => {
   describe('Compound prepositions', () => {
     it('should tokenize "at start of" as single keyword', () => {
       const tokens = tokenize('put "X" at start of #target');
-      // Phase 8: Compound keywords are identifiers classified by predicates
       const atStartOf = tokens.find(t => t.value === 'at start of');
       expect(atStartOf).toBeDefined();
       expect(atStartOf?.value).toBe('at start of');

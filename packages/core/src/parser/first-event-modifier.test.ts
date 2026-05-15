@@ -19,7 +19,7 @@ function findHandler(ast: any): any {
   return null;
 }
 
-describe('Phase 4: `on first <event>` alias for .once', () => {
+describe('`on first <event>` alias for .once', () => {
   it('parses "on first click"', () => {
     const r = parse('on first click log "once"');
     expect(r.success).toBe(true);

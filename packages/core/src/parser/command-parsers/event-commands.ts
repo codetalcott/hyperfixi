@@ -5,7 +5,6 @@
  * These functions use ParserContext for dependency injection, enabling
  * clean separation from the Parser class.
  *
- * Phase 9-3a Day 3: Command Extraction
  * @module parser/command-parsers/event-commands
  */
 
@@ -14,7 +13,6 @@ import type { ASTNode, CommandNode } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
 import { isCommandBoundary } from '../helpers/parsing-helpers';
-// Phase 4: TokenType import removed - using predicate methods instead
 
 /**
  * Parse trigger/send command
@@ -37,8 +35,6 @@ import { isCommandBoundary } from '../helpers/parsing-helpers';
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'trigger' or 'send' identifier node
  * @returns CommandNode representing the trigger/send command
- *
- * Phase 9-3a: Extracted from Parser.parseTriggerCommand
  */
 export function parseTriggerCommand(
   ctx: ParserContext,
@@ -56,7 +52,6 @@ export function parseTriggerCommand(
   const eventColumn = ctx.peek().column || 1;
 
   // Check if first token is an identifier (event name)
-  // Phase 4: Using predicate method - checkIdentifierLike() covers IDENTIFIER and KEYWORD
   if (ctx.checkIdentifierLike()) {
     eventName = ctx.advance().value;
 

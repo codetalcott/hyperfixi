@@ -4,8 +4,6 @@
  * Tests for the ParserContext dependency injection pattern.
  * Validates that all 48 methods are properly bound and work correctly
  * when called through the context interface.
- *
- * Phase 9-3a Day 2: Test Context Binding
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -38,7 +36,7 @@ describe('ParserContext', () => {
     });
 
     it('should expose all 46 required methods', () => {
-      // Token Navigation (8 methods - Phase 8: removed checkTokenType, matchTokenType)
+      // Token Navigation (8 methods)
       expect(typeof context.advance).toBe('function');
       expect(typeof context.peek).toBe('function');
       expect(typeof context.previous).toBe('function');
@@ -138,7 +136,6 @@ describe('ParserContext', () => {
     it('should advance through tokens', () => {
       const token = context.advance();
       expect(token).toBeDefined();
-      // Phase 8: Tokens now use 'kind' instead of 'type'
       expect(token.kind).toBeDefined();
     });
 

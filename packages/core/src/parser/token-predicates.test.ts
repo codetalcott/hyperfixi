@@ -2,7 +2,6 @@
  * Token Predicates Tests
  * Validates that predicate functions correctly classify tokens
  *
- * Phase 8: Updated to use TokenKind (lexical) classification
  */
 
 import { describe, it, expect } from 'vitest';

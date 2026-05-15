@@ -5,7 +5,6 @@
  * Verifies that the parser either recovers gracefully or reports
  * meaningful errors without crashing.
  *
- * Phase 10: Parser Coverage & Refactoring Plan
  */
 
 import { describe, it, expect } from 'vitest';

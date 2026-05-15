@@ -1,6 +1,5 @@
 /**
- * Tests for hyperscript runtime expression evaluator
- * Connects AST parser with Phase 3 expression evaluation system
+ * Tests for the canonical hyperscript AST evaluator.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -149,7 +148,7 @@ describe('Hyperscript Runtime Evaluator', () => {
   });
 
   describe('Complex Expression Integration', () => {
-    it('should evaluate expressions using Phase 3 expression system', async () => {
+    it('should evaluate expressions through the canonical evaluator', async () => {
       const element = document.createElement('input');
       element.value = '123';
       const context = createMockHyperscriptContext(element);

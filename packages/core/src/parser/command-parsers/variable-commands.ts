@@ -5,7 +5,6 @@
  * These functions use ParserContext for dependency injection, enabling
  * clean separation from the Parser class.
  *
- * Phase 9-3b: Command Extraction (Batch 2)
  * @module parser/command-parsers/variable-commands
  */
 
@@ -19,7 +18,6 @@ import {
   createIdentifier,
   createPropertyOfExpression,
 } from '../helpers/ast-helpers';
-// Phase 4: TokenType import removed - using value-based checks instead
 
 /**
  * Parse set command
@@ -47,8 +45,6 @@ import {
  * @param ctx - Parser context providing access to parser state and methods
  * @param identifierNode - The 'set' identifier node
  * @returns CommandNode representing the set command, or null on error
- *
- * Phase 9-3b: Extracted from Parser.parseSetCommand
  */
 /**
  * Parse colon-prefixed variable target: `:localVar` or `::globalVar`
@@ -315,8 +311,8 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
  * - Custom increment/decrement amount via 'by' keyword
  * - Default increment/decrement of 1
  *
- * IMPLEMENTATION NOTE (Phase 1 - Parser Sugar):
- * This function now transforms increment/decrement into a `set` command at parse time:
+ * IMPLEMENTATION NOTE:
+ * This function transforms increment/decrement into a `set` command at parse time:
  *   - `increment x` → `set x to (x + 1)`
  *   - `increment x by 5` → `set x to (x + 5)`
  *   - `decrement x` → `set x to (x - 1)`
@@ -333,9 +329,6 @@ export function parseSetCommand(ctx: ParserContext, identifierNode: IdentifierNo
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'increment' or 'decrement' command token
  * @returns CommandNode representing a `set` command with binary expression
- *
- * Phase 9-3b: Extracted from Parser.parseCommand (special handling section)
- * Phase 1 (Bundle Reduction): Transformed to emit `set` command
  */
 export function parseIncrementDecrementCommand(ctx: ParserContext, commandToken: Token) {
   const commandName = commandToken.value;

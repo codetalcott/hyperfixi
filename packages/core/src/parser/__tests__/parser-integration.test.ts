@@ -5,7 +5,6 @@
  * hyperscript strings, asserting on the final AST structure. They cover
  * cross-cutting concerns that unit-level mock tests can miss.
  *
- * Phase 9: Parser Coverage & Refactoring Plan
  */
 
 import { describe, it, expect } from 'vitest';

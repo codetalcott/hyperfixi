@@ -25,7 +25,6 @@ describe('Template Literals', () => {
     it('should tokenize basic template literal', () => {
       const tokens = tokenize('`hello world`');
       expect(tokens).toHaveLength(1);
-      // Phase 8: Tokens now use 'kind' instead of 'type'
       // TokenKind uses 'template' (shorter form)
       expect(tokens[0]).toMatchObject({
         kind: 'template',
@@ -38,7 +37,6 @@ describe('Template Literals', () => {
     it('should tokenize empty template literal', () => {
       const tokens = tokenize('``');
       expect(tokens).toHaveLength(1);
-      // Phase 8: Tokens now use 'kind' instead of 'type'
       // TokenKind uses 'template' (shorter form)
       expect(tokens[0]).toMatchObject({
         kind: 'template',
@@ -58,7 +56,6 @@ describe('Template Literals', () => {
     it('should tokenize template literal with variable interpolation', () => {
       const tokens = tokenize('`hello ${name}`');
       expect(tokens).toHaveLength(1);
-      // Phase 8: Tokens now use 'kind' instead of 'type'
       // TokenKind uses 'template' (shorter form)
       expect(tokens[0]).toMatchObject({
         kind: 'template',
