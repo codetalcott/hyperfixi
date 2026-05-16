@@ -18,6 +18,7 @@
 import type { ExecutionContext } from '../types/core';
 import type { ASTNode } from '../types/base-types';
 import type { RuntimeEnvironment } from './environment';
+import { debug } from '../utils/debug';
 
 // Re-export RuntimeEnvironment for convenience
 export type { RuntimeEnvironment } from './environment';
@@ -239,7 +240,7 @@ export class EventSourceRegistry {
     const normalizedName = name.toLowerCase();
 
     if (this.sources.has(normalizedName)) {
-      console.warn(`[EventSourceRegistry] Overwriting existing event source: ${name}`);
+      debug.runtime(`[EventSourceRegistry] Overwriting existing event source: ${name}`);
     }
 
     this.sources.set(normalizedName, source);
@@ -301,7 +302,7 @@ export class EventSourceRegistry {
     const source = this.get(sourceName);
 
     if (!source) {
-      console.warn(`[EventSourceRegistry] Unknown event source: ${sourceName}`);
+      debug.runtime(`[EventSourceRegistry] Unknown event source: ${sourceName}`);
       return undefined;
     }
 

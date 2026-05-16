@@ -17,6 +17,7 @@
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../types/core';
+import { debug } from '../utils/debug';
 
 /**
  * Context provider function signature
@@ -308,7 +309,7 @@ export class ContextProviderRegistry {
       try {
         result[name] = await this.resolve(name, context, cache);
       } catch (error) {
-        console.warn(`[ContextProviderRegistry] Failed to resolve '${name}':`, error);
+        debug.runtime(`[ContextProviderRegistry] Failed to resolve '${name}':`, error);
         result[name] = undefined;
       }
     }

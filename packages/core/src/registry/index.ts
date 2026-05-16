@@ -68,6 +68,7 @@ export {
 } from '../runtime/command-adapter';
 
 import { CommandRegistryV2 } from '../runtime/command-adapter';
+import { debug } from '../utils/debug';
 import { EventSourceRegistry, createEventSourceRegistry } from './event-source-registry';
 import {
   ContextProviderRegistry,
@@ -164,7 +165,7 @@ export function createRegistry(options?: {
 
     use(plugin: LokaScriptPlugin): void {
       if (installedPlugins.has(plugin.name)) {
-        console.warn(`[LokaScriptRegistry] Plugin '${plugin.name}' is already installed`);
+        debug.runtime(`[LokaScriptRegistry] Plugin '${plugin.name}' is already installed`);
         return;
       }
 

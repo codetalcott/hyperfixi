@@ -34,6 +34,7 @@
 import type { LokaScriptPlugin, ContextProviderFn } from '../index';
 import type { CommandWithParseInput } from '../../runtime/command-adapter';
 import type { EventSource } from '../event-source-registry';
+import { debug } from '../../utils/debug';
 
 // ============================================================================
 // Types
@@ -401,7 +402,9 @@ export function createMultilingualServerPlugin(
         }
       }
 
-      console.log(`[hyperfixi-multilingual-server] Initialized with ${languages.length} languages`);
+      debug.runtime(
+        `[hyperfixi-multilingual-server] Initialized with ${languages.length} languages`
+      );
     },
   };
 }
