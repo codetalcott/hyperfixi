@@ -63,16 +63,16 @@ export function initializeDOMProcessor(
  * Log compilation error with optional debug details
  */
 function logCompileError(element: Element, code: string, result: CompileResult): void {
-  console.error(`Failed to compile hyperscript on element:`, element);
-  console.error(`Code: "${code}"`);
+  debug.parse(`Failed to compile hyperscript on element:`, element);
+  debug.parse(`Code: "${code}"`);
 
   if (result.errors?.length) {
     result.errors.forEach((error, i) => {
-      console.error(`Error ${i + 1}: ${error.message} (line ${error.line}, col ${error.column})`);
+      debug.parse(`Error ${i + 1}: ${error.message} (line ${error.line}, col ${error.column})`);
     });
   }
 
-  // Log detailed parse information using debug.parse
+  // Log detailed parse information for downstream diagnostic consumers.
   debug.parse('Compilation failed - error details:', {
     code,
     errors: result.errors,
@@ -177,10 +177,10 @@ export function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNo
       return { eventType: DEFAULT_EVENT_TYPE, body: ast };
     }
 
-    console.warn('⚠️ Unknown AST structure for event extraction:', ast.type);
+    debug.event('Unknown AST structure for event extraction:', ast.type);
     return null;
   } catch (error) {
-    console.error('❌ Error extracting event info:', error);
+    debug.event('Error extracting event info:', error);
     return null;
   }
 }
@@ -192,7 +192,7 @@ async function executeHyperscriptAST(ast: ASTNode, context: ExecutionContext): P
   try {
     return await getRuntimeFn().execute(ast, context);
   } catch (error) {
-    console.error('Error executing hyperscript AST:', error);
+    debug.runtime('Error executing hyperscript AST:', error);
     throw error;
   }
 }
@@ -206,7 +206,7 @@ export function setupEventHandler(element: Element, ast: ASTNode, context: Execu
     const eventInfo = extractEventInfo(ast);
 
     if (!eventInfo) {
-      console.error('❌ Could not extract event information from AST:', ast);
+      debug.event('Could not extract event information from AST:', ast);
       return;
     }
 
@@ -231,10 +231,10 @@ export function setupEventHandler(element: Element, ast: ASTNode, context: Execu
         // Execute the event handler body
         await executeHyperscriptAST(eventInfo.body, context);
       } catch (error) {
-        console.error('❌ Error executing hyperscript event handler:', error);
-        console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-        console.error('❌ Event info body:', eventInfo.body);
-        console.error('❌ Context:', context);
+        debug.event('Error executing hyperscript event handler:', error);
+        debug.event('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        debug.event('Event info body:', eventInfo.body);
+        debug.event('Context:', context);
       }
     };
 
@@ -250,7 +250,7 @@ export function setupEventHandler(element: Element, ast: ASTNode, context: Execu
     }
     debug.event('Event handler attached:', eventInfo.eventType);
   } catch (error) {
-    console.error('Error setting up event handler:', error);
+    debug.event('Error setting up event handler:', error);
   }
 }
 
@@ -281,7 +281,7 @@ async function processHyperscriptAttributeAsync(
     }
 
     if (!compileResult.ast) {
-      console.warn('⚠️ No AST generated for hyperscript:', hyperscriptCode);
+      debug.parse('No AST generated for hyperscript:', hyperscriptCode);
       return;
     }
 
@@ -304,7 +304,7 @@ async function processHyperscriptAttributeAsync(
       void executeHyperscriptAST(compileResult.ast, context);
     }
   } catch (error) {
-    console.error('❌ Error processing multilingual hyperscript:', error, 'on element:', element);
+    debug.runtime('Error processing multilingual hyperscript:', error, 'on element:', element);
   }
 }
 
@@ -324,7 +324,7 @@ function processHyperscriptAttributeSync(element: Element, hyperscriptCode: stri
     }
 
     if (!compileResult.ast) {
-      console.warn('⚠️ No AST generated for hyperscript:', hyperscriptCode);
+      debug.parse('No AST generated for hyperscript:', hyperscriptCode);
       return;
     }
 
@@ -345,9 +345,9 @@ function processHyperscriptAttributeSync(element: Element, hyperscriptCode: stri
         setupEventHandler(element, compileResult.ast, context);
         debug.event('setupEventHandler completed successfully');
       } catch (setupError) {
-        console.error('❌ Error in setupEventHandler:', setupError);
-        console.error(
-          '❌ setupError stack:',
+        debug.event('Error in setupEventHandler:', setupError);
+        debug.event(
+          'setupError stack:',
           setupError instanceof Error ? setupError.stack : 'No stack trace'
         );
         throw setupError; // Re-throw to see it in outer catch
@@ -358,7 +358,7 @@ function processHyperscriptAttributeSync(element: Element, hyperscriptCode: stri
       void executeHyperscriptAST(compileResult.ast, context);
     }
   } catch (error) {
-    console.error('❌ Error processing hyperscript attribute:', error, 'on element:', element);
+    debug.runtime('Error processing hyperscript attribute:', error, 'on element:', element);
   }
 }
 
@@ -439,6 +439,6 @@ export function process(element: Element): void {
       }
     });
   } catch (error) {
-    console.error('Error processing hyperscript node:', error);
+    debug.runtime('Error processing hyperscript node:', error);
   }
 }
