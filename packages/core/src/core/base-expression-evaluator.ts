@@ -110,7 +110,7 @@ export class BaseExpressionEvaluator {
 
     // Handle nodes without type property
     if (!node.type) {
-      console.error('EVALUATOR: Node missing type property:', node);
+      debug.expressions('EVALUATOR: Node missing type property:', node);
       throw new Error(`Node missing type property: ${JSON.stringify(node)}`);
     }
     switch (node.type) {

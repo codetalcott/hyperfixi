@@ -4,6 +4,7 @@
  */
 
 import type { HyperscriptEvent, ExecutionContext } from '../types/core';
+import { debug } from '../utils/debug';
 
 // Event listener information
 interface ListenerInfo {
@@ -79,7 +80,7 @@ function wrapEventHandler(
     try {
       handler.call(element, event);
     } catch (error) {
-      console.error(`Error in hyperscript event handler for ${eventType}:`, error);
+      debug.event(`Error in hyperscript event handler for ${eventType}:`, error);
 
       // Dispatch error event
       const errorEvent = createHyperscriptEvent('error', {

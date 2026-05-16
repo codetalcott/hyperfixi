@@ -3,6 +3,8 @@
  * Handles different content placement strategies
  */
 
+import { debug } from '../utils/debug';
+
 /**
  * DOM manipulation strategies
  */
@@ -75,7 +77,7 @@ export function applySwap(
         return true;
     }
   } catch (error) {
-    console.error('DOM swap failed:', error);
+    debug.runtime('DOM swap failed:', error);
     return false;
   }
 }

@@ -163,7 +163,7 @@ export class LazyExpressionEvaluator extends BaseExpressionEvaluator {
           module = await import('../expressions/positional/index');
           break;
         default:
-          console.warn(`Unknown expression category: ${category}`);
+          debug.expressions(`Unknown expression category: ${category}`);
           return;
       }
 
@@ -172,7 +172,7 @@ export class LazyExpressionEvaluator extends BaseExpressionEvaluator {
       const expressions = module[categoryKey] || module.default;
 
       if (!expressions) {
-        console.warn(`No expressions found in category: ${category}`);
+        debug.expressions(`No expressions found in category: ${category}`);
         return;
       }
 
@@ -182,7 +182,7 @@ export class LazyExpressionEvaluator extends BaseExpressionEvaluator {
         `  ✓ Registered ${Object.keys(expressions).length} expressions from ${category}`
       );
     } catch (error) {
-      console.error(`Failed to load expression category: ${category}`, error);
+      debug.expressions(`Failed to load expression category: ${category}`, error);
       throw error;
     }
   }
@@ -243,7 +243,7 @@ export class LazyExpressionEvaluator extends BaseExpressionEvaluator {
 
     // Handle nodes without type property
     if (!node.type) {
-      console.error('LAZY EVALUATOR: Node missing type property:', node);
+      debug.expressions('LAZY EVALUATOR: Node missing type property:', node);
       throw new Error(`Node missing type property: ${JSON.stringify(node)}`);
     }
 
