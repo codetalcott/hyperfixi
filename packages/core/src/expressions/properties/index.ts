@@ -56,7 +56,7 @@ export const possessiveExpression: ExpressionImplementation = {
     return (element as Record<string, unknown>)[property];
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return (
       validateArgCount(args, 2, 'possessive', 'element, property') ??
       validateArgIsString(args, 1, 'possessive', 'property name')
@@ -95,7 +95,7 @@ export const myExpression: ExpressionImplementation = {
     return (context.me as Record<string, unknown>)[property];
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return validateSingleStringArg(args, 'my', 'property');
   },
 };
@@ -133,7 +133,7 @@ export const itsExpression: ExpressionImplementation = {
     return (target as Record<string, unknown>)[property];
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return validateSingleStringArg(args, 'its', 'property');
   },
 };
@@ -169,7 +169,7 @@ export const yourExpression: ExpressionImplementation = {
     return (context.you as Record<string, unknown>)[property];
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return validateSingleStringArg(args, 'your', 'property');
   },
 };
@@ -209,7 +209,7 @@ export const ofExpression: ExpressionImplementation = {
     return (object as Record<string, unknown>)[property];
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return (
       validateArgCount(args, 2, 'of', 'property, object') ??
       validateArgIsString(args, 0, 'of', 'property name')
@@ -241,7 +241,7 @@ export const attributeExpression: ExpressionImplementation = {
     return target.getAttribute(attributeName);
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return (
       validateArgRange(args, 1, 2, 'attribute', 'attributeName, optional element') ??
       validateArgIsString(args, 0, 'attribute', 'attribute name') ??
@@ -277,7 +277,7 @@ export const attributeWithValueExpression: ExpressionImplementation = {
     return actualValue === expectedValue;
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return (
       validateArgRange(
         args,
@@ -319,7 +319,7 @@ export const classReferenceExpression: ExpressionImplementation = {
     return Array.from(elements) as HTMLElement[];
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return validateSingleStringArg(args, 'classReference', 'className');
   },
 };
@@ -346,7 +346,7 @@ export const idReferenceExpression: ExpressionImplementation = {
     return document.getElementById(cleanId);
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return validateSingleStringArg(args, 'idReference', 'idValue');
   },
 };

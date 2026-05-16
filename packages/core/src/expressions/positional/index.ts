@@ -57,7 +57,7 @@ export const firstExpression: ExpressionImplementation = {
     return null;
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return validateMaxArgs(args, 1, 'first', 'collection');
   },
 };
@@ -107,7 +107,7 @@ export const lastExpression: ExpressionImplementation = {
     return null;
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return validateMaxArgs(args, 1, 'last', 'collection');
   },
 };
@@ -169,7 +169,7 @@ export const atExpression: ExpressionImplementation = {
     return null;
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     return (
       validateArgRange(args, 1, 2, 'at', 'index, optional collection') ??
       validateArgIsNumber(args, 0, 'at', 'index')
@@ -204,7 +204,7 @@ export const nextExpression: ExpressionImplementation = {
     return findNextElementInDOM(startElement, selector as string);
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     const maxError = validateMaxArgs(args, 2, 'next', 'optional selector, optional fromElement');
     if (maxError) return maxError;
     if (args.length >= 1 && args[0] != null && typeof args[0] !== 'string') {
@@ -240,7 +240,7 @@ export const previousExpression: ExpressionImplementation = {
     return findPreviousElementInDOM(startElement, selector as string);
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     const maxError = validateMaxArgs(
       args,
       2,
@@ -345,7 +345,7 @@ export const nextWithinExpression: ExpressionImplementation = {
     return findNextElementWithinContainer(startElement, selector as string, container);
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     const rangeError = validateArgRange(
       args,
       2,
@@ -391,7 +391,7 @@ export const previousWithinExpression: ExpressionImplementation = {
     return findPreviousElementWithinContainer(startElement, selector as string, container);
   },
 
-  validate(args: any[]): string | null {
+  validate(args: unknown[]): string | null {
     const rangeError = validateArgRange(
       args,
       2,
