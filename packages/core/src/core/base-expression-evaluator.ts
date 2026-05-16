@@ -795,7 +795,8 @@ export class BaseExpressionEvaluator {
   }
 
   /**
-   * Evaluate CSS selector nodes created by expression-parser
+   * Evaluate CSS selector nodes produced by the parser
+   * (`{ selectorType, selector }` shape, e.g. `#id`, `.cls`, `<tag/>`).
    */
   protected async evaluateCSSSelector(
     node: { selectorType: string; selector: string },
