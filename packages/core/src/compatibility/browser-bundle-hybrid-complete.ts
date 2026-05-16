@@ -13,6 +13,12 @@
  * Target: ~7-8 KB gzipped (~85% hyperscript coverage)
  *
  * Now uses modular parser components for better tree-shaking.
+ *
+ * Console output policy: this is a TERMINAL bundle (no library consumer
+ * below us). Errors and warnings surface directly to the user's console
+ * by design — the developer running this bundle is the audience for any
+ * parse/execution failure. The lone `console.log(...values)` site is the
+ * `log` command's runtime implementation (intentional).
  */
 
 // =============================================================================
@@ -850,7 +856,6 @@ function processElement(el: Element): void {
   try {
     const parser = new HybridParser(code);
     const ast = parser.parse();
-    console.log('HyperFixi AST:', JSON.stringify(ast, null, 2).slice(0, 500));
     executeAST(ast, el);
   } catch (err) {
     console.error('HyperFixi Hybrid Complete error:', err, 'Code:', code);
