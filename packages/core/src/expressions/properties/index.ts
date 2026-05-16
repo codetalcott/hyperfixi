@@ -31,7 +31,7 @@ export const possessiveExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ["'s", 's'],
 
-  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<any> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [element, property] = args;
     if (element == null) {
       return undefined;
@@ -70,7 +70,7 @@ export const myExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['my'],
 
-  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [property] = args;
     if (!context.me) {
       return undefined;
@@ -106,7 +106,7 @@ export const itsExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['its'],
 
-  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [property] = args;
     if (context.it == null) {
       return undefined;
@@ -144,7 +144,7 @@ export const yourExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['your'],
 
-  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [property] = args;
     if (!context.you) {
       return undefined;
@@ -184,7 +184,7 @@ export const ofExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['of'],
 
-  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<any> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [property, object] = args;
     if (object == null) {
       return undefined;

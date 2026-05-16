@@ -317,7 +317,7 @@ export const andExpression: EnhancedExpressionImplementation = {
   associativity: 'Left',
   operators: ['and', '&&'],
 
-  async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<any> {
+  async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<unknown> {
     const startTime = Date.now();
     try {
       // Return the first falsy value, or the last value if all are truthy
@@ -431,7 +431,7 @@ export const orExpression: ExpressionImplementation = {
   associativity: 'Left',
   operators: ['or', '||'],
 
-  async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<any> {
+  async evaluate(context: ExecutionContext, left: unknown, right: unknown): Promise<unknown> {
     const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
     const startTime = tracking ? Date.now() : 0;
     // Return the first truthy value, or the last value if all are falsy

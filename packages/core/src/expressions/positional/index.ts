@@ -19,7 +19,7 @@ export const firstExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['first'],
 
-  async evaluate(context: ExecutionContext, collection?: any): Promise<any> {
+  async evaluate(context: ExecutionContext, collection?: unknown): Promise<unknown> {
     // If no collection provided, use context.it
     const target = collection !== undefined ? collection : context.it;
 
@@ -68,7 +68,7 @@ export const lastExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['last'],
 
-  async evaluate(context: ExecutionContext, collection?: any): Promise<any> {
+  async evaluate(context: ExecutionContext, collection?: unknown): Promise<unknown> {
     // If no collection provided, use context.it
     const target = collection !== undefined ? collection : context.it;
 
@@ -118,7 +118,7 @@ export const atExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['at'],
 
-  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [index, collection] = args;
     if (!isNumber(index)) {
       throw new Error('Index must be a number');
