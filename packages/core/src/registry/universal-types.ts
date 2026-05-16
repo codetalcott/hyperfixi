@@ -21,6 +21,7 @@ import type {
   RuntimeEnvironment,
 } from './event-source-registry';
 import type { ExecutionContext } from '../types/core';
+import type { CommandWithParseInput } from '../runtime/command-adapter';
 import { isBrowserEnvironment, isNodeEnvironment } from './environment';
 
 /**
@@ -162,7 +163,7 @@ export interface TypedRegistry<TEnv extends RuntimeEnvironment = 'universal'> {
    * Command registry
    */
   commands: {
-    register(command: any): void;
+    register(command: CommandWithParseInput): void;
     has(name: string): boolean;
     getCommandNames(): string[];
   };
