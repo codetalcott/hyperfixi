@@ -30,16 +30,6 @@ export {
   type ParseToASTResult,
 };
 
-// Lazy-loaded semantic module
-let _semanticModule: typeof import('@lokascript/semantic') | null = null;
-
-async function getSemanticModule() {
-  if (!_semanticModule) {
-    _semanticModule = await import('@lokascript/semantic');
-  }
-  return _semanticModule;
-}
-
 /**
  * Unified Multilingual Hyperscript API
  *

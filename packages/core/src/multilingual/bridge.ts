@@ -13,6 +13,7 @@
 
 import type { SemanticNode, SemanticAnalyzer, ASTNode } from '@lokascript/semantic';
 import { DEFAULT_CONFIDENCE_THRESHOLD } from '@lokascript/semantic';
+import { debug } from '../utils/debug';
 
 // =============================================================================
 // Bridge Implementation
@@ -192,7 +193,7 @@ export class SemanticGrammarBridge {
         return buildResult.ast;
       } catch (error) {
         // Fall through to fallback
-        console.warn('[SemanticGrammarBridge] AST build failed, using fallback:', error);
+        debug.runtime('[SemanticGrammarBridge] AST build failed, using fallback:', error);
       }
     }
 
