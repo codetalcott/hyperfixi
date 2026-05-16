@@ -26,7 +26,8 @@ export interface JsCommandInput {
 }
 
 export interface JsCommandOutput {
-  result: any;
+  /** Return value of the inline JavaScript — opaque to the runtime. */
+  result: unknown;
   executed: boolean;
   codeLength: number;
   parameters?: string[];
@@ -161,8 +162,8 @@ export class JsCommand implements DecoratedCommand {
   private createExecutionContext(
     context: TypedExecutionContext,
     parameters: string[]
-  ): Record<string, any> {
-    const executionContext: Record<string, any> = {
+  ): Record<string, unknown> {
+    const executionContext: Record<string, unknown> = {
       // Hyperscript context variables
       me: context.me,
       it: context.it,
@@ -192,7 +193,7 @@ export class JsCommand implements DecoratedCommand {
           acc[param] = value;
           return acc;
         },
-        {} as Record<string, any>
+        {} as Record<string, unknown>
       ),
     };
 

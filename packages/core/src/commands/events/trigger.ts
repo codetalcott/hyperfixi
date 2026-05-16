@@ -37,7 +37,8 @@ export type EventDispatchMode = 'trigger' | 'send';
  */
 export interface EventDispatchInput {
   eventName: string;
-  detail?: any;
+  /** Event detail payload — opaque; passed straight to CustomEvent. */
+  detail?: unknown;
   targets: EventTarget[];
   options: EventOptions;
   mode: EventDispatchMode;
@@ -89,7 +90,7 @@ export class EventDispatchCommand implements DecoratedCommand {
     const nodeType = (n: ASTNode) => (n as any)?.type || 'unknown';
     const firstArg = raw.args[0];
     let eventName: string;
-    let detail: any;
+    let detail: unknown;
 
     if (nodeType(firstArg) === 'functionCall' || nodeType(firstArg) === 'callExpression') {
       // functionCall: { name, args } (from parseTriggerCommand)
@@ -215,7 +216,7 @@ export class EventDispatchCommand implements DecoratedCommand {
         return await evaluator.evaluate(singleArg, context);
       }
     }
-    const detail: Record<string, any> = {};
+    const detail: Record<string, unknown> = {};
     for (const arg of args) {
       const ev = await evaluator.evaluate(arg, context);
       if (typeof ev === 'object' && ev !== null && !Array.isArray(ev)) Object.assign(detail, ev);

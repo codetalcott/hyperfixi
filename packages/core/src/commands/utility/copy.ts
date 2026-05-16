@@ -158,7 +158,7 @@ export class CopyCommand implements DecoratedCommand {
   private dispatchCopyEvent(
     context: TypedExecutionContext,
     eventName: string,
-    detail: Record<string, any>
+    detail: Record<string, unknown>
   ): void {
     if (isHTMLElement(context.me)) {
       const event = new CustomEvent(eventName, { detail, bubbles: true, cancelable: false });
