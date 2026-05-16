@@ -2,7 +2,11 @@
  * BeepCommand - Decorated Implementation
  *
  * Provides debugging output for expressions with type information.
- * Uses Stage 3 decorators for reduced boilerplate.
+ *
+ * **Console output is intentional**: `beep!` is a debug-only command —
+ * `console.group` / `console.log` calls below are the command's entire
+ * purpose, not stray instrumentation. The `sideEffects` metadata array
+ * (`['console-output', 'debugging']`) declares this for tooling.
  *
  * Syntax:
  *   beep!
@@ -26,7 +30,7 @@ import {
  * Typed input for BeepCommand
  */
 export interface BeepCommandInput {
-  expressions?: any[];
+  expressions?: unknown[];
 }
 
 /**
@@ -35,7 +39,7 @@ export interface BeepCommandInput {
 export interface BeepCommandOutput {
   expressionCount: number;
   debugged: boolean;
-  outputs: Array<{ value: any; type: string; representation: string }>;
+  outputs: Array<{ value: unknown; type: string; representation: string }>;
 }
 
 /**
@@ -76,7 +80,7 @@ export class BeepCommand implements DecoratedCommand {
       return { expressionCount: 0, debugged: true, outputs: [] };
     }
 
-    const outputs: Array<{ value: any; type: string; representation: string }> = [];
+    const outputs: Array<{ value: unknown; type: string; representation: string }> = [];
     console.group('🔔 beep! Debug Output');
 
     for (const expression of expressions) {
@@ -103,7 +107,11 @@ export class BeepCommand implements DecoratedCommand {
     console.groupEnd();
   }
 
-  private debugExpression(expression: any): { value: any; type: string; representation: string } {
+  private debugExpression(expression: unknown): {
+    value: unknown;
+    type: string;
+    representation: string;
+  } {
     return {
       value: expression,
       type: this.getType(expression),
@@ -111,7 +119,7 @@ export class BeepCommand implements DecoratedCommand {
     };
   }
 
-  private getType(value: any): string {
+  private getType(value: unknown): string {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
     if (Array.isArray(value)) return 'array';
@@ -124,7 +132,7 @@ export class BeepCommand implements DecoratedCommand {
     return typeof value;
   }
 
-  private getRepresentation(value: any): string {
+  private getRepresentation(value: unknown): string {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
     if (Array.isArray(value)) {
