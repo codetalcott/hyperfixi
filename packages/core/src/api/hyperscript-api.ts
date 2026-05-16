@@ -294,7 +294,7 @@ export interface CompileResult {
   errors?: CompileError[];
 
   /** LSE SemanticNode representation (when available) */
-  lse?: unknown;
+  lse?: import('@lokascript/framework').SemanticNode;
 
   /** Metadata about the compilation */
   meta: {

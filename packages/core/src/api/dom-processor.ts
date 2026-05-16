@@ -4,7 +4,8 @@
  */
 
 import type { ASTNode, ExecutionContext } from '../types/core';
-import type { CompileResult } from './hyperscript-api';
+import type { CompileResult, NewCompileOptions } from './hyperscript-api';
+import type { Runtime } from '../runtime/runtime';
 import { createContext } from '../core/context';
 import { debug } from '../utils/debug';
 
@@ -19,9 +20,9 @@ const DEFAULT_LANGUAGE = 'en';
 // Type for compile functions (to avoid circular dependency)
 // =============================================================================
 
-type CompileFunction = (code: string, options?: any) => CompileResult;
-type CompileAsyncFunction = (code: string, options?: any) => Promise<CompileResult>;
-type GetRuntimeFunction = () => any;
+type CompileFunction = (code: string, options?: NewCompileOptions) => CompileResult;
+type CompileAsyncFunction = (code: string, options?: NewCompileOptions) => Promise<CompileResult>;
+type GetRuntimeFunction = () => Runtime;
 
 // These will be injected from hyperscript-api.ts
 let compileSyncFn: CompileFunction;
