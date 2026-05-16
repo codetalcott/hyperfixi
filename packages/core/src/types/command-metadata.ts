@@ -11,6 +11,8 @@
  * - Validation improvements
  */
 
+import { debug } from '../utils/debug';
+
 // ============================================================================
 // Command Categories
 // ============================================================================
@@ -534,10 +536,10 @@ export class CommandMetadataRegistry {
   register(name: string, metadata: CommandMetadata, implementation: unknown): void {
     const validation = validateCommandMetadata(metadata, name);
     if (!validation.isValid) {
-      console.warn(`CommandMetadataRegistry: Invalid metadata for '${name}':`, validation.errors);
+      debug.command(`CommandMetadataRegistry: Invalid metadata for '${name}':`, validation.errors);
     }
     if (validation.warnings.length > 0) {
-      console.debug(`CommandMetadataRegistry: Warnings for '${name}':`, validation.warnings);
+      debug.command(`CommandMetadataRegistry: Warnings for '${name}':`, validation.warnings);
     }
 
     this.commands.set(name, { name, metadata, implementation });

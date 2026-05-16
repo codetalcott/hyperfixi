@@ -231,7 +231,13 @@ export function createHooks(config: {
 }
 
 /**
- * Logging hooks for debugging
+ * Logging hooks for debugging.
+ *
+ * Console output is intentional: this is an opt-in hook that consumers
+ * explicitly register when they want command execution logged. The
+ * `console.log` / `console.error` calls below ARE the feature, not stray
+ * instrumentation. Same pattern as `commands/utility/beep.ts`. Consumers
+ * who don't want logging simply don't register this hook.
  */
 export const loggingHooks: RuntimeHooks = {
   beforeExecute: ctx => {

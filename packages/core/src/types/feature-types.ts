@@ -141,6 +141,6 @@ export interface FeatureValidationResult {
   suggestions: string[];
   parsedSyntax?: {
     tokens: string[];
-    structure: Record<string, any>;
+    structure: Record<string, unknown>;
   };
 }

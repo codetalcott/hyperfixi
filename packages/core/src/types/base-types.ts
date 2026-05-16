@@ -208,7 +208,7 @@ export interface ExecutionContext extends CoreExecutionContext {
   };
 
   /**
-   * Phase 5b: optional convenience for plugin commands to register per-element
+   * Optional convenience for plugin commands to register per-element
    * teardown without going through `runtime.getCleanupRegistry()`. Populated by
    * runtime code paths that construct the execution context with a runtime
    * reference available. Plugins that cannot rely on presence should fall back
