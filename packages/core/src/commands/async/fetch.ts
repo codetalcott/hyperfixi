@@ -121,11 +121,32 @@ export interface FetchCommandInput {
   throwOnError?: boolean;
 }
 
+/**
+ * Response body decoded according to `as <type>`. The exact runtime shape
+ * depends on the response-type modifier and is narrowed by callers:
+ *   - `json`        → parsed JSON value (any JS type)
+ *   - `text`        → string
+ *   - `html`        → DocumentFragment | HTMLElement | null
+ *   - `blob`        → Blob
+ *   - `arrayBuffer` → ArrayBuffer
+ *   - `response`    → the raw Response object
+ *   - custom        → whatever the plugin-registered handler returns
+ */
+export type FetchResponseData =
+  | string
+  | Response
+  | Blob
+  | ArrayBuffer
+  | DocumentFragment
+  | HTMLElement
+  | null
+  | unknown;
+
 export interface FetchCommandOutput {
   status: number;
   statusText: string;
   headers: Headers;
-  data: any;
+  data: FetchResponseData;
   url: string;
   duration: number;
 }
@@ -328,16 +349,20 @@ export class FetchCommand implements DecoratedCommand {
     return r;
   }
 
-  private parseHeaders(h: any): Headers {
+  private parseHeaders(h: unknown): Headers {
     if (h instanceof Headers) return h;
     const headers = new Headers();
     if (typeof h === 'object' && h !== null) {
-      for (const [k, v] of Object.entries(h)) headers.set(k, String(v));
+      for (const [k, v] of Object.entries(h as Record<string, unknown>)) {
+        headers.set(k, String(v));
+      }
     }
     return headers;
   }
 
-  private parseBody(body: any): string | FormData | Blob | ArrayBuffer | URLSearchParams | null {
+  private parseBody(
+    body: unknown
+  ): string | FormData | Blob | ArrayBuffer | URLSearchParams | null {
     if (body === null || body === undefined) return null;
     if (
       body instanceof FormData ||
@@ -355,7 +380,7 @@ export class FetchCommand implements DecoratedCommand {
     response: Response,
     type: string,
     context: TypedExecutionContext
-  ): Promise<any> {
+  ): Promise<FetchResponseData> {
     switch (type) {
       case 'response':
         return response;
@@ -387,7 +412,7 @@ export class FetchCommand implements DecoratedCommand {
     return fragment;
   }
 
-  private dispatchEvent(target: EventTarget, name: string, detail: any): void {
+  private dispatchEvent(target: EventTarget, name: string, detail: unknown): void {
     target.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, cancelable: true }));
   }
 }

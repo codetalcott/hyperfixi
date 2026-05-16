@@ -19,13 +19,24 @@ import {
   type CommandMetadata,
 } from '../decorators';
 
+/**
+ * A command queued for async execution. The runtime accepts three shapes:
+ *   - An AST node (the path the parser actually emits today)
+ *   - A function `(ctx) => Promise<unknown>` (for programmatic callers)
+ *   - An object exposing `execute(ctx)` (legacy command-object form)
+ */
+type AsyncCommandItem =
+  | ASTNode
+  | ((context: TypedExecutionContext) => unknown | Promise<unknown>)
+  | { name?: string; execute(context: TypedExecutionContext): unknown | Promise<unknown> };
+
 export interface AsyncCommandInput {
-  commands: any[];
+  commands: AsyncCommandItem[];
 }
 
 export interface AsyncCommandOutput {
   commandCount: number;
-  results: any[];
+  results: unknown[];
   executed: boolean;
   duration: number;
 }
@@ -118,9 +129,9 @@ export class AsyncCommand implements DecoratedCommand {
    */
   private async executeCommandsAsync(
     context: TypedExecutionContext,
-    commands: any[]
-  ): Promise<any[]> {
-    const results: any[] = [];
+    commands: AsyncCommandItem[]
+  ): Promise<unknown[]> {
+    const results: unknown[] = [];
 
     for (let i = 0; i < commands.length; i++) {
       const command = commands[i];
@@ -152,15 +163,25 @@ export class AsyncCommand implements DecoratedCommand {
    * @param context - Execution context
    * @returns Command result
    */
-  private async executeCommand(command: any, context: TypedExecutionContext): Promise<any> {
+  private async executeCommand(
+    command: AsyncCommandItem,
+    context: TypedExecutionContext
+  ): Promise<unknown> {
     // Handle function commands
     if (typeof command === 'function') {
       return await command(context);
     }
 
     // Handle command objects with execute method
-    if (command && typeof command === 'object' && typeof command.execute === 'function') {
-      return await command.execute(context);
+    if (
+      command &&
+      typeof command === 'object' &&
+      'execute' in command &&
+      typeof (command as { execute: unknown }).execute === 'function'
+    ) {
+      return await (
+        command as { execute(ctx: TypedExecutionContext): unknown | Promise<unknown> }
+      ).execute(context);
     }
 
     throw new Error('Invalid command: must be a function or object with execute method');
@@ -172,13 +193,13 @@ export class AsyncCommand implements DecoratedCommand {
    * @param command - Command object
    * @returns Command name
    */
-  private getCommandName(command: any): string {
+  private getCommandName(command: AsyncCommandItem): string {
     if (typeof command === 'function') {
       return command.name || 'anonymous function';
     }
 
     if (command && typeof command === 'object') {
-      return command.name || 'unnamed command';
+      return (command as { name?: string }).name || 'unnamed command';
     }
 
     return 'unknown';
