@@ -11,6 +11,8 @@
  * Bundle size savings: ~80 lines per command using these helpers
  */
 
+import { debug } from '../../utils/debug';
+
 /**
  * Parse class names from various input formats
  *
@@ -156,7 +158,7 @@ export function resolveDynamicClasses(
           return String(value);
         }
         // If variable not found, return empty string (class won't be applied)
-        console.warn(`Dynamic class variable '${varName}' not found in context`);
+        debug.command(`Dynamic class variable '${varName}' not found in context`);
         return '';
       }
       return cls;

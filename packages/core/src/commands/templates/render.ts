@@ -28,6 +28,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { debug } from '../../utils/debug';
 
 /**
  * Typed input for RenderCommand
@@ -498,7 +499,7 @@ export class RenderCommand {
         const value = this.evaluateExpression(trimmedExpr, context);
         return this.escapeHtml(String(value || ''));
       } catch (error) {
-        console.warn(`Template interpolation error for ${expression}:`, error);
+        debug.command(`render: template interpolation error for ${expression}:`, error);
         return match;
       }
     });

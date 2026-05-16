@@ -15,6 +15,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { morphAdapter, type MorphOptions } from '../../lib/morph-adapter';
 import { withViewTransition, isViewTransitionsSupported } from '../../lib/view-transitions';
 import { isHTMLElement } from '../../utils/element-check';
+import { debug } from '../../utils/debug';
 import type { SwapStrategy } from './swap';
 import {
   command,
@@ -90,7 +91,7 @@ export function extractPartials(html: string): ParsedPartial[] {
   for (const element of partialElements) {
     const target = element.getAttribute('target');
     if (!target) {
-      console.warn('hx-partial element missing target attribute, skipping');
+      debug.command('process partials: hx-partial element missing target attribute, skipping');
       continue;
     }
 
@@ -308,9 +309,8 @@ export class ProcessPartialsCommand implements DecoratedCommand {
     // Dispatch lifecycle event with backward compatibility (lokascript: + hyperfixi:)
     dispatchLokaScriptEvent(window, 'partials', result!);
 
-    if (result!.errors.length > 0) {
-      console.warn('Some partials failed to process:', result!.errors);
-    }
+    // Errors are already surfaced on `result!.errors` and via the
+    // `hyperfixi:partials` event; no extra console output needed.
 
     return result!;
   }
