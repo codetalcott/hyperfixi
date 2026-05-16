@@ -1,7 +1,7 @@
 /**
  * Style Manipulation Helpers
  *
- * Phase 3 Consolidation: Shared utilities for CSS property manipulation
+ * Shared utilities for CSS property manipulation
  * Used by toggle, add, remove, and set commands.
  *
  * Provides:

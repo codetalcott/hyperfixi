@@ -1,7 +1,7 @@
 /**
  * Selector Type Detection Helpers
  *
- * Phase 3 Consolidation: Shared utilities for detecting selector types
+ * Shared utilities for detecting selector types
  * Used by toggle, add, remove, and set commands.
  *
  * Provides:

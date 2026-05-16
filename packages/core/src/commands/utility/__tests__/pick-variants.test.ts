@@ -1,5 +1,5 @@
 /**
- * End-to-end tests for pick variants (Phase A2 Phase 4).
+ * End-to-end tests for pick variants.
  *
  * Covers the 4 upstream `_hyperscript` variants newly added to hyperfixi:
  *   - pick first <count> of <expr>
@@ -53,7 +53,7 @@ const lit = (value: unknown) => ({ type: 'literal', value }) as unknown as Expre
 
 // ---------- tests ----------
 
-describe('PickCommand variants (Phase A2 Phase 4)', () => {
+describe('PickCommand variants', () => {
   const cmd = new PickCommand();
 
   describe('first <count> of <array>', () => {

@@ -201,7 +201,7 @@ export { BlurCommand, createBlurCommand } from './execution/blur';
 // Content Commands
 export { AppendCommand, createAppendCommand } from './content/append';
 
-// Animation Commands (Phase 6-3)
+// Animation Commands
 export { TransitionCommand, createTransitionCommand } from './animation/transition';
 export { MeasureCommand, createMeasureCommand } from './animation/measure';
 export { SettleCommand, createSettleCommand } from './animation/settle';
@@ -209,32 +209,32 @@ export {
   StartViewTransitionCommand,
   createStartViewTransitionCommand,
 } from './animation/start-view-transition';
+export { TakeCommand, createTakeCommand } from './animation/take';
 
-// Advanced Commands (Phase 6-4)
+// Advanced Commands
 export { JsCommand, createJsCommand } from './advanced/js';
 export { AsyncCommand, createAsyncCommand } from './advanced/async';
 
-// Control Flow - Phase 6-4
+// Control Flow
 export { UnlessCommand, createUnlessCommand } from './control-flow/unless';
+export { ThrowCommand, createThrowCommand } from './control-flow/throw';
 
-// Data Commands - Phase 6-4
+// Data Commands
 export { DefaultCommand, createDefaultCommand } from './data/default';
 export { ClearCommand, createClearCommand } from './data/clear';
 
-// Execution Commands - Phase 6-4
+// Execution Commands
 export { PseudoCommand, createPseudoCommand } from './execution/pseudo-command';
 
-// Utility & Specialized - Phase 6-5
+// Utility & Specialized
 export { TellCommand, createTellCommand } from './utility/tell';
 export { CopyCommand, createCopyCommand } from './utility/copy';
 export { PickCommand, createPickCommand } from './utility/pick';
-export { ThrowCommand, createThrowCommand } from './control-flow/throw';
 export { BeepCommand, createBeepCommand } from './utility/beep';
 export { BreakpointCommand, createBreakpointCommand } from './utility/breakpoint';
 export { InstallCommand, createInstallCommand } from './behaviors/install';
 
-// Final Commands - Phase 6-6
-export { TakeCommand, createTakeCommand } from './animation/take';
+// Templates
 export { RenderCommand, createRenderCommand } from './templates/render';
 
 // Export input types for documentation

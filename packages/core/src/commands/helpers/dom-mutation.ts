@@ -1,7 +1,7 @@
 /**
  * DOM Mutation Helpers
  *
- * Phase 3 Consolidation: Shared utilities for DOM mutation operations
+ * Shared utilities for DOM mutation operations
  * Used by put, make, swap, add, and remove commands.
  *
  * Provides:

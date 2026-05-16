@@ -106,7 +106,7 @@ export {
   buildUrlWithParams,
 } from './url-validation';
 
-// Style manipulation helpers (Phase 3)
+// Style manipulation helpers
 export {
   parseCSSProperty,
   isCSSPropertySyntax,
@@ -121,7 +121,7 @@ export {
 } from './style-manipulation';
 export type { ToggleableCSSProperty, ParsedCSSProperty } from './style-manipulation';
 
-// Selector type detection helpers (Phase 3)
+// Selector type detection helpers
 export {
   detectSelectorType,
   isSmartElementTag,
@@ -131,19 +131,18 @@ export {
   isIdSelectorNode,
   isBareSmartElementNode,
   SMART_ELEMENT_TAGS,
-  // Phase 4: First argument evaluation helpers
+  // First argument evaluation helpers
   evaluateFirstArg,
   detectInputType,
 } from './selector-type-detection';
 export type {
   SelectorType,
   SmartElementTag,
-  // Phase 4: First argument types
   CommandInputType,
   ParsedFirstArg,
 } from './selector-type-detection';
 
-// Input validation helpers (Phase 3)
+// Input validation helpers
 export {
   validateTargetArray,
   isValidTargetArray,
@@ -160,7 +159,7 @@ export {
 } from './input-validator';
 export type { ValidationResult as InputValidationResult } from './input-validator';
 
-// Smart element helpers (Phase 3)
+// Smart element helpers
 export {
   detectSmartElementType,
   resolveSmartElementTargets,
@@ -176,7 +175,7 @@ export {
 } from './smart-element';
 export type { SmartElementType, DialogMode } from './smart-element';
 
-// DOM mutation helpers (Phase 3)
+// DOM mutation helpers
 export {
   toInsertPosition,
   looksLikeHTML,
@@ -193,7 +192,7 @@ export {
 } from './dom-mutation';
 export type { ContentInsertPosition, SemanticPosition } from './dom-mutation';
 
-// Batch DOM operations (Phase 4 - Consolidation)
+// Batch DOM operations
 export {
   batchApply,
   batchApplyItems,
@@ -208,7 +207,7 @@ export {
   batchRemoveStyles,
 } from './batch-dom-operations';
 
-// Event waiting helpers (Phase 4 - Consolidation)
+// Event waiting helpers
 export {
   waitForEvent,
   waitForTime,
@@ -227,7 +226,7 @@ export type {
   RaceResult,
 } from './event-waiting';
 
-// Temporal modifiers (Phase 4 - Consolidation)
+// Temporal modifiers
 export {
   createReversionFn,
   setupDurationReversion,
@@ -237,7 +236,7 @@ export {
 } from './temporal-modifiers';
 export type { ToggleType, CleanupFn, TemporalModifierOptions } from './temporal-modifiers';
 
-// Loop execution helpers (Phase 5 - Size Optimization)
+// Loop execution helpers
 export {
   executeLoop,
   createForLoopConfig,

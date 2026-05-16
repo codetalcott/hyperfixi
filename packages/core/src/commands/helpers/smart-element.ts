@@ -1,7 +1,7 @@
 /**
  * Smart Element Helpers
  *
- * Phase 3 Consolidation: Shared utilities for smart element detection and toggling
+ * Shared utilities for smart element detection and toggling
  * Used by toggle command and potentially other DOM commands.
  *
  * Smart elements are interactive HTML elements with special toggle behavior:

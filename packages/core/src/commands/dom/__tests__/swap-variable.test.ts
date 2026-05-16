@@ -1,5 +1,5 @@
 /**
- * Tests for variable-swap form (Phase A2 Phase 6).
+ * Tests for variable-swap form.
  *
  * `swap x with y` where both operands are bare identifier names exchanges
  * the values of two local variables. Mirrors upstream `_hyperscript`
@@ -42,7 +42,7 @@ function evaluator(): ExpressionEvaluator {
 
 const ident = (name: string) => ({ type: 'identifier', name }) as unknown as ExpressionNode;
 
-describe('SwapCommand variable-swap variant (Phase A2 Phase 6)', () => {
+describe('SwapCommand variable-swap variant', () => {
   const cmd = new SwapCommand();
 
   describe('parseInput detection', () => {

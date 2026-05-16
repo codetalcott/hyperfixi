@@ -211,7 +211,7 @@ describe('TellCommand', () => {
       expect(result.commandResults).toEqual(['result-value']);
     });
 
-    // Phase A2 Phase 2: parity-verification gap tests for multi-target iteration
+    // parity-verification gap tests for multi-target iteration
     // and pronoun-binding-during-iteration.
 
     it('should iterate over multi-target arrays, binding me/you to each in turn', async () => {

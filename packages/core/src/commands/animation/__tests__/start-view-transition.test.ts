@@ -1,5 +1,5 @@
 /**
- * Tests for StartViewTransitionCommand (Phase A2 Phase 5).
+ * Tests for StartViewTransitionCommand.
  *
  * Covers:
  *   - Parser: recognizes `start view transition [using <type>] <body> end`
@@ -42,7 +42,7 @@ function makeEvaluator(): ExpressionEvaluator {
 
 const lit = (value: unknown) => ({ type: 'literal', value }) as unknown as ExpressionNode;
 
-describe('StartViewTransitionCommand (Phase A2 Phase 5)', () => {
+describe('StartViewTransitionCommand', () => {
   const command = new StartViewTransitionCommand();
 
   describe('metadata', () => {

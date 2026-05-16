@@ -374,7 +374,7 @@ describe('WaitCommand - Race Conditions', () => {
       expect(output.duration).toBeLessThan(100);
     });
 
-    // Phase A2 Phase 1: parity-verification gap tests for 3-way races and
+    // parity-verification gap tests for 3-way races and
     // listener cleanup. Existing tests above already cover event-wins,
     // time-wins, event+event, and duration tracking; these supplement.
 

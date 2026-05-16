@@ -962,7 +962,7 @@ describe('FetchCommand', () => {
   });
 
   // ============================================================================
-  // fetchThrowsOn pattern registry (Phase A2 Phase 3 — upstream config parity)
+  // fetchThrowsOn pattern registry (upstream config parity)
   // ============================================================================
 
   describe('fetchThrowsOn pattern registry', () => {

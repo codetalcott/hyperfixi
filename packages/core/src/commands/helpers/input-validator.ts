@@ -1,7 +1,7 @@
 /**
  * Input Validation Helpers for Commands
  *
- * Phase 3 Consolidation: Shared validation utilities for command inputs
+ * Shared validation utilities for command inputs
  * Used by toggle, add, remove, set, and other commands.
  *
  * Provides:
