@@ -1,6 +1,13 @@
 /**
  * Example: Server Request Event Source
  *
+ * **Status: Documentation example, not a public API.** Lives under `src/`
+ * so it stays type-checked but is not re-exported from `package.json` and
+ * (as of 2026-05-16) has no production importers. May be used by the
+ * `projects/_hyper_min` docs site or browser-test harnesses — confirm
+ * before treating as wholly dead. See memory:
+ * project_registry_examples_status for the open question.
+ *
  * Demonstrates how to create a custom event source for server-side hyperscript.
  * This example shows the pattern for handling HTTP requests as hyperscript events.
  *

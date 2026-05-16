@@ -1,6 +1,13 @@
 /**
  * Example: Server-Side Commands
  *
+ * **Status: Documentation example, not a public API.** Lives under `src/`
+ * so it stays type-checked but is not re-exported from `package.json` and
+ * (as of 2026-05-16) has no production importers. May be used by the
+ * `projects/_hyper_min` docs site or browser-test harnesses — confirm
+ * before treating as wholly dead. See memory:
+ * project_registry_examples_status for the open question.
+ *
  * Demonstrates how to create custom commands for server-side hyperscript.
  * These commands work with HTTP request/response in the execution context.
  *
@@ -85,7 +92,7 @@ export const respondCommand: CommandWithParseInput = {
   },
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, any> },
+    raw: { args: ASTNode[]; modifiers: Record<string, unknown> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<RespondInput> {
@@ -131,10 +138,13 @@ export const respondCommand: CommandWithParseInput = {
 
     // Handle modifiers
     if (raw.modifiers?.status) {
-      statusCode = Number(await evaluator.evaluate(raw.modifiers.status, context)) || 200;
+      statusCode =
+        Number(await evaluator.evaluate(raw.modifiers.status as ASTNode, context)) || 200;
     }
     if (raw.modifiers?.as) {
-      const asType = String(await evaluator.evaluate(raw.modifiers.as, context)).toLowerCase();
+      const asType = String(
+        await evaluator.evaluate(raw.modifiers.as as ASTNode, context)
+      ).toLowerCase();
       if (asType === 'json' || asType === 'html' || asType === 'text') {
         contentType = asType;
       }
@@ -217,7 +227,7 @@ export const redirectCommand: CommandWithParseInput = {
   },
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, any> },
+    raw: { args: ASTNode[]; modifiers: Record<string, unknown> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<RedirectInput> {
@@ -250,7 +260,8 @@ export const redirectCommand: CommandWithParseInput = {
 
     // Handle modifiers
     if (raw.modifiers?.status) {
-      statusCode = Number(await evaluator.evaluate(raw.modifiers.status, context)) || 302;
+      statusCode =
+        Number(await evaluator.evaluate(raw.modifiers.status as ASTNode, context)) || 302;
     }
 
     return { url, statusCode };
@@ -302,7 +313,7 @@ export const setHeaderCommand: CommandWithParseInput = {
   },
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, any> },
+    raw: { args: ASTNode[]; modifiers: Record<string, unknown> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetHeaderInput> {
@@ -318,7 +329,7 @@ export const setHeaderCommand: CommandWithParseInput = {
 
     // Look for 'to' modifier or second arg
     if (raw.modifiers?.to) {
-      value = String(await evaluator.evaluate(raw.modifiers.to, context));
+      value = String(await evaluator.evaluate(raw.modifiers.to as ASTNode, context));
     } else if (args[1]) {
       value = String(await evaluator.evaluate(args[1], context));
     }

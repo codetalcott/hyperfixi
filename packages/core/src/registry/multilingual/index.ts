@@ -1,6 +1,13 @@
 /**
  * Multilingual Server Plugin System
  *
+ * Server-plugin facade for the core `SemanticGrammarBridge` from
+ * `packages/core/src/multilingual/bridge.ts`. This module ships the server-
+ * side wiring (custom event sources, context providers, command list) that
+ * surfaces multilingual hyperscript through the registry; the actual
+ * parse / translate logic lives in `src/multilingual/`. Not exported from
+ * `package.json`; consumers reach it via deep imports.
+ *
  * Enables server-side hyperscript commands in any of the 23 supported languages.
  * Leverages the semantic parsing infrastructure for language-agnostic command execution.
  *
