@@ -93,10 +93,14 @@ export class TakeCommand implements DecoratedCommand {
     input: TakeCommandInput,
     context: TypedExecutionContext
   ): Promise<TakeCommandOutput> {
-    const sourceElement = resolveElement(input.source as string | HTMLElement | undefined, context);
+    const sourceElement = resolveElement(
+      input.source as string | HTMLElement | undefined,
+      context,
+      'take'
+    );
     const targetElement = input.target
-      ? resolveElement(input.target as string | HTMLElement | undefined, context)
-      : resolveElement(undefined, context);
+      ? resolveElement(input.target as string | HTMLElement | undefined, context, 'take')
+      : resolveElement(undefined, context, 'take');
 
     const value = this.takeProperty(sourceElement, input.property);
     this.putProperty(targetElement, input.property, value);

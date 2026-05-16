@@ -15,6 +15,11 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/base-types';
 import { isHTMLElement } from '../../utils/element-check';
 
+/** Prefix an error message with `[commandName]` when one was supplied. */
+function withCmd(commandName: string | undefined, message: string): string {
+  return commandName ? `[${commandName}] ${message}` : message;
+}
+
 /**
  * Resolve target element from various input types
  *
@@ -26,12 +31,14 @@ import { isHTMLElement } from '../../utils/element-check';
  *
  * @param target - Target (element, selector, context ref, or undefined for me)
  * @param context - Execution context
+ * @param commandName - Optional command name to prefix error messages, aiding debugging
  * @returns Resolved HTML element
  * @throws Error if element cannot be resolved
  */
 export function resolveElement(
   target: string | HTMLElement | undefined,
-  context: ExecutionContext | TypedExecutionContext
+  context: ExecutionContext | TypedExecutionContext,
+  commandName?: string
 ): HTMLElement {
   // If target is already an HTMLElement, return it
   if (isHTMLElement(target)) {
@@ -42,7 +49,12 @@ export function resolveElement(
   if (!target) {
     const me = context.me;
     if (!me) {
-      throw new Error('No target element - provide explicit target or ensure context.me is set');
+      throw new Error(
+        withCmd(
+          commandName,
+          'No target element — provide explicit target or ensure context.me is set'
+        )
+      );
     }
     return asHTMLElement(me);
   }
@@ -54,21 +66,21 @@ export function resolveElement(
     // Handle context references
     if (trimmed === 'me') {
       if (!context.me) {
-        throw new Error('Context reference "me" is not available');
+        throw new Error(withCmd(commandName, 'Context reference "me" is not available'));
       }
       return asHTMLElement(context.me);
     }
 
     if (trimmed === 'it') {
       if (!isHTMLElement(context.it)) {
-        throw new Error('Context reference "it" is not an HTMLElement');
+        throw new Error(withCmd(commandName, 'Context reference "it" is not an HTMLElement'));
       }
       return context.it as HTMLElement;
     }
 
     if (trimmed === 'you') {
       if (!context.you) {
-        throw new Error('Context reference "you" is not available');
+        throw new Error(withCmd(commandName, 'Context reference "you" is not available'));
       }
       return asHTMLElement(context.you);
     }
@@ -77,19 +89,19 @@ export function resolveElement(
     const doc =
       (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
     if (!doc) {
-      throw new Error('DOM not available - cannot resolve element selector');
+      throw new Error(withCmd(commandName, 'DOM not available — cannot resolve element selector'));
     }
     const element = doc.querySelector(trimmed);
     if (!element) {
-      throw new Error(`Element not found with selector: ${trimmed}`);
+      throw new Error(withCmd(commandName, `Element not found with selector: ${trimmed}`));
     }
     if (!isHTMLElement(element)) {
-      throw new Error(`Element found but is not an HTMLElement: ${trimmed}`);
+      throw new Error(withCmd(commandName, `Element found but is not an HTMLElement: ${trimmed}`));
     }
     return element as HTMLElement;
   }
 
-  throw new Error(`Invalid target type: ${typeof target}`);
+  throw new Error(withCmd(commandName, `Invalid target type: ${typeof target}`));
 }
 
 /**
@@ -229,34 +241,39 @@ export function findAll(element: HTMLElement, selector: string): HTMLElement[] {
  *
  * @param possessive - Possessive keyword
  * @param context - Execution context
+ * @param commandName - Optional command name to prefix error messages, aiding debugging
  * @returns Resolved HTMLElement
  * @throws Error if context reference is unavailable or not an HTMLElement
  */
 export function resolvePossessive(
   possessive: string,
-  context: ExecutionContext | TypedExecutionContext
+  context: ExecutionContext | TypedExecutionContext,
+  commandName?: string
 ): HTMLElement {
   switch (possessive.toLowerCase()) {
     case 'my':
     case 'me':
-      if (!context.me) throw new Error('No "me" element in context');
-      if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
+      if (!context.me) throw new Error(withCmd(commandName, 'No "me" element in context'));
+      if (!isHTMLElement(context.me))
+        throw new Error(withCmd(commandName, 'context.me is not an HTMLElement'));
       return context.me as HTMLElement;
 
     case 'its':
     case 'it':
-      if (!context.it) throw new Error('No "it" value in context');
-      if (!isHTMLElement(context.it)) throw new Error('context.it is not an HTMLElement');
+      if (!context.it) throw new Error(withCmd(commandName, 'No "it" value in context'));
+      if (!isHTMLElement(context.it))
+        throw new Error(withCmd(commandName, 'context.it is not an HTMLElement'));
       return context.it as HTMLElement;
 
     case 'your':
     case 'you':
-      if (!context.you) throw new Error('No "you" element in context');
-      if (!isHTMLElement(context.you)) throw new Error('context.you is not an HTMLElement');
+      if (!context.you) throw new Error(withCmd(commandName, 'No "you" element in context'));
+      if (!isHTMLElement(context.you))
+        throw new Error(withCmd(commandName, 'context.you is not an HTMLElement'));
       return context.you as HTMLElement;
 
     default:
-      throw new Error(`Unknown possessive: ${possessive}`);
+      throw new Error(withCmd(commandName, `Unknown possessive: ${possessive}`));
   }
 }
 

@@ -111,7 +111,7 @@ export class MeasureCommand implements DecoratedCommand {
     input: MeasureCommandInput,
     context: TypedExecutionContext
   ): Promise<MeasureCommandOutput> {
-    const targetElement = resolveElement(input.target, context);
+    const targetElement = resolveElement(input.target, context, 'measure');
     const prop = input.property || 'width';
     const measurement = this.getMeasurement(targetElement, prop);
 

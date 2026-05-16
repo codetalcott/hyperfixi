@@ -168,7 +168,7 @@ export class DefaultCommand implements DecoratedCommand {
     value: unknown
   ): DefaultCommandOutput {
     // Use shared helper for possessive resolution
-    const targetElement = resolvePossessive(possessive, context);
+    const targetElement = resolvePossessive(possessive, context, 'default');
     const existingValue = getElementProperty(targetElement, property);
     const targetName = `${possessive} ${property}`;
 

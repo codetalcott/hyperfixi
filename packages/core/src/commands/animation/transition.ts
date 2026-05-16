@@ -121,7 +121,7 @@ export class TransitionCommand implements DecoratedCommand {
     if (property.startsWith('*')) property = property.substring(1);
     property = camelToKebab(property);
 
-    const targetElement = resolveElement(target, context);
+    const targetElement = resolveElement(target, context, 'transition');
     const duration = parseDuration(durationInput, 300);
     const fromValue = getComputedStyle(targetElement).getPropertyValue(property);
 

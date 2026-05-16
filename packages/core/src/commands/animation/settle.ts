@@ -102,7 +102,7 @@ export class SettleCommand implements DecoratedCommand {
     context: TypedExecutionContext
   ): Promise<SettleCommandOutput> {
     const { target, timeout: timeoutInput } = input;
-    const targetElement = resolveElement(target, context);
+    const targetElement = resolveElement(target, context, 'settle');
     const timeout = parseDuration(timeoutInput, 5000);
 
     const startTime = Date.now();
