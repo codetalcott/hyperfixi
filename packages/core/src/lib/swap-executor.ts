@@ -1,40 +1,18 @@
 /**
- * Swap Executor - Shared DOM swap execution logic
+ * Swap Executor — shared DOM swap dispatch.
  *
- * Provides a unified interface for executing swap strategies across
- * swap command, history-swap behavior, and boosted behavior.
- *
- * Consolidates duplicated swap strategy implementation (~60 lines x 3 = 180 lines saved)
- *
- * @example
- * ```typescript
- * import { executeSwap, SwapStrategy } from '../lib/swap-executor';
- *
- * executeSwap(target, content, 'morph');
- * executeSwap(target, content, 'innerHTML');
- * executeSwap(target, null, 'delete');
- * ```
+ * Used by the swap/morph commands and the boosted + history-swap behaviors so
+ * the 10-strategy switch lives in exactly one place. Optional View Transitions
+ * wrapping is folded in via `executeSwapWithTransition`.
  */
 
 import { morphAdapter, type MorphOptions } from './morph-adapter';
 import { withViewTransition, isViewTransitionsSupported } from './view-transitions';
 import { isHTMLElement, isDocumentFragment } from '../utils/element-check';
-import {
-  validatePartialContent,
-  getPartialValidationConfig,
-} from '../validation/partial-validator';
-import { emitPartialValidationWarnings } from '../validation/partial-warning-formatter';
 
-// ============================================================================
-// Types
-// ============================================================================
-
-/**
- * All supported swap strategies
- */
 export type SwapStrategy =
-  | 'morph' // Inner morph (default) - intelligent diffing, preserves state
-  | 'morphOuter' // Outer morph - replace element with morph
+  | 'morph' // Inner morph (default) — intelligent diffing, preserves state
+  | 'morphOuter' // Outer morph — replace element with morph
   | 'innerHTML' // Replace inner content
   | 'outerHTML' // Replace entire element
   | 'beforeBegin' // Insert before element
@@ -44,29 +22,19 @@ export type SwapStrategy =
   | 'delete' // Remove element
   | 'none'; // No DOM changes
 
-/**
- * Options for swap execution
- */
 export interface SwapExecutionOptions {
-  /** Morphing options (for morph strategies) */
+  /** Morphing options (for morph strategies). */
   morphOptions?: MorphOptions;
-  /** Use View Transitions API for smooth animations */
+  /** Wrap the swap in `document.startViewTransition` when supported. */
   useViewTransition?: boolean;
-  /** Validate content for layout elements before swapping (opt-in) */
-  validateContent?: boolean;
-  /** Target selector for validation context (used in warning messages) */
-  targetSelector?: string;
 }
 
-// ============================================================================
-// Strategy Mapping
-// ============================================================================
-
 /**
- * Map natural language keywords to swap strategies
+ * Natural-language → strategy mapping. Shared between the swap parser
+ * ([parser/command-parsers/dom-commands.ts]) and the swap command runtime.
  */
 export const STRATEGY_KEYWORDS: Record<string, SwapStrategy> = {
-  // Natural language (Option A from plan)
+  // Natural language
   into: 'innerHTML',
   over: 'outerHTML',
 
@@ -86,36 +54,21 @@ export const STRATEGY_KEYWORDS: Record<string, SwapStrategy> = {
   outermorph: 'morphOuter',
 };
 
-/**
- * Detect strategy from parsed arguments
- */
 export function detectStrategy(args: string[]): SwapStrategy {
-  const normalized = args.map(a => a.toLowerCase());
-
-  for (const arg of normalized) {
-    if (STRATEGY_KEYWORDS[arg]) {
-      return STRATEGY_KEYWORDS[arg];
-    }
+  for (const arg of args) {
+    const lower = arg.toLowerCase();
+    if (STRATEGY_KEYWORDS[lower]) return STRATEGY_KEYWORDS[lower];
   }
-
   // Default to morph for best UX (preserves form state, focus, etc.)
   return 'morph';
 }
 
-// ============================================================================
-// Core Execution
-// ============================================================================
-
 /**
- * Execute a swap strategy on a target element
+ * Execute a swap strategy on a single target.
  *
- * This is the core function that performs the actual DOM manipulation
- * for all swap strategies. Used by swap command, history-swap, and boosted.
- *
- * @param target - Target HTML element
- * @param content - Content to swap in (null for delete strategy)
- * @param strategy - Swap strategy to use
- * @param morphOptions - Optional morphing configuration
+ * Used by `executeSwapWithTransition` and is exported for legacy callers; new
+ * code should prefer the async wrapper so View Transitions stay opt-in via
+ * options rather than ad-hoc boilerplate.
  */
 export function executeSwap(
   target: HTMLElement,
@@ -128,7 +81,6 @@ export function executeSwap(
 
   switch (strategy) {
     case 'morph':
-      // Inner morph - morph children only
       if (content !== null) {
         try {
           morphAdapter.morphInner(target, contentEl || contentStr, morphOptions);
@@ -146,12 +98,10 @@ export function executeSwap(
       break;
 
     case 'morphOuter':
-      // Outer morph - morph the entire element
       if (content !== null) {
         try {
           morphAdapter.morph(target, contentEl || contentStr, morphOptions);
         } catch (error) {
-          // Fallback to outerHTML if morph fails
           console.warn('[HyperFixi] Morph failed, falling back to outerHTML:', error);
           if (contentEl) {
             target.replaceWith(contentEl);
@@ -216,7 +166,6 @@ export function executeSwap(
       break;
 
     case 'none':
-      // No DOM changes
       break;
 
     default:
@@ -225,15 +174,9 @@ export function executeSwap(
 }
 
 /**
- * Execute swap with optional View Transitions
- *
- * Wraps executeSwap with View Transitions API support.
- * Uses the transition queue to prevent cancellation.
- *
- * @param targets - Array of target elements
- * @param content - Content to swap in
- * @param strategy - Swap strategy to use
- * @param options - Execution options (morphOptions, useViewTransition)
+ * Execute a swap across one or more targets, optionally inside a View
+ * Transition. Prefer this entry point — boosted, history-swap, swap, morph,
+ * and process-partials all funnel through it so VT wrapping is consistent.
  */
 export async function executeSwapWithTransition(
   targets: HTMLElement[],
@@ -241,26 +184,7 @@ export async function executeSwapWithTransition(
   strategy: SwapStrategy,
   options: SwapExecutionOptions = {}
 ): Promise<void> {
-  const {
-    morphOptions,
-    useViewTransition = false,
-    validateContent = false,
-    targetSelector,
-  } = options;
-
-  // Validate content if enabled and content is a string
-  if (validateContent && typeof content === 'string') {
-    const config = getPartialValidationConfig();
-    if (config.enabled) {
-      // Derive target selector from first target if not provided
-      const selector = targetSelector || deriveTargetSelector(targets[0]);
-      const validation = validatePartialContent(content, selector);
-
-      if (validation.totalIssues > 0 && config.showWarnings) {
-        emitPartialValidationWarnings(validation);
-      }
-    }
-  }
+  const { morphOptions, useViewTransition = false } = options;
 
   const performSwap = () => {
     for (const target of targets) {
@@ -268,7 +192,6 @@ export async function executeSwapWithTransition(
     }
   };
 
-  // Use View Transitions API if requested and supported
   if (useViewTransition && isViewTransitionsSupported()) {
     await withViewTransition(performSwap);
   } else {
@@ -277,29 +200,9 @@ export async function executeSwapWithTransition(
 }
 
 /**
- * Derive a target selector string from an element for validation context
- */
-function deriveTargetSelector(element?: HTMLElement): string {
-  if (!element) return '';
-  if (element.id) return `#${element.id}`;
-  if (element.className) {
-    const firstClass = element.className.split(' ')[0];
-    if (firstClass) return `.${firstClass}`;
-  }
-  return element.tagName.toLowerCase();
-}
-
-/**
- * Extract content string from various value types
- *
- * Handles:
- * - null/undefined -> null
- * - HTMLElement -> HTMLElement (passed through)
- * - DocumentFragment -> HTML string (serialized)
- * - string/other -> string
- *
- * @param value - Value to extract content from
- * @returns Content as string, HTMLElement, or null
+ * Coerce a swap value (raw expression output) into something `executeSwap` can
+ * use: HTMLElement passthrough, DocumentFragment → serialized HTML string,
+ * null/undefined → null, anything else → String(value).
  */
 export function extractContent(value: unknown): string | HTMLElement | null {
   if (value === null || value === undefined) {
@@ -308,25 +211,11 @@ export function extractContent(value: unknown): string | HTMLElement | null {
   if (isHTMLElement(value)) {
     return value as HTMLElement;
   }
-  // Handle DocumentFragment from fetch ... as html
   if (isDocumentFragment(value)) {
     const fragment = value as DocumentFragment;
-    // Serialize fragment children to HTML string
     const div = document.createElement('div');
     div.appendChild(fragment.cloneNode(true));
     return div.innerHTML;
   }
   return String(value);
 }
-
-// ============================================================================
-// Exports
-// ============================================================================
-
-export default {
-  executeSwap,
-  executeSwapWithTransition,
-  extractContent,
-  detectStrategy,
-  STRATEGY_KEYWORDS,
-};

@@ -270,14 +270,10 @@ export {
 export type { SwapStrategy, SwapExecutionOptions } from '../lib/swap-executor';
 
 // Morph Adapter types
-export type { MorphOptions, MorphEngine } from '../lib/morph-adapter';
+export type { MorphOptions } from '../lib/morph-adapter';
 
 // View Transitions types
-export type {
-  TransitionCallback,
-  ViewTransitionOptions,
-  ViewTransitionsConfig,
-} from '../lib/view-transitions';
+export type { TransitionCallback } from '../lib/view-transitions';
 
 // Behavior types
 export type { HistorySwapConfig, HistorySwapInstance } from '../behaviors/history-swap';

@@ -45,8 +45,7 @@
  *   </div>
  */
 
-import { executeSwap } from '../lib/swap-executor';
-import { withViewTransition, isViewTransitionsSupported } from '../lib/view-transitions';
+import { executeSwapWithTransition } from '../lib/swap-executor';
 import { isExternalUrl } from '../commands/helpers/url-validation';
 import { isHTMLElement } from '../utils/element-check';
 import type { SwapStrategy } from '../commands/dom/swap';
@@ -240,16 +239,7 @@ export function createBoosted(config: BoostedConfig): BoostedInstance {
 
       const html = await response.text();
 
-      // Perform swap (optionally with View Transitions)
-      const performSwap = () => {
-        executeSwap(targetElement, html, strategy);
-      };
-
-      if (useViewTransition && isViewTransitionsSupported()) {
-        await withViewTransition(performSwap);
-      } else {
-        performSwap();
-      }
+      await executeSwapWithTransition([targetElement], html, strategy, { useViewTransition });
 
       // Remove loading indicators
       targetElement.classList.remove('hx-swapping');

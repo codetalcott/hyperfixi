@@ -22,7 +22,6 @@ import type { ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { resolveElements } from '../helpers/element-resolution';
 import {
-  executeSwap,
   executeSwapWithTransition,
   extractContent,
   STRATEGY_KEYWORDS,
@@ -474,18 +473,10 @@ export class MorphCommand implements DecoratedCommand {
     if (!targets || !strategy) {
       throw new Error('[HyperFixi] morph: requires targets and strategy');
     }
-    const safeContent = content ?? null;
-
-    if (useViewTransition) {
-      await executeSwapWithTransition(targets, safeContent, strategy, {
-        morphOptions,
-        useViewTransition,
-      });
-    } else {
-      for (const target of targets) {
-        executeSwap(target, safeContent, strategy, morphOptions);
-      }
-    }
+    await executeSwapWithTransition(targets, content ?? null, strategy, {
+      morphOptions,
+      useViewTransition,
+    });
   }
 }
 
