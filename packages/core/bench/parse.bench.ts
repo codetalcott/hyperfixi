@@ -8,16 +8,15 @@
  */
 
 import { bench, describe } from 'vitest';
+import type { CompileResult } from '../src/api/hyperscript-api';
 
-// Lazy imports to avoid loading before warmup
-let compile: (code: string) => unknown;
-let compileAsync: (code: string) => Promise<unknown>;
+// Lazy import to avoid loading before warmup
+let compile: (code: string) => CompileResult;
 
 async function ensureCompiler() {
   if (!compile) {
-    const mod = await import('../src/index.js');
-    compile = mod.compile;
-    compileAsync = mod.compileMultilingual;
+    const mod = await import('../src/index');
+    compile = mod.lokascript.compileSync.bind(mod.lokascript);
   }
 }
 

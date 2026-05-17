@@ -7,41 +7,30 @@
  * Run: npm run bench
  */
 
+// @vitest-environment happy-dom
 import { bench, describe, beforeAll } from 'vitest';
-import { JSDOM } from 'jsdom';
+import type { ASTNode, CompileResult, ExecutionContext } from '../src/index';
 
-// Setup DOM environment
-let document: Document;
-let compile: (code: string) => { ast?: unknown; success: boolean };
-let execute: (ast: unknown, context?: unknown) => Promise<unknown>;
+// Vitest provides a happy-dom global environment (see vitest.config.ts).
+// We just need to seed the DOM with fixtures and load the API lazily.
+let compile: (code: string) => CompileResult;
+let execute: (ast: ASTNode, context?: ExecutionContext) => Promise<unknown>;
 
 beforeAll(async () => {
-  const dom = new JSDOM(
-    `<!DOCTYPE html>
-    <html>
-      <body>
-        <button id="button" class="btn">Click</button>
-        <div id="container">
-          <div class="item">Item 1</div>
-          <div class="item">Item 2</div>
-          <div class="item">Item 3</div>
-        </div>
-        <div id="output"></div>
-        <input id="input" value="test" />
-      </body>
-    </html>`,
-    { url: 'http://localhost/' }
-  );
-  document = dom.window.document;
+  document.body.innerHTML = `
+    <button id="button" class="btn">Click</button>
+    <div id="container">
+      <div class="item">Item 1</div>
+      <div class="item">Item 2</div>
+      <div class="item">Item 3</div>
+    </div>
+    <div id="output"></div>
+    <input id="input" value="test" />
+  `;
 
-  // Mock global document/window
-  (globalThis as unknown as { document: Document }).document = document;
-  (globalThis as unknown as { window: Window }).window = dom.window as unknown as Window;
-
-  // Load hyperfixi
-  const mod = await import('../src/index.js');
-  compile = mod.compile;
-  execute = mod.execute;
+  const mod = await import('../src/index');
+  compile = mod.lokascript.compileSync.bind(mod.lokascript);
+  execute = mod.lokascript.execute.bind(mod.lokascript);
 });
 
 // =============================================================================
@@ -53,7 +42,7 @@ describe('Execute: Class Manipulation', () => {
     'toggle class',
     async () => {
       const result = compile('toggle .active on #button');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -64,7 +53,7 @@ describe('Execute: Class Manipulation', () => {
     'add class',
     async () => {
       const result = compile('add .highlight to #button');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
       // Cleanup
@@ -80,7 +69,7 @@ describe('Execute: Class Manipulation', () => {
       document.getElementById('button')?.classList.add('temp');
 
       const result = compile('remove .temp from #button');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -91,7 +80,7 @@ describe('Execute: Class Manipulation', () => {
     'toggle on multiple elements',
     async () => {
       const result = compile('toggle .selected on .item');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -108,7 +97,7 @@ describe('Execute: Content Manipulation', () => {
     'put text content',
     async () => {
       const result = compile("put 'Hello World' into #output");
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -119,7 +108,7 @@ describe('Execute: Content Manipulation', () => {
     'append content',
     async () => {
       const result = compile("append '<span>item</span>' to #output");
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
       // Cleanup
@@ -133,7 +122,7 @@ describe('Execute: Content Manipulation', () => {
     'prepend content',
     async () => {
       const result = compile("prepend '<span>first</span>' to #output");
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
       // Cleanup
@@ -153,7 +142,7 @@ describe('Execute: Variable Operations', () => {
     'set local variable',
     async () => {
       const result = compile('set :count to 42');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -164,7 +153,7 @@ describe('Execute: Variable Operations', () => {
     'arithmetic with variables',
     async () => {
       const result = compile('set :a to 10 then set :b to :a * 2 + 5');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -175,7 +164,7 @@ describe('Execute: Variable Operations', () => {
     'increment variable',
     async () => {
       const result = compile('set :n to 0 then increment :n');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -192,7 +181,7 @@ describe('Execute: Visibility', () => {
     'hide element',
     async () => {
       const result = compile('hide #output');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
       // Reset
@@ -206,7 +195,7 @@ describe('Execute: Visibility', () => {
     'show element',
     async () => {
       const result = compile('show #output');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -223,7 +212,7 @@ describe('Execute: Loops', () => {
     'repeat 10 times',
     async () => {
       const result = compile('repeat 10 times toggle .temp on #button end');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
     },
@@ -234,7 +223,7 @@ describe('Execute: Loops', () => {
     'for each on 3 items',
     async () => {
       const result = compile('for each el in .item toggle .processed on el end');
-      if (result.success && result.ast) {
+      if (result.ok && result.ast) {
         await execute(result.ast);
       }
       // Cleanup
