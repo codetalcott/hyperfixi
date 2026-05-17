@@ -12,7 +12,7 @@ import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, CommandNode } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
-import { isCommandBoundary } from '../helpers/parsing-helpers';
+import { isCommandBoundary, parseMaybeNamedArgument } from '../helpers/parsing-helpers';
 
 /**
  * Parse trigger/send command
@@ -72,32 +72,15 @@ export function parseTriggerCommand(
       const detailArgs: ASTNode[] = [];
 
       while (!ctx.isAtEnd() && !ctx.check(')')) {
-        // Check if this is a named parameter (identifier followed by ':')
-        const checkpoint = ctx.savePosition();
-        let paramName: string | undefined;
+        const { name, value } = parseMaybeNamedArgument(ctx);
 
-        if (ctx.checkIdentifierLike()) {
-          const possibleName = ctx.peek().value;
-          ctx.advance(); // consume identifier
-
-          if (ctx.check(':')) {
-            ctx.advance(); // consume ':'
-            paramName = possibleName;
-          } else {
-            // Not a named parameter, rewind
-            ctx.restorePosition(checkpoint);
-          }
-        }
-
-        const value = ctx.parseExpression();
-
-        if (paramName !== undefined) {
+        if (name !== undefined) {
           // Named param: wrap as objectLiteral so evaluator produces {name: value}
           detailArgs.push({
             type: 'objectLiteral',
             properties: [
               {
-                key: { type: 'identifier', name: paramName } as ASTNode,
+                key: { type: 'identifier', name } as ASTNode,
                 value: value,
               },
             ],

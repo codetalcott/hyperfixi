@@ -319,7 +319,6 @@ const SWAP_STRATEGY_KEYWORDS = [
  * @returns CommandNode representing the swap command
  */
 export function parseSwapCommand(ctx: ParserContext, identifierNode: IdentifierNode) {
-  console.log('[PARSER DEBUG] parseSwapCommand called');
   const args: ASTNode[] = [];
 
   // Check for strategy keyword first (innerHTML, outerHTML, into, over, delete)

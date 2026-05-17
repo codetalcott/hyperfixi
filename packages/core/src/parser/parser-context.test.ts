@@ -35,7 +35,7 @@ describe('ParserContext', () => {
       expect(context.current).toBeDefined();
     });
 
-    it('should expose all 46 required methods', () => {
+    it('should expose all required methods', () => {
       // Token Navigation (8 methods)
       expect(typeof context.advance).toBe('function');
       expect(typeof context.peek).toBe('function');
@@ -46,41 +46,13 @@ describe('ParserContext', () => {
       expect(typeof context.matchOperator).toBe('function');
       expect(typeof context.isAtEnd).toBe('function');
 
-      // AST Node Creation (11 methods)
+      // AST Node Creation (1 method exposed; others remain private to Parser)
       expect(typeof context.createIdentifier).toBe('function');
-      expect(typeof context.createLiteral).toBe('function');
-      expect(typeof context.createSelector).toBe('function');
-      expect(typeof context.createBinaryExpression).toBe('function');
-      expect(typeof context.createUnaryExpression).toBe('function');
-      expect(typeof context.createMemberExpression).toBe('function');
-      expect(typeof context.createPossessiveExpression).toBe('function');
-      expect(typeof context.createCallExpression).toBe('function');
-      expect(typeof context.createErrorNode).toBe('function');
-      expect(typeof context.createProgramNode).toBe('function');
-      expect(typeof context.createCommandFromIdentifier).toBe('function');
 
-      // Expression Parsing (18 methods)
+      // Expression Parsing (4 methods exposed; others remain private to Parser)
       expect(typeof context.parseExpression).toBe('function');
       expect(typeof context.parsePrimary).toBe('function');
-      expect(typeof context.parseCall).toBe('function');
-      expect(typeof context.parseAssignment).toBe('function');
-      expect(typeof context.parseLogicalOr).toBe('function');
       expect(typeof context.parseLogicalAnd).toBe('function');
-      expect(typeof context.parseEquality).toBe('function');
-      expect(typeof context.parseComparison).toBe('function');
-      expect(typeof context.parseAddition).toBe('function');
-      expect(typeof context.parseMultiplication).toBe('function');
-      expect(typeof context.parseImplicitBinary).toBe('function');
-      expect(typeof context.parseConditional).toBe('function');
-      expect(typeof context.parseConditionalBranch).toBe('function');
-      expect(typeof context.parseEventHandler).toBe('function');
-      expect(typeof context.parseBehaviorDefinition).toBe('function');
-      expect(typeof context.parseNavigationFunction).toBe('function');
-      expect(typeof context.parseMyPropertyAccess).toBe('function');
-      expect(typeof context.parseDollarExpression).toBe('function');
-      expect(typeof context.parseHyperscriptSelector).toBe('function');
-      expect(typeof context.parseAttributeOrArrayLiteral).toBe('function');
-      expect(typeof context.parseObjectLiteral).toBe('function');
       expect(typeof context.parseCSSObjectLiteral).toBe('function');
 
       // Command Sequence Parsing (2 methods)
@@ -181,80 +153,6 @@ describe('ParserContext', () => {
       expect(node.name).toBe('myVar');
       expect(node.start).toBeDefined();
       expect(node.end).toBeDefined();
-    });
-
-    it('should create literal node', () => {
-      const node = context.createLiteral(42, '42');
-
-      expect(node.type).toBe('literal');
-      expect(node.value).toBe(42);
-      expect(node.raw).toBe('42');
-    });
-
-    it('should create selector node', () => {
-      const node = context.createSelector('button.active');
-
-      expect(node.type).toBe('selector');
-      expect(node.value).toBe('button.active');
-    });
-
-    it('should create binary expression node', () => {
-      const left = context.createLiteral(1, '1');
-      const right = context.createLiteral(2, '2');
-      // Note: signature is (operator, left, right) matching the parser implementation
-      const node = context.createBinaryExpression('+', left, right);
-
-      expect(node.type).toBe('binaryExpression');
-      expect(node.operator).toBe('+');
-      expect(node.left).toBe(left);
-      expect(node.right).toBe(right);
-    });
-
-    it('should create unary expression node', () => {
-      const arg = context.createLiteral(5, '5');
-      const node = context.createUnaryExpression('-', arg, true);
-
-      expect(node.type).toBe('unaryExpression');
-      expect(node.operator).toBe('-');
-      expect(node.argument).toBe(arg);
-      expect(node.prefix).toBe(true);
-    });
-
-    it('should create member expression node', () => {
-      const obj = context.createIdentifier('window');
-      const prop = context.createIdentifier('document');
-      const node = context.createMemberExpression(obj, prop, false);
-
-      expect(node.type).toBe('memberExpression');
-      expect(node.object).toBe(obj);
-      expect(node.property).toBe(prop);
-      expect(node.computed).toBe(false);
-    });
-
-    it('should create call expression node', () => {
-      const callee = context.createIdentifier('alert');
-      const args = [context.createLiteral('Hello', '"Hello"')];
-      const node = context.createCallExpression(callee, args);
-
-      expect(node.type).toBe('callExpression');
-      expect(node.callee).toBe(callee);
-      expect(node.arguments).toEqual(args);
-    });
-
-    it('should create error node', () => {
-      const node = context.createErrorNode();
-
-      expect(node.type).toBe('identifier');
-      expect(node.name).toBe('__ERROR__');
-    });
-
-    it('should create program node from statements', () => {
-      const stmt1 = context.createIdentifier('stmt1');
-      const stmt2 = context.createIdentifier('stmt2');
-      const program = context.createProgramNode([stmt1, stmt2]);
-
-      expect(program.type).toBe('Program');
-      expect(program.statements).toHaveLength(2);
     });
   });
 

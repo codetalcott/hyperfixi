@@ -623,8 +623,11 @@ export class Parser {
           if (!this.isAtEnd()) {
             try {
               this.parseExpressionPratt(0);
-            } catch {
-              /* recovery */
+            } catch (recoveryErr) {
+              debug.parse(
+                'arrow body discarded after error:',
+                recoveryErr instanceof Error ? recoveryErr.message : String(recoveryErr)
+              );
             }
           }
           return this.createErrorNode();
@@ -698,8 +701,12 @@ export class Parser {
   }
 
   // ============================================================================
-  // Legacy expression chain methods (kept for reference, no longer called)
-  // These will be removed in a follow-up cleanup.
+  // Pre-Pratt precedence chain (kept because `parseLogicalAnd` is still exposed
+  // on ParserContext and called from `command-parsers/control-flow-commands.ts`
+  // to collect condition atoms one-by-one while stopping at `or`). The other
+  // methods are reachable only as transitive deps of `parseLogicalAnd` —
+  // delete them all in one pass once that caller is migrated to the Pratt
+  // parser (see AUDIT.md F1b).
   // ============================================================================
 
   /* istanbul ignore next -- legacy: superseded by Pratt parser */
@@ -4266,41 +4273,13 @@ export class Parser {
       matchOperator: this.matchOperator.bind(this),
       isAtEnd: this.isAtEnd.bind(this),
 
-      // AST Node Creation (11 methods)
+      // AST Node Creation (1 method exposed; others remain private to Parser)
       createIdentifier: this.createIdentifier.bind(this),
-      createLiteral: this.createLiteral.bind(this),
-      createSelector: this.createSelector.bind(this),
-      createBinaryExpression: this.createBinaryExpression.bind(this),
-      createUnaryExpression: this.createUnaryExpression.bind(this),
-      createMemberExpression: this.createMemberExpression.bind(this),
-      createPossessiveExpression: this.createPossessiveExpression.bind(this),
-      createCallExpression: this.createCallExpression.bind(this),
-      createErrorNode: this.createErrorNode.bind(this),
-      createProgramNode: this.createProgramNode.bind(this),
-      createCommandFromIdentifier: this.createCommandFromIdentifier.bind(this),
 
-      // Expression Parsing (18 methods)
+      // Expression Parsing (4 methods exposed; others remain private to Parser)
       parseExpression: this.parseExpression.bind(this),
       parsePrimary: this.parsePrimary.bind(this),
-      parseCall: this.parseCall.bind(this),
-      parseAssignment: this.parseAssignment.bind(this),
-      parseLogicalOr: this.parseLogicalOr.bind(this),
       parseLogicalAnd: this.parseLogicalAnd.bind(this),
-      parseEquality: this.parseEquality.bind(this),
-      parseComparison: this.parseComparison.bind(this),
-      parseAddition: this.parseAddition.bind(this),
-      parseMultiplication: this.parseMultiplication.bind(this),
-      parseImplicitBinary: this.parseImplicitBinary.bind(this),
-      parseConditional: this.parseConditional.bind(this),
-      parseConditionalBranch: this.parseConditionalBranch.bind(this),
-      parseEventHandler: this.parseEventHandler.bind(this),
-      parseBehaviorDefinition: this.parseBehaviorDefinition.bind(this),
-      parseNavigationFunction: this.parseNavigationFunction.bind(this),
-      parseMyPropertyAccess: this.parseMyPropertyAccess.bind(this),
-      parseDollarExpression: this.parseDollarExpression.bind(this),
-      parseHyperscriptSelector: this.parseHyperscriptSelector.bind(this),
-      parseAttributeOrArrayLiteral: this.parseAttributeOrArrayLiteral.bind(this),
-      parseObjectLiteral: this.parseObjectLiteral.bind(this),
       parseCSSObjectLiteral: this.parseCSSObjectLiteral.bind(this),
 
       // Command Sequence Parsing (3 methods)

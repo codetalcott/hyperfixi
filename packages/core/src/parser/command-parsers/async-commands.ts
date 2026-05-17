@@ -12,7 +12,11 @@ import type { ParserContext } from '../parser-types';
 import type { ASTNode, Token } from '../../types/core';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
-import { consumeOptionalKeyword, isCommandBoundary } from '../helpers/parsing-helpers';
+import {
+  consumeOptionalKeyword,
+  isCommandBoundary,
+  parseMaybeNamedArgument,
+} from '../helpers/parsing-helpers';
 import {
   createArrayLiteral,
   createObjectLiteral,
@@ -227,27 +231,7 @@ export function parseInstallCommand(ctx: ParserContext, commandToken: Token) {
     const params: Array<{ name?: string; value: ASTNode }> = [];
 
     while (!ctx.isAtEnd() && !ctx.check(')')) {
-      // Check if this is a named parameter (identifier followed by ':')
-      const checkpoint = ctx.savePosition();
-      let paramName: string | undefined;
-
-      if (ctx.checkIdentifierLike()) {
-        const possibleName = ctx.peek().value;
-        ctx.advance(); // consume identifier
-
-        if (ctx.check(':')) {
-          // This is a named parameter
-          ctx.advance(); // consume ':'
-          paramName = possibleName;
-        } else {
-          // Not a named parameter, rewind
-          ctx.restorePosition(checkpoint);
-        }
-      }
-
-      // Parse the parameter value
-      const value = ctx.parseExpression();
-      params.push(paramName !== undefined ? { name: paramName, value } : { value });
+      params.push(parseMaybeNamedArgument(ctx));
 
       // Check for comma separator
       if (ctx.check(',')) {

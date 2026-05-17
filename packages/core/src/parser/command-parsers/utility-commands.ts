@@ -576,9 +576,6 @@ export function parseJsCommand(ctx: ParserContext, identifierNode: IdentifierNod
   const rawSlice = ctx.getInputSlice(jsCodeStart, jsCodeEnd);
   const code = rawSlice.trim();
 
-  // Debug logging for development
-  // console.log('[parseJsCommand] jsCodeStart:', jsCodeStart, 'jsCodeEnd:', jsCodeEnd, 'rawSlice:', JSON.stringify(rawSlice), 'code:', JSON.stringify(code));
-
   // Build args: first arg is code string, second is parameters array
   const codeNode: ASTNode = {
     type: 'literal',

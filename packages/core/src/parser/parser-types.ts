@@ -259,48 +259,30 @@ export interface TokenPredicates {
 }
 
 /**
- * ASTFactory — AST node creation.
+ * ASTFactory — AST node creation exposed to command parsers.
+ *
+ * Only methods called externally via `ParserContext` are declared here.
+ * Other node-builder helpers (literal, binary/unary, member, possessive,
+ * call, error, program, selector, commandFromIdentifier) remain `private`
+ * on the `Parser` class because they're only called by `Parser` itself.
  */
 export interface ASTFactory {
   /** Create identifier AST node */
   createIdentifier(name: string): IdentifierNode;
-
-  /** Create literal AST node */
-  createLiteral(value: unknown, raw: string): ASTNode;
-
-  /** Create selector AST node */
-  createSelector(value: string): ASTNode;
-
-  /** Create binary expression AST node */
-  createBinaryExpression(operator: string, left: ASTNode, right: ASTNode): ASTNode;
-
-  /** Create unary expression AST node */
-  createUnaryExpression(operator: string, operand: ASTNode, prefix?: boolean): ASTNode;
-
-  /** Create member expression AST node */
-  createMemberExpression(object: ASTNode, property: ASTNode, computed: boolean): ASTNode;
-
-  /** Create possessive expression AST node */
-  createPossessiveExpression(object: ASTNode, property: ASTNode): ASTNode;
-
-  /** Create call expression AST node */
-  createCallExpression(callee: ASTNode, args: ASTNode[]): ASTNode;
-
-  /** Create error node for recovery */
-  createErrorNode(): ASTNode;
-
-  /** Create program node */
-  createProgramNode(statements: ASTNode[]): ASTNode;
-
-  /** Create command node from identifier */
-  createCommandFromIdentifier(identifierNode: IdentifierNode): CommandNode;
 }
 
 /**
- * ExpressionParser — expression parsing methods.
- * The main entry point is `parseExpression()`; the individual precedence-level
- * methods are legacy (superseded by the Pratt parser) but kept for backward
- * compatibility.
+ * ExpressionParser — expression parsing methods exposed to command parsers.
+ *
+ * `parseExpression` is the primary entry point (Pratt-based). `parsePrimary`
+ * is exposed for parsers that need to consume a single atom. `parseLogicalAnd`
+ * is exposed for `parseIfCommand`'s condition-token loop, which collects
+ * atoms one-by-one and must stop at `or`. `parseCSSObjectLiteral` is exposed
+ * for the one place that opens a `{` after a CSS property.
+ *
+ * All other internal parsing methods (parseCall, the legacy precedence chain,
+ * parseEventHandler, parseBehaviorDefinition, etc.) remain `private` on the
+ * `Parser` class.
  */
 export interface ExpressionParser {
   /** Parse a complete expression */
@@ -309,62 +291,8 @@ export interface ExpressionParser {
   /** Parse a primary expression */
   parsePrimary(): ASTNode;
 
-  /** Parse a call expression */
-  parseCall(): ASTNode;
-
-  /** Parse an assignment expression */
-  parseAssignment(): ASTNode;
-
-  /** Parse a logical OR expression */
-  parseLogicalOr(): ASTNode;
-
-  /** Parse a logical AND expression */
+  /** Parse a logical AND expression (stops at `or`) */
   parseLogicalAnd(): ASTNode;
-
-  /** Parse an equality expression */
-  parseEquality(): ASTNode;
-
-  /** Parse a comparison expression */
-  parseComparison(): ASTNode;
-
-  /** Parse an addition/subtraction expression */
-  parseAddition(): ASTNode;
-
-  /** Parse a multiplication/division expression */
-  parseMultiplication(): ASTNode;
-
-  /** Parse an implicit binary expression */
-  parseImplicitBinary(): ASTNode;
-
-  /** Parse a conditional expression */
-  parseConditional(): ASTNode;
-
-  /** Parse a conditional branch */
-  parseConditionalBranch(): ASTNode;
-
-  /** Parse an event handler */
-  parseEventHandler(): ASTNode;
-
-  /** Parse a behavior definition */
-  parseBehaviorDefinition(): ASTNode;
-
-  /** Parse a navigation function */
-  parseNavigationFunction(): ASTNode;
-
-  /** Parse "my" property access */
-  parseMyPropertyAccess(): ASTNode;
-
-  /** Parse $ dollar expression */
-  parseDollarExpression(): ASTNode;
-
-  /** Parse hyperscript selector */
-  parseHyperscriptSelector(): ASTNode;
-
-  /** Parse attribute or array literal */
-  parseAttributeOrArrayLiteral(): ASTNode;
-
-  /** Parse object literal */
-  parseObjectLiteral(): ASTNode;
 
   /** Parse CSS object literal */
   parseCSSObjectLiteral(): ASTNode;

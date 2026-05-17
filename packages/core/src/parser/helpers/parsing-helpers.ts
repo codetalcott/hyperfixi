@@ -343,3 +343,34 @@ export function consumeOptionalKeyword(ctx: ParserContext, keyword: string): boo
   }
   return false;
 }
+
+/**
+ * Parse a `name: value` argument (named) or fall through to a positional value.
+ *
+ * Single-token lookahead: peeks for an identifier followed by `:`. On a hit,
+ * consumes both and returns `{ name, value }`. On a miss, restores the position
+ * and returns `{ value }` only. The value is parsed with `ctx.parseExpression()`.
+ *
+ * Used by `trigger eventName(key: value, ...)` and `install Behavior(key: value, ...)`.
+ */
+export function parseMaybeNamedArgument(ctx: ParserContext): {
+  name?: string;
+  value: ASTNode;
+} {
+  const checkpoint = ctx.savePosition();
+  let name: string | undefined;
+
+  if (ctx.checkIdentifierLike()) {
+    const possible = ctx.peek().value;
+    ctx.advance();
+    if (ctx.check(':')) {
+      ctx.advance();
+      name = possible;
+    } else {
+      ctx.restorePosition(checkpoint);
+    }
+  }
+
+  const value = ctx.parseExpression();
+  return name !== undefined ? { name, value } : { value };
+}

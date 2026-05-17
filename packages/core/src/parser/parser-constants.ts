@@ -505,7 +505,13 @@ export const DOM_EVENTS = new Set([
 ]);
 
 /**
- * Tokenizer keywords (superset of HYPERSCRIPT_KEYWORDS with additional tokenizer-specific entries)
+ * Keywords the tokenizer should classify as KEYWORD tokens.
+ *
+ * Overlaps with but is not a superset of HYPERSCRIPT_KEYWORDS: this set
+ * scopes tokenization, while HYPERSCRIPT_KEYWORDS scopes validation. Each
+ * contains entries the other lacks (e.g. `where`, `before`, `equal` are
+ * tokenizer-only; `matches`, `contains`, `every`, `first`, `last` are
+ * validation-only).
  */
 export const TOKENIZER_KEYWORDS = new Set([
   'on',
