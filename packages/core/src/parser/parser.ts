@@ -700,185 +700,16 @@ export class Parser {
     };
   }
 
-  // ============================================================================
-  // Pre-Pratt precedence chain (kept because `parseLogicalAnd` is still exposed
-  // on ParserContext and called from `command-parsers/control-flow-commands.ts`
-  // to collect condition atoms one-by-one while stopping at `or`). The other
-  // methods are reachable only as transitive deps of `parseLogicalAnd` —
-  // delete them all in one pass once that caller is migrated to the Pratt
-  // parser (see AUDIT.md F1b).
-  // ============================================================================
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
-  private parseAssignment(): ASTNode {
-    let expr = this.parseLogicalOr();
-    if (this.match('=')) {
-      if (this.check('>')) {
-        this.advance();
-        this.addError(
-          'Arrow functions (=>) are not supported in hyperscript. ' +
-            'Use "js ... end" blocks for JavaScript callbacks.'
-        );
-        if (!this.isAtEnd()) {
-          try {
-            this.parseExpression();
-          } catch {
-            /* recovery */
-          }
-        }
-        return this.createErrorNode();
-      }
-      const operator = this.previous().value;
-      const right = this.parseAssignment();
-      expr = this.createBinaryExpression(operator, expr, right);
-    }
-    return expr;
-  }
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
-  private parseLogicalOr(): ASTNode {
-    let expr = this.parseLogicalAnd();
-    while (this.match('or')) {
-      const operator = this.previous().value;
-      const right = this.parseLogicalAnd();
-      expr = this.createBinaryExpression(operator, expr, right);
-    }
-    return expr;
-  }
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
+  /**
+   * Parse an expression that stops at `or` (bp=10).
+   *
+   * Exposed on `ParserContext` for `parseIfCommand`'s single-line condition
+   * loop, which collects atoms one-by-one and treats `or` as a delimiter
+   * rather than a binary operator. The bp=11 floor consumes `and` (bp=20)
+   * and everything tighter while leaving `or` for the outer loop.
+   */
   private parseLogicalAnd(): ASTNode {
-    let expr = this.parseEquality();
-    while (this.match('and')) {
-      const operator = this.previous().value;
-      const right = this.parseEquality();
-      expr = this.createBinaryExpression(operator, expr, right);
-    }
-    return expr;
-  }
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
-  private parseEquality(): ASTNode {
-    let expr = this.parseComparison();
-    while (
-      this.matchComparisonOperator() ||
-      this.match(
-        'is',
-        'match',
-        'matches',
-        'contains',
-        'include',
-        'includes',
-        'in',
-        'of',
-        'as',
-        'really'
-      )
-    ) {
-      const operator = this.previous().value;
-      if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
-        expr = this.createUnaryExpression(operator, expr, false);
-        continue;
-      }
-      const right = this.parseComparison();
-      expr = this.createBinaryExpression(operator, expr, right);
-    }
-    return expr;
-  }
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
-  private parseComparison(): ASTNode {
-    let expr = this.parseAddition();
-    while (this.matchComparisonOperator()) {
-      const operator = this.previous().value;
-      if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
-        expr = this.createUnaryExpression(operator, expr, false);
-        continue;
-      }
-      const right = this.parseAddition();
-      expr = this.createBinaryExpression(operator, expr, right);
-    }
-    return expr;
-  }
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
-  private parseAddition(): ASTNode {
-    let expr = this.parseMultiplication();
-    while (this.match('+', '-') || this.matchOperator('+') || this.matchOperator('-')) {
-      const operator = this.previous().value;
-      if (this.check('+') || this.check('-')) {
-        this.addError(`Invalid operator combination: ${operator}${this.peek().value}`);
-        return expr;
-      }
-      if (this.isAtEnd()) {
-        this.addError(`Expected expression after '${operator}' operator`);
-        return expr;
-      }
-      const right = this.parseMultiplication();
-      expr = this.createBinaryExpression(operator, expr, right);
-    }
-    return expr;
-  }
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
-  private parseMultiplication(): ASTNode {
-    let expr = this.parseUnary();
-    while (this.match('*', '/', '%', 'mod')) {
-      const operator = this.previous().value;
-      if (
-        this.check('*') ||
-        this.check('/') ||
-        this.check('%') ||
-        this.check('+') ||
-        this.check('-')
-      ) {
-        const nextOp = this.peek().value;
-        if (operator === '*' && nextOp === '*') {
-          this.addError(`Unexpected token: ${nextOp}`);
-        } else {
-          this.addError(`Invalid operator combination: ${operator}${nextOp}`);
-        }
-        return expr;
-      }
-      if (this.isAtEnd()) {
-        this.addError(`Expected expression after '${operator}' operator`);
-        return expr;
-      }
-      const right = this.parseUnary();
-      expr = this.createBinaryExpression(operator, expr, right);
-    }
-    return expr;
-  }
-
-  /* istanbul ignore next -- legacy: superseded by Pratt parser */
-  private parseUnary(): ASTNode {
-    if (this.match('not', 'no', 'exists', 'some', '-', '+')) {
-      const operator = this.previous().value;
-      if (this.isAtEnd()) {
-        this.addError(`Expected expression after '${operator}' operator`);
-        return this.createErrorNode();
-      }
-      const expr = this.parseUnary();
-      return this.createUnaryExpression(operator, expr, true);
-    }
-    if (
-      this.check('does') &&
-      this.current + 1 < this.tokens.length &&
-      this.tokens[this.current + 1].value === 'not' &&
-      this.current + 2 < this.tokens.length &&
-      this.tokens[this.current + 2].value === 'exist'
-    ) {
-      this.advance();
-      this.advance();
-      this.advance();
-      if (this.isAtEnd()) {
-        this.addError(`Expected expression after 'does not exist' operator`);
-        return this.createErrorNode();
-      }
-      const expr = this.parseUnary();
-      return this.createUnaryExpression('does not exist', expr, true);
-    }
-    return this.parseImplicitBinary();
+    return this.parseExpressionPratt(11);
   }
 
   private parseImplicitBinary(): ASTNode {
@@ -3225,49 +3056,48 @@ export class Parser {
     // Semantic parsing uses modifiers format ({args: [patient], modifiers: {into: dest}})
     // Command handlers now accept both formats via fallback logic
 
-    // Commands with complex syntax that semantic parsing doesn't handle correctly yet
-    // These must use traditional parsing until semantic schemas support their full syntax
+    // Commands that intentionally use traditional parsing. Each entry has
+    // upstream-`_hyperscript` syntax the semantic schemas do not model:
+    //   - install: `install Behavior(param: value)` named-param block
+    //   - wait: multiline `or` continuation + `from` clauses
+    //   - repeat / for: nested command bodies and `until event X from Y`
+    //   - set / put: complex target syntax (possessive, CSS properties,
+    //     `at start/end of`, `before`, `after`, `into`)
+    //   - increment / decrement: `by N` quantity (no semantic role marker)
+    //   - add: CSS object-literal syntax
+    //   - if / unless: condition role + multi-branch bodies
+    //   - make / measure / trigger / halt / remove / exit / return / closest:
+    //     each carries hyperscript-specific shape that semantic doesn't capture
+    //   - js: raw-body command (semantic loses the body)
+    //   - tell: command block with body
+    // `call` and `get` previously lived on this list; they're now handled by
+    // SemanticIntegrationAdapter.parseExpressionString() (method calls etc.).
+    // Migrating any of the remaining commands is a multi-PR initiative
+    // touching both `packages/semantic/` schemas and the dispatch here.
     const commandToken = this.previous();
     let commandName = commandToken.value;
     const skipSemanticParsing: string[] = [
-      // Commands with complex syntax that semantic parsing doesn't handle correctly yet:
-      // - 'install' has complex 'install Behavior(param: value)' syntax with named params
       'install',
-      // TODO: Add semantic parsing support for these commands
-      // - 'wait' has complex multiline 'or' continuation and 'from' clauses
       'wait',
-      // - 'repeat' has nested command blocks and 'until event X from Y' syntax
       'repeat',
-      // - 'for' has nested command blocks (for x in collection)
       'for',
-      // - 'set' has complex target expressions (possessive, CSS properties, etc.)
       'set',
-      // - 'put' has complex positioning (at start/end of, before, after, into)
       'put',
-      // - 'increment' has 'by' keyword syntax not yet in semantic quantity role markers
       'increment',
-      // - 'decrement' has 'by' keyword syntax not yet in semantic quantity role markers
       'decrement',
-      // - 'add' can have CSS object literals with special syntax
       'add',
-      // Control flow commands:
-      // - 'if'/'unless' via buildIfCommandNode with condition role
       'if',
       'unless',
-      // Other commands with complex syntax:
       'make',
       'measure',
       'trigger',
       'halt',
       'remove',
       'exit',
-      'return', // return can have complex expressions like 'return x + y'
+      'return',
       'closest',
-      // Body-based commands that require traditional parsing:
-      'js', // js ... end with body content
-      'tell', // tell <target> <commands> with body
-      // ✅ 'call'/'get' now supported via parseExpressionString() in SemanticIntegrationAdapter
-      // which properly handles method calls like me.insertBefore(a, b)
+      'js',
+      'tell',
     ];
 
     if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {
