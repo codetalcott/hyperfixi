@@ -34,7 +34,8 @@
  * Expected size: ~450-500 KB (runtime + semantic parser combined)
  */
 
-import { createMinimalRuntime } from '../runtime/runtime-experimental';
+import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
+import { createFullExpressionRegistry } from '../expressions/index';
 import { createContext, ensureContext } from '../core/context';
 import type { ASTNode } from '../types/base-types';
 
@@ -212,7 +213,7 @@ const SUPPORTED_LANGUAGES = [
 ] as const;
 
 // Create runtime with ALL 41 commands
-const runtime = createMinimalRuntime(
+const runtime = createTreeShakeableRuntime(
   [
     // DOM (7)
     createHideCommand(),
@@ -279,9 +280,9 @@ const runtime = createMinimalRuntime(
     // Templates (1)
     createRenderCommand(),
   ],
-  // No options: RuntimeExperimental's default kitchen-sink ExpressionRegistry
-  // covers all expression categories.
-  {}
+  // Kitchen-sink expression registry: this bundle ships all 7 expression
+  // categories to support all 24 languages without per-language tree-shaking.
+  { expressionRegistry: createFullExpressionRegistry() }
 );
 
 // Pre-create analyzer for synchronous API

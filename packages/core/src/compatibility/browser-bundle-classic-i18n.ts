@@ -24,7 +24,7 @@
  */
 
 import { parse } from '../parser/parser';
-import { createMinimalRuntime } from '../runtime/runtime-experimental';
+import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
 import { createMinimalAttributeProcessor } from '../dom/minimal-attribute-processor';
 import { createContext, ensureContext } from '../core/context';
 import type { KeywordResolver } from '../parser/types';
@@ -225,7 +225,7 @@ const expressionRegistry = createExpressionRegistry(
 );
 
 // Create runtime instance with classic commands (37 total)
-const runtimeExperimental = createMinimalRuntime(
+const runtime = createTreeShakeableRuntime(
   [
     // DOM (7)
     createAddCommand(),
@@ -324,7 +324,7 @@ const runtimeAdapter = {
     if (!parseResult.success || !parseResult.node) {
       throw new Error(parseResult.error?.message || 'Parse failed');
     }
-    return await runtimeExperimental.execute(parseResult.node, ctx);
+    return await runtime.execute(parseResult.node, ctx);
   },
 };
 
@@ -533,12 +533,12 @@ const api = {
       if (!parseResult.success || !parseResult.node) {
         throw new Error(parseResult.error?.message || 'Parse failed');
       }
-      return await runtimeExperimental.execute(parseResult.node, ctx);
+      return await runtime.execute(parseResult.node, ctx);
     }
 
     // If it's an AST node, execute directly
     if (codeOrAst && typeof codeOrAst === 'object') {
-      return await runtimeExperimental.execute(codeOrAst, ctx);
+      return await runtime.execute(codeOrAst, ctx);
     }
 
     throw new Error('execute() requires a code string or compiled AST');
@@ -553,7 +553,7 @@ const api = {
     if (!parseResult.success || !parseResult.node) {
       throw new Error(parseResult.error?.message || 'Parse failed');
     }
-    return await runtimeExperimental.execute(parseResult.node, ctx);
+    return await runtime.execute(parseResult.node, ctx);
   },
 
   /**

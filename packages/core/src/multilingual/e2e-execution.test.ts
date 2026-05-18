@@ -14,7 +14,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { parse, buildAST } from '@lokascript/semantic';
-import { createMinimalRuntime } from '../runtime/runtime-experimental';
+import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
+import { createFullExpressionRegistry } from '../expressions/index';
 import { createContext } from '../core/context';
 import type { ASTNode } from '../types/base-types';
 
@@ -37,26 +38,29 @@ import { createWaitCommand } from '../commands/async/wait';
 
 let dom: JSDOM;
 let document: Document;
-let runtime: ReturnType<typeof createMinimalRuntime>;
+let runtime: ReturnType<typeof createTreeShakeableRuntime>;
 
 beforeEach(() => {
   dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
   document = dom.window.document;
 
   // Create runtime with test commands
-  runtime = createMinimalRuntime([
-    createToggleCommand(),
-    createAddCommand(),
-    createRemoveCommand(),
-    createShowCommand(),
-    createHideCommand(),
-    createSetCommand(),
-    createIncrementCommand(),
-    createDecrementCommand(),
-    createPutCommand(),
-    createLogCommand(),
-    createWaitCommand(),
-  ]);
+  runtime = createTreeShakeableRuntime(
+    [
+      createToggleCommand(),
+      createAddCommand(),
+      createRemoveCommand(),
+      createShowCommand(),
+      createHideCommand(),
+      createSetCommand(),
+      createIncrementCommand(),
+      createDecrementCommand(),
+      createPutCommand(),
+      createLogCommand(),
+      createWaitCommand(),
+    ],
+    { expressionRegistry: createFullExpressionRegistry() }
+  );
 });
 
 /**

@@ -30,7 +30,7 @@
  */
 
 import { parse } from '../parser/parser';
-import { createMinimalRuntime } from '../runtime/runtime-experimental';
+import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
 import { createMinimalAttributeProcessor } from '../dom/minimal-attribute-processor';
 import { createContext, ensureContext } from '../core/context';
 
@@ -152,7 +152,7 @@ const expressionRegistry = createExpressionRegistry(
 );
 
 // Create runtime instance with classic commands (37 total) and custom expression evaluator
-const runtimeExperimental = createMinimalRuntime(
+const runtime = createTreeShakeableRuntime(
   [
     // DOM (12) — + empty, open, close, select, reset (v0.9.90)
     createAddCommand(),
@@ -239,7 +239,7 @@ const runtimeAdapter = {
     if (!parseResult.success || !parseResult.node) {
       throw new Error(parseResult.error?.message || 'Parse failed');
     }
-    return await runtimeExperimental.execute(parseResult.node, ctx);
+    return await runtime.execute(parseResult.node, ctx);
   },
 };
 
