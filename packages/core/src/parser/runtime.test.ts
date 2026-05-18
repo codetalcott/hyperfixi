@@ -140,8 +140,10 @@ describe('Hyperscript Runtime Evaluator', () => {
       const ast = parse('<button/>');
 
       expect(ast.success).toBe(true);
+      // `<query/>` form returns a collection — only bare `#id` unwraps to a
+      // single element. See evaluateSelector in parser/runtime.ts.
       const result = await evaluateAST(ast.node!, context);
-      expect(result).toBe(button);
+      expect(result).toEqual([button]);
 
       document.body.removeChild(button);
     });
