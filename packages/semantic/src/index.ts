@@ -221,6 +221,7 @@ export {
 export {
   tryGetProfile,
   getRegisteredLanguages,
+  isLanguageRegistered,
   // Note: getPatternsForLanguage and getPatternsForLanguageAndCommand
   // are already exported from './patterns'
 } from './registry';

@@ -29,10 +29,12 @@ import { createContext, createChildContext } from '../core/context';
 import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types';
 import type { RuntimeHooks } from '../types/hooks';
 import type { SemanticAnalyzerInterface } from '../parser/types';
+import { createSemanticAdapter } from '../parser/semantic-integration';
 import {
-  createSemanticAnalyzer,
+  parseSemantic,
+  isLanguageRegistered,
+  getRegisteredLanguages,
   DEFAULT_CONFIDENCE_THRESHOLD,
-  type SemanticAnalyzer,
 } from '@lokascript/semantic';
 import { registerHistorySwap, registerBoosted } from '../behaviors';
 import {
@@ -146,7 +148,7 @@ declare global {
 }
 
 // Singleton semantic analyzer instance (lazy-initialized)
-let semanticAnalyzerInstance: SemanticAnalyzer | null = null;
+let semanticAnalyzerInstance: SemanticAnalyzerInterface | null = null;
 
 // Singleton bridge instance for direct AST path (lazy-initialized)
 let bridgeInstance: import('../multilingual/bridge').SemanticGrammarBridge | null = null;
@@ -229,12 +231,13 @@ async function getOrCreateBridge(): Promise<
  */
 function getSemanticAnalyzer(): SemanticAnalyzerInterface {
   if (!semanticAnalyzerInstance) {
-    semanticAnalyzerInstance = createSemanticAnalyzer();
+    semanticAnalyzerInstance = createSemanticAdapter({
+      parse: parseSemantic,
+      isRegistered: isLanguageRegistered,
+      registered: getRegisteredLanguages,
+    }) as unknown as SemanticAnalyzerInterface;
   }
-  // Type cast required: SemanticAnalyzer from @lokascript/semantic has compatible
-  // interface but different internal types (ActionType vs string, SemanticValue vs object)
-  // This is safe because the parser only uses the public interface methods
-  return semanticAnalyzerInstance as unknown as SemanticAnalyzerInterface;
+  return semanticAnalyzerInstance;
 }
 
 /**

@@ -447,13 +447,39 @@ const envDefaultMode = process.env.HYPERSCRIPT_LS_DEFAULT_MODE as ServerMode | u
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
 
-// Cached semantic analyzer (LRU cache built-in)
+// Cached semantic analyzer (adapter wrapping the new parseSemantic primitives).
 let cachedAnalyzer: any = null;
 
 function getSemanticAnalyzer(): any {
   if (!semanticPackage) return null;
   if (!cachedAnalyzer) {
-    cachedAnalyzer = semanticPackage.createSemanticAnalyzer();
+    cachedAnalyzer = {
+      analyze(code: string, language: string) {
+        if (!semanticPackage.isLanguageRegistered(language)) {
+          return {
+            confidence: 0,
+            errors: [`Language '${language}' is not supported for semantic parsing`],
+          };
+        }
+        const result = semanticPackage.parseSemantic(code, language);
+        const out: {
+          confidence: number;
+          command?: { name: string; roles: Map<string, unknown> };
+          errors?: string[];
+        } = { confidence: result.confidence };
+        if (result.node) {
+          out.command = { name: result.node.action, roles: result.node.roles };
+        }
+        if (result.error) out.errors = [result.error];
+        return out;
+      },
+      supportsLanguage(language: string) {
+        return semanticPackage.isLanguageRegistered(language);
+      },
+      supportedLanguages() {
+        return semanticPackage.getRegisteredLanguages();
+      },
+    };
   }
   return cachedAnalyzer;
 }

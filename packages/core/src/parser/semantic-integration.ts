@@ -909,6 +909,85 @@ export function createSemanticIntegration(
 }
 
 // =============================================================================
+// Adapter: build core's SemanticAnalyzer contract from @lokascript/semantic primitives
+// =============================================================================
+
+/**
+ * Minimal shape of `parseSemantic` / `parseWithConfidence` from `@lokascript/semantic`.
+ * Re-declared here so core doesn't take a hard import on the semantic package.
+ */
+interface SemanticParseFn {
+  (
+    input: string,
+    language: string
+  ): {
+    node: { action: string; roles: ReadonlyMap<string, unknown> } | null;
+    confidence: number;
+    error?: string;
+    tokensConsumed?: number;
+  };
+}
+
+/**
+ * Build a `SemanticAnalyzer` from the new semantic primitives (`parseSemantic`,
+ * `isLanguageRegistered`, `getRegisteredLanguages`). The returned object
+ * conforms to core's local `SemanticAnalyzer` interface so the
+ * `SemanticIntegrationAdapter` can keep working unchanged.
+ *
+ * Replaces the deprecated `createSemanticAnalyzer()` factory from
+ * `@lokascript/semantic`.
+ *
+ * @example
+ * ```typescript
+ * import { parseSemantic, isLanguageRegistered, getRegisteredLanguages } from '@lokascript/semantic';
+ * import { createSemanticAdapter } from '@hyperfixi/core/parser/semantic-integration';
+ *
+ * const analyzer = createSemanticAdapter({
+ *   parse: parseSemantic,
+ *   isRegistered: isLanguageRegistered,
+ *   registered: getRegisteredLanguages,
+ * });
+ * ```
+ */
+export function createSemanticAdapter(deps: {
+  parse: SemanticParseFn;
+  isRegistered: (language: string) => boolean;
+  registered: () => string[];
+}): SemanticAnalyzer {
+  return {
+    analyze(input: string, language: string): SemanticAnalysisResult {
+      if (!deps.isRegistered(language)) {
+        return {
+          confidence: 0,
+          errors: [`Language '${language}' is not supported for semantic parsing`],
+        };
+      }
+      const result = deps.parse(input, language);
+      const out: SemanticAnalysisResult = {
+        confidence: result.confidence,
+        ...(result.tokensConsumed !== undefined ? { tokensConsumed: result.tokensConsumed } : {}),
+        ...(result.node
+          ? {
+              command: {
+                name: result.node.action,
+                roles: result.node.roles as ReadonlyMap<SemanticRole, SemanticValue>,
+              },
+            }
+          : {}),
+        ...(result.error ? { errors: [result.error] } : {}),
+      };
+      return out;
+    },
+    supportsLanguage(language: string): boolean {
+      return deps.isRegistered(language);
+    },
+    supportedLanguages(): string[] {
+      return deps.registered();
+    },
+  };
+}
+
+// =============================================================================
 // Helper Functions
 // =============================================================================
 

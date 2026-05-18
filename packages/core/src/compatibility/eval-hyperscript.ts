@@ -11,14 +11,16 @@ import { COMMANDS } from '../parser/parser-constants';
 import { setGlobal } from '../parser/extensions';
 import type { ExecutionContext } from '../types/core';
 import type { SemanticAnalyzerInterface } from '../parser/types';
+import { createSemanticAdapter } from '../parser/semantic-integration';
 import {
-  createSemanticAnalyzer,
+  parseSemantic,
+  isLanguageRegistered,
+  getRegisteredLanguages,
   DEFAULT_CONFIDENCE_THRESHOLD,
-  type SemanticAnalyzer,
 } from '@lokascript/semantic';
 
 // Singleton semantic analyzer instance (lazy-initialized)
-let semanticAnalyzerInstance: SemanticAnalyzer | null = null;
+let semanticAnalyzerInstance: SemanticAnalyzerInterface | null = null;
 
 /**
  * Get or create the singleton semantic analyzer instance.
@@ -26,9 +28,13 @@ let semanticAnalyzerInstance: SemanticAnalyzer | null = null;
  */
 function getSemanticAnalyzer(): SemanticAnalyzerInterface {
   if (!semanticAnalyzerInstance) {
-    semanticAnalyzerInstance = createSemanticAnalyzer();
+    semanticAnalyzerInstance = createSemanticAdapter({
+      parse: parseSemantic,
+      isRegistered: isLanguageRegistered,
+      registered: getRegisteredLanguages,
+    }) as unknown as SemanticAnalyzerInterface;
   }
-  return semanticAnalyzerInstance as unknown as SemanticAnalyzerInterface;
+  return semanticAnalyzerInstance;
 }
 
 /**

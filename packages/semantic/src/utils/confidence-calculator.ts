@@ -107,18 +107,37 @@ export interface ParseWithConfidenceResult {
   confidence: number;
   error: string | undefined;
   /** Number of tokens consumed during pattern matching, if a match succeeded. */
-  tokensConsumed?: number;
+  tokensConsumed?: number | undefined;
 }
 
 /**
  * Calculate confidence and parse to a semantic node in one call.
+ *
+ * Strategy: try the full semantic parser first (which preserves event
+ * handler bodies, compound statements, etc.) and fall back to pattern
+ * matching if the full parser fails. This mirrors `SemanticAnalyzerImpl.analyze()`.
+ *
  * Returns both the parsed node and the confidence score.
  */
 export function parseWithConfidence(
   hyperscript: string,
   language: string
 ): ParseWithConfidenceResult {
-  // Use the confidence calculator for the score
+  // Try the full parser first
+  // (require here to avoid circular dependency with semantic-parser)
+  try {
+    const { parse } = require('../parser/semantic-parser');
+    const node = parse(hyperscript, language);
+    return {
+      node,
+      confidence: node?.metadata?.confidence ?? 0.8,
+      error: undefined,
+    };
+  } catch {
+    // Full parser failed — fall through to pattern matching
+  }
+
+  // Fallback: pattern matching for simple commands
   const confidenceResult = calculateTranslationConfidence(hyperscript, language);
 
   if (!confidenceResult.parseSuccess) {
@@ -129,23 +148,10 @@ export function parseWithConfidence(
     };
   }
 
-  // Also do the full parse to get the semantic node
-  // (import parse here to avoid circular dependency)
-  try {
-    const { parse } = require('../parser/semantic-parser');
-    const node = parse(hyperscript, language);
-    return {
-      node,
-      confidence: confidenceResult.confidence,
-      error: undefined,
-      tokensConsumed: confidenceResult.tokensConsumed,
-    };
-  } catch (error) {
-    return {
-      node: null,
-      confidence: confidenceResult.confidence,
-      error: error instanceof Error ? error.message : String(error),
-      tokensConsumed: confidenceResult.tokensConsumed,
-    };
-  }
+  return {
+    node: null,
+    confidence: confidenceResult.confidence,
+    error: undefined,
+    tokensConsumed: confidenceResult.tokensConsumed,
+  };
 }

@@ -8,10 +8,9 @@
 import {
   translate,
   render,
-  createSemanticAnalyzer,
-  shouldUseSemanticResult,
+  parseSemantic,
+  isLanguageRegistered,
   tryGetProfile,
-  type SemanticAnalyzer,
 } from '@lokascript/semantic';
 
 export interface PreprocessorConfig {
@@ -53,15 +52,6 @@ const DEFAULT_CONFIG: PreprocessorConfig = {
 function resolveThreshold(threshold: number | Record<string, number>, lang: string): number {
   if (typeof threshold === 'number') return threshold;
   return threshold[lang] ?? threshold['*'] ?? DEFAULT_THRESHOLD;
-}
-
-let analyzer: SemanticAnalyzer | null = null;
-
-function getAnalyzer(): SemanticAnalyzer {
-  if (!analyzer) {
-    analyzer = createSemanticAnalyzer();
-  }
-  return analyzer;
 }
 
 /**
@@ -160,19 +150,19 @@ function trySemanticTranslation(src: string, lang: string, threshold: number): s
     }
 
     // Check if the semantic parser can handle this
-    const sem = getAnalyzer();
-    if (!sem.supportsLanguage(lang)) return null;
+    if (!isLanguageRegistered(lang)) return null;
 
-    const result = sem.analyze(src, lang);
-    if (!shouldUseSemanticResult(result, threshold)) return null;
-
-    // Render the semantic node to English
-    if (result.node) {
-      return render(result.node, 'en');
+    const result = parseSemantic(src, lang);
+    if (result.confidence < threshold || !result.node) {
+      // If we got SOME confidence but no node, fall back to translate()
+      if (result.confidence >= threshold) {
+        return translate(src, lang, 'en');
+      }
+      return null;
     }
 
-    // Fallback: use translate() which combines parse+render
-    return translate(src, lang, 'en');
+    // Render the semantic node to English
+    return render(result.node, 'en');
   } catch {
     return null;
   }

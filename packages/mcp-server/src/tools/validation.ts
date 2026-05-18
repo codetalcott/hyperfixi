@@ -27,17 +27,57 @@ try {
 // Cached Semantic Analyzer (Phase 6 - Performance)
 // =============================================================================
 
-// Module-level cached analyzer instance - reuses built-in LRU cache
-let cachedAnalyzer: ReturnType<typeof semanticPackage.createSemanticAnalyzer> | null = null;
+// Module-level cached adapter instance. Wraps the new parseSemantic
+// primitives in the legacy `analyze()` shape so call sites can stay unchanged.
+let cachedAnalyzer: {
+  analyze: (
+    code: string,
+    language: string
+  ) => {
+    confidence: number;
+    command?: { name: string; roles: Map<string, unknown> };
+    errors?: string[];
+    tokensConsumed?: number;
+  };
+  supportsLanguage: (language: string) => boolean;
+  supportedLanguages: () => string[];
+} | null = null;
 
 /**
- * Get or create cached semantic analyzer.
- * The analyzer has built-in LRU caching (1000 entries) for repeated parses.
+ * Get or create a cached adapter wrapping parseSemantic from @lokascript/semantic.
+ * Shape matches the deprecated createSemanticAnalyzer() return value so
+ * existing call sites (analyzer.analyze, .supportsLanguage, .supportedLanguages)
+ * remain valid.
  */
-function getSemanticAnalyzer(): ReturnType<typeof semanticPackage.createSemanticAnalyzer> | null {
+function getSemanticAnalyzer(): typeof cachedAnalyzer {
   if (!semanticPackage) return null;
   if (!cachedAnalyzer) {
-    cachedAnalyzer = semanticPackage.createSemanticAnalyzer();
+    cachedAnalyzer = {
+      analyze(code: string, language: string) {
+        if (!semanticPackage.isLanguageRegistered(language)) {
+          return {
+            confidence: 0,
+            errors: [`Language '${language}' is not supported for semantic parsing`],
+          };
+        }
+        const result = semanticPackage.parseSemantic(code, language);
+        const out: ReturnType<NonNullable<typeof cachedAnalyzer>['analyze']> = {
+          confidence: result.confidence,
+        };
+        if (result.tokensConsumed !== undefined) out.tokensConsumed = result.tokensConsumed;
+        if (result.node) {
+          out.command = { name: result.node.action, roles: result.node.roles };
+        }
+        if (result.error) out.errors = [result.error];
+        return out;
+      },
+      supportsLanguage(language: string) {
+        return semanticPackage.isLanguageRegistered(language);
+      },
+      supportedLanguages() {
+        return semanticPackage.getRegisteredLanguages();
+      },
+    };
   }
   return cachedAnalyzer;
 }

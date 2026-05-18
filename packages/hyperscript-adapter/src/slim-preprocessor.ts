@@ -12,11 +12,9 @@
 // Import from /core — does NOT trigger all-language registration.
 // Languages are registered separately via side-effect imports in bundle entries.
 import {
-  createSemanticAnalyzer,
-  shouldUseSemanticResult,
-  parse,
+  parseWithConfidence,
+  isLanguageRegistered,
   tryGetProfile,
-  type SemanticAnalyzer,
 } from '@lokascript/semantic/core';
 
 import { renderToHyperscript } from './hyperscript-renderer';
@@ -33,15 +31,6 @@ const DEFAULT_CONFIG: PreprocessorConfig = {
 function resolveThreshold(threshold: number | Record<string, number>, lang: string): number {
   if (typeof threshold === 'number') return threshold;
   return threshold[lang] ?? threshold['*'] ?? DEFAULT_THRESHOLD;
-}
-
-let analyzer: SemanticAnalyzer | null = null;
-
-function getAnalyzer(): SemanticAnalyzer {
-  if (!analyzer) {
-    analyzer = createSemanticAnalyzer();
-  }
-  return analyzer;
 }
 
 /**
@@ -111,19 +100,12 @@ function trySemanticTranslation(src: string, lang: string, threshold: number): s
       return translateCompound(statements, lang, threshold);
     }
 
-    const sem = getAnalyzer();
-    if (!sem.supportsLanguage(lang)) return null;
+    if (!isLanguageRegistered(lang)) return null;
 
-    const result = sem.analyze(src, lang);
-    if (!shouldUseSemanticResult(result, threshold)) return null;
+    const result = parseWithConfidence(src, lang);
+    if (result.confidence < threshold || !result.node) return null;
 
-    if (result.node) {
-      return renderToHyperscript(result.node);
-    }
-
-    // Fallback: parse then render via custom renderer
-    const node = parse(src, lang);
-    return renderToHyperscript(node);
+    return renderToHyperscript(result.node);
   } catch {
     return null;
   }

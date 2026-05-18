@@ -165,9 +165,21 @@ export function convertSemanticASTToAOT(node: SemanticASTNodeLike): ASTNode {
  */
 export async function createSemanticAdapter(): Promise<SemanticParserAdapter> {
   const semantic = await import('@lokascript/semantic');
-  const analyzer = semantic.createSemanticAnalyzer();
   const ASTBuilderClass = semantic.ASTBuilder;
   const parseWithConfidence = semantic.parseWithConfidence;
+  const isLanguageRegistered = semantic.isLanguageRegistered;
+
+  // Build a lightweight analyzer-like object — just supportsLanguage is read
+  // by SemanticParserAdapter; analyze() goes through parseWithConfidence directly.
+  const analyzer: SemanticAnalyzerLike = {
+    analyze() {
+      // Not used by SemanticParserAdapter; analysis goes through parseWithConfidenceFn.
+      throw new Error('SemanticParserAdapter routes analyze() through parseWithConfidence.');
+    },
+    supportsLanguage(language: string) {
+      return isLanguageRegistered(language);
+    },
+  };
 
   // Use the interchange converter from semantic
   const converter = (semantic as Record<string, unknown>).fromSemanticAST as InterchangeConverter;
@@ -182,7 +194,7 @@ export async function createSemanticAdapter(): Promise<SemanticParserAdapter> {
   _converter = converter;
 
   return new SemanticParserAdapter(
-    analyzer as unknown as SemanticAnalyzerLike,
+    analyzer,
     ASTBuilderClass as unknown as new () => ASTBuilderLike,
     parseWithConfidence as unknown as ParseWithConfidenceFn,
     converter
