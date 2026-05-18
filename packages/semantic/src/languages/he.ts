@@ -7,9 +7,9 @@
 
 import { registerLanguage } from '../registry';
 import { hebrewTokenizer } from '../tokenizers/he';
-import { hebrewProfile } from '../generators/profiles/hebrew';
+import { hebrewProfile } from '../generators/profiles/he';
 
 export { hebrewTokenizer } from '../tokenizers/he';
-export { hebrewProfile } from '../generators/profiles/hebrew';
+export { hebrewProfile } from '../generators/profiles/he';
 
 registerLanguage('he', hebrewTokenizer, hebrewProfile);

@@ -46,7 +46,7 @@ import { polishProfile } from '../src/generators/profiles/polish';
 import { ukrainianProfile } from '../src/generators/profiles/ukrainian';
 import { swahiliProfile } from '../src/generators/profiles/swahili';
 import { quechuaProfile } from '../src/generators/profiles/quechua';
-import { hebrewProfile } from '../src/generators/profiles/hebrew';
+import { hebrewProfile } from '../src/generators/profiles/he';
 import { malayProfile } from '../src/generators/profiles/ms';
 import { tagalogProfile } from '../src/generators/profiles/tl';
 

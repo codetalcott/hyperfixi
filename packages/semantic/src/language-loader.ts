@@ -220,7 +220,7 @@ const LANGUAGE_IMPORTERS: Record<string, () => Promise<LanguageModule>> = {
   },
   he: async () => {
     const { hebrewTokenizer } = await import('./tokenizers/he');
-    const { hebrewProfile } = await import('./generators/profiles/hebrew');
+    const { hebrewProfile } = await import('./generators/profiles/he');
     return { tokenizer: hebrewTokenizer, profile: hebrewProfile };
   },
 };

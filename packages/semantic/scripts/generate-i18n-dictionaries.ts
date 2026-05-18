@@ -37,7 +37,7 @@ import { chineseProfile } from '../src/generators/profiles/chinese';
 import { englishProfile } from '../src/generators/profiles/english';
 import { frenchProfile } from '../src/generators/profiles/french';
 import { germanProfile } from '../src/generators/profiles/german';
-import { hebrewProfile } from '../src/generators/profiles/hebrew';
+import { hebrewProfile } from '../src/generators/profiles/he';
 import { hindiProfile } from '../src/generators/profiles/hindi';
 import { indonesianProfile } from '../src/generators/profiles/indonesian';
 import { italianProfile } from '../src/generators/profiles/italian';

@@ -48,7 +48,7 @@ import { hindiProfile } from '../src/generators/profiles/hindi';
 import { tagalogProfile } from '../src/generators/profiles/tl';
 import { thaiProfile } from '../src/generators/profiles/thai';
 import { polishProfile } from '../src/generators/profiles/polish';
-import { hebrewProfile } from '../src/generators/profiles/hebrew';
+import { hebrewProfile } from '../src/generators/profiles/he';
 import { malayProfile } from '../src/generators/profiles/ms';
 
 import type { LanguageProfile as SemanticProfile, RoleMarker } from '../src/generators/profiles/types';

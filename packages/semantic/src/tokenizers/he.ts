@@ -11,7 +11,7 @@
 
 import type { TokenKind } from '../types';
 import { BaseTokenizer, type KeywordEntry } from './base';
-import { hebrewProfile } from '../generators/profiles/hebrew';
+import { hebrewProfile } from '../generators/profiles/he';
 import {
   StringLiteralExtractor,
   NumberExtractor,
