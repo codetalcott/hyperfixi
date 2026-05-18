@@ -120,11 +120,6 @@ export interface LokaScriptCoreAPI {
   attributeProcessor: any;
 
   /**
-   * Tailwind extension
-   */
-  tailwindExtension: any;
-
-  /**
    * Debug utilities
    */
   debug: {

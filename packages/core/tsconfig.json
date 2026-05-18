@@ -4,14 +4,14 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    
+
     // Output configuration
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
     "removeComments": true,
-    
+
     // Type checking
     "strict": true,
     "noUnusedLocals": false,
@@ -20,14 +20,14 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-    
+
     // Module resolution
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    
+
     // Path mapping for clean imports
     "baseUrl": "./src",
     "paths": {
@@ -39,28 +39,23 @@
       "@features/*": ["features/*"],
       "@types/*": ["types/*"]
     },
-    
+
     // Advanced options
     "incremental": true,
     "composite": true
   },
-  
-  "include": [
-    "src/**/*",
-    "vitest.config.ts"
-  ],
-  
+
+  "include": ["src/**/*", "vitest.config.ts"],
+
   "exclude": [
     "node_modules",
     "dist",
     "src/legacy/**/*",
-    "src/deno-mod.ts",
-    "src/examples/deno-*.ts",
     "src/context/**/*",
     "src/performance/benchmarks.ts",
     "src/test-helpers/**/*"
   ],
-  
+
   "ts-node": {
     "esm": true
   }

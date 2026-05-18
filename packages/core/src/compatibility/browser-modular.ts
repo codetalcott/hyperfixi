@@ -24,7 +24,6 @@
 import { evalHyperScript, evalHyperScriptAsync, evalHyperScriptSmart } from './eval-hyperscript';
 import { hyperscript } from '../api/hyperscript-api';
 import { defaultAttributeProcessor } from '../dom/attribute-processor';
-import { tailwindExtension } from '../extensions/tailwind';
 import { Parser } from '../parser/parser';
 import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
@@ -110,9 +109,6 @@ const hyperfixi = {
   // Attribute processor
   attributeProcessor: defaultAttributeProcessor,
 
-  // Extensions
-  tailwindExtension,
-
   // Performance utilities
   styleBatcher,
   ObjectPool,
@@ -167,7 +163,6 @@ export {
   Runtime,
   tokenize,
   defaultAttributeProcessor,
-  tailwindExtension,
   debug,
   styleBatcher,
   ObjectPool,

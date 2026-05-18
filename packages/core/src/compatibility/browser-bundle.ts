@@ -21,7 +21,6 @@ import { evalHyperScript, evalHyperScriptAsync, evalHyperScriptSmart } from './e
 import { lokascript, hyperscript, config } from '../api/lokascript-api';
 import type { RuntimeHooks } from '../types/hooks';
 import { defaultAttributeProcessor } from '../dom/attribute-processor';
-import { tailwindExtension } from '../extensions/tailwind';
 import { Parser } from '../parser/parser';
 import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
@@ -60,7 +59,6 @@ interface HyperFixiBrowserAPI {
   evalHyperScript: typeof evalHyperScript;
   evalHyperScriptAsync: typeof evalHyperScriptAsync;
   evalHyperScriptSmart: typeof evalHyperScriptSmart;
-  tailwindExtension: typeof tailwindExtension;
   compile: (code: string, options?: NewCompileOptions) => CompileResult;
   compileSync: (code: string, options?: NewCompileOptions) => CompileResult;
   compileMultilingual: (code: string, language: string) => Promise<CompileResult>;
@@ -186,9 +184,6 @@ const hyperfixiAPI = {
 
   // Attribute processor for manual control
   attributeProcessor: defaultAttributeProcessor,
-
-  // Extensions
-  tailwindExtension,
 
   // Performance utilities
   styleBatcher,
