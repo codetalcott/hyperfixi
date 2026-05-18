@@ -155,7 +155,7 @@ describe('renderToHyperscript', () => {
 
   describe('async commands', () => {
     it('renders wait', () => {
-      expect(renderToHyperscript(cmd('wait', [['patient', lit('500ms')]]))).toBe('wait 500ms');
+      expect(renderToHyperscript(cmd('wait', [['duration', lit('500ms')]]))).toBe('wait 500ms');
     });
 
     it('renders fetch with response type', () => {
