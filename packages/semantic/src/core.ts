@@ -112,6 +112,9 @@ export type {
   TokenizationConfig,
 } from './registry';
 
+// Static all-known-profiles manifest (non-deprecated successor to languageProfiles)
+export { KNOWN_PROFILES } from './generators/known-profiles';
+
 // =============================================================================
 // Core Types
 // =============================================================================

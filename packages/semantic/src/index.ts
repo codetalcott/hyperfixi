@@ -300,6 +300,9 @@ export {
   getSupportedLanguages as getGeneratorLanguages,
   isLanguageSupported as isGeneratorLanguageSupported,
 
+  // Static all-known-profiles manifest (non-deprecated successor to languageProfiles)
+  KNOWN_PROFILES,
+
   // Command schemas
   type CommandSchema,
   type RoleSpec,

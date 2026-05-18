@@ -34,6 +34,9 @@ export {
   isLanguageSupported,
 } from './language-profiles';
 
+// Static all-known-profiles manifest (non-deprecated successor to languageProfiles)
+export { KNOWN_PROFILES } from './known-profiles';
+
 // Command schemas
 export {
   type CommandSchema,
