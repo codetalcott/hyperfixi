@@ -5,7 +5,7 @@
  */
 
 import type { LanguagePattern, ActionType } from '../types';
-import { buildPatternsForLanguage, buildAllPatterns } from './builders';
+import { buildPatternsForLanguage, getHandcraftedLanguages } from './builders';
 
 // =============================================================================
 // Pattern Cache
@@ -22,10 +22,17 @@ let _allPatterns: LanguagePattern[] | null = null;
 
 /**
  * Ensure all patterns are built (lazy initialization).
+ *
+ * Iterates the handcrafted-language list and collects patterns per language
+ * via the non-deprecated `buildPatternsForLanguage()` path.
  */
 function ensureAllPatterns(): LanguagePattern[] {
   if (_allPatterns === null) {
-    _allPatterns = buildAllPatterns();
+    const all: LanguagePattern[] = [];
+    for (const lang of getHandcraftedLanguages()) {
+      all.push(...buildPatternsForLanguage(lang));
+    }
+    _allPatterns = all;
   }
   return _allPatterns;
 }
@@ -67,10 +74,7 @@ export const allPatterns: LanguagePattern[] = new Proxy([] as LanguagePattern[],
  * @deprecated Since v1.3.0. Targeted for removal in v3.0.0. Use getPatternsForLanguage() for tree-shaking.
  */
 export function getAllPatterns(): LanguagePattern[] {
-  if (_allPatterns === null) {
-    _allPatterns = buildAllPatterns();
-  }
-  return _allPatterns;
+  return ensureAllPatterns();
 }
 
 /**
@@ -105,7 +109,7 @@ export function getPatternsForLanguageAndCommand(
  * Get all supported languages.
  */
 export function getSupportedLanguages(): string[] {
-  const languages = new Set(allPatterns.map(p => p.language));
+  const languages = new Set(ensureAllPatterns().map(p => p.language));
   return Array.from(languages);
 }
 
@@ -113,7 +117,7 @@ export function getSupportedLanguages(): string[] {
  * Get all supported commands.
  */
 export function getSupportedCommands(): ActionType[] {
-  const commands = new Set(allPatterns.map(p => p.command));
+  const commands = new Set(ensureAllPatterns().map(p => p.command));
   return Array.from(commands) as ActionType[];
 }
 
@@ -121,7 +125,7 @@ export function getSupportedCommands(): ActionType[] {
  * Find a pattern by ID.
  */
 export function getPatternById(id: string): LanguagePattern | undefined {
-  return allPatterns.find(p => p.id === id);
+  return ensureAllPatterns().find(p => p.id === id);
 }
 
 // =============================================================================
@@ -140,14 +144,15 @@ export interface PatternStats {
 export function getPatternStats(): PatternStats {
   const byLanguage: Record<string, number> = {};
   const byCommand: Record<string, number> = {};
+  const patterns = ensureAllPatterns();
 
-  for (const pattern of allPatterns) {
+  for (const pattern of patterns) {
     byLanguage[pattern.language] = (byLanguage[pattern.language] || 0) + 1;
     byCommand[pattern.command] = (byCommand[pattern.command] || 0) + 1;
   }
 
   return {
-    totalPatterns: allPatterns.length,
+    totalPatterns: patterns.length,
     byLanguage,
     byCommand,
   };
