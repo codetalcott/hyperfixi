@@ -14,7 +14,6 @@ import {
 import { definePlugin } from '../index';
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode } from '../../types/base-types';
-import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 
 // ============================================================================
 // Example 1: Database Query Command (Multilingual)
@@ -65,7 +64,7 @@ export const queryCommand: MultilingualCommand = {
 
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, unknown> },
-    evaluator: ExpressionEvaluator,
+    evaluator: { evaluate(node: ASTNode, ctx: ExecutionContext): Promise<unknown> },
     context: ExecutionContext
   ) {
     // Semantic parser has already extracted roles from any language

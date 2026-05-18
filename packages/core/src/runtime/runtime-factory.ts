@@ -38,28 +38,17 @@
 
 import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';
 import { CommandRegistryV2 } from './command-adapter';
-import { ConfigurableExpressionEvaluator } from '../core/configurable-expression-evaluator';
-import type { BaseExpressionEvaluator } from '../core/base-expression-evaluator';
-import type { ExpressionRegistry } from '../core/expression-registry';
+import { createExpressionRegistry, type ExpressionRegistry } from '../core/expression-registry';
 import type { ParserInterface } from '../parser/parser-interface';
 import type { ExecutionContext } from '../types/core';
 
 export interface TreeShakeableRuntimeOptions {
   /**
-   * Expression evaluator instance.
-   * @deprecated Pass `expressionRegistry` instead (built with
-   * `createCoreRegistry()` / `createCommonRegistry()` /
-   * `createFullExpressionRegistry()`). Class-based evaluators are scheduled
-   * for removal in the next phase of the evaluator consolidation arc.
+   * Bundle-supplied expression registry. Build with `createExpressionRegistry()`
+   * from the category objects the bundle includes, or use `createCoreRegistry()` /
+   * `createCommonRegistry()` / `createFullExpressionRegistry()`.
    */
-  expressionEvaluator?: BaseExpressionEvaluator;
-
-  /**
-   * Bundle-supplied expression registry. Preferred over `expressionEvaluator`
-   * during the consolidation arc; when both are set, registry wins. Required
-   * either as `expressionRegistry` here or as `expressionEvaluator` (legacy).
-   */
-  expressionRegistry?: ExpressionRegistry;
+  expressionRegistry: ExpressionRegistry;
 
   /**
    * Enable async command execution.
@@ -218,32 +207,24 @@ export function createTreeShakeableRuntime(
   commands: any[],
   options: TreeShakeableRuntimeOptions
 ): RuntimeBase {
-  // The command registry / adapter chain still consumes a class-based evaluator
-  // (it gets stashed in `__evaluator` for commands like `call` to use). When
-  // the caller passes only a registry, hand the adapter the deprecated class
-  // wrapper temporarily — both paths see consistent expression semantics
-  // because the runtime's evaluator calls go through `evaluateAST` either way.
-  const adapterEvaluator =
-    options.expressionEvaluator ??
-    // Empty configurable acts as a thin shell for the adapter's __evaluator slot.
-    new ConfigurableExpressionEvaluator([]);
-  const registry = new CommandRegistryV2(adapterEvaluator as any);
+  // CommandRegistryV2's adapter takes a shared "evaluator" (used for the
+  // legacy `__evaluator` slot in context.locals). The registry-driven evaluator
+  // is canonical now; pass null — call.ts falls back to evaluateAST when no
+  // mock is set, and other commands that use __evaluator have been migrated.
+  const registry = new CommandRegistryV2(null as any);
 
   for (const command of commands) {
     registry.register(command);
   }
 
-  const runtimeOptions: RuntimeBaseOptions = {
+  return new RuntimeBase({
     registry,
-    expressionEvaluator: options.expressionEvaluator,
     expressionRegistry: options.expressionRegistry,
     enableAsyncCommands: options.enableAsyncCommands ?? true,
     commandTimeout: options.commandTimeout ?? 10000,
     enableErrorReporting: options.enableErrorReporting ?? true,
     enableResultPattern: options.enableResultPattern ?? true,
-  };
-
-  return new RuntimeBase(runtimeOptions);
+  });
 }
 
 /**
@@ -278,13 +259,16 @@ export function createTreeShakeableRuntime(
  * ```
  */
 export function createRuntime(options: RuntimeOptions): LokaScriptRuntime {
-  // Create expression evaluator from provided categories
-  const expressionEvaluator = options.expressions
-    ? new ConfigurableExpressionEvaluator(options.expressions)
-    : new ConfigurableExpressionEvaluator([]);
+  // Build an ExpressionRegistry from the caller-supplied categories. Static
+  // imports of expression-category modules at the bundle entry — combined
+  // with this lookup — are what makes tree-shaking work for subset bundles.
+  const expressionRegistry = createExpressionRegistry(...(options.expressions ?? []));
 
-  // Create command registry with shared evaluator
-  const registry = new CommandRegistryV2(expressionEvaluator as any);
+  // CommandRegistryV2's adapter takes a shared "evaluator" stashed in
+  // context.locals.__evaluator (legacy path); call.ts falls back to evaluateAST
+  // when no mock is present, so we can pass null and the registry-driven
+  // canonical evaluator handles everything.
+  const registry = new CommandRegistryV2(null as any);
 
   // Register commands (invoke factory functions)
   for (const commandFactory of options.commands) {
@@ -295,7 +279,7 @@ export function createRuntime(options: RuntimeOptions): LokaScriptRuntime {
   // Create runtime base
   const runtimeOptions: RuntimeBaseOptions = {
     registry,
-    expressionEvaluator,
+    expressionRegistry,
     enableAsyncCommands: options.enableAsyncCommands ?? true,
     commandTimeout: options.commandTimeout ?? 10000,
     enableErrorReporting: options.enableErrorReporting ?? true,
@@ -346,4 +330,4 @@ export function createRuntime(options: RuntimeOptions): LokaScriptRuntime {
 }
 
 // Re-export types for convenience (RuntimeOptions and LokaScriptRuntime already exported above)
-export type { BaseExpressionEvaluator, ParserInterface };
+export type { ExpressionRegistry, ParserInterface };

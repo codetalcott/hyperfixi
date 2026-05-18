@@ -13,9 +13,8 @@
 
 import { RuntimeBase } from './runtime-base';
 import { CommandRegistryV2 } from './command-adapter';
-import { BaseExpressionEvaluator } from '../core/base-expression-evaluator';
-import { ExpressionEvaluator } from '../core/expression-evaluator';
-import { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
+import { createFullExpressionRegistry } from '../expressions/index';
+import type { ExpressionRegistry } from '../core/expression-registry';
 
 // Import commands-v2 (with parseInput() methods)
 // DOM Commands (7)
@@ -94,23 +93,10 @@ import { createRenderCommand } from '../commands/templates/render';
 
 export interface RuntimeExperimentalOptions {
   /**
-   * Enable lazy loading of expressions
-   * Ignored if expressionEvaluator is provided.
+   * Bundle-supplied ExpressionRegistry. If unset, falls back to a kitchen-sink
+   * registry (full expression catalogue).
    */
-  lazyLoad?: boolean;
-
-  /**
-   * Preload level for expressions (if lazy loading enabled)
-   * Ignored if expressionEvaluator is provided.
-   */
-  expressionPreload?: 'core' | 'all' | 'common' | 'none';
-
-  /**
-   * Custom expression evaluator (optional).
-   * If provided, lazyLoad and expressionPreload options are ignored.
-   * Use ConfigurableExpressionEvaluator for custom bundles with specific categories.
-   */
-  expressionEvaluator?: BaseExpressionEvaluator;
+  expressionRegistry?: ExpressionRegistry;
 
   /**
    * Custom registry (optional - if not provided, creates default with 5 core commands)
@@ -224,22 +210,12 @@ export class RuntimeExperimental extends RuntimeBase {
       );
     }
 
-    // Create expression evaluator (custom, lazy, or standard)
-    let expressionEvaluator: BaseExpressionEvaluator;
-    if (options.expressionEvaluator) {
-      expressionEvaluator = options.expressionEvaluator;
-    } else if (options.lazyLoad) {
-      expressionEvaluator = new LazyExpressionEvaluator({
-        preload: options.expressionPreload || 'core',
-      });
-    } else {
-      expressionEvaluator = new ExpressionEvaluator();
-    }
-
-    // Initialize RuntimeBase with registry and evaluator
+    // Registry-driven canonical evaluator. RuntimeExperimental is a test/
+    // validation harness — the bundle-supplied registry takes precedence;
+    // when absent, the full registry is constructed.
     const baseOptions: any = {
       registry: registry as unknown as CommandRegistryV2,
-      expressionEvaluator,
+      expressionRegistry: options.expressionRegistry ?? createFullExpressionRegistry(),
     };
 
     if (options.enableAsyncCommands !== undefined) {

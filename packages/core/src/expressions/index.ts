@@ -8,14 +8,17 @@
  *
  * ```typescript
  * import { createTreeShakeableRuntime } from '@hyperfixi/core/runtime';
- * import { references, logical } from '@hyperfixi/core/expressions';
+ * import {
+ *   createExpressionRegistry,
+ *   referencesExpressions,
+ *   logicalExpressions,
+ * } from '@hyperfixi/core/expressions';
  * import { toggle, add } from '@hyperfixi/core/commands';
- * import { ConfigurableExpressionEvaluator } from '@hyperfixi/core/expressions';
  *
- * const evaluator = new ConfigurableExpressionEvaluator([references, logical]);
+ * const registry = createExpressionRegistry(referencesExpressions, logicalExpressions);
  * const runtime = createTreeShakeableRuntime(
  *   [toggle(), add()],
- *   { expressionEvaluator: evaluator }
+ *   { expressionRegistry: registry }
  * );
  * ```
  *
@@ -27,14 +30,14 @@
  * - **conversion**: Type conversion (`as` keyword)
  * - **positional**: Array navigation (`first`, `last`, `at`)
  * - **properties**: Possessive syntax (`element's property`)
+ * - **mathematical**: Arithmetic operators (addition, subtraction, etc.)
  *
- * ## Pre-configured Bundles
+ * ## Pre-configured Registry Factories
  *
- * For convenience, use pre-configured evaluator factories:
- *
- * - `createCoreExpressionEvaluator()`: references + logical + special (~4KB)
- * - `createCommonExpressionEvaluator()`: core + conversion + positional (~8KB)
- * - `createFullExpressionEvaluator()`: all 6 categories (~12KB)
+ * - `createCoreRegistry()`: references + logical + special
+ * - `createCommonRegistry()`: core + conversion + positional
+ * - `createFullRegistry()`: all 6 standard categories
+ * - `createFullExpressionRegistry()`: all 7 categories (kitchen-sink, includes mathematical)
  */
 
 // =============================================================================
@@ -54,21 +57,10 @@ export { positionalExpressions as positional } from './bundles/common-expression
 export { propertiesExpressions as properties } from './bundles/full-expressions';
 
 // =============================================================================
-// PRE-CONFIGURED EVALUATOR FACTORIES
+// PRE-CONFIGURED REGISTRY FACTORIES
 // =============================================================================
 
-export {
-  createCoreExpressionEvaluator,
-  createCommonExpressionEvaluator,
-  createFullExpressionEvaluator,
-} from './bundles';
-
-// =============================================================================
-// CONFIGURABLE EVALUATOR (for custom category combinations)
-// =============================================================================
-
-export { ConfigurableExpressionEvaluator } from '../core/configurable-expression-evaluator';
-export { BaseExpressionEvaluator } from '../core/base-expression-evaluator';
+export { createCoreRegistry, createCommonRegistry, createFullRegistry } from './bundles';
 
 // =============================================================================
 // FULL EXPRESSION REGISTRY (all 7 categories merged into one Map)

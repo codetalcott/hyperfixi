@@ -279,9 +279,10 @@ const runtime = createMinimalRuntime(
     // Templates (1)
     createRenderCommand(),
   ],
-  {
-    expressionPreload: 'all', // Load all expressions for full compatibility
-  }
+  // No options: RuntimeExperimental's default kitchen-sink ExpressionRegistry
+  // covers all expression categories (replaces the legacy
+  // `expressionPreload: 'all'` setting from before the consolidation arc).
+  {}
 );
 
 // =============================================================================

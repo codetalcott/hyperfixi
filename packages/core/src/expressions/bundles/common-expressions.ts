@@ -23,7 +23,6 @@
  * ```
  */
 
-import { ConfigurableExpressionEvaluator } from '../../core/configurable-expression-evaluator';
 import { createExpressionRegistry } from '../../core/expression-registry';
 import type { ExpressionRegistry } from '../../core/expression-registry';
 import { referencesExpressions } from '../references/index';
@@ -33,31 +32,8 @@ import { conversionExpressions } from '../conversion/index';
 import { positionalExpressions } from '../positional/index';
 
 /**
- * Create an expression evaluator with common expression categories.
- *
- * Includes: references, logical, special, conversion, positional
- * Excludes: properties (possessive syntax)
- *
- * @deprecated Use `createCommonRegistry()` with the registry-driven runtime;
- * class-based evaluators are scheduled for removal in the next phase of the
- * evaluator consolidation arc.
- *
- * @returns ConfigurableExpressionEvaluator with common expression categories
- */
-export function createCommonExpressionEvaluator(): ConfigurableExpressionEvaluator {
-  return new ConfigurableExpressionEvaluator([
-    referencesExpressions,
-    logicalExpressions,
-    specialExpressions,
-    conversionExpressions,
-    positionalExpressions,
-  ]);
-}
-
-/**
- * Build an ExpressionRegistry with common expression categories (references,
- * logical, special, conversion, positional). Replacement for
- * `createCommonExpressionEvaluator` in registry-driven bundles.
+ * Build an ExpressionRegistry with common expression categories
+ * (references, logical, special, conversion, positional).
  */
 export function createCommonRegistry(): ExpressionRegistry {
   return createExpressionRegistry(

@@ -271,16 +271,20 @@ describe('CallCommand', () => {
   // ==========================================================================
 
   describe('execute - error handling', () => {
-    it('should throw when __evaluator is not in context.locals', async () => {
-      // Create context without __evaluator
-      const contextWithoutEvaluator = createMockContext();
-      (contextWithoutEvaluator as any).locals = new Map();
+    it('falls back to evaluateAST when no __evaluator mock is in context.locals', async () => {
+      // Phase 4 of the evaluator consolidation arc: `call` no longer requires
+      // a `__evaluator` slot in context.locals. The canonical `evaluateAST`
+      // is used when no mock is present. Test contexts (via
+      // `createMockHyperscriptContext`) include a full ExpressionRegistry,
+      // so literal evaluation just works.
+      const contextWithoutMock = createMockContext();
+      (contextWithoutMock as any).locals = new Map();
 
       const input = { expression: { type: 'literal', value: 42 } };
+      const output = await command.execute(input, contextWithoutMock);
 
-      await expect(command.execute(input, contextWithoutEvaluator)).rejects.toThrow(
-        '[CALL.execute] No evaluator available in context'
-      );
+      expect(output.result).toBe(42);
+      expect(output.expressionType).toBe('value');
     });
   });
 

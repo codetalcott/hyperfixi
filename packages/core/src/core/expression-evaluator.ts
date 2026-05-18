@@ -1,47 +1,22 @@
 /**
- * Expression Evaluator - Bridge between parser AST and expression system
+ * ExpressionEvaluator — interface shim retained for backward compatibility.
  *
- * This class extends BaseExpressionEvaluator and eagerly imports all 6 expression
- * categories at construction time. For lazy loading, use LazyExpressionEvaluator.
- * For custom bundles with specific categories, use ConfigurableExpressionEvaluator.
+ * The class hierarchy (BaseExpressionEvaluator + subclasses) was deleted in
+ * Phase 4 of the evaluator consolidation arc; expression dispatch now goes
+ * through `parser/runtime.ts:evaluateAST` with a bundle-supplied
+ * `ExpressionRegistry` on the `ExecutionContext`. This interface is what
+ * V2 commands receive in their `parseInput(raw, evaluator, context)` signature.
+ *
+ * Command-adapter passes an object that wraps `evaluateAST`; tests can supply
+ * any shape with the same `evaluate` method.
  */
 
-import { BaseExpressionEvaluator } from './base-expression-evaluator';
+import type { ASTNode } from '../types/base-types';
+import type { ExecutionContext } from '../types/core';
 
-// Import all expression categories
-import { referencesExpressions } from '../expressions/references/index';
-import { logicalExpressions } from '../expressions/logical/index';
-import { conversionExpressions } from '../expressions/conversion/index';
-import { positionalExpressions } from '../expressions/positional/index';
-import { propertiesExpressions } from '../expressions/properties/index';
-import { specialExpressions } from '../expressions/special/index';
-
-export class ExpressionEvaluator extends BaseExpressionEvaluator {
-  constructor() {
-    super();
-    this.registerExpressions();
-  }
-
-  /**
-   * Register all expression implementations from different categories
-   */
-  private registerExpressions(): void {
-    // Register reference expressions
-    this.registerCategory(referencesExpressions);
-
-    // Register logical expressions
-    this.registerCategory(logicalExpressions);
-
-    // Register conversion expressions
-    this.registerCategory(conversionExpressions);
-
-    // Register positional expressions
-    this.registerCategory(positionalExpressions);
-
-    // Register property expressions
-    this.registerCategory(propertiesExpressions);
-
-    // Register special expressions
-    this.registerCategory(specialExpressions);
-  }
+export interface ExpressionEvaluator {
+  // Loose return type matches the deleted class's behavior; many call sites
+  // assign directly to typed slots without explicit narrowing.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  evaluate(node: ASTNode, context: ExecutionContext): Promise<any>;
 }

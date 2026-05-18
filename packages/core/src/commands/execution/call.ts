@@ -10,7 +10,7 @@
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
-import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { evaluateAST } from '../../parser/runtime';
 import {
   command,
   meta,
@@ -54,7 +54,7 @@ export class CallCommand implements DecoratedCommand {
 
   parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
-    _evaluator: ExpressionEvaluator,
+    _evaluator: unknown,
     _context: ExecutionContext
   ): Promise<CallCommandInput> {
     if (!raw.args?.length) throw new Error('call command requires an expression');
@@ -69,14 +69,17 @@ export class CallCommand implements DecoratedCommand {
   ): Promise<CallCommandOutput> {
     const { expression: expressionNode } = input;
 
-    // NOW evaluate the expression during the execute phase
-    // Get evaluator from locals where CommandAdapterV2 stored it
-    const evaluator = context.locals?.get('__evaluator') as ExpressionEvaluator | undefined;
-    if (!evaluator) {
-      throw new Error('[CALL.execute] No evaluator available in context');
-    }
-
-    const expression = await evaluator.evaluate(expressionNode, context);
+    // Evaluate the call's expression. Prefer a mock evaluator stashed in
+    // `context.locals.__evaluator` (test-injection path retained from the
+    // pre-Phase-4 class-based evaluator), otherwise dispatch through the
+    // canonical `evaluateAST` — the bundle's registry is already threaded
+    // through `context.registry`.
+    const mockEvaluator = context.locals?.get('__evaluator') as
+      | { evaluate(node: ASTNode, ctx: ExecutionContext): unknown }
+      | undefined;
+    const expression = mockEvaluator
+      ? await mockEvaluator.evaluate(expressionNode, context)
+      : await evaluateAST(expressionNode, context);
 
     let result: unknown;
     let wasAsync = false;

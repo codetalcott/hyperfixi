@@ -79,7 +79,7 @@ import { hybridParser as parser } from '../parser/hybrid-parser';
 // STEP 4: Create the runtime with your selected components
 // =============================================================================
 import { createRuntime, type LokaScriptRuntime } from '../runtime/runtime-factory';
-import { ConfigurableExpressionEvaluator } from '../core/configurable-expression-evaluator';
+import { createExpressionRegistry } from '../core/expression-registry';
 
 // List of command factories to register
 const commandFactories = [toggle, add, remove, show, hide, set, log, send];
@@ -187,5 +187,5 @@ export {
   processElements,
   // Re-export for advanced customization
   createRuntime,
-  ConfigurableExpressionEvaluator,
+  createExpressionRegistry,
 };

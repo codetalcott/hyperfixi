@@ -30,9 +30,9 @@ import { createContext, ensureContext } from '../core/context';
 import type { KeywordResolver } from '../parser/types';
 
 // ============================================================================
-// Expression Categories (for ConfigurableExpressionEvaluator)
+// Expression Categories (assembled into an ExpressionRegistry below)
 // ============================================================================
-import { ConfigurableExpressionEvaluator } from '../core/configurable-expression-evaluator';
+import { createExpressionRegistry } from '../core/expression-registry';
 import { referencesExpressions } from '../expressions/references/index';
 import { logicalExpressions } from '../expressions/logical/index';
 import { specialExpressions } from '../expressions/special/index';
@@ -213,15 +213,16 @@ function getCurrentKeywordResolver(): KeywordResolver | undefined {
 // Runtime Setup
 // ============================================================================
 
-// Create ConfigurableExpressionEvaluator with all 6 expression categories
-const expressionEvaluator = new ConfigurableExpressionEvaluator([
+// Build an ExpressionRegistry with the 6 categories the classic-i18n bundle
+// ships. Tree-shaking keeps only these categories' modules in the dist.
+const expressionRegistry = createExpressionRegistry(
   referencesExpressions,
   logicalExpressions,
   specialExpressions,
   propertiesExpressions,
   conversionExpressions,
-  positionalExpressions,
-]);
+  positionalExpressions
+);
 
 // Create runtime instance with classic commands (37 total)
 const runtimeExperimental = createMinimalRuntime(
@@ -299,7 +300,7 @@ const runtimeExperimental = createMinimalRuntime(
     createRenderCommand(),
     createPseudoCommand(),
   ],
-  { expressionEvaluator }
+  { expressionRegistry }
 );
 
 // ============================================================================

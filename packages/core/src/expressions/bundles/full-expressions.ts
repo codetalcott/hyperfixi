@@ -1,8 +1,10 @@
 /**
  * Full Expression Bundle - All expression categories
  *
- * This bundle includes all 6 expression categories for full hyperscript
- * compatibility. Use this when you need complete expression support.
+ * Builds an ExpressionRegistry containing all 6 standard expression categories
+ * for full hyperscript compatibility. Use this when you need complete
+ * expression support; for size-sensitive bundles use `createCoreRegistry()` or
+ * `createCommonRegistry()` instead.
  *
  * Includes:
  * - references: CSS selectors, me, you, it, etc.
@@ -12,20 +14,19 @@
  * - positional: first, last, array navigation
  * - properties: possessive syntax like "element's property"
  *
- * Expected bundle contribution: ~11,885 lines
- *
  * @example
  * ```typescript
- * import { createFullExpressionEvaluator } from './expressions/bundles/full-expressions';
+ * import { createFullRegistry } from './expressions/bundles/full-expressions';
  * import { createTreeShakeableRuntime } from './runtime/runtime-factory';
  *
  * const runtime = createTreeShakeableRuntime(commands, {
- *   expressionEvaluator: createFullExpressionEvaluator(),
+ *   expressionRegistry: createFullRegistry(),
  * });
  * ```
  */
 
-import { ConfigurableExpressionEvaluator } from '../../core/configurable-expression-evaluator';
+import { createExpressionRegistry } from '../../core/expression-registry';
+import type { ExpressionRegistry } from '../../core/expression-registry';
 import { referencesExpressions } from '../references/index';
 import { logicalExpressions } from '../logical/index';
 import { specialExpressions } from '../special/index';
@@ -34,19 +35,20 @@ import { positionalExpressions } from '../positional/index';
 import { propertiesExpressions } from '../properties/index';
 
 /**
- * Create an expression evaluator with all expression categories.
- *
- * @returns ConfigurableExpressionEvaluator with all 6 expression categories
+ * Build an ExpressionRegistry with all 6 standard expression categories.
+ * Note: this does not include `mathematical` (which has its own bundle
+ * cost); for the kitchen-sink including math, use
+ * `createFullExpressionRegistry` from `expressions/index.ts`.
  */
-export function createFullExpressionEvaluator(): ConfigurableExpressionEvaluator {
-  return new ConfigurableExpressionEvaluator([
+export function createFullRegistry(): ExpressionRegistry {
+  return createExpressionRegistry(
     referencesExpressions,
     logicalExpressions,
     specialExpressions,
     conversionExpressions,
     positionalExpressions,
-    propertiesExpressions,
-  ]);
+    propertiesExpressions
+  );
 }
 
 // Export individual categories for custom bundles

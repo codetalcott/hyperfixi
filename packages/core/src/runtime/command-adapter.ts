@@ -15,10 +15,22 @@ import type { ExecutionContext, TypedExecutionContext, ValidationResult } from '
 import type { ASTNode } from '../types/base-types';
 import type { HookContext, RuntimeHooks } from '../types/hooks';
 import { HookRegistry } from '../types/hooks';
-import { ExpressionEvaluator } from '../core/expression-evaluator';
+import { evaluateAST } from '../parser/runtime';
+import type { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
 import { isControlFlowError } from './runtime-base';
 import { COMMANDS } from '../parser/parser-constants';
+
+/**
+ * Adapter that wraps the canonical `evaluateAST` in the `ExpressionEvaluator`
+ * shape expected by command `parseInput()` implementations. The context's
+ * registry (threaded via `context.registry`) drives named-expression dispatch.
+ */
+const canonicalEvaluator: ExpressionEvaluator = {
+  evaluate(node: ASTNode, context: ExecutionContext): Promise<unknown> {
+    return evaluateAST(node, context);
+  },
+};
 
 /**
  * Runtime-compatible command interface
@@ -70,7 +82,7 @@ export interface CommandWithParseInput {
   name: string;
   parseInput?(
     raw: CommandRawInput,
-    evaluator: ExpressionEvaluator,
+    evaluator: { evaluate(node: ASTNode, context: ExecutionContext): Promise<unknown> },
     context: ExecutionContext
   ): Promise<unknown>;
   execute(input: unknown, context: TypedExecutionContext): Promise<unknown>;
@@ -142,16 +154,19 @@ export class ContextBridge {
  * to the commands themselves via parseInput().
  */
 export class CommandAdapterV2 implements RuntimeCommand {
-  private expressionEvaluator: ExpressionEvaluator;
   private hookRegistry: HookRegistry | null;
 
   constructor(
     private impl: CommandWithParseInput,
-    sharedEvaluator?: ExpressionEvaluator,
+    /**
+     * Unused since the Phase 4 evaluator consolidation; retained as a
+     * positional parameter to keep callers binary-compatible. All evaluator
+     * dispatch now goes through the canonical `evaluateAST` against the
+     * context's ExpressionRegistry.
+     */
+    _legacySharedEvaluator?: unknown,
     hookRegistry?: HookRegistry
   ) {
-    // Use shared evaluator if provided, otherwise create new (backward compat)
-    this.expressionEvaluator = sharedEvaluator ?? new ExpressionEvaluator();
     this.hookRegistry = hookRegistry ?? null;
   }
 
@@ -234,12 +249,6 @@ export class CommandAdapterV2 implements RuntimeCommand {
         return undefined;
       }
 
-      // Store evaluator in locals for commands that need it during execute()
-      if (!context.locals) {
-        (context as { locals: Map<string, unknown> }).locals = new Map();
-      }
-      context.locals.set('__evaluator', this.expressionEvaluator);
-
       // Convert to typed context
       const typedContext = ContextBridge.toTyped(context);
 
@@ -261,7 +270,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
           const mods = rawInput.modifiers as Record<string, unknown> | undefined;
           const whenCondition = (mods?.when || mods?.where) as ASTNode | undefined;
           if (whenCondition) {
-            const conditionResult = await this.expressionEvaluator.evaluate(whenCondition, context);
+            const conditionResult = await evaluateAST(whenCondition, context);
             if (!conditionResult) {
               debug.command(
                 `CommandAdapterV2: '${this.name}' skipped - when/where condition evaluated to false`
@@ -278,7 +287,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
               // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
               commandName: rawInput.commandName as string | undefined,
             },
-            this.expressionEvaluator,
+            canonicalEvaluator,
             context
           );
         } else {
@@ -351,23 +360,22 @@ export class CommandAdapterV2 implements RuntimeCommand {
  * Registry that uses CommandAdapterV2 for all commands.
  * Much simpler than V1 because it doesn't need command-specific logic.
  *
- * For tree-shaking: Pass a shared ExpressionEvaluator to avoid importing
- * all 6 expression categories for each command.
+ * Expression evaluation goes through the canonical `evaluateAST` against the
+ * bundle's ExpressionRegistry (threaded via `context.registry`).
  */
 export class CommandRegistryV2 {
   private adapters = new Map<string, CommandAdapterV2>();
   private implementations = new Map<string, CommandWithParseInput>();
-  private sharedEvaluator?: ExpressionEvaluator;
   private hookRegistry?: HookRegistry;
 
   /**
    * Create a command registry.
-   * @param sharedEvaluator Optional shared evaluator for tree-shaking optimization.
-   *                        If not provided, each adapter creates its own evaluator.
+   * @param _legacySharedEvaluator Unused since Phase 4 of the evaluator
+   *   consolidation arc. Retained as a positional parameter so external
+   *   callers don't have to update yet.
    * @param hookRegistry Optional hook registry for runtime hooks.
    */
-  constructor(sharedEvaluator?: ExpressionEvaluator, hookRegistry?: HookRegistry) {
-    this.sharedEvaluator = sharedEvaluator;
+  constructor(_legacySharedEvaluator?: unknown, hookRegistry?: HookRegistry) {
     this.hookRegistry = hookRegistry;
   }
 
@@ -410,7 +418,7 @@ export class CommandRegistryV2 {
     debug.runtime(`CommandRegistryV2: Registering command '${name}'`);
 
     this.implementations.set(name, impl);
-    const adapter = new CommandAdapterV2(impl, this.sharedEvaluator, this.hookRegistry);
+    const adapter = new CommandAdapterV2(impl, undefined, this.hookRegistry);
     this.adapters.set(name, adapter);
 
     // Also register with the parser so it recognizes the command keyword
@@ -496,10 +504,10 @@ export class CommandRegistryV2 {
  */
 export function createCommandRegistryV2(
   commands: CommandWithParseInput[],
-  sharedEvaluator?: ExpressionEvaluator,
+  _legacySharedEvaluator?: unknown,
   hookRegistry?: HookRegistry
 ): CommandRegistryV2 {
-  const registry = new CommandRegistryV2(sharedEvaluator, hookRegistry);
+  const registry = new CommandRegistryV2(undefined, hookRegistry);
 
   for (const command of commands) {
     registry.register(command);

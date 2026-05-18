@@ -5,9 +5,7 @@
 
 import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';
 import { CommandRegistryV2, type CommandWithParseInput } from './command-adapter';
-import { ExpressionEvaluator } from '../core/expression-evaluator';
-// LazyExpressionEvaluator is dynamically imported only when lazyLoad=true
-// This allows tree-shaking to eliminate it in browser builds where lazyLoad=false
+import { createFullExpressionRegistry } from '../expressions/index';
 
 // Import all 48 V2 commands
 // DOM Commands (11) - includes htmx-like swap/morph/process-partials and v0.9.90 `empty`
@@ -138,6 +136,15 @@ export interface RuntimeOptions {
   registry?: CommandRegistryV2;
 
   /**
+   * Bundle-supplied ExpressionRegistry threaded into evaluator contexts.
+   * When set, the runtime dispatches expression evaluation through
+   * `parser/runtime.ts:evaluateAST` with this registry on the context.
+   * If unset, Runtime constructs a full registry (kitchen-sink) — fine
+   * for the full bundle but a tree-shaking leak for subset bundles.
+   */
+  expressionRegistry?: import('../core/expression-registry').ExpressionRegistry;
+
+  /**
    * Deprecated - V1 option, kept for backward compatibility
    * @deprecated Use lazyLoad instead
    */
@@ -256,18 +263,13 @@ export class Runtime extends RuntimeBase {
       registry.register(createRenderCommand());
     }
 
-    // Create expression evaluator
-    // Browser builds use lazyLoad=false, so ExpressionEvaluator is always used
-    // This allows tree-shaking to eliminate LazyExpressionEvaluator from browser bundles
-    const expressionEvaluator = new ExpressionEvaluator();
-
-    // Initialize RuntimeBase with registry and evaluator
-    const baseOptions: Partial<RuntimeBaseOptions> & {
-      registry: CommandRegistryV2;
-      expressionEvaluator: ExpressionEvaluator;
-    } = {
+    // Initialize RuntimeBase with the bundle-supplied ExpressionRegistry. If
+    // none was provided, fall back to a kitchen-sink one (the full bundle
+    // takes this path; subset bundles pass their own registry to control
+    // which expression categories ship).
+    const baseOptions: RuntimeBaseOptions = {
       registry,
-      expressionEvaluator,
+      expressionRegistry: options.expressionRegistry ?? createFullExpressionRegistry(),
     };
 
     if (options.enableAsyncCommands !== undefined) {

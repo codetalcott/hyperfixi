@@ -26,7 +26,6 @@
  * ```
  */
 
-import { ConfigurableExpressionEvaluator } from '../../core/configurable-expression-evaluator';
 import { createExpressionRegistry } from '../../core/expression-registry';
 import type { ExpressionRegistry } from '../../core/expression-registry';
 import { referencesExpressions } from '../references/index';
@@ -34,27 +33,9 @@ import { logicalExpressions } from '../logical/index';
 import { specialExpressions } from '../special/index';
 
 /**
- * Create an expression evaluator with only core expression categories.
- *
- * @deprecated Use `createCoreRegistry()` with the registry-driven runtime;
- * class-based evaluators are scheduled for removal in the next phase of the
- * evaluator consolidation arc.
- *
- * @returns ConfigurableExpressionEvaluator with references, logical, and special expressions
- */
-export function createCoreExpressionEvaluator(): ConfigurableExpressionEvaluator {
-  return new ConfigurableExpressionEvaluator([
-    referencesExpressions,
-    logicalExpressions,
-    specialExpressions,
-  ]);
-}
-
-/**
  * Build an ExpressionRegistry with the core expression categories
- * (references, logical, special). Replacement for `createCoreExpressionEvaluator`
- * in registry-driven bundles. Tree-shaking keeps only these three categories'
- * modules in the dist.
+ * (references, logical, special). Tree-shaking keeps only these three
+ * categories' modules in the dist.
  */
 export function createCoreRegistry(): ExpressionRegistry {
   return createExpressionRegistry(referencesExpressions, logicalExpressions, specialExpressions);
