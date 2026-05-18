@@ -384,8 +384,9 @@ export function extractValue(value: SemanticValue): string {
  * Get the typed `SemanticValue` for a named role on a SemanticNode.
  * Returns `undefined` if the role is missing.
  *
- * Prefer this over `extractRoleValue` when you need the structured value
- * (e.g. to branch on `value.type`, read `value.selectorKind`, etc.).
+ * Use this when you need the structured value (e.g. to branch on
+ * `value.type`, read `value.selectorKind`, etc.). See {@link extractRoleValue}
+ * for the string-convenience companion.
  */
 export function getRoleValue(node: SemanticNode, role: string): SemanticValue | undefined {
   return node.roles.get(role);
@@ -395,8 +396,9 @@ export function getRoleValue(node: SemanticNode, role: string): SemanticValue | 
  * Extract a string representation from a named role on a SemanticNode.
  * Returns empty string if the role is missing.
  *
- * @deprecated Use {@link getRoleValue} when you need the typed `SemanticValue`
- * object. Use `getRoleValue` + `extractValue` if you still need a string.
+ * String-convenience companion to {@link getRoleValue}. Use this when you
+ * just want a stringified role value; use `getRoleValue` when you need to
+ * inspect the typed `SemanticValue` (e.g. to branch on `value.type`).
  */
 export function extractRoleValue(node: SemanticNode, role: string): string {
   const value = node.roles.get(role);
