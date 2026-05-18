@@ -2,11 +2,10 @@
  * Example: Server-Side Commands
  *
  * **Status: Documentation example, not a public API.** Lives under `src/`
- * so it stays type-checked but is not re-exported from `package.json` and
- * (as of 2026-05-16) has no production importers. May be used by the
- * `projects/_hyper_min` docs site or browser-test harnesses — confirm
- * before treating as wholly dead. See memory:
- * project_registry_examples_status for the open question.
+ * so it stays type-checked against the live registry types but is not
+ * re-exported from `package.json`. No production importers (verified
+ * 2026-05-17 across `_hyper_min`, browser tests, and full git history).
+ * Copy the patterns into your project rather than importing.
  *
  * Demonstrates how to create custom commands for server-side hyperscript.
  * These commands work with HTTP request/response in the execution context.

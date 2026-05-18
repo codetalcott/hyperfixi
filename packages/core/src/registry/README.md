@@ -161,10 +161,18 @@ registry.use(serverPlugin);
 
 Complete example for server-side hyperscript in Express:
 
+> The `respondCommand` / `requestEventSource` referenced below are reference
+> implementations in [examples/](examples/), not exports of `@hyperfixi/core`.
+> Copy them into your project (or adapt the patterns) — they intentionally
+> aren't part of the public API surface.
+
 ```typescript
 import express from 'express';
 import { registry } from '@hyperfixi/core/registry';
-import { respondCommand, requestEventSource } from '@hyperfixi/core/registry/examples';
+// Copy from packages/core/src/registry/examples/server-commands.ts
+//   and    packages/core/src/registry/examples/server-event-source.ts
+import { respondCommand } from './lib/respond-command';
+import { requestEventSource } from './lib/request-event-source';
 
 // Register server commands
 registry.commands.register(respondCommand);
