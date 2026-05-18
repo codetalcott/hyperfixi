@@ -7,6 +7,8 @@
  */
 
 import type { ASTNode, ExecutionContext, ExpressionImplementation } from '../types/core';
+import type { ExecutionResult, ExecutionSignal } from '../types/result';
+import { ok, err } from '../types/result';
 import { getRegisteredNodeEvaluator, notifyGlobalRead } from './extensions';
 // Re-export setGlobal for backward-compatible access via the runtime module.
 export { setGlobal } from './extensions';
@@ -127,16 +129,6 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     throw new Error('Cannot evaluate null or undefined AST node');
   }
 
-  // Ensure a registry is available for named-expression dispatch. Callers that
-  // care about tree-shaking always pass a context with `.registry` set, so this
-  // fallback never triggers for size-sensitive bundles. Tests and standalone
-  // eval paths that don't set one get the full registry on demand. The dynamic
-  // import keeps the kitchen-sink category modules out of bundles that never
-  // hit this branch.
-  if (!context.registry) {
-    context = { ...context, registry: await loadFullRegistry() };
-  }
-
   // ============================================================================
   // Fast Paths - Inline common cases for 20-30% performance improvement
   // ============================================================================
@@ -222,6 +214,43 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 }
 
 /**
+ * Result-based wrapper around `evaluateAST` that captures hyperscript control-flow
+ * signals (halt/exit/break/continue/return) as `err()` values instead of letting
+ * them propagate as exceptions. Used by the runtime's command-execution loop
+ * where these signals are expected and need to be dispatched to enclosing
+ * blocks rather than logged as errors. Re-throws any non-signal error.
+ */
+export async function evaluateASTWithResult(
+  node: ASTNode,
+  context: ExecutionContext
+): Promise<ExecutionResult<unknown>> {
+  try {
+    const value = await evaluateAST(node, context);
+    return ok(value);
+  } catch (e) {
+    if (e instanceof Error) {
+      const error = e as any;
+      if (error.isHalt || error.message === 'HALT_EXECUTION') {
+        return err({ type: 'halt' } as ExecutionSignal);
+      }
+      if (error.isExit || error.message === 'EXIT_COMMAND') {
+        return err({ type: 'exit', returnValue: error.returnValue } as ExecutionSignal);
+      }
+      if (error.isBreak) {
+        return err({ type: 'break' } as ExecutionSignal);
+      }
+      if (error.isContinue) {
+        return err({ type: 'continue' } as ExecutionSignal);
+      }
+      if (error.isReturn) {
+        return err({ type: 'return', returnValue: error.returnValue } as ExecutionSignal);
+      }
+    }
+    throw e;
+  }
+}
+
+/**
  * Parse and evaluate a hyperscript expression source string using the
  * canonical evaluator. Upstream-faithful semantics: silent-null member
  * access, late-binding `this` on method extraction.
@@ -235,10 +264,16 @@ export async function evaluateExpressionFromSource(
     const err = result.error ?? result.errors?.[0];
     throw new Error(`Failed to parse expression: ${err?.message ?? 'unknown error'}`);
   }
+  // Standalone-eval callers (Hyperscript.eval, hyperscript-adapter,
+  // features/def) are full-bundle-only paths. If the caller didn't supply
+  // a registry, lazy-load the kitchen-sink one. The dynamic import here is
+  // *only* reachable from full bundles — minimal/standard never call
+  // `evaluateExpressionFromSource`, so rollup's `inlineDynamicImports` on
+  // those configs doesn't drag the expression categories in.
+  const ctx = context.registry ? context : { ...context, registry: await loadFullRegistry() };
   // `parse()` returns a single AST node for bare expressions (literal,
   // identifier, binary, member, call, selector, array, object, possessive).
-  // evaluateAST handles registry fallback for callers that didn't set one.
-  return evaluateAST(result.node as ASTNode, context);
+  return evaluateAST(result.node as ASTNode, ctx);
 }
 
 let cachedFullRegistry: import('../core/expression-registry').ExpressionRegistry | null = null;

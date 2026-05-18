@@ -17,6 +17,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { parse } from './parser';
 import { evaluateAST, evaluateExpressionFromSource } from './runtime';
 import { createContext } from '../core/context';
+import { createFullExpressionRegistry } from '../expressions/index';
+
+const FULL_REGISTRY = createFullExpressionRegistry();
 
 async function evalArg(
   code: string,
@@ -30,7 +33,7 @@ async function evalArg(
   const ast = result.node as any;
   const firstCmd = ast.body?.[0] ?? ast;
   const arg = firstCmd.args?.[0] ?? firstCmd;
-  const ctx = { ...createContext(), ...contextOverrides } as any;
+  const ctx = { ...createContext(), registry: FULL_REGISTRY, ...contextOverrides } as any;
   return evaluateAST(arg, ctx);
 }
 

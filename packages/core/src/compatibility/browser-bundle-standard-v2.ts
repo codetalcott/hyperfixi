@@ -29,7 +29,7 @@
 
 import { parse } from '../parser/parser';
 import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
-import { createCommonExpressionEvaluator } from '../expressions/bundles/common-expressions';
+import { createCommonRegistry } from '../expressions/bundles/common-expressions';
 import { createMinimalAttributeProcessor } from '../dom/minimal-attribute-processor';
 import { createContext, ensureContext } from '../core/context';
 
@@ -110,7 +110,7 @@ const runtime = createTreeShakeableRuntime(
     createBreakpointCommand(),
   ],
   {
-    expressionEvaluator: createCommonExpressionEvaluator(),
+    expressionRegistry: createCommonRegistry(),
   }
 );
 

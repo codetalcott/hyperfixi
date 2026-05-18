@@ -14,6 +14,8 @@ import { HookRegistry } from '../types/hooks';
 import { ok, err, isOk, asControlFlowError } from '../types/result';
 
 import { BaseExpressionEvaluator } from '../core/base-expression-evaluator';
+import { evaluateAST, evaluateASTWithResult } from '../parser/runtime';
+import type { ExpressionRegistry } from '../core/expression-registry';
 
 /**
  * Convert an ExecutionSignal to a legacy Error for backward compatibility.
@@ -152,11 +154,23 @@ export interface RuntimeBaseOptions {
   enableResultPattern?: boolean;
 
   /**
-   * Expression evaluator instance. REQUIRED for tree-shaking support.
-   * Use ConfigurableExpressionEvaluator for minimal bundles, or ExpressionEvaluator for full bundles.
-   * Accepts any class extending BaseExpressionEvaluator.
+   * Expression evaluator instance. **Deprecated** — use `registry` instead.
+   * Retained during the evaluator consolidation arc for callers that haven't
+   * migrated yet; when both are provided, `registry` wins. Scheduled for
+   * removal in the next phase.
    */
-  expressionEvaluator: BaseExpressionEvaluator;
+  expressionEvaluator?: BaseExpressionEvaluator;
+
+  /**
+   * Expression registry threaded through to `parser/runtime.ts:evaluateAST`
+   * via `context.registry`. Build with `createExpressionRegistry()` from the
+   * category objects the bundle includes (`createCoreRegistry`,
+   * `createCommonRegistry`, `createFullExpressionRegistry`, etc.). When set,
+   * the runtime uses the canonical `evaluateAST` dispatcher; the class-based
+   * `expressionEvaluator` path becomes inactive. Named `expressionRegistry`
+   * (not `registry`) to avoid collision with the existing CommandRegistry field.
+   */
+  expressionRegistry?: ExpressionRegistry;
 
   /**
    * Runtime hooks for command execution lifecycle.
@@ -222,7 +236,10 @@ export interface BehaviorAPI {
 export class RuntimeBase {
   protected options: RuntimeBaseOptions;
   protected registry: CommandRegistry;
-  protected expressionEvaluator: BaseExpressionEvaluator;
+  /** Bundle-supplied expression registry threaded into evaluator contexts. */
+  protected expressionRegistry?: ExpressionRegistry;
+  /** Class-based evaluator (deprecated, retained for bundles not yet migrated). */
+  protected expressionEvaluator?: BaseExpressionEvaluator;
   /** Behavior registry for programmatic behavior registration */
   public behaviorRegistry: Map<string, BehaviorEntry>;
   public behaviorAPI: BehaviorAPI;
@@ -248,6 +265,7 @@ export class RuntimeBase {
     };
 
     this.registry = options.registry;
+    this.expressionRegistry = options.expressionRegistry;
     this.expressionEvaluator = options.expressionEvaluator;
     this.behaviorRegistry = new Map();
     this.globalVariables = getSharedGlobals();
@@ -800,8 +818,19 @@ export class RuntimeBase {
    * Handles standard expressions + the "implicit command pattern" (space operator)
    */
   protected async evaluateExpression(node: ASTNode, context: ExecutionContext): Promise<unknown> {
-    // 1. Standard Evaluation
-    const result = await this.expressionEvaluator.evaluate(node, context);
+    // 1. Standard Evaluation. Prefer the registry-driven canonical evaluator
+    //    when a bundle-supplied registry is available; fall back to the legacy
+    //    class-based evaluator during the consolidation arc.
+    let result: unknown;
+    if (this.expressionRegistry) {
+      const ctx = context.registry ? context : { ...context, registry: this.expressionRegistry };
+      result = await evaluateAST(node, ctx);
+    } else if (this.expressionEvaluator) {
+      result = await this.expressionEvaluator.evaluate(node, context);
+    } else {
+      // No registry or evaluator supplied — evaluateAST's lazy fallback fires.
+      result = await evaluateAST(node, context);
+    }
 
     // 2. Check for "Implicit Command Pattern" (e.g. "add .class")
     // This happens when the parser sees "word token" but interprets as property access
@@ -822,8 +851,16 @@ export class RuntimeBase {
     node: ASTNode,
     context: ExecutionContext
   ): Promise<ExecutionResult<unknown>> {
-    // Use Result-based evaluation from expression evaluator
-    const result = await this.expressionEvaluator.evaluateWithResult(node, context);
+    // Prefer registry-driven canonical evaluator over the legacy class-based one.
+    let result: ExecutionResult<unknown>;
+    if (this.expressionRegistry) {
+      const ctx = context.registry ? context : { ...context, registry: this.expressionRegistry };
+      result = await evaluateASTWithResult(node, ctx);
+    } else if (this.expressionEvaluator) {
+      result = await this.expressionEvaluator.evaluateWithResult(node, context);
+    } else {
+      result = await evaluateASTWithResult(node, context);
+    }
 
     if (!isOk(result)) {
       return result; // Propagate signal

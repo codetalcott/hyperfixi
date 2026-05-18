@@ -117,6 +117,13 @@ export const waitForEvent = (
   });
 };
 
+import { createFullExpressionRegistry } from './expressions/index';
+
+// Construct once at module-load. Vitest's happy-dom environment is set up
+// before this file's parse, so the static import here doesn't race with DOM
+// availability. Used by `createMockHyperscriptContext`'s `.registry` field.
+const TEST_REGISTRY = createFullExpressionRegistry();
+
 export const createMockHyperscriptContext = (element?: HTMLElement) => ({
   me: element || null,
   it: null as any,
@@ -124,6 +131,7 @@ export const createMockHyperscriptContext = (element?: HTMLElement) => ({
   result: null as any,
   locals: new Map<string, any>(),
   globals: new Map<string, any>(),
+  registry: TEST_REGISTRY,
   flags: {
     halted: false,
     breaking: false,

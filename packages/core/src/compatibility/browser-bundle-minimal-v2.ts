@@ -27,7 +27,7 @@
 
 import { parse } from '../parser/parser';
 import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
-import { createCoreExpressionEvaluator } from '../expressions/bundles/core-expressions';
+import { createCoreRegistry } from '../expressions/bundles/core-expressions';
 import { createMinimalAttributeProcessor } from '../dom/minimal-attribute-processor';
 import { createContext, ensureContext } from '../core/context';
 
@@ -58,7 +58,7 @@ const runtime = createTreeShakeableRuntime(
     createWaitCommand(),
   ],
   {
-    expressionEvaluator: createCoreExpressionEvaluator(),
+    expressionRegistry: createCoreRegistry(),
   }
 );
 

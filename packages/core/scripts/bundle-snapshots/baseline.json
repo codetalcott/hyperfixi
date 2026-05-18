@@ -2,44 +2,44 @@
   "$schema": "./baseline.schema.json",
   "purpose": "Tree-shaking + bundle-size baseline for the evaluator consolidation arc (parser/runtime.ts canonical + ExpressionRegistry).",
   "generated": "2026-05-18",
-  "commit": "44504239",
+  "commit": "10cdec95",
   "tolerance_percent": 5,
-  "notes": "Sizes captured BEFORE the consolidation refactor begins. Re-run after each phase via `node scripts/bundle-size-snapshot.mjs --check`. If any bundle moves outside ±tolerance_percent, the refactor has regressed tree-shaking.",
+  "notes": "Updated 2026-05-18 after Phase 3 (runtime classes use registry-driven canonical evaluator). Re-run after each phase via `node scripts/bundle-size-snapshot.mjs --check`. If any bundle moves outside ±tolerance_percent, tree-shaking has regressed. Phase 3 added ~4-5 KB gzip to minimal/standard (parser/runtime.ts evaluator dispatcher now in the bundle); category-module tree-shaking still works (verified via grep of dist).",
   "bundles": {
     "hyperfixi-minimal.js": {
       "config": "rollup.browser-minimal.config.mjs",
       "entry": "src/compatibility/browser-bundle-minimal-v2.ts",
-      "evaluator_strategy": "createCoreExpressionEvaluator (3 of 7 categories: references, logical, special)",
-      "raw_bytes": 301541,
-      "gzip_bytes": 72491
+      "evaluator_strategy": "createCoreRegistry (3 of 7 categories: references, logical, special) + parser/runtime.ts canonical evaluator",
+      "raw_bytes": 321387,
+      "gzip_bytes": 76829
     },
     "hyperfixi-standard.js": {
       "config": "rollup.browser-standard.config.mjs",
       "entry": "src/compatibility/browser-bundle-standard-v2.ts",
-      "evaluator_strategy": "createCommonExpressionEvaluator (subset of categories)",
-      "raw_bytes": 329007,
-      "gzip_bytes": 78970
+      "evaluator_strategy": "createCommonRegistry (5 of 7 categories) + parser/runtime.ts canonical evaluator",
+      "raw_bytes": 348893,
+      "gzip_bytes": 83270
     },
     "hyperfixi-classic.js": {
       "config": "rollup.browser-classic.config.mjs",
       "entry": "src/compatibility/browser-bundle-classic.ts",
       "evaluator_strategy": "ConfigurableExpressionEvaluator (caller-selected categories)",
-      "raw_bytes": 400535,
-      "gzip_bytes": 96415
+      "raw_bytes": 420508,
+      "gzip_bytes": 100796
     },
     "hyperfixi-classic-i18n.js": {
       "config": "rollup.browser-classic-i18n.config.mjs",
       "entry": "src/compatibility/browser-bundle-classic-i18n.ts",
       "evaluator_strategy": "ConfigurableExpressionEvaluator + i18n keyword mapping",
-      "raw_bytes": 510547,
-      "gzip_bytes": 131080
+      "raw_bytes": 530375,
+      "gzip_bytes": 135545
     },
     "hyperfixi.js": {
       "config": "rollup.browser.config.mjs",
       "entry": "src/compatibility/browser-bundle.ts",
       "evaluator_strategy": "ExpressionEvaluator (full — all 7 categories)",
-      "raw_bytes": 1243418,
-      "gzip_bytes": 279872
+      "raw_bytes": 1245801,
+      "gzip_bytes": 280682
     }
   }
 }

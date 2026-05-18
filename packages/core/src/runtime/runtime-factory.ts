@@ -40,17 +40,26 @@ import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';
 import { CommandRegistryV2 } from './command-adapter';
 import { ConfigurableExpressionEvaluator } from '../core/configurable-expression-evaluator';
 import type { BaseExpressionEvaluator } from '../core/base-expression-evaluator';
+import type { ExpressionRegistry } from '../core/expression-registry';
 import type { ParserInterface } from '../parser/parser-interface';
 import type { ExecutionContext } from '../types/core';
 
 export interface TreeShakeableRuntimeOptions {
   /**
-   * Expression evaluator instance (required).
-   * Use createCoreExpressionEvaluator() for minimal bundles.
-   * Use createCommonExpressionEvaluator() for standard bundles.
-   * Use new ExpressionEvaluator() for full bundles.
+   * Expression evaluator instance.
+   * @deprecated Pass `expressionRegistry` instead (built with
+   * `createCoreRegistry()` / `createCommonRegistry()` /
+   * `createFullExpressionRegistry()`). Class-based evaluators are scheduled
+   * for removal in the next phase of the evaluator consolidation arc.
    */
-  expressionEvaluator: BaseExpressionEvaluator;
+  expressionEvaluator?: BaseExpressionEvaluator;
+
+  /**
+   * Bundle-supplied expression registry. Preferred over `expressionEvaluator`
+   * during the consolidation arc; when both are set, registry wins. Required
+   * either as `expressionRegistry` here or as `expressionEvaluator` (legacy).
+   */
+  expressionRegistry?: ExpressionRegistry;
 
   /**
    * Enable async command execution.
@@ -209,9 +218,16 @@ export function createTreeShakeableRuntime(
   commands: any[],
   options: TreeShakeableRuntimeOptions
 ): RuntimeBase {
-  // Pass the shared expression evaluator to the registry for tree-shaking optimization
-  // This avoids each CommandAdapterV2 creating its own ExpressionEvaluator instance
-  const registry = new CommandRegistryV2(options.expressionEvaluator as any);
+  // The command registry / adapter chain still consumes a class-based evaluator
+  // (it gets stashed in `__evaluator` for commands like `call` to use). When
+  // the caller passes only a registry, hand the adapter the deprecated class
+  // wrapper temporarily — both paths see consistent expression semantics
+  // because the runtime's evaluator calls go through `evaluateAST` either way.
+  const adapterEvaluator =
+    options.expressionEvaluator ??
+    // Empty configurable acts as a thin shell for the adapter's __evaluator slot.
+    new ConfigurableExpressionEvaluator([]);
+  const registry = new CommandRegistryV2(adapterEvaluator as any);
 
   for (const command of commands) {
     registry.register(command);
@@ -220,6 +236,7 @@ export function createTreeShakeableRuntime(
   const runtimeOptions: RuntimeBaseOptions = {
     registry,
     expressionEvaluator: options.expressionEvaluator,
+    expressionRegistry: options.expressionRegistry,
     enableAsyncCommands: options.enableAsyncCommands ?? true,
     commandTimeout: options.commandTimeout ?? 10000,
     enableErrorReporting: options.enableErrorReporting ?? true,

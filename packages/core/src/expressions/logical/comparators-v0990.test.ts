@@ -11,6 +11,9 @@ import { describe, it, expect } from 'vitest';
 import { parse } from '../../parser/parser';
 import { evaluateAST } from '../../parser/runtime';
 import { createContext } from '../../core/context';
+import { createFullExpressionRegistry } from '../index';
+
+const FULL_REGISTRY = createFullExpressionRegistry();
 
 async function evalArg(code: string): Promise<unknown> {
   const result = parse(code);
@@ -21,7 +24,7 @@ async function evalArg(code: string): Promise<unknown> {
   const ast = result.node as any;
   const firstCmd = ast.body?.[0] ?? ast;
   const arg = firstCmd.args?.[0] ?? firstCmd;
-  return evaluateAST(arg, createContext());
+  return evaluateAST(arg, { ...createContext(), registry: FULL_REGISTRY });
 }
 
 describe('Comparators (v0.9.90)', () => {
