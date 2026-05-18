@@ -182,6 +182,8 @@
     "build:browser:all": "npm run build:browser:dev && npm run build:browser:prod && npm run build:browser:llm && npm run build:browser:lite && npm run build:browser:minimal && npm run build:browser:standard && npm run build:browser:classic && npm run build:browser:classic-i18n && npm run build:browser:multilingual && npm run build:browser:semantic-complete",
     "build:browser:modular": "rollup -c rollup.browser-modular.config.mjs",
     "build:parser-modules": "rollup -c rollup.parser-modules.config.mjs",
+    "snapshot:bundle-size": "node scripts/bundle-size-snapshot.mjs --check",
+    "snapshot:bundle-size:update": "node scripts/bundle-size-snapshot.mjs --update",
     "generate:bundle": "tsx scripts/generate-inline-bundle.ts",
     "generate:bundle:textshelf": "tsx scripts/generate-inline-bundle.ts --config bundle-configs/textshelf.config.json",
     "dev": "rollup -c -w",
