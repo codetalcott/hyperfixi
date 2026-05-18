@@ -106,6 +106,8 @@ export interface ParseWithConfidenceResult {
   node: SemanticNode | null;
   confidence: number;
   error: string | undefined;
+  /** Number of tokens consumed during pattern matching, if a match succeeded. */
+  tokensConsumed?: number;
 }
 
 /**
@@ -136,12 +138,14 @@ export function parseWithConfidence(
       node,
       confidence: confidenceResult.confidence,
       error: undefined,
+      tokensConsumed: confidenceResult.tokensConsumed,
     };
   } catch (error) {
     return {
       node: null,
       confidence: confidenceResult.confidence,
       error: error instanceof Error ? error.message : String(error),
+      tokensConsumed: confidenceResult.tokensConsumed,
     };
   }
 }
