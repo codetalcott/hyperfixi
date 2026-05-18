@@ -23,4 +23,5 @@ export type {
   ForEachNode,
   WhileNode,
   PositionalNode,
+  ErrorNode,
 } from './types';

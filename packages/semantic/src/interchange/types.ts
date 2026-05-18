@@ -1,12 +1,14 @@
 /**
  * AST Interchange Format Types (Semantic-local copy)
  *
- * These are structurally identical to the canonical types in
- * @hyperfixi/core/ast-utils/interchange/types.ts
- *
+ * Mirrors the canonical types in @hyperfixi/core/ast-utils/interchange/types.ts.
  * Duplicated here because the semantic package has no dependency on core.
- * TypeScript's structural typing ensures these are assignable to the
- * core package's versions when both are used by a consumer (e.g. AOT compiler).
+ *
+ * **Must be kept in sync manually.** Structural typing makes a semantic-typed
+ * node assignable to the core-typed slot, but not the reverse: a node from
+ * `fromCoreAST` whose `type` is missing from the semantic union (e.g. 'error')
+ * fails to narrow in consumer switches with no compile-time signal. When the
+ * canonical adds a node kind or field, mirror it here.
  */
 
 // =============================================================================
@@ -29,7 +31,8 @@ export type InterchangeNode =
   | RepeatNode
   | ForEachNode
   | WhileNode
-  | PositionalNode;
+  | PositionalNode
+  | ErrorNode;
 
 /**
  * Position fields are optional — present when the source parser provides them,
@@ -111,6 +114,12 @@ export interface PositionalNode extends BaseNode {
   readonly target?: InterchangeNode;
 }
 
+export interface ErrorNode extends BaseNode {
+  readonly type: 'error';
+  readonly message: string;
+  readonly token?: string;
+}
+
 // =============================================================================
 // COMMAND & EVENT NODES
 // =============================================================================
@@ -123,6 +132,8 @@ export interface CommandNode extends BaseNode {
   readonly modifiers?: Record<string, unknown>;
   /** Semantic roles from the semantic parser (patient, destination, source, etc.). */
   readonly roles?: Readonly<Record<string, InterchangeNode>>;
+  /** True when the command was incompletely parsed (mid-typing). */
+  readonly partial?: boolean;
 }
 
 export interface EventNode extends BaseNode {
