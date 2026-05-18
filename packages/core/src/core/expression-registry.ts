@@ -45,21 +45,35 @@ export type ExpressionRegistry = ReadonlyMap<string, ExpressionImplementation>;
  * ```
  */
 /**
- * Build the registry from one or more category objects. Parameter type uses
- * `Record<string, unknown>` because individual expression implementations
- * have stricter input/output shapes than `ExpressionImplementation`'s
- * `(context, ...args: unknown[])` signature — covariance bites if we try to
- * require the strict shape. The cast on `map.set` is safe because every
- * category module ships interchangeable `evaluate` implementations.
+ * Minimum shape the factory needs from any item being registered: a callable
+ * `evaluate`. Two implementation shapes flow through here — plain
+ * `ExpressionImplementation` objects (variadic `(context, ...args)`) and
+ * `BaseExpressionImpl` subclasses (typed `(input)`) — and their `evaluate`
+ * signatures are variance-incompatible. Documenting the minimum shape via
+ * an explicit interface is stricter than `any` while staying permissive
+ * enough that both forms type-check at the call site.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface ExpressionLike {
+  // `any[]` is required: both call signatures end up here and they disagree
+  // on parameter shapes. Without `any` the variance check rejects one of them.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  evaluate: (...args: any[]) => any;
+}
+
+/**
+ * Build the registry from one or more category objects. The cast on
+ * `map.set` remains because `ExpressionImplementation` has fields beyond
+ * `evaluate` (`name`, `category`, etc.) that not every input is guaranteed
+ * to satisfy at the type level. Downstream consumers (`parser/runtime.ts`)
+ * only call `evaluate`, so the runtime invariant holds regardless.
+ */
 export function createExpressionRegistry(
-  ...categories: ReadonlyArray<Readonly<Record<string, any>>>
+  ...categories: ReadonlyArray<Readonly<Record<string, ExpressionLike>>>
 ): ExpressionRegistry {
   const map = new Map<string, ExpressionImplementation>();
   for (const category of categories) {
     for (const [name, impl] of Object.entries(category)) {
-      map.set(name, impl as ExpressionImplementation);
+      map.set(name, impl as unknown as ExpressionImplementation);
     }
   }
   return map;
