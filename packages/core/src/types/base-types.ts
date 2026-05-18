@@ -6,6 +6,7 @@
 
 import type { RuntimeValidator } from '../validation/lightweight-validators';
 import type { CoreExecutionContext } from './core-context';
+import type { ExpressionRegistry } from '../core/expression-registry';
 
 // Re-export core context types for convenience
 export type { CoreExecutionContext } from './core-context';
@@ -186,6 +187,15 @@ export type ExpressionCategory =
 export interface ExecutionContext extends CoreExecutionContext {
   /** Result of last operation — mutable for runtime context updates */
   result: unknown;
+
+  /**
+   * Name → expression-implementation lookup used by `parser/runtime.ts:evaluateAST`
+   * to dispatch named-expression operators (e.g. `ends with`, `is in`, `as`).
+   * Optional during the consolidation arc (Phase 1); becomes required for
+   * runtime evaluation paths in later phases. Construct via
+   * `createExpressionRegistry()` from selected expression categories.
+   */
+  readonly registry?: ExpressionRegistry;
 
   // Control flow flags
   readonly halted?: boolean;
