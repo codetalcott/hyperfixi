@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
-// Public packages to sync (excludes private packages like ast-toolkit)
+// Public packages to sync (excludes private/internal packages)
 const PACKAGES = [
   'core',
   'semantic',

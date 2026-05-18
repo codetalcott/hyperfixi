@@ -53,7 +53,6 @@ PACKAGES=(
   "smart-bundling:Smart Bundling"
 
   # Other
-  "ast-toolkit:AST Toolkit"
   "developer-tools:Developer Tools"
   "behaviors:Behaviors"
   "patterns-reference:Patterns Reference"

@@ -58,13 +58,12 @@ jobs:
       # 4. core (depends on semantic)
       # 5. patterns-reference (depends on semantic)
       # 6. i18n (depends on core, semantic)
-      # 7. ast-toolkit (depends on core, patterns-reference)
-      # 8. aot-compiler (depends on core, semantic)
-      # 9. compilation-service (depends on aot-compiler, semantic)
-      # 10. mcp-server (depends on semantic, patterns-reference, compilation-service, ast-toolkit optional)
-      # 11. developer-tools
-      # 12. vite-plugin (depends on core)
-      # 13. language-server (depends on semantic, core, ast-toolkit - all optional)
+      # 7. aot-compiler (depends on core, semantic)
+      # 8. compilation-service (depends on aot-compiler, semantic)
+      # 9. mcp-server (depends on semantic, patterns-reference, compilation-service)
+      # 10. developer-tools
+      # 11. vite-plugin (depends on core)
+      # 12. language-server (depends on semantic, core)
       # NOTE: `intent-element` has no downstream build consumers — skipped
       # here to keep the CI footprint small. Add it if you want CI to
       # verify its build.
@@ -124,9 +123,6 @@ jobs:
 
       - name: Build hyperscript-adapter package
         run: npm run build --prefix packages/hyperscript-adapter
-
-      - name: Build ast-toolkit package
-        run: npm run build --prefix packages/ast-toolkit
 
       - name: Build aot-compiler package
         run: npm run build --prefix packages/aot-compiler
@@ -194,7 +190,6 @@ jobs:
             packages/behaviors/dist/
             packages/patterns-reference/dist/
             packages/hyperscript-adapter/dist/
-            packages/ast-toolkit/dist/
             packages/aot-compiler/dist/
             packages/compilation-service/dist/
             packages/planner/dist/
@@ -247,7 +242,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Run export validation for published packages
-          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference ast-toolkit aot-compiler compilation-service language-server --strict 2>&1 | tee /tmp/export-validation.log
+          node scripts/validate-exports.mjs core semantic i18n vite-plugin mcp-server patterns-reference aot-compiler compilation-service language-server --strict 2>&1 | tee /tmp/export-validation.log
 
           # Parse results for summary
           if grep -q "✅" /tmp/export-validation.log; then

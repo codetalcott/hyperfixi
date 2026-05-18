@@ -9,9 +9,9 @@ import {
   generateCommand,
   generateExpression,
   minify,
-  format
-} from '../../src/generator/index.js';
-import type { ASTNode } from '../../src/types.js';
+  format,
+} from './generator.js';
+import type { ASTNode } from './types.js';
 
 describe('Code Generator', () => {
   describe('generate()', () => {
@@ -31,9 +31,9 @@ describe('Code Generator', () => {
             end: 25,
             line: 1,
             column: 11,
-            args: [{ type: 'selector', value: '.active', start: 17, end: 24, line: 1, column: 18 }]
-          }
-        ]
+            args: [{ type: 'selector', value: '.active', start: 17, end: 24, line: 1, column: 18 }],
+          },
+        ],
       } as any;
 
       const code = generate(ast);
@@ -54,17 +54,17 @@ describe('Code Generator', () => {
             type: 'eventHandler',
             event: 'click',
             commands: [
-              { type: 'command', name: 'add', args: [{ type: 'selector', value: '.visible' }] }
-            ]
+              { type: 'command', name: 'add', args: [{ type: 'selector', value: '.visible' }] },
+            ],
           },
           {
             type: 'eventHandler',
             event: 'mouseover',
             commands: [
-              { type: 'command', name: 'toggle', args: [{ type: 'selector', value: '.hover' }] }
-            ]
-          }
-        ]
+              { type: 'command', name: 'toggle', args: [{ type: 'selector', value: '.hover' }] },
+            ],
+          },
+        ],
       } as any;
 
       const code = generate(ast);
@@ -79,9 +79,7 @@ describe('Code Generator', () => {
         type: 'eventHandler',
         event: 'click',
         selector: '#button',
-        commands: [
-          { type: 'command', name: 'hide', args: [] }
-        ]
+        commands: [{ type: 'command', name: 'hide', args: [] }],
       } as any;
 
       const code = generate(ast);
@@ -95,7 +93,7 @@ describe('Code Generator', () => {
         type: 'command',
         name: 'put',
         args: [{ type: 'literal', value: 'Hello' }],
-        target: { type: 'selector', value: '#output' }
+        target: { type: 'selector', value: '#output' },
       } as any;
 
       const code = generate(ast);
@@ -110,7 +108,7 @@ describe('Code Generator', () => {
       const ast: ASTNode = {
         type: 'command',
         name: 'show',
-        args: [{ type: 'selector', value: '#modal' }]
+        args: [{ type: 'selector', value: '#modal' }],
       } as any;
 
       const code = generateCommand(ast);
@@ -123,8 +121,8 @@ describe('Code Generator', () => {
         name: 'add',
         args: [
           { type: 'selector', value: '.highlight' },
-          { type: 'selector', value: '.visible' }
-        ]
+          { type: 'selector', value: '.visible' },
+        ],
       } as any;
 
       const code = generateCommand(ast);
@@ -138,7 +136,7 @@ describe('Code Generator', () => {
         type: 'command',
         name: 'toggle',
         args: [{ type: 'selector', value: '.active' }],
-        target: { type: 'identifier', name: 'me' }
+        target: { type: 'identifier', name: 'me' },
       } as any;
 
       const code = generateCommand(ast);
@@ -177,7 +175,7 @@ describe('Code Generator', () => {
         type: 'binaryExpression',
         operator: '+',
         left: { type: 'literal', value: 5 },
-        right: { type: 'literal', value: 3 }
+        right: { type: 'literal', value: 3 },
       } as any;
       expect(generateExpression(ast)).toBe('5 + 3');
     });
@@ -187,7 +185,7 @@ describe('Code Generator', () => {
         type: 'binaryExpression',
         operator: '>',
         left: { type: 'identifier', name: 'count' },
-        right: { type: 'literal', value: 0 }
+        right: { type: 'literal', value: 0 },
       } as any;
       expect(generateExpression(ast)).toBe('count > 0');
     });
@@ -197,7 +195,7 @@ describe('Code Generator', () => {
         type: 'logicalExpression',
         operator: 'and',
         left: { type: 'identifier', name: 'a' },
-        right: { type: 'identifier', name: 'b' }
+        right: { type: 'identifier', name: 'b' },
       } as any;
       expect(generateExpression(ast)).toBe('a and b');
     });
@@ -206,7 +204,7 @@ describe('Code Generator', () => {
       const ast: ASTNode = {
         type: 'possessiveExpression',
         object: { type: 'identifier', name: 'element' },
-        property: { type: 'identifier', name: 'className' }
+        property: { type: 'identifier', name: 'className' },
       } as any;
       expect(generateExpression(ast)).toBe("element's className");
     });
@@ -216,7 +214,7 @@ describe('Code Generator', () => {
         type: 'memberExpression',
         object: { type: 'identifier', name: 'arr' },
         property: { type: 'literal', value: 0 },
-        computed: true
+        computed: true,
       } as any;
       expect(generateExpression(ast)).toBe('arr[0]');
     });
@@ -226,7 +224,7 @@ describe('Code Generator', () => {
         type: 'memberExpression',
         object: { type: 'identifier', name: 'obj' },
         property: { type: 'identifier', name: 'prop' },
-        computed: false
+        computed: false,
       } as any;
       expect(generateExpression(ast)).toBe('obj.prop');
     });
@@ -237,8 +235,8 @@ describe('Code Generator', () => {
         callee: { type: 'identifier', name: 'myFunc' },
         arguments: [
           { type: 'literal', value: 'arg1' },
-          { type: 'literal', value: 42 }
-        ]
+          { type: 'literal', value: 42 },
+        ],
       } as any;
       expect(generateExpression(ast)).toBe("myFunc('arg1', 42)");
     });
@@ -252,13 +250,13 @@ describe('Code Generator', () => {
           type: 'binaryExpression',
           operator: '>',
           left: { type: 'identifier', name: 'count' },
-          right: { type: 'literal', value: 0 }
+          right: { type: 'literal', value: 0 },
         },
         then: {
           type: 'command',
           name: 'show',
-          args: [{ type: 'selector', value: '#message' }]
-        }
+          args: [{ type: 'selector', value: '#message' }],
+        },
       } as any;
 
       const code = generate(ast);
@@ -276,13 +274,13 @@ describe('Code Generator', () => {
         then: {
           type: 'command',
           name: 'add',
-          args: [{ type: 'selector', value: '.valid' }]
+          args: [{ type: 'selector', value: '.valid' }],
         },
         else: {
           type: 'command',
           name: 'add',
-          args: [{ type: 'selector', value: '.invalid' }]
-        }
+          args: [{ type: 'selector', value: '.invalid' }],
+        },
       } as any;
 
       const code = generate(ast);
@@ -305,9 +303,9 @@ describe('Code Generator', () => {
           {
             type: 'command',
             name: 'toggle',
-            args: [{ type: 'selector', value: '.active' }]
-          }
-        ]
+            args: [{ type: 'selector', value: '.active' }],
+          },
+        ],
       } as any;
 
       const code = generate(ast);
@@ -322,7 +320,7 @@ describe('Code Generator', () => {
         type: 'behavior',
         name: 'Toggler',
         parameters: ['className', 'target'],
-        body: []
+        body: [],
       } as any;
 
       const code = generate(ast);
@@ -340,8 +338,8 @@ describe('Code Generator', () => {
         parameters: [],
         body: {
           type: 'returnStatement',
-          argument: { type: 'literal', value: 'Hello!' }
-        }
+          argument: { type: 'literal', value: 'Hello!' },
+        },
       } as any;
 
       const code = generate(ast);
@@ -362,9 +360,9 @@ describe('Code Generator', () => {
             type: 'binaryExpression',
             operator: '+',
             left: { type: 'identifier', name: 'a' },
-            right: { type: 'identifier', name: 'b' }
-          }
-        }
+            right: { type: 'identifier', name: 'b' },
+          },
+        },
       } as any;
 
       const code = generate(ast);
@@ -383,10 +381,10 @@ describe('Code Generator', () => {
             type: 'eventHandler',
             event: 'click',
             commands: [
-              { type: 'command', name: 'toggle', args: [{ type: 'selector', value: '.active' }] }
-            ]
-          }
-        ]
+              { type: 'command', name: 'toggle', args: [{ type: 'selector', value: '.active' }] },
+            ],
+          },
+        ],
       } as any;
 
       const minified = minify(ast);
@@ -402,8 +400,8 @@ describe('Code Generator', () => {
         event: 'click',
         commands: [
           { type: 'command', name: 'toggle', args: [{ type: 'selector', value: '.active' }] },
-          { type: 'command', name: 'add', args: [{ type: 'selector', value: '.clicked' }] }
-        ]
+          { type: 'command', name: 'add', args: [{ type: 'selector', value: '.clicked' }] },
+        ],
       } as any;
 
       const formatted = format(ast, '    '); // 4-space indentation
@@ -421,10 +419,10 @@ describe('Code Generator', () => {
             type: 'eventHandler',
             event: 'click',
             commands: [
-              { type: 'command', name: 'toggle', args: [{ type: 'selector', value: '.active' }] }
-            ]
-          }
-        ]
+              { type: 'command', name: 'toggle', args: [{ type: 'selector', value: '.active' }] },
+            ],
+          },
+        ],
       } as any;
 
       const result = generateWithMetadata(ast);
@@ -456,7 +454,7 @@ describe('Code Generator', () => {
     it('should escape strings properly', () => {
       const ast: ASTNode = {
         type: 'literal',
-        value: "it's a \"test\""
+        value: 'it\'s a "test"',
       } as any;
 
       const code = generateExpression(ast);
@@ -467,7 +465,7 @@ describe('Code Generator', () => {
       const ast: ASTNode = {
         type: 'selector',
         value: '.computed',
-        raw: '#original-selector'
+        raw: '#original-selector',
       } as any;
 
       const codeWithRaw = generate(ast, { preserveRaw: true });

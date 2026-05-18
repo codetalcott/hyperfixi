@@ -86,7 +86,7 @@ try {
   const core = await import('@hyperfixi/core');
   parseFunction = core.parse;
   fromCoreASTFn = core.fromCoreAST;
-  // Interchange-aware LSP module (replaces deprecated @lokascript/ast-toolkit)
+  // Interchange-aware LSP module
   interchangeLSP = await import('@hyperfixi/core/ast-utils');
   console.error('[lokascript-ls] @hyperfixi/core loaded — AST parsing + interchange LSP enabled');
 } catch {
