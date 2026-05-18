@@ -317,8 +317,7 @@ const api = {
    */
   async execute(code: string, lang: string, context?: any): Promise<any> {
     const semantic = getSemanticModule();
-    const analyzer = semantic.createSemanticAnalyzer();
-    const result = analyzer.analyze(code, lang);
+    const result = semantic.parseSemantic(code, lang);
 
     if (result.confidence < 0.5 || !result.node) {
       throw new Error(
@@ -341,8 +340,7 @@ const api = {
    */
   parse(code: string, lang: string): ASTNode | null {
     const semantic = getSemanticModule();
-    const analyzer = semantic.createSemanticAnalyzer();
-    const result = analyzer.analyze(code, lang);
+    const result = semantic.parseSemantic(code, lang);
 
     if (result.confidence < 0.5 || !result.node) {
       return null;
@@ -477,8 +475,7 @@ async function processElementSemantic(element: HTMLElement): Promise<void> {
     debug.parse(`ATTR-ML: Processing element with lang="${lang}":`, code.substring(0, 60));
 
     const semantic = getSemanticModule();
-    const analyzer = semantic.createSemanticAnalyzer();
-    const result = analyzer.analyze(code, lang);
+    const result = semantic.parseSemantic(code, lang);
 
     if (result.confidence < 0.5 || !result.node) {
       debug.parse(`ATTR-ML: Low confidence (${result.confidence.toFixed(2)}) for: ${code}`);

@@ -11,7 +11,7 @@
  * - Morphological normalization for conjugations
  */
 
-import type { SemanticNode, SemanticAnalyzer, ASTNode } from '@lokascript/semantic';
+import type { SemanticNode, ASTNode } from '@lokascript/semantic';
 import { DEFAULT_CONFIDENCE_THRESHOLD } from '@lokascript/semantic';
 import { debug } from '../utils/debug';
 
@@ -78,7 +78,7 @@ async function getSemanticModule() {
  * Bridge connecting semantic parsing to grammar transformation.
  */
 export class SemanticGrammarBridge {
-  private analyzer: SemanticAnalyzer | null = null;
+  private _initialized = false;
   private config: Required<BridgeConfig>;
 
   constructor(config: BridgeConfig = {}) {
@@ -92,12 +92,13 @@ export class SemanticGrammarBridge {
   }
 
   async initialize(): Promise<void> {
-    const semantic = await getSemanticModule();
-    this.analyzer = semantic.createSemanticAnalyzer();
+    // Ensure the semantic module (and its language modules) are loaded
+    await getSemanticModule();
+    this._initialized = true;
   }
 
   isInitialized(): boolean {
-    return this.analyzer !== null;
+    return this._initialized;
   }
 
   async transform(input: string, sourceLang: string, targetLang: string): Promise<BridgeResult> {
@@ -149,9 +150,8 @@ export class SemanticGrammarBridge {
       await this.initialize();
     }
 
-    if (!this.analyzer) return null;
-
-    const result = this.analyzer.analyze(input, lang);
+    const semantic = await getSemanticModule();
+    const result = semantic.parseSemantic(input, lang);
     // Return node if parsing succeeded, regardless of confidence
     // Confidence filtering should happen at the compile level, not parse level
     return result.node ?? null;
@@ -180,13 +180,11 @@ export class SemanticGrammarBridge {
       await this.initialize();
     }
 
-    if (!this.analyzer) return null;
-
-    const result = this.analyzer.analyze(input, lang);
+    const semantic = await getSemanticModule();
+    const result = semantic.parseSemantic(input, lang);
 
     if (result.confidence >= this.config.confidenceThreshold && result.node) {
       // Use the direct AST builder path
-      const semantic = await getSemanticModule();
       try {
         const buildResult = semantic.buildAST(result.node);
         // buildAST now returns { ast, warnings }, extract just the AST
@@ -213,18 +211,8 @@ export class SemanticGrammarBridge {
       await this.initialize();
     }
 
-    if (!this.analyzer) {
-      return {
-        ast: null,
-        usedDirectPath: false,
-        confidence: 0,
-        lang,
-        fallbackText: null,
-      };
-    }
-
-    const result = this.analyzer.analyze(input, lang);
     const semantic = await getSemanticModule();
+    const result = semantic.parseSemantic(input, lang);
 
     // Try direct AST path if confidence is high enough
     if (result.confidence >= this.config.confidenceThreshold && result.node) {

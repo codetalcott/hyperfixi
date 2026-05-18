@@ -122,7 +122,7 @@ import { createRenderCommand } from '../commands/templates/render';
 // =============================================================================
 
 import {
-  createSemanticAnalyzer,
+  parseSemantic,
   buildAST,
   translate as semanticTranslate,
   getAllTranslations as semanticGetAllTranslations,
@@ -285,9 +285,6 @@ const runtime = createTreeShakeableRuntime(
   { expressionRegistry: createFullExpressionRegistry() }
 );
 
-// Pre-create analyzer for synchronous API
-const analyzer = createSemanticAnalyzer();
-
 // =============================================================================
 // API
 // =============================================================================
@@ -319,7 +316,7 @@ const api = {
    * await hyperfixi.execute('alternar .active', 'es');
    */
   async execute(code: string, lang: string, context?: any): Promise<any> {
-    const result = analyzer.analyze(code, lang);
+    const result = parseSemantic(code, lang);
 
     if (result.confidence < 0.5 || !result.node) {
       throw new Error(
@@ -341,7 +338,7 @@ const api = {
    * @returns AST node or null (synchronous)
    */
   parse(code: string, lang: string): ASTNode | null {
-    const result = analyzer.analyze(code, lang);
+    const result = parseSemantic(code, lang);
 
     if (result.confidence < 0.5 || !result.node) {
       return null;
@@ -417,10 +414,10 @@ const api = {
   runtime,
 
   /**
-   * The semantic analyzer instance.
-   * Use for advanced parsing operations.
+   * Parse hyperscript directly via the semantic package's parseSemantic.
+   * Returns `{ node, confidence, error?, tokensConsumed? }`.
    */
-  analyzer,
+  parseSemantic,
 
   /**
    * Bundle version

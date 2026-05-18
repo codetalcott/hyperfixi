@@ -153,6 +153,12 @@ export {
 // =============================================================================
 
 export { parse, canParse } from './parser';
+export {
+  parseWithConfidence,
+  type ParseWithConfidenceResult,
+  type ConfidenceResult,
+  calculateTranslationConfidence,
+} from './utils/confidence-calculator';
 export { render, renderExplicit, translate, toExplicit, fromExplicit } from './explicit';
 
 // =============================================================================

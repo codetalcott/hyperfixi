@@ -31,19 +31,27 @@ import type {
 // =============================================================================
 
 /**
- * Semantic analyzer interface for multilingual support.
- * This matches the interface from @lokascript/semantic.
+ * Result shape returned by the semantic parse function.
+ * Matches `ParseWithConfidenceResult` from `@lokascript/semantic`.
  */
-interface SemanticAnalysisResult {
+interface SemanticParseResult {
   confidence: number;
   node?: unknown;
-  errors?: string[];
+  error?: string | undefined;
 }
 
-interface SemanticAnalyzer {
-  analyze(input: string, language: string): SemanticAnalysisResult;
-  supportsLanguage(language: string): boolean;
-}
+/**
+ * Function that parses input in a given language and returns a confidence
+ * score plus an optional semantic node. Matches `parseSemantic` / `parseWithConfidence`
+ * from `@lokascript/semantic`.
+ */
+type SemanticParseFn = (input: string, language: string) => SemanticParseResult;
+
+/**
+ * Function that checks whether a language is registered for parsing.
+ * Matches `isLanguageRegistered` from `@lokascript/semantic`.
+ */
+type SupportsLanguageFn = (language: string) => boolean;
 
 type BuildASTFn = (node: unknown) => { ast: ASTNode; warnings: string[] };
 
@@ -51,23 +59,28 @@ type BuildASTFn = (node: unknown) => { ast: ASTNode; warnings: string[] };
  * Optional semantic parser for multilingual support.
  * Set via setSemanticParser() when semantic package is available.
  */
-let semanticAnalyzer: SemanticAnalyzer | null = null;
+let semanticParse: SemanticParseFn | null = null;
+let supportsLanguage: SupportsLanguageFn | null = null;
 let buildASTFn: BuildASTFn | null = null;
 
 /**
  * Configure the semantic parser for multilingual compilation.
- * Call this with the semantic analyzer from @lokascript/semantic.
  *
  * @example
  * ```typescript
- * import { createSemanticAnalyzer, buildAST } from '@lokascript/semantic';
+ * import { parseSemantic, isLanguageRegistered, buildAST } from '@lokascript/semantic';
  * import { setSemanticParser } from '@hyperfixi/vite-plugin';
  *
- * setSemanticParser(createSemanticAnalyzer(), buildAST);
+ * setSemanticParser(parseSemantic, isLanguageRegistered, buildAST);
  * ```
  */
-export function setSemanticParser(analyzer: SemanticAnalyzer, buildAST: BuildASTFn): void {
-  semanticAnalyzer = analyzer;
+export function setSemanticParser(
+  parse: SemanticParseFn,
+  supports: SupportsLanguageFn,
+  buildAST: BuildASTFn
+): void {
+  semanticParse = parse;
+  supportsLanguage = supports;
   buildASTFn = buildAST;
 }
 
@@ -75,7 +88,8 @@ export function setSemanticParser(analyzer: SemanticAnalyzer, buildAST: BuildAST
  * Clear the semantic parser (for testing).
  */
 export function clearSemanticParser(): void {
-  semanticAnalyzer = null;
+  semanticParse = null;
+  supportsLanguage = null;
   buildASTFn = null;
 }
 
@@ -83,7 +97,7 @@ export function clearSemanticParser(): void {
  * Check if semantic parser is available.
  */
 export function hasSemanticParser(): boolean {
-  return semanticAnalyzer !== null && buildASTFn !== null;
+  return semanticParse !== null && supportsLanguage !== null && buildASTFn !== null;
 }
 
 /**
@@ -313,9 +327,9 @@ export function compile(script: string, options: CompileOptions = {}): CompiledH
     let ast: ASTNode;
 
     // For non-English, try semantic parser first
-    if (language !== 'en' && semanticAnalyzer && buildASTFn) {
-      if (semanticAnalyzer.supportsLanguage(language)) {
-        const result = semanticAnalyzer.analyze(script, language);
+    if (language !== 'en' && semanticParse && supportsLanguage && buildASTFn) {
+      if (supportsLanguage(language)) {
+        const result = semanticParse(script, language);
 
         if (result.node && result.confidence >= SEMANTIC_CONFIDENCE_THRESHOLD) {
           const { ast: builtAST, warnings } = buildASTFn(result.node);
@@ -334,8 +348,7 @@ export function compile(script: string, options: CompileOptions = {}): CompiledH
         } else {
           // Semantic parsing failed or low confidence
           if (debug) {
-            const reason =
-              result.errors?.join(', ') || `low confidence (${result.confidence.toFixed(2)})`;
+            const reason = result.error || `low confidence (${result.confidence.toFixed(2)})`;
             console.log(`[hyperfixi] Semantic parse failed for "${script}": ${reason}`);
           }
           return null;

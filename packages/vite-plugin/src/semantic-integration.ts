@@ -686,7 +686,7 @@ export function generateSemanticIntegrationCode(config: SemanticConfig): string 
 
 // Core infrastructure (no language data bundled)
 import {
-  createSemanticAnalyzer,
+  parseWithConfidence,
   buildAST,
   isLanguageSupported,
 } from '@lokascript/semantic/core';
@@ -711,7 +711,6 @@ const grammarTransformer = new GrammarTransformer();
   const aliasesCode = generateMultilingualAliases(config.languages);
 
   code += `
-const semanticAnalyzer = createSemanticAnalyzer();
 const SUPPORTED_SEMANTIC_LANGUAGES = ['${languages}', 'en'];
 const SEMANTIC_CONFIDENCE_THRESHOLD = 0.7;
 
@@ -739,7 +738,7 @@ function parseWithSemantic(code, lang = null) {
   for (const tryLang of languagesToTry) {
     if (!isLanguageSupported(tryLang)) continue;
     try {
-      const result = semanticAnalyzer.analyze(code, tryLang);
+      const result = parseWithConfidence(code, tryLang);
       if (result && result.confidence >= SEMANTIC_CONFIDENCE_THRESHOLD) {
         // buildAST returns {ast, warnings} - extract the ast
         const buildResult = buildAST(result.node);
