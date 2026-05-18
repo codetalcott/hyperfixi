@@ -331,6 +331,29 @@ describe('toCoreAST', () => {
       expect(result.count).toBeUndefined();
       expect(result.loopVariant).toBeUndefined();
     });
+
+    it('converts repeat with whileCondition (while variant)', () => {
+      const result = toCoreAST({
+        type: 'repeat',
+        whileCondition: { type: 'identifier', value: 'running' },
+        body: [],
+      });
+      expect(result.name).toBe('repeat');
+      expect(result.loopVariant).toBe('while');
+      expect((result.condition as any).type).toBe('identifier');
+      expect((result.condition as any).name).toBe('running');
+    });
+
+    it('converts repeat with untilEvent (until variant)', () => {
+      const result = toCoreAST({
+        type: 'repeat',
+        untilEvent: 'click',
+        body: [],
+      });
+      expect(result.name).toBe('repeat');
+      expect(result.loopVariant).toBe('until');
+      expect(result.untilEvent).toBe('click');
+    });
   });
 
   describe('foreach nodes', () => {

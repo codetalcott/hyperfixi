@@ -779,17 +779,17 @@ describe('fromCoreAST', () => {
       expect(fromCoreAST(undefined as any)).toEqual({ type: 'literal', value: null });
     });
 
-    it('handles unknown node type (falls to default)', () => {
+    it('surfaces unknown node type as an error node', () => {
       expect(fromCoreAST(coreNode('someUnknownType', { value: 'data' }))).toEqual({
-        type: 'literal',
-        value: 'data',
+        type: 'error',
+        message: 'Unknown core AST node type: someUnknownType',
       });
     });
 
-    it('handles unknown node type with no value', () => {
+    it('surfaces unknown node type as an error node when value is absent', () => {
       expect(fromCoreAST(coreNode('randomType'))).toEqual({
-        type: 'literal',
-        value: null,
+        type: 'error',
+        message: 'Unknown core AST node type: randomType',
       });
     });
 

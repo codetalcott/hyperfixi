@@ -169,8 +169,8 @@ export function fromCoreAST(node: CoreNode): InterchangeNode {
 
     default:
       return {
-        type: 'literal',
-        value: (node.value as string | number | boolean | null) ?? null,
+        type: 'error' as const,
+        message: `Unknown core AST node type: ${node.type}`,
         ...pos(node),
       };
   }

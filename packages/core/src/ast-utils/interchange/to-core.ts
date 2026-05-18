@@ -214,6 +214,12 @@ function convertRepeat(node: InterchangeNode & { type: 'repeat' }): CoreNode {
         ? { type: 'literal', value: node.count, raw: String(node.count), ...POS }
         : toCoreAST(node.count);
     result.loopVariant = 'times';
+  } else if (node.whileCondition !== undefined) {
+    result.condition = toCoreAST(node.whileCondition);
+    result.loopVariant = 'while';
+  } else if (node.untilEvent !== undefined) {
+    result.untilEvent = node.untilEvent;
+    result.loopVariant = 'until';
   }
 
   return result;

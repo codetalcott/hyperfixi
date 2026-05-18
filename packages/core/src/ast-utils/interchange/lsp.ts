@@ -19,6 +19,14 @@ import type {
   RepeatNode,
   ForEachNode,
   WhileNode,
+  BinaryNode,
+  UnaryNode,
+  MemberNode,
+  PossessiveNode,
+  CallNode,
+  SelectorNode,
+  IdentifierNode,
+  LiteralNode,
 } from './types';
 
 // =============================================================================
@@ -542,23 +550,29 @@ function getChildren(node: InterchangeNode): InterchangeNode[] {
       children.push(...w.body);
       break;
     }
-    case 'binary':
-      children.push((node as any).left, (node as any).right);
+    case 'binary': {
+      const b = node as BinaryNode;
+      children.push(b.left, b.right);
       break;
+    }
     case 'unary':
-      children.push((node as any).operand);
+      children.push((node as UnaryNode).operand);
       break;
-    case 'member':
-      children.push((node as any).object);
-      if (typeof (node as any).property !== 'string') children.push((node as any).property);
+    case 'member': {
+      const m = node as MemberNode;
+      children.push(m.object);
+      if (typeof m.property !== 'string') children.push(m.property);
       break;
+    }
     case 'possessive':
-      children.push((node as any).object);
+      children.push((node as PossessiveNode).object);
       break;
-    case 'call':
-      children.push((node as any).callee);
-      if ((node as any).args) children.push(...(node as any).args);
+    case 'call': {
+      const c = node as CallNode;
+      children.push(c.callee);
+      if (c.args) children.push(...c.args);
       break;
+    }
   }
 
   return children;
@@ -608,11 +622,11 @@ function estimateLength(node: InterchangeNode): number {
     case 'command':
       return (node as CommandNode).name?.length ?? 5;
     case 'selector':
-      return ((node as any).value?.length ?? 5) + 1;
+      return ((node as SelectorNode).value?.length ?? 5) + 1;
     case 'identifier':
-      return (node as any).value?.length ?? 2;
+      return (node as IdentifierNode).value?.length ?? 2;
     case 'literal':
-      return String((node as any).value ?? '').length + 2;
+      return String((node as LiteralNode).value ?? '').length + 2;
     default:
       return 10;
   }
@@ -698,9 +712,9 @@ function friendlyTypeName(node: InterchangeNode): string {
     case 'while':
       return 'While Loop';
     case 'binary':
-      return `Binary Expression (${(node as any).operator})`;
+      return `Binary Expression (${(node as BinaryNode).operator})`;
     case 'unary':
-      return `Unary Expression (${(node as any).operator})`;
+      return `Unary Expression (${(node as UnaryNode).operator})`;
     case 'literal':
       return 'Literal';
     case 'identifier':
