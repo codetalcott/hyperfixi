@@ -6,19 +6,15 @@
  * registries. Behavior mirrors upstream `_hyperscript/src/core/runtime.js`.
  */
 
-import type { ASTNode, ExecutionContext } from '../types/core';
+import type { ASTNode, ExecutionContext, ExpressionImplementation } from '../types/core';
 import { getRegisteredNodeEvaluator, notifyGlobalRead } from './extensions';
 // Re-export setGlobal for backward-compatible access via the runtime module.
 export { setGlobal } from './extensions';
 
-// Expression-category registries — operators, references, conversions, etc.
-import { referencesExpressions } from '../expressions/references/index';
-import { logicalExpressions } from '../expressions/logical/index';
-import { conversionExpressions } from '../expressions/conversion/index';
-import { positionalExpressions } from '../expressions/positional/index';
-import { propertiesExpressions } from '../expressions/properties/index';
-import { specialExpressions as importedSpecialExpressions } from '../expressions/special/index';
-import { mathematicalExpressions } from '../expressions/mathematical/index';
+// Static imports limited to plain utilities + lazy-evaluating collection helpers,
+// which aren't registered as ExpressionImplementations. Named-expression dispatch
+// (logical operators, references, conversions, positional, properties, math) goes
+// through `context.registry` so bundle entries control which categories ship.
 import { isElement, getElementProperty } from '../expressions/property-access-utils';
 import {
   evaluateWhere,
@@ -29,12 +25,25 @@ import {
 } from '../expressions/collection/index';
 import { parse } from './parser';
 
-// Merged set used by binary-operator dispatch: arithmetic, math, and special
-// literal helpers live in two registries that share a flat lookup surface here.
-const specialExpressions = {
-  ...importedSpecialExpressions,
-  ...mathematicalExpressions,
-};
+/**
+ * Look up a named expression on the runtime context's registry. Throws a clear,
+ * actionable error when missing — the registry is constructed by the bundle
+ * entry, and a miss means the bundle didn't include that expression's category.
+ */
+function getExpr(context: ExecutionContext, name: string): ExpressionImplementation {
+  const impl = context.registry?.get(name);
+  if (!impl) {
+    throw new Error(
+      `Expression '${name}' not in ExecutionContext.registry. ` +
+        `The bundle's ExpressionRegistry must include this expression's category. ` +
+        `Use createExpressionRegistry() with the relevant category objects ` +
+        `(referencesExpressions, logicalExpressions, conversionExpressions, ` +
+        `positionalExpressions, propertiesExpressions, specialExpressions, ` +
+        `mathematicalExpressions).`
+    );
+  }
+  return impl;
+}
 
 // ============================================================================
 // Node shapes — minimal per-helper interfaces over ASTNode.
@@ -116,6 +125,16 @@ function unwrapTypedResult(result: any): any {
 export async function evaluateAST(node: ASTNode, context: ExecutionContext): Promise<any> {
   if (!node) {
     throw new Error('Cannot evaluate null or undefined AST node');
+  }
+
+  // Ensure a registry is available for named-expression dispatch. Callers that
+  // care about tree-shaking always pass a context with `.registry` set, so this
+  // fallback never triggers for size-sensitive bundles. Tests and standalone
+  // eval paths that don't set one get the full registry on demand. The dynamic
+  // import keeps the kitchen-sink category modules out of bundles that never
+  // hit this branch.
+  if (!context.registry) {
+    context = { ...context, registry: await loadFullRegistry() };
   }
 
   // ============================================================================
@@ -218,7 +237,19 @@ export async function evaluateExpressionFromSource(
   }
   // `parse()` returns a single AST node for bare expressions (literal,
   // identifier, binary, member, call, selector, array, object, possessive).
+  // evaluateAST handles registry fallback for callers that didn't set one.
   return evaluateAST(result.node as ASTNode, context);
+}
+
+let cachedFullRegistry: import('../core/expression-registry').ExpressionRegistry | null = null;
+async function loadFullRegistry(): Promise<
+  import('../core/expression-registry').ExpressionRegistry
+> {
+  if (!cachedFullRegistry) {
+    const mod = await import('../expressions/index');
+    cachedFullRegistry = mod.createFullExpressionRegistry();
+  }
+  return cachedFullRegistry;
 }
 
 /**
@@ -238,19 +269,19 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
   // Context variables. Upstream aliases: `my`/`I` → me, `your`/`yourself` →
   // you, `its` → it. Matches `_hyperscript/src/core/runtime.js:resolveSymbol`.
   if (name === 'me' || name === 'my' || name === 'I') {
-    return referencesExpressions.me.evaluate(context);
+    return getExpr(context, 'me').evaluate(context);
   }
   if (name === 'you' || name === 'your' || name === 'yourself') {
-    return referencesExpressions.you.evaluate(context);
+    return getExpr(context, 'you').evaluate(context);
   }
   if (name === 'it' || name === 'its') {
-    return referencesExpressions.it.evaluate(context);
+    return getExpr(context, 'it').evaluate(context);
   }
   if (name === 'window') {
-    return referencesExpressions.window.evaluate(context);
+    return getExpr(context, 'window').evaluate(context);
   }
   if (name === 'document') {
-    return referencesExpressions.document.evaluate(context);
+    return getExpr(context, 'document').evaluate(context);
   }
   if (context.locals && context.locals.has(name)) {
     return context.locals.get(name);
@@ -332,13 +363,13 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
   if (operator === 'and') {
     if (!left) return false;
     const right = await evaluateAST(node.right, context);
-    return logicalExpressions.and.evaluate(context, left, right);
+    return getExpr(context, 'and').evaluate(context, left, right);
   }
 
   if (operator === 'or') {
     if (left) return true;
     const right = await evaluateAST(node.right, context);
-    return logicalExpressions.or.evaluate(context, left, right);
+    return getExpr(context, 'or').evaluate(context, left, right);
   }
 
   // Evaluate right side for other operators
@@ -358,91 +389,91 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
         return String(left ?? '') + String(right ?? '');
       }
       return unwrapTypedResult(
-        await specialExpressions.addition.evaluate(context as any, { left, right })
+        await getExpr(context, 'addition').evaluate(context as any, { left, right })
       );
     case '-':
       return unwrapTypedResult(
-        await specialExpressions.subtraction.evaluate(context as any, { left, right })
+        await getExpr(context, 'subtraction').evaluate(context as any, { left, right })
       );
     case '*':
       return unwrapTypedResult(
-        await specialExpressions.multiplication.evaluate(context as any, { left, right })
+        await getExpr(context, 'multiplication').evaluate(context as any, { left, right })
       );
     case '/':
       return unwrapTypedResult(
-        await specialExpressions.division.evaluate(context as any, { left, right })
+        await getExpr(context, 'division').evaluate(context as any, { left, right })
       );
     case '%':
     case 'mod':
       return unwrapTypedResult(
-        await specialExpressions.modulo.evaluate(context as any, { left, right })
+        await getExpr(context, 'modulo').evaluate(context as any, { left, right })
       );
     case '^':
     case '**':
       return unwrapTypedResult(
-        await specialExpressions.power.evaluate(context as any, { left, right })
+        await getExpr(context, 'power').evaluate(context as any, { left, right })
       );
 
     case '>':
     case 'is greater than':
-      return logicalExpressions.greaterThan.evaluate(context, left, right);
+      return getExpr(context, 'greaterThan').evaluate(context, left, right);
     case '<':
     case 'is less than':
-      return logicalExpressions.lessThan.evaluate(context, left, right);
+      return getExpr(context, 'lessThan').evaluate(context, left, right);
     case '>=':
     case 'is greater than or equal to':
-      return logicalExpressions.greaterThanOrEqual.evaluate(context, left, right);
+      return getExpr(context, 'greaterThanOrEqual').evaluate(context, left, right);
     case '<=':
     case 'is less than or equal to':
-      return logicalExpressions.lessThanOrEqual.evaluate(context, left, right);
+      return getExpr(context, 'lessThanOrEqual').evaluate(context, left, right);
     case '==':
     case 'is':
     case 'am': // upstream alias for `is` (e.g., `if I am .active`)
     case 'equals':
     case 'is equal to':
-      return logicalExpressions.equals.evaluate(context, L, R);
+      return getExpr(context, 'equals').evaluate(context, L, R);
     case '!=':
     case 'is not':
     case 'is not equal to':
-      return logicalExpressions.notEquals.evaluate(context, L, R);
+      return getExpr(context, 'notEquals').evaluate(context, L, R);
     case '===':
     case 'really equals':
     case 'is really equal to':
-      return logicalExpressions.strictEquals.evaluate(context, L, R);
+      return getExpr(context, 'strictEquals').evaluate(context, L, R);
     case '!==':
     case 'is not really equal to':
-      return logicalExpressions.strictNotEquals.evaluate(context, L, R);
+      return getExpr(context, 'strictNotEquals').evaluate(context, L, R);
 
     case 'as':
       // For 'as' conversion, right operand should be a string type name
-      return conversionExpressions.as.evaluate(context, left, normalizeAsTargetType(right));
+      return getExpr(context, 'as').evaluate(context, left, normalizeAsTargetType(right));
 
     case 'contains':
-      return logicalExpressions.contains.evaluate(context, L, R);
+      return getExpr(context, 'contains').evaluate(context, L, R);
 
     case 'does not contain':
     case 'does not include':
-      return logicalExpressions.doesNotContain.evaluate(context, L, R);
+      return getExpr(context, 'doesNotContain').evaluate(context, L, R);
 
     case 'starts with':
-      return logicalExpressions.startsWith.evaluate(context, L, R);
+      return getExpr(context, 'startsWith').evaluate(context, L, R);
 
     case 'ends with':
-      return logicalExpressions.endsWith.evaluate(context, L, R);
+      return getExpr(context, 'endsWith').evaluate(context, L, R);
 
     case 'does not start with': {
-      const r = await logicalExpressions.startsWith.evaluate(context, L, R);
+      const r = await getExpr(context, 'startsWith').evaluate(context, L, R);
       return !r;
     }
 
     case 'does not end with': {
-      const r = await logicalExpressions.endsWith.evaluate(context, L, R);
+      const r = await getExpr(context, 'endsWith').evaluate(context, L, R);
       return !r;
     }
 
     case 'match':
     case 'matches':
-      return logicalExpressions.matches.evaluate(context, L, R);
+      return getExpr(context, 'matches').evaluate(context, L, R);
 
     case 'in':
     case 'is in':
@@ -517,7 +548,7 @@ function normalizeAsTargetType(target: unknown): string {
 async function evaluateAsExpressionNode(node: AsNode, context: ExecutionContext): Promise<unknown> {
   const value = await evaluateAST(node.expression, context);
   const typeName = normalizeAsTargetType(node.targetType);
-  return conversionExpressions.as.evaluate(context, value, typeName);
+  return getExpr(context, 'as').evaluate(context, value, typeName);
 }
 
 /**
@@ -533,7 +564,7 @@ async function evaluateBetweenExpression(
   // `ignoring case` applies when bounds are string (lexicographic) ranges
   const ci = (v: unknown): unknown => (typeof v === 'string' ? v.toLowerCase() : v);
   const [V, lo, hi] = node.ignoringCase ? [ci(value), ci(min), ci(max)] : [value, min, max];
-  const inRange = (await logicalExpressions.between.evaluate(context, V, lo, hi)) as boolean;
+  const inRange = (await getExpr(context, 'between').evaluate(context, V, lo, hi)) as boolean;
   return node.negated ? !inRange : inRange;
 }
 
@@ -801,10 +832,10 @@ async function evaluateUnaryExpression(node: UnaryNode, context: ExecutionContex
   switch (node.operator) {
     case 'not':
     case '!':
-      return logicalExpressions.not.evaluate(context, value);
+      return getExpr(context, 'not').evaluate(context, value);
 
     case 'no':
-      return logicalExpressions.no.evaluate(context, value);
+      return getExpr(context, 'no').evaluate(context, value);
 
     case '-':
       return -value;
@@ -815,16 +846,16 @@ async function evaluateUnaryExpression(node: UnaryNode, context: ExecutionContex
     case 'exists':
     case 'some':
       // `some` is upstream's truthy-non-empty check — same semantics as `exists`.
-      return logicalExpressions.exists.evaluate(context, value);
+      return getExpr(context, 'exists').evaluate(context, value);
 
     case 'does not exist':
-      return logicalExpressions.doesNotExist.evaluate(context, value);
+      return getExpr(context, 'doesNotExist').evaluate(context, value);
 
     case 'is empty':
-      return logicalExpressions.isEmpty.evaluate(context, value);
+      return getExpr(context, 'isEmpty').evaluate(context, value);
 
     case 'is not empty':
-      return logicalExpressions.isNotEmpty.evaluate(context, value);
+      return getExpr(context, 'isNotEmpty').evaluate(context, value);
 
     default:
       throw new Error(`Unknown unary operator: ${node.operator}`);
@@ -919,15 +950,15 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
 
     switch (funcName) {
       case 'closest':
-        return referencesExpressions.closest.evaluate(context, ...args);
+        return getExpr(context, 'closest').evaluate(context, ...args);
       case 'previous':
-        return positionalExpressions.previous.evaluate(context, ...args);
+        return getExpr(context, 'previous').evaluate(context, ...args);
       case 'next':
-        return positionalExpressions.next.evaluate(context, ...args);
+        return getExpr(context, 'next').evaluate(context, ...args);
       case 'first':
-        return positionalExpressions.first.evaluate(context, ...args);
+        return getExpr(context, 'first').evaluate(context, ...args);
       case 'last':
-        return positionalExpressions.last.evaluate(context, ...args);
+        return getExpr(context, 'last').evaluate(context, ...args);
       default:
         if (typeof callee === 'function') {
           return callee(...args);
@@ -967,7 +998,7 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
 async function evaluateSelector(node: SelectorNode, context: ExecutionContext): Promise<any> {
   const selector = node.value;
   const escaped = typeof selector === 'string' ? escapeClassColons(selector) : selector;
-  const result = await referencesExpressions.elementWithSelector.evaluate(context, escaped);
+  const result = await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
 
   // Bare `#id` unwraps to single element. `<#id/>` (query-form, marked by
   // parser with `fromQuery: true`) always returns the collection — matches
@@ -1011,7 +1042,7 @@ async function evaluatePossessiveExpression(
   const object = await evaluateAST(node.object, context);
   const propertyName = node.property.name;
 
-  return propertiesExpressions.possessive.evaluate(context, object, propertyName);
+  return getExpr(context, 'possessive').evaluate(context, object, propertyName);
 }
 
 /**

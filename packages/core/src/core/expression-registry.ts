@@ -44,13 +44,22 @@ export type ExpressionRegistry = ReadonlyMap<string, ExpressionImplementation>;
  * );
  * ```
  */
+/**
+ * Build the registry from one or more category objects. Parameter type uses
+ * `Record<string, unknown>` because individual expression implementations
+ * have stricter input/output shapes than `ExpressionImplementation`'s
+ * `(context, ...args: unknown[])` signature — covariance bites if we try to
+ * require the strict shape. The cast on `map.set` is safe because every
+ * category module ships interchangeable `evaluate` implementations.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createExpressionRegistry(
-  ...categories: ReadonlyArray<Record<string, ExpressionImplementation>>
+  ...categories: ReadonlyArray<Readonly<Record<string, any>>>
 ): ExpressionRegistry {
   const map = new Map<string, ExpressionImplementation>();
   for (const category of categories) {
     for (const [name, impl] of Object.entries(category)) {
-      map.set(name, impl);
+      map.set(name, impl as ExpressionImplementation);
     }
   }
   return map;
