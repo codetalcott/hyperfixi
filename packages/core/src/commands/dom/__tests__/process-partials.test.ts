@@ -275,7 +275,9 @@ describe('ProcessPartialsCommand (Decorated)', () => {
     });
 
     it('should skip elements without target attribute', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // Missing-target elements are skipped silently in production
+      // (debug.command logging only fires when hyperfixi:debug is enabled).
+      // See process-partials.ts:94.
       const html = `
         <hx-partial><p>No target</p></hx-partial>
         <hx-partial target="#valid"><p>Has target</p></hx-partial>
@@ -285,7 +287,6 @@ describe('ProcessPartialsCommand (Decorated)', () => {
 
       expect(partials).toHaveLength(1);
       expect(partials[0].target).toBe('#valid');
-      expect(warnSpy).toHaveBeenCalled();
     });
   });
 
@@ -464,7 +465,9 @@ describe('ProcessPartialsCommand (Decorated)', () => {
     });
 
     it('should report error for missing target in end-to-end flow', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // Missing-target errors surface on result.errors and via the
+      // hyperfixi:partials / lokascript:partials event — not console.warn.
+      // See process-partials.ts:312-313.
       const context = createMockContext();
       const evaluator = createMockEvaluator();
       const htmlContent =
@@ -487,10 +490,6 @@ describe('ProcessPartialsCommand (Decorated)', () => {
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toContain('#does-not-exist');
       expect(result.errors[0]).toContain('not found');
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('partials failed'),
-        expect.any(Array)
-      );
     });
   });
 });
