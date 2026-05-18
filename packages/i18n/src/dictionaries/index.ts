@@ -1,7 +1,7 @@
 /**
  * Dictionary Index
  *
- * Exports dictionaries for all 22 supported languages.
+ * Exports dictionaries for all supported languages.
  * Each dictionary maps English canonical keywords to locale-specific translations
  * across 8 categories: commands, modifiers, events, logical, temporal, values,
  * attributes, and expressions.
@@ -36,6 +36,7 @@ import { bengaliDictionary as bnDict } from './bn';
 import { thaiDictionary as thDict } from './th';
 import { malayDictionary as msDict } from './ms';
 import { tagalogDictionary as tlDict } from './tl';
+import { he as heDict } from './he';
 
 // =============================================================================
 // Dictionary Exports
@@ -87,6 +88,8 @@ export const th: Dictionary = thDict;
 export const ms: Dictionary = msDict;
 /** Tagalog dictionary */
 export const tl: Dictionary = tlDict;
+/** Hebrew dictionary */
+export const he: Dictionary = heDict;
 
 // =============================================================================
 // Dictionary Registry
@@ -119,6 +122,7 @@ export const dictionaries: Record<string, Dictionary> = {
   th,
   ms,
   tl,
+  he,
 };
 
 // =============================================================================

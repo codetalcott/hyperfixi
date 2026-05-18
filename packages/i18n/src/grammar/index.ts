@@ -46,6 +46,7 @@ export {
   tagalogProfile,
   thaiProfile,
   polishProfile,
+  hebrewProfile,
 } from './profiles';
 
 // Direct language-pair translation

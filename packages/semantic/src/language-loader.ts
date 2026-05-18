@@ -218,6 +218,11 @@ const LANGUAGE_IMPORTERS: Record<string, () => Promise<LanguageModule>> = {
     const { vietnameseProfile } = await import('./generators/profiles/vietnamese');
     return { tokenizer: vietnameseTokenizer, profile: vietnameseProfile };
   },
+  he: async () => {
+    const { hebrewTokenizer } = await import('./tokenizers/he');
+    const { hebrewProfile } = await import('./generators/profiles/hebrew');
+    return { tokenizer: hebrewTokenizer, profile: hebrewProfile };
+  },
 };
 
 /**

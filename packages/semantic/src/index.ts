@@ -31,9 +31,14 @@
 // Register All Languages (Full Bundle)
 // =============================================================================
 
-// Import to register all 13 languages. This enables tree-shaking for minimal bundles
+// Import to register all languages. This enables tree-shaking for minimal bundles
 // by importing only specific languages (e.g., './languages/en').
 import './languages/_all';
+
+// Canonical list of supported languages, derived from the language-loader's
+// LANGUAGE_IMPORTERS map. Used by the public `getSupportedLanguages()` below
+// so adding a language to the loader automatically extends the public API.
+import { SUPPORTED_LANGUAGES } from './language-loader';
 
 // =============================================================================
 // Core Types
@@ -230,9 +235,12 @@ export type { PossessiveConfig } from './registry';
 
 /**
  * Get all supported languages for parsing.
+ *
+ * Derived from the canonical language-loader registry, so adding a new
+ * language to LANGUAGE_IMPORTERS automatically extends this list.
  */
 export function getSupportedLanguages(): string[] {
-  return ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw'];
+  return [...SUPPORTED_LANGUAGES];
 }
 
 /**
@@ -454,6 +462,9 @@ export {
   canLoadLanguage,
   getLoadedLanguages,
   getUnloadedLanguages,
+  // Canonical supported-language list (single source of truth)
+  SUPPORTED_LANGUAGES,
+  // Backward-compatible alias
   SUPPORTED_LANGUAGES as LAZY_LOAD_LANGUAGES,
   // Types
   type LoadLanguageOptions,

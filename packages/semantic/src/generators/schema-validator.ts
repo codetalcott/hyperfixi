@@ -28,7 +28,7 @@ export { SchemaErrorCodes };
  * Result from validating a single command schema.
  *
  * The `items` array contains all validation results with machine-readable codes.
- * For backward compatibility, `notes`, `warnings`, and `errors` getters are provided.
+ * Filter by severity at the call site: `items.filter(i => i.severity === 'error')`.
  */
 export interface SchemaValidation {
   action: ActionType;
@@ -37,37 +37,15 @@ export interface SchemaValidation {
 }
 
 /**
- * Extended validation result with backward-compatible getters.
+ * Validation result for a single command schema.
  */
-export interface SchemaValidationResult extends SchemaValidation {
-  /** @deprecated Since v1.3.0. Will be removed in v2.0.0. Use items.filter(i => i.severity === 'note') */
-  readonly notes: string[];
-  /** @deprecated Since v1.3.0. Will be removed in v2.0.0. Use items.filter(i => i.severity === 'warning') */
-  readonly warnings: string[];
-  /** @deprecated Since v1.3.0. Will be removed in v2.0.0. Use items.filter(i => i.severity === 'error') */
-  readonly errors: string[];
-}
+export type SchemaValidationResult = SchemaValidation;
 
-/**
- * Create a SchemaValidationResult with backward-compatible getters.
- */
 function createValidationResult(
   action: ActionType,
   items: SchemaValidationItem[]
 ): SchemaValidationResult {
-  return {
-    action,
-    items,
-    get notes() {
-      return items.filter(i => i.severity === 'note').map(i => i.message);
-    },
-    get warnings() {
-      return items.filter(i => i.severity === 'warning').map(i => i.message);
-    },
-    get errors() {
-      return items.filter(i => i.severity === 'error').map(i => i.message);
-    },
-  };
+  return { action, items };
 }
 
 // Commands where multi-type patient roles are intentional (not ambiguous)

@@ -8,35 +8,10 @@
 import { describe, it, expect } from 'vitest';
 import { dictionaries } from './dictionaries';
 import type { Dictionary } from './types';
+import { COMPLETE_LANGUAGES } from './test-utils/complete-languages';
 
 // Focus on when/where which were the main TODO items we fixed
 const REQUIRED_LOGICAL_KEYWORDS = ['when', 'where', 'and', 'or', 'not'] as const;
-
-// Languages that are fully implemented (not placeholder stubs)
-const COMPLETE_LANGUAGES = [
-  'en',
-  'es',
-  'ja',
-  'ko',
-  'ar',
-  'id',
-  'pt',
-  'it',
-  'vi',
-  'qu',
-  'sw',
-  'pl',
-  'ru',
-  'zh',
-  'hi',
-  'bn',
-  'de',
-  'th',
-  'fr',
-  'uk',
-  'tl',
-  'ms',
-] as const;
 
 // Languages with placeholder translations (none currently)
 const INCOMPLETE_LANGUAGES = [] as const;

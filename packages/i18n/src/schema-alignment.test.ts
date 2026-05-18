@@ -16,6 +16,7 @@ import { commandSchemas } from '@lokascript/semantic';
 import { dictionaries } from './dictionaries';
 import type { Dictionary } from './types';
 import { DICTIONARY_CATEGORIES } from './types';
+import { COMPLETE_LANGUAGES } from './test-utils/complete-languages';
 
 /**
  * Dictionaries store each English keyword once in whichever category it
@@ -38,33 +39,6 @@ const NON_USER_FACING_ACTIONS = new Set(['compound', 'init', 'behavior']);
 // Event handler 'on' is a top-level feature, not a command the user writes at
 // command position in the same way. It's handled specially by the parser.
 // Still, it has an i18n entry under `commands` in en.ts.
-
-// Languages we consider "complete" for schema coverage. Kept in sync with
-// translation-validation.test.ts's COMPLETE_LANGUAGES.
-const COMPLETE_LANGUAGES = [
-  'en',
-  'es',
-  'ja',
-  'ko',
-  'ar',
-  'id',
-  'pt',
-  'it',
-  'vi',
-  'qu',
-  'sw',
-  'pl',
-  'ru',
-  'zh',
-  'hi',
-  'bn',
-  'de',
-  'th',
-  'fr',
-  'uk',
-  'tl',
-  'ms',
-] as const;
 
 describe('Schema ↔ i18n alignment', () => {
   const schemaActions = Object.keys(commandSchemas).filter(

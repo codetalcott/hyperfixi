@@ -53,14 +53,17 @@ describe('Language Loader', () => {
   // ==========================================================================
 
   describe('SUPPORTED_LANGUAGES', () => {
-    it('contains exactly 23 languages', () => {
-      expect(SUPPORTED_LANGUAGES).toHaveLength(23);
+    // Explicit expected list — when adding a language, append it here so the
+    // assertion stays meaningful without becoming a magic number.
+    const EXPECTED_LANGUAGES = ['ar', 'bn', 'de', 'en', 'es', 'fr', 'he', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
+
+    it(`contains exactly ${EXPECTED_LANGUAGES.length} languages`, () => {
+      expect(SUPPORTED_LANGUAGES).toHaveLength(EXPECTED_LANGUAGES.length);
     });
 
     it('contains all expected language codes', () => {
-      const expected = ['ar', 'bn', 'de', 'en', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'sw', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];
-      for (const code of expected) {
-        expect(SUPPORTED_LANGUAGES).toContain(code);
+      for (const code of EXPECTED_LANGUAGES) {
+        expect(SUPPORTED_LANGUAGES, `missing code: ${code}`).toContain(code);
       }
     });
 
@@ -148,9 +151,9 @@ describe('Language Loader', () => {
       expect(results[2].error).toBeUndefined();
     });
 
-    it('loads all 23 languages without errors', async () => {
+    it('loads every supported language without errors', async () => {
       const results = await loadLanguages(SUPPORTED_LANGUAGES, { skipIfRegistered: false });
-      expect(results).toHaveLength(23);
+      expect(results).toHaveLength(SUPPORTED_LANGUAGES.length);
       const errors = results.filter(r => r.error);
       expect(errors).toHaveLength(0);
     });
@@ -169,7 +172,7 @@ describe('Language Loader', () => {
     it('returns all languages when all are registered', () => {
       // Test setup registers all languages
       const loaded = getLoadedLanguages();
-      expect(loaded.length).toBe(23);
+      expect(loaded.length).toBe(SUPPORTED_LANGUAGES.length);
     });
 
     it('contains only valid language codes', () => {

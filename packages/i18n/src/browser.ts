@@ -59,6 +59,7 @@ export { bnKeywords, bnDictionary } from './parser/bn';
 export { thKeywords, thDictionary } from './parser/th';
 export { msKeywords, msDictionary } from './parser/ms';
 export { tlKeywords, tlDictionary } from './parser/tl';
+export { heKeywords, heDictionary } from './parser/he';
 
 // Locale management
 export { LocaleManager, detectBrowserLocale } from './parser/locale-manager';
@@ -87,6 +88,7 @@ export { bn } from './dictionaries/bn';
 export { th } from './dictionaries/th';
 export { ms } from './dictionaries/ms';
 export { tl } from './dictionaries/tl';
+export { he } from './dictionaries/he';
 
 // Grammar-aware transformation system (Phase 2)
 export {
@@ -127,6 +129,7 @@ export {
   indonesianProfile,
   quechuaProfile,
   swahiliProfile,
+  hebrewProfile,
   // Direct language-pair translation
   directMappings,
   hasDirectMapping,

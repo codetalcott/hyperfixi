@@ -40,30 +40,37 @@ import type { ParsedElement, SemanticRole } from './types';
 describe('Language Profiles', () => {
   it('should have profiles for all supported locales', () => {
     const locales = getSupportedLocales();
-    expect(locales).toContain('en');
-    expect(locales).toContain('ja');
-    expect(locales).toContain('ko');
-    expect(locales).toContain('zh');
-    expect(locales).toContain('ar');
-    expect(locales).toContain('tr');
-    expect(locales).toContain('es');
-    expect(locales).toContain('de');
-    expect(locales).toContain('fr');
-    expect(locales).toContain('pt');
-    expect(locales).toContain('id');
-    expect(locales).toContain('qu');
-    expect(locales).toContain('sw');
-    expect(locales).toContain('bn');
-    // New languages added
-    expect(locales).toContain('it');
-    expect(locales).toContain('ru');
-    expect(locales).toContain('uk');
-    expect(locales).toContain('vi');
-    expect(locales).toContain('hi');
-    expect(locales).toContain('tl');
-    expect(locales).toContain('th');
-    expect(locales).toContain('pl');
-    expect(locales.length).toBe(22);
+    // Explicit expected list — when adding a profile, append it here so the
+    // count assertion stays meaningful without becoming a magic number.
+    const expectedLocales = [
+      'en',
+      'ja',
+      'ko',
+      'zh',
+      'ar',
+      'tr',
+      'es',
+      'de',
+      'fr',
+      'pt',
+      'id',
+      'qu',
+      'sw',
+      'bn',
+      'it',
+      'ru',
+      'uk',
+      'vi',
+      'hi',
+      'tl',
+      'th',
+      'pl',
+      'he',
+    ];
+    for (const code of expectedLocales) {
+      expect(locales, `missing profile: ${code}`).toContain(code);
+    }
+    expect(locales.length).toBe(expectedLocales.length);
   });
 
   it('should return undefined for unknown locales', () => {

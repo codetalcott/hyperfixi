@@ -55,6 +55,7 @@ export { bnKeywords, bnDictionary } from './bn';
 export { thKeywords, thDictionary } from './th';
 export { msKeywords, msDictionary } from './ms';
 export { tlKeywords, tlDictionary } from './tl';
+export { heKeywords, heDictionary } from './he';
 
 // Locale management
 export { LocaleManager, detectBrowserLocale } from './locale-manager';

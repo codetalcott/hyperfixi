@@ -827,6 +827,36 @@ export const polishProfile: LanguageProfile = {
 };
 
 // =============================================================================
+// Hebrew (SVO, RTL, Prepositions)
+// =============================================================================
+
+export const hebrewProfile: LanguageProfile = {
+  code: 'he',
+  name: 'עברית',
+
+  wordOrder: 'SVO', // Modern Hebrew is predominantly SVO (Biblical Hebrew was VSO)
+  adpositionType: 'preposition',
+  morphology: 'fusional', // Root-and-pattern (Semitic), like Arabic
+  direction: 'rtl',
+
+  canonicalOrder: ['event', 'action', 'patient', 'destination'],
+
+  // Hebrew uses single-letter prefix prepositions (ב, ל, מ, כ) that attach to
+  // the following word. For tokenization we treat them as spaced forms.
+  markers: [
+    { form: 'ב', role: 'event', position: 'preposition', required: true },
+    { form: 'על', role: 'destination', position: 'preposition', required: false },
+    { form: 'אל', role: 'destination', position: 'preposition', required: false },
+    { form: 'ל', role: 'destination', position: 'preposition', required: false },
+    { form: 'את', role: 'patient', position: 'preposition', required: false }, // Direct object marker
+    { form: 'מ', role: 'source', position: 'preposition', required: false },
+    { form: 'מן', role: 'source', position: 'preposition', required: false },
+    { form: 'עם', role: 'style', position: 'preposition', required: false },
+    { form: 'כ', role: 'method', position: 'preposition', required: false },
+  ],
+};
+
+// =============================================================================
 // Profile Registry
 // =============================================================================
 
@@ -854,6 +884,7 @@ export const profiles: Record<string, LanguageProfile> = {
   tl: tagalogProfile,
   th: thaiProfile,
   pl: polishProfile,
+  he: hebrewProfile,
 };
 
 export function getProfile(locale: string): LanguageProfile | undefined {
