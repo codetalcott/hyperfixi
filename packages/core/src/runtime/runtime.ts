@@ -4,7 +4,7 @@
  */
 
 import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';
-import { CommandRegistryV2, type CommandWithParseInput } from './command-adapter';
+import { CommandRegistryV2 } from './command-adapter';
 import { createFullExpressionRegistry } from '../expressions/index';
 
 // Import all 48 V2 commands
@@ -300,34 +300,4 @@ export class Runtime extends RuntimeBase {
  */
 export function createRuntime(options: RuntimeOptions = {}): Runtime {
   return new Runtime(options);
-}
-
-/**
- * Factory function for creating a minimal runtime with custom commands
- *
- * Example usage:
- * ```typescript
- * import { createMinimalRuntime } from './runtime';
- * import { createHideCommand, createShowCommand } from '../commands';
- *
- * const runtime = createMinimalRuntime([
- *   createHideCommand(),
- *   createShowCommand()
- * ]);
- * ```
- */
-export function createMinimalRuntime(
-  commands: CommandWithParseInput[],
-  options: Omit<RuntimeOptions, 'registry'> = {}
-): Runtime {
-  const registry = new CommandRegistryV2();
-
-  for (const command of commands) {
-    registry.register(command);
-  }
-
-  return new Runtime({
-    ...options,
-    registry,
-  });
 }
