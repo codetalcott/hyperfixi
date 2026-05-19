@@ -21,7 +21,7 @@ import type {
 import {
   toNumber,
   ensureFinite,
-  isNumeric,
+  canBeNumeric,
   safeDivide,
   safeModulo,
   validateBinaryInput,
@@ -85,16 +85,11 @@ export class AdditionExpression implements BaseTypedExpression<number> {
     if (!result.isValid) return result;
 
     const { left, right } = input as { left: unknown; right: unknown };
-    // Accept anything `toNumber` can convert: primitives, null/undefined, and
-    // objects (DOM elements expose textContent/value; toNumber extracts those).
-    // Reject only primitives that are clearly non-numeric (e.g. unparseable strings).
-    const acceptsObject = (v: unknown) =>
-      v === null ||
-      v === undefined ||
-      typeof v === 'boolean' ||
-      typeof v === 'object' ||
-      isNumeric(v);
-    if (!acceptsObject(left)) {
+    // Validator delegates to canBeNumeric (single source of truth shared with
+    // toNumber). Drift between the two is what produced the [object Object]
+    // counter regression on 2026-05-19 — never reintroduce a parallel
+    // primitive-type check here.
+    if (!canBeNumeric(left)) {
       return {
         isValid: false,
         errors: [
@@ -106,7 +101,7 @@ export class AdditionExpression implements BaseTypedExpression<number> {
         suggestions: ['Provide a numeric value for left operand'],
       };
     }
-    if (!acceptsObject(right)) {
+    if (!canBeNumeric(right)) {
       return {
         isValid: false,
         errors: [

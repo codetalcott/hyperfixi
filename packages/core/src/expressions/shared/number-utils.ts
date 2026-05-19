@@ -130,6 +130,27 @@ export function ensureFinite(num: number, operation: string): number {
 }
 
 /**
+ * Returns true iff `toNumber(value)` would succeed.
+ *
+ * Single source of truth for validators that want to reject inputs `toNumber`
+ * can't handle. Use this instead of a parallel `isNumeric`-style check, which
+ * inevitably drifts (the validator rejected DOM elements that `toNumber` knew
+ * how to read via `textContent`, silently propagating failure shapes through
+ * the arithmetic registry — bug 2026-05-19).
+ *
+ * @param value - Value to check
+ * @returns true if value can be converted to a finite number
+ */
+export function canBeNumeric(value: unknown): boolean {
+  try {
+    toNumber(value, '_');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Check if value is numeric (finite number or numeric string)
  *
  * @param value - Value to check

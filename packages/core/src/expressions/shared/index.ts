@@ -18,6 +18,7 @@ export {
   toNumberOrNull,
   ensureFinite,
   isNumeric,
+  canBeNumeric,
   safeDivide,
   safeModulo,
 } from './number-utils';
