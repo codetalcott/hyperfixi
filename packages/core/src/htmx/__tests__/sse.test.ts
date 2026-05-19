@@ -189,6 +189,35 @@ describe('SSE integration', () => {
       proc.destroy();
     });
 
+    it('honors changes to hx-swap between events (cache invalidates on signature change)', async () => {
+      const { ctor, instances } = createMockEventSourceFactory();
+      const calls: string[] = [];
+      const proc = new HtmxAttributeProcessor({
+        watchMutations: false,
+        eventSourceCtor: ctor,
+      });
+      proc.init(async code => {
+        calls.push(code);
+      });
+      const el = mkElement('<div sse-connect="/s" sse-swap="tick" hx-swap="innerHTML"></div>');
+      proc.processElement(el);
+      instances[0].fireOpen();
+      // First event uses innerHTML.
+      instances[0].emit('tick', '<i>a</i>');
+      await Promise.resolve();
+      expect(calls[0]).toContain('put');
+      expect(calls[0]).toContain('"<i>a</i>"');
+      // Mutate hx-swap; subsequent events should pick up the new strategy
+      // (signature change invalidates the cached template).
+      el.setAttribute('hx-swap', 'outerHTML');
+      instances[0].emit('tick', '<b>b</b>');
+      await Promise.resolve();
+      expect(calls).toHaveLength(2);
+      expect(calls[1]).toContain('outerHTML');
+      expect(calls[1]).toContain('"<b>b</b>"');
+      proc.destroy();
+    });
+
     it('honors hx-swap=outerHTML for incoming events', async () => {
       const { ctor, instances } = createMockEventSourceFactory();
       const calls: string[] = [];

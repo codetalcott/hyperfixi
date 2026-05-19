@@ -232,45 +232,38 @@ const FX_EVENTS = {
 } as const;
 
 /**
- * Build the hyperscript snippet that performs the swap for an incoming SSE
- * event. Mirrors the htmx-request swap shape: `it` is set to the event
- * payload, then the configured swap command runs against `hx-target` /
- * `hx-swap` (defaulting to `innerHTML` on the source element).
+ * Build a swap-snippet template for an SSE/WS connection. The template is a
+ * closure that takes a JSON-stringified data literal and returns the
+ * hyperscript snippet to execute. Splitting build (config-time, once per
+ * element) from invocation (event-time, possibly many times per second)
+ * lets the processor cache the template per element and skip the
+ * resolveHxTarget call + ternary chain on each event.
  */
-function buildSSESwapHyperscript(data: string, config: HtmxConfig, element: Element): string {
+function buildSSESwapTemplate(config: HtmxConfig): (dataLit: string) => string {
   const target = config.target ?? 'me';
   const swap = config.swap ?? 'innerHTML';
-  // JSON.stringify produces a valid hyperscript string literal — escaping
-  // newlines, quotes, etc. without us re-implementing it.
-  const dataLit = JSON.stringify(data);
-
   // Resolve `hx-target` using the same resolver as the request-cycle path
   // (htmx-translator.ts). Handles `this`/`me`, `closest <sel>`, `find <sel>`,
   // `next <sel>`, `previous <sel>`, and plain CSS selectors uniformly.
-  const resolvedTarget = resolveHxTarget(target);
-
-  const swapCmd =
-    swap === 'outerHTML'
-      ? `set ${resolvedTarget}'s outerHTML to ${dataLit}`
-      : swap === 'beforebegin'
-        ? `put ${dataLit} before ${resolvedTarget}`
-        : swap === 'afterend'
-          ? `put ${dataLit} after ${resolvedTarget}`
-          : swap === 'afterbegin'
-            ? `put ${dataLit} at start of ${resolvedTarget}`
-            : swap === 'beforeend'
-              ? `put ${dataLit} at end of ${resolvedTarget}`
-              : swap === 'none'
-                ? ''
-                : swap === 'delete'
-                  ? `remove ${resolvedTarget}`
-                  : // Default: innerHTML
-                    `put ${dataLit} into ${resolvedTarget}`;
-  // `element` is captured for future per-element selector resolution; the
-  // current shape just passes through `me` so no use yet. Kept as a param
-  // so we don't have to re-thread it when more swap strategies care.
-  void element;
-  return swapCmd;
+  const t = resolveHxTarget(target);
+  switch (swap) {
+    case 'outerHTML':
+      return d => `set ${t}'s outerHTML to ${d}`;
+    case 'beforebegin':
+      return d => `put ${d} before ${t}`;
+    case 'afterend':
+      return d => `put ${d} after ${t}`;
+    case 'afterbegin':
+      return d => `put ${d} at start of ${t}`;
+    case 'beforeend':
+      return d => `put ${d} at end of ${t}`;
+    case 'none':
+      return () => '';
+    case 'delete':
+      return () => `remove ${t}`;
+    default:
+      return d => `put ${d} into ${t}`;
+  }
 }
 
 export class HtmxAttributeProcessor {
@@ -295,6 +288,29 @@ export class HtmxAttributeProcessor {
   private wsConnectionsSet = new Set<WSConnection>();
   /** Listeners installed on ws-send sources, for cleanup on detach. */
   private wsSendListeners = new WeakMap<Element, () => void>();
+
+  /**
+   * Per-element swap template cache. Each SSE/WS event re-reads
+   * `hx-target` / `hx-swap` so dynamic attribute changes are honored; the
+   * template (closure over the resolved target + swap strategy) is then
+   * looked up by `${target}|${swap}` signature. Cache hits skip
+   * resolveHxTarget + the swap-strategy ternary on high-frequency feeds;
+   * misses re-build only when the attributes actually change.
+   */
+  private swapTemplateCache = new WeakMap<
+    Element,
+    { sig: string; build: (dataLit: string) => string }
+  >();
+
+  /** Build (or look up) the swap-snippet template for this element. */
+  private getSwapTemplate(element: Element, config: HtmxConfig): (dataLit: string) => string {
+    const sig = `${config.target ?? 'me'}|${config.swap ?? 'innerHTML'}`;
+    const cached = this.swapTemplateCache.get(element);
+    if (cached && cached.sig === sig) return cached.build;
+    const build = buildSSESwapTemplate(config);
+    this.swapTemplateCache.set(element, { sig, build });
+    return build;
+  }
 
   /** Optional EventSource constructor override (tests inject a mock). */
   private eventSourceCtor: SSEEventSourceCtor | undefined;
@@ -407,14 +423,15 @@ export class HtmxAttributeProcessor {
     const swapHandler = (eventName: string, data: string): void => {
       // Build a tiny hyperscript snippet that surfaces the event payload
       // through the normal swap flow. We re-derive target/swap on each
-      // event so dynamic attribute changes are honored.
+      // event so dynamic attribute changes are honored; the swap-template
+      // closure is cached per element keyed by the attribute pair.
       const config: HtmxConfig = {
         url: undefined,
         method: 'GET',
         target: element.getAttribute('hx-target') ?? undefined,
         swap: element.getAttribute('hx-swap') ?? 'innerHTML',
       };
-      const swapHs = buildSSESwapHyperscript(data, config, element);
+      const swapHs = this.getSwapTemplate(element, config)(JSON.stringify(data));
       if (!swapHs) return;
       // Dispatch a recognizable event so consumers can observe pre-swap.
       this.dispatchLifecycleEvent(
@@ -498,14 +515,16 @@ export class HtmxAttributeProcessor {
 
     const swapHandler = (envelope: WSSwapEnvelope, _rawData: string): void => {
       // Build a fresh swap snippet per envelope so per-message overrides
-      // (envelope.target / envelope.swap) are honored.
+      // (envelope.target / envelope.swap) are honored. The template-cache
+      // lookup keys off (target|swap) so repeated envelopes with the same
+      // shape hit a cached closure.
       const config: HtmxConfig = {
         url: undefined,
         method: 'GET',
         target: envelope.target,
         swap: envelope.swap ?? element.getAttribute('hx-swap') ?? 'innerHTML',
       };
-      const swapHs = buildSSESwapHyperscript(envelope.data, config, element);
+      const swapHs = this.getSwapTemplate(element, config)(JSON.stringify(envelope.data));
       if (!swapHs) return;
       this.dispatchLifecycleEvent(
         element,
