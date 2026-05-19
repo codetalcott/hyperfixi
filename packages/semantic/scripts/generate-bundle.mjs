@@ -412,18 +412,10 @@ export { render, renderExplicit, toExplicit, fromExplicit } from './explicit';
 export { buildAST, ASTBuilder, getCommandMapper, registerCommandMapper } from './ast-builder';
 
 // =============================================================================
-// Semantic Analyzer (for core parser integration)
+// Confidence Thresholds (for core parser integration)
 // =============================================================================
 
-export {
-  createSemanticAnalyzer,
-  SemanticAnalyzerImpl,
-  shouldUseSemanticResult,
-  DEFAULT_CONFIDENCE_THRESHOLD,
-  HIGH_CONFIDENCE_THRESHOLD,
-} from './core-bridge';
-
-export type { SemanticAnalyzer, SemanticAnalysisResult } from './core-bridge';
+export { DEFAULT_CONFIDENCE_THRESHOLD, HIGH_CONFIDENCE_THRESHOLD } from './core-bridge';
 
 // =============================================================================
 // Type Helpers

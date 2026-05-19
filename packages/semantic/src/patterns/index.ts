@@ -19,17 +19,10 @@ import type { LanguageProfile } from '../generators/language-profiles';
 // =============================================================================
 
 // Pattern building
-export {
-  buildPatternsForLanguage,
-  buildAllPatterns,
-  getGeneratedPatterns,
-  getHandcraftedLanguages,
-} from './builders';
+export { buildPatternsForLanguage, getHandcraftedLanguages } from './builders';
 
 // Pattern lookup and cache
 export {
-  allPatterns,
-  getAllPatterns,
   getPatternsForLanguage,
   getPatternsForLanguageAndCommand,
   getSupportedLanguages,

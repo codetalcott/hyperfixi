@@ -111,7 +111,6 @@ export {
 // =============================================================================
 
 export {
-  getAllPatterns,
   getPatternsForLanguage,
   getPatternsForLanguageAndCommand,
   getSupportedLanguages as getSupportedPatternLanguages,
@@ -254,18 +253,9 @@ export const VERSION = '0.1.0';
 // =============================================================================
 
 export {
-  // Types
-  type SemanticAnalysisResult,
-  type SemanticAnalyzer,
-  // Implementation
-  SemanticAnalyzerImpl,
-  createSemanticAnalyzer,
   // Thresholds
   DEFAULT_CONFIDENCE_THRESHOLD,
   HIGH_CONFIDENCE_THRESHOLD,
-  // Helpers
-  shouldUseSemanticResult,
-  rolesToCommandArgs,
 } from './core-bridge';
 
 // =============================================================================
@@ -295,12 +285,8 @@ export {
   indonesianProfile,
   quechuaProfile,
   swahiliProfile,
-  languageProfiles,
-  getProfile,
-  getSupportedLanguages as getGeneratorLanguages,
-  isLanguageSupported as isGeneratorLanguageSupported,
 
-  // Static all-known-profiles manifest (non-deprecated successor to languageProfiles)
+  // Static all-known-profiles manifest
   KNOWN_PROFILES,
 
   // Command schemas

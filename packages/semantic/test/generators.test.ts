@@ -15,10 +15,7 @@ import {
   koreanProfile,
   chineseProfile,
   turkishProfile,
-  languageProfiles,
-  getProfile,
-  getSupportedLanguages,
-  isLanguageSupported,
+  KNOWN_PROFILES,
 
   // Command schemas
   toggleSchema,
@@ -85,43 +82,28 @@ describe('Language Profiles', () => {
     });
   });
 
-  describe('getProfile', () => {
-    it('should return profile for valid language code', () => {
-      expect(getProfile('en')).toBe(englishProfile);
-      expect(getProfile('ja')).toBe(japaneseProfile);
-      expect(getProfile('ar')).toBe(arabicProfile);
-      expect(getProfile('es')).toBe(spanishProfile);
+  describe('KNOWN_PROFILES (static manifest)', () => {
+    it('returns profile for valid language code', () => {
+      expect(KNOWN_PROFILES['en']).toBe(englishProfile);
+      expect(KNOWN_PROFILES['ja']).toBe(japaneseProfile);
+      expect(KNOWN_PROFILES['ar']).toBe(arabicProfile);
+      expect(KNOWN_PROFILES['es']).toBe(spanishProfile);
     });
 
-    it('should return undefined for invalid language code', () => {
-      expect(getProfile('invalid')).toBeUndefined();
-      expect(getProfile('')).toBeUndefined();
-    });
-  });
-
-  describe('getSupportedLanguages', () => {
-    it('should return all supported language codes', () => {
-      const languages = getSupportedLanguages();
-      expect(languages).toContain('en');
-      expect(languages).toContain('ja');
-      expect(languages).toContain('ar');
-      expect(languages).toContain('es');
-      expect(languages).toContain('ko');
-      expect(languages).toContain('zh');
-      expect(languages).toContain('tr');
-    });
-  });
-
-  describe('isLanguageSupported', () => {
-    it('should return true for supported languages', () => {
-      expect(isLanguageSupported('en')).toBe(true);
-      expect(isLanguageSupported('ja')).toBe(true);
-      expect(isLanguageSupported('ar')).toBe(true);
+    it('returns undefined for invalid language code', () => {
+      expect(KNOWN_PROFILES['invalid']).toBeUndefined();
+      expect(KNOWN_PROFILES['']).toBeUndefined();
     });
 
-    it('should return false for unsupported languages', () => {
-      expect(isLanguageSupported('invalid')).toBe(false);
-      expect(isLanguageSupported('xx')).toBe(false);
+    it('covers all expected language codes', () => {
+      const codes = Object.keys(KNOWN_PROFILES);
+      expect(codes).toContain('en');
+      expect(codes).toContain('ja');
+      expect(codes).toContain('ar');
+      expect(codes).toContain('es');
+      expect(codes).toContain('ko');
+      expect(codes).toContain('zh');
+      expect(codes).toContain('tr');
     });
   });
 

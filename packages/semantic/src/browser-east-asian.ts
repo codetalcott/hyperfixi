@@ -136,15 +136,7 @@ export { buildAST, ASTBuilder, getCommandMapper, registerCommandMapper } from '.
 // Semantic Analyzer (for core parser integration)
 // =============================================================================
 
-export {
-  createSemanticAnalyzer,
-  SemanticAnalyzerImpl,
-  shouldUseSemanticResult,
-  DEFAULT_CONFIDENCE_THRESHOLD,
-  HIGH_CONFIDENCE_THRESHOLD,
-} from './core-bridge';
-
-export type { SemanticAnalyzer, SemanticAnalysisResult } from './core-bridge';
+export { DEFAULT_CONFIDENCE_THRESHOLD, HIGH_CONFIDENCE_THRESHOLD } from './core-bridge';
 
 // =============================================================================
 // Type Helpers

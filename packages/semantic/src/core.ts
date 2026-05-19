@@ -28,19 +28,9 @@
 // =============================================================================
 
 export {
-  // Types
-  type SemanticAnalysisResult,
-  type SemanticAnalyzer,
-  type SemanticAnalyzerOptions,
-  // Implementation
-  SemanticAnalyzerImpl,
-  createSemanticAnalyzer,
   // Thresholds
   DEFAULT_CONFIDENCE_THRESHOLD,
   HIGH_CONFIDENCE_THRESHOLD,
-  // Helpers
-  shouldUseSemanticResult,
-  rolesToCommandArgs,
   // Cache types
   type SemanticCacheConfig,
   type CacheStats,

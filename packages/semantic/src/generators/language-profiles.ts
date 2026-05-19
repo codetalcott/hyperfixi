@@ -1,17 +1,16 @@
 /**
  * Language Profiles
  *
- * Re-exports from individual profile files for backwards compatibility.
- * For minimal bundles, import specific profiles directly:
+ * Type re-exports and individual profile re-exports.
+ * For tree-shaking, import specific profiles directly:
  *
  * @example
  * ```typescript
- * // Tree-shakeable import
  * import { englishProfile } from './profiles/english';
- *
- * // Full import (all profiles bundled)
- * import { englishProfile, languageProfiles } from './language-profiles';
  * ```
+ *
+ * For the full static manifest of all defined profiles (build-time tooling
+ * use case), import `KNOWN_PROFILES` from `./known-profiles`.
  *
  * @generated This file is auto-generated. Do not edit manually.
  */
@@ -55,91 +54,3 @@ export { tagalogProfile } from './profiles/tl';
 export { turkishProfile } from './profiles/turkish';
 export { ukrainianProfile } from './profiles/ukrainian';
 export { vietnameseProfile } from './profiles/vietnamese';
-
-// Import for creating the combined object
-import { arabicProfile } from './profiles/arabic';
-import { bengaliProfile } from './profiles/bengali';
-import { chineseProfile } from './profiles/chinese';
-import { englishProfile } from './profiles/english';
-import { frenchProfile } from './profiles/french';
-import { germanProfile } from './profiles/german';
-import { hebrewProfile } from './profiles/he';
-import { hindiProfile } from './profiles/hindi';
-import { indonesianProfile } from './profiles/indonesian';
-import { italianProfile } from './profiles/italian';
-import { japaneseProfile } from './profiles/japanese';
-import { koreanProfile } from './profiles/korean';
-import { malayProfile } from './profiles/ms';
-import { polishProfile } from './profiles/polish';
-import { portugueseProfile } from './profiles/portuguese';
-import { quechuaProfile } from './profiles/quechua';
-import { russianProfile } from './profiles/russian';
-import { spanishProfile } from './profiles/spanish';
-import { spanishMexicoProfile } from './profiles/spanishMexico';
-import { swahiliProfile } from './profiles/swahili';
-import { thaiProfile } from './profiles/thai';
-import { tagalogProfile } from './profiles/tl';
-import { turkishProfile } from './profiles/turkish';
-import { ukrainianProfile } from './profiles/ukrainian';
-import { vietnameseProfile } from './profiles/vietnamese';
-import type { LanguageProfile } from './profiles/types';
-
-// =============================================================================
-// Profile Registry (backwards compatibility)
-// =============================================================================
-
-/**
- * All available language profiles.
- * @deprecated Import individual profiles for tree-shaking.
- */
-export const languageProfiles: Record<string, LanguageProfile> = {
-  ar: arabicProfile,
-  bn: bengaliProfile,
-  zh: chineseProfile,
-  en: englishProfile,
-  fr: frenchProfile,
-  de: germanProfile,
-  he: hebrewProfile,
-  hi: hindiProfile,
-  id: indonesianProfile,
-  it: italianProfile,
-  ja: japaneseProfile,
-  ko: koreanProfile,
-  ms: malayProfile,
-  pl: polishProfile,
-  pt: portugueseProfile,
-  qu: quechuaProfile,
-  ru: russianProfile,
-  es: spanishProfile,
-  'es-MX': spanishMexicoProfile,
-  sw: swahiliProfile,
-  th: thaiProfile,
-  tl: tagalogProfile,
-  tr: turkishProfile,
-  uk: ukrainianProfile,
-  vi: vietnameseProfile,
-};
-
-/**
- * Get a language profile by code.
- * @deprecated Use the registry's getProfile instead.
- */
-export function getProfile(code: string): LanguageProfile | undefined {
-  return languageProfiles[code];
-}
-
-/**
- * Get all supported language codes.
- * @deprecated Use the registry's getRegisteredLanguages instead.
- */
-export function getSupportedLanguages(): string[] {
-  return Object.keys(languageProfiles);
-}
-
-/**
- * Check if a language is supported.
- * @deprecated Use the registry's isLanguageRegistered instead.
- */
-export function isLanguageSupported(code: string): boolean {
-  return code in languageProfiles;
-}

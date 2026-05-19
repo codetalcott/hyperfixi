@@ -28,10 +28,6 @@ export {
   indonesianProfile,
   quechuaProfile,
   swahiliProfile,
-  languageProfiles,
-  getProfile,
-  getSupportedLanguages,
-  isLanguageSupported,
 } from './language-profiles';
 
 // Static all-known-profiles manifest (non-deprecated successor to languageProfiles)

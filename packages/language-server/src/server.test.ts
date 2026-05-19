@@ -2095,7 +2095,7 @@ describe('Language Coverage', () => {
     expect(languages.length).toBeGreaterThanOrEqual(20);
 
     for (const lang of languages) {
-      const profile = semanticPackage.getProfile(lang);
+      const profile = semanticPackage.tryGetProfile(lang);
       expect(profile, `missing profile for '${lang}'`).toBeDefined();
       expect(profile.keywords, `missing keywords for '${lang}'`).toBeDefined();
     }
@@ -2127,7 +2127,7 @@ describe('Language Coverage', () => {
     // Build a reverse cache the same way the server does
     const cache = new Map<string, string>();
     for (const lang of others) {
-      const profile = semanticPackage.getProfile(lang);
+      const profile = semanticPackage.tryGetProfile(lang);
       if (profile?.keywords) {
         for (const [canonicalKey, translation] of Object.entries(profile.keywords)) {
           const trans = translation as { primary?: string; alternatives?: string[] };
@@ -2150,7 +2150,7 @@ describe('Language Coverage', () => {
     // should now contribute entries
     const languagesWithKeywords = new Set<string>();
     for (const lang of others) {
-      const profile = semanticPackage.getProfile(lang);
+      const profile = semanticPackage.tryGetProfile(lang);
       if (profile?.keywords && Object.keys(profile.keywords).length > 0) {
         languagesWithKeywords.add(lang);
       }

@@ -38,44 +38,8 @@ function ensureAllPatterns(): LanguagePattern[] {
 }
 
 // =============================================================================
-// All Patterns (Lazy Getter - for backwards compatibility)
-// =============================================================================
-
-/**
- * All registered patterns across all languages.
- * Uses a Proxy to lazily build patterns on first access.
- * @deprecated Since v1.3.0. Targeted for removal in v3.0.0. Use getPatternsForLanguage() for tree-shaking.
- */
-export const allPatterns: LanguagePattern[] = new Proxy([] as LanguagePattern[], {
-  get(_target, prop) {
-    const arr = ensureAllPatterns();
-    const value = Reflect.get(arr, prop);
-    // Bind methods to the actual array, not the proxy target
-    if (typeof value === 'function') {
-      return value.bind(arr);
-    }
-    return value;
-  },
-  // Support iteration (for...of, spread operator)
-  ownKeys() {
-    return Reflect.ownKeys(ensureAllPatterns());
-  },
-  getOwnPropertyDescriptor(_target, prop) {
-    return Reflect.getOwnPropertyDescriptor(ensureAllPatterns(), prop);
-  },
-});
-
-// =============================================================================
 // Pattern Lookup
 // =============================================================================
-
-/**
- * Get all patterns.
- * @deprecated Since v1.3.0. Targeted for removal in v3.0.0. Use getPatternsForLanguage() for tree-shaking.
- */
-export function getAllPatterns(): LanguagePattern[] {
-  return ensureAllPatterns();
-}
 
 /**
  * Get all patterns for a specific language.

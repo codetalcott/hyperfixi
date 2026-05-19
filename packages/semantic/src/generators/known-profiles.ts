@@ -1,10 +1,10 @@
 /**
  * Static manifest of all defined language profiles.
  *
- * Non-deprecated successor to the `languageProfiles` Record in
- * `./language-profiles.ts`. Use this for build-time tooling
- * (grammar generation, translation sync, documentation extraction)
- * that needs to iterate every defined profile, regardless of runtime
+ * Non-deprecated successor to the `languageProfiles` Record that used to
+ * live in `./language-profiles.ts`. Use this for build-time tooling
+ * (grammar generation, translation sync, documentation extraction) that
+ * needs to iterate every defined profile, regardless of runtime
  * registration state.
  *
  * For runtime checks (is this language currently loaded?) use the registry:
@@ -13,15 +13,18 @@
  * Lives outside `./profiles/` because that directory is auto-scanned by
  * `scripts/generate-indexes.ts`; placing a non-language manifest there
  * would be misinterpreted as a new language module.
+ *
+ * @generated This file is auto-generated. Do not edit manually.
  */
 
 import type { LanguageProfile } from './profiles/types';
 import { arabicProfile } from './profiles/arabic';
 import { bengaliProfile } from './profiles/bengali';
-import { chineseProfile } from './profiles/chinese';
-import { englishProfile } from './profiles/english';
-import { frenchProfile } from './profiles/french';
 import { germanProfile } from './profiles/german';
+import { englishProfile } from './profiles/english';
+import { spanishProfile } from './profiles/spanish';
+import { spanishMexicoProfile } from './profiles/spanishMexico';
+import { frenchProfile } from './profiles/french';
 import { hebrewProfile } from './profiles/he';
 import { hindiProfile } from './profiles/hindi';
 import { indonesianProfile } from './profiles/indonesian';
@@ -33,14 +36,13 @@ import { polishProfile } from './profiles/polish';
 import { portugueseProfile } from './profiles/portuguese';
 import { quechuaProfile } from './profiles/quechua';
 import { russianProfile } from './profiles/russian';
-import { spanishProfile } from './profiles/spanish';
-import { spanishMexicoProfile } from './profiles/spanishMexico';
 import { swahiliProfile } from './profiles/swahili';
 import { thaiProfile } from './profiles/thai';
 import { tagalogProfile } from './profiles/tl';
 import { turkishProfile } from './profiles/turkish';
 import { ukrainianProfile } from './profiles/ukrainian';
 import { vietnameseProfile } from './profiles/vietnamese';
+import { chineseProfile } from './profiles/chinese';
 
 export const KNOWN_PROFILES: Readonly<Record<string, LanguageProfile>> = Object.freeze({
   ar: arabicProfile,

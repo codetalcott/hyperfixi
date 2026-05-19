@@ -246,34 +246,23 @@ function generateLanguageProfiles(): void {
     console.warn('   This will cause incorrect keys in language-profiles.ts\n');
   }
 
-  const reExports = languages.map(l =>
-    `export { ${l.profileName} } from './profiles/${l.file}';`
-  ).join('\n');
-
-  const imports = languages.map(l =>
-    `import { ${l.profileName} } from './profiles/${l.file}';`
-  ).join('\n');
-
-  const objectEntries = languages.map(l => {
-    // Quote keys that contain special characters (like hyphens in BCP 47 codes)
-    const key = l.code.includes('-') ? `'${l.code}'` : l.code;
-    return `  ${key}: ${l.profileName},`;
-  }).join('\n');
+  const reExports = languages
+    .map(l => `export { ${l.profileName} } from './profiles/${l.file}';`)
+    .join('\n');
 
   const content = `/**
  * Language Profiles
  *
- * Re-exports from individual profile files for backwards compatibility.
- * For minimal bundles, import specific profiles directly:
+ * Type re-exports and individual profile re-exports.
+ * For tree-shaking, import specific profiles directly:
  *
  * @example
  * \`\`\`typescript
- * // Tree-shakeable import
  * import { englishProfile } from './profiles/english';
- *
- * // Full import (all profiles bundled)
- * import { englishProfile, languageProfiles } from './language-profiles';
  * \`\`\`
+ *
+ * For the full static manifest of all defined profiles (build-time tooling
+ * use case), import \`KNOWN_PROFILES\` from \`./known-profiles\`.
  *
  * @generated This file is auto-generated. Do not edit manually.
  */
@@ -293,50 +282,68 @@ export type {
 
 // Re-export individual profiles
 ${reExports}
-
-// Import for creating the combined object
-${imports}
-import type { LanguageProfile } from './profiles/types';
-
-// =============================================================================
-// Profile Registry (backwards compatibility)
-// =============================================================================
-
-/**
- * All available language profiles.
- * @deprecated Import individual profiles for tree-shaking.
- */
-export const languageProfiles: Record<string, LanguageProfile> = {
-${objectEntries}
-};
-
-/**
- * Get a language profile by code.
- * @deprecated Use the registry's getProfile instead.
- */
-export function getProfile(code: string): LanguageProfile | undefined {
-  return languageProfiles[code];
-}
-
-/**
- * Get all supported language codes.
- * @deprecated Use the registry's getRegisteredLanguages instead.
- */
-export function getSupportedLanguages(): string[] {
-  return Object.keys(languageProfiles);
-}
-
-/**
- * Check if a language is supported.
- * @deprecated Use the registry's isLanguageRegistered instead.
- */
-export function isLanguageSupported(code: string): boolean {
-  return code in languageProfiles;
-}
 `;
 
   fs.writeFileSync(path.join(SEMANTIC_SRC, 'generators/language-profiles.ts'), content);
   console.log(`  Generated: src/generators/language-profiles.ts (${files.length} profiles)`);
+}
+
+/**
+ * Generate src/generators/known-profiles.ts (the canonical static manifest).
+ */
+function generateKnownProfiles(): void {
+  const dir = path.join(SEMANTIC_SRC, 'generators/profiles');
+  const files = getLanguageFiles(dir, ['index.ts', 'types.ts', 'marker-templates.ts']);
+
+  const languages = files.map(f => {
+    const code = Object.keys(LANGUAGE_NAMES).find(c => LANGUAGE_NAMES[c] === f || c === f) || f;
+    const profileName = toProfileName(code);
+    return { code, file: f, profileName };
+  });
+
+  // Sort by code for deterministic output
+  const sorted = [...languages].sort((a, b) => a.code.localeCompare(b.code));
+
+  const imports = sorted
+    .map(l => `import { ${l.profileName} } from './profiles/${l.file}';`)
+    .join('\n');
+
+  const objectEntries = sorted
+    .map(l => {
+      const key = l.code.includes('-') ? `'${l.code}'` : l.code;
+      return `  ${key}: ${l.profileName},`;
+    })
+    .join('\n');
+
+  const content = `/**
+ * Static manifest of all defined language profiles.
+ *
+ * Non-deprecated successor to the \`languageProfiles\` Record that used to
+ * live in \`./language-profiles.ts\`. Use this for build-time tooling
+ * (grammar generation, translation sync, documentation extraction) that
+ * needs to iterate every defined profile, regardless of runtime
+ * registration state.
+ *
+ * For runtime checks (is this language currently loaded?) use the registry:
+ * \`getRegisteredLanguages()\`, \`tryGetProfile()\`, \`isLanguageRegistered()\`.
+ *
+ * Lives outside \`./profiles/\` because that directory is auto-scanned by
+ * \`scripts/generate-indexes.ts\`; placing a non-language manifest there
+ * would be misinterpreted as a new language module.
+ *
+ * @generated This file is auto-generated. Do not edit manually.
+ */
+
+import type { LanguageProfile } from './profiles/types';
+${imports}
+
+export const KNOWN_PROFILES: Readonly<Record<string, LanguageProfile>> = Object.freeze({
+${objectEntries}
+});
+`;
+
+  fs.writeFileSync(path.join(SEMANTIC_SRC, 'generators/known-profiles.ts'), content);
+  console.log(`  Generated: src/generators/known-profiles.ts (${files.length} profiles)`);
 }
 
 /**
@@ -449,6 +456,7 @@ function main() {
   generateLanguagesAll();
   generateProfilesIndex();
   generateLanguageProfiles();
+  generateKnownProfiles();
   generateAllPatternIndexes();
 
   console.log('\nNote: tokenizers/index.ts has static content that shouldn\'t be auto-generated.');

@@ -246,26 +246,23 @@ describe('Performance Edge Cases', () => {
 // Confidence Score Edge Cases
 // =============================================================================
 
-import { createSemanticAnalyzer } from '../src';
+import { parseSemantic } from '../src';
 
 describe('Confidence Score Edge Cases', () => {
   it('should produce high confidence for standard patterns', () => {
-    const analyzer = createSemanticAnalyzer();
-    const result = analyzer.analyze('toggle .active', 'en');
+    const result = parseSemantic('toggle .active', 'en');
     expect(result.confidence).toBeGreaterThanOrEqual(0.5);
   });
 
   it('should have confidence in analysis result', () => {
-    const analyzer = createSemanticAnalyzer();
-    const result = analyzer.analyze('.active を トグル', 'ja');
+    const result = parseSemantic('.active を トグル', 'ja');
     expect(typeof result.confidence).toBe('number');
     expect(result.confidence).toBeGreaterThanOrEqual(0);
     expect(result.confidence).toBeLessThanOrEqual(1);
   });
 
   it('should have low confidence for unparseable input', () => {
-    const analyzer = createSemanticAnalyzer();
-    const result = analyzer.analyze('foobar baz qux', 'en');
+    const result = parseSemantic('foobar baz qux', 'en');
     expect(result.confidence).toBeLessThan(0.5);
   });
 });

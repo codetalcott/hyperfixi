@@ -11,7 +11,12 @@
  * - Thread-safe for browser environments (single-threaded)
  */
 
-import type { SemanticAnalysisResult } from '../core-bridge';
+/**
+ * Cache value type — kept generic to decouple the cache from any specific
+ * result shape. As of v3.0.0 the cache is no longer wired up to a default
+ * consumer; it remains a generic LRU helper.
+ */
+type CachedValue = unknown;
 
 // =============================================================================
 // Types
@@ -34,7 +39,7 @@ export interface SemanticCacheConfig {
  */
 interface CacheEntry {
   /** The cached result */
-  result: SemanticAnalysisResult;
+  result: CachedValue;
   /** Timestamp when entry was created */
   createdAt: number;
   /** Last access timestamp (for LRU) */
@@ -132,7 +137,7 @@ export class SemanticCache {
    * @param language - The language code
    * @returns The cached result, or undefined if not found/expired
    */
-  get(input: string, language: string): SemanticAnalysisResult | undefined {
+  get(input: string, language: string): CachedValue | undefined {
     if (!this.config.enabled) {
       this.stats.misses++;
       return undefined;
@@ -170,11 +175,19 @@ export class SemanticCache {
    * @param language - The language code
    * @param result - The analysis result to cache
    */
-  set(input: string, language: string, result: SemanticAnalysisResult): void {
+  set(input: string, language: string, result: CachedValue): void {
     if (!this.config.enabled) return;
 
-    // Don't cache failed results (confidence 0)
-    if (result.confidence === 0) return;
+    // Don't cache obviously-failed results (e.g. parse results with confidence 0).
+    // We probe defensively because the cache is now generic.
+    if (
+      result !== null &&
+      typeof result === 'object' &&
+      'confidence' in result &&
+      (result as { confidence: unknown }).confidence === 0
+    ) {
+      return;
+    }
 
     const key = this.makeKey(input, language);
     const now = Date.now();
@@ -322,11 +335,11 @@ export function createSemanticCache(config?: SemanticCacheConfig): SemanticCache
  * @param cache - The cache instance to use
  * @returns Wrapped function with caching
  */
-export function withCache<T extends (input: string, language: string) => SemanticAnalysisResult>(
+export function withCache<T extends (input: string, language: string) => CachedValue>(
   analyzeFn: T,
   cache: SemanticCache = semanticCache
 ): T {
-  return ((input: string, language: string): SemanticAnalysisResult => {
+  return ((input: string, language: string): CachedValue => {
     // Check cache first
     const cached = cache.get(input, language);
     if (cached) {

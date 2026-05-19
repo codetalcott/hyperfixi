@@ -32,7 +32,7 @@ import { getEnglishOnlyPatterns } from './languages/en';
 import { generatePatternsForLanguage } from '../generators/pattern-generator';
 
 // Import registry functions for lazy loading support
-import { getRegisteredLanguages, tryGetProfile } from '../registry';
+import { tryGetProfile } from '../registry';
 
 // =============================================================================
 // Pattern Loader Registry
@@ -92,19 +92,6 @@ export function getPatternLoaders(): readonly PatternLoader[] {
 // Using per-language cache instead of global cache to support lazy loading
 // where languages are registered one at a time
 const _generatedPatternsPerLanguage = new Map<string, LanguagePattern[]>();
-
-/**
- * Get all generated patterns (lazy loaded).
- * @deprecated Since v1.3.0. Targeted for removal in v3.0.0. Use getGeneratedPatternsForLanguage() for lazy loading support.
- */
-export function getGeneratedPatterns(): LanguagePattern[] {
-  // For backwards compatibility, generate for all currently registered languages
-  const allPatterns: LanguagePattern[] = [];
-  for (const lang of getRegisteredLanguages()) {
-    allPatterns.push(...getGeneratedPatternsForLanguage(lang));
-  }
-  return allPatterns;
-}
 
 /**
  * Get generated patterns for a specific language.
@@ -191,18 +178,6 @@ const handcraftedLanguages = [
   'tl',
   'he',
 ];
-
-/**
- * Build patterns for all languages.
- * @deprecated Since v1.3.0. Targeted for removal in v3.0.0. Use getPatternsForLanguage() for tree-shaking.
- */
-export function buildAllPatterns(): LanguagePattern[] {
-  const all: LanguagePattern[] = [];
-  for (const lang of handcraftedLanguages) {
-    all.push(...buildPatternsForLanguage(lang));
-  }
-  return all;
-}
 
 /**
  * Get list of all supported languages.
