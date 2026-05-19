@@ -64,14 +64,20 @@
     </p>
     <div class="live-target" hx-live="put $count into me">(still says 0 — no reactivity)</div>
 
-    <h2>Other htmx attributes still work</h2>
+    <h2>Other DOM wiring still works</h2>
     <p>
-      Critically, <em>only</em> the live element is skipped — other htmx wiring on the same page
-      (here, an <code>hx-on:click</code> handler) wires up normally.
+      Critically, <em>only</em> the live element is skipped — regular
+      <code>_="..."</code> hyperscript on the same page wires up normally. The button below uses
+      <code>_=</code> rather than <code>hx-on:click</code> because the htmx-compat layer's
+      <code>hx-on:*</code> implementation has a known gap (see
+      <a href="https://github.com/anthropics/claude-code">project_hx_on_handler_gap</a> in
+      memory): the translator currently runs the handler body as one-shot code instead of
+      registering an event listener, so <code>hx-on:click</code> doesn't fire in either the
+      slim or hx-v4 bundle. <code>_="on click ..."</code> works in both.
     </p>
     <div class="other">
-      <button hx-on:click="this.textContent = 'clicked at ' + new Date().toLocaleTimeString()">
-        I am wired via hx-on:click
+      <button _="on click put 'clicked at ' + (new Date()).toLocaleTimeString() into me">
+        I am wired via _="on click ..."
       </button>
     </div>
 
