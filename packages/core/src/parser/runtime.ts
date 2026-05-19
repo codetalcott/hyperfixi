@@ -190,6 +190,11 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
     case 'conditionalExpression':
       return evaluateConditionalExpression(n, context);
 
+    // Raw string AST node (loop variables, event names, command args parsed
+    // as bare strings — e.g. transition's "*background-color" property arg).
+    case 'string':
+      return n.value;
+
     // Composite expression nodes produced by the canonical parser.
     case 'arrayLiteral':
       return evaluateArrayLiteralNode(n, context);
@@ -388,6 +393,18 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
           if (all.length === 0) return null;
           return posKind === 'first' ? all[0] : all[all.length - 1];
         }
+      }
+    }
+
+    // Scoped query selector: `<X/> in <root>` returns all descendants of <root>
+    // matching X — i.e. tell <p/> in me / tell <details/> in #article2.
+    // Without this, the bare `in` branch below treats the array of pre-resolved
+    // <X> elements as a containment-check against <root>, returning a boolean.
+    if (leftNode?.type === 'selector' && leftNode.fromQuery && typeof leftNode.value === 'string') {
+      const root = await evaluateAST(node.right, context);
+      const scope = root && typeof (root as any).querySelectorAll === 'function' ? root : null;
+      if (scope) {
+        return Array.from((scope as Element).querySelectorAll(leftNode.value));
       }
     }
   }
@@ -930,6 +947,14 @@ async function evaluateMemberExpression(node: MemberNode, context: ExecutionCont
         return object.getAttribute(attrName);
       }
       return undefined;
+    }
+
+    // Element property access routes through getElementProperty so that
+    // `me.*background-color` (parsed as property "computed-background-color")
+    // and special DOM properties resolve correctly. Plain object access
+    // falls back to a direct lookup.
+    if (object instanceof Element && typeof propertyName === 'string') {
+      return getElementProperty(object, propertyName);
     }
 
     return object?.[propertyName];

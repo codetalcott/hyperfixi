@@ -116,6 +116,13 @@ export class ContextBridge {
       ...(context.events !== undefined && { events: context.events }),
       meta: context.meta || {},
 
+      // Bundle-supplied ExpressionRegistry. Commands like `call` invoke
+      // `evaluateAST(node, context)` directly inside their `execute()`, which
+      // requires `context.registry` for named-expression dispatch
+      // (elementWithSelector, addition, etc.). Propagate it through so the
+      // typed context isn't a registry-less downgrade of the original.
+      ...(context.registry !== undefined && { registry: context.registry }),
+
       // Enhanced features for typed commands
       expressionStack: [],
       evaluationDepth: 0,
