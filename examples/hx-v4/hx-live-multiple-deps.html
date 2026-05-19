@@ -52,10 +52,8 @@
          from whatever the body actually touched. -->
     <div
       class="display"
-      hx-live="put 'Total: $' + (($price or 0) * ($quantity or 0)) into me's textContent"
-    >
-      Total: $0
-    </div>
+      hx-live="put 'Total: $' + ($price * $quantity) into me"
+    >Total: $0</div>
 
     <div class="controls">
       <fieldset>
@@ -97,22 +95,11 @@
       </li>
     </ul>
 
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
-    <script type="module">
-      import { reactivityPlugin } from '../../packages/reactivity/dist/index.js';
-      // Capture full-bundle API before the hx bundle overwrites window.hyperfixi.
-      const hf = window.hyperfixi;
-      const runtime = hf.createRuntime();
-      hf.installPlugin(runtime, reactivityPlugin);
-      await hf.run('set $price to 0');
-      await hf.run('set $quantity to 0');
-      await new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = '../../packages/core/dist/hyperfixi-hx.js';
-        s.onload = res;
-        s.onerror = rej;
-        document.head.appendChild(s);
-      });
+    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script>
+      // Seed the globals so the first live render shows a number rather than NaN.
+      window.hyperfixi.run('set $price to 0');
+      window.hyperfixi.run('set $quantity to 0');
     </script>
   </body>
 </html>

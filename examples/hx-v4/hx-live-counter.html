@@ -63,8 +63,8 @@
       <code>$count</code> from any handler re-runs the live body via fine-grained dep tracking.
     </p>
 
-    <!-- The hx-live attribute reads the $count global and writes the result
-         into the element. Any subsequent write to $count re-runs the body. -->
+    <!-- hx-live reads the $count global and writes the result into the element.
+         Any subsequent write to $count re-runs the body. -->
     <div class="counter" hx-live="put $count into me">0</div>
 
     <div>
@@ -76,68 +76,47 @@
 
     <h2>What's happening</h2>
     <ol>
-      <li>The full <code>hyperfixi.js</code> bundle loads (provides Runtime + installPlugin).</li>
-      <li>A module script imports <code>@hyperfixi/reactivity</code> and installs it.</li>
-      <li>Then <code>hyperfixi-hx.js</code> loads. Its scanner sees <code>hx-live</code>, finds the
-        <code>live</code> feature registered, and emits a <code>live ... end</code> block.
+      <li>
+        The <code>hyperfixi-hx-v4.js</code> bundle loads. It bundles the full hyperscript runtime,
+        <code>@hyperfixi/reactivity</code>, and the htmx-compat attribute processor.
       </li>
-      <li>Each button mutates <code>$count</code> via a regular <code>set</code> command — the
-        write fires the reactivity graph's notify hook, which re-runs the live body.
+      <li>
+        Reactivity is installed onto the default runtime at bundle init — that registers the
+        <code>live</code> feature globally and wires <code>$count</code> writes into the
+        notify chain.
+      </li>
+      <li>
+        On <code>DOMContentLoaded</code>, the htmx-compat scanner sees
+        <code>hx-live</code>, translates it to <code>live put $count into me end</code>, and runs
+        it through the same runtime — so its dep-tracked read of <code>$count</code> subscribes
+        to the reactive graph.
+      </li>
+      <li>
+        Each button mutates <code>$count</code> via a regular <code>set</code> command. The full
+        runtime's <code>setGlobal()</code> calls <code>notifyGlobalWrite()</code> → reactivity
+        hook fires → the live body re-runs.
       </li>
     </ol>
 
     <h3>Console</h3>
     <div class="console" id="console">(events appear here)</div>
 
-    <!-- Bundle loading order is load-bearing:
-         1. Full hyperfixi (Runtime + installPlugin) — sync, blocks parsing
-         2. Module script — installs reactivity plugin (registers `live` globally),
-            captures the full API before the hx bundle overwrites window.hyperfixi
-         3. Dynamically inject hyperfixi-hx — its scanner now sees `live` registered -->
-    <script src="../../packages/core/dist/hyperfixi.js"></script>
-    <script type="module">
-      import { reactivityPlugin } from '../../packages/reactivity/dist/index.js';
-
+    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script>
       const log = msg => {
         const c = document.getElementById('console');
         c.textContent += '\n' + msg;
         c.scrollTop = c.scrollHeight;
       };
+      log('hyperfixi-hx-v4 loaded — hx-live + reactivity active');
 
-      // Capture the full bundle's API before the hx bundle overwrites
-      // window.hyperfixi. The hx bundle replaces the global with a slimmer
-      // API that doesn't expose .run() / .createRuntime() / installPlugin —
-      // we keep a reference to the full surface for plugin install and
-      // subsequent script-based mutations.
-      const hf = window.hyperfixi;
+      // Initialize $count so the first live render shows 0 rather than undefined.
+      window.hyperfixi.run('set $count to 0').then(() => log('$count initialized to 0'));
 
-      // Install reactivity onto a runtime. The plugin's side effect is
-      // registering `live`/`when`/`bind` features on the GLOBAL parser-
-      // extension registry — so once installed, any later hyperscript
-      // processing (including hx-live translation) sees the features.
-      const runtime = hf.createRuntime();
-      hf.installPlugin(runtime, reactivityPlugin);
-      log('reactivity plugin installed');
-
-      // Initial value so the first run shows 0 rather than empty.
-      await hf.run('set $count to 0');
-      log('$count initialized to 0');
-
-      // Now inject hyperfixi-hx. Its scanner will see `live` registered.
-      // This will overwrite window.hyperfixi, but we kept our `hf` reference.
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = '../../packages/core/dist/hyperfixi-hx.js';
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-      log('hyperfixi-hx loaded — hx-live now active');
-
-      // The +1 from raw JS button: write through hyperscript so the global
-      // write hook fires (which is what wakes the live block's effect).
+      // "+1 from raw JS": write through hyperscript so the global write hook
+      // fires (that's what wakes the live block's effect).
       document.getElementById('js-bump').addEventListener('click', () => {
-        hf.run('set $count to ($count or 0) + 1');
+        window.hyperfixi.run('set $count to ($count or 0) + 1');
         log('raw-JS bump fired');
       });
     </script>

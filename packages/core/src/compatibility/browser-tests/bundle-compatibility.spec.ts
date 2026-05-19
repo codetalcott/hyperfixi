@@ -80,6 +80,27 @@ const BUNDLES = {
       fetch: true,
     },
   },
+  // hx-v4: full runtime + htmx-compat + reactivity (hx-live/bind/when)
+  // auto-installed. Larger than hybrid-hx because it carries the full
+  // runtime, but it's the bundle authors reach for when they need the
+  // htmx v4 reactive/streaming surface without manual plugin wiring.
+  'hybrid-hx-v4': {
+    file: 'hyperfixi-hx-v4.js',
+    size: '~257 KB',
+    features: {
+      toggle: true,
+      addClass: true,
+      put: true,
+      increment: true,
+      show: true,
+      hide: true,
+      blocks: true,
+      eventModifiers: true,
+      i18nAliases: true,
+      semanticParser: true,
+      fetch: true,
+    },
+  },
   minimal: {
     file: 'hyperfixi-browser-minimal.js',
     size: '58 KB',

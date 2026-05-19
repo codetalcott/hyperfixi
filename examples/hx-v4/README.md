@@ -2,28 +2,15 @@
 
 Interactive demos of HyperFixi's htmx v4 attribute support.
 
-> **Status: scaffolded; reactive re-render lands in Phase 5.**
+> **Status: hx-live works end-to-end via the new `hyperfixi-hx-v4` bundle.**
 >
-> The example HTML files demonstrate the intended user-facing shape and
-> end-to-end exercise the bundle wiring. Smoke-testing them in a real
-> browser confirms:
+> The `hyperfixi-hx-v4.js` bundle (Phase 5) bundles the full hyperscript
+> runtime + `@hyperfixi/reactivity` + the htmx-compat attribute processor
+> into a single script tag. Single runtime → single `notifyGlobalWrite`
+> path → reactive effects wake when `_=` handlers mutate globals.
 >
-> - ✅ `hx-live` is recognized by the htmx processor
-> - ✅ The reactivity-feature gate passes (parser-extension registry is now
->   shared across bundles — fixed in this commit)
-> - ✅ The translator emits the correct `live ... end` block
-> - ✅ The initial live-block run executes (the live target shows the
->   initial value)
-> - ⚠️ **Subsequent writes via `_=` event handlers don't trigger the live
->   effect to re-run.** The `hyperfixi-hx.js` bundle uses the slim
->   `hybrid-complete` runtime for `_=` attribute processing — its `set`
->   command path doesn't route through the same notify-global hook the
->   reactivity effect subscribes to.
->
-> Phase 5 will ship a single `hyperfixi-hx-v4.js` bundle that uses the full
-> runtime and auto-installs reactivity, eliminating the dual-runtime split.
-> When that lands, these demos will work end-to-end without the manual
-> wiring shown below.
+> SSE and WebSocket demos land with Phases 3 / 4. Localized attribute
+> names land with Phase 8.
 
 ## Run locally
 
@@ -57,32 +44,39 @@ mutation event regardless of relevance.
 
 ### `hx-live-no-reactivity.html`
 
-The error path. This page intentionally does NOT install
-`@hyperfixi/reactivity`. The processor's gate fires: `hx-live` elements are
-skipped with a clear console error, and other htmx attributes on the same page
-(here, `hx-on:click`) continue to work. Open devtools console to see the
-diagnostic message.
+The error path. This page intentionally loads the **slim** `hyperfixi-hx.js`
+bundle and does NOT install `@hyperfixi/reactivity`. The processor's gate
+fires: `hx-live` elements are skipped with a clear console error, and other
+htmx attributes on the same page (here, `hx-on:click`) continue to work. Open
+devtools console to see the diagnostic message.
 
-## Bundle wiring (interim, until Phase 5)
+## Bundle wiring
 
-These demos load three things:
+The first two demos load a single script:
 
-1. **`hyperfixi.js`** (full bundle) — provides `Runtime`, `createRuntime`,
-   `installPlugin`, and `getParserExtensionRegistry` on `window.hyperfixi`.
-2. **`@hyperfixi/reactivity`** (ESM module) — imported inline; its
-   `reactivityPlugin` registers the `live` / `when` / `bind` features on the
-   global parser-extension registry.
-3. **`hyperfixi-hx.js`** (htmx-compat bundle) — dynamically injected
-   _after_ reactivity is installed, so its scanner sees `live` registered when
-   it encounters `hx-live` attributes.
+```html
+<script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+```
 
-The order matters because `hyperfixi-hx.js` auto-initializes on
-`DOMContentLoaded` (or immediately if the DOM is already parsed). Loading it
-last ensures reactivity is in place first.
+That bundle includes everything needed for `hx-live`:
 
-**Phase 5** will ship a single `hyperfixi-hx-v4.js` bundle that auto-installs
-reactivity, collapsing this three-step wiring into one script tag. These demos
-will be updated when that bundle exists.
+1. **Full hyperscript runtime** — needed for the `set` command to fire
+   `notifyGlobalWrite()` on writes to `$count` / `$price` / etc. The slim
+   `hybrid-complete` runtime in `hyperfixi-hx.js` skips that notify, which
+   is why the slim bundle's hx-live half-renders (initial value only, no
+   updates).
+2. **`@hyperfixi/reactivity`** — auto-installed at bundle init. Registers
+   the `live` / `when` / `bind` parser features and the global read/write
+   hooks that wire reads to effect subscriptions and writes to notify.
+3. **htmx-compat attribute processor** — auto-initialized on
+   `DOMContentLoaded`. Translates `hx-live` to a `live ... end` block run
+   through the same full runtime.
+
+Trade-off: `hyperfixi-hx-v4.js` is much larger than the slim
+`hyperfixi-hx.js` (~257 KB vs 13 KB gzipped). If you don't need `hx-live`
+/ SSE / WS / `bind`, stay on the slim bundle. For production builds, use
+[`@hyperfixi/vite-plugin`](../../packages/vite-plugin/) — it scans your
+HTML and emits a bundle with only the surface you actually use.
 
 ## Cross-link
 

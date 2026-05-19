@@ -75,6 +75,13 @@ const BUNDLES = {
     output: 'dist/hyperfixi-hx.js',
     critical: true,
   },
+  'hybrid-hx-v4': {
+    name: 'hybrid-hx-v4',
+    script: 'build:browser:hybrid-hx-v4',
+    config: 'rollup.browser-hybrid-hx-v4.config.mjs',
+    output: 'dist/hyperfixi-hx-v4.js',
+    critical: true,
+  },
 
   // === Standard bundles (full features) ===
   minimal: {

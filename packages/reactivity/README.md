@@ -43,7 +43,7 @@ When this plugin is installed, `@hyperfixi/core`'s htmx-compat layer also recogn
 <div hx-live="$count を me に 入れる"></div>
 ```
 
-If reactivity isn't installed at the moment an `hx-live` element is processed, a clear console error is logged and the element is skipped — other htmx attributes on the same element still wire up normally. The forthcoming `hyperfixi-hx-v4` bundle auto-installs reactivity so this gate is invisible to users of that bundle.
+If reactivity isn't installed at the moment an `hx-live` element is processed, a clear console error is logged and the element is skipped — other htmx attributes on the same element still wire up normally. The `hyperfixi-hx-v4.js` bundle (in `@hyperfixi/core/dist/`) auto-installs reactivity so this gate is invisible to users of that bundle.
 
 ## `when ... changes`
 

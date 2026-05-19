@@ -321,7 +321,7 @@ The bundle compatibility test suite automatically tests all 7 bundles against ga
 
 - Location: `packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts`
 - Tests: Toggle, show/hide, input mirroring, counter, modals, fetch, tabs, blocks, event modifiers
-- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.3 KB), hybrid-hx (9.5 KB), minimal (58 KB), standard (63 KB), browser (203 KB)
+- Bundles: lite (1.9 KB), lite-plus (2.6 KB), hybrid-complete (7.3 KB), hybrid-hx (9.5 KB), hybrid-hx-v4 (~257 KB), minimal (58 KB), standard (63 KB), browser (203 KB)
 - Prints ASCII compatibility matrix showing feature support across all bundles
 
 ### Using Behaviors (Browser)
@@ -676,12 +676,13 @@ hyperfixi({
 
 For projects prioritizing bundle size over features:
 
-| Bundle                         | Size (gzip) | Commands  | Features                                      |
-| ------------------------------ | ----------- | --------- | --------------------------------------------- |
-| `hyperfixi-lite.js`            | 1.9 KB      | 8         | Regex parser, basic commands                  |
-| `hyperfixi-lite-plus.js`       | 2.6 KB      | 14        | Regex parser, more commands, i18n aliases     |
-| `hyperfixi-hybrid-complete.js` | 7.3 KB      | 21+blocks | Full AST parser, expressions, event modifiers |
-| `hyperfixi-hx.js`              | 9.7 KB      | 21+blocks | hybrid-complete + htmx/fixi attribute support |
+| Bundle                         | Size (gzip) | Commands  | Features                                                      |
+| ------------------------------ | ----------- | --------- | ------------------------------------------------------------- |
+| `hyperfixi-lite.js`            | 1.9 KB      | 8         | Regex parser, basic commands                                  |
+| `hyperfixi-lite-plus.js`       | 2.6 KB      | 14        | Regex parser, more commands, i18n aliases                     |
+| `hyperfixi-hybrid-complete.js` | 7.3 KB      | 21+blocks | Full AST parser, expressions, event modifiers                 |
+| `hyperfixi-hx.js`              | 9.7 KB      | 21+blocks | hybrid-complete + htmx/fixi attribute support                 |
+| `hyperfixi-hx-v4.js`           | ~257 KB     | 40+blocks | Full runtime + htmx-compat + reactivity (hx-live, bind, when) |
 
 **Hybrid Complete** (~85% hyperscript coverage) is recommended - it supports:
 
@@ -743,7 +744,17 @@ When `@hyperfixi/reactivity` is installed, the htmx-compat layer recognizes the 
 <div hx-live="put $count into me"></div>
 ```
 
-The expression re-runs only when its tracked dependencies actually change (not on every DOM mutation, which is the upstream htmx v4 approach). If reactivity isn't installed, the element is skipped with a clear console error pointing to the install command. The forthcoming `hyperfixi-hx-v4` bundle auto-installs reactivity.
+The expression re-runs only when its tracked dependencies actually change (not on every DOM mutation, which is the upstream htmx v4 approach). If reactivity isn't installed, the element is skipped with a clear console error pointing to the install command.
+
+**Easiest path: use the `hyperfixi-hx-v4.js` bundle.** It ships the full runtime + `@hyperfixi/reactivity` auto-installed + the htmx-compat layer in a single script tag. Larger than `hyperfixi-hx.js` (~257 KB vs 13 KB gzipped) but no manual plugin wiring required. For size-tuned production builds, use `@hyperfixi/vite-plugin` instead.
+
+```html
+<script src="hyperfixi-hx-v4.js"></script>
+<div hx-live="put $count into me"></div>
+<button _="on click set $count to ($count or 0) + 1">+1</button>
+```
+
+See the working demos in [`examples/hx-v4/`](examples/hx-v4/).
 
 ### htmx Lifecycle Events
 
