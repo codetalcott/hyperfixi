@@ -52,6 +52,24 @@ describe('evalHyperScript API Compatibility', () => {
       });
       expect(result).toBe('baz');
     });
+
+    it('shares globals across calls when no globals are provided', async () => {
+      // Regression for item 5 in htmx-v4-reactive-streaming.md follow-ups.
+      // evalHyperScript used to construct a fresh globals Map per call, so
+      // cross-call $writes were invisible.
+      const key = `__shared_test_${Date.now()}`;
+      await evalHyperScript(`set $${key} to 42`);
+      const result = await evalHyperScript(`$${key}`);
+      expect(result).toBe(42);
+    });
+
+    it('respects an explicit globals Map (no implicit shared override)', async () => {
+      const isolated = new Map<string, unknown>([['x', 99]]);
+      const result = await evalHyperScript('$x', { globals: isolated });
+      expect(result).toBe(99);
+      // The isolated Map should remain detached from the shared singleton.
+      expect(isolated.has('x')).toBe(true);
+    });
   });
 
   describe('Original _hyperscript Test Cases', () => {

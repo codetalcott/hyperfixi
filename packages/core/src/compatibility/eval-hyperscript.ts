@@ -9,6 +9,7 @@ import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
 import { COMMANDS } from '../parser/parser-constants';
 import { setGlobal } from '../parser/extensions';
+import { getSharedGlobals } from '../core/context';
 import type { ExecutionContext } from '../types/core';
 import type { SemanticAnalyzerInterface } from '../parser/types';
 import { createSemanticAdapter } from '../parser/semantic-integration';
@@ -72,13 +73,21 @@ function convertContext(
     return hyperScriptContext as ExecutionContext;
   }
 
+  // Default to the shared globals singleton — matches createContext() so that
+  // evalHyperScript() and hyperscript.run()/.eval() see the same $globals across
+  // calls. Callers can still pass an explicit Map to isolate per-call.
+  // (See item 5 of htmx-v4-reactive-streaming.md follow-ups.)
+  const providedGlobals = hyperScriptContext?.globals;
+  const initialGlobals: Map<string, any> =
+    providedGlobals instanceof Map ? providedGlobals : getSharedGlobals();
+
   const context: ExecutionContext = {
     me: hyperScriptContext?.me || null,
     you: hyperScriptContext?.you || null,
     it: (hyperScriptContext as any)?.it || hyperScriptContext?.result,
     result: hyperScriptContext?.result,
     locals: new Map(),
-    globals: new Map(),
+    globals: initialGlobals,
     halted: false,
     returned: false,
     broke: false,
@@ -97,16 +106,16 @@ function convertContext(
     }
   }
 
-  if (hyperScriptContext.globals && typeof hyperScriptContext.globals === 'object') {
-    // Handle both Map and plain object globals
-    if (hyperScriptContext.globals instanceof Map) {
-      for (const [key, value] of hyperScriptContext.globals) {
-        setGlobal(context, key, value);
-      }
-    } else {
-      for (const [key, value] of Object.entries(hyperScriptContext.globals)) {
-        setGlobal(context, key, value);
-      }
+  // Plain-object globals are merged into whichever Map we ended up with
+  // (shared singleton or caller-provided). For Map globals, the assignment
+  // above already adopted the caller's Map identity, so no copy is needed.
+  if (
+    hyperScriptContext.globals &&
+    typeof hyperScriptContext.globals === 'object' &&
+    !(hyperScriptContext.globals instanceof Map)
+  ) {
+    for (const [key, value] of Object.entries(hyperScriptContext.globals)) {
+      setGlobal(context, key, value);
     }
   }
 
