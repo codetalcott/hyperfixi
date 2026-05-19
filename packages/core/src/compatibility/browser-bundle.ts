@@ -38,7 +38,7 @@ import {
 
 // Semantic parsing API for multilingual support
 import {
-  createSemanticAnalyzer,
+  parseSemantic,
   parse as semanticParse,
   translate,
   render,
@@ -78,7 +78,7 @@ interface HyperFixiBrowserAPI {
   ObjectPool: typeof ObjectPool;
   // Semantic parsing API for multilingual support
   semantic: {
-    createAnalyzer: typeof createSemanticAnalyzer;
+    parseSemantic: typeof parseSemantic;
     parse: typeof semanticParse;
     translate: typeof translate;
     render: typeof render;
@@ -195,7 +195,7 @@ const hyperfixiAPI = {
 
   // Semantic parsing API for multilingual support
   semantic: {
-    createAnalyzer: createSemanticAnalyzer,
+    parseSemantic,
     parse: semanticParse,
     translate,
     render,

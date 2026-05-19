@@ -477,6 +477,15 @@ export class RuntimeBase {
     const nodeName = (node as { name?: string })?.name || '';
     debug.runtime(`RUNTIME BASE: execute() called with node type: '${node.type}'`);
 
+    // Thread the bundle's ExpressionRegistry through context. Commands receive
+    // this context and forward it to evaluator.evaluate(), which dispatches
+    // named-expression lookups via context.registry. Without this, parseInput()
+    // calls that evaluate AST nodes (e.g. tell's target, send's target) fail
+    // with "Expression X not in ExecutionContext.registry".
+    if (!context.registry) {
+      context = { ...context, registry: this.expressionRegistry };
+    }
+
     // Inject behavior API
     if (!context.locals.has('_behaviors')) {
       context.locals.set('_behaviors', this.behaviorAPI);
