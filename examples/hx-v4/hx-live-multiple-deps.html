@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>hx-live multi-dep — HyperFixi</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 640px;
+        margin: 3em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      .display {
+        font-size: 1.5em;
+        margin: 1em 0;
+        padding: 0.75em 1em;
+        background: #fef3c7;
+        border-radius: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1em;
+      }
+      .controls fieldset {
+        padding: 0.75em;
+      }
+      input[type='number'] {
+        font-size: 1em;
+        padding: 0.25em;
+        width: 6em;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>hx-live with multiple dependencies</h1>
+    <p class="note">
+      The live body reads <code>$price</code> and <code>$quantity</code>. Changing
+      <em>either</em> triggers a re-render — the reactivity graph tracks both reads.
+    </p>
+
+    <!-- The expression reads two globals; the dep set is computed at runtime
+         from whatever the body actually touched. -->
+    <div
+      class="display"
+      hx-live="put 'Total: $' + (($price or 0) * ($quantity or 0)) into me's textContent"
+    >
+      Total: $0
+    </div>
+
+    <div class="controls">
+      <fieldset>
+        <legend>Price</legend>
+        <input
+          type="number"
+          id="price"
+          value="0"
+          step="0.5"
+          _="on input set $price to (my value as Number)"
+        />
+      </fieldset>
+      <fieldset>
+        <legend>Quantity</legend>
+        <input
+          type="number"
+          id="qty"
+          value="0"
+          step="1"
+          _="on input set $quantity to (my value as Number)"
+        />
+      </fieldset>
+    </div>
+
+    <h2>What this demonstrates</h2>
+    <ul>
+      <li>
+        <strong>Fine-grained tracking</strong>: the live body reads both globals on its first
+        execution; the runtime records both as dependencies.
+      </li>
+      <li>
+        <strong>No wasted re-runs</strong>: mutating an unrelated global (try
+        <code>window.hyperfixi.run("set $other to 5")</code> in the console) does not re-execute
+        the body.
+      </li>
+      <li>
+        <strong>Multilingual-ready</strong>: the body is hyperscript, not JS — it reads naturally
+        and (after Phase 8) will work with localized attribute names too.
+      </li>
+    </ul>
+
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script type="module">
+      import { reactivityPlugin } from '../../packages/reactivity/dist/index.js';
+      // Capture full-bundle API before the hx bundle overwrites window.hyperfixi.
+      const hf = window.hyperfixi;
+      const runtime = hf.createRuntime();
+      hf.installPlugin(runtime, reactivityPlugin);
+      await hf.run('set $price to 0');
+      await hf.run('set $quantity to 0');
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = '../../packages/core/dist/hyperfixi-hx.js';
+        s.onload = res;
+        s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    </script>
+  </body>
+</html>

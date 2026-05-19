@@ -431,9 +431,36 @@ export class ParserExtensionRegistry {
  * instance in their install context; the parser reads from the same
  * underlying module-level sets/maps.
  */
+/**
+ * Cross-bundle singleton. Each browser bundle that imports this module gets
+ * its own module-local instance of `ParserExtensionRegistry` (rollup +
+ * tsup's `splitting: false` inlines shared code). To make plugins installed
+ * via one bundle (e.g. `@hyperfixi/reactivity` registering `live` through
+ * `window.hyperfixi.installPlugin`) visible to a sibling bundle (e.g.
+ * `hyperfixi-hx.js`'s processor checking `hasFeature('live')`), we hoist
+ * the singleton onto globalThis under a well-known key.
+ *
+ * The first bundle to load creates the singleton and writes it to the key.
+ * Subsequent bundles see it and reuse it. Duck-typed (no instanceof check)
+ * because each bundle has its own copy of the class.
+ */
 const SINGLETON = new ParserExtensionRegistry();
+const WINDOW_KEY = '__hyperfixi_parser_extension_registry__';
 
 export function getParserExtensionRegistry(): ParserExtensionRegistry {
+  if (typeof globalThis !== 'undefined') {
+    const g = globalThis as Record<string, unknown>;
+    const existing = g[WINDOW_KEY];
+    // Duck-type: must expose the registerFeature method we rely on.
+    if (
+      existing &&
+      typeof existing === 'object' &&
+      typeof (existing as { registerFeature?: unknown }).registerFeature === 'function'
+    ) {
+      return existing as ParserExtensionRegistry;
+    }
+    g[WINDOW_KEY] = SINGLETON;
+  }
   return SINGLETON;
 }
 

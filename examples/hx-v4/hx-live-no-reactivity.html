@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>hx-live without reactivity (error path) — HyperFixi</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 640px;
+        margin: 3em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      .live-target {
+        font-size: 1.5em;
+        padding: 0.75em 1em;
+        background: #fee2e2;
+        border-radius: 6px;
+        color: #991b1b;
+      }
+      .other {
+        margin-top: 1em;
+        padding: 0.75em 1em;
+        background: #d1fae5;
+        border-radius: 6px;
+      }
+      button {
+        font-size: 1em;
+        padding: 0.5em 1em;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+      kbd {
+        background: #e5e7eb;
+        padding: 0.1em 0.4em;
+        border-radius: 3px;
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>hx-live without reactivity — graceful skip</h1>
+    <p class="note">
+      Open the browser console (<kbd>F12</kbd>) before reading further. This page intentionally
+      loads <code>hyperfixi-hx.js</code> WITHOUT installing
+      <code>@hyperfixi/reactivity</code> — to demonstrate the graceful skip + clear console error
+      path.
+    </p>
+
+    <h2>The live element</h2>
+    <p>
+      The div below has <code>hx-live="put $count into me"</code>. Without reactivity, the
+      processor skips it (and logs why).
+    </p>
+    <div class="live-target" hx-live="put $count into me">(still says 0 — no reactivity)</div>
+
+    <h2>Other htmx attributes still work</h2>
+    <p>
+      Critically, <em>only</em> the live element is skipped — other htmx wiring on the same page
+      (here, an <code>hx-on:click</code> handler) wires up normally.
+    </p>
+    <div class="other">
+      <button hx-on:click="this.textContent = 'clicked at ' + new Date().toLocaleTimeString()">
+        I am wired via hx-on:click
+      </button>
+    </div>
+
+    <h2>What you should see in the console</h2>
+    <pre><code>[htmx-compat] hx-live requires @hyperfixi/reactivity to be installed.
+Install it via `installPlugin(runtime, reactivityPlugin)`, or use the
+hyperfixi-hx-v4 bundle which auto-installs it. Element: &lt;div ...&gt;</code></pre>
+    <p class="note">
+      The element-with-error is logged so you can identify the source in larger pages.
+    </p>
+
+    <!-- Note: NO reactivity import here — that's the whole point. -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script src="../../packages/core/dist/hyperfixi-hx.js"></script>
+  </body>
+</html>

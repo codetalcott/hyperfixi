@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>hx-live counter — HyperFixi</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 640px;
+        margin: 3em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      .counter {
+        font-size: 3em;
+        font-variant-numeric: tabular-nums;
+        margin: 1em 0;
+        padding: 0.5em 1em;
+        background: #f3f4f6;
+        border-radius: 6px;
+        display: inline-block;
+        min-width: 3em;
+        text-align: center;
+      }
+      button {
+        font-size: 1em;
+        padding: 0.5em 1em;
+        margin-right: 0.5em;
+        cursor: pointer;
+      }
+      .console {
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+        background: #1f2937;
+        color: #d1d5db;
+        padding: 1em;
+        border-radius: 6px;
+        max-height: 12em;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+      h1 {
+        margin-bottom: 0;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>hx-live counter</h1>
+    <p class="note">
+      The number below is rendered by <code>&lt;div hx-live="put $count into me"&gt;</code>. Mutating
+      <code>$count</code> from any handler re-runs the live body via fine-grained dep tracking.
+    </p>
+
+    <!-- The hx-live attribute reads the $count global and writes the result
+         into the element. Any subsequent write to $count re-runs the body. -->
+    <div class="counter" hx-live="put $count into me">0</div>
+
+    <div>
+      <button _="on click set $count to ($count or 0) + 1">+1</button>
+      <button _="on click set $count to ($count or 0) - 1">−1</button>
+      <button _="on click set $count to 0">reset</button>
+      <button id="js-bump">+1 from raw JS</button>
+    </div>
+
+    <h2>What's happening</h2>
+    <ol>
+      <li>The full <code>hyperfixi.js</code> bundle loads (provides Runtime + installPlugin).</li>
+      <li>A module script imports <code>@hyperfixi/reactivity</code> and installs it.</li>
+      <li>Then <code>hyperfixi-hx.js</code> loads. Its scanner sees <code>hx-live</code>, finds the
+        <code>live</code> feature registered, and emits a <code>live ... end</code> block.
+      </li>
+      <li>Each button mutates <code>$count</code> via a regular <code>set</code> command — the
+        write fires the reactivity graph's notify hook, which re-runs the live body.
+      </li>
+    </ol>
+
+    <h3>Console</h3>
+    <div class="console" id="console">(events appear here)</div>
+
+    <!-- Bundle loading order is load-bearing:
+         1. Full hyperfixi (Runtime + installPlugin) — sync, blocks parsing
+         2. Module script — installs reactivity plugin (registers `live` globally),
+            captures the full API before the hx bundle overwrites window.hyperfixi
+         3. Dynamically inject hyperfixi-hx — its scanner now sees `live` registered -->
+    <script src="../../packages/core/dist/hyperfixi.js"></script>
+    <script type="module">
+      import { reactivityPlugin } from '../../packages/reactivity/dist/index.js';
+
+      const log = msg => {
+        const c = document.getElementById('console');
+        c.textContent += '\n' + msg;
+        c.scrollTop = c.scrollHeight;
+      };
+
+      // Capture the full bundle's API before the hx bundle overwrites
+      // window.hyperfixi. The hx bundle replaces the global with a slimmer
+      // API that doesn't expose .run() / .createRuntime() / installPlugin —
+      // we keep a reference to the full surface for plugin install and
+      // subsequent script-based mutations.
+      const hf = window.hyperfixi;
+
+      // Install reactivity onto a runtime. The plugin's side effect is
+      // registering `live`/`when`/`bind` features on the GLOBAL parser-
+      // extension registry — so once installed, any later hyperscript
+      // processing (including hx-live translation) sees the features.
+      const runtime = hf.createRuntime();
+      hf.installPlugin(runtime, reactivityPlugin);
+      log('reactivity plugin installed');
+
+      // Initial value so the first run shows 0 rather than empty.
+      await hf.run('set $count to 0');
+      log('$count initialized to 0');
+
+      // Now inject hyperfixi-hx. Its scanner will see `live` registered.
+      // This will overwrite window.hyperfixi, but we kept our `hf` reference.
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = '../../packages/core/dist/hyperfixi-hx.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      log('hyperfixi-hx loaded — hx-live now active');
+
+      // The +1 from raw JS button: write through hyperscript so the global
+      // write hook fires (which is what wakes the live block's effect).
+      document.getElementById('js-bump').addEventListener('click', () => {
+        hf.run('set $count to ($count or 0) + 1');
+        log('raw-JS bump fired');
+      });
+    </script>
+  </body>
+</html>

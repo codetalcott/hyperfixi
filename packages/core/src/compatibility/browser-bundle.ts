@@ -50,6 +50,8 @@ import {
 import { getDefaultRegistry } from '../registry';
 import type { LokaScriptRegistry, LokaScriptPlugin } from '../registry';
 import { registerFetchResponseType } from '../commands/async/fetch';
+import { installPlugin } from '../runtime/plugin';
+import { getParserExtensionRegistry } from '../parser/extensions';
 
 // Import CompileResult type for browser bundle
 import type { CompileResult, NewCompileOptions } from '../api/hyperscript-api';
@@ -71,6 +73,8 @@ interface HyperFixiBrowserAPI {
   Parser: typeof Parser;
   Runtime: typeof Runtime;
   tokenize: typeof tokenize;
+  installPlugin: typeof installPlugin;
+  getParserExtensionRegistry: typeof getParserExtensionRegistry;
   attributeProcessor: typeof defaultAttributeProcessor;
   debug: typeof debug;
   debugControl: typeof debugControl;
@@ -172,6 +176,12 @@ const hyperfixiAPI = {
   Runtime,
   tokenize,
 
+  // Plugin install + parser-extension registry — needed by external plugins
+  // like @hyperfixi/reactivity to register their `live`/`when`/`bind` features
+  // onto a runtime when loaded via <script> tag (CDN/static hosting).
+  installPlugin,
+  getParserExtensionRegistry,
+
   // DOM processing for HTMX/manual compatibility
   processNode: async (element: Element | Document): Promise<void> => {
     if (element === document) {
@@ -272,16 +282,29 @@ if (typeof window !== 'undefined') {
   // Primary: hyperfixi
   window.hyperfixi = hyperfixiAPI;
 
-  // Deprecated alias for v1.x compatibility (remove in v3.0.0)
+  // Deprecated alias for v1.x compatibility (remove in v3.0.0).
+  // Define with both getter and setter — the hybrid-hx bundle (and others)
+  // perform a plain `window.lokascript = api` on load, which would TypeError
+  // under a getter-only descriptor. The setter forwards to window.hyperfixi
+  // so the alias keeps pointing at whichever API was assigned most recently.
   if (typeof window.lokascript === 'undefined') {
+    let warned = false;
     Object.defineProperty(window, 'lokascript', {
       get() {
-        console.warn(
-          '[DEPRECATED] window.lokascript is deprecated and will be removed in v3.0.0. ' +
-            'Please use window.hyperfixi instead. ' +
-            'See https://github.com/codetalcott/hyperfixi/blob/main/MIGRATION.md'
-        );
+        if (!warned) {
+          warned = true;
+          console.warn(
+            '[DEPRECATED] window.lokascript is deprecated and will be removed in v3.0.0. ' +
+              'Please use window.hyperfixi instead. ' +
+              'See https://github.com/codetalcott/hyperfixi/blob/main/MIGRATION.md'
+          );
+        }
         return window.hyperfixi;
+      },
+      set(value) {
+        // Plain assignment from another bundle: route it through hyperfixi so
+        // the canonical name stays the source of truth.
+        window.hyperfixi = value;
       },
       enumerable: true,
       configurable: true,
