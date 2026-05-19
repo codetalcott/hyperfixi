@@ -777,6 +777,30 @@ The connection auto-reconnects on transient errors with exponential backoff (1s 
 
 The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't ship the SSE module (size budget).
 
+### `ws-connect` / `ws-send` (htmx v4)
+
+WebSocket support follows the same shape as SSE but is bidirectional. `ws-connect="<url>"` on an element opens a per-element WebSocket; `ws-send` on a descendant form or button forwards a JSON-serialized payload over the socket on submit/click.
+
+```html
+<div ws-connect="wss://example/api">
+  <form ws-send>
+    <input name="msg" />
+    <button type="submit">Send</button>
+  </form>
+</div>
+```
+
+Incoming messages are routed two ways:
+
+- **JSON envelope** `{ target, swap?, data }` → applies through the existing `hx-target`/`hx-swap` machinery, letting the server drive surgical updates without the client knowing the layout up front.
+- **Anything else** → dispatched as `htmx:wsMessage` with the raw text; consumers can subscribe and route however they like.
+
+Reconnect on unclean close uses the same bounded exponential backoff as SSE (1s → 2s → 4s … capped at 30s, 5 retries). Outbound sends queue while the socket is connecting and flush on `htmx:wsOpen`. Lifecycle events: `htmx:wsOpen`, `htmx:wsMessage`, `htmx:wsError`, `htmx:wsClose`.
+
+> **When to use SSE vs WS:** prefer SSE for server-push streams (notifications, telemetry, live feeds) — it's HTTP-native, plays nice with proxies and HTTP/2, and the browser handles reconnect. Reach for WebSockets when you genuinely need a low-latency bidirectional channel (chat, collaborative editing, control planes). SSE is the documented default for that reason.
+
+The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't.
+
 ### htmx Lifecycle Events
 
 The htmx compatibility layer dispatches CustomEvents at key points in the request lifecycle:
@@ -791,6 +815,10 @@ The htmx compatibility layer dispatches CustomEvents at key points in the reques
 | `htmx:sseMessage`    | SSE message received (any event)                    | No         | `{ url, event?, data }`    |
 | `htmx:sseError`      | SSE error / connection lost                         | No         | `{ url, error or event }`  |
 | `htmx:sseClose`      | SSE connection closed (manual or after retry limit) | No         | `{ url }`                  |
+| `htmx:wsOpen`        | WS connection opens                                 | No         | `{ url }`                  |
+| `htmx:wsMessage`     | WS message received (raw or envelope)               | No         | `{ url, envelope?, data }` |
+| `htmx:wsError`       | WS error                                            | No         | `{ url, error or event }`  |
+| `htmx:wsClose`       | WS connection closed                                | No         | `{ url, code, reason }`    |
 
 **Example usage:**
 

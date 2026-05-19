@@ -17,6 +17,12 @@
 import { translateToHyperscript, type HtmxConfig } from './htmx-translator.js';
 import { getParserExtensionRegistry } from '../parser/extensions.js';
 import { SSEConnection, type SSEEventSourceCtor } from './sse.js';
+import {
+  WSConnection,
+  collectWSSendPayload,
+  type WSEventSourceCtor,
+  type WSSwapEnvelope,
+} from './ws.js';
 
 // ============================================================================
 // Lifecycle Event Types
@@ -144,6 +150,12 @@ export interface HtmxProcessorOptions {
    * global `EventSource` is used.
    */
   eventSourceCtor?: SSEEventSourceCtor;
+  /**
+   * Override the `WebSocket` constructor used for `ws-connect`. Same
+   * intent as `eventSourceCtor` — happy-dom/jsdom may not provide a
+   * usable WebSocket. Leave undefined in production to use the global.
+   */
+  wsEventSourceCtor?: WSEventSourceCtor;
 }
 
 /** htmx attributes to scan for */
@@ -154,13 +166,18 @@ const HTMX_REQUEST_ATTRS = ['hx-get', 'hx-post', 'hx-put', 'hx-patch', 'hx-delet
  * opens a long-lived EventSource handled outside the htmx translation
  * path entirely (see {@link HtmxAttributeProcessor.attachSSE}).
  */
-const HTMX_STANDALONE_ATTRS = ['hx-live', 'sse-connect'];
+const HTMX_STANDALONE_ATTRS = ['hx-live', 'sse-connect', 'ws-connect'];
 /**
  * SSE attributes consumed by the SSE attachment path. `sse-swap` is not
  * standalone — it names events on a connection opened by `sse-connect`,
  * which can be on the same element or an ancestor.
  */
 const SSE_ATTRS = ['sse-connect', 'sse-swap'];
+/**
+ * WS attributes. `ws-send` is not standalone — it tags an element inside
+ * a `ws-connect` subtree as an outbound message source (form/button).
+ */
+const WS_ATTRS = ['ws-connect', 'ws-send'];
 const HTMX_ALL_ATTRS = [
   ...HTMX_REQUEST_ATTRS,
   'hx-target',
@@ -174,6 +191,7 @@ const HTMX_ALL_ATTRS = [
   'hx-replace-url',
   ...HTMX_STANDALONE_ATTRS,
   'sse-swap',
+  'ws-send',
 ];
 
 /** fixi attributes to scan for */
@@ -272,8 +290,16 @@ export class HtmxAttributeProcessor {
   private sseConnections = new WeakMap<Element, SSEConnection>();
   private sseConnectionsSet = new Set<SSEConnection>();
 
+  /** Same pattern for WS connections. */
+  private wsConnections = new WeakMap<Element, WSConnection>();
+  private wsConnectionsSet = new Set<WSConnection>();
+  /** Listeners installed on ws-send sources, for cleanup on detach. */
+  private wsSendListeners = new WeakMap<Element, () => void>();
+
   /** Optional EventSource constructor override (tests inject a mock). */
   private eventSourceCtor: SSEEventSourceCtor | undefined;
+  /** Optional WebSocket constructor override (tests inject a mock). */
+  private wsEventSourceCtor: WSEventSourceCtor | undefined;
 
   /**
    * Helper to dispatch lifecycle events with consistent options
@@ -312,8 +338,10 @@ export class HtmxAttributeProcessor {
       // Required<> mapping above stays consistent without changing every
       // existing call site.
       eventSourceCtor: options.eventSourceCtor as SSEEventSourceCtor,
+      wsEventSourceCtor: options.wsEventSourceCtor as WSEventSourceCtor,
     };
     this.eventSourceCtor = options.eventSourceCtor;
+    this.wsEventSourceCtor = options.wsEventSourceCtor;
   }
 
   /**
@@ -348,6 +376,10 @@ export class HtmxAttributeProcessor {
       conn.detach();
     }
     this.sseConnectionsSet.clear();
+    for (const conn of this.wsConnectionsSet) {
+      conn.detach();
+    }
+    this.wsConnectionsSet.clear();
     this.executeCallback = null;
   }
 
@@ -450,6 +482,123 @@ export class HtmxAttributeProcessor {
     if (typeof root.querySelectorAll !== 'function') return;
     const descendants = root.querySelectorAll('[sse-connect]');
     for (const el of descendants) this.detachSSE(el);
+  }
+
+  /**
+   * Open a WebSocket for an element bearing `ws-connect`. Idempotent.
+   * Wires up `ws-send` listeners on descendant forms/buttons in the same
+   * subtree so submit/click events serialize and forward over the socket.
+   */
+  attachWS(element: Element): WSConnection | null {
+    const existing = this.wsConnections.get(element);
+    if (existing) return existing;
+
+    const url = element.getAttribute('ws-connect');
+    if (!url) return null;
+
+    const swapHandler = (envelope: WSSwapEnvelope, _rawData: string): void => {
+      // Build a fresh swap snippet per envelope so per-message overrides
+      // (envelope.target / envelope.swap) are honored.
+      const config: HtmxConfig = {
+        url: undefined,
+        method: 'GET',
+        target: envelope.target,
+        swap: envelope.swap ?? element.getAttribute('hx-swap') ?? 'innerHTML',
+      };
+      const swapHs = buildSSESwapHyperscript(envelope.data, config, element);
+      if (!swapHs) return;
+      this.dispatchLifecycleEvent(
+        element,
+        'htmx:wsMessage',
+        { url, envelope, data: envelope.data },
+        { cancelable: false }
+      );
+      if (this.executeCallback) {
+        void this.executeCallback(swapHs, element).catch(err => {
+          if (typeof console !== 'undefined') {
+            console.error('[ws-compat] swap execution failed:', err);
+          }
+        });
+      }
+    };
+
+    const conn = new WSConnection(element, url, swapHandler, {
+      WSEventSourceCtor: this.wsEventSourceCtor,
+      debug: this.options.debug,
+    });
+    this.wsConnections.set(element, conn);
+    this.wsConnectionsSet.add(conn);
+
+    // Wire up any `ws-send` descendants. We attach a single listener per
+    // source element. The ancestor walk lets `ws-send` be placed
+    // anywhere inside the connection element's subtree.
+    this.wireWSSendDescendants(element, conn);
+
+    return conn;
+  }
+
+  /**
+   * Install submit/click listeners on every `[ws-send]` element under the
+   * given connection root. The listener serializes the source's payload
+   * via {@link collectWSSendPayload} and forwards as JSON over the socket.
+   *
+   * Idempotent per source — repeated calls don't stack listeners.
+   */
+  private wireWSSendDescendants(root: Element, conn: WSConnection): void {
+    if (typeof root.querySelectorAll !== 'function') return;
+    const sources: Element[] = [];
+    if (root.matches?.('[ws-send]')) sources.push(root);
+    for (const el of root.querySelectorAll('[ws-send]')) sources.push(el);
+
+    for (const source of sources) {
+      if (this.wsSendListeners.has(source)) continue;
+      // Choose event: form → submit, anything else → click.
+      const eventName = source.tagName === 'FORM' ? 'submit' : 'click';
+      const listener = (ev: Event): void => {
+        // Forms shouldn't navigate when ws-send is the action.
+        if (eventName === 'submit') ev.preventDefault();
+        const payload = collectWSSendPayload(source);
+        conn.send(payload);
+      };
+      source.addEventListener(eventName, listener);
+      this.wsSendListeners.set(source, () => source.removeEventListener(eventName, listener));
+    }
+  }
+
+  /** Get the WS connection for an element, if open. */
+  getWSConnection(element: Element): WSConnection | null {
+    return this.wsConnections.get(element) ?? null;
+  }
+
+  /** Detach an element's WS connection. Idempotent. */
+  detachWS(element: Element): void {
+    const conn = this.wsConnections.get(element);
+    if (!conn) return;
+    conn.detach();
+    this.wsConnections.delete(element);
+    this.wsConnectionsSet.delete(conn);
+    // Drop ws-send listeners under this subtree too. If the element
+    // itself was a ws-send source, that's covered by the next loop's
+    // descendant walk too via `root.matches`.
+    if (typeof element.querySelectorAll === 'function') {
+      const sources: Element[] = [];
+      if (element.matches?.('[ws-send]')) sources.push(element);
+      for (const el of element.querySelectorAll('[ws-send]')) sources.push(el);
+      for (const source of sources) {
+        const cleanup = this.wsSendListeners.get(source);
+        if (cleanup) {
+          cleanup();
+          this.wsSendListeners.delete(source);
+        }
+      }
+    }
+  }
+
+  private detachWSSubtree(root: Element): void {
+    this.detachWS(root);
+    if (typeof root.querySelectorAll !== 'function') return;
+    const descendants = root.querySelectorAll('[ws-connect]');
+    for (const el of descendants) this.detachWS(el);
   }
 
   /**
@@ -626,6 +775,11 @@ export class HtmxAttributeProcessor {
       this.attachSSE(element);
       // Don't mark processed here — fall through so any hx-* attrs on the
       // same element still get translated.
+    }
+    // WS attachment: same parallel-path model as SSE. `ws-send` listeners
+    // are wired on descendants by attachWS().
+    if (element.hasAttribute('ws-connect')) {
+      this.attachWS(element);
     }
 
     // Detect if this is a fixi-style or htmx-style element
@@ -901,13 +1055,14 @@ export class HtmxAttributeProcessor {
           }
         }
 
-        // Handle removed nodes — close any SSE connections that were open
-        // on the removed subtree so EventSource doesn't leak after the
-        // element is gone. We walk descendants too because a single
-        // removed parent may carry many `sse-connect` children.
+        // Handle removed nodes — close any SSE/WS connections that were
+        // open on the removed subtree so EventSource/WebSocket don't leak
+        // after the element is gone. We walk descendants too because a
+        // single removed parent may carry many connections.
         for (const node of mutation.removedNodes) {
           if (node instanceof Element) {
             this.detachSSESubtree(node);
+            this.detachWSSubtree(node);
           }
         }
 
@@ -965,7 +1120,14 @@ export class HtmxAttributeProcessor {
 }
 
 // Export constants for external use
-export { FIXI_ATTRS, HTMX_ALL_ATTRS as HTMX_ATTRS, SSE_ATTRS };
+export { FIXI_ATTRS, HTMX_ALL_ATTRS as HTMX_ATTRS, SSE_ATTRS, WS_ATTRS };
 
 export { translateToHyperscript, type HtmxConfig } from './htmx-translator.js';
 export { SSEConnection, type SSEEventSourceCtor, type SSEEventSourceLike } from './sse.js';
+export {
+  WSConnection,
+  collectWSSendPayload,
+  type WSEventSourceCtor,
+  type WSEventSourceLike,
+  type WSSwapEnvelope,
+} from './ws.js';

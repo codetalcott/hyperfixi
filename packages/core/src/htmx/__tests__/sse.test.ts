@@ -18,12 +18,17 @@ import {
 // EventSource mock
 // ─────────────────────────────────────────────────────────────────────
 
-interface MockEventSource extends SSEEventSourceLike {
+// Drop `readonly` on `readyState` so the mock can mutate it directly to
+// simulate connection-state transitions. The interface declares it
+// readonly to mirror the browser's `EventSource` surface; in tests we
+// need write access to drive close/error scenarios.
+type MockEventSource = Omit<SSEEventSourceLike, 'readyState'> & {
+  readyState: number;
   emit(type: string, data: string): void;
   fireError(): void;
   fireOpen(): void;
   closeWasCalled: boolean;
-}
+};
 
 function createMockEventSourceFactory(): {
   ctor: SSEEventSourceCtor;
