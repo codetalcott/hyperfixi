@@ -85,7 +85,16 @@ export class AdditionExpression implements BaseTypedExpression<number> {
     if (!result.isValid) return result;
 
     const { left, right } = input as { left: unknown; right: unknown };
-    if (!isNumeric(left) && typeof left !== 'boolean' && left !== null && left !== undefined) {
+    // Accept anything `toNumber` can convert: primitives, null/undefined, and
+    // objects (DOM elements expose textContent/value; toNumber extracts those).
+    // Reject only primitives that are clearly non-numeric (e.g. unparseable strings).
+    const acceptsObject = (v: unknown) =>
+      v === null ||
+      v === undefined ||
+      typeof v === 'boolean' ||
+      typeof v === 'object' ||
+      isNumeric(v);
+    if (!acceptsObject(left)) {
       return {
         isValid: false,
         errors: [
@@ -97,7 +106,7 @@ export class AdditionExpression implements BaseTypedExpression<number> {
         suggestions: ['Provide a numeric value for left operand'],
       };
     }
-    if (!isNumeric(right) && typeof right !== 'boolean' && right !== null && right !== undefined) {
+    if (!acceptsObject(right)) {
       return {
         isValid: false,
         errors: [

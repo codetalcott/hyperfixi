@@ -111,8 +111,8 @@ type ConditionalNode = ASTNode & { test: ASTNode; consequent: ASTNode; alternate
  * are responsible for awaiting any wrapping Promise first.
  */
 function unwrapTypedResult(result: any): any {
-  if (result && typeof result === 'object' && 'success' in result && 'value' in result) {
-    if (result.success) return result.value;
+  if (result && typeof result === 'object' && 'success' in result) {
+    if (result.success) return 'value' in result ? result.value : undefined;
     const errors = result.errors || [];
     const errorMessage = errors.length > 0 ? errors[0].message : 'Expression evaluation failed';
     throw new Error(errorMessage);
