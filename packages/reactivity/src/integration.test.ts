@@ -334,6 +334,31 @@ describe('@hyperfixi/reactivity — integration', () => {
 
       document.body.removeChild(div);
     });
+
+    it('throws with a multi-level hint for chained property access on RHS', async () => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+      const ctx = createContext(div);
+      // `me.style.backgroundColor` — chained .style.backgroundColor.
+      const r = parse('bind $color to me.style.backgroundColor');
+      expect(r.success).toBe(true);
+      await expect(runtime.execute(r.node!, ctx)).rejects.toThrow(/multi-level property access/);
+      document.body.removeChild(div);
+    });
+
+    it('throws with type+snippet hint when RHS does not resolve to an element', async () => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+      const ctx = createContext(div);
+      // String literal on RHS isn't a var-ref, so we reach the element check
+      // with a non-element value and surface the new diagnostic.
+      const r = parse('bind $value to "just-a-string"');
+      expect(r.success).toBe(true);
+      await expect(runtime.execute(r.node!, ctx)).rejects.toThrow(
+        /did not resolve to an element \(got string "just-a-string"\)\. If you meant to write to a property/
+      );
+      document.body.removeChild(div);
+    });
   });
 
   describe('^name DOM-scoped vars', () => {

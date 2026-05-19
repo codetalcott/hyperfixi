@@ -109,6 +109,21 @@ function unwrapExplicitProperty(node: ASTNode): { element: ASTNode; propertyName
 }
 
 /**
+ * Detect a chained property access on the bind RHS — e.g.
+ * `me.style.backgroundColor` or `#el's dataset's value`.
+ *
+ * After `unwrapExplicitProperty` peels the outermost member, the returned
+ * `element` is the object of that member. If that object is itself a
+ * member/possessive expression, we have a multi-level chain that v1 of
+ * bind doesn't support. Used only for the error path; the parsed AST is
+ * left intact.
+ */
+function isChainedMember(node: ASTNode | undefined): boolean {
+  if (!node) return false;
+  return node.type === 'memberExpression' || node.type === 'possessiveExpression';
+}
+
+/**
  * Whether the input/change listener installed by `trackDomProperty` would
  * actually fire for this element. Used to decide whether to wire up the
  * DOM→var direction when an explicit property is given.
@@ -171,10 +186,28 @@ export function makeEvaluateBindFeature(runtime: {
     // (element-expression, propertyName). Otherwise, evaluate the whole side
     // and rely on auto-detection.
     const explicit = unwrapExplicitProperty(domSide.exprNode);
+    // Multi-level property access (`#el.style.background`, `me's dataset's id`)
+    // is not supported in v1. Surface that diagnosis up front; otherwise the
+    // user gets the generic "did not resolve to an element" message and no
+    // hint that the chain is the problem.
+    if (explicit && isChainedMember(explicit.element)) {
+      throw new Error(
+        'bind: multi-level property access (e.g., `#el.a.b`) is not supported in v1 — restructure to a single property write or pass the element directly for auto-detection (e.g., `bind $x to #el`).'
+      );
+    }
     const elementExpr = explicit ? explicit.element : domSide.exprNode;
     const domValue = await runtime.execute(elementExpr, context);
     if (!(domValue instanceof Element)) {
-      throw new Error('bind: right-hand side did not resolve to an element');
+      const valueType =
+        domValue === null ? 'null' : domValue === undefined ? 'undefined' : typeof domValue;
+      const snippet =
+        domValue !== null && domValue !== undefined ? ` "${String(domValue).slice(0, 40)}"` : '';
+      const suggestion = explicit
+        ? ''
+        : " If you meant to write to a property, use the explicit form: `<selector>'s <property>`.";
+      throw new Error(
+        `bind: right-hand side did not resolve to an element (got ${valueType}${snippet}).${suggestion}`
+      );
     }
     const el = domValue;
     // Explicit property bypasses auto-detect; the user takes responsibility for
