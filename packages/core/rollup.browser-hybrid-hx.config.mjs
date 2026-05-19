@@ -31,7 +31,11 @@ export default {
     file: 'dist/hyperfixi-hx.js',
     format: 'iife',
     name: 'hyperfixi',
-    sourcemap: false
+    sourcemap: false,
+    // Entry module re-exports both default API and named members; "named"
+    // suppresses rollup's named-vs-default warning while emitting the
+    // single window-attached object shape we want for IIFE consumers.
+    exports: 'named'
   },
   plugins: [
     nodeResolve({

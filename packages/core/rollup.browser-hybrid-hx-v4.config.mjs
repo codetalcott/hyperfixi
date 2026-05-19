@@ -31,6 +31,12 @@ export default {
     name: 'hyperfixi',
     sourcemap: false,
     inlineDynamicImports: true,
+    // The entry module re-exports both the default API and named members
+    // (e.g. `htmxCompat`). For an IIFE we want a single window-attached
+    // object whose properties are the named exports; "named" tells Rollup
+    // to skip its warning about the default vs named mix and emit the
+    // expected shape.
+    exports: 'named',
   },
   plugins: [
     nodeResolve({

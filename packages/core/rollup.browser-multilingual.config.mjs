@@ -21,6 +21,9 @@ export default {
     name: '_hyperfixiMultilingualInternal',
     sourcemap: true,
     inlineDynamicImports: true,
+    // Entry re-exports default + named members; "named" suppresses
+    // rollup's warning while emitting the IIFE shape we want.
+    exports: 'named',
   },
   // Mark @lokascript/semantic as external - it's loaded separately
   external: ['@lokascript/semantic'],
