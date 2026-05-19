@@ -13,11 +13,13 @@ import type {
   ExpressionMetadata,
   ValidationResult,
   EvaluationResult,
+  ExecutionContext,
 } from '../../types/base-types';
 import type { ExpressionCategory } from '../../types/expression-types';
 import { isString, isNumber, isBoolean } from '../type-helpers';
 import { toNumber } from '../shared';
 import { BaseExpressionImpl } from '../base-expression';
+import { notifyLocalRead } from '../../parser/extensions';
 
 // ============================================================================
 // Input Schemas
@@ -178,6 +180,7 @@ export class StringLiteralExpression extends BaseExpressionImpl<StringLiteralInp
 
     // Check locals
     if (context.locals?.has(varName)) {
+      notifyLocalRead(varName, context as unknown as ExecutionContext);
       return context.locals.get(varName);
     }
 

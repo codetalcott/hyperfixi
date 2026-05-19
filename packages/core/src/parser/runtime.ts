@@ -9,7 +9,7 @@
 import type { ASTNode, ExecutionContext, ExpressionImplementation } from '../types/core';
 import type { ExecutionResult, ExecutionSignal } from '../types/result';
 import { ok, err } from '../types/result';
-import { getRegisteredNodeEvaluator, notifyGlobalRead } from './extensions';
+import { getRegisteredNodeEvaluator, notifyGlobalRead, notifyLocalRead } from './extensions';
 // Re-export setGlobal for backward-compatible access via the runtime module.
 export { setGlobal } from './extensions';
 
@@ -324,6 +324,7 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
     return getExpr(context, 'document').evaluate(context);
   }
   if (context.locals && context.locals.has(name)) {
+    notifyLocalRead(name, context);
     return context.locals.get(name);
   }
   if (context.globals && context.globals.has(name)) {
@@ -784,7 +785,10 @@ async function evaluateTemplateLiteralNode(
 
 /** Resolve a `$var` reference inside a template literal. */
 function resolveTemplateVariable(varName: string, context: ExecutionContext): unknown {
-  if (context.locals?.has(varName)) return context.locals.get(varName);
+  if (context.locals?.has(varName)) {
+    notifyLocalRead(varName, context);
+    return context.locals.get(varName);
+  }
   if (varName === 'me' && context.me) return context.me;
   if (varName === 'you' && context.you) return context.you;
   if (varName === 'it' && context.it) return context.it;

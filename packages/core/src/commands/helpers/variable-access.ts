@@ -14,7 +14,7 @@
 
 import type { ExecutionContext } from '../../types/base-types';
 import { isHTMLElement } from '../../utils/element-check';
-import { setGlobal, notifyLocalWrite } from '../../parser/extensions';
+import { setGlobal, notifyLocalWrite, notifyLocalRead } from '../../parser/extensions';
 
 /**
  * Convert any value to a number for arithmetic operations
@@ -96,6 +96,7 @@ export function getVariableValue(
 
   // Check local variables first (unless global is preferred)
   if (preferredScope !== 'global' && context.locals && context.locals.has(name)) {
+    notifyLocalRead(name, context);
     return context.locals.get(name);
   }
 
@@ -111,6 +112,7 @@ export function getVariableValue(
 
   // Check local variables as fallback
   if (preferredScope === 'global' && context.locals && context.locals.has(name)) {
+    notifyLocalRead(name, context);
     return context.locals.get(name);
   }
 
