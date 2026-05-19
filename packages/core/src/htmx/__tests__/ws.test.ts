@@ -294,7 +294,7 @@ describe('WebSocket integration', () => {
       });
       const el = mkElement('<div ws-connect="/api"></div>');
       el.addEventListener('htmx:wsClose', () => events.push('close'));
-      proc.attachWS(el);
+      const conn = proc.attachWS(el)!;
       // Drive multiple unclean closes. fireClose nulls our `socket` ref
       // (via onclose) and schedules reconnect — open() then constructs a
       // fresh mock instance.
@@ -310,6 +310,9 @@ describe('WebSocket integration', () => {
       // close event after the loop's onclose run signals give-up.
       // (Each fireClose triggers one event; detach adds one more.)
       expect(events.length).toBeGreaterThanOrEqual(6);
+      // Direct terminal-state assertion (item 16 follow-up — avoids
+      // inferring give-up from event counts alone).
+      expect(conn.isDestroyed).toBe(true);
       vi.useRealTimers();
       proc.destroy();
     });

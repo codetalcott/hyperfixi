@@ -128,6 +128,16 @@ export class WSConnection {
   }
 
   /**
+   * True once `detach()` has run or the reconnect-retry budget has been
+   * exhausted. A terminal state — destroyed connections don't reconnect
+   * and silently drop further `send()` calls. Lets tests assert "we gave
+   * up" directly rather than counting `htmx:wsClose` events.
+   */
+  get isDestroyed(): boolean {
+    return this.destroyed;
+  }
+
+  /**
    * Send a payload over the socket. If the connection isn't OPEN yet,
    * the payload is queued and flushed on `onopen`. Returns true if the
    * payload was queued or sent.
