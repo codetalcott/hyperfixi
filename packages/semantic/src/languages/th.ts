@@ -5,7 +5,7 @@
  * Import this module to enable Thai language support.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { thaiTokenizer } from '../tokenizers/thai';
 import { thaiProfile } from '../generators/profiles/thai';
 

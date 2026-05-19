@@ -5,7 +5,7 @@
  * Importing this module registers Japanese tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { japaneseTokenizer } from '../tokenizers/japanese';
 import { japaneseProfile } from '../generators/profiles/japanese';
 

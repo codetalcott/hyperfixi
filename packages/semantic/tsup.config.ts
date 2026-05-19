@@ -650,5 +650,20 @@ export default defineConfig([
     format: ['esm'],
     splitting: false,
     sourcemap: true,
+    // Keep `../core` unbundled so all language modules share the runtime
+    // registry singleton from dist/core.js. Without this, each language
+    // file inlines its own copy of registry.ts and registration writes to
+    // a different Map than parseWithConfidence reads from.
+    esbuildPlugins: [
+      {
+        name: 'externalize-core',
+        setup(build) {
+          build.onResolve({ filter: /^\.\.\/core$/ }, () => ({
+            path: '../core.js',
+            external: true,
+          }));
+        },
+      },
+    ],
   },
 ]);

@@ -5,7 +5,7 @@
  * Importing this module registers Spanish tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { spanishTokenizer } from '../tokenizers/spanish';
 import { spanishProfile } from '../generators/profiles/spanish';
 

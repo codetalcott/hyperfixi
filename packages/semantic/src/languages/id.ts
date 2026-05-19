@@ -5,7 +5,7 @@
  * Importing this module registers Indonesian tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { indonesianTokenizer } from '../tokenizers/indonesian';
 import { indonesianProfile } from '../generators/profiles/indonesian';
 

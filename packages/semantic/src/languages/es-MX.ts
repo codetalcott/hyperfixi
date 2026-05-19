@@ -20,7 +20,7 @@
  * ```
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { spanishTokenizer } from '../tokenizers/spanish';
 import { spanishMexicoProfile } from '../generators/profiles/spanishMexico';
 

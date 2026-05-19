@@ -5,7 +5,7 @@
  * Importing this module registers Portuguese tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { portugueseTokenizer } from '../tokenizers/portuguese';
 import { portugueseProfile } from '../generators/profiles/portuguese';
 

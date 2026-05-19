@@ -5,7 +5,7 @@
  * Importing this module registers French tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { frenchTokenizer } from '../tokenizers/french';
 import { frenchProfile } from '../generators/profiles/french';
 

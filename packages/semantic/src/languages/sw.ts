@@ -5,7 +5,7 @@
  * Importing this module registers Swahili tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { swahiliTokenizer } from '../tokenizers/swahili';
 import { swahiliProfile } from '../generators/profiles/swahili';
 

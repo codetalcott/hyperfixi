@@ -5,7 +5,7 @@
  * Importing this module registers Arabic tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { arabicTokenizer } from '../tokenizers/arabic';
 import { arabicProfile } from '../generators/profiles/arabic';
 

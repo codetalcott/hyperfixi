@@ -5,7 +5,7 @@
  * Importing this module registers Turkish tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { turkishTokenizer } from '../tokenizers/turkish';
 import { turkishProfile } from '../generators/profiles/turkish';
 

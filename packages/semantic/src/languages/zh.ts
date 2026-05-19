@@ -5,7 +5,7 @@
  * Importing this module registers Chinese tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { chineseTokenizer } from '../tokenizers/chinese';
 import { chineseProfile } from '../generators/profiles/chinese';
 

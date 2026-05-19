@@ -5,7 +5,7 @@
  * Import this file to enable Vietnamese semantic parsing.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { vietnameseTokenizer } from '../tokenizers/vietnamese';
 import { vietnameseProfile } from '../generators/profiles/vietnamese';
 

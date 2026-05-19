@@ -8,7 +8,7 @@
  * for commands in software UI (not infinitive like most other languages).
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { polishTokenizer } from '../tokenizers/polish';
 import { polishProfile } from '../generators/profiles/polish';
 

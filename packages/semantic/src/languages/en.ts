@@ -13,7 +13,7 @@
  * ```
  */
 
-import { registerLanguage, registerPatterns } from '../registry';
+import { registerLanguage, registerPatterns } from '../core';
 import { englishTokenizer } from '../tokenizers/english';
 import { englishProfile } from '../generators/profiles/english';
 import { buildEnglishPatterns } from '../patterns/en';

@@ -14,7 +14,7 @@
  * ```
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { ukrainianTokenizer } from '../tokenizers/ukrainian';
 import { ukrainianProfile } from '../generators/profiles/ukrainian';
 

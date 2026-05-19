@@ -8,6 +8,7 @@
 import { tokenize } from '../tokenizers';
 import { getPatternsForLanguage } from '../registry';
 import { patternMatcher } from '../parser/pattern-matcher';
+import { parse as parseSemantic } from '../parser/semantic-parser';
 import type { SemanticNode, ActionType } from '../types';
 
 export interface ConfidenceResult {
@@ -124,15 +125,19 @@ export function parseWithConfidence(
   language: string
 ): ParseWithConfidenceResult {
   // Try the full parser first
-  // (require here to avoid circular dependency with semantic-parser)
   try {
-    const { parse } = require('../parser/semantic-parser');
-    const node = parse(hyperscript, language);
-    return {
-      node,
-      confidence: node?.metadata?.confidence ?? 0.8,
-      error: undefined,
-    };
+    const node = parseSemantic(hyperscript, language);
+    if (node) {
+      // Full parser consumed the input successfully — report its token count
+      // so callers detecting trailing input (e.g. compound statement splits)
+      // see a consistent shape vs. the pattern-matching fallback below.
+      return {
+        node,
+        confidence: node.metadata?.confidence ?? 0.8,
+        error: undefined,
+        tokensConsumed: tokenize(hyperscript, language).tokens.length,
+      };
+    }
   } catch {
     // Full parser failed — fall through to pattern matching
   }

@@ -5,7 +5,7 @@
  * Import this module to enable Bengali language support.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { bengaliTokenizer } from '../tokenizers/bengali';
 import { bengaliProfile } from '../generators/profiles/bengali';
 

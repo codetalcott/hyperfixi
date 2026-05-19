@@ -5,7 +5,7 @@
  * Importing this module registers Italian tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { italianTokenizer } from '../tokenizers/italian';
 import { italianProfile } from '../generators/profiles/italian';
 

@@ -5,7 +5,7 @@
  * Importing this module registers Quechua tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { quechuaTokenizer } from '../tokenizers/quechua';
 import { quechuaProfile } from '../generators/profiles/quechua';
 

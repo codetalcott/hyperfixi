@@ -5,7 +5,7 @@
  * Importing this module registers Hebrew tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { hebrewTokenizer } from '../tokenizers/he';
 import { hebrewProfile } from '../generators/profiles/he';
 

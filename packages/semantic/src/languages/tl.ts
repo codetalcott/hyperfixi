@@ -5,7 +5,7 @@
  * Import this module to enable Tagalog language support.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { tagalogTokenizer } from '../tokenizers/tl';
 import { tagalogProfile } from '../generators/profiles/tl';
 

@@ -14,7 +14,7 @@
  * ```
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { russianTokenizer } from '../tokenizers/russian';
 import { russianProfile } from '../generators/profiles/russian';
 

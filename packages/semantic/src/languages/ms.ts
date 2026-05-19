@@ -5,7 +5,7 @@
  * Import this module to enable Malay language support.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { malayTokenizer } from '../tokenizers/ms';
 import { malayProfile } from '../generators/profiles/ms';
 

@@ -5,7 +5,7 @@
  * Importing this module registers Korean tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { koreanTokenizer } from '../tokenizers/korean';
 import { koreanProfile } from '../generators/profiles/korean';
 

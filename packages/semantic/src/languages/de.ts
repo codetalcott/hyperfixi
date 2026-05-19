@@ -5,7 +5,7 @@
  * Importing this module registers German tokenizer and profile.
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { germanTokenizer } from '../tokenizers/german';
 import { germanProfile } from '../generators/profiles/german';
 

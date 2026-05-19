@@ -14,7 +14,7 @@
  * ```
  */
 
-import { registerLanguage } from '../registry';
+import { registerLanguage } from '../core';
 import { hindiTokenizer } from '../tokenizers/hindi';
 import { hindiProfile } from '../generators/profiles/hindi';
 
