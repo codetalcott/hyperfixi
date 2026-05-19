@@ -1120,7 +1120,12 @@ export class RuntimeBase {
       `BEHAVIOR: Found behavior, eventHandlers count: ${behavior.eventHandlers?.length || 0}`
     );
 
-    // Create isolated context
+    // Create isolated context. Thread the bundle's ExpressionRegistry so
+    // behaviors whose event handlers evaluate expressions directly (e.g. via
+    // command parseInput's evaluator) see the same registry as the rest of
+    // the runtime. Without this, the registry is recovered later at
+    // runtime.execute(), but only after every entry point. Symmetric with the
+    // event/mutation/change contexts below which spread `...context`.
     const baseBehaviorContext: ExecutionContext = {
       me: element,
       you: null,
@@ -1128,6 +1133,7 @@ export class RuntimeBase {
       result: null,
       locals: new Map(),
       globals: this.globalVariables,
+      registry: this.expressionRegistry,
       halted: false,
       returned: false,
       broke: false,
