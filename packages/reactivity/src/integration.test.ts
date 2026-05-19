@@ -222,6 +222,118 @@ describe('@hyperfixi/reactivity — integration', () => {
 
       document.body.removeChild(cb);
     });
+
+    it("explicit property via possessive (`me's value`) on a text input", async () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = 'initial';
+      document.body.appendChild(input);
+      const ctx = createContext(input);
+      ctx.globals.set('greeting', 'pending');
+
+      const r = parse("bind $greeting to me's value");
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      // DOM → var on init.
+      expect(ctx.globals.get('greeting')).toBe('initial');
+
+      // var → DOM.
+      ctx.globals.set('greeting', 'updated');
+      reactive.notifyGlobal('greeting');
+      await settle();
+      expect(input.value).toBe('updated');
+
+      // DOM → var on user input (form-like element, listener still active).
+      input.value = 'typed';
+      input.dispatchEvent(new Event('input'));
+      await settle();
+      expect(ctx.globals.get('greeting')).toBe('typed');
+
+      document.body.removeChild(input);
+    });
+
+    it('explicit property via member access (`me.value`) on a text input', async () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = 'hello';
+      document.body.appendChild(input);
+      const ctx = createContext(input);
+      ctx.globals.set('greeting', 'pending');
+
+      const r = parse('bind $greeting to me.value');
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      expect(ctx.globals.get('greeting')).toBe('hello');
+
+      ctx.globals.set('greeting', 'changed');
+      reactive.notifyGlobal('greeting');
+      await settle();
+      expect(input.value).toBe('changed');
+
+      document.body.removeChild(input);
+    });
+
+    it('explicit property targets a non-default property (color input value)', async () => {
+      // A color input's default `value` is the same as auto-detect, but this
+      // test pins the explicit-property path against a specific property name
+      // rather than relying on type-based auto-detection.
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.value = '#ff0000';
+      document.body.appendChild(picker);
+      const ctx = createContext(picker);
+      ctx.globals.set('color', '#000000');
+
+      const r = parse("bind $color to me's value");
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      // DOM → var on init.
+      expect(ctx.globals.get('color')).toBe('#ff0000');
+
+      // var → DOM (explicit property name; auto-detect would have picked the
+      // same string — but the code path here goes through the unwrap branch).
+      ctx.globals.set('color', '#00ff00');
+      reactive.notifyGlobal('color');
+      await settle();
+      expect(picker.value).toBe('#00ff00');
+
+      document.body.removeChild(picker);
+    });
+
+    it('var → DOM works for non-form properties; DOM → var is skipped', async () => {
+      // Binding a div's textContent: var→DOM should propagate; the listener
+      // for DOM→var isn't installed because input/change don't fire on divs.
+      const div = document.createElement('div');
+      div.textContent = 'initial';
+      document.body.appendChild(div);
+      const ctx = createContext(div);
+      ctx.globals.set('text', 'override');
+
+      const r = parse("bind $text to me's textContent");
+      expect(r.success).toBe(true);
+      await runtime.execute(r.node!, ctx);
+      await settle();
+
+      // No DOM→var sync, so the var keeps its pre-bind value.
+      expect(ctx.globals.get('text')).toBe('override');
+
+      // var → DOM fires on the initial run because var !== DOM.
+      expect(div.textContent).toBe('override');
+
+      // var → DOM continues to fire on subsequent writes.
+      ctx.globals.set('text', 'updated');
+      reactive.notifyGlobal('text');
+      await settle();
+      expect(div.textContent).toBe('updated');
+
+      document.body.removeChild(div);
+    });
   });
 
   describe('^name DOM-scoped vars', () => {

@@ -8,15 +8,30 @@
  *      after init. On its own initial run, var === DOM (Effect 1 just synced
  *      them), so the write is a no-op.
  *
- * Auto-detects the DOM property by element type:
- *   - INPUT[type=checkbox]              → `checked`
- *   - INPUT[type=number|range]          → `valueAsNumber`
- *   - INPUT|TEXTAREA|SELECT             → `value`
- *   - contenteditable="true"            → `textContent`
- *   - Custom elements with own `value`  → `value`
+ * Two binding forms:
  *
- * Users can override by binding directly to a property expression, e.g.
- * `bind $state to #el's value`.
+ *   1. Auto-detected (DOM side is a bare element expression):
+ *
+ *        bind $name to #input          -- detects `value`
+ *        bind $checked to me           -- detects `checked` on a checkbox
+ *
+ *      Auto-detected property by element type:
+ *        - INPUT[type=checkbox|radio]      → `checked`
+ *        - INPUT[type=number|range]        → `valueAsNumber`
+ *        - INPUT|TEXTAREA|SELECT           → `value`
+ *        - contenteditable="true"          → `textContent`
+ *        - Custom elements with own `value` → `value`
+ *
+ *   2. Explicit property (DOM side is a member or possessive expression):
+ *
+ *        bind $color to #picker's value    -- possessive (preferred — reads in any language)
+ *        bind $color to #picker.value      -- dot (JS-style alternative)
+ *        bind $text to #div's textContent  -- non-form properties: var→DOM only
+ *
+ *      For form-like elements, both directions work. For non-form elements
+ *      (e.g., binding a div's `textContent`), only var→DOM fires — there are
+ *      no input/change events to drive DOM→var, so user mutations of the
+ *      property via devtools won't propagate back.
  */
 
 import type { ASTNode, ExecutionContext, FeatureParserCtx } from './types';
@@ -71,6 +86,53 @@ function detectProperty(el: Element): string | null {
 }
 
 /**
+ * If `node` is a `memberExpression` or `possessiveExpression` with a static
+ * identifier property (`#el.value` or `#el's value`), return the inner element
+ * expression and the property name. Returns null for anything else.
+ *
+ * Computed member access (`#el[prop]`) is intentionally rejected — we'd have to
+ * evaluate the index dynamically and the binding direction would be unclear.
+ * Chained property access (`#el.dataset.value`) is also not unpacked — we only
+ * peel one level. Multi-level support is a future arc.
+ */
+function unwrapExplicitProperty(node: ASTNode): { element: ASTNode; propertyName: string } | null {
+  if (!node || (node.type !== 'memberExpression' && node.type !== 'possessiveExpression')) {
+    return null;
+  }
+  if (node.type === 'memberExpression' && node.computed === true) return null;
+  const property = node.property as ASTNode | undefined;
+  const object = node.object as ASTNode | undefined;
+  if (!property || !object || property.type !== 'identifier') return null;
+  const name = (property.name as string) ?? '';
+  if (!name) return null;
+  return { element: object, propertyName: name };
+}
+
+/**
+ * Whether the input/change listener installed by `trackDomProperty` would
+ * actually fire for this element. Used to decide whether to wire up the
+ * DOM→var direction when an explicit property is given.
+ */
+function isFormLikeElement(el: Element): boolean {
+  const tag = el.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  if ((el as HTMLElement).contentEditable === 'true') return true;
+  return false;
+}
+
+/**
+ * Whether debug logging is enabled. Mirrors signals.ts — keeps a single
+ * convention for the package.
+ */
+function debugEnabled(): boolean {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('hyperfixi:debug') !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Create the bind evaluator. Because `bind` has unusual parse shape (AST
  * nodes for left/right that may be identifiers, `$name` references, or DOM
  * element lookups), we rely on the runtime to evaluate them.
@@ -105,16 +167,31 @@ export function makeEvaluateBindFeature(runtime: {
       throw new Error('bind: could not identify a symbol side');
     }
 
-    // Resolve DOM element synchronously by executing the expression.
-    const domValue = await runtime.execute(domSide.exprNode, context);
+    // Unwrap explicit property syntax: `#el.value` or `#el's value` becomes
+    // (element-expression, propertyName). Otherwise, evaluate the whole side
+    // and rely on auto-detection.
+    const explicit = unwrapExplicitProperty(domSide.exprNode);
+    const elementExpr = explicit ? explicit.element : domSide.exprNode;
+    const domValue = await runtime.execute(elementExpr, context);
     if (!(domValue instanceof Element)) {
       throw new Error('bind: right-hand side did not resolve to an element');
     }
     const el = domValue;
-    const prop = detectProperty(el);
+    // Explicit property bypasses auto-detect; the user takes responsibility for
+    // picking something readable from the element. For DOM→var to work without
+    // explicit property, fall back to auto-detect.
+    const prop = explicit ? explicit.propertyName : detectProperty(el);
     if (!prop) {
       throw new Error(
         `bind: could not auto-detect property for <${el.tagName.toLowerCase()}> — use explicit \`<expr>'s <property>\` form`
+      );
+    }
+    // For explicit-property mode on non-form elements, DOM→var can't sync via
+    // input/change events. Skip the listener install; only var→DOM runs.
+    const installDomToVar = !explicit || isFormLikeElement(el);
+    if (explicit && !installDomToVar && debugEnabled() && typeof console !== 'undefined') {
+      console.warn(
+        `[@hyperfixi/reactivity] bind: DOM→var skipped for <${el.tagName.toLowerCase()}>.${prop} — no input/change event source.`
       );
     }
 
@@ -155,17 +232,21 @@ export function makeEvaluateBindFeature(runtime: {
       }
     };
 
-    // Effect 1: DOM → var (fires on user input)
-    const stopDomToVar = reactive.createEffect(
-      () => {
-        reactive.trackDomProperty(el, prop);
-        return readDom();
-      },
-      newValue => {
-        writeVar(newValue);
-      },
-      owner
-    );
+    // Effect 1: DOM → var (fires on user input). Skipped for explicit-property
+    // bindings on non-form elements — no input/change events would drive it.
+    let stopDomToVar: (() => void) | null = null;
+    if (installDomToVar) {
+      stopDomToVar = reactive.createEffect(
+        () => {
+          reactive.trackDomProperty(el, prop);
+          return readDom();
+        },
+        newValue => {
+          writeVar(newValue);
+        },
+        owner
+      );
+    }
 
     // Effect 2: var → DOM (fires on programmatic var writes — for globals
     // via the core's globalWriteHook, for locals via the localWriteHook the
@@ -183,7 +264,7 @@ export function makeEvaluateBindFeature(runtime: {
       owner
     );
 
-    context.registerCleanup?.(owner, stopDomToVar, 'bind-dom-to-var');
+    if (stopDomToVar) context.registerCleanup?.(owner, stopDomToVar, 'bind-dom-to-var');
     context.registerCleanup?.(owner, stopVarToDom, 'bind-var-to-dom');
     return undefined;
   };

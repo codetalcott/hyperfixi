@@ -80,7 +80,19 @@ Auto-detected property by element type:
 | `[contenteditable="true"]`          | `textContent`   |
 | Custom elements with own `value`    | `value`         |
 
-To override, bind directly to a property expression (not yet supported in v1).
+### Explicit property
+
+Bind to a specific property using either possessive or member-access syntax:
+
+```hyperscript
+bind $color to #picker's value     -- possessive (preferred — reads in any language)
+bind $color to #picker.value       -- dot syntax (JS-style alternative)
+bind $text to #div's textContent   -- non-form properties: var→DOM only
+```
+
+For form-like elements (`<input>`, `<textarea>`, `<select>`, `[contenteditable=true]`) both directions work. For non-form elements (e.g., binding a `<div>`'s `textContent`), only var→DOM fires — there are no `input`/`change` events to drive DOM→var, so user mutations of the property via devtools won't propagate back. Enable [debug logging](#debug-logging) to see a one-time warning when this happens.
+
+Chained property access (`bind $x to #el's dataset.value`) is not supported in v1 — only one level deep.
 
 Both `$globals` and `:locals` are accepted on the var side. Local writes propagate through the localWriteHook keyed off `context.me`, so a `set :foo to ...` from any handler running on the same `me` element will update the bound DOM property.
 
