@@ -735,6 +735,16 @@ For projects prioritizing bundle size over features:
 
 Fixi features include request dropping (anti-double-submit), `fx-ignore` attribute, and a rich event lifecycle (`fx:init`, `fx:config`, `fx:before`, `fx:after`, `fx:error`, `fx:finally`, `fx:swapped`).
 
+### `hx-live` reactive expressions (htmx v4)
+
+When `@hyperfixi/reactivity` is installed, the htmx-compat layer recognizes the htmx v4 `hx-live` attribute and translates it to a `live ... end` block. The body is hyperscript syntax (not JavaScript like upstream htmx v4) — it gets fine-grained dependency tracking and inherits hyperscript's multilingual support:
+
+```html
+<div hx-live="put $count into me"></div>
+```
+
+The expression re-runs only when its tracked dependencies actually change (not on every DOM mutation, which is the upstream htmx v4 approach). If reactivity isn't installed, the element is skipped with a clear console error pointing to the install command. The forthcoming `hyperfixi-hx-v4` bundle auto-installs reactivity.
+
 ### htmx Lifecycle Events
 
 The htmx compatibility layer dispatches CustomEvents at key points in the request lifecycle:

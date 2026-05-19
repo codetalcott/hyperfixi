@@ -31,6 +31,20 @@ end
 
 The body is one effect; its dependency set is the union of every read performed during execution. Writes to any tracked dependency schedule a re-run on the next microtask flush.
 
+### `hx-live` bridge
+
+When this plugin is installed, `@hyperfixi/core`'s htmx-compat layer also recognizes the htmx v4 `hx-live` attribute and translates it to a `live ... end` block. The attribute value is hyperscript syntax — not JavaScript like upstream htmx v4 — so it reads naturally and inherits hyperscript's multilingual support:
+
+```html
+<!-- English -->
+<div hx-live="put $count into me"></div>
+
+<!-- Japanese (within <section lang="ja"> once Phase 8 lands) -->
+<div hx-live="$count を me に 入れる"></div>
+```
+
+If reactivity isn't installed at the moment an `hx-live` element is processed, a clear console error is logged and the element is skipped — other htmx attributes on the same element still wire up normally. The forthcoming `hyperfixi-hx-v4` bundle auto-installs reactivity so this gate is invisible to users of that bundle.
+
 ## `when ... changes`
 
 ```hyperscript

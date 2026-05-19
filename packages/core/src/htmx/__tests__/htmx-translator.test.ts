@@ -513,6 +513,39 @@ describe('htmx-translator', () => {
         expect(config.headers).toContain('X-Request-Id');
       });
     });
+
+    describe('hx-live (reactive expression)', () => {
+      it('emits a live ... end block when hxLive is set', () => {
+        const div = document.createElement('div');
+        const config: HtmxConfig = { hxLive: 'put $count into me' };
+        const result = translateToHyperscript(config, div);
+        expect(result).toBe('live\n  put $count into me\nend');
+      });
+
+      it('emits live block alongside event handlers when both are present', () => {
+        const div = document.createElement('div');
+        const config: HtmxConfig = {
+          hxLive: 'put $count into me',
+          onHandlers: { click: 'toggle .active on me' },
+        };
+        const result = translateToHyperscript(config, div);
+        // Live block first, then hx-on handlers
+        expect(result).toContain('live\n  put $count into me\nend');
+        expect(result).toContain('on click toggle .active on me');
+      });
+
+      it('emits live block alongside a request handler', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          hxLive: 'put $count into me',
+          method: 'GET',
+          url: '/api/data',
+        };
+        const result = translateToHyperscript(config, button);
+        expect(result).toContain('live\n  put $count into me\nend');
+        expect(result).toContain("fetch '/api/data'");
+      });
+    });
   });
 
   describe('hasHtmxAttributes', () => {
@@ -702,6 +735,18 @@ describe('HtmxAttributeProcessor', () => {
       const config = processor.collectAttributes(el);
       expect(config.headers).toBe('{"X-Custom": "val", "Authorization": "Bearer token"}');
     });
+
+    it('collects hx-live into config', () => {
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+      });
+      const el = document.createElement('div');
+      el.setAttribute('hx-live', 'put $count into me');
+
+      const config = processor.collectAttributes(el);
+      expect(config.hxLive).toBe('put $count into me');
+    });
   });
 
   describe('scanForHtmxElements', () => {
@@ -754,6 +799,23 @@ describe('HtmxAttributeProcessor', () => {
       const elements = processor.scanForHtmxElements();
       expect(elements).toHaveLength(2);
     });
+
+    it('finds elements with only hx-live (no request URL)', () => {
+      // hx-live makes an element discoverable even without hx-get/post/etc.
+      // — it's a standalone reactive expression.
+      const el = document.createElement('div');
+      el.setAttribute('hx-live', 'put $count into me');
+      document.body.appendChild(el);
+
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+        root: document.body,
+      });
+      const elements = processor.scanForHtmxElements();
+      expect(elements).toHaveLength(1);
+      expect(elements[0]).toBe(el);
+    });
   });
 
   describe('manualProcess', () => {
@@ -771,6 +833,96 @@ describe('HtmxAttributeProcessor', () => {
       expect(result).toContain("fetch '/api/users'");
       expect(result).toContain('put it into #users-list');
       expect(result).toContain('on click');
+    });
+  });
+
+  describe('hx-live reactivity gate', () => {
+    // These tests cover the processor's runtime check that the `live` feature
+    // is registered before emitting a live block. They don't pull in
+    // @hyperfixi/reactivity (which would be a cross-package dep); instead they
+    // poke the parser-extension registry directly to simulate plugin presence.
+
+    beforeEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('logs a clear error when reactivity plugin is not installed', async () => {
+      const { getParserExtensionRegistry } = await import('../../parser/extensions');
+      const registry = getParserExtensionRegistry();
+      const baseline = registry.snapshot();
+      // Ensure no `live` feature registered (default state).
+      registry.restore(baseline);
+
+      const el = document.createElement('div');
+      el.setAttribute('hx-live', 'put $count into me');
+      document.body.appendChild(el);
+
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+        root: document.body,
+      });
+
+      let executed = false;
+      processor.init(async () => {
+        executed = true;
+      });
+
+      const errors: string[] = [];
+      const originalError = console.error;
+      console.error = (...args: unknown[]) => {
+        errors.push(args.map(a => String(a)).join(' '));
+      };
+      try {
+        processor.processElement(el);
+      } finally {
+        console.error = originalError;
+      }
+
+      expect(errors.some(e => e.includes('hx-live requires @hyperfixi/reactivity'))).toBe(true);
+      expect(executed).toBe(false);
+
+      registry.restore(baseline);
+    });
+
+    it('emits the live block when reactivity plugin is installed', async () => {
+      const { getParserExtensionRegistry } = await import('../../parser/extensions');
+      const registry = getParserExtensionRegistry();
+      const baseline = registry.snapshot();
+      // Register a no-op `live` feature parser to satisfy the hasFeature() gate.
+      registry.registerFeature('live', () => null);
+
+      const el = document.createElement('div');
+      el.setAttribute('hx-live', 'put $count into me');
+      document.body.appendChild(el);
+
+      // Stub dispatchEvent — the processor dispatches lifecycle CustomEvents
+      // and the jsdom instance set up at module top has stricter type checks
+      // than the processor's globals expect. We're testing the live-block
+      // emission, not the lifecycle dispatch path.
+      el.dispatchEvent = (() => true) as Element['dispatchEvent'];
+
+      const processor = new HtmxAttributeProcessor({
+        processExisting: false,
+        watchMutations: false,
+        root: document.body,
+      });
+
+      let receivedCode = '';
+      processor.init(async (code: string) => {
+        receivedCode = code;
+      });
+
+      processor.processElement(el);
+      // Give the async init callback a tick to fire.
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(receivedCode).toContain('live');
+      expect(receivedCode).toContain('put $count into me');
+      expect(receivedCode).toContain('end');
+
+      registry.restore(baseline);
     });
   });
 });
