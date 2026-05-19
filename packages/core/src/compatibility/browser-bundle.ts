@@ -106,6 +106,10 @@ interface HyperFixiBrowserAPI {
   registerHooks: (name: string, hooks: RuntimeHooks) => void;
   unregisterHooks: (name: string) => boolean;
   getRegisteredHooks: () => string[];
+  // Force lazy default-runtime construction; idempotent. Bundle authors that
+  // need to install a plugin before any user code runs (e.g. hyperfixi-hx-v4
+  // wiring @hyperfixi/reactivity) call this to get the runtime instance.
+  getDefaultRuntime: typeof hyperscript.getDefaultRuntime;
   // Plugin registry for external plugins (e.g., @lokascript/siren)
   registry: LokaScriptRegistry;
   // Fetch response type extension point
@@ -258,6 +262,7 @@ const hyperfixiAPI = {
   registerHooks: hyperscript.registerHooks,
   unregisterHooks: hyperscript.unregisterHooks,
   getRegisteredHooks: hyperscript.getRegisteredHooks,
+  getDefaultRuntime: hyperscript.getDefaultRuntime,
 
   // Plugin registry for external plugins (e.g., @lokascript/siren)
   registry: getDefaultRegistry(),

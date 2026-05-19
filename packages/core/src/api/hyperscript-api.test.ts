@@ -34,6 +34,21 @@ describe('Hyperscript Public API', () => {
     it('should have a version string', () => {
       expect(hyperscript.version).toMatch(/^\d+\.\d+\.\d+/);
     });
+
+    it('exposes getDefaultRuntime as an idempotent forcing constructor', () => {
+      // Public API method introduced to replace the
+      // `hyperscript.getRegisteredHooks()` no-op trick that bundle authors
+      // used to force lazy runtime construction before installing plugins.
+      expect(typeof hyperscript.getDefaultRuntime).toBe('function');
+      const first = hyperscript.getDefaultRuntime();
+      const second = hyperscript.getDefaultRuntime();
+      expect(first).toBeDefined();
+      expect(first).toBe(second);
+      // The runtime should expose the plugin-install surface that bundle
+      // authors actually care about (sanity check; the full surface is
+      // tested elsewhere).
+      expect(typeof first.registerHooks).toBe('function');
+    });
   });
 
   describe('compileSync() method - new API', () => {

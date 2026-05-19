@@ -64,29 +64,13 @@ import {
 // ============== REACTIVITY INSTALL ==============
 
 // The default runtime is constructed lazily on first use by the
-// hyperscript API — calling any method that reaches into it (here:
-// `getRegisteredHooks`) triggers construction and the constructor's
-// `globalThis._hyperscript.runtime = this` assignment. We need it alive
-// BEFORE the htmx-compat scanner runs so reactivity is registered on the
-// runtime that will actually evaluate `hx-live` blocks.
+// hyperscript API. We need it alive BEFORE the htmx-compat scanner runs
+// so reactivity is registered on the runtime that will actually evaluate
+// `hx-live` blocks. `getDefaultRuntime()` is the public, intent-revealing
+// way to force construction (returns the singleton directly; no indirection
+// through `globalThis._hyperscript.runtime`).
 function installReactivityOnDefaultRuntime(): void {
-  // Force-construct the default runtime (idempotent if already built).
-  hyperfixiAPI.getRegisteredHooks();
-
-  const globalHook = (
-    globalThis as unknown as {
-      _hyperscript?: { runtime?: unknown };
-    }
-  )._hyperscript;
-  const runtime = globalHook?.runtime;
-  if (!runtime) {
-    console.warn(
-      '[hyperfixi-hx-v4] Default runtime not found on globalThis._hyperscript.runtime ' +
-        'after force-construction; reactivity (hx-live, bind, when) will not work. ' +
-        'This is unexpected — please file a bug.'
-    );
-    return;
-  }
+  const runtime = hyperfixiAPI.getDefaultRuntime();
   // Cast both args through `never` because `@hyperfixi/reactivity` is built
   // against `dist/` types of `@hyperfixi/core` while this entry file
   // imports from `src/`. The shapes are identical at runtime (same module

@@ -408,6 +408,18 @@ export interface HyperscriptAPI {
   /** Create a custom runtime instance */
   createRuntime(options?: RuntimeOptions): Runtime;
 
+  /**
+   * Get (and force lazy construction of) the singleton default runtime.
+   *
+   * The default runtime is constructed on first compile/execute. Bundle authors
+   * that need to install a plugin (e.g. `@hyperfixi/reactivity`) before any
+   * user code runs must force construction first — calling this method does
+   * that explicitly, rather than relying on a no-op like `getRegisteredHooks()`.
+   *
+   * Idempotent: subsequent calls return the same instance.
+   */
+  getDefaultRuntime(): Runtime;
+
   /** Runtime Hooks */
   registerHooks(name: string, hooks: RuntimeHooks): void;
   unregisterHooks(name: string): boolean;
@@ -1143,6 +1155,7 @@ export const hyperscript: HyperscriptAPI = {
 
   // Advanced
   createRuntime: createRuntimeInstance,
+  getDefaultRuntime: () => getDefaultRuntime(),
 
   // Runtime Hooks
   registerHooks: (name: string, hooks: RuntimeHooks) => {
