@@ -15,6 +15,7 @@
     "test": "npm run test --workspaces",
     "test:integration": "npm test --workspace=@hyperfixi/core && npm test --workspace=@lokascript/semantic",
     "test:check": "./scripts/test-check-all.sh",
+    "smoke:dist": "node scripts/smoke-dist.mjs",
     "test:core": "npm test --workspace=@hyperfixi/core",
     "test:semantic": "npm test --workspace=@lokascript/semantic",
     "test:multilingual": "npm run test:multilingual --workspace=@hyperfixi/testing-framework",
