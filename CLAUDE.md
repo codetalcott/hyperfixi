@@ -661,6 +661,19 @@ hyperfixi({
 
 ## Browser Bundles
 
+### Choosing your bundle
+
+Decision tree for the most common cases:
+
+1. **Using `@hyperfixi/vite-plugin`?** Don't pick a bundle by hand — the plugin scans your project and emits the right one (minimal handcrafted when possible, falls back to `hx-v4` when it spots htmx v4 features). See [vite plugin README](packages/vite-plugin/README.md).
+2. **Need `hx-live`, `bind`, `when`, SSE, or WebSocket?** Use `hyperfixi-hx-v4.js` (~257 KB gz). Single script tag, everything auto-installed. The size cost buys correctness — the slim runtime can't satisfy these features (its `set` doesn't fire `notifyGlobalWrite`, the slim parser doesn't know reactive features, and SSE/WS modules aren't wired).
+3. **Need only htmx v1/v2 attributes (`hx-get`/`hx-post`/etc.)?** Use `hyperfixi-hx.js` (~13 KB gz). Includes htmx-compat + the slim hybrid runtime for `_=` attributes. No reactivity, no streaming.
+4. **Pure hyperscript (`_=` attributes), ~85% feature coverage, smallest realistic size?** Use `hyperfixi-hybrid-complete.js` (~7.3 KB gz). Full AST parser, expressions, event modifiers, block commands (`if`, `for`, `repeat`, `while`, `fetch`).
+5. **Tiny static page (toggle / show / hide / put / set)?** Use `hyperfixi-lite.js` (~1.9 KB gz). Regex parser, 8 commands. Drops to `hyperfixi-lite-plus.js` (~2.6 KB gz) if you need a few more commands + i18n aliases.
+6. **Authoring in multiple languages (Japanese, Korean, Arabic, etc.) or need the full semantic parser at runtime?** Use `hyperfixi.js` (full bundle, ~203 KB gz) or `hyperfixi-multilingual.js` (~64 KB, parser-free i18n via the semantic bundle loaded separately).
+
+Rule of thumb: start as small as you can; upgrade when you hit a missing feature. The vite plugin removes this decision entirely for projects that use it.
+
 ### Core Bundles
 
 | Bundle                                               | Global                  | Size (gzip) | Use Case                             |

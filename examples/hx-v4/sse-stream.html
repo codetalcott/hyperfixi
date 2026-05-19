@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>sse-connect / sse-swap — HyperFixi hx-v4</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 720px;
+        margin: 3em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      .feed {
+        background: #f3f4f6;
+        border-radius: 6px;
+        padding: 0.75em 1em;
+        max-height: 18em;
+        overflow-y: auto;
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+      }
+      .row {
+        padding: 0.25em 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .meta {
+        color: #6b7280;
+        margin-right: 0.75em;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+      kbd {
+        background: #e5e7eb;
+        padding: 0.1em 0.4em;
+        border-radius: 3px;
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SSE — <code>sse-connect</code> / <code>sse-swap</code></h1>
+    <p class="note">
+      The element below opens an <code>EventSource</code> against
+      <code>/fake-stream</code> and routes incoming <code>tick</code> events into
+      <code>#feed</code> with <code>hx-swap="afterbegin"</code>. This page polyfills
+      <code>EventSource</code> with a tiny in-page mock so you can run the demo without a backend.
+    </p>
+
+    <!-- The mock below intercepts `new EventSource('/fake-stream')` and pushes
+         a synthetic event every 800ms. In production, point sse-connect at a
+         real SSE endpoint (Server-Sent Events / `text/event-stream`). -->
+    <script>
+      // Tiny in-page EventSource mock — only activates for the demo URL.
+      const NativeEventSource = window.EventSource;
+      window.EventSource = function MockEventSource(url) {
+        if (url !== '/fake-stream') return new NativeEventSource(url);
+        const self = this;
+        self.url = url;
+        self.readyState = 1;
+        self._listeners = new Map();
+        self.addEventListener = (type, l) => {
+          let bucket = self._listeners.get(type);
+          if (!bucket) self._listeners.set(type, (bucket = new Set()));
+          bucket.add(l);
+        };
+        self.removeEventListener = (type, l) => self._listeners.get(type)?.delete(l);
+        self.close = () => {
+          self.readyState = 2;
+          if (self._interval) clearInterval(self._interval);
+        };
+        let count = 0;
+        self._interval = setInterval(() => {
+          count++;
+          const data =
+            '<div class="row"><span class="meta">' +
+            new Date().toLocaleTimeString() +
+            '</span> tick #' +
+            count +
+            '</div>';
+          const bucket = self._listeners.get('tick');
+          if (bucket) for (const l of bucket) l.call(self, { type: 'tick', data });
+        }, 800);
+        if (self.onopen) self.onopen(new Event('open'));
+        return self;
+      };
+    </script>
+
+    <div
+      sse-connect="/fake-stream"
+      sse-swap="tick"
+      hx-target="#feed"
+      hx-swap="afterbegin"
+    ></div>
+
+    <h2>Live feed</h2>
+    <div id="feed" class="feed">(events appear here, newest first)</div>
+
+    <h2>What's happening</h2>
+    <ol>
+      <li>
+        The bundle's htmx-compat processor sees <code>sse-connect="/fake-stream"</code>, opens an
+        <code>EventSource</code>, and subscribes a listener for <code>tick</code> events (from the
+        <code>sse-swap</code> value).
+      </li>
+      <li>
+        Each <code>tick</code> event's <code>data</code> is wrapped in a tiny hyperscript snippet
+        — <code>put &lt;data&gt; at start of #feed</code> — and runs through the same execution
+        path that handles other htmx attributes, honoring
+        <code>hx-target</code> + <code>hx-swap="afterbegin"</code>.
+      </li>
+      <li>
+        On element removal (try <kbd>devtools → delete node</kbd>), the
+        <code>MutationObserver</code> closes the <code>EventSource</code> — no leak.
+      </li>
+    </ol>
+
+    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+  </body>
+</html>

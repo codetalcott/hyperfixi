@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ws-connect / ws-send chat — HyperFixi hx-v4</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 720px;
+        margin: 3em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      .messages {
+        background: #f3f4f6;
+        border-radius: 6px;
+        padding: 0.75em 1em;
+        max-height: 20em;
+        overflow-y: auto;
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+      }
+      .row {
+        padding: 0.25em 0;
+      }
+      .meta {
+        color: #6b7280;
+        margin-right: 0.75em;
+      }
+      .you {
+        color: #1d4ed8;
+      }
+      .echo {
+        color: #047857;
+      }
+      form {
+        display: flex;
+        gap: 0.5em;
+        margin-top: 1em;
+      }
+      input[type='text'] {
+        flex: 1;
+        font-size: 1em;
+        padding: 0.5em;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+      }
+      button {
+        font-size: 1em;
+        padding: 0.5em 1em;
+        cursor: pointer;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WebSocket — <code>ws-connect</code> / <code>ws-send</code></h1>
+    <p class="note">
+      The form below uses <code>ws-send</code> to forward its fields as a JSON message over the
+      WebSocket opened by <code>ws-connect</code>. Incoming messages tagged with a
+      <code>target</code> field are routed through the existing <code>hx-target</code>/
+      <code>hx-swap</code> machinery — here the mock echoes each sent message as a swap envelope.
+    </p>
+
+    <!-- In-page WebSocket mock — only activates for the demo URL. -->
+    <script>
+      const NativeWebSocket = window.WebSocket;
+      window.WebSocket = function MockWebSocket(url) {
+        if (url !== 'wss://example/echo') return new NativeWebSocket(url);
+        const self = this;
+        self.url = url;
+        self.readyState = 0;
+        self.onopen = null;
+        self.onmessage = null;
+        self.onerror = null;
+        self.onclose = null;
+        self.close = () => {
+          self.readyState = 3;
+          if (self.onclose) self.onclose({ code: 1000, reason: 'closed', wasClean: true });
+        };
+        self.send = data => {
+          // Echo back as a swap envelope after a short delay.
+          setTimeout(() => {
+            if (self.onmessage) {
+              const payload = JSON.parse(data);
+              const html =
+                '<div class="row"><span class="meta">' +
+                new Date().toLocaleTimeString() +
+                '</span><span class="echo">echo:</span> ' +
+                escapeHtml(payload.msg) +
+                '</div>';
+              self.onmessage({
+                data: JSON.stringify({
+                  target: '#messages',
+                  swap: 'beforeend',
+                  data: html,
+                }),
+              });
+            }
+          }, 200);
+        };
+        setTimeout(() => {
+          self.readyState = 1;
+          if (self.onopen) self.onopen(new Event('open'));
+        }, 50);
+        return self;
+      };
+      function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, c =>
+          c === '&'
+            ? '&amp;'
+            : c === '<'
+              ? '&lt;'
+              : c === '>'
+                ? '&gt;'
+                : c === '"'
+                  ? '&quot;'
+                  : '&#39;'
+        );
+      }
+    </script>
+
+    <div ws-connect="wss://example/echo">
+      <h2>Messages</h2>
+      <div id="messages" class="messages">(echoed messages appear here)</div>
+
+      <form ws-send>
+        <input type="text" name="msg" placeholder="Say something" autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
+    <h2>What's happening</h2>
+    <ol>
+      <li>
+        The processor sees <code>ws-connect="wss://example/echo"</code> and opens a
+        <code>WebSocket</code>. Submit handlers are installed on every <code>ws-send</code>
+        descendant — here, the form.
+      </li>
+      <li>
+        On submit, the form's fields are serialized to JSON
+        (<code>{"msg":"..."}</code>) and sent over the socket.
+      </li>
+      <li>
+        The mock echoes back a swap envelope:
+        <code>{"target":"#messages","swap":"beforeend","data":"&lt;div&gt;..."}</code>. The processor
+        recognizes the envelope shape, runs the swap snippet, and appends the message.
+      </li>
+      <li>
+        On element removal, <code>MutationObserver</code> closes the socket and removes the form
+        listener.
+      </li>
+    </ol>
+
+    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+  </body>
+</html>

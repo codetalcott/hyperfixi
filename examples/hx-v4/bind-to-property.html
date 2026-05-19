@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>bind to .property — HyperFixi hx-v4</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 640px;
+        margin: 3em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 1.5em;
+        margin: 1.5em 0;
+      }
+      input[type='color'] {
+        width: 4em;
+        height: 4em;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 0;
+        cursor: pointer;
+      }
+      input[type='text'] {
+        font-size: 1em;
+        padding: 0.5em;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        width: 14em;
+      }
+      .swatch {
+        width: 6em;
+        height: 6em;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        background: #1f2937;
+      }
+      .label {
+        color: #6b7280;
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>bind <code>$var</code> to <code>el</code></h1>
+    <p class="note">
+      The htmx-v4 bundle's <code>@hyperfixi/reactivity</code> provides two-way <code>bind</code>
+      for form elements. <code>bind $color to me</code> auto-detects the readable property
+      (<code>value</code> for inputs) and wires the bind in both directions. The explicit-property
+      form <code>bind $x to me's prop</code> is also supported; chained access
+      (<code>me's style.backgroundColor</code>) is deferred — the swatch below uses
+      <code>hx-live</code> instead for a reactive style update.
+    </p>
+
+    <div class="row">
+      <input
+        type="color"
+        id="picker"
+        value="#1f2937"
+        _="bind $color to me"
+      />
+      <span class="label">
+        <code>bind $color to me</code> on a <code>&lt;input type="color"&gt;</code> (auto-detects
+        <code>value</code>)
+      </span>
+    </div>
+
+    <div class="row">
+      <input
+        type="text"
+        id="echo"
+        value="#1f2937"
+        _="bind $color to me"
+      />
+      <span class="label">
+        Same auto-detect bind on a second input — both stay in sync via <code>$color</code>
+      </span>
+    </div>
+
+    <div class="row">
+      <div
+        class="swatch"
+        hx-live="set my @style to 'background:' + $color"
+      ></div>
+      <span class="label">
+        <code>hx-live="set my @style to ..."</code> — reactive style update
+      </span>
+    </div>
+
+    <p class="note">
+      Try editing the text input directly (paste <code>red</code>, <code>#0af</code>,
+      <code>rebeccapurple</code>) — the picker follows because both are bound to
+      <code>$color</code>. The swatch follows because its <code>hx-live</code> body reads
+      <code>$color</code> and the reactivity graph notifies it on every change.
+    </p>
+
+    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script>
+      window.hyperfixi.run('set $color to "#1f2937"');
+    </script>
+  </body>
+</html>
