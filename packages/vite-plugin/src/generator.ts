@@ -622,6 +622,23 @@ export class Generator {
           `[hyperfixi] Detected htmx v4 features: ${triggers.join(', ')}\n` +
             `  Using the hx-v4 premade bundle (auto-installs reactivity + SSE/WS).`
         );
+        // Reactivity-only users currently still get the full hx-v4 bundle —
+        // a more granular fallback is feasible but deferred until size
+        // feedback warrants the maintenance lift. See memory entry
+        // project_parked_vite_plugin_reactivity_only_bundle for the
+        // implementation shape and trigger conditions.
+        const onlyReactivity =
+          usage.needsReactivity &&
+          !usage.htmx?.needsHxLive &&
+          !usage.htmx?.needsSSE &&
+          !usage.htmx?.needsWS &&
+          !usage.htmx?.hasHtmxAttributes;
+        if (onlyReactivity) {
+          console.log(
+            `  Note: this project uses reactivity only (no hx-*/sse-*/ws-* attributes). ` +
+              `A reactivity-only fallback is parked pending size feedback.`
+          );
+        }
       }
       return this.generateDevFallback('hx-v4');
     }
