@@ -243,6 +243,18 @@ describe('evaluateExpressionFromSource (canonical string→eval helper)', () => 
     expect(await evaluateExpressionFromSource('5 > 3', ctx())).toBe(true);
   });
 
+  it('or/and short-circuit returns the operand, not a boolean', async () => {
+    // `or` returns the first truthy operand or the last operand.
+    expect(await evaluateExpressionFromSource('10 or 0', ctx())).toBe(10);
+    expect(await evaluateExpressionFromSource('"" or "fallback"', ctx())).toBe('fallback');
+    expect(await evaluateExpressionFromSource('null or "x"', ctx())).toBe('x');
+    // `and` returns the first falsy operand or the last operand.
+    expect(await evaluateExpressionFromSource('0 and 5', ctx())).toBe(0);
+    expect(await evaluateExpressionFromSource('"a" and "b"', ctx())).toBe('b');
+    // Composed: arithmetic on operands shouldn't be coerced to 1/0.
+    expect(await evaluateExpressionFromSource('(10 or 0) * (3 or 0)', ctx())).toBe(30);
+  });
+
   it('evaluates literals', async () => {
     expect(await evaluateExpressionFromSource('"hello"', ctx())).toBe('hello');
     expect(await evaluateExpressionFromSource('42', ctx())).toBe(42);

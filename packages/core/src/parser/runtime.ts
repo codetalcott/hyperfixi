@@ -412,15 +412,19 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
 
   const left = await evaluateAST(node.left, context);
 
-  // Handle short-circuit evaluation for logical operators
+  // Handle short-circuit evaluation for logical operators.
+  // Return the operand (not a boolean) so chained arithmetic like
+  // `($price or 0) * ($quantity or 0)` produces the expected numeric result.
+  // Matches JS `||`/`&&` and upstream _hyperscript semantics; the non-short-circuit
+  // branch already returns operands via `orExpression.evaluate`.
   if (operator === 'and') {
-    if (!left) return false;
+    if (!left) return left;
     const right = await evaluateAST(node.right, context);
     return getExpr(context, 'and').evaluate(context, left, right);
   }
 
   if (operator === 'or') {
-    if (left) return true;
+    if (left) return left;
     const right = await evaluateAST(node.right, context);
     return getExpr(context, 'or').evaluate(context, left, right);
   }

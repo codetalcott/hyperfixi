@@ -161,13 +161,12 @@ describe('Logical Expressions', () => {
         expect(await logicalExpressions.and.evaluate(context, false, false)).toBe(false);
       });
 
-      // Test expectations don't match JS short-circuit semantics ('hello' && 'world' = 'world', not true)
-      it.skip('should handle truthy/falsy values', async () => {
-        expect(await logicalExpressions.and.evaluate(context, 'hello', 'world')).toBe(true);
-        expect(await logicalExpressions.and.evaluate(context, 'hello', '')).toBe(false);
-        expect(await logicalExpressions.and.evaluate(context, 1, 2)).toBe(true);
-        expect(await logicalExpressions.and.evaluate(context, 1, 0)).toBe(false);
-        expect(await logicalExpressions.and.evaluate(context, null, 'value')).toBe(false);
+      it('returns the operand (JS && semantics), not a boolean', async () => {
+        expect(await logicalExpressions.and.evaluate(context, 'hello', 'world')).toBe('world');
+        expect(await logicalExpressions.and.evaluate(context, 'hello', '')).toBe('');
+        expect(await logicalExpressions.and.evaluate(context, 1, 2)).toBe(2);
+        expect(await logicalExpressions.and.evaluate(context, 1, 0)).toBe(0);
+        expect(await logicalExpressions.and.evaluate(context, null, 'value')).toBeNull();
       });
 
       it('should have correct precedence', () => {
@@ -188,12 +187,11 @@ describe('Logical Expressions', () => {
         expect(await logicalExpressions.or.evaluate(context, false, false)).toBe(false);
       });
 
-      // Test expectations don't match JS short-circuit semantics ('hello' || '' = 'hello', not true)
-      it.skip('should handle truthy/falsy values', async () => {
-        expect(await logicalExpressions.or.evaluate(context, 'hello', '')).toBe(true);
-        expect(await logicalExpressions.or.evaluate(context, '', 'world')).toBe(true);
-        expect(await logicalExpressions.or.evaluate(context, '', null)).toBe(false);
-        expect(await logicalExpressions.or.evaluate(context, 1, 0)).toBe(true);
+      it('returns the operand (JS || semantics), not a boolean', async () => {
+        expect(await logicalExpressions.or.evaluate(context, 'hello', '')).toBe('hello');
+        expect(await logicalExpressions.or.evaluate(context, '', 'world')).toBe('world');
+        expect(await logicalExpressions.or.evaluate(context, '', null)).toBeNull();
+        expect(await logicalExpressions.or.evaluate(context, 1, 0)).toBe(1);
       });
 
       it('should have lower precedence than and', () => {
