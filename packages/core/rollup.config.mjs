@@ -14,6 +14,15 @@ const commonPlugins = [
 
 /**
  * Helper to create a subpath export entry
+ *
+ * `inlineDynamicImports: true` matches the main entry's pattern. The
+ * pre-existing circular dependency in `src/expressions/conversion/` produces
+ * a dynamic import that would otherwise force rollup to emit multiple chunks
+ * (and fail with "Invalid value for option 'output.file' - when building
+ * multiple chunks, the 'output.dir' option must be used"). Inlining keeps the
+ * subpath bundle single-file, which is what the package.json exports map
+ * points to.
+ *
  * @param {string} input - Source file path
  * @param {string} outputBase - Output path without extension
  * @param {string[]} external - External dependencies
@@ -22,8 +31,8 @@ function createSubpathEntry(input, outputBase, external = []) {
   return {
     input,
     output: [
-      { file: `${outputBase}.mjs`, format: 'es', sourcemap: true },
-      { file: `${outputBase}.js`, format: 'cjs', sourcemap: true },
+      { file: `${outputBase}.mjs`, format: 'es', sourcemap: true, inlineDynamicImports: true },
+      { file: `${outputBase}.js`, format: 'cjs', sourcemap: true, inlineDynamicImports: true },
     ],
     plugins: commonPlugins,
     external,

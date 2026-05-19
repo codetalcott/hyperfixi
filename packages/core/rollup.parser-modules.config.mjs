@@ -24,18 +24,23 @@ export default parserModules.map(module => ({
       file: `dist/${module}.mjs`,
       format: 'es',
       sourcemap: true,
+      // Same rationale as rollup.config.mjs's createSubpathEntry: the
+      // expressions/conversion circular dep produces a dynamic import that
+      // forces multiple chunks otherwise.
+      inlineDynamicImports: true,
     },
     {
       file: `dist/${module}.js`,
       format: 'cjs',
       sourcemap: true,
+      inlineDynamicImports: true,
     },
   ],
   plugins: [
     nodeResolve(),
     typescript({
       tsconfig: './tsconfig.build.json',
-      declaration: false,  // Declarations are built separately
+      declaration: false, // Declarations are built separately
       compilerOptions: {
         emitDeclarationOnly: false,
         declarationDir: undefined,
