@@ -16,6 +16,7 @@
 
 import { translateToHyperscript, type HtmxConfig } from './htmx-translator.js';
 import { getParserExtensionRegistry } from '../parser/extensions.js';
+import { SSEConnection, type SSEEventSourceCtor } from './sse.js';
 
 // ============================================================================
 // Lifecycle Event Types
@@ -136,12 +137,30 @@ export interface HtmxProcessorOptions {
   requestDropping?: boolean;
   /** Dispatch fixi-compatible events (fx:*) in addition to htmx events */
   fixiEvents?: boolean;
+  /**
+   * Override the `EventSource` constructor used for `sse-connect`. Mainly
+   * for tests in happy-dom / jsdom which lack a real EventSource — inject
+   * a small mock here. In production this is left undefined and the
+   * global `EventSource` is used.
+   */
+  eventSourceCtor?: SSEEventSourceCtor;
 }
 
 /** htmx attributes to scan for */
 const HTMX_REQUEST_ATTRS = ['hx-get', 'hx-post', 'hx-put', 'hx-patch', 'hx-delete'];
-/** Attributes that should make an element discoverable even without a request URL. */
-const HTMX_STANDALONE_ATTRS = ['hx-live'];
+/**
+ * Attributes that make an element discoverable even without a request URL.
+ * `hx-live` translates to a reactive `live ... end` block. `sse-connect`
+ * opens a long-lived EventSource handled outside the htmx translation
+ * path entirely (see {@link HtmxAttributeProcessor.attachSSE}).
+ */
+const HTMX_STANDALONE_ATTRS = ['hx-live', 'sse-connect'];
+/**
+ * SSE attributes consumed by the SSE attachment path. `sse-swap` is not
+ * standalone — it names events on a connection opened by `sse-connect`,
+ * which can be on the same element or an ancestor.
+ */
+const SSE_ATTRS = ['sse-connect', 'sse-swap'];
 const HTMX_ALL_ATTRS = [
   ...HTMX_REQUEST_ATTRS,
   'hx-target',
@@ -154,6 +173,7 @@ const HTMX_ALL_ATTRS = [
   'hx-push-url',
   'hx-replace-url',
   ...HTMX_STANDALONE_ATTRS,
+  'sse-swap',
 ];
 
 /** fixi attributes to scan for */
@@ -193,6 +213,48 @@ const FX_EVENTS = {
   INITED: 'fx:inited',
 } as const;
 
+/**
+ * Build the hyperscript snippet that performs the swap for an incoming SSE
+ * event. Mirrors the htmx-request swap shape: `it` is set to the event
+ * payload, then the configured swap command runs against `hx-target` /
+ * `hx-swap` (defaulting to `innerHTML` on the source element).
+ */
+function buildSSESwapHyperscript(data: string, config: HtmxConfig, element: Element): string {
+  const target = config.target ?? 'me';
+  const swap = config.swap ?? 'innerHTML';
+  // JSON.stringify produces a valid hyperscript string literal — escaping
+  // newlines, quotes, etc. without us re-implementing it.
+  const dataLit = JSON.stringify(data);
+
+  // Resolve `me`-relative target: an explicit `hx-target="this"` or `me`
+  // means the connection element; CSS selectors are passed through
+  // unchanged for `put it into <sel>` to handle.
+  const resolvedTarget = target === 'this' || target === 'me' ? 'me' : target;
+
+  const swapCmd =
+    swap === 'outerHTML'
+      ? `set ${resolvedTarget}'s outerHTML to ${dataLit}`
+      : swap === 'beforebegin'
+        ? `put ${dataLit} before ${resolvedTarget}`
+        : swap === 'afterend'
+          ? `put ${dataLit} after ${resolvedTarget}`
+          : swap === 'afterbegin'
+            ? `put ${dataLit} at start of ${resolvedTarget}`
+            : swap === 'beforeend'
+              ? `put ${dataLit} at end of ${resolvedTarget}`
+              : swap === 'none'
+                ? ''
+                : swap === 'delete'
+                  ? `remove ${resolvedTarget}`
+                  : // Default: innerHTML
+                    `put ${dataLit} into ${resolvedTarget}`;
+  // `element` is captured for future per-element selector resolution; the
+  // current shape just passes through `me` so no use yet. Kept as a param
+  // so we don't have to re-thread it when more swap strategies care.
+  void element;
+  return swapCmd;
+}
+
 export class HtmxAttributeProcessor {
   private options: Required<HtmxProcessorOptions>;
   private observer: MutationObserver | null = null;
@@ -201,6 +263,17 @@ export class HtmxAttributeProcessor {
 
   /** Track pending requests per element for request dropping (fixi behavior) */
   private pendingRequests = new WeakMap<Element, AbortController>();
+
+  /**
+   * Track open SSE connections per element. WeakMap won't let us iterate
+   * for `destroy()` — we mirror onto a Set for cleanup. `WeakMap` first so
+   * lookups stay O(1) during processing.
+   */
+  private sseConnections = new WeakMap<Element, SSEConnection>();
+  private sseConnectionsSet = new Set<SSEConnection>();
+
+  /** Optional EventSource constructor override (tests inject a mock). */
+  private eventSourceCtor: SSEEventSourceCtor | undefined;
 
   /**
    * Helper to dispatch lifecycle events with consistent options
@@ -235,7 +308,12 @@ export class HtmxAttributeProcessor {
         (typeof document !== 'undefined' ? document.body : (null as unknown as Element)),
       requestDropping: options.requestDropping ?? true, // Enable by default for fixi compatibility
       fixiEvents: options.fixiEvents ?? true, // Enable by default
+      // Fold `eventSourceCtor` into options via a no-op `undefined` so the
+      // Required<> mapping above stays consistent without changing every
+      // existing call site.
+      eventSourceCtor: options.eventSourceCtor as SSEEventSourceCtor,
     };
+    this.eventSourceCtor = options.eventSourceCtor;
   }
 
   /**
@@ -266,7 +344,112 @@ export class HtmxAttributeProcessor {
       this.observer.disconnect();
       this.observer = null;
     }
+    for (const conn of this.sseConnectionsSet) {
+      conn.detach();
+    }
+    this.sseConnectionsSet.clear();
     this.executeCallback = null;
+  }
+
+  /**
+   * Open an SSE connection for an element bearing `sse-connect`. Idempotent:
+   * if a connection already exists for this element, the existing one is
+   * returned. Named-event subscriptions are added per `sse-swap` value.
+   *
+   * Routing model: incoming events whose `type` matches an `sse-swap` name
+   * on the element (comma-separated values supported) are wrapped in a
+   * tiny hyperscript snippet — `set :it to <data> then <swap command>` —
+   * and run via the same `executeCallback` that processes `_=`. This reuses
+   * the existing swap machinery (`hx-target`, `hx-swap`) for free.
+   *
+   * Returns null in environments without `EventSource` and no test
+   * override (typically non-browser).
+   */
+  attachSSE(element: Element): SSEConnection | null {
+    const existing = this.sseConnections.get(element);
+    if (existing) return existing;
+
+    const url = element.getAttribute('sse-connect');
+    if (!url) return null;
+
+    const swapHandler = (eventName: string, data: string): void => {
+      // Build a tiny hyperscript snippet that surfaces the event payload
+      // through the normal swap flow. We re-derive target/swap on each
+      // event so dynamic attribute changes are honored.
+      const config: HtmxConfig = {
+        url: undefined,
+        method: 'GET',
+        target: element.getAttribute('hx-target') ?? undefined,
+        swap: element.getAttribute('hx-swap') ?? 'innerHTML',
+      };
+      const swapHs = buildSSESwapHyperscript(data, config, element);
+      if (!swapHs) return;
+      // Dispatch a recognizable event so consumers can observe pre-swap.
+      this.dispatchLifecycleEvent(
+        element,
+        'htmx:sseMessage',
+        { url, event: eventName, data },
+        { cancelable: false }
+      );
+      if (this.executeCallback) {
+        void this.executeCallback(swapHs, element).catch(err => {
+          if (typeof console !== 'undefined') {
+            console.error('[sse-compat] swap execution failed:', err);
+          }
+        });
+      }
+    };
+
+    const conn = new SSEConnection(element, url, swapHandler, {
+      EventSourceCtor: this.eventSourceCtor,
+      debug: this.options.debug,
+    });
+    this.sseConnections.set(element, conn);
+    this.sseConnectionsSet.add(conn);
+
+    // Subscribe to each named event listed in sse-swap (comma-separated).
+    const swapAttr = element.getAttribute('sse-swap');
+    if (swapAttr) {
+      for (const name of swapAttr
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)) {
+        conn.listenFor(name);
+      }
+    }
+
+    return conn;
+  }
+
+  /**
+   * Get the SSE connection for an element, if one is open.
+   * Returns null if no `sse-connect` was processed for this element.
+   */
+  getSSEConnection(element: Element): SSEConnection | null {
+    return this.sseConnections.get(element) ?? null;
+  }
+
+  /**
+   * Detach an element's SSE connection. Idempotent. Used internally by
+   * MutationObserver on node removal; safe to call manually too.
+   */
+  detachSSE(element: Element): void {
+    const conn = this.sseConnections.get(element);
+    if (!conn) return;
+    conn.detach();
+    this.sseConnections.delete(element);
+    this.sseConnectionsSet.delete(conn);
+  }
+
+  /**
+   * Walk a removed subtree and detach any SSE connections found. Called
+   * from the MutationObserver when nodes are removed.
+   */
+  private detachSSESubtree(root: Element): void {
+    this.detachSSE(root);
+    if (typeof root.querySelectorAll !== 'function') return;
+    const descendants = root.querySelectorAll('[sse-connect]');
+    for (const el of descendants) this.detachSSE(el);
   }
 
   /**
@@ -434,6 +617,17 @@ export class HtmxAttributeProcessor {
       return;
     }
 
+    // SSE attachment runs independently of the request-translation path. An
+    // element can bear ONLY `sse-connect` (no hx-get/post/etc.) and still
+    // be valid — we open the stream and route named events through swap.
+    // Elements with both `sse-connect` and request attrs get both paths
+    // wired: SSE first (long-lived), then htmx translation (event-driven).
+    if (element.hasAttribute('sse-connect')) {
+      this.attachSSE(element);
+      // Don't mark processed here — fall through so any hx-* attrs on the
+      // same element still get translated.
+    }
+
     // Detect if this is a fixi-style or htmx-style element
     const isFx = this.isFxElement(element);
     const config = isFx ? this.collectFxAttributes(element) : this.collectAttributes(element);
@@ -441,6 +635,7 @@ export class HtmxAttributeProcessor {
 
     // Skip if no meaningful config
     if (!config.url && !config.onHandlers && !config.boost && !config.hxLive) {
+      // sse-connect already handled above; no-op fall-through is correct.
       return;
     }
 
@@ -706,6 +901,16 @@ export class HtmxAttributeProcessor {
           }
         }
 
+        // Handle removed nodes — close any SSE connections that were open
+        // on the removed subtree so EventSource doesn't leak after the
+        // element is gone. We walk descendants too because a single
+        // removed parent may carry many `sse-connect` children.
+        for (const node of mutation.removedNodes) {
+          if (node instanceof Element) {
+            this.detachSSESubtree(node);
+          }
+        }
+
         // Handle attribute changes
         if (mutation.type === 'attributes' && mutation.target instanceof Element) {
           const attrName = mutation.attributeName;
@@ -760,6 +965,7 @@ export class HtmxAttributeProcessor {
 }
 
 // Export constants for external use
-export { FIXI_ATTRS, HTMX_ALL_ATTRS as HTMX_ATTRS };
+export { FIXI_ATTRS, HTMX_ALL_ATTRS as HTMX_ATTRS, SSE_ATTRS };
 
 export { translateToHyperscript, type HtmxConfig } from './htmx-translator.js';
+export { SSEConnection, type SSEEventSourceCtor, type SSEEventSourceLike } from './sse.js';

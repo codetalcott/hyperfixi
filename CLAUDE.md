@@ -756,16 +756,41 @@ The expression re-runs only when its tracked dependencies actually change (not o
 
 See the working demos in [`examples/hx-v4/`](examples/hx-v4/).
 
+### `sse-connect` / `sse-swap` (htmx v4)
+
+The htmx-compat processor recognizes `sse-connect="<url>"` to open a long-lived `EventSource` against the URL, and `sse-swap="<event-name>[, <event-name>...]"` to route named events through the existing `hx-target` / `hx-swap` machinery.
+
+```html
+<!-- Stream incoming `tick` events into #notifications -->
+<div sse-connect="/events" sse-swap="tick" hx-target="#notifications" hx-swap="beforeend"></div>
+
+<!-- One connection, multiple named events -->
+<div
+  sse-connect="/feed"
+  sse-swap="post, like, comment"
+  hx-target="#timeline"
+  hx-swap="afterbegin"
+></div>
+```
+
+The connection auto-reconnects on transient errors with exponential backoff (1s → 2s → 4s …, capped at 30s, 5 retries before giving up). On element removal from the DOM, the connection is closed automatically via MutationObserver — no leaks. Custom lifecycle events fire on the element: `htmx:sseOpen`, `htmx:sseMessage`, `htmx:sseError`, `htmx:sseClose`.
+
+The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't ship the SSE module (size budget).
+
 ### htmx Lifecycle Events
 
 The htmx compatibility layer dispatches CustomEvents at key points in the request lifecycle:
 
-| Event                | When                                           | Cancelable | Detail                     |
-| -------------------- | ---------------------------------------------- | ---------- | -------------------------- |
-| `htmx:configuring`   | After attributes collected, before translation | Yes        | `{ config, element }`      |
-| `htmx:beforeRequest` | Before hyperscript execution                   | Yes        | `{ element, url, method }` |
-| `htmx:afterSettle`   | After successful execution                     | No         | `{ element, target }`      |
-| `htmx:error`         | On execution failure                           | No         | `{ element, error }`       |
+| Event                | When                                                | Cancelable | Detail                     |
+| -------------------- | --------------------------------------------------- | ---------- | -------------------------- |
+| `htmx:configuring`   | After attributes collected, before translation      | Yes        | `{ config, element }`      |
+| `htmx:beforeRequest` | Before hyperscript execution                        | Yes        | `{ element, url, method }` |
+| `htmx:afterSettle`   | After successful execution                          | No         | `{ element, target }`      |
+| `htmx:error`         | On execution failure                                | No         | `{ element, error }`       |
+| `htmx:sseOpen`       | SSE connection opens                                | No         | `{ url }`                  |
+| `htmx:sseMessage`    | SSE message received (any event)                    | No         | `{ url, event?, data }`    |
+| `htmx:sseError`      | SSE error / connection lost                         | No         | `{ url, error or event }`  |
+| `htmx:sseClose`      | SSE connection closed (manual or after retry limit) | No         | `{ url }`                  |
 
 **Example usage:**
 

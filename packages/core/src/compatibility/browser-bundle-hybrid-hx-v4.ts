@@ -87,7 +87,12 @@ function installReactivityOnDefaultRuntime(): void {
     );
     return;
   }
-  hyperfixiAPI.installPlugin(runtime as never, reactivityPlugin);
+  // Cast both args through `never` because `@hyperfixi/reactivity` is built
+  // against `dist/` types of `@hyperfixi/core` while this entry file
+  // imports from `src/`. The shapes are identical at runtime (same module
+  // pre- vs post-build) but TypeScript treats them as distinct nominal
+  // types due to private-property identity in CommandRegistryV2.
+  hyperfixiAPI.installPlugin(runtime as never, reactivityPlugin as never);
 }
 
 installReactivityOnDefaultRuntime();
