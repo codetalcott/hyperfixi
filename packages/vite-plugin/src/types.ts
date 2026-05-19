@@ -248,6 +248,30 @@ export interface HtmxUsage {
 
   /** Whether hx-confirm is used */
   usesConfirm: boolean;
+
+  /**
+   * htmx v4 reactive/streaming surface detected. Each flag pulls in the
+   * corresponding bundle module; collectively they're what makes
+   * `hyperfixi-hx-v4.js` the right premade choice when none would do.
+   *
+   * Optional to keep older fixture literals (and callers that ignore
+   * htmx v4) compatible. Scanner code always emits explicit `false`.
+   */
+  needsHxLive?: boolean;
+  /** sse-connect / sse-swap detected. Pulls in `@hyperfixi/core/htmx/sse`. */
+  needsSSE?: boolean;
+  /** ws-connect / ws-send detected. Pulls in `@hyperfixi/core/htmx/ws`. */
+  needsWS?: boolean;
+  /**
+   * `bind $x to <expr>.<prop>` detected inside an `_=` attribute. Implies
+   * reactivity (the bind feature lives in `@hyperfixi/reactivity`).
+   */
+  needsBindToProperty?: boolean;
+  /**
+   * Any hx-v4-class feature → vite-generated bundle should auto-install
+   * `@hyperfixi/reactivity`. Derived from needsHxLive || needsBindToProperty.
+   */
+  needsReactivity?: boolean;
 }
 
 /**
@@ -268,6 +292,28 @@ export interface FileUsage {
 
   /** HTMX/Fixi attribute usage (if detected) */
   htmx?: HtmxUsage;
+
+  /**
+   * Reactivity-requiring constructs detected directly inside `_=` script
+   * bodies (independent of htmx attributes). Today: `bind` features
+   * (`live`/`when`/`bind`/`^var`). When true, the generated bundle should
+   * auto-install `@hyperfixi/reactivity`.
+   *
+   * Kept top-level rather than under `htmx` because authors may use these
+   * features without any htmx attributes at all (pure `_=` reactive code).
+   * The aggregator OR-merges this with `htmx.needsReactivity`.
+   *
+   * Optional so older callers / fixtures that build `FileUsage` literals
+   * without these fields stay valid; the scanner always emits explicit
+   * `false` so reads can rely on the value being defined post-scan.
+   */
+  needsReactivity?: boolean;
+
+  /**
+   * Explicit-property `bind` form (`bind $x to <expr>.<prop>`) detected
+   * in an `_=` body. Implies `needsReactivity` too.
+   */
+  needsBindToProperty?: boolean;
 }
 
 /**
@@ -288,6 +334,19 @@ export interface AggregatedUsage {
 
   /** Aggregated HTMX/Fixi usage across all files */
   htmx: HtmxUsage;
+
+  /**
+   * Whether any file uses reactivity-requiring constructs (either via
+   * `hx-live` attributes or inside `_=` scripts). Drives the generated
+   * bundle's auto-install of `@hyperfixi/reactivity`.
+   *
+   * Optional to keep test fixtures compatible; the aggregator always
+   * emits an explicit boolean.
+   */
+  needsReactivity?: boolean;
+
+  /** Whether any file uses explicit-property bind. */
+  needsBindToProperty?: boolean;
 
   /** Map of file paths to their usage */
   fileUsage: Map<string, FileUsage>;

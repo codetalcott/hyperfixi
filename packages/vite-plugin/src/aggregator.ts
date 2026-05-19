@@ -75,13 +75,22 @@ export class Aggregator {
       triggerModifiers: new Set(),
       urlManagement: new Set(),
       usesConfirm: false,
+      needsHxLive: false,
+      needsSSE: false,
+      needsWS: false,
+      needsBindToProperty: false,
+      needsReactivity: false,
     };
+    let needsReactivity = false;
+    let needsBindToProperty = false;
 
     for (const usage of this.fileUsage.values()) {
       for (const cmd of usage.commands) commands.add(cmd);
       for (const block of usage.blocks) blocks.add(block);
       for (const lang of usage.detectedLanguages) detectedLanguages.add(lang);
       if (usage.positional) positional = true;
+      if (usage.needsReactivity) needsReactivity = true;
+      if (usage.needsBindToProperty) needsBindToProperty = true;
 
       // Aggregate htmx usage
       if (usage.htmx) {
@@ -93,6 +102,14 @@ export class Aggregator {
         for (const modifier of usage.htmx.triggerModifiers) htmx.triggerModifiers.add(modifier);
         for (const url of usage.htmx.urlManagement) htmx.urlManagement.add(url);
         if (usage.htmx.usesConfirm) htmx.usesConfirm = true;
+        if (usage.htmx.needsHxLive) htmx.needsHxLive = true;
+        if (usage.htmx.needsSSE) htmx.needsSSE = true;
+        if (usage.htmx.needsWS) htmx.needsWS = true;
+        if (usage.htmx.needsBindToProperty) htmx.needsBindToProperty = true;
+        if (usage.htmx.needsReactivity) {
+          htmx.needsReactivity = true;
+          needsReactivity = true;
+        }
       }
     }
 
@@ -102,6 +119,8 @@ export class Aggregator {
       positional,
       detectedLanguages,
       htmx,
+      needsReactivity,
+      needsBindToProperty,
       fileUsage: new Map(this.fileUsage),
     };
 

@@ -601,6 +601,31 @@ export class Generator {
       return this.generateEmptyBundle(options);
     }
 
+    // htmx v4 reactive/streaming features: the minimal generator's slim
+    // runtime can't satisfy these (its `set` doesn't fire notifyGlobalWrite,
+    // it has no live/when/bind features, and SSE/WS modules aren't wired).
+    // Route to the `hx-v4` bundle which bundles everything correctly.
+    const needsV4Bundle =
+      usage.needsReactivity ||
+      usage.htmx?.needsHxLive ||
+      usage.htmx?.needsSSE ||
+      usage.htmx?.needsWS;
+    if (needsV4Bundle) {
+      if (this.debug) {
+        const triggers: string[] = [];
+        if (usage.htmx?.needsHxLive) triggers.push('hx-live');
+        if (usage.htmx?.needsSSE) triggers.push('sse-connect/sse-swap');
+        if (usage.htmx?.needsWS) triggers.push('ws-connect/ws-send');
+        if (usage.needsBindToProperty) triggers.push('bind-to-property');
+        else if (usage.needsReactivity) triggers.push('live/when/bind in _=');
+        console.log(
+          `[hyperfixi] Detected htmx v4 features: ${triggers.join(', ')}\n` +
+            `  Using the hx-v4 premade bundle (auto-installs reactivity + SSE/WS).`
+        );
+      }
+      return this.generateDevFallback('hx-v4');
+    }
+
     // Check for commands that require full runtime - if found, fall back to full bundle
     const unsupportedCommands = this.getUnsupportedCommands(commands);
     if (unsupportedCommands.length > 0) {
@@ -804,11 +829,24 @@ export { api };
   }
 
   /**
-   * Generate a development fallback bundle
+   * Generate a development fallback bundle.
+   *
+   * `hx-v4` re-exports the htmx v4 surface bundle: full runtime +
+   * htmx-compat + reactivity (hx-live, bind, when) + SSE + WS, all
+   * auto-installed. The vite plugin selects this when scanner detects
+   * any of `hx-live`, `sse-connect`/`sse-swap`, `ws-connect`/`ws-send`,
+   * or `bind ... to <expr>.<prop>` in `_=` bodies — the minimal
+   * generator can't satisfy those features (the slim runtime lacks the
+   * reactive notify chain and the SSE/WS modules). Larger artifact but
+   * correct end-to-end.
    */
-  generateDevFallback(fallback: 'hybrid-complete' | 'full'): string {
+  generateDevFallback(fallback: 'hybrid-complete' | 'full' | 'hx-v4'): string {
     const bundle =
-      fallback === 'full' ? '@hyperfixi/core/browser' : '@hyperfixi/core/browser/hybrid-complete';
+      fallback === 'full'
+        ? '@hyperfixi/core/browser'
+        : fallback === 'hx-v4'
+          ? '@hyperfixi/core/browser/hybrid-hx-v4'
+          : '@hyperfixi/core/browser/hybrid-complete';
 
     return `/**
  * LokaScript Dev Fallback Bundle

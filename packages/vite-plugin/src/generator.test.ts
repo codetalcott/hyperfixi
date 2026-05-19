@@ -31,7 +31,14 @@ function createUsage(commands: string[], blocks: string[] = [], positional = fal
       triggerModifiers: new Set<string>(),
       urlManagement: new Set<string>(),
       usesConfirm: false,
+      needsHxLive: false,
+      needsSSE: false,
+      needsWS: false,
+      needsBindToProperty: false,
+      needsReactivity: false,
     },
+    needsReactivity: false,
+    needsBindToProperty: false,
     fileUsage: new Map(),
   };
 }
@@ -424,6 +431,45 @@ describe('Vite Integration Edge Cases', () => {
       const code = generator.generate(usage, { htmx: false });
 
       expect(code).not.toContain('htmx:afterSettle');
+    });
+  });
+
+  describe('htmx v4 fallback to hx-v4 bundle', () => {
+    it('routes to hyperfixi-hx-v4 when hx-live is detected', () => {
+      const usage = createUsage(['put']);
+      usage.htmx.needsHxLive = true;
+      usage.htmx.needsReactivity = true;
+      usage.needsReactivity = true;
+      const code = generator.generate(usage, {});
+      expect(code).toContain('@hyperfixi/core/browser/hybrid-hx-v4');
+    });
+
+    it('routes to hyperfixi-hx-v4 when sse-connect is detected', () => {
+      const usage = createUsage(['put']);
+      usage.htmx.needsSSE = true;
+      const code = generator.generate(usage, {});
+      expect(code).toContain('@hyperfixi/core/browser/hybrid-hx-v4');
+    });
+
+    it('routes to hyperfixi-hx-v4 when ws-connect is detected', () => {
+      const usage = createUsage(['put']);
+      usage.htmx.needsWS = true;
+      const code = generator.generate(usage, {});
+      expect(code).toContain('@hyperfixi/core/browser/hybrid-hx-v4');
+    });
+
+    it('routes to hyperfixi-hx-v4 when bind-to-property in _= is detected', () => {
+      const usage = createUsage(['bind']);
+      usage.needsReactivity = true;
+      usage.needsBindToProperty = true;
+      const code = generator.generate(usage, {});
+      expect(code).toContain('@hyperfixi/core/browser/hybrid-hx-v4');
+    });
+
+    it('stays on minimal bundle when no v4 features present', () => {
+      const usage = createUsage(['toggle']);
+      const code = generator.generate(usage, {});
+      expect(code).not.toContain('hybrid-hx-v4');
     });
   });
 

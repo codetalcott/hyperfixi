@@ -159,6 +159,20 @@ Level 2: + Regional Semantic Bundle      +16-61 KB
 Level 3: + Grammar Transformation        +68 KB
 ```
 
+## htmx v4 reactive / streaming surface
+
+The scanner detects `hx-live`, `sse-connect` / `sse-swap`, `ws-connect` / `ws-send`, and `bind <var> to <expr>.<prop>` inside `_=` bodies. When any of those is found in the project, the generated bundle is the `hyperfixi-hx-v4.js` premade bundle (full runtime + `@hyperfixi/reactivity` + htmx-compat auto-installed + SSE/WS).
+
+```html
+<!-- Triggers the hx-v4 fallback automatically -->
+<div hx-live="put $count into me"></div>
+<div sse-connect="/stream" sse-swap="tick" hx-target="#out"></div>
+<form ws-send><input name="msg" /></form>
+<input _="on input bind $val to me.value" />
+```
+
+The slim minimal-bundle generator can't satisfy these features (its parser/runtime doesn't know `live`/`when`/`bind`, doesn't route writes through `notifyGlobalWrite`, and doesn't ship the SSE/WS modules), so the plugin opts into the full hx-v4 bundle for correctness over size. If size matters more, drop the v4 attributes and use plain `_=` / v1-v2 htmx attributes.
+
 ## Options
 
 ```javascript

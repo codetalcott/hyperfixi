@@ -20,6 +20,23 @@ const HTMX_URL_PATTERN = /\b(hx-push-url|hx-replace-url)\s*=\s*["'][^"']+["']/gi
 const HTMX_CONFIRM_PATTERN = /\bhx-confirm\s*=\s*["']/gi;
 const HTMX_ON_PATTERN = /\bhx-on:(\w+)\s*=\s*["']([^"']+)["']/g;
 
+// htmx v4 reactive/streaming surface
+const HX_LIVE_PATTERN = /\bhx-live\s*=\s*["']/i;
+const SSE_CONNECT_PATTERN = /\bsse-connect\s*=\s*["']/i;
+const SSE_SWAP_PATTERN = /\bsse-swap\s*=\s*["']/i;
+const WS_CONNECT_PATTERN = /\bws-connect\s*=\s*["']/i;
+const WS_SEND_PATTERN = /\bws-send(\s*=\s*["']|\b)/i;
+
+/**
+ * `bind <var> to <expr>.<property>` inside `_=` bodies. Matches both the
+ * default `$var` form and possessive (`me's value`) syntax. The trailing
+ * `.<ident>` is what makes this "explicit property" bind — it's also
+ * possible to write `bind $x to <element>` without a property, but that
+ * path is the auto-detect form and doesn't itself signal "needs the
+ * Phase 1 bind-to-property addition" beyond what plain reactivity needs.
+ */
+const BIND_TO_PROPERTY_PATTERN = /\bbind\s+\S+\s+to\s+\S+\.\w+/i;
+
 /**
  * Converts include/exclude options to RegExp
  */
@@ -66,6 +83,8 @@ export class Scanner {
       blocks: new Set(),
       positional: false,
       detectedLanguages: new Set(),
+      needsReactivity: false,
+      needsBindToProperty: false,
     };
 
     // Find all hyperscript in _="..." attributes (single, double, backtick quotes)
@@ -107,6 +126,10 @@ export class Scanner {
       if (/hx-target\s*=\s*["'](closest|next|previous|find)\s/i.test(code)) {
         usage.positional = true;
       }
+
+      // Roll htmx-attribute-driven reactivity flags up to the top level so
+      // the aggregator and generator only have to consult one place.
+      if (htmxUsage.needsReactivity) usage.needsReactivity = true;
     }
 
     if (
@@ -166,6 +189,24 @@ export class Scanner {
     for (const lang of languages) {
       usage.detectedLanguages.add(lang);
     }
+
+    // Reactivity features inside `_=` bodies. `live`, `when`, and `bind` are
+    // top-level features from `@hyperfixi/reactivity`. Their `^var` form
+    // (DOM-scoped inherited globals) also implies reactivity.
+    if (
+      /\blive\b/.test(script) ||
+      /\bwhen\s+\S+\s+changes\b/i.test(script) ||
+      /\bbind\b/.test(script) ||
+      /\^\w/.test(script)
+    ) {
+      usage.needsReactivity = true;
+    }
+    // Explicit-property bind specifically: `bind <var> to <expr>.<prop>`.
+    // Implies reactivity too — the auto-detect form already set it above.
+    if (BIND_TO_PROPERTY_PATTERN.test(script)) {
+      usage.needsBindToProperty = true;
+      usage.needsReactivity = true;
+    }
   }
 
   /**
@@ -181,6 +222,11 @@ export class Scanner {
       triggerModifiers: new Set(),
       urlManagement: new Set(),
       usesConfirm: false,
+      needsHxLive: false,
+      needsSSE: false,
+      needsWS: false,
+      needsBindToProperty: false,
+      needsReactivity: false,
     };
 
     // Detect hx-get/post/put/patch/delete
@@ -246,6 +292,21 @@ export class Scanner {
     const targetPattern = new RegExp(HTMX_TARGET_PATTERN.source, 'gi');
     while ((match = targetPattern.exec(code))) {
       usage.hasHtmxAttributes = true;
+    }
+
+    // htmx v4 reactive / streaming surface
+    if (HX_LIVE_PATTERN.test(code)) {
+      usage.hasHtmxAttributes = true;
+      usage.needsHxLive = true;
+      usage.needsReactivity = true;
+    }
+    if (SSE_CONNECT_PATTERN.test(code) || SSE_SWAP_PATTERN.test(code)) {
+      usage.hasHtmxAttributes = true;
+      usage.needsSSE = true;
+    }
+    if (WS_CONNECT_PATTERN.test(code) || WS_SEND_PATTERN.test(code)) {
+      usage.hasHtmxAttributes = true;
+      usage.needsWS = true;
     }
 
     return usage;

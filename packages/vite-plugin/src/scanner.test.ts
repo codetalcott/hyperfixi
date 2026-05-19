@@ -555,6 +555,67 @@ describe('Scanner', () => {
       expect(usage.htmx).toBeUndefined();
     });
 
+    // ──── htmx v4 reactive / streaming surface ────
+
+    it('detects hx-live and flags needsHxLive + needsReactivity', () => {
+      const usage = scanner.scan('<div hx-live="put $count into me"></div>', 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.needsHxLive).toBe(true);
+      expect(usage.htmx?.needsReactivity).toBe(true);
+      expect(usage.needsReactivity).toBe(true);
+    });
+
+    it('detects sse-connect', () => {
+      const usage = scanner.scan('<div sse-connect="/stream" sse-swap="tick"></div>', 'test.html');
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.needsSSE).toBe(true);
+      // SSE alone doesn't require reactivity.
+      expect(usage.htmx?.needsReactivity).toBeFalsy();
+      expect(usage.needsReactivity).toBeFalsy();
+    });
+
+    it('detects sse-swap on its own (server determines event names)', () => {
+      const usage = scanner.scan('<div sse-swap="patch"></div>', 'test.html');
+      expect(usage.htmx?.needsSSE).toBe(true);
+    });
+
+    it('detects ws-connect and ws-send', () => {
+      const usage = scanner.scan(
+        '<div ws-connect="wss://example/api"><form ws-send><input name="m" /></form></div>',
+        'test.html'
+      );
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.needsWS).toBe(true);
+      // WS alone doesn't require reactivity.
+      expect(usage.htmx?.needsReactivity).toBeFalsy();
+    });
+
+    it('detects bind-to-property inside _= scripts and flags reactivity', () => {
+      const usage = scanner.scan(`<input _="on input bind $val to me.value" />`, 'test.html');
+      expect(usage.needsBindToProperty).toBe(true);
+      expect(usage.needsReactivity).toBe(true);
+    });
+
+    it('detects plain bind/live/when inside _= scripts as needsReactivity', () => {
+      const liveUsage = scanner.scan(`<div _="live put $tick into me"></div>`, 'test.html');
+      expect(liveUsage.needsReactivity).toBe(true);
+
+      const whenUsage = scanner.scan(
+        `<div _="when $message changes put it into me end"></div>`,
+        'test.html'
+      );
+      expect(whenUsage.needsReactivity).toBe(true);
+
+      const bindUsage = scanner.scan(`<input _="bind $val to me" />`, 'test.html');
+      expect(bindUsage.needsReactivity).toBe(true);
+    });
+
+    it('does not flag reactivity when no v4 features are present', () => {
+      const usage = scanner.scan('<button _="on click toggle .active">x</button>', 'test.html');
+      expect(usage.needsReactivity).toBeFalsy();
+      expect(usage.needsBindToProperty).toBeFalsy();
+    });
+
     it('handles complex htmx example', () => {
       const code = `
         <div hx-get="/api/users"
