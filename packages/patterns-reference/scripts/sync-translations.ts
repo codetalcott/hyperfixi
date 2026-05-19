@@ -17,8 +17,7 @@ import Database from 'better-sqlite3';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import {
-  languageProfiles,
-  getGeneratorLanguages,
+  KNOWN_PROFILES,
   calculateTranslationConfidence,
   type LanguageProfile,
 } from '@lokascript/semantic';
@@ -46,7 +45,7 @@ const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1]
 
 // Build LANGUAGES from semantic profiles
 const LANGUAGES: Record<string, { name: string; wordOrder: string }> = Object.fromEntries(
-  Object.entries(languageProfiles).map(([code, profile]: [string, LanguageProfile]) => [
+  Object.entries(KNOWN_PROFILES).map(([code, profile]: [string, LanguageProfile]) => [
     code,
     { name: profile.name, wordOrder: profile.wordOrder },
   ])
@@ -54,7 +53,7 @@ const LANGUAGES: Record<string, { name: string; wordOrder: string }> = Object.fr
 
 // Build KEYWORD_TRANSLATIONS from semantic profiles (fallback for non-grammar languages)
 const KEYWORD_TRANSLATIONS: Record<string, Record<string, string>> = Object.fromEntries(
-  Object.entries(languageProfiles).map(([code, profile]: [string, LanguageProfile]) => {
+  Object.entries(KNOWN_PROFILES).map(([code, profile]: [string, LanguageProfile]) => {
     const keywords: Record<string, string> = {};
 
     // Extract keywords from profile.keywords
@@ -101,7 +100,7 @@ const KEYWORD_TRANSLATIONS: Record<string, Record<string, string>> = Object.from
   })
 );
 
-console.log(`Loaded ${getGeneratorLanguages().length} languages from @lokascript/semantic`);
+console.log(`Loaded ${Object.keys(KNOWN_PROFILES).length} languages from @lokascript/semantic`);
 
 // =============================================================================
 // Translation Logic

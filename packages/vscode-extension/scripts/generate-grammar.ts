@@ -27,8 +27,7 @@ import { fileURLToPath } from 'url';
 
 // Import semantic profiles
 import {
-  languageProfiles,
-  getSupportedLanguages,
+  KNOWN_PROFILES,
   type LanguageProfile,
   type KeywordTranslation,
 } from '@lokascript/semantic';
@@ -144,7 +143,7 @@ function collectTranslations(englishKeywords: string[]): { latin: string[]; nonL
   const latin = new Set<string>(englishKeywords);
   const nonLatin = new Set<string>();
 
-  const profiles = languageProfiles as Record<string, LanguageProfile>;
+  const profiles = KNOWN_PROFILES as Record<string, LanguageProfile>;
 
   for (const [langCode, profile] of Object.entries(profiles)) {
     if (!profile.keywords) continue;
@@ -186,7 +185,7 @@ function collectReferences(): { latin: string[]; nonLatin: string[] } {
   const latin = new Set<string>(REFERENCE_KEYWORDS);
   const nonLatin = new Set<string>();
 
-  const profiles = languageProfiles as Record<string, LanguageProfile>;
+  const profiles = KNOWN_PROFILES as Record<string, LanguageProfile>;
 
   for (const [langCode, profile] of Object.entries(profiles)) {
     if (!profile.references) continue;
@@ -236,7 +235,7 @@ function buildPattern(latin: string[], nonLatin: string[]): string {
 
 function generateGrammar(mode: GrammarMode): object {
   console.log(`Collecting translations from semantic profiles (mode=${mode})...`);
-  console.log(`  Supported languages: ${getSupportedLanguages().join(', ')}`);
+  console.log(`  Supported languages: ${Object.keys(KNOWN_PROFILES).join(', ')}`);
   const includeV2 = mode === 'lokascript';
 
   // Collect translations for each category

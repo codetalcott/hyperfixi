@@ -7,7 +7,7 @@
  * Data sources:
  * - Commands: commandSchemas from @lokascript/semantic (45 commands with full schema data)
  * - Expressions: static EXPRESSION_CATALOG (~35 entries covering all expression categories)
- * - Keywords: languageProfiles from @lokascript/semantic (24 languages)
+ * - Keywords: KNOWN_PROFILES from @lokascript/semantic (25 languages)
  * - Features/Symbols: static catalogs
  */
 
@@ -1422,9 +1422,9 @@ function handleSearchLanguageElements(args: Record<string, unknown>): {
   }
 
   // Search keywords (from language profiles)
-  if (searchTypes.includes('keyword') && semanticPackage?.languageProfiles) {
+  if (searchTypes.includes('keyword') && semanticPackage?.KNOWN_PROFILES) {
     const seenKeywords = new Set<string>();
-    for (const [lang, profile] of Object.entries(semanticPackage.languageProfiles) as [
+    for (const [lang, profile] of Object.entries(semanticPackage.KNOWN_PROFILES) as [
       string,
       any,
     ][]) {

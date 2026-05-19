@@ -29,7 +29,7 @@ import {
   koreanProfile,
   turkishProfile,
   chineseProfile,
-  languageProfiles,
+  KNOWN_PROFILES as languageProfiles,
   getDefinedSchemas,
 } from '../src/generators';
 import type { LanguagePattern } from '../src/types';

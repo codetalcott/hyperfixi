@@ -418,7 +418,7 @@ function getValidCommandsForLanguage(language: string): string[] {
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords) {
       const commands: string[] = [...englishCommands]; // Always include English for compatibility
       for (const [, translation] of Object.entries(profile.keywords)) {
@@ -450,7 +450,7 @@ function getEventHandlerKeywords(language: string): string[] {
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords && profile.keywords['on']) {
       const trans = profile.keywords['on'] as { primary?: string; alternatives?: string[] };
       if (trans.primary) {
@@ -627,7 +627,7 @@ function validateHyperscript(
   const endVariants = ['end'];
   if (semanticPackage && language !== 'en') {
     try {
-      const profile = semanticPackage.getProfile(language);
+      const profile = semanticPackage.tryGetProfile(language);
       if (profile?.keywords?.['if']?.primary) {
         ifVariants.push(profile.keywords['if'].primary);
       }
@@ -726,7 +726,7 @@ function validateHyperscript(
     const toggleVariants = ['toggle'];
     if (semanticPackage && language !== 'en') {
       try {
-        const profile = semanticPackage.getProfile(language);
+        const profile = semanticPackage.tryGetProfile(language);
         if (profile?.keywords?.toggle?.primary) {
           toggleVariants.push(profile.keywords.toggle.primary);
         }
@@ -945,7 +945,7 @@ function translateSuggestion(
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords && profile.keywords[suggestion.command]) {
       const trans = profile.keywords[suggestion.command] as { primary?: string };
       if (trans.primary) {
@@ -1646,7 +1646,7 @@ function explainInLanguage(
     const parseResult = analyzer.analyze(code, sourceLanguage);
 
     // Get language profile for keyword translations
-    const profile = semanticPackage.getProfile(targetLanguage);
+    const profile = semanticPackage.tryGetProfile(targetLanguage);
 
     // Build the explanation
     const explanation: Record<string, unknown> = {

@@ -12,7 +12,7 @@ import {
   validateLanguage,
   validateCommand,
 } from '../src/language-building-schema';
-import { languageProfiles } from '../src/generators/language-profiles';
+import { KNOWN_PROFILES as languageProfiles } from '../src/generators/known-profiles';
 import { getSupportedLanguages as getTokenizerLanguages } from '../src/tokenizers';
 import { getSupportedLanguages as getPatternLanguages } from '../src/patterns';
 import { getBaseLanguageCode, isLanguageVariant } from '../src/registry';

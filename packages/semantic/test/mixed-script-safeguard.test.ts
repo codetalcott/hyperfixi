@@ -10,14 +10,14 @@
 
 import { describe, it, expect } from 'vitest';
 import '../src/languages/_all';
-import { getRegisteredLanguages, getTokenizer, getProfile } from '../src';
+import { getRegisteredLanguages, getTokenizer, tryGetProfile } from '../src';
 
 describe('Non-Latin tokenizers handle ASCII identifiers', () => {
   const languages = getRegisteredLanguages();
 
   for (const code of languages) {
-    const profile = getProfile(code);
-    if (profile.script === 'latin') continue;
+    const profile = tryGetProfile(code);
+    if (!profile || profile.script === 'latin') continue;
 
     it(`[${code}] tokenizes ASCII identifiers as whole words`, () => {
       const tokenizer = getTokenizer(code);

@@ -987,7 +987,7 @@ function getContextualCompletions(context: string, language: string): Completion
       return eng;
     }
     try {
-      const profile = semanticPackage.getProfile(effectiveLanguage);
+      const profile = semanticPackage.tryGetProfile(effectiveLanguage);
       if (profile?.keywords?.[eng]?.primary) {
         return profile.keywords[eng].primary;
       }
@@ -1481,7 +1481,7 @@ function buildTranslationCache(): Map<string, string> {
 
     for (const [lang, langName] of Object.entries(langMap)) {
       try {
-        const profile = semanticPackage.getProfile(lang);
+        const profile = semanticPackage.tryGetProfile(lang);
         const kw = profile?.keywords?.[canonicalKey as keyof typeof profile.keywords];
         if (kw) {
           const trans = kw as { primary?: string };
@@ -1521,7 +1521,7 @@ function buildReverseKeywordCache(): Map<string, string> {
 
   for (const lang of languagesToTry) {
     try {
-      const profile = semanticPackage.getProfile(lang);
+      const profile = semanticPackage.tryGetProfile(lang);
       if (profile?.keywords) {
         for (const [canonicalKey, translation] of Object.entries(profile.keywords)) {
           const trans = translation as { primary?: string; alternatives?: string[] };
@@ -1578,7 +1578,7 @@ function getKeywordVariants(eng: string): string[] {
 
   for (const lang of getOtherLanguages()) {
     try {
-      const profile = semanticPackage.getProfile(lang);
+      const profile = semanticPackage.tryGetProfile(lang);
       if (profile?.keywords?.[eng]) {
         const trans = profile.keywords[eng] as { primary?: string; alternatives?: string[] };
         if (trans.primary && !variants.includes(trans.primary)) {
@@ -1853,7 +1853,7 @@ function extractSymbols(code: string, language: string): DocumentSymbol[] {
     const variants = [eng];
     if (!semanticPackage || language === 'en') return variants;
     try {
-      const profile = semanticPackage.getProfile(language);
+      const profile = semanticPackage.tryGetProfile(language);
       if (profile?.keywords?.[eng]) {
         const trans = profile.keywords[eng] as { primary?: string; alternatives?: string[] };
         if (trans.primary) variants.push(trans.primary);

@@ -447,7 +447,7 @@ function getValidCommandsForLanguage(language: string): string[] {
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords) {
       const commands: string[] = [...englishCommands]; // Always include English for compatibility
       for (const [engCommand, translation] of Object.entries(profile.keywords)) {
@@ -707,7 +707,7 @@ function getKeywordTranslation(
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords && profile.keywords[command]) {
       const trans = profile.keywords[command] as { primary?: string };
       if (trans.primary) {
@@ -733,7 +733,7 @@ function getReferenceTranslation(
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.references && profile.references[ref]) {
       return { label: profile.references[ref], englishLabel: ref };
     }
@@ -991,7 +991,7 @@ function normalizeToEnglish(word: string, language: string): string {
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords) {
       // Check if word matches any translated keyword
       for (const [engKey, translation] of Object.entries(profile.keywords)) {
@@ -1115,7 +1115,7 @@ function getKeywordVariants(engKeyword: string, language: string): string[] {
   }
 
   try {
-    const profile = semanticPackage.getProfile(language);
+    const profile = semanticPackage.tryGetProfile(language);
     if (profile && profile.keywords && profile.keywords[engKeyword]) {
       const trans = profile.keywords[engKeyword] as { primary?: string; alternatives?: string[] };
       if (trans.primary) {
