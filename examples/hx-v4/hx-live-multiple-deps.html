@@ -49,10 +49,12 @@
     </p>
 
     <!-- The expression reads two globals; the dep set is computed at runtime
-         from whatever the body actually touched. -->
+         from whatever the body actually touched. Writing into `me's textContent`
+         is the honest form for plain-text output — the runtime won't have to
+         guess based on the value's shape. -->
     <div
       class="display"
-      hx-live="put 'Total: $' + ($price * $quantity) into me"
+      hx-live="put 'Total: $' + ($price * $quantity) into me's textContent"
     >Total: $0</div>
 
     <div class="controls">

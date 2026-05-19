@@ -674,13 +674,14 @@ describe('resolveAnyPropertyTarget', () => {
     expect(result!.property).toBe('@hidden');
   });
 
-  it('should return null for possessiveExpression with plain property', async () => {
-    // Plain properties like 'hidden' should NOT be intercepted as property targets
-    // in possessive expressions — they are normal property access (returns value)
+  it('should resolve possessiveExpression with plain property name (textContent)', async () => {
+    // `me's textContent` and similar plain-identifier possessives need to be
+    // recognized as property write targets — otherwise put/set/toggle fall
+    // through to the selector path and `querySelectorAll(currentText)` throws.
     const node = {
       type: 'possessiveExpression',
       object: { type: 'idSelector', value: '#any-target' },
-      property: { type: 'identifier', name: 'hidden' },
+      property: { type: 'identifier', name: 'textContent' },
     };
 
     const evaluator = createMockEvaluator();
@@ -688,7 +689,57 @@ describe('resolveAnyPropertyTarget', () => {
 
     const result = await resolveAnyPropertyTarget(node as any, evaluator as any, context);
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result!.element).toBe(testElement);
+    expect(result!.property).toBe('textContent');
+  });
+
+  it('should resolve possessiveExpression with innerHTML', async () => {
+    const node = {
+      type: 'possessiveExpression',
+      object: { type: 'idSelector', value: '#any-target' },
+      property: { type: 'identifier', name: 'innerHTML' },
+    };
+
+    const evaluator = createMockEvaluator();
+    const context = createMockContext();
+
+    const result = await resolveAnyPropertyTarget(node as any, evaluator as any, context);
+
+    expect(result).not.toBeNull();
+    expect(result!.property).toBe('innerHTML');
+  });
+
+  it('should still resolve possessiveExpression with @attribute prefix (regression)', async () => {
+    const node = {
+      type: 'possessiveExpression',
+      object: { type: 'idSelector', value: '#any-target' },
+      property: { type: 'identifier', name: '@disabled' },
+    };
+
+    const evaluator = createMockEvaluator();
+    const context = createMockContext();
+
+    const result = await resolveAnyPropertyTarget(node as any, evaluator as any, context);
+
+    expect(result).not.toBeNull();
+    expect(result!.property).toBe('@disabled');
+  });
+
+  it('should still resolve possessiveExpression with *css prefix (regression)', async () => {
+    const node = {
+      type: 'possessiveExpression',
+      object: { type: 'idSelector', value: '#any-target' },
+      property: { type: 'identifier', name: '*opacity' },
+    };
+
+    const evaluator = createMockEvaluator();
+    const context = createMockContext();
+
+    const result = await resolveAnyPropertyTarget(node as any, evaluator as any, context);
+
+    expect(result).not.toBeNull();
+    expect(result!.property).toBe('*opacity');
   });
 
   it('should return null for unsupported node types', async () => {

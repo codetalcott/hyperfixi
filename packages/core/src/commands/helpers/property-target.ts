@@ -185,10 +185,12 @@ export async function resolveAnyPropertyTarget(
     // e.g., #el's @disabled → property: { type: 'identifier', name: '@disabled' }
     const propertyName = (propertyNode?.name || propertyNode?.value) as string;
 
-    // Only treat as property target if name starts with @ or * (attribute/CSS property)
-    // Regular member expressions like element.textContent should not be intercepted
-    if (!propertyName || (!propertyName.startsWith('@') && !propertyName.startsWith('*')))
-      return null;
+    // Accept any property name. All three callers (put/set/toggle) are write commands
+    // that want property-write semantics for `<element>'s <property>` — including
+    // plain identifiers like `textContent`, `innerHTML`, `value`. The earlier @/*
+    // restriction made `put X into me's textContent` fall through to the selector
+    // path, causing `querySelectorAll(<current-text>)` SyntaxErrors.
+    if (!propertyName) return null;
     return { element: element as HTMLElement, property: propertyName };
   }
 

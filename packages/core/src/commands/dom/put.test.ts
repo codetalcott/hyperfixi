@@ -312,6 +312,56 @@ describe('PutCommand', () => {
         )
       ).rejects.toThrow('No elements');
     });
+
+    it('should resolve "me\'s textContent" as a property-write target', async () => {
+      // Regression for item 1 in htmx-v4-reactive-streaming.md follow-ups:
+      // `put X into me's textContent` used to evaluate me's textContent to the
+      // element's current text and try to use that as a querySelectorAll selector.
+      const element = createMockElement('textContent-target');
+      const context = createMockContext(element);
+      const targetNode = {
+        type: 'possessiveExpression',
+        object: { type: 'identifier', name: 'me' },
+        property: { type: 'identifier', name: 'textContent' },
+      } as unknown as ASTNode;
+      const evaluator = createMockEvaluator(new Map([[targetNode.object as ASTNode, element]]));
+
+      const contentNode = { type: 'string', value: 'Hello world' } as ASTNode;
+      const intoNode = { type: 'literal', value: 'into' } as ASTNode;
+
+      const input = await command.parseInput(
+        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        evaluator,
+        context
+      );
+
+      expect(input.targets).toEqual([element]);
+      expect(input.memberPath).toBe('textContent');
+      expect(input.position).toBe('replace');
+    });
+
+    it('should resolve "#el\'s innerHTML" as a property-write target', async () => {
+      const element = createMockElement('innerHTML-target');
+      const context = createMockContext(element);
+      const targetNode = {
+        type: 'possessiveExpression',
+        object: { type: 'idSelector', value: '#innerHTML-target' },
+        property: { type: 'identifier', name: 'innerHTML' },
+      } as unknown as ASTNode;
+      const evaluator = createMockEvaluator(new Map([[targetNode.object as ASTNode, element]]));
+
+      const contentNode = { type: 'string', value: '<b>x</b>' } as ASTNode;
+      const intoNode = { type: 'literal', value: 'into' } as ASTNode;
+
+      const input = await command.parseInput(
+        { args: [contentNode, intoNode, targetNode], modifiers: {} },
+        evaluator,
+        context
+      );
+
+      expect(input.targets).toEqual([element]);
+      expect(input.memberPath).toBe('innerHTML');
+    });
   });
 
   describe('Parsing - Variable Assignment', () => {
