@@ -14,7 +14,7 @@
  * - Full fixi event lifecycle: fx:init, fx:config, fx:before, fx:after, fx:error, fx:finally, fx:swapped
  */
 
-import { translateToHyperscript, type HtmxConfig } from './htmx-translator.js';
+import { translateToHyperscript, resolveHxTarget, type HtmxConfig } from './htmx-translator.js';
 import { getParserExtensionRegistry } from '../parser/extensions.js';
 import { SSEConnection, type SSEEventSourceCtor } from './sse.js';
 import {
@@ -244,10 +244,10 @@ function buildSSESwapHyperscript(data: string, config: HtmxConfig, element: Elem
   // newlines, quotes, etc. without us re-implementing it.
   const dataLit = JSON.stringify(data);
 
-  // Resolve `me`-relative target: an explicit `hx-target="this"` or `me`
-  // means the connection element; CSS selectors are passed through
-  // unchanged for `put it into <sel>` to handle.
-  const resolvedTarget = target === 'this' || target === 'me' ? 'me' : target;
+  // Resolve `hx-target` using the same resolver as the request-cycle path
+  // (htmx-translator.ts). Handles `this`/`me`, `closest <sel>`, `find <sel>`,
+  // `next <sel>`, `previous <sel>`, and plain CSS selectors uniformly.
+  const resolvedTarget = resolveHxTarget(target);
 
   const swapCmd =
     swap === 'outerHTML'

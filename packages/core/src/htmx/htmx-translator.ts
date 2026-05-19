@@ -70,9 +70,13 @@ const TRIGGER_MAP: Record<string, string> = {
 };
 
 /**
- * Resolve hx-target value to hyperscript selector
+ * Resolve an `hx-target` attribute value to its hyperscript-selector equivalent.
+ * Handles the shortcut forms (`this` / `closest <sel>` / `find <sel>` / `next <sel>` /
+ * `previous <sel>`) plus plain CSS selectors. Exported so the SSE/WS swap path
+ * in [htmx-attribute-processor.ts] can use the same resolver as the request-cycle
+ * path — without it, those streaming swaps silently ignore the shortcut forms.
  */
-function resolveTarget(target: string): string {
+export function resolveHxTarget(target: string): string {
   if (target === 'this') {
     return 'me';
   }
@@ -304,7 +308,7 @@ export function translateToHyperscript(config: HtmxConfig, element: Element): st
   commands.push(fetchCmd);
 
   // Build swap command
-  const target = config.target ? resolveTarget(config.target) : 'me';
+  const target = config.target ? resolveHxTarget(config.target) : 'me';
   const swap = config.swap || 'innerHTML';
   const swapCmd = buildSwapCommand(target, swap, false);
 

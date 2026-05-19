@@ -208,6 +208,38 @@ describe('SSE integration', () => {
       proc.destroy();
     });
 
+    // Regression for item 9 in htmx-v4-reactive-streaming.md follow-ups:
+    // SSE/WS used to pass non-trivial hx-target values through untouched,
+    // ignoring real htmx's shortcut grammar. Now the same resolveHxTarget
+    // helper as the request-cycle path expands them.
+    const shortcutCases: { target: string; expected: string }[] = [
+      { target: 'closest .container', expected: 'closest <.container/>' },
+      { target: 'find .inner', expected: 'first <.inner/> in me' },
+      { target: 'next .sibling', expected: 'next <.sibling/>' },
+      { target: 'previous .sibling', expected: 'previous <.sibling/>' },
+    ];
+    for (const { target, expected } of shortcutCases) {
+      it(`resolves hx-target="${target}" in SSE swap`, async () => {
+        const { ctor, instances } = createMockEventSourceFactory();
+        const calls: string[] = [];
+        const proc = new HtmxAttributeProcessor({
+          watchMutations: false,
+          eventSourceCtor: ctor,
+        });
+        proc.init(async code => {
+          calls.push(code);
+        });
+        const el = mkElement(`<div sse-connect="/s" sse-swap="tick" hx-target="${target}"></div>`);
+        proc.processElement(el);
+        instances[0].fireOpen();
+        instances[0].emit('tick', '<span>x</span>');
+        await Promise.resolve();
+        expect(calls).toHaveLength(1);
+        expect(calls[0]).toContain(expected);
+        proc.destroy();
+      });
+    }
+
     it('supports multiple named events via comma-separated sse-swap', async () => {
       const { ctor, instances } = createMockEventSourceFactory();
       const calls: string[] = [];

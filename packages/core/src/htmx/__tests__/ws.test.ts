@@ -171,6 +171,37 @@ describe('WebSocket integration', () => {
       proc.destroy();
     });
 
+    // Regression for item 9 in htmx-v4-reactive-streaming.md follow-ups:
+    // the WS envelope target field should accept the same hx-target shortcut
+    // forms as the request-cycle path (closest/find/next/previous).
+    const wsShortcutCases: { target: string; expected: string }[] = [
+      { target: 'closest .container', expected: 'closest <.container/>' },
+      { target: 'find .inner', expected: 'first <.inner/> in me' },
+      { target: 'next .sibling', expected: 'next <.sibling/>' },
+      { target: 'previous .sibling', expected: 'previous <.sibling/>' },
+    ];
+    for (const { target, expected } of wsShortcutCases) {
+      it(`resolves envelope target="${target}" via resolveHxTarget`, async () => {
+        const { ctor, instances } = createMockWSFactory();
+        const calls: string[] = [];
+        const proc = new HtmxAttributeProcessor({
+          watchMutations: false,
+          wsEventSourceCtor: ctor,
+        });
+        proc.init(async code => {
+          calls.push(code);
+        });
+        const el = mkElement('<div ws-connect="/api"></div>');
+        proc.processElement(el);
+        instances[0].fireOpen();
+        instances[0].fireMessage(JSON.stringify({ target, swap: 'innerHTML', data: '<i>x</i>' }));
+        await Promise.resolve();
+        expect(calls).toHaveLength(1);
+        expect(calls[0]).toContain(expected);
+        proc.destroy();
+      });
+    }
+
     it('dispatches htmx:wsMessage for non-envelope payloads', () => {
       const { ctor, instances } = createMockWSFactory();
       const events: { type: string; detail: unknown }[] = [];
