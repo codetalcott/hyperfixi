@@ -15,6 +15,7 @@
  */
 
 import { translateToHyperscript, type HtmxConfig } from './htmx-translator.js';
+import { getParserExtensionRegistry } from '../parser/extensions.js';
 
 // ============================================================================
 // Lifecycle Event Types
@@ -139,6 +140,8 @@ export interface HtmxProcessorOptions {
 
 /** htmx attributes to scan for */
 const HTMX_REQUEST_ATTRS = ['hx-get', 'hx-post', 'hx-put', 'hx-patch', 'hx-delete'];
+/** Attributes that should make an element discoverable even without a request URL. */
+const HTMX_STANDALONE_ATTRS = ['hx-live'];
 const HTMX_ALL_ATTRS = [
   ...HTMX_REQUEST_ATTRS,
   'hx-target',
@@ -150,6 +153,7 @@ const HTMX_ALL_ATTRS = [
   'hx-headers',
   'hx-push-url',
   'hx-replace-url',
+  ...HTMX_STANDALONE_ATTRS,
 ];
 
 /** fixi attributes to scan for */
@@ -160,7 +164,8 @@ const FIXI_REQUEST_ATTR = 'fx-action';
 const ALL_ATTRS = [...HTMX_ALL_ATTRS, ...FIXI_ATTRS];
 
 /** Build CSS selector for elements with any hx-* or fx-* attribute */
-const HTMX_SELECTOR = HTMX_REQUEST_ATTRS.map(attr => `[${attr}]`).join(', ') + ', [hx-on\\:]';
+const HTMX_DISCOVERY_ATTRS = [...HTMX_REQUEST_ATTRS, ...HTMX_STANDALONE_ATTRS];
+const HTMX_SELECTOR = HTMX_DISCOVERY_ATTRS.map(attr => `[${attr}]`).join(', ') + ', [hx-on\\:]';
 const FIXI_SELECTOR = `[${FIXI_REQUEST_ATTR}]`;
 const COMBINED_SELECTOR = `${HTMX_SELECTOR}, ${FIXI_SELECTOR}`;
 
@@ -369,6 +374,12 @@ export class HtmxAttributeProcessor {
       config.onHandlers = onHandlers;
     }
 
+    // hx-live (v4 reactive expression — hyperscript body)
+    const hxLive = element.getAttribute('hx-live');
+    if (hxLive) {
+      config.hxLive = hxLive;
+    }
+
     return config;
   }
 
@@ -429,8 +440,32 @@ export class HtmxAttributeProcessor {
     const prefix = isFx ? 'fx' : 'htmx';
 
     // Skip if no meaningful config
-    if (!config.url && !config.onHandlers && !config.boost) {
+    if (!config.url && !config.onHandlers && !config.boost && !config.hxLive) {
       return;
+    }
+
+    // hx-live emits a `live ... end` block, which requires @hyperfixi/reactivity
+    // to be installed on the runtime. If the `live` feature isn't registered,
+    // strip hxLive from the config and log a clear error — let other attributes
+    // on the element still process.
+    if (config.hxLive) {
+      const registry = getParserExtensionRegistry();
+      if (!registry.hasFeature('live')) {
+        if (typeof console !== 'undefined') {
+          console.error(
+            `[${prefix}-compat] hx-live requires @hyperfixi/reactivity to be installed. ` +
+              `Install it via \`installPlugin(runtime, reactivityPlugin)\`, or use the ` +
+              `hyperfixi-hx-v4 bundle which auto-installs it. Element:`,
+            element
+          );
+        }
+        delete config.hxLive;
+        // If hxLive was the only reason this element was processed, skip now
+        // to avoid running the empty-translate code path below.
+        if (!config.url && !config.onHandlers && !config.boost) {
+          return;
+        }
+      }
     }
 
     // Dispatch fx:init event for fixi elements (cancelable)

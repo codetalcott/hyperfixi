@@ -24,6 +24,13 @@ export interface HtmxConfig {
   pushUrl?: boolean | string;
   replaceUrl?: boolean | string;
   onHandlers?: Record<string, string>;
+  /**
+   * htmx v4 `hx-live="..."` — reactive expression that re-runs when its
+   * dependencies change. Body is hyperscript syntax (not JS, unlike upstream
+   * htmx v4). Translated to a `live ... end` block, which requires
+   * `@hyperfixi/reactivity` to be installed on the runtime.
+   */
+  hxLive?: string;
 }
 
 /**
@@ -238,6 +245,14 @@ function buildSwapCommand(target: string, swap: string, useMorph: boolean): stri
 export function translateToHyperscript(config: HtmxConfig, element: Element): string {
   const parts: string[] = [];
 
+  // hx-live → live ... end block. Emitted first so it's parsed as a top-level
+  // feature alongside event handlers. Requires @hyperfixi/reactivity to be
+  // installed; the processor's processElement gates the emission on feature
+  // availability and logs a clear error if missing.
+  if (config.hxLive) {
+    parts.push(`live\n  ${config.hxLive}\nend`);
+  }
+
   // Handle hx-on:* inline handlers
   if (config.onHandlers) {
     for (const [event, code] of Object.entries(config.onHandlers)) {
@@ -246,7 +261,7 @@ export function translateToHyperscript(config: HtmxConfig, element: Element): st
     }
   }
 
-  // If no request URL, just return the event handlers
+  // If no request URL, just return the event handlers (and any live block)
   if (!config.url) {
     return parts.join('\n');
   }
