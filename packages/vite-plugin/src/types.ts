@@ -131,7 +131,7 @@ export interface HyperfixiPluginOptions {
    * - 'slavic': pl, ru, uk
    * - 'south-asian': hi, bn
    * - 'priority': 13 most common languages
-   * - 'all': All 21 supported languages
+   * - 'all': All 24 supported languages
    */
   region?: 'western' | 'east-asian' | 'slavic' | 'south-asian' | 'priority' | 'all';
 

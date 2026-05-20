@@ -21,6 +21,7 @@
         "hx-austauschen": "hx-swap",
         "hx-auslösen": "hx-trigger",
         "hx-bei": "hx-on",
+        "hx-direkt": "hx-live",
         "sse-verbinden": "sse-connect",
         "sse-austauschen": "sse-swap",
         "ws-verbinden": "ws-connect",

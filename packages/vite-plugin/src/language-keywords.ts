@@ -1,7 +1,7 @@
 /**
  * Language Keywords for Detection
  *
- * Maps of keywords for each of the 21 supported languages.
+ * Maps of keywords for each of the 24 supported languages.
  * Used by the scanner to detect which languages are used in hyperscript templates.
  *
  * Note: These are a representative subset of keywords - enough to reliably
@@ -28,11 +28,13 @@ export const SUPPORTED_LANGUAGES = [
   'zh',
   'ko', // East Asian
   'ar', // RTL (Arabic script)
+  'he', // RTL (Hebrew script)
   'hi',
   'bn', // South Asian (Indic scripts)
   'th', // Southeast Asian (Thai script)
   'tr', // Agglutinative Latin
   'id',
+  'ms', // Malay (Latin script, closely related to id)
   'sw',
   'qu', // Other
   'tl', // Tagalog (auto-added)
@@ -205,6 +207,40 @@ export const ARABIC_KEYWORDS = new Set([
   'كرر',
   'انتظر',
   'بينما',
+]);
+
+/**
+ * Hebrew keywords (Hebrew script).
+ * Auto-synced from semantic profile.
+ */
+export const HE_KEYWORDS = new Set([
+  'מתג',
+  'הדלק כבה',
+  'הוסף',
+  'הסר',
+  'מחק',
+  'הורד',
+  'הראה',
+  'הצג',
+  'הסתר',
+  'החבא',
+  'קבע',
+  'הגדר',
+  'הגדל',
+  'הוסף אחד',
+  'הקטן',
+  'הפחת',
+  'הפעל',
+  'שגר',
+  'שלח',
+  'אם',
+  'אחרת',
+  'אם לא',
+  'חזור',
+  'חכה',
+  'המתן',
+  'כל עוד',
+  'בזמן',
 ]);
 
 /**
@@ -400,6 +436,35 @@ export const INDONESIAN_KEYWORDS = new Set([
   'ulangi',
   'tunggu',
   'selama',
+]);
+
+/**
+ * Malay keywords (Latin script).
+ * Auto-synced from semantic profile.
+ */
+export const MS_KEYWORDS = new Set([
+  'togol',
+  'tukar',
+  'tambah',
+  'buang',
+  'padam',
+  'tunjuk',
+  'sembunyi',
+  'sorok',
+  'tetapkan',
+  'setkan',
+  'tambah_satu',
+  'kurang_satu',
+  'cetuskan',
+  'hantar',
+  'jika',
+  'kalau',
+  'kalau_tidak',
+  'jika_tidak',
+  'ulang',
+  'tunggu',
+  'selagi',
+  'semasa',
 ]);
 
 /**
@@ -800,6 +865,7 @@ export const LANGUAGE_KEYWORDS: Record<SupportedLanguage, Set<string>> = {
   ko: KOREAN_KEYWORDS,
   zh: CHINESE_KEYWORDS,
   ar: ARABIC_KEYWORDS,
+  he: HE_KEYWORDS,
   es: SPANISH_KEYWORDS,
   pt: PORTUGUESE_KEYWORDS,
   fr: FRENCH_KEYWORDS,
@@ -814,6 +880,7 @@ export const LANGUAGE_KEYWORDS: Record<SupportedLanguage, Set<string>> = {
   th: THAI_KEYWORDS,
   tr: TURKISH_KEYWORDS,
   id: INDONESIAN_KEYWORDS,
+  ms: MS_KEYWORDS,
   sw: SWAHILI_KEYWORDS,
   qu: QUECHUA_KEYWORDS,
   tl: TL_KEYWORDS,
@@ -832,8 +899,19 @@ export function containsLanguageKeywords(script: string, language: SupportedLang
   if (!keywords || keywords.size === 0) return false;
 
   // Non-Latin scripts can use simple includes (no risk of false positives)
-  // Includes: CJK (ja, ko, zh), Arabic (ar), Cyrillic (ru, uk), Indic (hi, bn), Thai (th)
-  const nonLatinLangs: SupportedLanguage[] = ['ja', 'ko', 'zh', 'ar', 'ru', 'uk', 'hi', 'bn', 'th'];
+  // Includes: CJK (ja, ko, zh), Arabic (ar), Hebrew (he), Cyrillic (ru, uk), Indic (hi, bn), Thai (th)
+  const nonLatinLangs: SupportedLanguage[] = [
+    'ja',
+    'ko',
+    'zh',
+    'ar',
+    'he',
+    'ru',
+    'uk',
+    'hi',
+    'bn',
+    'th',
+  ];
   if (nonLatinLangs.includes(language)) {
     for (const keyword of keywords) {
       if (script.includes(keyword)) {

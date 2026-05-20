@@ -1,8 +1,8 @@
 /**
  * BDD Domain Tests
  *
- * Validates the multilingual BDD specification DSL across 4 languages
- * (EN, ES, JA, AR) covering SVO, SOV, and VSO word orders.
+ * Validates the multilingual BDD specification DSL across 8 languages
+ * (EN, ES, JA, AR, KO, ZH, TR, FR) covering SVO, SOV, and VSO word orders.
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';

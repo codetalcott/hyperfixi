@@ -2,8 +2,9 @@
  * @lokascript/domain-bdd — Multilingual BDD Specification Domain
  *
  * A behavior-driven development domain built on @lokascript/framework.
- * Parses Given/When/Then specifications in English, Spanish, Japanese,
- * or Arabic, and compiles them to Playwright test code.
+ * Parses Given/When/Then specifications in 8 languages (English, Spanish,
+ * Japanese, Arabic, Korean, Chinese, Turkish, French) covering SVO, SOV,
+ * and VSO word orders, and compiles them to Playwright test code.
  *
  * @example
  * ```typescript

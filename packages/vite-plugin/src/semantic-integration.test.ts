@@ -316,7 +316,7 @@ describe('generateSemanticIntegrationCode', () => {
     expect(code).toContain("from '@lokascript/semantic/core'");
     expect(code).not.toContain("from '@lokascript/semantic';");
     // Imports all languages that are in SUPPORTED_LANGUAGES and have ESM exports
-    // The 'all' region expands to the vite-plugin's SUPPORTED_LANGUAGES (22 languages)
+    // The 'all' region expands to the vite-plugin's SUPPORTED_LANGUAGES (24 languages)
     expect(code).toContain("import '@lokascript/semantic/languages/en'");
     expect(code).toContain("import '@lokascript/semantic/languages/es'");
     expect(code).toContain("import '@lokascript/semantic/languages/ja'");

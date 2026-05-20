@@ -141,6 +141,12 @@ export const portugueseProfile: LanguageProfile = {
     until: { primary: 'até', normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },
     from: { primary: 'de', alternatives: ['desde'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-conectar`, `hx-ao-vivo`, etc.
+    connect: { primary: 'conectar', alternatives: ['conexão'], normalized: 'connect' },
+    stream: { primary: 'transmitir', alternatives: ['fluxo'], normalized: 'stream' },
+    live: { primary: 'ao-vivo', alternatives: ['vivo', 'direto'], normalized: 'live' },
+    socket: { primary: 'soquete', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'em', alternatives: ['ao'], normalized: 'on' },

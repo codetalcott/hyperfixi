@@ -48,7 +48,7 @@ const DETECTION_KEYWORDS = [
 ];
 
 // Languages that use non-Latin scripts (use simple includes for detection)
-const NON_LATIN_LANGUAGES = ['ja', 'ko', 'zh', 'ar', 'ru', 'uk', 'hi', 'bn', 'th'];
+const NON_LATIN_LANGUAGES = ['ja', 'ko', 'zh', 'ar', 'he', 'ru', 'uk', 'hi', 'bn', 'th'];
 
 // =============================================================================
 // Parse Arguments
@@ -144,9 +144,12 @@ function updateKeywordsFile(
       keywordString = keywordArray.join(', ');
     }
 
-    // Find existing keyword set and update it
+    // Find existing keyword set and update it.
+    // Match `new Set([...])` and `new Set<string>([...])` — the latter is
+    // needed for empty stub sets where the explicit generic prevents
+    // `Set<never>` inference.
     const existingSetRegex = new RegExp(
-      `export const ${upperCode}_KEYWORDS = new Set\\(\\[[\\s\\S]*?\\]\\);`,
+      `export const ${upperCode}_KEYWORDS = new Set(?:<[^>]+>)?\\(\\[[\\s\\S]*?\\]\\);`,
       'g'
     );
 

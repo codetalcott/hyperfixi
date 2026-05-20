@@ -60,9 +60,10 @@ const KEYS = {
 
 /**
  * Priority languages to emit vocab modules for. Matches the eight
- * languages flagged in the original Phase 0 audit + PHASE_8_KEYWORD_GAPS.md.
+ * languages flagged in the original Phase 0 audit + PHASE_8_KEYWORD_GAPS.md,
+ * plus Portuguese (added after the initial Phase 8 rollout).
  */
-const PRIORITY_LANGS = ['en', 'es', 'fr', 'ja', 'zh', 'ar', 'ko', 'de'];
+const PRIORITY_LANGS = ['en', 'es', 'fr', 'ja', 'zh', 'ar', 'ko', 'de', 'pt'];
 
 /** Map of priority code → semantic profile import path. */
 const PROFILE_MODULES = {
@@ -74,6 +75,7 @@ const PROFILE_MODULES = {
   ar: 'arabic',
   ko: 'korean',
   de: 'german',
+  pt: 'portuguese',
 };
 
 /**

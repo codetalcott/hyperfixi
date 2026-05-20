@@ -7,6 +7,7 @@
 
 import type { FileUsage, HyperfixiPluginOptions, HtmxUsage } from './types';
 import { detectLanguages } from './language-keywords';
+import { buildLocalizedHxLivePattern, SSE_NS_PATTERN, WS_NS_PATTERN } from './htmx-localized-attrs';
 
 // htmx/fixi attribute patterns
 const HTMX_REQUEST_PATTERN =
@@ -20,12 +21,16 @@ const HTMX_URL_PATTERN = /\b(hx-push-url|hx-replace-url)\s*=\s*["'][^"']+["']/gi
 const HTMX_CONFIRM_PATTERN = /\bhx-confirm\s*=\s*["']/gi;
 const HTMX_ON_PATTERN = /\bhx-on:(\w+)\s*=\s*["']([^"']+)["']/g;
 
-// htmx v4 reactive/streaming surface
+// htmx v4 reactive/streaming surface (English-form attributes).
 const HX_LIVE_PATTERN = /\bhx-live\s*=\s*["']/i;
 const SSE_CONNECT_PATTERN = /\bsse-connect\s*=\s*["']/i;
 const SSE_SWAP_PATTERN = /\bsse-swap\s*=\s*["']/i;
 const WS_CONNECT_PATTERN = /\bws-connect\s*=\s*["']/i;
 const WS_SEND_PATTERN = /\bws-send(\s*=\s*["']|\b)/i;
+
+// Localized v4 attribute patterns (see ./htmx-localized-attrs.ts).
+// Built once at module load so the regex's literal-set is fixed.
+const HX_LIVE_LOCALIZED_PATTERN = buildLocalizedHxLivePattern();
 
 /**
  * Phase 8: localized htmx-compat attribute names. Vocab modules under
@@ -311,7 +316,7 @@ export class Scanner {
       usage.hasHtmxAttributes = true;
     }
 
-    // htmx v4 reactive / streaming surface
+    // htmx v4 reactive / streaming surface — English-form attributes.
     if (HX_LIVE_PATTERN.test(code)) {
       usage.hasHtmxAttributes = true;
       usage.needsHxLive = true;
@@ -326,15 +331,39 @@ export class Scanner {
       usage.needsWS = true;
     }
 
-    // Phase 8: pages authored with localized htmx attribute names
-    // (`hx-obtener`, `hx-取得`, `sse-conectar`, etc.) need the
-    // htmx-compat bundle even if no English-form attribute appears.
-    // The generic LOCALIZED_HX_PATTERN matches any hx-/sse-/ws-
-    // attribute name including Unicode suffixes. We don't try to
-    // infer which specific feature is needed from a localized form —
-    // detecting any localized name flips `hasHtmxAttributes` so the
-    // generator routes to hyperfixi-hx-v4 (the only bundle that ships
-    // the orchestrator + vocab discovery path).
+    // Phase 8: localized v4 attribute names. Authors writing Spanish
+    // (`hx-en-vivo`, `sse-conectar`, `ws-conectar`), Japanese
+    // (`hx-ライブ`, `sse-接続`), etc. need the same feature flags so
+    // the generator routes them to the hx-v4 bundle (which ships the
+    // orchestrator + vocab discovery path the slim bundles lack).
+    //
+    // SSE/WS use namespace-only matching: any `sse-*` or `ws-*` localized
+    // form means the project needs that feature. The htmx-compat layer
+    // scopes those features to their namespace, so any localized name
+    // inside the namespace is unambiguous.
+    //
+    // hx-live needs an explicit set of translated suffixes because the
+    // `hx-*` namespace also covers non-reactive attributes (hx-get,
+    // hx-target, etc.) that don't require v4 routing.
+    if (HX_LIVE_LOCALIZED_PATTERN.test(code)) {
+      usage.hasHtmxAttributes = true;
+      usage.needsHxLive = true;
+      usage.needsReactivity = true;
+    }
+    if (!usage.needsSSE && SSE_NS_PATTERN.test(code)) {
+      usage.hasHtmxAttributes = true;
+      usage.needsSSE = true;
+    }
+    if (!usage.needsWS && WS_NS_PATTERN.test(code)) {
+      usage.hasHtmxAttributes = true;
+      usage.needsWS = true;
+    }
+
+    // Final catch-all: pages authored with any other localized htmx
+    // attribute name (`hx-obtener`, `hx-取得`, etc. — non-v4 features)
+    // still need the htmx-compat bundle even if no English-form or v4
+    // attribute matched. LOCALIZED_HX_PATTERN matches any hx-/sse-/ws-
+    // attribute including Unicode suffixes.
     if (!usage.hasHtmxAttributes && LOCALIZED_HX_PATTERN.test(code)) {
       usage.hasHtmxAttributes = true;
     }

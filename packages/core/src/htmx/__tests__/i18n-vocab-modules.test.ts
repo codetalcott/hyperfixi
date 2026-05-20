@@ -19,7 +19,7 @@ import { resetHooks } from '../i18n-hooks.js';
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../../../..');
 const VOCAB_DIR = resolve(REPO_ROOT, 'packages/core/vocab/htmx');
 
-const PRIORITY_LANGS = ['en', 'es', 'fr', 'ja', 'zh', 'ar', 'ko', 'de'];
+const PRIORITY_LANGS = ['en', 'es', 'fr', 'ja', 'zh', 'ar', 'ko', 'de', 'pt'];
 
 async function loadVocabModule(lang: string): Promise<void> {
   const path = resolve(VOCAB_DIR, `${lang}.js`);
@@ -78,6 +78,27 @@ describe('generated htmx vocab modules', () => {
       const source = await readFile(path, 'utf-8');
       expect(source).toContain('"sse-接続": "sse-connect"');
       expect(source).toContain('"hx-ライブ": "hx-live"');
+    });
+  });
+
+  describe('German vocab', () => {
+    it('emits a localized hx-live (not the English loanword)', async () => {
+      const path = resolve(VOCAB_DIR, 'de.js');
+      const source = await readFile(path, 'utf-8');
+      expect(source).toContain('"hx-direkt": "hx-live"');
+      expect(source).toContain('"sse-verbinden": "sse-connect"');
+      expect(source).toContain('"ws-senden": "ws-send"');
+    });
+  });
+
+  describe('Portuguese vocab', () => {
+    it('maps the Phase 8 keywords (added after initial 8-lang rollout)', async () => {
+      const path = resolve(VOCAB_DIR, 'pt.js');
+      const source = await readFile(path, 'utf-8');
+      expect(source).toContain('"hx-ao-vivo": "hx-live"');
+      expect(source).toContain('"sse-conectar": "sse-connect"');
+      expect(source).toContain('"ws-conectar": "ws-connect"');
+      expect(source).toContain('"ws-enviar": "ws-send"');
     });
   });
 

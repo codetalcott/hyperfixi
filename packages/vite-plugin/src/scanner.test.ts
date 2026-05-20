@@ -616,6 +616,74 @@ describe('Scanner', () => {
       expect(usage.needsBindToProperty).toBeFalsy();
     });
 
+    // ──── Phase 8: localized v4 attribute detection ────
+
+    it('detects Spanish hx-en-vivo as needsHxLive', () => {
+      const usage = scanner.scan(
+        '<div lang="es" hx-en-vivo="put $count into me"></div>',
+        'test.html'
+      );
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.needsHxLive).toBe(true);
+      expect(usage.htmx?.needsReactivity).toBe(true);
+    });
+
+    it('detects Japanese hx-ライブ as needsHxLive', () => {
+      const usage = scanner.scan(
+        '<div lang="ja" hx-ライブ="put $count into me"></div>',
+        'test.html'
+      );
+      expect(usage.htmx?.needsHxLive).toBe(true);
+      expect(usage.htmx?.needsReactivity).toBe(true);
+    });
+
+    it('detects German hx-direkt as needsHxLive', () => {
+      const usage = scanner.scan(
+        '<div lang="de" hx-direkt="put $count into me"></div>',
+        'test.html'
+      );
+      expect(usage.htmx?.needsHxLive).toBe(true);
+    });
+
+    it('detects Spanish sse-conectar as needsSSE', () => {
+      const usage = scanner.scan(
+        '<div lang="es" sse-conectar="/stream" sse-intercambiar="tick"></div>',
+        'test.html'
+      );
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.needsSSE).toBe(true);
+    });
+
+    it('detects Japanese sse-接続 as needsSSE', () => {
+      const usage = scanner.scan('<div lang="ja" sse-接続="/stream"></div>', 'test.html');
+      expect(usage.htmx?.needsSSE).toBe(true);
+    });
+
+    it('detects German ws-verbinden as needsWS', () => {
+      const usage = scanner.scan(
+        '<div lang="de" ws-verbinden="wss://example/api"></div>',
+        'test.html'
+      );
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.needsWS).toBe(true);
+    });
+
+    it('detects Korean ws-연결 as needsWS', () => {
+      const usage = scanner.scan('<div lang="ko" ws-연결="wss://example/api"></div>', 'test.html');
+      expect(usage.htmx?.needsWS).toBe(true);
+    });
+
+    it('does NOT flag needsHxLive on a localized non-live hx-* (e.g. hx-obtener)', () => {
+      // Spanish hx-obtener is hx-get — must NOT trigger reactive routing.
+      const usage = scanner.scan(
+        '<button lang="es" hx-obtener="/api/users">x</button>',
+        'test.html'
+      );
+      expect(usage.htmx?.hasHtmxAttributes).toBe(true);
+      expect(usage.htmx?.needsHxLive).toBeFalsy();
+      expect(usage.htmx?.needsReactivity).toBeFalsy();
+    });
+
     it('handles complex htmx example', () => {
       const code = `
         <div hx-get="/api/users"

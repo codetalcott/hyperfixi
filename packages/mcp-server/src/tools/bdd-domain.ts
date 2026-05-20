@@ -61,7 +61,7 @@ export const bddDomainTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code: en, es, ja, ar',
+          description: 'Language code: en, es, ja, ar, ko, zh, tr, fr',
           default: 'en',
         },
       },
@@ -82,7 +82,7 @@ export const bddDomainTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code: en, es, ja, ar',
+          description: 'Language code: en, es, ja, ar, ko, zh, tr, fr',
           default: 'en',
         },
       },
@@ -93,7 +93,7 @@ export const bddDomainTools = [
     name: 'validate_bdd',
     description:
       'Validate BDD scenario syntax. Returns whether each step parses successfully ' +
-      'and any errors. Supports 4 languages.',
+      'and any errors. Supports 8 languages.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -103,7 +103,7 @@ export const bddDomainTools = [
         },
         language: {
           type: 'string',
-          description: 'Language code: en, es, ja, ar',
+          description: 'Language code: en, es, ja, ar, ko, zh, tr, fr',
           default: 'en',
         },
       },
@@ -124,11 +124,11 @@ export const bddDomainTools = [
         },
         from: {
           type: 'string',
-          description: 'Source language code: en, es, ja, ar',
+          description: 'Source language code: en, es, ja, ar, ko, zh, tr, fr',
         },
         to: {
           type: 'string',
-          description: 'Target language code: en, es, ja, ar',
+          description: 'Target language code: en, es, ja, ar, ko, zh, tr, fr',
         },
       },
       required: ['scenario', 'from', 'to'],

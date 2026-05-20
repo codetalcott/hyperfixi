@@ -49,7 +49,7 @@ export function createDomainRegistry(): DomainRegistry {
   registry.register({
     name: 'bdd',
     description: 'BDD scenario',
-    languages: ['en', 'es', 'ja', 'ar'],
+    languages: ['en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'fr'],
     inputLabel: 'scenario',
     inputDescription: 'BDD scenario text (e.g., "given #button is exists")',
     outputDescription: 'Playwright test code with Given/When/Then assertions',

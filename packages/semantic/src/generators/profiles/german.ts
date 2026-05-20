@@ -147,7 +147,7 @@ export const germanProfile: LanguageProfile = {
     // used by the vocab generator — `sse-verbinden`, `hx-live`, etc.
     connect: { primary: 'verbinden', alternatives: ['Verbindung'], normalized: 'connect' },
     stream: { primary: 'stream', alternatives: ['Strom'], normalized: 'stream' },
-    live: { primary: 'live', alternatives: ['direkt'], normalized: 'live' },
+    live: { primary: 'direkt', alternatives: ['live', 'echtzeit'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
