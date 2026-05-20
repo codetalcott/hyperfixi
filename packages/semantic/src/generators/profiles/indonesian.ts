@@ -142,6 +142,16 @@ export const indonesianProfile: LanguageProfile = {
     until: { primary: 'sampai', normalized: 'until' },
     event: { primary: 'peristiwa', alternatives: ['event'], normalized: 'event' },
     from: { primary: 'dari', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-sambungkan`, `hx-langsung`, etc.
+    connect: {
+      primary: 'sambungkan',
+      alternatives: ['hubungkan', 'koneksi'],
+      normalized: 'connect',
+    },
+    stream: { primary: 'alirkan', alternatives: ['streaming'], normalized: 'stream' },
+    live: { primary: 'langsung', alternatives: ['live'], normalized: 'live' },
+    socket: { primary: 'soket', alternatives: ['socket', 'websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'pada', alternatives: ['ketika', 'saat'], normalized: 'on' },

@@ -28,6 +28,17 @@ export {
   indonesianProfile,
   quechuaProfile,
   swahiliProfile,
+  italianProfile,
+  polishProfile,
+  russianProfile,
+  ukrainianProfile,
+  hindiProfile,
+  bengaliProfile,
+  vietnameseProfile,
+  hebrewProfile,
+  thaiProfile,
+  malayProfile,
+  tagalogProfile,
 } from './language-profiles';
 
 // Static all-known-profiles manifest (non-deprecated successor to languageProfiles)

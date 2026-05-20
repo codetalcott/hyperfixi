@@ -307,6 +307,20 @@ export const ukrainianProfile: LanguageProfile = {
     until: { primary: 'поки_не', normalized: 'until' },
     event: { primary: 'подія', normalized: 'event' },
     from: { primary: 'з', alternatives: ['від', 'із'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-підключити`, `hx-наживо`, etc.
+    connect: {
+      primary: 'підключити',
+      alternatives: ['зʼєднати', 'підключитися'],
+      normalized: 'connect',
+    },
+    stream: { primary: 'транслювати', alternatives: ['потік', 'стрім'], normalized: 'stream' },
+    live: {
+      primary: 'наживо',
+      alternatives: ['у-прямому-ефірі', 'в-режимі-реального-часу'],
+      normalized: 'live',
+    },
+    socket: { primary: 'сокет', alternatives: ['гніздо', 'websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'при', normalized: 'on' },

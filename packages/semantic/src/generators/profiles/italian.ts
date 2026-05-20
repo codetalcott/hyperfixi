@@ -161,6 +161,16 @@ export const italianProfile: LanguageProfile = {
     until: { primary: 'fino', normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },
     from: { primary: 'da', alternatives: ['di'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-connettere`, `hx-in-diretta`, etc.
+    connect: {
+      primary: 'connettere',
+      alternatives: ['connettersi', 'collegare'],
+      normalized: 'connect',
+    },
+    stream: { primary: 'trasmettere', alternatives: ['flusso', 'streaming'], normalized: 'stream' },
+    live: { primary: 'in-diretta', alternatives: ['diretta', 'dal-vivo'], normalized: 'live' },
+    socket: { primary: 'socket', alternatives: ['presa', 'websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'su', alternatives: ['al'], normalized: 'on' },

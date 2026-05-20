@@ -139,6 +139,19 @@ export const quechuaProfile: LanguageProfile = {
     hover: { primary: 'hawachiy', normalized: 'hover' },
     input: { primary: 'yaykuchiy', normalized: 'input' },
     change: { primary: 'kambiay', normalized: 'change' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-tinkiy`, `hx-kawsachkaq`, etc.
+    // These are aspirational Runasimi coinages using native morphology
+    // (-y infinitive, -na instrument nominalizer, -chiy causative).
+    // No established Quechua ICT corpus exists to validate against.
+    connect: { primary: 'tinkiy', alternatives: ['watay', 'hukllachay'], normalized: 'connect' },
+    stream: {
+      primary: 'phawachiy',
+      alternatives: ['sururichiy', "ch'uquchiy"],
+      normalized: 'stream',
+    },
+    live: { primary: 'kawsachkaq', alternatives: ['kunan-pacha', 'kawsay'], normalized: 'live' },
+    socket: { primary: 'tinkina', alternatives: ["t'oqo", 'tinkiy-tinkina'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'pi', alternatives: ['kaqtin'] },

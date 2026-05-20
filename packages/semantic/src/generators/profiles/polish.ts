@@ -284,6 +284,12 @@ export const polishProfile: LanguageProfile = {
     until: { primary: 'aż', alternatives: ['az'], normalized: 'until' },
     event: { primary: 'zdarzenie', normalized: 'event' },
     from: { primary: 'z', alternatives: ['od', 'ze'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-połącz`, `hx-na-żywo`, etc.
+    connect: { primary: 'połącz', alternatives: ['podłącz'], normalized: 'connect' },
+    stream: { primary: 'transmituj', alternatives: ['strumień', 'streamuj'], normalized: 'stream' },
+    live: { primary: 'na-żywo', alternatives: ['na-bieżąco', 'live'], normalized: 'live' },
+    socket: { primary: 'gniazdo', alternatives: ['socket', 'websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'gdy', alternatives: ['przy', 'na'], normalized: 'on' },

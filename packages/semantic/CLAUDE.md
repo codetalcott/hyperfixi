@@ -195,50 +195,17 @@ export class NewLanguageTokenizer extends BaseTokenizer {
 
 See `src/tokenizers/thai.ts`, `src/tokenizers/ms.ts`, or `src/tokenizers/tl.ts` for working examples.
 
-## Adding a Language Variant (Regional)
+## Regional Language Codes (BCP 47)
 
-For regional variants like `es-MX` (Mexican Spanish), `pt-BR` (Brazilian Portuguese):
+Regional codes like `en-US`, `pt-BR`, `es-MX` are normalized to their base
+language by the registry: `getBaseLanguageCode('en-US')` returns `'en'`,
+and `tryGetProfile('en-US')` falls back to `englishProfile`. This means
+HTML attributes like `lang="pt-BR"` "just work" — the browser-supplied
+regional tag resolves to the registered base profile.
 
-1. **Create variant profile** in `src/generators/profiles/{name}.ts`:
-
-   ```typescript
-   export const spanishMexicoProfile: LanguageProfile = {
-     code: 'es-MX',
-     name: 'Spanish (Mexico)',
-     extends: 'es', // Inherit from base Spanish
-     keywords: {
-       // Override only Mexican-specific alternatives
-       wait: { primary: 'esperar', alternatives: ['ahorita'], normalized: 'wait' },
-       fetch: { primary: 'obtener', alternatives: ['jalar'], normalized: 'fetch' },
-     },
-   };
-   ```
-
-2. **Create language module** in `src/languages/{code}.ts`:
-
-   ```typescript
-   import { registerLanguage } from '../registry';
-   import { spanishTokenizer } from '../tokenizers/spanish'; // Reuse base tokenizer
-   import { spanishMexicoProfile } from '../generators/profiles/spanishMexico';
-
-   registerLanguage('es-MX', spanishTokenizer, spanishMexicoProfile);
-   ```
-
-3. **Add to LANGUAGE_NAMES** in `scripts/generate-indexes.ts`:
-
-   ```typescript
-   'es-MX': 'spanishMexico',
-   ```
-
-4. **Run index generator**: `npm run generate:indexes`
-
-5. **Add to SUPPORTED_LANGUAGES** in `src/language-building-schema.ts`
-
-Variants inherit:
-
-- Tokenizer from base language (via registry fallback)
-- Profile fields not overridden (via `extends` + deep merge)
-- Patterns from base language (via registry fallback)
+Regional **variants** (separate profiles with `extends: 'xx'` and
+overridden vocabulary) are not currently shipped. If demand emerges,
+this section will be reinstated alongside a worked example.
 
 ### Marker Templates (Shared Profile Components)
 

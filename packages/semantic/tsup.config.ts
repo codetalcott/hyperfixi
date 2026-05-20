@@ -626,7 +626,6 @@ export default defineConfig([
       'languages/de': 'src/languages/de.ts',
       'languages/en': 'src/languages/en.ts',
       'languages/es': 'src/languages/es.ts',
-      'languages/es-MX': 'src/languages/es-MX.ts',
       'languages/fr': 'src/languages/fr.ts',
       'languages/he': 'src/languages/he.ts',
       'languages/hi': 'src/languages/hi.ts',

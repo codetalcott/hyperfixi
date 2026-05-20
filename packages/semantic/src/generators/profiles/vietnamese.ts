@@ -150,6 +150,15 @@ export const vietnameseProfile: LanguageProfile = {
     until: { primary: 'cho đến khi', normalized: 'until' },
     event: { primary: 'sự kiện', normalized: 'event' },
     from: { primary: 'từ', alternatives: ['khỏi'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-kết-nối`, `hx-trực-tiếp`, etc.
+    // Vietnamese multi-word forms are hyphenated for single-token HTML
+    // attribute suffixes (diacritics preserved).
+    // `nối` is reserved as `append` primary — connect uses the compound form only.
+    connect: { primary: 'kết-nối', alternatives: ['kết-nối-tới'], normalized: 'connect' },
+    stream: { primary: 'truyền-phát', alternatives: ['phát', 'luồng'], normalized: 'stream' },
+    live: { primary: 'trực-tiếp', alternatives: ['phát-trực-tiếp'], normalized: 'live' },
+    socket: { primary: 'socket', alternatives: ['ổ-cắm', 'websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'khi', alternatives: ['trên'], normalized: 'on' },

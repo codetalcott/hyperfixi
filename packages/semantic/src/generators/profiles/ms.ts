@@ -141,6 +141,12 @@ export const malayProfile: LanguageProfile = {
     until: { primary: 'sehingga', alternatives: ['sampai'], normalized: 'until' },
     event: { primary: 'peristiwa', normalized: 'event' },
     from: { primary: 'dari', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-sambung`, `hx-langsung`, etc.
+    connect: { primary: 'sambung', alternatives: ['hubungkan'], normalized: 'connect' },
+    stream: { primary: 'strim', alternatives: ['penstriman', 'aliran'], normalized: 'stream' },
+    live: { primary: 'langsung', alternatives: ['siaran-langsung'], normalized: 'live' },
+    socket: { primary: 'soket', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'apabila', alternatives: ['ketika'], normalized: 'on' },

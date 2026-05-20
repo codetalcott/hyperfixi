@@ -264,7 +264,6 @@ export type SemanticBundleType =
   | 'de'
   | 'en'
   | 'es'
-  | 'es-MX'
   | 'fr'
   | 'he'
   | 'hi'
@@ -412,7 +411,6 @@ const SINGLE_LANGUAGE_BUNDLES: readonly string[] = [
   'de',
   'en',
   'es',
-  'es-MX',
   'fr',
   'he',
   'hi',
@@ -488,7 +486,6 @@ export const SEMANTIC_BUNDLE_SIZES: Record<SemanticBundleType, { raw: string; gz
   de: { raw: '57 KB', gzip: '~14 KB' },
   en: { raw: '82 KB', gzip: '~20 KB' },
   es: { raw: '64 KB', gzip: '~16 KB' },
-  'es-MX': { raw: '64 KB', gzip: '~16 KB' },
   fr: { raw: '57 KB', gzip: '~14 KB' },
   he: { raw: '56 KB', gzip: '~14 KB' },
   hi: { raw: '56 KB', gzip: '~14 KB' },
@@ -538,7 +535,6 @@ const LANGUAGES_WITH_ESM_EXPORTS = new Set([
   'de',
   'en',
   'es',
-  'es-MX',
   'fr',
   'he',
   'hi',

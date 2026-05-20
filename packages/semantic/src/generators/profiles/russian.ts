@@ -297,6 +297,20 @@ export const russianProfile: LanguageProfile = {
     until: { primary: 'пока_не', normalized: 'until' },
     event: { primary: 'событие', normalized: 'event' },
     from: { primary: 'из', alternatives: ['от', 'с'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-подключить`, `hx-в-прямом-эфире`, etc.
+    connect: {
+      primary: 'подключить',
+      alternatives: ['соединить', 'подключиться'],
+      normalized: 'connect',
+    },
+    stream: { primary: 'транслировать', alternatives: ['поток', 'стрим'], normalized: 'stream' },
+    live: {
+      primary: 'в-прямом-эфире',
+      alternatives: ['прямой-эфир', 'вживую'],
+      normalized: 'live',
+    },
+    socket: { primary: 'сокет', alternatives: ['гнездо', 'websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'при', normalized: 'on' },

@@ -47,7 +47,6 @@ export { portugueseProfile } from './profiles/portuguese';
 export { quechuaProfile } from './profiles/quechua';
 export { russianProfile } from './profiles/russian';
 export { spanishProfile } from './profiles/spanish';
-export { spanishMexicoProfile } from './profiles/spanishMexico';
 export { swahiliProfile } from './profiles/swahili';
 export { thaiProfile } from './profiles/thai';
 export { tagalogProfile } from './profiles/tl';

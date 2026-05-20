@@ -19,7 +19,131 @@ import { resetHooks } from '../i18n-hooks.js';
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../../../..');
 const VOCAB_DIR = resolve(REPO_ROOT, 'packages/core/vocab/htmx');
 
-const PRIORITY_LANGS = ['en', 'es', 'fr', 'ja', 'zh', 'ar', 'ko', 'de', 'pt'];
+const PRIORITY_LANGS = [
+  // Original Phase 8 priority eight
+  'en',
+  'es',
+  'fr',
+  'ja',
+  'zh',
+  'ar',
+  'ko',
+  'de',
+  // Tier 2 (added during Phase 8 expansion)
+  'pt',
+  'it',
+  'ru',
+  'uk',
+  'pl',
+  'tr',
+  // Tier 3 (24-lang expansion)
+  'hi',
+  'bn',
+  'vi',
+  'id',
+  'ms',
+  'tl',
+  'th',
+  'he',
+  'sw',
+  'qu',
+];
+
+/**
+ * Per-language expected localized forms for the Phase 8 attribute keywords.
+ * Updated whenever the vocab regenerates — see scripts/gen-htmx-vocab.mjs.
+ * Tests below use this to assert each generated module emits the right
+ * canonical-to-localized mapping. Omit a key if the language uses the
+ * English form (the vocab generator dedups identity mappings).
+ */
+const EXPECTED_PHASE8: Record<
+  string,
+  { live?: string; sseConnect?: string; wsConnect?: string; wsSend?: string }
+> = {
+  es: {
+    live: 'hx-en-vivo',
+    sseConnect: 'sse-conectar',
+    wsConnect: 'ws-conectar',
+    wsSend: 'ws-enviar',
+  },
+  fr: {
+    live: 'hx-en-direct',
+    sseConnect: 'sse-connecter',
+    wsConnect: 'ws-connecter',
+    wsSend: 'ws-envoyer',
+  },
+  ja: { live: 'hx-ライブ', sseConnect: 'sse-接続', wsConnect: 'ws-接続', wsSend: 'ws-送る' },
+  zh: { live: 'hx-实时', sseConnect: 'sse-连接', wsConnect: 'ws-连接', wsSend: 'ws-发送' },
+  ar: { live: 'hx-مباشر', sseConnect: 'sse-اتصل', wsConnect: 'ws-اتصل', wsSend: 'ws-أرسل' },
+  ko: { live: 'hx-실시간', sseConnect: 'sse-연결', wsConnect: 'ws-연결', wsSend: 'ws-보내다' },
+  de: {
+    live: 'hx-direkt',
+    sseConnect: 'sse-verbinden',
+    wsConnect: 'ws-verbinden',
+    wsSend: 'ws-senden',
+  },
+  pt: {
+    live: 'hx-ao-vivo',
+    sseConnect: 'sse-conectar',
+    wsConnect: 'ws-conectar',
+    wsSend: 'ws-enviar',
+  },
+  it: {
+    live: 'hx-in-diretta',
+    sseConnect: 'sse-connettere',
+    wsConnect: 'ws-connettere',
+    wsSend: 'ws-inviare',
+  },
+  ru: {
+    live: 'hx-в-прямом-эфире',
+    sseConnect: 'sse-подключить',
+    wsConnect: 'ws-подключить',
+    wsSend: 'ws-отправить',
+  },
+  uk: {
+    live: 'hx-наживо',
+    sseConnect: 'sse-підключити',
+    wsConnect: 'ws-підключити',
+    wsSend: 'ws-надіслати',
+  },
+  pl: { live: 'hx-na-żywo', sseConnect: 'sse-połącz', wsConnect: 'ws-połącz', wsSend: 'ws-wyślij' },
+  tr: { live: 'hx-canlı', sseConnect: 'sse-bağlan', wsConnect: 'ws-bağlan', wsSend: 'ws-gönder' },
+  hi: { live: 'hx-लाइव', sseConnect: 'sse-कनेक्ट', wsConnect: 'ws-कनेक्ट', wsSend: 'ws-भेजें' },
+  bn: { live: 'hx-লাইভ', sseConnect: 'sse-কানেক্ট', wsConnect: 'ws-কানেক্ট', wsSend: 'ws-পাঠান' },
+  vi: {
+    live: 'hx-trực-tiếp',
+    sseConnect: 'sse-kết-nối',
+    wsConnect: 'ws-kết-nối',
+    wsSend: 'ws-gửi',
+  },
+  id: {
+    live: 'hx-langsung',
+    sseConnect: 'sse-sambungkan',
+    wsConnect: 'ws-sambungkan',
+    wsSend: 'ws-kirim',
+  },
+  ms: {
+    live: 'hx-langsung',
+    sseConnect: 'sse-sambung',
+    wsConnect: 'ws-sambung',
+    wsSend: 'ws-hantar',
+  },
+  tl: { sseConnect: 'sse-ikonekta', wsConnect: 'ws-ikonekta', wsSend: 'ws-ipadala' }, // tl uses bare `live`, `socket`
+  th: { live: 'hx-ไลฟ์', sseConnect: 'sse-เชื่อมต่อ', wsConnect: 'ws-เชื่อมต่อ', wsSend: 'ws-ส่ง' },
+  he: { live: 'hx-חי', sseConnect: 'sse-התחבר', wsConnect: 'ws-התחבר', wsSend: 'ws-שלח' },
+  sw: {
+    live: 'hx-moja-kwa-moja',
+    sseConnect: 'sse-unganisha',
+    wsConnect: 'ws-unganisha',
+    wsSend: 'ws-tuma',
+  },
+  qu: {
+    live: 'hx-kawsachkaq',
+    sseConnect: 'sse-tinkiy',
+    wsConnect: 'ws-tinkiy',
+    wsSend: 'ws-kachay',
+  },
+};
 
 async function loadVocabModule(lang: string): Promise<void> {
   const path = resolve(VOCAB_DIR, `${lang}.js`);
@@ -100,6 +224,26 @@ describe('generated htmx vocab modules', () => {
       expect(source).toContain('"ws-conectar": "ws-connect"');
       expect(source).toContain('"ws-enviar": "ws-send"');
     });
+  });
+
+  // ──── Data-driven Phase 8 coverage across all priority languages ────
+  //
+  // For each language with an EXPECTED_PHASE8 fixture, assert the vocab
+  // module emits the canonical-form mapping for whichever Phase 8 keys
+  // the fixture declares. Optional fields (some langs use bare English
+  // forms — e.g. Tagalog `live`) are skipped when undefined.
+  describe('data-driven Phase 8 attribute coverage', () => {
+    for (const [lang, expected] of Object.entries(EXPECTED_PHASE8)) {
+      it(`${lang}.js contains the expected Phase 8 localized attrs`, async () => {
+        const path = resolve(VOCAB_DIR, `${lang}.js`);
+        const source = await readFile(path, 'utf-8');
+        if (expected.live) expect(source).toContain(`"${expected.live}": "hx-live"`);
+        if (expected.sseConnect)
+          expect(source).toContain(`"${expected.sseConnect}": "sse-connect"`);
+        if (expected.wsConnect) expect(source).toContain(`"${expected.wsConnect}": "ws-connect"`);
+        if (expected.wsSend) expect(source).toContain(`"${expected.wsSend}": "ws-send"`);
+      });
+    }
   });
 
   describe('English emits an empty (but valid) registration', () => {

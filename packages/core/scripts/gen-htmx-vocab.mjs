@@ -59,11 +59,20 @@ const KEYS = {
 };
 
 /**
- * Priority languages to emit vocab modules for. Matches the eight
- * languages flagged in the original Phase 0 audit + PHASE_8_KEYWORD_GAPS.md,
- * plus Portuguese (added after the initial Phase 8 rollout).
+ * Languages to emit vocab modules for. Originally the eight Phase 0
+ * priority languages (en/es/fr/ja/zh/ar/ko/de); expanded over time as
+ * Phase 8 keywords were added to additional semantic profiles. The full
+ * set now covers every semantic profile that has the four Phase 8
+ * keywords (connect/stream/live/socket) populated.
  */
-const PRIORITY_LANGS = ['en', 'es', 'fr', 'ja', 'zh', 'ar', 'ko', 'de', 'pt'];
+const PRIORITY_LANGS = [
+  // Original Phase 8 priority eight
+  'en', 'es', 'fr', 'ja', 'zh', 'ar', 'ko', 'de',
+  // Tier 2 (added after initial rollout)
+  'pt', 'it', 'ru', 'uk', 'pl', 'tr',
+  // Tier 3 (filled in the 24-lang expansion)
+  'hi', 'bn', 'vi', 'id', 'ms', 'tl', 'th', 'he', 'sw', 'qu',
+];
 
 /** Map of priority code → semantic profile import path. */
 const PROFILE_MODULES = {
@@ -76,6 +85,21 @@ const PROFILE_MODULES = {
   ko: 'korean',
   de: 'german',
   pt: 'portuguese',
+  it: 'italian',
+  ru: 'russian',
+  uk: 'ukrainian',
+  pl: 'polish',
+  tr: 'turkish',
+  hi: 'hindi',
+  bn: 'bengali',
+  vi: 'vietnamese',
+  id: 'indonesian',
+  ms: 'malay',
+  tl: 'tagalog',
+  th: 'thai',
+  he: 'hebrew',
+  sw: 'swahili',
+  qu: 'quechua',
 };
 
 /**

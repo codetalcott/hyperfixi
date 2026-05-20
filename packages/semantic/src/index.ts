@@ -285,6 +285,17 @@ export {
   indonesianProfile,
   quechuaProfile,
   swahiliProfile,
+  italianProfile,
+  polishProfile,
+  russianProfile,
+  ukrainianProfile,
+  hindiProfile,
+  bengaliProfile,
+  vietnameseProfile,
+  hebrewProfile,
+  thaiProfile,
+  malayProfile,
+  tagalogProfile,
 
   // Static all-known-profiles manifest
   KNOWN_PROFILES,

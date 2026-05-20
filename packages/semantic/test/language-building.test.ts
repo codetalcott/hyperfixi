@@ -130,7 +130,7 @@ describe('Cross-Validation', () => {
   it('all profile codes are valid language codes (ISO 639-1 or BCP 47)', () => {
     // This catches when a profile file is added but LANGUAGE_NAMES mapping is missing
     // in generate-indexes.ts, which would cause incorrect keys like 'hebrew' instead of 'he'
-    // Valid formats: 'xx' (ISO 639-1) or 'xx-YY' (BCP 47 with region, e.g., es-MX, pt-BR)
+    // Valid formats: 'xx' (ISO 639-1) or 'xx-YY' (BCP 47 with region, e.g., en-US, pt-BR)
     const validCodePattern = /^[a-z]{2}(-[A-Z]{2})?$/;
     const profileCodes = Object.keys(languageProfiles);
     const invalidCodes = profileCodes.filter(code => !validCodePattern.test(code));

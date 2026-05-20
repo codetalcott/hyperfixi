@@ -145,6 +145,12 @@ export const bengaliProfile: LanguageProfile = {
     until: { primary: 'পর্যন্ত', alternatives: [], normalized: 'until' },
     event: { primary: 'ঘটনা', alternatives: [], normalized: 'event' },
     from: { primary: 'থেকে', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-কানেক্ট`, `hx-লাইভ`, etc.
+    connect: { primary: 'কানেক্ট', alternatives: ['সংযোগ', 'যুক্ত'], normalized: 'connect' },
+    stream: { primary: 'স্ট্রিম', alternatives: ['স্রোত', 'প্রবাহ'], normalized: 'stream' },
+    live: { primary: 'লাইভ', alternatives: ['সরাসরি', 'প্রত্যক্ষ'], normalized: 'live' },
+    socket: { primary: 'সকেট', alternatives: ['ওয়েবসকেট'], normalized: 'socket' },
   },
   tokenization: {
     particles: ['কে', 'তে', 'থেকে', 'র', 'এর', 'দিয়ে', 'জন্য', 'পর্যন্ত'],

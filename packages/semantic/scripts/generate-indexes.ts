@@ -35,7 +35,6 @@ const SEMANTIC_SRC = path.resolve(__dirname, '../src');
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'english',
   es: 'spanish',
-  'es-MX': 'spanishMexico', // Mexican Spanish variant
   ja: 'japanese',
   ar: 'arabic',
   ko: 'korean',
@@ -233,7 +232,7 @@ function generateLanguageProfiles(): void {
   });
 
   // Validate: warn if any profile file is missing from LANGUAGE_NAMES
-  // Valid codes: ISO 639-1 (2 letters) or BCP 47 with region (e.g., es-MX, pt-BR)
+  // Valid codes: ISO 639-1 (2 letters) or BCP 47 with region (e.g., en-US, pt-BR)
   const validCodePattern = /^[a-z]{2}(-[A-Z]{2})?$/;
   const missingMappings = languages.filter(l => !validCodePattern.test(l.code));
   if (missingMappings.length > 0) {

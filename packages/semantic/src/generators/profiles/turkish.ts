@@ -185,6 +185,13 @@ export const turkishProfile: LanguageProfile = {
     until: { primary: 'kadar', normalized: 'until' },
     event: { primary: 'olay', normalized: 'event' },
     from: { primary: 'den', alternatives: ['dan'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-bağlan`, `hx-canlı`, etc.
+    // Turkish convention: imperative verb forms (matches `değiştir`, `ayarla`).
+    connect: { primary: 'bağlan', alternatives: ['bağla', 'bağlantı'], normalized: 'connect' },
+    stream: { primary: 'yayınla', alternatives: ['akıt', 'akış'], normalized: 'stream' },
+    live: { primary: 'canlı', alternatives: ['gerçek-zamanlı'], normalized: 'live' },
+    socket: { primary: 'soket', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
     // Event marker: da/de/ta/te (locative case suffix with vowel harmony), used in SOV pattern

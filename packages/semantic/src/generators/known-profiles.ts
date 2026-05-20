@@ -23,7 +23,6 @@ import { bengaliProfile } from './profiles/bengali';
 import { germanProfile } from './profiles/german';
 import { englishProfile } from './profiles/english';
 import { spanishProfile } from './profiles/spanish';
-import { spanishMexicoProfile } from './profiles/spanishMexico';
 import { frenchProfile } from './profiles/french';
 import { hebrewProfile } from './profiles/he';
 import { hindiProfile } from './profiles/hindi';
@@ -50,7 +49,6 @@ export const KNOWN_PROFILES: Readonly<Record<string, LanguageProfile>> = Object.
   de: germanProfile,
   en: englishProfile,
   es: spanishProfile,
-  'es-MX': spanishMexicoProfile,
   fr: frenchProfile,
   he: hebrewProfile,
   hi: hindiProfile,

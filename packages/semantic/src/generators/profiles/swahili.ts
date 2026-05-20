@@ -139,6 +139,12 @@ export const swahiliProfile: LanguageProfile = {
     until: { primary: 'hadi', normalized: 'until' },
     event: { primary: 'tukio', normalized: 'event' },
     from: { primary: 'kutoka', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-unganisha`, `hx-moja-kwa-moja`, etc.
+    connect: { primary: 'unganisha', alternatives: ['unga', 'ungana'], normalized: 'connect' },
+    stream: { primary: 'tiririsha', alternatives: ['mtiririko', 'strimu'], normalized: 'stream' },
+    live: { primary: 'moja-kwa-moja', alternatives: ['mubashara', 'hai'], normalized: 'live' },
+    socket: { primary: 'soketi', alternatives: ['tundu', 'soketi-wavuti'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'unapo', alternatives: ['kwenye', 'kwa', 'wakati'] },

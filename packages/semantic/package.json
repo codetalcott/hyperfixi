@@ -141,10 +141,6 @@
       "types": "./dist/languages/vi.d.ts",
       "import": "./dist/languages/vi.js"
     },
-    "./languages/es-MX": {
-      "types": "./dist/languages/es-MX.d.ts",
-      "import": "./dist/languages/es-MX.js"
-    },
     "./browser/ja": {
       "default": "./dist/browser-ja.ja.global.js"
     },

@@ -26,12 +26,26 @@
 export const HX_LIVE_LOCALIZED: ReadonlySet<string> = new Set([
   // Each entry is the suffix after the `hx-` prefix.
   'مباشر', // ar
+  'লাইভ', // bn
   'direkt', // de
   'en-vivo', // es
   'en-direct', // fr
+  'חי', // he
+  'लाइव', // hi
+  'langsung', // id
+  'in-diretta', // it
   'ライブ', // ja
   '실시간', // ko
+  'langsung', // ms
+  'na-żywo', // pl
   'ao-vivo', // pt
+  'kawsachkaq', // qu
+  'в-прямом-эфире', // ru
+  'moja-kwa-moja', // sw
+  'ไลฟ์', // th
+  'canlı', // tr
+  'наживо', // uk
+  'trực-tiếp', // vi
   '实时', // zh
 ]);
 

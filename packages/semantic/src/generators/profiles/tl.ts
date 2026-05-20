@@ -145,6 +145,14 @@ export const tagalogProfile: LanguageProfile = {
     until: { primary: 'hanggang', normalized: 'until' },
     event: { primary: 'pangyayari', normalized: 'event' },
     from: { primary: 'mula', alternatives: ['galing'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-ikonekta`, `hx-live`, etc.
+    // Filipino dev culture code-switches English heavily; `live`/`socket`
+    // are typically written verbatim in code.
+    connect: { primary: 'ikonekta', alternatives: ['kumonekta', 'connect'], normalized: 'connect' },
+    stream: { primary: 'i-stream', alternatives: ['stream', 'agos'], normalized: 'stream' },
+    live: { primary: 'live', alternatives: ['tuwiran', 'direkta'], normalized: 'live' },
+    socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'kapag', normalized: 'on' },

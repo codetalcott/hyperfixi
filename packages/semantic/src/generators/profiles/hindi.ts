@@ -159,6 +159,13 @@ export const hindiProfile: LanguageProfile = {
     until: { primary: 'तक', alternatives: [], normalized: 'until' },
     event: { primary: 'घटना', alternatives: [], normalized: 'event' },
     from: { primary: 'से', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-कनेक्ट`, `hx-लाइव`, etc.
+    // `जोड़ें` is reserved as `add` — `connect` alternatives are limited to non-colliding forms.
+    connect: { primary: 'कनेक्ट', alternatives: ['संयोजित'], normalized: 'connect' },
+    stream: { primary: 'स्ट्रीम', alternatives: ['धारा', 'प्रवाह'], normalized: 'stream' },
+    live: { primary: 'लाइव', alternatives: ['सजीव', 'प्रत्यक्ष'], normalized: 'live' },
+    socket: { primary: 'सॉकेट', alternatives: ['वेबसॉकेट'], normalized: 'socket' },
   },
   tokenization: {
     particles: ['को', 'में', 'पर', 'से', 'का', 'की', 'के', 'तक', 'ने'],

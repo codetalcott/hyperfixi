@@ -134,8 +134,8 @@ function deepMerge<T extends object>(base: T, variant: Partial<T>): T {
  * @example
  * ```typescript
  * const esMX = mergeProfiles(spanishProfile, {
- *   code: 'es-MX',
- *   name: 'Spanish (Mexico)',
+ *   code: 'en-GB',
+ *   name: 'English (UK)',
  *   keywords: {
  *     toggle: { primary: 'alternar', alternatives: ['dale', 'cambiar'] },
  *   },
@@ -359,7 +359,7 @@ export async function queryExternalPatternsForCommand(
 
 /**
  * Extract the base language code from a BCP 47 tag.
- * Examples: 'es-MX' → 'es', 'pt-BR' → 'pt', 'en' → 'en'
+ * Examples: 'en-US' → 'en', 'pt-BR' → 'pt', 'en' → 'en'
  */
 export function getBaseLanguageCode(code: string): string {
   return code.split('-')[0];
@@ -367,7 +367,7 @@ export function getBaseLanguageCode(code: string): string {
 
 /**
  * Check if a code is a language variant (has region subtag).
- * Examples: 'es-MX' → true, 'pt' → false
+ * Examples: 'en-US' → true, 'pt' → false
  */
 export function isLanguageVariant(code: string): boolean {
   return code.includes('-');
@@ -379,14 +379,14 @@ export function isLanguageVariant(code: string): boolean {
 
 /**
  * Get a tokenizer for the specified language.
- * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
+ * Supports fallback: if 'en-US' is not registered, falls back to 'en'.
  * @throws Error if neither the variant nor base language is registered
  */
 export function getTokenizer(code: string): LanguageTokenizer {
   // Try exact match first
   let tokenizer = tokenizers.get(code);
 
-  // Fallback: es-MX → es
+  // Fallback: en-US → en
   if (!tokenizer && isLanguageVariant(code)) {
     const baseCode = getBaseLanguageCode(code);
     tokenizer = tokenizers.get(baseCode);
@@ -405,14 +405,14 @@ export function getTokenizer(code: string): LanguageTokenizer {
 
 /**
  * Get a profile for the specified language.
- * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
+ * Supports fallback: if 'en-US' is not registered, falls back to 'en'.
  * @throws Error if neither the variant nor base language is registered
  */
 export function getProfile(code: string): LanguageProfile {
   // Try exact match first
   let profile = profiles.get(code);
 
-  // Fallback: es-MX → es
+  // Fallback: en-US → en
   if (!profile && isLanguageVariant(code)) {
     const baseCode = getBaseLanguageCode(code);
     profile = profiles.get(baseCode);
@@ -433,7 +433,7 @@ export function getProfile(code: string): LanguageProfile {
 
 /**
  * Try to get a tokenizer, returning undefined if not registered.
- * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
+ * Supports fallback: if 'en-US' is not registered, falls back to 'en'.
  */
 export function tryGetTokenizer(code: string): LanguageTokenizer | undefined {
   let tokenizer = tokenizers.get(code);
@@ -445,7 +445,7 @@ export function tryGetTokenizer(code: string): LanguageTokenizer | undefined {
 
 /**
  * Try to get a profile, returning undefined if not registered.
- * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
+ * Supports fallback: if 'en-US' is not registered, falls back to 'en'.
  */
 export function tryGetProfile(code: string): LanguageProfile | undefined {
   let profile = profiles.get(code);
@@ -514,7 +514,7 @@ export function tokenize(input: string, language: string): TokenStream {
  * Get patterns for a specific language.
  * First checks for directly registered patterns (for tree-shaking),
  * then falls back to pattern generator.
- * Supports fallback: if 'es-MX' is not registered, falls back to 'es'.
+ * Supports fallback: if 'en-US' is not registered, falls back to 'en'.
  * @throws Error if language is not registered
  */
 export function getPatternsForLanguage(code: string): LanguagePattern[] {

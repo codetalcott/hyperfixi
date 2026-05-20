@@ -150,6 +150,12 @@ export const hebrewProfile: LanguageProfile = {
     until: { primary: 'עד', normalized: 'until' },
     event: { primary: 'אירוע', normalized: 'event' },
     from: { primary: 'מ', alternatives: ['מאת'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-התחבר`, `hx-חי`, etc.
+    connect: { primary: 'התחבר', alternatives: ['חבר', 'התחברות'], normalized: 'connect' },
+    stream: { primary: 'הזרם', alternatives: ['סטרים', 'שידור'], normalized: 'stream' },
+    live: { primary: 'חי', alternatives: ['בזמן-אמת', 'לייב'], normalized: 'live' },
+    socket: { primary: 'שקע', alternatives: ['סוקט', 'ווב-סוקט'], normalized: 'socket' },
   },
   tokenization: {
     prefixes: ['ה', 'ו', 'ב', 'כ', 'ל', 'מ', 'ש'], // Common Hebrew prefixes

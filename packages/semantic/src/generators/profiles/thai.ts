@@ -146,6 +146,16 @@ export const thaiProfile: LanguageProfile = {
     until: { primary: 'จนถึง', alternatives: [], normalized: 'until' },
     event: { primary: 'เหตุการณ์', alternatives: [], normalized: 'event' },
     from: { primary: 'จาก', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-เชื่อมต่อ`, `hx-ไลฟ์`, etc.
+    connect: { primary: 'เชื่อมต่อ', alternatives: ['เชื่อม'], normalized: 'connect' },
+    stream: { primary: 'สตรีม', alternatives: ['สตรีมมิ่ง', 'กระแส'], normalized: 'stream' },
+    live: { primary: 'ไลฟ์', alternatives: ['สด', 'ถ่ายทอดสด'], normalized: 'live' },
+    socket: {
+      primary: 'ซ็อกเก็ต',
+      alternatives: ['websocket', 'เว็บซ็อกเก็ต'],
+      normalized: 'socket',
+    },
   },
   tokenization: {
     boundaryStrategy: 'character', // Character-based like Chinese/Japanese
