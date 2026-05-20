@@ -24,6 +24,15 @@ import {
   type WSSwapEnvelope,
 } from './ws.js';
 import { getHooks, KEYS, type AttrNamespace } from './i18n-hooks.js';
+import { onVocabUpdate, getAllLocalizedAttrs, getAllHxOnPrefixes } from './i18n-orchestrator.js';
+
+/** Return event suffix if `attrName` starts with any localized hx-on prefix, else null. */
+function matchHxOnPrefix(attrName: string): string | null {
+  for (const prefix of getAllHxOnPrefixes()) {
+    if (attrName.startsWith(prefix)) return attrName.slice(prefix.length);
+  }
+  return null;
+}
 
 // ============================================================================
 // Lifecycle Event Types
@@ -312,6 +321,16 @@ export class HtmxAttributeProcessor {
   private onHandlerElements = new Set<Element>();
 
   /**
+   * Localized attribute names snapshotted from the orchestrator —
+   * needed in the MutationObserver attribute-change branch since the
+   * static ALL_ATTRS list only covers English forms. Refreshed via
+   * `refreshLocalizedAttrs()` when the orchestrator's vocab updates.
+   */
+  private localizedAttrSet = new Set<string>();
+  /** Unsubscribe handle for the orchestrator's vocab-update channel. */
+  private unsubscribeVocab: (() => void) | null = null;
+
+  /**
    * Per-element swap template cache. Each SSE/WS event re-reads
    * `hx-target` / `hx-swap` so dynamic attribute changes are honored; the
    * template (closure over the resolved target + swap strategy) is then
@@ -406,6 +425,10 @@ export class HtmxAttributeProcessor {
    * Stop watching for mutations and cleanup
    */
   destroy(): void {
+    if (this.unsubscribeVocab) {
+      this.unsubscribeVocab();
+      this.unsubscribeVocab = null;
+    }
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
@@ -661,11 +684,15 @@ export class HtmxAttributeProcessor {
     if (!this.executeCallback) return;
     const exec = this.executeCallback;
     const map = new Map<string, () => void>();
-    for (const [eventName, body] of Object.entries(onHandlers)) {
+    for (const [rawEventName, body] of Object.entries(onHandlers)) {
+      // Translate localized event names via the vocab hook — Spanish
+      // `hx-on:clic` registers a `click` listener, not `clic`.
+      // Identity by default.
+      const eventName = getHooks().eventNameOf(element, rawEventName);
       const listener = (_evt: Event): void => {
         void exec(body, element).catch(err => {
           if (typeof console !== 'undefined') {
-            console.error(`[htmx-compat] hx-on:${eventName} execution failed:`, err);
+            console.error(`[htmx-compat] hx-on:${rawEventName} execution failed:`, err);
           }
         });
       };
@@ -731,7 +758,7 @@ export class HtmxAttributeProcessor {
     const visit = (el: Element): void => {
       const attrs = el.attributes;
       for (let i = 0; i < attrs.length; i++) {
-        if (attrs[i].name.startsWith('hx-on:')) {
+        if (matchHxOnPrefix(attrs[i].name) !== null) {
           out.push(el);
           return;
         }
@@ -813,11 +840,15 @@ export class HtmxAttributeProcessor {
       config.replaceUrl = replaceUrl === 'true' ? true : replaceUrl;
     }
 
-    // Collect hx-on:* event handlers
+    // Collect hx-on:* event handlers — accepts any localized prefix
+    // (`hx-en:click` for Spanish, etc.). The event suffix is taken
+    // verbatim and later translated via `eventNameOf` in
+    // installOnHandlers, so Spanish `hx-en:clic` ends up registering
+    // a real `click` listener.
     const onHandlers: Record<string, string> = {};
     for (const attr of element.attributes) {
-      if (attr.name.startsWith('hx-on:')) {
-        const event = attr.name.slice(6); // Remove 'hx-on:' prefix
+      const event = matchHxOnPrefix(attr.name);
+      if (event !== null) {
         onHandlers[event] = attr.value;
       }
     }
@@ -1198,7 +1229,15 @@ export class HtmxAttributeProcessor {
         // Handle attribute changes
         if (mutation.type === 'attributes' && mutation.target instanceof Element) {
           const attrName = mutation.attributeName;
-          if (attrName && (ALL_ATTRS.includes(attrName) || attrName.startsWith('hx-on:'))) {
+          // Localized attribute names live in the orchestrator's
+          // registry. Check there too — the static ALL_ATTRS list only
+          // covers English forms.
+          const isHtmxAttr =
+            attrName != null &&
+            (ALL_ATTRS.includes(attrName) ||
+              matchHxOnPrefix(attrName) !== null ||
+              this.localizedAttrSet.has(attrName));
+          if (isHtmxAttr) {
             // Re-process element if htmx or fixi attributes changed
             this.processedElements.delete(mutation.target);
             this.processElement(mutation.target);
@@ -1207,14 +1246,50 @@ export class HtmxAttributeProcessor {
       }
     });
 
+    // Snapshot localized attribute names so the attribute-change branch
+    // above can recognize them. Refreshed on every vocab-update event
+    // via {@link refreshLocalizedAttrs}.
+    this.localizedAttrSet = new Set(getAllLocalizedAttrs());
+    this.unsubscribeVocab = onVocabUpdate(() => this.refreshLocalizedAttrs());
+
     if (this.options.root) {
       this.observer.observe(this.options.root, {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ALL_ATTRS,
+        attributeFilter: this.computeAttributeFilter(),
       });
     }
+  }
+
+  /**
+   * Compute the full attribute filter, including any localized attribute
+   * names already registered with the orchestrator. Falls back to the
+   * static English-only set when no vocab is loaded.
+   */
+  private computeAttributeFilter(): string[] {
+    const localized = getAllLocalizedAttrs();
+    if (localized.length === 0) return ALL_ATTRS;
+    return [...new Set([...ALL_ATTRS, ...localized])];
+  }
+
+  /**
+   * Refresh `localizedAttrSet` and re-install the observer with the
+   * updated attributeFilter. Called from the orchestrator's
+   * vocab-update channel so dynamic additions of localized-name
+   * attributes (e.g. authored via JS after page load) trigger
+   * reprocessing the same way the English-form attributes do.
+   */
+  private refreshLocalizedAttrs(): void {
+    this.localizedAttrSet = new Set(getAllLocalizedAttrs());
+    if (!this.observer || !this.options.root) return;
+    this.observer.disconnect();
+    this.observer.observe(this.options.root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: this.computeAttributeFilter(),
+    });
   }
 
   /**

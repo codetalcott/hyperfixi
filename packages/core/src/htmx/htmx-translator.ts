@@ -11,6 +11,8 @@
  * - fixi default swap: outerHTML
  */
 
+import { getHooks } from './i18n-hooks.js';
+
 export interface HtmxConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   url?: string;
@@ -110,10 +112,20 @@ export function resolveHxTarget(target: string): string {
 }
 
 /**
- * Parse trigger string to extract event and modifiers
- * Examples: "click", "click delay:500ms", "keyup[key=='Enter']"
+ * Parse trigger string to extract event and modifiers.
+ * Examples: "click", "click delay:500ms", "keyup[key=='Enter']".
+ *
+ * `translateEventName` is the orchestrator's vocab-aware mapper —
+ * Spanish `hx-trigger="clic"` arrives here as `"clic"` and gets
+ * translated to `"click"` so the runtime registers a real DOM
+ * listener (downstream `TRIGGER_MAP` lookup then handles the
+ * trigger-specific hyperscript form). Identity by default; vocab
+ * impls walk the per-element lang scope.
  */
-function parseTrigger(trigger: string): { event: string; modifiers: string[] } {
+function parseTrigger(
+  trigger: string,
+  translateEventName: (value: string) => string
+): { event: string; modifiers: string[] } {
   // Split on first space to separate event from modifiers
   const parts = trigger.trim().split(/\s+/);
   const eventPart = parts[0];
@@ -122,14 +134,16 @@ function parseTrigger(trigger: string): { event: string; modifiers: string[] } {
   // Handle event filters like keyup[key=='Enter']
   const filterMatch = eventPart.match(/^(\w+)\[(.+)\]$/);
   if (filterMatch) {
+    const localized = translateEventName(filterMatch[1]);
     return {
-      event: TRIGGER_MAP[filterMatch[1]] || filterMatch[1],
+      event: TRIGGER_MAP[localized] || localized,
       modifiers: [`filter: ${filterMatch[2]}`, ...modifiers],
     };
   }
 
+  const localized = translateEventName(eventPart);
   return {
-    event: TRIGGER_MAP[eventPart] || eventPart,
+    event: TRIGGER_MAP[localized] || localized,
     modifiers,
   };
 }
@@ -271,9 +285,13 @@ export function translateToHyperscript(config: HtmxConfig, element: Element): st
   // Build the main request handler
   const commands: string[] = [];
 
-  // Event trigger
+  // Event trigger — `getHooks().eventNameOf` translates per-element
+  // localized event names (e.g. Spanish `clic` → `click`) before
+  // TRIGGER_MAP / runtime listener registration. Identity by default.
   const triggerStr = config.trigger || getDefaultTrigger(element);
-  const { event, modifiers } = parseTrigger(triggerStr);
+  const { event, modifiers } = parseTrigger(triggerStr, value =>
+    getHooks().eventNameOf(element, value)
+  );
   const modifierStr = translateModifiers(modifiers);
 
   // Confirmation dialog

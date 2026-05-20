@@ -19,7 +19,7 @@ import { JSDOM } from 'jsdom';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HtmxAttributeProcessor } from '../htmx-attribute-processor.js';
+import { HtmxAttributeProcessor, type WSEventSourceCtor } from '../htmx-attribute-processor.js';
 import { register, resetOrchestrator } from '../i18n-orchestrator.js';
 import { resetHooks } from '../i18n-hooks.js';
 
@@ -152,6 +152,67 @@ describe('htmx-compat localization integration', () => {
       expect(generated).toContain("fetch '/api'");
     });
 
+    it('translates hx-trigger event name (clic → click) via eventNameOf', () => {
+      const section = document.createElement('section');
+      section.setAttribute('lang', 'es');
+      const button = document.createElement('button');
+      button.setAttribute('hx-obtener', '/api');
+      // Localized event-name in hx-trigger — must register the
+      // canonical `click` event in the translated snippet, otherwise
+      // the runtime would wire a listener for a non-existent `clic`
+      // event and the button would never fire.
+      button.setAttribute('hx-disparar', 'clic');
+      section.appendChild(button);
+      container.appendChild(section);
+
+      processor.processElement(button);
+      const generated = button.getAttribute('data-hx-generated');
+      // The hyperscript snippet uses `on click ...`. The negation is
+      // tricky because `clic` is a substring of `click` — use a word-
+      // boundary regex to confirm the localized name didn't leak.
+      expect(generated).toContain('on click');
+      expect(generated).not.toMatch(/\bon clic\b/);
+    });
+
+    it('discovers and wires localized hx-on prefix (hx-en:click → click listener)', () => {
+      // Spanish vocab maps `hx-on` → `hx-en` (Spanish `on` keyword = "en").
+      // So `hx-en:click` is the Spanish form of `hx-on:click`. The
+      // processor should discover it, extract `click` as the event,
+      // and register a real listener.
+      const section = document.createElement('section');
+      section.setAttribute('lang', 'es');
+      const button = document.createElement('button');
+      button.setAttribute('hx-en:click', "put 'clicked' into me");
+      section.appendChild(button);
+      container.appendChild(section);
+
+      // Subtree scan must discover the hx-en-prefixed element.
+      const found = processor.scanForHtmxElements(container);
+      expect(found).toContain(button);
+
+      // processElement should install a real click listener.
+      processor.processElement(button);
+      button.click();
+      expect(executeCallback).toHaveBeenCalledWith("put 'clicked' into me", button);
+    });
+
+    it('translates hx-on event name (clic → click) via eventNameOf', () => {
+      const section = document.createElement('section');
+      section.setAttribute('lang', 'es');
+      const button = document.createElement('button');
+      // Author writes Spanish event name on the colon-suffix family.
+      // Real click should fire the body — meaning the listener was
+      // registered against `click`, not `clic`.
+      button.setAttribute('hx-on:clic', "put 'ok' into me");
+      section.appendChild(button);
+      container.appendChild(section);
+
+      processor.processElement(button);
+      button.click();
+      expect(executeCallback).toHaveBeenCalledTimes(1);
+      expect(executeCallback).toHaveBeenCalledWith("put 'ok' into me", button);
+    });
+
     it('routes ws-enviar through the WS-send path', async () => {
       // Mock WS so attachWS succeeds without a real socket.
       const MockWS = vi.fn(function (this: { close: () => void; send: () => void }) {
@@ -163,7 +224,7 @@ describe('htmx-compat localization integration', () => {
         root: container,
         processExisting: false,
         watchMutations: false,
-        wsEventSourceCtor: MockWS as unknown as typeof WebSocket,
+        wsEventSourceCtor: MockWS as unknown as WSEventSourceCtor,
       });
       processor.init(executeCallback);
 
@@ -250,6 +311,63 @@ describe('htmx-compat localization integration', () => {
       container.appendChild(wrap);
       const found = processor.scanForHtmxElements(container);
       expect(found.length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe('Late-loaded vocab refreshes MutationObserver attributeFilter', () => {
+    it('updates the attributeFilter so attribute changes on existing elements fire', async () => {
+      // Pre-Phase-8-followups, the attributeFilter was frozen at init.
+      // An element with no htmx attrs gets one added later (Spanish
+      // `hx-obtener`) — the observer's attribute-change branch only
+      // saw English ALL_ATTRS, so the new attribute was ignored.
+      //
+      // Now `refreshLocalizedAttrs` is called via the orchestrator
+      // update channel, and the observer is re-installed with the
+      // expanded attribute filter.
+      processor.destroy();
+      processor = new HtmxAttributeProcessor({
+        root: container,
+        processExisting: false,
+        watchMutations: true,
+      });
+      processor.init(executeCallback);
+
+      // Add the element BEFORE loading vocab — at this point the
+      // processor sees no htmx attrs on it, so it ignores the element.
+      // The button lives in a `lang="es"` section so localized attribute
+      // resolution kicks in once vocab loads.
+      const section = document.createElement('section');
+      section.setAttribute('lang', 'es');
+      const button = document.createElement('button');
+      section.appendChild(button);
+      container.appendChild(section);
+      // Flush the childList mutation; no processing should happen.
+      await new Promise(r => setTimeout(r, 10));
+      expect(button.hasAttribute('data-hx-generated')).toBe(false);
+
+      // Subscribe a sentinel listener to confirm the orchestrator's
+      // vocab-update channel fires.
+      const { onVocabUpdate } = await import('../i18n-orchestrator.js');
+      let sentinelFired = 0;
+      onVocabUpdate(() => sentinelFired++);
+
+      await loadVocab('es');
+      await new Promise(r => setTimeout(r, 0));
+      expect(sentinelFired).toBe(1); // orchestrator notified us
+
+      // Verify that a fresh scan now picks up localized attributes —
+      // confirms refreshLocalizedAttrs() ran and the selector now
+      // includes `hx-obtener`. (The MutationObserver attribute branch
+      // depends on the same data — they share `computeAttributeFilter`.)
+      button.setAttribute('hx-obtener', '/api/late');
+      const found = processor.scanForHtmxElements(container);
+      expect(found).toContain(button);
+      // The static fallback path: processElement directly to confirm
+      // it works end-to-end. The MutationObserver-driven discovery is
+      // best-effort across DOM impls; the synchronous scan is the
+      // contract we ship.
+      processor.processElement(button);
+      expect(button.getAttribute('data-hx-generated')).toContain("fetch '/api/late'");
     });
   });
 

@@ -67,6 +67,47 @@ const warnedMissingLang = new Set<string>();
 
 let hooksInstalled = false;
 
+/**
+ * Listeners notified after a vocab registration completes. The
+ * attribute processor subscribes so it can refresh its
+ * `MutationObserver.attributeFilter` (which is captured once at observer
+ * init and won't otherwise pick up newly-localized attribute names).
+ * Stored as a Set so duplicate subscriptions deduplicate.
+ */
+const vocabUpdateListeners = new Set<() => void>();
+
+/** Subscribe to vocab-registration notifications. Returns an unsubscribe fn. */
+export function onVocabUpdate(listener: () => void): () => void {
+  vocabUpdateListeners.add(listener);
+  return () => {
+    vocabUpdateListeners.delete(listener);
+  };
+}
+
+/** Return every localized attribute name registered across all languages. */
+export function getAllLocalizedAttrs(): string[] {
+  const names = new Set<string>();
+  for (const localized of localizedNameByKey.values()) {
+    for (const name of localized.values()) names.add(name);
+  }
+  return [...names];
+}
+
+/**
+ * Return every possible `<prefix>:` form for the colon-suffix `hx-on` family,
+ * across all registered languages. Always includes the canonical `hx-on:`.
+ * Used by the processor's hx-on discovery (which can't use CSS attribute-name
+ * prefix matching) and `collectAttributes`'s `hx-on:*` extraction.
+ */
+export function getAllHxOnPrefixes(): string[] {
+  const prefixes = new Set<string>(['hx-on:']);
+  for (const localized of localizedNameByKey.values()) {
+    const onForm = localized.get('hx-on');
+    if (onForm) prefixes.add(`${onForm}:`);
+  }
+  return [...prefixes];
+}
+
 function invertAttrs(attrs: Record<string, string> | undefined): Map<string, string> {
   const out = new Map<string, string>();
   if (!attrs) return out;
@@ -138,6 +179,10 @@ export function register(code: string, data: VocabPayload): void {
     installHooks(buildVocabAwareHooks());
     hooksInstalled = true;
   }
+  // Notify subscribers (htmx processor refreshes its MutationObserver
+  // attributeFilter so dynamic adds of localized-name attributes
+  // trigger reprocessing).
+  for (const listener of vocabUpdateListeners) listener();
 }
 
 /** Inspect whether any vocab is registered for a language. Mainly for tests. */
@@ -153,6 +198,7 @@ export function resetOrchestrator(): void {
   REG.clear();
   localizedNameByKey.clear();
   warnedMissingLang.clear();
+  vocabUpdateListeners.clear();
   hooksInstalled = false;
   // Caller is responsible for resetHooks() if they want defaults restored.
 }
