@@ -1376,30 +1376,95 @@ const SEED_EXAMPLES: SeedExample[] = [
   },
 
   // ==========================================================================
-  // Reactivity — live, when X changes, bind, reactive arrays
-  // Runs in HyperFixi when @hyperfixi/reactivity plugin is installed
+  // Reactivity — live, when X changes, bind, ^name, reactive arrays
+  // Runs in HyperFixi when @hyperfixi/reactivity plugin is installed.
+  // Upstream _hyperscript 0.9.90 also supports these (engine: 'both').
   // ==========================================================================
   {
     id: 'live-derived-value',
     title: 'Live Derived Value',
-    raw_code: 'live put `Count: ${$count}` into me',
-    description: 'Reactively update content whenever the dependent variable changes',
+    raw_code: 'live put `Count: ${$count}` into me end',
+    description: 'Reactively update content whenever a tracked dependency changes',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'live-multiple-deps',
+    title: 'Live Block With Multiple Dependencies',
+    raw_code: 'live put `${$price * $quantity}` into #total end',
+    description: 'Body re-runs only when one of its tracked reads ($price or $quantity) changes',
     feature: 'reactivity',
     engine: 'both',
   },
   {
     id: 'when-value-changes',
     title: 'When Computed Value Changes',
-    raw_code: 'when (#price\'s value * #qty\'s value) changes put \'$\' + it into me',
-    description: 'React to changes in computed values; `it` holds the new value',
+    raw_code: 'when (#price\'s value * #qty\'s value) changes put `$${it}` into me end',
+    description: 'React to changes in a computed expression; `it` is the new value',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'when-multiple-changes',
+    title: 'When Any Of Several Values Change',
+    raw_code: 'when $firstName or $lastName changes put `${$firstName} ${$lastName}` into #full-name end',
+    description: 'Watch multiple expressions; body fires when any one of them changes',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'bind-auto-detect',
+    title: 'Bind Variable To Form Element',
+    raw_code: 'bind $greeting to #name-input',
+    description: 'Two-way bind a global variable to an input; property auto-detected (value/checked/etc.)',
     feature: 'reactivity',
     engine: 'both',
   },
   {
     id: 'bind-two-way',
-    title: 'Two-Way Bind',
-    raw_code: 'bind my value to #other-input\'s value',
-    description: 'Two-way bind two values so changes in either propagate to the other',
+    title: 'Two-Way Bind Two Inputs',
+    raw_code: 'bind $name to #input-a then bind $name to #input-b',
+    description: 'Share a global between two inputs by binding both to it; edits in either propagate to the other',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'bind-explicit-property',
+    title: 'Bind To Explicit Property',
+    raw_code: 'bind $color to #picker\'s value',
+    description: 'Use possessive syntax to bind to a named property explicitly (preferred — reads in any language)',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'bind-non-form-display',
+    title: 'Bind Variable To Display-Only Element',
+    raw_code: 'bind $message to #status\'s textContent',
+    description: 'For non-form properties, only var→DOM fires; user mutations of the property are not observed',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'caret-var-write',
+    title: 'Set DOM-Scoped Variable On Parent',
+    raw_code: 'on load set ^count to 0',
+    description: 'Declare a ^name variable on this element; descendants can read and write it',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'caret-var-increment',
+    title: 'Increment Inherited DOM-Scoped Variable',
+    raw_code: 'on click increment ^count',
+    description: 'Walks up the parent chain to find ^count and writes the nearest defining ancestor',
+    feature: 'reactivity',
+    engine: 'both',
+  },
+  {
+    id: 'caret-var-on-target',
+    title: 'Read DOM-Scoped Variable From Another Element',
+    raw_code: 'on click put ^count on #host into me',
+    description: 'Read a ^name variable scoped to a specific element instead of walking up from `me`',
     feature: 'reactivity',
     engine: 'both',
   },
@@ -1407,9 +1472,54 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'reactive-array-push',
     title: 'Reactive Array Mutation',
     raw_code: 'on click call $items.push(`item ${$items.length + 1}`)',
-    description: 'Mutate a reactive array; live blocks observing it re-render automatically',
+    description: 'Mutate a reactive array; live blocks reading it re-render automatically',
     feature: 'reactivity',
     engine: 'both',
+  },
+
+  // ==========================================================================
+  // HyperFixi htmx v4 reactive + streaming attributes
+  // Require the hyperfixi-hx-v4.js bundle (full runtime + reactivity + SSE/WS).
+  // ==========================================================================
+  {
+    id: 'hx-live-attribute',
+    title: 'hx-live Reactive Attribute',
+    raw_code: '<div hx-live="put $count into me"></div>',
+    description: 'htmx v4 attribute that re-runs the hyperscript body whenever a tracked read changes',
+    feature: 'reactivity',
+    engine: 'lokascript',
+  },
+  {
+    id: 'hx-live-with-mutator',
+    title: 'hx-live Plus Hyperscript Mutator',
+    raw_code: '<button _="on click set $count to ($count or 0) + 1">+1</button>\n<div hx-live="put $count into me"></div>',
+    description: 'Pair a hyperscript handler that writes a global with an hx-live element that re-renders on writes',
+    feature: 'reactivity',
+    engine: 'lokascript',
+  },
+  {
+    id: 'sse-connect-swap',
+    title: 'Server-Sent Events Stream Into Target',
+    raw_code: '<div sse-connect="/events" sse-swap="tick" hx-target="#feed" hx-swap="afterbegin"></div>',
+    description: 'Open an EventSource and route named events through hx-target/hx-swap',
+    feature: 'realtime',
+    engine: 'lokascript',
+  },
+  {
+    id: 'sse-multi-event',
+    title: 'SSE With Multiple Event Names',
+    raw_code: '<div sse-connect="/feed" sse-swap="post, like, comment" hx-target="#timeline" hx-swap="afterbegin"></div>',
+    description: 'One SSE connection routing several named server events into the same target',
+    feature: 'realtime',
+    engine: 'lokascript',
+  },
+  {
+    id: 'ws-connect-send',
+    title: 'WebSocket With Form Send',
+    raw_code: '<div ws-connect="wss://example/api">\n  <form ws-send>\n    <input name="msg" />\n    <button type="submit">Send</button>\n  </form>\n</div>',
+    description: 'Open a WebSocket on an element; descendant forms serialize fields to JSON and ws-send on submit',
+    feature: 'realtime',
+    engine: 'lokascript',
   },
 
   // ==========================================================================
