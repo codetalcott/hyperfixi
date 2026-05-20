@@ -1,0 +1,173 @@
+/**
+ * Vocab-aware orchestrator for the htmx-compat attribute layer.
+ *
+ * Adapts the [loka-js orchestrator pattern](../../../../loka-js/orchestrator.js)
+ * for our three namespaces (`hx-*`, `sse-*`, `ws-*`). Vocab modules call
+ * `register(lang, vocab)` to add localized attribute names and event
+ * translations; the first registration installs vocab-aware hooks into
+ * the central registry from [i18n-hooks.ts](./i18n-hooks.ts).
+ *
+ * Public surface:
+ *
+ *   window.__hyperfixi_i18n.register('es', {
+ *     hyperfixi: {
+ *       attrs: { 'sse-conectar': 'sse-connect', 'hx-objetivo': 'hx-target' },
+ *       events: { clic: 'click', cambio: 'change' },
+ *     },
+ *   });
+ *
+ * Lookups resolve language per element via [langOf](./lang-resolver.ts) —
+ * an ancestor walk over `data-hyperfixi-lang` then `lang`, defaulting to
+ * `'en'`. Unknown languages or unknown keys silently fall back to English
+ * literals; a one-time console warning fires per missing language so
+ * authors notice when vocab modules aren't loaded.
+ *
+ * No runtime dependency on `@lokascript/semantic` — the orchestrator
+ * stores whatever vocab is passed and doesn't validate against the
+ * semantic registry. Regional variants (es-MX) collapse to base (es) via
+ * `normLang` rather than walking `LanguageProfile.extends`.
+ */
+
+import { installHooks, type AttrNamespace, type I18nHooks } from './i18n-hooks.js';
+import { langOf, normLang } from './lang-resolver.js';
+
+export interface HyperfixiVocab {
+  /**
+   * Map of localized attribute name → canonical English form.
+   * Both must be fully-qualified (e.g. `'sse-conectar': 'sse-connect'`),
+   * not just suffixes. Identity mappings are valid but redundant.
+   */
+  attrs?: Record<string, string>;
+  /**
+   * Map of localized event name → canonical English form
+   * (e.g. `'clic': 'click'`). Used by `eventNameOf` for translating
+   * `hx-trigger` values from the authoring language.
+   */
+  events?: Record<string, string>;
+}
+
+interface VocabPayload {
+  hyperfixi?: HyperfixiVocab;
+}
+
+/**
+ * Per-language vocab Map. Lookups walk this Map per element-attribute
+ * read, keyed by the normalized language code.
+ */
+const REG = new Map<string, HyperfixiVocab>();
+
+/**
+ * Inverted index keyed by `${ns}-${key}` (canonical) → localized name,
+ * per language. Built once on register() so the hot path is a Map lookup.
+ */
+const localizedNameByKey = new Map<string, Map<string, string>>();
+
+/** Languages we've already warned about being missing. */
+const warnedMissingLang = new Set<string>();
+
+let hooksInstalled = false;
+
+function invertAttrs(attrs: Record<string, string> | undefined): Map<string, string> {
+  const out = new Map<string, string>();
+  if (!attrs) return out;
+  for (const [localized, canonical] of Object.entries(attrs)) {
+    // Key by canonical so the hook can do `nameByKey.get('hx-get')`.
+    out.set(canonical, localized);
+  }
+  return out;
+}
+
+function buildVocabAwareHooks(): I18nHooks {
+  return {
+    nameOf: (elt: Element, ns: AttrNamespace, key: string): string => {
+      const canonical = `${ns}-${key}`;
+      const lang = langOf(elt);
+      if (lang === 'en') return canonical;
+      const localized = localizedNameByKey.get(lang)?.get(canonical);
+      if (localized) return localized;
+      // Lang scope exists but no entry for this key — fall back to canonical.
+      // Warn once per missing-language so authors notice unregistered vocab.
+      if (!REG.has(lang) && !warnedMissingLang.has(lang)) {
+        warnedMissingLang.add(lang);
+        if (typeof console !== 'undefined') {
+          console.warn(
+            `[hyperfixi-i18n] No vocab registered for lang="${lang}". ` +
+              `Elements in this language scope fall back to English attribute names. ` +
+              `Load packages/core/dist/i18n/htmx/${lang}.js to opt in.`
+          );
+        }
+      }
+      return canonical;
+    },
+    selectorFor: (ns: AttrNamespace, key: string): string => {
+      // Union over canonical + every registered language's localized form.
+      // Stays a single CSS selector so callers (scan, detach) need no
+      // changes; cost is proportional to number of registered languages.
+      const canonical = `${ns}-${key}`;
+      const names = new Set<string>([canonical]);
+      for (const localized of localizedNameByKey.values()) {
+        const v = localized.get(canonical);
+        if (v) names.add(v);
+      }
+      return [...names].map(n => `[${n}]`).join(', ');
+    },
+    eventNameOf: (elt: Element, value: string): string => {
+      const lang = langOf(elt);
+      if (lang === 'en') return value;
+      return REG.get(lang)?.events?.[value] ?? value;
+    },
+  };
+}
+
+/**
+ * Register a vocab module for a language. Idempotent — re-registering
+ * a language replaces its vocab entirely. The first call swaps the
+ * default hooks for the vocab-aware impls; subsequent calls just
+ * update the registry.
+ *
+ * The expected shape comes from the vocab modules generated by
+ * `packages/core/scripts/gen-htmx-vocab.mjs` (Phase 8c).
+ */
+export function register(code: string, data: VocabPayload): void {
+  const lang = normLang(code);
+  const vocab = data?.hyperfixi ?? {};
+  REG.set(lang, vocab);
+  localizedNameByKey.set(lang, invertAttrs(vocab.attrs));
+  warnedMissingLang.delete(lang); // we know about it now
+  if (!hooksInstalled) {
+    installHooks(buildVocabAwareHooks());
+    hooksInstalled = true;
+  }
+}
+
+/** Inspect whether any vocab is registered for a language. Mainly for tests. */
+export function isLangRegistered(code: string): boolean {
+  return REG.has(normLang(code));
+}
+
+/**
+ * Reset orchestrator state — drop all registrations and uninstall hooks.
+ * Mainly for tests; production code should leave registrations in place.
+ */
+export function resetOrchestrator(): void {
+  REG.clear();
+  localizedNameByKey.clear();
+  warnedMissingLang.clear();
+  hooksInstalled = false;
+  // Caller is responsible for resetHooks() if they want defaults restored.
+}
+
+/**
+ * Install the public `window.__hyperfixi_i18n` API. Called automatically
+ * on module import in browser environments; idempotent.
+ */
+function installPublicAPI(): void {
+  if (typeof window === 'undefined') return;
+  const w = window as unknown as {
+    __hyperfixi_i18n?: { register: typeof register };
+  };
+  if (w.__hyperfixi_i18n) return;
+  w.__hyperfixi_i18n = { register };
+}
+
+installPublicAPI();
