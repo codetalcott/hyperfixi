@@ -265,6 +265,31 @@ const BOUNDARY_MODIFIERS = new Set([
   'over',
 ]);
 
+/**
+ * Block-introducing keywords whose body should not be split at command
+ * boundaries. Currently only `live` because it's the case where the
+ * old splitter caused visible breakage:
+ *
+ *   en: `live put $count into me end`
+ *   de (broken): `live dann setzen $count zu ich ende`  ← spurious `dann`
+ *   de (fixed):  `live setzen $count zu ich ende`
+ *
+ * Other block heads (`when`, `unless`, `if`, `for`, `while`, `repeat`,
+ * `fetch`, `async`) are *not* added here because they either:
+ *   (a) split cleanly via the `then`/`do` keyword paths
+ *       (`if X then Y end` works), or
+ *   (b) have an intermediate connector (`when <expr> changes <body>`,
+ *       `unless <cond> <body>`) and merging the whole block into one
+ *       statement causes `parseStatement` to fail and produce a
+ *       severely-truncated output (worse than the spurious-`then`
+ *       result it had before).
+ *
+ * If future work wants to handle (b), it needs to either teach
+ * `parseStatement` about the connectors or special-case the joiner to
+ * not insert `then` inside reactive blocks.
+ */
+const BLOCK_HEAD_KEYWORDS = new Set(['live']);
+
 function splitOnCommandBoundaries(input: string, sourceLocale: string): string[] {
   const commandKeywords = getCommandKeywordsForLocale(sourceLocale);
   const tokens = input.split(/\s+/);
@@ -282,9 +307,22 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
   // So we need to track whether we've seen the first command yet
   let seenFirstCommand = !isEventHandler; // If not event handler, we're already past the "first command" phase
 
+  // Track block-scope depth (live/when/bind/if/unless/for/while/...). While
+  // inside a block, do not split on command boundaries — the body belongs
+  // to the block head and must transform as one unit. See comments on
+  // BLOCK_HEAD_KEYWORDS for the failure mode this prevents.
+  let blockDepth = 0;
+
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     const lowerToken = token.toLowerCase();
+
+    // Update block-scope depth before any split decision.
+    if (BLOCK_HEAD_KEYWORDS.has(lowerToken)) {
+      blockDepth++;
+    } else if (lowerToken === 'end' && blockDepth > 0) {
+      blockDepth--;
+    }
 
     // If this is a command keyword and we already have tokens in current part
     if (commandKeywords.has(lowerToken) && currentPart.length > 0) {
@@ -297,6 +335,13 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
       if (!seenFirstCommand) {
         // Mark that we've now seen the first command
         seenFirstCommand = true;
+        currentPart.push(token);
+        continue;
+      }
+
+      // Don't split inside a block (live/when/bind/unless body, etc.).
+      // The block head and its body must transform as one statement.
+      if (blockDepth > 0) {
         currentPart.push(token);
         continue;
       }

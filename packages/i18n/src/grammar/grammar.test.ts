@@ -1156,4 +1156,50 @@ describe('Possessive Dot Notation Translation', () => {
       expect(result).not.toMatch(/\bmy\b/);
     });
   });
+
+  // ──── Reactive `live` block scope ────
+  // Before this fix, the splitter cut between `live` and the body's
+  // first command keyword, then the join logic re-inserted the target
+  // language's `then` keyword between them. E.g.
+  //   `live put X into me end` (en→de) became
+  //   `live dann setzen X zu ich ende` (spurious `dann`).
+  // The fix tracks block depth from `live` to its matching `end` and
+  // suppresses splits inside that scope.
+  describe('live block does not spuriously inject "then"', () => {
+    const cases: Array<[string, string, RegExp]> = [
+      // [target lang, input, banned pattern]
+      ['de', 'live put $count into me end', /\bdann\b/i],
+      ['es', 'live put $count into me end', /\bentonces\b/i],
+      ['ja', 'live put $count into me end', /それから/],
+      ['tr', 'live put $count into me end', /\bsonra\b/i],
+      ['it', 'live put $count into me end', /\ballora\b/i],
+      ['ru', 'live put $count into me end', /\bзатем\b/i],
+      ['vi', 'live put $count into me end', /\brồi\b/i],
+    ];
+
+    for (const [target, input, banned] of cases) {
+      it(`(${target}) does not inject "then" inside the body`, () => {
+        const transformer = new GrammarTransformer('en', target);
+        const result = transformer.transform(input);
+        expect(result, `unexpected ${banned} in: ${result}`).not.toMatch(banned);
+      });
+    }
+
+    it('keeps live body as one unit — no `live then` artifact', () => {
+      const transformer = new GrammarTransformer('en', 'en');
+      const result = transformer.transform('live put $count into me end');
+      expect(result).not.toMatch(/live\s+then\b/i);
+      expect(result).toMatch(/^live\b/);
+      expect(result).toMatch(/\bend$/);
+    });
+
+    it('still splits on explicit "then" OUTSIDE the live block', () => {
+      // Legitimate `then`-based chains MUST still split.
+      const transformer = new GrammarTransformer('en', 'de');
+      const result = transformer.transform('live put $x into me end then toggle .active');
+      // German "then" = "dann" — appears exactly once (between block + toggle).
+      const occurrences = (result.match(/\bdann\b/gi) || []).length;
+      expect(occurrences).toBe(1);
+    });
+  });
 });
