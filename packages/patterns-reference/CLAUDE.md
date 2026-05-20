@@ -57,20 +57,34 @@ npm run build              # Build package
 
 After running `npm run populate`:
 
-| Table                | Rows | Description                                |
-| -------------------- | ---- | ------------------------------------------ |
-| code_examples        | 53   | Patterns covering all hyperscript commands |
-| pattern_translations | 689  | 53 patterns × 13 languages                 |
-| llm_examples         | 212  | Few-shot examples with quality scores      |
+| Table                | Rows  | Description                                    |
+| -------------------- | ----- | ---------------------------------------------- |
+| code_examples        | 164   | Patterns covering all hyperscript commands     |
+| pattern_translations | 3,936 | 164 patterns × 24 languages                    |
+| llm_examples         | ~600  | Few-shot examples with quality scores (varies) |
 
-### Supported Languages (13)
+### Supported Languages (24)
 
-| Word Order | Languages                  |
-| ---------- | -------------------------- |
-| SVO        | en, es, fr, pt, id, sw, zh |
-| SOV        | ja, ko, tr, qu             |
-| VSO        | ar                         |
-| V2         | de                         |
+| Word Order | Languages                                  |
+| ---------- | ------------------------------------------ |
+| SVO        | en, es, fr, pt, it, id, ms, sw, zh, vi, tl |
+| SOV        | ja, ko, tr, qu, hi, bn                     |
+| VSO        | ar                                         |
+| V2         | de                                         |
+| Other      | ru, uk, pl, th, he                         |
+
+Languages are derived dynamically from `KNOWN_PROFILES` in
+`@lokascript/semantic`; adding a profile there automatically picks up
+in the next `npm run sync:translations`.
+
+### Non-Translatable Patterns
+
+5 patterns (`hx-live-attribute`, `hx-live-with-mutator`,
+`sse-connect-swap`, `sse-multi-event`, `ws-connect-send`) are flagged
+`translatable=0` because their `raw_code` is HTML markup — the
+attribute names (`hx-live`, `sse-connect`, etc.) are language-agnostic
+and resolved at runtime by vocab modules. `sync-translations.ts` emits
+identity rows (raw English text) for these across all 24 languages.
 
 ## Integration Points
 
@@ -123,11 +137,15 @@ Pattern structure:
 
 ## Adding New Languages
 
-1. Edit `scripts/sync-translations.ts`:
-   - Add to `LANGUAGES` object with word order
-   - Add to `KEYWORD_TRANSLATIONS` with translations
-2. Run `npm run sync:translations` to generate translations
-3. Run `npm run validate:fix` to verify
+Languages are derived from `KNOWN_PROFILES` in `@lokascript/semantic`.
+To add support here:
+
+1. Add the language profile in `packages/semantic/src/generators/profiles/`
+   and register it (see `packages/semantic/CLAUDE.md`).
+2. Rebuild semantic: `npm run build --prefix packages/semantic`
+3. Re-sync translations: `npm run sync:translations` (orphan-language
+   rows from removed profiles are also deleted automatically).
+4. Validate: `npm run validate:fix`
 
 ## CI/CD
 

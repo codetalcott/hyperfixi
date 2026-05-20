@@ -46,6 +46,12 @@ CREATE TABLE IF NOT EXISTS code_examples (
   description TEXT,
   feature TEXT,
   engine TEXT DEFAULT NULL,
+  -- Set to 0 for HTML-embedded patterns whose body should not be translated
+  -- as natural-language prose. sync-translations.ts emits identity rows
+  -- (English text) for these across all languages instead of running the
+  -- grammar transformation pass.
+  translatable INTEGER NOT NULL DEFAULT 1,
+  non_translatable_reason TEXT,
   source_url TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -212,6 +218,14 @@ interface SeedExample {
   description: string;
   feature: string;
   engine?: string | null;
+  /**
+   * Set to `false` for HTML-embedded patterns whose body shouldn't be
+   * grammar-transformed (e.g. `<div hx-live="put $count into me">`).
+   * Default `true` runs the standard translation pipeline.
+   */
+  translatable?: boolean;
+  /** Human-readable reason — surfaces in DB for tooling/docs. */
+  non_translatable_reason?: string;
 }
 
 /**
@@ -1488,6 +1502,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'htmx v4 attribute that re-runs the hyperscript body whenever a tracked read changes',
     feature: 'reactivity',
     engine: 'lokascript',
+    translatable: false,
+    non_translatable_reason: 'HTML markup — hx-live attribute names are language-agnostic and resolved by vocab modules at runtime',
   },
   {
     id: 'hx-live-with-mutator',
@@ -1496,6 +1512,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Pair a hyperscript handler that writes a global with an hx-live element that re-renders on writes',
     feature: 'reactivity',
     engine: 'lokascript',
+    translatable: false,
+    non_translatable_reason: 'HTML markup with embedded hyperscript — vocab modules handle per-language attribute resolution',
   },
   {
     id: 'sse-connect-swap',
@@ -1504,6 +1522,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Open an EventSource and route named events through hx-target/hx-swap',
     feature: 'realtime',
     engine: 'lokascript',
+    translatable: false,
+    non_translatable_reason: 'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
   },
   {
     id: 'sse-multi-event',
@@ -1512,6 +1532,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'One SSE connection routing several named server events into the same target',
     feature: 'realtime',
     engine: 'lokascript',
+    translatable: false,
+    non_translatable_reason: 'HTML markup — sse-/hx- attribute names are language-agnostic and resolved by vocab modules',
   },
   {
     id: 'ws-connect-send',
@@ -1520,6 +1542,8 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Open a WebSocket on an element; descendant forms serialize fields to JSON and ws-send on submit',
     feature: 'realtime',
     engine: 'lokascript',
+    translatable: false,
+    non_translatable_reason: 'HTML markup — ws-/hx- attribute names are language-agnostic and resolved by vocab modules',
   },
 
   // ==========================================================================
@@ -1778,12 +1802,21 @@ function initDatabase() {
     // Insert code examples
     console.log(`Inserting ${SEED_EXAMPLES.length} code examples...`);
     const insertExample = db.prepare(`
-      INSERT INTO code_examples (id, title, raw_code, description, feature, engine)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO code_examples (id, title, raw_code, description, feature, engine, translatable, non_translatable_reason)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const ex of SEED_EXAMPLES) {
-      insertExample.run(ex.id, ex.title, ex.raw_code, ex.description, ex.feature, ex.engine ?? null);
+      insertExample.run(
+        ex.id,
+        ex.title,
+        ex.raw_code,
+        ex.description,
+        ex.feature,
+        ex.engine ?? null,
+        ex.translatable === false ? 0 : 1,
+        ex.non_translatable_reason ?? null
+      );
     }
 
     // Insert translations

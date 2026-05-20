@@ -112,6 +112,8 @@ interface CodeExample {
   raw_code: string;
   description: string;
   feature: string;
+  /** 1 = translate normally; 0 = emit identity rows (HTML markup etc.). */
+  translatable: number;
 }
 
 // =============================================================================
@@ -268,14 +270,24 @@ async function syncTranslations() {
         console.log(`  English: "${example.raw_code}"`);
       }
 
+      // Non-translatable patterns (HTML markup, etc.) emit identity rows
+      // across all languages — keeps the per-language presence so downstream
+      // queries don't have NULL holes, but skips the grammar transformation
+      // that would mangle the markup.
+      const isTranslatable = example.translatable !== 0;
+
       for (const [langCode, langInfo] of Object.entries(LANGUAGES)) {
-        const translated = translateHyperscript(example.raw_code, langCode);
-        const confidence = getConfidence(langCode, translated);
+        const translated = isTranslatable
+          ? translateHyperscript(example.raw_code, langCode)
+          : example.raw_code;
+        const confidence = isTranslatable
+          ? getConfidence(langCode, translated)
+          : (langCode === 'en' ? 1.0 : 0.5);
         const verifiedParses = langCode === 'en' ? 1 : 0;
 
         // Track which method was used
         const hasGrammarProfile = getGrammarProfile(langCode) !== undefined;
-        if (langCode !== 'en') {
+        if (langCode !== 'en' && isTranslatable) {
           if (hasGrammarProfile) {
             grammarUsed++;
           } else {
@@ -284,11 +296,13 @@ async function syncTranslations() {
         }
 
         // Determine translation method
-        const translationMethod = langCode === 'en'
-          ? 'original'
-          : hasGrammarProfile
-            ? 'grammar-transform'
-            : 'keyword-substitute';
+        const translationMethod = !isTranslatable
+          ? 'non-translatable-identity'
+          : langCode === 'en'
+            ? 'original'
+            : hasGrammarProfile
+              ? 'grammar-transform'
+              : 'keyword-substitute';
 
         // Check if translation exists
         const existing = checkExists.get(example.id, langCode) as { id: number } | undefined;
@@ -322,11 +336,25 @@ async function syncTranslations() {
       }
     }
 
+    // Delete orphan-language rows: anything not in KNOWN_PROFILES gets
+    // removed. Catches removed variants (es-MX), retired languages, or
+    // typos in past sync runs. Skipped during --dry-run.
+    let orphansDeleted = 0;
+    if (!dryRun) {
+      const knownLangs = Object.keys(LANGUAGES);
+      const placeholders = knownLangs.map(() => '?').join(',');
+      const orphanResult = db
+        .prepare(`DELETE FROM pattern_translations WHERE language NOT IN (${placeholders})`)
+        .run(...knownLangs);
+      orphansDeleted = orphanResult.changes;
+    }
+
     // Print summary
     console.log('\nSync complete!');
     console.log(`  - Inserted: ${inserted}`);
     console.log(`  - Updated: ${updated}`);
     console.log(`  - Skipped: ${skipped}`);
+    console.log(`  - Orphan language rows deleted: ${orphansDeleted}`);
     console.log(`  - Grammar transforms: ${grammarUsed}`);
     console.log(`  - Keyword substitutes: ${keywordUsed}`);
 
