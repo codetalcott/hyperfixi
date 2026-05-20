@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-config",
-  "version": "0.1.0",
+  "version": "2.4.0",
   "private": true,
   "description": "Shared domain-registry wiring + priority order for MCP servers and other consumers. Single source of truth for which LokaScript domains exist and how the dispatcher breaks ambiguity.",
   "type": "module",

@@ -18,6 +18,7 @@
     "src/context/**/*",
     "src/performance/benchmarks.ts",
     "src/test-helpers/**/*",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "src/compatibility/browser-bundle-hybrid-hx-v4.ts"
   ]
 }

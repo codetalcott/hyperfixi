@@ -481,6 +481,17 @@ export const commands: Record<string, CommandRef> = {
   },
 
   // Animation Commands
+  start: {
+    name: 'start',
+    description: 'Animate DOM mutations via document.startViewTransition (View Transitions API)',
+    syntax: 'start view transition [using type] <body> end',
+    category: 'animation',
+    availability: 'full',
+    examples: [
+      'start view transition put result into #out end',
+      'start view transition using slide remove .open from #panel end',
+    ],
+  },
   transition: {
     name: 'transition',
     description: 'Apply CSS transitions',

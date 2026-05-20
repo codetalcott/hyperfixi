@@ -75,38 +75,51 @@ jobs:
 
       - name: Build all packages
         run: |
-          # Build order: framework → semantic → core → i18n → core browser → rest
-          # (core browser bundle requires i18n/dist/browser.js)
+          # Build order mirrors .github/workflows/ci.yml (which is known-green).
+          # Private workspace deps (intent, domain-toolkit, domain-config,
+          # mcp-multilingual-intent, developer-tools) are still built — they're
+          # consumed via workspace symlinks by published packages, so their
+          # dist/ must exist for tsc to resolve cross-package imports.
+          npm run build --prefix packages/intent
           npm run build --prefix packages/framework
-          npm run build --prefix packages/semantic
-          npm run build --prefix packages/core
-          npm run build --prefix packages/i18n
-          npm run build:browser --prefix packages/core
-          npm run build --prefix packages/hyperscript-adapter
-          npm run build --prefix packages/patterns-reference
-          npm run build --prefix packages/aot-compiler
-          npm run build --prefix packages/server-bridge
-          npm run build --prefix packages/types-browser
-          npm run build --prefix packages/domain-sql
           npm run build --prefix packages/domain-bdd
-          npm run build --prefix packages/domain-llm
+          npm run build --prefix packages/domain-sql
+          npm run build --prefix packages/domain-jsx
           npm run build --prefix packages/domain-todo
           npm run build --prefix packages/domain-behaviorspec
-          npm run build --prefix packages/domain-jsx
+          npm run build --prefix packages/domain-llm
           npm run build --prefix packages/domain-flow
           npm run build --prefix packages/domain-voice
           npm run build --prefix packages/domain-learn
+          npm run build --prefix packages/semantic
+          npm run build --prefix packages/domain-toolkit
+          npm run build --prefix packages/domain-config
+          npm run build --prefix packages/behaviors
+          npm run build --prefix packages/core
+          npm run build --prefix packages/patterns-reference
+          npm run build --prefix packages/i18n
+          npm run build --prefix packages/hyperscript-adapter
+          npm run build --prefix packages/aot-compiler
           npm run build --prefix packages/compilation-service
           npm run build --prefix packages/planner
           npm run build --prefix packages/mcp-server
+          npm run build --prefix packages/mcp-multilingual-intent
+          npm run build --prefix packages/developer-tools
+          npm run build --prefix packages/server-bridge
           npm run build --prefix packages/vite-plugin
-          npm run build --prefix packages/behaviors
-          npm run build --prefix packages/testing-framework
           npm run build --prefix packages/language-server
+          # Plugin packages (HyperfixiPlugin) — reactivity before components (components depends on reactivity)
+          npm run build --prefix packages/reactivity
+          npm run build --prefix packages/components
+          npm run build --prefix packages/speech
+          npm run build --prefix packages/types-browser
+          npm run build --prefix packages/testing-framework
           npm run build --prefix packages/mcp-server-hyperscript
           npm run build --prefix packages/language-server-hyperscript
           npm run build --prefix packages/multilingual-hyperscript
           npm run build --prefix packages/hyperscript-tools-i18n
+          # Core browser bundles depend on i18n/dist/browser.js + reactivity/dist (for hybrid-hx-v4)
+          npm run build:browser --prefix packages/core
 
       - name: Run tests
         run: |
@@ -145,7 +158,7 @@ jobs:
           for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin \
                      framework server-bridge types-browser aot-compiler \
                      domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
-                     compilation-service behaviors testing-framework language-server \
+                     compilation-service behaviors reactivity components speech testing-framework language-server \
                      mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
                      hyperscript-tools-i18n; do
             if [ -f "packages/$pkg/package.json" ]; then
@@ -169,11 +182,14 @@ jobs:
           # All packages in dependency order
           # Packages that have version-lock with core use the same VERSION
           # New domain/framework packages start at 1.0.0 but will be bumped if VERSION_TYPE != current
+          # Plugin packages (reactivity, components, speech) listed after behaviors
+          # because components depends on reactivity; both depend on @hyperfixi/core
+          # (which is in position 2). speech depends on core only.
           ALL_PACKAGES="semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser aot-compiler \
                         domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                         compilation-service mcp-server vite-plugin \
-                        behaviors testing-framework language-server \
+                        behaviors reactivity components speech testing-framework language-server \
                         mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n"
 

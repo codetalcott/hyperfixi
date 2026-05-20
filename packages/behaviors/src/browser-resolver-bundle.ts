@@ -18,7 +18,7 @@ function init() {
 
   // Compile and register each behavior definition with the runtime.
   // This is equivalent to having them in a <script type="text/hyperscript"> block.
-  for (const [name, source] of Object.entries(BEHAVIOR_SOURCES)) {
+  for (const source of Object.values(BEHAVIOR_SOURCES)) {
     const result = hf.compileSync(source, { traditional: true });
     if (result?.ok && result.ast) {
       // execute() registers the behavior in the runtime's behaviorRegistry

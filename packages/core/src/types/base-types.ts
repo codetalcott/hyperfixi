@@ -194,8 +194,12 @@ export interface ExecutionContext extends CoreExecutionContext {
    * Optional during the consolidation arc (Phase 1); becomes required for
    * runtime evaluation paths in later phases. Construct via
    * `createExpressionRegistry()` from selected expression categories.
+   *
+   * Mutable so `RuntimeBase.execute()` can lazily inject the bundle's registry
+   * onto caller-supplied contexts that didn't construct one — see the comment
+   * at the top of `execute()` for the rationale.
    */
-  readonly registry?: ExpressionRegistry;
+  registry?: ExpressionRegistry;
 
   // Control flow flags
   readonly halted?: boolean;

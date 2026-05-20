@@ -482,8 +482,14 @@ export class RuntimeBase {
     // named-expression lookups via context.registry. Without this, parseInput()
     // calls that evaluate AST nodes (e.g. tell's target, send's target) fail
     // with "Expression X not in ExecutionContext.registry".
+    //
+    // Mutate in place rather than spread into a new object — `locals`/`globals`
+    // are already populated via the caller's reference (see the `.set()` calls
+    // below), so command writes to `context.result` / `context.it` need to
+    // propagate to the caller too. Cloning here would silently swallow those
+    // writes at the outer boundary while letting them flow within the runtime.
     if (!context.registry) {
-      context = { ...context, registry: this.expressionRegistry };
+      context.registry = this.expressionRegistry;
     }
 
     // Inject behavior API

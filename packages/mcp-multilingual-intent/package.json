@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/mcp-multilingual-intent",
-  "version": "0.1.0",
+  "version": "2.4.0",
   "private": true,
   "description": "Multilingual-intent MCP server — parses natural language in 24 languages, emits LSE protocol JSON. Wraps @lokascript/framework + @hyperfixi/patterns-reference behind a Siren HTTP API that siren-mcp bridges to MCP.",
   "type": "module",

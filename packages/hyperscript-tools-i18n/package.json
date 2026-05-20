@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/i18n",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Build-time translation for hyperscript code samples — generate per-language HTML from a canonical English source",
   "type": "module",
   "main": "dist/index.js",
