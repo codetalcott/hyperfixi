@@ -109,6 +109,20 @@ test.describe('hx-v4 reactive/streaming features @comprehensive', () => {
     expect(text.length).toBeGreaterThan(20);
   });
 
+  test('hx-on:click fires on the no-reactivity demo (Phase 8-pre regression)', async ({ page }) => {
+    // Confirms hx-on:* now registers real DOM listeners even without
+    // reactivity installed and without any paired request attribute.
+    // Pre-8-pre: translator wrapped the body as `on click body` text and
+    // shipped it through executeCallback, which silently no-op'd.
+    await loadDemo(page, 'hx-live-no-reactivity.html');
+
+    const button = page.getByRole('button', { name: /I am wired via hx-on:click/ });
+    await expect(button).toHaveText(/wired via hx-on:click/);
+    await button.click();
+    // After click, the button's text should be replaced with "clicked at ..."
+    await expect(button).toHaveText(/clicked at \d/);
+  });
+
   test('ws-chat: ws-send submits to the mocked socket and echoes back', async ({ page }) => {
     await loadDemo(page, 'ws-chat.html');
 

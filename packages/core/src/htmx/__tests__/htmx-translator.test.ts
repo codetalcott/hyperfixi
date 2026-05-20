@@ -434,28 +434,39 @@ describe('htmx-translator', () => {
     });
 
     describe('hx-on:* handlers', () => {
-      it('wraps hx-on handlers in event syntax', () => {
+      // The translator deliberately ignores onHandlers — the processor
+      // installs real addEventListener calls for those (see hx-on.test.ts).
+      // Wrapping them as `on EVENT body` in the translated snippet parsed
+      // fine but never reached the runtime path that registers listeners,
+      // so handlers silently no-op'd. See htmx-v4-reactive-streaming.md
+      // Phase 8-pre.
+      it('does not emit translated hyperscript for onHandlers', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
-          onHandlers: {
-            click: 'toggle .active on me',
-          },
+          onHandlers: { click: 'toggle .active on me' },
         };
-        const result = translateToHyperscript(config, button);
-        expect(result).toContain('on click toggle .active on me');
+        expect(translateToHyperscript(config, button)).toBe('');
       });
 
-      it('handles multiple hx-on handlers', () => {
+      it('does not emit anything for multiple onHandlers either', () => {
         const button = document.createElement('button');
         const config: HtmxConfig = {
-          onHandlers: {
-            mouseenter: 'add .hover',
-            mouseleave: 'remove .hover',
-          },
+          onHandlers: { mouseenter: 'add .hover', mouseleave: 'remove .hover' },
+        };
+        expect(translateToHyperscript(config, button)).toBe('');
+      });
+
+      it('still emits a request handler when onHandlers are present', () => {
+        const button = document.createElement('button');
+        const config: HtmxConfig = {
+          method: 'GET',
+          url: '/api',
+          onHandlers: { mouseenter: 'add .hover' },
         };
         const result = translateToHyperscript(config, button);
-        expect(result).toContain('on mouseenter add .hover');
-        expect(result).toContain('on mouseleave remove .hover');
+        expect(result).toContain("fetch '/api'");
+        // But the hx-on body is NOT in the translated output.
+        expect(result).not.toContain('add .hover');
       });
     });
 
@@ -522,16 +533,16 @@ describe('htmx-translator', () => {
         expect(result).toBe('live\n  put $count into me\nend');
       });
 
-      it('emits live block alongside event handlers when both are present', () => {
+      it('emits live block alone when onHandlers are also present', () => {
         const div = document.createElement('div');
         const config: HtmxConfig = {
           hxLive: 'put $count into me',
           onHandlers: { click: 'toggle .active on me' },
         };
         const result = translateToHyperscript(config, div);
-        // Live block first, then hx-on handlers
-        expect(result).toContain('live\n  put $count into me\nend');
-        expect(result).toContain('on click toggle .active on me');
+        // Live block is the only translated output — onHandlers are
+        // installed directly by the processor (see hx-on.test.ts).
+        expect(result).toBe('live\n  put $count into me\nend');
       });
 
       it('emits live block alongside a request handler', () => {

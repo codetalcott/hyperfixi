@@ -290,6 +290,19 @@ export class HtmxAttributeProcessor {
   private wsSendListeners = new WeakMap<Element, () => void>();
 
   /**
+   * Per-element hx-on:* listener tracking. The processor owns these
+   * registrations end-to-end (not the runtime) because translating
+   * `on EVENT body` through executeCallback parses as a sequence node
+   * whose event children never reach the runtime's addEventListener path.
+   * Map<element, Map<eventName, removeFn>> for idempotent re-install on
+   * attribute changes and deterministic cleanup on element removal.
+   * The parallel Set is needed because WeakMap can't be iterated during
+   * `destroy()`.
+   */
+  private onHandlerListeners = new WeakMap<Element, Map<string, () => void>>();
+  private onHandlerElements = new Set<Element>();
+
+  /**
    * Per-element swap template cache. Each SSE/WS event re-reads
    * `hx-target` / `hx-swap` so dynamic attribute changes are honored; the
    * template (closure over the resolved target + swap strategy) is then
@@ -396,6 +409,10 @@ export class HtmxAttributeProcessor {
       conn.detach();
     }
     this.wsConnectionsSet.clear();
+    // Snapshot before iteration — detachOnHandlers mutates the Set.
+    for (const el of [...this.onHandlerElements]) {
+      this.detachOnHandlers(el);
+    }
     this.executeCallback = null;
   }
 
@@ -621,6 +638,48 @@ export class HtmxAttributeProcessor {
   }
 
   /**
+   * Install real DOM listeners for `hx-on:*` handlers. Idempotent — re-calling
+   * with the same element first removes any previously-installed listeners.
+   * Each listener executes the captured hyperscript body via
+   * `executeCallback`, the same path used by the request-cycle translation.
+   * Bodies that error are logged via console.error rather than thrown so a
+   * single broken handler doesn't take down the page.
+   */
+  private installOnHandlers(element: Element, onHandlers: Record<string, string>): void {
+    this.detachOnHandlers(element);
+    if (!this.executeCallback) return;
+    const exec = this.executeCallback;
+    const map = new Map<string, () => void>();
+    for (const [eventName, body] of Object.entries(onHandlers)) {
+      const listener = (_evt: Event): void => {
+        void exec(body, element).catch(err => {
+          if (typeof console !== 'undefined') {
+            console.error(`[htmx-compat] hx-on:${eventName} execution failed:`, err);
+          }
+        });
+      };
+      element.addEventListener(eventName, listener);
+      map.set(eventName, () => element.removeEventListener(eventName, listener));
+    }
+    this.onHandlerListeners.set(element, map);
+    this.onHandlerElements.add(element);
+  }
+
+  /** Remove all `hx-on:*` listeners installed on this element. Idempotent. */
+  private detachOnHandlers(element: Element): void {
+    const map = this.onHandlerListeners.get(element);
+    if (!map) return;
+    for (const removeFn of map.values()) removeFn();
+    this.onHandlerListeners.delete(element);
+    this.onHandlerElements.delete(element);
+  }
+
+  /** Walk a removed subtree and detach any hx-on listeners found. */
+  private detachOnHandlersSubtree(root: Element): void {
+    for (const el of this.findHxOnElements(root)) this.detachOnHandlers(el);
+  }
+
+  /**
    * Scan for elements with hx-* or fx-* attributes
    * Excludes elements with fx-ignore or inside fx-ignore containers
    */
@@ -633,15 +692,42 @@ export class HtmxAttributeProcessor {
       return [];
     }
 
-    const elements = Array.from(searchRoot.querySelectorAll(COMBINED_SELECTOR));
+    const found = new Set<Element>(searchRoot.querySelectorAll(COMBINED_SELECTOR));
 
     // Also check the root element itself
     if (searchRoot.matches?.(COMBINED_SELECTOR)) {
-      elements.unshift(searchRoot);
+      found.add(searchRoot);
     }
 
+    // Discover elements bearing only `hx-on:*` (e.g., `hx-on:click`). CSS
+    // can't match an attribute by name-prefix, so we walk the subtree once
+    // and check attribute names. Elements without attributes short-circuit.
+    for (const el of this.findHxOnElements(searchRoot)) found.add(el);
+
     // Filter out elements inside fx-ignore containers
-    return elements.filter(el => !el.closest('[fx-ignore]'));
+    return Array.from(found).filter(el => !el.closest('[fx-ignore]'));
+  }
+
+  /**
+   * Walk a subtree and yield elements with any `hx-on:*` attribute. Pulled
+   * out so scan and detach paths share one O(N) walk implementation.
+   */
+  private findHxOnElements(root: Element): Element[] {
+    const out: Element[] = [];
+    const visit = (el: Element): void => {
+      const attrs = el.attributes;
+      for (let i = 0; i < attrs.length; i++) {
+        if (attrs[i].name.startsWith('hx-on:')) {
+          out.push(el);
+          return;
+        }
+      }
+    };
+    visit(root);
+    if (typeof root.querySelectorAll === 'function') {
+      for (const el of root.querySelectorAll('*')) visit(el);
+    }
+    return out;
   }
 
   /**
@@ -806,9 +892,16 @@ export class HtmxAttributeProcessor {
     const config = isFx ? this.collectFxAttributes(element) : this.collectAttributes(element);
     const prefix = isFx ? 'fx' : 'htmx';
 
-    // Skip if no meaningful config
-    if (!config.url && !config.onHandlers && !config.boost && !config.hxLive) {
-      // sse-connect already handled above; no-op fall-through is correct.
+    // hx-on:* listeners are installed directly via addEventListener — they
+    // do not go through the translation path. Install before the early-skip
+    // checks so handler-only elements get wired even when there's no URL.
+    if (config.onHandlers) {
+      this.installOnHandlers(element, config.onHandlers);
+    }
+
+    // Skip if no meaningful config beyond hx-on (which is already wired).
+    if (!config.url && !config.boost && !config.hxLive) {
+      // sse-connect / hx-on already handled above; no-op fall-through is correct.
       return;
     }
 
@@ -829,8 +922,9 @@ export class HtmxAttributeProcessor {
         }
         delete config.hxLive;
         // If hxLive was the only reason this element was processed, skip now
-        // to avoid running the empty-translate code path below.
-        if (!config.url && !config.onHandlers && !config.boost) {
+        // to avoid running the empty-translate code path below. hx-on
+        // handlers were already installed above and don't need translation.
+        if (!config.url && !config.boost) {
           return;
         }
       }
@@ -1077,11 +1171,13 @@ export class HtmxAttributeProcessor {
         // Handle removed nodes — close any SSE/WS connections that were
         // open on the removed subtree so EventSource/WebSocket don't leak
         // after the element is gone. We walk descendants too because a
-        // single removed parent may carry many connections.
+        // single removed parent may carry many connections. Same goes for
+        // any hx-on:* listeners we installed directly.
         for (const node of mutation.removedNodes) {
           if (node instanceof Element) {
             this.detachSSESubtree(node);
             this.detachWSSubtree(node);
+            this.detachOnHandlersSubtree(node);
           }
         }
 

@@ -257,13 +257,11 @@ export function translateToHyperscript(config: HtmxConfig, element: Element): st
     parts.push(`live\n  ${config.hxLive}\nend`);
   }
 
-  // Handle hx-on:* inline handlers
-  if (config.onHandlers) {
-    for (const [event, code] of Object.entries(config.onHandlers)) {
-      // hx-on:* handlers contain raw hyperscript, just wrap in event
-      parts.push(`on ${event} ${code}`);
-    }
-  }
+  // hx-on:* handlers are NOT translated to hyperscript source here. Wrapping
+  // them as `on EVENT body` and running through executeCallback parses fine
+  // but never reaches the runtime path that calls `addEventListener` —
+  // executeAST treats top-level event nodes inside a sequence as one-shot.
+  // The processor installs real DOM listeners for them via installOnHandlers.
 
   // If no request URL, just return the event handlers (and any live block)
   if (!config.url) {
