@@ -160,6 +160,7 @@
     "dist/**/*.d.ts",
     "dist/**/*.d.cts",
     "dist/**/*.d.mts",
+    "vocab/**/*.js",
     "README.md",
     "LICENSE"
   ],
@@ -190,6 +191,7 @@
     "snapshot:bundle-size:update": "node scripts/bundle-size-snapshot.mjs --update",
     "generate:bundle": "tsx scripts/generate-inline-bundle.ts",
     "generate:bundle:textshelf": "tsx scripts/generate-inline-bundle.ts --config bundle-configs/textshelf.config.json",
+    "generate:htmx-vocab": "node scripts/gen-htmx-vocab.mjs",
     "dev": "rollup -c -w",
     "test": "timeout 120 vitest run || [ $? -eq 124 ]",
     "test:watch": "vitest",
