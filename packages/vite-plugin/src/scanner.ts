@@ -28,6 +28,23 @@ const WS_CONNECT_PATTERN = /\bws-connect\s*=\s*["']/i;
 const WS_SEND_PATTERN = /\bws-send(\s*=\s*["']|\b)/i;
 
 /**
+ * Phase 8: localized htmx-compat attribute names. Vocab modules under
+ * `packages/core/vocab/htmx/` emit per-language maps like
+ *   `hx-obtener` (es) → `hx-get`
+ *   `hx-取得`     (ja) → `hx-get`
+ *   `sse-conectar`(es) → `sse-connect`
+ *
+ * The scanner needs to recognize these so projects authoring in
+ * Spanish/Japanese/etc. still get the htmx-compat bundle. The pattern
+ * matches `hx-`/`sse-`/`ws-` followed by any identifier characters
+ * (including Unicode), which covers both English and localized forms.
+ * Bare `hx-` / `sse-` / `ws-` (with no suffix) and English forms
+ * already matched by the named patterns above contribute too — the
+ * generic match is a superset.
+ */
+const LOCALIZED_HX_PATTERN = /\b(hx|sse|ws)-[\w\-\p{L}]+\s*=\s*["']/u;
+
+/**
  * `bind <var> to <expr>.<property>` inside `_=` bodies. Matches both the
  * default `$var` form and possessive (`me's value`) syntax. The trailing
  * `.<ident>` is what makes this "explicit property" bind — it's also
@@ -307,6 +324,19 @@ export class Scanner {
     if (WS_CONNECT_PATTERN.test(code) || WS_SEND_PATTERN.test(code)) {
       usage.hasHtmxAttributes = true;
       usage.needsWS = true;
+    }
+
+    // Phase 8: pages authored with localized htmx attribute names
+    // (`hx-obtener`, `hx-取得`, `sse-conectar`, etc.) need the
+    // htmx-compat bundle even if no English-form attribute appears.
+    // The generic LOCALIZED_HX_PATTERN matches any hx-/sse-/ws-
+    // attribute name including Unicode suffixes. We don't try to
+    // infer which specific feature is needed from a localized form —
+    // detecting any localized name flips `hasHtmxAttributes` so the
+    // generator routes to hyperfixi-hx-v4 (the only bundle that ships
+    // the orchestrator + vocab discovery path).
+    if (!usage.hasHtmxAttributes && LOCALIZED_HX_PATTERN.test(code)) {
+      usage.hasHtmxAttributes = true;
     }
 
     return usage;

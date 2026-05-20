@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Localized htmx attributes — HyperFixi</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 800px;
+        margin: 2em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      section {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1em 1.25em;
+        margin: 1.25em 0;
+      }
+      section[lang='es'] {
+        background: #fef3c7;
+      }
+      section[lang='ja'] {
+        background: #dbeafe;
+      }
+      section[lang='ar'] {
+        background: #fce7f3;
+      }
+      section[lang='en'] {
+        background: #d1fae5;
+      }
+      h2 {
+        margin-top: 0;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5em;
+      }
+      h2 .tag {
+        font-size: 0.6em;
+        font-weight: normal;
+        background: rgba(0, 0, 0, 0.1);
+        padding: 0.2em 0.5em;
+        border-radius: 4px;
+      }
+      button {
+        font-size: 1em;
+        padding: 0.5em 1em;
+      }
+      .out {
+        margin-top: 0.75em;
+        padding: 0.5em;
+        background: white;
+        border-radius: 4px;
+        min-height: 1.5em;
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+      kbd {
+        background: #e5e7eb;
+        padding: 0.1em 0.4em;
+        border-radius: 3px;
+        font-family:
+          ui-monospace,
+          SF Mono,
+          Menlo,
+          monospace;
+        font-size: 0.85em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Localized htmx-compat attributes</h1>
+    <p class="note">
+      Three sections on one page, each in a different language. Each button uses the localized
+      htmx attribute names from its <code>lang=</code> scope's vocab module. Devtools shows the
+      author-time attribute names — the orchestrator translates them to canonical English under
+      the hood. The mocked fetch returns the URL it was called with so you can confirm each
+      lang scope wired its own attribute correctly.
+    </p>
+
+    <section lang="es">
+      <h2>Español <span class="tag">hx-obtener / hx-objetivo</span></h2>
+      <p>El botón usa <code>hx-obtener</code> (la forma en español de <code>hx-get</code>).</p>
+      <button hx-obtener="/api/usuarios" hx-objetivo="#out-es">Cargar usuarios</button>
+      <div class="out" id="out-es">(pulsa el botón)</div>
+    </section>
+
+    <section lang="ja">
+      <h2>日本語 <span class="tag">hx-取得 / hx-ターゲット</span></h2>
+      <p>ボタンは <code>hx-取得</code>（<code>hx-get</code> の日本語形）を使用します。</p>
+      <button hx-取得="/api/ユーザー" hx-ターゲット="#out-ja">ユーザーを読み込む</button>
+      <div class="out" id="out-ja">(ボタンをクリックしてください)</div>
+    </section>
+
+    <section lang="ar" dir="rtl">
+      <h2>العربية <span class="tag">hx-احصل / hx-هدف</span></h2>
+      <p>الزر يستخدم <code>hx-احصل</code> (الشكل العربي لـ <code>hx-get</code>).</p>
+      <button hx-احصل="/api/مستخدمين" hx-هدف="#out-ar">تحميل المستخدمين</button>
+      <div class="out" id="out-ar">(انقر الزر)</div>
+    </section>
+
+    <section lang="en">
+      <h2>English <span class="tag">hx-get / hx-target</span></h2>
+      <p>The button uses the canonical English form — no vocab module needed.</p>
+      <button hx-get="/api/users" hx-target="#out-en">Load users</button>
+      <div class="out" id="out-en">(click the button)</div>
+    </section>
+
+    <h2>What you should see in the console</h2>
+    <p class="note">
+      Open devtools (<kbd>F12</kbd>) → Network tab. Each button click issues a GET to its
+      authored URL (<code>/api/usuarios</code>, <code>/api/ユーザー</code>, etc.). The mocked
+      <code>fetch</code> returns plain text so the output div fills with the response.
+    </p>
+
+    <!-- Mock fetch so we don't need a backend. -->
+    <script>
+      (function () {
+        const originalFetch = window.fetch;
+        window.fetch = function (url, opts) {
+          // Echo the requested URL back as plain text.
+          return Promise.resolve(
+            new Response('Fetched: ' + url, {
+              status: 200,
+              headers: { 'Content-Type': 'text/html' },
+            })
+          );
+        };
+      })();
+    </script>
+
+    <!-- 1. Full hx-v4 bundle: runtime + reactivity + htmx-compat orchestrator. -->
+    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+
+    <!-- 2. Vocab modules for the languages used on this page. Order matters:
+         these must load AFTER hx-v4 (which installs the orchestrator) but
+         BEFORE any DOMContentLoaded-driven scan starts. -->
+    <script src="../../packages/core/vocab/htmx/es.js"></script>
+    <script src="../../packages/core/vocab/htmx/ja.js"></script>
+    <script src="../../packages/core/vocab/htmx/ar.js"></script>
+  </body>
+</html>

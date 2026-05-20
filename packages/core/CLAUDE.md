@@ -150,3 +150,35 @@ npx rollup -c rollup.browser-custom.config.mjs
 ```
 
 See [bundle-configs/README.md](bundle-configs/README.md) for full options.
+
+## htmx-compat layer
+
+The `htmx/` subdirectory implements the htmx + fixi attribute layer used by the `hyperfixi-hx.js` (v1/v2) and `hyperfixi-hx-v4.js` (v4 reactive + streaming) bundles. Key files:
+
+| File                                   | Purpose                                                                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `src/htmx/htmx-attribute-processor.ts` | Main scan + dispatch. Iterates `KEYS` from i18n-hooks for attribute reads, owns hx-on/SSE/WS lifecycle.                    |
+| `src/htmx/htmx-translator.ts`          | Translates collected config → hyperscript snippet. Does NOT handle `hx-on:*` (processor installs real listeners directly). |
+| `src/htmx/sse.ts` / `src/htmx/ws.ts`   | `SSEConnection` / `WSConnection` classes — open/close, backoff reconnect, JSON-envelope swap routing.                      |
+| `src/htmx/i18n-hooks.ts`               | `I18nHooks` contract (nameOf/selectorFor/eventNameOf) + `KEYS` registry (namespaced: `hx`, `sse`, `ws`).                   |
+| `src/htmx/i18n-orchestrator.ts`        | Per-element lang resolution. Stores vocab Map; first `register()` installs vocab-aware hooks.                              |
+| `src/htmx/lang-resolver.ts`            | `langOf()` ancestor walk; `normLang()` regional collapse.                                                                  |
+
+### Localized attribute names (Phase 8)
+
+Vocab modules under `packages/core/vocab/htmx/{lang}.js` self-register via `window.__hyperfixi_i18n.register(lang, payload)`. The orchestrator builds an inverted index per language so per-attribute reads (e.g. `nameOf(elt, 'hx', 'get')`) walk the closest ancestor `lang=`, find the registered vocab, and return the localized form (`hx-obtener` for `lang="es"`).
+
+To regenerate vocab modules from semantic profiles + i18n dictionaries:
+
+```bash
+npm run build --prefix packages/semantic   # ensure profiles dist is fresh
+npm run generate:htmx-vocab                # emits vocab/htmx/{lang}.js
+```
+
+Tests:
+
+- `src/htmx/__tests__/i18n-hooks.test.ts` — contract surface (defaults, install/reset)
+- `src/htmx/__tests__/i18n-orchestrator.test.ts` — lang resolution + vocab registration
+- `src/htmx/__tests__/i18n-vocab-modules.test.ts` — emitted module loads cleanly
+- `src/htmx/__tests__/i18n-integration.test.ts` — end-to-end (uses jsdom, not happy-dom, for Unicode CSS selector support)
+- `src/compatibility/browser-tests/i18n-htmx.spec.ts` — Playwright smoke against multilang fixtures

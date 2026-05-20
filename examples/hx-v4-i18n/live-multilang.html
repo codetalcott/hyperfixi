@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Localized hx-live counters — HyperFixi</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 800px;
+        margin: 2em auto;
+        padding: 0 1em;
+        line-height: 1.5;
+      }
+      section {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1em 1.25em;
+        margin: 1.25em 0;
+      }
+      section[lang='es'] {
+        background: #fef3c7;
+      }
+      section[lang='ja'] {
+        background: #dbeafe;
+      }
+      section[lang='ar'] {
+        background: #fce7f3;
+      }
+      .counter {
+        font-size: 2.5em;
+        font-variant-numeric: tabular-nums;
+        padding: 0.4em 0.8em;
+        background: white;
+        border-radius: 6px;
+        display: inline-block;
+        min-width: 2em;
+        text-align: center;
+        margin: 0.5em 0;
+      }
+      button {
+        font-size: 1em;
+        padding: 0.5em 1em;
+        margin-right: 0.5em;
+      }
+      .note {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Localized <code>hx-live</code> reactive counters</h1>
+    <p class="note">
+      Three counters, three languages, one shared reactive variable
+      (<code>$global_count</code>). Each counter binds to it via the localized form of
+      <code>hx-live</code> — Spanish <code>hx-en-vivo</code>, Japanese <code>hx-ライブ</code>,
+      Arabic <code>hx-مباشر</code>. Clicking <em>any</em> button updates the shared variable
+      and all three counters re-render in lockstep.
+    </p>
+
+    <p>
+      <button _="on click set $global_count to ($global_count or 0) + 1">+1</button>
+      <button _="on click set $global_count to ($global_count or 0) - 1">−1</button>
+      <button _="on click set $global_count to 0">reset</button>
+    </p>
+
+    <section lang="es">
+      <h2>Español</h2>
+      <p>El contador está vinculado a <code>$global_count</code> vía <code>hx-en-vivo</code>:</p>
+      <div class="counter" hx-en-vivo="put $global_count or 0 into me">0</div>
+    </section>
+
+    <section lang="ja">
+      <h2>日本語</h2>
+      <p>カウンターは <code>hx-ライブ</code> で <code>$global_count</code> にバインドされています：</p>
+      <div class="counter" hx-ライブ="put $global_count or 0 into me">0</div>
+    </section>
+
+    <section lang="ar" dir="rtl">
+      <h2>العربية</h2>
+      <p>العداد مرتبط بـ <code>$global_count</code> عبر <code>hx-مباشر</code>:</p>
+      <div class="counter" hx-مباشر="put $global_count or 0 into me">0</div>
+    </section>
+
+    <h2>What you should see</h2>
+    <p class="note">
+      Clicking <kbd>+1</kbd>, <kbd>−1</kbd>, or <kbd>reset</kbd> updates the shared
+      <code>$global_count</code>. All three counters — Spanish, Japanese, Arabic — re-render
+      to the same number because they all subscribe to the same reactive variable via the
+      localized <code>hx-live</code> form. Reactivity dep-tracking is language-agnostic; the
+      vocab orchestrator just routes localized attribute names to the canonical
+      <code>hx-live</code> path.
+    </p>
+
+    <!-- hx-v4 ships the runtime + reactivity + htmx-compat orchestrator. -->
+    <script src="../../packages/core/dist/hyperfixi-hx-v4.js"></script>
+    <script src="../../packages/core/vocab/htmx/es.js"></script>
+    <script src="../../packages/core/vocab/htmx/ja.js"></script>
+    <script src="../../packages/core/vocab/htmx/ar.js"></script>
+  </body>
+</html>

@@ -814,6 +814,41 @@ Reconnect on unclean close uses the same bounded exponential backoff as SSE (1s 
 
 The `hyperfixi-hx-v4.js` bundle bundles this support; the slim `hyperfixi-hx.js` doesn't.
 
+### Localized htmx attribute names (Phase 8)
+
+The htmx-compat layer in `hyperfixi-hx-v4.js` recognizes localized attribute names per-element based on the nearest `lang=` ancestor. Spanish authors can write `hx-obtener` / `hx-objetivo` / `sse-conectar`; Japanese authors `hx-取得` / `hx-ターゲット`; Arabic `hx-احصل` / `hx-هدف`. The orchestrator translates them to canonical English (`hx-get` / `hx-target` / `sse-connect`) before they hit the existing processor paths.
+
+```html
+<script src="hyperfixi-hx-v4.js"></script>
+<!-- Opt in to languages by loading their vocab modules. -->
+<script src="packages/core/vocab/htmx/es.js"></script>
+<script src="packages/core/vocab/htmx/ja.js"></script>
+
+<section lang="es">
+  <button hx-obtener="/api/usuarios" hx-objetivo="#out">Cargar</button>
+</section>
+<section lang="ja">
+  <button hx-取得="/api/ユーザー" hx-ターゲット="#out">読み込む</button>
+</section>
+```
+
+**Resolution order** for `langOf(element)`:
+
+1. `data-hyperfixi-lang` on the element itself
+2. `data-hyperfixi-lang` on any ancestor
+3. `lang=` on any ancestor (HTML standard)
+4. `'en'` fallback
+
+Regional variants collapse to base codes (`es-MX` → `es`). Elements outside any lang scope use English literals — same behavior as before Phase 8. Missing-vocab langs log a one-time console warning per language and fall back to English.
+
+**Bundled vocab modules** (`packages/core/vocab/htmx/`) cover 8 priority languages — en, es, fr, ja, zh, ar, ko, de. Each is a self-registering `<script>` tag (loka-js convention). To add another language: edit the keyword translations in `packages/semantic/src/generators/profiles/{lang}.ts` and run `npm run generate:htmx-vocab --prefix packages/core`.
+
+**The `hx-` / `sse-` / `ws-` prefixes are preserved across languages** — only the suffix is localized. Spanish writes `hx-obtener`, not `xx-obtener`. The brand prefix doubles as a discovery anchor.
+
+**Out of scope** for this arc: localizing the `_=` hyperscript attribute itself. The vocab orchestrator translates htmx-compat attribute names only.
+
+See the live demos in [`examples/hx-v4-i18n/`](examples/hx-v4-i18n/).
+
 ### htmx Lifecycle Events
 
 The htmx compatibility layer dispatches CustomEvents at key points in the request lifecycle:
