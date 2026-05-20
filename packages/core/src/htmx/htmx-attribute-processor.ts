@@ -23,6 +23,7 @@ import {
   type WSEventSourceCtor,
   type WSSwapEnvelope,
 } from './ws.js';
+import { getHooks, KEYS, type AttrNamespace } from './i18n-hooks.js';
 
 // ============================================================================
 // Lifecycle Event Types
@@ -158,54 +159,62 @@ export interface HtmxProcessorOptions {
   wsEventSourceCtor?: WSEventSourceCtor;
 }
 
-/** htmx attributes to scan for */
-const HTMX_REQUEST_ATTRS = ['hx-get', 'hx-post', 'hx-put', 'hx-patch', 'hx-delete'];
 /**
- * Attributes that make an element discoverable even without a request URL.
- * `hx-live` translates to a reactive `live ... end` block. `sse-connect`
- * opens a long-lived EventSource handled outside the htmx translation
- * path entirely (see {@link HtmxAttributeProcessor.attachSSE}).
+ * Canonical English-form attribute snapshots for backwards-compat exports.
+ * Internal call sites route through `getHooks()` / `KEYS` instead so they
+ * pick up vocab-localized names when Phase 8b's orchestrator installs
+ * non-default hooks.
  */
-const HTMX_STANDALONE_ATTRS = ['hx-live', 'sse-connect', 'ws-connect'];
-/**
- * SSE attributes consumed by the SSE attachment path. `sse-swap` is not
- * standalone — it names events on a connection opened by `sse-connect`,
- * which can be on the same element or an ancestor.
- */
-const SSE_ATTRS = ['sse-connect', 'sse-swap'];
-/**
- * WS attributes. `ws-send` is not standalone — it tags an element inside
- * a `ws-connect` subtree as an outbound message source (form/button).
- */
-const WS_ATTRS = ['ws-connect', 'ws-send'];
-const HTMX_ALL_ATTRS = [
-  ...HTMX_REQUEST_ATTRS,
-  'hx-target',
-  'hx-swap',
-  'hx-trigger',
-  'hx-confirm',
-  'hx-boost',
-  'hx-vals',
-  'hx-headers',
-  'hx-push-url',
-  'hx-replace-url',
-  ...HTMX_STANDALONE_ATTRS,
-  'sse-swap',
-  'ws-send',
-];
+const HTMX_ALL_ATTRS = KEYS.hx
+  .filter(k => k !== 'on') // hx-on:* is a colon-suffix family, not a flat attr
+  .map(k => `hx-${k}`)
+  .concat(['sse-swap', 'ws-send']);
+const SSE_ATTRS = KEYS.sse.map(k => `sse-${k}`);
+const WS_ATTRS = KEYS.ws.map(k => `ws-${k}`);
 
-/** fixi attributes to scan for */
+/** Attributes that make an element discoverable even without a request URL. */
+const HX_STANDALONE_KEYS: readonly string[] = ['live'];
+
+/**
+ * fixi attributes — left as English literals. Phase 8 localization scope
+ * is hx-/sse-/ws- only; fx-* is preserved per the htmx-v4 plan.
+ */
 const FIXI_ATTRS = ['fx-action', 'fx-method', 'fx-trigger', 'fx-target', 'fx-swap', 'fx-ignore'];
 const FIXI_REQUEST_ATTR = 'fx-action';
 
-/** Combined attributes for MutationObserver */
+/** Combined attributes for MutationObserver attributeFilter. */
 const ALL_ATTRS = [...HTMX_ALL_ATTRS, ...FIXI_ATTRS];
 
-/** Build CSS selector for elements with any hx-* or fx-* attribute */
-const HTMX_DISCOVERY_ATTRS = [...HTMX_REQUEST_ATTRS, ...HTMX_STANDALONE_ATTRS];
-const HTMX_SELECTOR = HTMX_DISCOVERY_ATTRS.map(attr => `[${attr}]`).join(', ') + ', [hx-on\\:]';
-const FIXI_SELECTOR = `[${FIXI_REQUEST_ATTR}]`;
-const COMBINED_SELECTOR = `${HTMX_SELECTOR}, ${FIXI_SELECTOR}`;
+/**
+ * Build the CSS selector used to discover candidate elements. Computed at
+ * runtime through `getHooks().selectorFor` so vocab-aware impls can
+ * union over registered languages. Defaults to today's English literals
+ * when no orchestrator hook is installed.
+ */
+function buildCombinedSelector(): string {
+  const hooks = getHooks();
+  const parts: string[] = [];
+  // hx-get/post/put/patch/delete + hx-live as discovery anchors. Other
+  // hx-* attrs (target, swap, etc.) modify a request but don't trigger
+  // one on their own — matching them would mass-process inert elements.
+  for (const key of ['get', 'post', 'put', 'patch', 'delete', ...HX_STANDALONE_KEYS]) {
+    parts.push(hooks.selectorFor('hx', key));
+  }
+  parts.push(hooks.selectorFor('sse', 'connect'));
+  parts.push(hooks.selectorFor('ws', 'connect'));
+  parts.push(`[${FIXI_REQUEST_ATTR}]`);
+  return parts.join(', ');
+}
+
+/** Read an attribute via the namespace-aware hook. */
+function getAttr(element: Element, ns: AttrNamespace, key: string): string | null {
+  return element.getAttribute(getHooks().nameOf(element, ns, key));
+}
+
+/** Check attribute presence via the namespace-aware hook. */
+function hasAttr(element: Element, ns: AttrNamespace, key: string): boolean {
+  return element.hasAttribute(getHooks().nameOf(element, ns, key));
+}
 
 // ============================================================================
 // Lifecycle Event Name Constants
@@ -434,7 +443,7 @@ export class HtmxAttributeProcessor {
     const existing = this.sseConnections.get(element);
     if (existing) return existing;
 
-    const url = element.getAttribute('sse-connect');
+    const url = getAttr(element, 'sse', 'connect');
     if (!url) return null;
 
     const swapHandler = (eventName: string, data: string): void => {
@@ -445,8 +454,8 @@ export class HtmxAttributeProcessor {
       const config: HtmxConfig = {
         url: undefined,
         method: 'GET',
-        target: element.getAttribute('hx-target') ?? undefined,
-        swap: element.getAttribute('hx-swap') ?? 'innerHTML',
+        target: getAttr(element, 'hx', 'target') ?? undefined,
+        swap: getAttr(element, 'hx', 'swap') ?? 'innerHTML',
       };
       const swapHs = this.getSwapTemplate(element, config)(JSON.stringify(data));
       if (!swapHs) return;
@@ -474,7 +483,7 @@ export class HtmxAttributeProcessor {
     this.sseConnectionsSet.add(conn);
 
     // Subscribe to each named event listed in sse-swap (comma-separated).
-    const swapAttr = element.getAttribute('sse-swap');
+    const swapAttr = getAttr(element, 'sse', 'swap');
     if (swapAttr) {
       for (const name of swapAttr
         .split(',')
@@ -514,7 +523,7 @@ export class HtmxAttributeProcessor {
   private detachSSESubtree(root: Element): void {
     this.detachSSE(root);
     if (typeof root.querySelectorAll !== 'function') return;
-    const descendants = root.querySelectorAll('[sse-connect]');
+    const descendants = root.querySelectorAll(getHooks().selectorFor('sse', 'connect'));
     for (const el of descendants) this.detachSSE(el);
   }
 
@@ -527,7 +536,7 @@ export class HtmxAttributeProcessor {
     const existing = this.wsConnections.get(element);
     if (existing) return existing;
 
-    const url = element.getAttribute('ws-connect');
+    const url = getAttr(element, 'ws', 'connect');
     if (!url) return null;
 
     const swapHandler = (envelope: WSSwapEnvelope, _rawData: string): void => {
@@ -539,7 +548,7 @@ export class HtmxAttributeProcessor {
         url: undefined,
         method: 'GET',
         target: envelope.target,
-        swap: envelope.swap ?? element.getAttribute('hx-swap') ?? 'innerHTML',
+        swap: envelope.swap ?? getAttr(element, 'hx', 'swap') ?? 'innerHTML',
       };
       const swapHs = this.getSwapTemplate(element, config)(JSON.stringify(envelope.data));
       if (!swapHs) return;
@@ -582,9 +591,10 @@ export class HtmxAttributeProcessor {
    */
   private wireWSSendDescendants(root: Element, conn: WSConnection): void {
     if (typeof root.querySelectorAll !== 'function') return;
+    const wsSendSelector = getHooks().selectorFor('ws', 'send');
     const sources: Element[] = [];
-    if (root.matches?.('[ws-send]')) sources.push(root);
-    for (const el of root.querySelectorAll('[ws-send]')) sources.push(el);
+    if (root.matches?.(wsSendSelector)) sources.push(root);
+    for (const el of root.querySelectorAll(wsSendSelector)) sources.push(el);
 
     for (const source of sources) {
       if (this.wsSendListeners.has(source)) continue;
@@ -617,9 +627,10 @@ export class HtmxAttributeProcessor {
     // itself was a ws-send source, that's covered by the next loop's
     // descendant walk too via `root.matches`.
     if (typeof element.querySelectorAll === 'function') {
+      const wsSendSelector = getHooks().selectorFor('ws', 'send');
       const sources: Element[] = [];
-      if (element.matches?.('[ws-send]')) sources.push(element);
-      for (const el of element.querySelectorAll('[ws-send]')) sources.push(el);
+      if (element.matches?.(wsSendSelector)) sources.push(element);
+      for (const el of element.querySelectorAll(wsSendSelector)) sources.push(el);
       for (const source of sources) {
         const cleanup = this.wsSendListeners.get(source);
         if (cleanup) {
@@ -633,7 +644,7 @@ export class HtmxAttributeProcessor {
   private detachWSSubtree(root: Element): void {
     this.detachWS(root);
     if (typeof root.querySelectorAll !== 'function') return;
-    const descendants = root.querySelectorAll('[ws-connect]');
+    const descendants = root.querySelectorAll(getHooks().selectorFor('ws', 'connect'));
     for (const el of descendants) this.detachWS(el);
   }
 
@@ -692,10 +703,13 @@ export class HtmxAttributeProcessor {
       return [];
     }
 
-    const found = new Set<Element>(searchRoot.querySelectorAll(COMBINED_SELECTOR));
+    // Selector is built per-scan so vocab updates (8b/8c) take effect for
+    // any subsequent scan without re-instantiating the processor.
+    const selector = buildCombinedSelector();
+    const found = new Set<Element>(searchRoot.querySelectorAll(selector));
 
     // Also check the root element itself
-    if (searchRoot.matches?.(COMBINED_SELECTOR)) {
+    if (searchRoot.matches?.(selector)) {
       found.add(searchRoot);
     }
 
@@ -738,7 +752,7 @@ export class HtmxAttributeProcessor {
 
     // Check request method attributes
     for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
-      const url = element.getAttribute(`hx-${method}`);
+      const url = getAttr(element, 'hx', method);
       if (url) {
         config.method = method.toUpperCase() as HtmxConfig['method'];
         config.url = url;
@@ -747,54 +761,54 @@ export class HtmxAttributeProcessor {
     }
 
     // Target element
-    const target = element.getAttribute('hx-target');
+    const target = getAttr(element, 'hx', 'target');
     if (target) {
       config.target = target;
     }
 
     // Swap strategy
-    const swap = element.getAttribute('hx-swap');
+    const swap = getAttr(element, 'hx', 'swap');
     if (swap) {
       config.swap = swap;
     }
 
     // Trigger event
-    const trigger = element.getAttribute('hx-trigger');
+    const trigger = getAttr(element, 'hx', 'trigger');
     if (trigger) {
       config.trigger = trigger;
     }
 
     // Confirmation dialog
-    const confirm = element.getAttribute('hx-confirm');
+    const confirm = getAttr(element, 'hx', 'confirm');
     if (confirm) {
       config.confirm = confirm;
     }
 
     // Boost mode
-    const boost = element.getAttribute('hx-boost');
+    const boost = getAttr(element, 'hx', 'boost');
     if (boost === 'true') {
       config.boost = true;
     }
 
     // Additional values (JSON)
-    const vals = element.getAttribute('hx-vals');
+    const vals = getAttr(element, 'hx', 'vals');
     if (vals) {
       config.vals = vals;
     }
 
     // Custom headers (JSON)
-    const headers = element.getAttribute('hx-headers');
+    const headers = getAttr(element, 'hx', 'headers');
     if (headers) {
       config.headers = headers;
     }
 
     // URL management
-    const pushUrl = element.getAttribute('hx-push-url');
+    const pushUrl = getAttr(element, 'hx', 'push-url');
     if (pushUrl) {
       config.pushUrl = pushUrl === 'true' ? true : pushUrl;
     }
 
-    const replaceUrl = element.getAttribute('hx-replace-url');
+    const replaceUrl = getAttr(element, 'hx', 'replace-url');
     if (replaceUrl) {
       config.replaceUrl = replaceUrl === 'true' ? true : replaceUrl;
     }
@@ -812,7 +826,7 @@ export class HtmxAttributeProcessor {
     }
 
     // hx-live (v4 reactive expression — hyperscript body)
-    const hxLive = element.getAttribute('hx-live');
+    const hxLive = getAttr(element, 'hx', 'live');
     if (hxLive) {
       config.hxLive = hxLive;
     }
@@ -876,14 +890,14 @@ export class HtmxAttributeProcessor {
     // be valid — we open the stream and route named events through swap.
     // Elements with both `sse-connect` and request attrs get both paths
     // wired: SSE first (long-lived), then htmx translation (event-driven).
-    if (element.hasAttribute('sse-connect')) {
+    if (hasAttr(element, 'sse', 'connect')) {
       this.attachSSE(element);
       // Don't mark processed here — fall through so any hx-* attrs on the
       // same element still get translated.
     }
     // WS attachment: same parallel-path model as SSE. `ws-send` listeners
     // are wired on descendants by attachWS().
-    if (element.hasAttribute('ws-connect')) {
+    if (hasAttr(element, 'ws', 'connect')) {
       this.attachWS(element);
     }
 
