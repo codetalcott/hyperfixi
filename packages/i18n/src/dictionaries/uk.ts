@@ -134,6 +134,8 @@ export const ukrainianDictionary: Dictionary = {
     else: 'інакше',
     otherwise: 'в_іншому_випадку',
     end: 'кінець',
+    live: 'живий',
+    changes: 'змінюється',
     has: 'має',
     have: 'маю',
     isNot: 'не_є',

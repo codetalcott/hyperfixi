@@ -123,6 +123,8 @@ export const thaiDictionary: Dictionary = {
     undefined: 'ไม่กำหนด',
     end: 'จบ',
     then: 'แล้ว',
+    live: 'สด',
+    changes: 'เปลี่ยน',
   },
 
   temporal: {

@@ -130,6 +130,8 @@ export const it: Dictionary = {
     else: 'altrimenti',
     otherwise: 'altrimenti',
     end: 'fine',
+    live: 'vivo',
+    changes: 'cambia',
   },
 
   temporal: {

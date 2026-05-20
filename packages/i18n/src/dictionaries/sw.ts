@@ -130,6 +130,8 @@ export const sw: Dictionary = {
     else: 'sivyo',
     otherwise: 'vinginevyo',
     end: 'mwisho',
+    live: 'moja_kwa_moja',
+    changes: 'inabadilika',
   },
 
   temporal: {

@@ -62,6 +62,101 @@ function getCommandKeywordsForLocale(locale: string): Set<string> {
  * Example: "wait 2s toggle .highlight"
  * Returns: ["wait 2s", "toggle .highlight"]
  */
+/**
+ * A reactive-block structure pulled apart by `extractBlockStructure`.
+ * Block-syntactic tokens (head, optional condition expression, optional
+ * connector, optional `end` tail) live outside the inner body so the
+ * body can be transformed by the regular pipeline (SOV reordering,
+ * possessives, etc.) without having block delimiters dragged into role
+ * values or moved by the canonical-order reorder.
+ */
+interface BlockStructure {
+  headKeyword: string;
+  /** Condition expression for `when X changes Y` / `unless X Y`. */
+  prefixExpr?: string;
+  /** `changes` for `when`; undefined for `live`/`unless`. */
+  connector?: string;
+  body: string;
+  /** `end` if the source had one; undefined otherwise. */
+  tailKeyword?: string;
+}
+
+/**
+ * Detect a reactive block (`live ... end`, `when X changes Y [end]`,
+ * `unless X Y [end]`) and decompose it. Returns `null` when the input
+ * is not a reactive block, when there's content after the matched
+ * `end`, or when the heuristic can't locate a body — all of which fall
+ * through to the standard `parseStatement` path.
+ */
+function extractBlockStructure(input: string, sourceLocale: string): BlockStructure | null {
+  const tokens = input.split(/\s+/);
+  const head = tokens[0]?.toLowerCase();
+  if (!head || !BLOCK_HEAD_KEYWORDS.has(head)) return null;
+
+  // Depth-aware match for the closing `end` so nested blocks
+  // (`live when X changes Y end end`) slice correctly.
+  let depth = 1;
+  let endIdx = -1;
+  for (let i = 1; i < tokens.length; i++) {
+    const t = tokens[i].toLowerCase();
+    if (BLOCK_HEAD_KEYWORDS.has(t)) depth++;
+    else if (t === 'end') {
+      depth--;
+      if (depth === 0) {
+        endIdx = i;
+        break;
+      }
+    }
+  }
+
+  // If there's trailing content after the matched `end`, bail out and
+  // let the existing splitter handle it. (`splitOnThen` normally
+  // separates trailing code before we get here.)
+  if (endIdx !== -1 && endIdx !== tokens.length - 1) return null;
+
+  const inner = endIdx !== -1 ? tokens.slice(1, endIdx) : tokens.slice(1);
+  const base: BlockStructure = { headKeyword: tokens[0], body: '' };
+  if (endIdx !== -1) base.tailKeyword = tokens[endIdx];
+
+  if (head === 'live') {
+    return { ...base, body: inner.join(' ') };
+  }
+
+  if (head === 'when') {
+    // Reactive: `when <expr> changes <body>`. Without `changes`, fall
+    // through to the standard event-wait path (parseConditional).
+    const idx = inner.findIndex(t => t.toLowerCase() === 'changes');
+    if (idx >= 0) {
+      return {
+        ...base,
+        prefixExpr: inner.slice(0, idx).join(' '),
+        connector: inner[idx],
+        body: inner.slice(idx + 1).join(' '),
+      };
+    }
+    return null;
+  }
+
+  // `unless <cond> <body>`: condition runs up to the first command
+  // keyword in `inner`. Heuristic — works because hyperscript bodies
+  // always start with a command verb, and `unless` conditions rarely
+  // contain bare command keywords as values.
+  const commands = getCommandKeywordsForLocale(sourceLocale);
+  let bodyStart = -1;
+  for (let i = 0; i < inner.length; i++) {
+    if (commands.has(inner[i].toLowerCase())) {
+      bodyStart = i;
+      break;
+    }
+  }
+  if (bodyStart <= 0) return null;
+  return {
+    ...base,
+    prefixExpr: inner.slice(0, bodyStart).join(' '),
+    body: inner.slice(bodyStart).join(' '),
+  };
+}
+
 function splitCompoundStatement(input: string, sourceLocale: string): string[] {
   // First, split on newlines (preserving non-empty lines)
   const lines = input
@@ -267,28 +362,16 @@ const BOUNDARY_MODIFIERS = new Set([
 
 /**
  * Block-introducing keywords whose body should not be split at command
- * boundaries. Currently only `live` because it's the case where the
- * old splitter caused visible breakage:
+ * boundaries by `splitOnCommandBoundaries`. Inputs starting with one of
+ * these are also routed around `parseStatement` entirely by
+ * `extractBlockStructure` + `transformBlock` so block-syntactic tokens
+ * never reach `parseCommand`/`parseConditional` (where they'd be
+ * misinterpreted as command verbs or swept into role values).
  *
- *   en: `live put $count into me end`
- *   de (broken): `live dann setzen $count zu ich ende`  ← spurious `dann`
- *   de (fixed):  `live setzen $count zu ich ende`
- *
- * Other block heads (`when`, `unless`, `if`, `for`, `while`, `repeat`,
- * `fetch`, `async`) are *not* added here because they either:
- *   (a) split cleanly via the `then`/`do` keyword paths
- *       (`if X then Y end` works), or
- *   (b) have an intermediate connector (`when <expr> changes <body>`,
- *       `unless <cond> <body>`) and merging the whole block into one
- *       statement causes `parseStatement` to fail and produce a
- *       severely-truncated output (worse than the spurious-`then`
- *       result it had before).
- *
- * If future work wants to handle (b), it needs to either teach
- * `parseStatement` about the connectors or special-case the joiner to
- * not insert `then` inside reactive blocks.
+ * `if` deliberately stays out: `if X then Y end` already works via the
+ * `splitOnThen` + `parseConditional` path.
  */
-const BLOCK_HEAD_KEYWORDS = new Set(['live']);
+const BLOCK_HEAD_KEYWORDS = new Set(['live', 'when', 'unless']);
 
 function splitOnCommandBoundaries(input: string, sourceLocale: string): string[] {
   const commandKeywords = getCommandKeywordsForLocale(sourceLocale);
@@ -1210,6 +1293,15 @@ export class GrammarTransformer {
    * Transform a single hyperscript statement (no compound "then" chains).
    */
   private transformSingle(input: string): string {
+    // 0. Reactive block? Route around parseStatement entirely so
+    //    block-syntactic tokens (live/when/unless/end) aren't treated
+    //    as command verbs or swept into role values, and so SOV/VSO
+    //    reorder applies only inside the body.
+    const block = extractBlockStructure(input, this.sourceProfile.code);
+    if (block) {
+      return this.transformBlock(block);
+    }
+
     // 1. Parse into semantic roles
     const parsed = parseStatement(input, this.sourceProfile.code);
     if (!parsed) {
@@ -1245,6 +1337,30 @@ export class GrammarTransformer {
 
     // 7. Join without markers (still use joinTokens for consistency)
     return joinTokens(reordered.map(e => e.translated || e.value));
+  }
+
+  /**
+   * Translate a reactive block by translating the head/tail/connector
+   * via the dictionary, recursively transforming the body through the
+   * regular pipeline, and rejoining in source-language position order.
+   * Block-syntactic tokens are never reordered: they're delimiters, not
+   * arguments, and authors expect them at start/end positions
+   * regardless of target word order.
+   */
+  private transformBlock(block: BlockStructure): string {
+    const src = this.sourceProfile.code;
+    const dst = this.targetProfile.code;
+
+    const head = translateWord(block.headKeyword, src, dst);
+    const tail = block.tailKeyword ? translateWord(block.tailKeyword, src, dst) : '';
+    const connector = block.connector ? translateWord(block.connector, src, dst) : '';
+    const prefix = block.prefixExpr ? translateMultiWordValue(block.prefixExpr, src, dst) : '';
+
+    // Recurse through `transform()` (not `transformSingle`) so the body
+    // gets `then`-splitting and nested-block handling for free.
+    const body = this.transform(block.body);
+
+    return [head, prefix, connector, body, tail].filter(s => s.length > 0).join(' ');
   }
 
   /**

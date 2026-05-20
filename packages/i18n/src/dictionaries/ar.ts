@@ -130,6 +130,8 @@ export const ar: Dictionary = {
     else: 'وإلا',
     otherwise: 'خلاف ذلك',
     end: 'النهاية',
+    live: 'حي',
+    changes: 'يتغير',
   },
 
   temporal: {

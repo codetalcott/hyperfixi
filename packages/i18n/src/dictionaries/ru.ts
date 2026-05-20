@@ -134,6 +134,8 @@ export const russianDictionary: Dictionary = {
     else: 'иначе',
     otherwise: 'в_противном_случае',
     end: 'конец',
+    live: 'живой',
+    changes: 'изменяется',
     has: 'имеет',
     have: 'имею',
     isNot: 'не_есть',

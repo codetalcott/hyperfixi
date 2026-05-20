@@ -130,6 +130,8 @@ export const ja: Dictionary = {
     else: 'そうでなければ',
     otherwise: 'そうでなければ',
     end: '終わり',
+    live: 'ライブ',
+    changes: '変わったら',
   },
 
   temporal: {

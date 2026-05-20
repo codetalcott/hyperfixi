@@ -130,6 +130,8 @@ export const id: Dictionary = {
     else: 'lainnya',
     otherwise: 'sebaliknya',
     end: 'akhir',
+    live: 'langsung',
+    changes: 'berubah',
   },
 
   temporal: {

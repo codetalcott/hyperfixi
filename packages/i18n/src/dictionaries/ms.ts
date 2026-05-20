@@ -141,6 +141,8 @@ export const malayDictionary: Dictionary = {
     else: 'kalau_tidak',
     otherwise: 'jika_tidak',
     end: 'tamat',
+    live: 'langsung',
+    changes: 'berubah',
     if: 'jika',
     empty: 'kosong',
     true: 'benar',

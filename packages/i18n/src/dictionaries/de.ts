@@ -130,6 +130,8 @@ export const de: Dictionary = {
     else: 'sonst',
     otherwise: 'andernfalls',
     end: 'ende',
+    live: 'live',
+    changes: 'ändert',
   },
 
   temporal: {

@@ -134,6 +134,8 @@ export const hindiDictionary: Dictionary = {
     else: 'वरना',
     otherwise: 'अन्यथा',
     end: 'समाप्त',
+    live: 'लाइव',
+    changes: 'बदलने पर',
     has: 'है',
     have: 'है',
     isNot: 'नहीं_है',

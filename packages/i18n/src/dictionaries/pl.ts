@@ -130,6 +130,8 @@ export const pl: Dictionary = {
     else: 'inaczej',
     otherwise: 'wpp',
     end: 'koniec',
+    live: 'żywy',
+    changes: 'zmienia',
   },
 
   temporal: {

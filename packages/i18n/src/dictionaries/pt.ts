@@ -130,6 +130,8 @@ export const pt: Dictionary = {
     else: 'senão',
     otherwise: 'caso_contrário',
     end: 'fim',
+    live: 'vivo',
+    changes: 'muda',
   },
 
   temporal: {

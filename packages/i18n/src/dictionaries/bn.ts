@@ -123,6 +123,8 @@ export const bengaliDictionary: Dictionary = {
     undefined: 'অনির্ধারিত',
     end: 'শেষ',
     then: 'তারপর',
+    live: 'লাইভ',
+    changes: 'পরিবর্তিত হলে',
   },
 
   temporal: {

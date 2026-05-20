@@ -130,6 +130,8 @@ export const vi: Dictionary = {
     else: 'không thì',
     end: 'kết thúc',
     then: 'rồi',
+    live: 'trực tiếp',
+    changes: 'thay đổi',
   },
 
   temporal: {

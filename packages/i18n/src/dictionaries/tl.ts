@@ -141,6 +141,8 @@ export const tagalogDictionary: Dictionary = {
     else: 'kung_hindi',
     otherwise: 'kung_hindi_man',
     end: 'wakas',
+    live: 'live',
+    changes: 'nagbabago',
     if: 'kung',
     empty: 'walang_laman',
     true: 'totoo',

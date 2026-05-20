@@ -130,6 +130,8 @@ export const tr: Dictionary = {
     else: 'yoksa',
     otherwise: 'aksi_halde',
     end: 'son',
+    live: 'canlı',
+    changes: 'değiştiğinde',
   },
 
   temporal: {

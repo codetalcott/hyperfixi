@@ -130,6 +130,8 @@ export const qu: Dictionary = {
     else: 'mana_chayqa',
     otherwise: 'huk_kaqpi',
     end: 'tukuy',
+    live: 'kawsay',
+    changes: 'tukurikun',
   },
 
   temporal: {

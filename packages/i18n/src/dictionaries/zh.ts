@@ -130,6 +130,8 @@ export const zh: Dictionary = {
     else: '否则',
     otherwise: '要不然',
     end: '结束',
+    live: '实时',
+    changes: '改变时',
   },
 
   temporal: {

@@ -76,6 +76,8 @@ export const he: Dictionary = {
     else: 'אחרת',
     end: 'סוף',
     then: 'אז',
+    live: 'חי',
+    changes: 'משתנה',
     when: 'כאשר',
     where: 'איפה',
   },

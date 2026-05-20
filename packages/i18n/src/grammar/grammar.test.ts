@@ -1202,4 +1202,70 @@ describe('Possessive Dot Notation Translation', () => {
       expect(occurrences).toBe(1);
     });
   });
+
+  // ──── Block extraction for `when`, `unless`, and SOV `live` ────
+  // Block-syntactic tokens are pulled out before parseStatement so
+  // they don't end up as command verbs (`live` → action role) or get
+  // swept into role values (`end` → destination tail). The body
+  // recurses through the regular pipeline, which keeps SOV reorder
+  // working *inside* the body without disturbing the block frame.
+  describe('reactive blocks — when/unless/live block extraction', () => {
+    it('`when X changes Y` does not truncate — body is translated (en→de)', () => {
+      const t = new GrammarTransformer('en', 'de');
+      const result = t.transform('when $count changes log $count');
+      // Pre-fix output was just `wenn` (parseConditional returned only
+      // the action role). Now we should see head + body translated.
+      expect(result.length).toBeGreaterThan('wenn'.length + 5);
+      expect(result).toMatch(/wenn/i);
+      expect(result).toMatch(/protokolliere|log/i);
+      expect(result).toMatch(/ändert|changes/i);
+    });
+
+    it('`unless X Y` does not truncate — body is translated (en→de)', () => {
+      const t = new GrammarTransformer('en', 'de');
+      const result = t.transform('unless $disabled add .ready to me');
+      expect(result.length).toBeGreaterThan('wennnicht'.length + 5);
+      expect(result).toMatch(/wennnicht|unless/i);
+      expect(result).toMatch(/hinzufüg|add/i);
+    });
+
+    it('`live X end` keeps live at start and end at end (SOV: ja)', () => {
+      const t = new GrammarTransformer('en', 'ja');
+      const result = t.transform('live put $count into me end');
+      // Block frame: head first, tail last. Pre-fix the SOV reorder
+      // dragged `live` to the end as if it were the action verb.
+      expect(result).toMatch(/^(live|ライブ)/);
+      expect(result).toMatch(/(end|終わり)$/);
+      // SOV reorder applies inside the body — destination marker に
+      // should appear, indicating `me` was reordered with its postposition.
+      expect(result).toMatch(/に/);
+    });
+
+    it('`live X end` keeps live at start and end at end (SOV: tr)', () => {
+      const t = new GrammarTransformer('en', 'tr');
+      const result = t.transform('live put $count into me end');
+      expect(result).toMatch(/^(live|canlı)/i);
+      expect(result).toMatch(/(end|son)$/i);
+    });
+
+    it('regression: `if X then Y end` still works (no block extraction)', () => {
+      // `if` is intentionally not a BLOCK_HEAD_KEYWORD — splitOnThen +
+      // parseConditional already handle it. Verify we didn't regress.
+      const t = new GrammarTransformer('en', 'de');
+      const result = t.transform('if $x then increment $count end');
+      expect(result).toMatch(/wenn|if/i);
+      expect(result).toMatch(/dann|then/i);
+      expect(result).toMatch(/erhöh|increment/i);
+    });
+
+    it('regression: `live X end then toggle .y` — exactly one "then" connector', () => {
+      // Splitter must still recognize the `then` *outside* the live
+      // block as a statement boundary, even now that we route blocks
+      // around parseStatement.
+      const t = new GrammarTransformer('en', 'de');
+      const result = t.transform('live put $x into me end then toggle .active');
+      const danns = (result.match(/\bdann\b/gi) || []).length;
+      expect(danns).toBe(1);
+    });
+  });
 });

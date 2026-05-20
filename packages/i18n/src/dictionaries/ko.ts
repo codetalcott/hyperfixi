@@ -130,6 +130,8 @@ export const ko: Dictionary = {
     else: '아니면',
     otherwise: '그렇지않으면',
     end: '끝',
+    live: '라이브',
+    changes: '변경되면',
   },
 
   temporal: {

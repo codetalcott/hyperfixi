@@ -172,6 +172,8 @@ export const en: Dictionary = {
     else: 'else',
     otherwise: 'otherwise',
     end: 'end',
+    live: 'live',
+    changes: 'changes',
   },
 
   temporal: {
