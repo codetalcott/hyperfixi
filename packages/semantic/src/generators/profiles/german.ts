@@ -143,6 +143,12 @@ export const germanProfile: LanguageProfile = {
     until: { primary: 'bis', normalized: 'until' },
     event: { primary: 'Ereignis', alternatives: ['Event'], normalized: 'event' },
     from: { primary: 'von', alternatives: ['aus'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-verbinden`, `hx-live`, etc.
+    connect: { primary: 'verbinden', alternatives: ['Verbindung'], normalized: 'connect' },
+    stream: { primary: 'stream', alternatives: ['Strom'], normalized: 'stream' },
+    live: { primary: 'live', alternatives: ['direkt'], normalized: 'live' },
+    socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'bei', alternatives: ['auf'], normalized: 'on' },

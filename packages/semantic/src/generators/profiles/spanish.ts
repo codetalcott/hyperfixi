@@ -177,6 +177,12 @@ export const spanishProfile: LanguageProfile = {
     until: { primary: 'hasta', alternatives: ['hasta que'], normalized: 'until' },
     event: { primary: 'evento', normalized: 'event' },
     from: { primary: 'de', alternatives: ['desde'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-conectar`, `hx-en-vivo`, etc.
+    connect: { primary: 'conectar', alternatives: ['conectarse'], normalized: 'connect' },
+    stream: { primary: 'transmitir', alternatives: ['flujo'], normalized: 'stream' },
+    live: { primary: 'en-vivo', alternatives: ['vivo', 'directo'], normalized: 'live' },
+    socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'al', alternatives: ['cuando', 'en'], normalized: 'on' },

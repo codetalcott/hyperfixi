@@ -148,6 +148,13 @@ export const arabicProfile: LanguageProfile = {
     until: { primary: 'حتى', normalized: 'until' },
     event: { primary: 'حدث', normalized: 'event' },
     from: { primary: 'من', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-اتصل`, `hx-مباشر`, etc.
+    // Imperative form matching the profile's verb convention.
+    connect: { primary: 'اتصل', alternatives: ['اتصال'], normalized: 'connect' },
+    stream: { primary: 'تدفق', alternatives: ['بث'], normalized: 'stream' },
+    live: { primary: 'مباشر', alternatives: ['حي'], normalized: 'live' },
+    socket: { primary: 'مقبس', alternatives: ['websocket'], normalized: 'socket' },
   },
   tokenization: {
     prefixes: ['ال', 'و', 'ف', 'ب', 'ك', 'ل'],

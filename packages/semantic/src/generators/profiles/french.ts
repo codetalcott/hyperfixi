@@ -142,6 +142,12 @@ export const frenchProfile: LanguageProfile = {
     until: { primary: "jusqu'à", alternatives: ['jusque'], normalized: 'until' },
     event: { primary: 'événement', normalized: 'event' },
     from: { primary: 'de', alternatives: ['depuis'], normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-connecter`, `hx-en-direct`, etc.
+    connect: { primary: 'connecter', alternatives: ['connexion'], normalized: 'connect' },
+    stream: { primary: 'flux', alternatives: ['streaming'], normalized: 'stream' },
+    live: { primary: 'en-direct', alternatives: ['direct'], normalized: 'live' },
+    socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
   },
   eventHandler: {
     keyword: { primary: 'sur', alternatives: ['lors'], normalized: 'on' },

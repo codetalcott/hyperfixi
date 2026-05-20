@@ -143,6 +143,12 @@ export const chineseProfile: LanguageProfile = {
     until: { primary: '直到', normalized: 'until' },
     event: { primary: '事件', normalized: 'event' },
     from: { primary: '从', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-连接`, `hx-实时`, etc.
+    connect: { primary: '连接', alternatives: ['连接器'], normalized: 'connect' },
+    stream: { primary: '流', alternatives: ['流式传输'], normalized: 'stream' },
+    live: { primary: '实时', alternatives: ['直播'], normalized: 'live' },
+    socket: { primary: '套接字', alternatives: ['websocket'], normalized: 'socket' },
   },
   tokenization: {
     boundaryStrategy: 'character',

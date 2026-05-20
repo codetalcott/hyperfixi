@@ -161,6 +161,14 @@ export const japaneseProfile: LanguageProfile = {
     until: { primary: 'まで', alternatives: ['迄'], normalized: 'until' },
     event: { primary: 'イベント', alternatives: ['事象'], normalized: 'event' },
     from: { primary: 'から', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-接続`, `hx-ライブ`, etc. Noun
+    // forms (rather than verb stems) since these appear as attribute
+    // suffixes, not verbs in a hyperscript sentence.
+    connect: { primary: '接続', alternatives: ['接続する'], normalized: 'connect' },
+    stream: { primary: 'ストリーム', alternatives: ['配信'], normalized: 'stream' },
+    live: { primary: 'ライブ', alternatives: ['実時間'], normalized: 'live' },
+    socket: { primary: 'ソケット', alternatives: ['websocket'], normalized: 'socket' },
   },
   tokenization: {
     particles: ['を', 'に', 'で', 'から', 'の', 'が', 'は', 'も', 'へ', 'と'],

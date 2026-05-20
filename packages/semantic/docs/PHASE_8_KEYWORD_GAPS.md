@@ -37,21 +37,27 @@ Audit covers the eight priority languages flagged in the original plan. Format b
 
 ¹ In `ja` and `ko` the `event` slot is repurposed as the post-positional object marker (`を` / `을`). This works for grammar-driven role placement but doesn't expose an attribute-suffix-friendly keyword. Phase 8c will need a second entry (e.g. `event_noun: '出来事'` / `이벤트`) or a tag that distinguishes the marker form from the noun form.
 
-## Findings summary
+> **Update during 8c-prep execution (2026-05-19):** the table above is the original audit. Verification before fill found two corrections:
+>
+> 1. `target` was actually present in all 8 priority profiles' `keywords` block. Real fill scope was 4 keywords × 8 langs = **32 entries**, not 40.
+> 2. In ja/ko, `keywords.event` already holds the noun (`イベント` / `이벤트`) — only `roleMarkers.event` holds the particle. No `event_noun` disambiguation needed.
+>
+> See commit closing this audit for the actual fills.
 
-**Missing from all 8 priority languages** (uniform gap — must be added before Phase 8c):
+## Findings summary (corrected)
+
+**Filled in 8c-prep** (added to all 8 priority languages in `packages/semantic/src/generators/profiles/`):
 
 - `connect`
 - `stream`
-- `target`
 - `live`
 - `socket`
 
-**Present everywhere** (no work needed):
+**Already present** (no work needed):
 
-- `send`, `swap`, `event` — though `event` for ja/ko needs the noun-vs-marker tweak noted above.
+- `send`, `swap`, `event`, `target`.
 
-So the Phase 8c keyword work is concentrated, not dispersed: 5 missing keywords × 8 priority languages = 40 entries minimum, plus the ja/ko event-noun disambiguation.
+Final scope: 4 missing keywords × 8 priority languages = **32 entries**.
 
 ## What Phase 8c should do
 

@@ -146,6 +146,12 @@ export const koreanProfile: LanguageProfile = {
     until: { primary: '까지', normalized: 'until' },
     event: { primary: '이벤트', normalized: 'event' },
     from: { primary: '에서', normalized: 'from' },
+    // Phase 8 (htmx v4 localized attributes): attribute-suffix keywords
+    // used by the vocab generator — `sse-연결`, `hx-실시간`, etc.
+    connect: { primary: '연결', alternatives: ['접속'], normalized: 'connect' },
+    stream: { primary: '스트림', alternatives: ['스트리밍'], normalized: 'stream' },
+    live: { primary: '실시간', alternatives: ['라이브'], normalized: 'live' },
+    socket: { primary: '소켓', alternatives: ['websocket'], normalized: 'socket' },
   },
   tokenization: {
     particles: ['을', '를', '이', '가', '은', '는', '에', '에서', '으로', '로', '와', '과', '도'],

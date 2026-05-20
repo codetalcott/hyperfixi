@@ -129,5 +129,11 @@ export const englishProfile: LanguageProfile = {
     until: { primary: 'until' },
     event: { primary: 'event' },
     from: { primary: 'from' },
+    // Phase 8 (htmx v4 localized attributes): keywords used as attribute
+    // suffixes by the vocab generator — `sse-connect`, `hx-live`, etc.
+    connect: { primary: 'connect', normalized: 'connect' },
+    stream: { primary: 'stream', normalized: 'stream' },
+    live: { primary: 'live', normalized: 'live' },
+    socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
   },
 };
