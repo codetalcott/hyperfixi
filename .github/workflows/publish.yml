@@ -42,6 +42,8 @@ jobs:
     name: Publish to npm
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     permissions:
       contents: write
       id-token: write # Required for npm trusted publishing (OIDC provenance)
@@ -293,3 +295,44 @@ jobs:
               echo "- \`$PKG_NAME@$PKG_VER\`"
             done
           } >> $GITHUB_STEP_SUMMARY
+
+  release-smoke:
+    name: Release smoke test
+    needs: publish
+    if: ${{ github.event.inputs.dry-run == 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run release smoke test
+        run: |
+          VERSION="${{ needs.publish.outputs.version }}"
+          # A fresh publish can take a few minutes to propagate across the npm
+          # CDN. Retry the harness up to 3 times with a 90s backoff.
+          for attempt in 1 2 3; do
+            echo "::group::release-smoke attempt $attempt (v$VERSION)"
+            if node examples/release-smoke/run.mjs "$VERSION"; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "attempt $attempt failed; waiting 90s for npm CDN propagation…"
+            sleep 90
+          done
+          echo "::error::release smoke test failed after 3 attempts"
+          exit 1

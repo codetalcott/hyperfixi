@@ -73,7 +73,8 @@ Two parallel arcs landed since v2.3.1: **upstream `_hyperscript` 0.9.90 parity**
 ### Changed (internal)
 
 - **Evaluator consolidation**: Retired the `BaseExpressionEvaluator` class hierarchy and 4 helper modules (~2,700 LOC removed) in favor of the single canonical evaluator at `parser/runtime.ts:evaluateAST` with the `ExpressionRegistry` on `ExecutionContext`. Both consolidation arcs (α + β) closed.
-- **Domain DSLs**: Extracted a shared internal config package (workspace-only) consumed by all 8 domain DSLs.
+- **Domain DSLs**: Extracted a shared config package (`@hyperfixi/domain-config`) consumed by all 8 domain DSLs.
+- **Published infrastructure packages**: `@lokascript/intent`, `@hyperfixi/domain-config`, `@hyperfixi/planner`, and `@hyperfixi/intent-element` are published to npm as transitive dependencies (required for `@hyperfixi/core` and the domain DSLs to install cleanly from the registry). They are infra deps — users do not install them directly. (These were published from post-tag fix-forward commits; the `v2.4.0` git tag predates them.)
 
 ## [2.3.1] - 2026-04-23
 
