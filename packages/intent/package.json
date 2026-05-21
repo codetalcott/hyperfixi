@@ -1,7 +1,6 @@
 {
   "name": "@lokascript/intent",
   "version": "2.4.0",
-  "private": true,
   "description": "Universal UI intent protocol — LSE types, bracket syntax, and protocol JSON. Zero dependencies.",
   "type": "module",
   "main": "dist/index.cjs",

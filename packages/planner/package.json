@@ -39,6 +39,12 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "private": true,
-  "sideEffects": false
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -157,6 +157,7 @@ jobs:
           echo "Setting all packages to version $VERSION"
           for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin \
                      framework server-bridge types-browser aot-compiler \
+                     intent domain-config planner \
                      domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                      compilation-service behaviors reactivity components speech testing-framework language-server \
                      mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
@@ -185,10 +186,13 @@ jobs:
           # Plugin packages (reactivity, components, speech) listed after behaviors
           # because components depends on reactivity; both depend on @hyperfixi/core
           # (which is in position 2). speech depends on core only.
-          ALL_PACKAGES="semantic core i18n hyperscript-adapter patterns-reference \
+          # intent is first — @hyperfixi/core and @lokascript/framework depend on it.
+          # domain-config sits after the domain-* packages + framework (its deps).
+          # planner sits before mcp-server (which depends on it).
+          ALL_PACKAGES="intent semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser aot-compiler \
-                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
-                        compilation-service mcp-server vite-plugin \
+                        domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn domain-config \
+                        compilation-service planner mcp-server vite-plugin \
                         behaviors reactivity components speech testing-framework language-server \
                         mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n"
