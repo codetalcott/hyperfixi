@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>release-smoke: core bundle</title>
+  </head>
+  <body>
+    <!--
+      Loads the published full browser bundle from the temp install's
+      node_modules. run.mjs serves this dir statically and drives the
+      buttons with Playwright.
+    -->
+    <button id="toggle-btn" _="on click toggle .active on me">Toggle</button>
+    <button id="put-btn" _="on click put 'clicked' into #out">Put</button>
+    <div id="out">initial</div>
+
+    <script src="node_modules/@hyperfixi/core/dist/hyperfixi.js"></script>
+  </body>
+</html>

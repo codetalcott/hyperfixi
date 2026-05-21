@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>release-smoke: hx-v4 bundle</title>
+  </head>
+  <body>
+    <!--
+      The hyperfixi-hx-v4.js bundle ships the full runtime + @hyperfixi/reactivity
+      auto-installed + the htmx-compat layer. `hx-live` is translated to a
+      reactive `live` block: the #live div re-runs `put $count into me`
+      whenever $count changes. Clicking #inc mutates $count via a plain
+      `_=` handler — verifying the cross-cutting reactive notify path.
+    -->
+    <button id="inc" _="on click set $count to ($count or 0) + 1">+1</button>
+    <div id="live" hx-live="put $count into me">0</div>
+
+    <script src="node_modules/@hyperfixi/core/dist/hyperfixi-hx-v4.js"></script>
+    <script>
+      // Seed $count as a tracked reactive global before relying on hx-live —
+      // matches examples/hx-v4/hx-live-counter.html. Without this, the live
+      // block's first read sees an unset global and never subscribes to the
+      // reactive graph, so later writes don't re-run it.
+      window.hyperfixi.run('set $count to 0');
+    </script>
+  </body>
+</html>
