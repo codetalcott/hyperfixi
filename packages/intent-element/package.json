@@ -1,7 +1,6 @@
 {
   "name": "@hyperfixi/intent-element",
   "version": "2.4.0",
-  "private": true,
   "description": "<lse-intent> custom element — validates LSE protocol JSON and executes it via the hyperfixi runtime.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -14,11 +13,11 @@
       "require": "./dist/index.cjs"
     },
     "./browser": {
-      "import": "./dist/intent-element.iife.js"
+      "import": "./dist/intent-element.iife.global.js"
     }
   },
   "sideEffects": [
-    "./dist/intent-element.iife.js"
+    "./dist/intent-element.iife.global.js"
   ],
   "scripts": {
     "build": "tsup && npm run build:types",

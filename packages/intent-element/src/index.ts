@@ -10,7 +10,7 @@
  * @example
  * ```html
  * <script src="hyperfixi.js"></script>
- * <script src="intent-element.iife.js"></script>
+ * <script src="intent-element.iife.global.js"></script>
  *
  * <lse-intent>
  *   <script type="application/lse+json">

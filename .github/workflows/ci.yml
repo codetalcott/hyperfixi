@@ -161,6 +161,10 @@ jobs:
       - name: Build speech package
         run: npm run build --prefix packages/speech
 
+      # intent-element depends on @lokascript/intent (built above) + @hyperfixi/core
+      - name: Build intent-element package
+        run: npm run build --prefix packages/intent-element
+
       - name: Build all browser bundles
         run: npm run build:browser --prefix packages/core
 
@@ -212,6 +216,7 @@ jobs:
             packages/reactivity/dist/
             packages/components/dist/
             packages/speech/dist/
+            packages/intent-element/dist/
           retention-days: 3
 
   # ============================================

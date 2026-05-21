@@ -112,6 +112,8 @@ jobs:
           npm run build --prefix packages/reactivity
           npm run build --prefix packages/components
           npm run build --prefix packages/speech
+          # intent-element depends on @lokascript/intent + @hyperfixi/core (both built above)
+          npm run build --prefix packages/intent-element
           npm run build --prefix packages/types-browser
           npm run build --prefix packages/testing-framework
           npm run build --prefix packages/mcp-server-hyperscript
@@ -157,7 +159,7 @@ jobs:
           echo "Setting all packages to version $VERSION"
           for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin \
                      framework server-bridge types-browser aot-compiler \
-                     intent domain-config planner \
+                     intent intent-element domain-config planner \
                      domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
                      compilation-service behaviors reactivity components speech testing-framework language-server \
                      mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
@@ -189,11 +191,12 @@ jobs:
           # intent is first — @hyperfixi/core and @lokascript/framework depend on it.
           # domain-config sits after the domain-* packages + framework (its deps).
           # planner sits before mcp-server (which depends on it).
+          # intent-element depends on intent + core, so it follows them.
           ALL_PACKAGES="intent semantic core i18n hyperscript-adapter patterns-reference \
                         framework server-bridge types-browser aot-compiler \
                         domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn domain-config \
                         compilation-service planner mcp-server vite-plugin \
-                        behaviors reactivity components speech testing-framework language-server \
+                        behaviors reactivity components speech intent-element testing-framework language-server \
                         mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
                         hyperscript-tools-i18n"
 
