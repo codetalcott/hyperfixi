@@ -475,11 +475,6 @@ jobs:
         run: npm test --prefix packages/speech -- --run
 
       - name: Test components
-        # Known pre-existing failures in v2 reactive ^var rendering integration
-        # tests — `set` command target resolution gap surfaces in the component
-        # init path. Tracked separately; doesn't block v2.4.0 since the package
-        # is still iterating on v2 reactive features.
-        continue-on-error: true
         run: npm test --prefix packages/components -- --run
 
   # ============================================
