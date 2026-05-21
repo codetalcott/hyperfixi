@@ -10,7 +10,10 @@
 set -e
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# `core` before `reactivity` — reactivity's build consumes core's dist.
 "$REPO_ROOT/scripts/ensure-fresh.sh" \
+  "$REPO_ROOT/packages/core" \
+  "$REPO_ROOT/packages/reactivity" \
   "$REPO_ROOT/packages/framework" \
   "$REPO_ROOT/packages/semantic" \
   "$REPO_ROOT/packages/aot-compiler" \
@@ -51,6 +54,11 @@ PACKAGES=(
   # Plugin & bundling
   "vite-plugin:Vite Plugin"
   "smart-bundling:Smart Bundling"
+
+  # Runtime plugins (HyperfixiPlugin) — reactivity before components (dep order)
+  "reactivity:Reactivity"
+  "components:Components"
+  "speech:Speech"
 
   # Other
   "developer-tools:Developer Tools"
