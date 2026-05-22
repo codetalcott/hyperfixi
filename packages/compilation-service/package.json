@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/compilation-service",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Semantic compilation service for LokaScript - validates and compiles hyperscript from 24 languages, explicit syntax, or LLM JSON",
   "type": "module",
   "sideEffects": false,
@@ -34,20 +34,20 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.4.0",
+    "@lokascript/framework": "^2.5.0",
     "hono": "^4.11.7"
   },
   "devDependencies": {
     "@hono/node-server": "^2.0.0",
-    "@hyperfixi/aot-compiler": "^2.4.0",
-    "@lokascript/semantic": "^2.4.0",
+    "@hyperfixi/aot-compiler": "^2.5.0",
+    "@lokascript/semantic": "^2.5.0",
     "@types/node": "^20.11.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
     "vitest": "^4.1.5"
   },
   "peerDependencies": {
-    "@lokascript/semantic": "^2.4.0"
+    "@lokascript/semantic": "^2.5.0"
   },
   "peerDependenciesMeta": {
     "@lokascript/semantic": {

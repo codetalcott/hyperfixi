@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-22
+
+A focused release: a new LLM-domain introspection API, plus correctness fixes for the parser, the multilingual renderers, and how published packages declare their internal dependencies.
+
+### Added
+
+- **`describeCommands()` / `describeCommand()`** in `@lokascript/domain-llm` — a JSON-serializable description of every LLM command: its roles, per-language marker keywords, and a verified runnable example in each of the 8 supported languages. Adds the `LLM_LANGUAGE_CODES` export. One source of truth for docs, MCP tool schemas, and LLM-agent discovery. `@lokascript/domain-llm` also gains a package README.
+
+### Fixed
+
+- **`toggle @attribute`** (`@hyperfixi/core`): `toggle @disabled`, `toggle @required`, and similar threw `toggle command: no valid class names found` in the browser. `toggle` now skips semantic parsing (like its sibling DOM commands `add` / `remove`), so the `@attr` / `.class` / `*property` argument forms all work.
+- **SOV word order in the multilingual renderers** (`@lokascript/domain-bdd`, `@lokascript/domain-llm`): Japanese / Korean / Turkish output from `renderBDD` and `renderLLM` was not parseable — particle placement and word order were wrong, so `translate_bdd` / `translate_llm` produced broken SOV text. Fixed, with render→compile round-trip guardrail tests.
+- **Internal dependency versions**: published packages declared their internal workspace dependencies as `"*"`, which shipped literally to npm and could let a consumer resolve a mismatched (older) internal package. Internal deps now carry exact caret ranges.
+
 ## [2.4.0] - 2026-05-20
 
 Two parallel arcs landed since v2.3.1: **upstream `_hyperscript` 0.9.90 parity** (9 phases — commands, comparators, collection ops, event modifiers, plugin system, 3 new public plugin packages, i18n) and **htmx v4 compatibility** (reactive `hx-live`, SSE/WebSocket streaming, per-element localized attribute names, the size-busting `hyperfixi-hx-v4.js` bundle).

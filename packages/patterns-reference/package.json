@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/patterns-reference",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Queryable patterns database for hyperscript with multilingual translations and LLM support",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -68,7 +68,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/patterns-reference#readme",
   "dependencies": {
-    "@lokascript/semantic": "^2.4.0",
+    "@lokascript/semantic": "^2.5.0",
     "better-sqlite3": "^12.6.2"
   },
   "devDependencies": {
