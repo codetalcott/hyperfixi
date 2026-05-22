@@ -24,9 +24,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "*",
-    "@lokascript/intent": "*",
-    "@lokascript/semantic": "*"
+    "@lokascript/framework": "^2.4.0",
+    "@lokascript/intent": "^2.4.0",
+    "@lokascript/semantic": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

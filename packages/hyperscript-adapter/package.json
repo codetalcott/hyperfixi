@@ -142,7 +142,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/hyperscript-adapter#readme",
   "dependencies": {
-    "@lokascript/semantic": "*"
+    "@lokascript/semantic": "^2.4.0"
   },
   "optionalDependencies": {
     "@lokascript/i18n": "*"

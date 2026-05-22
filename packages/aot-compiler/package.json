@@ -37,12 +37,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lokascript/framework": "*",
+    "@lokascript/framework": "^2.4.0",
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {
-    "@hyperfixi/core": "*",
-    "@lokascript/semantic": "*",
+    "@hyperfixi/core": "^2.4.0",
+    "@lokascript/semantic": "^2.4.0",
     "@types/node": "^20.11.0",
     "commander": "^14.0.3",
     "tsup": "^8.0.1",
@@ -50,8 +50,8 @@
     "vitest": "^4.1.5"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "*",
-    "@lokascript/semantic": "*"
+    "@hyperfixi/core": "^2.4.0",
+    "@lokascript/semantic": "^2.4.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/core": {

@@ -52,7 +52,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/core": "*",
+    "@hyperfixi/core": "^2.4.0",
     "@rollup/plugin-terser": "^1.0.0",
     "acorn": "^8.10.0",
     "acorn-walk": "^8.2.0",

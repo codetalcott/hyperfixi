@@ -29,7 +29,7 @@
     "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "peerDependencies": {
-    "@hyperfixi/server-bridge": "*",
+    "@hyperfixi/server-bridge": "^2.4.0",
     "vite": ">=4.0.0"
   },
   "peerDependenciesMeta": {
@@ -38,7 +38,7 @@
     }
   },
   "dependencies": {
-    "@hyperfixi/core": "*",
+    "@hyperfixi/core": "^2.4.0",
     "glob": "^11.0.0"
   },
   "devDependencies": {

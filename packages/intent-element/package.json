@@ -43,10 +43,10 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/intent": "*"
+    "@lokascript/intent": "^2.4.0"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "*"
+    "@hyperfixi/core": "^2.4.0"
   },
   "peerDependenciesMeta": {
     "@hyperfixi/core": {
@@ -54,7 +54,7 @@
     }
   },
   "devDependencies": {
-    "@hyperfixi/core": "*",
+    "@hyperfixi/core": "^2.4.0",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",

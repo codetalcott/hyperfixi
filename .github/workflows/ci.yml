@@ -301,6 +301,11 @@ jobs:
       - name: Verify CI build order
         run: node scripts/check-ci-build-order.cjs
 
+      # Cheap guard: zero-dep node script that fails if package versions have
+      # drifted apart (the monorepo publishes uniformly).
+      - name: Validate package versions
+        run: node scripts/validate-versions.cjs
+
       - name: Install dependencies
         run: npm ci
 

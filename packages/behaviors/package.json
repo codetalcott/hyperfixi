@@ -111,10 +111,10 @@
     "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
   },
   "peerDependencies": {
-    "@hyperfixi/core": "*"
+    "@hyperfixi/core": "^2.4.0"
   },
   "devDependencies": {
-    "@hyperfixi/core": "*",
+    "@hyperfixi/core": "^2.4.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.5"
