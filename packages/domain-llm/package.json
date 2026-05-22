@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/domain-llm",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Multilingual LLM prompt DSL built on @lokascript/framework - ask, summarize, analyze, translate via natural language",
   "type": "module",
   "sideEffects": false,
@@ -24,10 +24,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lokascript/framework": "^2.4.0"
+    "@lokascript/framework": "^2.5.0"
   },
   "devDependencies": {
-    "@lokascript/domain-toolkit": "^2.4.0",
+    "@lokascript/domain-toolkit": "^2.5.0",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
