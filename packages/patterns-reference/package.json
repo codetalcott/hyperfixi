@@ -68,7 +68,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/patterns-reference#readme",
   "dependencies": {
-    "@lokascript/semantic": "*",
+    "@lokascript/semantic": "^2.4.0",
     "better-sqlite3": "^12.6.2"
   },
   "devDependencies": {

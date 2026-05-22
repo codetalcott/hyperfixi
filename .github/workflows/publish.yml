@@ -78,10 +78,10 @@ jobs:
       - name: Build all packages
         run: |
           # Build order mirrors .github/workflows/ci.yml (which is known-green).
-          # Private workspace deps (intent, domain-toolkit, domain-config,
-          # mcp-multilingual-intent, developer-tools) are still built — they're
-          # consumed via workspace symlinks by published packages, so their
-          # dist/ must exist for tsc to resolve cross-package imports.
+          # Every workspace dep is built — including the private ones
+          # (domain-toolkit, mcp-multilingual-intent, developer-tools) — because
+          # their dist/ must exist for tsc to resolve cross-package imports.
+          # (intent and domain-config are public, published packages.)
           npm run build --prefix packages/intent
           npm run build --prefix packages/framework
           npm run build --prefix packages/domain-bdd
@@ -158,19 +158,11 @@ jobs:
       - name: Sync all package versions
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Setting all packages to version $VERSION"
-          for pkg in semantic core i18n hyperscript-adapter patterns-reference mcp-server vite-plugin \
-                     framework server-bridge types-browser aot-compiler \
-                     intent intent-element domain-config planner \
-                     domain-sql domain-bdd domain-llm domain-todo domain-behaviorspec domain-jsx domain-flow domain-voice domain-learn \
-                     compilation-service behaviors reactivity components speech testing-framework language-server \
-                     mcp-server-hyperscript language-server-hyperscript multilingual-hyperscript \
-                     hyperscript-tools-i18n; do
-            if [ -f "packages/$pkg/package.json" ]; then
-              # Use npm pkg set to avoid registry lookups (safe for unpublished packages)
-              (cd "packages/$pkg" && npm pkg set version="$VERSION")
-            fi
-          done
+          echo "Setting all packages to $VERSION (and internal dep ranges to ^$VERSION)"
+          # set-version.cjs bumps every package + root + lerna.json AND rewrites
+          # internal workspace dep ranges to ^VERSION — so published tarballs
+          # carry accurate constraints (npm has no workspace: protocol).
+          node scripts/set-version.cjs "$VERSION"
 
       - name: Publish packages
         env:
@@ -248,7 +240,7 @@ jobs:
           # Don't commit package-lock.json — it contains workspace-package versions that
           # would cause the next run's `npm install` to fail (tries to fetch old versions
           # from registry since they're now published but at a higher version number)
-          git add packages/*/package.json 2>/dev/null || true
+          git add packages/*/package.json package.json lerna.json 2>/dev/null || true
           git commit -m "chore: release v$VERSION" || echo "No changes to commit"
           git pull --rebase origin main || git pull --no-rebase origin main
           git push

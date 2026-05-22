@@ -25,7 +25,7 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/language-server": "*"
+    "@lokascript/language-server": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

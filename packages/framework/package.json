@@ -96,7 +96,7 @@
   "author": "LokaScript Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/intent": "*"
+    "@lokascript/intent": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

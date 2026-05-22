@@ -32,9 +32,6 @@
     "clean": "npm run clean --workspaces && rm -rf node_modules",
     "clean:test": "rm -rf packages/*/coverage packages/*/html packages/*/playwright-report packages/*/test-results packages/*/.vitest clients/*/coverage",
     "bootstrap": "npm install",
-    "release": "npm run build && npm run test && npm run release:version",
-    "release:version": "lerna version --conventional-commits",
-    "release:publish": "lerna publish from-git",
     "dev": "npx http-server . -p 3000 -c-1",
     "docs:dev": "npm run dev --workspace=apps/docs-site",
     "docs:build": "npm run build --workspace=apps/docs-site",
@@ -66,7 +63,6 @@
     "rebuild:fast": "./scripts/rebuild-all.sh --skip-tests",
     "hooks:enable-pre-push": "cp .husky/pre-push.example .husky/pre-push && chmod +x .husky/pre-push && echo '✅ Pre-push hook enabled'",
     "hooks:disable-pre-push": "rm -f .husky/pre-push && echo '✅ Pre-push hook disabled'",
-    "workspace:enable": "node scripts/use-workspace-protocol.cjs && npm install",
     "prepublishOnly": "npm run version:validate && npm run changelog:validate && npm run build && npm run test",
     "prepare": "husky"
   },

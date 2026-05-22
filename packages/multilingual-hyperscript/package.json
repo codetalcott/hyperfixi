@@ -124,7 +124,7 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/hyperscript-adapter": "^2.3.1"
+    "@lokascript/hyperscript-adapter": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
