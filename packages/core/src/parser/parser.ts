@@ -3065,6 +3065,9 @@ export class Parser {
     //     `at start/end of`, `before`, `after`, `into`)
     //   - increment / decrement: `by N` quantity (no semantic role marker)
     //   - add: CSS object-literal syntax
+    //   - toggle: `.class` / `@attr` / `*property` argument references —
+    //     semantic parsing drops the prefix, so `toggle @disabled` loses the
+    //     attribute reference (sibling of add / remove, which are also here)
     //   - if / unless: condition role + multi-branch bodies
     //   - make / measure / trigger / halt / remove / exit / return / closest:
     //     each carries hyperscript-specific shape that semantic doesn't capture
@@ -3086,6 +3089,7 @@ export class Parser {
       'increment',
       'decrement',
       'add',
+      'toggle',
       'if',
       'unless',
       'make',
