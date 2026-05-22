@@ -9,7 +9,7 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "lerna run build",
+    "build": "npm run build:workspaces",
     "build:workspaces": "npm run build --workspaces --if-present",
     "build:packages": "npm run build --workspace=packages/* --if-present",
     "test": "npm run test --workspaces",
