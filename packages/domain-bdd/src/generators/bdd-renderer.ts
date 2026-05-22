@@ -53,7 +53,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو موجود',
     ko: '이 존재',
     zh: '是 存在',
-    tr: 'dir mevcut',
+    tr: 'mevcut dir',
     fr: 'est existe',
   },
   visible: {
@@ -63,7 +63,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو ظاهر',
     ko: '이 표시',
     zh: '是 可见',
-    tr: 'dir görünür',
+    tr: 'görünür dir',
     fr: 'est visible',
   },
   hidden: {
@@ -73,7 +73,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو مخفي',
     ko: '이 숨김',
     zh: '是 隐藏',
-    tr: 'dir gizli',
+    tr: 'gizli dir',
     fr: 'est caché',
   },
   loaded: {
@@ -83,7 +83,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو محمل',
     ko: '이 로드됨',
     zh: '是 加载',
-    tr: 'dir yüklü',
+    tr: 'yüklü dir',
     fr: 'est chargé',
   },
   disabled: {
@@ -93,7 +93,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو معطل',
     ko: '이 비활성',
     zh: '是 禁用',
-    tr: 'dir devre dışı',
+    tr: 'devre dışı dir',
     fr: 'est désactivé',
   },
   enabled: {
@@ -103,7 +103,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو مفعل',
     ko: '이 활성',
     zh: '是 启用',
-    tr: 'dir etkin',
+    tr: 'etkin dir',
     fr: 'est activé',
   },
   checked: {
@@ -113,7 +113,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو محدد',
     ko: '이 체크됨',
     zh: '是 选中',
-    tr: 'dir işaretli',
+    tr: 'işaretli dir',
     fr: 'est coché',
   },
   focused: {
@@ -123,7 +123,7 @@ const STATE_WORDS: Record<string, Record<string, string>> = {
     ar: 'هو مركز',
     ko: '이 포커스',
     zh: '是 聚焦',
-    tr: 'dir odaklanmış',
+    tr: 'odaklanmış dir',
     fr: 'est focalisé',
   },
 };
@@ -344,6 +344,24 @@ const ASSERTION_WORDS: Record<string, Record<string, string>> = {
   },
 };
 
+/**
+ * SOV particle placed before a CSS-class assertion (`then #x has .active`).
+ * Per-language — must not leak across languages (e.g. Japanese `に` into Korean).
+ */
+const CLASS_ASSERTION_PARTICLE: Record<string, string> = {
+  ja: 'に',
+  ko: '에',
+  tr: 'de',
+};
+
+/**
+ * SOV "has" word that follows the class in a class assertion, where the
+ * language requires one. Japanese/Korean need none; Turkish needs `sahip`.
+ */
+const CLASS_ASSERTION_HAS: Record<string, string> = {
+  tr: 'sahip',
+};
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -427,9 +445,16 @@ function renderThen(node: SemanticNode, lang: string): string {
 
   // CSS class assertion
   if (assertionStr.startsWith('.')) {
-    const assertPhrase = `has ${assertionStr}`;
-    if (isSOV(lang)) return `${targetStr} に ${assertionStr} ${keyword}`;
-    return `${keyword} ${targetStr} ${assertPhrase}`;
+    if (isSOV(lang)) {
+      // SOV: target <particle> .class [has-word] keyword — particle is
+      // per-language (ja に, ko 에, tr de); Turkish also needs a trailing
+      // `sahip`. Falls back to Japanese `に` only for unknown SOV languages.
+      const particle = CLASS_ASSERTION_PARTICLE[lang] ?? 'に';
+      const hasWord = CLASS_ASSERTION_HAS[lang];
+      const middle = hasWord ? `${assertionStr} ${hasWord}` : assertionStr;
+      return `${targetStr} ${particle} ${middle} ${keyword}`;
+    }
+    return `${keyword} ${targetStr} has ${assertionStr}`;
   }
 
   const assertPhrase = lookup(ASSERTION_WORDS, assertionStr, lang);

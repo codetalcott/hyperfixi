@@ -163,6 +163,10 @@ export {
 } from './tokenizers/index.js';
 export type { LLMPromptSpec, LLMMessage, LLMModelPreferences, LLMAction } from './types.js';
 
+// Introspection — programmatic command/role discovery
+export { describeCommands, describeCommand, LLM_LANGUAGE_CODES } from './introspection.js';
+export type { CommandDescription, RoleDescription, LLMLanguageCode } from './introspection.js';
+
 // =============================================================================
 // Domain Scan Config (for AOT / Vite plugin integration)
 // =============================================================================

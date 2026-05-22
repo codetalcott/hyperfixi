@@ -94,12 +94,22 @@ function mk(marker: string, lang: string): string {
   return MARKERS[marker]?.[lang] ?? marker;
 }
 
+/**
+ * Wrap a value in quotes if it contains whitespace and is not already quoted.
+ * A multi-word role value (e.g. an `ask` question) must be quoted to tokenize
+ * back as a single token, regardless of word order.
+ */
+function quoteIfNeeded(value: string): string {
+  if (/\s/.test(value) && !/^(["']).*\1$/.test(value)) return `"${value}"`;
+  return value;
+}
+
 // =============================================================================
 // Per-Command Renderers
 // =============================================================================
 
 function renderAsk(node: SemanticNode, lang: string): string {
-  const question = extractRoleValue(node, 'patient') || '...';
+  const question = quoteIfNeeded(extractRoleValue(node, 'patient') || '...');
   const context = extractRoleValue(node, 'source');
   const style = extractRoleValue(node, 'manner');
   const verb = kw('ask', lang);
@@ -157,8 +167,13 @@ function renderAnalyze(node: SemanticNode, lang: string): string {
   const verb = kw('analyze', lang);
 
   if (isSOV(lang)) {
-    // SOV: content として analysisType 分析
-    return `${content} ${mk('as', lang)} ${analysisType} ${verb}`;
+    // SOV: manner precedes patient (sovPosition manner > patient). Marker
+    // placement differs by language — Japanese expects the marker before the
+    // manner value; Korean/Turkish after it.
+    const asMarker = mk('as', lang);
+    return lang === 'ja'
+      ? `${asMarker} ${analysisType} ${content} ${verb}`
+      : `${analysisType} ${asMarker} ${content} ${verb}`;
   }
   // SVO / VSO: verb content as type
   return `${verb} ${content} ${mk('as', lang)} ${analysisType}`;
@@ -171,8 +186,9 @@ function renderTranslate(node: SemanticNode, lang: string): string {
   const verb = kw('translate', lang);
 
   if (isSOV(lang)) {
-    // SOV: content を fromLang から toLang に 翻訳
-    return `${content} ${mk('from', lang)} ${fromLang} ${mk('to', lang)} ${toLang} ${verb}`;
+    // SOV: markers are postpositions — they follow their role value.
+    // content fromLang <from> toLang <to> verb
+    return `${content} ${fromLang} ${mk('from', lang)} ${toLang} ${mk('to', lang)} ${verb}`;
   }
   // SVO / VSO: verb content from fromLang to toLang
   return `${verb} ${content} ${mk('from', lang)} ${fromLang} ${mk('to', lang)} ${toLang}`;
