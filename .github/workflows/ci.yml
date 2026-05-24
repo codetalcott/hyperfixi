@@ -1,3 +1,26 @@
+# CI workflow design notes:
+#
+# Two-tier job set to avoid duplicating effort on merge.
+#
+#   pull_request runs the FULL matrix (every job that doesn't gate on
+#   branch name). This is the authoritative "does this PR pass" check.
+#
+#   push to main / develop runs only the merge-skew detectors:
+#     - build  (does the merged code still compile?)
+#     - export-validation  (do package.json exports still resolve?)
+#     - lint-typecheck  (do cross-package types still resolve?)
+#     - unit-tests  (do critical logic paths still work?)
+#   Plus the post-merge-only effects:
+#     - coverage  (uploads to Codecov)
+#     - benchmarks  (tracks perf trends on main)
+#
+#   The heavy jobs that already ran on the PR — browser-tests,
+#   multilingual-validation, bundle-size, mcp-demos — are gated to
+#   `if: github.event_name == 'pull_request'` and skipped on push.
+#   Saves ~60 min runner-time per merge.
+#
+# Why not enable a merge queue instead: keep this simple change in
+# place until there's bandwidth to set up merge_group properly.
 name: CI
 
 on:
@@ -576,10 +599,15 @@ jobs:
   # ============================================
   # Job 6: Browser Tests (Playwright)
   # ============================================
+  # Slim post-merge: this job already ran against the merged-as-PR code.
+  # Re-running it on `push` to main/develop only catches merge skew, which
+  # is rare and which `build` + `unit-tests` cover for the vast majority
+  # of cases. Skipping it post-merge saves ~30 min runner time per merge.
   browser-tests:
     name: Browser Tests
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'pull_request'
     timeout-minutes: 30
 
     steps:
@@ -637,10 +665,12 @@ jobs:
   # ============================================
   # Job 7: Multilingual Validation
   # ============================================
+  # Slim post-merge: PR-only. See note on browser-tests above.
   multilingual-validation:
     name: Multilingual Validation
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'pull_request'
     timeout-minutes: 15
 
     steps:
@@ -697,10 +727,15 @@ jobs:
   # ============================================
   # Job 8: Bundle Size Analysis
   # ============================================
+  # Slim post-merge: PR-only. The size report on a PR is what reviewers
+  # actually look at; the post-merge repeat against an identical artifact
+  # has no readers. Pre-publish-check.yml still gates bundle sizes at
+  # publish time as a final guard.
   bundle-size:
     name: Bundle Size Analysis
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'pull_request'
     timeout-minutes: 10
 
     steps:
@@ -803,10 +838,16 @@ jobs:
   # and the three IDE integration demos (EN ≡ JA/AR/KO schema equivalence).
   # Captures demo output as an artifact so the landing page can embed it.
   # Reuses build artifacts from Job 1 — no rebuild cost.
+  #
+  # Slim post-merge: PR-only. The committed `demo-output.txt` staleness
+  # check is what matters here, and it already ran on the PR. Re-running
+  # against the merged code produces the same output (deterministic
+  # demos against the same build artifacts).
   mcp-demos:
     name: MCP Multilingual Demos
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'pull_request'
     timeout-minutes: 5
 
     steps:
