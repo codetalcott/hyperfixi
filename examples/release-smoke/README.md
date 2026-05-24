@@ -29,9 +29,30 @@ browser stage, not the Node stage.
 ```bash
 node examples/release-smoke/run.mjs            # tests the "latest" dist-tag
 node examples/release-smoke/run.mjs 2.4.0      # tests a specific version
+node examples/release-smoke/run.mjs --matrix   # adds the bundle compatibility matrix
+node examples/release-smoke/run.mjs --matrix 2.5.0
 ```
 
 Exit `0` = all green, `1` = any failure. Each check prints a `✓`/`✗` line.
+
+### `--matrix` (opt-in, comprehensive browser stage)
+
+By default the harness only drives two browser pages (toggle/put on the full
+bundle, `hx-live` on hx-v4). With `--matrix`, it additionally serves the repo's
+`examples/` and `packages/core/test-pages/` to Playwright, but rewrites
+`/packages/core/dist/*` to the registry-installed `node_modules/@hyperfixi/core/dist/`.
+That points two in-repo specs at the published tarball:
+
+- [`bundle-compatibility.spec.ts`](../../packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts) — 8 bundles × gallery examples + bundle-specific tests (~92 tests)
+- [`hx-v4-features.spec.ts`](../../packages/core/src/compatibility/browser-tests/hx-v4-features.spec.ts) — hx-v4 distinctive surface: `hx-live`, multi-dep reactivity, two-way `bind`, SSE mock streaming, WS mock round-trip, hx-on:click in slim bundle without reactivity (~6 tests)
+
+The webroot also exposes `packages/core/vocab/` (from the registry tarball) so
+[`i18n-htmx.spec.ts`](../../packages/core/src/compatibility/browser-tests/i18n-htmx.spec.ts) can be wired in once an underlying reactivity bug is resolved (localized `hx-live` counters don't re-render on global writes — separate concern from the vocab packaging signal).
+
+Slower (~minutes) and noisier (Playwright's line reporter streams), but it's
+the most comprehensive browser-level signal we have against actual npm
+artifacts. Run it after publishing a new minor/major or before tagging a
+release.
 
 ## Requirements
 
