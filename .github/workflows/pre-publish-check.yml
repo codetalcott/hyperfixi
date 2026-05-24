@@ -297,7 +297,7 @@ jobs:
 
           # Size limits (gzipped bytes)
           MAX_LITE=4000           # 4 KB
-          MAX_HYBRID=15000        # 15 KB
+          MAX_HYBRID=18000        # 18 KB (hyperfixi-hybrid-hx.js currently ~16.6 KB; bumped from 15 KB to reflect Phase 8 growth)
           MAX_BROWSER=290000      # 290 KB (actual: ~273 KB, allow headroom)
 
           failed=0
