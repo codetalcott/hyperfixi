@@ -182,8 +182,9 @@ function buildMatrixWebroot(tmp) {
 }
 
 /**
- * Stage 4: drive `bundle-compatibility.spec.ts` from `packages/core` against
- * the registry-installed bundles via BASE_URL override. Streams Playwright's
+ * Stage 4: drive `bundle-compatibility.spec.ts`, `hx-v4-features.spec.ts`, and
+ * `i18n-orchestrator-api.spec.ts` from `packages/core` against the
+ * registry-installed bundles via BASE_URL override. Streams Playwright's
  * line-reporter output so the user sees per-test progress; success is just
  * the spawn's exit code.
  */
@@ -218,12 +219,21 @@ async function runMatrixStage(tmp) {
           // bind, SSE / WS mock streaming, plus the no-reactivity diagnostic
           // (hx-on:click wiring in the slim bundle without reactivity installed).
           'src/compatibility/browser-tests/hx-v4-features.spec.ts',
+          // Orchestrator public-API gate — guards the v2.5.0 terser regression
+          // where `window.__hyperfixi_i18n = { register }` was mangled out of
+          // the minified hybrid-hx / hybrid-hx-v4 bundles, silently breaking
+          // every vocab/htmx/{lang}.js module on load (fixed in 90ba037b).
+          // Surgical check — no swap-pipeline dependency.
+          'src/compatibility/browser-tests/i18n-orchestrator-api.spec.ts',
           // NOTE: src/compatibility/browser-tests/i18n-htmx.spec.ts is NOT
-          // wired here yet. Both its tests hit a separate pre-existing
+          // wired here yet. Its `live-multilang` test hits a pre-existing
           // reactivity bug (localized hx-live counters don't re-render on
-          // global writes — needs runtime/notify-hook investigation). The
-          // webroot already exposes `packages/core/vocab/` so the spec can be
-          // dropped in once that bug is fixed.
+          // global writes — needs runtime/notify-hook investigation). Its
+          // `multilang-page` test hits a separate pre-existing swap bug
+          // (`fetch ... as html` → `put it into target` stringifies the
+          // DocumentFragment instead of inserting it). The webroot already
+          // exposes `packages/core/vocab/` so the spec can be dropped in
+          // once those bugs are fixed.
           '--project=full',
           '--reporter=line',
         ],
@@ -239,7 +249,7 @@ async function runMatrixStage(tmp) {
         res(1);
       });
     });
-    record(`bundle-compat + hx-v4-features vs @${VERSION} tarball`, exitCode === 0,
+    record(`bundle-compat + hx-v4-features + i18n-orchestrator-api vs @${VERSION} tarball`, exitCode === 0,
       exitCode === 0 ? null : `playwright exit ${exitCode}`);
   } finally {
     matrixServer.close();
