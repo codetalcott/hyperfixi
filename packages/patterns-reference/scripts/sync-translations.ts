@@ -25,6 +25,7 @@ import {
   GrammarTransformer,
   getProfile as getGrammarProfile,
 } from '@lokascript/i18n';
+import { maskSpans, unmaskSpans } from '../src/sync/span-mask';
 
 // =============================================================================
 // Configuration
@@ -167,13 +168,21 @@ function translateHyperscript(code: string, language: string): string {
     return code;
   }
 
+  // Mask non-translatable spans (string literals, URLs, HTML inner text,
+  // bracket expressions, component directives) before handing the surface
+  // to the transformer or keyword substituter. Both treat input as a flat
+  // token stream and would otherwise reorder content inside HTML elements,
+  // translate words inside string literals, etc.
+  const { masked, spans } = maskSpans(code);
+
   // Check if language has grammar transformation support
   const grammarProfile = getGrammarProfile(language);
   if (grammarProfile) {
     try {
       // Use cached transformer for performance (98% fewer instantiations)
       const transformer = getCachedTransformer(language);
-      const result = transformer.transform(code);
+      const transformed = transformer.transform(masked);
+      const result = unmaskSpans(transformed, spans);
       if (verbose) {
         console.log(`  [grammar] ${language}: "${code}" -> "${result}"`);
       }
@@ -183,12 +192,12 @@ function translateHyperscript(code: string, language: string): string {
       if (verbose) {
         console.log(`  [fallback] ${language}: grammar transform failed (${error}), using keywords`);
       }
-      return keywordSubstitute(code, language);
+      return unmaskSpans(keywordSubstitute(masked, language), spans);
     }
   }
 
   // Languages without grammar support use keyword substitution
-  return keywordSubstitute(code, language);
+  return unmaskSpans(keywordSubstitute(masked, language), spans);
 }
 
 /**

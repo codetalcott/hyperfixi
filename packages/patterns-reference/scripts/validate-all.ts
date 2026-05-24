@@ -15,6 +15,7 @@
 import Database from 'better-sqlite3';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
+import { runAllChecks, type CheckKind } from '../src/sync/translation-checks';
 
 // =============================================================================
 // Configuration
@@ -41,10 +42,13 @@ interface Translation {
   verified_parses: number;
 }
 
+type FailureKind = 'structural' | CheckKind;
+
 interface ValidationResult {
   translation: Translation;
   valid: boolean;
   error?: string;
+  kind?: FailureKind;
 }
 
 // =============================================================================
@@ -152,6 +156,15 @@ async function validateAll() {
   const db = new Database(dbPath);
 
   try {
+    // Build a lookup of source raw_code by pattern id, used by the
+    // translation-checks (literal preservation, HTML parity, truncation).
+    const sources = new Map<string, string>();
+    for (const row of db
+      .prepare('SELECT id, raw_code FROM code_examples')
+      .all() as { id: string; raw_code: string }[]) {
+      sources.set(row.id, row.raw_code);
+    }
+
     // Get all translations
     const translations = db.prepare('SELECT * FROM pattern_translations').all() as Translation[];
     console.log(`Found ${translations.length} translations\n`);
@@ -160,22 +173,44 @@ async function validateAll() {
     const results: ValidationResult[] = [];
     let validCount = 0;
     let invalidCount = 0;
+    const failuresByKind = new Map<FailureKind, number>();
 
     const updateVerified = db.prepare(
       'UPDATE pattern_translations SET verified_parses = ? WHERE id = ?'
     );
 
     for (const translation of translations) {
-      const { valid, error } = validatePattern(translation.hyperscript);
+      // Structural check first (parens, quotes, brackets balanced).
+      const structural = validatePattern(translation.hyperscript);
+      const failures: { kind: FailureKind; error: string }[] = [];
+      if (!structural.valid) {
+        failures.push({ kind: 'structural', error: structural.error || 'invalid' });
+      }
 
-      if (valid) {
+      // Source-vs-translation checks. Skip for English (it IS the source).
+      const source = sources.get(translation.code_example_id);
+      if (source && translation.language !== 'en') {
+        const checkFailures = runAllChecks(source, translation.hyperscript, translation.language);
+        for (const f of checkFailures) failures.push(f);
+      }
+
+      if (failures.length === 0) {
         validCount++;
         if (fix && translation.verified_parses !== 1) {
           updateVerified.run(1, translation.id);
         }
       } else {
         invalidCount++;
-        results.push({ translation, valid, error });
+        // Record the FIRST failure kind for the summary; surface all in verbose.
+        for (const f of failures) {
+          failuresByKind.set(f.kind, (failuresByKind.get(f.kind) || 0) + 1);
+        }
+        results.push({
+          translation,
+          valid: false,
+          error: failures.map(f => `[${f.kind}] ${f.error}`).join('; '),
+          kind: failures[0].kind,
+        });
 
         if (fix && translation.verified_parses !== 0) {
           updateVerified.run(0, translation.id);
@@ -184,7 +219,10 @@ async function validateAll() {
         if (verbose) {
           console.log(`[INVALID] ${translation.language}:${translation.code_example_id}`);
           console.log(`  Code: ${translation.hyperscript}`);
-          console.log(`  Error: ${error}\n`);
+          for (const f of failures) {
+            console.log(`  [${f.kind}] ${f.error}`);
+          }
+          console.log('');
         }
       }
     }
@@ -193,6 +231,12 @@ async function validateAll() {
     console.log('\nValidation complete!');
     console.log(`  - Valid: ${validCount}`);
     console.log(`  - Invalid: ${invalidCount}`);
+    if (failuresByKind.size > 0) {
+      console.log('  - Failures by check:');
+      for (const [kind, n] of [...failuresByKind.entries()].sort((a, b) => b[1] - a[1])) {
+        console.log(`      ${kind}: ${n}`);
+      }
+    }
 
     if (invalidCount > 0 && !verbose) {
       console.log('\nInvalid translations:');
