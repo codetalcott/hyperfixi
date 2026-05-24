@@ -190,26 +190,33 @@ As of 2026-01-23, all CI testing has been consolidated into a single `.github/wo
 **Key features:**
 
 - **Shared build artifacts**: Packages are built once and shared across all jobs (40% faster)
-- **Parallel execution**: 8 jobs run in parallel after build completes
+- **Parallel execution**: jobs run in parallel after build completes
+- **Two-tier job set**: full matrix on `pull_request`, slim skew-detector set on `push` to main/develop
 - **Node 24 LTS**: Active LTS release (EOL April 2028)
 - **Smart failure handling**: Known failures (behaviors, SOV/VSO languages) marked with `continue-on-error`
 
 **Jobs:**
 
-1. `build` - Build all packages once, upload artifacts
-2. `lint-typecheck` - ESLint + TypeScript checks
-3. `unit-tests` - Vitest tests on Node 24
-4. `coverage` - Code coverage reports (Codecov)
-5. `browser-tests` - Playwright browser tests
-6. `multilingual-validation` - Test 20 languages (23 total, 3 experimental)
-7. `bundle-size` - Analyze and check bundle size limits
-8. `benchmarks` - Performance benchmarks (main branch only)
+| #   | Job                       | PR  | push main/develop | Notes                                            |
+| --- | ------------------------- | --- | ----------------- | ------------------------------------------------ |
+| 1   | `build`                   | ✓   | ✓                 | Build all packages once, upload artifacts        |
+| 2   | `export-validation`       | ✓   | ✓                 | Verify package.json exports resolve to dist      |
+| 3   | `lint-typecheck`          | ✓   | ✓                 | ESLint + TypeScript checks                       |
+| 4   | `unit-tests`              | ✓   | ✓                 | Vitest tests on Node 24                          |
+| 5   | `coverage`                | —   | main only         | Codecov upload (already gated to push+main)      |
+| 6   | `browser-tests`           | ✓   | —                 | Playwright; PR-only (slim post-merge)            |
+| 7   | `multilingual-validation` | ✓   | —                 | 20-language sweep; PR-only (slim post-merge)     |
+| 8   | `bundle-size`             | ✓   | —                 | Size report; PR-only (slim post-merge)           |
+| 9   | `mcp-demos`               | ✓   | —                 | Demo capture + drift check; PR-only              |
+| 10  | `benchmarks`              | —   | main only         | Perf trend tracking (already gated to push+main) |
+
+The four PR-only jobs already ran against the merged-as-PR code, so re-running them on the post-merge push to main wastes ~60 min runner-time per merge. Merge-skew is caught by `build` + `lint-typecheck` + `unit-tests` (still run on push). For perfect skew detection without duplication, see the merge-queue note in `.github/workflows/ci.yml`.
 
 **Triggers:**
 
-- Push to `main` or `develop`
-- Pull requests to `main` or `develop`
-- Concurrency: Cancels in-progress runs on new push
+- Push to `main` or `develop` (slim job set — see table)
+- Pull requests to `main` or `develop` (full job set)
+- Concurrency: Cancels in-progress runs on new push (per `${{ github.workflow }}-${{ github.ref }}`; pre-merge and post-merge runs are on different refs so the post-merge run is NOT cancelled)
 
 **Known Issues:**
 
