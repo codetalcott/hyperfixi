@@ -6,7 +6,8 @@
  * language-specific markers and rules.
  */
 
-import type { LanguageProfile } from '../types';
+import type { LanguageProfile, SemanticRole } from '../types';
+import { reorderRoles, insertMarkers } from '../types';
 
 // =============================================================================
 // English (Reference Language)
@@ -198,20 +199,33 @@ export const chineseProfile: LanguageProfile = {
         requiredRoles: ['event', 'action'],
       },
       transform: {
-        // 当 点击 时 增加 #count
+        // 当 EVENT 时 ACTION [patient] [destination] [source] [style] [method] ...
         roleOrder: ['event', 'action', 'patient'],
         insertMarkers: true,
-        custom: (parsed, _profile) => {
-          // Handle 当...时 circumfix
+        custom: (parsed, profile) => {
+          // Handle 当...时 circumfix wrapping the event, then emit the action,
+          // then any remaining roles in canonical order with their markers.
+          // Earlier this function emitted only event/action/patient and silently
+          // dropped destination, source, style, etc. — that produced truncated
+          // output for `send X to Y`, `fetch /api with method:...`, etc.
           const event = parsed.roles.get('event');
           const action = parsed.roles.get('action');
-          const patient = parsed.roles.get('patient');
 
-          const parts = ['当', event?.translated || event?.value, '时'];
-          parts.push(action?.translated || action?.value || '');
-          if (patient) {
-            parts.push(patient.translated || patient.value);
-          }
+          // Build the post-action role list using the canonical order minus
+          // event/action, plus a safety net for any roles not in the order.
+          const remaining = new Map(parsed.roles);
+          remaining.delete('event');
+          remaining.delete('action');
+
+          const remainingOrder: SemanticRole[] = (profile.canonicalOrder || []).filter(
+            r => r !== 'event' && r !== 'action'
+          );
+          const reordered = reorderRoles(remaining, remainingOrder);
+          const markedTokens = insertMarkers(reordered, profile.markers, profile.adpositionType);
+
+          const parts: string[] = ['当', event?.translated || event?.value || '', '时'];
+          if (action) parts.push(action.translated || action.value);
+          parts.push(...markedTokens);
 
           return parts.filter(Boolean).join(' ');
         },
