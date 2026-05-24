@@ -45,9 +45,10 @@ That points two in-repo specs at the published tarball:
 
 - [`bundle-compatibility.spec.ts`](../../packages/core/src/compatibility/browser-tests/bundle-compatibility.spec.ts) — 8 bundles × gallery examples + bundle-specific tests (~92 tests)
 - [`hx-v4-features.spec.ts`](../../packages/core/src/compatibility/browser-tests/hx-v4-features.spec.ts) — hx-v4 distinctive surface: `hx-live`, multi-dep reactivity, two-way `bind`, SSE mock streaming, WS mock round-trip, hx-on:click in slim bundle without reactivity (~6 tests)
+- [`i18n-orchestrator-api.spec.ts`](../../packages/core/src/compatibility/browser-tests/i18n-orchestrator-api.spec.ts) — guards the v2.5.0 terser regression where `window.__hyperfixi_i18n.register` was mangled out of the minified hybrid-hx / hybrid-hx-v4 bundles, silently breaking every `vocab/htmx/{lang}.js` module on load (2 tests, ~600 ms)
 
 The webroot also exposes `packages/core/vocab/` (from the registry tarball) so
-[`i18n-htmx.spec.ts`](../../packages/core/src/compatibility/browser-tests/i18n-htmx.spec.ts) can be wired in once an underlying reactivity bug is resolved (localized `hx-live` counters don't re-render on global writes — separate concern from the vocab packaging signal).
+[`i18n-htmx.spec.ts`](../../packages/core/src/compatibility/browser-tests/i18n-htmx.spec.ts) can be wired in once two underlying bugs are resolved: localized `hx-live` counters don't re-render on global writes (reactivity / notify-hook), and `fetch ... as html` → `put it into target` stringifies the parsed `DocumentFragment` instead of inserting it (swap pipeline). Both are pre-existing and separate from the vocab-packaging signal the orchestrator-api spec now covers.
 
 Slower (~minutes) and noisier (Playwright's line reporter streams), but it's
 the most comprehensive browser-level signal we have against actual npm

@@ -387,6 +387,31 @@ jobs:
             echo "</details>" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: htmx i18n orchestrator public API
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## htmx i18n Orchestrator Public API" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          cd packages/core
+
+          # Guards the v2.5.0 terser regression class: vocab modules
+          # (vocab/htmx/{lang}.js) depend on window.__hyperfixi_i18n.register
+          # being reachable in the published bundles. Surfaced 2.5.0 → 2.5.1.
+          if npx playwright test src/compatibility/browser-tests/i18n-orchestrator-api.spec.ts --reporter=list 2>&1 | tee /tmp/i18n-orchestrator-api.log; then
+            echo "✅ window.__hyperfixi_i18n.register reachable in hybrid-hx + hybrid-hx-v4" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Orchestrator public API check failed — vocab modules will silently break" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<details><summary>Test Failures</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            tail -60 /tmp/i18n-orchestrator-api.log >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
       - name: Stop HTTP server
         if: always()
         run: |
