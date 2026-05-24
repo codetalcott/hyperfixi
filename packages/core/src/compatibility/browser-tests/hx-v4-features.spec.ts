@@ -14,7 +14,10 @@
 import { test, expect, type Page } from '@playwright/test';
 import { waitForHyperfixi } from './test-utils';
 
-const BASE_URL = 'http://127.0.0.1:3000';
+// Mirrors bundle-compatibility.spec.ts — env override lets the release-smoke
+// `--matrix` stage point this spec at its ephemeral server (which serves the
+// registry-installed @hyperfixi/core/dist instead of the repo build).
+const BASE_URL = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 
 async function loadDemo(page: Page, file: string): Promise<void> {
   await page.goto(`${BASE_URL}/examples/hx-v4/${file}`, {
@@ -116,11 +119,18 @@ test.describe('hx-v4 reactive/streaming features @comprehensive', () => {
     // shipped it through executeCallback, which silently no-op'd.
     await loadDemo(page, 'hx-live-no-reactivity.html');
 
-    const button = page.getByRole('button', { name: /I am wired via hx-on:click/ });
+    // Scoped CSS selector instead of getByRole — the button's accessible name
+    // changes after the first click (from "I am wired..." to "clicked N time(s)"),
+    // which would break a role-name locator on subsequent assertions.
+    const button = page.locator('.other button');
     await expect(button).toHaveText(/wired via hx-on:click/);
     await button.click();
-    // After click, the button's text should be replaced with "clicked at ..."
-    await expect(button).toHaveText(/clicked at \d/);
+    // Body increments $clicks and rewrites the button text. Two clicks proves
+    // the listener stays attached AND that the slim runtime's `set` persists
+    // state across invocations even without reactivity wired in.
+    await expect(button).toHaveText(/clicked 1 time/);
+    await button.click();
+    await expect(button).toHaveText(/clicked 2 time/);
   });
 
   test('ws-chat: ws-send submits to the mocked socket and echoes back', async ({ page }) => {

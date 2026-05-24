@@ -8,7 +8,12 @@
  */
 import { test, expect, Page } from '@playwright/test';
 
-const BASE_URL = 'http://127.0.0.1:3000';
+// Default targets the local http-server (port 3000) used by the in-repo flow.
+// The release-smoke harness (examples/release-smoke/run.mjs --matrix) overrides
+// this via BASE_URL to point at an ephemeral server that swaps in the
+// registry-installed @hyperfixi/core/dist bundles, so the same matrix exercises
+// the published tarball instead of the locally built artifacts.
+const BASE_URL = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 
 // Bundle configurations with expected capabilities (sizes are gzipped)
 const BUNDLES = {

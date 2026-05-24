@@ -22,11 +22,15 @@
 (function () {
   'use strict';
 
-  // Bundle configurations
+  // Bundle configurations.
+  // `browser` points at the canonical `hyperfixi.js` (hyperfixi-browser.js is a
+  // backward-compat copy that will be removed in v3.0.0 — see
+  // scripts/create-bundle-aliases.mjs).
   const BUNDLES = {
-    'browser': 'hyperfixi-browser.js',
+    'browser': 'hyperfixi.js',
     'hybrid-complete': 'hyperfixi-hybrid-complete.js',
     'hybrid-hx': 'hyperfixi-hybrid-hx.js',
+    'hybrid-hx-v4': 'hyperfixi-hx-v4.js',
     'lite': 'hyperfixi-lite.js',
     'lite-plus': 'hyperfixi-lite-plus.js',
     'standard': 'hyperfixi-browser-standard.js',
