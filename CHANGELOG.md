@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-05-24
+
+A single-bug patch for a v2.5.0 publishing regression that broke every localized htmx attribute.
+
+### Fixed
+
+- **`hyperfixi-hx.js` / `hyperfixi-hx-v4.js`: `window.__hyperfixi_i18n` lost to terser** (`@hyperfixi/core`). The Phase 8 orchestrator's public-API singleton (`window.__hyperfixi_i18n = { register }`) was being eliminated by terser in the published v2.5.0 hybrid-hx and hybrid-hx-v4 bundles, silently breaking every `vocab/htmx/{lang}.js` module on load with `"loaded before the htmx-compat orchestrator"`. Two layers fixed: (1) the module-level `installPublicAPI()` invocation is now exported and called explicitly from each bundle entry that includes htmx-compat, so terser's `unused: true, toplevel: true` pass can't drop it; (2) the API is exposed via bracket-access (`window['__hyperfixi_i18n']`) to bypass terser's `properties.regex: /^_/` mangling. Localized htmx attribute names (`hx-obtener`, `hx-取得`, `hx-احصل`, …) now resolve correctly in the published bundles, matching their already-working behavior under the source-aliased vitest suite.
+
+### Tests
+
+- **Orchestrator public-API gate** in pre-publish-check + release-smoke. New 2-test Playwright spec (`packages/core/src/compatibility/browser-tests/i18n-orchestrator-api.spec.ts`, ~600 ms) asserts `typeof window.__hyperfixi_i18n.register === 'function'` in both shipped htmx bundles. Wired into `.github/workflows/pre-publish-check.yml` (fails the workflow on regression) and the `--matrix` stage of `examples/release-smoke/run.mjs` (so the gate fires against the registry-installed tarball, not only the locally-built dist). Surgical — no swap-pipeline dependency. The broader `i18n-htmx.spec.ts` remains un-wired pending two pre-existing bugs unrelated to this release: a reactivity / notify-hook bug breaking localized `hx-live` re-renders, and a swap-pipeline bug stringifying `DocumentFragment`s in `fetch ... as html` → `put it into target`.
+
 ## [2.5.0] - 2026-05-22
 
 A focused release: a new LLM-domain introspection API, plus correctness fixes for the parser, the multilingual renderers, and how published packages declare their internal dependencies.

@@ -10,7 +10,10 @@
 import { test, expect, type Page } from '@playwright/test';
 import { waitForHyperfixi } from './test-utils';
 
-const BASE_URL = 'http://127.0.0.1:3000';
+// Mirrors bundle-compatibility.spec.ts / hx-v4-features.spec.ts — env override
+// lets the release-smoke `--matrix` stage point this spec at its ephemeral
+// server (which serves the registry-installed @hyperfixi/core/{dist,vocab}/).
+const BASE_URL = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 
 async function loadDemo(page: Page, file: string): Promise<void> {
   await page.goto(`${BASE_URL}/examples/hx-v4-i18n/${file}`, {

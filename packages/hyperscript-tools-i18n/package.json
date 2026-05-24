@@ -1,6 +1,6 @@
 {
   "name": "@hyperscript-tools/i18n",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Build-time translation for hyperscript code samples — generate per-language HTML from a canonical English source",
   "type": "module",
   "main": "dist/index.js",
@@ -44,7 +44,7 @@
   "author": "HyperFixi Contributors",
   "license": "MIT",
   "dependencies": {
-    "@lokascript/i18n": "^2.5.0"
+    "@lokascript/i18n": "^2.5.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

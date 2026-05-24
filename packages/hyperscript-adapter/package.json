@@ -1,6 +1,6 @@
 {
   "name": "@lokascript/hyperscript-adapter",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Multilingual adapter plugin for original _hyperscript — write hyperscript in 24 languages",
   "type": "module",
   "main": "dist/index.cjs",
@@ -142,7 +142,7 @@
   },
   "homepage": "https://github.com/codetalcott/hyperfixi/tree/main/packages/hyperscript-adapter#readme",
   "dependencies": {
-    "@lokascript/semantic": "^2.5.0"
+    "@lokascript/semantic": "^2.5.1"
   },
   "optionalDependencies": {
     "@lokascript/i18n": "*"

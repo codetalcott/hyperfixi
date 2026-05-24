@@ -25,16 +25,33 @@
  *   npx playwright install chromium
  */
 
-import { mkdtempSync, rmSync, writeFileSync, copyFileSync, readFileSync, existsSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  writeFileSync,
+  copyFileSync,
+  readFileSync,
+  existsSync,
+  symlinkSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname, extname } from 'node:path';
+import { join, dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, 'fixtures');
-const VERSION = process.argv[2] || 'latest';
+// `examples/release-smoke/run.mjs` → repo root is two levels up. The matrix
+// stage serves repo gallery pages + test-pages from here, but swaps the
+// bundle path to the registry tarball.
+const REPO_ROOT = resolve(HERE, '..', '..');
+
+// argv: any flags + an optional version. Flags start with `--`.
+const args = process.argv.slice(2);
+const RUN_MATRIX = args.includes('--matrix');
+const VERSION = args.find((a) => !a.startsWith('--')) || 'latest';
 
 // User-facing packages the harness installs explicitly. Their transitive deps
 // (@lokascript/intent, domain-config, planner, the domain-* packages, …) are
@@ -60,6 +77,13 @@ const CONTENT_TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.map': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
 };
 
 const results = [];
@@ -104,6 +128,131 @@ async function browserCase(chromium, port, file, name, fn) {
     record(name, false, e.message.split('\n')[0]);
   } finally {
     await browser.close();
+  }
+}
+
+/**
+ * Build a webroot under `tmp` that combines:
+ *   - repo `examples/` + `packages/core/test-pages/` (the HTML the spec hits)
+ *   - registry-installed `node_modules/@hyperfixi/core/dist/` mounted at
+ *     `/packages/core/dist/` so `bundle-loader.js`'s `../../packages/core/dist/`
+ *     resolves to the published tarball, not the repo build.
+ *
+ * Returns the absolute webroot path. Symlinks (not copies) — fast and
+ * keeps the source of truth obvious if anything 404s.
+ */
+function buildMatrixWebroot(tmp) {
+  const webroot = join(tmp, 'webroot');
+  mkdirSync(join(webroot, 'packages', 'core'), { recursive: true });
+  mkdirSync(join(webroot, 'packages', 'developer-tools'), { recursive: true });
+
+  symlinkSync(join(REPO_ROOT, 'examples'), join(webroot, 'examples'), 'dir');
+  symlinkSync(
+    join(REPO_ROOT, 'packages', 'core', 'test-pages'),
+    join(webroot, 'packages', 'core', 'test-pages'),
+    'dir',
+  );
+  symlinkSync(
+    join(tmp, 'node_modules', '@hyperfixi', 'core', 'dist'),
+    join(webroot, 'packages', 'core', 'dist'),
+    'dir',
+  );
+  // hx-v4-i18n demos load `packages/core/vocab/htmx/{lang}.js` — vocab modules
+  // are part of the published surface (`files: ["vocab/**/*.js"]`), so we
+  // serve the registry-installed copy. Catches vocab-packaging bugs that would
+  // otherwise only surface when an end user tries to author localized htmx.
+  symlinkSync(
+    join(tmp, 'node_modules', '@hyperfixi', 'core', 'vocab'),
+    join(webroot, 'packages', 'core', 'vocab'),
+    'dir',
+  );
+  // prism-loader.js (used by every gallery page for code highlighting) pulls
+  // `packages/developer-tools/dist/prism-hyperscript-i18n/browser.mjs`. It's a
+  // docs-only dep, but a 404 here lands in the page's console as an error and
+  // tripped the spec's "loads without critical errors" assertion. Symlinking
+  // the local build keeps the check honest — it's not part of the published
+  // surface we're validating.
+  symlinkSync(
+    join(REPO_ROOT, 'packages', 'developer-tools', 'dist'),
+    join(webroot, 'packages', 'developer-tools', 'dist'),
+    'dir',
+  );
+
+  return webroot;
+}
+
+/**
+ * Stage 4: drive `bundle-compatibility.spec.ts`, `hx-v4-features.spec.ts`, and
+ * `i18n-orchestrator-api.spec.ts` from `packages/core` against the
+ * registry-installed bundles via BASE_URL override. Streams Playwright's
+ * line-reporter output so the user sees per-test progress; success is just
+ * the spawn's exit code.
+ */
+async function runMatrixStage(tmp) {
+  const corePkgDist = join(tmp, 'node_modules', '@hyperfixi', 'core', 'dist');
+  if (!existsSync(corePkgDist)) {
+    record('matrix prereq: @hyperfixi/core/dist installed', false, `missing ${corePkgDist}`);
+    return;
+  }
+
+  let webroot;
+  try {
+    webroot = buildMatrixWebroot(tmp);
+  } catch (e) {
+    record('matrix webroot setup', false, e.message);
+    return;
+  }
+
+  const matrixServer = await startServer(webroot);
+  const baseUrl = `http://127.0.0.1:${matrixServer.port}`;
+
+  try {
+    const exitCode = await new Promise((res) => {
+      const child = spawn(
+        'npx',
+        [
+          'playwright',
+          'test',
+          // Existing matrix: 8 bundles × gallery examples + bundle-specific tests.
+          'src/compatibility/browser-tests/bundle-compatibility.spec.ts',
+          // hx-v4 distinctive features: hx-live, multi-dep tracking, two-way
+          // bind, SSE / WS mock streaming, plus the no-reactivity diagnostic
+          // (hx-on:click wiring in the slim bundle without reactivity installed).
+          'src/compatibility/browser-tests/hx-v4-features.spec.ts',
+          // Orchestrator public-API gate — guards the v2.5.0 terser regression
+          // where `window.__hyperfixi_i18n = { register }` was mangled out of
+          // the minified hybrid-hx / hybrid-hx-v4 bundles, silently breaking
+          // every vocab/htmx/{lang}.js module on load (fixed in 90ba037b).
+          // Surgical check — no swap-pipeline dependency.
+          'src/compatibility/browser-tests/i18n-orchestrator-api.spec.ts',
+          // NOTE: src/compatibility/browser-tests/i18n-htmx.spec.ts is NOT
+          // wired here yet. Its `live-multilang` test hits a pre-existing
+          // reactivity bug (localized hx-live counters don't re-render on
+          // global writes — needs runtime/notify-hook investigation). Its
+          // `multilang-page` test hits a separate pre-existing swap bug
+          // (`fetch ... as html` → `put it into target` stringifies the
+          // DocumentFragment instead of inserting it). The webroot already
+          // exposes `packages/core/vocab/` so the spec can be dropped in
+          // once those bugs are fixed.
+          '--project=full',
+          '--reporter=line',
+        ],
+        {
+          cwd: join(REPO_ROOT, 'packages', 'core'),
+          env: { ...process.env, BASE_URL: baseUrl },
+          stdio: 'inherit',
+        },
+      );
+      child.on('close', (code) => res(code ?? 1));
+      child.on('error', (err) => {
+        console.error(`  (spawn error: ${err.message})`);
+        res(1);
+      });
+    });
+    record(`bundle-compat + hx-v4-features + i18n-orchestrator-api vs @${VERSION} tarball`, exitCode === 0,
+      exitCode === 0 ? null : `playwright exit ${exitCode}`);
+  } finally {
+    matrixServer.close();
   }
 }
 
@@ -183,6 +332,18 @@ async function main() {
           { timeout: 5_000 },
         );
       });
+    }
+
+    // ---- 4. Bundle compatibility matrix (opt-in: --matrix) -----------------
+    // Runs the existing in-repo Playwright matrix (~8 bundles × gallery
+    // examples) against a server that serves repo gallery pages BUT swaps
+    // `/packages/core/dist/*` to the registry-installed @hyperfixi/core/dist.
+    // This exercises the published tarball through the same surface the local
+    // browser-tests use — catching bundle-shape regressions that source-aliased
+    // unit tests can't see.
+    if (RUN_MATRIX) {
+      console.log('\n4. Bundle compatibility matrix vs published bundles (Playwright)');
+      await runMatrixStage(tmp);
     }
   } finally {
     server?.close();

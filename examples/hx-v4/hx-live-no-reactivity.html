@@ -71,7 +71,10 @@
       wire up normally. Demonstrating with the htmx-compat path:
     </p>
     <div class="other">
-      <button hx-on:click="put 'clicked at ' + (new Date()).toLocaleTimeString() into me">
+      <!-- The slim hybrid-hx parser doesn't support the `new` keyword, so this
+           body uses a counter pattern instead of `new Date()`. Same point:
+           the handler fires, hyperscript executes, the DOM updates. -->
+      <button hx-on:click="set $clicks to ($clicks or 0) + 1 then put 'clicked ' + $clicks + ' time(s)' into me">
         I am wired via hx-on:click
       </button>
     </div>
