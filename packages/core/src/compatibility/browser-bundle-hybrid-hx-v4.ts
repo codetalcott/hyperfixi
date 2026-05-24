@@ -61,6 +61,15 @@ import {
   type HtmxConfig,
 } from '../htmx/htmx-translator.js';
 
+// Install `window.__hyperfixi_i18n` synchronously so vocab modules
+// (vocab/htmx/{lang}.js) loaded by `<script>` tags AFTER this bundle can
+// register their localized attribute names. The orchestrator module already
+// calls this on import, but Terser's `unused: true, toplevel: true` pass
+// elides the side effect under `sideEffects: false`. Calling here from the
+// entry guarantees the assignment survives minification.
+import { installPublicAPI as installI18nPublicAPI } from '../htmx/i18n-orchestrator.js';
+installI18nPublicAPI();
+
 // ============== REACTIVITY INSTALL ==============
 
 // The default runtime is constructed lazily on first use by the
