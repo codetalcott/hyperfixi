@@ -234,16 +234,33 @@ jobs:
           fi
 
       - name: Commit version changes
-        if: ${{ github.event.inputs.dry-run == 'false' }}
+        # When version-type=current, the bump was already committed by hand
+        # before this workflow was dispatched — there is nothing to commit
+        # here, and running the step risks corrupting state (see lockfile
+        # handling below). Skip cleanly so tags + release still run.
+        if: ${{ github.event.inputs.dry-run == 'false' && github.event.inputs.version-type != 'current' }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          # Don't commit package-lock.json — it contains workspace-package versions that
-          # would cause the next run's `npm install` to fail (tries to fetch old versions
-          # from registry since they're now published but at a higher version number)
+          BRANCH="${{ github.ref_name }}"
+
+          # The "Install dependencies" step earlier in this job did
+          # `rm -f package-lock.json && npm install`, which leaves an
+          # unstaged lockfile change in the worktree. We intentionally do
+          # NOT commit it (would break the next run's `npm install` because
+          # it would reference workspace-package versions that are now
+          # higher-than-published-at-the-time). Restore it from HEAD so the
+          # subsequent `git pull` doesn't refuse with "your local changes
+          # would be overwritten by merge".
+          git checkout -- package-lock.json 2>/dev/null || true
+
           git add packages/*/package.json package.json lerna.json 2>/dev/null || true
           git commit -m "chore: release v$VERSION" || echo "No changes to commit"
-          git pull --rebase origin main || git pull --no-rebase origin main
-          git push
+
+          # Pull from the SAME branch the workflow ran on, not hardcoded
+          # `main` — release branches (release/x.y.z) need to stay on the
+          # release branch, not pull main into themselves.
+          git pull --rebase origin "$BRANCH" || git pull --no-rebase origin "$BRANCH"
+          git push origin HEAD:"$BRANCH"
 
       - name: Create Git tags
         if: ${{ github.event.inputs.dry-run == 'false' }}
