@@ -53,6 +53,14 @@ import {
   type HtmxConfig,
 } from '../htmx/htmx-translator.js';
 
+// Install `window.__hyperfixi_i18n` synchronously so vocab modules
+// (vocab/htmx/{lang}.js) loaded after this bundle can register localized
+// attribute names. The slim bundle doesn't auto-load any vocab modules,
+// but the public API has to exist for users who load them by hand.
+// See browser-bundle-hybrid-hx-v4.ts for the equivalent fix's full rationale.
+import { installPublicAPI as installI18nPublicAPI } from '../htmx/i18n-orchestrator.js';
+installI18nPublicAPI();
+
 // ============== HTMX/FIXI COMPATIBILITY ==============
 
 let htmxProcessor: HtmxAttributeProcessor | null = null;

@@ -204,16 +204,28 @@ export function resetOrchestrator(): void {
 }
 
 /**
- * Install the public `window.__hyperfixi_i18n` API. Called automatically
- * on module import in browser environments; idempotent.
+ * Install the public `window.__hyperfixi_i18n` API so vocab modules
+ * (`vocab/htmx/{lang}.js`) can call `register()` on it. Idempotent.
+ *
+ * Two minification hazards this avoids — both load-bearing:
+ *   1. Bundle entries MUST `import { installPublicAPI }` and call it
+ *      explicitly. The module-level invocation below survives Rollup but
+ *      Terser's `unused: true, toplevel: true` pass elides it under
+ *      `sideEffects: false`. See browser-bundle-hybrid-hx*.ts.
+ *   2. Property access uses bracket-with-string-constant rather than dot
+ *      access. Terser's `properties.regex: /^_/` mangles dot access to
+ *      `_`-prefixed properties (`w.__hyperfixi_i18n` → `w.X`), but leaves
+ *      bracket access via a string constant alone. The
+ *      `__hyperfixi_parser_extension_registry__` singleton uses the same
+ *      trick — see packages/core/src/parser/extensions.ts.
  */
-function installPublicAPI(): void {
+const WINDOW_KEY = '__hyperfixi_i18n';
+
+export function installPublicAPI(): void {
   if (typeof window === 'undefined') return;
-  const w = window as unknown as {
-    __hyperfixi_i18n?: { register: typeof register };
-  };
-  if (w.__hyperfixi_i18n) return;
-  w.__hyperfixi_i18n = { register };
+  const w = window as unknown as Record<string, { register: typeof register } | undefined>;
+  if (w[WINDOW_KEY]) return;
+  w[WINDOW_KEY] = { register };
 }
 
 installPublicAPI();
