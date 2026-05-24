@@ -110,6 +110,13 @@ export const ENGLISH_COMMANDS: Set<string> = new Set([
   'trigger',
   'unless',
   'wait',
+  // v2.x reactive + realtime + service-worker DSL commands
+  'live',
+  'bind',
+  'eventsource',
+  'socket',
+  'worker',
+  'intercept',
 ]);
 
 // =============================================================================

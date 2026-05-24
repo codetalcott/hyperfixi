@@ -135,5 +135,9 @@ export const englishProfile: LanguageProfile = {
     stream: { primary: 'stream', normalized: 'stream' },
     live: { primary: 'live', normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
+    bind: { primary: 'bind', normalized: 'bind' },
+    eventsource: { primary: 'eventsource', normalized: 'eventsource' },
+    worker: { primary: 'worker', normalized: 'worker' },
+    intercept: { primary: 'intercept', normalized: 'intercept' },
   },
 };
