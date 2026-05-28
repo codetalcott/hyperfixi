@@ -6,6 +6,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MakeCommand } from '../make';
+import { evalHyperScript } from '../../../compatibility/eval-hyperscript';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 import type { ASTNode } from '../../../types/base-types';
 
@@ -228,6 +229,31 @@ describe('MakeCommand', () => {
       expect(el.classList.contains('bar')).toBe(true);
     });
 
+    it('should create element from open/close HTML literal with text', async () => {
+      const context = createMockContext();
+      const result = await command.execute(
+        { article: 'a' as const, expression: '<div>created element</div>' },
+        context
+      );
+
+      const el = result as HTMLElement;
+      expect(el.tagName).toBe('DIV');
+      expect(el.textContent).toBe('created element');
+    });
+
+    it('should create nested open/close element with attributes', async () => {
+      const context = createMockContext();
+      const result = await command.execute(
+        { article: 'a' as const, expression: "<li class='item'><span>1</span></li>" },
+        context
+      );
+
+      const el = result as HTMLElement;
+      expect(el.tagName).toBe('LI');
+      expect(el.classList.contains('item')).toBe(true);
+      expect(el.querySelector('span')?.textContent).toBe('1');
+    });
+
     it('should set context.it to created element', async () => {
       const context = createMockContext();
       const input = {
@@ -361,6 +387,41 @@ describe('MakeCommand', () => {
       expect(result).toBeInstanceOf(URL);
       expect((result as URL).pathname).toBe('/page');
       expect(context.it).toBe(result);
+    });
+  });
+
+  // These go through the REAL parser + runtime (evalHyperScript), which the
+  // unit tests above bypass. They guard the integration gap that previously
+  // left `make <element-literal>` broken end-to-end: the parser files the
+  // element under modifiers.a (not args[0]) and the literal must be created,
+  // not querySelector-ed.
+  describe('integration (parser → runtime)', () => {
+    it('creates a self-closing element with id + classes', async () => {
+      const el = (await evalHyperScript('make a <div#created.box.big/>')) as HTMLElement;
+      expect(el.tagName).toBe('DIV');
+      expect(el.id).toBe('created');
+      expect(el.classList.contains('box')).toBe(true);
+      expect(el.classList.contains('big')).toBe(true);
+    });
+
+    it('creates an open/close element with text content', async () => {
+      const el = (await evalHyperScript('make a <div>created element</div>')) as HTMLElement;
+      expect(el.tagName).toBe('DIV');
+      expect(el.textContent).toBe('created element');
+    });
+
+    it('binds the created element to `it` for a following command', async () => {
+      document.body.innerHTML = '<div id="make-out"></div>';
+      await evalHyperScript('make a <div>created element</div> then put it into #make-out');
+      expect(document.getElementById('make-out')?.textContent).toContain('created element');
+    });
+
+    it('binds the created element to a `called` variable', async () => {
+      document.body.innerHTML = '<div id="make-out2"></div>';
+      await evalHyperScript('make a <b#bold/> called madeEl then put madeEl into #make-out2');
+      const child = document.getElementById('make-out2')?.firstElementChild as HTMLElement | null;
+      expect(child?.tagName).toBe('B');
+      expect(child?.id).toBe('bold');
     });
   });
 });

@@ -32,7 +32,11 @@ export interface MultiWordPattern {
  */
 export const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
   { command: 'append', keywords: ['to'], syntax: 'append <value> [to <target>]' },
-  { command: 'make', keywords: ['a', 'an'], syntax: 'make (a|an) <type>' },
+  {
+    command: 'make',
+    keywords: ['a', 'an', 'from', 'called'],
+    syntax: 'make (a|an) <type> [from <args>] [called <name>]',
+  },
   { command: 'send', keywords: ['to'], syntax: 'send <event> to <target>' },
   { command: 'throw', keywords: [], syntax: 'throw <error>' },
 ];

@@ -56,6 +56,23 @@ function createDOMElement(expr: string): HTMLElement {
   return element;
 }
 
+/**
+ * Create a DOM element from a full open/close HTML literal like
+ * `<li class='x'><span>1</span></li>` (with nested children), as opposed to the
+ * `<tag#id.class/>` self-closing shorthand handled by createDOMElement.
+ */
+function createElementFromHTML(html: string): HTMLElement {
+  const template = document.createElement('template');
+  template.innerHTML = html.trim();
+  const fromTemplate = template.content.firstElementChild;
+  if (fromTemplate && isHTMLElement(fromTemplate)) return fromTemplate;
+  // Fallback for environments where <template>.content is unavailable.
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html.trim();
+  const child = wrapper.firstElementChild;
+  return child && isHTMLElement(child) ? child : wrapper;
+}
+
 /** Create class instance using constructor lookup */
 function createClassInstance(
   className: string | HTMLElement,
@@ -106,14 +123,16 @@ async function resolveVariableName(
   context: TypedExecutionContext
 ): Promise<string | undefined> {
   if (!calledMod) return undefined;
+  // `called <name>` parses the name as a symbol or a bare identifier; use the
+  // node's name directly rather than evaluating it (the name isn't a variable).
   if (
-    calledMod.type === 'symbol' &&
+    (calledMod.type === 'symbol' || calledMod.type === 'identifier') &&
     typeof (calledMod as Record<string, unknown>).name === 'string'
   ) {
     return (calledMod as Record<string, unknown>).name as string;
   }
   const value = await evaluator.evaluate(calledMod, context);
-  return typeof value === 'string' ? value : String(value);
+  return typeof value === 'string' ? value : undefined;
 }
 
 @meta({
@@ -135,9 +154,22 @@ export class MakeCommand implements DecoratedCommand {
     evaluator: ExpressionEvaluator,
     context: TypedExecutionContext
   ): Promise<MakeCommandInput> {
+    // `make a <…>` parses the element as the value of the article modifier
+    // (a/an), not a positional arg. Fall back to args[0] for direct callers.
+    const elementNode = raw.modifiers.an ?? raw.modifiers.a ?? raw.args[0];
+    if (!elementNode) {
+      throw new Error('Make command requires class name or DOM element expression');
+    }
+    // Element literals carry their full `<…>` markup on `node.raw`; use it
+    // directly so the element is created rather than querySelector-ed.
+    const rawLiteral = (elementNode as Record<string, unknown>).raw;
     const expression =
-      raw.args.length > 0 ? await evaluator.evaluate(raw.args[0], context) : undefined;
-    if (!expression) throw new Error('Make command requires class name or DOM element expression');
+      typeof rawLiteral === 'string' && rawLiteral.startsWith('<')
+        ? rawLiteral
+        : await evaluator.evaluate(elementNode, context);
+    if (expression === undefined || expression === null) {
+      throw new Error('Make command requires class name or DOM element expression');
+    }
 
     const article = raw.modifiers.an !== undefined ? 'an' : 'a';
     const constructorArgs = await resolveConstructorArgs(raw.modifiers.from, evaluator, context);
@@ -149,10 +181,13 @@ export class MakeCommand implements DecoratedCommand {
   async execute(input: MakeCommandInput, context: TypedExecutionContext): Promise<unknown> {
     const { expression, constructorArgs = [], variableName } = input;
 
+    const isLiteral = typeof expression === 'string' && expression.startsWith('<');
     const result =
-      typeof expression === 'string' && expression.startsWith('<') && expression.endsWith('/>')
-        ? createDOMElement(expression)
-        : createClassInstance(expression, constructorArgs, context);
+      isLiteral && (expression as string).endsWith('/>')
+        ? createDOMElement(expression as string)
+        : isLiteral && /<\/[a-zA-Z]/.test(expression as string)
+          ? createElementFromHTML(expression as string)
+          : createClassInstance(expression, constructorArgs, context);
 
     Object.assign(context, { it: result });
     if (variableName) setVariableValue(variableName, result, context);
