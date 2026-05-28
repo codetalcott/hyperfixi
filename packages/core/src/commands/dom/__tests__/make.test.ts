@@ -424,4 +424,33 @@ describe('MakeCommand', () => {
       expect(child?.id).toBe('bold');
     });
   });
+
+  describe('interpolation (`{expr}` in element literals)', () => {
+    it('interpolates an inline expression', async () => {
+      const el = (await evalHyperScript('make a <span>item {2 * 3}</span>')) as HTMLElement;
+      expect(el.textContent).toBe('item 6');
+    });
+
+    it('interpolates a local variable bound earlier in the script', async () => {
+      const el = (await evalHyperScript(
+        'set n to 5 then make a <div>Article #{n}</div>'
+      )) as HTMLElement;
+      // `#` is literal text; `{n}` is interpolated → "#5".
+      expect(el.textContent).toBe('Article #5');
+    });
+
+    it('HTML-escapes interpolated values (no markup injection)', async () => {
+      const el = (await evalHyperScript("make a <span>{'<b>hi</b>'}</span>")) as HTMLElement;
+      // The value is escaped, so no nested <b> element is created.
+      expect(el.querySelector('b')).toBeNull();
+      expect(el.textContent).toBe('<b>hi</b>');
+    });
+
+    it('leaves non-expression braces untouched', async () => {
+      const el = (await evalHyperScript(
+        'make a <span>a {definitely not valid !} b</span>'
+      )) as HTMLElement;
+      expect(el.textContent).toBe('a {definitely not valid !} b');
+    });
+  });
 });

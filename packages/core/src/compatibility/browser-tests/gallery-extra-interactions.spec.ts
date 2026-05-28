@@ -90,10 +90,14 @@ test.describe('infinite-scroll.html @comprehensive', () => {
     // The handler's `repeat 10 times … make a <li>…</li> … put it at end of
     // #content-list` appends rows. We assert growth, not an exact count — a
     // synthetic scroll-to-bottom can re-trigger additional pages as the content
-    // grows. (Item text shows literal #{} markers: template interpolation inside
-    // element literals is a separate, unshipped feature.)
+    // grows.
     await expect.poll(async () => await items.count(), { timeout: 5000 }).toBeGreaterThan(10);
     await expect(page.locator('#items-loaded')).not.toHaveText('10');
+
+    // The made rows interpolate `{itemNum}` — a dynamically-created item's
+    // number badge shows a real number (e.g. "#11"), not the literal "#{itemNum}".
+    const madeBadge = items.nth(10).locator('.item-number');
+    await expect(madeBadge).toHaveText(/^#\d+$/);
   });
 });
 

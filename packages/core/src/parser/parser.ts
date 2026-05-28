@@ -3093,6 +3093,7 @@ export class Parser {
       'increment',
       'decrement',
       'add',
+      'append',
       'toggle',
       'if',
       'unless',
