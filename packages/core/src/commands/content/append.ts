@@ -65,8 +65,21 @@ export class AppendCommand implements DecoratedCommand {
     const content = await evaluator.evaluate(raw.args[0], context);
     let target: string | HTMLElement | unknown[] | undefined;
 
-    if (raw.modifiers?.to) target = await evaluator.evaluate(raw.modifiers.to, context);
-    else if ((raw as any).target) target = (raw as any).target;
+    if (raw.modifiers?.to) {
+      const toNode = raw.modifiers.to as unknown as Record<string, unknown>;
+      const toType = toNode.type;
+      // A bare variable reference (`to greeting`, `to :greeting`, `to me`) keeps
+      // its NAME so execute can read+write the variable. Evaluating it would
+      // yield the current value, so `append … to <var>` would lose the binding.
+      if (
+        (toType === 'identifier' || toType === 'variable' || toType === 'symbol') &&
+        typeof toNode.name === 'string'
+      ) {
+        target = toNode.name as string;
+      } else {
+        target = await evaluator.evaluate(raw.modifiers.to, context);
+      }
+    } else if ((raw as any).target) target = (raw as any).target;
 
     return { content, target };
   }
@@ -101,6 +114,10 @@ export class AppendCommand implements DecoratedCommand {
 
       const current = getVariableValue(target, context);
       if (current !== undefined) {
+        if (isHTMLElement(current)) {
+          (current as HTMLElement).innerHTML += contentStr;
+          return { result: current, targetType: 'element', target: current as HTMLElement };
+        }
         if (Array.isArray(current)) {
           current.push(content);
           return { result: current, targetType: 'array', target };

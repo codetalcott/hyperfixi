@@ -4,22 +4,23 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { waitForHyperfixi } from './test-utils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Served by the Playwright webServer (http-server at the repo root on :3000).
+const BASE_URL = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 
 test.describe('Multi-Word Command Parser (Session 32)', () => {
   test.beforeEach(async ({ page }) => {
-    // Create a test HTML page with HyperFixi loaded
+    // Create a test HTML page with HyperFixi loaded. The bundle is loaded from
+    // the served repo root; auto-init runs because readyState != 'loading' when
+    // the script executes inside setContent.
     const testHTML = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>Multi-Word Command Test</title>
-  <script src="/dist/hyperfixi.js"></script>
+  <script src="/packages/core/dist/hyperfixi.js"></script>
 </head>
 <body>
   <div id="results"></div>
@@ -55,22 +56,16 @@ test.describe('Multi-Word Command Parser (Session 32)', () => {
     Test Make
   </button>
   <div id="result-make"></div>
-
-  <script>
-    // Initialize HyperFixi
-    if (window.HyperFixi) {
-      window.HyperFixi.browserInit();
-      console.log('✅ HyperFixi initialized');
-    } else {
-      console.error('❌ HyperFixi not loaded');
-    }
-  </script>
 </body>
 </html>
     `;
 
-    await page.goto('data:text/html;charset=utf-8,' + encodeURIComponent(testHTML));
-    await page.waitForTimeout(500); // Wait for HyperFixi to initialize
+    // Navigate to the served origin first so root-relative script paths resolve,
+    // then inject the markup (a data: URL can't load the /packages/... bundle).
+    await page.goto(`${BASE_URL}/examples/index.html`, { waitUntil: 'domcontentloaded' });
+    await page.setContent(testHTML, { waitUntil: 'load' });
+    await waitForHyperfixi(page);
+    await page.waitForTimeout(150); // let the attribute processor wire `_=` handlers
   });
 
   test('append...to command works in _="" attribute', async ({ page }) => {

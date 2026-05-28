@@ -9,9 +9,11 @@
  */
 
 import type { ASTNode, TypedExecutionContext } from '../../types/base-types';
+import type { ExecutionContext } from '../../types/core';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { setVariableValue } from '../helpers/variable-access';
+import { evaluateExpressionFromSource } from '../../parser/runtime';
 import {
   command,
   meta,
@@ -19,6 +21,47 @@ import {
   type DecoratedCommand,
   type CommandMetadata,
 } from '../decorators';
+
+const HTML_ESCAPE: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, c => HTML_ESCAPE[c]);
+}
+
+/**
+ * Interpolate `{expr}` placeholders in a make element literal against the live
+ * context (e.g. `<li>Article #{itemNum}</li>` → `<li>Article #5</li>`, where
+ * `#` is literal and `{itemNum}` is evaluated). Values are HTML-escaped to keep
+ * the innerHTML build safe. Braces whose contents aren't a valid/evaluable
+ * expression are left untouched, so literal `{...}` text survives.
+ */
+async function interpolateLiteral(html: string, context: ExecutionContext): Promise<string> {
+  if (!html.includes('{')) return html;
+  const re = /\{([^{}]+)\}/g;
+  const replacements: Array<{ index: number; length: number; text: string }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    let text = m[0]; // default: leave the literal `{…}` untouched
+    try {
+      const value = await evaluateExpressionFromSource(m[1].trim(), context);
+      if (value !== undefined && value !== null) text = escapeHtml(String(value));
+    } catch {
+      /* not an expression — keep the literal text */
+    }
+    replacements.push({ index: m.index, length: m[0].length, text });
+  }
+  let result = html;
+  for (let i = replacements.length - 1; i >= 0; i--) {
+    const { index, length, text } = replacements[i];
+    result = result.slice(0, index) + text + result.slice(index + length);
+  }
+  return result;
+}
 
 /** Typed input after parsing */
 export interface MakeCommandInput {
@@ -163,12 +206,17 @@ export class MakeCommand implements DecoratedCommand {
     // Element literals carry their full `<…>` markup on `node.raw`; use it
     // directly so the element is created rather than querySelector-ed.
     const rawLiteral = (elementNode as Record<string, unknown>).raw;
-    const expression =
+    let expression =
       typeof rawLiteral === 'string' && rawLiteral.startsWith('<')
         ? rawLiteral
         : await evaluator.evaluate(elementNode, context);
     if (expression === undefined || expression === null) {
       throw new Error('Make command requires class name or DOM element expression');
+    }
+    // Evaluate `{expr}` interpolation inside element literals against the live
+    // context (vars bound by the surrounding handler, e.g. `{itemNum}`).
+    if (typeof expression === 'string' && expression.startsWith('<')) {
+      expression = await interpolateLiteral(expression, context as ExecutionContext);
     }
 
     const article = raw.modifiers.an !== undefined ? 'an' : 'a';
