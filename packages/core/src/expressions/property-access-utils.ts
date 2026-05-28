@@ -172,6 +172,8 @@ const SPECIAL_DOM_PROPERTIES: Record<string, (element: Element) => unknown> = {
   lastchild: el => el.lastElementChild,
   nextsibling: el => el.nextElementSibling,
   previoussibling: el => el.previousElementSibling,
+  next: el => el.nextElementSibling,
+  previous: el => el.previousElementSibling,
   values: el => collectFormValues(el),
 };
 

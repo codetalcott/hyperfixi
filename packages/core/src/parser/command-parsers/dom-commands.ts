@@ -143,6 +143,14 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
     }
   }
 
+  // Optional bare `modal` modifier for dialogs: `toggle #dialog modal`.
+  // ToggleCommand.parseModalMode reads args[1] === 'modal'. (The `as modal`
+  // form is handled in ToggleCommand.parseInput via the asExpression target.)
+  if (ctx.check('modal')) {
+    ctx.advance();
+    args.push({ type: 'literal', value: 'modal', raw: 'modal' } as unknown as ASTNode);
+  }
+
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(...args)
     .endingAt(ctx.getPosition())

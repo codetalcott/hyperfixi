@@ -97,6 +97,11 @@ test.describe('Landing Page Examples @comprehensive', () => {
           el => window.getComputedStyle(el).backgroundColor
         );
 
+        // The whole point of the demo: holding cycles the background color, so
+        // the sampled color MUST differ from the initial. Without this the test
+        // passes even if cycling is completely broken.
+        expect(cyclingBg).not.toBe(initialBg);
+
         // Release
         await page.mouse.up();
         await page.waitForTimeout(100);
@@ -143,6 +148,10 @@ test.describe('Landing Page Examples @comprehensive', () => {
           el => window.getComputedStyle(el).backgroundColor
         );
 
+        // Color must have changed during the hold and be a real rgb/hsl color.
+        expect(cyclingBg).not.toBe(initialBg);
+        expect(cyclingBg).toMatch(/^rgb/);
+
         await page.mouse.up();
         await page.waitForTimeout(300);
 
@@ -177,6 +186,9 @@ test.describe('Landing Page Examples @comprehensive', () => {
         await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
         await page.mouse.down();
         await page.waitForTimeout(600);
+        // Sample mid-hold to confirm cycling actually happened before release.
+        const duringBg = await colorBox.evaluate(el => window.getComputedStyle(el).backgroundColor);
+        expect(duringBg).not.toBe(initialBg);
         await page.mouse.up();
 
         // Wait for final transition to complete
@@ -185,9 +197,11 @@ test.describe('Landing Page Examples @comprehensive', () => {
         // Color should be restored (note: 'initial' resolves to computed value)
         const finalBg = await colorBox.evaluate(el => window.getComputedStyle(el).backgroundColor);
 
-        // The final background should be either the initial value or close to it
-        // Since 'initial' is CSS keyword, it should restore to transparent or the element default
-        expect(finalBg).toBeTruthy();
+        // After release the demo runs `transition *background-color to initial`,
+        // so the final color must be a concrete rgb/rgba value and must no longer
+        // match the mid-hold cycling color.
+        expect(finalBg).toMatch(/^rgba?\(/);
+        expect(finalBg).not.toBe(duringBg);
       }
     });
 
@@ -915,7 +929,8 @@ test.describe('Landing Page Examples @comprehensive', () => {
       // Read clipboard
       const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
 
-      // Should contain the script tag
+      // The demo copies `my previous.innerText` (the install <code> snippet), so
+      // the clipboard must contain the script tag — not the string "undefined".
       expect(clipboardText).toContain('unpkg.com/hyperscript.org');
     });
   });
