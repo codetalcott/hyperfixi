@@ -1380,6 +1380,10 @@ export class Parser {
       // Mark as query-form so the evaluator returns the full collection even
       // for `<#id/>` (upstream QueryRef → ElementCollection, not single element).
       (node as any).fromQuery = true;
+      // Preserve the full `<…>` markup so `make` can build an element from it
+      // (createDOMElement / innerHTML) rather than querySelector-ing the inner
+      // selector. Additive — other query-reference consumers read `value`.
+      (node as any).raw = queryValue;
       return node;
     }
 

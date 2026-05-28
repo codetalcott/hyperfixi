@@ -70,13 +70,12 @@ test.describe('smart-element-toggle.html @comprehensive', () => {
 });
 
 test.describe('infinite-scroll.html @comprehensive', () => {
-  test('scrolling fires the on-scroll handler (updates position, shows loader)', async ({
-    page,
-  }) => {
+  test('scrolling to the bottom appends more items', async ({ page }) => {
     await load(page, '/examples/fetch-and-async/infinite-scroll.html');
 
-    await expect(page.locator('#content-list .content-item')).toHaveCount(10);
-    await expect(page.locator('#scroll-position')).toHaveText('0%');
+    const items = page.locator('#content-list .content-item');
+    await expect(items).toHaveCount(10);
+    await expect(page.locator('#items-loaded')).toHaveText('10');
 
     // Drive the scroll handler: jump to the bottom and fire a scroll event.
     await page.locator('.scroll-container').evaluate(el => {
@@ -84,19 +83,17 @@ test.describe('infinite-scroll.html @comprehensive', () => {
       el.dispatchEvent(new Event('scroll'));
     });
 
-    // The `on scroll` handler runs: it updates the scroll-position readout, then
-    // (near the bottom) flips the loading indicator on. Previously the whole
-    // handler silently failed to install because the `make a <li>…</li>` literal
-    // mis-lexed and corrupted the parse — fixed by the open/close-tag tokenizer.
-    await expect(page.locator('#scroll-position')).not.toHaveText('0%');
+    // Handler enters the near-bottom branch and flips the loader on during the
+    // simulated 1.5s fetch.
     await expect(page.locator('#loading')).toHaveClass(/active/, { timeout: 1500 });
 
-    // KNOWN GAP (not asserted): items do not actually append. The handler's
-    // `make a <li …>…</li> called newItem` uses `make`'s element-literal syntax,
-    // which is broken upstream of this fix — the parser files the literal under
-    // modifiers.a with its </> stripped/mangled and make.parseInput sees an empty
-    // args[0], so make throws mid-loop. Item-append coverage is out of scope until
-    // `make <element-literal>` is reworked.
+    // The handler's `repeat 10 times … make a <li>…</li> … put it at end of
+    // #content-list` appends rows. We assert growth, not an exact count — a
+    // synthetic scroll-to-bottom can re-trigger additional pages as the content
+    // grows. (Item text shows literal #{} markers: template interpolation inside
+    // element literals is a separate, unshipped feature.)
+    await expect.poll(async () => await items.count(), { timeout: 5000 }).toBeGreaterThan(10);
+    await expect(page.locator('#items-loaded')).not.toHaveText('10');
   });
 });
 
