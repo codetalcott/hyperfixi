@@ -206,6 +206,11 @@ test.describe('Intermediate @gallery @interaction', () => {
     const text = await page.locator('#user-data').textContent();
     expect(text).toBeTruthy();
     expect(text!.length).toBeGreaterThan(10);
+    // The card interpolates ${userData.name}, ${userData.email}, etc. via
+    // template literals — assert the fields actually resolved (no "undefined"
+    // leaking through) and the rendered structure is present.
+    expect(text).not.toContain('undefined');
+    expect(text).toContain('📧');
 
     expectNoCriticalErrors(collector);
   });

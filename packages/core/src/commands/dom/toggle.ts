@@ -89,6 +89,18 @@ export type ToggleCommandInput =
       untilEvent?: string;
     };
 
+/** True when an arg is `<target> as modal` (asExpression with a `modal` target). */
+function isModalAsExpression(arg: ASTNode | undefined): boolean {
+  if (!arg || (arg as Record<string, unknown>).type !== 'asExpression') return false;
+  const targetType = (arg as Record<string, unknown>).targetType;
+  // targetType is dual-shape: an identifier node { name } or a bare string.
+  const name =
+    typeof targetType === 'string'
+      ? targetType
+      : ((targetType as Record<string, unknown>)?.name as string | undefined);
+  return typeof name === 'string' && name.toLowerCase() === 'modal';
+}
+
 /** Parse modal mode from args and modifiers */
 async function parseModalMode(
   args: ASTNode[],
@@ -191,6 +203,16 @@ export class ToggleCommand implements DecoratedCommand {
     context: ExecutionContext
   ): Promise<ToggleCommandInput> {
     if (!raw.args?.length) throw new Error('toggle command requires an argument');
+
+    // `toggle <dialog> as modal`: the `as modal` conversion parses into an
+    // asExpression whose targetType is `modal`. Unwrap to the real target and
+    // force modal mode — `modal` is not a real type conversion.
+    let forceModal = false;
+    if (isModalAsExpression(raw.args[0])) {
+      forceModal = true;
+      const inner = (raw.args[0] as Record<string, unknown>).expression as ASTNode;
+      raw = { ...raw, args: [inner, ...raw.args.slice(1)] };
+    }
 
     const firstArg = raw.args[0];
 
@@ -375,7 +397,9 @@ export class ToggleCommand implements DecoratedCommand {
 
         const smartType = detectSmartElementType(elements);
         if (smartType === 'dialog') {
-          const mode = await parseModalMode(raw.args, raw.modifiers, evaluator, context);
+          const mode = forceModal
+            ? 'modal'
+            : await parseModalMode(raw.args, raw.modifiers, evaluator, context);
           return { type: 'dialog', mode, targets: elements as HTMLDialogElement[] };
         }
         if (smartType === 'details') {

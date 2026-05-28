@@ -106,6 +106,11 @@ export {
 // Core parsing functions from the parser module
 export { parse, canParse } from './parser';
 
+// Recommended full-parser entry: returns { node, confidence, error }.
+// Exposed on the browser global so pages can read a real confidence score
+// (the deprecated createSemanticAnalyzer().analyze() path is not bundled here).
+export { parseWithConfidence as parseSemantic } from './utils/confidence-calculator';
+
 // Explicit mode parsing and utilities
 export { parseAny, parseExplicit, isExplicitSyntax } from './explicit';
 
