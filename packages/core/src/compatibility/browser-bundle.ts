@@ -52,6 +52,16 @@ import type { LokaScriptRegistry, LokaScriptPlugin } from '../registry';
 import { registerFetchResponseType } from '../commands/async/fetch';
 import { installPlugin } from '../runtime/plugin';
 import { getParserExtensionRegistry } from '../parser/extensions';
+import {
+  validatePartialContent,
+  configurePartialValidation,
+  getPartialValidationConfig,
+  resetPartialValidationConfig,
+} from '../validation/partial-validator';
+import {
+  emitPartialValidationWarnings,
+  formatResultSummary,
+} from '../validation/partial-warning-formatter';
 
 // Import CompileResult type for browser bundle
 import type { CompileResult, NewCompileOptions } from '../api/hyperscript-api';
@@ -119,6 +129,13 @@ interface HyperFixiBrowserAPI {
     node: import('@lokascript/framework').SemanticNode,
     element?: Element
   ): Promise<unknown>;
+  // Partial template validation (development-time)
+  validatePartialContent: typeof validatePartialContent;
+  configurePartialValidation: typeof configurePartialValidation;
+  getPartialValidationConfig: typeof getPartialValidationConfig;
+  resetPartialValidationConfig: typeof resetPartialValidationConfig;
+  emitPartialValidationWarnings: typeof emitPartialValidationWarnings;
+  formatResultSummary: typeof formatResultSummary;
 }
 
 // Export to global scope for browser testing
@@ -274,6 +291,14 @@ const hyperfixiAPI = {
   // LSE SemanticNode execution — delegates to hyperscript API
   // Used by the <lse-intent> custom element via window.hyperfixi.evalLSENode()
   evalLSENode: hyperscript.evalLSENode.bind(hyperscript),
+
+  // Partial template validation (development-time)
+  validatePartialContent,
+  configurePartialValidation,
+  getPartialValidationConfig,
+  resetPartialValidationConfig,
+  emitPartialValidationWarnings,
+  formatResultSummary,
 
   // Version info
   version: '2.0.0-full',

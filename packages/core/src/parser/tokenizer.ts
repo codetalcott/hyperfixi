@@ -561,6 +561,14 @@ function tokenizeCSSSelector(tokenizer: Tokenizer): void {
 
 function tokenizeQueryReference(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
+
+  // Open/close element literal with children (<li ...>...</li>): scan with
+  // tag-depth balancing up to the matching close tag.
+  if (looksLikeElementLiteral(tokenizer)) {
+    tokenizeElementLiteral(tokenizer, start);
+    return;
+  }
+
   let value = '';
 
   // Consume opening '<'
@@ -578,6 +586,78 @@ function tokenizeQueryReference(tokenizer: Tokenizer): void {
       value += advance(tokenizer); // consume '>'
       break;
     }
+  }
+
+  addToken(tokenizer, TokenKind.SELECTOR, value, start);
+}
+
+/**
+ * Tokenize a full open/close HTML element literal as a single SELECTOR token,
+ * balancing nested tags (`<li><div>...</div></li>`) and self-closing children,
+ * and skipping `<`/`>` inside attribute quotes. Stops after the matching
+ * top-level close tag. The `make` command builds the element from this string.
+ */
+function tokenizeElementLiteral(tokenizer: Tokenizer, start: number): void {
+  const input = tokenizer.input;
+  let value = '';
+  let depth = 0;
+  let quote = '';
+
+  while (tokenizer.position < input.length) {
+    const ch = input[tokenizer.position];
+
+    if (quote) {
+      value += advance(tokenizer);
+      if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      value += advance(tokenizer);
+      continue;
+    }
+
+    if (ch === '<') {
+      const next = input[tokenizer.position + 1];
+      if (next === '/') {
+        // Closing tag — consume through '>'.
+        while (tokenizer.position < input.length && input[tokenizer.position] !== '>') {
+          value += advance(tokenizer);
+        }
+        if (tokenizer.position < input.length) value += advance(tokenizer); // '>'
+        depth--;
+        if (depth <= 0) break;
+        continue;
+      }
+      // Opening tag — consume through '>', detecting a self-closing '/>'.
+      let selfClose = false;
+      let tagQuote = '';
+      while (tokenizer.position < input.length) {
+        const c2 = input[tokenizer.position];
+        if (tagQuote) {
+          value += advance(tokenizer);
+          if (c2 === tagQuote) tagQuote = '';
+          continue;
+        }
+        if (c2 === '"' || c2 === "'") {
+          tagQuote = c2;
+          value += advance(tokenizer);
+          continue;
+        }
+        if (c2 === '>') {
+          selfClose = input[tokenizer.position - 1] === '/';
+          value += advance(tokenizer); // '>'
+          break;
+        }
+        value += advance(tokenizer);
+      }
+      if (!selfClose) depth++;
+      if (depth <= 0) break; // self-closing root with no children
+      continue;
+    }
+
+    // Content character (text between tags).
+    value += advance(tokenizer);
   }
 
   addToken(tokenizer, TokenKind.SELECTOR, value, start);
@@ -1006,7 +1086,30 @@ function isAlphaNumeric(char: string): boolean {
   return /[a-zA-Z0-9]/.test(char);
 }
 
+/**
+ * Does `<` at the current position open an HTML element literal with children,
+ * e.g. `<li class='x'>...</li>`? True when `<` is immediately followed by a tag
+ * name and a matching `</tagname>` close tag exists ahead. Distinct from a
+ * comparison operator (`x < 10`, `a < b`), where `<` is followed by space/digit.
+ */
+function looksLikeElementLiteral(tokenizer: Tokenizer): boolean {
+  const input = tokenizer.input;
+  const afterLt = input[tokenizer.position + 1];
+  if (!afterLt || !/[a-zA-Z]/.test(afterLt)) return false;
+  let p = tokenizer.position + 1;
+  let tag = '';
+  while (p < input.length && /[a-zA-Z0-9-]/.test(input[p])) {
+    tag += input[p];
+    p++;
+  }
+  return tag.length > 0 && input.indexOf('</' + tag + '>', p) !== -1;
+}
+
 function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
+  // Open/close element literal (<li ...>...</li>) — handled by the tag-balancing
+  // scanner in tokenizeQueryReference; recognize it before the self-closing scan.
+  if (looksLikeElementLiteral(tokenizer)) return true;
+
   // Look ahead to see if this pattern matches <.../>
   // A query reference should contain valid selector characters and end with />
   let pos = tokenizer.position + 1; // Start after <

@@ -191,14 +191,19 @@ test.describe('Gallery Example Regression Tests @comprehensive', () => {
       // Get the color box and interact with it
       const colorBox = page.locator('#color-box');
       const box = await colorBox.boundingBox();
+      expect(box).toBeTruthy();
 
-      if (box) {
-        // Move to element and simulate mouse press/hold/release
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.down();
-        await page.waitForTimeout(1000); // Hold for a bit
-        await page.mouse.up();
-      }
+      const initialBg = await colorBox.evaluate(el => window.getComputedStyle(el).backgroundColor);
+
+      // Move to element and simulate mouse press/hold/release
+      await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(1000); // Hold for a bit
+      // The demo reads `my *background-color` (computed-style access). If that
+      // syntax works the color cycles; assert it actually changed mid-hold.
+      const cyclingBg = await colorBox.evaluate(el => window.getComputedStyle(el).backgroundColor);
+      expect(cyclingBg).not.toBe(initialBg);
+      await page.mouse.up();
 
       await page.waitForTimeout(500);
 
