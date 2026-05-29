@@ -13,7 +13,7 @@
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/base-types';
-import { isHTMLElement } from '../../utils/element-check';
+import { isHTMLElement, isNodeList } from '../../utils/element-check';
 
 /** Prefix an error message with `[commandName]` when one was supplied. */
 function withCmd(commandName: string | undefined, message: string): string {
@@ -364,8 +364,14 @@ export async function resolveTargetsFromArgs(
 
     if (isHTMLElement(evaluated)) {
       targets.push(evaluated as HTMLElement);
-    } else if (evaluated instanceof NodeList) {
-      const elements = Array.from(evaluated).filter(isHTMLElement) as HTMLElement[];
+    } else if (isNodeList(evaluated)) {
+      // Cross-realm safe: a selector resolved in another realm (iframe, or
+      // JSDOM in tests) yields a NodeList whose constructor !== the global
+      // NodeList, so `instanceof NodeList` would miss it and fall through to
+      // the "got object" error.
+      const elements = Array.from(evaluated as ArrayLike<unknown>).filter(
+        isHTMLElement
+      ) as HTMLElement[];
       targets.push(...elements);
     } else if (Array.isArray(evaluated)) {
       const elements = evaluated.filter(isHTMLElement) as HTMLElement[];
@@ -391,6 +397,11 @@ export async function resolveTargetsFromArgs(
           `Invalid CSS selector: "${evaluated}" - ${error instanceof Error ? error.message : String(error)}`
         );
       }
+    } else if (evaluated == null) {
+      // An unresolved selector (no match) yields null/undefined — treat as
+      // "no target" and fall through to the context.me default below, rather
+      // than erroring on `typeof null === 'object'`.
+      continue;
     } else {
       throw new Error(
         `Invalid ${commandName} target: expected HTMLElement or CSS selector, got ${typeof evaluated}`
