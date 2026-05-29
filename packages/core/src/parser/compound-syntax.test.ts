@@ -234,3 +234,39 @@ describe('Compound Syntax - Backwards Compatibility', () => {
     expect(result2).toBeDefined();
   });
 });
+
+describe('Toggle between - tokenizer + parser regression', () => {
+  it('tokenizes a class selector after `between` (not member access)', () => {
+    // `.on`'s class name collides with the `on` keyword. After `between` it
+    // must still be a single SELECTOR token, not `.` + `on`.
+    const tokens = tokenize('toggle between .on and .off on #target');
+    const selectors = tokens.filter(t => t.kind === TokenKind.SELECTOR).map(t => t.value);
+    expect(selectors).toContain('.on');
+    expect(selectors).toContain('.off');
+    expect(selectors).toContain('#target');
+  });
+
+  it('parses `toggle between .on and .off on #target` to flat args', () => {
+    const result = parse('toggle between .on and .off on #target') as {
+      success: boolean;
+      error?: { message?: string };
+      node?: {
+        name?: string;
+        args?: unknown[];
+        body?: Array<{ type?: string; name?: string; args?: unknown[] }>;
+      };
+    };
+    expect(result.success).toBe(true);
+    // `parse` returns the command node directly for a single statement.
+    const cmd = result.node?.body?.[0] ?? result.node;
+    expect(cmd?.name).toBe('toggle');
+    // Flat shape the toggle command's parseInput expects:
+    // [between, classA, and, classB, on, target]
+    const args = (cmd?.args ?? []) as Array<Record<string, unknown>>;
+    expect(args[0]?.name).toBe('between');
+    expect(args[1]?.value).toBe('.on');
+    expect(args[2]?.name).toBe('and');
+    expect(args[3]?.value).toBe('.off');
+    expect(args[args.length - 1]?.value).toBe('#target');
+  });
+});

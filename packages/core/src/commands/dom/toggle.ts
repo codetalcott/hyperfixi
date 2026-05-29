@@ -226,9 +226,17 @@ export class ToggleCommand implements DecoratedCommand {
         context
       );
 
-      // Extract classA (index 1) and classB (index 3, after 'and')
-      const classAValue = await evaluator.evaluate(raw.args[1], context);
-      const classBValue = await evaluator.evaluate(raw.args[3], context);
+      // Extract classA (index 1) and classB (index 3, after 'and'). `.on`/`.off`
+      // here are class NAMES to alternate, not selectors to query — so read a
+      // selector node's literal value directly; only evaluate non-selector args
+      // (e.g. a variable holding a dynamic class name).
+      const classNameArg = async (arg: ASTNode): Promise<unknown> => {
+        const a = arg as Record<string, unknown>;
+        if (a?.type === 'selector') return a.value;
+        return evaluator.evaluate(arg, context);
+      };
+      const classAValue = await classNameArg(raw.args[1]);
+      const classBValue = await classNameArg(raw.args[3]);
 
       // Find target args (skip between, classA, and, classB, and any 'on'/'from' keywords)
       const targetArgs: ASTNode[] = [];

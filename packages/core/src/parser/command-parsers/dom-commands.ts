@@ -94,19 +94,30 @@ export function parseToggleCommand(ctx: ParserContext, identifierNode: Identifie
     ctx.advance(); // consume 'between'
     args.push(ctx.createIdentifier('between'));
 
-    // Parse first class/attribute (stops at 'and')
-    const firstArg = parseOneArgument(ctx, [KEYWORDS.AND]);
-    if (firstArg) {
-      args.push(firstArg);
-    }
+    // Parse first class/attribute. `parseOneArgument` uses the full expression
+    // parser, which treats `and` as a logical operator — so `.on and .off`
+    // comes back as a single binary `and` expression. Split it back into the
+    // flat `classA, and, classB` shape the toggle command's parseInput expects.
+    const firstArg = parseOneArgument(ctx, [KEYWORDS.AND]) as
+      | (ASTNode & { type?: string; operator?: string; left?: ASTNode; right?: ASTNode })
+      | undefined;
+    if (firstArg && firstArg.type === 'binaryExpression' && firstArg.operator === 'and') {
+      if (firstArg.left) args.push(firstArg.left);
+      args.push(ctx.createIdentifier('and'));
+      if (firstArg.right) args.push(firstArg.right);
+    } else {
+      if (firstArg) {
+        args.push(firstArg);
+      }
 
-    // Consume 'and' keyword
-    consumeKeywordToArgs(ctx, KEYWORDS.AND, args);
+      // Consume 'and' keyword
+      consumeKeywordToArgs(ctx, KEYWORDS.AND, args);
 
-    // Parse second class/attribute (stops at 'on'/'from'/'for')
-    const secondArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON, KEYWORDS.FOR]);
-    if (secondArg) {
-      args.push(secondArg);
+      // Parse second class/attribute (stops at 'on'/'from'/'for')
+      const secondArg = parseOneArgument(ctx, [KEYWORDS.FROM, KEYWORDS.ON, KEYWORDS.FOR]);
+      if (secondArg) {
+        args.push(secondArg);
+      }
     }
 
     // Accept 'from' or 'on' for target specification
