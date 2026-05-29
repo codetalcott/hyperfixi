@@ -46,12 +46,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         const expectedContent = 'render :)';
         let actualContent = '';
 
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         console.log('Expected:', expectedContent);
@@ -109,12 +114,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
 
         // Expected: "render &lt;br&gt; <br>"
         let actualContent = '';
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         const expectedContent = 'render &lt;br&gt; <br>';
@@ -163,12 +173,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
 
         let actualContent = '';
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         const expectedContent = 'begin\n1\n2\n3\nend\n';
@@ -222,12 +237,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
 
         let actualContent = '';
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         const expectedContent = 'begin\na\nend\n';
