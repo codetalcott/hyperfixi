@@ -447,6 +447,22 @@ export const COMPARISON_OPERATORS = new Set([
   'is greater than or equal to',
   'is less than or equal to',
   'really equals',
+  // Upstream parity — shortened / first-person ("am") comparison forms.
+  // `am`/`is` are interchangeable; the trailing `equal`/`to` words are optional;
+  // `contain`/`match` accept `do not`/`does not` negation with either spelling.
+  'am in', // `I am in [1, 2]`
+  'am not in',
+  'am between', // `I am between 1 and 10`
+  'am not between',
+  'is really', // strict equality without `equal to` — `2 is really 2`
+  'is not really',
+  'is equal', // loose equality without trailing `to` — `2 is equal 2`
+  'is not equal',
+  'contain', // singular subject — `I contain that`
+  'do not contain', // first-person negation — `I do not contain that`
+  'does not contains', // third-person + plural verb — `that does not contains me`
+  'do not match', // `I do not match .foo`
+  'does not match', // `x does not match .foo`
   // Postfix modifier on string comparators (upstream _hyperscript 0.9.90):
   //   "name is 'alice' ignoring case"
   //   "str starts with 'hi' ignoring case"

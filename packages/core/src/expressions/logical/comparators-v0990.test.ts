@@ -50,8 +50,11 @@ describe('Comparators (v0.9.90)', () => {
     it('"hello world" does not end with "hello" → true', async () => {
       expect(await evalArg('return "hello world" does not end with "hello"')).toBe(true);
     });
-    it('non-string LHS returns false: 42 starts with "4"', async () => {
-      expect(await evalArg('return 42 starts with "4"')).toBe(false);
+    it('coerces non-string LHS to string (upstream): 42 starts with "4" → true', async () => {
+      expect(await evalArg('return 42 starts with "4"')).toBe(true);
+    });
+    it('null LHS never matches: null starts with "x" → false', async () => {
+      expect(await evalArg('return null starts with "x"')).toBe(false);
     });
   });
 

@@ -493,20 +493,33 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
     case 'is less than or equal to':
       return getExpr(context, 'lessThanOrEqual').evaluate(context, left, right);
     case '==':
+      return getExpr(context, 'equals').evaluate(context, L, R);
     case 'is':
     case 'am': // upstream alias for `is` (e.g., `if I am .active`)
     case 'equals':
-    case 'is equal to':
-      return getExpr(context, 'equals').evaluate(context, L, R);
+    case 'is equal': // shortened `is equal to`
+    case 'is equal to': {
+      // `#el is checked` / `#el is disabled`: when the RHS is a bare identifier
+      // that resolved to undefined but names a boolean property on the left
+      // element, upstream reads that property rather than comparing values.
+      const bp = booleanPropertyFallback(node, left, right);
+      return bp !== undefined ? bp : getExpr(context, 'equals').evaluate(context, L, R);
+    }
     case '!=':
-    case 'is not':
-    case 'is not equal to':
       return getExpr(context, 'notEquals').evaluate(context, L, R);
+    case 'is not':
+    case 'is not equal': // shortened `is not equal to`
+    case 'is not equal to': {
+      const bp = booleanPropertyFallback(node, left, right);
+      return bp !== undefined ? !bp : getExpr(context, 'notEquals').evaluate(context, L, R);
+    }
     case '===':
     case 'really equals':
+    case 'is really': // strict equality without `equal to`
     case 'is really equal to':
       return getExpr(context, 'strictEquals').evaluate(context, L, R);
     case '!==':
+    case 'is not really': // strict inequality without `equal to`
     case 'is not really equal to':
       return getExpr(context, 'strictNotEquals').evaluate(context, L, R);
 
@@ -515,9 +528,14 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
       return getExpr(context, 'as').evaluate(context, left, normalizeAsTargetType(right));
 
     case 'contains':
+    case 'contain': // singular subject — `I contain that`
+    case 'includes':
+    case 'include':
       return getExpr(context, 'contains').evaluate(context, L, R);
 
     case 'does not contain':
+    case 'do not contain': // first-person negation
+    case 'does not contains': // third-person + plural verb
     case 'does not include':
       return getExpr(context, 'doesNotContain').evaluate(context, L, R);
 
@@ -539,13 +557,25 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
 
     case 'match':
     case 'matches':
-      return getExpr(context, 'matches').evaluate(context, L, R);
+      return getExpr(context, 'matches').evaluate(context, L, matchTargetOf(node.right, R));
+
+    case 'does not match':
+    case 'do not match': {
+      const r = await getExpr(context, 'matches').evaluate(
+        context,
+        L,
+        matchTargetOf(node.right, R)
+      );
+      return !r;
+    }
 
     case 'in':
     case 'is in':
+    case 'am in': // first-person — `I am in [1, 2]`
       return isIn(left, right);
 
     case 'is not in':
+    case 'am not in':
       return !isIn(left, right);
 
     case 'of':
@@ -581,6 +611,38 @@ function isIn(item: unknown, container: unknown): boolean {
     return item === container || container.contains(item);
   }
   return container != null && typeof container === 'object' && (item as any) in (container as any);
+}
+
+/**
+ * `match`/`matches` semantics: a CSS-selector literal on the right
+ * (`I match .foo`) tests the LEFT element against the selector *string*, not
+ * against the elements that selector resolves to. So when the right operand is
+ * a selector node, use its raw text; otherwise use the already-evaluated value.
+ */
+function matchTargetOf(rightNode: unknown, evaluated: unknown): unknown {
+  const n = rightNode as { type?: string; value?: unknown } | null;
+  if (n && n.type === 'selector' && typeof n.value === 'string') return n.value;
+  return evaluated;
+}
+
+/**
+ * Upstream `is`/`is not` fallback: `#checkbox is checked` / `#button is
+ * disabled`. When the right operand is a bare identifier that resolved to
+ * `undefined` and names a boolean property of the left (DOM) element, read that
+ * property instead of comparing values. Returns the boolean property value, or
+ * `undefined` when the fallback does not apply (callers then compare normally).
+ */
+function booleanPropertyFallback(
+  node: { right?: unknown },
+  left: unknown,
+  right: unknown
+): boolean | undefined {
+  if (right !== undefined) return undefined; // RHS resolved → normal comparison
+  const rn = node.right as { type?: string; name?: string } | null;
+  if (!rn || rn.type !== 'identifier' || typeof rn.name !== 'string') return undefined;
+  if (left == null || typeof left !== 'object') return undefined;
+  const prop = (left as Record<string, unknown>)[rn.name];
+  return typeof prop === 'boolean' ? prop === true : undefined;
 }
 
 /**

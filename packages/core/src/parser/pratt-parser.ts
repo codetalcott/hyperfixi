@@ -427,6 +427,53 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
       } as unknown as ASTNode;
     }) as BindingPowerEntry,
   ],
+  // First-person ("am") variants of the between ternary — `I am between 1 and 10`.
+  [
+    'am between',
+    leftAssoc(30, (left, _token, ctx) => {
+      const min = ctx.parseExpr(31);
+      const next = ctx.peek();
+      if (!next || next.value.toLowerCase() !== 'and') {
+        throw new Error(
+          `between requires 'and' between min and max operands, got: ${next?.value ?? '<end>'}`
+        );
+      }
+      ctx.advance(); // consume 'and'
+      const max = ctx.parseExpr(31);
+      return {
+        type: 'betweenExpression',
+        value: left,
+        min,
+        max,
+        negated: false,
+        start: (left as any).start,
+        end: (max as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
+  [
+    'am not between',
+    leftAssoc(30, (left, _token, ctx) => {
+      const min = ctx.parseExpr(31);
+      const next = ctx.peek();
+      if (!next || next.value.toLowerCase() !== 'and') {
+        throw new Error(
+          `between requires 'and' between min and max operands, got: ${next?.value ?? '<end>'}`
+        );
+      }
+      ctx.advance(); // consume 'and'
+      const max = ctx.parseExpr(31);
+      return {
+        type: 'betweenExpression',
+        value: left,
+        min,
+        max,
+        negated: true,
+        start: (left as any).start,
+        end: (max as any).end,
+      } as unknown as ASTNode;
+    }) as BindingPowerEntry,
+  ],
 
   // `ignoring case` — postfix modifier on string comparators.
   // bp 25 sits between `and` (20) and comparison operators (30), so:
@@ -666,6 +713,21 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
   ['equals', leftAssoc(30) as BindingPowerEntry],
   ['does not contain', leftAssoc(30) as BindingPowerEntry],
   ['does not include', leftAssoc(30) as BindingPowerEntry],
+
+  // Upstream parity — shortened / first-person comparison forms (see
+  // COMPARISON_OPERATORS in parser-constants.ts). Plain binary operators here;
+  // `am between` / `am not between` get betweenExpression handlers below.
+  ['am in', leftAssoc(30) as BindingPowerEntry],
+  ['am not in', leftAssoc(30) as BindingPowerEntry],
+  ['is really', leftAssoc(30) as BindingPowerEntry],
+  ['is not really', leftAssoc(30) as BindingPowerEntry],
+  ['is equal', leftAssoc(30) as BindingPowerEntry],
+  ['is not equal', leftAssoc(30) as BindingPowerEntry],
+  ['contain', leftAssoc(30) as BindingPowerEntry],
+  ['do not contain', leftAssoc(30) as BindingPowerEntry],
+  ['does not contains', leftAssoc(30) as BindingPowerEntry],
+  ['do not match', leftAssoc(30) as BindingPowerEntry],
+  ['does not match', leftAssoc(30) as BindingPowerEntry],
 
   // English-form comparison aliases (upstream parity)
   ['is equal to', leftAssoc(30) as BindingPowerEntry],

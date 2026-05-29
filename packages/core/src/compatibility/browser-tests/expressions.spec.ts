@@ -17,10 +17,11 @@ const HYPERSCRIPT_TEST_ROOT =
   process.env.HYPERSCRIPT_TEST_ROOT || resolve(__dirname, '../../../../../../_hyperscript/test');
 
 // Minimum pass rate (% of runnable upstream cases) the suite must hold.
-// Baseline as of this harness landing: 182/361 runnable = 50%. Floor set just
-// below to catch regressions without blocking on the ~179 known parity gaps;
-// ratchet this up as those gaps are fixed in follow-ups.
-const EXPRESSION_PASS_RATE_FLOOR = 47;
+// History (only ever ratchet UP — a drop means a regression):
+//   - harness landing:           182/361 runnable = 50%  (floor 47)
+//   - comparisonOperator cluster: 211/361 runnable = 58%  (floor 57)
+// Ratchet this up as the remaining parity gaps are fixed in follow-ups.
+const EXPRESSION_PASS_RATE_FLOOR = 57;
 
 interface TestFile {
   filename: string;

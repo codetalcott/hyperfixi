@@ -403,9 +403,12 @@ describe('Logical Expressions', () => {
         expect(await logicalExpressions.startsWith.evaluate(context, 'hello', '')).toBe(true);
       });
 
-      it('should return false for non-strings', async () => {
-        expect(await logicalExpressions.startsWith.evaluate(context, 123, '1')).toBe(false);
+      it('coerces non-string operands to strings (upstream parity)', async () => {
+        // `123 starts with '12'` → '123'.startsWith('1') → true
+        expect(await logicalExpressions.startsWith.evaluate(context, 123, '1')).toBe(true);
         expect(await logicalExpressions.startsWith.evaluate(context, 'hello', 123)).toBe(false);
+        // null/undefined never match
+        expect(await logicalExpressions.startsWith.evaluate(context, null, '1')).toBe(false);
       });
 
       it('should validate arguments', () => {
@@ -426,9 +429,12 @@ describe('Logical Expressions', () => {
         expect(await logicalExpressions.endsWith.evaluate(context, 'hello', '')).toBe(true);
       });
 
-      it('should return false for non-strings', async () => {
-        expect(await logicalExpressions.endsWith.evaluate(context, 123, '3')).toBe(false);
+      it('coerces non-string operands to strings (upstream parity)', async () => {
+        // `123 ends with '3'` → '123'.endsWith('3') → true
+        expect(await logicalExpressions.endsWith.evaluate(context, 123, '3')).toBe(true);
         expect(await logicalExpressions.endsWith.evaluate(context, 'hello', 123)).toBe(false);
+        // null/undefined never match
+        expect(await logicalExpressions.endsWith.evaluate(context, null, '3')).toBe(false);
       });
 
       it('should validate arguments', () => {
