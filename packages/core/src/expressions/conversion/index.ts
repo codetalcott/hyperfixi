@@ -135,15 +135,25 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     return {};
   },
 
-  // HTML/DOM conversions
+  // HTML/DOM conversions. Mirrors upstream's `implicitLoop`: existing nodes are
+  // appended as-is; everything else is parsed as an HTML string. Arrays/NodeLists
+  // contribute each item, so `[<p>, "<p></p>"] as Fragment` yields two children.
   Fragment: (value: unknown) => {
-    if (!isString(value)) {
-      value = defaultConversions.String(value);
+    const frag = document.createDocumentFragment();
+    const items =
+      Array.isArray(value) || value instanceof NodeList
+        ? Array.from(value as ArrayLike<unknown>)
+        : [value];
+    for (const item of items) {
+      if (item instanceof Node) {
+        frag.append(item);
+      } else {
+        const template = document.createElement('template');
+        template.innerHTML = item == null ? '' : String(item);
+        frag.append(template.content);
+      }
     }
-
-    const template = document.createElement('template');
-    template.innerHTML = String(value);
-    return template.content;
+    return frag;
   },
 
   HTML: (value: unknown) => {
@@ -202,6 +212,27 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     }
     return params.toString();
   },
+
+  // Collection conversions (upstream _hyperscript 0.9.90).
+  Set: (value: unknown) => new Set(value as Iterable<unknown>),
+
+  Map: (value: unknown) => new Map(Object.entries((value ?? {}) as Record<string, unknown>)),
+
+  Keys: (value: unknown) => {
+    if (value instanceof Map) return Array.from(value.keys());
+    return Object.keys((value ?? {}) as object);
+  },
+
+  Entries: (value: unknown) => {
+    if (value instanceof Map) return Array.from(value.entries());
+    return Object.entries((value ?? {}) as object);
+  },
+
+  Reversed: (value: unknown) => Array.from(value as ArrayLike<unknown>).reverse(),
+
+  Unique: (value: unknown) => [...new Set(value as Iterable<unknown>)],
+
+  Flat: (value: unknown) => Array.from(value as ArrayLike<unknown>).flat(),
 
   // Deprecated compound types — kept working in 0.9.90+ for migration.
   // New code should use `as Values | FormEncoded` / `as Values | JSONString`.
@@ -329,7 +360,8 @@ function getInputValue(input: HTMLInputElement | HTMLSelectElement | HTMLTextAre
 function parseFixedPrecision(type: string): { precision?: number } {
   const match = type.match(/^Fixed(?::(\d+))?$/);
   if (match) {
-    return { precision: match[1] ? parseInt(match[1], 10) : 2 };
+    // Upstream default is `Number(value).toFixed()` → 0 decimal places.
+    return { precision: match[1] ? parseInt(match[1], 10) : 0 };
   }
   return {};
 }
@@ -352,11 +384,18 @@ export const asExpression: ExpressionImplementation = {
       throw new Error('Conversion type must be a string');
     }
 
-    // Handle Fixed:<precision> conversion
+    // Handle Fixed:<precision> conversion (a dynamic resolver upstream, so it
+    // runs before the null short-circuit below — `Number(null).toFixed()`).
     if (type.startsWith('Fixed')) {
       const { precision } = parseFixedPrecision(type);
       const num = defaultConversions.Number(value) as number;
-      return num.toFixed(precision || 2);
+      return num.toFixed(precision ?? 0);
+    }
+
+    // Upstream `convertValue`: null/undefined pass through unchanged for every
+    // static converter (`null as String` is null, not "").
+    if (value == null) {
+      return value;
     }
 
     // Check for built-in conversion (case-sensitive first)

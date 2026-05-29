@@ -20,8 +20,17 @@ const HYPERSCRIPT_TEST_ROOT =
 // History (only ever ratchet UP — a drop means a regression):
 //   - harness landing:           182/361 runnable = 50%  (floor 47)
 //   - comparisonOperator cluster: 211/361 runnable = 58%  (floor 57)
+//   - asExpression/conversions:   222/361 runnable = 61%  (floor 60)
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
-const EXPRESSION_PASS_RATE_FLOOR = 57;
+//
+// Known harness limitation (not product gaps): a handful of upstream tests use
+// the result of the synchronous `_hyperscript("expr")` global *synchronously*
+// (e.g. `const r = _hyperscript("1 as Date"); r.getTime()`). HyperFixi evaluates
+// asynchronously, so the compatibility-test.html shim returns a Promise — those
+// closures (Date/Set/Map/Fragment/Values, config.conversions custom converters)
+// can't pass without a synchronous eval path. The conversions themselves are
+// correct, as the `run`-based cases (awaited) confirm.
+const EXPRESSION_PASS_RATE_FLOOR = 60;
 
 interface TestFile {
   filename: string;

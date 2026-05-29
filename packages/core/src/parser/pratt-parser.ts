@@ -603,34 +603,60 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
   [
     'as',
     leftAssoc(70, (left, token, ctx) => {
-      const targetType = ctx.parseExpr(71);
-      // Support `Fixed:N` and similar parameterized type names. The pratt
-      // parser stops at `:` (unknown infix), leaving it as the next token.
-      // Treat the target type as an opaque string and include the suffix —
-      // `normalizeAsTargetType` in runtime.ts resolves the final string form.
-      const peeked = ctx.peek();
-      if (
-        peeked &&
-        peeked.value === ':' &&
-        targetType &&
-        (targetType as any).type === 'identifier'
-      ) {
-        ctx.advance(); // consume ':'
-        const suffix = ctx.advance();
-        if (suffix && suffix.value !== undefined) {
-          (targetType as any).name = `${(targetType as any).name}:${suffix.value}`;
-          (targetType as any).end = suffix.end;
+      // Parse one conversion type: an optional `a`/`an` article (`as a Date`,
+      // `as an Object`), the type name, and an optional `:suffix` (`Fixed:2`).
+      // The pratt parser stops at `:` (unknown infix), leaving it as the next
+      // token; `normalizeAsTargetType` in runtime.ts resolves the final string.
+      const parseConversionType = (): ASTNode => {
+        const article = ctx.peek();
+        if (article && (article.value === 'a' || article.value === 'an')) {
+          ctx.advance(); // skip optional article
         }
-      }
-      return {
+        const targetType = ctx.parseExpr(71);
+        const peeked = ctx.peek();
+        if (
+          peeked &&
+          peeked.value === ':' &&
+          targetType &&
+          (targetType as any).type === 'identifier'
+        ) {
+          ctx.advance(); // consume ':'
+          const suffix = ctx.advance();
+          if (suffix && suffix.value !== undefined) {
+            (targetType as any).name = `${(targetType as any).name}:${suffix.value}`;
+            (targetType as any).end = suffix.end;
+          }
+        }
+        return targetType;
+      };
+
+      let firstType = parseConversionType();
+      let node: ASTNode = {
         type: 'asExpression',
         expression: left,
-        targetType,
+        targetType: firstType,
         start: (left as any).start,
-        end: (targetType as any).end ?? token.end,
+        end: (firstType as any).end ?? token.end,
         line: (left as any).line ?? token.line,
         column: (left as any).column ?? token.column,
-      };
+      } as unknown as ASTNode;
+
+      // Pipe chaining: `value as JSONString | JSON` applies conversions
+      // left-to-right (each `as`-node feeds the next).
+      while (ctx.peek() && ctx.peek()!.value === '|') {
+        ctx.advance(); // consume '|'
+        const nextType = parseConversionType();
+        node = {
+          type: 'asExpression',
+          expression: node,
+          targetType: nextType,
+          start: (node as any).start,
+          end: (nextType as any).end ?? (node as any).end,
+          line: (node as any).line,
+          column: (node as any).column,
+        } as unknown as ASTNode;
+      }
+      return node;
     }) as BindingPowerEntry,
   ],
 
