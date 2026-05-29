@@ -26,7 +26,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       console.log('=== Testing Basic Template Rendering ===');
 
       // Create template exactly like official test: make("<template>render ${x}</template>")
-      const tmpl = make('<template>render ${x}</template>');
+      const tmpl = await make('<template>render ${x}</template>');
       console.log('Created template:', tmpl);
 
       try {
@@ -46,12 +46,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         const expectedContent = 'render :)';
         let actualContent = '';
 
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         console.log('Expected:', expectedContent);
@@ -96,7 +101,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       console.log('=== Testing HTML Escaping ===');
 
       // Official test: make("<template>render ${x} ${unescaped x}</template>")
-      const tmpl = make('<template>render ${x} ${unescaped x}</template>');
+      const tmpl = await make('<template>render ${x} ${unescaped x}</template>');
 
       try {
         const context = hyperfixi.createContext();
@@ -109,12 +114,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
 
         // Expected: "render &lt;br&gt; <br>"
         let actualContent = '';
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         const expectedContent = 'render &lt;br&gt; <br>';
@@ -151,7 +161,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
 
       // Official test template: "begin\n@repeat in [1, 2, 3]\n${it}\n@end\nend\n"
       const templateContent = 'begin\n@repeat in [1, 2, 3]\n${it}\n@end\nend\n';
-      const tmpl = make(`<template>${templateContent}</template>`);
+      const tmpl = await make(`<template>${templateContent}</template>`);
 
       try {
         const context = hyperfixi.createContext();
@@ -163,12 +173,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
 
         let actualContent = '';
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         const expectedContent = 'begin\n1\n2\n3\nend\n';
@@ -210,7 +225,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
 
       // Official test: "begin\n@if true\na\n@else\nb\n@end\nend\n"
       const templateContent = 'begin\n@if true\na\n@else\nb\n@end\nend\n';
-      const tmpl = make(`<template>${templateContent}</template>`);
+      const tmpl = await make(`<template>${templateContent}</template>`);
 
       try {
         const context = hyperfixi.createContext();
@@ -222,12 +237,17 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         const renderResult = await hyperfixi.evalHyperScript('render tmpl with (x: x)', context);
 
         let actualContent = '';
-        if (renderResult && typeof renderResult.textContent === 'string') {
+        // render() returns { element, rendered, directivesProcessed }; `rendered`
+        // is the processed template string (matches official _hyperscript's
+        // render output). Prefer it, then fall back for other result shapes.
+        if (renderResult && typeof renderResult.rendered === 'string') {
+          actualContent = renderResult.rendered;
+        } else if (typeof renderResult === 'string') {
+          actualContent = renderResult;
+        } else if (renderResult && typeof renderResult.textContent === 'string') {
           actualContent = renderResult.textContent;
         } else if (renderResult && typeof renderResult.innerHTML === 'string') {
           actualContent = renderResult.innerHTML;
-        } else if (typeof renderResult === 'string') {
-          actualContent = renderResult;
         }
 
         const expectedContent = 'begin\na\nend\n';
@@ -283,7 +303,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
 
       // Test simple render command parsing
       try {
-        const simpleTemplate = make('<template>test</template>');
+        const simpleTemplate = await make('<template>test</template>');
         const context = hyperfixi.createContext();
         context.locals = new Map([['tmpl', simpleTemplate]]);
 

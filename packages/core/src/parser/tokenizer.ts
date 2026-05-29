@@ -180,6 +180,9 @@ export function tokenize(input: string): Token[] {
         'on',
         'in',
         'at',
+        // `toggle between .a and .b` — the class after `between` is a selector,
+        // not member access on the `between` identifier.
+        'between',
         // Positional keywords can be followed by bare CSS selectors
         'first',
         'last',

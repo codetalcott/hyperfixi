@@ -267,7 +267,9 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
           test: async () => {
             // This should now work - we have command system implemented!
             clearWorkArea();
-            const div = make('<div id="d1" _=\'on click put "foo" into #d1.innerHTML\'></div>');
+            const div = await make(
+              '<div id="d1" _=\'on click put "foo" into #d1.innerHTML\'></div>'
+            );
             document.body.appendChild(div); // Add to DOM for selector resolution
             div.click();
             await new Promise(resolve => setTimeout(resolve, 100)); // Wait for async execution
@@ -281,7 +283,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
           test: async () => {
             // This should now work - we have command system implemented!
             clearWorkArea();
-            const div = make('<div _=\'on click set my innerHTML to "test"\'></div>');
+            const div = await make('<div _=\'on click set my innerHTML to "test"\'></div>');
             document.body.appendChild(div); // Add to DOM
             div.click();
             await new Promise(resolve => setTimeout(resolve, 100)); // Wait for async execution

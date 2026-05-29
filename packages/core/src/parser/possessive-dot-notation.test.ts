@@ -251,4 +251,51 @@ describe('Possessive dot notation (my.prop, its.prop, your.prop)', () => {
       expect(result).toBe('attr-value');
     });
   });
+
+  // Regression: reserved words (e.g. `result`, `open`) must be accepted as
+  // property names after a possessive (space syntax), matching JS member-access
+  // semantics. Previously `its result` threw "Expected property name after 'its'"
+  // because the possessive parser used the strict identifier predicate.
+  describe('reserved words as property names (space syntax)', () => {
+    const makeCtx = (overrides: Record<string, unknown>) =>
+      ({
+        me: null,
+        you: null,
+        it: null,
+        result: null,
+        locals: new Map(),
+        globals: new Map(),
+        parent: undefined,
+        halted: false,
+        returned: false,
+        broke: false,
+        continued: false,
+        async: false,
+        ...overrides,
+      }) as unknown as ExecutionContext;
+
+    it('parses and evaluates `its result`', async () => {
+      const result = await evaluateExpressionFromSource(
+        'its result',
+        makeCtx({ it: { result: 'success' } })
+      );
+      expect(result).toBe('success');
+    });
+
+    it('parses and evaluates `my result`', async () => {
+      const result = await evaluateExpressionFromSource(
+        'my result',
+        makeCtx({ me: { result: 42 } })
+      );
+      expect(result).toBe(42);
+    });
+
+    it('parses and evaluates `your open` (reserved-ish property)', async () => {
+      const result = await evaluateExpressionFromSource(
+        'your open',
+        makeCtx({ you: { open: true } })
+      );
+      expect(result).toBe(true);
+    });
+  });
 });

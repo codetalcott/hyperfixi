@@ -269,13 +269,23 @@ export const elementWithSelectorExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Array',
 
-  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const selector = args[0];
     if (typeof selector !== 'string') {
       throw new Error('Selector must be a string');
     }
 
-    const elements = document.querySelectorAll(selector);
+    // Resolve relative to the context element's ownerDocument so selectors
+    // work across documents (iframes, shadow hosts, and JSDOM in tests),
+    // falling back to the global document. Matches resolveTargetsFromArgs.
+    const doc =
+      (context?.me as { ownerDocument?: Document } | null)?.ownerDocument ??
+      (typeof document !== 'undefined' ? document : null);
+    if (!doc) {
+      throw new Error('DOM not available - cannot resolve element selector');
+    }
+
+    const elements = doc.querySelectorAll(selector);
     return Array.from(elements) as HTMLElement[];
   },
 

@@ -101,6 +101,7 @@ type CallNode = ASTNode & {
   isConstructor?: boolean;
 };
 type SelectorNode = ASTNode & { value: unknown; fromQuery?: boolean };
+type ContextRefNode = ASTNode & { contextType: 'me' | 'you' | 'it' | 'target' | 'event' };
 type PossessiveNode = ASTNode & { object: ASTNode; property: { name: string } };
 type EventHandlerNode = ASTNode & { event?: unknown; selector?: unknown; commands: ASTNode[] };
 type ConditionalNode = ASTNode & { test: ASTNode; consequent: ASTNode; alternate?: ASTNode };
@@ -180,6 +181,14 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 
     case 'selector':
       return evaluateSelector(n, context);
+
+    // Context references (`me`/`you`/`it`/`target`/`event`). The traditional
+    // parser emits these as `identifier` nodes (handled above), but the
+    // semantic→AST builder emits dedicated `contextReference` nodes — e.g. for
+    // a command's implicit `me` target (`toggle .active`). Resolve them through
+    // the same reference expressions / context fields.
+    case 'contextReference':
+      return evaluateContextReference(n as ContextRefNode, context);
 
     case 'possessiveExpression':
       return evaluatePossessiveExpression(n, context);
@@ -1077,6 +1086,35 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
   }
 
   return result;
+}
+
+/**
+ * Resolve a `contextReference` node (`me`/`you`/`it`/`target`/`event`) emitted
+ * by the semantic→AST builder. `me`/`you`/`it` go through the registered
+ * reference expressions (same as the identifier path); `event`/`target` read
+ * the corresponding context fields, with `target` falling back to the event's
+ * target and then `me`.
+ */
+async function evaluateContextReference(
+  node: ContextRefNode,
+  context: ExecutionContext
+): Promise<any> {
+  switch (node.contextType) {
+    case 'me':
+    case 'you':
+    case 'it':
+      return getExpr(context, node.contextType).evaluate(context);
+    case 'event':
+      return (context as any).event;
+    case 'target':
+      return (
+        (context as any).target ??
+        (context as any).event?.target ??
+        getExpr(context, 'me').evaluate(context)
+      );
+    default:
+      return undefined;
+  }
 }
 
 /**

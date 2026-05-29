@@ -124,13 +124,19 @@ test.describe('LokaScript i18n Bundle', () => {
       return {
         toggle: provider.resolve('بدل'),
         click: provider.resolve('نقر'),
-        on: provider.resolve('عند'),
+        // Arabic distinguishes spatial/event `on` (على) from `at`/`upon` (عند)
+        // and `when` (عندما); English collapses the first two to "on".
+        on: provider.resolve('على'),
+        at: provider.resolve('عند'),
+        when: provider.resolve('عندما'),
       };
     });
 
     expect(results.toggle).toBe('toggle');
     expect(results.click).toBe('click');
     expect(results.on).toBe('on');
+    expect(results.at).toBe('at');
+    expect(results.when).toBe('when');
   });
 
   test('Korean provider resolves keywords correctly', async ({ page }) => {
@@ -154,13 +160,16 @@ test.describe('LokaScript i18n Bundle', () => {
       return {
         toggle: provider.resolve('切换'),
         click: provider.resolve('点击'),
+        // 当 = "when" (event trigger), 在 = "at"/spatial.
         when: provider.resolve('当'),
+        at: provider.resolve('在'),
       };
     });
 
     expect(results.toggle).toBe('toggle');
     expect(results.click).toBe('click');
-    expect(results.when).toBe('on');
+    expect(results.when).toBe('when');
+    expect(results.at).toBe('at');
   });
 
   test('Turkish provider resolves keywords correctly', async ({ page }) => {
@@ -302,14 +311,15 @@ test.describe('LokaScript i18n Bundle', () => {
     expect(keywords.hasAdd || keywords.hasRemove).toBe(true);
   });
 
-  test('non-existent keyword returns original string', async ({ page }) => {
+  test('non-existent keyword resolves to undefined', async ({ page }) => {
     const result = await page.evaluate(() => {
       const esProvider = (window as any).LokaScriptI18n.esKeywords;
       return esProvider.resolve('nonexistentkeyword123');
     });
 
-    // Should return original string when not found
-    expect(result).toBe('nonexistentkeyword123');
+    // Documented contract (parser/types.ts): resolve() returns undefined for
+    // tokens that aren't locale keywords; callers treat those as identifiers.
+    expect(result).toBeUndefined();
   });
 
   test('keyword resolution is case-insensitive or normalized', async ({ page }) => {
@@ -334,8 +344,9 @@ test.describe('LokaScript i18n Bundle', () => {
     const testCards = await page.locator('.test-card').count();
     expect(testCards).toBeGreaterThan(5);
 
-    // Check header is visible
+    // Check header is visible. The multilingual demo page keeps LokaScript
+    // branding; assert brand-agnostically on the stable "i18n" token.
     const header = await page.locator('.header h1').textContent();
-    expect(header).toContain('HyperFixi i18n');
+    expect(header).toContain('i18n');
   });
 });

@@ -657,6 +657,15 @@ export default defineConfig([
       {
         name: 'externalize-core',
         setup(build) {
+          // tsup applies esbuildPlugins from every config block to a shared
+          // esbuild context, so this plugin leaks into the IIFE browser builds
+          // unless we scope it. The browser bundles are self-contained globals
+          // and MUST inline `../core` (externalizing it produces an
+          // unresolvable `require('../core.js')` that throws at load, leaving
+          // `window.LokaScriptSemantic` undefined). Only the ESM `languages/*`
+          // subpath build needs the externalization, to share the runtime
+          // registry singleton from dist/core.js. Gate on format === 'esm'.
+          if (build.initialOptions.format !== 'esm') return;
           build.onResolve({ filter: /^\.\.\/core$/ }, () => ({
             path: '../core.js',
             external: true,

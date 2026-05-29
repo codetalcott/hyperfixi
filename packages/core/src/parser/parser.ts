@@ -1262,8 +1262,11 @@ export class Parser {
           // Attribute reference: element's @data-attr
           propertyName = this.advance().value;
         } else {
-          // Normal property access
-          const property = this.consumeIdentifier('Expected property name after possessive');
+          // Normal property access. Use the permissive identifier-like predicate
+          // so reserved words (e.g. `result`, `open`, `if`) are accepted as
+          // property names — matches JS semantics where any IdentifierName is
+          // valid after a possessive, same as the `.` member-access path above.
+          const property = this.consumeIdentifierLike('Expected property name after possessive');
           propertyName = property.value;
         }
 
@@ -3450,9 +3453,12 @@ export class Parser {
         );
       }
 
-      // Standard JavaScript property access: my className, its value, your name
+      // Standard JavaScript property access: my className, its value, your name.
+      // Use the permissive identifier-like predicate so reserved words (e.g.
+      // `its result`, `my open`) are accepted as property names — matches the
+      // `.` member-access path; any IdentifierName is valid after a possessive.
       const contextLabels = { me: 'my', it: 'its', you: 'your' };
-      const property = this.consumeIdentifier(
+      const property = this.consumeIdentifierLike(
         `Expected property name after '${contextLabels[contextVar]}'`
       );
       return this.createMemberExpression(
