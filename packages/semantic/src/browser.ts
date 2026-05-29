@@ -107,8 +107,7 @@ export {
 export { parse, canParse } from './parser';
 
 // Recommended full-parser entry: returns { node, confidence, error }.
-// Exposed on the browser global so pages can read a real confidence score
-// (the deprecated createSemanticAnalyzer().analyze() path is not bundled here).
+// Exposed on the browser global so pages can read a real confidence score.
 export { parseWithConfidence as parseSemantic } from './utils/confidence-calculator';
 
 // Explicit mode parsing and utilities
@@ -131,6 +130,11 @@ export { render, renderExplicit, toExplicit, fromExplicit } from './explicit';
 // =============================================================================
 
 export { DEFAULT_CONFIDENCE_THRESHOLD, HIGH_CONFIDENCE_THRESHOLD } from './core-bridge';
+
+// Analyzer factory: returns { analyze(input, language) => { node, confidence } }.
+// Used by core parser integration and browser-global consumers. Backed by the
+// full parser (parse()), which is bundled here.
+export { createSemanticAnalyzer } from './parser';
 
 // =============================================================================
 // AST Builder (direct semantic-to-AST conversion)

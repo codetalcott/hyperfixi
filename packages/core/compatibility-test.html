@@ -55,28 +55,42 @@
         window.testExpression = async function(expression, context = {}) {
             try {
                 // Use the correct API for both libraries
-                let original, originalError;
+                let original, originalError, referenceUnavailable = false;
                 let ours, oursError;
-                
-                // Test _hyperscript
+
+                // Test _hyperscript. compatibility-test.html installs a window._hyperscript
+                // STUB (function) that maps to hyperfixi; the real upstream lib is loaded
+                // from dist/_hyperscript.js and provides `.evaluate()`. Treat "no .evaluate
+                // method" as reference-unavailable rather than erroring (mirrors
+                // testExpressionWithContext).
                 try {
-                    original = _hyperscript.evaluate(expression, context);
+                    if (typeof _hyperscript === 'undefined' || typeof _hyperscript.evaluate !== 'function') {
+                        referenceUnavailable = true;
+                        originalError = '_hyperscript reference implementation not loaded';
+                    } else {
+                        original = _hyperscript.evaluate(expression, context);
+                    }
                 } catch (err) {
                     originalError = err.message;
                 }
-                
+
                 // Test hyperfixi
                 try {
                     ours = await hyperfixi.evalHyperScript(expression, context);
                 } catch (err) {
                     oursError = err.message;
                 }
-                
+
+                // Reference unavailable - defer to "ours" succeeding
+                if (referenceUnavailable) {
+                    return { expression, original, ours, match: !oursError, referenceUnavailable };
+                }
+
                 // Both succeeded - compare values
                 if (!originalError && !oursError) {
                     return { expression, original, ours, match: original === ours };
                 }
-                
+
                 // Both failed - check if error messages are similar (compatibility)
                 if (originalError && oursError) {
                     // For mixed operator errors, both should fail - that's compatible

@@ -37,7 +37,7 @@ test.describe('Direct AST Path Execution', () => {
         }
 
         // Build AST directly from semantic node
-        const ast = S.buildAST(analysisResult.node);
+        const ast = S.buildAST(analysisResult.node)?.ast;
 
         return {
           parsed: true,
@@ -109,7 +109,7 @@ test.describe('Direct AST Path Execution', () => {
           return { parsed: false, built: false };
         }
 
-        const ast = S.buildAST(analysisResult.node);
+        const ast = S.buildAST(analysisResult.node)?.ast;
 
         return {
           parsed: true,
@@ -137,7 +137,7 @@ test.describe('Direct AST Path Execution', () => {
           return { parsed: false, built: false };
         }
 
-        const ast = S.buildAST(analysisResult.node);
+        const ast = S.buildAST(analysisResult.node)?.ast;
 
         return {
           parsed: true,
@@ -185,7 +185,7 @@ test.describe('Direct AST Path Execution', () => {
           return { parsed: false, built: false };
         }
 
-        const ast = S.buildAST(analysisResult.node);
+        const ast = S.buildAST(analysisResult.node)?.ast;
 
         return {
           parsed: true,
@@ -214,7 +214,7 @@ test.describe('Direct AST Path Execution', () => {
           return { parsed: false, built: false };
         }
 
-        const ast = S.buildAST(analysisResult.node);
+        const ast = S.buildAST(analysisResult.node)?.ast;
 
         return {
           parsed: true,
@@ -242,7 +242,7 @@ test.describe('Direct AST Path Execution', () => {
           return { parsed: false, built: false };
         }
 
-        const ast = S.buildAST(analysisResult.node);
+        const ast = S.buildAST(analysisResult.node)?.ast;
 
         return {
           parsed: true,
@@ -270,7 +270,7 @@ test.describe('Direct AST Path Execution', () => {
           return { parsed: false, built: false };
         }
 
-        const ast = S.buildAST(analysisResult.node);
+        const ast = S.buildAST(analysisResult.node)?.ast;
 
         return {
           parsed: true,
@@ -313,9 +313,9 @@ test.describe('Direct AST Path Execution', () => {
         const jaResult = analyzer.analyze('#button の .active を 切り替え', 'ja');
         const esResult = analyzer.analyze('alternar .active en #button', 'es');
 
-        const enAST = enResult.node ? S.buildAST(enResult.node) : null;
-        const jaAST = jaResult.node ? S.buildAST(jaResult.node) : null;
-        const esAST = esResult.node ? S.buildAST(esResult.node) : null;
+        const enAST = enResult.node ? S.buildAST(enResult.node)?.ast : null;
+        const jaAST = jaResult.node ? S.buildAST(jaResult.node)?.ast : null;
+        const esAST = esResult.node ? S.buildAST(esResult.node)?.ast : null;
 
         return {
           enName: enAST?.name,

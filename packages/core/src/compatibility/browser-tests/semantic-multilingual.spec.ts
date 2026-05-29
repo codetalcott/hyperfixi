@@ -414,10 +414,11 @@ test.describe('Semantic Multilingual Parser', () => {
     });
 
     test('analyzer supports expected languages', async ({ page }) => {
+      // Supported languages come from the package-level getSupportedLanguages();
+      // the analyzer surface is just analyze().
       const supportedLangs = await page.evaluate(() => {
         const S = (window as any).LokaScriptSemantic;
-        const analyzer = S.createSemanticAnalyzer();
-        return analyzer.supportedLanguages();
+        return S.getSupportedLanguages();
       });
       // Original 4 languages
       expect(supportedLangs).toContain('en');
@@ -440,11 +441,13 @@ test.describe('Semantic Multilingual Parser', () => {
       const result = await page.evaluate(() => {
         const S = (window as any).LokaScriptSemantic;
         const analyzer = S.createSemanticAnalyzer();
-        return analyzer.analyze('toggle .active on #button', 'en');
+        const res = analyzer.analyze('toggle .active on #button', 'en');
+        // analyze() returns { node, confidence, success }; the SemanticNode uses
+        // `action` (not a `command` object).
+        return { confidence: res.confidence, action: res.node?.action };
       });
       expect(result.confidence).toBeGreaterThan(0);
-      expect(result.command).toBeDefined();
-      expect(result.command?.name).toBe('toggle');
+      expect(result.action).toBe('toggle');
     });
 
     test('analyzer returns low confidence for unknown input', async ({ page }) => {

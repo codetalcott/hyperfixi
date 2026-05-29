@@ -73,7 +73,9 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
     expect(languages).toContain('id');
     expect(languages).toContain('qu');
     expect(languages).toContain('sw');
-    expect(languages.length).toBe(13);
+    // Package supports 24 languages (the original 13 plus bn, he, hi, it, ms,
+    // pl, ru, th, tl, uk, vi). See packages/semantic/CLAUDE.md.
+    expect(languages.length).toBe(24);
   });
 
   test('parses English toggle command @quick', async ({ page }) => {
@@ -212,14 +214,17 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
     });
 
     expect(explicit).toBeDefined();
-    expect(explicit).toContain('TOGGLE');
+    // Explicit syntax is a lowercase, bracket-wrapped IR:
+    // `[toggle patient:.active destination:me]`.
+    expect(explicit).toContain('toggle');
     expect(explicit).toContain('.active');
   });
 
   test('converts from explicit syntax', async ({ page }) => {
     const natural = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
-      const explicit = 'TOGGLE PATIENT=".active"';
+      // Explicit IR must be bracket-wrapped, lowercase `key:value` roles.
+      const explicit = '[toggle patient:.active]';
       return S.fromExplicit(explicit, 'en');
     });
 
@@ -237,8 +242,8 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
     expect(tokens).toBeDefined();
     expect(Array.isArray(tokens)).toBe(true);
     expect(tokens.length).toBeGreaterThan(0);
-    // Should contain 'toggle', '.active', 'on', 'me'
-    expect(tokens.some((t: any) => t.text === 'toggle')).toBe(true);
+    // Tokens expose `.value` (the surface text). Should contain 'toggle'.
+    expect(tokens.some((t: any) => t.value === 'toggle')).toBe(true);
   });
 
   test('tokenizes Japanese correctly', async ({ page }) => {
@@ -277,34 +282,38 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
     expect(allTranslations.ko).toBeDefined();
   });
 
+  // canParse is a boolean predicate; numeric confidence comes from
+  // parseSemantic (parseWithConfidence).
   test('canParse returns confidence score', async ({ page }) => {
-    const canParse = await page.evaluate(() => {
+    const out = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
-      return S.canParse('toggle .active', 'en');
+      return {
+        can: S.canParse('toggle .active', 'en'),
+        conf: S.parseSemantic('toggle .active', 'en')?.confidence,
+      };
     });
 
-    expect(canParse).toBeDefined();
-    expect(typeof canParse).toBe('number');
-    expect(canParse).toBeGreaterThan(0.8);
-    expect(canParse).toBeLessThanOrEqual(1);
+    expect(out.can).toBe(true);
+    expect(typeof out.conf).toBe('number');
+    expect(out.conf).toBeGreaterThan(0.8);
+    expect(out.conf).toBeLessThanOrEqual(1);
   });
 
   test('canParse returns low confidence for invalid input', async ({ page }) => {
-    const canParse = await page.evaluate(() => {
+    const out = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
-      return S.canParse('xyzabc123 notvalid', 'en');
+      return { can: S.canParse('xyzabc123 notvalid', 'en') };
     });
 
-    expect(canParse).toBeDefined();
-    expect(typeof canParse).toBe('number');
-    expect(canParse).toBeLessThan(0.5);
+    expect(out.can).toBe(false);
   });
 
   test('isExplicitSyntax correctly identifies explicit syntax', async ({ page }) => {
     const check = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
       return {
-        explicit: S.isExplicitSyntax('TOGGLE PATIENT=".active"'),
+        // Explicit IR is bracket-wrapped.
+        explicit: S.isExplicitSyntax('[toggle patient:.active]'),
         natural: S.isExplicitSyntax('toggle .active'),
       };
     });
@@ -317,49 +326,63 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
     const analyzerCheck = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
       const analyzer = S.createSemanticAnalyzer('en');
+      // analyze() returns { node, confidence, success } — the confidence is on
+      // the result, so the analyzer surface is just analyze().
+      const res = analyzer?.analyze('toggle .active', 'en');
       return {
         exists: !!analyzer,
         hasAnalyze: typeof analyzer?.analyze === 'function',
-        hasGetConfidence: typeof analyzer?.getConfidence === 'function',
+        resultHasConfidence: typeof res?.confidence === 'number',
       };
     });
 
     expect(analyzerCheck.exists).toBe(true);
     expect(analyzerCheck.hasAnalyze).toBe(true);
-    expect(analyzerCheck.hasGetConfidence).toBe(true);
+    expect(analyzerCheck.resultHasConfidence).toBe(true);
   });
 
+  // Note: SemanticNode uses `action` (not `command`) and `roles` is a Map, so
+  // role assertions must run inside page.evaluate (a Map serializes to `{}`
+  // across the Playwright bridge). Matches the documented shape in
+  // packages/semantic/CLAUDE.md.
   test('parses add command with destination', async ({ page }) => {
     const result = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
-      return S.parse('add .active to #button', 'en');
+      const n = S.parse('add .active to #button', 'en');
+      return {
+        action: n.action,
+        hasPatient: !!n.roles?.get?.('patient'),
+        hasDestination: !!n.roles?.get?.('destination'),
+      };
     });
 
-    expect(result).toBeDefined();
-    expect(result.command).toBe('add');
-    expect(result.roles.patient).toBeDefined();
-    expect(result.roles.destination).toBeDefined();
+    expect(result.action).toBe('add');
+    expect(result.hasPatient).toBe(true);
+    expect(result.hasDestination).toBe(true);
   });
 
   test('parses remove command', async ({ page }) => {
     const result = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
-      return S.parse('remove .active', 'en');
+      const n = S.parse('remove .active', 'en');
+      return { action: n.action, hasPatient: !!n.roles?.get?.('patient') };
     });
 
-    expect(result).toBeDefined();
-    expect(result.command).toBe('remove');
-    expect(result.roles.patient).toBeDefined();
+    expect(result.action).toBe('remove');
+    expect(result.hasPatient).toBe(true);
   });
 
   test('handles complex multi-word commands', async ({ page }) => {
     const result = await page.evaluate(() => {
       const S = (window as any).LokaScriptSemantic;
-      return S.parse('add .highlight to #element', 'en');
+      // parse() returns a node without a confidence score; use parseSemantic
+      // (parseWithConfidence) when a confidence value is needed.
+      const n = S.parse('add .highlight to #element', 'en');
+      const conf = S.parseSemantic('add .highlight to #element', 'en');
+      return { action: n.action, confidence: conf?.confidence ?? 0 };
     });
 
-    expect(result).toBeDefined();
-    expect(result.command).toBe('add');
+    expect(result.action).toBe('add');
     expect(result.confidence).toBeGreaterThan(0.7);
   });
 });

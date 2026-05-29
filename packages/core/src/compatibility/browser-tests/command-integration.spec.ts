@@ -20,7 +20,7 @@ test.describe('HyperFixi Command Integration Tests', () => {
       clearWorkArea();
 
       // Create element with hyperscript behavior using our make function
-      const div = make(
+      const div = await make(
         '<div id="test-put" _=\'on click put "hello world" into #test-put.innerHTML\'></div>'
       );
 
@@ -54,7 +54,7 @@ test.describe('HyperFixi Command Integration Tests', () => {
       clearWorkArea();
 
       // Create element with hyperscript behavior
-      const div = make(
+      const div = await make(
         '<div id="test-set" _=\'on click set my innerHTML to "test content"\'></div>'
       );
 
@@ -88,10 +88,10 @@ test.describe('HyperFixi Command Integration Tests', () => {
       clearWorkArea();
 
       // Create elements with different behaviors
-      const div1 = make(
+      const div1 = await make(
         '<div id="test-multi-1" _=\'on click put "first" into #test-multi-1.innerHTML\'></div>'
       );
-      const div2 = make(
+      const div2 = await make(
         '<div id="test-multi-2" _=\'on click set my innerHTML to "second"\'></div>'
       );
 
