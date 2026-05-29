@@ -126,6 +126,12 @@ jobs:
       - name: Build semantic package
         run: npm run build --prefix packages/semantic
 
+      # Guard against the IIFE bundle externalizing `../core` (would throw at
+      # load and leave window.LokaScriptSemantic undefined). Verified at the
+      # dist level — unit tests resolve to source and can't catch this.
+      - name: Verify semantic bundle output
+        run: bash scripts/verify-semantic-bundle.sh
+
       - name: Build domain-toolkit package
         run: npm run build --prefix packages/domain-toolkit
 
