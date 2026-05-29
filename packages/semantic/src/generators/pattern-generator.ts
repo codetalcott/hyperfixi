@@ -581,30 +581,33 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
       }
     }
   } else if (defaultMarker) {
-    if (defaultMarker.position === 'before') {
-      // Preposition: "on #button"
-      if (defaultMarker.primary) {
-        const markerToken: PatternToken = defaultMarker.alternatives
-          ? {
-              type: 'literal',
-              value: defaultMarker.primary,
-              alternatives: defaultMarker.alternatives,
-            }
-          : { type: 'literal', value: defaultMarker.primary };
-        tokens.push(markerToken);
-      }
-      tokens.push(roleValueToken);
-    } else {
-      // Postposition/particle: "#button に"
-      tokens.push(roleValueToken);
-      const markerToken: PatternToken = defaultMarker.alternatives
+    // When the profile allows colloquial marker-dropping, the marker becomes an
+    // optional group so `.active değiştir` parses as well as `.active i değiştir`.
+    // The marked form still matches the marker literal directly (higher
+    // confidence); the unmarked form falls back through the optional group.
+    const asMarker = (): PatternToken =>
+      defaultMarker.alternatives
         ? {
             type: 'literal',
             value: defaultMarker.primary,
             alternatives: defaultMarker.alternatives,
           }
         : { type: 'literal', value: defaultMarker.primary };
-      tokens.push(markerToken);
+    const pushMarker = (marker: PatternToken): void => {
+      tokens.push(
+        profile.markersOptional ? { type: 'group', optional: true, tokens: [marker] } : marker
+      );
+    };
+    if (defaultMarker.position === 'before') {
+      // Preposition: "on #button"
+      if (defaultMarker.primary) {
+        pushMarker(asMarker());
+      }
+      tokens.push(roleValueToken);
+    } else {
+      // Postposition/particle: "#button に"
+      tokens.push(roleValueToken);
+      pushMarker(asMarker());
     }
   } else {
     // No marker, just the role value

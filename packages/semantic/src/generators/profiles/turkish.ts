@@ -17,6 +17,10 @@ export const turkishProfile: LanguageProfile = {
   wordOrder: 'SOV',
   markingStrategy: 'case-suffix',
   usesSpaces: true,
+  // Colloquial Turkish frequently drops the accusative/case suffix
+  // (`.active değiştir` for `.active i değiştir`). Accept both — the marked form
+  // stays the higher-confidence match.
+  markersOptional: true,
   verb: {
     position: 'end',
     suffixes: ['mek', 'mak', 'yor', 'di', 'miş'],
