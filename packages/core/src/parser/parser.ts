@@ -1261,6 +1261,13 @@ export class Parser {
         } else if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
           // Attribute reference: element's @data-attr
           propertyName = this.advance().value;
+        } else if (this.check('[') && this.tokens[this.current + 1]?.value?.startsWith('@')) {
+          // Bracketed attribute reference: `element's [@data-attr]` — the long
+          // form of `element's @data-attr`. Strip the brackets and reuse the
+          // `@attr` property path so it resolves to getAttribute.
+          this.advance(); // consume '['
+          propertyName = this.advance().value; // the @attr token
+          this.consume(']', "Expected ']' after attribute reference");
         } else {
           // Normal property access. Use the permissive identifier-like predicate
           // so reserved words (e.g. `result`, `open`, `if`) are accepted as
