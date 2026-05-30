@@ -370,6 +370,70 @@ function parseFixedPrecision(type: string): { precision?: number } {
 // Main Conversion Expression
 // ============================================================================
 
+const TYPE_ALIASES: Record<string, string> = {
+  boolean: 'Boolean',
+  bool: 'Boolean',
+  string: 'String',
+  str: 'String',
+  number: 'Number',
+  num: 'Number',
+  int: 'Int',
+  integer: 'Int',
+  float: 'Float',
+  array: 'Array',
+  object: 'Object',
+  obj: 'Object',
+  date: 'Date',
+  json: 'JSON',
+  jsonstring: 'JSONString',
+  formencoded: 'FormEncoded',
+};
+
+/**
+ * Apply an `as`-conversion synchronously. This is the canonical conversion logic
+ * shared by the (async-signature) `asExpression.evaluate` and the synchronous
+ * expression fast-path used by the parity harness. All built-in converters are
+ * synchronous, so this never needs to await.
+ */
+export function convertValue(value: unknown, type: string, context?: ExecutionContext): unknown {
+  if (typeof type !== 'string') {
+    throw new Error('Conversion type must be a string');
+  }
+
+  // Handle Fixed:<precision> conversion (a dynamic resolver upstream, so it
+  // runs before the null short-circuit below — `Number(null).toFixed()`).
+  if (type.startsWith('Fixed')) {
+    const { precision } = parseFixedPrecision(type);
+    const num = defaultConversions.Number(value) as number;
+    return num.toFixed(precision ?? 0);
+  }
+
+  // Upstream `convertValue`: null/undefined pass through unchanged for every
+  // static converter (`null as String` is null, not "").
+  if (value == null) {
+    return value;
+  }
+
+  // Built-in conversion (case-sensitive first), then case-insensitive aliases.
+  let converter = defaultConversions[type];
+  if (converter) {
+    return converter(value, context);
+  }
+
+  const aliasedType = TYPE_ALIASES[type.toLowerCase()];
+  if (aliasedType) {
+    converter = defaultConversions[aliasedType];
+    if (converter) {
+      return converter(value, context);
+    }
+  }
+
+  // Unknown conversion type — return the original value (custom conversions via
+  // global config are not yet supported).
+  console.warn(`Unknown conversion type: ${type}`);
+  return value;
+}
+
 export const asExpression: ExpressionImplementation = {
   name: 'as',
   category: 'Conversion',
@@ -380,65 +444,7 @@ export const asExpression: ExpressionImplementation = {
 
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [value, type] = args;
-    if (typeof type !== 'string') {
-      throw new Error('Conversion type must be a string');
-    }
-
-    // Handle Fixed:<precision> conversion (a dynamic resolver upstream, so it
-    // runs before the null short-circuit below — `Number(null).toFixed()`).
-    if (type.startsWith('Fixed')) {
-      const { precision } = parseFixedPrecision(type);
-      const num = defaultConversions.Number(value) as number;
-      return num.toFixed(precision ?? 0);
-    }
-
-    // Upstream `convertValue`: null/undefined pass through unchanged for every
-    // static converter (`null as String` is null, not "").
-    if (value == null) {
-      return value;
-    }
-
-    // Check for built-in conversion (case-sensitive first)
-    let converter = defaultConversions[type];
-    if (converter) {
-      return converter(value, context);
-    }
-
-    // Check for case-insensitive matches and common aliases
-    const lowerType = type.toLowerCase();
-    const typeAliases: Record<string, string> = {
-      boolean: 'Boolean',
-      bool: 'Boolean',
-      string: 'String',
-      str: 'String',
-      number: 'Number',
-      num: 'Number',
-      int: 'Int',
-      integer: 'Int',
-      float: 'Float',
-      array: 'Array',
-      object: 'Object',
-      obj: 'Object',
-      date: 'Date',
-      json: 'JSON',
-      jsonstring: 'JSONString',
-      formencoded: 'FormEncoded',
-    };
-
-    const aliasedType = typeAliases[lowerType];
-    if (aliasedType) {
-      converter = defaultConversions[aliasedType];
-      if (converter) {
-        return converter(value, context);
-      }
-    }
-
-    // Check for custom conversions in global config
-    // This would be extended later to support _hyperscript.config.conversions
-
-    // Fallback: return original value
-    console.warn(`Unknown conversion type: ${type}`);
-    return value;
+    return convertValue(value, type as string, context);
   },
 
   validate(args: unknown[]): string | null {

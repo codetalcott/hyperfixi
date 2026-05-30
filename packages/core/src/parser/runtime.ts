@@ -18,6 +18,7 @@ export { setGlobal } from './extensions';
 // (logical operators, references, conversions, positional, properties, math) goes
 // through `context.registry` so bundle entries control which categories ship.
 import { isElement, getElementProperty } from '../expressions/property-access-utils';
+import { convertValue } from '../expressions/conversion/index';
 import {
   evaluateWhere,
   evaluateSortedBy,
@@ -296,12 +297,79 @@ export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext)
   const n = node as any;
   switch (n?.type) {
     case 'literal':
+    case 'string':
       return n.value;
     case 'selector':
       return evaluateSelectorSync(n, context);
+    case 'identifier':
+      return resolveIdentifierSync(n.name, context);
+    case 'contextReference':
+      return resolveContextReferenceSync(n.contextType, context);
+    case 'arrayLiteral':
+      return (n.elements as ASTNode[]).map(el => evaluateExpressionSync(el, context));
+    case 'objectLiteral':
+      return evaluateObjectLiteralSync(n, context);
+    case 'asExpression': {
+      const value = evaluateExpressionSync(n.expression, context);
+      return convertValue(value, normalizeAsTargetType(n.targetType), context);
+    }
     default:
       throw new NotSyncEvaluable(n?.type ?? 'unknown');
   }
+}
+
+/** Sync identifier resolution mirroring `evaluateIdentifier` (sans the async
+ *  registry / reactivity hooks, which yield the same values for these reads). */
+function resolveIdentifierSync(name: string, context: ExecutionContext): unknown {
+  if (name === 'me' || name === 'my' || name === 'I') return context.me;
+  if (name === 'you' || name === 'your' || name === 'yourself') return context.you;
+  if (name === 'it' || name === 'its') return context.it ?? context.result;
+  if (name === 'window') return typeof window !== 'undefined' ? window : globalThis;
+  if (name === 'document') return typeof document !== 'undefined' ? document : undefined;
+  if (context.locals?.has(name)) return context.locals.get(name);
+  if (context.globals?.has(name)) return context.globals.get(name);
+  if (name.startsWith('$') && context.globals?.has(name.slice(1)))
+    return context.globals.get(name.slice(1));
+  if ((context as any)[name] !== undefined) return (context as any)[name];
+  if (typeof globalThis !== 'undefined' && name in globalThis)
+    return (globalThis as Record<string, unknown>)[name];
+  return undefined;
+}
+
+/** Sync `me`/`you`/`it`/`event`/`target` resolution mirroring `evaluateContextReference`. */
+function resolveContextReferenceSync(contextType: string, context: ExecutionContext): unknown {
+  switch (contextType) {
+    case 'me':
+      return context.me;
+    case 'you':
+      return context.you;
+    case 'it':
+      return context.it ?? context.result;
+    case 'event':
+      return (context as any).event;
+    case 'target':
+      return (context as any).target ?? (context as any).event?.target ?? context.me;
+    default:
+      throw new NotSyncEvaluable('contextReference');
+  }
+}
+
+/** Sync object-literal evaluation mirroring `evaluateObjectLiteralNode`. */
+function evaluateObjectLiteralSync(node: any, context: ExecutionContext): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const property of node.properties) {
+    const keyNode = property.key;
+    let key: string;
+    if (keyNode.type === 'identifier') {
+      key = keyNode.name;
+    } else if (keyNode.type === 'literal' && keyNode.valueType === 'string') {
+      key = keyNode.value;
+    } else {
+      key = String(evaluateExpressionSync(keyNode, context));
+    }
+    result[key] = evaluateExpressionSync(property.value, context);
+  }
+  return result;
 }
 
 /**
