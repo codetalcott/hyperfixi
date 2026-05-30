@@ -25,6 +25,10 @@ const HYPERSCRIPT_TEST_ROOT =
 //   - styleRef (possessive/of):   230/361 runnable = 64%  (floor 63)
 //   - sync-eval selector path:    244/361 runnable = 68%  (floor 67)
 //   - sync-eval asExpression:      252/361 runnable = 70%  (floor 69)
+//   - Phase A product bugs:        273/361 runnable = 76%  (floor 75)
+//       splitJoin (standalone `return`), mathOperator (array `+`),
+//       objectLiteral (hyphenated keys), propertyAccess (`X of Y`),
+//       attributeRef (bare `[@attr]`).
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
 // Harness/upstream-fidelity note: upstream's `_hyperscript("expr")` is
@@ -36,7 +40,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
 // fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
 // pass); extending evalHyperScriptSync to those node types lifts them further.
-const EXPRESSION_PASS_RATE_FLOOR = 69;
+const EXPRESSION_PASS_RATE_FLOOR = 75;
 
 interface TestFile {
   filename: string;
