@@ -1132,6 +1132,14 @@ async function evaluateCollectionExpression(
 ): Promise<any> {
   const collection = await evaluateAST(node.collection, context);
 
+  // Null-safety (upstream _hyperscript): every collection operator passes a
+  // null/undefined collection through unchanged rather than coercing it.
+  // `null where it > 1` → null; `null joined by ','` → null;
+  // `undefined mapped to ...` → undefined.
+  if (collection == null) {
+    return collection;
+  }
+
   // Helper: evaluate the RHS AST with `it` bound to the given element.
   const evalWithIt = async (astNode: ASTNode, it: unknown): Promise<unknown> => {
     const elementContext = { ...context, it } as ExecutionContext;

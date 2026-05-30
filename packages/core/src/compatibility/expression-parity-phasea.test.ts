@@ -89,6 +89,32 @@ describe('expression parity (Phase A)', () => {
     });
   });
 
+  describe('collection-expression null safety (collectionExpressions)', () => {
+    it('where on null returns null', async () => {
+      expect(await evalHyperScript('set x to null then return x where it > 1')).toBeNull();
+    });
+    it('sorted by on null returns null', async () => {
+      expect(await evalHyperScript('set x to null then return x sorted by it')).toBeNull();
+    });
+    it('mapped to on null returns null', async () => {
+      expect(await evalHyperScript('set x to null then return x mapped to (it * 2)')).toBeNull();
+    });
+    it('split by on null returns null', async () => {
+      expect(await evalHyperScript("set x to null then return x split by ','")).toBeNull();
+    });
+    it('joined by on null returns null', async () => {
+      expect(await evalHyperScript("set x to null then return x joined by ','")).toBeNull();
+    });
+    it('where on undefined returns undefined', async () => {
+      expect(await evalHyperScript('return doesNotExist where it > 1')).toBeUndefined();
+    });
+    it('still filters a non-null array', async () => {
+      expect(
+        await evalHyperScript('set arr to [1, 2, 3, 4, 5] then return arr where it > 3')
+      ).toEqual([4, 5]);
+    });
+  });
+
   describe('bare `[@attr]` attribute reference (attributeRef)', () => {
     it('reads an attribute off the context element', async () => {
       const div = document.createElement('div');
