@@ -115,6 +115,25 @@ describe('expression parity (Phase A)', () => {
     });
   });
 
+  describe('`no` with `where` precedence (no)', () => {
+    // `no X where Y` must filter first, then test emptiness — `no (X where Y)`,
+    // not `(no X) where Y`. `no` binds looser than the collection operators.
+    it('is true when the filter removes everything', async () => {
+      expect(await evalHyperScript('no [1, 2, 3] where it > 5')).toBe(true);
+    });
+    it('is false when matches remain', async () => {
+      expect(await evalHyperScript('no [1, 2, 3] where it > 1')).toBe(false);
+    });
+    it('works with `is not`', async () => {
+      expect(await evalHyperScript('no [1, 2, 3] where it is not 2')).toBe(false);
+    });
+    it('still handles bare `no` (null / empty / non-empty)', async () => {
+      expect(await evalHyperScript('no null')).toBe(true);
+      expect(await evalHyperScript('no []')).toBe(true);
+      expect(await evalHyperScript('no [1, 2, 3]')).toBe(false);
+    });
+  });
+
   describe('bare `[@attr]` attribute reference (attributeRef)', () => {
     it('reads an attribute off the context element', async () => {
       const div = document.createElement('div');

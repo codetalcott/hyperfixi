@@ -31,6 +31,8 @@ const HYPERSCRIPT_TEST_ROOT =
 //       attributeRef (bare `[@attr]`).
 //   - Phase B collection null-safety: 279/361 runnable = 77%  (floor 76)
 //       where/sorted by/mapped to/split by/joined by on null|undefined.
+//   - `no` × `where` precedence:    282/361 runnable = 78%  (floor 77)
+//       `no X where Y` now binds as `no (X where Y)` (filter, then test empty).
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
 // Harness/upstream-fidelity note: upstream's `_hyperscript("expr")` is
@@ -42,7 +44,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
 // fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
 // pass); extending evalHyperScriptSync to those node types lifts them further.
-const EXPRESSION_PASS_RATE_FLOOR = 76;
+const EXPRESSION_PASS_RATE_FLOOR = 77;
 
 interface TestFile {
   filename: string;
