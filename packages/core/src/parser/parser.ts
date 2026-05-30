@@ -3400,8 +3400,8 @@ export class Parser {
   }
 
   private parseContextPropertyAccess(contextVar: 'me' | 'it' | 'you'): MemberExpressionNode {
-    // Check for CSS property syntax: my *background-color (only applies to 'me')
-    const hasCssPrefix = contextVar === 'me' && this.match('*');
+    // Check for CSS style-ref syntax: `my *color`, `its *height`, `your *width`.
+    const hasCssPrefix = this.match('*');
 
     if (hasCssPrefix) {
       // Parse CSS property name with hyphens (e.g., background-color)
@@ -3432,9 +3432,10 @@ export class Parser {
         }
       }
 
-      // Create member expression with computed-prefix for CSS properties
-      // This tells the evaluator to use getComputedStyle
-      const cssPropertyName = `computed-${propertyName}`;
+      // Preserve the `*` so the evaluator distinguishes inline (`*color`) from
+      // computed (`*computed-color`) styles. Forcing a `computed-` prefix here
+      // wrongly made `my *color` computed and double-prefixed `my *computed-color`.
+      const cssPropertyName = `*${propertyName}`;
       return this.createMemberExpression(
         this.createIdentifier(contextVar),
         this.createIdentifier(cssPropertyName),

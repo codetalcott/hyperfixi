@@ -419,6 +419,23 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
     }
   }
 
+  // Style reference with `of`: `*color of me`, `*computed-height of it`. The left
+  // operand is a `*prop` selector — read that style off the RIGHT element rather
+  // than indexing it (`me["red"]`, which the generic `of` branch would do).
+  if (
+    operator === 'of' &&
+    leftNode?.type === 'selector' &&
+    typeof leftNode.value === 'string' &&
+    /^\*[a-zA-Z][\w-]*$/.test(leftNode.value)
+  ) {
+    const el = await evaluateAST(node.right, context);
+    return getExpr(context, 'styleRef').evaluate(
+      context,
+      leftNode.value.slice(1),
+      el as HTMLElement
+    );
+  }
+
   const left = await evaluateAST(node.left, context);
 
   // Handle short-circuit evaluation for logical operators.
