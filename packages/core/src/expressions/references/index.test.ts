@@ -380,9 +380,11 @@ describe('Reference Expressions', () => {
         expect(widthResult).toBe('10px');
       });
 
-      it('should return undefined for unset inline properties', async () => {
+      it('distinguishes unset-but-valid ("") from unknown (undefined) properties', async () => {
+        // Upstream parity: a valid but unset inline property is "", while an
+        // unknown property name is undefined (`*height` → "", `*bad-prop` → undefined).
         const heightResult = await referenceExpressions.styleRef.evaluate(context, 'height');
-        expect(heightResult).toBeUndefined();
+        expect(heightResult).toBe('');
 
         const badPropResult = await referenceExpressions.styleRef.evaluate(context, 'bad-prop');
         expect(badPropResult).toBeUndefined();

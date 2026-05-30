@@ -21,6 +21,7 @@ const HYPERSCRIPT_TEST_ROOT =
 //   - harness landing:           182/361 runnable = 50%  (floor 47)
 //   - comparisonOperator cluster: 211/361 runnable = 58%  (floor 57)
 //   - asExpression/conversions:   222/361 runnable = 61%  (floor 60)
+//   - styleRef (bare `*prop`):    224/361 runnable = 62%  (floor 61)
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
 // Known harness limitation (not product gaps): a handful of upstream tests use
@@ -30,7 +31,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // closures (Date/Set/Map/Fragment/Values, config.conversions custom converters)
 // can't pass without a synchronous eval path. The conversions themselves are
 // correct, as the `run`-based cases (awaited) confirm.
-const EXPRESSION_PASS_RATE_FLOOR = 60;
+const EXPRESSION_PASS_RATE_FLOOR = 61;
 
 interface TestFile {
   filename: string;

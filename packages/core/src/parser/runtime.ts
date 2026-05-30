@@ -1136,6 +1136,15 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
  */
 async function evaluateSelector(node: SelectorNode, context: ExecutionContext): Promise<any> {
   const selector = node.value;
+
+  // Style reference: `*color`, `*text-align`, `*computed-color`. The leading `*`
+  // here is NOT the universal CSS selector — it reads a style property off the
+  // context element (upstream styleRef). Route to the styleRef expression rather
+  // than querySelectorAll, which would throw on `*color`.
+  if (typeof selector === 'string' && !node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
+    return getExpr(context, 'styleRef').evaluate(context, selector.slice(1));
+  }
+
   const escaped = typeof selector === 'string' ? escapeClassColons(selector) : selector;
   const result = await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
 
