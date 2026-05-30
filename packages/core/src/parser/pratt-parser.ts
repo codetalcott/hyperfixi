@@ -768,7 +768,10 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
 
   // Equality-level keywords from parseEquality
   ['in', leftAssoc(30) as BindingPowerEntry],
-  ['of', leftAssoc(30) as BindingPowerEntry],
+  // `of` is right-associative so `c of b of a` parses as `c of (b of a)` —
+  // property `c` of (property `b` of `a`). See evaluateBinaryExpression's `of`
+  // path-access handler in runtime.ts.
+  ['of', rightAssoc(30) as BindingPowerEntry],
   ['really', leftAssoc(30) as BindingPowerEntry],
 
   // Postfix unary operators — consume operator, no right-hand side
