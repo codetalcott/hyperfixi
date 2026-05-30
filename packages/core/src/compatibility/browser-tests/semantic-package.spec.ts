@@ -181,7 +181,10 @@ test.describe('HyperFixi Semantic Parser Bundle', () => {
     });
 
     expect(translated).toBeDefined();
-    expect(translated).toContain('トグル');
+    // The renderer uses the primary keyword `切り替え` (native Japanese) for
+    // toggle; `トグル` is only a recognized alternative. This matches the
+    // canonical output asserted in packages/semantic semantic.test.ts.
+    expect(translated).toContain('切り替え');
     expect(translated).toContain('.active');
   });
 
