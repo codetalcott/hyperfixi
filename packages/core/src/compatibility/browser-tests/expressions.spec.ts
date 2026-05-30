@@ -23,16 +23,19 @@ const HYPERSCRIPT_TEST_ROOT =
 //   - asExpression/conversions:   222/361 runnable = 61%  (floor 60)
 //   - styleRef (bare `*prop`):    224/361 runnable = 62%  (floor 61)
 //   - styleRef (possessive/of):   230/361 runnable = 64%  (floor 63)
+//   - sync-eval selector path:    244/361 runnable = 68%  (floor 67)
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
-// Known harness limitation (not product gaps): a handful of upstream tests use
-// the result of the synchronous `_hyperscript("expr")` global *synchronously*
-// (e.g. `const r = _hyperscript("1 as Date"); r.getTime()`). HyperFixi evaluates
-// asynchronously, so the compatibility-test.html shim returns a Promise — those
-// closures (Date/Set/Map/Fragment/Values, config.conversions custom converters)
-// can't pass without a synchronous eval path. The conversions themselves are
-// correct, as the `run`-based cases (awaited) confirm.
-const EXPRESSION_PASS_RATE_FLOOR = 63;
+// Harness/upstream-fidelity note: upstream's `_hyperscript("expr")` is
+// SYNCHRONOUS, but HyperFixi evaluates asynchronously. The compatibility-test.html
+// shim now tries `hyperfixi.evalHyperScriptSync` first (a sync fast-path for the
+// pure-expression subset — currently selector references) and falls back to the
+// async Promise otherwise. Cases still gated by this (consume the result
+// synchronously but aren't yet sync-evaluable): the remaining asExpression
+// closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
+// fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
+// pass); extending evalHyperScriptSync to those node types lifts them further.
+const EXPRESSION_PASS_RATE_FLOOR = 67;
 
 interface TestFile {
   filename: string;

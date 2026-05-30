@@ -269,6 +269,84 @@ export async function evaluateASTWithResult(
  * canonical evaluator. Upstream-faithful semantics: silent-null member
  * access, late-binding `this` on method extraction.
  */
+/**
+ * Thrown by `evaluateExpressionSync` when a node can't be evaluated without the
+ * async pipeline. Callers (the upstream-parity harness shim) catch this and fall
+ * back to the async `evaluateAST`.
+ */
+export class NotSyncEvaluable extends Error {
+  constructor(nodeType: string) {
+    super(`Expression node "${nodeType}" is not synchronously evaluable`);
+    this.name = 'NotSyncEvaluable';
+  }
+}
+
+/**
+ * Synchronous fast-path for the *pure-expression* subset, used only by the
+ * upstream-parity harness so `_hyperscript("expr")` can return a value (not a
+ * Promise) — matching upstream's synchronous `_hyperscript()`. Production keeps
+ * using the canonical async `evaluateAST`; anything this can't prove is
+ * synchronous throws `NotSyncEvaluable` so the caller falls back to async.
+ *
+ * Currently covers bare selector references (`.c1`, `#id`, `<.c1/>`), which is
+ * what the classRef/queryRef parity tests need. Reuses the same selector
+ * resolution semantics as `evaluateSelector` (sans the async registry).
+ */
+export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext): unknown {
+  const n = node as any;
+  switch (n?.type) {
+    case 'literal':
+      return n.value;
+    case 'selector':
+      return evaluateSelectorSync(n, context);
+    default:
+      throw new NotSyncEvaluable(n?.type ?? 'unknown');
+  }
+}
+
+/**
+ * Synchronous mirror of `evaluateSelector` for plain CSS/query selectors.
+ * Style references (`*color`) and anything needing the async pipeline throw
+ * `NotSyncEvaluable` to defer to the async path.
+ */
+function evaluateSelectorSync(node: SelectorNode, context: ExecutionContext): unknown {
+  const selector = node.value;
+  if (typeof selector !== 'string') throw new NotSyncEvaluable('selector');
+  // Style references go through the async styleRef expression — defer.
+  if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
+    throw new NotSyncEvaluable('selector');
+  }
+  const escaped = escapeClassColons(selector);
+  const doc =
+    (context?.me as { ownerDocument?: Document } | null)?.ownerDocument ??
+    (typeof document !== 'undefined' ? document : null);
+  if (!doc) throw new NotSyncEvaluable('selector');
+  const elements = Array.from(doc.querySelectorAll(escaped));
+  // Bare `#id` unwraps to a single element/null; query-form (`<#id/>`) and class
+  // selectors return the collection — matches evaluateSelector.
+  if (!node.fromQuery && selector.startsWith('#')) {
+    return elements[0] ?? null;
+  }
+  return elements;
+}
+
+/**
+ * Synchronous counterpart to `evaluateExpressionFromSource`, used by the parity
+ * harness. Parses (sync) then evaluates via `evaluateExpressionSync`, throwing
+ * `NotSyncEvaluable` for anything outside the sync subset.
+ */
+export function evaluateExpressionFromSourceSync(
+  source: string,
+  context: ExecutionContext
+): unknown {
+  const result = parse(source);
+  if (!result.success || !result.node) {
+    const err = result.error ?? result.errors?.[0];
+    throw new Error(`Failed to parse expression: ${err?.message ?? 'unknown error'}`);
+  }
+  return evaluateExpressionSync(result.node as ASTNode, context);
+}
+
 export async function evaluateExpressionFromSource(
   source: string,
   context: ExecutionContext

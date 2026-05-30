@@ -22,7 +22,15 @@
         // _hyperscript compatibility shim — maps official API names to HyperFixi
         // Many official tests reference window._hyperscript directly
         window._hyperscript = function(code, ctx) {
-            return hyperfixi.evalHyperScript(code, ctx);
+            // Upstream's `_hyperscript(expr)` is SYNCHRONOUS for pure expressions
+            // (e.g. `Array.from(_hyperscript(".c1"))`, `_hyperscript("1 as Date").getTime()`).
+            // HyperFixi evaluates async, so try the synchronous fast-path first and
+            // fall back to the async Promise for commands / non-sync expressions.
+            try {
+                return hyperfixi.evalHyperScriptSync(code, ctx);
+            } catch (e) {
+                return hyperfixi.evalHyperScript(code, ctx);
+            }
         };
         window._hyperscript.processNode = function(el) {
             return hyperfixi.processNode(el);
