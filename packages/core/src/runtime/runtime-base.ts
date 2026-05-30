@@ -515,19 +515,40 @@ export class RuntimeBase {
 
       switch (node.type) {
         case 'command': {
+          // A standalone `return <expr>` reaches here as a single-command
+          // program — there is no `then`-joined sequence around it to catch the
+          // control-flow signal (executeCommandSequenceWithResult handles the
+          // multi-command case). Surface the returned value the same way the
+          // sequence executor does, rather than leaking the raw
+          // RETURN_EXECUTION signal to the caller.
           // Use Result-based execution when enabled (~12-18% faster)
           if (this.options.enableResultPattern) {
-            try {
-              const result = await this.processCommandWithResult(node as CommandNode, context);
-              if (!isOk(result)) {
-                throw signalToError(result.error);
+            const result = await this.processCommandWithResult(node as CommandNode, context);
+            if (!isOk(result)) {
+              if (result.error.type === 'return') {
+                const rv = (result.error as { returnValue?: unknown }).returnValue;
+                if (rv !== undefined) {
+                  Object.assign(context, { it: rv, result: rv });
+                }
+                return rv;
               }
-              return result.value;
-            } catch (e) {
-              throw e;
+              throw signalToError(result.error);
             }
+            return result.value;
           }
-          return await this.processCommand(node as CommandNode, context);
+          try {
+            return await this.processCommand(node as CommandNode, context);
+          } catch (e) {
+            const cfe = asControlFlowError(e);
+            if (cfe?.isReturn) {
+              const rv = cfe.returnValue;
+              if (rv !== undefined) {
+                Object.assign(context, { it: rv, result: rv });
+              }
+              return rv;
+            }
+            throw e;
+          }
         }
 
         case 'eventHandler': {
