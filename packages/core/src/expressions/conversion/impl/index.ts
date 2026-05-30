@@ -73,6 +73,13 @@ export type SupportedConversionType =
   | 'Values'
   | 'Values:Form'
   | 'Values:JSON'
+  | 'Set'
+  | 'Map'
+  | 'Keys'
+  | 'Entries'
+  | 'Reversed'
+  | 'Unique'
+  | 'Flat'
   | `Fixed:${number}`
   | string;
 
@@ -346,6 +353,87 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       );
     }
   },
+
+  // Collection conversions (upstream _hyperscript 0.9.90), kept in parallel with
+  // the functional registry in ../index.ts. Each takes (value, context) to match
+  // the EnhancedTypeConverter interface even though context is unused here.
+  Set: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Set<unknown>> => {
+    try {
+      return success(new Set(value as Iterable<unknown>), 'object');
+    } catch (error) {
+      return converterError(
+        'Set',
+        'SET_CONVERSION_FAILED',
+        errorMsg('Failed to convert to Set', error),
+        ['Ensure the value is iterable']
+      );
+    }
+  },
+
+  Map: (
+    value: unknown,
+    _context: TypedExpressionContext
+  ): EvaluationResult<Map<string, unknown>> => {
+    try {
+      return success(new Map(Object.entries((value ?? {}) as Record<string, unknown>)), 'object');
+    } catch (error) {
+      return converterError(
+        'Map',
+        'MAP_CONVERSION_FAILED',
+        errorMsg('Failed to convert to Map', error),
+        ['Ensure the value is a plain object']
+      );
+    }
+  },
+
+  Keys: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown[]> => {
+    if (value instanceof Map) return success(Array.from(value.keys()), 'array');
+    return success(Object.keys((value ?? {}) as object), 'array');
+  },
+
+  Entries: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown[]> => {
+    if (value instanceof Map) return success(Array.from(value.entries()), 'array');
+    return success(Object.entries((value ?? {}) as object), 'array');
+  },
+
+  Reversed: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown[]> => {
+    try {
+      return success(Array.from(value as ArrayLike<unknown>).reverse(), 'array');
+    } catch (error) {
+      return converterError(
+        'Reversed',
+        'REVERSED_CONVERSION_FAILED',
+        errorMsg('Failed to reverse value', error),
+        ['Ensure the value is array-like']
+      );
+    }
+  },
+
+  Unique: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown[]> => {
+    try {
+      return success([...new Set(value as Iterable<unknown>)], 'array');
+    } catch (error) {
+      return converterError(
+        'Unique',
+        'UNIQUE_CONVERSION_FAILED',
+        errorMsg('Failed to dedupe value', error),
+        ['Ensure the value is iterable']
+      );
+    }
+  },
+
+  Flat: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown[]> => {
+    try {
+      return success(Array.from(value as ArrayLike<unknown>).flat(), 'array');
+    } catch (error) {
+      return converterError(
+        'Flat',
+        'FLAT_CONVERSION_FAILED',
+        errorMsg('Failed to flatten value', error),
+        ['Ensure the value is array-like']
+      );
+    }
+  },
 };
 
 // ============================================================================
@@ -518,10 +606,10 @@ export class AsExpression
 
       const { value, type } = input;
 
-      // Handle Fixed:<precision> conversion
+      // Handle Fixed:<precision> conversion (upstream default is 0 places)
       if (type.startsWith('Fixed')) {
         const precisionMatch = type.match(/^Fixed:(\d+)$/);
-        const precision = precisionMatch ? parseInt(precisionMatch[1], 10) : 2;
+        const precision = precisionMatch ? parseInt(precisionMatch[1], 10) : 0;
         const numberResult = enhancedConverters.Number(value, context);
         if (!numberResult.success) {
           return numberResult;

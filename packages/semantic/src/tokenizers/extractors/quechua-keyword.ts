@@ -81,7 +81,22 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
   }
 
   canExtract(input: string, position: number): boolean {
-    return isQuechuaLetter(input[position]);
+    if (isQuechuaLetter(input[position])) return true;
+    // Hyphenated suffix notation (`-ta`, `-pi`, `-manta`, …). Without this the
+    // bare `-` is split off as a stray operator token, which breaks SOV pattern
+    // matching (`.active -ta tikray` would fail where `.active ta tikray` works).
+    return this.isHyphenatedSuffix(input, position) !== null;
+  }
+
+  /**
+   * Return the suffix (without the leading hyphen) if `position` begins a
+   * hyphenated Quechua suffix like `-ta`, else null.
+   */
+  private isHyphenatedSuffix(input: string, position: number): string | null {
+    if (input[position] !== '-') return null;
+    const match = input.slice(position).match(/^-([a-zñ'’]+)/i);
+    if (match && SUFFIXES.has(`-${match[1].toLowerCase()}`)) return match[1];
+    return null;
   }
 
   extract(input: string, position: number): ExtractionResult | null {
@@ -90,6 +105,17 @@ export class QuechuaKeywordExtractor implements ContextAwareExtractor {
     }
 
     const startPos = position;
+
+    // Hyphenated suffix (`-ta`): consume the leading hyphen and emit the bare
+    // suffix token, so it tokenizes identically to the standalone `ta` form.
+    const hyphenSuffix = this.isHyphenatedSuffix(input, position);
+    if (hyphenSuffix !== null) {
+      return {
+        value: hyphenSuffix,
+        length: hyphenSuffix.length + 1, // +1 for the consumed hyphen
+        metadata: { suffixValue: hyphenSuffix.toLowerCase() },
+      };
+    }
 
     // First, try to find the longest matching keyword starting at this position
     // This ensures compound words are recognized whole

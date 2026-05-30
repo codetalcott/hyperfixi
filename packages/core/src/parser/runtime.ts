@@ -18,6 +18,7 @@ export { setGlobal } from './extensions';
 // (logical operators, references, conversions, positional, properties, math) goes
 // through `context.registry` so bundle entries control which categories ship.
 import { isElement, getElementProperty } from '../expressions/property-access-utils';
+import { convertValue } from '../expressions/conversion/index';
 import {
   evaluateWhere,
   evaluateSortedBy,
@@ -269,6 +270,151 @@ export async function evaluateASTWithResult(
  * canonical evaluator. Upstream-faithful semantics: silent-null member
  * access, late-binding `this` on method extraction.
  */
+/**
+ * Thrown by `evaluateExpressionSync` when a node can't be evaluated without the
+ * async pipeline. Callers (the upstream-parity harness shim) catch this and fall
+ * back to the async `evaluateAST`.
+ */
+export class NotSyncEvaluable extends Error {
+  constructor(nodeType: string) {
+    super(`Expression node "${nodeType}" is not synchronously evaluable`);
+    this.name = 'NotSyncEvaluable';
+  }
+}
+
+/**
+ * Synchronous fast-path for the *pure-expression* subset, used only by the
+ * upstream-parity harness so `_hyperscript("expr")` can return a value (not a
+ * Promise) — matching upstream's synchronous `_hyperscript()`. Production keeps
+ * using the canonical async `evaluateAST`; anything this can't prove is
+ * synchronous throws `NotSyncEvaluable` so the caller falls back to async.
+ *
+ * Currently covers bare selector references (`.c1`, `#id`, `<.c1/>`), which is
+ * what the classRef/queryRef parity tests need. Reuses the same selector
+ * resolution semantics as `evaluateSelector` (sans the async registry).
+ */
+export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext): unknown {
+  const n = node as any;
+  switch (n?.type) {
+    case 'literal':
+    case 'string':
+      return n.value;
+    case 'selector':
+      return evaluateSelectorSync(n, context);
+    case 'identifier':
+      return resolveIdentifierSync(n.name, context);
+    case 'contextReference':
+      return resolveContextReferenceSync(n.contextType, context);
+    case 'arrayLiteral':
+      return (n.elements as ASTNode[]).map(el => evaluateExpressionSync(el, context));
+    case 'objectLiteral':
+      return evaluateObjectLiteralSync(n, context);
+    case 'asExpression': {
+      const value = evaluateExpressionSync(n.expression, context);
+      return convertValue(value, normalizeAsTargetType(n.targetType), context);
+    }
+    default:
+      throw new NotSyncEvaluable(n?.type ?? 'unknown');
+  }
+}
+
+/** Sync identifier resolution mirroring `evaluateIdentifier` (sans the async
+ *  registry / reactivity hooks, which yield the same values for these reads). */
+function resolveIdentifierSync(name: string, context: ExecutionContext): unknown {
+  if (name === 'me' || name === 'my' || name === 'I') return context.me;
+  if (name === 'you' || name === 'your' || name === 'yourself') return context.you;
+  if (name === 'it' || name === 'its') return context.it ?? context.result;
+  if (name === 'window') return typeof window !== 'undefined' ? window : globalThis;
+  if (name === 'document') return typeof document !== 'undefined' ? document : undefined;
+  if (context.locals?.has(name)) return context.locals.get(name);
+  if (context.globals?.has(name)) return context.globals.get(name);
+  if (name.startsWith('$') && context.globals?.has(name.slice(1)))
+    return context.globals.get(name.slice(1));
+  if ((context as any)[name] !== undefined) return (context as any)[name];
+  if (typeof globalThis !== 'undefined' && name in globalThis)
+    return (globalThis as Record<string, unknown>)[name];
+  return undefined;
+}
+
+/** Sync `me`/`you`/`it`/`event`/`target` resolution mirroring `evaluateContextReference`. */
+function resolveContextReferenceSync(contextType: string, context: ExecutionContext): unknown {
+  switch (contextType) {
+    case 'me':
+      return context.me;
+    case 'you':
+      return context.you;
+    case 'it':
+      return context.it ?? context.result;
+    case 'event':
+      return (context as any).event;
+    case 'target':
+      return (context as any).target ?? (context as any).event?.target ?? context.me;
+    default:
+      throw new NotSyncEvaluable('contextReference');
+  }
+}
+
+/** Sync object-literal evaluation mirroring `evaluateObjectLiteralNode`. */
+function evaluateObjectLiteralSync(node: any, context: ExecutionContext): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const property of node.properties) {
+    const keyNode = property.key;
+    let key: string;
+    if (keyNode.type === 'identifier') {
+      key = keyNode.name;
+    } else if (keyNode.type === 'literal' && keyNode.valueType === 'string') {
+      key = keyNode.value;
+    } else {
+      key = String(evaluateExpressionSync(keyNode, context));
+    }
+    result[key] = evaluateExpressionSync(property.value, context);
+  }
+  return result;
+}
+
+/**
+ * Synchronous mirror of `evaluateSelector` for plain CSS/query selectors.
+ * Style references (`*color`) and anything needing the async pipeline throw
+ * `NotSyncEvaluable` to defer to the async path.
+ */
+function evaluateSelectorSync(node: SelectorNode, context: ExecutionContext): unknown {
+  const selector = node.value;
+  if (typeof selector !== 'string') throw new NotSyncEvaluable('selector');
+  // Style references go through the async styleRef expression — defer.
+  if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
+    throw new NotSyncEvaluable('selector');
+  }
+  const escaped = escapeClassColons(selector);
+  const doc =
+    (context?.me as { ownerDocument?: Document } | null)?.ownerDocument ??
+    (typeof document !== 'undefined' ? document : null);
+  if (!doc) throw new NotSyncEvaluable('selector');
+  const elements = Array.from(doc.querySelectorAll(escaped));
+  // Bare `#id` unwraps to a single element/null; query-form (`<#id/>`) and class
+  // selectors return the collection — matches evaluateSelector.
+  if (!node.fromQuery && selector.startsWith('#')) {
+    return elements[0] ?? null;
+  }
+  return elements;
+}
+
+/**
+ * Synchronous counterpart to `evaluateExpressionFromSource`, used by the parity
+ * harness. Parses (sync) then evaluates via `evaluateExpressionSync`, throwing
+ * `NotSyncEvaluable` for anything outside the sync subset.
+ */
+export function evaluateExpressionFromSourceSync(
+  source: string,
+  context: ExecutionContext
+): unknown {
+  const result = parse(source);
+  if (!result.success || !result.node) {
+    const err = result.error ?? result.errors?.[0];
+    throw new Error(`Failed to parse expression: ${err?.message ?? 'unknown error'}`);
+  }
+  return evaluateExpressionSync(result.node as ASTNode, context);
+}
+
 export async function evaluateExpressionFromSource(
   source: string,
   context: ExecutionContext
@@ -419,6 +565,23 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
     }
   }
 
+  // Style reference with `of`: `*color of me`, `*computed-height of it`. The left
+  // operand is a `*prop` selector — read that style off the RIGHT element rather
+  // than indexing it (`me["red"]`, which the generic `of` branch would do).
+  if (
+    operator === 'of' &&
+    leftNode?.type === 'selector' &&
+    typeof leftNode.value === 'string' &&
+    /^\*[a-zA-Z][\w-]*$/.test(leftNode.value)
+  ) {
+    const el = await evaluateAST(node.right, context);
+    return getExpr(context, 'styleRef').evaluate(
+      context,
+      leftNode.value.slice(1),
+      el as HTMLElement
+    );
+  }
+
   const left = await evaluateAST(node.left, context);
 
   // Handle short-circuit evaluation for logical operators.
@@ -493,20 +656,33 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
     case 'is less than or equal to':
       return getExpr(context, 'lessThanOrEqual').evaluate(context, left, right);
     case '==':
+      return getExpr(context, 'equals').evaluate(context, L, R);
     case 'is':
     case 'am': // upstream alias for `is` (e.g., `if I am .active`)
     case 'equals':
-    case 'is equal to':
-      return getExpr(context, 'equals').evaluate(context, L, R);
+    case 'is equal': // shortened `is equal to`
+    case 'is equal to': {
+      // `#el is checked` / `#el is disabled`: when the RHS is a bare identifier
+      // that resolved to undefined but names a boolean property on the left
+      // element, upstream reads that property rather than comparing values.
+      const bp = booleanPropertyFallback(node, left, right);
+      return bp !== undefined ? bp : getExpr(context, 'equals').evaluate(context, L, R);
+    }
     case '!=':
-    case 'is not':
-    case 'is not equal to':
       return getExpr(context, 'notEquals').evaluate(context, L, R);
+    case 'is not':
+    case 'is not equal': // shortened `is not equal to`
+    case 'is not equal to': {
+      const bp = booleanPropertyFallback(node, left, right);
+      return bp !== undefined ? !bp : getExpr(context, 'notEquals').evaluate(context, L, R);
+    }
     case '===':
     case 'really equals':
+    case 'is really': // strict equality without `equal to`
     case 'is really equal to':
       return getExpr(context, 'strictEquals').evaluate(context, L, R);
     case '!==':
+    case 'is not really': // strict inequality without `equal to`
     case 'is not really equal to':
       return getExpr(context, 'strictNotEquals').evaluate(context, L, R);
 
@@ -515,9 +691,14 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
       return getExpr(context, 'as').evaluate(context, left, normalizeAsTargetType(right));
 
     case 'contains':
+    case 'contain': // singular subject — `I contain that`
+    case 'includes':
+    case 'include':
       return getExpr(context, 'contains').evaluate(context, L, R);
 
     case 'does not contain':
+    case 'do not contain': // first-person negation
+    case 'does not contains': // third-person + plural verb
     case 'does not include':
       return getExpr(context, 'doesNotContain').evaluate(context, L, R);
 
@@ -539,13 +720,25 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
 
     case 'match':
     case 'matches':
-      return getExpr(context, 'matches').evaluate(context, L, R);
+      return getExpr(context, 'matches').evaluate(context, L, matchTargetOf(node.right, R));
+
+    case 'does not match':
+    case 'do not match': {
+      const r = await getExpr(context, 'matches').evaluate(
+        context,
+        L,
+        matchTargetOf(node.right, R)
+      );
+      return !r;
+    }
 
     case 'in':
     case 'is in':
+    case 'am in': // first-person — `I am in [1, 2]`
       return isIn(left, right);
 
     case 'is not in':
+    case 'am not in':
       return !isIn(left, right);
 
     case 'of':
@@ -581,6 +774,38 @@ function isIn(item: unknown, container: unknown): boolean {
     return item === container || container.contains(item);
   }
   return container != null && typeof container === 'object' && (item as any) in (container as any);
+}
+
+/**
+ * `match`/`matches` semantics: a CSS-selector literal on the right
+ * (`I match .foo`) tests the LEFT element against the selector *string*, not
+ * against the elements that selector resolves to. So when the right operand is
+ * a selector node, use its raw text; otherwise use the already-evaluated value.
+ */
+function matchTargetOf(rightNode: unknown, evaluated: unknown): unknown {
+  const n = rightNode as { type?: string; value?: unknown } | null;
+  if (n && n.type === 'selector' && typeof n.value === 'string') return n.value;
+  return evaluated;
+}
+
+/**
+ * Upstream `is`/`is not` fallback: `#checkbox is checked` / `#button is
+ * disabled`. When the right operand is a bare identifier that resolved to
+ * `undefined` and names a boolean property of the left (DOM) element, read that
+ * property instead of comparing values. Returns the boolean property value, or
+ * `undefined` when the fallback does not apply (callers then compare normally).
+ */
+function booleanPropertyFallback(
+  node: { right?: unknown },
+  left: unknown,
+  right: unknown
+): boolean | undefined {
+  if (right !== undefined) return undefined; // RHS resolved → normal comparison
+  const rn = node.right as { type?: string; name?: string } | null;
+  if (!rn || rn.type !== 'identifier' || typeof rn.name !== 'string') return undefined;
+  if (left == null || typeof left !== 'object') return undefined;
+  const prop = (left as Record<string, unknown>)[rn.name];
+  return typeof prop === 'boolean' ? prop === true : undefined;
 }
 
 /**
@@ -1074,6 +1299,15 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
  */
 async function evaluateSelector(node: SelectorNode, context: ExecutionContext): Promise<any> {
   const selector = node.value;
+
+  // Style reference: `*color`, `*text-align`, `*computed-color`. The leading `*`
+  // here is NOT the universal CSS selector — it reads a style property off the
+  // context element (upstream styleRef). Route to the styleRef expression rather
+  // than querySelectorAll, which would throw on `*color`.
+  if (typeof selector === 'string' && !node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
+    return getExpr(context, 'styleRef').evaluate(context, selector.slice(1));
+  }
+
   const escaped = typeof selector === 'string' ? escapeClassColons(selector) : selector;
   const result = await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
 

@@ -298,6 +298,23 @@ export const elementWithSelectorExpression: ExpressionImplementation = {
 // StyleRef Expressions (CSS property access)
 // ============================================================================
 
+/**
+ * Read a style property off an element, matching upstream `*prop` semantics:
+ *   - `computed-<prop>` → `getComputedStyle(el).getPropertyValue(prop)` (or "")
+ *   - `<prop>`          → the camelCase inline-style property, so a valid but
+ *     unset property is "" while an unknown property is `undefined`
+ *     (`*height` → "", `*bad-prop` → undefined). `getPropertyValue` can't make
+ *     that distinction (it returns "" for both).
+ */
+function readStyleValue(target: HTMLElement, property: string): string | undefined {
+  if (property.startsWith('computed-')) {
+    const cssProperty = property.substring(9); // Remove 'computed-' prefix
+    return getComputedStyle(target).getPropertyValue(cssProperty) || '';
+  }
+  const camel = property.replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase());
+  return (target.style as unknown as Record<string, string | undefined>)[camel];
+}
+
 export const styleRefExpression: ExpressionImplementation = {
   name: 'styleRef',
   category: 'Reference',
@@ -316,16 +333,7 @@ export const styleRefExpression: ExpressionImplementation = {
       return undefined;
     }
 
-    // Check if it's a computed style request
-    if (property.startsWith('computed-')) {
-      const cssProperty = property.substring(9); // Remove 'computed-' prefix
-      const computedStyle = getComputedStyle(target);
-      return computedStyle.getPropertyValue(cssProperty) || '';
-    }
-
-    // Direct style property access
-    const value = target.style.getPropertyValue(property);
-    return value || undefined;
+    return readStyleValue(target, property);
   },
 
   validate(args: unknown[]): string | null {
@@ -364,16 +372,7 @@ export const possessiveStyleRefExpression: ExpressionImplementation = {
       return undefined;
     }
 
-    // Check if it's a computed style request
-    if (property.startsWith('computed-')) {
-      const cssProperty = property.substring(9); // Remove 'computed-' prefix
-      const computedStyle = getComputedStyle(target);
-      return computedStyle.getPropertyValue(cssProperty) || '';
-    }
-
-    // Direct style property access
-    const value = target.style.getPropertyValue(property);
-    return value || undefined;
+    return readStyleValue(target, property);
   },
 
   validate(args: unknown[]): string | null {
@@ -410,16 +409,7 @@ export const ofStyleRefExpression: ExpressionImplementation = {
       return undefined;
     }
 
-    // Check if it's a computed style request
-    if (property.startsWith('computed-')) {
-      const cssProperty = property.substring(9); // Remove 'computed-' prefix
-      const computedStyle = getComputedStyle(target);
-      return computedStyle.getPropertyValue(cssProperty) || '';
-    }
-
-    // Direct style property access
-    const value = target.style.getPropertyValue(property);
-    return value || undefined;
+    return readStyleValue(target, property);
   },
 
   validate(args: unknown[]): string | null {

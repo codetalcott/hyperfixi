@@ -68,6 +68,13 @@ export interface GeneratorConfig {
   generateSimpleVariants?: boolean;
   /** Whether to generate alternative keyword patterns */
   generateAlternatives?: boolean;
+  /**
+   * Whether to generate verb-first fallback patterns for SOV languages
+   * (`トグル .active` alongside the canonical `.active を トグル`). Default on.
+   * These are strictly lower priority than the canonical patterns, so native
+   * SOV order always wins; this only accepts bilingual/code-switched input.
+   */
+  generateVerbFirstVariants?: boolean;
 }
 
 const defaultConfig: GeneratorConfig = {
@@ -148,6 +155,60 @@ export function generateSimplePattern(
 }
 
 /**
+ * Generate a verb-first fallback pattern for an SOV language.
+ *
+ * Canonical SOV order is patient-then-verb (`.active を トグル`). Bilingual and
+ * code-switching authors often write the English/loanword verb first
+ * (`トグル .active`). This emits `[verb] [required role(s), UNMARKED]` at a lower
+ * priority so the canonical pattern always wins for native input — the
+ * verb-first form only matches when the input genuinely starts with the verb.
+ *
+ * Kept deliberately conservative: only commands with a single required role
+ * (patient-focused: toggle/add/remove/show/hide/…) get this fallback, which
+ * keeps the unmarked match unambiguous. Returns null otherwise.
+ */
+export function generateVerbFirstPattern(
+  schema: CommandSchema,
+  profile: LanguageProfile,
+  config: GeneratorConfig = defaultConfig
+): LanguagePattern | null {
+  if (profile.wordOrder !== 'SOV') return null;
+
+  const requiredRoles = schema.roles.filter(r => r.required);
+  if (requiredRoles.length !== 1) return null;
+
+  const keyword = profile.keywords[schema.action];
+  if (!keyword) return null;
+
+  const verbToken: PatternToken = keyword.alternatives
+    ? { type: 'literal', value: keyword.primary, alternatives: keyword.alternatives }
+    : { type: 'literal', value: keyword.primary };
+
+  // Verb first, then the required role(s) with NO marker (the marker is what
+  // disambiguates roles in canonical SOV; verb-first input typically omits it).
+  const roleTokens: PatternToken[] = requiredRoles.map(r => ({
+    type: 'role',
+    role: r.role,
+    optional: false,
+    expectedTypes: r.expectedTypes,
+  }));
+
+  return {
+    id: `${schema.action}-${profile.code}-generated-verb-first`,
+    language: profile.code,
+    command: schema.action,
+    // Strictly below the canonical (basePriority) and simple (basePriority - 5)
+    // patterns so native order is always preferred.
+    priority: (config.basePriority ?? 100) - 20,
+    template: {
+      format: `${keyword.primary} <${requiredRoles[0].role}>`,
+      tokens: [verbToken, ...roleTokens],
+    },
+    extraction: buildExtractionRulesWithDefaults(schema, profile),
+  };
+}
+
+/**
  * Generate all pattern variants for a command in a language.
  */
 export function generatePatternVariants(
@@ -165,6 +226,14 @@ export function generatePatternVariants(
     const simple = generateSimplePattern(schema, profile, config);
     if (simple) {
       patterns.push(simple);
+    }
+  }
+
+  // Verb-first fallback for SOV languages (lower priority than the above).
+  if (config.generateVerbFirstVariants !== false) {
+    const verbFirst = generateVerbFirstPattern(schema, profile, config);
+    if (verbFirst) {
+      patterns.push(verbFirst);
     }
   }
 
@@ -581,30 +650,33 @@ function buildRoleToken(roleSpec: RoleSpec, profile: LanguageProfile): PatternTo
       }
     }
   } else if (defaultMarker) {
-    if (defaultMarker.position === 'before') {
-      // Preposition: "on #button"
-      if (defaultMarker.primary) {
-        const markerToken: PatternToken = defaultMarker.alternatives
-          ? {
-              type: 'literal',
-              value: defaultMarker.primary,
-              alternatives: defaultMarker.alternatives,
-            }
-          : { type: 'literal', value: defaultMarker.primary };
-        tokens.push(markerToken);
-      }
-      tokens.push(roleValueToken);
-    } else {
-      // Postposition/particle: "#button に"
-      tokens.push(roleValueToken);
-      const markerToken: PatternToken = defaultMarker.alternatives
+    // When the profile allows colloquial marker-dropping, the marker becomes an
+    // optional group so `.active değiştir` parses as well as `.active i değiştir`.
+    // The marked form still matches the marker literal directly (higher
+    // confidence); the unmarked form falls back through the optional group.
+    const asMarker = (): PatternToken =>
+      defaultMarker.alternatives
         ? {
             type: 'literal',
             value: defaultMarker.primary,
             alternatives: defaultMarker.alternatives,
           }
         : { type: 'literal', value: defaultMarker.primary };
-      tokens.push(markerToken);
+    const pushMarker = (marker: PatternToken): void => {
+      tokens.push(
+        profile.markersOptional ? { type: 'group', optional: true, tokens: [marker] } : marker
+      );
+    };
+    if (defaultMarker.position === 'before') {
+      // Preposition: "on #button"
+      if (defaultMarker.primary) {
+        pushMarker(asMarker());
+      }
+      tokens.push(roleValueToken);
+    } else {
+      // Postposition/particle: "#button に"
+      tokens.push(roleValueToken);
+      pushMarker(asMarker());
     }
   } else {
     // No marker, just the role value

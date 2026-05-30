@@ -1261,6 +1261,13 @@ export class Parser {
         } else if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
           // Attribute reference: element's @data-attr
           propertyName = this.advance().value;
+        } else if (this.check('[') && this.tokens[this.current + 1]?.value?.startsWith('@')) {
+          // Bracketed attribute reference: `element's [@data-attr]` — the long
+          // form of `element's @data-attr`. Strip the brackets and reuse the
+          // `@attr` property path so it resolves to getAttribute.
+          this.advance(); // consume '['
+          propertyName = this.advance().value; // the @attr token
+          this.consume(']', "Expected ']' after attribute reference");
         } else {
           // Normal property access. Use the permissive identifier-like predicate
           // so reserved words (e.g. `result`, `open`, `if`) are accepted as
@@ -3400,8 +3407,8 @@ export class Parser {
   }
 
   private parseContextPropertyAccess(contextVar: 'me' | 'it' | 'you'): MemberExpressionNode {
-    // Check for CSS property syntax: my *background-color (only applies to 'me')
-    const hasCssPrefix = contextVar === 'me' && this.match('*');
+    // Check for CSS style-ref syntax: `my *color`, `its *height`, `your *width`.
+    const hasCssPrefix = this.match('*');
 
     if (hasCssPrefix) {
       // Parse CSS property name with hyphens (e.g., background-color)
@@ -3432,9 +3439,10 @@ export class Parser {
         }
       }
 
-      // Create member expression with computed-prefix for CSS properties
-      // This tells the evaluator to use getComputedStyle
-      const cssPropertyName = `computed-${propertyName}`;
+      // Preserve the `*` so the evaluator distinguishes inline (`*color`) from
+      // computed (`*computed-color`) styles. Forcing a `computed-` prefix here
+      // wrongly made `my *color` computed and double-prefixed `my *computed-color`.
+      const cssPropertyName = `*${propertyName}`;
       return this.createMemberExpression(
         this.createIdentifier(contextVar),
         this.createIdentifier(cssPropertyName),

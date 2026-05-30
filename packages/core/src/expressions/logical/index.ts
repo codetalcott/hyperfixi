@@ -562,7 +562,7 @@ export const existsExpression: ExpressionImplementation = {
   async evaluate(context: ExecutionContext, value: unknown): Promise<boolean> {
     const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
     const startTime = tracking ? Date.now() : 0;
-    const result = value != null;
+    const result = valueExists(value);
     if (tracking) trackEvaluation(this, context, [value], result, startTime);
     return result;
   },
@@ -571,6 +571,20 @@ export const existsExpression: ExpressionImplementation = {
     return validateArgCount(args, 1, 'exists', 'value');
   },
 };
+
+/**
+ * Existence check shared by `exists` / `does not exist`. Selector references
+ * resolve to arrays/NodeLists (empty when nothing matched), so a non-null but
+ * empty collection must count as "does not exist" — matching upstream, where
+ * `.missing exists` is false. Strings (even empty) and other values exist iff
+ * non-null.
+ */
+function valueExists(value: unknown): boolean {
+  if (value == null) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof NodeList !== 'undefined' && value instanceof NodeList) return value.length > 0;
+  return true;
+}
 
 export const doesNotExistExpression: ExpressionImplementation = {
   name: 'doesNotExist',
@@ -581,7 +595,7 @@ export const doesNotExistExpression: ExpressionImplementation = {
   async evaluate(context: ExecutionContext, value: unknown): Promise<boolean> {
     const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
     const startTime = tracking ? Date.now() : 0;
-    const result = value == null;
+    const result = !valueExists(value);
     if (tracking) trackEvaluation(this, context, [value], result, startTime);
     return result;
   },
@@ -644,13 +658,19 @@ export const containsExpression: ExpressionImplementation = {
     if (isString(container) && isString(value)) {
       result = (container as string).includes(value as string);
     }
-    // Array containment
-    else if (Array.isArray(container)) {
-      result = container.includes(value);
-    }
-    // Check for NodeList (browser environment only)
-    else if (typeof NodeList !== 'undefined' && container instanceof NodeList) {
-      result = Array.from(container).includes(value as Node);
+    // Array / NodeList containment. Direct membership wins; otherwise, when the
+    // collection holds DOM nodes and `value` is a node, treat it as DOM
+    // containment so selector references work: `.outer contains #d2` (where
+    // `.outer` resolves to `[<div.outer>]`) is true because the div contains #d2.
+    else if (
+      Array.isArray(container) ||
+      (typeof NodeList !== 'undefined' && container instanceof NodeList)
+    ) {
+      const items = Array.from(container as ArrayLike<unknown>);
+      result =
+        items.includes(value) ||
+        (value instanceof Node &&
+          items.some(item => item instanceof Node && (item as Node).contains(value as Node)));
     }
     // Check if object has property (uses registry-based type checks)
     else if (isObject(container) && isString(value)) {
@@ -696,9 +716,9 @@ export const startsWithExpression: ExpressionImplementation = {
   async evaluate(context: ExecutionContext, str: unknown, prefix: unknown): Promise<boolean> {
     const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
     const startTime = tracking ? Date.now() : 0;
-    // Uses registry-based type checks
-    const result =
-      isString(str) && isString(prefix) ? (str as string).startsWith(prefix as string) : false;
+    // Upstream coerces non-string operands to strings (`123 starts with '12'`),
+    // but null/undefined never match.
+    const result = str != null && prefix != null ? String(str).startsWith(String(prefix)) : false;
     if (tracking) trackEvaluation(this, context, [str, prefix], result, startTime);
     return result;
   },
@@ -717,9 +737,9 @@ export const endsWithExpression: ExpressionImplementation = {
   async evaluate(context: ExecutionContext, str: unknown, suffix: unknown): Promise<boolean> {
     const tracking = (context as { evaluationHistory?: unknown[] }).evaluationHistory;
     const startTime = tracking ? Date.now() : 0;
-    // Uses registry-based type checks
-    const result =
-      isString(str) && isString(suffix) ? (str as string).endsWith(suffix as string) : false;
+    // Upstream coerces non-string operands to strings (`123 ends with '23'`),
+    // but null/undefined never match.
+    const result = str != null && suffix != null ? String(str).endsWith(String(suffix)) : false;
     if (tracking) trackEvaluation(this, context, [str, suffix], result, startTime);
     return result;
   },

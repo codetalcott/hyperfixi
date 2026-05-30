@@ -206,7 +206,28 @@ function collectFormValues(el: Element): FormData {
  * @param property - Property name
  * @returns Property value (with methods bound to element)
  */
+/**
+ * Read a `*`-prefixed style reference off an element (possessive/member syntax:
+ * `my *color`, `its *computed-height`). `*computed-<prop>` reads the computed
+ * style (or "" when absent); `*<prop>` reads the camelCase inline style so a
+ * valid-but-unset property is "" while an unknown property is undefined —
+ * matching upstream `*height` → "", `*bad-prop` → undefined.
+ */
+function getElementStyleValue(element: Element, styleProp: string): string | undefined {
+  if (!isHTMLElement(element)) return undefined;
+  if (styleProp.startsWith('computed-')) {
+    return getComputedStyle(element).getPropertyValue(styleProp.slice('computed-'.length)) || '';
+  }
+  const camel = styleProp.replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase());
+  return (element.style as unknown as Record<string, string | undefined>)[camel];
+}
+
 export function getElementProperty(element: Element, property: string): unknown {
+  // Style reference via possessive/member (`my *color`, `its *computed-height`).
+  if (property.startsWith('*')) {
+    return getElementStyleValue(element, property.slice(1));
+  }
+
   // Handle CSS computed style properties with computed- prefix
   if (property.startsWith('computed-')) {
     const cssProperty = property.slice('computed-'.length);

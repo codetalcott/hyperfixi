@@ -17,7 +17,12 @@
  * Recommended for: Complex applications, full _hyperscript compatibility
  */
 
-import { evalHyperScript, evalHyperScriptAsync, evalHyperScriptSmart } from './eval-hyperscript';
+import {
+  evalHyperScript,
+  evalHyperScriptAsync,
+  evalHyperScriptSmart,
+  evalHyperScriptSync,
+} from './eval-hyperscript';
 import { lokascript, hyperscript, config } from '../api/lokascript-api';
 import type { RuntimeHooks } from '../types/hooks';
 import { defaultAttributeProcessor } from '../dom/attribute-processor';
@@ -71,6 +76,7 @@ interface HyperFixiBrowserAPI {
   evalHyperScript: typeof evalHyperScript;
   evalHyperScriptAsync: typeof evalHyperScriptAsync;
   evalHyperScriptSmart: typeof evalHyperScriptSmart;
+  evalHyperScriptSync: typeof evalHyperScriptSync;
   compile: (code: string, options?: NewCompileOptions) => CompileResult;
   compileSync: (code: string, options?: NewCompileOptions) => CompileResult;
   compileMultilingual: (code: string, language: string) => Promise<CompileResult>;
@@ -149,6 +155,7 @@ declare global {
     evalHyperScript: typeof evalHyperScript;
     evalHyperScriptAsync: typeof evalHyperScriptAsync;
     evalHyperScriptSmart: typeof evalHyperScriptSmart;
+    evalHyperScriptSync: typeof evalHyperScriptSync;
   }
 }
 
@@ -158,6 +165,7 @@ const hyperfixiAPI = {
   evalHyperScript,
   evalHyperScriptAsync,
   evalHyperScriptSmart,
+  evalHyperScriptSync,
 
   // Convenience method that matches _hyperscript() function signature exactly
   evaluate: evalHyperScript,
@@ -346,6 +354,7 @@ if (typeof window !== 'undefined') {
   window.evalHyperScript = evalHyperScript;
   window.evalHyperScriptAsync = evalHyperScriptAsync;
   window.evalHyperScriptSmart = evalHyperScriptSmart;
+  window.evalHyperScriptSync = evalHyperScriptSync;
 
   // Initialize attribute processor when DOM is ready
   if (document.readyState === 'loading') {

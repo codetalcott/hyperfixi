@@ -17,10 +17,26 @@ const HYPERSCRIPT_TEST_ROOT =
   process.env.HYPERSCRIPT_TEST_ROOT || resolve(__dirname, '../../../../../../_hyperscript/test');
 
 // Minimum pass rate (% of runnable upstream cases) the suite must hold.
-// Baseline as of this harness landing: 182/361 runnable = 50%. Floor set just
-// below to catch regressions without blocking on the ~179 known parity gaps;
-// ratchet this up as those gaps are fixed in follow-ups.
-const EXPRESSION_PASS_RATE_FLOOR = 47;
+// History (only ever ratchet UP — a drop means a regression):
+//   - harness landing:           182/361 runnable = 50%  (floor 47)
+//   - comparisonOperator cluster: 211/361 runnable = 58%  (floor 57)
+//   - asExpression/conversions:   222/361 runnable = 61%  (floor 60)
+//   - styleRef (bare `*prop`):    224/361 runnable = 62%  (floor 61)
+//   - styleRef (possessive/of):   230/361 runnable = 64%  (floor 63)
+//   - sync-eval selector path:    244/361 runnable = 68%  (floor 67)
+//   - sync-eval asExpression:      252/361 runnable = 70%  (floor 69)
+// Ratchet this up as the remaining parity gaps are fixed in follow-ups.
+//
+// Harness/upstream-fidelity note: upstream's `_hyperscript("expr")` is
+// SYNCHRONOUS, but HyperFixi evaluates asynchronously. The compatibility-test.html
+// shim now tries `hyperfixi.evalHyperScriptSync` first (a sync fast-path for the
+// pure-expression subset — currently selector references) and falls back to the
+// async Promise otherwise. Cases still gated by this (consume the result
+// synchronously but aren't yet sync-evaluable): the remaining asExpression
+// closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
+// fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
+// pass); extending evalHyperScriptSync to those node types lifts them further.
+const EXPRESSION_PASS_RATE_FLOOR = 69;
 
 interface TestFile {
   filename: string;

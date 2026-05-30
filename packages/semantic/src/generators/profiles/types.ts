@@ -123,6 +123,15 @@ export interface LanguageProfile {
   /** Event handler pattern configuration (for simple SVO languages) */
   readonly eventHandler?: EventHandlerConfig;
   /**
+   * When true, role markers (case particles/postpositions) are emitted as
+   * OPTIONAL pattern tokens, so colloquial marker-dropping input still parses
+   * (e.g. Turkish `.active değiştir` alongside the canonical `.active i
+   * değiştir`). The canonical marked form remains the higher-confidence match;
+   * this only adds a lower-priority fallback. Leave unset (false) for languages
+   * where the particle is grammatically load-bearing (e.g. Japanese/Korean).
+   */
+  readonly markersOptional?: boolean;
+  /**
    * Default verb form for command keywords. Defaults to 'infinitive'.
    *
    * Based on software UI localization research:

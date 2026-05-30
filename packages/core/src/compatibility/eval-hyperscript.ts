@@ -3,7 +3,11 @@
  * Provides evalHyperScript() function that matches the original _hyperscript API
  */
 
-import { evaluateExpressionFromSource } from '../parser/runtime';
+import {
+  evaluateExpressionFromSource,
+  evaluateExpressionFromSourceSync,
+  NotSyncEvaluable,
+} from '../parser/runtime';
 import { Parser } from '../parser/parser';
 import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
@@ -182,6 +186,32 @@ export async function evalHyperScript(
     }
     throw error;
   }
+}
+
+/**
+ * Synchronous evaluation of a pure-expression script, matching upstream's
+ * synchronous `_hyperscript("expr")`. Returns the value directly (not a Promise)
+ * for the synchronously-evaluable subset (currently selector references).
+ *
+ * Throws `NotSyncEvaluable` (or a parse/command error) when the script needs the
+ * async pipeline — callers (the parity harness shim) fall back to
+ * `evalHyperScript`. Production code should keep using the async API; this exists
+ * so the harness faithfully mirrors upstream's sync expression semantics
+ * (e.g. `Array.from(_hyperscript(".c1"))`).
+ */
+export function evalHyperScriptSync(
+  script: string,
+  context?: HyperScriptContext | ExecutionContext
+): any {
+  if (!script || script.trim() === '') {
+    throw new Error('Cannot evaluate empty script');
+  }
+  // Commands need the async runtime — defer.
+  if (isCommand(script)) {
+    throw new NotSyncEvaluable('command');
+  }
+  const executionContext = convertContext(context);
+  return evaluateExpressionFromSourceSync(script, executionContext);
 }
 
 /**

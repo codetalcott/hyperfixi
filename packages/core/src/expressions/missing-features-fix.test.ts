@@ -53,9 +53,10 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
     });
 
     it('should handle null/undefined gracefully', async () => {
+      // Upstream `convertValue` short-circuits null/undefined for every static
+      // converter, so `null as Date` is null (not an Invalid Date object).
       const result1 = await evaluateExpressionFromSource('null as Date', context);
-      expect(result1).toBeInstanceOf(Date);
-      expect(isNaN(result1.getTime())).toBe(true);
+      expect(result1).toBeNull();
     });
   });
 

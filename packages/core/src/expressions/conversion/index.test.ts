@@ -30,13 +30,15 @@ describe('Conversion Expressions', () => {
         expect(await conversionExpressions.as.evaluate(context, [1, 2, 3], 'Array')).toEqual([
           1, 2, 3,
         ]);
-        expect(await conversionExpressions.as.evaluate(context, null, 'Array')).toEqual([]);
+        // Upstream `convertValue`: null/undefined pass through unchanged.
+        expect(await conversionExpressions.as.evaluate(context, null, 'Array')).toBeNull();
       });
 
       it('should convert to String', async () => {
         expect(await conversionExpressions.as.evaluate(context, 123, 'String')).toBe('123');
         expect(await conversionExpressions.as.evaluate(context, true, 'String')).toBe('true');
-        expect(await conversionExpressions.as.evaluate(context, null, 'String')).toBe('');
+        // Upstream parity: `null as String` is null, not "".
+        expect(await conversionExpressions.as.evaluate(context, null, 'String')).toBeNull();
         expect(await conversionExpressions.as.evaluate(context, { key: 'value' }, 'String')).toBe(
           '{"key":"value"}'
         );
@@ -48,7 +50,8 @@ describe('Conversion Expressions', () => {
         expect(await conversionExpressions.as.evaluate(context, true, 'Number')).toBe(1);
         expect(await conversionExpressions.as.evaluate(context, false, 'Number')).toBe(0);
         expect(await conversionExpressions.as.evaluate(context, 'invalid', 'Number')).toBe(0);
-        expect(await conversionExpressions.as.evaluate(context, null, 'Number')).toBe(0);
+        // Upstream parity: null passes through unchanged (not coerced to 0).
+        expect(await conversionExpressions.as.evaluate(context, null, 'Number')).toBeNull();
       });
 
       it('should convert to Int', async () => {
@@ -228,9 +231,8 @@ describe('Conversion Expressions', () => {
 
     describe('Fixed precision conversion', () => {
       it('should convert to fixed precision string', async () => {
-        expect(await conversionExpressions.as.evaluate(context, 123.456789, 'Fixed')).toBe(
-          '123.46'
-        );
+        // Upstream default is `Number(value).toFixed()` → 0 decimal places.
+        expect(await conversionExpressions.as.evaluate(context, 123.456789, 'Fixed')).toBe('123');
         expect(await conversionExpressions.as.evaluate(context, 123.456789, 'Fixed:4')).toBe(
           '123.4568'
         );
@@ -460,7 +462,7 @@ describe('Conversion Expressions', () => {
 
     describe('parseFixedPrecision', () => {
       it('should parse Fixed precision', () => {
-        expect(parseFixedPrecision('Fixed')).toEqual({ precision: 2 });
+        expect(parseFixedPrecision('Fixed')).toEqual({ precision: 0 }); // upstream default
         expect(parseFixedPrecision('Fixed:4')).toEqual({ precision: 4 });
         expect(parseFixedPrecision('Fixed:0')).toEqual({ precision: 0 });
         expect(parseFixedPrecision('NotFixed')).toEqual({});
