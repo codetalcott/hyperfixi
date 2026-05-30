@@ -1713,14 +1713,48 @@ export class Parser {
       // Parse property key
       let key: ASTNode;
 
-      if (this.matchPredicate(isIdentifier)) {
-        // Unquoted property name
-        key = this.createIdentifier(this.previous().value);
+      if (this.check('[')) {
+        // Computed property key: `{ [expr]: value }`. Parse the inner
+        // expression; the runtime evaluates it to the actual key (see
+        // evaluateObjectLiteralNode / executeObjectLiteral, which String()
+        // any non-identifier/non-string key node).
+        this.advance(); // consume '['
+        key = this.parseExpression();
+        this.consume(']', "Expected ']' after computed property name in object literal");
       } else if (this.matchString()) {
         // Quoted property name
         const raw = this.previous().value;
         const value = raw.slice(1, -1); // Remove quotes
         key = this.createLiteral(value, raw);
+      } else if (this.check('-') || this.checkPredicate(isIdentifier)) {
+        // Plain or hyphenated identifier key. The tokenizer splits on '-', so
+        // reassemble `-foo` / `bar-baz` / `-dashed` into the original key text.
+        // A dash-free identifier stays an identifier node; anything containing a
+        // dash becomes a string-literal key, matching upstream `_hyperscript`
+        // (`{-foo:1}` → key "-foo").
+        let keyText = '';
+        let sawDash = false;
+        while (this.check('-')) {
+          this.advance();
+          keyText += '-';
+          sawDash = true;
+        }
+        if (this.checkPredicate(isIdentifier)) {
+          keyText += this.advance().value;
+        }
+        while (this.check('-')) {
+          this.advance();
+          keyText += '-';
+          sawDash = true;
+          if (this.checkPredicate(isIdentifier)) {
+            keyText += this.advance().value;
+          }
+        }
+        if (keyText === '' || keyText === '-') {
+          this.addError('Expected property name in object literal');
+          return this.createErrorNode();
+        }
+        key = sawDash ? this.createLiteral(keyText, keyText) : this.createIdentifier(keyText);
       } else {
         this.addError('Expected property name in object literal');
         return this.createErrorNode();
@@ -3994,7 +4028,7 @@ export class Parser {
     const startLine = this.previous().line;
     const startColumn = this.previous().column;
 
-    // Check if this is an attribute literal: [@attr="value"]
+    // Check if this is an attribute literal/reference: [@attr] or [@attr="value"]
     // The next token should start with '@'
     if (!this.isAtEnd() && this.peek().value.startsWith('@')) {
       // Attribute literal syntax - collect all tokens until ']'
@@ -4007,8 +4041,25 @@ export class Parser {
 
       this.consume(']', "Expected ']' after attribute literal");
 
+      const inner = tokens.join(''); // e.g. "@foo", "@data-foo", '@data-foo="blue"'
+
+      // Bare `[@attr]` (no `=value`) is an attribute REFERENCE — read the
+      // attribute off the context element, identical to the short form `@attr`
+      // (see the standalone `@attribute` handler above). Only the valued form
+      // `[@attr=value]` stays a literal string for the `add` command to parse.
+      if (!inner.includes('=')) {
+        return {
+          type: 'attributeAccess',
+          attributeName: inner.replace(/^@/, ''),
+          start: startPos,
+          end: this.previous().end,
+          line: startLine,
+          column: startColumn,
+        } as ASTNode;
+      }
+
       // Reconstruct the full attribute literal string: [@attr="value"]
-      const attributeString = '[' + tokens.join('') + ']';
+      const attributeString = '[' + inner + ']';
 
       // Return as a string literal that the ADD command can parse
       return {
