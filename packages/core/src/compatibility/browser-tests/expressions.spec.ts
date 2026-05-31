@@ -38,6 +38,15 @@ const HYPERSCRIPT_TEST_ROOT =
 //       all matched elements (collection-intrinsic props like `length` excluded).
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
+// Remaining gaps @ 79% are NOT clean product bugs — triaged & decided 2026-05-30:
+//   • ~12 async-shim cases (positional/closest/queryRef/relativePositional consumed
+//     via synchronous `=== el` / `.length`) — harness-only; awaited equivalents pass.
+//   • intentional known-diffs from upstream: boolean `in` (not intersection-array),
+//     checkbox `as Values` → boolean (not value). KEPT deliberately.
+//   • deferred features: relativePositional from/within/wrapping, blockLiteral,
+//     typecheck `: Type`, stringPostfix units; + low-value error-message parity.
+// See ~/.claude/plans/please-write-a-planning-optimized-fern.md → "DECISIONS".
+//
 // Harness/upstream-fidelity note: upstream's `_hyperscript("expr")` is
 // SYNCHRONOUS, but HyperFixi evaluates asynchronously. The compatibility-test.html
 // shim now tries `hyperfixi.evalHyperScriptSync` first (a sync fast-path for the
