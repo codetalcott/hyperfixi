@@ -1,5 +1,15 @@
 # Pre-existing test failures — triage
 
+> **Next session: start here.** This is the handoff/checklist for the remaining
+> pre-existing test work. The "Fixed in this PR" section is done (PR #237). Pick
+> up the **"NOT fixed — genuine issues for follow-up"** section, in this order:
+> (1) the real `when`/`where` falsy-guard bug (`<command> when <falsy>` does not
+> skip) + rewrite the 10 `conditional-modifiers` tests against real parsing;
+> (2) wire `::name` global reads through `notifyGlobalRead`;
+> (3) decide the `parser` `first of` AST shape; then `start-view-transition`.
+> Cross-session context (the 79%→82% parity arc, PRs #236/#237) is in the
+> auto-loaded memory note `project-expression-parity-completion`.
+
 A sweep (2026-05-31) of the failing vitest tests that existed on `main`,
 unrelated to the expression-parity arc. This PR fixes the **stale tests** (where
 the production behavior is correct/intentional and only the test expectation had
