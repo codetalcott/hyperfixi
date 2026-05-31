@@ -25,7 +25,27 @@ const HYPERSCRIPT_TEST_ROOT =
 //   - styleRef (possessive/of):   230/361 runnable = 64%  (floor 63)
 //   - sync-eval selector path:    244/361 runnable = 68%  (floor 67)
 //   - sync-eval asExpression:      252/361 runnable = 70%  (floor 69)
+//   - Phase A product bugs:        273/361 runnable = 76%  (floor 75)
+//       splitJoin (standalone `return`), mathOperator (array `+`),
+//       objectLiteral (hyphenated keys), propertyAccess (`X of Y`),
+//       attributeRef (bare `[@attr]`).
+//   - Phase B collection null-safety: 279/361 runnable = 77%  (floor 76)
+//       where/sorted by/mapped to/split by/joined by on null|undefined.
+//   - `no` × `where` precedence:    282/361 runnable = 78%  (floor 77)
+//       `no X where Y` now binds as `no (X where Y)` (filter, then test empty).
+//   - possessive over collections: 286/361 runnable = 79%  (floor 78)
+//       `.cls's *color` / `'s [@attr]` / chained `'s style's display` map over
+//       all matched elements (collection-intrinsic props like `length` excluded).
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
+//
+// Remaining gaps @ 79% are NOT clean product bugs — triaged & decided 2026-05-30:
+//   • ~12 async-shim cases (positional/closest/queryRef/relativePositional consumed
+//     via synchronous `=== el` / `.length`) — harness-only; awaited equivalents pass.
+//   • intentional known-diffs from upstream: boolean `in` (not intersection-array),
+//     checkbox `as Values` → boolean (not value). KEPT deliberately.
+//   • deferred features: relativePositional from/within/wrapping, blockLiteral,
+//     typecheck `: Type`, stringPostfix units; + low-value error-message parity.
+// See ~/.claude/plans/please-write-a-planning-optimized-fern.md → "DECISIONS".
 //
 // Harness/upstream-fidelity note: upstream's `_hyperscript("expr")` is
 // SYNCHRONOUS, but HyperFixi evaluates asynchronously. The compatibility-test.html
@@ -36,7 +56,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
 // fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
 // pass); extending evalHyperScriptSync to those node types lifts them further.
-const EXPRESSION_PASS_RATE_FLOOR = 69;
+const EXPRESSION_PASS_RATE_FLOOR = 78;
 
 interface TestFile {
   filename: string;

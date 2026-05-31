@@ -582,6 +582,25 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
     );
   }
 
+  // `X of Y` property access (upstream `_hyperscript`): the LEFT operand is a
+  // property *path* applied to the RIGHT object — NOT a value to resolve in the
+  // current scope. `foo of obj` → obj.foo; `a.b of obj` → obj.a.b. `of` is
+  // right-associative (see pratt-parser), so `c of b of a` parses as
+  // `c of (b of a)`. When the left side isn't a static path (e.g. a computed
+  // member or literal index) we fall through to the generic `case 'of'` below.
+  if (operator === 'of') {
+    const path = propertyPathOf(node.left);
+    if (path) {
+      const target = await evaluateAST(node.right, context);
+      let cur: unknown = target;
+      for (const seg of path) {
+        if (cur == null) return undefined;
+        cur = isElement(cur) ? getElementProperty(cur, seg) : (cur as any)[seg];
+      }
+      return typeof cur === 'function' ? (cur as any).bind(target) : cur;
+    }
+  }
+
   const left = await evaluateAST(node.left, context);
 
   // Handle short-circuit evaluation for logical operators.
@@ -616,6 +635,13 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
       // JS-native: `+` concatenates if either operand is a string.
       if (typeof left === 'string' || typeof right === 'string') {
         return String(left ?? '') + String(right ?? '');
+      }
+      // Upstream `_hyperscript` array semantics: when the left operand is an
+      // array, `+` concatenates rather than coerces. `[1,2] + [3,4]` →
+      // [1,2,3,4]; `[1,2] + 3` → [1,2,3]. Always returns a fresh array so the
+      // original is never mutated.
+      if (Array.isArray(left)) {
+        return Array.isArray(right) ? [...left, ...right] : [...left, right];
       }
       return unwrapTypedResult(
         await getExpr(context, 'addition').evaluate(context as any, { left, right })
@@ -759,6 +785,38 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
     default:
       throw new Error(`Unknown binary operator: ${operator}`);
   }
+}
+
+/**
+ * Extract a static property path from an expression node for `X of Y` access.
+ * `foo` → ['foo']; `a.b.c` → ['a','b','c']. Returns null when the node isn't a
+ * plain identifier / dotted member chain (e.g. computed member, call, literal),
+ * so the caller can fall back to generic evaluation.
+ */
+function propertyPathOf(node: unknown): string[] | null {
+  const n = node as {
+    type?: string;
+    name?: string;
+    object?: unknown;
+    property?: { type?: string; name?: string; value?: unknown };
+    computed?: boolean;
+  } | null;
+  if (!n) return null;
+  if (n.type === 'identifier' && typeof n.name === 'string') return [n.name];
+  if (n.type === 'memberExpression' && !n.computed) {
+    const objPath = propertyPathOf(n.object);
+    if (!objPath) return null;
+    const prop = n.property;
+    const propName =
+      prop?.type === 'identifier' && typeof prop.name === 'string'
+        ? prop.name
+        : typeof prop?.value === 'string'
+          ? prop.value
+          : null;
+    if (propName == null) return null;
+    return [...objPath, propName];
+  }
+  return null;
 }
 
 /**
@@ -1073,6 +1131,14 @@ async function evaluateCollectionExpression(
   context: ExecutionContext
 ): Promise<any> {
   const collection = await evaluateAST(node.collection, context);
+
+  // Null-safety (upstream _hyperscript): every collection operator passes a
+  // null/undefined collection through unchanged rather than coercing it.
+  // `null where it > 1` → null; `null joined by ','` → null;
+  // `undefined mapped to ...` → undefined.
+  if (collection == null) {
+    return collection;
+  }
 
   // Helper: evaluate the RHS AST with `it` bound to the given element.
   const evalWithIt = async (astNode: ASTNode, it: unknown): Promise<unknown> => {

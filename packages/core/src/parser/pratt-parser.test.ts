@@ -177,9 +177,14 @@ describe('CORE_FRAGMENT', () => {
   });
 
   it('has unary prefix operators at tier 8', () => {
-    for (const op of ['not', '!', 'no']) {
+    // Boolean negation binds tight (tier 8).
+    for (const op of ['not', '!']) {
       expect(CORE_FRAGMENT.get(op)?.prefix?.bp).toBe(80);
     }
+    // `no` (emptiness check) is intentionally LOW precedence so its operand
+    // absorbs collection operators (`no X where Y` ⇒ `no (X where Y)`),
+    // matching upstream _hyperscript. See the `no` entry in pratt-parser.ts.
+    expect(CORE_FRAGMENT.get('no')?.prefix?.bp).toBe(27);
   });
 });
 

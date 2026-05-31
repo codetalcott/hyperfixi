@@ -663,7 +663,14 @@ export const CORE_FRAGMENT: BindingPowerFragment = new Map<string, BindingPowerE
   // Tier 8: Unary prefix (bp 80)
   ['not', prefix(80) as BindingPowerEntry],
   ['!', prefix(80) as BindingPowerEntry],
-  ['no', prefix(80) as BindingPowerEntry],
+  // `no` (emptiness check) is LOW precedence in upstream `_hyperscript`: it
+  // applies to a whole filtered expression, so `no X where Y` means
+  // `no (X where Y)` — filter first, then test emptiness. Bind looser than the
+  // collection operators (`where`/`sorted by`/`mapped to`/… at bp 28) and the
+  // `in`/`of`/comparison operators (bp 30) so its operand absorbs them, while
+  // staying tighter than logical `and`/`or` (bp 10). Distinct from boolean
+  // `not`/`!`, which bind tight (bp 80).
+  ['no', prefix(27) as BindingPowerEntry],
 ]);
 
 /**
@@ -768,7 +775,10 @@ export const PARSER_COMPARISON_FRAGMENT: BindingPowerFragment = new Map<string, 
 
   // Equality-level keywords from parseEquality
   ['in', leftAssoc(30) as BindingPowerEntry],
-  ['of', leftAssoc(30) as BindingPowerEntry],
+  // `of` is right-associative so `c of b of a` parses as `c of (b of a)` —
+  // property `c` of (property `b` of `a`). See evaluateBinaryExpression's `of`
+  // path-access handler in runtime.ts.
+  ['of', rightAssoc(30) as BindingPowerEntry],
   ['really', leftAssoc(30) as BindingPowerEntry],
 
   // Postfix unary operators — consume operator, no right-hand side
