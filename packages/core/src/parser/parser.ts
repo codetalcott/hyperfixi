@@ -3483,6 +3483,27 @@ export class Parser {
         false
       );
     } else {
+      // Bracketed attribute access: `my [@attr]`, `its [@data-x]`. Mirror the
+      // computed-member shape `X[@attr]` (property is an attributeAccess node)
+      // so the set write-path and read-path treat it as an attribute, not a key.
+      if (this.check('[') && this.tokens[this.current + 1]?.value?.startsWith('@')) {
+        this.advance(); // consume '['
+        const attrToken = this.advance();
+        this.consume(']', "Expected ']' after attribute reference");
+        return this.createMemberExpression(
+          this.createIdentifier(contextVar),
+          {
+            type: 'attributeAccess',
+            attributeName: attrToken.value.substring(1),
+            start: attrToken.start,
+            end: attrToken.end,
+            line: attrToken.line,
+            column: attrToken.column,
+          } as ASTNode,
+          true
+        );
+      }
+
       // Check for attribute access syntax: my @attr, its @attr, your @attr
       // Use @-prefixed identifier (matching possessive expression pattern at line 1168-1170)
       // so evaluateMemberExpression can handle it via propertyName.startsWith('@')
