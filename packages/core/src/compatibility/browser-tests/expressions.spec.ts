@@ -56,7 +56,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
 // fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
 // pass); extending evalHyperScriptSync to those node types lifts them further.
-const EXPRESSION_PASS_RATE_FLOOR = 78;
+const EXPRESSION_PASS_RATE_FLOOR = 79;
 
 interface TestFile {
   filename: string;

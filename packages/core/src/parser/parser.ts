@@ -3378,7 +3378,63 @@ export class Parser {
       args.push(this.parsePrimary());
     }
 
-    return this.createCallExpression(this.createIdentifier(funcName), args);
+    const callNode = this.createCallExpression(this.createIdentifier(funcName), args);
+
+    // Relative positional modifiers for `next`/`previous`:
+    //   next <sel> from <el> [within <el> | in <coll>] [with wrapping]
+    if (funcName === 'next' || funcName === 'previous') {
+      const relativePositional = this.parseRelativePositionalModifiers();
+      if (relativePositional) {
+        (callNode as unknown as Record<string, unknown>).relativePositional = relativePositional;
+      }
+    }
+
+    return callNode;
+  }
+
+  /**
+   * Parse the trailing `from <el> [within <el> | in <coll>] [with wrapping]`
+   * modifiers of a relative positional expression (`next`/`previous`). Returns
+   * null when none are present so the bare `next <sel>` form is unchanged.
+   */
+  private parseRelativePositionalModifiers(): {
+    from?: ASTNode;
+    within?: ASTNode;
+    inElt?: ASTNode;
+    inSearch: boolean;
+    wrapping: boolean;
+  } | null {
+    if (!this.check('from') && !this.check('within') && !this.check('in') && !this.check('with')) {
+      return null;
+    }
+
+    let from: ASTNode | undefined;
+    let within: ASTNode | undefined;
+    let inElt: ASTNode | undefined;
+    let inSearch = false;
+    let wrapping = false;
+
+    if (this.match('from')) {
+      from = this.parseRelativePositionalOperand();
+    }
+    if (this.match('in')) {
+      inSearch = true;
+      inElt = this.parseRelativePositionalOperand();
+    } else if (this.match('within')) {
+      within = this.parseRelativePositionalOperand();
+    }
+    if (this.match('with')) {
+      this.match('wrapping');
+      wrapping = true;
+    }
+
+    return { from, within, inElt, inSearch, wrapping };
+  }
+
+  /** Parse a single relative-positional operand: optional `the` + a primary. */
+  private parseRelativePositionalOperand(): ASTNode {
+    this.match('the');
+    return this.parsePrimary();
   }
 
   /**

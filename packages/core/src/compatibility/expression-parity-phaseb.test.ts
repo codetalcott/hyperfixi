@@ -57,4 +57,59 @@ describe('expression parity (Phase B)', () => {
     // Known gap (deferred): bare `x@attr` member-short adjacency is a parse-level
     // read-syntax gap (affects reads too, not just set) — use `x[@attr]` instead.
   });
+
+  describe('Track B — relativePositional from/within/in/with-wrapping', () => {
+    // `next <sel> from <el> [within <el> | in <coll>] [with wrapping]` previously
+    // errored with "Unexpected token: from"; parseNavigationFunction now consumes
+    // the modifiers and the runtime applies upstream document-order scan semantics
+    // (returning `undefined` on no-match, matching upstream).
+    function setup() {
+      document.body.innerHTML =
+        "<div id='d1' class='c1'></div><p class='c1'></p>" +
+        "<div id='d2' class='c1'></div><p class='c1'></p>" +
+        "<div id='d3' class='c1'></div>";
+    }
+    const id = (s: string) => document.getElementById(s);
+
+    it('next <div/> from #d1 → next matching sibling', async () => {
+      setup();
+      expect(await evalHyperScript('the next <div/> from #d1')).toBe(id('d2'));
+    });
+    it('next <div/> from the last → undefined (no match, no wrap)', async () => {
+      setup();
+      expect(await evalHyperScript('the next <div/> from #d3')).toBeUndefined();
+    });
+    it('previous <div/> from #d2 → previous matching sibling', async () => {
+      setup();
+      expect(await evalHyperScript('the previous <div/> from #d2')).toBe(id('d1'));
+    });
+    it('next … with wrapping wraps to the first match', async () => {
+      setup();
+      expect(await evalHyperScript('the next <div/> from #d3 with wrapping')).toBe(id('d1'));
+    });
+    it('next … in <collection> scans the array', async () => {
+      setup();
+      expect(await evalHyperScript('the next <div/> from #d1 in .c1')).toBe(id('d2'));
+    });
+    it('next <h1/> … in <collection> → undefined (no match)', async () => {
+      setup();
+      expect(await evalHyperScript('the next <h1/> from #d1 in .c1')).toBeUndefined();
+    });
+    it('previous <h1/> … in <collection> → undefined (no match)', async () => {
+      setup();
+      expect(await evalHyperScript('the previous <h1/> from #d1 in .c1')).toBeUndefined();
+    });
+    it('within <container> constrains the search root', async () => {
+      document.body.innerHTML =
+        "<div id='d1' class='c1'><div id='d2' class='c1'></div><div id='d3' class='c1'></div></div>" +
+        "<div id='d4' class='c1'></div>";
+      expect(await evalHyperScript('the next .c1 from #d2 within #d1')).toBe(id('d3'));
+      expect(await evalHyperScript('the next .c1 from #d3 within #d1')).toBeUndefined();
+    });
+    it('bare `next <sel>` (no modifiers) keeps the legacy tree-walk', async () => {
+      document.body.innerHTML = "<div id='b1'></div><div id='b2' class='target'></div>";
+      const b1 = id('b1')!;
+      expect(await evalHyperScript('next .target', { me: b1 })).toBe(id('b2'));
+    });
+  });
 });

@@ -1299,6 +1299,22 @@ async function resolveCallArgs(
  * constructor invocations (`new Foo(...)`), and member-expression callees
  * (preserves `this` via `.apply`).
  */
+/** Parser-attached modifiers for `next`/`previous` relative positional calls. */
+interface RelativePositionalModifiers {
+  from?: ASTNode;
+  within?: ASTNode;
+  inElt?: ASTNode;
+  inSearch: boolean;
+  wrapping: boolean;
+}
+
+/** Unwrap a selector result (array/collection) to a single Element, or undefined. */
+function unwrapElement(value: unknown): Element | undefined {
+  if (value instanceof Element) return value;
+  if (Array.isArray(value)) return value[0] instanceof Element ? value[0] : undefined;
+  return undefined;
+}
+
 async function evaluateCallExpression(node: CallNode, context: ExecutionContext): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
 
@@ -1320,9 +1336,30 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
       case 'closest':
         return getExpr(context, 'closest').evaluate(context, ...args);
       case 'previous':
-        return getExpr(context, 'previous').evaluate(context, ...args);
-      case 'next':
-        return getExpr(context, 'next').evaluate(context, ...args);
+      case 'next': {
+        // Relative positional: `next <sel> from <el> [within <el>|in <coll>]
+        // [with wrapping]`. The parser attaches the modifier nodes; evaluate
+        // them here and pass an options object as the 3rd arg. The bare
+        // `next <sel>` form (no modifiers) keeps the legacy 1-arg call.
+        const relPos = (node as unknown as { relativePositional?: RelativePositionalModifiers })
+          .relativePositional;
+        if (relPos) {
+          const from = relPos.from
+            ? unwrapElement(await evaluateAST(relPos.from, context))
+            : (context.me as Element | undefined);
+          const within = relPos.within
+            ? unwrapElement(await evaluateAST(relPos.within, context))
+            : undefined;
+          const inElt = relPos.inElt ? await evaluateAST(relPos.inElt, context) : undefined;
+          return getExpr(context, funcName).evaluate(context, args[0], from, {
+            within,
+            inElt,
+            inSearch: relPos.inSearch,
+            wrapping: relPos.wrapping,
+          });
+        }
+        return getExpr(context, funcName).evaluate(context, ...args);
+      }
       case 'first':
         return getExpr(context, 'first').evaluate(context, ...args);
       case 'last':
