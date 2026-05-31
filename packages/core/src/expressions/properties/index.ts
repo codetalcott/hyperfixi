@@ -21,6 +21,53 @@ export { getElementProperty };
 /** Property names that must never be accessed on plain objects (prototype pollution prevention). */
 const UNSAFE_PROPS = new Set(['__proto__', 'constructor', 'prototype']);
 
+/**
+ * Read a single property/attribute/style off one value, applying the
+ * element/object/primitive rules shared by `possessive`/`my`/`its`/`your`.
+ */
+function readPossessiveValue(element: unknown, property: string): unknown {
+  if (element instanceof Element) {
+    return getElementProperty(element, property);
+  }
+  if (isObject(element)) {
+    if (UNSAFE_PROPS.has(property)) return undefined;
+    return (element as Record<string, unknown>)[property];
+  }
+  return (element as Record<string, unknown>)[property];
+}
+
+/**
+ * A classRef/queryRef resolves to a *collection* of elements; upstream
+ * `_hyperscript` maps a possessive over every match (`.cls's *color` →
+ * `["red", "red"]`). We map arrays / NodeLists / HTMLCollections whose items are
+ * Elements or host objects (e.g. the `CSSStyleDeclaration` that `'s style`
+ * yields, so chains like `.cls's style's display` keep mapping), but NOT arrays
+ * of primitives or plain objects — so `[1, 2, 3]'s length` still reads the
+ * array's own property rather than mapping element-wise.
+ */
+function isMappableCollection(v: unknown): boolean {
+  let items: unknown[];
+  if (Array.isArray(v)) {
+    items = v;
+  } else if (
+    (typeof NodeList !== 'undefined' && v instanceof NodeList) ||
+    (typeof HTMLCollection !== 'undefined' && v instanceof HTMLCollection)
+  ) {
+    items = Array.from(v as ArrayLike<unknown>);
+  } else {
+    return false;
+  }
+  if (items.length === 0) return false;
+  return items.every(
+    item =>
+      item instanceof Element ||
+      (item != null &&
+        typeof item === 'object' &&
+        (item as object).constructor !== Object &&
+        !Array.isArray(item))
+  );
+}
+
 // ============================================================================
 // Possessive Expressions
 // ============================================================================
@@ -41,19 +88,15 @@ export const possessiveExpression: ExpressionImplementation = {
       throw new Error('Property name must be a string');
     }
 
-    // Handle DOM element attributes and properties
-    if (element instanceof Element) {
-      return getElementProperty(element, property);
+    // classRef/queryRef collections map the property over every member — UNLESS
+    // the property belongs to the collection itself (e.g. `length` on the
+    // HTMLCollection from `'s children`, or array methods). That keeps
+    // `#x's children's length` reading the count while `.cls's *color` maps.
+    if (isMappableCollection(element) && !(property in (element as object))) {
+      return Array.from(element as ArrayLike<unknown>, item => readPossessiveValue(item, property));
     }
 
-    // Handle regular object property access
-    if (isObject(element)) {
-      if (UNSAFE_PROPS.has(property)) return undefined;
-      return (element as Record<string, unknown>)[property];
-    }
-
-    // Handle primitive values
-    return (element as Record<string, unknown>)[property];
+    return readPossessiveValue(element, property);
   },
 
   validate(args: unknown[]): string | null {

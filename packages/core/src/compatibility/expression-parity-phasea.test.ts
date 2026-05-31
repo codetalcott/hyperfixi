@@ -134,6 +134,34 @@ describe('expression parity (Phase A)', () => {
     });
   });
 
+  describe('possessive over classref/queryref collections (possessiveExpression)', () => {
+    it('maps a style read over all matched elements', async () => {
+      document.body.innerHTML =
+        "<div class='pc1' style='color:red'></div><div class='pc1' style='color:red'></div>";
+      expect(await evalHyperScript(".pc1's *color")).toEqual(['red', 'red']);
+    });
+    it('maps an attribute read over all matched elements', async () => {
+      document.body.innerHTML =
+        "<div class='pc2' data-foo='bar'></div><div class='pc2' data-foo='bar'></div>";
+      expect(await evalHyperScript(".pc2's [@data-foo]")).toEqual(['bar', 'bar']);
+    });
+    it('maps a chained possessive (classref → style → display)', async () => {
+      document.body.innerHTML = "<div class='pc3' style='display: inline'></div>";
+      expect(await evalHyperScript(".pc3's style's display")).toEqual(['inline']);
+    });
+    it('maps a chained possessive on a queryref', async () => {
+      document.body.innerHTML = "<div class='pc4' style='display: inline'></div>";
+      expect(await evalHyperScript("<.pc4/>'s style's display")).toEqual(['inline']);
+    });
+    it('still reads a plain array’s own property (no element-wise mapping)', async () => {
+      expect(await evalHyperScript("[1, 2, 3]'s length")).toBe(3);
+    });
+    it('still reads a single element property (idref, not mapped)', async () => {
+      document.body.innerHTML = "<div id='pf' style='display: inline'></div>";
+      expect(await evalHyperScript("#pf's style's display")).toBe('inline');
+    });
+  });
+
   describe('bare `[@attr]` attribute reference (attributeRef)', () => {
     it('reads an attribute off the context element', async () => {
       const div = document.createElement('div');
