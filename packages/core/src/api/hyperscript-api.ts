@@ -30,6 +30,7 @@ import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types'
 import type { RuntimeHooks } from '../types/hooks';
 import type { SemanticAnalyzerInterface } from '../parser/types';
 import { createSemanticAdapter } from '../parser/semantic-integration';
+import { conversionConfig, type ConversionConfig } from '../expressions/conversion';
 import {
   parseSemantic,
   isLanguageRegistered,
@@ -188,6 +189,14 @@ export interface HyperscriptConfig {
    * Default: false.
    */
   logAll: boolean;
+
+  /**
+   * User-extensible `as` conversion registry (upstream
+   * `_hyperscript.config.conversions`). Add a named converter
+   * (`config.conversions.Foo = val => …`) or push a dynamic resolver
+   * (`config.conversions.dynamicResolvers.push((name, val) => …)`).
+   */
+  conversions: ConversionConfig;
 }
 
 /**
@@ -208,6 +217,9 @@ export const config: HyperscriptConfig = {
   language: 'en',
   confidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
   logAll: false,
+  // Shared singleton so `convertValue` and `config.conversions` see the same
+  // registry (named converters + dynamicResolvers).
+  conversions: conversionConfig.conversions,
 };
 
 /**

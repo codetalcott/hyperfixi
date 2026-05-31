@@ -11,6 +11,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { evalHyperScript } from './eval-hyperscript';
+import { conversionConfig } from '../expressions/conversion';
 
 describe('expression parity (Phase B)', () => {
   describe('Track A — set attribute write-path (attributeRef / possessiveExpression)', () => {
@@ -139,6 +140,32 @@ describe('expression parity (Phase B)', () => {
     it('does not disturb arithmetic', async () => {
       expect(await evalHyperScript('1 + 1')).toBe(2);
       expect(await evalHyperScript('2 * 3')).toBe(6);
+    });
+  });
+
+  describe('Track E — custom `as` conversions (config.conversions)', () => {
+    // Upstream `_hyperscript.config.conversions` — a named converter or a
+    // dynamic resolver extends the `as` target types.
+    it('resolves a named custom converter', async () => {
+      (conversionConfig.conversions as Record<string, unknown>).Foo = (val: unknown) => 'foo' + val;
+      try {
+        expect(await evalHyperScript('1 as Foo')).toBe('foo1');
+      } finally {
+        delete (conversionConfig.conversions as Record<string, unknown>).Foo;
+      }
+    });
+    it('resolves a dynamic converter (first non-undefined wins)', async () => {
+      const resolver = (conversion: string, val: unknown) =>
+        conversion.indexOf('Foo:') === 0 ? conversion.split(':')[1] + val : undefined;
+      conversionConfig.conversions.dynamicResolvers.push(resolver);
+      try {
+        expect(await evalHyperScript('1 as Foo:Bar')).toBe('Bar1');
+      } finally {
+        conversionConfig.conversions.dynamicResolvers.pop();
+      }
+    });
+    it('still warns + passes through for a truly unknown type', async () => {
+      expect(await evalHyperScript('1 as DefinitelyNotAType')).toBe(1);
     });
   });
 });
