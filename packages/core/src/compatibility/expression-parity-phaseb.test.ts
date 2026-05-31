@@ -10,7 +10,7 @@
  * Companion to expression-parity-phasea.test.ts.
  */
 import { describe, it, expect } from 'vitest';
-import { evalHyperScript } from './eval-hyperscript';
+import { evalHyperScript, evalHyperScriptSync } from './eval-hyperscript';
 import { conversionConfig } from '../expressions/conversion';
 
 describe('expression parity (Phase B)', () => {
@@ -166,6 +166,32 @@ describe('expression parity (Phase B)', () => {
     });
     it('still warns + passes through for a truly unknown type', async () => {
       expect(await evalHyperScript('1 as DefinitelyNotAType')).toBe(1);
+    });
+  });
+
+  describe('Track D — blockLiteral lambdas', () => {
+    // `\-> expr`, `\ x -> expr`, `\ x, y -> expr` errored at parse. They now
+    // produce a function; the body is evaluated synchronously when possible so
+    // the closure works as a plain JS callback (e.g. Array.map).
+    it('no-arg lambda', async () => {
+      const fn = (await evalHyperScript('\\-> true')) as () => unknown;
+      expect(fn()).toBe(true);
+    });
+    it('identity lambda', async () => {
+      const fn = (await evalHyperScript('\\ x -> x')) as (a: unknown) => unknown;
+      expect(fn(true)).toBe(true);
+      expect(fn(42)).toBe(42);
+    });
+    it('two-arg lambda', async () => {
+      const fn = (await evalHyperScript('\\ x, y -> y')) as (a: unknown, b: unknown) => unknown;
+      expect(fn(false, true)).toBe(true);
+    });
+    it('used as a synchronous Array.map callback (member-access body)', async () => {
+      expect(await evalHyperScript("['a', 'ab', 'abc'].map(\\ s -> s.length)")).toEqual([1, 2, 3]);
+    });
+    it('the synchronous fast-path returns the function directly', () => {
+      const fn = evalHyperScriptSync('\\ x -> x') as (a: unknown) => unknown;
+      expect(fn('hi')).toBe('hi');
     });
   });
 });

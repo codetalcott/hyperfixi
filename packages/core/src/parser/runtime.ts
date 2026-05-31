@@ -218,6 +218,8 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
       return evaluateTemplateLiteralNode(n, context);
     case 'stringPostfix':
       return evaluateStringPostfixNode(n, context);
+    case 'blockLiteral':
+      return makeBlockLiteralClosure(n, context);
 
     default: {
       // Allow plugins to register evaluators for custom AST node types.
@@ -317,6 +319,29 @@ export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext)
     }
     case 'stringPostfix':
       return `${evaluateExpressionSync(n.expression, context)}${n.unit}`;
+    case 'blockLiteral':
+      return makeBlockLiteralClosure(n, context);
+    case 'memberExpression': {
+      // Plain property reads only. DOM/collection targets defer to the async
+      // path, which has styleRef/classref special-casing this naive read would
+      // get wrong.
+      const obj = evaluateExpressionSync(n.object, context);
+      if (obj == null) return undefined;
+      if (
+        obj instanceof Element ||
+        Array.isArray(obj) ||
+        (typeof Node !== 'undefined' && obj instanceof Node)
+      ) {
+        throw new NotSyncEvaluable('memberExpression');
+      }
+      const prop = n.computed
+        ? String(evaluateExpressionSync(n.property, context))
+        : (n.property?.name as string);
+      const value = (obj as Record<string, unknown>)[prop];
+      return typeof value === 'function'
+        ? (value as (...a: unknown[]) => unknown).bind(obj)
+        : value;
+    }
     default:
       throw new NotSyncEvaluable(n?.type ?? 'unknown');
   }
@@ -991,6 +1016,33 @@ async function evaluateObjectLiteralNode(
 }
 
 /** Resolve `@attr` on `me`. Returns `@attr` literal when there is no element. */
+/**
+ * Build the closure for a block-literal (lambda) node: `\ x, y -> body`.
+ * Binds positional arguments to the declared parameters in a child scope and
+ * evaluates the body. The body is evaluated synchronously when possible (so the
+ * closure can be used as a synchronous JS callback, e.g. `arr.map(\ s -> …)`),
+ * falling back to async evaluation for bodies the sync path can't handle.
+ */
+function makeBlockLiteralClosure(
+  node: { parameters: string[]; body: ASTNode },
+  context: ExecutionContext
+): (...args: unknown[]) => unknown {
+  const params = node.parameters ?? [];
+  return (...args: unknown[]) => {
+    const locals = new Map(context.locals ?? new Map());
+    params.forEach((name, i) => locals.set(name, args[i]));
+    const childContext = { ...context, locals } as ExecutionContext;
+    try {
+      return evaluateExpressionSync(node.body, childContext);
+    } catch (e) {
+      if (e instanceof NotSyncEvaluable) {
+        return evaluateAST(node.body, childContext);
+      }
+      throw e;
+    }
+  };
+}
+
 /**
  * Evaluate a string-postfix measurement expression (`1em`, `100%`, `(0 + 1) px`).
  * Mirrors upstream `_hyperscript`: `"" + value + unit`.

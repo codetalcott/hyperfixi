@@ -1708,6 +1708,11 @@ export class Parser {
       return this.parseDollarExpression();
     }
 
+    // Block literal (lambda): `\-> expr`, `\ x -> expr`, `\ x, y -> expr`.
+    if (this.peek().value === '\\') {
+      return this.parseBlockLiteral();
+    }
+
     // Handle standalone attribute reference syntax (@attribute)
     if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
       const attrToken = this.advance();
@@ -1726,6 +1731,48 @@ export class Parser {
     this.addError(`Unexpected token: ${token.value} at line ${token.line}, column ${token.column}`);
     this.advance(); // Always advance past unparseable tokens to prevent infinite loops
     return this.createErrorNode();
+  }
+
+  /**
+   * Parse a block-literal (lambda) expression: `\-> expr`, `\ x -> expr`,
+   * `\ x, y -> expr`. Mirrors upstream `_hyperscript`'s BlockLiteral — the body
+   * is a single expression; the result is a function binding the parameters.
+   * `->` tokenizes as `-` then `>`.
+   */
+  private parseBlockLiteral(): ASTNode {
+    const start = this.peek().start;
+    this.advance(); // consume '\'
+
+    const parameters: string[] = [];
+    // Parameters run until the `->` arrow (a `-` followed by `>`).
+    while (!this.isAtEnd() && !(this.check('-') && this.tokens[this.current + 1]?.value === '>')) {
+      if (this.checkIdentifier()) {
+        parameters.push(this.advance().value);
+        this.match(','); // optional separator between params
+      } else {
+        this.addError(`Unexpected token in block literal parameters: ${this.peek().value}`);
+        break;
+      }
+    }
+
+    if (!(this.check('-') && this.tokens[this.current + 1]?.value === '>')) {
+      this.addError("Expected '->' in block literal");
+      return this.createErrorNode();
+    }
+    this.advance(); // consume '-'
+    this.advance(); // consume '>'
+
+    const body = this.parseExpression();
+
+    return {
+      type: 'blockLiteral',
+      parameters,
+      body,
+      start,
+      end: this.previous().end,
+      line: this.previous().line,
+      column: this.previous().column,
+    } as ASTNode;
   }
 
   private parseDollarExpression(): ASTNode {

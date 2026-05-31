@@ -60,7 +60,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // The remaining gap below 100% is mostly intentional divergences + harness
 // artifacts — see docs/UPSTREAM-KNOWN-DIFFS.md (checkbox `as Values` → boolean,
 // boolean `in`, error-message text, sync `=== el` / fire-and-forget `set`).
-const EXPRESSION_PASS_RATE_FLOOR = 80;
+const EXPRESSION_PASS_RATE_FLOOR = 81;
 
 interface TestFile {
   filename: string;
