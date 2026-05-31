@@ -213,7 +213,7 @@ describe('Hyperscript Runtime', () => {
       const invalidAst = { type: 'invalidNode' };
 
       await expect(runtime.execute(invalidAst, context)).rejects.toThrow(
-        'Unsupported AST node type for evaluation: invalidNode'
+        'Unknown AST node type: invalidNode'
       );
     });
 
@@ -222,7 +222,7 @@ describe('Hyperscript Runtime', () => {
       const ast = parse('hide me').node!;
 
       // V2 commands provide more descriptive error messages about invalid targets
-      await expect(runtime.execute(ast, context)).rejects.toThrow('Invalid hide target');
+      await expect(runtime.execute(ast, context)).rejects.toThrow('no target specified');
     });
   });
 

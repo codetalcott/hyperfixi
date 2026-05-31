@@ -296,7 +296,7 @@ describe('Plugin system (v0.9.90 Phase 5)', () => {
       const el = document.createElement('div');
       const ctx = createContext(el);
       const node = { type: 'nobodyKnowsThis' } as unknown as ASTNode;
-      await expect(runtime.execute(node, ctx)).rejects.toThrow(/Unsupported AST node type/);
+      await expect(runtime.execute(node, ctx)).rejects.toThrow(/Unknown AST node type/);
     });
   });
 
