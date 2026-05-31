@@ -112,4 +112,33 @@ describe('expression parity (Phase B)', () => {
       expect(await evalHyperScript('next .target', { me: b1 })).toBe(id('b2'));
     });
   });
+
+  describe('Track C — stringPostfix measurement units', () => {
+    // `1em` / `100%` / `(0 + 1) px` etc. errored with "Unexpected token: em".
+    // A trailing CSS unit (or a `%` with no operand) now stringifies the value.
+    it('appends CSS units to a number', async () => {
+      expect(await evalHyperScript('1em')).toBe('1em');
+      expect(await evalHyperScript('1px')).toBe('1px');
+      expect(await evalHyperScript('-1px')).toBe('-1px');
+    });
+    it('handles the % unit', async () => {
+      expect(await evalHyperScript('100%')).toBe('100%');
+    });
+    it('allows a space before the unit', async () => {
+      expect(await evalHyperScript('1 em')).toBe('1em');
+      expect(await evalHyperScript('100 %')).toBe('100%');
+    });
+    it('applies to parenthesized expression roots', async () => {
+      expect(await evalHyperScript('(0 + 1) em')).toBe('1em');
+      expect(await evalHyperScript('(100 + 0) %')).toBe('100%');
+    });
+    it('keeps `%` as modulo when a right operand follows', async () => {
+      expect(await evalHyperScript('100 % 5')).toBe(0);
+      expect(await evalHyperScript('10 % 3')).toBe(1);
+    });
+    it('does not disturb arithmetic', async () => {
+      expect(await evalHyperScript('1 + 1')).toBe(2);
+      expect(await evalHyperScript('2 * 3')).toBe(6);
+    });
+  });
 });

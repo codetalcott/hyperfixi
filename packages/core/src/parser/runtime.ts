@@ -216,6 +216,8 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
       return evaluatePropertyOfExpressionNode(n, context);
     case 'templateLiteral':
       return evaluateTemplateLiteralNode(n, context);
+    case 'stringPostfix':
+      return evaluateStringPostfixNode(n, context);
 
     default: {
       // Allow plugins to register evaluators for custom AST node types.
@@ -313,6 +315,8 @@ export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext)
       const value = evaluateExpressionSync(n.expression, context);
       return convertValue(value, normalizeAsTargetType(n.targetType), context);
     }
+    case 'stringPostfix':
+      return `${evaluateExpressionSync(n.expression, context)}${n.unit}`;
     default:
       throw new NotSyncEvaluable(n?.type ?? 'unknown');
   }
@@ -987,6 +991,18 @@ async function evaluateObjectLiteralNode(
 }
 
 /** Resolve `@attr` on `me`. Returns `@attr` literal when there is no element. */
+/**
+ * Evaluate a string-postfix measurement expression (`1em`, `100%`, `(0 + 1) px`).
+ * Mirrors upstream `_hyperscript`: `"" + value + unit`.
+ */
+async function evaluateStringPostfixNode(
+  node: { expression: ASTNode; unit: string },
+  context: ExecutionContext
+): Promise<string> {
+  const value = await evaluateAST(node.expression, context);
+  return `${value}${node.unit}`;
+}
+
 async function evaluateAttributeAccessNode(
   node: AttributeAccessNode,
   context: ExecutionContext

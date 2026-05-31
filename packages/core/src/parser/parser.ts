@@ -107,6 +107,42 @@ export type ParseResult = CoreParseResult;
 export type { ParseError } from './types';
 
 /**
+ * CSS measurement units recognized as string-postfix expressions, e.g. `1em`
+ * → "1em". Mirrors upstream `_hyperscript` STRING_POSTFIXES (CSS values level 4,
+ * minus `in`, which collides with the hyperscript `in` operator). `%` is handled
+ * separately (it doubles as the modulo operator).
+ */
+const STRING_POSTFIX_UNITS = new Set([
+  'em',
+  'ex',
+  'cap',
+  'ch',
+  'ic',
+  'rem',
+  'lh',
+  'rlh',
+  'vw',
+  'vh',
+  'vi',
+  'vb',
+  'vmin',
+  'vmax',
+  'cm',
+  'mm',
+  'Q',
+  'pc',
+  'pt',
+  'px',
+]);
+
+/**
+ * Binding power for the string-postfix operator. Chosen to sit between binary
+ * `+`/`-` (40) and unary `-`/`+` (80) so `-1px` parses as `(-1)px` → "-1px"
+ * while `1em + 2px` parses as `"1em" + "2px"` → "1em2px".
+ */
+const STRING_POSTFIX_BP = 60;
+
+/**
  * Parse a time expression string (e.g., "200ms", "1s", "2h") to milliseconds.
  * The tokenizer already validates the format (TIME_UNITS: ms, s, seconds, minutes, hours, days).
  */
@@ -596,6 +632,18 @@ export class Parser {
     while (!this.isAtEnd()) {
       const nextToken = this.peek();
 
+      // String postfix (`1em`, `100%`, `(0 + 1) px`): a CSS unit token, or a
+      // `%` with no following operand, turns the left expression into a string.
+      // Binds at STRING_POSTFIX_BP (looser than unary `-`/`+` so `-1px` → "-1px",
+      // tighter than binary `+` so `1em + 2px` → "1em2px").
+      if (STRING_POSTFIX_BP >= minBp) {
+        const postfix = this.tryParseStringPostfix(left, nextToken);
+        if (postfix) {
+          left = postfix;
+          continue;
+        }
+      }
+
       // Check infix table FIRST — operators like 'in' are both stop tokens
       // and comparison operators; the Pratt table takes priority.
       const infixEntry = Parser.PRATT_TABLE.get(nextToken.value);
@@ -678,6 +726,53 @@ export class Parser {
     this.prattCache.set(cacheKey, { node: left, endPos: this.current });
 
     return left;
+  }
+
+  /**
+   * Try to parse a trailing string-postfix measurement unit on `left`.
+   * Returns a `stringPostfix` node (consuming the unit token) or null.
+   * Mirrors upstream `_hyperscript`'s StringPostfixExpression — `"" + val + unit`.
+   */
+  private tryParseStringPostfix(left: ASTNode, nextToken: Token): ASTNode | null {
+    const v = nextToken.value;
+    let unit: string | null = null;
+    if (STRING_POSTFIX_UNITS.has(v)) {
+      unit = v;
+    } else if (v === '%') {
+      // `%` is the modulo operator only when a right operand follows; otherwise
+      // it's a percentage string postfix (`100%`, `100 %`, `(100 + 0) %`).
+      const after = this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+      if (!this.canStartOperand(after)) {
+        unit = '%';
+      }
+    }
+    if (unit == null) return null;
+
+    const unitToken = this.advance();
+    return {
+      type: 'stringPostfix',
+      expression: left,
+      unit,
+      start: (left as { start?: number }).start,
+      end: unitToken.end,
+      line: (left as { line?: number }).line,
+      column: (left as { column?: number }).column,
+    } as ASTNode;
+  }
+
+  /** Whether `t` can begin an operand (used to disambiguate `%` postfix vs modulo). */
+  private canStartOperand(t: Token | null): boolean {
+    if (!t) return false;
+    const v = t.value;
+    if (PRATT_STOP_TOKENS.has(v) || PRATT_STOP_DELIMITERS.has(v)) return false;
+    if (
+      t.kind === 'number' ||
+      t.kind === 'string' ||
+      t.kind === 'identifier' ||
+      t.kind === 'symbol'
+    )
+      return true;
+    return ['(', '[', '{', '-', '+', '!', '#', '.', '<', '$', '@'].includes(v);
   }
 
   /** Create a PrattContext adapter that bridges the Pratt interface to the Parser's internal state. */
