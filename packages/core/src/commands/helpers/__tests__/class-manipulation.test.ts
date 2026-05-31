@@ -8,6 +8,7 @@ import {
   resolveDynamicClasses,
 } from '../class-manipulation';
 import type { TypedExecutionContext } from '../../../types/core';
+import { debug } from '../../../utils/debug';
 
 describe('Class Manipulation Helpers', () => {
   describe('parseClasses', () => {
@@ -171,7 +172,7 @@ describe('Class Manipulation Helpers', () => {
 
   describe('resolveDynamicClasses', () => {
     let mockContext: TypedExecutionContext;
-    let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+    let debugSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
       mockContext = {
@@ -179,7 +180,9 @@ describe('Class Manipulation Helpers', () => {
         globals: new Map<string, unknown>(),
       } as TypedExecutionContext;
 
-      consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // A missing dynamic-class variable is reported via the debug system
+      // (debug.command), not console.warn — keeps production output quiet.
+      debugSpy = vi.spyOn(debug, 'command').mockImplementation(() => {});
     });
 
     it('should resolve dynamic class from locals', () => {
@@ -217,7 +220,7 @@ describe('Class Manipulation Helpers', () => {
     it('should warn when dynamic variable not found', () => {
       const result = resolveDynamicClasses(['{missing}'], mockContext);
       expect(result).toEqual([]);
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect(debugSpy).toHaveBeenCalledWith(
         expect.stringContaining("Dynamic class variable 'missing' not found")
       );
     });

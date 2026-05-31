@@ -97,7 +97,7 @@ describe('Element Resolution Helpers', () => {
         const context = createMockContext({ me: null });
 
         expect(() => resolveElement(undefined, context)).toThrow(
-          'No target element - provide explicit target or ensure context.me is set'
+          'No target element — provide explicit target or ensure context.me is set'
         );
       });
     });
