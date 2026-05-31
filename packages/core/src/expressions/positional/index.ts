@@ -181,14 +181,31 @@ export const atExpression: ExpressionImplementation = {
 // DOM Relative Positional Expressions
 // ============================================================================
 
+/**
+ * Modifiers for the relative positional expression
+ * (`next <sel> from <el> [within <el> | in <coll>] [with wrapping]`).
+ * Passed as the 3rd argument to `next`/`previous` only when the parser captured
+ * an explicit `from`/`within`/`in`/`with wrapping` clause; the bare `next <sel>`
+ * form leaves it undefined and keeps the legacy tree-walk behavior.
+ */
+export interface RelativePositionalOptions {
+  within?: Element | null;
+  inElt?: unknown;
+  inSearch?: boolean;
+  wrapping?: boolean;
+}
+
 export const nextExpression: ExpressionImplementation = {
   name: 'next',
   category: 'Reference',
   evaluatesTo: 'Element',
   operators: ['next'],
 
-  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
-    const [selector, fromElement] = args;
+  async evaluate(
+    context: ExecutionContext,
+    ...args: unknown[]
+  ): Promise<HTMLElement | null | undefined> {
+    const [selector, fromElement, options] = args;
     const startElement = (fromElement as HTMLElement | undefined) || context.me;
 
     if (!startElement || !(startElement instanceof Element)) {
@@ -200,12 +217,27 @@ export const nextExpression: ExpressionImplementation = {
       return startElement.nextElementSibling as HTMLElement | null;
     }
 
-    // Find next element matching selector in DOM tree
+    // Explicit `from/within/in/wrapping` clause → upstream document-order scan.
+    if (options) {
+      return scanRelative(
+        startElement,
+        selector as string,
+        options as RelativePositionalOptions,
+        true
+      );
+    }
+
+    // Bare `next <sel>` (relative to me) keeps the existing tree-walk behavior.
     return findNextElementInDOM(startElement, selector as string);
   },
 
   validate(args: unknown[]): string | null {
-    const maxError = validateMaxArgs(args, 2, 'next', 'optional selector, optional fromElement');
+    const maxError = validateMaxArgs(
+      args,
+      3,
+      'next',
+      'optional selector, optional fromElement, optional modifiers'
+    );
     if (maxError) return maxError;
     if (args.length >= 1 && args[0] != null && typeof args[0] !== 'string') {
       return 'selector must be a string';
@@ -223,8 +255,11 @@ export const previousExpression: ExpressionImplementation = {
   evaluatesTo: 'Element',
   operators: ['previous', 'prev'],
 
-  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
-    const [selector, fromElement] = args;
+  async evaluate(
+    context: ExecutionContext,
+    ...args: unknown[]
+  ): Promise<HTMLElement | null | undefined> {
+    const [selector, fromElement, options] = args;
     const startElement = (fromElement as HTMLElement | undefined) || context.me;
 
     if (!startElement || !(startElement instanceof Element)) {
@@ -236,6 +271,16 @@ export const previousExpression: ExpressionImplementation = {
       return startElement.previousElementSibling as HTMLElement | null;
     }
 
+    // Explicit `from/within/in/wrapping` clause → upstream document-order scan.
+    if (options) {
+      return scanRelative(
+        startElement,
+        selector as string,
+        options as RelativePositionalOptions,
+        false
+      );
+    }
+
     // Find previous element matching selector in DOM tree
     return findPreviousElementInDOM(startElement, selector as string);
   },
@@ -243,9 +288,9 @@ export const previousExpression: ExpressionImplementation = {
   validate(args: unknown[]): string | null {
     const maxError = validateMaxArgs(
       args,
-      2,
+      3,
       'previous',
-      'optional selector, optional fromElement'
+      'optional selector, optional fromElement, optional modifiers'
     );
     if (maxError) return maxError;
     if (args.length >= 1 && args[0] != null && typeof args[0] !== 'string') {
@@ -315,6 +360,96 @@ function findPreviousElementInDOM(startElement: Element, selector: string): HTML
   }
 
   return null;
+}
+
+// ----------------------------------------------------------------------------
+// Relative positional scan (upstream `from/within/in/with wrapping` semantics).
+// Ported from _hyperscript/src/parsetree/expressions/positional.js — returns
+// `undefined` (not null) on no-match to match upstream's contract.
+// ----------------------------------------------------------------------------
+
+const DOCUMENT_POSITION_PRECEDING = 2; // Node.DOCUMENT_POSITION_PRECEDING
+const DOCUMENT_POSITION_FOLLOWING = 4; // Node.DOCUMENT_POSITION_FOLLOWING
+
+function scanForwardQuery(
+  start: Element,
+  root: ParentNode,
+  match: string,
+  wrap: boolean
+): HTMLElement | undefined {
+  const results = root.querySelectorAll(match);
+  for (let i = 0; i < results.length; i++) {
+    const elt = results[i];
+    if (elt.compareDocumentPosition(start) === DOCUMENT_POSITION_PRECEDING) {
+      return elt as HTMLElement;
+    }
+  }
+  return wrap ? (results[0] as HTMLElement | undefined) : undefined;
+}
+
+function scanBackwardsQuery(
+  start: Element,
+  root: ParentNode,
+  match: string,
+  wrap: boolean
+): HTMLElement | undefined {
+  const results = root.querySelectorAll(match);
+  for (let i = results.length - 1; i >= 0; i--) {
+    const elt = results[i];
+    if (elt.compareDocumentPosition(start) === DOCUMENT_POSITION_FOLLOWING) {
+      return elt as HTMLElement;
+    }
+  }
+  return wrap ? (results[results.length - 1] as HTMLElement | undefined) : undefined;
+}
+
+function scanForwardArray(
+  start: Element,
+  arrayLike: unknown,
+  match: string,
+  wrap: boolean
+): HTMLElement | undefined {
+  const array = Array.from((arrayLike as Iterable<Element>) ?? []) as Element[];
+  const matches: Element[] = [];
+  for (const elt of array) {
+    if ((elt.matches && elt.matches(match)) || elt === start) {
+      matches.push(elt);
+    }
+  }
+  for (let i = 0; i < matches.length - 1; i++) {
+    if (matches[i] === start) {
+      return matches[i + 1] as HTMLElement;
+    }
+  }
+  if (wrap) {
+    const first = matches[0];
+    if (first && first.matches && first.matches(match)) {
+      return first as HTMLElement;
+    }
+  }
+  return undefined;
+}
+
+/** Resolve a relative positional scan to a single element (or undefined). */
+function scanRelative(
+  start: Element,
+  selector: string,
+  options: RelativePositionalOptions,
+  forward: boolean
+): HTMLElement | undefined {
+  if (options.inSearch) {
+    if (options.inElt == null) return undefined;
+    const array = forward
+      ? Array.from(options.inElt as Iterable<Element>)
+      : Array.from(options.inElt as Iterable<Element>).reverse();
+    return scanForwardArray(start, array, selector, !!options.wrapping);
+  }
+  const root: ParentNode | null =
+    (options.within as Element | null) ?? (typeof document !== 'undefined' ? document.body : null);
+  if (!root) return undefined;
+  return forward
+    ? scanForwardQuery(start, root, selector, !!options.wrapping)
+    : scanBackwardsQuery(start, root, selector, !!options.wrapping);
 }
 
 // ============================================================================

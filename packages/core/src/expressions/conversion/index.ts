@@ -17,6 +17,27 @@ export interface ConversionFunction {
   (value: unknown, context?: ExecutionContext): unknown;
 }
 
+/** A user-registered dynamic converter: `(conversionName, value) => result | undefined`. */
+export type DynamicConversionResolver = (conversion: string, value: unknown) => unknown;
+
+/**
+ * User-extensible conversion registry, exposed on the global as
+ * `hyperfixi.config.conversions` (and `_hyperscript.config.conversions` in the
+ * compat shim). Mirrors upstream `_hyperscript.config.conversions`:
+ *   - string keys map a target type name → converter function `(val) => result`
+ *   - `dynamicResolvers` is an array of `(conversionName, val) => result|undefined`
+ *     tried in order for any type not matched by a built-in or a named entry.
+ * Checked by `convertValue` before falling back to the "unknown type" warning.
+ */
+export interface ConversionConfig {
+  [type: string]: ConversionFunction | DynamicConversionResolver[] | undefined;
+  dynamicResolvers: DynamicConversionResolver[];
+}
+
+export const conversionConfig: { conversions: ConversionConfig } = {
+  conversions: { dynamicResolvers: [] },
+};
+
 export const defaultConversions: Record<string, ConversionFunction> = {
   // Basic type conversions
   Array: (value: unknown) => {
@@ -428,8 +449,20 @@ export function convertValue(value: unknown, type: string, context?: ExecutionCo
     }
   }
 
-  // Unknown conversion type — return the original value (custom conversions via
-  // global config are not yet supported).
+  // User-registered conversions (upstream `_hyperscript.config.conversions`):
+  // a named converter, then the dynamic resolvers (first non-undefined wins).
+  const named = conversionConfig.conversions[type];
+  if (typeof named === 'function') {
+    return (named as ConversionFunction)(value, context);
+  }
+  for (const resolver of conversionConfig.conversions.dynamicResolvers) {
+    const resolved = resolver(type, value);
+    if (resolved !== undefined) {
+      return resolved;
+    }
+  }
+
+  // Unknown conversion type — return the original value unchanged.
   console.warn(`Unknown conversion type: ${type}`);
   return value;
 }

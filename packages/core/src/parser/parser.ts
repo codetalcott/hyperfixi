@@ -107,6 +107,42 @@ export type ParseResult = CoreParseResult;
 export type { ParseError } from './types';
 
 /**
+ * CSS measurement units recognized as string-postfix expressions, e.g. `1em`
+ * → "1em". Mirrors upstream `_hyperscript` STRING_POSTFIXES (CSS values level 4,
+ * minus `in`, which collides with the hyperscript `in` operator). `%` is handled
+ * separately (it doubles as the modulo operator).
+ */
+const STRING_POSTFIX_UNITS = new Set([
+  'em',
+  'ex',
+  'cap',
+  'ch',
+  'ic',
+  'rem',
+  'lh',
+  'rlh',
+  'vw',
+  'vh',
+  'vi',
+  'vb',
+  'vmin',
+  'vmax',
+  'cm',
+  'mm',
+  'Q',
+  'pc',
+  'pt',
+  'px',
+]);
+
+/**
+ * Binding power for the string-postfix operator. Chosen to sit between binary
+ * `+`/`-` (40) and unary `-`/`+` (80) so `-1px` parses as `(-1)px` → "-1px"
+ * while `1em + 2px` parses as `"1em" + "2px"` → "1em2px".
+ */
+const STRING_POSTFIX_BP = 60;
+
+/**
  * Parse a time expression string (e.g., "200ms", "1s", "2h") to milliseconds.
  * The tokenizer already validates the format (TIME_UNITS: ms, s, seconds, minutes, hours, days).
  */
@@ -596,6 +632,18 @@ export class Parser {
     while (!this.isAtEnd()) {
       const nextToken = this.peek();
 
+      // String postfix (`1em`, `100%`, `(0 + 1) px`): a CSS unit token, or a
+      // `%` with no following operand, turns the left expression into a string.
+      // Binds at STRING_POSTFIX_BP (looser than unary `-`/`+` so `-1px` → "-1px",
+      // tighter than binary `+` so `1em + 2px` → "1em2px").
+      if (STRING_POSTFIX_BP >= minBp) {
+        const postfix = this.tryParseStringPostfix(left, nextToken);
+        if (postfix) {
+          left = postfix;
+          continue;
+        }
+      }
+
       // Check infix table FIRST — operators like 'in' are both stop tokens
       // and comparison operators; the Pratt table takes priority.
       const infixEntry = Parser.PRATT_TABLE.get(nextToken.value);
@@ -678,6 +726,53 @@ export class Parser {
     this.prattCache.set(cacheKey, { node: left, endPos: this.current });
 
     return left;
+  }
+
+  /**
+   * Try to parse a trailing string-postfix measurement unit on `left`.
+   * Returns a `stringPostfix` node (consuming the unit token) or null.
+   * Mirrors upstream `_hyperscript`'s StringPostfixExpression — `"" + val + unit`.
+   */
+  private tryParseStringPostfix(left: ASTNode, nextToken: Token): ASTNode | null {
+    const v = nextToken.value;
+    let unit: string | null = null;
+    if (STRING_POSTFIX_UNITS.has(v)) {
+      unit = v;
+    } else if (v === '%') {
+      // `%` is the modulo operator only when a right operand follows; otherwise
+      // it's a percentage string postfix (`100%`, `100 %`, `(100 + 0) %`).
+      const after = this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+      if (!this.canStartOperand(after)) {
+        unit = '%';
+      }
+    }
+    if (unit == null) return null;
+
+    const unitToken = this.advance();
+    return {
+      type: 'stringPostfix',
+      expression: left,
+      unit,
+      start: (left as { start?: number }).start,
+      end: unitToken.end,
+      line: (left as { line?: number }).line,
+      column: (left as { column?: number }).column,
+    } as ASTNode;
+  }
+
+  /** Whether `t` can begin an operand (used to disambiguate `%` postfix vs modulo). */
+  private canStartOperand(t: Token | null): boolean {
+    if (!t) return false;
+    const v = t.value;
+    if (PRATT_STOP_TOKENS.has(v) || PRATT_STOP_DELIMITERS.has(v)) return false;
+    if (
+      t.kind === 'number' ||
+      t.kind === 'string' ||
+      t.kind === 'identifier' ||
+      t.kind === 'symbol'
+    )
+      return true;
+    return ['(', '[', '{', '-', '+', '!', '#', '.', '<', '$', '@'].includes(v);
   }
 
   /** Create a PrattContext adapter that bridges the Pratt interface to the Parser's internal state. */
@@ -1613,6 +1708,11 @@ export class Parser {
       return this.parseDollarExpression();
     }
 
+    // Block literal (lambda): `\-> expr`, `\ x -> expr`, `\ x, y -> expr`.
+    if (this.peek().value === '\\') {
+      return this.parseBlockLiteral();
+    }
+
     // Handle standalone attribute reference syntax (@attribute)
     if (isSymbol(this.peek()) && this.peek().value.startsWith('@')) {
       const attrToken = this.advance();
@@ -1631,6 +1731,48 @@ export class Parser {
     this.addError(`Unexpected token: ${token.value} at line ${token.line}, column ${token.column}`);
     this.advance(); // Always advance past unparseable tokens to prevent infinite loops
     return this.createErrorNode();
+  }
+
+  /**
+   * Parse a block-literal (lambda) expression: `\-> expr`, `\ x -> expr`,
+   * `\ x, y -> expr`. Mirrors upstream `_hyperscript`'s BlockLiteral — the body
+   * is a single expression; the result is a function binding the parameters.
+   * `->` tokenizes as `-` then `>`.
+   */
+  private parseBlockLiteral(): ASTNode {
+    const start = this.peek().start;
+    this.advance(); // consume '\'
+
+    const parameters: string[] = [];
+    // Parameters run until the `->` arrow (a `-` followed by `>`).
+    while (!this.isAtEnd() && !(this.check('-') && this.tokens[this.current + 1]?.value === '>')) {
+      if (this.checkIdentifier()) {
+        parameters.push(this.advance().value);
+        this.match(','); // optional separator between params
+      } else {
+        this.addError(`Unexpected token in block literal parameters: ${this.peek().value}`);
+        break;
+      }
+    }
+
+    if (!(this.check('-') && this.tokens[this.current + 1]?.value === '>')) {
+      this.addError("Expected '->' in block literal");
+      return this.createErrorNode();
+    }
+    this.advance(); // consume '-'
+    this.advance(); // consume '>'
+
+    const body = this.parseExpression();
+
+    return {
+      type: 'blockLiteral',
+      parameters,
+      body,
+      start,
+      end: this.previous().end,
+      line: this.previous().line,
+      column: this.previous().column,
+    } as ASTNode;
   }
 
   private parseDollarExpression(): ASTNode {
@@ -3378,7 +3520,63 @@ export class Parser {
       args.push(this.parsePrimary());
     }
 
-    return this.createCallExpression(this.createIdentifier(funcName), args);
+    const callNode = this.createCallExpression(this.createIdentifier(funcName), args);
+
+    // Relative positional modifiers for `next`/`previous`:
+    //   next <sel> from <el> [within <el> | in <coll>] [with wrapping]
+    if (funcName === 'next' || funcName === 'previous') {
+      const relativePositional = this.parseRelativePositionalModifiers();
+      if (relativePositional) {
+        (callNode as unknown as Record<string, unknown>).relativePositional = relativePositional;
+      }
+    }
+
+    return callNode;
+  }
+
+  /**
+   * Parse the trailing `from <el> [within <el> | in <coll>] [with wrapping]`
+   * modifiers of a relative positional expression (`next`/`previous`). Returns
+   * null when none are present so the bare `next <sel>` form is unchanged.
+   */
+  private parseRelativePositionalModifiers(): {
+    from?: ASTNode;
+    within?: ASTNode;
+    inElt?: ASTNode;
+    inSearch: boolean;
+    wrapping: boolean;
+  } | null {
+    if (!this.check('from') && !this.check('within') && !this.check('in') && !this.check('with')) {
+      return null;
+    }
+
+    let from: ASTNode | undefined;
+    let within: ASTNode | undefined;
+    let inElt: ASTNode | undefined;
+    let inSearch = false;
+    let wrapping = false;
+
+    if (this.match('from')) {
+      from = this.parseRelativePositionalOperand();
+    }
+    if (this.match('in')) {
+      inSearch = true;
+      inElt = this.parseRelativePositionalOperand();
+    } else if (this.match('within')) {
+      within = this.parseRelativePositionalOperand();
+    }
+    if (this.match('with')) {
+      this.match('wrapping');
+      wrapping = true;
+    }
+
+    return { from, within, inElt, inSearch, wrapping };
+  }
+
+  /** Parse a single relative-positional operand: optional `the` + a primary. */
+  private parseRelativePositionalOperand(): ASTNode {
+    this.match('the');
+    return this.parsePrimary();
   }
 
   /**
@@ -3483,6 +3681,27 @@ export class Parser {
         false
       );
     } else {
+      // Bracketed attribute access: `my [@attr]`, `its [@data-x]`. Mirror the
+      // computed-member shape `X[@attr]` (property is an attributeAccess node)
+      // so the set write-path and read-path treat it as an attribute, not a key.
+      if (this.check('[') && this.tokens[this.current + 1]?.value?.startsWith('@')) {
+        this.advance(); // consume '['
+        const attrToken = this.advance();
+        this.consume(']', "Expected ']' after attribute reference");
+        return this.createMemberExpression(
+          this.createIdentifier(contextVar),
+          {
+            type: 'attributeAccess',
+            attributeName: attrToken.value.substring(1),
+            start: attrToken.start,
+            end: attrToken.end,
+            line: attrToken.line,
+            column: attrToken.column,
+          } as ASTNode,
+          true
+        );
+      }
+
       // Check for attribute access syntax: my @attr, its @attr, your @attr
       // Use @-prefixed identifier (matching possessive expression pattern at line 1168-1170)
       // so evaluateMemberExpression can handle it via propertyName.startsWith('@')

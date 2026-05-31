@@ -56,7 +56,11 @@ const HYPERSCRIPT_TEST_ROOT =
 // closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
 // fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
 // pass); extending evalHyperScriptSync to those node types lifts them further.
-const EXPRESSION_PASS_RATE_FLOOR = 78;
+//
+// The remaining gap below 100% is mostly intentional divergences + harness
+// artifacts — see docs/UPSTREAM-KNOWN-DIFFS.md (checkbox `as Values` → boolean,
+// boolean `in`, error-message text, sync `=== el` / fire-and-forget `set`).
+const EXPRESSION_PASS_RATE_FLOOR = 81;
 
 interface TestFile {
   filename: string;

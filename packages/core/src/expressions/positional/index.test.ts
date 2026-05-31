@@ -236,9 +236,11 @@ describe('Positional Expressions', () => {
         expect(positionalExpressions.next.validate!([])).toBeNull();
         expect(positionalExpressions.next.validate!(['selector'])).toBeNull();
         expect(positionalExpressions.next.validate!(['selector', document.body])).toBeNull();
+        // 3rd arg is the relative-positional modifiers object (from/within/in/wrapping).
+        expect(positionalExpressions.next.validate!(['selector', document.body, {}])).toBeNull();
         expect(
-          positionalExpressions.next.validate!(['selector', document.body, 'extra'])
-        ).toContain('at most 2 arguments');
+          positionalExpressions.next.validate!(['selector', document.body, {}, 'extra'])
+        ).toContain('at most 3 arguments');
         expect(positionalExpressions.next.validate!([123])).toContain('must be a string');
         expect(positionalExpressions.next.validate!(['selector', 'not-element'])).toContain(
           'must be an Element'
@@ -288,9 +290,13 @@ describe('Positional Expressions', () => {
         expect(positionalExpressions.previous.validate!([])).toBeNull();
         expect(positionalExpressions.previous.validate!(['selector'])).toBeNull();
         expect(positionalExpressions.previous.validate!(['selector', document.body])).toBeNull();
+        // 3rd arg is the relative-positional modifiers object (from/within/in/wrapping).
         expect(
-          positionalExpressions.previous.validate!(['selector', document.body, 'extra'])
-        ).toContain('at most 2 arguments');
+          positionalExpressions.previous.validate!(['selector', document.body, {}])
+        ).toBeNull();
+        expect(
+          positionalExpressions.previous.validate!(['selector', document.body, {}, 'extra'])
+        ).toContain('at most 3 arguments');
         expect(positionalExpressions.previous.validate!([123])).toContain('must be a string');
         expect(positionalExpressions.previous.validate!(['selector', 'not-element'])).toContain(
           'must be an Element'

@@ -216,6 +216,10 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
       return evaluatePropertyOfExpressionNode(n, context);
     case 'templateLiteral':
       return evaluateTemplateLiteralNode(n, context);
+    case 'stringPostfix':
+      return evaluateStringPostfixNode(n, context);
+    case 'blockLiteral':
+      return makeBlockLiteralClosure(n, context);
 
     default: {
       // Allow plugins to register evaluators for custom AST node types.
@@ -312,6 +316,31 @@ export function evaluateExpressionSync(node: ASTNode, context: ExecutionContext)
     case 'asExpression': {
       const value = evaluateExpressionSync(n.expression, context);
       return convertValue(value, normalizeAsTargetType(n.targetType), context);
+    }
+    case 'stringPostfix':
+      return `${evaluateExpressionSync(n.expression, context)}${n.unit}`;
+    case 'blockLiteral':
+      return makeBlockLiteralClosure(n, context);
+    case 'memberExpression': {
+      // Plain property reads only. DOM/collection targets defer to the async
+      // path, which has styleRef/classref special-casing this naive read would
+      // get wrong.
+      const obj = evaluateExpressionSync(n.object, context);
+      if (obj == null) return undefined;
+      if (
+        obj instanceof Element ||
+        Array.isArray(obj) ||
+        (typeof Node !== 'undefined' && obj instanceof Node)
+      ) {
+        throw new NotSyncEvaluable('memberExpression');
+      }
+      const prop = n.computed
+        ? String(evaluateExpressionSync(n.property, context))
+        : (n.property?.name as string);
+      const value = (obj as Record<string, unknown>)[prop];
+      return typeof value === 'function'
+        ? (value as (...a: unknown[]) => unknown).bind(obj)
+        : value;
     }
     default:
       throw new NotSyncEvaluable(n?.type ?? 'unknown');
@@ -987,6 +1016,45 @@ async function evaluateObjectLiteralNode(
 }
 
 /** Resolve `@attr` on `me`. Returns `@attr` literal when there is no element. */
+/**
+ * Build the closure for a block-literal (lambda) node: `\ x, y -> body`.
+ * Binds positional arguments to the declared parameters in a child scope and
+ * evaluates the body. The body is evaluated synchronously when possible (so the
+ * closure can be used as a synchronous JS callback, e.g. `arr.map(\ s -> …)`),
+ * falling back to async evaluation for bodies the sync path can't handle.
+ */
+function makeBlockLiteralClosure(
+  node: { parameters: string[]; body: ASTNode },
+  context: ExecutionContext
+): (...args: unknown[]) => unknown {
+  const params = node.parameters ?? [];
+  return (...args: unknown[]) => {
+    const locals = new Map(context.locals ?? new Map());
+    params.forEach((name, i) => locals.set(name, args[i]));
+    const childContext = { ...context, locals } as ExecutionContext;
+    try {
+      return evaluateExpressionSync(node.body, childContext);
+    } catch (e) {
+      if (e instanceof NotSyncEvaluable) {
+        return evaluateAST(node.body, childContext);
+      }
+      throw e;
+    }
+  };
+}
+
+/**
+ * Evaluate a string-postfix measurement expression (`1em`, `100%`, `(0 + 1) px`).
+ * Mirrors upstream `_hyperscript`: `"" + value + unit`.
+ */
+async function evaluateStringPostfixNode(
+  node: { expression: ASTNode; unit: string },
+  context: ExecutionContext
+): Promise<string> {
+  const value = await evaluateAST(node.expression, context);
+  return `${value}${node.unit}`;
+}
+
 async function evaluateAttributeAccessNode(
   node: AttributeAccessNode,
   context: ExecutionContext
@@ -1299,6 +1367,22 @@ async function resolveCallArgs(
  * constructor invocations (`new Foo(...)`), and member-expression callees
  * (preserves `this` via `.apply`).
  */
+/** Parser-attached modifiers for `next`/`previous` relative positional calls. */
+interface RelativePositionalModifiers {
+  from?: ASTNode;
+  within?: ASTNode;
+  inElt?: ASTNode;
+  inSearch: boolean;
+  wrapping: boolean;
+}
+
+/** Unwrap a selector result (array/collection) to a single Element, or undefined. */
+function unwrapElement(value: unknown): Element | undefined {
+  if (value instanceof Element) return value;
+  if (Array.isArray(value)) return value[0] instanceof Element ? value[0] : undefined;
+  return undefined;
+}
+
 async function evaluateCallExpression(node: CallNode, context: ExecutionContext): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
 
@@ -1320,9 +1404,30 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
       case 'closest':
         return getExpr(context, 'closest').evaluate(context, ...args);
       case 'previous':
-        return getExpr(context, 'previous').evaluate(context, ...args);
-      case 'next':
-        return getExpr(context, 'next').evaluate(context, ...args);
+      case 'next': {
+        // Relative positional: `next <sel> from <el> [within <el>|in <coll>]
+        // [with wrapping]`. The parser attaches the modifier nodes; evaluate
+        // them here and pass an options object as the 3rd arg. The bare
+        // `next <sel>` form (no modifiers) keeps the legacy 1-arg call.
+        const relPos = (node as unknown as { relativePositional?: RelativePositionalModifiers })
+          .relativePositional;
+        if (relPos) {
+          const from = relPos.from
+            ? unwrapElement(await evaluateAST(relPos.from, context))
+            : (context.me as Element | undefined);
+          const within = relPos.within
+            ? unwrapElement(await evaluateAST(relPos.within, context))
+            : undefined;
+          const inElt = relPos.inElt ? await evaluateAST(relPos.inElt, context) : undefined;
+          return getExpr(context, funcName).evaluate(context, args[0], from, {
+            within,
+            inElt,
+            inSearch: relPos.inSearch,
+            wrapping: relPos.wrapping,
+          });
+        }
+        return getExpr(context, funcName).evaluate(context, ...args);
+      }
       case 'first':
         return getExpr(context, 'first').evaluate(context, ...args);
       case 'last':
