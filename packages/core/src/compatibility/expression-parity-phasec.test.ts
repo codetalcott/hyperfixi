@@ -159,3 +159,30 @@ describe('expression parity (Phase C) — Phase 4: .{expr} / #{expr} template re
     ).toHaveLength(1);
   });
 });
+
+/**
+ * Phase 5: dot member-access maps over a classRef/queryRef collection, matching
+ * the possessive form — `.cb.checked` === `.cb's checked` → [true, false].
+ */
+describe('expression parity (Phase C) — Phase 5: member access over a collection', () => {
+  const made: Element[] = [];
+  afterEach(() => {
+    while (made.length) made.pop()!.remove();
+  });
+  beforeEach(() => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML =
+      "<input class='cb' type='checkbox' checked /><input class='cb' type='checkbox' />";
+    for (const el of Array.from(wrap.children)) {
+      document.body.appendChild(el);
+      made.push(el);
+    }
+  });
+
+  it('.cb.checked maps .checked over the collection', async () => {
+    expect(await evalHyperScript('.cb.checked')).toEqual([true, false]);
+  });
+  it('dot form agrees with the possessive form', async () => {
+    expect(await evalHyperScript('.cb.checked')).toEqual(await evalHyperScript(".cb's checked"));
+  });
+});

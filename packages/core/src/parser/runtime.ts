@@ -24,6 +24,7 @@ export { setGlobal };
 // through `context.registry` so bundle entries control which categories ship.
 import { isElement, getElementProperty } from '../expressions/property-access-utils';
 import { convertValue } from '../expressions/conversion/index';
+import { isMappableCollection } from '../expressions/properties/index';
 import {
   evaluateWhere,
   evaluateSortedBy,
@@ -1378,6 +1379,15 @@ async function evaluateMemberExpression(node: MemberNode, context: ExecutionCont
     // falls back to a direct lookup.
     if (object instanceof Element && typeof propertyName === 'string') {
       return getElementProperty(object, propertyName);
+    }
+
+    // A classRef/queryRef collection maps `.prop` over every member, so the dot
+    // form matches the possessive form: `.cb.checked` === `.cb's checked` →
+    // [true, false]. Same guard as the possessive evaluator (element/host
+    // collections only; skips collection-own props so `.items.length` is still
+    // the count) — delegate to it for one source of truth.
+    if (isMappableCollection(object) && !(propertyName in (object as object))) {
+      return getExpr(context, 'possessive').evaluate(context, object, propertyName);
     }
 
     return object?.[propertyName];

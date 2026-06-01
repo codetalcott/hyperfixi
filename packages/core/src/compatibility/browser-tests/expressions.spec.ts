@@ -52,22 +52,26 @@ const HYPERSCRIPT_TEST_ROOT =
 //   - Phase 4 `.{expr}` / `#{expr}` templates: 307/361 runnable = 85%  (floor 84)
 //       template refs interpolate the inner EXPRESSION (`.{'c1'}` → `.c1`,
 //       `#{'d1'}` → `#d1`, `.{cls}` reads the local), in both sync + async paths.
+//   - Phase 5 member-access over collections: 308/361 runnable = 85%  (floor 84)
+//       `.cb.checked` maps `.checked` over the collection like `.cb's checked`
+//       → [true, false]. (Still 85% — adds margin, not a new integer rate.)
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
 // Remaining gaps @ 85% are NOT clean product bugs — triaged & decided 2026-05-30,
-// re-verified 2026-06-01 (54 failing of 361 runnable):
+// re-verified 2026-06-01 (53 failing of 361 runnable):
 //   • async-shim artifacts (~24, the largest bucket): positional / closest /
 //     relativePositional consumed via synchronous `=== el` / `.length`, and
 //     fire-and-forget `_hyperscript("set …")` reads (attributeRef red→blue).
 //     Harness-only — the awaited `run`-based equivalents pass.
 //   • intentional known-diffs / decided-deferred (see docs/UPSTREAM-KNOWN-DIFFS.md):
 //     boolean `in` (not intersection-array), checkbox `as Values` → boolean,
-//     error-message text not matched verbatim, `typecheck : Type` postfix.
-//   • un-triaged REAL gaps (next real work — phase 5 of the plan):
-//     query-ref `$`/`${}` interpolation (`<#$id/>`, `<[foo='${x}']/>`, element
-//     interpolation) — needs harness locals-threading into sync eval (3);
-//     objectLiteral computed-key calls, collectionExpressions `where`→previous-
-//     result, closest "attributes resolve as attributes".
+//     error-message text not matched verbatim, `typecheck : Type` postfix,
+//     `[true]` single-elt array-literal vs `[attr]` selector ambiguity,
+//     `{[bar()]:…}` window-global computed keys, `closest @attr`,
+//     collectionExpressions `where`→previous-`result` scoping.
+//   • remaining feature gap (needs harness work): query-ref `$`/`${}`
+//     interpolation (`<#$id/>`, `<[foo='${x}']/>`, element interpolation) —
+//     needs harness locals-threading into sync eval (3).
 //     See ~/.claude/plans/expression-parity-remaining.md.
 //
 // NOTE: relativePositional / blockLiteral / stringPostfix were "deferred" through
