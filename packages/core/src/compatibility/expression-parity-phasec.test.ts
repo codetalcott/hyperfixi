@@ -126,9 +126,8 @@ describe('expression parity (Phase C) — Phase 2/3: selector operands + of-form
 
 /**
  * Phase 4: `.{expr}` / `#{expr}` template refs interpolate the inner EXPRESSION
- * (not just a bare variable) — `.{'c1'}` → `.c1`, `#{'d1'}` → `#d1`. Query-ref
- * `$`/`${}` interpolation (`<#$id/>`, `<[foo='${x}']/>`) still needs harness
- * locals-threading and stays a documented gap.
+ * (not just a bare variable) — `.{'c1'}` → `.c1`, `#{'d1'}` → `#d1`. (Query-ref
+ * `$`/`${}` interpolation — `<#$id/>`, `<[foo='${x}']/>` — ships in Phase 6 below.)
  */
 describe('expression parity (Phase C) — Phase 4: .{expr} / #{expr} template refs', () => {
   const made: Element[] = [];
@@ -184,5 +183,68 @@ describe('expression parity (Phase C) — Phase 5: member access over a collecti
   });
   it('dot form agrees with the possessive form', async () => {
     expect(await evalHyperScript('.cb.checked')).toEqual(await evalHyperScript(".cb's checked"));
+  });
+});
+
+/**
+ * Phase 6: query-ref `$var` / `${expr}` interpolation — substitute a local /
+ * expression (or DOM element) into a `<…/>` selector. Mirrors upstream
+ * `test/expressions/queryRef.js` ("$ works", "$ no curlies works", "interpolate
+ * elements into queries"). Query refs return the full collection (fromQuery), so
+ * callers index with `Array.from(value)[0]`. `$=` (attribute ends-with) must stay
+ * literal — guarded by the `/\$[^=]/` gate.
+ */
+describe('expression parity (Phase C) — Phase 6: query-ref $ / ${} interpolation', () => {
+  const made: Element[] = [];
+  afterEach(() => {
+    while (made.length) made.pop()!.remove();
+  });
+  const mount = (html: string): Element[] => {
+    const tpl = document.createElement('div');
+    tpl.innerHTML = html;
+    const els = Array.from(tpl.children);
+    for (const el of els) {
+      document.body.appendChild(el);
+      made.push(el);
+    }
+    return els;
+  };
+
+  it("string interpolation: <[foo='${x}']/> matches the attribute", async () => {
+    mount("<div foo='bar' class='c2'></div>");
+    const value = (await evalHyperScript("<[foo='${x}']/>", {
+      locals: { x: 'bar' },
+    })) as ArrayLike<unknown>;
+    expect(Array.from(value)).toHaveLength(1);
+  });
+
+  it('bare $var interpolation: <#$id/> resolves the element (collection)', async () => {
+    const [el] = mount("<div id='d1'></div>");
+    const value = (await evalHyperScript('<#$id/>', {
+      locals: { id: 'd1' },
+    })) as ArrayLike<unknown>;
+    expect(Array.from(value)[0]).toBe(el);
+  });
+
+  it('element interpolation: <${a} + div/> selects the adjacent sibling', async () => {
+    const [a, b] = mount("<div class='a'></div><div class='b'></div>");
+    const value = (await evalHyperScript('<${a} + div/>', { locals: { a } })) as ArrayLike<unknown>;
+    expect(Array.from(value)[0]).toBe(b);
+    // The temp marker must never leak onto the DOM.
+    expect(a.hasAttribute('data-hs-query-id')).toBe(false);
+  });
+
+  it('sync path: evaluateExpressionFromSourceSync resolves <#$id/> from locals', () => {
+    const [el] = mount("<div id='d2'></div>");
+    const ctx = createMockHyperscriptContext() as unknown as ExecutionContext;
+    ctx.locals!.set('id', 'd2');
+    const value = evaluateExpressionFromSourceSync('<#$id/>', ctx) as ArrayLike<unknown>;
+    expect(Array.from(value)[0]).toBe(el);
+  });
+
+  it('regression: <[title$="bar"]/> ($= ends-with) stays literal', async () => {
+    mount("<div title='foo bar'></div>");
+    const value = (await evalHyperScript('<[title$="bar"]/>')) as ArrayLike<unknown>;
+    expect(Array.from(value)).toHaveLength(1);
   });
 });

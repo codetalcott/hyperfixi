@@ -55,10 +55,16 @@ const HYPERSCRIPT_TEST_ROOT =
 //   - Phase 5 member-access over collections: 308/361 runnable = 85%  (floor 84)
 //       `.cb.checked` maps `.checked` over the collection like `.cb's checked`
 //       → [true, false]. (Still 85% — adds margin, not a new integer rate.)
+//   - Phase 6 query-ref `$`/`${}` interpolation: 311/361 runnable = 86%  (floor 85)
+//       `<#$id/>` / `<[foo='${x}']/>` / `<${el} + div/>` substitute a local /
+//       expression (or DOM element, via the `data-hs-query-id` marker trick) into
+//       the selector, in both sync + async paths. `$=` (attribute ends-with) stays
+//       literal via the `/\$[^=]/` gate. queryRef.js 10→13.
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
-// Remaining gaps @ 85% are NOT clean product bugs — triaged & decided 2026-05-30,
-// re-verified 2026-06-01 (53 failing of 361 runnable):
+// Remaining gaps @ 86% are NOT clean product bugs — triaged & decided 2026-05-30,
+// re-verified 2026-06-01 (50 failing of 361 runnable, after Phase 6 shipped the
+// last real feature gap — query-ref interpolation, 3 cases):
 //   • async-shim artifacts (~24, the largest bucket): positional / closest /
 //     relativePositional consumed via synchronous `=== el` / `.length`, and
 //     fire-and-forget `_hyperscript("set …")` reads (attributeRef red→blue).
@@ -69,10 +75,8 @@ const HYPERSCRIPT_TEST_ROOT =
 //     `[true]` single-elt array-literal vs `[attr]` selector ambiguity,
 //     `{[bar()]:…}` window-global computed keys, `closest @attr`,
 //     collectionExpressions `where`→previous-`result` scoping.
-//   • remaining feature gap (needs harness work): query-ref `$`/`${}`
-//     interpolation (`<#$id/>`, `<[foo='${x}']/>`, element interpolation) —
-//     needs harness locals-threading into sync eval (3).
-//     See ~/.claude/plans/expression-parity-remaining.md.
+//   See ~/.claude/plans/expression-parity-remaining.md. No remaining clean
+//   feature gaps — the residual is async-shim artifacts + intentional diffs.
 //
 // NOTE: relativePositional / blockLiteral / stringPostfix were "deferred" through
 // 79%; PR #236 SHIPPED all three (blockLiteral 4/4, stringPostfix 3/3, +6
@@ -84,14 +88,15 @@ const HYPERSCRIPT_TEST_ROOT =
 // pure-expression subset — currently selector references) and falls back to the
 // async Promise otherwise. Cases still gated by this (consume the result
 // synchronously but aren't yet sync-evaluable): the remaining asExpression
-// closures (Date/Set/Map/Fragment), classRef/queryRef with interpolation, and the
-// fire-and-forget `set` tests. The products are correct (awaited `run`-based cases
-// pass); extending evalHyperScriptSync to those node types lifts them further.
+// closures (Date/Set/Map/Fragment) and the fire-and-forget `set` tests.
+// (classRef/queryRef interpolation is now sync-evaluable — Phases 4 & 6.) The
+// products are correct (awaited `run`-based cases pass); extending
+// evalHyperScriptSync to those node types lifts them further.
 //
 // The remaining gap below 100% is mostly intentional divergences + harness
 // artifacts — see docs/UPSTREAM-KNOWN-DIFFS.md (checkbox `as Values` → boolean,
 // boolean `in`, error-message text, sync `=== el` / fire-and-forget `set`).
-const EXPRESSION_PASS_RATE_FLOOR = 84;
+const EXPRESSION_PASS_RATE_FLOOR = 85;
 
 interface TestFile {
   filename: string;

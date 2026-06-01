@@ -419,6 +419,22 @@ function evaluateSelectorSync(node: SelectorNode, context: ExecutionContext): un
   if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(raw)) {
     throw new NotSyncEvaluable('selector');
   }
+  // Query-ref `$var` / `${expr}` interpolation — mirror of `evaluateSelector`.
+  // `$=` (attribute ends-with) stays literal via the `/\$[^=]/` gate.
+  if (node.fromQuery && /\$[^=]/.test(raw)) {
+    const { selector: built, elements } = interpolateQueryRefTemplateSync(raw, context);
+    const escaped = escapeSelectorForQuery(node, built);
+    const doc =
+      (context?.me as { ownerDocument?: Document } | null)?.ownerDocument ??
+      (typeof document !== 'undefined' ? document : null);
+    if (!doc) throw new NotSyncEvaluable('selector');
+    elements.forEach((el, i) => el.setAttribute('data-hs-query-id', String(i)));
+    try {
+      return Array.from(doc.querySelectorAll(escaped));
+    } finally {
+      elements.forEach(el => el.removeAttribute('data-hs-query-id'));
+    }
+  }
   // `.{expr}` / `#{expr}` template refs — interpolate before querying.
   const selector =
     !node.fromQuery && raw.includes('{') ? interpolateSelectorTemplateSync(raw, context) : raw;
@@ -1536,6 +1552,23 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
     return getExpr(context, 'styleRef').evaluate(context, selector.slice(1));
   }
 
+  // Query-ref `$var` / `${expr}` interpolation (upstream queryRef template form).
+  // Gated to fromQuery + a `$` NOT followed by `=`, so `<[attr$='x']/>` stays
+  // literal. Elements are tagged `data-hs-query-id` for the query, then untagged.
+  if (typeof selector === 'string' && node.fromQuery && /\$[^=]/.test(selector)) {
+    const { selector: built, elements } = await interpolateQueryRefTemplate(selector, context);
+    const escaped = escapeSelectorForQuery(node, built);
+    elements.forEach((el, i) => el.setAttribute('data-hs-query-id', String(i)));
+    try {
+      // `elementWithSelector` runs querySelectorAll synchronously inside
+      // `.evaluate()`; markers stay set until the awaited result resolves, then
+      // `finally` removes them — never leaking `data-hs-query-id` onto the DOM.
+      return await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
+    } finally {
+      elements.forEach(el => el.removeAttribute('data-hs-query-id'));
+    }
+  }
+
   // `.{expr}` / `#{expr}` template refs — interpolate before querying.
   if (typeof selector === 'string' && !node.fromQuery && selector.includes('{')) {
     selector = await interpolateSelectorTemplate(selector, context);
@@ -1650,6 +1683,88 @@ function interpolateSelectorTemplate(selector: string, context: ExecutionContext
   return replaceAsync(selector, /\{([^}]*)\}/g, async (_m: string, inner: string) =>
     String((await evaluateExpressionFromSource(inner.trim(), context)) ?? '')
   );
+}
+
+// Query-ref (`<…/>`) template interpolation: `$var` / `${expr}` substitute a
+// local/expression (or DOM element) into the selector — upstream's queryRef
+// template form (`QueryRef.parse` + `TemplatedQueryElementCollection`). Upstream
+// `parseStringTemplate` reads an EXPRESSION after `$` whether or not braces are
+// present, so bare `$var` and `${expr}` are the same operation (evaluate the
+// inner expression); we treat them identically, which also yields element
+// resolution for free. Distinct from the `.{expr}` brace form above, which is
+// gated to non-query refs.
+//
+// `$=` (CSS attribute ends-with, `<[attr$='x']/>`) must stay literal — the regex
+// only matches `$` followed by `{` or an identifier-start char, never `=`.
+const QUERY_REF_INTERP_RE = /\$\{([^}]+)\}|\$([a-zA-Z_$][a-zA-Z0-9_.$]*)/g;
+
+/** Split a fromQuery selector into literal-string and inner-expression segments. */
+function scanQueryRefTemplate(selector: string): Array<{ lit: string } | { expr: string }> {
+  const segs: Array<{ lit: string } | { expr: string }> = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  QUERY_REF_INTERP_RE.lastIndex = 0;
+  while ((m = QUERY_REF_INTERP_RE.exec(selector)) !== null) {
+    if (m.index > last) segs.push({ lit: selector.slice(last, m.index) });
+    segs.push({ expr: m[1] ?? m[2] });
+    last = m.index + m[0].length;
+  }
+  if (last < selector.length) segs.push({ lit: selector.slice(last) });
+  return segs;
+}
+
+/**
+ * Assemble the final selector + element list from a scan and its evaluated
+ * values (one per `{ expr }` segment, in order). Interpolated Elements get the
+ * upstream `[data-hs-query-id='<i>']` marker; everything else stringifies.
+ */
+function assembleQueryRef(
+  segs: Array<{ lit: string } | { expr: string }>,
+  values: unknown[]
+): { selector: string; elements: Element[] } {
+  let out = '';
+  const elements: Element[] = [];
+  let vi = 0;
+  for (const s of segs) {
+    if ('lit' in s) {
+      out += s.lit;
+      continue;
+    }
+    const v = values[vi++];
+    if (isElement(v)) {
+      out += `[data-hs-query-id='${elements.length}']`;
+      elements.push(v);
+    } else {
+      out += String(v ?? '');
+    }
+  }
+  return { selector: out, elements };
+}
+
+async function interpolateQueryRefTemplate(
+  selector: string,
+  context: ExecutionContext
+): Promise<{ selector: string; elements: Element[] }> {
+  const segs = scanQueryRefTemplate(selector);
+  const values = await Promise.all(
+    segs
+      .filter((s): s is { expr: string } => 'expr' in s)
+      .map(s => evaluateExpressionFromSource(s.expr, context))
+  );
+  return assembleQueryRef(segs, values);
+}
+
+function interpolateQueryRefTemplateSync(
+  selector: string,
+  context: ExecutionContext
+): { selector: string; elements: Element[] } {
+  const segs = scanQueryRefTemplate(selector);
+  // `evaluateExpressionFromSourceSync` throws `NotSyncEvaluable` for non-sync
+  // inner exprs — let it propagate so the caller falls back to the async path.
+  const values = segs
+    .filter((s): s is { expr: string } => 'expr' in s)
+    .map(s => evaluateExpressionFromSourceSync(s.expr, context));
+  return assembleQueryRef(segs, values);
 }
 
 /**

@@ -1164,12 +1164,14 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
       char === ')' ||
       char === '*' || // For [attr*="value"]
       char === '^' || // For [attr^="value"]
-      char === '$' || // For [attr$="value"]
+      char === '$' || // For [attr$="value"] and `$var` / `${expr}` interpolation
       char === '~' || // For [attr~="value"]
       char === '|' || // For [attr|="value"]
       char === '>' || // For child combinator
       char === '+' || // For adjacent sibling combinator
-      char === ',' // For multiple selectors
+      char === ',' || // For multiple selectors
+      char === '{' || // For `${expr}` interpolation (e.g. <[foo='${x}']/>)
+      char === '}' // For `${expr}` interpolation
     ) {
       foundValidContent = true;
       pos++;
