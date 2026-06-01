@@ -412,12 +412,15 @@ function evaluateObjectLiteralSync(node: any, context: ExecutionContext): Record
  * `NotSyncEvaluable` to defer to the async path.
  */
 function evaluateSelectorSync(node: SelectorNode, context: ExecutionContext): unknown {
-  const selector = node.value;
-  if (typeof selector !== 'string') throw new NotSyncEvaluable('selector');
+  const raw = node.value;
+  if (typeof raw !== 'string') throw new NotSyncEvaluable('selector');
   // Style references go through the async styleRef expression — defer.
-  if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
+  if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(raw)) {
     throw new NotSyncEvaluable('selector');
   }
+  // `.{expr}` / `#{expr}` template refs — interpolate before querying.
+  const selector =
+    !node.fromQuery && raw.includes('{') ? interpolateSelectorTemplateSync(raw, context) : raw;
   const escaped = escapeSelectorForQuery(node, selector);
   const doc =
     (context?.me as { ownerDocument?: Document } | null)?.ownerDocument ??
@@ -1513,7 +1516,7 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
  * only `#id` selectors yield a single element.
  */
 async function evaluateSelector(node: SelectorNode, context: ExecutionContext): Promise<any> {
-  const selector = node.value;
+  let selector = node.value;
 
   // Style reference: `*color`, `*text-align`, `*computed-color`. The leading `*`
   // here is NOT the universal CSS selector — it reads a style property off the
@@ -1521,6 +1524,11 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
   // than querySelectorAll, which would throw on `*color`.
   if (typeof selector === 'string' && !node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
     return getExpr(context, 'styleRef').evaluate(context, selector.slice(1));
+  }
+
+  // `.{expr}` / `#{expr}` template refs — interpolate before querying.
+  if (typeof selector === 'string' && !node.fromQuery && selector.includes('{')) {
+    selector = await interpolateSelectorTemplate(selector, context);
   }
 
   const escaped = typeof selector === 'string' ? escapeSelectorForQuery(node, selector) : selector;
@@ -1616,6 +1624,22 @@ function escapeSelectorForQuery(node: SelectorNode, selector: string): string {
     return escapeBareRefSelector(selector);
   }
   return escapeClassColons(selector);
+}
+
+// Non-query `.{expr}` / `#{expr}` template refs (upstream classRef/idRef template
+// form): each `{…}` is evaluated as an EXPRESSION against the context and
+// substituted — `.{'c1'}` → `.c1`, `#{id}` → `#<value-of-id>`. Gated to non-query
+// refs; query refs use the `$`/`${}` interpolation syntax on a separate path, so
+// their braces (inside `${…}`) are left untouched here.
+function interpolateSelectorTemplateSync(selector: string, context: ExecutionContext): string {
+  return selector.replace(/\{([^}]*)\}/g, (_m, inner: string) =>
+    String(evaluateExpressionFromSourceSync(inner.trim(), context) ?? '')
+  );
+}
+function interpolateSelectorTemplate(selector: string, context: ExecutionContext): Promise<string> {
+  return replaceAsync(selector, /\{([^}]*)\}/g, async (_m: string, inner: string) =>
+    String((await evaluateExpressionFromSource(inner.trim(), context)) ?? '')
+  );
 }
 
 /**

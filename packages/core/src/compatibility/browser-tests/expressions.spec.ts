@@ -49,10 +49,13 @@ const HYPERSCRIPT_TEST_ROOT =
 //       `some`/`no`/`of` accept a bare selector operand (`some .aClass`); `'s`
 //       binds tighter than `of` so `the display of #foo's style` = the display of
 //       (#foo's style); `the X of <collection>` maps the read over members.
+//   - Phase 4 `.{expr}` / `#{expr}` templates: 307/361 runnable = 85%  (floor 84)
+//       template refs interpolate the inner EXPRESSION (`.{'c1'}` → `.c1`,
+//       `#{'d1'}` → `#d1`, `.{cls}` reads the local), in both sync + async paths.
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
-// Remaining gaps @ 84% are NOT clean product bugs — triaged & decided 2026-05-30,
-// re-verified 2026-06-01 (56 failing of 361 runnable):
+// Remaining gaps @ 85% are NOT clean product bugs — triaged & decided 2026-05-30,
+// re-verified 2026-06-01 (54 failing of 361 runnable):
 //   • async-shim artifacts (~24, the largest bucket): positional / closest /
 //     relativePositional consumed via synchronous `=== el` / `.length`, and
 //     fire-and-forget `_hyperscript("set …")` reads (attributeRef red→blue).
@@ -60,8 +63,9 @@ const HYPERSCRIPT_TEST_ROOT =
 //   • intentional known-diffs / decided-deferred (see docs/UPSTREAM-KNOWN-DIFFS.md):
 //     boolean `in` (not intersection-array), checkbox `as Values` → boolean,
 //     error-message text not matched verbatim, `typecheck : Type` postfix.
-//   • un-triaged REAL gaps (next real work — phases 4-5 of the plan):
-//     `$var`/template interpolation in queryRef/idRef + `.{expr}` classRef (4),
+//   • un-triaged REAL gaps (next real work — phase 5 of the plan):
+//     query-ref `$`/`${}` interpolation (`<#$id/>`, `<[foo='${x}']/>`, element
+//     interpolation) — needs harness locals-threading into sync eval (3);
 //     objectLiteral computed-key calls, collectionExpressions `where`→previous-
 //     result, closest "attributes resolve as attributes".
 //     See ~/.claude/plans/expression-parity-remaining.md.
@@ -83,7 +87,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // The remaining gap below 100% is mostly intentional divergences + harness
 // artifacts — see docs/UPSTREAM-KNOWN-DIFFS.md (checkbox `as Values` → boolean,
 // boolean `in`, error-message text, sync `=== el` / fire-and-forget `set`).
-const EXPRESSION_PASS_RATE_FLOOR = 83;
+const EXPRESSION_PASS_RATE_FLOOR = 84;
 
 interface TestFile {
   filename: string;

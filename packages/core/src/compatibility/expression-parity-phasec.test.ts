@@ -123,3 +123,39 @@ describe('expression parity (Phase C) — Phase 2/3: selector operands + of-form
     });
   });
 });
+
+/**
+ * Phase 4: `.{expr}` / `#{expr}` template refs interpolate the inner EXPRESSION
+ * (not just a bare variable) — `.{'c1'}` → `.c1`, `#{'d1'}` → `#d1`. Query-ref
+ * `$`/`${}` interpolation (`<#$id/>`, `<[foo='${x}']/>`) still needs harness
+ * locals-threading and stays a documented gap.
+ */
+describe('expression parity (Phase C) — Phase 4: .{expr} / #{expr} template refs', () => {
+  const made: Element[] = [];
+  afterEach(() => {
+    while (made.length) made.pop()!.remove();
+  });
+  const mount = (html: string) => {
+    const tpl = document.createElement('div');
+    tpl.innerHTML = html;
+    const el = tpl.firstElementChild!;
+    document.body.appendChild(el);
+    made.push(el);
+    return el;
+  };
+
+  it("classRef literal template: .{'c1'} matches class c1", async () => {
+    mount("<div class='c1'></div>");
+    expect(Array.from((await evalHyperScript(".{'c1'}")) as ArrayLike<unknown>)).toHaveLength(1);
+  });
+  it("idRef literal template: #{'d1'} resolves the element", async () => {
+    const el = mount("<div id='d1'></div>");
+    expect(await evalHyperScript("#{'d1'}")).toBe(el);
+  });
+  it('classRef variable template: .{cls} reads the local', async () => {
+    mount("<div class='c1'></div>");
+    expect(
+      Array.from((await evalHyperScript('.{cls}', { locals: { cls: 'c1' } })) as ArrayLike<unknown>)
+    ).toHaveLength(1);
+  });
+});
