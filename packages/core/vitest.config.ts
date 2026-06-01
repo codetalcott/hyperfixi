@@ -19,7 +19,13 @@ export default defineConfig({
     // - Legacy integration tests - testing removed APIs (Phase 7 consolidation)
     exclude: [
       'node_modules',
-      'dist',
+      // Build artifacts: exclude compiled *.test.js duplicates anywhere. A bare
+      // 'dist' only catches the top-level dist; the rollup typescript cache
+      // mirrors the build under .rollup.cache/**/dist/**, and a CLI substring
+      // filter (e.g. `vitest run src/commands`) matches those compiled copies —
+      // doubling the suite with stale duplicates that crash forks. Glob both.
+      '**/dist/**',
+      '**/.rollup.cache/**',
       // Playwright browser tests - require real browser
       'src/compatibility/browser-tests/**/*.spec.ts',
       'src/multilingual/browser-e2e.spec.ts',

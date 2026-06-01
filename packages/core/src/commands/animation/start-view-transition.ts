@@ -108,12 +108,14 @@ export class StartViewTransitionCommand implements DecoratedCommand {
       return { usedViewTransition: false, commandsExecuted };
     }
 
-    // `transitionName` is accepted by the parser for syntax compatibility
-    // (upstream `start view transition using "slide"`) but currently has no
-    // runtime effect — the View Transitions API takes names via CSS
-    // `view-transition-name`, not via the JS call.
-    void input.transitionName;
-    await withViewTransition(runBody);
+    // Forward the parsed `transitionName` (upstream `start view transition
+    // using "slide"`) to the helper, which maps it to the View Transitions API
+    // `types` so CSS can target the transition via
+    // `:active-view-transition-type(...)`. No-op where the object form is
+    // unsupported (names can also be applied per-element via CSS
+    // `view-transition-name`).
+    const options = input.transitionName ? { transitionName: input.transitionName } : undefined;
+    await withViewTransition(runBody, options);
     return { usedViewTransition: true, commandsExecuted };
   }
 }
