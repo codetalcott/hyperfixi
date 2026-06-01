@@ -53,6 +53,48 @@ because `:` collides with object-literal (`{k: v}`) and ternary syntax, and the
 remaining payoff is partly the error-message parity above. Not planned unless a
 concrete need appears.
 
+## Triaged niche gaps (deliberately not fixed)
+
+Reviewed during the Phase 1–5 parity follow-up (2026-06-01) and judged
+low-value-and/or-high-risk relative to fixing. Recorded so they aren't re-opened
+as "easy wins". If a concrete user need appears, revisit individually.
+
+### `[true]` / `[false]` single-element array literal
+
+`[1]`, `['x']`, and `[true, false]` parse as array literals, but a **single**
+bracketed identifier (`[true]`, `[false]`, `[me]`) parses as a CSS **attribute
+selector** (`[true]` → `querySelectorAll("[true]")` → `[]`). Disambiguating
+`[true]` (array) from `[disabled]` (attribute selector) would touch the sensitive
+`[attr]`-selector path for ~zero real-world payoff (nobody writes `[true]`).
+
+**Decision: keep `[identifier]` as an attribute selector.**
+
+### `{[bar()]: …}` computed object-literal keys that call window globals
+
+`{[foo]: true, [bar()]: false}` where `foo`/`bar` are `window` globals — the
+computed key `bar()` calls a global function. HyperFixi resolves bare identifiers
+against locals/globals, not `window`, so `bar` isn't a function in scope
+("Cannot call non-function: bar"). Computed string/expression keys work
+(`{[expr]: v}`, hyphenated keys); only the window-global-function form differs.
+
+**Decision: accept as known-diff; do not special-case window-global resolution.**
+
+### `closest @attr` (attribute-value walk)
+
+Upstream's `closest @foo` walks ancestors for the nearest element with attribute
+`foo` and returns its **value**. HyperFixi's `closest` takes a selector
+("closest requires a string selector"). A separate feature, not a parity bug.
+
+**Decision: deferred — implement only if requested.**
+
+### `collectionExpressions` — `the result` inside `where` refers to the previous command result
+
+`get 3 then set arr to … then return arr where it > the result` expects `the
+result` inside the `where` filter to stay bound to the previous command's result
+(`3`), not rebind per element. Niche scoping interaction.
+
+**Decision: accept as known-diff.**
+
 ## Harness artifacts (product is correct; the test shape can't observe it)
 
 These upstream tests consume results in a way our async runtime can't satisfy
