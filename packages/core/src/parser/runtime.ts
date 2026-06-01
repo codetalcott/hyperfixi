@@ -24,6 +24,7 @@ export { setGlobal };
 // through `context.registry` so bundle entries control which categories ship.
 import { isElement, getElementProperty } from '../expressions/property-access-utils';
 import { convertValue } from '../expressions/conversion/index';
+import { isMappableCollection } from '../expressions/properties/index';
 import {
   evaluateWhere,
   evaluateSortedBy,
@@ -412,13 +413,16 @@ function evaluateObjectLiteralSync(node: any, context: ExecutionContext): Record
  * `NotSyncEvaluable` to defer to the async path.
  */
 function evaluateSelectorSync(node: SelectorNode, context: ExecutionContext): unknown {
-  const selector = node.value;
-  if (typeof selector !== 'string') throw new NotSyncEvaluable('selector');
+  const raw = node.value;
+  if (typeof raw !== 'string') throw new NotSyncEvaluable('selector');
   // Style references go through the async styleRef expression — defer.
-  if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
+  if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(raw)) {
     throw new NotSyncEvaluable('selector');
   }
-  const escaped = escapeClassColons(selector);
+  // `.{expr}` / `#{expr}` template refs — interpolate before querying.
+  const selector =
+    !node.fromQuery && raw.includes('{') ? interpolateSelectorTemplateSync(raw, context) : raw;
+  const escaped = escapeSelectorForQuery(node, selector);
   const doc =
     (context?.me as { ownerDocument?: Document } | null)?.ownerDocument ??
     (typeof document !== 'undefined' ? document : null);
@@ -1125,12 +1129,12 @@ async function evaluatePropertyOfExpressionNode(
     throw new Error(`Cannot access property "${propertyName}" of ${target}`);
   }
 
-  if (isElement(target)) {
-    return getElementProperty(target, propertyName);
-  }
-
-  const value = (target as any)[propertyName];
-  return typeof value === 'function' ? value.bind(target) : value;
+  // `the X of Y` and `Y's X` are the same access — delegate to the possessive
+  // expression so a collection target maps the read over every member
+  // (`the display of .foo's style` → ["inline"]) while a single element/object
+  // reads identically (readPossessiveValue uses getElementProperty for
+  // Elements, the same as the old single-element branch here).
+  return getExpr(context, 'possessive').evaluate(context, target, propertyName);
 }
 
 /**
@@ -1377,6 +1381,15 @@ async function evaluateMemberExpression(node: MemberNode, context: ExecutionCont
       return getElementProperty(object, propertyName);
     }
 
+    // A classRef/queryRef collection maps `.prop` over every member, so the dot
+    // form matches the possessive form: `.cb.checked` === `.cb's checked` →
+    // [true, false]. Same guard as the possessive evaluator (element/host
+    // collections only; skips collection-own props so `.items.length` is still
+    // the count) — delegate to it for one source of truth.
+    if (isMappableCollection(object) && !(propertyName in (object as object))) {
+      return getExpr(context, 'possessive').evaluate(context, object, propertyName);
+    }
+
     return object?.[propertyName];
   }
 }
@@ -1513,7 +1526,7 @@ async function evaluateCallExpression(node: CallNode, context: ExecutionContext)
  * only `#id` selectors yield a single element.
  */
 async function evaluateSelector(node: SelectorNode, context: ExecutionContext): Promise<any> {
-  const selector = node.value;
+  let selector = node.value;
 
   // Style reference: `*color`, `*text-align`, `*computed-color`. The leading `*`
   // here is NOT the universal CSS selector — it reads a style property off the
@@ -1523,7 +1536,12 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
     return getExpr(context, 'styleRef').evaluate(context, selector.slice(1));
   }
 
-  const escaped = typeof selector === 'string' ? escapeClassColons(selector) : selector;
+  // `.{expr}` / `#{expr}` template refs — interpolate before querying.
+  if (typeof selector === 'string' && !node.fromQuery && selector.includes('{')) {
+    selector = await interpolateSelectorTemplate(selector, context);
+  }
+
+  const escaped = typeof selector === 'string' ? escapeSelectorForQuery(node, selector) : selector;
   const result = await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
 
   // Bare `#id` unwraps to single element. `<#id/>` (query-form, marked by
@@ -1585,6 +1603,53 @@ const PSEUDO_CLASS_COLON_RE = new RegExp(
 );
 function escapeClassColons(selector: string): string {
   return selector.replace(PSEUDO_CLASS_COLON_RE, '$1\\:');
+}
+
+// Upstream `_hyperscript` runtime.escapeSelector: a *bare* class ref (`.foo`)
+// captures the LITERAL class name (the tokenizer strips author backslashes), so
+// the CSS-special chars must be re-escaped before querySelectorAll. This is how
+// modern utility-class names match — `.c1:foo:bar` → `.c1\:foo\:bar` (class
+// literally named `c1:foo:bar`), `.group-[…]:block` likewise.
+//
+// NOTE (intentional, upstream-faithful): inside a *bare class ref* a colon is a
+// LITERAL class char, NOT a pseudo-class — `.btn:hover` matches a class named
+// `btn:hover`, not hovered `.btn`. Pseudo-class selection lives on QUERY refs
+// (`<button:hover/>`), which keep the pseudo-preserving escapeClassColons path.
+// Do not "fix" this back to pseudo semantics for bare refs.
+const BARE_REF_ESCAPE_RE = /[:&()[\]/]/g;
+function escapeBareRefSelector(selector: string): string {
+  const prefix = selector[0]; // '.' (only bare class refs route here)
+  return prefix + selector.slice(1).replace(BARE_REF_ESCAPE_RE, '\\$&');
+}
+
+/**
+ * Choose the right escaping for a selector node before querySelectorAll:
+ *   - bare class ref (`.foo`, not a `<…/>` query, no `{…}` template) → upstream
+ *     escapeSelector (literal class name).
+ *   - everything else (query refs, id refs, templates) → the pseudo-preserving
+ *     escapeClassColons, so `<button:hover/>` etc. keep working.
+ */
+function escapeSelectorForQuery(node: SelectorNode, selector: string): string {
+  if (!node.fromQuery && selector.startsWith('.') && !selector.includes('{')) {
+    return escapeBareRefSelector(selector);
+  }
+  return escapeClassColons(selector);
+}
+
+// Non-query `.{expr}` / `#{expr}` template refs (upstream classRef/idRef template
+// form): each `{…}` is evaluated as an EXPRESSION against the context and
+// substituted — `.{'c1'}` → `.c1`, `#{id}` → `#<value-of-id>`. Gated to non-query
+// refs; query refs use the `$`/`${}` interpolation syntax on a separate path, so
+// their braces (inside `${…}`) are left untouched here.
+function interpolateSelectorTemplateSync(selector: string, context: ExecutionContext): string {
+  return selector.replace(/\{([^}]*)\}/g, (_m, inner: string) =>
+    String(evaluateExpressionFromSourceSync(inner.trim(), context) ?? '')
+  );
+}
+function interpolateSelectorTemplate(selector: string, context: ExecutionContext): Promise<string> {
+  return replaceAsync(selector, /\{([^}]*)\}/g, async (_m: string, inner: string) =>
+    String((await evaluateExpressionFromSource(inner.trim(), context)) ?? '')
+  );
 }
 
 /**

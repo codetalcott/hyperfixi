@@ -45,7 +45,7 @@ function readPossessiveValue(element: unknown, property: string): unknown {
  * of primitives or plain objects — so `[1, 2, 3]'s length` still reads the
  * array's own property rather than mapping element-wise.
  */
-function isMappableCollection(v: unknown): boolean {
+export function isMappableCollection(v: unknown): boolean {
   let items: unknown[];
   if (Array.isArray(v)) {
     items = v;

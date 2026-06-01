@@ -190,6 +190,14 @@ export function tokenize(input: string): Token[] {
         'previous',
         'closest',
         'random',
+        // `the display of .foo's style` — the class after `of` is a selector
+        // operand, not member access on the `of` keyword. (`of #foo` already
+        // tokenizes as a selector; this aligns the `.`-ref path.)
+        'of',
+        // Collection quantifiers take a bare selector operand:
+        // `some .foo`, `no .foo` (mirrors `some <.foo/>`, which already works).
+        'some',
+        'no',
       ]);
       // Commands like add, remove, toggle can be followed by class selectors
       const isCommandContext =
@@ -222,7 +230,9 @@ export function tokenize(input: string): Token[] {
       if (
         isCSSSelectorContext &&
         !isAdjacentToPrev &&
-        (isAlpha(peek(tokenizer)) || peek(tokenizer) === '{')
+        // Class name can start with a letter, a `{` template, or a leading `-`
+        // (`.-c1`, `.-c1\/22`) — matches upstream's class-ref guard.
+        (isAlpha(peek(tokenizer)) || peek(tokenizer) === '{' || peek(tokenizer) === '-')
       ) {
         tokenizeCSSSelector(tokenizer);
         continue;
@@ -552,7 +562,16 @@ function tokenizeCSSSelector(tokenizer: Tokenizer): void {
 
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
-    if (isAlphaNumeric(char) || char === '-' || char === '_' || char === ':') {
+    if (char === '\\') {
+      // CSS escape: drop the author's backslash, keep the literal escaped char
+      // so the stored selector is the *literal* class name (`.-c1\/22` → class
+      // `-c1/22`, `.group-\[…\]:block` → `group-[…]:block`). It is re-escaped at
+      // query time by escapeBareRefSelector — mirrors upstream consumeClassReference.
+      advance(tokenizer); // consume + discard '\'
+      if (tokenizer.position < tokenizer.input.length) {
+        value += advance(tokenizer); // keep the escaped char verbatim
+      }
+    } else if (isAlphaNumeric(char) || char === '-' || char === '_' || char === ':') {
       value += advance(tokenizer);
     } else {
       break;

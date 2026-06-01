@@ -36,16 +36,47 @@ const HYPERSCRIPT_TEST_ROOT =
 //   - possessive over collections: 286/361 runnable = 79%  (floor 78)
 //       `.cls's *color` / `'s [@attr]` / chained `'s style's display` map over
 //       all matched elements (collection-intrinsic props like `length` excluded).
+//   - Phase C/D feature gaps:       297/361 runnable = 82%  (floor 81)
+//       relativePositional (`next/previous … from/within/in/with wrapping`),
+//       stringPostfix units (`1em`/`100%`), blockLiteral lambdas (`\ x -> body`),
+//       `set @attr` write-path, user-extensible `as` converters (config.conversions).
+//   - Phase 1 classRef tokenization: 301/361 runnable = 83%  (floor 82)
+//       bare class refs now store the LITERAL class name (author backslashes
+//       stripped) and re-escape `[:&()[\]\/]` at query time — `.c1:foo:bar`,
+//       `.-c1`, `.-c1\/22`, tailwind `.group-\[…\]:block`. (`.btn:hover` is now a
+//       literal class, NOT a pseudo — pseudo stays on query refs `<button:hover/>`.)
+//   - Phase 2/3 selector operands + of-form: 305/361 runnable = 84%  (floor 83)
+//       `some`/`no`/`of` accept a bare selector operand (`some .aClass`); `'s`
+//       binds tighter than `of` so `the display of #foo's style` = the display of
+//       (#foo's style); `the X of <collection>` maps the read over members.
+//   - Phase 4 `.{expr}` / `#{expr}` templates: 307/361 runnable = 85%  (floor 84)
+//       template refs interpolate the inner EXPRESSION (`.{'c1'}` → `.c1`,
+//       `#{'d1'}` → `#d1`, `.{cls}` reads the local), in both sync + async paths.
+//   - Phase 5 member-access over collections: 308/361 runnable = 85%  (floor 84)
+//       `.cb.checked` maps `.checked` over the collection like `.cb's checked`
+//       → [true, false]. (Still 85% — adds margin, not a new integer rate.)
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
-// Remaining gaps @ 79% are NOT clean product bugs — triaged & decided 2026-05-30:
-//   • ~12 async-shim cases (positional/closest/queryRef/relativePositional consumed
-//     via synchronous `=== el` / `.length`) — harness-only; awaited equivalents pass.
-//   • intentional known-diffs from upstream: boolean `in` (not intersection-array),
-//     checkbox `as Values` → boolean (not value). KEPT deliberately.
-//   • deferred features: relativePositional from/within/wrapping, blockLiteral,
-//     typecheck `: Type`, stringPostfix units; + low-value error-message parity.
-// See ~/.claude/plans/please-write-a-planning-optimized-fern.md → "DECISIONS".
+// Remaining gaps @ 85% are NOT clean product bugs — triaged & decided 2026-05-30,
+// re-verified 2026-06-01 (53 failing of 361 runnable):
+//   • async-shim artifacts (~24, the largest bucket): positional / closest /
+//     relativePositional consumed via synchronous `=== el` / `.length`, and
+//     fire-and-forget `_hyperscript("set …")` reads (attributeRef red→blue).
+//     Harness-only — the awaited `run`-based equivalents pass.
+//   • intentional known-diffs / decided-deferred (see docs/UPSTREAM-KNOWN-DIFFS.md):
+//     boolean `in` (not intersection-array), checkbox `as Values` → boolean,
+//     error-message text not matched verbatim, `typecheck : Type` postfix,
+//     `[true]` single-elt array-literal vs `[attr]` selector ambiguity,
+//     `{[bar()]:…}` window-global computed keys, `closest @attr`,
+//     collectionExpressions `where`→previous-`result` scoping.
+//   • remaining feature gap (needs harness work): query-ref `$`/`${}`
+//     interpolation (`<#$id/>`, `<[foo='${x}']/>`, element interpolation) —
+//     needs harness locals-threading into sync eval (3).
+//     See ~/.claude/plans/expression-parity-remaining.md.
+//
+// NOTE: relativePositional / blockLiteral / stringPostfix were "deferred" through
+// 79%; PR #236 SHIPPED all three (blockLiteral 4/4, stringPostfix 3/3, +6
+// relativePositional). Don't re-list them as deferred.
 //
 // Harness/upstream-fidelity note: upstream's `_hyperscript("expr")` is
 // SYNCHRONOUS, but HyperFixi evaluates asynchronously. The compatibility-test.html
@@ -60,7 +91,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // The remaining gap below 100% is mostly intentional divergences + harness
 // artifacts — see docs/UPSTREAM-KNOWN-DIFFS.md (checkbox `as Values` → boolean,
 // boolean `in`, error-message text, sync `=== el` / fire-and-forget `set`).
-const EXPRESSION_PASS_RATE_FLOOR = 81;
+const EXPRESSION_PASS_RATE_FLOOR = 84;
 
 interface TestFile {
   filename: string;
