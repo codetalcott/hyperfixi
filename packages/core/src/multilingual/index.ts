@@ -219,11 +219,24 @@ export class MultilingualHyperscript {
    */
   async getAllTranslations(input: string, from: string): Promise<Record<string, BridgeResult>> {
     await this.ensureInitialized();
-    return this.bridge.getAllTranslations(input, from);
+    const all = await this.bridge.getAllTranslations(input, from);
+    // Restrict to the fully grammar-supported languages so this stays
+    // consistent with getSupportedLanguages()/getLanguageInfo(). The bridge
+    // iterates the semantic parser's broader tokenizer set (more languages
+    // parse than have full grammar-transformation + metadata support).
+    const supported = new Set(this.getSupportedLanguages());
+    return Object.fromEntries(
+      Object.entries(all).filter(([lang]) => supported.has(lang))
+    ) as Record<string, BridgeResult>;
   }
 
   /**
    * Get all supported language codes.
+   *
+   * These are the languages with full grammar-transformation + metadata support
+   * (direction / word order via getLanguageInfo, grammar profiles). The semantic
+   * PARSER recognizes more languages (24 tokenizers), but only these have full
+   * transformation support, so they define the multilingual API's language set.
    *
    * @returns Array of ISO 639-1 language codes
    */

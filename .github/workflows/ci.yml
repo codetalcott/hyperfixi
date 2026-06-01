@@ -429,15 +429,13 @@ jobs:
       # kills the process after 5 minutes and treats exit code 124 (timeout)
       # as success, since the tests themselves completed.
       - name: Test core
-        run: |
-          timeout 300 npm test --prefix packages/core || {
-            EXIT=$?
-            if [ $EXIT -eq 124 ]; then
-              echo "::notice::Process killed by timeout (esbuild daemon hang - known issue)"
-              exit 0
-            fi
-            exit $EXIT
-          }
+        # The core `test` script (scripts/vitest-run.sh) judges pass/fail from
+        # the reporter summary, so it handles the esbuild post-run daemon hang
+        # correctly: a benign 124 AFTER tests complete is a PASS, but a mid-run
+        # hang (no summary) or any failing test is a real FAIL. Trust its exit
+        # code — do NOT blanket-treat 124 as success (that previously masked a
+        # hung suite and hid every failure behind a false green).
+        run: npm test --prefix packages/core
 
       - name: Test semantic
         run: npm test --prefix packages/semantic

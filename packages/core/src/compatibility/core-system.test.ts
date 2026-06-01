@@ -255,9 +255,13 @@ describe('Core System Validation', () => {
     });
 
     it('should handle element attribute access', async () => {
-      testContainer.innerHTML = '<div data-test="attribute-value">content</div>';
+      testContainer.innerHTML = '<div id="attr-el" data-test="attribute-value">content</div>';
 
-      const result = await evalHyperScript("[data-test]'s @data-test");
+      // Use a single-element (#id) selector: possessive `@attr` access on one
+      // element yields a scalar. (An attribute/class selector like `[data-test]`
+      // is a collection, so `'s @attr` over it correctly returns an array —
+      // consistent with the `.class` array tests above.)
+      const result = await evalHyperScript("#attr-el's @data-test");
       expect(result).toBe('attribute-value');
     });
   });

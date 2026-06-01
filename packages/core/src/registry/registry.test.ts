@@ -26,6 +26,7 @@ import {
   type LokaScriptPlugin,
 } from './index';
 import type { ExecutionContext } from '../types/core';
+import { debug } from '../utils/debug';
 
 // ============================================================================
 // Test Utilities
@@ -122,7 +123,9 @@ describe('EventSourceRegistry', () => {
     });
 
     it('should warn when overwriting existing source', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // Diagnostics route through the debug system (debug.runtime), not
+      // console.warn — see event-source-registry.ts.
+      const warnSpy = vi.spyOn(debug, 'runtime').mockImplementation(() => {});
       const source1 = createMockEventSource('test');
       const source2 = createMockEventSource('test');
 
@@ -515,7 +518,8 @@ describe('Unified Registry', () => {
     });
 
     it('should warn on duplicate plugin installation', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      // Diagnostics route through debug.runtime, not console.warn — see index.ts.
+      const warnSpy = vi.spyOn(debug, 'runtime').mockImplementation(() => {});
       const registry = createRegistry();
 
       const plugin: LokaScriptPlugin = {

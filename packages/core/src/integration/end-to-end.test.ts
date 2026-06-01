@@ -224,9 +224,9 @@ describe('End-to-End Hyperscript Integration', () => {
     it('should handle context variable access', async () => {
       const context = hyperscript.createContext(button);
 
-      // Set variables directly in context for testing
-      if (!context.variables) (context as any).variables = new Map();
-      context.variables!.set('testVar', 'test value');
+      // Set the variable in context.locals — the field the evaluator actually
+      // resolves. (context.variables is a vestigial Map the runtime never reads.)
+      context.locals.set('testVar', 'test value');
 
       // Test that we can access context variables through evaluation
       const result = await hyperscript.eval('testVar', context);
@@ -278,10 +278,9 @@ describe('End-to-End Hyperscript Integration', () => {
     it('should handle context variables in expressions', async () => {
       const context = hyperscript.createContext(button);
 
-      // Set variables directly in context for testing
-      if (!context.variables) (context as any).variables = new Map();
-      context.variables!.set('counter', 1);
-      context.variables!.set('message', 'Hello');
+      // Set the variables in context.locals — the field the evaluator resolves.
+      context.locals.set('counter', 1);
+      context.locals.set('message', 'Hello');
 
       // Test variable evaluation
       const counterResult = await hyperscript.eval('counter', context);

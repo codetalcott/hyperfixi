@@ -9,9 +9,14 @@
 import type { ASTNode, ExecutionContext, ExpressionImplementation } from '../types/core';
 import type { ExecutionResult, ExecutionSignal } from '../types/result';
 import { ok, err } from '../types/result';
-import { getRegisteredNodeEvaluator, notifyGlobalRead, notifyLocalRead } from './extensions';
+import {
+  getRegisteredNodeEvaluator,
+  notifyGlobalRead,
+  notifyLocalRead,
+  setGlobal,
+} from './extensions';
 // Re-export setGlobal for backward-compatible access via the runtime module.
-export { setGlobal } from './extensions';
+export { setGlobal };
 
 // Static imports limited to plain utilities + lazy-evaluating collection helpers,
 // which aren't registered as ExpressionImplementations. Named-expression dispatch
@@ -554,6 +559,29 @@ async function evaluateBinaryExpression(node: BinaryNode, context: ExecutionCont
   const operator = node.operator;
   const rightNode = node.right as any;
   const leftNode = node.left as any;
+
+  // Assignment (`x = value`): the LEFT operand is a target, not a value to read.
+  // `=` reaches the runtime only via the assignment fragment in the pratt table
+  // (comparisons use `==`/`is`), so binaryExpression('=') is unambiguously an
+  // assignment. Write to the matching scope and return the assigned value.
+  if (operator === '=') {
+    const value = await evaluateAST(node.right, context);
+    if (leftNode?.type === 'identifier' && typeof leftNode.name === 'string') {
+      const name: string = leftNode.name;
+      if (name.startsWith('$')) {
+        setGlobal(context, name.slice(1), value);
+      } else if (leftNode.scope === 'global') {
+        setGlobal(context, name, value);
+      } else {
+        if (!context.locals) (context as { locals?: Map<string, unknown> }).locals = new Map();
+        context.locals!.set(name, value);
+      }
+      return value;
+    }
+    throw new Error(
+      `Assignment target must be a variable identifier (got '${leftNode?.type ?? 'undefined'}')`
+    );
+  }
 
   // Handle 'has'/'have' operator for CSS class checking (e.g., "me has .active" or "I have .active")
   if (operator === 'has' || operator === 'have') {
@@ -1322,6 +1350,11 @@ async function evaluateMemberExpression(node: MemberNode, context: ExecutionCont
   if (node.computed) {
     // Computed access: object[property]
     const property = await evaluateAST(node.property, context);
+    // Negative array indices count from the end (`arr[-1]` → last element),
+    // matching common scripting conventions. Plain JS would return undefined.
+    if (Array.isArray(object) && typeof property === 'number' && property < 0) {
+      return object[object.length + property];
+    }
     return object?.[property];
   } else {
     // Non-computed access: object.property
