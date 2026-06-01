@@ -418,7 +418,7 @@ function evaluateSelectorSync(node: SelectorNode, context: ExecutionContext): un
   if (!node.fromQuery && /^\*[a-zA-Z][\w-]*$/.test(selector)) {
     throw new NotSyncEvaluable('selector');
   }
-  const escaped = escapeClassColons(selector);
+  const escaped = escapeSelectorForQuery(node, selector);
   const doc =
     (context?.me as { ownerDocument?: Document } | null)?.ownerDocument ??
     (typeof document !== 'undefined' ? document : null);
@@ -1523,7 +1523,7 @@ async function evaluateSelector(node: SelectorNode, context: ExecutionContext): 
     return getExpr(context, 'styleRef').evaluate(context, selector.slice(1));
   }
 
-  const escaped = typeof selector === 'string' ? escapeClassColons(selector) : selector;
+  const escaped = typeof selector === 'string' ? escapeSelectorForQuery(node, selector) : selector;
   const result = await getExpr(context, 'elementWithSelector').evaluate(context, escaped);
 
   // Bare `#id` unwraps to single element. `<#id/>` (query-form, marked by
@@ -1585,6 +1585,37 @@ const PSEUDO_CLASS_COLON_RE = new RegExp(
 );
 function escapeClassColons(selector: string): string {
   return selector.replace(PSEUDO_CLASS_COLON_RE, '$1\\:');
+}
+
+// Upstream `_hyperscript` runtime.escapeSelector: a *bare* class ref (`.foo`)
+// captures the LITERAL class name (the tokenizer strips author backslashes), so
+// the CSS-special chars must be re-escaped before querySelectorAll. This is how
+// modern utility-class names match — `.c1:foo:bar` → `.c1\:foo\:bar` (class
+// literally named `c1:foo:bar`), `.group-[…]:block` likewise.
+//
+// NOTE (intentional, upstream-faithful): inside a *bare class ref* a colon is a
+// LITERAL class char, NOT a pseudo-class — `.btn:hover` matches a class named
+// `btn:hover`, not hovered `.btn`. Pseudo-class selection lives on QUERY refs
+// (`<button:hover/>`), which keep the pseudo-preserving escapeClassColons path.
+// Do not "fix" this back to pseudo semantics for bare refs.
+const BARE_REF_ESCAPE_RE = /[:&()[\]/]/g;
+function escapeBareRefSelector(selector: string): string {
+  const prefix = selector[0]; // '.' (only bare class refs route here)
+  return prefix + selector.slice(1).replace(BARE_REF_ESCAPE_RE, '\\$&');
+}
+
+/**
+ * Choose the right escaping for a selector node before querySelectorAll:
+ *   - bare class ref (`.foo`, not a `<…/>` query, no `{…}` template) → upstream
+ *     escapeSelector (literal class name).
+ *   - everything else (query refs, id refs, templates) → the pseudo-preserving
+ *     escapeClassColons, so `<button:hover/>` etc. keep working.
+ */
+function escapeSelectorForQuery(node: SelectorNode, selector: string): string {
+  if (!node.fromQuery && selector.startsWith('.') && !selector.includes('{')) {
+    return escapeBareRefSelector(selector);
+  }
+  return escapeClassColons(selector);
 }
 
 /**
