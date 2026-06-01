@@ -545,15 +545,11 @@ jobs:
           npm install
 
       - name: Generate coverage - core
-        run: |
-          timeout 300 npm run test:coverage --prefix packages/core || {
-            EXIT=$?
-            if [ $EXIT -eq 124 ]; then
-              echo "::notice::Process killed by timeout (esbuild daemon hang - known issue)"
-              exit 0
-            fi
-            exit $EXIT
-          }
+        # test:coverage uses scripts/vitest-run.sh, which judges pass/fail from
+        # the reporter summary (benign post-run 124 = PASS; mid-run hang or any
+        # failure = FAIL). Trust its exit code; give it a longer timeout since
+        # coverage instrumentation is slower than a plain run.
+        run: VITEST_TIMEOUT=300 npm run test:coverage --prefix packages/core
 
       - name: Generate coverage - semantic
         run: npm test --prefix packages/semantic -- --coverage

@@ -69,7 +69,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:watch": "vitest watch",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run src/core/**/*.test.ts src/generation/**/*.test.ts",
     "test:integration": "vitest run src/__test__/**/*.test.ts src/api/**/*.test.ts",

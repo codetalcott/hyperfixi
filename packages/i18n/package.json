@@ -37,9 +37,9 @@
     "build": "tsup && npm run build:browser",
     "build:browser": "rollup -c rollup.config.mjs",
     "dev": "tsup --watch",
-    "test": "vitest",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
-    "test:coverage": "vitest run --coverage",
+    "test": "bash ../../scripts/vitest-run.sh",
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
+    "test:coverage": "bash ../../scripts/vitest-run.sh --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext ts,tsx",
     "validate-dictionaries": "node scripts/validate-dictionaries.js"

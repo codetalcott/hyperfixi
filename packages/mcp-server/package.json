@@ -24,7 +24,7 @@
     "service:restart": "launchctl stop com.lokascript.mcp-server && launchctl start com.lokascript.mcp-server",
     "service:status": "launchctl list | grep lokascript || echo 'Not running'",
     "service:logs": "tail -f logs/stdout.log logs/stderr.log",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },
   "keywords": [
     "mcp",

@@ -15,7 +15,7 @@
     "dev:watch": "tsx watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "mcp": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api",
     "mcp:verbose": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api --verbose",
     "mcp:http": "node ../../../siren-grail/packages/siren-agent/bin/siren-mcp.mjs http://localhost:3030/api --http 8080",

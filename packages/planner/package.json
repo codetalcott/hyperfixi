@@ -18,7 +18,7 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "typecheck": "tsc --noEmit"
   },
   "author": "LokaScript Contributors",

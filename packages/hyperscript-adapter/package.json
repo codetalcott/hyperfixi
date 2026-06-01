@@ -111,9 +111,9 @@
     "prebuild": "npm run generate:syntax",
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest",
+    "test": "bash ../../scripts/vitest-run.sh",
     "test:run": "vitest run",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "test:browser": "npx playwright test",
     "typecheck": "tsc --noEmit"
   },
