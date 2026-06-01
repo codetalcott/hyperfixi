@@ -38,20 +38,33 @@ fi
 
 summary="$(grep -aE 'Test Files|Tests ' "$LOG" | tail -2)"
 
+# 1. Explicit test failures in the summary -> FAIL.
 if grep -qaE '[0-9]+ failed' "$LOG"; then
   echo "vitest-run: FAIL — failing tests reported (exit=$rc)"
   [ -n "$summary" ] && echo "$summary"
   exit 1
 fi
 
-if grep -qaE 'Test Files .*passed' "$LOG"; then
-  if [ "$rc" -eq 124 ]; then
-    echo "vitest-run: PASS — tests completed; process killed by post-run esbuild daemon hang (benign)"
-  fi
+# 2. Clean exit -> PASS.
+if [ "$rc" -eq 0 ]; then
   [ -n "$summary" ] && echo "$summary"
   exit 0
 fi
 
-echo "vitest-run: FAIL — run did not complete (no reporter summary; exit=$rc)."
-echo "  A timeout here means the suite hung mid-run; results are NOT trustworthy."
+# 3. Benign post-run esbuild daemon hang: killed by `timeout` (124) only AFTER
+#    the run completed (a reporter summary is present). Tests passed; the daemon
+#    just kept the event loop alive. -> PASS.
+if [ "$rc" -eq 124 ] && grep -qaE 'Test Files .*passed' "$LOG"; then
+  echo "vitest-run: PASS — tests completed; process killed by post-run esbuild daemon hang (benign)"
+  [ -n "$summary" ] && echo "$summary"
+  exit 0
+fi
+
+# 4. Any other non-zero exit -> FAIL. Covers: a mid-run hang (124 with no
+#    summary; results untrustworthy) AND non-test failures that still print a
+#    passing test summary, e.g. a coverage-threshold miss (`vitest --coverage`
+#    exits non-zero while "Test Files N passed" is shown). Never mask these.
+echo "vitest-run: FAIL — non-zero exit ($rc) not attributable to a benign post-run hang."
+echo "  (mid-run hang with no summary, coverage-threshold miss, or a crash.)"
+[ -n "$summary" ] && echo "$summary"
 exit 1

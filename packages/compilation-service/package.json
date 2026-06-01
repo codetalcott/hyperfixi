@@ -29,7 +29,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "serve": "tsx src/serve.ts",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5",
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },

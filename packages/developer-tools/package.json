@@ -60,7 +60,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext ts,tsx",
     "lint:fix": "eslint src --ext ts,tsx --fix",
-    "test:check": "vitest run --reporter=dot 2>&1 | tail -5"
+    "test:check": "VITEST_QUIET=1 bash ../../scripts/vitest-run.sh --reporter=dot"
   },
   "keywords": [
     "hyperscript",
