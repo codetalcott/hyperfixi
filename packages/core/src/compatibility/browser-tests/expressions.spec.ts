@@ -45,10 +45,14 @@ const HYPERSCRIPT_TEST_ROOT =
 //       stripped) and re-escape `[:&()[\]\/]` at query time — `.c1:foo:bar`,
 //       `.-c1`, `.-c1\/22`, tailwind `.group-\[…\]:block`. (`.btn:hover` is now a
 //       literal class, NOT a pseudo — pseudo stays on query refs `<button:hover/>`.)
+//   - Phase 2/3 selector operands + of-form: 305/361 runnable = 84%  (floor 83)
+//       `some`/`no`/`of` accept a bare selector operand (`some .aClass`); `'s`
+//       binds tighter than `of` so `the display of #foo's style` = the display of
+//       (#foo's style); `the X of <collection>` maps the read over members.
 // Ratchet this up as the remaining parity gaps are fixed in follow-ups.
 //
-// Remaining gaps @ 83% are NOT clean product bugs — triaged & decided 2026-05-30,
-// re-verified 2026-06-01 (60 failing of 361 runnable):
+// Remaining gaps @ 84% are NOT clean product bugs — triaged & decided 2026-05-30,
+// re-verified 2026-06-01 (56 failing of 361 runnable):
 //   • async-shim artifacts (~24, the largest bucket): positional / closest /
 //     relativePositional consumed via synchronous `=== el` / `.length`, and
 //     fire-and-forget `_hyperscript("set …")` reads (attributeRef red→blue).
@@ -56,11 +60,11 @@ const HYPERSCRIPT_TEST_ROOT =
 //   • intentional known-diffs / decided-deferred (see docs/UPSTREAM-KNOWN-DIFFS.md):
 //     boolean `in` (not intersection-array), checkbox `as Values` → boolean,
 //     error-message text not matched verbatim, `typecheck : Type` postfix.
-//   • un-triaged REAL gaps (next real work — phases 2-5 of the plan):
-//     possessiveExpression over classrefs (`.cls's foo`, 8) + `the X of Y's Z`
-//     of-form, `$var`/template interpolation in queryRef/idRef + `.{expr}` (4),
-//     objectLiteral computed-key calls, some.js empty-selector, collectionExpressions
-//     `where`→previous-result. See ~/.claude/plans/expression-parity-remaining.md.
+//   • un-triaged REAL gaps (next real work — phases 4-5 of the plan):
+//     `$var`/template interpolation in queryRef/idRef + `.{expr}` classRef (4),
+//     objectLiteral computed-key calls, collectionExpressions `where`→previous-
+//     result, closest "attributes resolve as attributes".
+//     See ~/.claude/plans/expression-parity-remaining.md.
 //
 // NOTE: relativePositional / blockLiteral / stringPostfix were "deferred" through
 // 79%; PR #236 SHIPPED all three (blockLiteral 4/4, stringPostfix 3/3, +6
@@ -79,7 +83,7 @@ const HYPERSCRIPT_TEST_ROOT =
 // The remaining gap below 100% is mostly intentional divergences + harness
 // artifacts — see docs/UPSTREAM-KNOWN-DIFFS.md (checkbox `as Values` → boolean,
 // boolean `in`, error-message text, sync `=== el` / fire-and-forget `set`).
-const EXPRESSION_PASS_RATE_FLOOR = 82;
+const EXPRESSION_PASS_RATE_FLOOR = 83;
 
 interface TestFile {
   filename: string;

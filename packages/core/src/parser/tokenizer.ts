@@ -190,6 +190,14 @@ export function tokenize(input: string): Token[] {
         'previous',
         'closest',
         'random',
+        // `the display of .foo's style` — the class after `of` is a selector
+        // operand, not member access on the `of` keyword. (`of #foo` already
+        // tokenizes as a selector; this aligns the `.`-ref path.)
+        'of',
+        // Collection quantifiers take a bare selector operand:
+        // `some .foo`, `no .foo` (mirrors `some <.foo/>`, which already works).
+        'some',
+        'no',
       ]);
       // Commands like add, remove, toggle can be followed by class selectors
       const isCommandContext =

@@ -1125,12 +1125,12 @@ async function evaluatePropertyOfExpressionNode(
     throw new Error(`Cannot access property "${propertyName}" of ${target}`);
   }
 
-  if (isElement(target)) {
-    return getElementProperty(target, propertyName);
-  }
-
-  const value = (target as any)[propertyName];
-  return typeof value === 'function' ? value.bind(target) : value;
+  // `the X of Y` and `Y's X` are the same access — delegate to the possessive
+  // expression so a collection target maps the read over every member
+  // (`the display of .foo's style` → ["inline"]) while a single element/object
+  // reads identically (readPossessiveValue uses getElementProperty for
+  // Elements, the same as the old single-element branch here).
+  return getExpr(context, 'possessive').evaluate(context, target, propertyName);
 }
 
 /**

@@ -3666,8 +3666,13 @@ export class Parser {
 
     this.advance(); // consume "of"
 
-    // Parse the target expression (e.g., #test-input)
-    const target = this.parsePrimary();
+    // Parse the target through parseCall (not parsePrimary) so a trailing
+    // possessive binds to the TARGET, not the whole `of` expression:
+    // `the display of #foo's style` = `the display of (#foo's style)`, i.e.
+    // propertyOf(display, possessive(#foo, style)) — NOT (the display of #foo)'s
+    // style. `'s` binds tighter than `of`. parseCall is a safe superset of
+    // parsePrimary for targets with no postfix (`the value of me` unchanged).
+    const target = this.parseCall();
 
     // Return a propertyOfExpression node
     return {
