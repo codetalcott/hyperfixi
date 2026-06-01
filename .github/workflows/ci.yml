@@ -1,49 +1,40 @@
 # CI workflow design notes:
 #
-# Two-tier job set to avoid duplicating effort on merge.
+# Goal: no PR<->push duplication, cheap doc-only PRs, and a reliable required-
+# check gate — all without a merge queue (overkill for a solo maintainer).
 #
-#   pull_request runs the FULL matrix (every job that doesn't gate on
-#   branch name). This is the authoritative "does this PR pass" check.
+#   pull_request — the authoritative gate. Runs the fast required checks
+#   (build, export-validation, lint-typecheck, unit-tests) ALWAYS, plus the
+#   heavy jobs (browser-tests, multilingual-validation, bundle-size, mcp-demos)
+#   only when `changes.code == 'true'` (i.e. non-doc files changed). A doc-only
+#   PR therefore runs just the fast required checks → reports green → mergeable,
+#   while skipping the expensive jobs.
 #
-#   push to main / develop runs only the merge-skew detectors:
-#     - build  (does the merged code still compile?)
-#     - export-validation  (do package.json exports still resolve?)
-#     - lint-typecheck  (do cross-package types still resolve?)
-#     - unit-tests  (do critical logic paths still work?)
-#   Plus the post-merge-only effects:
-#     - coverage  (uploads to Codecov)
-#     - benchmarks  (tracks perf trends on main)
+#   push to main / develop — post-merge effects ONLY:
+#     - build      (needed by the two below)
+#     - coverage   (uploads to Codecov)
+#     - benchmarks (tracks perf trends on main)
+#   The skew detectors (export-validation, lint-typecheck, unit-tests) are NOT
+#   re-run on push: branch protection is `strict` (branch must be up to date),
+#   so the PR already validated the exact merged result. This removes the only
+#   PR<->push duplication.
 #
-#   The heavy jobs that already ran on the PR — browser-tests,
-#   multilingual-validation, bundle-size, mcp-demos — are gated to
-#   `if: github.event_name == 'pull_request'` and skipped on push.
-#   Saves ~60 min runner-time per merge.
-#
-# Why not enable a merge queue instead: keep this simple change in
-# place until there's bandwidth to set up merge_group properly.
+#   `concurrency: cancel-in-progress` means rapid pushes to a PR cancel stale
+#   runs, so the heavy jobs effectively run once per PR — most of a merge
+#   queue's minutes benefit, with none of its operational complexity.
 name: CI
 
 on:
+  # NOTE: deliberately no workflow-level `paths-ignore`. With required status
+  # checks, a paths-ignored PR skips the whole workflow, so the required checks
+  # never report and the PR is blocked forever ("Expected — waiting for status").
+  # Doc-only changes are handled per-job instead: the `changes` job sets
+  # code=false and the heavy jobs skip on it, while the fast required checks
+  # still run + report — so a docs-only PR stays cheap AND mergeable.
   push:
     branches: [main, develop]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'examples/**'
-      - '.claude/**'
-      - '*.txt'
   pull_request:
     branches: [main, develop]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'examples/**'
-      - '.claude/**'
-      - '*.txt'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -53,6 +44,36 @@ env:
   NODE_OPTIONS: --max-old-space-size=4096
 
 jobs:
+  # ============================================
+  # Job 0: Detect whether non-doc ("code") files changed.
+  # Heavy jobs gate on this so doc-only PRs skip them. The fast required checks
+  # do NOT gate on it — they must always report so the branch-protection gate
+  # is satisfied (a doc-only PR still needs them green to merge).
+  # ============================================
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    # Only consumed by the PR-only heavy jobs, so no need to run it on push.
+    if: github.event_name == 'pull_request'
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # `code` is true when any changed file is OUTSIDE the doc set.
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!examples/**'
+              - '!.claude/**'
+              - '!**/*.txt'
+              - '!.gitignore'
+              - '!LICENSE'
+
   # ============================================
   # Job 1: Build All Packages (runs once, shared by all jobs)
   # ============================================
@@ -255,6 +276,9 @@ jobs:
     name: Export Validation
     runs-on: ubuntu-latest
     needs: build
+    # PR-only: `strict` branch protection means the PR validated the merged
+    # result, so re-running this on the post-merge push would be redundant.
+    if: github.event_name == 'pull_request'
     timeout-minutes: 5
 
     steps:
@@ -312,6 +336,8 @@ jobs:
     name: Lint & Typecheck
     runs-on: ubuntu-latest
     needs: build
+    # PR-only (see export-validation): redundant on push under `strict`.
+    if: github.event_name == 'pull_request'
     timeout-minutes: 10
 
     steps:
@@ -397,6 +423,8 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: build
+    # PR-only (see export-validation): redundant on push under `strict`.
+    if: github.event_name == 'pull_request'
     timeout-minutes: 15
 
     steps:
@@ -606,8 +634,9 @@ jobs:
   browser-tests:
     name: Browser Tests
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
+    needs: [build, changes]
+    # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 30
 
     steps:
@@ -669,8 +698,9 @@ jobs:
   multilingual-validation:
     name: Multilingual Validation
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
+    needs: [build, changes]
+    # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 15
 
     steps:
@@ -734,8 +764,9 @@ jobs:
   bundle-size:
     name: Bundle Size Analysis
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
+    needs: [build, changes]
+    # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 10
 
     steps:
@@ -846,8 +877,9 @@ jobs:
   mcp-demos:
     name: MCP Multilingual Demos
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
+    needs: [build, changes]
+    # Heavy job: PR-only AND only when non-doc files changed (skips doc PRs).
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     timeout-minutes: 5
 
     steps:
