@@ -3241,7 +3241,48 @@ export class Parser {
     }
   }
 
+  /**
+   * Parse a command, then attach any trailing `when`/`where` conditional guard.
+   *
+   * Traditional command parsers (parseAddCommand, the generic argument loop,
+   * etc.) stop at the command's own arguments and leave a trailing
+   * `... when <cond>` / `... where <cond>` in the token stream — which the
+   * statement loop in parseEventHandler would otherwise silently discard via its
+   * "skip unexpected tokens" pass. Capturing the guard here, centrally, makes
+   * every command support the modifier uniformly. The runtime (CommandAdapterV2)
+   * evaluates `modifiers.when` / `modifiers.where` and skips the command on a
+   * falsy result.
+   *
+   * The semantic-parse path already maps its `condition` role into
+   * `modifiers.when` and consumes the tokens via skipToCommandBoundary(), so by
+   * the time we peek here there is nothing left to attach — no double handling.
+   */
   private parseCommand(): CommandNode {
+    const node = this.parseCommandCore();
+
+    // Block commands (if/unless/repeat/for/tell) own their bodies through `end`;
+    // a trailing guard is not idiomatic there, so restrict to ordinary commands.
+    if (
+      node &&
+      node.type === 'command' &&
+      !node.body &&
+      (this.check('when') || this.check('where'))
+    ) {
+      const keyword = this.peek().value.toLowerCase(); // 'when' | 'where'
+      this.advance(); // consume the when/where keyword
+      const condition = this.parseExpression();
+      if (condition) {
+        node.modifiers = {
+          ...(node.modifiers ?? {}),
+          [keyword]: condition as ExpressionNode,
+        };
+      }
+    }
+
+    return node;
+  }
+
+  private parseCommandCore(): CommandNode {
     // Try semantic-first parsing if available
     // Semantic parsing uses modifiers format ({args: [patient], modifiers: {into: dest}})
     // Command handlers now accept both formats via fallback logic

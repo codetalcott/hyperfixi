@@ -44,11 +44,13 @@ describe('DOM Mutation Helpers', () => {
 
   describe('toInsertPosition', () => {
     it('should map semantic positions to InsertPosition values', () => {
+      // SemanticPosition vocabulary is before/prepend/append/after/into —
+      // NOT start/end/replace (those aren't keys; they map to undefined).
       expect(toInsertPosition('before')).toBe('beforebegin');
-      expect(toInsertPosition('start' as any)).toBe('afterbegin');
-      expect(toInsertPosition('end' as any)).toBe('beforeend');
+      expect(toInsertPosition('prepend')).toBe('afterbegin');
+      expect(toInsertPosition('append')).toBe('beforeend');
       expect(toInsertPosition('after')).toBe('afterend');
-      expect(toInsertPosition('replace' as any)).toBe('replace');
+      expect(toInsertPosition('into')).toBe('replace');
     });
   });
 
@@ -79,15 +81,18 @@ describe('DOM Mutation Helpers', () => {
       expect(target.nextElementSibling?.textContent).toBe('After');
     });
 
-    it('should replace target with HTML (replace)', () => {
+    it('should replace target content with HTML (replace)', () => {
       const parent = target.parentElement!;
       const originalChildCount = parent.children.length;
 
       insertContent(target, '<p>Replacement</p>', 'replace');
 
-      expect(parent.children.length).toBe(originalChildCount); // Same count
-      expect(parent.querySelector('#target')).toBeNull(); // Original gone
-      expect(parent.querySelector('p')?.textContent).toBe('Replacement');
+      // 'replace' (the `into` semantic) replaces the target's *content*, not the
+      // element itself — target stays put, its children are swapped out.
+      expect(parent.children.length).toBe(originalChildCount); // target still there
+      expect(parent.querySelector('#target')).not.toBeNull();
+      expect(target.querySelector('span')).toBeNull(); // original child gone
+      expect(target.querySelector('p')?.textContent).toBe('Replacement');
     });
   });
 
@@ -98,13 +103,14 @@ describe('DOM Mutation Helpers', () => {
       expect(target.querySelector('p')).toBeNull(); // No element created
     });
 
-    it('should replace target with text node (replace)', () => {
+    it('should replace target content with text (replace)', () => {
       const parent = target.parentElement!;
 
       insertContent(target, 'Just text', 'replace');
 
-      expect(parent.querySelector('#target')).toBeNull();
-      expect(parent.textContent).toContain('Just text');
+      // Content-replacement: target keeps its place, text becomes its content.
+      expect(parent.querySelector('#target')).not.toBeNull();
+      expect(target.textContent).toBe('Just text');
     });
   });
 
@@ -138,13 +144,14 @@ describe('DOM Mutation Helpers', () => {
       expect(target.nextElementSibling).toBe(newElement);
     });
 
-    it('should replace target with element (replace)', () => {
+    it('should replace target content with element (replace)', () => {
       const parent = target.parentElement!;
 
       insertContent(target, newElement, 'replace');
 
-      expect(parent.querySelector('#target')).toBeNull();
-      expect(parent.querySelector('p')).toBe(newElement);
+      // Content-replacement: target keeps its place, newElement becomes its child.
+      expect(parent.querySelector('#target')).not.toBeNull();
+      expect(target.firstElementChild).toBe(newElement);
     });
   });
 
@@ -157,8 +164,8 @@ describe('DOM Mutation Helpers', () => {
     it('should handle all semantic positions', () => {
       const testCases: Array<[string, () => boolean]> = [
         ['before', () => !!target.previousElementSibling],
-        ['start', () => target.firstElementChild?.tagName === 'P'],
-        ['end', () => target.lastElementChild?.tagName === 'P'],
+        ['prepend', () => target.firstElementChild?.tagName === 'P'],
+        ['append', () => target.lastElementChild?.tagName === 'P'],
         ['after', () => !!target.nextElementSibling],
       ];
 
@@ -231,7 +238,9 @@ describe('DOM Mutation Helpers', () => {
 
       const count = removeElements([attached, orphan]);
 
-      expect(count).toBe(2);
+      // Only the attached element is actually removed; the orphan has no parent,
+      // so removeElement returns false for it and it is not counted.
+      expect(count).toBe(1);
     });
   });
 
@@ -246,8 +255,10 @@ describe('DOM Mutation Helpers', () => {
       const result = swapElements(elem1, elem2);
 
       expect(result).toBe(true);
-      expect(document.body.children[0].id).toBe('second');
-      expect(document.body.children[1].id).toBe('first');
+      // document.body also holds the `target` div from the outer beforeEach, so
+      // assert the swap by relative order, not absolute body indices.
+      expect(elem2.nextElementSibling).toBe(elem1);
+      expect(elem1.previousElementSibling).toBe(elem2);
     });
 
     it('should return false if elements not in DOM', () => {
@@ -269,6 +280,48 @@ describe('DOM Mutation Helpers', () => {
       swapElements(elem1, elem2);
 
       expect(elem2.nextElementSibling).toBe(elem1);
+    });
+
+    it('should swap elements across different parents', () => {
+      const x = document.createElement('div');
+      const y = document.createElement('div');
+      const e1 = document.createElement('span');
+      const e2 = document.createElement('span');
+      e1.id = 'e1';
+      e2.id = 'e2';
+      x.appendChild(e1);
+      y.appendChild(e2);
+      document.body.append(x, y);
+
+      const result = swapElements(e1, e2);
+
+      expect(result).toBe(true);
+      expect(x.firstElementChild).toBe(e2); // e1 left x, e2 took its place
+      expect(y.firstElementChild).toBe(e1);
+    });
+
+    it('should treat swapping an element with itself as a no-op success', () => {
+      const elem = document.createElement('div');
+      elem.id = 'solo';
+      document.body.appendChild(elem);
+
+      const result = swapElements(elem, elem);
+
+      expect(result).toBe(true);
+      expect(document.body.contains(elem)).toBe(true);
+    });
+
+    it('should return false (not throw) for an ancestor/descendant pair', () => {
+      const outer = document.createElement('div');
+      const inner = document.createElement('div');
+      outer.appendChild(inner);
+      document.body.appendChild(outer);
+
+      // Swapping a node with one inside its own subtree is impossible; the helper
+      // must fail gracefully rather than throw a DOM HierarchyRequestError.
+      expect(swapElements(outer, inner)).toBe(false);
+      expect(swapElements(inner, outer)).toBe(false);
+      expect(outer.contains(inner)).toBe(true); // tree untouched
     });
   });
 

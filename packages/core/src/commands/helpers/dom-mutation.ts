@@ -52,7 +52,17 @@ const positionMap: Record<SemanticPosition, ContentInsertPosition> = {
  * ```
  */
 export function toInsertPosition(position: SemanticPosition): ContentInsertPosition {
-  return positionMap[position];
+  const mapped = positionMap[position];
+  if (mapped === undefined) {
+    // Guard the contract: this function promises a ContentInsertPosition. An
+    // unknown name (e.g. the wrong vocabulary `start`/`end`) would otherwise
+    // return undefined and flow into `insertAdjacentHTML(undefined, …)`, which
+    // hangs under happy-dom instead of throwing like a real DOM. Fail loudly.
+    throw new Error(
+      `Unknown semantic position '${position}'. Valid positions: ${Object.keys(positionMap).join(', ')}.`
+    );
+  }
+  return mapped;
 }
 
 /**
@@ -179,6 +189,20 @@ function insertElement(
 function insertText(target: HTMLElement, content: string, position: ContentInsertPosition): void {
   // Cast to DOM InsertPosition - 'replace' is handled before this function is called
   const domPosition = position as globalThis.InsertPosition;
+  // Defense-in-depth: an invalid position passed straight to
+  // insertAdjacentHTML/Text throws SyntaxError in a real browser but *hangs*
+  // under happy-dom. Reject it here so a bad caller fails fast instead.
+  const VALID: ReadonlyArray<globalThis.InsertPosition> = [
+    'beforebegin',
+    'afterbegin',
+    'beforeend',
+    'afterend',
+  ];
+  if (!VALID.includes(domPosition)) {
+    throw new Error(
+      `Invalid insert position '${position}'. Expected one of ${VALID.join(', ')} (or 'replace').`
+    );
+  }
   if (looksLikeHTML(content)) {
     target.insertAdjacentHTML(domPosition, content);
   } else {
@@ -241,6 +265,19 @@ export function removeElements(elements: HTMLElement[]): number {
  */
 export function swapElements(element1: HTMLElement, element2: HTMLElement): boolean {
   if (!element1.parentNode || !element2.parentNode) {
+    return false;
+  }
+
+  // Swapping an element with itself is a no-op that trivially "succeeds".
+  if (element1 === element2) {
+    return true;
+  }
+
+  // Refuse nested pairs: moving one element into the other's subtree would throw
+  // HierarchyRequestError (a node can't contain itself). Fail gracefully — same
+  // contract as the orphan case above — rather than letting the DOM exception
+  // escape to the caller.
+  if (element1.contains(element2) || element2.contains(element1)) {
     return false;
   }
 

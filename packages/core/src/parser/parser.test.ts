@@ -623,17 +623,24 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse "first of" positional expressions', () => {
+      // Canonical shape: `first of X` is positional/index access ("first element
+      // of X"), emitted as a callExpression — `first(X)` — which the runtime
+      // evaluates via the first/last case in evaluateCallExpression. This is
+      // deliberately NOT a `binaryExpression('of')`: that operator means
+      // property access (`value of me` → me.value) and would compute
+      // items['first'] (undefined) here. See PRE-EXISTING-FAILURES.md.
       expectAST('first of items', {
-        type: 'binaryExpression',
-        operator: 'of',
-        left: {
+        type: 'callExpression',
+        callee: {
           type: 'identifier',
           name: 'first',
         },
-        right: {
-          type: 'identifier',
-          name: 'items',
-        },
+        arguments: [
+          {
+            type: 'identifier',
+            name: 'items',
+          },
+        ],
       });
     });
 

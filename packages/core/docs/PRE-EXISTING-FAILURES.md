@@ -1,22 +1,17 @@
 # Pre-existing test failures — triage
 
-> **Next session: start here.** This is the handoff/checklist for the remaining
-> pre-existing test work. The "Fixed in this PR" section is done (PR #237). Pick
-> up the **"NOT fixed — genuine issues for follow-up"** section, in this order:
-> (1) the real `when`/`where` falsy-guard bug (`<command> when <falsy>` does not
-> skip) + rewrite the 10 `conditional-modifiers` tests against real parsing;
-> (2) wire `::name` global reads through `notifyGlobalRead`;
-> (3) decide the `parser` `first of` AST shape; then `start-view-transition`.
-> Cross-session context (the 79%→82% parity arc, PRs #236/#237) is in the
-> auto-loaded memory note `project-expression-parity-completion`.
+> **Status: all triaged items resolved.** PR #237 fixed the stale tests; the
+> follow-up below fixed the four genuine issues. Cross-session context (the
+> 79%→82% parity arc, PRs #236/#237) is in the auto-loaded memory note
+> `project-expression-parity-completion`.
 
 A sweep (2026-05-31) of the failing vitest tests that existed on `main`,
-unrelated to the expression-parity arc. This PR fixes the **stale tests** (where
-the production behavior is correct/intentional and only the test expectation had
-drifted) and documents the rest — genuine bugs and design-ambiguous cases that
-deserve focused follow-ups rather than a rushed batch fix.
+unrelated to the expression-parity arc. PR #237 fixed the **stale tests** (where
+the production behavior was correct/intentional and only the test expectation had
+drifted). The follow-up fixed the genuine bugs and settled the design-ambiguous
+cases.
 
-## Fixed in this PR (stale tests — production behavior is correct)
+## Fixed in PR #237 (stale tests — production behavior is correct)
 
 | Test                                                   | Was                                                                   | Now                                                                                          |
 | ------------------------------------------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -27,43 +22,107 @@ deserve focused follow-ups rather than a rushed batch fix.
 | `runtime-objectliteral.test.ts` ×3                     | set `context.variables` (a vestigial field the evaluator never reads) | populate `context.locals` (the field `evaluateIdentifier` resolves)                          |
 | `class-manipulation.test.ts` "warn when var not found" | spied `console.warn`                                                  | spies `debug.command` (diagnostics route through the debug system, deliberately not console) |
 
-## NOT fixed — genuine issues for focused follow-up
+## Fixed in follow-up (genuine issues)
 
-### `conditional-modifiers.test.ts` (10) — entangled with a real `when`/`where` bug
+### 1. `when` command-modifier guard now skips on falsy — real bug
 
-The 10 unit tests build synthetic `{ type: 'expression' }` condition nodes (cast
-`as unknown as ASTNode`) and assume a mock evaluator handles the guard — an old
-runtime API. The current runtime evaluates the guard via `evaluateAST`, which
-rightly rejects the synthetic type. **But** a real end-to-end check surfaced a
-genuine bug worth its own fix:
+`add .active to me when false` used to still add `.active`: the runtime guard
+(`runtime/command-adapter.ts` — `mods.when || mods.where`) was correct, but the
+**traditional command parsers** never attached the condition, so the statement
+loop silently discarded the trailing `when <cond>` tokens.
 
-```
-add .active to me when false   // still adds .active — the falsy guard does NOT skip
-```
+**Fix:** `parseCommand()` (`parser/parser.ts`) is now a thin wrapper around
+`parseCommandCore()` that, after the command-specific parse, consumes a trailing
+`when` and attaches the parsed condition to `modifiers.when` (block commands with
+a body are skipped). The runtime then evaluates it and skips on falsy.
 
-`when true` works (same as no guard), so the guard is effectively ignored.
-Rewriting the 10 tests against real parsing would _expose_ this bug, not paper
-over it. **Action: fix the `when`/`where` command-modifier guard (skip on falsy),
-then rewrite these tests against real `<command> when <condition>` parsing.**
+**`where` is NOT an equivalent surface guard.** `where` is a real collection-
+filter operator (binding power 28 in the pratt parser; `case 'where'` in
+`parser/runtime.ts`), so `me where false` binds as a filter expression
+(`collectionExpression`, operator `where`) during target parsing and never
+reaches the guard position. Making `where` a trailing guard would break the
+legitimate filter operator, so **`when` is the canonical command guard.** The
+runtime still honors a hand-built / semantic `modifiers.where`; it is just
+unreachable via the `<command> … where <cond>` surface.
 
-### `plugin.test.ts` "global read hook — `::name`" (1) — real feature gap
+The 9 synthetic unit tests (which built `{ type:'expression' }` nodes + a mock
+evaluator the adapter no longer consults) were rewritten in
+`runtime/conditional-modifiers.test.ts` to drive the **real parser + runtime**
+end-to-end, including a test pinning the `when`-guard / `where`-filter
+distinction so it isn't accidentally "re-fixed" into a regression.
 
-`::name` explicit-global reads don't fire the registered global-read hook
-(`expected [] to include 'x'`). `notifyGlobalRead` fires for `$name` globals
-(`evaluateIdentifier`) but the `::name` path isn't wired to it. **Action: route
-`::name` reads through `notifyGlobalRead`.**
+### 2. `::name` explicit-global reads now fire `notifyGlobalRead`
 
-### `parser.test.ts` "first of" (1) — AST-shape design decision
+`::name` parses to `{ type:'identifier', name, scope:'global' }`.
+`evaluateIdentifier` (`parser/runtime.ts`) never inspected `node.scope`, so it
+fired the global-read hook only on the `$name` path. Added an explicit-global
+branch (before the locals lookup): when `node.scope === 'global'` and the global
+exists, fire `notifyGlobalRead(name, context)` and return the value (falling
+through to the normal lookups otherwise). Symmetric with the existing
+`::name`-write path. Covered by `plugin.test.ts` "global read hook — `::name`".
 
-`first of items` now parses as a `callExpression` (`first(items)`); the test
-expects a `binaryExpression` with operator `of`. The behavior is correct
-(`first of [10,20,30]` → 10); only the AST shape changed. Whether the canonical
-shape should be a positional/binary node or a call is a design decision — left
-for the owner rather than guessing.
+### 3. `first of items` AST shape — decided: `callExpression`
 
-### `start-view-transition.test.ts` (1) — needs investigation
+`first of X` parses as a `callExpression` (`first(X)`), evaluated correctly by
+the `first`/`last` case in `evaluateCallExpression`. The old test expected
+`binaryExpression('of')` — **rejected as the canonical shape.** `first of X` is
+positional/index access ("first element of X"), semantically distinct from
+property-access `of` (`value of me` → `me.value`); the binary-`of` evaluator
+treats the left side as a property path and would compute `items['first']`
+(undefined). The "more honest" alternative is a dedicated `positionalExpression`
+node (used by the hybrid parser), not binary `of` — out of scope for a test fix.
+`parser.test.ts` updated to assert the `callExpression` shape, with a comment.
 
-"wraps body in withViewTransition when API supported" expects the options object
-(`{ transitionName: 'fade' }`) as the 2nd argument to the view-transition call;
-the command currently passes only 1 argument. Could be a small real gap or a
-test expecting unimplemented behavior — investigate before changing.
+### 5. `dom-mutation.test.ts` — hang (whole-suite blocker) + 6 stale assertions
+
+The file **hung indefinitely** (blocking any full `src/commands` run), masking
+several stale assertions. Root cause of the hang: the test passed invalid
+semantic position names (`start`/`end`) to `insertContentSemantic`. The valid
+`SemanticPosition` vocabulary is `before / prepend / append / after / into`, so
+`toInsertPosition('start')` returned `undefined`, which flowed into
+`element.insertAdjacentHTML(undefined, …)` — that **hangs under happy-dom**
+(a real DOM throws `SyntaxError`).
+
+Fixes:
+
+- **Helper hardening** (`commands/helpers/dom-mutation.ts`) — defense-in-depth so
+  a bad position can never hang again: `toInsertPosition` now throws on an
+  unknown name (its return type already promised a value), and `insertText`
+  validates the position before calling `insertAdjacentHTML`/`insertAdjacentText`.
+  No production caller passes dynamic positions, so this only converts a hang
+  into a clear error.
+- **Test fixes** (`dom-mutation.test.ts`, all 6 stale assertions, no production
+  behavior changed):
+  - position-name drift: `start`→`prepend`, `end`→`append`, `replace`→`into`
+    (the `toInsertPosition` and `insertContentSemantic` cases);
+  - `replace` semantics: the helper replaces a target's _content_ (`innerHTML`,
+    the documented `into` behavior), so the three tests asserting the _element_
+    was removed (`#target` becomes null) were corrected to assert
+    content-replacement;
+  - `removeElements` mix: an orphan (no parent) isn't removed, so the count is 1,
+    not 2;
+  - `swapElements`: `document.body` also holds the `beforeEach` `target` div, so
+    the absolute-index assertions were rewritten as relative-order checks.
+
+Result: 44/44 passing; the full `src/commands/helpers` directory now completes
+instead of hanging.
+
+**`swapElements` audit (follow-up).** `swapElements` is correct for normal cases
+(same-parent adjacent/non-adjacent, cross-parent, same-element no-op) but **threw
+an uncaught `HierarchyRequestError` for an ancestor/descendant pair** (moving a
+node into its own subtree). Hardened to return `false` for nested pairs — same
+graceful-failure contract as the orphan case — and added edge-case tests
+(cross-parent, same-element, nested). Note: `swapElements` currently has **no
+production callers** (the `swap`/`morph` command does _content_ swapping via the
+morph adapter, not element-position swapping); it remains an exported helper, so
+it was hardened rather than removed. Removal is a separate API-surface decision.
+
+### 4. `start-view-transition` forwards `transitionName`
+
+The parsed `transitionName` was discarded (`void input.transitionName`).
+`withViewTransition(callback, options?)` (`lib/view-transitions.ts`) now accepts
+an options object and maps `transitionName` to the View Transitions API `types`
+(modern object form, with a safe fallback to the callback form for browsers that
+only support it). `commands/animation/start-view-transition.ts` forwards
+`{ transitionName }` when a name is present. Covered by the
+`start-view-transition.test.ts` "wraps body in withViewTransition" test.

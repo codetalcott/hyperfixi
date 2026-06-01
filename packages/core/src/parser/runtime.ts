@@ -507,6 +507,17 @@ async function evaluateIdentifier(node: IdentifierNode, context: ExecutionContex
   if (name === 'document') {
     return getExpr(context, 'document').evaluate(context);
   }
+  // Explicit-global reference (`::name`). The parser tags these with
+  // scope: 'global' and a bare name. They target context.globals directly
+  // (ignoring any local of the same name) and must fire the global-read hook —
+  // symmetric with the `::name` write path (setVariableValue('global') →
+  // notifyGlobalWrite). Unlike the `$name` branch below, the name is already
+  // bare, so we pass it through unchanged. Falls through to the normal lookups
+  // (incl. globalThis) when the global isn't present in context.
+  if ((node as { scope?: string }).scope === 'global' && context.globals?.has(name)) {
+    notifyGlobalRead(name, context);
+    return context.globals.get(name);
+  }
   if (context.locals && context.locals.has(name)) {
     notifyLocalRead(name, context);
     return context.locals.get(name);
