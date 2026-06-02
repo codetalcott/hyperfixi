@@ -89,7 +89,11 @@
     "fast-uri": "^3.1.2",
     "ip-address": "^10.1.1",
     "follow-redirects": "^1.16.0",
-    "axios": "^1.16.0"
+    "axios": "^1.16.0",
+    "tmp": "^0.2.7",
+    "qs": "^6.15.2",
+    "yaml": "^2.9.0",
+    "brace-expansion": "^5.0.6"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
