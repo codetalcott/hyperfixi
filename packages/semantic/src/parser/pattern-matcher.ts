@@ -365,8 +365,21 @@ export class PatternMatcher {
     // Use profile-based possessive keyword lookup
     if (!this.currentProfile) return null;
 
-    const tokenLower = (token.normalized || token.value).toLowerCase();
-    const baseRef = getPossessiveReference(this.currentProfile, tokenLower);
+    // Look up the possessive keyword by BOTH the native value and the normalized
+    // form. Profiles key `possessive.keywords` by the NATIVE word (EN 'my',
+    // AR 'لي', TL 'aking', HE 'שלי', KO '내'), but most non-English tokenizers
+    // normalize that word to its English base ('لي' → normalized 'me'). Looking
+    // up only the normalized form misses every native-keyed profile, so the
+    // possessive value-filler ('my value', 'لي قيمة') never matches outside
+    // English. Trying the native value first makes the lookup language-agnostic.
+    const candidates = [token.value, token.normalized].filter(Boolean) as string[];
+    let baseRef: string | undefined;
+    for (const candidate of candidates) {
+      baseRef =
+        getPossessiveReference(this.currentProfile, candidate) ??
+        getPossessiveReference(this.currentProfile, candidate.toLowerCase());
+      if (baseRef) break;
+    }
 
     if (!baseRef) return null;
 
