@@ -83,6 +83,12 @@ export interface TestConfig {
   /** Enable regression comparison */
   regression?: boolean;
 
+  /** Path to the committed baseline JSON (for --regression / --save-baseline). */
+  baselinePath?: string;
+
+  /** Run the suite, then write results as the baseline (--save-baseline). */
+  saveBaseline?: boolean;
+
   /** Minimum confidence threshold for semantic parsing */
   confidenceThreshold?: number;
 

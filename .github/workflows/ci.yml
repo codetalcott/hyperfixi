@@ -731,20 +731,32 @@ jobs:
       - name: Populate patterns database
         run: npm run populate --prefix packages/patterns-reference
 
+      # Quick mode (10 core patterns/lang) is genuinely expected at 100% — a real
+      # gate, no continue-on-error. A drop here is a real regression in core
+      # multilingual parsing.
       - name: Test priority languages (quick mode)
         run: |
           cd packages/testing-framework
-          npx tsx src/multilingual/cli.ts --languages en,ja,ko,es,zh,ar --quick
-        continue-on-error: true # Shell spawning issues in CI environment may cause failures
+          npx tsx src/multilingual/cli.ts --languages en,ja,ko,es,zh,ar --quick --bundle browser-priority
 
-      - name: Test supported languages (full mode)
+      # Full mode (164 patterns/lang) has a KNOWN, documented gap: newer feature
+      # patterns (reactivity/streaming/components/possessive-dot, added 2026-05)
+      # lack complete non-English coverage, so the absolute rate is ~85%, not 100%
+      # (HE/TL/AR/KO are the laggards — tracked for language-coverage work). This
+      # step gates on REGRESSION vs the committed baseline: a language fails CI if
+      # its parse rate drops >2pts below baseline (per-pattern flips on borderline-
+      # confidence patterns are reported but don't fail the gate). Regenerate the
+      # baseline after an INTENTIONAL coverage change — IMPORTANT: populate first
+      # so the DB matches CI:
+      #   npm run populate --prefix packages/patterns-reference
+      #   cd packages/testing-framework && npx tsx src/multilingual/cli.ts \
+      #     --languages <…> --full --bundle browser-priority --save-baseline \
+      #     --baseline ./baselines/multilingual-priority.json
+      # QU (Quechua), BN (Bengali), MS (Malay) are excluded — under development.
+      - name: Test supported languages (full mode, regression gate)
         run: |
           cd packages/testing-framework
-          # Excluding QU (Quechua), BN (Bengali), MS (Malay) - need more development
-          # All languages now pass at 100% (JA, KO, TR, AR all fixed as of Jan 2026)
-          # Hebrew (HE) added Jan 2026 after configuration fix
-          npx tsx src/multilingual/cli.ts --languages ar,de,en,es,fr,he,hi,id,it,ja,ko,pl,pt,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority
-        continue-on-error: true # Shell spawning issues in CI environment may cause failures
+          npx tsx src/multilingual/cli.ts --languages ar,de,en,es,fr,he,hi,id,it,ja,ko,pl,pt,ru,sw,th,tl,tr,uk,vi,zh --full --bundle browser-priority --regression --baseline ./baselines/multilingual-priority.json
 
       - name: Upload test results
         if: always()

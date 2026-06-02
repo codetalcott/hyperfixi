@@ -48,9 +48,12 @@ export class TestOrchestrator {
     // Add JSON reporter for structured output
     this.reporters.push(new JSONReporter('./test-results/results.json'));
 
-    // Add regression reporter if requested
+    // Add regression reporter if requested. Default to the COMMITTED baseline
+    // (test-results/ is gitignored), overridable via --baseline.
     if (this.config.regression) {
-      this.reporters.push(new RegressionReporter('./test-results/baseline.json'));
+      this.reporters.push(
+        new RegressionReporter(this.config.baselinePath ?? './baselines/multilingual-priority.json')
+      );
     }
   }
 
