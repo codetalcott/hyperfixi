@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-02T04:26:36.434Z",
-  "commit": "88491979",
+  "timestamp": "2026-06-02T14:09:03.127Z",
+  "commit": "58593786",
   "languages": {
     "ar": {
-      "parseSuccess": 119,
-      "parseFailure": 45,
-      "parseRate": 0.725609756097561,
-      "avgConfidence": 0.8780555359398664,
-      "bundleSize": 389160,
+      "parseSuccess": 125,
+      "parseFailure": 39,
+      "parseRate": 0.7621951219512195,
+      "avgConfidence": 0.8919088702147528,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -189,7 +189,15 @@
           "success": true,
           "confidence": 1
         },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
         "input-char-count": {
+          "success": true,
+          "confidence": 1
+        },
+        "input-validation": {
           "success": true,
           "confidence": 1
         },
@@ -221,6 +229,10 @@
           "success": true,
           "confidence": 1
         },
+        "if-empty": {
+          "success": true,
+          "confidence": 1
+        },
         "copy-to-clipboard": {
           "success": true,
           "confidence": 1
@@ -245,11 +257,31 @@
           "success": true,
           "confidence": 1
         },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "optional-chaining-possessive": {
           "success": true,
           "confidence": 1
         },
         "make-toast-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "template-literal-interpolation": {
           "success": true,
           "confidence": 1
         },
@@ -431,13 +463,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "input-mirror": {
-          "success": false
-        },
-        "input-validation": {
-          "success": true,
-          "confidence": 0.5
-        },
         "input-clear": {
           "success": false
         },
@@ -491,10 +516,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "if-empty": {
-          "success": true,
-          "confidence": 0.5
-        },
         "unless-condition": {
           "success": false
         },
@@ -505,25 +526,10 @@
         "announce-screen-reader": {
           "success": false
         },
-        "set-text-possessive-dot": {
-          "success": false
-        },
-        "set-inner-html-possessive-dot": {
-          "success": false
-        },
-        "get-value-possessive-dot": {
-          "success": false
-        },
         "method-call-possessive-dot": {
           "success": false
         },
-        "chained-access-possessive-dot": {
-          "success": false
-        },
         "get-attribute-possessive-dot": {
-          "success": false
-        },
-        "template-literal-interpolation": {
           "success": false
         },
         "eventsource-basic": {
@@ -627,7 +633,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.9234398782343985,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1274,7 +1280,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 1,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1919,7 +1925,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.978234398782344,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2566,7 +2572,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.978234398782344,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3212,8 +3218,8 @@
       "parseSuccess": 123,
       "parseFailure": 41,
       "parseRate": 0.75,
-      "avgConfidence": 0.8300683959220551,
-      "bundleSize": 389160,
+      "avgConfidence": 0.8329590914956775,
+      "bundleSize": 389230,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -3223,7 +3229,15 @@
           "success": true,
           "confidence": 1
         },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
         "transition-color": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -3471,10 +3485,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "input-mirror": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "input-char-count": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -3596,10 +3606,6 @@
           "confidence": 0.8222222222222222
         },
         "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-value-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -3837,7 +3843,7 @@
       "parseFailure": 1,
       "parseRate": 0.9939024390243902,
       "avgConfidence": 0.9846625766871165,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4501,7 +4507,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.978234398782344,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5148,7 +5154,7 @@
       "parseFailure": 24,
       "parseRate": 0.8536585365853658,
       "avgConfidence": 0.9974603174603175,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5788,8 +5794,8 @@
       "parseSuccess": 143,
       "parseFailure": 21,
       "parseRate": 0.8719512195121951,
-      "avgConfidence": 0.7574980574980575,
-      "bundleSize": 389160,
+      "avgConfidence": 0.7873681873681874,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5963,6 +5969,14 @@
           "success": true,
           "confidence": 1
         },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
+        "input-char-count": {
+          "success": true,
+          "confidence": 1
+        },
         "next-element": {
           "success": true,
           "confidence": 1
@@ -6019,6 +6033,22 @@
           "success": true,
           "confidence": 1
         },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "its-value-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -6028,6 +6058,10 @@
           "confidence": 1
         },
         "make-toast-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "template-literal-interpolation": {
           "success": true,
           "confidence": 1
         },
@@ -6082,6 +6116,14 @@
         "take-class-from-siblings": {
           "success": true,
           "confidence": 1
+        },
+        "input-validation": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "install-behavior": {
           "success": true,
@@ -6166,18 +6208,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "input-mirror": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "input-char-count": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "input-validation": {
-          "success": true,
-          "confidence": 0.5
-        },
         "input-clear": {
           "success": true,
           "confidence": 0.5
@@ -6245,10 +6275,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "if-empty": {
-          "success": true,
-          "confidence": 0.5
-        },
         "unless-condition": {
           "success": true,
           "confidence": 0.5
@@ -6277,23 +6303,7 @@
           "success": true,
           "confidence": 0.5
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "get-value-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 0.5
         },
@@ -6302,10 +6312,6 @@
           "confidence": 0.5
         },
         "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "template-literal-interpolation": {
           "success": true,
           "confidence": 0.5
         },
@@ -6433,7 +6439,7 @@
       "parseFailure": 35,
       "parseRate": 0.7865853658536586,
       "avgConfidence": 0.5373815676141258,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7063,7 +7069,7 @@
       "parseFailure": 26,
       "parseRate": 0.8414634146341463,
       "avgConfidence": 0.8235104669887284,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -7702,7 +7708,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.8235920852359214,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "blur-element": {
           "success": true,
@@ -8348,8 +8354,8 @@
       "parseSuccess": 144,
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
-      "avgConfidence": 0.8761022927689599,
-      "bundleSize": 389160,
+      "avgConfidence": 0.878571428571429,
+      "bundleSize": 389230,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -8379,6 +8385,10 @@
           "success": true,
           "confidence": 1
         },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
         "transition-color": {
           "success": true,
           "confidence": 1
@@ -8392,6 +8402,10 @@
           "confidence": 1
         },
         "stagger-animation": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -8783,10 +8797,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "input-mirror": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "input-char-count": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -8868,10 +8878,6 @@
           "confidence": 0.8222222222222222
         },
         "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-value-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -8990,11 +8996,11 @@
       }
     },
     "sw": {
-      "parseSuccess": 137,
-      "parseFailure": 27,
-      "parseRate": 0.8353658536585366,
-      "avgConfidence": 0.8490904877766196,
-      "bundleSize": 389160,
+      "parseSuccess": 139,
+      "parseFailure": 25,
+      "parseRate": 0.8475609756097561,
+      "avgConfidence": 0.8563777549389063,
+      "bundleSize": 389230,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -9020,6 +9026,10 @@
           "success": true,
           "confidence": 1
         },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
         "input-char-count": {
           "success": true,
           "confidence": 1
@@ -9037,6 +9047,26 @@
           "confidence": 1
         },
         "computed-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "template-literal-interpolation": {
           "success": true,
           "confidence": 1
         },
@@ -9456,27 +9486,11 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "chained-access-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
         "make-toast-element": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "template-literal-interpolation": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9507,9 +9521,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "input-mirror": {
-          "success": false
-        },
         "input-validation": {
           "success": true,
           "confidence": 0.5
@@ -9538,9 +9549,6 @@
           "success": false
         },
         "focus-trap": {
-          "success": false
-        },
-        "get-value-possessive-dot": {
           "success": false
         },
         "method-call-possessive-dot": {
@@ -9632,7 +9640,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 0.9360670194003523,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10273,11 +10281,11 @@
       }
     },
     "tl": {
-      "parseSuccess": 114,
-      "parseFailure": 50,
-      "parseRate": 0.6951219512195121,
-      "avgConfidence": 0.8610251117991059,
-      "bundleSize": 389160,
+      "parseSuccess": 120,
+      "parseFailure": 44,
+      "parseRate": 0.7317073170731707,
+      "avgConfidence": 0.8679738562091506,
+      "bundleSize": 389230,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10332,6 +10340,10 @@
           "confidence": 1
         },
         "modal-close-backdrop": {
+          "success": true,
+          "confidence": 1
+        },
+        "input-mirror": {
           "success": true,
           "confidence": 1
         },
@@ -10395,7 +10407,27 @@
           "success": true,
           "confidence": 1
         },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 1
+        },
+        "template-literal-interpolation": {
           "success": true,
           "confidence": 1
         },
@@ -10729,9 +10761,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "input-mirror": {
-          "success": false
-        },
         "input-clear": {
           "success": false
         },
@@ -10786,25 +10815,10 @@
         "announce-screen-reader": {
           "success": false
         },
-        "set-text-possessive-dot": {
-          "success": false
-        },
-        "set-inner-html-possessive-dot": {
-          "success": false
-        },
-        "get-value-possessive-dot": {
-          "success": false
-        },
         "method-call-possessive-dot": {
           "success": false
         },
-        "chained-access-possessive-dot": {
-          "success": false
-        },
         "get-attribute-possessive-dot": {
-          "success": false
-        },
-        "template-literal-interpolation": {
           "success": false
         },
         "template-literal-list-build": {
@@ -10891,8 +10905,8 @@
       "parseSuccess": 140,
       "parseFailure": 24,
       "parseRate": 0.8536585365853658,
-      "avgConfidence": 0.7617460317460317,
-      "bundleSize": 389160,
+      "avgConfidence": 0.7796031746031746,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -11074,6 +11088,10 @@
           "success": true,
           "confidence": 1
         },
+        "input-char-count": {
+          "success": true,
+          "confidence": 1
+        },
         "next-element": {
           "success": true,
           "confidence": 1
@@ -11119,6 +11137,22 @@
           "confidence": 1
         },
         "stagger-animation": {
+          "success": true,
+          "confidence": 1
+        },
+        "set-text-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "set-inner-html-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -11261,10 +11295,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "input-char-count": {
-          "success": true,
-          "confidence": 0.5
-        },
         "input-validation": {
           "success": true,
           "confidence": 0.5
@@ -11374,23 +11404,7 @@
         "focus-trap": {
           "success": false
         },
-        "set-text-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "get-value-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
         "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "chained-access-possessive-dot": {
           "success": true,
           "confidence": 0.5
         },
@@ -11532,8 +11546,8 @@
       "parseSuccess": 144,
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
-      "avgConfidence": 0.8745149911816583,
-      "bundleSize": 389160,
+      "avgConfidence": 0.8769841269841274,
+      "bundleSize": 389230,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11563,6 +11577,10 @@
           "success": true,
           "confidence": 1
         },
+        "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
         "transition-color": {
           "success": true,
           "confidence": 1
@@ -11572,6 +11590,10 @@
           "confidence": 1
         },
         "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -11963,10 +11985,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "input-mirror": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "input-char-count": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -12048,10 +12066,6 @@
           "confidence": 0.8222222222222222
         },
         "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-value-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -12178,7 +12192,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 0.8809523809523814,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -12823,7 +12837,7 @@
       "parseFailure": 24,
       "parseRate": 0.8536585365853658,
       "avgConfidence": 0.9987301587301587,
-      "bundleSize": 389160,
+      "bundleSize": 389230,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13462,7 +13476,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 389160,
+      "size": 389230,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
