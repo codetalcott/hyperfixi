@@ -145,6 +145,16 @@ const MULTI_CHAR_PARTICLES = new Map<string, ParticleMetadata>([
 ]);
 
 /**
+ * True for a composed Hangul syllable (U+AC00–U+D7A3). Used to detect when a
+ * single-char particle is actually the first syllable of a longer Hangul word.
+ */
+function isHangulSyllable(char: string | undefined): boolean {
+  if (!char) return false;
+  const code = char.codePointAt(0)!;
+  return code >= 0xac00 && code <= 0xd7a3;
+}
+
+/**
  * KoreanParticleExtractor - Extracts Korean particles with vowel harmony metadata.
  */
 export class KoreanParticleExtractor implements ContextAwareExtractor {
@@ -161,8 +171,13 @@ export class KoreanParticleExtractor implements ContextAwareExtractor {
   canExtract(input: string, position: number): boolean {
     const char = input[position];
 
-    // Check single-character particles
-    if (SINGLE_CHAR_PARTICLES.has(char)) {
+    // Check single-character particles. A single-char particle is only a
+    // particle when it stands alone (followed by space / punctuation / EOL).
+    // If the next char is another Hangul syllable, this char is really the
+    // first syllable of a longer word — e.g. 로그 "log" (not particle 로 + 그),
+    // 이동 "go" (not subject-particle 이 + 동). Multi-char particles are tried
+    // first below, so 에서 / 으로 etc. are unaffected.
+    if (SINGLE_CHAR_PARTICLES.has(char) && !isHangulSyllable(input[position + 1])) {
       return true;
     }
 
@@ -192,10 +207,12 @@ export class KoreanParticleExtractor implements ContextAwareExtractor {
       }
     }
 
-    // Try single-character particles
+    // Try single-character particles — but only when standalone (see canExtract):
+    // a single-char particle followed by another Hangul syllable is the first
+    // syllable of a longer word (로그, 이동), not a particle.
     const char = input[position];
     const metadata = SINGLE_CHAR_PARTICLES.get(char);
-    if (metadata) {
+    if (metadata && !isHangulSyllable(input[position + 1])) {
       return {
         value: char,
         length: 1,

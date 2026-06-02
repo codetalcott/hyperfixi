@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-02T14:09:03.127Z",
-  "commit": "58593786",
+  "timestamp": "2026-06-02T14:26:14.263Z",
+  "commit": "4c66664b",
   "languages": {
     "ar": {
       "parseSuccess": 125,
       "parseFailure": 39,
       "parseRate": 0.7621951219512195,
       "avgConfidence": 0.8919088702147528,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -633,7 +633,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.9234398782343985,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1280,7 +1280,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 1,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1925,7 +1925,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.978234398782344,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2572,7 +2572,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.978234398782344,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3219,7 +3219,7 @@
       "parseFailure": 41,
       "parseRate": 0.75,
       "avgConfidence": 0.8329590914956775,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -3843,7 +3843,7 @@
       "parseFailure": 1,
       "parseRate": 0.9939024390243902,
       "avgConfidence": 0.9846625766871165,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4507,7 +4507,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.978234398782344,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5154,7 +5154,7 @@
       "parseFailure": 24,
       "parseRate": 0.8536585365853658,
       "avgConfidence": 0.9974603174603175,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5795,7 +5795,7 @@
       "parseFailure": 21,
       "parseRate": 0.8719512195121951,
       "avgConfidence": 0.7873681873681874,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6435,11 +6435,11 @@
       }
     },
     "ko": {
-      "parseSuccess": 129,
-      "parseFailure": 35,
-      "parseRate": 0.7865853658536586,
-      "avgConfidence": 0.5373815676141258,
-      "bundleSize": 389230,
+      "parseSuccess": 138,
+      "parseFailure": 26,
+      "parseRate": 0.8414634146341463,
+      "avgConfidence": 0.5385668276972625,
+      "bundleSize": 389339,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -6474,6 +6474,10 @@
           "confidence": 1
         },
         "event-throttle": {
+          "success": true,
+          "confidence": 1
+        },
+        "stagger-animation": {
           "success": true,
           "confidence": 1
         },
@@ -6589,7 +6593,8 @@
           "confidence": 0.5
         },
         "trigger-event": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "multiple-events": {
           "success": true,
@@ -6619,10 +6624,12 @@
           "confidence": 0.5
         },
         "go-url": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "go-back": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "focus-element": {
           "success": true,
@@ -6633,17 +6640,20 @@
           "confidence": 0.5
         },
         "log-value": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "log-element": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "get-value": {
           "success": true,
           "confidence": 0.5
         },
         "default-value": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "tell-command": {
           "success": true,
@@ -6741,7 +6751,8 @@
           "confidence": 0.5
         },
         "document-ready": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "set-opacity": {
           "success": true,
@@ -6829,10 +6840,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "stagger-animation": {
-          "success": true,
-          "confidence": 0.5
-        },
         "two-way-binding": {
           "success": true,
           "confidence": 0.5
@@ -6874,7 +6881,8 @@
           "confidence": 0.5
         },
         "optional-chaining-possessive": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "get-attribute-possessive-dot": {
           "success": true,
@@ -6999,7 +7007,8 @@
           "success": false
         },
         "caret-var-write": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "caret-var-increment": {
           "success": true,
@@ -7069,7 +7078,7 @@
       "parseFailure": 26,
       "parseRate": 0.8414634146341463,
       "avgConfidence": 0.8235104669887284,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -7708,7 +7717,7 @@
       "parseFailure": 18,
       "parseRate": 0.8902439024390244,
       "avgConfidence": 0.8235920852359214,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "blur-element": {
           "success": true,
@@ -8355,7 +8364,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 0.878571428571429,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -9000,7 +9009,7 @@
       "parseFailure": 25,
       "parseRate": 0.8475609756097561,
       "avgConfidence": 0.8563777549389063,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -9640,7 +9649,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 0.9360670194003523,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10285,7 +10294,7 @@
       "parseFailure": 44,
       "parseRate": 0.7317073170731707,
       "avgConfidence": 0.8679738562091506,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10906,7 +10915,7 @@
       "parseFailure": 24,
       "parseRate": 0.8536585365853658,
       "avgConfidence": 0.7796031746031746,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -11547,7 +11556,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 0.8769841269841274,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -12192,7 +12201,7 @@
       "parseFailure": 20,
       "parseRate": 0.8780487804878049,
       "avgConfidence": 0.8809523809523814,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -12837,7 +12846,7 @@
       "parseFailure": 24,
       "parseRate": 0.8536585365853658,
       "avgConfidence": 0.9987301587301587,
-      "bundleSize": 389230,
+      "bundleSize": 389339,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13476,7 +13485,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 389230,
+      "size": 389339,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
