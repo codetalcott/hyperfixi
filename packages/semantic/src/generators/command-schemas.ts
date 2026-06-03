@@ -558,6 +558,61 @@ export const liveSchema: CommandSchema = {
 };
 
 /**
+ * Realtime / service-worker block commands.
+ *
+ * Each introduces a named, body-bearing construct whose body is a sequence of
+ * statements (often an `on <event> … end` handler), e.g.:
+ * - `eventsource ChatStream from /events on message put it into #messages end`
+ * - `socket ChatSocket ws://host on message put it into #chat end`
+ * - `worker Calculator def add(a, b) return a + b end end`
+ * - `intercept / precache /, /app.js as "v1" on /api/* use network-first end`
+ *
+ * Like `live`, the keyword takes no fixed leading role (the name/source/body
+ * vary in shape), so they use `bareKeyword` generation: the parsed node
+ * carries the action and the body is handled by the block machinery. Richer
+ * role extraction (name, source) can be layered on later if needed.
+ */
+export const eventsourceSchema: CommandSchema = {
+  action: 'eventsource',
+  description: 'Open a Server-Sent Events stream and handle its events',
+  category: 'async',
+  primaryRole: 'patient',
+  hasBody: true,
+  bareKeyword: true,
+  roles: [],
+};
+
+export const socketSchema: CommandSchema = {
+  action: 'socket',
+  description: 'Open a WebSocket and handle its messages',
+  category: 'async',
+  primaryRole: 'patient',
+  hasBody: true,
+  bareKeyword: true,
+  roles: [],
+};
+
+export const workerSchema: CommandSchema = {
+  action: 'worker',
+  description: 'Define a Web Worker with inline methods',
+  category: 'async',
+  primaryRole: 'patient',
+  hasBody: true,
+  bareKeyword: true,
+  roles: [],
+};
+
+export const interceptSchema: CommandSchema = {
+  action: 'intercept',
+  description: 'Service-worker fetch interception / caching strategies',
+  category: 'async',
+  primaryRole: 'patient',
+  hasBody: true,
+  bareKeyword: true,
+  roles: [],
+};
+
+/**
  * Show command: makes an element visible.
  */
 export const showSchema: CommandSchema = {
@@ -2314,6 +2369,11 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   // Reactivity
   bind: bindSchema,
   live: liveSchema,
+  // Realtime / streaming + service workers
+  eventsource: eventsourceSchema,
+  socket: socketSchema,
+  worker: workerSchema,
+  intercept: interceptSchema,
   // Meta commands (for compound structures)
   compound: {
     action: 'compound',
