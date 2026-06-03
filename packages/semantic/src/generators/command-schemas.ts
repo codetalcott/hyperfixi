@@ -95,6 +95,15 @@ export interface CommandSchema {
   readonly category: CommandCategory;
   /** Whether this command typically has a body (like event handlers) */
   readonly hasBody?: boolean;
+  /**
+   * Generate a bare keyword pattern even when the command has no roles.
+   * Normally `getDefinedSchemas` only emits patterns for schemas with at least
+   * one role (a roleless keyword like `compound`/`else`/`async` would otherwise
+   * match greedily and mis-parse). Block keywords that legitimately stand alone
+   * before a body — `live <body> end` — opt in here so a `[keyword]` pattern is
+   * generated and the construct parses (body handled like other block bodies).
+   */
+  readonly bareKeyword?: boolean;
   /** Notes about special handling */
   readonly notes?: string;
   /**
@@ -524,6 +533,28 @@ export const bindSchema: CommandSchema = {
     MISSING_VALUE: 'Add "to <element>" to specify the binding source',
     INVALID_SYNTAX: 'Use syntax: bind <variable> to <element>',
   },
+};
+
+/**
+ * Live command: a reactive block whose body re-runs when its tracked
+ * dependencies change.
+ *
+ * Patterns:
+ * - EN: live put `Count: ${$count}` into me end
+ *
+ * `live` takes no leading role — the body immediately follows the keyword —
+ * so it opts into `bareKeyword` pattern generation. Like other block commands
+ * (`repeat`/`for`), the body is parsed by the surrounding block machinery; the
+ * command node itself just carries the `live` action.
+ */
+export const liveSchema: CommandSchema = {
+  action: 'live',
+  description: 'Reactive block: re-run the body when its dependencies change',
+  category: 'control-flow',
+  primaryRole: 'patient',
+  hasBody: true,
+  bareKeyword: true,
+  roles: [],
 };
 
 /**
@@ -2282,6 +2313,7 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   render: renderSchema,
   // Reactivity
   bind: bindSchema,
+  live: liveSchema,
   // Meta commands (for compound structures)
   compound: {
     action: 'compound',
@@ -2311,7 +2343,7 @@ export function getSchemasByCategory(category: CommandCategory): CommandSchema[]
  * Get all fully-defined schemas (with roles).
  */
 export function getDefinedSchemas(): CommandSchema[] {
-  return Object.values(commandSchemas).filter(s => s.roles.length > 0);
+  return Object.values(commandSchemas).filter(s => s.roles.length > 0 || s.bareKeyword === true);
 }
 
 // =============================================================================

@@ -37,6 +37,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   init: [],
   install: [['patient', ''], ['destination', 'on']],
   js: [['patient', '']],
+  live: [],
   log: [['patient', '']],
   make: [['patient', '']],
   measure: [['patient', ''], ['source', 'of']],
