@@ -111,6 +111,12 @@ export type ActionType =
   // Reactivity
   | 'bind'
   | 'live'
+  // Realtime / streaming
+  | 'eventsource'
+  | 'socket'
+  | 'worker'
+  // Service workers
+  | 'intercept'
   // Meta (for compound nodes)
   | 'compound';
 

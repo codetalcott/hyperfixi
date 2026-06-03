@@ -58,6 +58,12 @@ export const en: Dictionary = {
     // Reactivity Commands
     bind: 'bind',
 
+    // Realtime / service-worker Commands
+    eventsource: 'eventsource',
+    socket: 'socket',
+    worker: 'worker',
+    intercept: 'intercept',
+
     // Navigation Commands
     go: 'go',
     pushUrl: 'pushUrl',
