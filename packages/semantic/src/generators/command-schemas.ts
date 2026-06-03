@@ -451,6 +451,82 @@ export const setSchema: CommandSchema = {
 };
 
 /**
+ * Bind command: reactively binds a variable to a form/element value.
+ *
+ * Patterns:
+ * - EN: bind $greeting to #name-input
+ * - ES: vincular $greeting a #name-input
+ * - JA: $greeting を #name-input に バインド
+ *
+ * Structurally mirrors `set` (a destination plus a "to"-marked operand), so it
+ * reuses the same per-language marker placement: the bound variable takes the
+ * destination slot (object marker in SOV), and the element takes the
+ * "to"-preposition slot.
+ */
+export const bindSchema: CommandSchema = {
+  action: 'bind',
+  description: 'Reactively bind a variable to an element or property value',
+  category: 'variable',
+  primaryRole: 'destination',
+  roles: [
+    {
+      role: 'destination',
+      description: 'The variable to bind',
+      required: true,
+      expectedTypes: ['reference', 'expression'],
+      svoPosition: 1,
+      sovPosition: 1,
+      // Bound variable mirrors `set`'s destination marking.
+      markerOverride: {
+        en: '', // "bind $x to #input"
+        ja: 'を', // variable gets object marker
+        ko: '를',
+        tr: 'i',
+        ar: '',
+        sw: '',
+        tl: '',
+        bn: 'কে',
+        qu: 'ta',
+      },
+    },
+    {
+      role: 'source',
+      description: 'The element or property to bind to',
+      required: true,
+      expectedTypes: ['selector', 'reference', 'expression'],
+      svoPosition: 2,
+      sovPosition: 2,
+      // Element mirrors `set`'s value ("to") marking per language.
+      markerOverride: {
+        en: 'to', // "bind $x to #input"
+        es: 'a',
+        pt: 'para',
+        fr: 'à',
+        de: 'an',
+        it: 'a',
+        id: 'ke',
+        ms: 'ke',
+        vi: 'với',
+        ja: 'に',
+        ko: '에',
+        tr: 'e',
+        ar: 'إلى',
+        sw: 'kwenye',
+        tl: 'sa',
+        bn: 'তে',
+        qu: 'man',
+      },
+    },
+  ],
+  errorCodes: ['MISSING_TARGET', 'MISSING_VALUE', 'INVALID_SYNTAX'],
+  recoveryHints: {
+    MISSING_TARGET: 'Add a variable to bind: bind $name to #input',
+    MISSING_VALUE: 'Add "to <element>" to specify the binding source',
+    INVALID_SYNTAX: 'Use syntax: bind <variable> to <element>',
+  },
+};
+
+/**
  * Show command: makes an element visible.
  */
 export const showSchema: CommandSchema = {
@@ -2204,6 +2280,8 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   exit: exitSchema,
   pick: pickSchema,
   render: renderSchema,
+  // Reactivity
+  bind: bindSchema,
   // Meta commands (for compound structures)
   compound: {
     action: 'compound',

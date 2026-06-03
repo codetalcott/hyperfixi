@@ -55,6 +55,9 @@ export const en: Dictionary = {
     decrement: 'decrement',
     default: 'default',
 
+    // Reactivity Commands
+    bind: 'bind',
+
     // Navigation Commands
     go: 'go',
     pushUrl: 'pushUrl',
