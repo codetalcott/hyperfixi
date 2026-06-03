@@ -959,6 +959,44 @@ describe('Line Structure Preservation', () => {
 });
 
 // =============================================================================
+// Cross-Language Command Boundary Tests
+// =============================================================================
+
+describe('Cross-Language Command Boundaries', () => {
+  // A grammatical marker (preposition/postposition) that binds an argument to
+  // its verb must never be mistaken for a command boundary. The English base
+  // set covers `to`/`on`/etc.; these cases verify the same protection for
+  // localized markers sourced from each language's profile.
+  const hasStandaloneThen = (s: string) => /(^|\s)then(\s|$)/.test(s);
+
+  it('does not split a Japanese object marker (を) from its verb', () => {
+    // Without locale-aware boundary modifiers, `を` before the command verb
+    // `増加` was treated as a boundary, injecting a spurious `then`.
+    const result = new GrammarTransformer('ja', 'en').transform('#count を 増加');
+
+    expect(hasStandaloneThen(result)).toBe(false);
+    expect(result).toBe('#count increment');
+  });
+
+  it('does not split a Korean object marker (을) from its verb', () => {
+    const result = new GrammarTransformer('ko', 'en').transform('.active 을 토글');
+
+    expect(hasStandaloneThen(result)).toBe(false);
+    expect(result).toBe('.active toggle');
+  });
+
+  it('still keeps English base-set prepositions attached', () => {
+    // `by` is in the English base set; the argument after it must stay
+    // attached to the command rather than starting a new one.
+    const result = new GrammarTransformer('en', 'en').transform('increment #count by 2');
+
+    expect(result).not.toContain('\n');
+    expect(hasStandaloneThen(result)).toBe(false);
+    expect(result).toBe('increment #count by 2');
+  });
+});
+
+// =============================================================================
 // Has/Have Operator Translation Tests
 // =============================================================================
 

@@ -345,7 +345,13 @@ function reconstructWithLineStructure(
  * - "on <event> <command>" stays together (event handler with first command)
  * - Modifiers like "to", "from" don't trigger splits
  */
-/** Modifier keywords that should not trigger command boundary splits */
+/**
+ * English modifier keywords that should not trigger command boundary splits.
+ * These are the base set; localized equivalents (e.g. Japanese `に`, Spanish
+ * `a`, Arabic `إلى`) are layered on per source locale by
+ * `getBoundaryModifiersForLocale`, so a preposition in a non-English source
+ * is also recognized as a modifier rather than a spurious command boundary.
+ */
 const BOUNDARY_MODIFIERS = new Set([
   'to',
   'into',
@@ -359,6 +365,37 @@ const BOUNDARY_MODIFIERS = new Set([
   'of',
   'over',
 ]);
+
+/**
+ * Boundary modifiers resolved for a given source locale: the English base set
+ * (always kept, since input may mix English keywords) plus every grammatical
+ * marker form declared by the locale's profile. Profile markers are the
+ * surface realizations of semantic roles (destination, source, style, …) —
+ * they always bind to a following value, so none should be treated as a
+ * command boundary. Cached per locale because profiles are static.
+ */
+const boundaryModifiersCache = new Map<string, Set<string>>();
+
+function getBoundaryModifiersForLocale(locale: string): Set<string> {
+  const cached = boundaryModifiersCache.get(locale);
+  if (cached) return cached;
+
+  const modifiers = new Set(BOUNDARY_MODIFIERS);
+
+  const profile = getProfile(locale);
+  profile?.markers.forEach(marker => {
+    const form = marker.form.replace(/^-|-$/g, '').toLowerCase();
+    if (form) modifiers.add(form);
+
+    marker.alternatives?.forEach(alt => {
+      const altForm = alt.replace(/^-|-$/g, '').toLowerCase();
+      if (altForm) modifiers.add(altForm);
+    });
+  });
+
+  boundaryModifiersCache.set(locale, modifiers);
+  return modifiers;
+}
 
 /**
  * Block-introducing keywords whose body should not be split at command
@@ -375,6 +412,7 @@ const BLOCK_HEAD_KEYWORDS = new Set(['live', 'when', 'unless']);
 
 function splitOnCommandBoundaries(input: string, sourceLocale: string): string[] {
   const commandKeywords = getCommandKeywordsForLocale(sourceLocale);
+  const boundaryModifiers = getBoundaryModifiersForLocale(sourceLocale);
   const tokens = input.split(/\s+/);
 
   if (tokens.length === 0) return [input];
@@ -429,7 +467,7 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
         continue;
       }
 
-      if (!BOUNDARY_MODIFIERS.has(prevLower) && !commandKeywords.has(prevLower)) {
+      if (!boundaryModifiers.has(prevLower) && !commandKeywords.has(prevLower)) {
         // This looks like a command boundary - save current part and start new one
         parts.push(currentPart.join(' '));
         currentPart = [token];
