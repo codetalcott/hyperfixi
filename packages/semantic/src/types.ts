@@ -110,6 +110,7 @@ export type ActionType =
   | 'behavior'
   // Reactivity
   | 'bind'
+  | 'live'
   // Meta (for compound nodes)
   | 'compound';
 
