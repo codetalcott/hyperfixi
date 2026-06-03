@@ -841,10 +841,10 @@ export class PatternMatcher {
         return createLiteral(token.normalized || token.value);
 
       case 'identifier':
-        // Check if it's a variable reference (:varname)
-        // Note: :varname doesn't match the ReferenceValue union but is used as a
+        // Check if it's a variable reference (:local or $global)
+        // Note: these don't match the ReferenceValue union but are used as a
         // reference token downstream — this cast preserves existing behavior
-        if (token.value.startsWith(':')) {
+        if (token.value.startsWith(':') || token.value.startsWith('$')) {
           return createReference(token.value as ReferenceValue['value']);
         }
         // Check if it's a built-in reference

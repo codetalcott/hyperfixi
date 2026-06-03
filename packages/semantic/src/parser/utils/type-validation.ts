@@ -119,10 +119,10 @@ export function isPropertyName(value: string): boolean {
 }
 
 /**
- * Check if a value is a variable reference (starts with :).
+ * Check if a value is a variable reference (`:local` or `$global`).
  */
 export function isVariableRef(value: string): boolean {
-  return value.startsWith(':');
+  return value.startsWith(':') || value.startsWith('$');
 }
 
 /**
