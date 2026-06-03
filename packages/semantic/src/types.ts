@@ -108,6 +108,8 @@ export type ActionType =
   | 'default'
   | 'init'
   | 'behavior'
+  // Reactivity
+  | 'bind'
   // Meta (for compound nodes)
   | 'compound';
 
