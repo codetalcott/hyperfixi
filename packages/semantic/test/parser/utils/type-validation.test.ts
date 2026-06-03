@@ -163,9 +163,14 @@ describe('Type Validation Utility', () => {
   });
 
   describe('isVariableRef', () => {
-    it('should return true for variable references', () => {
+    it('should return true for :local variable references', () => {
       expect(isVariableRef(':count')).toBe(true);
       expect(isVariableRef(':myVar')).toBe(true);
+    });
+
+    it('should return true for $global variable references', () => {
+      expect(isVariableRef('$count')).toBe(true);
+      expect(isVariableRef('$greeting')).toBe(true);
     });
 
     it('should return false for non-variables', () => {

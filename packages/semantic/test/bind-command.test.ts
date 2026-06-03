@@ -5,12 +5,9 @@
  * structurally a two-role command (`bind <variable> to <element>`), modeled on
  * `set`, and parses via the schema-generated pattern.
  *
- * Known limitation (tracked follow-up): the DB reference patterns use
- * `$`-global variables (e.g. `bind $greeting to #name-input`), which the
- * tokenizer currently splits into two tokens (`$` + name) and does not yet
- * recognize as a single reference value — so `$`-globals do not parse as a
- * leading role here. This affects `set`/`put`/`bind` alike and is a separate
- * tokenizer fix. The tests below use `:`-locals, which parse today.
+ * Both `:`-local and `$`-global variables parse as reference role values
+ * (the `$`-global tokenizer support landed alongside this — `VariableRefExtractor`
+ * keeps `$name` whole and the matcher/type-validation treat it as a reference).
  */
 import { describe, it, expect } from 'vitest';
 import { parse, canParse } from '../src';
@@ -50,7 +47,11 @@ describe('bind command', () => {
     expect(canParse('bind :greeting to #name-input', 'en')).toBe(true);
   });
 
-  // Documents the tracked tokenizer follow-up: $-globals are not yet supported
-  // as a leading role value (same gap affects `set $x to 5`).
-  it.todo('parses "bind $greeting to #name-input" once $-global tokenization lands');
+  it('parses "bind $greeting to #name-input" with a $-global variable', () => {
+    const node = parse('bind $greeting to #name-input', 'en') as CommandSemanticNode;
+
+    expect(node.action).toBe('bind');
+    expect(node.roles.get('destination')?.value).toBe('$greeting');
+    expect(node.roles.get('source')?.value).toBe('#name-input');
+  });
 });
