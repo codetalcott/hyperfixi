@@ -9,6 +9,7 @@ export const SYNTAX: Record<string, readonly [string, string][]> = {
   async: [],
   beep: [['patient', '']],
   behavior: [['patient', '']],
+  bind: [['destination', ''], ['source', 'to']],
   blur: [['patient', '']],
   break: [],
   breakpoint: [],
