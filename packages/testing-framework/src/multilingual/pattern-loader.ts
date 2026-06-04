@@ -12,6 +12,9 @@ import {
   type Translation,
 } from '@hyperfixi/patterns-reference';
 import type { LanguageCode, PatternTranslation, TestConfig, SamplingStrategy } from './types';
+import { isHtmlMarkupPattern } from './html-pattern';
+
+export { isHtmlMarkupPattern };
 
 /**
  * Load patterns for testing based on configuration
@@ -25,13 +28,19 @@ export async function loadPatterns(config: TestConfig): Promise<PatternTranslati
     results.push(...translations);
   }
 
+  // Exclude HTML-markup patterns from the semantic-parse set (see
+  // isHtmlMarkupPattern): the hyperscript text parser can't grade HTML, so
+  // counting them would understate the real parse rate. They are validated by
+  // the DOM/Playwright + i18n-htmx suites instead.
+  const semanticPatterns = results.filter(p => !isHtmlMarkupPattern(p.hyperscript));
+
   // Apply sampling if in quick mode
   if (config.mode === 'quick') {
     const limit = config.quickModeLimit || 10;
-    return samplePatterns(results, { type: 'stratified', perCategory: limit });
+    return samplePatterns(semanticPatterns, { type: 'stratified', perCategory: limit });
   }
 
-  return results;
+  return semanticPatterns;
 }
 
 /**
