@@ -149,6 +149,15 @@ export const germanProfile: LanguageProfile = {
     stream: { primary: 'stream', alternatives: ['Strom'], normalized: 'stream' },
     live: { primary: 'direkt', alternatives: ['live', 'echtzeit'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'binden', alternatives: ['verknuepfen', 'bind'], normalized: 'bind' },
+    intercept: { primary: 'abfangen', alternatives: ['intercept'], normalized: 'intercept' },
+    worker: { primary: 'arbeiter', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['ereignisquelle'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'bei', alternatives: ['auf'], normalized: 'on' },

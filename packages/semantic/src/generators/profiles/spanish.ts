@@ -183,6 +183,15 @@ export const spanishProfile: LanguageProfile = {
     stream: { primary: 'transmitir', alternatives: ['flujo'], normalized: 'stream' },
     live: { primary: 'en-vivo', alternatives: ['vivo', 'directo'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'vincular', alternatives: ['enlazar', 'bind'], normalized: 'bind' },
+    intercept: { primary: 'interceptar', alternatives: ['intercept'], normalized: 'intercept' },
+    worker: { primary: 'trabajador', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['fuente-de-eventos'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'al', alternatives: ['cuando', 'en'], normalized: 'on' },
