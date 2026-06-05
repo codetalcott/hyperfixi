@@ -148,6 +148,15 @@ export const frenchProfile: LanguageProfile = {
     stream: { primary: 'flux', alternatives: ['streaming'], normalized: 'stream' },
     live: { primary: 'en-direct', alternatives: ['direct'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'lier', alternatives: ['relier', 'bind'], normalized: 'bind' },
+    intercept: { primary: 'intercepter', alternatives: ['intercept'], normalized: 'intercept' },
+    worker: { primary: 'travailleur', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['source-d-evenements'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'sur', alternatives: ['lors'], normalized: 'on' },

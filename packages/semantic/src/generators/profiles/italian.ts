@@ -171,6 +171,15 @@ export const italianProfile: LanguageProfile = {
     stream: { primary: 'trasmettere', alternatives: ['flusso', 'streaming'], normalized: 'stream' },
     live: { primary: 'in-diretta', alternatives: ['diretta', 'dal-vivo'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['presa', 'websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'vincolare', alternatives: ['legare', 'bind'], normalized: 'bind' },
+    intercept: { primary: 'intercettare', alternatives: ['intercept'], normalized: 'intercept' },
+    worker: { primary: 'lavoratore', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['sorgente-eventi'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'su', alternatives: ['al'], normalized: 'on' },

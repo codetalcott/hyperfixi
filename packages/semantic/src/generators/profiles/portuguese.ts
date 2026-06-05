@@ -147,6 +147,15 @@ export const portugueseProfile: LanguageProfile = {
     stream: { primary: 'transmitir', alternatives: ['fluxo'], normalized: 'stream' },
     live: { primary: 'ao-vivo', alternatives: ['vivo', 'direto'], normalized: 'live' },
     socket: { primary: 'soquete', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'vincular', alternatives: ['ligar', 'bind'], normalized: 'bind' },
+    intercept: { primary: 'interceptar', alternatives: ['intercept'], normalized: 'intercept' },
+    worker: { primary: 'trabalhador', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['fonte-de-eventos'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'em', alternatives: ['ao'], normalized: 'on' },

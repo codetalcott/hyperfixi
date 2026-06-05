@@ -485,17 +485,37 @@ export const bindSchema: CommandSchema = {
       expectedTypes: ['reference', 'expression'],
       svoPosition: 1,
       sovPosition: 1,
-      // Bound variable mirrors `set`'s destination marking.
+      // Bound variable mirrors `set`'s destination marking. The bound
+      // variable is bare in SVO/VSO/V2 languages (no leading preposition);
+      // SOV/agglutinative languages attach an object marker after it. Every
+      // supported language is listed explicitly so the generator never falls
+      // back to a default destination preposition (which produced a spurious
+      // marker, e.g. "vincular en {var}" for Spanish).
       markerOverride: {
         en: '', // "bind $x to #input"
-        ja: 'を', // variable gets object marker
-        ko: '를',
-        tr: 'i',
+        es: '',
+        pt: '',
+        fr: '',
+        de: '',
+        it: '',
+        id: '',
+        ms: '',
+        vi: '',
+        ru: '',
+        uk: '',
+        pl: '',
+        th: '',
+        zh: '',
+        he: '',
         ar: '',
         sw: '',
         tl: '',
+        ja: 'を', // variable gets object marker
+        ko: '를',
+        tr: 'i',
         bn: 'কে',
         qu: 'ta',
+        hi: 'को',
       },
     },
     {
@@ -505,14 +525,17 @@ export const bindSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 2,
       sovPosition: 2,
-      // Element mirrors `set`'s value ("to") marking per language.
+      // Element mirrors `set`/`add`/`put`'s value ("to") marking per language.
+      // Each language uses its generic destination preposition (the same one
+      // the i18n translator and the other "to"-commands emit) so that
+      // auto-generated translations parse — e.g. German "zu", Italian "in".
       markerOverride: {
         en: 'to', // "bind $x to #input"
         es: 'a',
         pt: 'para',
         fr: 'à',
-        de: 'an',
-        it: 'a',
+        de: 'zu',
+        it: 'in',
         id: 'ke',
         ms: 'ke',
         vi: 'với',
