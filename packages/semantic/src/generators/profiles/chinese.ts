@@ -149,6 +149,10 @@ export const chineseProfile: LanguageProfile = {
     stream: { primary: '流', alternatives: ['流式传输'], normalized: 'stream' },
     live: { primary: '实时', alternatives: ['直播'], normalized: 'live' },
     socket: { primary: '套接字', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: { primary: '拦截', alternatives: ['intercept'], normalized: 'intercept' },
+    worker: { primary: '工作线程', alternatives: ['工作者', 'worker'], normalized: 'worker' },
+    eventsource: { primary: 'eventsource', alternatives: ['事件源'], normalized: 'eventsource' },
   },
   tokenization: {
     boundaryStrategy: 'character',

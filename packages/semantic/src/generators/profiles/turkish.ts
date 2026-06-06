@@ -196,6 +196,18 @@ export const turkishProfile: LanguageProfile = {
     stream: { primary: 'yayınla', alternatives: ['akıt', 'akış'], normalized: 'stream' },
     live: { primary: 'canlı', alternatives: ['gerçek-zamanlı'], normalized: 'live' },
     socket: { primary: 'soket', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: {
+      primary: 'yakala',
+      alternatives: ['araya-gir', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'işçi', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['olay-kaynağı'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     // Event marker: da/de/ta/te (locative case suffix with vowel harmony), used in SOV pattern

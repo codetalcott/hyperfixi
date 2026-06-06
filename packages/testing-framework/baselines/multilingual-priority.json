@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-06T11:15:49.091Z",
-  "commit": "246dc92",
+  "timestamp": "2026-06-06T13:50:01.029Z",
+  "commit": "18c853a",
   "languages": {
     "ar": {
-      "parseSuccess": 127,
-      "parseFailure": 27,
-      "parseRate": 0.8246753246753247,
-      "avgConfidence": 0.8857370769830244,
-      "bundleSize": 393048,
+      "parseSuccess": 128,
+      "parseFailure": 26,
+      "parseRate": 0.8311688311688312,
+      "avgConfidence": 0.8827235060690946,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -581,7 +581,8 @@
           "success": false
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -601,11 +602,11 @@
       }
     },
     "bn": {
-      "parseSuccess": 149,
-      "parseFailure": 5,
-      "parseRate": 0.9675324675324676,
-      "avgConfidence": 0.784041759880686,
-      "bundleSize": 393048,
+      "parseSuccess": 150,
+      "parseFailure": 4,
+      "parseRate": 0.974025974025974,
+      "avgConfidence": 0.7821481481481481,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1200,7 +1201,8 @@
           "confidence": 0.5
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": true,
@@ -1225,7 +1227,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.904066811909949,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1849,7 +1851,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2474,7 +2476,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9563543936092955,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3098,7 +3100,7 @@
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
       "avgConfidence": 0.9623988226637233,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3716,11 +3718,11 @@
       }
     },
     "he": {
-      "parseSuccess": 125,
-      "parseFailure": 29,
-      "parseRate": 0.8116883116883117,
-      "avgConfidence": 0.8276317460317466,
-      "bundleSize": 393048,
+      "parseSuccess": 128,
+      "parseFailure": 26,
+      "parseRate": 0.8311688311688312,
+      "avgConfidence": 0.8199528769841276,
+      "bundleSize": 394629,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4254,13 +4256,15 @@
           "success": false
         },
         "eventsource-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "socket-basic": {
           "success": false
         },
         "worker-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "keydown-key-is-syntax": {
           "success": false
@@ -4295,7 +4299,8 @@
           "success": false
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -4316,7 +4321,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 1,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4940,7 +4945,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9563543936092955,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5564,7 +5569,7 @@
       "parseFailure": 6,
       "parseRate": 0.961038961038961,
       "avgConfidence": 0.9705705705705706,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6179,11 +6184,11 @@
       }
     },
     "ja": {
-      "parseSuccess": 145,
-      "parseFailure": 9,
-      "parseRate": 0.9415584415584416,
-      "avgConfidence": 0.7834044882320744,
-      "bundleSize": 393048,
+      "parseSuccess": 147,
+      "parseFailure": 7,
+      "parseRate": 0.9545454545454546,
+      "avgConfidence": 0.7795486448547673,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6712,7 +6717,8 @@
           "confidence": 0.5
         },
         "worker-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "keydown-key-is-syntax": {
           "success": true,
@@ -6774,7 +6780,8 @@
           "confidence": 0.5
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": true,
@@ -6795,11 +6802,11 @@
       }
     },
     "ko": {
-      "parseSuccess": 140,
-      "parseFailure": 14,
-      "parseRate": 0.9090909090909091,
-      "avgConfidence": 0.5380158730158731,
-      "bundleSize": 393048,
+      "parseSuccess": 142,
+      "parseFailure": 12,
+      "parseRate": 0.922077922077922,
+      "avgConfidence": 0.5374804381846635,
+      "bundleSize": 394629,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7293,7 +7300,8 @@
           "confidence": 0.5
         },
         "worker-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "fetch-with-headers": {
           "success": true,
@@ -7385,7 +7393,8 @@
           "confidence": 0.5
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": true,
@@ -7410,7 +7419,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9788148148148148,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -8031,7 +8040,7 @@
       "parseFailure": 8,
       "parseRate": 0.948051948051948,
       "avgConfidence": 0.8057838660578391,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -8648,7 +8657,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8087872185911407,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "blur-element": {
           "success": true,
@@ -9268,11 +9277,11 @@
       }
     },
     "qu": {
-      "parseSuccess": 133,
-      "parseFailure": 21,
-      "parseRate": 0.8636363636363636,
-      "avgConfidence": 0.6804511278195489,
-      "bundleSize": 393048,
+      "parseSuccess": 135,
+      "parseFailure": 19,
+      "parseRate": 0.8766233766233766,
+      "avgConfidence": 0.6777777777777778,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": false
@@ -9787,7 +9796,8 @@
           "confidence": 0.5
         },
         "worker-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "on-custom-event-receive": {
           "success": false
@@ -9851,7 +9861,8 @@
           "confidence": 0.5
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": true,
@@ -9876,7 +9887,7 @@
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
       "avgConfidence": 0.8610217596972569,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10498,7 +10509,7 @@
       "parseFailure": 13,
       "parseRate": 0.9155844155844156,
       "avgConfidence": 0.8513227513227517,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11110,7 +11121,7 @@
       "parseFailure": 8,
       "parseRate": 0.948051948051948,
       "avgConfidence": 0.9300934985866488,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11727,7 +11738,7 @@
       "parseFailure": 29,
       "parseRate": 0.8116883116883117,
       "avgConfidence": 0.8532549019607846,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -12319,11 +12330,11 @@
       }
     },
     "tr": {
-      "parseSuccess": 142,
-      "parseFailure": 12,
-      "parseRate": 0.922077922077922,
-      "avgConfidence": 0.7756651017214398,
-      "bundleSize": 393048,
+      "parseSuccess": 144,
+      "parseFailure": 10,
+      "parseRate": 0.935064935064935,
+      "avgConfidence": 0.7718364197530865,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -12850,7 +12861,8 @@
           "confidence": 0.5
         },
         "worker-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "keydown-key-is-syntax": {
           "success": true,
@@ -12911,7 +12923,8 @@
           "confidence": 0.5
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": true,
@@ -12936,7 +12949,7 @@
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
       "avgConfidence": 0.8595080416272473,
-      "bundleSize": 393048,
+      "bundleSize": 394629,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -13554,11 +13567,11 @@
       }
     },
     "vi": {
-      "parseSuccess": 148,
-      "parseFailure": 6,
-      "parseRate": 0.961038961038961,
-      "avgConfidence": 0.870656370656371,
-      "bundleSize": 393048,
+      "parseSuccess": 152,
+      "parseFailure": 2,
+      "parseRate": 0.987012987012987,
+      "avgConfidence": 0.8609022556390982,
+      "bundleSize": 394629,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -14155,16 +14168,20 @@
           "success": false
         },
         "bind-auto-detect": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "bind-two-way": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "bind-explicit-property": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "bind-non-form-display": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "intercept-cache-strategies": {
           "success": true,
@@ -14173,11 +14190,11 @@
       }
     },
     "zh": {
-      "parseSuccess": 142,
-      "parseFailure": 12,
-      "parseRate": 0.922077922077922,
-      "avgConfidence": 0.9917057902973396,
-      "bundleSize": 393048,
+      "parseSuccess": 145,
+      "parseFailure": 9,
+      "parseRate": 0.9415584415584416,
+      "avgConfidence": 0.9815325670498084,
+      "bundleSize": 394629,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -14740,13 +14757,15 @@
           "confidence": 0.8222222222222222
         },
         "eventsource-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "socket-basic": {
           "success": false
         },
         "worker-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "live-derived-value": {
           "success": true,
@@ -14769,7 +14788,8 @@
           "success": false
         },
         "intercept-cache-strategies": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -14788,7 +14808,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 393048,
+      "size": 394629,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

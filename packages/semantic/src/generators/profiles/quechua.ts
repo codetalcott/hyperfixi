@@ -152,6 +152,14 @@ export const quechuaProfile: LanguageProfile = {
     },
     live: { primary: 'kawsachkaq', alternatives: ['kunan-pacha', 'kawsay'], normalized: 'live' },
     socket: { primary: 'tinkina', alternatives: ["t'oqo", 'tinkiy-tinkina'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: { primary: "hark'ay", alternatives: ['intercept'], normalized: 'intercept' },
+    worker: { primary: "llamk'aq", alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['kawsay-pukyu'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'pi', alternatives: ['kaqtin'] },

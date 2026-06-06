@@ -155,6 +155,14 @@ export const arabicProfile: LanguageProfile = {
     stream: { primary: 'تدفق', alternatives: ['بث'], normalized: 'stream' },
     live: { primary: 'مباشر', alternatives: ['حي'], normalized: 'live' },
     socket: { primary: 'مقبس', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: { primary: 'اعترض', alternatives: ['اعتراض', 'intercept'], normalized: 'intercept' },
+    worker: { primary: 'عامل', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['مصدر-الأحداث'],
+      normalized: 'eventsource',
+    },
   },
   tokenization: {
     prefixes: ['ال', 'و', 'ف', 'ب', 'ك', 'ل'],

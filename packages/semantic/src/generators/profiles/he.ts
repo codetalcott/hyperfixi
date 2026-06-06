@@ -156,6 +156,14 @@ export const hebrewProfile: LanguageProfile = {
     stream: { primary: 'הזרם', alternatives: ['סטרים', 'שידור'], normalized: 'stream' },
     live: { primary: 'חי', alternatives: ['בזמן-אמת', 'לייב'], normalized: 'live' },
     socket: { primary: 'שקע', alternatives: ['סוקט', 'ווב-סוקט'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: { primary: 'יירט', alternatives: ['יירוט', 'intercept'], normalized: 'intercept' },
+    worker: { primary: 'עובד', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['מקור-אירועים'],
+      normalized: 'eventsource',
+    },
   },
   tokenization: {
     prefixes: ['ה', 'ו', 'ב', 'כ', 'ל', 'מ', 'ש'], // Common Hebrew prefixes

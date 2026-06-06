@@ -152,6 +152,18 @@ export const koreanProfile: LanguageProfile = {
     stream: { primary: '스트림', alternatives: ['스트리밍'], normalized: 'stream' },
     live: { primary: '실시간', alternatives: ['라이브'], normalized: 'live' },
     socket: { primary: '소켓', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: {
+      primary: '가로채기',
+      alternatives: ['인터셉트', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: '워커', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['이벤트소스'],
+      normalized: 'eventsource',
+    },
   },
   tokenization: {
     particles: ['을', '를', '이', '가', '은', '는', '에', '에서', '으로', '로', '와', '과', '도'],

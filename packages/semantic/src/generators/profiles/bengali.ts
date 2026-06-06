@@ -151,6 +151,18 @@ export const bengaliProfile: LanguageProfile = {
     stream: { primary: 'স্ট্রিম', alternatives: ['স্রোত', 'প্রবাহ'], normalized: 'stream' },
     live: { primary: 'লাইভ', alternatives: ['সরাসরি', 'প্রত্যক্ষ'], normalized: 'live' },
     socket: { primary: 'সকেট', alternatives: ['ওয়েবসকেট'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: {
+      primary: 'আটকাও',
+      alternatives: ['ইন্টারসেপ্ট', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'কর্মী', alternatives: ['ওয়ার্কার', 'worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['ইভেন্টসোর্স'],
+      normalized: 'eventsource',
+    },
   },
   tokenization: {
     particles: ['কে', 'তে', 'থেকে', 'র', 'এর', 'দিয়ে', 'জন্য', 'পর্যন্ত'],
