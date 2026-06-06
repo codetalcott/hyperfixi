@@ -131,6 +131,7 @@ export const ko: Dictionary = {
     otherwise: '그렇지않으면',
     end: '끝',
     live: '라이브',
+    bind: '바인드',
     changes: '변경되면',
   },
 

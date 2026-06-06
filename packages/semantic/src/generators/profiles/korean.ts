@@ -152,7 +152,8 @@ export const koreanProfile: LanguageProfile = {
     stream: { primary: '스트림', alternatives: ['스트리밍'], normalized: 'stream' },
     live: { primary: '실시간', alternatives: ['라이브'], normalized: 'live' },
     socket: { primary: '소켓', alternatives: ['websocket'], normalized: 'socket' },
-    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    // Reactive / realtime commands
+    bind: { primary: '바인드', alternatives: ['bind'], normalized: 'bind' },
     intercept: {
       primary: '가로채기',
       alternatives: ['인터셉트', 'intercept'],

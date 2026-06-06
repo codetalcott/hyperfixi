@@ -151,7 +151,9 @@ export const bengaliProfile: LanguageProfile = {
     stream: { primary: 'স্ট্রিম', alternatives: ['স্রোত', 'প্রবাহ'], normalized: 'stream' },
     live: { primary: 'লাইভ', alternatives: ['সরাসরি', 'প্রত্যক্ষ'], normalized: 'live' },
     socket: { primary: 'সকেট', alternatives: ['ওয়েবসকেট'], normalized: 'socket' },
-    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    // Reactive / realtime commands
+    // `যুক্ত` collides with connect; keep the loan `বাইন্ড` + English form.
+    bind: { primary: 'বাইন্ড', alternatives: ['bind'], normalized: 'bind' },
     intercept: {
       primary: 'আটকাও',
       alternatives: ['ইন্টারসেপ্ট', 'intercept'],

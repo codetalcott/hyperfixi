@@ -131,6 +131,7 @@ export const ja: Dictionary = {
     otherwise: 'そうでなければ',
     end: '終わり',
     live: 'ライブ',
+    bind: 'バインド',
     changes: '変わったら',
   },
 

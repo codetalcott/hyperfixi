@@ -546,6 +546,8 @@ export const bindSchema: CommandSchema = {
         ko: '에',
         tr: 'e',
         ar: 'إلى',
+        zh: '到', // bind target uses 到 (arrive/to), not the default 从/"from"
+        he: 'ל', // "to" prefix preposition
         sw: 'kwenye',
         tl: 'sa',
         bn: 'তে',

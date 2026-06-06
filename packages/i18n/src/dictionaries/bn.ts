@@ -124,6 +124,7 @@ export const bengaliDictionary: Dictionary = {
     end: 'শেষ',
     then: 'তারপর',
     live: 'লাইভ',
+    bind: 'বাইন্ড',
     changes: 'পরিবর্তিত হলে',
   },
 

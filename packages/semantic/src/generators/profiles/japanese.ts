@@ -169,7 +169,8 @@ export const japaneseProfile: LanguageProfile = {
     stream: { primary: 'ストリーム', alternatives: ['配信'], normalized: 'stream' },
     live: { primary: 'ライブ', alternatives: ['実時間'], normalized: 'live' },
     socket: { primary: 'ソケット', alternatives: ['websocket'], normalized: 'socket' },
-    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    // Reactive / realtime commands
+    bind: { primary: 'バインド', alternatives: ['結びつける', 'bind'], normalized: 'bind' },
     intercept: {
       primary: 'インターセプト',
       alternatives: ['傍受', 'intercept'],
