@@ -152,7 +152,9 @@ export const quechuaProfile: LanguageProfile = {
     },
     live: { primary: 'kawsachkaq', alternatives: ['kunan-pacha', 'kawsay'], normalized: 'live' },
     socket: { primary: 'tinkina', alternatives: ["t'oqo", 'tinkiy-tinkina'], normalized: 'socket' },
-    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    // Reactive / realtime commands (bind keeps the English verb; no idiomatic
+    // Runasimi coinage that avoids collision with connect's `watay`)
+    bind: { primary: 'bind', alternatives: ['watachiy'], normalized: 'bind' },
     intercept: { primary: "hark'ay", alternatives: ['intercept'], normalized: 'intercept' },
     worker: { primary: "llamk'aq", alternatives: ['worker'], normalized: 'worker' },
     eventsource: {

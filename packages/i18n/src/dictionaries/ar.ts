@@ -131,6 +131,7 @@ export const ar: Dictionary = {
     otherwise: 'خلاف ذلك',
     end: 'النهاية',
     live: 'حي',
+    bind: 'اربط',
     changes: 'يتغير',
   },
 

@@ -105,6 +105,20 @@ export const japaneseProfile: LanguageProfile = {
         insertMarkers: true,
       },
     },
+    {
+      name: 'bind-to',
+      description: 'Transform bind $var to #el to Japanese verb-final order',
+      priority: 90,
+      match: {
+        commands: ['bind', 'バインド'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // $var を #el に バインド
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
   ],
 };
 
@@ -156,6 +170,20 @@ export const koreanProfile: LanguageProfile = {
       },
       transform: {
         roleOrder: ['patient', 'event', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'bind-to',
+      description: 'Transform bind $var to #el to Korean verb-final order',
+      priority: 90,
+      match: {
+        commands: ['bind', '바인드'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // $var 를 #el 에 바인드
+        roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
     },
@@ -243,6 +271,30 @@ export const chineseProfile: LanguageProfile = {
         // 把 X 放 到 Y
         roleOrder: ['patient', 'action', 'destination'],
         insertMarkers: true,
+      },
+    },
+    {
+      name: 'bind-to',
+      description: 'Bind binds a variable to an element: 绑定 X 到 Y (no 把)',
+      priority: 90,
+      match: {
+        commands: ['bind', '绑定'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // Plain SVO without the 把 object-fronting: the bound variable is the
+        // semantic destination (not a fronted patient), and `到` marks the
+        // target element. Custom so the patient does not pick up 把.
+        roleOrder: ['action', 'patient', 'destination'],
+        custom: parsed => {
+          const action = parsed.roles.get('action');
+          const patient = parsed.roles.get('patient');
+          const destination = parsed.roles.get('destination');
+          const verb = action?.translated || action?.value || '';
+          const v = patient?.translated || patient?.value || '';
+          const d = destination?.translated || destination?.value || '';
+          return [verb, v, '到', d].filter(Boolean).join(' ');
+        },
       },
     },
   ],
@@ -350,6 +402,20 @@ export const turkishProfile: LanguageProfile = {
       },
       transform: {
         roleOrder: ['patient', 'event', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'bind-to',
+      description: 'Transform bind $var to #el to Turkish verb-final order',
+      priority: 90,
+      match: {
+        commands: ['bind'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // $var i #el e bağla
+        roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
     },
@@ -579,6 +645,20 @@ export const bengaliProfile: LanguageProfile = {
       transform: {
         // #count কে ক্লিক এ বৃদ্ধি
         roleOrder: ['patient', 'event', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'bind-to',
+      description: 'Transform bind $var to #el to Bengali verb-final order',
+      priority: 90,
+      match: {
+        commands: ['bind', 'বাইন্ড'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // $var কে #el তে বাইন্ড
+        roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
     },
@@ -867,6 +947,33 @@ export const hebrewProfile: LanguageProfile = {
     { form: 'מן', role: 'source', position: 'preposition', required: false },
     { form: 'עם', role: 'style', position: 'preposition', required: false },
     { form: 'כ', role: 'method', position: 'preposition', required: false },
+  ],
+
+  rules: [
+    {
+      name: 'bind-to',
+      description: 'Bind binds a variable to an element: קשור X ל Y',
+      priority: 90,
+      match: {
+        commands: ['bind', 'קשור'],
+        requiredRoles: ['action', 'patient', 'destination'],
+      },
+      transform: {
+        // The bound variable is the semantic destination (kept bare, no את
+        // object marker), and ל marks the target element. Custom so the
+        // variable does not pick up את and the element uses ל (not על).
+        roleOrder: ['action', 'patient', 'destination'],
+        custom: parsed => {
+          const action = parsed.roles.get('action');
+          const patient = parsed.roles.get('patient');
+          const destination = parsed.roles.get('destination');
+          const verb = action?.translated || action?.value || '';
+          const v = patient?.translated || patient?.value || '';
+          const d = destination?.translated || destination?.value || '';
+          return [verb, v, 'ל', d].filter(Boolean).join(' ');
+        },
+      },
+    },
   ],
 };
 

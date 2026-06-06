@@ -131,6 +131,7 @@ export const zh: Dictionary = {
     otherwise: '要不然',
     end: '结束',
     live: '实时',
+    bind: '绑定',
     changes: '改变时',
   },
 

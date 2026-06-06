@@ -156,7 +156,8 @@ export const hebrewProfile: LanguageProfile = {
     stream: { primary: 'הזרם', alternatives: ['סטרים', 'שידור'], normalized: 'stream' },
     live: { primary: 'חי', alternatives: ['בזמן-אמת', 'לייב'], normalized: 'live' },
     socket: { primary: 'שקע', alternatives: ['סוקט', 'ווב-סוקט'], normalized: 'socket' },
-    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    // Reactive / realtime commands
+    bind: { primary: 'קשור', alternatives: ['אגד', 'bind'], normalized: 'bind' },
     intercept: { primary: 'יירט', alternatives: ['יירוט', 'intercept'], normalized: 'intercept' },
     worker: { primary: 'עובד', alternatives: ['worker'], normalized: 'worker' },
     eventsource: {

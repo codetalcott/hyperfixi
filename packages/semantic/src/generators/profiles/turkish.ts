@@ -196,7 +196,11 @@ export const turkishProfile: LanguageProfile = {
     stream: { primary: 'yayınla', alternatives: ['akıt', 'akış'], normalized: 'stream' },
     live: { primary: 'canlı', alternatives: ['gerçek-zamanlı'], normalized: 'live' },
     socket: { primary: 'soket', alternatives: ['websocket'], normalized: 'socket' },
-    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    // Reactive / realtime commands
+    // Turkish `bağla` means both bind and connect (collision), and
+    // `ilişkilendir` is mangled by the agglutinative normalizer; keep the
+    // English verb so it parses unambiguously as bind.
+    bind: { primary: 'bind', normalized: 'bind' },
     intercept: {
       primary: 'yakala',
       alternatives: ['araya-gir', 'intercept'],

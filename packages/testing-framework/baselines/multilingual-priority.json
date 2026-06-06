@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-06T13:50:01.029Z",
-  "commit": "18c853a",
+  "timestamp": "2026-06-06T14:25:26.864Z",
+  "commit": "606e928",
   "languages": {
     "ar": {
-      "parseSuccess": 128,
-      "parseFailure": 26,
-      "parseRate": 0.8311688311688312,
-      "avgConfidence": 0.8827235060690946,
-      "bundleSize": 394629,
+      "parseSuccess": 132,
+      "parseFailure": 22,
+      "parseRate": 0.8571428571428571,
+      "avgConfidence": 0.9052167331579098,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -289,7 +289,15 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -313,7 +321,35 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
         "reactive-array-push": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -532,27 +568,11 @@
         "get-attribute-possessive-dot": {
           "success": false
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "socket-basic": {
           "success": true,
           "confidence": 0.5
         },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "breakpoint-command": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
           "success": true,
           "confidence": 0.5
         },
@@ -562,27 +582,11 @@
         "when-multiple-changes": {
           "success": false
         },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
-          "success": false
-        },
-        "bind-explicit-property": {
-          "success": false
-        },
-        "bind-non-form-display": {
-          "success": false
-        },
         "caret-var-write": {
           "success": false
         },
         "caret-var-on-target": {
           "success": false
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -602,11 +606,11 @@
       }
     },
     "bn": {
-      "parseSuccess": 150,
-      "parseFailure": 4,
-      "parseRate": 0.974025974025974,
-      "avgConfidence": 0.7821481481481481,
-      "bundleSize": 394629,
+      "parseSuccess": 152,
+      "parseFailure": 2,
+      "parseRate": 0.987012987012987,
+      "avgConfidence": 0.791593567251462,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -936,11 +940,27 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
         },
         "when-multiple-changes": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
           "success": true,
           "confidence": 1
         },
@@ -1163,20 +1183,6 @@
         "pick-text-range": {
           "success": true,
           "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
-          "success": false
         },
         "bind-explicit-property": {
           "success": false
@@ -1226,8 +1232,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.904066811909949,
-      "bundleSize": 394629,
+      "avgConfidence": 0.9367465504720396,
+      "bundleSize": 395057,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1465,7 +1471,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -1489,6 +1507,14 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
@@ -1497,11 +1523,31 @@
           "success": true,
           "confidence": 1
         },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
         "caret-var-write": {
           "success": true,
           "confidence": 1
         },
         "caret-var-on-target": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -1789,46 +1835,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
-        },
         "behavior-removable": {
           "success": false
         },
@@ -1851,7 +1857,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 394629,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2475,8 +2481,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9563543936092955,
-      "bundleSize": 394629,
+      "avgConfidence": 0.989034132171387,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2958,7 +2964,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -3010,11 +3028,35 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
         },
         "when-multiple-changes": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
           "success": true,
           "confidence": 1
         },
@@ -3034,49 +3076,13 @@
           "success": true,
           "confidence": 1
         },
+        "intercept-cache-strategies": {
+          "success": true,
+          "confidence": 1
+        },
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
-        },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -3099,8 +3105,8 @@
       "parseSuccess": 151,
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.9623988226637233,
-      "bundleSize": 394629,
+      "avgConfidence": 0.9888888888888889,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3582,7 +3588,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -3642,6 +3660,22 @@
           "success": true,
           "confidence": 1
         },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
         "caret-var-write": {
           "success": true,
           "confidence": 1
@@ -3658,47 +3692,19 @@
           "success": true,
           "confidence": 1
         },
+        "intercept-cache-strategies": {
+          "success": true,
+          "confidence": 1
+        },
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
-        },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
         },
         "live-derived-value": {
           "success": false
         },
         "live-multiple-deps": {
           "success": false
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -3718,11 +3724,11 @@
       }
     },
     "he": {
-      "parseSuccess": 128,
-      "parseFailure": 26,
-      "parseRate": 0.8311688311688312,
-      "avgConfidence": 0.8199528769841276,
-      "bundleSize": 394629,
+      "parseSuccess": 132,
+      "parseFailure": 22,
+      "parseRate": 0.8571428571428571,
+      "avgConfidence": 0.8443482443482448,
+      "bundleSize": 395057,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -3744,7 +3750,43 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "on-custom-event-receive": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -4255,27 +4297,11 @@
         "focus-trap": {
           "success": false
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "socket-basic": {
           "success": false
         },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "keydown-key-is-syntax": {
           "success": false
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
         },
         "when-value-changes": {
           "success": false
@@ -4283,24 +4309,8 @@
         "when-multiple-changes": {
           "success": false
         },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
-          "success": false
-        },
-        "bind-explicit-property": {
-          "success": false
-        },
-        "bind-non-form-display": {
-          "success": false
-        },
         "caret-var-write": {
           "success": false
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -4321,7 +4331,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 1,
-      "bundleSize": 394629,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4944,8 +4954,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9563543936092955,
-      "bundleSize": 394629,
+      "avgConfidence": 0.989034132171387,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5427,7 +5437,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -5479,11 +5501,35 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
         },
         "when-multiple-changes": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
           "success": true,
           "confidence": 1
         },
@@ -5503,49 +5549,13 @@
           "success": true,
           "confidence": 1
         },
+        "intercept-cache-strategies": {
+          "success": true,
+          "confidence": 1
+        },
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
-        },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -5568,8 +5578,8 @@
       "parseSuccess": 148,
       "parseFailure": 6,
       "parseRate": 0.961038961038961,
-      "avgConfidence": 0.9705705705705706,
-      "bundleSize": 394629,
+      "avgConfidence": 0.9975975975975976,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6047,7 +6057,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -6104,6 +6126,22 @@
           "confidence": 1
         },
         "when-multiple-changes": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
           "success": true,
           "confidence": 1
         },
@@ -6123,6 +6161,10 @@
           "success": true,
           "confidence": 1
         },
+        "intercept-cache-strategies": {
+          "success": true,
+          "confidence": 1
+        },
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -6131,43 +6173,11 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "live-derived-value": {
           "success": false
         },
         "live-multiple-deps": {
           "success": false
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -6184,11 +6194,11 @@
       }
     },
     "ja": {
-      "parseSuccess": 147,
-      "parseFailure": 7,
-      "parseRate": 0.9545454545454546,
-      "avgConfidence": 0.7795486448547673,
-      "bundleSize": 394629,
+      "parseSuccess": 148,
+      "parseFailure": 6,
+      "parseRate": 0.961038961038961,
+      "avgConfidence": 0.7911733161733162,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6510,6 +6520,22 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
         "input-validation": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -6736,26 +6762,11 @@
           "success": true,
           "confidence": 0.5
         },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
         "when-value-changes": {
           "success": false
         },
         "when-multiple-changes": {
           "success": false
-        },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
         },
         "bind-explicit-property": {
           "success": false
@@ -6802,11 +6813,11 @@
       }
     },
     "ko": {
-      "parseSuccess": 142,
-      "parseFailure": 12,
-      "parseRate": 0.922077922077922,
-      "avgConfidence": 0.5374804381846635,
-      "bundleSize": 394629,
+      "parseSuccess": 144,
+      "parseFailure": 10,
+      "parseRate": 0.935064935064935,
+      "avgConfidence": 0.5508487654320988,
+      "bundleSize": 395057,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -6845,6 +6856,22 @@
           "confidence": 1
         },
         "stagger-animation": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
           "success": true,
           "confidence": 1
         },
@@ -7348,14 +7375,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
         "when-value-changes": {
           "success": true,
           "confidence": 0.5
@@ -7363,12 +7382,6 @@
         "when-multiple-changes": {
           "success": true,
           "confidence": 0.5
-        },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
-          "success": false
         },
         "bind-explicit-property": {
           "success": false
@@ -7418,8 +7431,8 @@
       "parseSuccess": 150,
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
-      "avgConfidence": 0.9788148148148148,
-      "bundleSize": 394629,
+      "avgConfidence": 0.9988148148148148,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -7901,7 +7914,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -7953,6 +7978,14 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
@@ -7974,6 +8007,10 @@
           "confidence": 1
         },
         "reactive-array-push": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -7997,26 +8034,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
         "bind-auto-detect": {
           "success": false
         },
@@ -8028,10 +8045,6 @@
         },
         "bind-non-form-display": {
           "success": false
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         }
       }
     },
@@ -8039,10 +8052,42 @@
       "parseSuccess": 146,
       "parseFailure": 8,
       "parseRate": 0.948051948051948,
-      "avgConfidence": 0.8057838660578391,
-      "bundleSize": 394629,
+      "avgConfidence": 0.8331811263318118,
+      "bundleSize": 395057,
       "patterns": {
         "window-scroll": {
+          "success": true,
+          "confidence": 1
+        },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -8594,18 +8639,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "live-derived-value": {
           "success": false
         },
@@ -8617,26 +8650,6 @@
         },
         "when-multiple-changes": {
           "success": false
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -8656,8 +8669,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8087872185911407,
-      "bundleSize": 394629,
+      "avgConfidence": 0.838198983297023,
+      "bundleSize": 395057,
       "patterns": {
         "blur-element": {
           "success": true,
@@ -8691,6 +8704,14 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "on-custom-event-receive": {
           "success": true,
           "confidence": 1
@@ -8699,11 +8720,39 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
         },
         "when-multiple-changes": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -9219,43 +9268,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
           "success": true,
           "confidence": 0.5
         },
@@ -9277,23 +9290,27 @@
       }
     },
     "qu": {
-      "parseSuccess": 135,
-      "parseFailure": 19,
-      "parseRate": 0.8766233766233766,
-      "avgConfidence": 0.6777777777777778,
-      "bundleSize": 394629,
+      "parseSuccess": 145,
+      "parseFailure": 9,
+      "parseRate": 0.9415584415584416,
+      "avgConfidence": 0.6931034482758621,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
-          "success": false
+          "success": true,
+          "confidence": 1
         },
         "toggle-class-on-other": {
-          "success": false
+          "success": true,
+          "confidence": 1
         },
         "add-class-basic": {
-          "success": false
+          "success": true,
+          "confidence": 1
         },
         "add-class-to-other": {
-          "success": false
+          "success": true,
+          "confidence": 1
         },
         "remove-element": {
           "success": true,
@@ -9487,17 +9504,37 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
         "remove-class-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "remove-class-from-all": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "set-text-basic": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "set-attribute": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "set-style": {
           "success": true,
@@ -9818,24 +9855,10 @@
           "success": true,
           "confidence": 0.5
         },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
         "when-value-changes": {
           "success": false
         },
         "when-multiple-changes": {
-          "success": false
-        },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
           "success": false
         },
         "bind-explicit-property": {
@@ -9886,8 +9909,8 @@
       "parseSuccess": 151,
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.8610217596972569,
-      "bundleSize": 394629,
+      "avgConfidence": 0.8842005676442766,
+      "bundleSize": 395057,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -9941,7 +9964,15 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -9950,6 +9981,26 @@
           "confidence": 1
         },
         "on-custom-event-receive": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -10465,42 +10516,14 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "socket-basic": {
           "success": false
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
         },
         "live-derived-value": {
           "success": false
         },
         "live-multiple-deps": {
           "success": false
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         }
       }
     },
@@ -10508,8 +10531,8 @@
       "parseSuccess": 141,
       "parseFailure": 13,
       "parseRate": 0.9155844155844156,
-      "avgConfidence": 0.8513227513227517,
-      "bundleSize": 394629,
+      "avgConfidence": 0.8644827198018691,
+      "bundleSize": 395057,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10579,7 +10602,19 @@
           "success": true,
           "confidence": 1
         },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 1
+        },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -10591,11 +10626,19 @@
           "success": true,
           "confidence": 1
         },
+        "beep-debug-expression": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
         },
         "when-multiple-changes": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -11003,15 +11046,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "template-literal-list-build": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "breakpoint-command": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "beep-debug-expression": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -11063,15 +11098,7 @@
         "method-call-possessive-dot": {
           "success": false
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
           "success": true,
           "confidence": 0.5
         },
@@ -11095,10 +11122,6 @@
         },
         "bind-non-form-display": {
           "success": false
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -11120,8 +11143,8 @@
       "parseSuccess": 146,
       "parseFailure": 8,
       "parseRate": 0.948051948051948,
-      "avgConfidence": 0.9300934985866488,
-      "bundleSize": 394629,
+      "avgConfidence": 0.9369428136551418,
+      "bundleSize": 395057,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11344,6 +11367,14 @@
           "confidence": 1
         },
         "beep-debug-expression": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
           "success": true,
           "confidence": 1
         },
@@ -11707,14 +11738,6 @@
         },
         "worker-basic": {
           "success": false
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
         },
         "bind-auto-detect": {
           "success": false
@@ -11737,8 +11760,8 @@
       "parseSuccess": 125,
       "parseFailure": 29,
       "parseRate": 0.8116883116883117,
-      "avgConfidence": 0.8532549019607846,
-      "bundleSize": 394629,
+      "avgConfidence": 0.8732549019607846,
+      "bundleSize": 395057,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11884,6 +11907,14 @@
           "success": true,
           "confidence": 1
         },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
           "success": true,
           "confidence": 1
@@ -11893,6 +11924,18 @@
           "confidence": 1
         },
         "on-custom-event-receive": {
+          "success": true,
+          "confidence": 1
+        },
+        "beep-debug-expression": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
           "success": true,
           "confidence": 1
         },
@@ -12274,15 +12317,7 @@
         "get-attribute-possessive-dot": {
           "success": false
         },
-        "template-literal-list-build": {
-          "success": true,
-          "confidence": 0.5
-        },
         "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
           "success": true,
           "confidence": 0.5
         },
@@ -12291,18 +12326,6 @@
           "confidence": 0.5
         },
         "breakpoint-command": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "beep-debug-expression": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
           "success": true,
           "confidence": 0.5
         },
@@ -12330,11 +12353,11 @@
       }
     },
     "tr": {
-      "parseSuccess": 144,
-      "parseFailure": 10,
-      "parseRate": 0.935064935064935,
-      "avgConfidence": 0.7718364197530865,
-      "bundleSize": 394629,
+      "parseSuccess": 146,
+      "parseFailure": 8,
+      "parseRate": 0.948051948051948,
+      "avgConfidence": 0.7852359208523593,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -12596,6 +12619,10 @@
           "success": true,
           "confidence": 1
         },
+        "template-literal-list-build": {
+          "success": true,
+          "confidence": 1
+        },
         "morph-fetch-result": {
           "success": true,
           "confidence": 1
@@ -12641,6 +12668,22 @@
           "confidence": 1
         },
         "take-class-from-siblings": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
           "success": true,
           "confidence": 1
         },
@@ -12848,10 +12891,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "template-literal-list-build": {
-          "success": true,
-          "confidence": 0.5
-        },
         "eventsource-basic": {
           "success": true,
           "confidence": 0.5
@@ -12880,24 +12919,10 @@
           "success": true,
           "confidence": 0.5
         },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
         "when-value-changes": {
           "success": false
         },
         "when-multiple-changes": {
-          "success": false
-        },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
           "success": false
         },
         "bind-explicit-property": {
@@ -12948,8 +12973,8 @@
       "parseSuccess": 151,
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.8595080416272473,
-      "bundleSize": 394629,
+      "avgConfidence": 0.8826868495742671,
+      "bundleSize": 395057,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -12999,11 +13024,39 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
           "success": true,
           "confidence": 1
         },
+        "worker-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "send-event-to-form": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -13527,42 +13580,14 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "socket-basic": {
           "success": false
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
         },
         "live-derived-value": {
           "success": false
         },
         "live-multiple-deps": {
           "success": false
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         }
       }
     },
@@ -13570,8 +13595,8 @@
       "parseSuccess": 152,
       "parseFailure": 2,
       "parseRate": 0.987012987012987,
-      "avgConfidence": 0.8609022556390982,
-      "bundleSize": 394629,
+      "avgConfidence": 0.8872180451127823,
+      "bundleSize": 395057,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -13621,7 +13646,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -13630,6 +13667,26 @@
           "confidence": 1
         },
         "on-custom-event-receive": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -14149,52 +14206,20 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "live-derived-value": {
           "success": false
         },
         "live-multiple-deps": {
           "success": false
-        },
-        "bind-auto-detect": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-two-way": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-explicit-property": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-non-form-display": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         }
       }
     },
     "zh": {
-      "parseSuccess": 145,
-      "parseFailure": 9,
-      "parseRate": 0.9415584415584416,
-      "avgConfidence": 0.9815325670498084,
-      "bundleSize": 394629,
+      "parseSuccess": 149,
+      "parseFailure": 5,
+      "parseRate": 0.9675324675324676,
+      "avgConfidence": 0.998806860551827,
+      "bundleSize": 395057,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -14676,7 +14701,15 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -14728,11 +14761,35 @@
           "success": true,
           "confidence": 1
         },
+        "live-derived-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "live-multiple-deps": {
+          "success": true,
+          "confidence": 1
+        },
         "when-value-changes": {
           "success": true,
           "confidence": 1
         },
         "when-multiple-changes": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-auto-detect": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-two-way": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-explicit-property": {
+          "success": true,
+          "confidence": 1
+        },
+        "bind-non-form-display": {
           "success": true,
           "confidence": 1
         },
@@ -14752,44 +14809,16 @@
           "success": true,
           "confidence": 1
         },
+        "intercept-cache-strategies": {
+          "success": true,
+          "confidence": 1
+        },
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "socket-basic": {
           "success": false
-        },
-        "worker-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-derived-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "live-multiple-deps": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "bind-auto-detect": {
-          "success": false
-        },
-        "bind-two-way": {
-          "success": false
-        },
-        "bind-explicit-property": {
-          "success": false
-        },
-        "bind-non-form-display": {
-          "success": false
-        },
-        "intercept-cache-strategies": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -14808,7 +14837,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 394629,
+      "size": 395057,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
