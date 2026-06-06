@@ -159,6 +159,19 @@ export const vietnameseProfile: LanguageProfile = {
     stream: { primary: 'truyền-phát', alternatives: ['phát', 'luồng'], normalized: 'stream' },
     live: { primary: 'trực-tiếp', alternatives: ['phát-trực-tiếp'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['ổ-cắm', 'websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'ràng buộc', alternatives: ['liên kết', 'bind'], normalized: 'bind' },
+    intercept: {
+      primary: 'chặn',
+      alternatives: ['chặn bắt', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'worker', alternatives: ['công nhân'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['nguồn sự kiện'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'khi', alternatives: ['trên'], normalized: 'on' },
