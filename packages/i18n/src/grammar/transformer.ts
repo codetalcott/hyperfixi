@@ -1022,7 +1022,7 @@ function translateWord(word: string, sourceLocale: string, targetLocale: string)
  */
 const POSSESSIVE_MARKERS: Record<
   string,
-  { type: 'prefix' | 'suffix' | 'preposition'; marker: string }
+  { type: 'prefix' | 'suffix' | 'preposition' | 'particle'; marker: string }
 > = {
   en: { type: 'suffix', marker: "'s" },
   es: { type: 'preposition', marker: 'de' },
@@ -1035,7 +1035,17 @@ const POSSESSIVE_MARKERS: Record<
   ar: { type: 'preposition', marker: 'لـ' },
   tr: { type: 'suffix', marker: "'ın" },
   id: { type: 'preposition', marker: 'dari' },
-  qu: { type: 'suffix', marker: '-pa' },
+  // Latin-script genitive: must be a *spaced* particle (`#picker pa`), since a
+  // glued `#pickerpa` can't be split from the selector by the tokenizer the
+  // way a non-Latin suffix (の/의/র) can.
+  qu: { type: 'particle', marker: 'pa' },
+  // Bengali SOV postposition genitive, like ja/ko — a spaced suffix the
+  // tokenizer splits off as a particle. Previously absent, so it fell back to
+  // the English `'s` marker and its possessive property paths never parsed.
+  // (Hindi `का` is intentionally omitted: its `bind` lacks a verb-final
+  // grammar rule, so fixing its possessive alone yields a wrong `on` parse —
+  // tracked as separate follow-up.)
+  bn: { type: 'suffix', marker: 'র' },
   sw: { type: 'preposition', marker: 'ya' },
 };
 
@@ -1078,6 +1088,10 @@ function translatePossessive(token: string, sourceLocale: string, targetLocale: 
     case 'suffix':
       // Japanese/Korean/Chinese: owner + marker (e.g., #buttonの, #button의)
       return `${translatedOwner}${targetMarker.marker}`;
+    case 'particle':
+      // Latin-script spaced genitive (Quechua `pa`): owner + space + marker
+      // so the tokenizer can separate it from the selector.
+      return `${translatedOwner} ${targetMarker.marker}`;
     case 'preposition':
       // Will be handled by caller - return marker + owner format
       // Store as special format to be processed later

@@ -675,12 +675,15 @@ export class PatternMatcher {
     tokens.advance(); // consume selector
 
     const possessiveToken = tokens.peek();
-    const profileMarker = this.currentProfile?.possessive?.marker;
+    // Agglutinative suffix markers may be written with a leading hyphen in the
+    // profile (e.g. Quechua `-pa`) but tokenize without it; normalize before
+    // comparing.
+    const profileMarker = this.currentProfile?.possessive?.marker?.replace(/^-/, '');
     const isEnglishPossessive =
       !!possessiveToken && possessiveToken.kind === 'punctuation' && possessiveToken.value === "'s";
-    // Non-English markers (の, 의, …) arrive as `particle` tokens. Match them
-    // against the active profile's possessive marker. Empty markers (Turkish,
-    // suffix-based) don't have a standalone token and are not handled here.
+    // Non-English markers (の, 의, র, pa, …) arrive as `particle` tokens. Match
+    // them against the active profile's possessive marker. Empty markers
+    // (Turkish, suffix-fused) don't have a standalone token and aren't handled here.
     const isProfilePossessive =
       !!possessiveToken &&
       !!profileMarker &&
