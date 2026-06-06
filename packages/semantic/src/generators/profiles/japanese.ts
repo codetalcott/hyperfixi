@@ -169,6 +169,18 @@ export const japaneseProfile: LanguageProfile = {
     stream: { primary: 'ストリーム', alternatives: ['配信'], normalized: 'stream' },
     live: { primary: 'ライブ', alternatives: ['実時間'], normalized: 'live' },
     socket: { primary: 'ソケット', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands (bind pending i18n grammar reconciliation)
+    intercept: {
+      primary: 'インターセプト',
+      alternatives: ['傍受', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'ワーカー', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['イベントソース'],
+      normalized: 'eventsource',
+    },
   },
   tokenization: {
     particles: ['を', 'に', 'で', 'から', 'の', 'が', 'は', 'も', 'へ', 'と'],
