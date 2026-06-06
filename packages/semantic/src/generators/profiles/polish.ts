@@ -290,6 +290,19 @@ export const polishProfile: LanguageProfile = {
     stream: { primary: 'transmituj', alternatives: ['strumień', 'streamuj'], normalized: 'stream' },
     live: { primary: 'na-żywo', alternatives: ['na-bieżąco', 'live'], normalized: 'live' },
     socket: { primary: 'gniazdo', alternatives: ['socket', 'websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'powiąż', alternatives: ['związać', 'bind'], normalized: 'bind' },
+    intercept: {
+      primary: 'przechwyć',
+      alternatives: ['przechwytuj', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'pracownik', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['źródło-zdarzeń'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'gdy', alternatives: ['przy', 'na'], normalized: 'on' },
