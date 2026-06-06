@@ -659,27 +659,39 @@ export class PatternMatcher {
 
   /**
    * Try to match a possessive selector expression like "#element's *opacity".
-   * Pattern: selector + "'s" + (selector | identifier)
-   * Returns a property-path value if matched, or null if not.
+   * Pattern: selector + possessive-marker + (selector | identifier)
+   *
+   * The possessive marker is English `'s` (a punctuation token) or, for other
+   * languages, the active profile's `possessive.marker` emitted as a `particle`
+   * token (e.g. Japanese `の`, Korean `의`). Returns a property-path value if
+   * matched, or null if not.
    */
   private tryMatchPossessiveSelectorExpression(tokens: TokenStream): SemanticValue | null {
     const token = tokens.peek();
     if (!token || token.kind !== 'selector') return null;
 
-    // Look ahead for: 's (possessive marker)
+    // Look ahead for the possessive marker.
     const mark = tokens.mark();
     tokens.advance(); // consume selector
 
     const possessiveToken = tokens.peek();
-    if (
-      !possessiveToken ||
-      possessiveToken.kind !== 'punctuation' ||
-      possessiveToken.value !== "'s"
-    ) {
+    const profileMarker = this.currentProfile?.possessive?.marker;
+    const isEnglishPossessive =
+      !!possessiveToken && possessiveToken.kind === 'punctuation' && possessiveToken.value === "'s";
+    // Non-English markers (の, 의, …) arrive as `particle` tokens. Match them
+    // against the active profile's possessive marker. Empty markers (Turkish,
+    // suffix-based) don't have a standalone token and are not handled here.
+    const isProfilePossessive =
+      !!possessiveToken &&
+      !!profileMarker &&
+      profileMarker !== "'s" &&
+      possessiveToken.value === profileMarker &&
+      (possessiveToken.kind === 'particle' || possessiveToken.kind === 'punctuation');
+    if (!isEnglishPossessive && !isProfilePossessive) {
       tokens.reset(mark);
       return null;
     }
-    tokens.advance(); // consume 's
+    tokens.advance(); // consume the possessive marker
 
     const propertyToken = tokens.peek();
     if (!propertyToken) {
@@ -687,8 +699,14 @@ export class PatternMatcher {
       return null;
     }
 
-    // Property can be a selector (*opacity) or identifier
-    if (propertyToken.kind !== 'selector' && propertyToken.kind !== 'identifier') {
+    // English keeps the historical selector-or-identifier property (e.g.
+    // `#element's *opacity`). For profile markers, only an identifier is a
+    // property — otherwise a target+patient construct like `#button の .active`
+    // ("toggle .active on #button") would be mis-read as a property path.
+    const propertyOk =
+      propertyToken.kind === 'identifier' ||
+      (isEnglishPossessive && propertyToken.kind === 'selector');
+    if (!propertyOk) {
       tokens.reset(mark);
       return null;
     }
