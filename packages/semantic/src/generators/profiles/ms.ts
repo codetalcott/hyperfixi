@@ -147,6 +147,15 @@ export const malayProfile: LanguageProfile = {
     stream: { primary: 'strim', alternatives: ['penstriman', 'aliran'], normalized: 'stream' },
     live: { primary: 'langsung', alternatives: ['siaran-langsung'], normalized: 'live' },
     socket: { primary: 'soket', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'ikat', alternatives: ['kaitkan', 'bind'], normalized: 'bind' },
+    intercept: { primary: 'pintas', alternatives: ['cegat', 'intercept'], normalized: 'intercept' },
+    worker: { primary: 'pekerja', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['sumber_peristiwa'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'apabila', alternatives: ['ketika'], normalized: 'on' },

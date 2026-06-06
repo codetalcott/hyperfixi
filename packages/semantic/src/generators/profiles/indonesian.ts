@@ -152,6 +152,19 @@ export const indonesianProfile: LanguageProfile = {
     stream: { primary: 'alirkan', alternatives: ['streaming'], normalized: 'stream' },
     live: { primary: 'langsung', alternatives: ['live'], normalized: 'live' },
     socket: { primary: 'soket', alternatives: ['socket', 'websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'ikat', alternatives: ['kaitkan', 'bind'], normalized: 'bind' },
+    intercept: {
+      primary: 'cegat',
+      alternatives: ['tangkap', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'pekerja', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['sumber peristiwa'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'pada', alternatives: ['ketika', 'saat'], normalized: 'on' },

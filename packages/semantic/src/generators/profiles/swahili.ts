@@ -145,6 +145,16 @@ export const swahiliProfile: LanguageProfile = {
     stream: { primary: 'tiririsha', alternatives: ['mtiririko', 'strimu'], normalized: 'stream' },
     live: { primary: 'moja-kwa-moja', alternatives: ['mubashara', 'hai'], normalized: 'live' },
     socket: { primary: 'soketi', alternatives: ['tundu', 'soketi-wavuti'], normalized: 'socket' },
+    // Reactive / realtime commands. `funga` is avoided for bind (it is the
+    // `close` keyword); `ambatisha` (attach) is used instead.
+    bind: { primary: 'ambatisha', alternatives: ['funganisha', 'bind'], normalized: 'bind' },
+    intercept: { primary: 'zuia', alternatives: ['nasa', 'intercept'], normalized: 'intercept' },
+    worker: { primary: 'mfanyakazi', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['chanzo-matukio'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'unapo', alternatives: ['kwenye', 'kwa', 'wakati'] },
