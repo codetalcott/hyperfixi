@@ -311,6 +311,19 @@ export const russianProfile: LanguageProfile = {
       normalized: 'live',
     },
     socket: { primary: 'сокет', alternatives: ['гнездо', 'websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    bind: { primary: 'привязать', alternatives: ['связать', 'bind'], normalized: 'bind' },
+    intercept: {
+      primary: 'перехватить',
+      alternatives: ['перехвати', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'рабочий', alternatives: ['воркер', 'worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['источник-событий'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'при', normalized: 'on' },

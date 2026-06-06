@@ -321,6 +321,26 @@ export const ukrainianProfile: LanguageProfile = {
       normalized: 'live',
     },
     socket: { primary: 'сокет', alternatives: ['гніздо', 'websocket'], normalized: 'socket' },
+    // Reactive / realtime commands
+    // ASCII apostrophe (U+0027) — the Ukrainian tokenizer's letter class
+    // whitelists U+0027, not the typographic ʼ (U+02BC); `приєднати` is an
+    // apostrophe-free fallback.
+    bind: {
+      primary: "прив'язати",
+      alternatives: ["зв'язати", 'приєднати', 'bind'],
+      normalized: 'bind',
+    },
+    intercept: {
+      primary: 'перехопити',
+      alternatives: ['перехоплення', 'intercept'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'робітник', alternatives: ['воркер', 'worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['джерело-подій'],
+      normalized: 'eventsource',
+    },
   },
   eventHandler: {
     keyword: { primary: 'при', normalized: 'on' },

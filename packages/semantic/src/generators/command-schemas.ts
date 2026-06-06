@@ -539,6 +539,9 @@ export const bindSchema: CommandSchema = {
         id: 'ke',
         ms: 'ke',
         vi: 'với',
+        ru: 'в', // generic destination preposition (matches set/put `into`)
+        uk: 'в',
+        pl: 'do',
         ja: 'に',
         ko: '에',
         tr: 'e',
