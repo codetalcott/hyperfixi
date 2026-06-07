@@ -143,6 +143,28 @@ export class SemanticParserImpl implements ISemanticParser {
       )
     );
 
+    // Stage 1.5: Trailing event clause wrapping a block/command body.
+    // SVO/VSO grammar transforms put the event clause at the end
+    // (`<body> عند <event>` / `<body> kapag <event>`). The per-command fused
+    // event patterns (toggle-event-ar-vso-…) only cover simple bodies, so a
+    // block body (e.g. `unless <cond> toggle …`) falls through to a hollow
+    // standalone-command match. This generic wrapper recognizes the trailing
+    // event and parses everything before it as the handler body. It runs only
+    // after the dedicated event patterns failed, and returns null (falling
+    // through to the command stage unchanged) unless it finds a genuine trailing
+    // event whose preceding tokens parse as a body — so it can only add parses,
+    // never break an existing one.
+    const trailingResult = this.tryTrailingEventExtraction(parseInput, language, sortedPatterns);
+    if (trailingResult) {
+      diagnostics.push(
+        parseDiagnostic('trailing event extraction succeeded', 'info', 'stage-trailing-event')
+      );
+      const result = modifiers
+        ? this.applyModifiers(trailingResult as EventHandlerSemanticNode, modifiers)
+        : trailingResult;
+      return withDiagnostics(result, diagnostics);
+    }
+
     // Stage 2: Try command patterns
     const commandPatterns = sortedPatterns.filter(p => p.command !== 'on');
     const commandMatch = patternMatcher.matchBest(tokens, commandPatterns);
@@ -987,6 +1009,72 @@ export class SemanticParserImpl implements ISemanticParser {
       windowTokens: new Set(['k_iri', 'ventana', 'window', 'document']),
     },
   };
+
+  /**
+   * Try to extract a trailing event clause that wraps a block/command body.
+   *
+   * SVO/VSO grammar transforms emit the event clause at the very end:
+   *   AR: "<body> عند <event>"   (e.g. "إلا I match .disabled بدل .selected عند نقر")
+   *   TL: "<body> kapag <event>" (e.g. "maliban_kung … palitan .selected kapag click")
+   *
+   * The per-command fused event patterns only cover simple bodies, so a block
+   * body (unless/if/…) isn't wrapped and degrades to a hollow standalone match.
+   * This recognizes a trailing `<on-marker> <event>` (gated to a recognized
+   * event keyword in the final position, so a trailing destination selector like
+   * `على #button` is never mistaken for an event), strips it, and parses the
+   * preceding tokens as the handler body. Returns null when there is no such
+   * trailing event or the body doesn't parse — so the caller falls through to
+   * the command stage unchanged.
+   */
+  private tryTrailingEventExtraction(
+    input: string,
+    language: string,
+    patterns: LanguagePattern[]
+  ): SemanticNode | null {
+    const tokens = tokenizeInternal(input, language).tokens;
+    if (tokens.length < 3) return null;
+
+    // Native event names for this language (e.g. ar نقر→click, tl native forms).
+    const langEvents = eventNameTranslations[language];
+    const nativeEventNames = new Set<string>();
+    if (langEvents) {
+      for (const native of Object.keys(langEvents)) nativeEventNames.add(native.toLowerCase());
+    }
+
+    // The event must be the final token; the on-marker the one before it.
+    const markerIdx = tokens.length - 2;
+    const marker = tokens[markerIdx];
+    const isOnMarker = marker.kind === 'keyword' && marker.normalized?.toLowerCase() === 'on';
+    if (!isOnMarker) return null;
+
+    const evtToken = tokens[tokens.length - 1];
+    const evtVal = evtToken.value.toLowerCase();
+    const evtNorm = evtToken.normalized?.toLowerCase();
+    const isKnownEvent =
+      (!!evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)) ||
+      SemanticParserImpl.KNOWN_EVENTS.has(evtVal) ||
+      nativeEventNames.has(evtVal);
+    if (!isKnownEvent) return null;
+
+    const eventName =
+      evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)
+        ? evtNorm
+        : (langEvents?.[evtVal] ?? evtVal);
+
+    // Body = everything before the on-marker, parsed as command(s)/block.
+    const bodyTokens = tokens.slice(0, markerIdx);
+    if (bodyTokens.length === 0) return null;
+
+    const commandPatterns = patterns.filter(p => p.command !== 'on');
+    const bodyStream = new TokenStreamImpl(bodyTokens, language);
+    const body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
+    if (body.length === 0) return null;
+
+    return createEventHandler({ type: 'literal', value: eventName }, body, undefined, {
+      sourceLanguage: language,
+      confidence: 0.75,
+    });
+  }
 
   /**
    * Try to extract an embedded event trigger from SOV grammar-transformed text.

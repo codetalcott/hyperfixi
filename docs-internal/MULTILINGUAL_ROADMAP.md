@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after custom-event SOV slot (`on-custom-event-receive` ko+qu, `window-resize` qu+tr). Property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after trailing-event block-wrap (`unless-condition` ar+tl). Custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -14,25 +14,25 @@ _Last updated: after custom-event SOV slot (`on-custom-event-receive` ko+qu, `wi
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 (generated with `--bundle browser-priority`). Cross-language average **99.05%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
-batch + Tier 1 + property-path patient + custom-event SOV: +62 instances).
-**31 failing pattern-instances** remain (24 are Bucket B behaviors).
+batch + Tier 1 + property-path patient + custom-event SOV + trailing-event
+block-wrap: +64 instances). **29 failing pattern-instances** remain (24 are
+Bucket B behaviors).
 
-| Rate   | Languages                                   |
-| ------ | ------------------------------------------- |
-| 100%   | en, bn, hi, ja, ko, ms, qu, ru, th, uk, vi  |
-| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4) |
-| 98–99% | tl (98.1)                                   |
-| 96–98% | it/pl/zh (97.4), ar (97.4), he (97.4)       |
+| Rate   | Languages                                              |
+| ------ | ------------------------------------------------------ |
+| 100%   | en, bn, hi, ja, ko, ms, qu, ru, th, uk, vi             |
+| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4), tl (98.7) |
+| 96–98% | it/pl/zh (97.4), ar (98.1), he (97.4)                  |
 
-**7 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
+**5 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
 
-| Track                         | Instances | Nature                                                                                               |
-| ----------------------------- | --------- | ---------------------------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)                     |
-| **Deep per-language grammar** | 7         | compound/`in me` splits, condition i18n + VSO block-wrap, caret destination reorder, event modifiers |
+| Track                         | Instances | Nature                                                                                |
+| ----------------------------- | --------- | ------------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)      |
+| **Deep per-language grammar** | 5         | compound/`in me` splits, caret destination reorder, event-modifier + VSO source-block |
 
-The 7 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
-`caret-var-on-target` (each **ar+tl**); `focus-trap` (tr).
+The 5 non-behavior remainders: `form-disable-on-submit`, `caret-var-on-target`
+(each **ar+tl**); `focus-trap` (tr).
 
 > **Custom-event SOV cleared `on-custom-event-receive` (ko+qu) and, as a side
 > effect, `window-resize` (qu+tr).** The SOV event extractor now accepts a bare
@@ -51,6 +51,34 @@ The 7 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
 ---
 
 ## Shipped
+
+### Trailing-event block-wrap — `unless-condition` ar+tl (+2)
+
+- **2 instances, 0 regressions, avg 99.05% (full `browser-priority` regen: exactly
+  ar/tl `unless-condition` flip `↑`, zero `↓`).** ar 97.4→98.1, tl 98.1→98.7.
+- **Root cause.** SVO/VSO transforms put the event clause at the very end
+  (`<body> عند <event>` / `<body> kapag <event>`). The per-command _fused_ event
+  patterns (`toggle-event-ar-vso-…`) only cover simple bodies, so a **block** body
+  (`unless <cond> toggle …`) wasn't wrapped and degraded to a hollow standalone
+  command. Two gaps: ar/tl didn't recognize `unless` at all (ar `إلا إذا`
+  **splits**, with `إذا`→`if`; tl `maliban_kung` was an unrecognized identifier),
+  and there was no generic block+trailing-event wrapper.
+- **Fix (two parts).**
+  1. **Keyword.** Added `unless` to the ar/tl semantic profiles as a single token
+     (`إلا` / `maliban_kung`); the i18n ar dict now emits single-token `إلا` (the
+     two-word `إلا إذا` is split by the tokenizer). `keyword-collisions.test.ts`
+     clean.
+  2. **Parser — `tryTrailingEventExtraction` (new stage 1.5).** Recognizes a
+     trailing `<on-marker> <event>` (gated to a recognized event keyword in the
+     final position, so a trailing destination selector like `على #button` is
+     never mistaken for an event), strips it, and parses the preceding tokens as
+     the handler body. It runs only after the dedicated event patterns fail and
+     returns null (falling through to the command stage unchanged) unless it finds
+     a genuine trailing event whose body parses — so structurally it can only add
+     parses, never break one. Result is en-parity: `on { unless(…) ; toggle(…) }`.
+- Locked by `semantic/test/multilingual-roadmap-fixes.test.ts` (ar+tl block-wrap
+  asserting the body keeps both `unless` and `toggle`, plus guards that a trailing
+  destination selector and a plain command are left untouched).
 
 ### Custom-event SOV slot — `on-custom-event-receive` ko+qu (+ window-resize qu+tr) (+4)
 
@@ -79,23 +107,17 @@ The 7 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
   the 클릭 control, and a guard that a plain command body never becomes a phantom
   event handler).
 
-### Investigated, deferred — `unless` / `caret-var` / `form-disable` (ar+tl)
+### Investigated, deferred — `caret-var` / `form-disable` (ar+tl)
+
+> `unless-condition` (ar+tl) graduated from this section — see Shipped →
+> "Trailing-event block-wrap". The generic trailing-event wrapper built there is
+> the reusable lever `focus-trap` (tr) will also need (event-at-end + block body),
+> once paired with a `from <source>` clause and a `<selector> in <scope>` matcher.
 
 Probed faithfully (DB-stored translation → `parseSemantic`) and confirmed each needs
 deep, multi-session work; the only achievable result is a hollow / mangled parse, so
 they were **not** landed (avoids inflating the non-null metric with empty matches):
 
-- **`unless-condition` (ar+tl).** Isolated cleanly: ar/tl already handle event-at-end
-  (`بدل .selected عند نقر` → `on`) and en parses the `unless` block, but ar/tl don't
-  recognize the `unless` keyword (ar `إلا إذا` **splits**, with `إذا`→`if`; tl
-  `maliban_kung` is an unrecognized identifier). Adding `unless` to the ar/tl profiles
-  (single-token `إلا` / `maliban_kung`) makes the block parse — **but** the simple
-  event-at-end is a _command-specific_ fused pattern (`toggle-event-ar-vso-verb-first`);
-  there is no generic block+event-at-end wrapper, so `unless … عند نقر` falls through to
-  a standalone `unless` that captures **nothing** (empty roles — body _and_ event
-  dropped), below even en-parity. A real `on` parse needs a generated
-  `unless-event-{ar,tl}-vso` pattern (or a generic event-at-end block wrapper). The
-  profile additions are correct-but-insufficient and were reverted to avoid a hollow flip.
 - **`caret-var-on-target` (ar+tl).** The i18n transformer mangles
   `put ^count on #host into me` → ar `ضع ^count عند نقر ثم في أنا عند #host` (spurious
   `then` inserted, `on #host` scope split to the end, the event stranded mid-stream).
