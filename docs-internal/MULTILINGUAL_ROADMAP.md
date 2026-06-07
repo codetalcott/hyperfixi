@@ -158,6 +158,12 @@ side rather than "fixing" the transformer.
 After Phases 1–4 the non-behavior failures left are all genuinely deep, each its
 own transformer/parser project (no shared lever remains):
 
+> **`transition-*` / `window-resize` (the "modifier" cluster):** attempted and
+> found to need a deliberate refactor (the `*style` patient is a selector the
+> transition schema rejects; the `duration` role lands after the event clause).
+> Full design in **[TRANSITION_MODIFIER_REFACTOR_PLAN.md](TRANSITION_MODIFIER_REFACTOR_PLAN.md)**
+> — slated for its own session.
+
 - **method-call / member-access — DONE (+5).** `my.value.toUpperCase()` /
   `my.getAttribute("data-id")` (ar/sw/tl). The possessive-dot matcher
   (`tryMatchPossessiveExpression`) expected the trailing call as a single `(...)`
