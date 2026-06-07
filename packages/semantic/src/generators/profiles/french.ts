@@ -146,7 +146,7 @@ export const frenchProfile: LanguageProfile = {
     // used by the vocab generator — `sse-connecter`, `hx-en-direct`, etc.
     connect: { primary: 'connecter', alternatives: ['connexion'], normalized: 'connect' },
     stream: { primary: 'flux', alternatives: ['streaming'], normalized: 'stream' },
-    live: { primary: 'en-direct', alternatives: ['direct'], normalized: 'live' },
+    live: { primary: 'en-direct', alternatives: ['direct', 'vif'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
     // Reactive / realtime commands
     bind: { primary: 'lier', alternatives: ['relier', 'bind'], normalized: 'bind' },

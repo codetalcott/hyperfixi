@@ -157,7 +157,7 @@ export const vietnameseProfile: LanguageProfile = {
     // `nối` is reserved as `append` primary — connect uses the compound form only.
     connect: { primary: 'kết-nối', alternatives: ['kết-nối-tới'], normalized: 'connect' },
     stream: { primary: 'truyền-phát', alternatives: ['phát', 'luồng'], normalized: 'stream' },
-    live: { primary: 'trực-tiếp', alternatives: ['phát-trực-tiếp'], normalized: 'live' },
+    live: { primary: 'trực-tiếp', alternatives: ['phát-trực-tiếp', 'live'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['ổ-cắm', 'websocket'], normalized: 'socket' },
     // Reactive / realtime commands
     bind: { primary: 'ràng buộc', alternatives: ['liên kết', 'bind'], normalized: 'bind' },
