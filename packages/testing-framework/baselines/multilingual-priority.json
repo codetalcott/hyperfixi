@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-07T11:47:19.051Z",
-  "commit": "d5cfc3c",
+  "timestamp": "2026-06-07T12:05:29.954Z",
+  "commit": "4213edb",
   "languages": {
     "ar": {
       "parseSuccess": 146,
@@ -11840,10 +11840,10 @@
       }
     },
     "tl": {
-      "parseSuccess": 141,
-      "parseFailure": 13,
-      "parseRate": 0.9155844155844156,
-      "avgConfidence": 0.885197104846667,
+      "parseSuccess": 143,
+      "parseFailure": 11,
+      "parseRate": 0.9285714285714286,
+      "avgConfidence": 0.8868027397439164,
       "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
@@ -11867,6 +11867,14 @@
           "confidence": 1
         },
         "put-content-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "put-before": {
+          "success": true,
+          "confidence": 1
+        },
+        "put-after": {
           "success": true,
           "confidence": 1
         },
@@ -12365,12 +12373,6 @@
         "repeat-while": {
           "success": true,
           "confidence": 0.5294117647058824
-        },
-        "put-before": {
-          "success": false
-        },
-        "put-after": {
-          "success": false
         },
         "transition-opacity": {
           "success": false

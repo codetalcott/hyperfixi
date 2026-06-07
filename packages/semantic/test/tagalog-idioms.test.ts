@@ -567,4 +567,17 @@ describe('Tagalog Integration Tests', () => {
       expect(tokens.length).toBeGreaterThan(0);
     });
   });
+
+  describe('Positional put (before/after)', () => {
+    // `bago` (before) / `matapos` (after) are destination markers for
+    // `put X before/after Y`. `matapos` — not `pagkatapos` (which is also "then")
+    // — is the unambiguous positional "after".
+    it('parses put … bago (before) …', () => {
+      expect(parse('ilagay "<p>New</p>" bago ako kapag click', 'tl')).toBeTruthy();
+    });
+
+    it('parses put … matapos (after) …', () => {
+      expect(parse('ilagay "<p>New</p>" matapos ako kapag click', 'tl')).toBeTruthy();
+    });
+  });
 });

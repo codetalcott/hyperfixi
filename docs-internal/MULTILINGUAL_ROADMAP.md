@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 4 (method-call possessive-dot + event-body block masking). Track 1 (reactive) complete._
+_Last updated: after Track 4 (method-call, event-body blocks, tl put before/after). Track 1 (reactive) complete._
 
 ---
 
@@ -13,7 +13,7 @@ _Last updated: after Track 4 (method-call possessive-dot + event-body block mask
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 (generated with `--bundle browser-priority`). Cross-language average **98.5%**
-(up from 97.5% before Phase 1; Phases 1–4 + Track 4: +36 instances).
+(up from 97.5% before Phase 1; Phases 1–4 + Track 4: +38 instances).
 
 | Rate         | Languages                             |
 | ------------ | ------------------------------------- |
@@ -22,9 +22,9 @@ Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 | 99.4%        | de, es, fr, hi, id, pt                |
 | 96–97%       | it/pl/zh (97.4), he (96.8), ko (96.1) |
 | 95–96%       | sw (96.8)                             |
-| **laggards** | **ar (94.8), tl (91.6)**              |
+| **laggards** | **ar (94.8), tl (92.9)**              |
 
-**~40 failing pattern-instances** remain after Phases 1–4 + Track 4, in two tracks (Track 1 reactive done):
+**~38 failing pattern-instances** remain after Phases 1–4 + Track 4, in two tracks (Track 1 reactive done):
 
 | Track                         | Instances | Nature                                                                           |
 | ----------------------------- | --------- | -------------------------------------------------------------------------------- |
@@ -180,6 +180,13 @@ own transformer/parser project (no shared lever remains):
 - **Still open here:** `focus-trap` (tr), `window-resize` (qu/tr) — event-block
   bodies _with_ a `from <source>` clause; need event-first + source ordering for
   VSO. `multiple-events` (ar) needs `or`-conjoined events.
+- **put before/after — DONE (+2, tl).** Only tl failed (ar/es/en parse). Two
+  causes: (1) tl's destination role-marker had no before/after alternatives, so
+  the generated put pattern couldn't match a before/after target — added `bago`
+  (before) / `matapos` (after) as destination alternatives, mirroring Arabic's
+  قبل/بعد. (2) the i18n tl dict emitted `pagkatapos` for positional "after", which
+  is _also_ tl "then" — switched it to the unambiguous `matapos` (matching the
+  semantic profile). Locked by tagalog-idioms.test.ts.
 - **`transition-*` `over <dur>` modifier** (ko/tl) — `over 500ms` modifier is
   dropped/misplaced in word-order reorder.
 - **`scroll to last <sel> in …`** (last-in-collection; ar/tl) — `scroll to` +
