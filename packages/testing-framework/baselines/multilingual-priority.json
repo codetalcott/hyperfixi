@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-07T03:56:37.550Z",
-  "commit": "0210ab7",
+  "timestamp": "2026-06-07T04:13:48.288Z",
+  "commit": "c5485a3",
   "languages": {
     "ar": {
       "parseSuccess": 134,
@@ -3730,10 +3730,10 @@
       }
     },
     "he": {
-      "parseSuccess": 135,
-      "parseFailure": 19,
-      "parseRate": 0.8766233766233766,
-      "avgConfidence": 0.8478071722516173,
+      "parseSuccess": 149,
+      "parseFailure": 5,
+      "parseRate": 0.9675324675324676,
+      "avgConfidence": 0.8454032172152983,
       "bundleSize": 396800,
       "patterns": {
         "put-content-basic": {
@@ -3924,6 +3924,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "trigger-event": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "multiple-events": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -3973,6 +3977,10 @@
           "confidence": 0.8222222222222222
         },
         "focus-element": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "blur-element": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -4028,6 +4036,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "modal-close-escape": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "modal-close-backdrop": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -4068,6 +4080,22 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "window-keydown": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "window-scroll": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "window-resize": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "document-ready": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "set-opacity": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -4100,6 +4128,14 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "repeat-until-event": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "repeat-forever": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "repeat-while": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -4112,7 +4148,15 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "event-throttle": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "event-from-elsewhere": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "event-key-combo": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -4161,6 +4205,10 @@
           "confidence": 0.8222222222222222
         },
         "toggle-aria-expanded": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "focus-trap": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -4248,6 +4296,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "keydown-key-is-syntax": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "breakpoint-command": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -4264,6 +4316,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "caret-var-write": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "caret-var-increment": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -4276,49 +4332,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "trigger-event": {
-          "success": false
-        },
-        "blur-element": {
-          "success": false
-        },
-        "modal-close-escape": {
-          "success": false
-        },
-        "window-keydown": {
-          "success": false
-        },
-        "window-scroll": {
-          "success": false
-        },
-        "window-resize": {
-          "success": false
-        },
-        "document-ready": {
-          "success": false
-        },
-        "repeat-until-event": {
-          "success": false
-        },
-        "repeat-forever": {
-          "success": false
-        },
-        "event-throttle": {
-          "success": false
-        },
-        "event-key-combo": {
-          "success": false
-        },
         "announce-screen-reader": {
-          "success": false
-        },
-        "focus-trap": {
-          "success": false
-        },
-        "keydown-key-is-syntax": {
-          "success": false
-        },
-        "caret-var-write": {
           "success": false
         },
         "behavior-removable": {
