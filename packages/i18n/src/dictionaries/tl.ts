@@ -36,7 +36,7 @@ export const tagalogDictionary: Dictionary = {
     throw: 'ihagis',
     catch: 'hulihin',
     measure: 'sukatin',
-    transition: 'baguhin',
+    transition: 'lumipat',
     increment: 'dagdagan',
     decrement: 'bawasan',
     default: 'pamantayan',

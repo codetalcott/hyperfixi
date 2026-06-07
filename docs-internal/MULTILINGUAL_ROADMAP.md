@@ -5,31 +5,38 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after the qu `install` keyword-collision fix (`install-behavior` qu). Track 4 (method-call, event-body blocks, tl put before/after) and Track 1 (reactive) complete._
+_Last updated: after the passthrough-alignment batch (or-conjoined events ar/tl; ko `fetch`/`transition` and tl `transition` keyword alignment). Track 4 (method-call, event-body blocks, tl put before/after) and Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **98.54%**
-(up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install`: +39 instances).
-**54 failing pattern-instances** remain (24 are Bucket B behaviors).
+(generated with `--bundle browser-priority`). Cross-language average **98.84%**
+(up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
+batch: +50 instances).
+**43 failing pattern-instances** remain (24 are Bucket B behaviors).
 
-| Rate     | Languages                                   |
-| -------- | ------------------------------------------- |
-| 100%     | en, bn, hi, ja, ms, ru, th, uk, vi          |
-| 98–99%   | qu (98.7), de/es/fr/id/pt (99.4), tr (98.7) |
-| 96–98%   | it/pl/zh (97.4), ko (96.1), he/sw (96.8)    |
-| laggards | **ar (94.8), tl (92.9)**                    |
+| Rate     | Languages                            |
+| -------- | ------------------------------------ |
+| 100%     | en, bn, hi, ja, ms, ru, th, uk, vi   |
+| 99%      | de/es/fr/id/pt (99.4), **ko (99.4)** |
+| 98–99%   | qu (98.7), tr (98.7), sw (98.1)      |
+| 96–98%   | it/pl/zh (97.4), he (96.8)           |
+| laggards | **ar (95.5), tl (96.1)**             |
 
-**~30 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors),
+**19 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors),
 in two tracks (Track 1 reactive done):
 
 | Track                         | Instances | Nature                                                                           |
 | ----------------------------- | --------- | -------------------------------------------------------------------------------- |
 | **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
-| **Deep per-language grammar** | ~30       | VSO event-at-end + `from`-source reorder, command modifiers, condition i18n      |
+| **Deep per-language grammar** | 19        | VSO event-at-end + `from`-source reorder, command modifiers, condition i18n      |
+
+The 19 non-behavior remainders: `input-clear`, `form-disable-on-submit`,
+`set-color-variable`, `last-in-collection`, `unless-condition`,
+`caret-var-on-target` (each **ar+tl**); `announce-screen-reader` (he+sw);
+`on-custom-event-receive` (ko+qu); `window-resize` (qu+tr); `focus-trap` (tr).
 
 > **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
 > cleared `@`/`*`/`^`; Phase 3a the English DOM events). Every remaining
@@ -40,6 +47,39 @@ in two tracks (Track 1 reactive done):
 ---
 
 ## Shipped
+
+### Passthrough-alignment batch — or-events + fetch/transition keywords (+11)
+
+- **11 instances, 0 regressions, avg 98.54% → 98.84%.** ar 94.8→95.5, tl 92.9→96.1,
+  ko 96.1→99.4. Confirmed by a full `browser-priority` baseline regen (exactly these
+  11 patterns flip `↑`, zero `↓`).
+- **`multiple-events` (ar, tl) — transformer fix.** `on click or keypress[…] toggle .active`
+  hoisted `or keypress` ahead of the command because `parseEventHandler` read `or` as the
+  action verb. Fixed by folding `or`-conjoined events into the event role value
+  (`EVENT_CONJUNCTIONS`) so `<event1> or <event2>` translates and reorders as one event
+  clause that lands at the end (VSO). The semantic parser already accepted the event-or
+  clause at the end — only the i18n transformer needed the fix.
+- **`fetch` (ko ×3) — keyword alignment.** The i18n ko dict emits `가져오기` for `fetch`,
+  but the semantic ko profile's primary is the loanword `패치` (chosen to avoid colliding
+  with `get`=얻다). `가져오기` ("bring/fetch") doesn't collide with `얻다`, so it's now a
+  semantic `fetch` alternative. Cleared `fetch-with-method`, `fetch-with-method-body`,
+  `fetch-formdata`.
+- **`transition` (ko ×2, tl ×4) — keyword alignment.** ko: profile primary is loanword
+  `트랜지션`; transformer emits `전환` ("switch/transition") — added as a semantic
+  alternative (toggle uses `토글`, no collision). tl: transformer emitted `baguhin`, which
+  is the semantic tl verb for **morph**; the semantic tl `transition` verb is `lumipat`,
+  so the i18n tl dict now emits `lumipat` (morph keeps `baguhin_hugis`). Cleared
+  `transition-color`/`transition-transform` (both), plus tl `transition-opacity` and
+  `fade-out-remove`.
+- **Why this batch and not the rest.** These were the failures where either the i18n
+  transformer leaked the wrong token (the recurring **passthrough-alignment** lever) or a
+  pure structural reorder bug existed — verifiable as single keyword/transformer edits with
+  zero parser-surface change. The remaining 19 each need genuine parser/profile structure
+  work (VSO requires a _parseable_ body — unlike en/ko, which pass via degenerate empty-body
+  matches — so `set`-of-possessive, positional `last … in`, member-access, `unless` blocks,
+  custom-event SOV slots, event modifiers, and he/sw `set`-pattern gaps must each be built
+  out). Locked by `grammar.test.ts` (or-events + tl transition) and
+  `semantic/test/multilingual-roadmap-fixes.test.ts` (ko fetch + transition).
 
 ### qu `install` keyword-collision fix — `install-behavior` (+1)
 
