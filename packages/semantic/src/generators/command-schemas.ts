@@ -385,7 +385,9 @@ export const setSchema: CommandSchema = {
       role: 'destination',
       description: 'The property or variable to set',
       required: true,
-      expectedTypes: ['selector', 'reference', 'expression'],
+      // 'property-path' opts this role into the "of"-possessive matcher
+      // (`set *--x of #y to z`); see pattern-matcher tryMatchOfPossessiveExpression.
+      expectedTypes: ['selector', 'reference', 'expression', 'property-path'],
       svoPosition: 1,
       sovPosition: 1,
       // Override destination marker for English (remove 'on', use no marker)
@@ -2134,7 +2136,8 @@ export const scrollSchema: CommandSchema = {
       role: 'destination',
       description: 'The element to scroll to',
       required: true,
-      expectedTypes: ['selector', 'reference'],
+      // 'expression' admits positional queries (`last <.message/> in #chat`).
+      expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 1,
       sovPosition: 1,
       markerOverride: { en: 'to' },
