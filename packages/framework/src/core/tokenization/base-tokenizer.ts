@@ -41,6 +41,39 @@ const SIMPLE_TOKENIZER_OPERATOR_SET = new Set(DEFAULT_OPERATORS);
 export type { KeywordEntry };
 
 /**
+ * Standard DOM event names recognized in every language as universal fallbacks.
+ * The i18n grammar transformer emits these verbatim (no native dictionary form),
+ * so each tokenizer must accept them or English-named event handlers won't parse.
+ * Kept to genuine DOM event names (not command verbs) to minimize collisions; the
+ * registration is `!has`-guarded so any native keyword of the same spelling wins.
+ */
+const ENGLISH_DOM_EVENT_NAMES: readonly string[] = [
+  'click',
+  'dblclick',
+  'input',
+  'change',
+  'submit',
+  'keydown',
+  'keyup',
+  'keypress',
+  'mousedown',
+  'mouseup',
+  'mouseover',
+  'mouseout',
+  'mouseenter',
+  'mouseleave',
+  'mousemove',
+  'pointerdown',
+  'pointerup',
+  'pointermove',
+  'focus',
+  'blur',
+  'load',
+  'resize',
+  'scroll',
+];
+
+/**
  * Profile interface for keyword derivation.
  * Matches the structure of LanguageProfile but only includes fields needed for tokenization.
  */
@@ -353,6 +386,20 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
     if (profile.possessive?.keywords) {
       for (const [native, normalized] of Object.entries(profile.possessive.keywords)) {
         keywordMap.set(native, { native, normalized });
+      }
+    }
+
+    // Register English DOM event names as universal fallbacks. The i18n grammar
+    // transformer has no native form for most DOM events, so it passes them
+    // through verbatim (`on keyup …` → `<on-marker> keyup …`). Without these,
+    // non-English token streams treat `keyup`/`keydown`/`resize`/… as bare
+    // identifiers, and event handlers using them (often with `[key==…]` guards)
+    // fail to parse. Guarded by `!has` so any native mapping wins (same policy
+    // as the English-reference fallbacks above). Generalizes the per-language
+    // registration introduced for Hebrew in #272.
+    for (const evt of ENGLISH_DOM_EVENT_NAMES) {
+      if (!keywordMap.has(evt)) {
+        keywordMap.set(evt, { native: evt, normalized: evt });
       }
     }
 

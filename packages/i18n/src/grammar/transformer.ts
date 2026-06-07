@@ -728,6 +728,7 @@ function tokenize(input: string, profile: LanguageProfile): string[] {
   let current = '';
   let inSelector = false;
   let selectorDepth = 0;
+  let bracketDepth = 0;
 
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
@@ -741,8 +742,17 @@ function tokenize(input: string, profile: LanguageProfile): string[] {
       if (selectorDepth === 0) inSelector = false;
     }
 
-    // Split on whitespace unless in selector
-    if (/\s/.test(char) && !inSelector) {
+    // Track event-guard / attribute brackets so `[key is 'Escape']` (which has
+    // internal spaces) stays a single token instead of splitting into
+    // `[key` / `is` / `'Escape']` — which mis-assigns `is` as the action verb.
+    if (char === '[') {
+      bracketDepth++;
+    } else if (char === ']' && bracketDepth > 0) {
+      bracketDepth--;
+    }
+
+    // Split on whitespace unless inside a selector or a bracket guard
+    if (/\s/.test(char) && !inSelector && bracketDepth === 0) {
       if (current) {
         tokens.push(current);
         current = '';
@@ -1180,6 +1190,21 @@ function translateMultiWordValue(
   sourceLocale: string,
   targetLocale: string
 ): string {
+  // Mask event-guard / attribute brackets (`[key is 'Escape']`): their contents
+  // are expression syntax, not translatable keywords — translating `is` -> `ni`
+  // etc. inside them breaks the guard. Restore verbatim after translation.
+  if (value.includes('[')) {
+    const guards: string[] = [];
+    const masked = value.replace(/\[[^\]]*\]/g, match => {
+      guards.push(match);
+      return `${guards.length - 1}`;
+    });
+    if (guards.length > 0) {
+      const translated = translateMultiWordValue(masked, sourceLocale, targetLocale);
+      return translated.replace(/(\d+)/g, (_, n) => guards[Number(n)]);
+    }
+  }
+
   // If it's a single word, check for possessive then translate
   if (!value.includes(' ')) {
     // Check for possessive 's

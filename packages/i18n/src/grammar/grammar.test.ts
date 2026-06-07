@@ -399,6 +399,15 @@ describe('GrammarTransformer', () => {
       expect(result).toContain('#output');
     });
 
+    it('should keep event guards intact and untranslated', () => {
+      // `[key is 'Escape']` must stay one token with its contents verbatim —
+      // the spaces must not split it, and `is` must not be translated as a verb.
+      const result = transformer.transform("on keyup[key is 'Escape'] clear me");
+      // Guard stays one verbatim token attached to the event (not split on its
+      // internal spaces), and `is` inside it is not translated to a verb.
+      expect(result).toContain("keyup[key is 'Escape']");
+    });
+
     it('should mask inline js bodies from word-order reordering', () => {
       // The raw JS body must stay verbatim and immediately after the (translated)
       // `js` keyword — never reordered ahead of the event like other roles.

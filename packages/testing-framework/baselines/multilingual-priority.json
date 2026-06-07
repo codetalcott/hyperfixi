@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-07T05:39:38.282Z",
-  "commit": "c9f4611",
+  "timestamp": "2026-06-07T05:53:16.278Z",
+  "commit": "8d8d274",
   "languages": {
     "ar": {
       "parseSuccess": 143,
       "parseFailure": 11,
       "parseRate": 0.9285714285714286,
       "avgConfidence": 0.9125077536842245,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -621,7 +621,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.83001443001443,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1246,7 +1246,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9374935159248873,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1870,7 +1870,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2495,7 +2495,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3119,7 +3119,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3743,7 +3743,7 @@
       "parseFailure": 5,
       "parseRate": 0.9675324675324676,
       "avgConfidence": 0.8446361989986156,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4363,7 +4363,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 1,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4987,7 +4987,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5611,7 +5611,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9976296296296296,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6232,7 +6232,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8274094823114431,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6856,7 +6856,7 @@
       "parseFailure": 7,
       "parseRate": 0.9545454545454546,
       "avgConfidence": 0.5566137566137567,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7474,7 +7474,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9988455988455989,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -8099,7 +8099,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.8352592592592598,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -8719,21 +8719,9 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.838198983297023,
-      "bundleSize": 396996,
+      "avgConfidence": 0.8312273057371102,
+      "bundleSize": 397297,
       "patterns": {
-        "blur-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "modal-close-escape": {
-          "success": true,
-          "confidence": 1
-        },
-        "window-keydown": {
-          "success": true,
-          "confidence": 1
-        },
         "window-resize": {
           "success": true,
           "confidence": 1
@@ -8742,15 +8730,7 @@
           "success": true,
           "confidence": 1
         },
-        "event-key-combo": {
-          "success": true,
-          "confidence": 1
-        },
         "announce-screen-reader": {
-          "success": true,
-          "confidence": 1
-        },
-        "focus-trap": {
           "success": true,
           "confidence": 1
         },
@@ -8763,10 +8743,6 @@
           "confidence": 1
         },
         "on-custom-event-receive": {
-          "success": true,
-          "confidence": 1
-        },
-        "keydown-key-is-syntax": {
           "success": true,
           "confidence": 1
         },
@@ -8978,6 +8954,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "blur-element": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "log-value": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9034,6 +9014,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "modal-close-escape": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "modal-close-backdrop": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9075,6 +9059,10 @@
           "confidence": 0.8222222222222222
         },
         "form-disable-on-submit": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "window-keydown": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9146,6 +9134,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "event-key-combo": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "fetch-loading-state": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9195,6 +9187,10 @@
           "confidence": 0.8222222222222222
         },
         "toggle-aria-expanded": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "focus-trap": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -9286,6 +9282,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "keydown-key-is-syntax": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "breakpoint-command": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -9344,7 +9344,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.7133333333333334,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -9965,7 +9965,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8860441146155434,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10586,11 +10586,11 @@
       }
     },
     "sw": {
-      "parseSuccess": 147,
-      "parseFailure": 7,
-      "parseRate": 0.9545454545454546,
-      "avgConfidence": 0.8768383543893751,
-      "bundleSize": 396996,
+      "parseSuccess": 150,
+      "parseFailure": 4,
+      "parseRate": 0.974025974025974,
+      "avgConfidence": 0.8821904761904765,
+      "bundleSize": 397297,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11056,6 +11056,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "blur-element": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "default-value": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -11072,7 +11076,15 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "modal-close-escape": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "input-clear": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "window-keydown": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -11112,6 +11124,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "event-key-combo": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "unless-condition": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -11120,11 +11136,19 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "focus-trap": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
         "make-toast-element": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "keydown-key-is-syntax": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -11140,18 +11164,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "blur-element": {
-          "success": false
-        },
-        "modal-close-escape": {
-          "success": true,
-          "confidence": 0.5
-        },
         "input-validation": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "window-keydown": {
           "success": true,
           "confidence": 0.5
         },
@@ -11163,18 +11176,11 @@
           "success": true,
           "confidence": 0.5
         },
-        "event-key-combo": {
-          "success": true,
-          "confidence": 0.5
-        },
         "if-empty": {
           "success": true,
           "confidence": 0.5
         },
         "announce-screen-reader": {
-          "success": false
-        },
-        "focus-trap": {
           "success": false
         },
         "method-call-possessive-dot": {
@@ -11183,9 +11189,6 @@
         "socket-basic": {
           "success": true,
           "confidence": 0.5
-        },
-        "keydown-key-is-syntax": {
-          "success": false
         },
         "behavior-removable": {
           "success": false
@@ -11208,7 +11211,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.940960626674911,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11833,7 +11836,7 @@
       "parseFailure": 16,
       "parseRate": 0.8961038961038961,
       "avgConfidence": 0.8835383428733814,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -12442,7 +12445,7 @@
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
       "avgConfidence": 0.8299484915378955,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13064,7 +13067,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8845598845598848,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -13689,7 +13692,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8894248608534325,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -14314,7 +14317,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9988148148148148,
-      "bundleSize": 396996,
+      "bundleSize": 397297,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -14933,7 +14936,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 396996,
+      "size": 397297,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

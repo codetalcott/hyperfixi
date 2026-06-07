@@ -114,6 +114,33 @@ side rather than "fixing" the transformer.
   handled with the Phase 5 behavior work). Locked in by a grammar.test.ts case.
 - Correct output, e.g. ja: `クリック で JS実行 console.log("from js") 終わり`.
 
+### Phase 3a — event guards + English DOM event passthrough
+
+- **3 instances, 0 regressions, avg 98.05% → 98.13%.** sw `blur-element`,
+  `focus-trap`, `keydown-key-is-syntax`.
+- **Two coordinated fixes:**
+  1. **i18n transformer** — the tokenizer split event guards on internal spaces
+     (`keyup[key is 'Escape']` → `keyup[key` / `is` / `'Escape']`, mis-reading
+     `is` as the action verb), and `translateMultiWordValue` translated keywords
+     _inside_ `[...]` (`is` → sw `ni`). Made `tokenize()` bracket-aware and mask
+     `[...]` guard spans from translation (verbatim, private-use sentinels).
+  2. **framework base tokenizer** — registered the standard English DOM event
+     names (`keyup`/`keydown`/`resize`/…) as universal `!has`-guarded fallbacks in
+     `initializeKeywordsFromProfile`. The transformer passes these through
+     verbatim (no native dictionary form), so non-English token streams treated
+     them as bare identifiers and guarded handlers failed. Generalizes the
+     per-language Hebrew registration from #272 to all 24 languages at once.
+- **Verified safe:** full semantic suite (5260 pass; only the environmental
+  `build-artifacts` `.d.ts` checks fail) and all 759 framework tests pass.
+- **Remaining Phase 3 (deferred — genuinely deep, heterogeneous):**
+  `event-key-combo` (ja/ko/qu/tr) and `repeat-until-event` (hi) need
+  **event-handler-body block masking** (`if…end` / `repeat…end` inside a handler
+  reorder into the role soup); `window-resize` (qu/tr) needs **event-modifier**
+  handling (`from window debounced at 200ms`); `multiple-events` (ar) needs
+  **`or`-conjoined events** in VSO; `on-custom-event-receive` (ko/qu) needs
+  custom-event + `put…into me` reorder; `focus-trap` (tr) needs the body-block
+  work too. Each is a separate transformer enhancement, not a shared fix.
+
 ---
 
 ## Remaining work
