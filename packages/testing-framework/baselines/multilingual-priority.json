@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-07T17:20:18.817Z",
-  "commit": "5dc3d86",
+  "timestamp": "2026-06-07T18:10:59.659Z",
+  "commit": "9b34d38",
   "languages": {
     "ar": {
       "parseSuccess": 150,
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
-      "avgConfidence": 0.9186778711484593,
-      "bundleSize": 399097,
+      "avgConfidence": 0.9253445378151258,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -221,6 +221,10 @@
           "success": true,
           "confidence": 1
         },
+        "window-keydown": {
+          "success": true,
+          "confidence": 1
+        },
         "window-resize": {
           "success": true,
           "confidence": 1
@@ -286,6 +290,10 @@
           "confidence": 1
         },
         "toggle-aria-expanded": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
           "success": true,
           "confidence": 1
         },
@@ -564,10 +572,6 @@
         "form-disable-on-submit": {
           "success": false
         },
-        "window-keydown": {
-          "success": true,
-          "confidence": 0.5
-        },
         "window-scroll": {
           "success": true,
           "confidence": 0.5
@@ -590,10 +594,6 @@
         },
         "unless-condition": {
           "success": false
-        },
-        "announce-screen-reader": {
-          "success": true,
-          "confidence": 0.5
         },
         "socket-basic": {
           "success": true,
@@ -627,8 +627,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8722222222222222,
-      "bundleSize": 399097,
+      "avgConfidence": 0.8754689754689755,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -950,6 +950,10 @@
           "success": true,
           "confidence": 1
         },
+        "announce-screen-reader": {
+          "success": true,
+          "confidence": 1
+        },
         "set-text-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -1182,10 +1186,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "announce-screen-reader": {
-          "success": true,
-          "confidence": 0.5
-        },
         "focus-trap": {
           "success": true,
           "confidence": 0.5
@@ -1253,7 +1253,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9367465504720396,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1877,7 +1877,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2502,7 +2502,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3126,7 +3126,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3746,11 +3746,11 @@
       }
     },
     "he": {
-      "parseSuccess": 149,
-      "parseFailure": 5,
-      "parseRate": 0.9675324675324676,
-      "avgConfidence": 0.8500053265153942,
-      "bundleSize": 399097,
+      "parseSuccess": 150,
+      "parseFailure": 4,
+      "parseRate": 0.974025974025974,
+      "avgConfidence": 0.8510052910052915,
+      "bundleSize": 399599,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -3761,6 +3761,10 @@
           "confidence": 1
         },
         "input-mirror": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
           "success": true,
           "confidence": 1
         },
@@ -4348,9 +4352,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "announce-screen-reader": {
-          "success": false
-        },
         "behavior-removable": {
           "success": false
         },
@@ -4370,7 +4371,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4995,7 +4996,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5619,7 +5620,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9976296296296296,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6239,8 +6240,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8410533910533909,
-      "bundleSize": 399097,
+      "avgConfidence": 0.8443001443001442,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6526,6 +6527,10 @@
           "success": true,
           "confidence": 1
         },
+        "announce-screen-reader": {
+          "success": true,
+          "confidence": 1
+        },
         "set-text-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -6790,10 +6795,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "announce-screen-reader": {
-          "success": true,
-          "confidence": 0.5
-        },
         "focus-trap": {
           "success": true,
           "confidence": 0.5
@@ -6865,7 +6866,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.5687726942628903,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7489,7 +7490,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9988455988455989,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -8114,7 +8115,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.8352592592592598,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -8735,7 +8736,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8312273057371102,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "window-resize": {
           "success": true,
@@ -9359,7 +9360,7 @@
       "parseFailure": 2,
       "parseRate": 0.987012987012987,
       "avgConfidence": 0.735672514619883,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -9981,8 +9982,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8871985157699446,
-      "bundleSize": 399097,
+      "avgConfidence": 0.8883529169243457,
+      "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10025,6 +10026,10 @@
           "confidence": 1
         },
         "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
           "success": true,
           "confidence": 1
         },
@@ -10537,10 +10542,6 @@
           "confidence": 0.8222222222222222
         },
         "computed-value": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "announce-screen-reader": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -10603,11 +10604,11 @@
       }
     },
     "sw": {
-      "parseSuccess": 151,
-      "parseFailure": 3,
-      "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.8849048670240726,
-      "bundleSize": 399097,
+      "parseSuccess": 152,
+      "parseFailure": 2,
+      "parseRate": 0.987012987012987,
+      "avgConfidence": 0.8856620718462827,
+      "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10678,6 +10679,10 @@
           "confidence": 1
         },
         "computed-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
           "success": true,
           "confidence": 1
         },
@@ -11201,9 +11206,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "announce-screen-reader": {
-          "success": false
-        },
         "socket-basic": {
           "success": true,
           "confidence": 0.5
@@ -11229,7 +11231,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9402185116470816,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11853,8 +11855,8 @@
       "parseSuccess": 151,
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.8932204228269676,
-      "bundleSize": 399097,
+      "avgConfidence": 0.896531681105113,
+      "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -12009,6 +12011,10 @@
           "confidence": 1
         },
         "computed-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
           "success": true,
           "confidence": 1
         },
@@ -12450,10 +12456,6 @@
         "unless-condition": {
           "success": false
         },
-        "announce-screen-reader": {
-          "success": true,
-          "confidence": 0.5
-        },
         "eventsource-basic": {
           "success": true,
           "confidence": 0.5
@@ -12475,8 +12477,8 @@
       "parseSuccess": 152,
       "parseFailure": 2,
       "parseRate": 0.987012987012987,
-      "avgConfidence": 0.8639619883040935,
-      "bundleSize": 399097,
+      "avgConfidence": 0.867251461988304,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -12786,6 +12788,10 @@
           "success": true,
           "confidence": 1
         },
+        "announce-screen-reader": {
+          "success": true,
+          "confidence": 1
+        },
         "set-text-possessive-dot": {
           "success": true,
           "confidence": 1
@@ -13022,10 +13028,6 @@
           "confidence": 0.5
         },
         "computed-value": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "announce-screen-reader": {
           "success": true,
           "confidence": 0.5
         },
@@ -13098,8 +13100,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8864564007421153,
-      "bundleSize": 399097,
+      "avgConfidence": 0.8876108018965165,
+      "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -13142,6 +13144,10 @@
           "confidence": 1
         },
         "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
           "success": true,
           "confidence": 1
         },
@@ -13650,10 +13656,6 @@
           "confidence": 0.8222222222222222
         },
         "computed-value": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "announce-screen-reader": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -13723,8 +13725,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8894248608534325,
-      "bundleSize": 399097,
+      "avgConfidence": 0.8917336631622349,
+      "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -13775,6 +13777,14 @@
           "confidence": 1
         },
         "fade-out-remove": {
+          "success": true,
+          "confidence": 1
+        },
+        "announce-screen-reader": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -14274,10 +14284,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "announce-screen-reader": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "focus-trap": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -14287,10 +14293,6 @@
           "confidence": 0.8222222222222222
         },
         "set-inner-html-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-value-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -14349,7 +14351,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9988148148148148,
-      "bundleSize": 399097,
+      "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -14968,7 +14970,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 399097,
+      "size": 399599,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

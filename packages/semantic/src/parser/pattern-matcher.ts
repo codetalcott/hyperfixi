@@ -394,6 +394,31 @@ export class PatternMatcher {
   ]);
 
   /**
+   * Reference bases that can lead a fused-dot property access (`it.value`,
+   * `event.detail.message`, `my.innerHTML`). Command verbs are deliberately
+   * excluded so `<verb> .class` (toggle .active) is never read as a property
+   * path. The corpus uses the English reference forms (they pass through the
+   * transformer verbatim); plain identifiers are handled separately.
+   */
+  private static readonly PROPERTY_ACCESS_BASES = new Set([
+    'it',
+    'me',
+    'you',
+    'my',
+    'its',
+    'your',
+    'event',
+    'result',
+    'target',
+    'detail',
+    'body',
+    'window',
+    'document',
+    'self',
+    'this',
+  ]);
+
+  /**
    * Try to match a positional query expression:
    *   <positional> <selector> [<in/from-marker> <source-selector>]
    * e.g. "last <.message/> in #chat", "first <button/> in .modal", "آخر <.message/> في #chat".
@@ -742,6 +767,37 @@ export class PatternMatcher {
     // Look ahead for: . identifier
     const mark = tokens.mark();
     tokens.advance(); // consume first token
+
+    // Fused-dot form: the tokenizer emits `it.value` / `event.detail.message` as
+    // a base token + `.`-prefixed *selector* tokens (`.value`, `.detail`), since
+    // `.foo` looks like a class selector. Fold a chain of those into the property
+    // path (the `.` operator path below handles the rare un-fused form).
+    //
+    // Gated to identifiers and known reference bases so a command verb followed
+    // by a class selector (`بدل .active` = "toggle .active") is never swallowed as
+    // a property access — command verbs are never reference bases.
+    const baseLower = token.value.toLowerCase();
+    const fusedFirst = tokens.peek();
+    if (
+      (token.kind === 'identifier' || PatternMatcher.PROPERTY_ACCESS_BASES.has(baseLower)) &&
+      fusedFirst &&
+      fusedFirst.kind === 'selector' &&
+      /^\.[a-zA-Z_]/.test(fusedFirst.value)
+    ) {
+      let fusedChain = token.value;
+      let fusedDepth = 0;
+      while (fusedDepth < PatternMatcher.MAX_PROPERTY_DEPTH) {
+        const prop = tokens.peek();
+        if (prop && prop.kind === 'selector' && /^\.[a-zA-Z_]/.test(prop.value)) {
+          fusedChain += `.${prop.value.slice(1)}`;
+          tokens.advance();
+          fusedDepth++;
+        } else {
+          break;
+        }
+      }
+      return { type: 'expression', raw: fusedChain } as SemanticValue;
+    }
 
     const dotToken = tokens.peek();
     if (!dotToken || dotToken.kind !== 'operator' || dotToken.value !== '.') {
