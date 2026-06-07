@@ -115,6 +115,16 @@ export class TurkishKeywordExtractor implements ContextAwareExtractor {
     for (let len = Math.min(maxKeywordLen, input.length - startPos); len >= 2; len--) {
       const candidate = input.slice(startPos, startPos + len);
 
+      // Word-boundary guard: a marker/keyword is only a real token when it ends
+      // at a word boundary. If the next character continues the word, this
+      // candidate is just a prefix of a longer content word (e.g. `de` in
+      // `değer`, `te` in `textContent`) — skip it so the whole word is kept.
+      // Turkish markers arrive space-delimited, so a mid-word match is always
+      // spurious.
+      if (startPos + len < input.length && isTurkishLetter(input[startPos + len])) {
+        continue;
+      }
+
       // Check all chars are Turkish
       let allTurkish = true;
       for (let i = 0; i < candidate.length; i++) {
@@ -169,8 +179,11 @@ export class TurkishKeywordExtractor implements ContextAwareExtractor {
       pos++;
     }
 
-    // Now try to find the longest matching keyword from what we extracted
+    // Now try to match the extracted word as a keyword. Only a full-word match
+    // counts: a shorter prefix would be a mid-word marker match (e.g. `de` in
+    // `değer`), the same spurious fragmentation guarded against above.
     for (let len = word.length; len >= 2; len--) {
+      if (len < word.length) break;
       const candidate = word.substring(0, len);
       const keywordEntry = this.context.lookupKeyword(candidate);
       if (keywordEntry) {

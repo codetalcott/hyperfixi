@@ -36,7 +36,11 @@ export const turkishProfile: LanguageProfile = {
     body: 'gövde',
   },
   possessive: {
-    marker: '', // Turkish uses genitive suffix -in/-ın + possessive suffix
+    // Genitive suffix, spaced for tokenization like Turkish's other case
+    // markers (i/e/de). i18n renders `#picker ın değer`; the parser matches
+    // `ın` as the possessive marker. Vowel-harmony variants (in/un/ün) are not
+    // distinguished — the generator emits the `ın` form for all owners.
+    marker: 'ın',
     markerPosition: 'after-object',
     usePossessiveAdjectives: true,
     specialForms: {

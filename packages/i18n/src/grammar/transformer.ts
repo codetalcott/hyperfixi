@@ -1033,7 +1033,9 @@ const POSSESSIVE_MARKERS: Record<
   ko: { type: 'suffix', marker: '의' },
   zh: { type: 'suffix', marker: '的' },
   ar: { type: 'preposition', marker: 'لـ' },
-  tr: { type: 'suffix', marker: "'ın" },
+  // Spaced genitive particle (not the glued `'ın`), so the tokenizer can split
+  // it off the selector — consistent with Turkish's other spaced case markers.
+  tr: { type: 'particle', marker: 'ın' },
   id: { type: 'preposition', marker: 'dari' },
   // Latin-script genitive: must be a *spaced* particle (`#picker pa`), since a
   // glued `#pickerpa` can't be split from the selector by the tokenizer the
