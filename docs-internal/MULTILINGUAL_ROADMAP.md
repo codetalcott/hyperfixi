@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after trailing-event block-wrap (`unless-condition` ar+tl). Custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after @attr-in-selector-role (`form-disable-on-submit` ar+tl). Trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -15,24 +15,23 @@ Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 (generated with `--bundle browser-priority`). Cross-language average **99.05%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
 batch + Tier 1 + property-path patient + custom-event SOV + trailing-event
-block-wrap: +64 instances). **29 failing pattern-instances** remain (24 are
-Bucket B behaviors).
+block-wrap + @attr-in-selector-role: +66 instances). **27 failing
+pattern-instances** remain (24 are Bucket B behaviors).
 
 | Rate   | Languages                                              |
 | ------ | ------------------------------------------------------ |
 | 100%   | en, bn, hi, ja, ko, ms, qu, ru, th, uk, vi             |
-| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4), tl (98.7) |
-| 96–98% | it/pl/zh (97.4), ar (98.1), he (97.4)                  |
+| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4), tl (99.4) |
+| 96–98% | it/pl/zh (97.4), ar (98.7), he (97.4)                  |
 
-**5 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
+**3 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
 
-| Track                         | Instances | Nature                                                                                |
-| ----------------------------- | --------- | ------------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)      |
-| **Deep per-language grammar** | 5         | compound/`in me` splits, caret destination reorder, event-modifier + VSO source-block |
+| Track                         | Instances | Nature                                                                           |
+| ----------------------------- | --------- | -------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
+| **Deep per-language grammar** | 3         | caret destination reorder (ar+tl), event-modifier + VSO source-block (tr)        |
 
-The 5 non-behavior remainders: `form-disable-on-submit`, `caret-var-on-target`
-(each **ar+tl**); `focus-trap` (tr).
+The 3 non-behavior remainders: `caret-var-on-target` (**ar+tl**); `focus-trap` (tr).
 
 > **Custom-event SOV cleared `on-custom-event-receive` (ko+qu) and, as a side
 > effect, `window-resize` (qu+tr).** The SOV event extractor now accepts a bare
@@ -51,6 +50,36 @@ The 5 non-behavior remainders: `form-disable-on-submit`, `caret-var-on-target`
 ---
 
 ## Shipped
+
+### `@attr` in selector roles — `form-disable-on-submit` ar+tl (+2)
+
+- **2 instances, 0 regressions, avg 99.05% (fix run vs committed baseline: exactly
+  ar/tl `form-disable-on-submit` flip `↑`, zero `↓`).** ar 98.1→98.7, tl 98.7→99.4.
+- **Root cause.** `@disabled` tokenizes with kind **`identifier`**, not `selector`
+  — and that kind is **load-bearing**: roles like bind's `@property`
+  (expectedTypes `['reference','expression']`) rely on the identifier reading.
+  Phase 1 kept `@attr`/`*style` as one token (fixing the `set` family) but left
+  the kind as `identifier`, so `add`/`remove`/`toggle`, whose patient is
+  `expectedTypes: ['selector']`, reject it: `add @disabled` failed outright (and
+  `toggle @disabled` only "passed" via a permissive hand pattern that captured
+  nothing). That bad `add @disabled` clause gated the whole form-disable body.
+- **Fix.** In `matchRoleToken` (`pattern-matcher.ts`), when the candidate token is
+  an `@`-prefixed `identifier` **and the role explicitly expects a `selector`**,
+  convert it to an attribute selector. Gated on `expectedTypes.includes('selector')`
+  so non-selector `@`-roles (bind's `@property`, etc.) are untouched. Combined with
+  the trailing-event wrapper (below), the ar/tl form-disable body now parses.
+- **A global token-kind reclassification was tried first and rejected** — making
+  `@attr` a `selector` kind everywhere regressed 43 patterns (bind/js-inline/when/
+  live/transition families read `@x` as a non-selector). The role-gated value
+  conversion is the surgical version: provably additive (the new branch only fires
+  for `@`-identifiers in selector roles; every other input hits byte-identical
+  code), confirmed by an A/B probe (same DB, build toggled — flips only form-disable).
+- **Methodology note.** The committed baseline can disagree with a fresh-DB harness
+  run by tens of patterns (a flaky undercount surfaced here at 3624 vs 3669). Trust
+  a controlled A/B probe over a single full-suite run; verify regressions against
+  the committed baseline. Locked by `multilingual-roadmap-fixes.test.ts`
+  (`add @disabled`, `remove @disabled`, a bind non-regression guard, and the ar/tl
+  form-disable bodies).
 
 ### Trailing-event block-wrap — `unless-condition` ar+tl (+2)
 
@@ -107,27 +136,30 @@ The 5 non-behavior remainders: `form-disable-on-submit`, `caret-var-on-target`
   the 클릭 control, and a guard that a plain command body never becomes a phantom
   event handler).
 
-### Investigated, deferred — `caret-var` / `form-disable` (ar+tl)
+### Investigated, deferred — `caret-var` (ar+tl), `focus-trap` (tr)
 
-> `unless-condition` (ar+tl) graduated from this section — see Shipped →
-> "Trailing-event block-wrap". The generic trailing-event wrapper built there is
-> the reusable lever `focus-trap` (tr) will also need (event-at-end + block body),
-> once paired with a `from <source>` clause and a `<selector> in <scope>` matcher.
+> `unless-condition` (ar+tl) and `form-disable-on-submit` (ar+tl) graduated from
+> this section — see Shipped → "Trailing-event block-wrap" and "@attr in selector
+> roles". The `<selector> in <scope>` matcher once scoped here turned out **not**
+> to be the form-disable blocker (`in me` was already tolerated; the real gate was
+> `@attr` patient classification), and `focus-trap`'s positional `<sel> in <scope>`
+> already parses in command context (`focus first <button/> in .modal` → OK). The
+> reusable trailing-event wrapper is the lever `focus-trap` still needs.
 
 Probed faithfully (DB-stored translation → `parseSemantic`) and confirmed each needs
-deep, multi-session work; the only achievable result is a hollow / mangled parse, so
-they were **not** landed (avoids inflating the non-null metric with empty matches):
+deep transformer work — the achievable semantic-side result is a mangled parse, so
+they were **not** landed:
 
 - **`caret-var-on-target` (ar+tl).** The i18n transformer mangles
   `put ^count on #host into me` → ar `ضع ^count عند نقر ثم في أنا عند #host` (spurious
   `then` inserted, `on #host` scope split to the end, the event stranded mid-stream).
   Needs transformer reorder surgery for the `^var on <elt> into me` scoped-destination
   shape before the semantic side can see anything parseable.
-- **`form-disable-on-submit` (ar+tl).** Compound (`add … <button/> in me  put "…" into
-<button/> in me`). The masked string literal defeats the transformer's compound split,
-  so the second clause stays fully English (`put "…" into <button/> in me`); separately,
-  `<button/> in me` (scoped query selector) isn't matched as one target. Needs both a
-  compound-split fix (mask-aware) and a `<selector> in <scope>` matcher.
+- **`focus-trap` (tr).** The i18n transformer mangles the event-block-with-source
+  `on keydown[key=="Tab"] from .modal if … end` into a scrambled token stream
+  (mixed untranslated `in`/`focus`/`first`, Turkish `içinde`/`eğer`/`durdur`, wrong
+  order). Needs the trailing-event wrapper (shipped) extended with a `from <source>`
+  clause plus transformer support for the SOV reorder of an event-block-with-source.
 
 ### Property-path patient — fused-dot member access (+2)
 

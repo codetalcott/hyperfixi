@@ -113,3 +113,36 @@ describe('Trailing event clause wraps a block body (unless-condition, ar+tl)', (
     expect(parse('بدل .selected', 'ar').action).toBe('toggle');
   });
 });
+
+describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)', () => {
+  // `@disabled` tokenizes with kind `identifier` (load-bearing — bind's
+  // `@property` relies on the identifier reading, expectedTypes
+  // ['reference','expression']). When a role explicitly expects a `selector`
+  // (add/remove/toggle patient), an `@`-identifier is an attribute selector and
+  // is now accepted. This clears `add @disabled to <button/>`, which gated the
+  // form-disable-on-submit body. See docs-internal/MULTILINGUAL_ROADMAP.md.
+  it('parses `add @disabled to <button/>` (attribute patient)', () => {
+    expect(canParse('add @disabled to <button/>', 'en')).toBe(true);
+    expect(parse('add @disabled to <button/>', 'en').action).toBe('add');
+  });
+
+  it('parses `remove @disabled from me`', () => {
+    expect(parse('remove @disabled from me', 'en').action).toBe('remove');
+  });
+
+  it('does not change bind, whose @property is a non-selector role', () => {
+    // bind's destination is expectedTypes ['reference','expression'] — the @attr
+    // conversion is gated to selector-expecting roles, so bind is untouched.
+    expect(parse('$color を #pickerの 値 に バインド', 'ja').action).toBe('bind');
+  });
+
+  const formDisable: Array<[string, string]> = [
+    ['ar', 'أضف @disabled إلى <button/> in me put "Submitting..." into <button/> in me عند إرسال'],
+    ['tl', 'idagdag @disabled sa <button/> in me put "Submitting..." into <button/> in me kapag submit'],
+  ];
+  for (const [lang, input] of formDisable) {
+    it(`[${lang}] parses the form-disable-on-submit body`, () => {
+      expect(parse(input, lang).action).toBe('on');
+    });
+  }
+});

@@ -363,6 +363,23 @@ export class PatternMatcher {
       return true;
     }
 
+    // Attribute selectors (`@attr`) tokenize with kind `identifier`, not
+    // `selector` — and that kind is load-bearing: roles like bind's `@property`
+    // (expectedTypes ['reference','expression']) rely on the identifier reading.
+    // But when a role *explicitly expects a selector* (e.g. add/remove/toggle's
+    // patient), an `@`-identifier is an attribute selector — so convert it here,
+    // gated on the role opting into `selector`. This lets `add @disabled to
+    // <button/>` fill its patient without disturbing the non-selector @-roles.
+    if (
+      token.kind === 'identifier' &&
+      token.value.startsWith('@') &&
+      patternToken.expectedTypes?.includes('selector')
+    ) {
+      captured.set(patternToken.role, createSelector(token.value));
+      tokens.advance();
+      return true;
+    }
+
     // Try to extract a semantic value from the token
     const value = this.tokenToSemanticValue(token);
     if (!value) {
