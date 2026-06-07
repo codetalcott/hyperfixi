@@ -1103,7 +1103,9 @@ export class SemanticParserImpl implements ISemanticParser {
     // body's command verb for marker-less Korean. The body re-parse further
     // below is the final guard — a wrong match yields no parseable body.
     if (eventIndex === -1) {
-      const commandActions = new Set(patterns.filter(p => p.command !== 'on').map(p => p.command));
+      const commandActions = new Set<string>(
+        patterns.filter(p => p.command !== 'on').map(p => p.command)
+      );
       for (let i = 0; i < allTokens.length; i++) {
         const token = allTokens[i];
         if (token.kind !== 'identifier') continue;
