@@ -3,10 +3,10 @@
   "commit": "9b34d38",
   "languages": {
     "ar": {
-      "parseSuccess": 151,
-      "parseFailure": 3,
-      "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.9258389448494627,
+      "parseSuccess": 152,
+      "parseFailure": 2,
+      "parseRate": 0.987012987012987,
+      "avgConfidence": 0.9263268465280847,
       "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
@@ -570,7 +570,8 @@
           "confidence": 0.5
         },
         "form-disable-on-submit": {
-          "success": false
+          "success": true,
+          "confidence": 1
         },
         "window-scroll": {
           "success": true,
@@ -11856,10 +11857,10 @@
       }
     },
     "tl": {
-      "parseSuccess": 152,
-      "parseFailure": 2,
-      "parseRate": 0.987012987012987,
-      "avgConfidence": 0.8972123937294215,
+      "parseSuccess": 153,
+      "parseFailure": 1,
+      "parseRate": 0.9935064935064936,
+      "avgConfidence": 0.8978842081494907,
       "bundleSize": 399599,
       "patterns": {
         "add-class-basic": {
@@ -12439,7 +12440,8 @@
           "confidence": 0.5
         },
         "form-disable-on-submit": {
-          "success": false
+          "success": true,
+          "confidence": 1
         },
         "window-scroll": {
           "success": true,
