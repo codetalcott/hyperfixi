@@ -5,30 +5,30 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Phases 1–4 (tokenizer token-split fixes + js/guard masking + English DOM events). Track 1 (reactive) complete._
+_Last updated: after Phases 1–4 + Track 4 method-call possessive-dot. Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **98.2%**
-(up from 97.5% before Phase 1; Phases 1, 2, 3a, 4 shipped: +26 instances).
+(generated with `--bundle browser-priority`). Cross-language average **98.3%**
+(up from 97.5% before Phase 1; Phases 1–4 + Track 4 method-call: +31 instances).
 
-| Rate         | Languages                                           |
-| ------------ | --------------------------------------------------- |
-| 100%         | en, bn, ms, ru, th, uk, vi                          |
-| 99.4%        | de, es, fr, hi, id, pt                              |
-| 97–99%       | ja (99.4), tr/zh (98.1), it/pl (97.4), he/qu (96.8) |
-| 95–96%       | sw (96.1), ko (95.5)                                |
-| **laggards** | **ar (93.5), tl (90.3)**                            |
+| Rate         | Languages                                              |
+| ------------ | ------------------------------------------------------ |
+| 100%         | en, bn, ms, ru, th, uk, vi                             |
+| 99.4%        | de, es, fr, hi, id, pt                                 |
+| 97–99%       | ja (99.4), tr/zh (98.1), it/pl/qu/zh (97.4), he (96.8) |
+| 95–96%       | sw (96.8), ko (95.5)                                   |
+| **laggards** | **ar (94.8), tl (91.6)**                               |
 
-**~50 failing pattern-instances** remain after Phases 1–4, in two tracks (Track 1 reactive done):
+**~45 failing pattern-instances** remain after Phases 1–4 + Track 4 method-call, in two tracks (Track 1 reactive done):
 
-| Track                         | Instances | Nature                                                                                 |
-| ----------------------------- | --------- | -------------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | ~26       | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)       |
-| **Deep per-language grammar** | ~24       | Heterogeneous transformer/parser gaps (method-calls, modifiers, reorder) — see Track 4 |
+| Track                         | Instances | Nature                                                                                |
+| ----------------------------- | --------- | ------------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | ~26       | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)      |
+| **Deep per-language grammar** | ~19       | Heterogeneous transformer/parser gaps (VSO event-at-end reorder, modifiers) — Track 4 |
 
 > **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
 > cleared `@`/`*`/`^`; Phase 3a the English DOM events). Every remaining
@@ -157,9 +157,15 @@ side rather than "fixing" the transformer.
 After Phases 1–4 the non-behavior failures left are all genuinely deep, each its
 own transformer/parser project (no shared lever remains):
 
-- **method-call / member-access** (`my.value.toUpperCase()`, `my.getAttribute(…)`;
-  ar/sw/tl) — the trailing `()` method call splits into `(`/`)` tokens and isn't
-  parsed; fails even in en via the raw semantic path. Needs method-call parsing.
+- **method-call / member-access — DONE (+5).** `my.value.toUpperCase()` /
+  `my.getAttribute("data-id")` (ar/sw/tl). The possessive-dot matcher
+  (`tryMatchPossessiveExpression`) expected the trailing call as a single `(...)`
+  token, but the tokenizer splits it into `(` / args / `)`. Changed it to consume
+  the call by balanced-paren count. The diagnostic detour: the bare semantic
+  `parse()` fails this even in en, but the harness wraps in an event handler
+  (`on input …`) whose body path parses it — so en passed all along and the fix
+  was purely making ar/sw/tl's possessive path consume the split parens. Locked by
+  possessive-value-fillers.test.ts.
 - **`transition-*` `over <dur>` modifier** (ko/tl) — `over 500ms` modifier is
   dropped/misplaced in word-order reorder.
 - **`scroll to last <sel> in …`** (last-in-collection; ar/tl) — `scroll to` +

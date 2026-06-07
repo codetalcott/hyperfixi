@@ -429,12 +429,28 @@ export class PatternMatcher {
         tokens.advance();
       }
 
-      // Check for method call — next token is '(' in the value (e.g., .getAttribute("data-id"))
-      const nextPeek = tokens.peek();
-      if (nextPeek?.kind === 'literal' && nextPeek.value.startsWith('(')) {
-        // Consume method args
-        chainedProps += nextPeek.value;
-        tokens.advance();
+      // Check for a trailing method call: chain + '(' [args...] ')'
+      // (e.g., my.value.toUpperCase(), my.getAttribute("data-id")). The tokenizer
+      // may emit the call as one token (`("data-id")`) or split it into `(` / args
+      // / `)` (kinds vary: identifier/punctuation/literal), so consume by value
+      // until the parentheses balance rather than relying on a single-token form.
+      const afterChain = tokens.peek();
+      if (afterChain && afterChain.value.startsWith('(')) {
+        let call = '';
+        let depth = 0;
+        let guard = 0;
+        while (!tokens.isAtEnd() && guard++ < PatternMatcher.MAX_METHOD_ARGS + 2) {
+          const t = tokens.peek();
+          if (!t) break;
+          call += t.value;
+          tokens.advance();
+          for (const ch of t.value) {
+            if (ch === '(') depth++;
+            else if (ch === ')') depth--;
+          }
+          if (depth <= 0) break;
+        }
+        chainedProps += call;
       }
 
       // Create property-path: my value -> { object: me, property: 'value' }

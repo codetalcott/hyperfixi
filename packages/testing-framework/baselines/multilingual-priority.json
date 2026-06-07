@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-07T06:05:38.263Z",
-  "commit": "9863a5d",
+  "timestamp": "2026-06-07T08:32:30.941Z",
+  "commit": "5c20e90",
   "languages": {
     "ar": {
-      "parseSuccess": 144,
-      "parseFailure": 10,
-      "parseRate": 0.935064935064935,
-      "avgConfidence": 0.9133082399626519,
-      "bundleSize": 397306,
+      "parseSuccess": 146,
+      "parseFailure": 8,
+      "parseRate": 0.948051948051948,
+      "avgConfidence": 0.9144957983193279,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -305,11 +305,19 @@
           "success": true,
           "confidence": 1
         },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
         "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -583,12 +591,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "method-call-possessive-dot": {
-          "success": false
-        },
-        "get-attribute-possessive-dot": {
-          "success": false
-        },
         "socket-basic": {
           "success": true,
           "confidence": 0.5
@@ -621,8 +623,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8397546897546898,
-      "bundleSize": 397306,
+      "avgConfidence": 0.8462481962481962,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -924,7 +926,15 @@
           "success": true,
           "confidence": 1
         },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -1176,15 +1186,7 @@
           "success": true,
           "confidence": 0.5
         },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
         "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.5
         },
@@ -1247,7 +1249,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9374935159248873,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1871,7 +1873,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2496,7 +2498,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3120,7 +3122,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3743,8 +3745,8 @@
       "parseSuccess": 149,
       "parseFailure": 5,
       "parseRate": 0.9675324675324676,
-      "avgConfidence": 0.8446361989986156,
-      "bundleSize": 397306,
+      "avgConfidence": 0.8470224778949617,
+      "bundleSize": 397443,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -3759,6 +3761,14 @@
           "confidence": 1
         },
         "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -4230,19 +4240,11 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "chained-access-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
         "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -4364,7 +4366,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 1,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4988,7 +4990,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5612,7 +5614,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9976296296296296,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6232,8 +6234,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8339454300238615,
-      "bundleSize": 397306,
+      "avgConfidence": 0.8404813777362797,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6523,7 +6525,15 @@
           "success": true,
           "confidence": 1
         },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -6782,15 +6792,7 @@
           "success": true,
           "confidence": 0.5
         },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
         "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.5
         },
@@ -6857,7 +6859,7 @@
       "parseFailure": 7,
       "parseRate": 0.9545454545454546,
       "avgConfidence": 0.5600151171579743,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7475,7 +7477,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9988455988455989,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -8100,7 +8102,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.8352592592592598,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -8721,7 +8723,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8312273057371102,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "window-resize": {
           "success": true,
@@ -9345,7 +9347,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.7166666666666667,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -9965,8 +9967,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8860441146155434,
-      "bundleSize": 397306,
+      "avgConfidence": 0.8883529169243457,
+      "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10017,6 +10019,14 @@
           "confidence": 1
         },
         "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -10532,15 +10542,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "chained-access-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -10587,11 +10589,11 @@
       }
     },
     "sw": {
-      "parseSuccess": 150,
-      "parseFailure": 4,
-      "parseRate": 0.974025974025974,
-      "avgConfidence": 0.8833756613756617,
-      "bundleSize": 397306,
+      "parseSuccess": 151,
+      "parseFailure": 3,
+      "parseRate": 0.9805194805194806,
+      "avgConfidence": 0.8853253442657419,
+      "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -10677,7 +10679,15 @@
           "success": true,
           "confidence": 1
         },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -11145,10 +11155,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "get-attribute-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "make-toast-element": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -11184,9 +11190,6 @@
         "announce-screen-reader": {
           "success": false
         },
-        "method-call-possessive-dot": {
-          "success": false
-        },
         "socket-basic": {
           "success": true,
           "confidence": 0.5
@@ -11212,7 +11215,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.940960626674911,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11833,11 +11836,11 @@
       }
     },
     "tl": {
-      "parseSuccess": 139,
-      "parseFailure": 15,
-      "parseRate": 0.9025974025974026,
-      "avgConfidence": 0.8848329739569691,
-      "bundleSize": 397306,
+      "parseSuccess": 141,
+      "parseFailure": 13,
+      "parseRate": 0.9155844155844156,
+      "avgConfidence": 0.8864665487944589,
+      "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11995,11 +11998,19 @@
           "success": true,
           "confidence": 1
         },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "chained-access-possessive-dot": {
           "success": true,
           "confidence": 1
         },
         "optional-chaining-possessive": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -12419,12 +12430,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "method-call-possessive-dot": {
-          "success": false
-        },
-        "get-attribute-possessive-dot": {
-          "success": false
-        },
         "eventsource-basic": {
           "success": true,
           "confidence": 0.5
@@ -12446,8 +12451,8 @@
       "parseSuccess": 151,
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.8365710080941869,
-      "bundleSize": 397306,
+      "avgConfidence": 0.8431935246504783,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -12741,7 +12746,15 @@
           "success": true,
           "confidence": 1
         },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
         "chained-access-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -12994,15 +13007,7 @@
         "focus-trap": {
           "success": false
         },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.5
-        },
         "optional-chaining-possessive": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.5
         },
@@ -13068,8 +13073,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8845598845598848,
-      "bundleSize": 397306,
+      "avgConfidence": 0.8868686868686871,
+      "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -13116,6 +13121,14 @@
           "confidence": 1
         },
         "get-value-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "method-call-possessive-dot": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 1
         },
@@ -13631,15 +13644,7 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "method-call-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
         "chained-access-possessive-dot": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "get-attribute-possessive-dot": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -13694,7 +13699,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8894248608534325,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -14319,7 +14324,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9988148148148148,
-      "bundleSize": 397306,
+      "bundleSize": 397443,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -14938,7 +14943,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 397306,
+      "size": 397443,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
