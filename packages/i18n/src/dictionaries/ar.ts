@@ -19,7 +19,10 @@ export const ar: Dictionary = {
     hide: 'اخف',
     show: 'اظهر',
     if: 'إذا',
-    unless: 'إلا إذا',
+    // Single-token form: the semantic ar tokenizer splits the two-word `إلا إذا`
+    // into `إلا` + `إذا`(if), which derails the `unless` block. `إلا` alone is the
+    // conventional Arabic shorthand and matches the ar profile's unless keyword.
+    unless: 'إلا',
     repeat: 'كرر',
     for: 'لكل',
     while: 'بينما',

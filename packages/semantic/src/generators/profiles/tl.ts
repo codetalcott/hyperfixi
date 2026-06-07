@@ -110,6 +110,7 @@ export const tagalogProfile: LanguageProfile = {
     settle: { primary: 'magpatahimik', normalized: 'settle' },
     // Control flow
     if: { primary: 'kung', normalized: 'if' },
+    unless: { primary: 'maliban_kung', normalized: 'unless' },
     when: { primary: 'tuwing', normalized: 'when' },
     where: { primary: 'kung_saan', normalized: 'where' },
     else: { primary: 'kung_hindi', alternatives: ['kundi'], normalized: 'else' },

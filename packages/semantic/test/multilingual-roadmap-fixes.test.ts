@@ -79,3 +79,37 @@ describe('Custom (non-keyword) event identifiers in SOV languages', () => {
     expect(parse('.active 를 토글', 'ko').action).toBe('toggle');
   });
 });
+
+describe('Trailing event clause wraps a block body (unless-condition, ar+tl)', () => {
+  // SVO/VSO transforms put the event clause last: `<body> عند <event>` /
+  // `<body> kapag <event>`. The per-command fused event patterns only cover
+  // simple bodies, so a block body (`unless <cond> toggle …`) used to degrade to
+  // a hollow standalone match. The trailing-event extractor now wraps it as a
+  // real `on` handler — en-parity: `on { unless(…) ; toggle(…) }`.
+  // See docs-internal/MULTILINGUAL_ROADMAP.md (unless-condition).
+  const cases: Array<[string, string]> = [
+    ['ar', 'إلا I match .disabled بدل .selected عند نقر'],
+    ['tl', 'maliban_kung I match .disabled palitan .selected kapag click'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] wraps the unless block as an event handler`, () => {
+      const node = parse(input, lang);
+      expect(node.action).toBe('on');
+      // Body must contain both the unless block and the toggle, not drop either.
+      const body = (node as { body?: unknown[] }).body ?? [];
+      expect(JSON.stringify(body)).toContain('unless');
+      expect(JSON.stringify(body)).toContain('toggle');
+    });
+  }
+
+  it('does not mistake a trailing destination selector for an event (ar)', () => {
+    // `بدل .active على #button` ends in `<on-marker> <selector>` — the trailing
+    // extractor must not treat `#button` as an event; it stays a toggle command.
+    expect(parse('بدل .active على #button', 'ar').action).toBe('toggle');
+  });
+
+  it('leaves a plain command unchanged (ar)', () => {
+    expect(parse('بدل .selected', 'ar').action).toBe('toggle');
+  });
+});
