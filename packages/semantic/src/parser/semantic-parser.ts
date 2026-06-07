@@ -1093,6 +1093,61 @@ export class SemanticParserImpl implements ISemanticParser {
       }
     }
 
+    // Second pass: custom (non-keyword) event identifiers, e.g. `on hello …`.
+    // Only runs when no built-in event keyword matched above. Custom events
+    // keep their untranslated source identifier (`hello`), so they surface as a
+    // bare `identifier` token rather than a normalized event keyword. To avoid
+    // mistaking a stray content identifier for an event, this is gated by the
+    // same structural cue the built-in path uses: the event-marker particle for
+    // marker languages (ja/tr/qu/bn), or being immediately followed by the
+    // body's command verb for marker-less Korean. The body re-parse further
+    // below is the final guard — a wrong match yields no parseable body.
+    if (eventIndex === -1) {
+      const commandActions = new Set(patterns.filter(p => p.command !== 'on').map(p => p.command));
+      for (let i = 0; i < allTokens.length; i++) {
+        const token = allTokens[i];
+        if (token.kind !== 'identifier') continue;
+
+        if (eventMarkers.size > 0) {
+          // Marker languages: the event-marker particle right after the
+          // identifier (modulo a bracket key-filter selector) confirms the role.
+          let markerOffset = 1;
+          const nextToken = allTokens[i + 1];
+          if (nextToken && nextToken.kind === 'selector' && nextToken.value.startsWith('[')) {
+            markerOffset = 2;
+          }
+          const markerToken = allTokens[i + markerOffset];
+          if (
+            markerToken &&
+            (markerToken.kind === 'particle' || markerToken.kind === 'keyword') &&
+            eventMarkers.has(markerToken.value)
+          ) {
+            eventIndex = i;
+            eventName = token.value;
+            keyFilter = markerOffset === 2 ? allTokens[i + 1].value : '';
+            tokensToRemove = markerOffset + 1;
+            break;
+          }
+        } else {
+          // Marker-less Korean: the event identifier sits immediately before the
+          // body's command verb (e.g. `… hello 넣다 …`).
+          const nextToken = allTokens[i + 1];
+          if (
+            nextToken &&
+            nextToken.kind === 'keyword' &&
+            nextToken.normalized != null &&
+            commandActions.has(nextToken.normalized)
+          ) {
+            eventIndex = i;
+            eventName = token.value;
+            keyFilter = '';
+            tokensToRemove = 1;
+            break;
+          }
+        }
+      }
+    }
+
     if (eventIndex === -1) return null;
 
     // Build the list of indices to remove: event keyword + marker
