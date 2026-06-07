@@ -60,9 +60,15 @@ export function extractCssSelector(input: string, position: number): string | nu
     return null; // Unclosed bracket
   }
 
-  // HTML tag selector: <tag/> or <tag#id.class[attr]/> or <tag[attr=value]/>
+  // HTML tag selector: <tag/>, <tag#id.class[attr]/>, <tag[attr=value]/>, and
+  // tag-less query selectors <.class/>, <#id/>, <[attr]/> (hyperscript treats
+  // `<.message/>` as "all .message elements"). The tag name is optional, but the
+  // lookahead requires the char after `<` to start a tag/`#`/`.`/`[` clause — so
+  // a less-than comparison (`a < b`) is never mis-extracted (the space fails it).
   if (char === '<') {
-    const match = input.slice(position).match(/^<[\w-]+(?:[#.][\w-]+|\[[^\]]+\])*\s*\/>/);
+    const match = input
+      .slice(position)
+      .match(/^<(?=[\w.#[])[\w-]*(?:[#.][\w-]+|\[[^\]]+\])*\s*\/>/);
     return match ? match[0] : null;
   }
 

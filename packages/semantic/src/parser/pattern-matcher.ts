@@ -264,6 +264,33 @@ export class PatternMatcher {
       return patternToken.optional || false;
     }
 
+    // Check for a positional query expression (e.g., 'last <.message/> in #chat',
+    // 'first <button/> in .modal'). Triggered only when the role starts with a
+    // positional keyword, so non-positional roles are unaffected.
+    const positionalValue = this.tryMatchPositionalExpression(tokens);
+    if (positionalValue) {
+      if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
+        if (!isTypeCompatible(positionalValue.type, patternToken.expectedTypes)) {
+          return patternToken.optional || false;
+        }
+      }
+      captured.set(patternToken.role, positionalValue);
+      return true;
+    }
+
+    // Check for an "of"-possessive expression (e.g. "*--primary-color of #theme",
+    // AR "*--primary-color من #theme", TL "*--primary-color ng #theme"). Gated to
+    // roles that opt into property-path (currently `set`'s destination), so the
+    // "of"/source marker can't be confused with a real source role on other
+    // commands (e.g. `get data from #input`).
+    if (patternToken.expectedTypes?.includes('property-path')) {
+      const ofPossessive = this.tryMatchOfPossessiveExpression(tokens);
+      if (ofPossessive) {
+        captured.set(patternToken.role, ofPossessive);
+        return true;
+      }
+    }
+
     // Check for possessive expression (e.g., 'my value', 'its innerHTML')
     const possessiveValue = this.tryMatchPossessiveExpression(tokens);
     if (possessiveValue) {
@@ -352,6 +379,137 @@ export class PatternMatcher {
     captured.set(patternToken.role, value);
     tokens.advance();
     return true;
+  }
+
+  /**
+   * Positional query keywords (English + normalized forms produced by the
+   * tokenizers for every language, e.g. AR آخر→last, TL huli→last).
+   */
+  private static readonly POSITIONAL_KEYWORDS = new Set([
+    'first',
+    'last',
+    'next',
+    'previous',
+    'random',
+  ]);
+
+  /**
+   * Try to match a positional query expression:
+   *   <positional> <selector> [<in/from-marker> <source-selector>]
+   * e.g. "last <.message/> in #chat", "first <button/> in .modal", "آخر <.message/> في #chat".
+   *
+   * Only fires when the role begins with a positional keyword, so ordinary
+   * roles are untouched. The whole construct is captured as a single
+   * expression value (the harness/AST treats positional queries as
+   * expressions). The optional source clause consumes exactly one
+   * `<marker> <selector>` pair, which is safe because positional queries are
+   * terminal in their role (e.g. scroll's only role is the destination).
+   */
+  private tryMatchPositionalExpression(tokens: TokenStream): SemanticValue | null {
+    const token = tokens.peek();
+    if (!token) return null;
+
+    const norm = (token.normalized ?? token.value).toLowerCase();
+    if (
+      !PatternMatcher.POSITIONAL_KEYWORDS.has(norm) &&
+      !PatternMatcher.POSITIONAL_KEYWORDS.has(token.value.toLowerCase())
+    ) {
+      return null;
+    }
+
+    const mark = tokens.mark();
+    const parts: string[] = [token.value];
+    tokens.advance();
+
+    // Required: the queried selector (e.g. <.message/>, .message, <button/>).
+    const sel = tokens.peek();
+    if (!sel || sel.kind !== 'selector') {
+      tokens.reset(mark);
+      return null;
+    }
+    parts.push(sel.value);
+    tokens.advance();
+
+    // Optional member access on the queried element: `.value`, `.textContent`
+    // (`previous <input/>.value`). The tokenizer emits these as `.`-prefixed
+    // selector tokens; fold them into the expression so the whole lvalue is one
+    // value.
+    let memberGuard = 0;
+    while (memberGuard++ < 8) {
+      const member = tokens.peek();
+      if (member && member.kind === 'selector' && member.value.startsWith('.')) {
+        parts.push(member.value);
+        tokens.advance();
+      } else {
+        break;
+      }
+    }
+
+    // Optional source clause: <marker> <source-selector> (in #chat / في #chat /
+    // sa_loob #chat). The marker may be a keyword, particle, or (TL) identifier;
+    // we only consume it when a selector follows, so a trailing command keyword
+    // is never swallowed.
+    const marker = tokens.peek();
+    const source = tokens.peek(1);
+    if (
+      marker &&
+      source &&
+      source.kind === 'selector' &&
+      (marker.kind === 'keyword' || marker.kind === 'particle' || marker.kind === 'identifier') &&
+      !PatternMatcher.POSITIONAL_KEYWORDS.has((marker.normalized ?? marker.value).toLowerCase())
+    ) {
+      parts.push(marker.value, source.value);
+      tokens.advance();
+      tokens.advance();
+    }
+
+    return { type: 'expression', raw: parts.join(' ') } as SemanticValue;
+  }
+
+  /**
+   * Markers that introduce the owner in a prepositional ("of") possessive:
+   * EN `of`; AR من / others that tokenize with a `source`/`of` normalized form;
+   * TL genitive linker `ng`. Kept narrow and only consulted for property-path
+   * roles, so it never shadows a real source role.
+   */
+  private isOfPossessiveMarker(token: LanguageToken): boolean {
+    const value = token.value.toLowerCase();
+    const normalized = (token.normalized ?? '').toLowerCase();
+    return value === 'of' || value === 'ng' || normalized === 'of' || normalized === 'source';
+  }
+
+  /**
+   * Try to match a prepositional "of" possessive:
+   *   <property-selector> <of-marker> <owner-selector>
+   * e.g. "*--primary-color of #theme" → property-path(#theme, *--primary-color).
+   *
+   * This is the surface the i18n transformer emits for "set the X of #y to Z"
+   * across languages (`set #y's X` would be the alternative, but the transformer
+   * uses the `of` form). Only called for property-path roles (see matchRoleToken).
+   */
+  private tryMatchOfPossessiveExpression(tokens: TokenStream): SemanticValue | null {
+    const property = tokens.peek();
+    if (!property || property.kind !== 'selector') return null;
+
+    const mark = tokens.mark();
+    tokens.advance();
+
+    const marker = tokens.peek();
+    if (!marker || !this.isOfPossessiveMarker(marker)) {
+      tokens.reset(mark);
+      return null;
+    }
+    tokens.advance();
+
+    const owner = tokens.peek();
+    if (!owner || owner.kind !== 'selector') {
+      tokens.reset(mark);
+      return null;
+    }
+    tokens.advance();
+
+    // "X of #y" means the X property of #y → property-path(object: #y, property: X).
+    return createPropertyPath(createSelector(owner.value), property.value);
   }
 
   /**

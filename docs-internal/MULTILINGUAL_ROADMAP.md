@@ -5,48 +5,76 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after the passthrough-alignment batch (or-conjoined events ar/tl; ko `fetch`/`transition` and tl `transition` keyword alignment). Track 4 (method-call, event-body blocks, tl put before/after) and Track 1 (reactive) complete._
+_Last updated: after the Tier 1 parser-feature batch (tag-less `<.class/>` selectors, positional `last/first <sel> in <src>`, `of`-possessive `set`, member-access on queried elements). Track 4 and Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **98.84%**
+(generated with `--bundle browser-priority`). Cross-language average **99.00%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
-batch: +50 instances).
-**43 failing pattern-instances** remain (24 are Bucket B behaviors).
+batch + Tier 1: +56 instances).
+**37 failing pattern-instances** remain (24 are Bucket B behaviors).
 
-| Rate     | Languages                            |
-| -------- | ------------------------------------ |
-| 100%     | en, bn, hi, ja, ms, ru, th, uk, vi   |
-| 99%      | de/es/fr/id/pt (99.4), **ko (99.4)** |
-| 98–99%   | qu (98.7), tr (98.7), sw (98.1)      |
-| 96–98%   | it/pl/zh (97.4), he (96.8)           |
-| laggards | **ar (95.5), tl (96.1)**             |
+| Rate   | Languages                                  |
+| ------ | ------------------------------------------ |
+| 100%   | en, bn, hi, ja, ms, ru, th, uk, vi         |
+| 99%    | de/es/fr/id/pt/ko (99.4)                   |
+| 98–99% | qu (98.7), tr (98.7), sw (98.1), tl (98.1) |
+| 96–98% | it/pl/zh (97.4), ar (97.4), he (96.8)      |
 
-**19 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors),
-in two tracks (Track 1 reactive done):
+**13 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
 
 | Track                         | Instances | Nature                                                                           |
 | ----------------------------- | --------- | -------------------------------------------------------------------------------- |
 | **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
-| **Deep per-language grammar** | 19        | VSO event-at-end + `from`-source reorder, command modifiers, condition i18n      |
+| **Deep per-language grammar** | 13        | compound/`in me` splits, condition i18n, custom-event SOV slot, event modifiers  |
 
-The 19 non-behavior remainders: `input-clear`, `form-disable-on-submit`,
-`set-color-variable`, `last-in-collection`, `unless-condition`,
+The 13 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
 `caret-var-on-target` (each **ar+tl**); `announce-screen-reader` (he+sw);
 `on-custom-event-receive` (ko+qu); `window-resize` (qu+tr); `focus-trap` (tr).
 
 > **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
-> cleared `@`/`*`/`^`; Phase 3a the English DOM events). Every remaining
+> cleared `@`/`*`/`^`; Tier 1 the tag-less `<.class/>` selector). Every remaining
 > non-behavior failure needs per-pattern transformer/parser/grammar work (see
-> Track 4 and "Why the rest is hard"). There is no longer a uniform fix that
-> clears a whole cluster.
+> "Why the rest is hard"). There is no longer a uniform fix that clears a whole
+> cluster.
 
 ---
 
 ## Shipped
+
+### Tier 1 parser features — positional / of-possessive / member-access (+6)
+
+- **6 instances, 0 regressions, avg 98.84% → 99.00%.** ar 95.5→97.4, tl 96.1→98.1.
+  Confirmed by a full `browser-priority` baseline regen (exactly these 6 flip `↑`,
+  zero `↓`). Cleared `last-in-collection`, `set-color-variable`, `input-clear` (all ar+tl).
+- **Unlike the passthrough batch, these are genuine parser features** — each fails
+  even in English at the bare-command level (English only "passed" them via the
+  degenerate empty-body event-handler match). VSO langs (ar/tl) require a parseable
+  body, so the features had to be built for real; English gains real parsing too.
+- **Tag-less query selector tokenization** (`css-selector.ts`). `<.message/>` /
+  `<#id/>` / `<[attr]/>` split into `<` + `.message` + `/>`; the tag name is now
+  optional in the extractor regex (lookahead still rejects `a < b`). Shared across
+  all 24 languages.
+- **Positional query expression** (`pattern-matcher.ts` `tryMatchPositionalExpression`).
+  Matches `<positional> <selector> [<marker> <source>]` (`last <.message/> in #chat`,
+  AR `آخر <.message/> في #chat`, TL `huli <.message/> sa_loob #chat`) as a single
+  expression. Triggered only when the role starts with a positional keyword
+  (first/last/next/previous/random), so other roles are untouched. `scroll`'s
+  destination role gained `expression` in its expected types. Also folds a trailing
+  `.prop` member access (`previous <input/>.value`).
+- **`of`-possessive `set`** (`pattern-matcher.ts` `tryMatchOfPossessiveExpression`).
+  `set <prop> of <owner> to <value>` (`*--primary-color of #theme`, AR `… من …`,
+  TL `… ng …`) → property-path. **Gated to roles that opt into `property-path`** —
+  only `set`'s destination does — so the `of`/source marker can never shadow a real
+  source role on other commands (`get data from #input` is unaffected). The leaked
+  untranslated `the` is absorbed by the existing `skipNoiseWords`.
+- **tl `scroll` keyword alignment.** Transformer emits English `scroll`; semantic tl
+  primary is `iscroll`. Added `scroll` as a tl alternative (passthrough-alignment).
+- Locked by `semantic/test/multilingual-tier1-features.test.ts` (16 cases across
+  en/ar/tl + regression guards).
 
 ### Passthrough-alignment batch — or-events + fetch/transition keywords (+11)
 
@@ -279,17 +307,18 @@ fix. Largest single pattern is `behavior-removable` (fails in 11 langs incl.
 high-rate de/es/fr/it/pt) — worth checking whether it's a _parse_ issue (the
 `install … removable` syntax) separable from the unimplemented-runtime issue.
 
-### Track 3 — Deep per-language grammar (~52 remaining)
+### Track 3 — Deep per-language grammar
 
-Concentrated in **tl (16)** and **ar (11)**; the rest scattered (ko 8, sw 7,
-qu 5, he/qu 5, ja/tr 3–4, zh/it/pl 1–4). Recurring themes:
+> **Historical analysis below; the live remainder is the 13 in "Current state".**
+> The Tier 1 batch cleared `last-in-collection`, `set-color-variable`, and
+> `input-clear` (ar+tl); the passthrough batch cleared `multiple-events`,
+> `fetch`, and `transition`. The notes here are kept as a record of approaches.
 
-- **`set-*` family (ar+tl): MOSTLY DONE in Phase 1.** The `@attr` / `*style`
-  token-splitting bug was fixed once in the shared `CssSelectorExtractor` (see
-  Shipped → Phase 1). Remaining `set-*` stragglers are `set-color-variable`
-  (article `the` + `of`-possessive) and `input-clear` (`<input/>.value` member
-  access) — both deferred to the scattered Phase 4 work below, not the `@`/`*`
-  token issue.
+- **`set-*` family (ar+tl): DONE.** Phase 1 fixed the `@attr` / `*style`
+  token-splitting in the shared `CssSelectorExtractor`; Tier 1 then cleared the two
+  stragglers — `set-color-variable` (the `of`-possessive `set` matcher, with the
+  leaked `the` absorbed by `skipNoiseWords`) and `input-clear` (member-access on a
+  queried element). See Shipped → Tier 1.
 - **possessive-dot (`.`):** `get-attribute-possessive-dot`,
   `method-call-possessive-dot` (ar/sw/tl) — member-access `.` chains.
 - **`caret`** (caret-var-write/on-target; ar/tl), **`transition-*`**

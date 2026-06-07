@@ -98,7 +98,9 @@ export const tagalogProfile: LanguageProfile = {
     breakpoint: { primary: 'breakpoint', normalized: 'breakpoint' },
     // Navigation
     go: { primary: 'pumunta', alternatives: ['punta'], normalized: 'go' },
-    scroll: { primary: 'iscroll', alternatives: ['mag_scroll'], normalized: 'scroll' },
+    // 'scroll' (English loanword) is the form the i18n transformer emits;
+    // registered as an alternative for passthrough-alignment.
+    scroll: { primary: 'iscroll', alternatives: ['mag_scroll', 'scroll'], normalized: 'scroll' },
     push: { primary: 'itulak', alternatives: ['ipush'], normalized: 'push' },
     replace: { primary: 'palitan_url', alternatives: ['ireplace'], normalized: 'replace' },
     process: { primary: 'iproseso', alternatives: ['proseso'], normalized: 'process' },
