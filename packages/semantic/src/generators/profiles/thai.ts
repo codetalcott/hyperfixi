@@ -153,8 +153,21 @@ export const thaiProfile: LanguageProfile = {
     live: { primary: 'ไลฟ์', alternatives: ['สด', 'ถ่ายทอดสด'], normalized: 'live' },
     socket: {
       primary: 'ซ็อกเก็ต',
-      alternatives: ['websocket', 'เว็บซ็อกเก็ต'],
+      alternatives: ['websocket', 'เว็บซ็อกเก็ต', 'socket'],
       normalized: 'socket',
+    },
+    // Service-worker / realtime keywords (mirrors #262 ja/he wiring; native
+    // primary + English alternative, eventsource keeps the canonical English form)
+    intercept: {
+      primary: 'ดักจับ',
+      alternatives: ['intercept', 'สกัดกั้น'],
+      normalized: 'intercept',
+    },
+    worker: { primary: 'เวิร์กเกอร์', alternatives: ['worker'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['อีเวนต์ซอร์ส'],
+      normalized: 'eventsource',
     },
     // Reactive: bind (generated text keeps the English verb; native primary
     // for future i18n dictionary support)

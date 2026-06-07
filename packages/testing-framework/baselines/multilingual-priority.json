@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-07T01:09:13.663Z",
-  "commit": "147ac2d",
+  "timestamp": "2026-06-07T02:37:49.391Z",
+  "commit": "3a60707",
   "languages": {
     "ar": {
       "parseSuccess": 132,
       "parseFailure": 22,
       "parseRate": 0.8571428571428571,
       "avgConfidence": 0.9052167331579098,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -610,7 +610,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.7943001443001443,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1235,7 +1235,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9367465504720396,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -1859,7 +1859,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2484,7 +2484,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3108,7 +3108,7 @@
       "parseFailure": 3,
       "parseRate": 0.9805194805194806,
       "avgConfidence": 0.9888888888888889,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3726,11 +3726,11 @@
       }
     },
     "he": {
-      "parseSuccess": 132,
-      "parseFailure": 22,
-      "parseRate": 0.8571428571428571,
-      "avgConfidence": 0.8443482443482448,
-      "bundleSize": 395292,
+      "parseSuccess": 133,
+      "parseFailure": 21,
+      "parseRate": 0.8636363636363636,
+      "avgConfidence": 0.8455185583005137,
+      "bundleSize": 395301,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -3753,6 +3753,10 @@
           "confidence": 1
         },
         "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
           "success": true,
           "confidence": 1
         },
@@ -4299,9 +4303,6 @@
         "focus-trap": {
           "success": false
         },
-        "socket-basic": {
-          "success": false
-        },
         "keydown-key-is-syntax": {
           "success": false
         },
@@ -4333,7 +4334,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 1,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -4957,7 +4958,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5581,7 +5582,7 @@
       "parseFailure": 6,
       "parseRate": 0.961038961038961,
       "avgConfidence": 0.9975975975975976,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6200,7 +6201,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.793957671957672,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6821,7 +6822,7 @@
       "parseFailure": 8,
       "parseRate": 0.948051948051948,
       "avgConfidence": 0.5570015220700152,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7438,7 +7439,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9988455988455989,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -8063,7 +8064,7 @@
       "parseFailure": 8,
       "parseRate": 0.948051948051948,
       "avgConfidence": 0.8331811263318118,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -8680,7 +8681,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.838198983297023,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "blur-element": {
           "success": true,
@@ -9304,7 +9305,7 @@
       "parseFailure": 7,
       "parseRate": 0.9545454545454546,
       "avgConfidence": 0.6972789115646258,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -9918,11 +9919,11 @@
       }
     },
     "ru": {
-      "parseSuccess": 151,
-      "parseFailure": 3,
-      "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.8842005676442766,
-      "bundleSize": 395292,
+      "parseSuccess": 152,
+      "parseFailure": 2,
+      "parseRate": 0.987012987012987,
+      "avgConfidence": 0.884962406015038,
+      "bundleSize": 395301,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -9977,6 +9978,10 @@
           "confidence": 1
         },
         "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
           "success": true,
           "confidence": 1
         },
@@ -10528,9 +10533,6 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "socket-basic": {
-          "success": false
-        },
         "live-derived-value": {
           "success": false
         },
@@ -10544,7 +10546,7 @@
       "parseFailure": 9,
       "parseRate": 0.9415584415584416,
       "avgConfidence": 0.8682211275314727,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11156,11 +11158,11 @@
       }
     },
     "th": {
-      "parseSuccess": 150,
-      "parseFailure": 4,
-      "parseRate": 0.974025974025974,
-      "avgConfidence": 0.9386243386243376,
-      "bundleSize": 395292,
+      "parseSuccess": 154,
+      "parseFailure": 0,
+      "parseRate": 1,
+      "avgConfidence": 0.9402185116470816,
+      "bundleSize": 395301,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11362,7 +11364,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -11423,6 +11437,10 @@
           "confidence": 1
         },
         "caret-var-on-target": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -11761,27 +11779,15 @@
         "install-behavior": {
           "success": true,
           "confidence": 0.8222222222222222
-        },
-        "eventsource-basic": {
-          "success": false
-        },
-        "socket-basic": {
-          "success": false
-        },
-        "worker-basic": {
-          "success": false
-        },
-        "intercept-cache-strategies": {
-          "success": false
         }
       }
     },
     "tl": {
-      "parseSuccess": 129,
-      "parseFailure": 25,
-      "parseRate": 0.8376623376623377,
-      "avgConfidence": 0.8771849825201401,
-      "bundleSize": 395292,
+      "parseSuccess": 130,
+      "parseFailure": 24,
+      "parseRate": 0.8441558441558441,
+      "avgConfidence": 0.8781297134238313,
+      "bundleSize": 395301,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -11984,6 +11990,10 @@
           "confidence": 1
         },
         "reactive-array-push": {
+          "success": true,
+          "confidence": 1
+        },
+        "intercept-cache-strategies": {
           "success": true,
           "confidence": 1
         },
@@ -12370,9 +12380,6 @@
         },
         "caret-var-on-target": {
           "success": false
-        },
-        "intercept-cache-strategies": {
-          "success": false
         }
       }
     },
@@ -12381,7 +12388,7 @@
       "parseFailure": 6,
       "parseRate": 0.961038961038961,
       "avgConfidence": 0.7927177177177177,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -12996,11 +13003,11 @@
       }
     },
     "uk": {
-      "parseSuccess": 151,
-      "parseFailure": 3,
-      "parseRate": 0.9805194805194806,
-      "avgConfidence": 0.8826868495742671,
-      "bundleSize": 395292,
+      "parseSuccess": 152,
+      "parseFailure": 2,
+      "parseRate": 0.987012987012987,
+      "avgConfidence": 0.8834586466165417,
+      "bundleSize": 395301,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -13051,6 +13058,10 @@
           "confidence": 1
         },
         "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
           "success": true,
           "confidence": 1
         },
@@ -13606,9 +13617,6 @@
           "success": true,
           "confidence": 0.5555555555555556
         },
-        "socket-basic": {
-          "success": false
-        },
         "live-derived-value": {
           "success": false
         },
@@ -13622,7 +13630,7 @@
       "parseFailure": 2,
       "parseRate": 0.987012987012987,
       "avgConfidence": 0.8872180451127823,
-      "bundleSize": 395292,
+      "bundleSize": 395301,
       "patterns": {
         "add-class-basic": {
           "success": true,
@@ -14241,11 +14249,11 @@
       }
     },
     "zh": {
-      "parseSuccess": 149,
-      "parseFailure": 5,
-      "parseRate": 0.9675324675324676,
-      "avgConfidence": 0.998806860551827,
-      "bundleSize": 395292,
+      "parseSuccess": 150,
+      "parseFailure": 4,
+      "parseRate": 0.974025974025974,
+      "avgConfidence": 0.9988148148148148,
+      "bundleSize": 395301,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -14731,6 +14739,10 @@
           "success": true,
           "confidence": 1
         },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
           "success": true,
           "confidence": 1
@@ -14843,9 +14855,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "socket-basic": {
-          "success": false
-        },
         "behavior-removable": {
           "success": false
         },
@@ -14863,7 +14872,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 395292,
+      "size": 395301,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
