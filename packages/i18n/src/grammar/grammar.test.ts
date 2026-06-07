@@ -408,6 +408,20 @@ describe('GrammarTransformer', () => {
       expect(result).toContain("keyup[key is 'Escape']");
     });
 
+    it('should keep an event-handler block body intact (not shredded)', () => {
+      // `on <event> if … end` must keep the event clause first, then the whole
+      // `if … end` block as a self-contained unit — never reordered into the
+      // event handler's role soup.
+      const result = transformer.transform(
+        'on keydown[key=="Enter"] if event.shiftKey call submitAndContinue() end'
+      );
+      // Event leads; the if-block follows with its condition preserved.
+      expect(result).toMatch(/keydown\[key=="Enter"\].*もし.*event\.shiftKey/);
+      expect(result).toContain('submitAndContinue()');
+      // `end` keyword present (translated), block not dropped.
+      expect(result).toContain('終わり');
+    });
+
     it('should mask inline js bodies from word-order reordering', () => {
       // The raw JS body must stay verbatim and immediately after the (translated)
       // `js` keyword — never reordered ahead of the event like other roles.

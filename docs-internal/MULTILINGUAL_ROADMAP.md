@@ -5,30 +5,31 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Phases 1–4 + Track 4 method-call possessive-dot. Track 1 (reactive) complete._
+_Last updated: after Track 4 (method-call possessive-dot + event-body block masking). Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **98.3%**
-(up from 97.5% before Phase 1; Phases 1–4 + Track 4 method-call: +31 instances).
+(generated with `--bundle browser-priority`). Cross-language average **98.5%**
+(up from 97.5% before Phase 1; Phases 1–4 + Track 4: +36 instances).
 
-| Rate         | Languages                                              |
-| ------------ | ------------------------------------------------------ |
-| 100%         | en, bn, ms, ru, th, uk, vi                             |
-| 99.4%        | de, es, fr, hi, id, pt                                 |
-| 97–99%       | ja (99.4), tr/zh (98.1), it/pl/qu/zh (97.4), he (96.8) |
-| 95–96%       | sw (96.8), ko (95.5)                                   |
-| **laggards** | **ar (94.8), tl (91.6)**                               |
+| Rate         | Languages                             |
+| ------------ | ------------------------------------- |
+| 100%         | en, bn, ms, ru, th, uk, vi            |
+| 98–99%       | ja (99.4), qu (98.1), tr/zh (98.1)    |
+| 99.4%        | de, es, fr, hi, id, pt                |
+| 96–97%       | it/pl/zh (97.4), he (96.8), ko (96.1) |
+| 95–96%       | sw (96.8)                             |
+| **laggards** | **ar (94.8), tl (91.6)**              |
 
-**~45 failing pattern-instances** remain after Phases 1–4 + Track 4 method-call, in two tracks (Track 1 reactive done):
+**~40 failing pattern-instances** remain after Phases 1–4 + Track 4, in two tracks (Track 1 reactive done):
 
-| Track                         | Instances | Nature                                                                                |
-| ----------------------------- | --------- | ------------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | ~26       | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)      |
-| **Deep per-language grammar** | ~19       | Heterogeneous transformer/parser gaps (VSO event-at-end reorder, modifiers) — Track 4 |
+| Track                         | Instances | Nature                                                                           |
+| ----------------------------- | --------- | -------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | ~26       | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
+| **Deep per-language grammar** | ~14       | VSO event-at-end + `from`-source reorder, command modifiers, condition i18n      |
 
 > **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
 > cleared `@`/`*`/`^`; Phase 3a the English DOM events). Every remaining
@@ -166,6 +167,19 @@ own transformer/parser project (no shared lever remains):
   (`on input …`) whose body path parses it — so en passed all along and the fix
   was purely making ar/sw/tl's possessive path consume the split parens. Locked by
   possessive-value-fillers.test.ts.
+- **event-handler block body — DONE (+5).** `event-key-combo` (ja/ko/qu/tr) +
+  `repeat-until-event` (hi). `on <event> {if|repeat|…} … end` had its block body
+  shredded across the event handler's roles by `parseEventHandler`. Added
+  `tryTransformEventWithBlockBody` (i18n): mask the block, reorder the event head,
+  transform the block as a self-contained unit (`transformBlockBody`), and emit
+  **event-clause first, then block** — even in verb-first (VSO) languages, since
+  the semantic parser only matches a block body after the event. Event heads with
+  a `from <source>` modifier are excluded (the source/event ordering differs by
+  word order and the existing path already parses them) — this keeps
+  `window-keydown` / `focus-trap` unregressed. Locked by a grammar.test.ts case.
+- **Still open here:** `focus-trap` (tr), `window-resize` (qu/tr) — event-block
+  bodies _with_ a `from <source>` clause; need event-first + source ordering for
+  VSO. `multiple-events` (ar) needs `or`-conjoined events.
 - **`transition-*` `over <dur>` modifier** (ko/tl) — `over 500ms` modifier is
   dropped/misplaced in word-order reorder.
 - **`scroll to last <sel> in …`** (last-in-collection; ar/tl) — `scroll to` +

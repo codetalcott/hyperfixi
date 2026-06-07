@@ -1343,6 +1343,12 @@ export class GrammarTransformer {
     if (!input.includes('\n')) {
       const jsBlock = this.tryTransformJsBlock(input);
       if (jsBlock !== null) return jsBlock;
+
+      // Event handler whose body is a block (`on <event> if/repeat/unless … end`):
+      // the block body must be reordered as a self-contained unit, not shredded
+      // across the event handler's role soup.
+      const eventBlock = this.tryTransformEventWithBlockBody(input);
+      if (eventBlock !== null) return eventBlock;
     }
 
     // Check if input has multi-line structure worth preserving
@@ -1487,6 +1493,96 @@ export class GrammarTransformer {
     const reordered = this.transformSingle([...before, placeholder].join(' '));
     if (!reordered.includes(placeholder)) return null; // unexpected — fall through
     return reordered.replace(placeholder, replacement);
+  }
+
+  /**
+   * Transform an event handler whose body is a block command
+   * (`on <event> [from <src>] {if|repeat|unless|while|for} … end`).
+   *
+   * `parseEventHandler` would treat the block keyword as the action and sweep the
+   * condition/body into role values, then reorder them — shredding the block
+   * (`if event.shiftKey call submitAndContinue() end` → scattered tokens). Instead
+   * we mask the whole block as an opaque action placeholder, reorder the event
+   * head normally, transform the block as a self-contained unit, and restitch.
+   *
+   * Returns `null` (fall through) when the input isn't an event handler, has no
+   * block-keyword body, or has no closing `end`.
+   */
+  private tryTransformEventWithBlockBody(input: string): string | null {
+    const tokens = tokenize(input, this.sourceProfile);
+    if (tokens.length === 0) return null;
+    if (!EVENT_KEYWORDS.has(tokens[0]?.toLowerCase())) return null;
+
+    // Source-language block-head keywords (harness source is English; the
+    // existing BLOCK_HEAD_KEYWORDS set is likewise English-keyed).
+    const BLOCK_BODY_KEYWORDS = new Set(['if', 'repeat', 'unless', 'while', 'for']);
+    let blockIdx = -1;
+    for (let i = 1; i < tokens.length; i++) {
+      if (BLOCK_BODY_KEYWORDS.has(tokens[i].toLowerCase())) {
+        blockIdx = i;
+        break;
+      }
+    }
+    if (blockIdx <= 0) return null;
+    // Only handle the explicitly-terminated form; un-terminated bodies
+    // (`on click unless X toggle Y`) keep the existing path.
+    if (tokens[tokens.length - 1].toLowerCase() !== 'end') return null;
+
+    const eventHead = tokens.slice(0, blockIdx);
+    const blockTokens = tokens.slice(blockIdx);
+
+    // Event heads carrying a `from <source>` modifier reorder the source relative
+    // to the event differently per word order; forcing event-first there breaks
+    // verb-first languages. Leave those on the existing path (they already parse)
+    // and only handle the plain `on <event> [guard]` head here.
+    if (eventHead.some(t => t.toLowerCase() === 'from')) return null;
+
+    const placeholder = 'EVENTBLOCKPLACEHOLDER';
+    const headOut = this.transformSingle([...eventHead, placeholder].join(' '));
+    if (!headOut.includes(placeholder)) return null;
+
+    const blockOut = this.transformBlockBody(blockTokens);
+
+    // Always emit the event clause first, then the block. An event handler's
+    // event is a leading delimiter, and the semantic parser only matches a
+    // block body when it follows the event — even in verb-first (VSO) languages
+    // whose normal command order would push the event to the end. So strip the
+    // placeholder out of the (possibly reordered) head and append the block,
+    // rather than substituting in place.
+    const eventClause = headOut.replace(placeholder, '').replace(/\s+/g, ' ').trim();
+    return [eventClause, blockOut].filter(s => s.length > 0).join(' ');
+  }
+
+  /**
+   * Transform a self-contained block command (`{head} {clause?} {body} {end}`),
+   * where head ∈ {if, repeat, unless, …}. The clause (condition / `until event …`)
+   * runs up to the first command verb and is translated word-by-word; the body is
+   * recursively transformed (so its inner commands reorder for the target); the
+   * head/tail keywords are translated. The block is never word-order reordered as
+   * a whole — delimiters stay at the edges regardless of target word order.
+   */
+  private transformBlockBody(blockTokens: string[]): string {
+    const src = this.sourceProfile.code;
+    const dst = this.targetProfile.code;
+
+    const head = blockTokens[0];
+    const hasEnd = blockTokens[blockTokens.length - 1]?.toLowerCase() === 'end';
+    const tail = hasEnd ? blockTokens[blockTokens.length - 1] : '';
+    const inner = blockTokens.slice(1, hasEnd ? -1 : undefined);
+
+    const commands = getCommandKeywordsForLocale(src);
+    let bodyStart = inner.findIndex(t => commands.has(t.toLowerCase()));
+    if (bodyStart < 0) bodyStart = inner.length;
+
+    const clause = inner.slice(0, bodyStart).join(' ');
+    const body = inner.slice(bodyStart).join(' ');
+
+    const headT = translateWord(head, src, dst);
+    const tailT = tail ? translateWord(tail, src, dst) : '';
+    const clauseT = clause ? translateMultiWordValue(clause, src, dst) : '';
+    const bodyT = body ? this.transform(body) : '';
+
+    return [headT, clauseT, bodyT, tailT].filter(s => s.length > 0).join(' ');
   }
 
   /**
