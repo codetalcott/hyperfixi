@@ -5,31 +5,31 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 4 (method-call, event-body blocks, tl put before/after). Track 1 (reactive) complete._
+_Last updated: after the qu `install` keyword-collision fix (`install-behavior` qu). Track 4 (method-call, event-body blocks, tl put before/after) and Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **98.5%**
-(up from 97.5% before Phase 1; Phases 1–4 + Track 4: +38 instances).
+(generated with `--bundle browser-priority`). Cross-language average **98.54%**
+(up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install`: +39 instances).
+**54 failing pattern-instances** remain (24 are Bucket B behaviors).
 
-| Rate         | Languages                             |
-| ------------ | ------------------------------------- |
-| 100%         | en, bn, ms, ru, th, uk, vi            |
-| 98–99%       | ja (99.4), qu (98.1), tr/zh (98.1)    |
-| 99.4%        | de, es, fr, hi, id, pt                |
-| 96–97%       | it/pl/zh (97.4), he (96.8), ko (96.1) |
-| 95–96%       | sw (96.8)                             |
-| **laggards** | **ar (94.8), tl (92.9)**              |
+| Rate     | Languages                                   |
+| -------- | ------------------------------------------- |
+| 100%     | en, bn, hi, ja, ms, ru, th, uk, vi          |
+| 98–99%   | qu (98.7), de/es/fr/id/pt (99.4), tr (98.7) |
+| 96–98%   | it/pl/zh (97.4), ko (96.1), he/sw (96.8)    |
+| laggards | **ar (94.8), tl (92.9)**                    |
 
-**~38 failing pattern-instances** remain after Phases 1–4 + Track 4, in two tracks (Track 1 reactive done):
+**~30 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors),
+in two tracks (Track 1 reactive done):
 
 | Track                         | Instances | Nature                                                                           |
 | ----------------------------- | --------- | -------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | ~26       | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
-| **Deep per-language grammar** | ~14       | VSO event-at-end + `from`-source reorder, command modifiers, condition i18n      |
+| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
+| **Deep per-language grammar** | ~30       | VSO event-at-end + `from`-source reorder, command modifiers, condition i18n      |
 
 > **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
 > cleared `@`/`*`/`^`; Phase 3a the English DOM events). Every remaining
@@ -40,6 +40,26 @@ Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 ---
 
 ## Shipped
+
+### qu `install` keyword-collision fix — `install-behavior` (+1)
+
+- **1 instance, 0 regressions, avg 98.51% → 98.54%.** qu 98.1% → 98.7%.
+- **Root cause (passthrough-alignment).** The i18n qu dictionary mapped
+  `install` → `churay`, but `churay` is also qu for `put`/`set`, and the semantic
+  qu profile expects `install` = `tarpuy` (`churay` = `put` there). So
+  `install Draggable` transformed to `Draggable ta churay`, which the semantic
+  parser read as a malformed `put` (no destination) and rejected. Changed the
+  i18n qu dict to emit `tarpuy` (the specific "install/plant" verb already in the
+  semantic profile) — this both aligns the two systems and removes the
+  put/set/install overload. Verified `Draggable ta tarpuy` parses as `install`.
+  Locked by a Quechua case in `grammar.test.ts`.
+- **Reusable finding — the keyword-mismatch diagnostic.** A scan comparing each
+  i18n dict's command verbs against the semantic profile's primary+alternatives
+  surfaces many mismatches, but **most are latent** (the command isn't in the
+  test corpus, or the parse survives via normalization/word-order). The qu
+  `install` case was special: an _active collision_ (one i18n form, three
+  commands) **and** in the corpus **and** failing. When mining this list for more
+  wins, cross-reference against the actual failing patterns first.
 
 ### issue #259 lineage (pre-this-arc)
 
@@ -335,18 +355,41 @@ en-parity degenerate matching).
 
 ## Suggested sequencing for fresh sessions
 
-Track 1 (reactive) is **done** (#269–#271); Hebrew events done (#272). What remains is
-**not** quick — pick deliberately:
+Track 1 (reactive) is **done** (#269–#271); Hebrew events done (#272); `js-inline`
+block masking is **done** (Phase 2 — the old item 1 here was stale). What remains is
+**not** quick — almost everything left is structural SOV/VSO body reordering. Pick
+deliberately:
 
-1. **`js-inline` block masking** (ja/ko/qu/tr, 4) — single transformer fix to mask the
-   `js … end` body from word-order reordering. Most tractable of the deep set; verify it
-   isn't a degenerate match first.
-2. **`set-*` family** (ar/tl, ~10) — biggest count but lowest value (en-parity degenerate
-   match) and needs `@attr`/`*style` token handling in event-handler bodies.
-3. **Bucket B behaviors** (24) — separate **runtime** track; implement
-   Draggable/Sortable/Resizable/Removable, then revisit the `install … <behavior>` parse.
-4. **Scattered per-language** (caret, transition-\*, possessive-dot, announce) — one
-   pattern at a time; expect tokenizer/transformer work per item.
+1. **Bucket B behaviors** (24, biggest lever) — separate **runtime** track. Note
+   `behavior-removable`'s `raw_code` is the behavior _definition source_, which
+   contains a **multi-line `js(me) … end`** block; Phase 2 only masked single-line
+   `js`, so this needs multi-line-js masking inside `behavior` defs (deferred
+   "Phase 5"). Not a cheap parse win.
+2. **`transition-*`** (ko/tl, ~6) — **deeper than the refactor plan claimed** (see
+   the ⚠️ update at the top of `TRANSITION_MODIFIER_REFACTOR_PLAN.md`): needs new
+   post-verb-role SOV/VSO event-handler pattern variants, not a marker tweak.
+   Multi-session, low ROI.
+3. **`set-*` family** (ar/tl, ~10) — biggest non-behavior count but lowest value
+   (en-parity degenerate match) and needs `@attr`/`*style` token handling in
+   event-handler bodies.
+4. **Scattered per-language** (caret, possessive-dot, announce, unless, multiple-events)
+   — one pattern at a time; expect tokenizer/transformer work per item.
+
+**Structural finding — custom events in SOV (`on-custom-event-receive`, ko/qu).**
+`on hello put X into me` parses in SVO (en/es) but fails in ko: `on click …` passes
+(`'Got it!' 를 클릭 넣다 나 에`) while `on hello …` fails (`… hello 넣다 …`) — the
+_only_ difference is the event token. The SOV event-handler pattern's `{event}` slot
+matches a **recognized event keyword** (클릭) but not an arbitrary identifier
+(`hello`); SVO works because the leading `on`/`en` marker disambiguates. Fixing it
+means letting the SOV `{event}` slot accept a bare identifier (over-match risk) — a
+parser change, not a keyword fix.
+
+**Keyword-mismatch mining (low-risk wins, mostly latent).** A diagnostic comparing
+each i18n dict verb to the semantic profile's primary+alternatives surfaces dozens
+of mismatches, but most are inert (untested command, or parse survives anyway). The
+qu `install` win was the rare case that was an _active collision_ AND in the corpus
+AND failing. Cross-reference any candidate against the live failing-pattern list
+before investing.
 
 Definition of done (unchanged from #259): all languages ≥ ~99% in the regenerated baseline.
 Realistically the next ~10–15 points of parse-rate require the deep work above, not
