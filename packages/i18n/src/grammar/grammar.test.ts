@@ -849,6 +849,36 @@ describe('Word Order Integration Tests', () => {
       expect(result).toContain('.active');
     });
   });
+
+  // Regression guards for the multilingual parse-rate roadmap (see
+  // docs-internal/MULTILINGUAL_ROADMAP.md).
+  describe('Multi-event handlers (or-conjoined events)', () => {
+    it('keeps "or"-conjoined events together as a single event clause (ar)', () => {
+      const transformer = new GrammarTransformer('en', 'ar');
+      const result = transformer.transform('on click or keypress[key=="Enter"] toggle .active');
+      // The toggle action must lead (VSO); the event clause "<click> or keypress"
+      // stays together at the end, rather than "or keypress" being hoisted ahead
+      // of the command (the old bug, which read "or" as the action verb).
+      expect(result.indexOf('بدل')).toBeLessThan(result.indexOf('أو'));
+      expect(result).toContain('أو keypress[key=="Enter"]');
+    });
+
+    it('keeps "or"-conjoined events together as a single event clause (tl)', () => {
+      const transformer = new GrammarTransformer('en', 'tl');
+      const result = transformer.transform('on click or keypress[key=="Enter"] toggle .active');
+      expect(result).toContain('o keypress[key=="Enter"]');
+      expect(result.indexOf('palitan')).toBeLessThan(result.indexOf(' o '));
+    });
+  });
+
+  describe('Tagalog transition keyword alignment', () => {
+    it('emits the semantic transition verb "lumipat" (not "baguhin"=morph)', () => {
+      const transformer = new GrammarTransformer('en', 'tl');
+      const result = transformer.transform('on click transition opacity to 0 over 300ms');
+      expect(result).toContain('lumipat');
+      expect(result).not.toContain('baguhin');
+    });
+  });
 });
 
 // =============================================================================

@@ -571,6 +571,14 @@ function deriveEventKeywordsFromProfiles(): Set<string> {
 /** Event keywords derived from language profiles */
 const EVENT_KEYWORDS = deriveEventKeywordsFromProfiles();
 
+/**
+ * Conjunctions that join multiple events in an event handler head
+ * (`on click or keypress ...`). Source hyperscript is English, so the
+ * canonical form is `or`; localized equivalents are added defensively for
+ * non-English sources.
+ */
+const EVENT_CONJUNCTIONS = new Set(['or']);
+
 // =============================================================================
 // Helper: Dynamic Modifier Map
 // =============================================================================
@@ -814,11 +822,30 @@ function parseEventHandler(tokens: string[], profile: LanguageProfile): ParsedSt
 
   // Next token is the event
   if (tokens[startIndex]) {
+    const eventTokens: string[] = [tokens[startIndex]];
+    startIndex++;
+
+    // Fold "or"-conjoined events into the event value (e.g.
+    // "on click or keypress[...] toggle .active"). Without this, "or" would be
+    // read as the action verb and the second event swept into role values,
+    // hoisting "or <event2>" ahead of the command on reorder. Keeping the whole
+    // "<event1> or <event2>" string in the event role lets it translate and
+    // reorder as a single event clause. Only consumes "or" that immediately
+    // follows the event, before any source/action — so a later "or" in a guard
+    // or value is untouched.
+    while (
+      tokens[startIndex] &&
+      EVENT_CONJUNCTIONS.has(tokens[startIndex].toLowerCase()) &&
+      tokens[startIndex + 1]
+    ) {
+      eventTokens.push(tokens[startIndex], tokens[startIndex + 1]);
+      startIndex += 2;
+    }
+
     roles.set('event', {
       role: 'event',
-      value: tokens[startIndex],
+      value: eventTokens.join(' '),
     });
-    startIndex++;
   }
 
   // Check for event source modifier before the action (e.g., "from #source" in "on input from #firstName set ...")

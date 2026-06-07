@@ -75,7 +75,10 @@ export const koreanProfile: LanguageProfile = {
     // Visibility
     show: { primary: '보이다', alternatives: ['표시', '보이기'], normalized: 'show' },
     hide: { primary: '숨기다', alternatives: ['숨기기'], normalized: 'hide' },
-    transition: { primary: '트랜지션', normalized: 'transition' }, // loanword to avoid collision with toggle alt 전환
+    // primary is the loanword 트랜지션; 전환 ("switch/transition") is the form the
+    // i18n transformer emits — registered as an alternative (passthrough-alignment).
+    // toggle uses 토글, so 전환 carries no collision.
+    transition: { primary: '트랜지션', alternatives: ['전환'], normalized: 'transition' },
     // Events
     on: { primary: '에', alternatives: ['시', '할 때'], normalized: 'on' },
     trigger: { primary: '트리거', normalized: 'trigger' },
@@ -105,7 +108,10 @@ export const koreanProfile: LanguageProfile = {
     process: { primary: '처리', normalized: 'process' },
     // Async
     wait: { primary: '대기', normalized: 'wait' },
-    fetch: { primary: '패치', normalized: 'fetch' }, // loanword to avoid collision with get
+    // primary is the loanword 패치 (avoids collision with get 얻다); 가져오기
+    // ("bring/fetch") is the form the i18n transformer emits, registered here so
+    // transformed fetch patterns parse (passthrough-alignment).
+    fetch: { primary: '패치', alternatives: ['가져오기'], normalized: 'fetch' },
     settle: { primary: '안정', normalized: 'settle' },
     // Control flow
     if: { primary: '만약', normalized: 'if' },
