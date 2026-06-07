@@ -1083,7 +1083,7 @@ function getEventHandlerPatternsPl(): LanguagePattern[] {
       template: {
         format: 'gdy {event} na {source}',
         tokens: [
-          { type: 'literal', value: 'gdy', alternatives: ['przy', 'na'] },
+          { type: 'literal', value: 'gdy', alternatives: ['kiedy', 'przy', 'na'] },
           { type: 'role', role: 'event' },
           {
             type: 'group',
@@ -1112,7 +1112,7 @@ function getEventHandlerPatternsPl(): LanguagePattern[] {
       template: {
         format: 'gdy {event}',
         tokens: [
-          { type: 'literal', value: 'gdy', alternatives: ['przy', 'na'] },
+          { type: 'literal', value: 'gdy', alternatives: ['kiedy', 'przy', 'na'] },
           { type: 'role', role: 'event' },
         ],
       },
@@ -1233,6 +1233,24 @@ function getEventHandlerPatternsPt(): LanguagePattern[] {
 
 function getEventHandlerPatternsQu(): LanguagePattern[] {
   return [
+    {
+      // Prefix `when` reactive block: the grammar transformer emits `maykama`
+      // (dict `when`) as a leading conjunction, e.g. `maykama <cond> <body>`.
+      id: 'event-qu-maykama',
+      language: 'qu',
+      command: 'on',
+      priority: 115,
+      template: {
+        format: 'maykama {event} {body}',
+        tokens: [
+          { type: 'literal', value: 'maykama' },
+          { type: 'role', role: 'event' },
+        ],
+      },
+      extraction: {
+        event: { position: 1 },
+      },
+    },
     {
       id: 'event-qu-source',
       language: 'qu',
@@ -1776,6 +1794,92 @@ function getEventHandlerPatternsZh(): LanguagePattern[] {
 }
 
 /**
+ * `when <condition> changes <body> end` reactive blocks for languages that
+ * otherwise have no hand-crafted event-handler patterns. The grammar
+ * transformer emits the dictionary `when` form as a leading conjunction
+ * (ja `とき`, tr `iken`, ar `عندما`, he `כאשר`), so a prefix `{when} {event}
+ * {body}` pattern — mirroring the es `cuando {event} {body}` shape — captures
+ * the condition as the event and delegates the trailing command to the body
+ * parser. Scoped to the `when` literal, so it never shadows `on <event>`
+ * handlers (which start with the event word, not the conjunction).
+ */
+function getEventHandlerPatternsJa(): LanguagePattern[] {
+  return [
+    {
+      id: 'event-ja-when',
+      language: 'ja',
+      command: 'on',
+      priority: 95,
+      template: {
+        format: 'とき {event} {body}',
+        tokens: [
+          { type: 'literal', value: 'とき', alternatives: ['時', 'ときに'] },
+          { type: 'role', role: 'event' },
+        ],
+      },
+      extraction: { event: { position: 1 } },
+    },
+  ];
+}
+
+function getEventHandlerPatternsTr(): LanguagePattern[] {
+  return [
+    {
+      id: 'event-tr-when',
+      language: 'tr',
+      command: 'on',
+      priority: 95,
+      template: {
+        format: 'iken {event} {body}',
+        tokens: [
+          { type: 'literal', value: 'iken', alternatives: ['durumunda', 'olduğunda'] },
+          { type: 'role', role: 'event' },
+        ],
+      },
+      extraction: { event: { position: 1 } },
+    },
+  ];
+}
+
+function getEventHandlerPatternsAr(): LanguagePattern[] {
+  return [
+    {
+      id: 'event-ar-when',
+      language: 'ar',
+      command: 'on',
+      priority: 95,
+      template: {
+        format: 'عندما {event} {body}',
+        tokens: [
+          { type: 'literal', value: 'عندما', alternatives: ['حين', 'لمّا'] },
+          { type: 'role', role: 'event' },
+        ],
+      },
+      extraction: { event: { position: 1 } },
+    },
+  ];
+}
+
+function getEventHandlerPatternsHe(): LanguagePattern[] {
+  return [
+    {
+      id: 'event-he-when',
+      language: 'he',
+      command: 'on',
+      priority: 95,
+      template: {
+        format: 'כאשר {event} {body}',
+        tokens: [
+          { type: 'literal', value: 'כאשר', alternatives: ['כש', 'עם'] },
+          { type: 'role', role: 'event' },
+        ],
+      },
+      extraction: { event: { position: 1 } },
+    },
+  ];
+}
+
+/**
  * Get event handler patterns for a specific language.
  */
 export function getEventHandlerPatternsForLanguage(language: string): LanguagePattern[] {
@@ -1818,6 +1922,14 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
       return getEventHandlerPatternsVi();
     case 'zh':
       return getEventHandlerPatternsZh();
+    case 'ja':
+      return getEventHandlerPatternsJa();
+    case 'tr':
+      return getEventHandlerPatternsTr();
+    case 'ar':
+      return getEventHandlerPatternsAr();
+    case 'he':
+      return getEventHandlerPatternsHe();
     default:
       return [];
   }
