@@ -537,7 +537,7 @@ export const bindSchema: CommandSchema = {
         de: 'zu',
         it: 'in',
         id: 'ke',
-        ms: 'ke',
+        ms: 'to', // no i18n grammar profile: prepositions stay English in generated text
         vi: 'vào', // generic destination preposition (matches set/put `into`), not "với"/with
         ru: 'в', // generic destination preposition (matches set/put `into`)
         uk: 'в',
@@ -548,7 +548,8 @@ export const bindSchema: CommandSchema = {
         ar: 'إلى',
         zh: '到', // bind target uses 到 (arrive/to), not the default 从/"from"
         he: 'ל', // "to" prefix preposition
-        sw: 'kwenye',
+        sw: 'kwa', // matches the generic `kwa` the transformer emits (not `kwenye`)
+        th: 'ใน', // generic destination preposition the transformer emits
         tl: 'sa',
         bn: 'তে',
         qu: 'man',

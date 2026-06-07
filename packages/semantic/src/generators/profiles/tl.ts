@@ -153,6 +153,9 @@ export const tagalogProfile: LanguageProfile = {
     stream: { primary: 'i-stream', alternatives: ['stream', 'agos'], normalized: 'stream' },
     live: { primary: 'live', alternatives: ['tuwiran', 'direkta'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
+    // Reactive: bind (generated text keeps the English verb; native primary
+    // for future i18n dictionary support)
+    bind: { primary: 'itali', alternatives: ['iugnay', 'bind'], normalized: 'bind' },
   },
   eventHandler: {
     keyword: { primary: 'kapag', normalized: 'on' },
