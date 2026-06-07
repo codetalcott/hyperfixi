@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Phase 1 `@attr`/`*style` tokenizer fix (ar/tl set-\* family). Track 1 (reactive) complete._
+_Last updated: after Phases 1–4 (tokenizer token-split fixes + js/guard masking + English DOM events). Track 1 (reactive) complete._
 
 ---
 
@@ -23,17 +23,18 @@ Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 | 95–96%       | sw (96.1), ko (95.5)                                |
 | **laggards** | **ar (93.5), tl (90.3)**                            |
 
-**~76 failing pattern-instances** remain, now in two tracks (Track 1 reactive is done):
+**~50 failing pattern-instances** remain after Phases 1–4, in two tracks (Track 1 reactive done):
 
-| Track                         | Instances | Nature                                                                          |
-| ----------------------------- | --------- | ------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable not implemented (CI `continue-on-error`) |
-| **Deep per-language grammar** | ~52       | Heterogeneous transformer/parser gaps, concentrated in tl / ar / ko             |
+| Track                         | Instances | Nature                                                                                 |
+| ----------------------------- | --------- | -------------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | ~26       | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)       |
+| **Deep per-language grammar** | ~24       | Heterogeneous transformer/parser gaps (method-calls, modifiers, reorder) — see Track 4 |
 
-> **The clean keyword/marker-alignment vein is exhausted.** Every remaining
+> **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
+> cleared `@`/`*`/`^`; Phase 3a the English DOM events). Every remaining
 > non-behavior failure needs per-pattern transformer/parser/grammar work (see
-> "Why the rest is hard"). There is no longer a uniform fix that clears a whole
-> cluster the way #269–#272 did.
+> Track 4 and "Why the rest is hard"). There is no longer a uniform fix that
+> clears a whole cluster.
 
 ---
 
