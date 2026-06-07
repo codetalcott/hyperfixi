@@ -398,6 +398,26 @@ describe('GrammarTransformer', () => {
       const result = transformer.transform('on input put value into #output');
       expect(result).toContain('#output');
     });
+
+    it('should keep event guards intact and untranslated', () => {
+      // `[key is 'Escape']` must stay one token with its contents verbatim —
+      // the spaces must not split it, and `is` must not be translated as a verb.
+      const result = transformer.transform("on keyup[key is 'Escape'] clear me");
+      // Guard stays one verbatim token attached to the event (not split on its
+      // internal spaces), and `is` inside it is not translated to a verb.
+      expect(result).toContain("keyup[key is 'Escape']");
+    });
+
+    it('should mask inline js bodies from word-order reordering', () => {
+      // The raw JS body must stay verbatim and immediately after the (translated)
+      // `js` keyword — never reordered ahead of the event like other roles.
+      const result = transformer.transform('on click js console.log("from js") end');
+      expect(result).toContain('console.log("from js")');
+      // js keyword precedes the raw body, which precedes the translated `end`.
+      expect(result).toMatch(/JS実行\s+console\.log\("from js"\)\s+終わり/);
+      // The body must not be split/reordered: no marker particle injected inside it.
+      expect(result).not.toMatch(/console\.log.*を.*from/);
+    });
   });
 
   describe('Arabic Transformation (VSO)', () => {

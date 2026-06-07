@@ -1,7 +1,7 @@
 /**
  * CSS Selector Extractor
  *
- * Extracts CSS selectors: #id, .class, [attr], <tag/>
+ * Extracts CSS selectors: #id, .class, [attr], <tag/>, @attr, *style
  * This is hyperscript-specific syntax.
  */
 
@@ -23,6 +23,23 @@ export function extractCssSelector(input: string, position: number): string | nu
   // Class selector: .identifier
   if (char === '.') {
     const match = input.slice(position).match(/^\.[a-zA-Z_][\w-]*/);
+    return match ? match[0] : null;
+  }
+
+  // Attribute reference: @attr (@disabled, @aria-selected, @data-count, @role)
+  // hyperscript's possessive-free attribute syntax. Kept as a single token so
+  // it fills a role; otherwise `@disabled` splits into `@` + `disabled`.
+  if (char === '@') {
+    const match = input.slice(position).match(/^@[a-zA-Z_][\w-]*/);
+    return match ? match[0] : null;
+  }
+
+  // Style/CSS-property reference: *prop or *--custom-prop
+  // (*opacity, *background-color, *--primary-color). Requires a letter, `_`, or
+  // a `--` custom-property prefix immediately after `*`, so the multiplication
+  // operator (`a * b`, `2 * 3`) is never mis-extracted.
+  if (char === '*') {
+    const match = input.slice(position).match(/^\*(?:--)?[a-zA-Z_][\w-]*/);
     return match ? match[0] : null;
   }
 
@@ -60,7 +77,11 @@ export class CssSelectorExtractor implements ValueExtractor {
 
   canExtract(input: string, position: number): boolean {
     const char = input[position];
-    return char === '#' || char === '.' || char === '[' || char === '<';
+    if (char === '#' || char === '.' || char === '[' || char === '<') return true;
+    // @attr / *style only when a valid name (or *-- custom property) follows, so
+    // a bare `*` (multiplication) or stray `@` does not get swallowed.
+    if (char === '@' || char === '*') return extractCssSelector(input, position) !== null;
+    return false;
   }
 
   extract(input: string, position: number): ExtractionResult | null {

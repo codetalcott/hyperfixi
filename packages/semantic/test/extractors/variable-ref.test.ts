@@ -21,6 +21,15 @@ describe('VariableRefExtractor', () => {
     expect(ex.extract('$x_1', 0)?.value).toBe('$x_1');
   });
 
+  it('extracts a ^caret variable whole', () => {
+    expect(ex.extract('^count', 0)?.value).toBe('^count');
+  });
+
+  it('does NOT match the bare `^` XOR operator', () => {
+    // `a ^ b` — space after `^`, so it is not a caret variable.
+    expect(ex.canExtract('^ b', 0)).toBe(false);
+  });
+
   it('stops at non-identifier characters', () => {
     // "$name to" → only "$name" is the variable token
     const r = ex.extract('$name to #x', 0);

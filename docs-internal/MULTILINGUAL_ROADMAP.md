@@ -5,35 +5,36 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after #272 (Hebrew DOM event-name recognition). Track 1 (reactive) complete._
+_Last updated: after Phases 1–4 (tokenizer token-split fixes + js/guard masking + English DOM events). Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **97.5%**
-(up from 96.2% at #267).
+(generated with `--bundle browser-priority`). Cross-language average **98.2%**
+(up from 97.5% before Phase 1; Phases 1, 2, 3a, 4 shipped: +26 instances).
 
-| Rate         | Languages                                   |
-| ------------ | ------------------------------------------- |
-| 100%         | en, bn, ms, ru, th, uk, vi                  |
-| 99.4%        | de, es, fr, hi, id, pt                      |
-| 97–99%       | ja (98.7), it/pl/tr/zh (97.4), he/qu (96.8) |
-| 94–96%       | sw (95.5), ko (94.8)                        |
-| **laggards** | **ar (87.0), tl (84.4)**                    |
+| Rate         | Languages                                           |
+| ------------ | --------------------------------------------------- |
+| 100%         | en, bn, ms, ru, th, uk, vi                          |
+| 99.4%        | de, es, fr, hi, id, pt                              |
+| 97–99%       | ja (99.4), tr/zh (98.1), it/pl (97.4), he/qu (96.8) |
+| 95–96%       | sw (96.1), ko (95.5)                                |
+| **laggards** | **ar (93.5), tl (90.3)**                            |
 
-**93 failing pattern-instances** remain, now in two tracks (Track 1 reactive is done):
+**~50 failing pattern-instances** remain after Phases 1–4, in two tracks (Track 1 reactive done):
 
-| Track                         | Instances | Nature                                                                          |
-| ----------------------------- | --------- | ------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable not implemented (CI `continue-on-error`) |
-| **Deep per-language grammar** | 69        | Heterogeneous transformer/parser gaps, concentrated in tl (24) / ar (20)        |
+| Track                         | Instances | Nature                                                                                 |
+| ----------------------------- | --------- | -------------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | ~26       | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)       |
+| **Deep per-language grammar** | ~24       | Heterogeneous transformer/parser gaps (method-calls, modifiers, reorder) — see Track 4 |
 
-> **The clean keyword/marker-alignment vein is exhausted.** Every remaining
+> **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
+> cleared `@`/`*`/`^`; Phase 3a the English DOM events). Every remaining
 > non-behavior failure needs per-pattern transformer/parser/grammar work (see
-> "Why the rest is hard"). There is no longer a uniform fix that clears a whole
-> cluster the way #269–#272 did.
+> Track 4 and "Why the rest is hard"). There is no longer a uniform fix that
+> clears a whole cluster.
 
 ---
 
@@ -75,6 +76,102 @@ move was **passthrough-alignment**: when the i18n transformer emits a token verb
 (English, or a form not in the profile), register that exact token on the semantic
 side rather than "fixing" the transformer.
 
+### Phase 1 — `@attr` / `*style` tokenizer fix (ar/tl `set-*` family)
+
+- **17 instances, 0 regressions, avg 97.5% → 97.9%.** ar 87.0% → 92.9%, tl 84.4% → 89.6%.
+- **One-line root cause, shared fix.** The semantic tokenizer's `CssSelectorExtractor`
+  (`packages/semantic/src/tokenizers/extractors/css-selector.ts`) handled `# . [ <`
+  but not `@` or `*`, so `@disabled` / `*opacity` / `*--primary-color` split into
+  `@`+`disabled` etc. and never filled a role (exactly the bug the `$greeting`
+  `variable-ref` extractor was written to avoid). Extended the extractor to keep
+  `@[a-zA-Z_][\w-]*` and `*(?:--)?[a-zA-Z_][\w-]*` as single selector tokens.
+  The `*` regex requires a letter/`_`/`--` immediately after `*`, so multiplication
+  (`a * b`, `2 * 3`) and globs (`*.css`, `/api/*`) — always space/`.`-delimited in the
+  corpus — are never mis-extracted.
+- This is shared across all 24 languages but only flips ar/tl (every other language
+  either passed already or routes `set` through a hand-crafted pattern / a different
+  command). Cleared: `set-attribute`, `set-style`, `set-opacity`, `set-transform`,
+  `default-value`, `tabs-aria`, `toggle-visibility`, `announce-screen-reader` (both
+  ar/tl), plus a bonus ar `transition-color` (uses `*background-color`).
+- **Roadmap note corrected:** the earlier "degenerate empty-body match" / "needs
+  per-language @attr handling" framing was wrong. en parses the body fine; the bug was
+  purely tokenizer-level token-splitting, fixable once in the shared extractor.
+- **Still failing (→ Phase 4):** `set-color-variable` (`set the *--x of #y …` —
+  untranslated article `the` + `of`-possessive) and `input-clear`
+  (`<input/>.value` member access on a selector).
+
+### Phase 2 — `js-inline` block masking (ja/ko/qu/tr)
+
+- **4 instances, 0 regressions, avg 97.9% → 98.05%.**
+- **Root cause:** the i18n transformer parsed `on click js console.log("from js") end`
+  as one statement with action `js` and the JS body + `end` as the patient role, then
+  reordered it — hoisting the raw JS ahead of the event
+  (`console.log(...) 終わり を クリック で JS実行`).
+- **Fix (`transformer.ts` → `tryTransformJsBlock`):** intercept `[on <event>] js <raw js> end`
+  at the top of `transform()`, before any splitting. The raw JS body is masked behind an
+  opaque placeholder so the surrounding event-handler head reorders normally; the
+  placeholder is then replaced with `<translated js> <verbatim body> <translated end>`.
+  Single-line only for now (multi-line js bodies — e.g. behavior `js(me) … end` — are
+  handled with the Phase 5 behavior work). Locked in by a grammar.test.ts case.
+- Correct output, e.g. ja: `クリック で JS実行 console.log("from js") 終わり`.
+
+### Phase 3a — event guards + English DOM event passthrough
+
+- **3 instances, 0 regressions, avg 98.05% → 98.13%.** sw `blur-element`,
+  `focus-trap`, `keydown-key-is-syntax`.
+- **Two coordinated fixes:**
+  1. **i18n transformer** — the tokenizer split event guards on internal spaces
+     (`keyup[key is 'Escape']` → `keyup[key` / `is` / `'Escape']`, mis-reading
+     `is` as the action verb), and `translateMultiWordValue` translated keywords
+     _inside_ `[...]` (`is` → sw `ni`). Made `tokenize()` bracket-aware and mask
+     `[...]` guard spans from translation (verbatim, private-use sentinels).
+  2. **framework base tokenizer** — registered the standard English DOM event
+     names (`keyup`/`keydown`/`resize`/…) as universal `!has`-guarded fallbacks in
+     `initializeKeywordsFromProfile`. The transformer passes these through
+     verbatim (no native dictionary form), so non-English token streams treated
+     them as bare identifiers and guarded handlers failed. Generalizes the
+     per-language Hebrew registration from #272 to all 24 languages at once.
+- **Verified safe:** full semantic suite (5260 pass; only the environmental
+  `build-artifacts` `.d.ts` checks fail) and all 759 framework tests pass.
+- **Remaining Phase 3 (deferred — genuinely deep, heterogeneous):**
+  `event-key-combo` (ja/ko/qu/tr) and `repeat-until-event` (hi) need
+  **event-handler-body block masking** (`if…end` / `repeat…end` inside a handler
+  reorder into the role soup); `window-resize` (qu/tr) needs **event-modifier**
+  handling (`from window debounced at 200ms`); `multiple-events` (ar) needs
+  **`or`-conjoined events** in VSO; `on-custom-event-receive` (ko/qu) needs
+  custom-event + `put…into me` reorder; `focus-trap` (tr) needs the body-block
+  work too. Each is a separate transformer enhancement, not a shared fix.
+
+### Phase 4 — caret variable token-split (ar/tl)
+
+- **2 instances, 0 regressions, avg 98.13% → 98.19%.** ar/tl `caret-var-write`.
+- **Root cause:** the `variable-ref` extractor kept `:local` / `$global` together
+  but not `^caret`, so `^count` split into `^` + `count` and never filled a role
+  (same class as Phase 1's `@`/`*`). Added `^` (identifier-start required, so the
+  XOR operator `a ^ b` is never mis-extracted). Locked by a variable-ref.test.ts
+  case. `caret-var-on-target` still fails — its `… on #host into me` destination
+  reorders (separate issue, below).
+
+### Track 4 — Scattered per-language remainder (deferred, ~deep)
+
+After Phases 1–4 the non-behavior failures left are all genuinely deep, each its
+own transformer/parser project (no shared lever remains):
+
+- **method-call / member-access** (`my.value.toUpperCase()`, `my.getAttribute(…)`;
+  ar/sw/tl) — the trailing `()` method call splits into `(`/`)` tokens and isn't
+  parsed; fails even in en via the raw semantic path. Needs method-call parsing.
+- **`transition-*` `over <dur>` modifier** (ko/tl) — `over 500ms` modifier is
+  dropped/misplaced in word-order reorder.
+- **`scroll to last <sel> in …`** (last-in-collection; ar/tl) — `scroll to` +
+  positional `last` + `in` source structure. (Tag-less `<.class/>` query selectors
+  also tokenize whole now would help, but the structure is the real blocker.)
+- **`unless <cond>`** (ar/tl) — the condition (`I match .disabled`) keeps English
+  `I`/`match` and the `unless` block isn't reassembled.
+- **`put … before/after`** (tl) — `after` → `pagkatapos` collides with `then`.
+- **caret-var-on-target, announce-screen-reader (he/sw), set-color-variable,
+  input-clear, form-disable-on-submit, multiple-events** — destination/compound
+  reorder + article/`of`-possessive + `or`-events (see Phase 3 notes).
+
 ---
 
 ## Remaining work
@@ -89,15 +186,17 @@ fix. Largest single pattern is `behavior-removable` (fails in 11 langs incl.
 high-rate de/es/fr/it/pt) — worth checking whether it's a _parse_ issue (the
 `install … removable` syntax) separable from the unimplemented-runtime issue.
 
-### Track 3 — Deep per-language grammar (69)
+### Track 3 — Deep per-language grammar (~52 remaining)
 
-Concentrated in **tl (24)** and **ar (20)**; the rest scattered (sw 7, ko 6,
-qu 5, ja/tr 3, zh/it/pl 1–2). Recurring themes — **all confirmed deep** (see below):
+Concentrated in **tl (16)** and **ar (11)**; the rest scattered (ko 8, sw 7,
+qu 5, he/qu 5, ja/tr 3–4, zh/it/pl 1–4). Recurring themes:
 
-- **`set-*` family (ar+tl):** `set-attribute`, `set-style`, `set-opacity`,
-  `set-transform`, `set-color-variable`. The `@attr` / `*style` tokens break
-  tokenization; even in **English** `set @disabled to true` only "passes" via a
-  **degenerate empty-body event-handler match** (the body isn't really parsed).
+- **`set-*` family (ar+tl): MOSTLY DONE in Phase 1.** The `@attr` / `*style`
+  token-splitting bug was fixed once in the shared `CssSelectorExtractor` (see
+  Shipped → Phase 1). Remaining `set-*` stragglers are `set-color-variable`
+  (article `the` + `of`-possessive) and `input-clear` (`<input/>.value` member
+  access) — both deferred to the scattered Phase 4 work below, not the `@`/`*`
+  token issue.
 - **possessive-dot (`.`):** `get-attribute-possessive-dot`,
   `method-call-possessive-dot` (ar/sw/tl) — member-access `.` chains.
 - **`caret`** (caret-var-write/on-target; ar/tl), **`transition-*`**
