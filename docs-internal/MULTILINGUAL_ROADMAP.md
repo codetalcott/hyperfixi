@@ -5,35 +5,41 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after #267 (reactive `bind` for ms/sw/th/tl)._
+_Last updated: after #272 (Hebrew DOM event-name recognition). Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **96.2%**.
+(generated with `--bundle browser-priority`). Cross-language average **97.5%**
+(up from 96.2% at #267).
 
-| Rate         | Languages                                        |
-| ------------ | ------------------------------------------------ |
-| 100%         | en, bn, ms                                       |
-| 99.4%        | de, es, hi, id, pt                               |
-| 98–99%       | vi (98.7), fr/ru/uk (98.1)                       |
-| 96–98%       | ja/th (97.4), zh (96.8), it/tr (96.1), qu (95.5) |
-| 94–95%       | ko/pl (94.8), sw (94.2)                          |
-| **laggards** | **he/ar (85.7), tl (83.8)**                      |
+| Rate         | Languages                                   |
+| ------------ | ------------------------------------------- |
+| 100%         | en, bn, ms, ru, th, uk, vi                  |
+| 99.4%        | de, es, fr, hi, id, pt                      |
+| 97–99%       | ja (98.7), it/pl/tr/zh (97.4), he/qu (96.8) |
+| 94–96%       | sw (95.5), ko (94.8)                        |
+| **laggards** | **ar (87.0), tl (84.4)**                    |
 
-**142 failing pattern-instances** remain, in three tracks:
+**93 failing pattern-instances** remain, now in two tracks (Track 1 reactive is done):
 
-| Track                          | Instances | Nature                                                                          |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------- |
-| **Reactive blocks/stragglers** | 35        | `live`/`when` reactive _blocks_, `socket`, and th/tl reactive stragglers        |
-| **Bucket B — behaviors**       | 24        | Draggable/Sortable/Resizable/Removable not implemented (CI `continue-on-error`) |
-| **Bucket C — per-language**    | 83        | Heterogeneous tokenizer/grammar gaps, concentrated in tl/ar/he                  |
+| Track                         | Instances | Nature                                                                          |
+| ----------------------------- | --------- | ------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable not implemented (CI `continue-on-error`) |
+| **Deep per-language grammar** | 69        | Heterogeneous transformer/parser gaps, concentrated in tl (24) / ar (20)        |
+
+> **The clean keyword/marker-alignment vein is exhausted.** Every remaining
+> non-behavior failure needs per-pattern transformer/parser/grammar work (see
+> "Why the rest is hard"). There is no longer a uniform fix that clears a whole
+> cluster the way #269–#272 did.
 
 ---
 
-## Shipped (issue #259 lineage)
+## Shipped
+
+### issue #259 lineage (pre-this-arc)
 
 - **#258** — reactive `bind` engine fix + Western batch (es/pt/fr/de/it).
 - **#262** — Class-B `intercept`/`worker`/`eventsource` keywords (ja/ko/zh/tr/qu/bn/ar/he).
@@ -43,32 +49,35 @@ Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 - **#266** — possessive property paths for tr (Turkish tokenizer word-boundary guard + spaced genitive).
 - **#267** — reactive `bind` for ms/sw/th/tl (keyword + source-marker alignment).
 
-Net: the **reactive keyword-wiring** sub-track and the **possessive property-path** gap are **complete** for every language where they applied.
+### Track 1 reactive — complete (#269–#271), + Hebrew events (#272)
+
+- **#269** — reactive stragglers: th/tl `intercept`/`worker`/`eventsource` keyword
+  wiring + `socket-basic` for he/ru/th/uk/zh (English `socket` alias — the transformer
+  emits `socket` verbatim and these profiles only carried the native form). **9 instances.**
+- **#270** — `live` blocks (fr/it/pl/ru/sw/uk/vi). Not deep block-grammar after all:
+  the i18n transformer emitted a `live` form the semantic profile didn't list
+  (fr `vif`, it `vivo`, …). Added each as a semantic alternative; for sw/vi the
+  emitted form was multi-token (tokenizer-splitting) so the i18n dict was changed to
+  a single-token form (sw `mubashara`, vi `live`). **14 instances.**
+- **#271** — `when` blocks (ar/he/ja/pl/qu/tr). `when <cond> changes <body> end`
+  parses as an event-handler whose leading `when` conjunction must be recognized:
+  pl pattern keyed on `gdy` vs emitted `kiedy`; qu/ar/he/tr had no/incomplete
+  event-handler patterns (added prefix `{when} {event} {body}` patterns); ja needed
+  the dict `when` form `とき`→`時` (`とき` starts with the particle `と`, which the
+  char-tokenizer's particle extractor ate). **12 instances.**
+- **#272** — Hebrew DOM event-name recognition. The he tokenizer knew Hebrew event
+  names but not the English `load`/`resize`/`scroll`/`keydown`/`mousedown`/`mouseup`
+  the transformer passes through verbatim. Registered them as he tokenizer extras.
+  **14 instances** — he 85.7% → 94.8%, no longer a laggard.
+
+Net so far this arc: **49 instances**, avg **96.2% → 97.5%**. The recurring winning
+move was **passthrough-alignment**: when the i18n transformer emits a token verbatim
+(English, or a form not in the profile), register that exact token on the semantic
+side rather than "fixing" the transformer.
 
 ---
 
 ## Remaining work
-
-### Track 1 — Reactive blocks & stragglers (35)
-
-Keywords already exist in every profile; the gaps are **grammar/block** level.
-
-- **`live` blocks (14):** `live-derived-value`, `live-multiple-deps` — fr, it, pl, ru, sw, uk, vi.
-  Generated text is a `live … end` block wrapping a `put` with a template literal,
-  e.g. `live put \`Count: ${$count}\` into me end`. The i18n block reordering /
-`extractBlockStructure` path doesn't produce parseable output for these langs.
-- **`when` blocks (12):** `when-value-changes`, `when-multiple-changes` — ar, he, ja, pl, qu, tr.
-  `when (#price's value * #qty's value) changes … end` — combines possessive +
-  arithmetic + the `changes` trigger + a block body. Hardest of the reactive set.
-- **`socket-basic` (5):** he, ru, th, uk, zh. Single pattern; likely a marker/keyword-form
-  issue (the `socket` keyword exists). Quick to diagnose, possibly Class-A-style.
-- **th/tl reactive stragglers (4):** `intercept-cache-strategies` (th, tl),
-  `eventsource-basic` (th), `worker-basic` (th). th/tl never got the
-  intercept/worker/eventsource keywords (#262 covered the 8 Class-B langs only).
-  **Likely the most tractable remaining reactive work** — keyword wiring, same as #267.
-
-**Effort:** `live`/`when` are deep block-grammar work (comparable to #263). `socket`
-and th/tl stragglers are likely quick keyword/marker fixes — **do those first.**
 
 ### Track 2 — Bucket B behaviors (24)
 
@@ -80,25 +89,42 @@ fix. Largest single pattern is `behavior-removable` (fails in 11 langs incl.
 high-rate de/es/fr/it/pt) — worth checking whether it's a _parse_ issue (the
 `install … removable` syntax) separable from the unimplemented-runtime issue.
 
-### Track 3 — Bucket C per-language (83)
+### Track 3 — Deep per-language grammar (69)
 
-Heterogeneous; concentrated in **tl (25), ar (22), he (22)**. Recurring themes:
+Concentrated in **tl (24)** and **ar (20)**; the rest scattered (sw 7, ko 6,
+qu 5, ja/tr 3, zh/it/pl 1–2). Recurring themes — **all confirmed deep** (see below):
 
 - **`set-*` family (ar+tl):** `set-attribute`, `set-style`, `set-opacity`,
-  `set-transform`, `set-color-variable` (2 each). Likely one shared `set`
-  style/attribute grammar issue per language → ~5-pattern win each.
+  `set-transform`, `set-color-variable`. The `@attr` / `*style` tokens break
+  tokenization; even in **English** `set @disabled to true` only "passes" via a
+  **degenerate empty-body event-handler match** (the body isn't really parsed).
 - **possessive-dot (`.`):** `get-attribute-possessive-dot`,
-  `method-call-possessive-dot` (ar/sw/tl). Distinct from the `'s` possessive
-  already fixed — this is member-access `.` chains.
-- **`caret`** (caret-var-write/on-target; ar/he/tl), **`transition-*`**
-  (color/transform/opacity; ar/ko/tl), **`announce-screen-reader`** (ar/he/sw/tl).
-- **event/window (he-heavy):** `event-key-combo` (5: he/ja/ko/qu/tr),
-  `window-resize/keydown/scroll`, `keydown-key-is-syntax`, `event-throttle`,
-  `focus-trap`, `modal-close-escape`, `repeat-until-event`/`repeat-forever`.
-- **`js-inline` (ja/ko/qu/tr)**, **`fetch-*` (ko)**, **`on-custom-event-receive` (ko/qu)**.
+  `method-call-possessive-dot` (ar/sw/tl) — member-access `.` chains.
+- **`caret`** (caret-var-write/on-target; ar/tl), **`transition-*`**
+  (color/opacity/transform; ar/ko/tl), **`announce-screen-reader`** (ar/he/sw/tl —
+  uses `set @role` + a compound body).
+- **`js-inline` (ja/ko/qu/tr):** the transformer **mangles** the `js … end` block,
+  reordering the JS source (`console.log(...) 終わり を クリック で JS実行`). The
+  block body needs masking from word-order transformation.
+- **`event-key-combo` (ja/ko/qu/tr):** complex SOV event + `keydown[key=="…"]` +
+  conditional. `put-before`/`put-after` (tl) hit a keyword collision
+  (`after`→`pagkatapos`, which is also tl's `then`).
 
-**Approach:** pick one language (tl or ar first — biggest gap) and clear its
-cluster; many of these are tokenizer/marker fixes that the harness validates per pattern.
+**Approach if resumed:** these are individual transformer/parser fixes, not a
+cluster sweep. Highest tractability-to-value is probably **`js-inline` block masking**
+(one transformer fix, 4 langs) — but verify it's not just another degenerate match
+first. The `set-*` family is the biggest count but the lowest value (best case is
+en-parity degenerate matching).
+
+### Why the rest is hard (investigation notes, this arc)
+
+- The harness's success criterion is **non-null parse**, so some en patterns "pass"
+  with a **degenerate empty-body** event-handler match (`set-@`/`*`). Replicating that
+  for other langs is legitimate by the metric but low-value and fiddly.
+- `@attr` / `*style` tokens are not handled by the language tokenizers in event-handler
+  bodies; a simple-var body (`set $x to true`) parses where `set @disabled to true` does not.
+- VSO/SOV event-handlers put the event at the end / reorder the body; combined with
+  unparseable body tokens, the whole handler match fails (not just the body).
 
 ---
 
@@ -157,20 +183,39 @@ cluster; many of these are tokenizer/marker fixes that the harness validates per
   native verb exists, keep the English form as primary (tr/qu `bind`).
 - **Don't run `generate:language-assets`** for focused batches — it syncs all drift into
   one unreviewable diff. Hand-edit the specific entries.
+- **Passthrough-alignment (the #269–#272 winning move):** when the transformer emits a
+  token verbatim — English (`socket`, `load`), or a dictionary form the semantic profile
+  doesn't list (`vif`, `kiedy`) — register **that exact token** on the semantic side
+  (profile alternative, tokenizer extra, or event-handler pattern literal). Don't "fix"
+  the transformer. Probe the actual transform output first; assumptions about what it
+  emits are often wrong.
+- **Char-tokenizer particle greediness (ja/th/zh):** a keyword that starts with a
+  particle (ja `とき` starts with `と`) gets eaten by the particle extractor. Prefer a
+  single-token form with no leading particle (ja `時`), set via the i18n dict.
+- **Multi-token keywords don't tokenize (vi/sw and most char-langs):** the tokenizer
+  splits on hyphen/space, so `trực tiếp` / `moja_kwa_moja` never match. Use a single-token
+  emitted form (English loanword, or a one-word native synonym already in the profile).
+- **Degenerate empty-body matches:** an en pattern can "pass" (non-null) while its body is
+  unparsed (`set @attr` inside `on click …`). Before chasing such a pattern in another
+  language, check whether en actually parses the body — if not, the win is hollow.
 
 ---
 
 ## Suggested sequencing for fresh sessions
 
-Each is an independent, focused PR (branch + baseline regen):
+Track 1 (reactive) is **done** (#269–#271); Hebrew events done (#272). What remains is
+**not** quick — pick deliberately:
 
-1. **th/tl reactive stragglers + `socket-basic`** — quick keyword/marker wins (~9 instances).
-2. **`live` block grammar** (fr/it/pl/ru/sw/uk/vi, 14) — design the reactive-block
-   reorder once; unlocks all 7 langs together.
-3. **`when` block grammar** (ar/he/ja/pl/qu/tr, 12) — builds on the `live` block work +
-   the `changes` trigger + possessive/arithmetic in the condition.
-4. **Bucket C by language** — tl first (biggest gap), then ar, then he. Clear each
-   language's `set-*` / possessive-dot / event clusters.
-5. **Bucket B behaviors** — separate runtime track; scope independently.
+1. **`js-inline` block masking** (ja/ko/qu/tr, 4) — single transformer fix to mask the
+   `js … end` body from word-order reordering. Most tractable of the deep set; verify it
+   isn't a degenerate match first.
+2. **`set-*` family** (ar/tl, ~10) — biggest count but lowest value (en-parity degenerate
+   match) and needs `@attr`/`*style` token handling in event-handler bodies.
+3. **Bucket B behaviors** (24) — separate **runtime** track; implement
+   Draggable/Sortable/Resizable/Removable, then revisit the `install … <behavior>` parse.
+4. **Scattered per-language** (caret, transition-\*, possessive-dot, announce) — one
+   pattern at a time; expect tokenizer/transformer work per item.
 
 Definition of done (unchanged from #259): all languages ≥ ~99% in the regenerated baseline.
+Realistically the next ~10–15 points of parse-rate require the deep work above, not
+more keyword wiring.
