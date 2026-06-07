@@ -5,35 +5,35 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after the Tier 1 parser-feature batch (tag-less `<.class/>` selectors, positional `last/first <sel> in <src>`, `of`-possessive `set`, member-access on queried elements). Track 4 and Track 1 (reactive) complete._
+_Last updated: after property-path patient (Tier 2; `announce-screen-reader` he+sw). Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **99.00%**
+(generated with `--bundle browser-priority`). Cross-language average **99.05%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
-batch + Tier 1: +56 instances).
-**37 failing pattern-instances** remain (24 are Bucket B behaviors).
+batch + Tier 1 + property-path patient: +58 instances).
+**35 failing pattern-instances** remain (24 are Bucket B behaviors).
 
-| Rate   | Languages                                  |
-| ------ | ------------------------------------------ |
-| 100%   | en, bn, hi, ja, ms, ru, th, uk, vi         |
-| 99%    | de/es/fr/id/pt/ko (99.4)                   |
-| 98–99% | qu (98.7), tr (98.7), sw (98.1), tl (98.1) |
-| 96–98% | it/pl/zh (97.4), ar (97.4), he (96.8)      |
+| Rate   | Languages                             |
+| ------ | ------------------------------------- |
+| 100%   | en, bn, hi, ja, ms, ru, th, uk, vi    |
+| 99%    | de/es/fr/id/pt/ko (99.4), sw (98.7)   |
+| 98–99% | qu (98.7), tr (98.7), tl (98.1)       |
+| 96–98% | it/pl/zh (97.4), ar (97.4), he (97.4) |
 
-**13 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
+**11 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
 
 | Track                         | Instances | Nature                                                                           |
 | ----------------------------- | --------- | -------------------------------------------------------------------------------- |
 | **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
-| **Deep per-language grammar** | 13        | compound/`in me` splits, condition i18n, custom-event SOV slot, event modifiers  |
+| **Deep per-language grammar** | 11        | compound/`in me` splits, condition i18n, custom-event SOV slot, event modifiers  |
 
-The 13 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
-`caret-var-on-target` (each **ar+tl**); `announce-screen-reader` (he+sw);
-`on-custom-event-receive` (ko+qu); `window-resize` (qu+tr); `focus-trap` (tr).
+The 11 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
+`caret-var-on-target` (each **ar+tl**); `on-custom-event-receive` (ko+qu);
+`window-resize` (qu+tr); `focus-trap` (tr).
 
 > **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
 > cleared `@`/`*`/`^`; Tier 1 the tag-less `<.class/>` selector). Every remaining
@@ -44,6 +44,29 @@ The 13 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
 ---
 
 ## Shipped
+
+### Property-path patient — fused-dot member access (+2)
+
+- **2 instances, 0 regressions, avg 99.00% → 99.05%.** he 97.4→97.4 (announce was
+  he's last non-behavior; he/sw both clear it). Cleared `announce-screen-reader`
+  (he+sw). Confirmed by a full `browser-priority` baseline regen (exactly these 2
+  flip `↑`, zero `↓`).
+- **Root cause.** `put event.detail.message into #x` fails even in **English** at
+  the bare-command level: the tokenizer fuses the dotted path into a base token +
+  `.`-prefixed _selector_ tokens (`event` + `.detail` + `.message`, since `.foo`
+  looks like a class selector), and `tryMatchPropertyAccessExpression` only knew the
+  un-fused `base . identifier` operator form. Added a fused-dot branch that folds a
+  chain of `.prop` selectors into the property path.
+- **The lever was NOT he/sw `set`.** Investigation found announce's `set …` clause
+  and the `set … on <target>` mis-split are both _tolerated_ inside the event-handler
+  compound (like `toggle .active on #host`, which already passes in he despite the
+  split). The only hard blocker was the property-path patient in the `put` clause —
+  so the he/sw `set`-marker alignment originally scoped for this item was unnecessary
+  and was dropped (no baseline impact, avoids the `weka`=put verb-collision risk).
+- **Regression guard.** The fused-dot branch is gated to identifier/reference bases
+  (`PROPERTY_ACCESS_BASES`) so a command verb + class selector (`toggle .active`,
+  AR `بدل .active`, the proclitic `وبدل .active`) is never swallowed as a property
+  path. Locked by `semantic/test/multilingual-property-path-patient.test.ts`.
 
 ### Tier 1 parser features — positional / of-possessive / member-access (+6)
 
@@ -309,7 +332,7 @@ high-rate de/es/fr/it/pt) — worth checking whether it's a _parse_ issue (the
 
 ### Track 3 — Deep per-language grammar
 
-> **Historical analysis below; the live remainder is the 13 in "Current state".**
+> **Historical analysis below; the live remainder is the 11 in "Current state".**
 > The Tier 1 batch cleared `last-in-collection`, `set-color-variable`, and
 > `input-clear` (ar+tl); the passthrough batch cleared `multiple-events`,
 > `fetch`, and `transition`. The notes here are kept as a record of approaches.
