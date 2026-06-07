@@ -113,7 +113,7 @@ export const ja: Dictionary = {
   },
 
   logical: {
-    when: 'とき',
+    when: '時',
     where: 'どこ',
     and: 'そして',
     or: 'または',
