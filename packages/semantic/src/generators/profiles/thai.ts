@@ -156,6 +156,9 @@ export const thaiProfile: LanguageProfile = {
       alternatives: ['websocket', 'เว็บซ็อกเก็ต'],
       normalized: 'socket',
     },
+    // Reactive: bind (generated text keeps the English verb; native primary
+    // for future i18n dictionary support)
+    bind: { primary: 'ผูก', alternatives: ['bind'], normalized: 'bind' },
   },
   tokenization: {
     boundaryStrategy: 'character', // Character-based like Chinese/Japanese
