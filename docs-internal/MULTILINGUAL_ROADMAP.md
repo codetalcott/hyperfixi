@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after @attr-in-selector-role (`form-disable-on-submit` ar+tl). Trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after caret-scope masking (`caret-var-on-target` ar+tl). @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -15,23 +15,23 @@ Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 (generated with `--bundle browser-priority`). Cross-language average **99.05%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
 batch + Tier 1 + property-path patient + custom-event SOV + trailing-event
-block-wrap + @attr-in-selector-role: +66 instances). **27 failing
-pattern-instances** remain (24 are Bucket B behaviors).
+block-wrap + @attr-in-selector-role + caret-scope masking: +68 instances).
+**25 failing pattern-instances** remain (24 are Bucket B behaviors).
 
 | Rate   | Languages                                              |
 | ------ | ------------------------------------------------------ |
-| 100%   | en, bn, hi, ja, ko, ms, qu, ru, th, uk, vi             |
-| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4), tl (99.4) |
-| 96–98% | it/pl/zh (97.4), ar (98.7), he (97.4)                  |
+| 100%   | en, bn, hi, ja, ko, ms, qu, ru, th, tl, uk, vi         |
+| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4), ar (99.4) |
+| 96–98% | it/pl/zh (97.4), he (97.4)                             |
 
-**3 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
+**1 non-behavior failing pattern-instance** remains (plus 24 Bucket B behaviors):
 
 | Track                         | Instances | Nature                                                                           |
 | ----------------------------- | --------- | -------------------------------------------------------------------------------- |
 | **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
-| **Deep per-language grammar** | 3         | caret destination reorder (ar+tl), event-modifier + VSO source-block (tr)        |
+| **Deep per-language grammar** | 1         | `focus-trap` (tr) — event-modifier guard + `from <source>` + VSO if-block        |
 
-The 3 non-behavior remainders: `caret-var-on-target` (**ar+tl**); `focus-trap` (tr).
+The sole non-behavior remainder: `focus-trap` (tr).
 
 > **Custom-event SOV cleared `on-custom-event-receive` (ko+qu) and, as a side
 > effect, `window-resize` (qu+tr).** The SOV event extractor now accepts a bare
@@ -50,6 +50,38 @@ The 3 non-behavior remainders: `caret-var-on-target` (**ar+tl**); `focus-trap` (
 ---
 
 ## Shipped
+
+### Caret-scope masking — `caret-var-on-target` ar+tl (+2)
+
+- **2 instances, 0 regressions, avg 99.05% (fix run vs committed baseline: exactly
+  ar/tl `caret-var-on-target` flip `↑`, zero `↓`; no stale-DB artifact this time).**
+  ar 98.7→99.4, tl 99.4→100.
+- **Root cause (two sides).** `on click put ^count on #host into me` failed even in
+  **English**: `^count on #host` reads a DOM-scoped `^count` variable from a
+  specific element, but the **overloaded `on`** broke both layers. (1) The semantic
+  `put` pattern had no notion of `^var on <selector>`, so the inner `on` left
+  `into me` unmatched → NULL (the full handler only "passed" with a hollow
+  empty body). (2) The i18n transformer's splitter/event-parser read the inner
+  `on` as an event/command boundary, mangling the output (`ضع ^count عند نقر ثم في
+أنا عند #host` — spurious `then`, scope stranded at the end, event lost).
+- **Fix (two parts).**
+  1. **Semantic matcher (`tryMatchCaretScopeExpression`).** Folds `^name on
+<selector>` into one expression value, gated to `^`-prefixed identifier tokens
+     followed by an `on`-marker (matched by raw value `on` or normalized
+     `destination`, cross-language) and a selector — so `toggle .active on #button`
+     (class-selector patient) is untouched. The trailing `into me` destination then
+     matches; the en handler gets a real body.
+  2. **Transformer masking.** `maskCaretScopes` hides the ` on <selector>` scope
+     behind an opaque sentinel attached to `^name` before any split/reorder (the
+     same shape as the js-block / string-literal masks), then `restoreCaretScopes`
+     puts it back verbatim. The command reorders as if the patient were a single
+     value; the event clause survives and `^count on #host` stays adjacent. `on`
+     is kept English (passthrough-alignment — the matcher accepts it everywhere).
+- Locked by `multilingual-roadmap-fixes.test.ts` (clean-en parse, real-body guard,
+  `toggle … on #button` + scope-less `put` guards, ar/tl transformed forms) and
+  `grammar.test.ts` (transform keeps the scope adjacent + event, no leftover
+  sentinel, normal commands undisturbed). Only one corpus pattern carries a
+  caret-scope, so the change is inherently narrow.
 
 ### `@attr` in selector roles — `form-disable-on-submit` ar+tl (+2)
 
@@ -136,25 +168,21 @@ The 3 non-behavior remainders: `caret-var-on-target` (**ar+tl**); `focus-trap` (
   the 클릭 control, and a guard that a plain command body never becomes a phantom
   event handler).
 
-### Investigated, deferred — `caret-var` (ar+tl), `focus-trap` (tr)
+### Investigated, deferred — `focus-trap` (tr)
 
-> `unless-condition` (ar+tl) and `form-disable-on-submit` (ar+tl) graduated from
-> this section — see Shipped → "Trailing-event block-wrap" and "@attr in selector
-> roles". The `<selector> in <scope>` matcher once scoped here turned out **not**
-> to be the form-disable blocker (`in me` was already tolerated; the real gate was
-> `@attr` patient classification), and `focus-trap`'s positional `<sel> in <scope>`
-> already parses in command context (`focus first <button/> in .modal` → OK). The
-> reusable trailing-event wrapper is the lever `focus-trap` still needs.
+> `unless-condition`, `form-disable-on-submit`, and `caret-var-on-target` (all
+> ar+tl) graduated from this section — see Shipped → "Trailing-event block-wrap",
+> "@attr in selector roles", and "Caret-scope masking". The `<selector> in <scope>`
+> matcher once scoped here turned out **not** to be the form-disable blocker (`in
+me` was already tolerated; the real gate was `@attr` patient classification), and
+> `focus-trap`'s positional `<sel> in <scope>` already parses in command context
+> (`focus first <button/> in .modal` → OK). The reusable trailing-event wrapper and
+> caret-scope masking are levers `focus-trap` can draw on.
 
-Probed faithfully (DB-stored translation → `parseSemantic`) and confirmed each needs
-deep transformer work — the achievable semantic-side result is a mangled parse, so
-they were **not** landed:
+Probed faithfully (DB-stored translation → `parseSemantic`); the sole remaining
+non-behavior failure needs deep transformer work — the achievable semantic-side
+result is a mangled parse, so it is **not** landed:
 
-- **`caret-var-on-target` (ar+tl).** The i18n transformer mangles
-  `put ^count on #host into me` → ar `ضع ^count عند نقر ثم في أنا عند #host` (spurious
-  `then` inserted, `on #host` scope split to the end, the event stranded mid-stream).
-  Needs transformer reorder surgery for the `^var on <elt> into me` scoped-destination
-  shape before the semantic side can see anything parseable.
 - **`focus-trap` (tr).** The i18n transformer mangles the event-block-with-source
   `on keydown[key=="Tab"] from .modal if … end` into a scrambled token stream
   (mixed untranslated `in`/`focus`/`first`, Turkish `içinde`/`eğer`/`durdur`, wrong

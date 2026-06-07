@@ -1335,6 +1335,43 @@ function translateElements(
 }
 
 // =============================================================================
+// Caret-scope masking (`^name on <selector>`)
+// =============================================================================
+
+/** Private-use sentinels bracketing a masked caret-scope index. */
+const CARET_SCOPE_OPEN = '\uE000';
+const CARET_SCOPE_CLOSE = '\uE001';
+
+/**
+ * Match `^name on <selector>` and the scope's selector form (#id, .class,
+ * <tag/>, [attr]). The `^name` is kept; only the ` on <selector>` scope is masked.
+ */
+const CARET_SCOPE_RE = /(\^[A-Za-z_][\w-]*)(\s+on\s+(?:[#.][\w-]+|<[^>]*\/>|\[[^\]]+\]))/g;
+
+/**
+ * Mask the ` on <selector>` scope of every `^name on <selector>` read behind an
+ * opaque token attached to `^name`, so the overloaded `on` doesn't reach the
+ * splitter / event-handler parser. Returns null when there's nothing to mask.
+ */
+function maskCaretScopes(input: string): { masked: string; scopes: string[] } | null {
+  const scopes: string[] = [];
+  const masked = input.replace(CARET_SCOPE_RE, (_m, varTok: string, scope: string) => {
+    const idx = scopes.length;
+    scopes.push(scope);
+    return `${varTok}${CARET_SCOPE_OPEN}${idx}${CARET_SCOPE_CLOSE}`;
+  });
+  return scopes.length > 0 ? { masked, scopes } : null;
+}
+
+/** Restore masked caret-scope tokens to their verbatim ` on <selector>` form. */
+function restoreCaretScopes(input: string, scopes: string[]): string {
+  return input.replace(
+    new RegExp(`${CARET_SCOPE_OPEN}(\\d+)${CARET_SCOPE_CLOSE}`, 'g'),
+    (_m, n: string) => scopes[Number(n)] ?? ''
+  );
+}
+
+// =============================================================================
 // Main Transformer
 // =============================================================================
 
@@ -1361,6 +1398,18 @@ export class GrammarTransformer {
    * For multi-line input, preserves line structure (indentation, blank lines).
    */
   transform(input: string): string {
+    // Caret-scoped variable reads (`^name on <selector>`) carry a second,
+    // overloaded `on` that the splitter/event-parser would mistake for an event
+    // or command boundary — mangling `put ^count on #host into me`. Mask the
+    // ` on <selector>` scope behind an opaque token attached to `^name` so the
+    // command reorders as if the patient were a single value, then restore it.
+    // `on` is kept verbatim (the semantic caret-scope matcher accepts it by raw
+    // value across languages — passthrough-alignment).
+    const caret = maskCaretScopes(input);
+    if (caret) {
+      return restoreCaretScopes(this.transform(caret.masked), caret.scopes);
+    }
+
     const targetThen = getTargetThenKeyword(this.targetProfile.code);
 
     // Inline JS blocks (`... js <raw js> end`) must be masked BEFORE any
