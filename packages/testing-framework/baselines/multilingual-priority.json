@@ -6862,10 +6862,10 @@
       }
     },
     "ko": {
-      "parseSuccess": 153,
-      "parseFailure": 1,
-      "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.5687726942628903,
+      "parseSuccess": 154,
+      "parseFailure": 0,
+      "parseRate": 1,
+      "avgConfidence": 0.5683261183261183,
       "bundleSize": 399599,
       "patterns": {
         "wait-for-event": {
@@ -7421,7 +7421,8 @@
           "confidence": 0.5
         },
         "on-custom-event-receive": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "keydown-key-is-syntax": {
           "success": true,
@@ -9356,10 +9357,10 @@
       }
     },
     "qu": {
-      "parseSuccess": 152,
-      "parseFailure": 2,
-      "parseRate": 0.987012987012987,
-      "avgConfidence": 0.735672514619883,
+      "parseSuccess": 154,
+      "parseFailure": 0,
+      "parseRate": 1,
+      "avgConfidence": 0.7326118326118326,
       "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
@@ -9791,7 +9792,8 @@
           "confidence": 0.5
         },
         "window-resize": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "document-ready": {
           "success": true,
@@ -9926,7 +9928,8 @@
           "confidence": 0.5
         },
         "on-custom-event-receive": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "keydown-key-is-syntax": {
           "success": true,
@@ -12474,10 +12477,10 @@
       }
     },
     "tr": {
-      "parseSuccess": 152,
-      "parseFailure": 2,
-      "parseRate": 0.987012987012987,
-      "avgConfidence": 0.867251461988304,
+      "parseSuccess": 153,
+      "parseFailure": 1,
+      "parseRate": 0.9935064935064936,
+      "avgConfidence": 0.8648511256354393,
       "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
@@ -12985,7 +12988,8 @@
           "confidence": 0.5
         },
         "window-resize": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "document-ready": {
           "success": true,
