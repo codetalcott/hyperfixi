@@ -88,6 +88,17 @@ const HEBREW_EXTRAS: KeywordEntry[] = [
   { native: 'שחרור מקש', normalized: 'keyup' },
   { native: 'מעבר עכבר', normalized: 'mouseover' },
   { native: 'יציאת עכבר', normalized: 'mouseout' },
+  // Standard DOM event names commonly written in English even in Hebrew code.
+  // The i18n dictionary has no Hebrew form for these, so the grammar
+  // transformer passes them through verbatim — register them so the emitted
+  // `ב load …` / `ב scroll …` handlers tokenize the event token.
+  { native: 'load', normalized: 'load' },
+  { native: 'resize', normalized: 'resize' },
+  { native: 'scroll', normalized: 'scroll' },
+  { native: 'keydown', normalized: 'keydown' },
+  { native: 'keyup', normalized: 'keyup' },
+  { native: 'mousedown', normalized: 'mousedown' },
+  { native: 'mouseup', normalized: 'mouseup' },
   { native: 'טעינה', normalized: 'load' },
   { native: 'גלילה', normalized: 'scroll' },
 
