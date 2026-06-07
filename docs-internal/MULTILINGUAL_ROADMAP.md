@@ -12,16 +12,16 @@ _Last updated: after Phase 1 `@attr`/`*style` tokenizer fix (ar/tl set-\* family
 ## Current state
 
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
-(generated with `--bundle browser-priority`). Cross-language average **97.9%**
-(up from 97.5% before Phase 1).
+(generated with `--bundle browser-priority`). Cross-language average **98.2%**
+(up from 97.5% before Phase 1; Phases 1, 2, 3a, 4 shipped: +26 instances).
 
-| Rate         | Languages                                   |
-| ------------ | ------------------------------------------- |
-| 100%         | en, bn, ms, ru, th, uk, vi                  |
-| 99.4%        | de, es, fr, hi, id, pt                      |
-| 97–99%       | ja (98.7), it/pl/tr/zh (97.4), he/qu (96.8) |
-| 94–96%       | sw (95.5), ko (94.8)                        |
-| **laggards** | **ar (92.9), tl (89.6)**                    |
+| Rate         | Languages                                           |
+| ------------ | --------------------------------------------------- |
+| 100%         | en, bn, ms, ru, th, uk, vi                          |
+| 99.4%        | de, es, fr, hi, id, pt                              |
+| 97–99%       | ja (99.4), tr/zh (98.1), it/pl (97.4), he/qu (96.8) |
+| 95–96%       | sw (96.1), ko (95.5)                                |
+| **laggards** | **ar (93.5), tl (90.3)**                            |
 
 **~76 failing pattern-instances** remain, now in two tracks (Track 1 reactive is done):
 
@@ -140,6 +140,36 @@ side rather than "fixing" the transformer.
   **`or`-conjoined events** in VSO; `on-custom-event-receive` (ko/qu) needs
   custom-event + `put…into me` reorder; `focus-trap` (tr) needs the body-block
   work too. Each is a separate transformer enhancement, not a shared fix.
+
+### Phase 4 — caret variable token-split (ar/tl)
+
+- **2 instances, 0 regressions, avg 98.13% → 98.19%.** ar/tl `caret-var-write`.
+- **Root cause:** the `variable-ref` extractor kept `:local` / `$global` together
+  but not `^caret`, so `^count` split into `^` + `count` and never filled a role
+  (same class as Phase 1's `@`/`*`). Added `^` (identifier-start required, so the
+  XOR operator `a ^ b` is never mis-extracted). Locked by a variable-ref.test.ts
+  case. `caret-var-on-target` still fails — its `… on #host into me` destination
+  reorders (separate issue, below).
+
+### Track 4 — Scattered per-language remainder (deferred, ~deep)
+
+After Phases 1–4 the non-behavior failures left are all genuinely deep, each its
+own transformer/parser project (no shared lever remains):
+
+- **method-call / member-access** (`my.value.toUpperCase()`, `my.getAttribute(…)`;
+  ar/sw/tl) — the trailing `()` method call splits into `(`/`)` tokens and isn't
+  parsed; fails even in en via the raw semantic path. Needs method-call parsing.
+- **`transition-*` `over <dur>` modifier** (ko/tl) — `over 500ms` modifier is
+  dropped/misplaced in word-order reorder.
+- **`scroll to last <sel> in …`** (last-in-collection; ar/tl) — `scroll to` +
+  positional `last` + `in` source structure. (Tag-less `<.class/>` query selectors
+  also tokenize whole now would help, but the structure is the real blocker.)
+- **`unless <cond>`** (ar/tl) — the condition (`I match .disabled`) keeps English
+  `I`/`match` and the `unless` block isn't reassembled.
+- **`put … before/after`** (tl) — `after` → `pagkatapos` collides with `then`.
+- **caret-var-on-target, announce-screen-reader (he/sw), set-color-variable,
+  input-clear, form-disable-on-submit, multiple-events** — destination/compound
+  reorder + article/`of`-possessive + `or`-events (see Phase 3 notes).
 
 ---
 

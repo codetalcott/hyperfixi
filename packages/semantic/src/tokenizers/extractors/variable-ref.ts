@@ -4,13 +4,16 @@
  * Extracts variable references:
  * - `:varname` — element-scoped local variables (`:count`, `:x`)
  * - `$varname` — global variables (`$count`, `$greeting`)
+ * - `^varname` — caret/published variables (`^count`)
  *
- * This is hyperscript-specific syntax. Both prefixes are kept attached to the
+ * This is hyperscript-specific syntax. All prefixes are kept attached to the
  * name so the reference tokenizes as a single token (otherwise `$greeting`
  * would split into `$` + `greeting` and never fill a role).
  *
  * The `$` form deliberately does NOT match `${` (template-literal
- * interpolation): the char after `$` must be an identifier start.
+ * interpolation): the char after `$` must be an identifier start. The `^` form
+ * requires an identifier start too, so the XOR operator (`a ^ b`) — always
+ * space-delimited — is never mis-extracted.
  */
 
 import type { ValueExtractor, ExtractionResult } from '../value-extractor-types';
@@ -24,7 +27,7 @@ export class VariableRefExtractor implements ValueExtractor {
   canExtract(input: string, position: number): boolean {
     const ch = input[position];
     return (
-      (ch === ':' || ch === '$') &&
+      (ch === ':' || ch === '$' || ch === '^') &&
       position + 1 < input.length &&
       /[a-zA-Z_]/.test(input[position + 1])
     );
