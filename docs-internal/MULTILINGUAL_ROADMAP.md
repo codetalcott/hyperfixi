@@ -99,6 +99,21 @@ side rather than "fixing" the transformer.
   untranslated article `the` + `of`-possessive) and `input-clear`
   (`<input/>.value` member access on a selector).
 
+### Phase 2 — `js-inline` block masking (ja/ko/qu/tr)
+
+- **4 instances, 0 regressions, avg 97.9% → 98.05%.**
+- **Root cause:** the i18n transformer parsed `on click js console.log("from js") end`
+  as one statement with action `js` and the JS body + `end` as the patient role, then
+  reordered it — hoisting the raw JS ahead of the event
+  (`console.log(...) 終わり を クリック で JS実行`).
+- **Fix (`transformer.ts` → `tryTransformJsBlock`):** intercept `[on <event>] js <raw js> end`
+  at the top of `transform()`, before any splitting. The raw JS body is masked behind an
+  opaque placeholder so the surrounding event-handler head reorders normally; the
+  placeholder is then replaced with `<translated js> <verbatim body> <translated end>`.
+  Single-line only for now (multi-line js bodies — e.g. behavior `js(me) … end` — are
+  handled with the Phase 5 behavior work). Locked in by a grammar.test.ts case.
+- Correct output, e.g. ja: `クリック で JS実行 console.log("from js") 終わり`.
+
 ---
 
 ## Remaining work

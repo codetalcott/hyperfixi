@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-07T05:30:51.010Z",
-  "commit": "ec634dd",
+  "timestamp": "2026-06-07T05:39:38.282Z",
+  "commit": "c9f4611",
   "languages": {
     "ar": {
       "parseSuccess": 143,
@@ -620,7 +620,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8267676767676768,
+      "avgConfidence": 0.83001443001443,
       "bundleSize": 396996,
       "patterns": {
         "toggle-class-basic": {
@@ -780,6 +780,10 @@
           "confidence": 1
         },
         "async-block": {
+          "success": true,
+          "confidence": 1
+        },
+        "js-inline": {
           "success": true,
           "confidence": 1
         },
@@ -1068,10 +1072,6 @@
           "confidence": 0.5
         },
         "call-function": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "js-inline": {
           "success": true,
           "confidence": 0.5
         },
@@ -3742,7 +3742,7 @@
       "parseSuccess": 149,
       "parseFailure": 5,
       "parseRate": 0.9675324675324676,
-      "avgConfidence": 0.8442100777671253,
+      "avgConfidence": 0.8446361989986156,
       "bundleSize": 396996,
       "patterns": {
         "put-content-basic": {
@@ -3822,6 +3822,10 @@
           "confidence": 0.8857142857142858
         },
         "default-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "js-inline": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -4014,10 +4018,6 @@
           "confidence": 0.8222222222222222
         },
         "async-block": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "js-inline": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -6228,10 +6228,10 @@
       }
     },
     "ja": {
-      "parseSuccess": 152,
-      "parseFailure": 2,
-      "parseRate": 0.987012987012987,
-      "avgConfidence": 0.8262740183792815,
+      "parseSuccess": 153,
+      "parseFailure": 1,
+      "parseRate": 0.9935064935064936,
+      "avgConfidence": 0.8274094823114431,
       "bundleSize": 396996,
       "patterns": {
         "toggle-class-basic": {
@@ -6387,6 +6387,10 @@
           "confidence": 1
         },
         "tell-command": {
+          "success": true,
+          "confidence": 1
+        },
+        "js-inline": {
           "success": true,
           "confidence": 1
         },
@@ -6682,9 +6686,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "js-inline": {
-          "success": false
-        },
         "modal-close-button": {
           "success": true,
           "confidence": 0.5
@@ -6851,10 +6852,10 @@
       }
     },
     "ko": {
-      "parseSuccess": 146,
-      "parseFailure": 8,
-      "parseRate": 0.948051948051948,
-      "avgConfidence": 0.5570015220700152,
+      "parseSuccess": 147,
+      "parseFailure": 7,
+      "parseRate": 0.9545454545454546,
+      "avgConfidence": 0.5566137566137567,
       "bundleSize": 396996,
       "patterns": {
         "wait-for-event": {
@@ -7108,7 +7109,8 @@
           "confidence": 0.5
         },
         "js-inline": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "tabs-basic": {
           "success": true,
@@ -9338,10 +9340,10 @@
       }
     },
     "qu": {
-      "parseSuccess": 149,
-      "parseFailure": 5,
-      "parseRate": 0.9675324675324676,
-      "avgConfidence": 0.7114093959731543,
+      "parseSuccess": 150,
+      "parseFailure": 4,
+      "parseRate": 0.974025974025974,
+      "avgConfidence": 0.7133333333333334,
       "bundleSize": 396996,
       "patterns": {
         "toggle-class-basic": {
@@ -9457,6 +9459,10 @@
           "confidence": 1
         },
         "async-block": {
+          "success": true,
+          "confidence": 1
+        },
+        "js-inline": {
           "success": true,
           "confidence": 1
         },
@@ -9686,9 +9692,6 @@
         "call-function": {
           "success": true,
           "confidence": 0.5
-        },
-        "js-inline": {
-          "success": false
         },
         "tabs-basic": {
           "success": true,
@@ -12435,10 +12438,10 @@
       }
     },
     "tr": {
-      "parseSuccess": 150,
-      "parseFailure": 4,
-      "parseRate": 0.974025974025974,
-      "avgConfidence": 0.8288148148148148,
+      "parseSuccess": 151,
+      "parseFailure": 3,
+      "parseRate": 0.9805194805194806,
+      "avgConfidence": 0.8299484915378955,
       "bundleSize": 396996,
       "patterns": {
         "toggle-class-basic": {
@@ -12602,6 +12605,10 @@
           "confidence": 1
         },
         "async-block": {
+          "success": true,
+          "confidence": 1
+        },
+        "js-inline": {
           "success": true,
           "confidence": 1
         },
@@ -12876,9 +12883,6 @@
         "call-function": {
           "success": true,
           "confidence": 0.5
-        },
-        "js-inline": {
-          "success": false
         },
         "modal-close-button": {
           "success": true,

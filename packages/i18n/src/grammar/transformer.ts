@@ -1311,6 +1311,15 @@ export class GrammarTransformer {
   transform(input: string): string {
     const targetThen = getTargetThenKeyword(this.targetProfile.code);
 
+    // Inline JS blocks (`... js <raw js> end`) must be masked BEFORE any
+    // splitting/reordering: the body is raw JavaScript, not hyperscript, so it
+    // must never be tokenized, translated, or word-order reordered. (Single-line
+    // only here; multi-line js bodies are handled with the behavior work.)
+    if (!input.includes('\n')) {
+      const jsBlock = this.tryTransformJsBlock(input);
+      if (jsBlock !== null) return jsBlock;
+    }
+
     // Check if input has multi-line structure worth preserving
     const hasMultiLineStructure = input.includes('\n');
 
@@ -1391,6 +1400,68 @@ export class GrammarTransformer {
 
     // 7. Join without markers (still use joinTokens for consistency)
     return joinTokens(reordered.map(e => e.translated || e.value));
+  }
+
+  /**
+   * Detect and transform an inline JS block (`[on <event>] js <raw js> end`).
+   *
+   * The `js ... end` body is raw JavaScript: it must not be tokenized,
+   * translated, or word-order reordered. We mask the whole block with a single
+   * opaque placeholder, run the surrounding statement (the event-handler head,
+   * if any) through the normal reorder pipeline so the placeholder lands in the
+   * correct action position, then substitute the translated `js`/`end` keywords
+   * around the verbatim body.
+   *
+   * Returns `null` (fall through to the normal path) when there is no js block,
+   * no matching `end`, or trailing content after `end` (kept tight on purpose).
+   */
+  private tryTransformJsBlock(input: string): string | null {
+    const src = this.sourceProfile.code;
+    const dst = this.targetProfile.code;
+
+    // The `js` / `end` keyword forms in the SOURCE language.
+    const sourceJs = translateWord('js', 'en', src);
+    const sourceEnd = translateWord('end', 'en', src).toLowerCase();
+
+    const tokens = input.split(/\s+/).filter(t => t.length > 0);
+    // The js command token, optionally with a `(locals)` suffix: `js`, `js(me)`.
+    const escapedJs = sourceJs.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const jsRe = new RegExp(`^${escapedJs}(\\(.*\\))?$`, 'i');
+    const jsIdx = tokens.findIndex(t => jsRe.test(t));
+    if (jsIdx === -1) return null;
+
+    // First `end` after the js keyword closes the block (raw JS never contains a
+    // bare hyperscript `end` token).
+    let endIdx = -1;
+    for (let i = jsIdx + 1; i < tokens.length; i++) {
+      if (tokens[i].toLowerCase() === sourceEnd) {
+        endIdx = i;
+        break;
+      }
+    }
+    if (endIdx === -1) return null;
+    // Trailing content after `end` — leave for the normal path.
+    if (endIdx !== tokens.length - 1) return null;
+
+    const jsToken = tokens[jsIdx];
+    const jsParen = jsToken.match(jsRe)?.[1] ?? '';
+    const jsKeywordRaw = jsParen ? jsToken.slice(0, jsToken.length - jsParen.length) : jsToken;
+
+    const body = tokens.slice(jsIdx + 1, endIdx).join(' ');
+    const targetJs = translateWord(jsKeywordRaw, src, dst) + jsParen;
+    const targetEnd = translateWord(tokens[endIdx], src, dst);
+    const replacement = [targetJs, body, targetEnd].filter(s => s.length > 0).join(' ');
+
+    const before = tokens.slice(0, jsIdx);
+    // Bare `js ... end` with no leading event-handler head: emit directly.
+    if (before.length === 0) return replacement;
+
+    // Mask the block as one opaque action token, reorder the surrounding
+    // statement, then restore the verbatim block.
+    const placeholder = 'JSBLOCKPLACEHOLDER';
+    const reordered = this.transformSingle([...before, placeholder].join(' '));
+    if (!reordered.includes(placeholder)) return null; // unexpected — fall through
+    return reordered.replace(placeholder, replacement);
   }
 
   /**
