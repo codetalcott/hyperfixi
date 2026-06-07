@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after property-path patient (Tier 2; `announce-screen-reader` he+sw). Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after custom-event SOV slot (`on-custom-event-receive` ko+qu, `window-resize` qu+tr). Property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -14,26 +14,33 @@ _Last updated: after property-path patient (Tier 2; `announce-screen-reader` he+
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 (generated with `--bundle browser-priority`). Cross-language average **99.05%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
-batch + Tier 1 + property-path patient: +58 instances).
-**35 failing pattern-instances** remain (24 are Bucket B behaviors).
+batch + Tier 1 + property-path patient + custom-event SOV: +62 instances).
+**31 failing pattern-instances** remain (24 are Bucket B behaviors).
 
-| Rate   | Languages                             |
-| ------ | ------------------------------------- |
-| 100%   | en, bn, hi, ja, ms, ru, th, uk, vi    |
-| 99%    | de/es/fr/id/pt/ko (99.4), sw (98.7)   |
-| 98–99% | qu (98.7), tr (98.7), tl (98.1)       |
-| 96–98% | it/pl/zh (97.4), ar (97.4), he (97.4) |
+| Rate   | Languages                                   |
+| ------ | ------------------------------------------- |
+| 100%   | en, bn, hi, ja, ko, ms, qu, ru, th, uk, vi  |
+| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4) |
+| 98–99% | tl (98.1)                                   |
+| 96–98% | it/pl/zh (97.4), ar (97.4), he (97.4)       |
 
-**11 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
+**7 non-behavior failing pattern-instances** remain (plus 24 Bucket B behaviors):
 
-| Track                         | Instances | Nature                                                                           |
-| ----------------------------- | --------- | -------------------------------------------------------------------------------- |
-| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
-| **Deep per-language grammar** | 11        | compound/`in me` splits, condition i18n, custom-event SOV slot, event modifiers  |
+| Track                         | Instances | Nature                                                                                               |
+| ----------------------------- | --------- | ---------------------------------------------------------------------------------------------------- |
+| **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`)                     |
+| **Deep per-language grammar** | 7         | compound/`in me` splits, condition i18n + VSO block-wrap, caret destination reorder, event modifiers |
 
-The 11 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
-`caret-var-on-target` (each **ar+tl**); `on-custom-event-receive` (ko+qu);
-`window-resize` (qu+tr); `focus-trap` (tr).
+The 7 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
+`caret-var-on-target` (each **ar+tl**); `focus-trap` (tr).
+
+> **Custom-event SOV cleared `on-custom-event-receive` (ko+qu) and, as a side
+> effect, `window-resize` (qu+tr).** The SOV event extractor now accepts a bare
+> (non-keyword) identifier in the event slot, gated by the event-marker particle
+> (ja/tr/qu/bn) or an immediately-following command verb (ko). The qu/tr resize
+> words (`hatun_kay` / `boyut_değiştir`) are real events absent from the native
+> event dictionary, so they fell out for free. **+4 instances, 0 regressions**
+> (full `browser-priority` regen). See Shipped → "Custom-event SOV slot".
 
 > **The clean tokenizer token-split vein is now largely worked out** (Phases 1 & 4
 > cleared `@`/`*`/`^`; Tier 1 the tag-less `<.class/>` selector). Every remaining
@@ -44,6 +51,61 @@ The 11 non-behavior remainders: `form-disable-on-submit`, `unless-condition`,
 ---
 
 ## Shipped
+
+### Custom-event SOV slot — `on-custom-event-receive` ko+qu (+ window-resize qu+tr) (+4)
+
+- **4 instances, 0 regressions, avg 99.05% (full `browser-priority` regen: exactly
+  ko/qu `on-custom-event-receive` + qu/tr `window-resize` flip `↑`, zero `↓`).**
+  ko 99.4→100, qu 98.7→100, tr 98.7→99.4.
+- **Root cause.** `trySOVEventExtraction` (the stage-3 fallback in
+  `semantic-parser.ts`) only recognized built-in event keywords
+  (`click`/`submit`/…) in the event slot. A custom event keeps its untranslated
+  source identifier after the grammar transform — `on hello put 'Got it!' into me`
+  → ko `'Got it!' 를 hello 넣다 나 에`, qu `… hello pi churay` — so `hello`
+  surfaced as a bare `identifier` token and never filled the event slot; the whole
+  handler failed (stages 1 & 2 already can't anchor a mid-stream event).
+- **Fix.** A second pass accepts a bare identifier in the event slot, gated by the
+  same structural cue the built-in path uses so a stray content identifier is never
+  mistaken for an event: marker languages (ja/tr/qu/bn) require the event-marker
+  particle right after the identifier (`hello pi`); marker-less Korean requires the
+  identifier to sit immediately before the body's command verb (`hello 넣다`). The
+  existing body re-parse is the final guard. Runs only after the event- and
+  command-pattern stages already failed.
+- **Bonus.** `window-resize` (qu/tr) flipped too: the qu/tr resize words
+  (`hatun_kay` / `boyut_değiştir`) are the real event, just absent from the native
+  event dictionary — the same gate now accepts them. (The `debounced at 200ms`
+  modifier is still dropped, but the metric is non-null parse.)
+- Locked by `semantic/test/multilingual-roadmap-fixes.test.ts` (ko+qu custom event,
+  the 클릭 control, and a guard that a plain command body never becomes a phantom
+  event handler).
+
+### Investigated, deferred — `unless` / `caret-var` / `form-disable` (ar+tl)
+
+Probed faithfully (DB-stored translation → `parseSemantic`) and confirmed each needs
+deep, multi-session work; the only achievable result is a hollow / mangled parse, so
+they were **not** landed (avoids inflating the non-null metric with empty matches):
+
+- **`unless-condition` (ar+tl).** Isolated cleanly: ar/tl already handle event-at-end
+  (`بدل .selected عند نقر` → `on`) and en parses the `unless` block, but ar/tl don't
+  recognize the `unless` keyword (ar `إلا إذا` **splits**, with `إذا`→`if`; tl
+  `maliban_kung` is an unrecognized identifier). Adding `unless` to the ar/tl profiles
+  (single-token `إلا` / `maliban_kung`) makes the block parse — **but** the simple
+  event-at-end is a _command-specific_ fused pattern (`toggle-event-ar-vso-verb-first`);
+  there is no generic block+event-at-end wrapper, so `unless … عند نقر` falls through to
+  a standalone `unless` that captures **nothing** (empty roles — body _and_ event
+  dropped), below even en-parity. A real `on` parse needs a generated
+  `unless-event-{ar,tl}-vso` pattern (or a generic event-at-end block wrapper). The
+  profile additions are correct-but-insufficient and were reverted to avoid a hollow flip.
+- **`caret-var-on-target` (ar+tl).** The i18n transformer mangles
+  `put ^count on #host into me` → ar `ضع ^count عند نقر ثم في أنا عند #host` (spurious
+  `then` inserted, `on #host` scope split to the end, the event stranded mid-stream).
+  Needs transformer reorder surgery for the `^var on <elt> into me` scoped-destination
+  shape before the semantic side can see anything parseable.
+- **`form-disable-on-submit` (ar+tl).** Compound (`add … <button/> in me  put "…" into
+<button/> in me`). The masked string literal defeats the transformer's compound split,
+  so the second clause stays fully English (`put "…" into <button/> in me`); separately,
+  `<button/> in me` (scoped query selector) isn't matched as one target. Needs both a
+  compound-split fix (mask-aware) and a `<selector> in <scope>` matcher.
 
 ### Property-path patient — fused-dot member access (+2)
 

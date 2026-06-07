@@ -48,3 +48,34 @@ describe('Korean transition keyword alignment (전환)', () => {
     expect(parse('.active 를 클릭 토글', 'ko').action).toBe('on');
   });
 });
+
+describe('Custom (non-keyword) event identifiers in SOV languages', () => {
+  // `on hello put 'Got it!' into me` — the custom event `hello` keeps its
+  // untranslated identifier form, so the SOV event extractor must accept a bare
+  // identifier in the event slot (gated by the event-marker particle for marker
+  // languages, or by an immediately-following command verb for marker-less
+  // Korean). See docs-internal/MULTILINGUAL_ROADMAP.md (on-custom-event-receive).
+  const cases: Array<[string, string]> = [
+    // Korean (no event-marker particle): `… <event-id> <verb> …`.
+    ['ko', "'Got it!' 를 hello 넣다 나 에"],
+    // Quechua (event-marker particle `pi`): `… <event-id> pi <verb>`.
+    ['qu', "'Got it!' ta noqa man hello pi churay"],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] parses custom event "${input}"`, () => {
+      expect(canParse(input, lang)).toBe(true);
+      expect(parse(input, lang).action).toBe('on');
+    });
+  }
+
+  it('still parses the known-event (클릭) control in Korean', () => {
+    expect(parse("'Got it!' 를 클릭 넣다 나 에", 'ko').action).toBe('on');
+  });
+
+  it('does not treat a plain command body as an event handler (ko)', () => {
+    // `.active 를 토글` is a bare toggle command — no event identifier present,
+    // so it must remain a command, never become a phantom event handler.
+    expect(parse('.active 를 토글', 'ko').action).toBe('toggle');
+  });
+});
