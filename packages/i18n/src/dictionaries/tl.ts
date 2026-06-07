@@ -80,7 +80,11 @@ export const tagalogDictionary: Dictionary = {
     as: 'bilang',
     by: 'sa_pamamagitan_ng',
     before: 'bago',
-    after: 'pagkatapos',
+    // `matapos` (not `pagkatapos`) for the positional "after": `pagkatapos` is
+    // also Tagalog "then", so emitting it for the position modifier collides with
+    // the sequence connector. `matapos` is the unambiguous positional form and
+    // matches the semantic tl profile's `after`.
+    after: 'matapos',
     over: 'sa_ibabaw',
     under: 'sa_ilalim',
     between: 'sa_pagitan',
