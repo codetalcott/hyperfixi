@@ -288,7 +288,7 @@ export const polishProfile: LanguageProfile = {
     // used by the vocab generator — `sse-połącz`, `hx-na-żywo`, etc.
     connect: { primary: 'połącz', alternatives: ['podłącz'], normalized: 'connect' },
     stream: { primary: 'transmituj', alternatives: ['strumień', 'streamuj'], normalized: 'stream' },
-    live: { primary: 'na-żywo', alternatives: ['na-bieżąco', 'live'], normalized: 'live' },
+    live: { primary: 'na-żywo', alternatives: ['na-bieżąco', 'live', 'żywy'], normalized: 'live' },
     socket: { primary: 'gniazdo', alternatives: ['socket', 'websocket'], normalized: 'socket' },
     // Reactive / realtime commands
     bind: { primary: 'powiąż', alternatives: ['związać', 'bind'], normalized: 'bind' },

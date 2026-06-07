@@ -307,7 +307,7 @@ export const russianProfile: LanguageProfile = {
     stream: { primary: 'транслировать', alternatives: ['поток', 'стрим'], normalized: 'stream' },
     live: {
       primary: 'в-прямом-эфире',
-      alternatives: ['прямой-эфир', 'вживую'],
+      alternatives: ['прямой-эфир', 'вживую', 'живой'],
       normalized: 'live',
     },
     socket: {

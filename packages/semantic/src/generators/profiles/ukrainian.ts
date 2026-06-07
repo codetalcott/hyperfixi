@@ -317,7 +317,7 @@ export const ukrainianProfile: LanguageProfile = {
     stream: { primary: 'транслювати', alternatives: ['потік', 'стрім'], normalized: 'stream' },
     live: {
       primary: 'наживо',
-      alternatives: ['у-прямому-ефірі', 'в-режимі-реального-часу'],
+      alternatives: ['у-прямому-ефірі', 'в-режимі-реального-часу', 'живий'],
       normalized: 'live',
     },
     socket: {
