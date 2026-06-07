@@ -27,6 +27,12 @@ describe('Possessive value-fillers (cross-language)', () => {
     ['AR: set my value (لي قيمة)', 'اضبط لي قيمة إلى 0 عند تحميل', 'ar'],
     ['TL: put my value (aking halaga)', 'ilagay aking halaga sa #preview kapag input', 'tl'],
     ['ES: put my value (mi valor)', 'al hacer clic poner mi valor en #preview', 'es'],
+    // Possessive-dot member access with a trailing method call. The method-call
+    // parens may tokenize split (`(` / args / `)`), so the possessive matcher
+    // consumes them by balanced count rather than expecting a single token.
+    ['EN: my.value.toUpperCase()', 'on input put my.value.toUpperCase() into #preview', 'en'],
+    ['AR: my.value.toUpperCase()', 'ضع لي.value.toUpperCase() إلى #preview عند إدخال', 'ar'],
+    ['TL: my.getAttribute("data-id")', 'ilagay aking.getAttribute("data-id") sa #output kapag click', 'tl'],
   ];
 
   for (const [label, code, lang] of cases) {
