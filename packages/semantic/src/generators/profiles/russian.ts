@@ -310,7 +310,11 @@ export const russianProfile: LanguageProfile = {
       alternatives: ['прямой-эфир', 'вживую'],
       normalized: 'live',
     },
-    socket: { primary: 'сокет', alternatives: ['гнездо', 'websocket'], normalized: 'socket' },
+    socket: {
+      primary: 'сокет',
+      alternatives: ['гнездо', 'websocket', 'socket'],
+      normalized: 'socket',
+    },
     // Reactive / realtime commands
     bind: { primary: 'привязать', alternatives: ['связать', 'bind'], normalized: 'bind' },
     intercept: {

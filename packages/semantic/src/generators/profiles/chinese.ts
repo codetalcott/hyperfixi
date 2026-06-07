@@ -148,7 +148,7 @@ export const chineseProfile: LanguageProfile = {
     connect: { primary: '连接', alternatives: ['连接器'], normalized: 'connect' },
     stream: { primary: '流', alternatives: ['流式传输'], normalized: 'stream' },
     live: { primary: '实时', alternatives: ['直播'], normalized: 'live' },
-    socket: { primary: '套接字', alternatives: ['websocket'], normalized: 'socket' },
+    socket: { primary: '套接字', alternatives: ['websocket', 'socket'], normalized: 'socket' },
     // Reactive / realtime commands
     bind: { primary: '绑定', alternatives: ['bind'], normalized: 'bind' },
     intercept: { primary: '拦截', alternatives: ['intercept'], normalized: 'intercept' },

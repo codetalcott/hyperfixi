@@ -320,7 +320,11 @@ export const ukrainianProfile: LanguageProfile = {
       alternatives: ['у-прямому-ефірі', 'в-режимі-реального-часу'],
       normalized: 'live',
     },
-    socket: { primary: 'сокет', alternatives: ['гніздо', 'websocket'], normalized: 'socket' },
+    socket: {
+      primary: 'сокет',
+      alternatives: ['гніздо', 'websocket', 'socket'],
+      normalized: 'socket',
+    },
     // Reactive / realtime commands
     // ASCII apostrophe (U+0027) — the Ukrainian tokenizer's letter class
     // whitelists U+0027, not the typographic ʼ (U+02BC); `приєднати` is an
