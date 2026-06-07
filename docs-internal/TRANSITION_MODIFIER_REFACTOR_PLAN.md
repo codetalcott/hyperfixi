@@ -10,6 +10,52 @@
 
 ---
 
+## ⚠️ Investigation update (supersedes "Root-cause findings" below)
+
+A hands-on probing session (via the real harness path: `maskSpans` →
+`GrammarTransformer` → `MultilingualHyperscript.parse`) found the original
+root-cause analysis **partly wrong** and the work **deeper than estimated**:
+
+1. **ko `opacity` (literal patient) does NOT parse standalone.** `transition-opacity`
+   / `fade-out-remove` "pass" in the baseline only because of the trailing
+   `then remove me` (a compound where `remove me` parses). Strip the `then` and
+   even the clean-literal ko transition is `null`. So the metric is hollow there.
+2. **The goal-marker mismatch is NOT "minor" — but fixing it doesn't help either.**
+   i18n maps the English `to` to the **`destination`** role globally
+   (`ENGLISH_MODIFIER_ROLES.to = 'destination'`), so for ko it emits the
+   destination particle `에`. The semantic transition schema calls that slot
+   **`goal`**. Aligning markers (schema `goal.markerOverride.ko`, or adding a
+   profile `goal` marker — only `transition` uses `goal`, so zero blast radius)
+   changes **nothing**, because of the real blocker:
+3. **THE REAL BLOCKER — structural.** The generated SOV/VSO event-handler pattern
+   (`generateSOVPatientFirstEventHandlerPattern` in
+   `packages/semantic/src/generators/event-handlers-sov.ts`) is
+   `{patient} {marker} {event} {marker} {verb}` — it **ends at the verb**. It has
+   no slots for transition's `goal` / `destination` / `duration`, which the i18n
+   transformer emits **after** the verb (`… 전환 0 에 500ms`) because those roles
+   aren't in the language's `canonicalOrder` (they land in the `remainingOrder`
+   tail, after the event clause). So those trailing tokens are always
+   unmatched leftovers; ko `으로`/`에서` only ever "matched" via a fragile
+   secondary path, never the transition pattern itself.
+4. **The patient-type widening (`expectedTypes: ['literal','selector','identifier']`)
+   is correct but inert for the metric.** It makes `transform`/`*background-color`
+   behave exactly like `opacity` in the SOV pattern's patient slot, but the
+   leftover-token problem above means no end-to-end outcome changes (verified:
+   broad 23-lang probe still fails exactly ko/tl color+transform).
+5. **i18n has no per-command role lever** — `to`→`destination` is global, so the
+   transition body can't be cleanly re-marked there without touching every
+   command that uses `to` for an element destination (`add .x to #el`).
+
+**Corrected scope:** landing `transition-*` requires **new post-verb-role
+SOV/VSO event-handler pattern variants** in the generator (emit
+`… {verb} {goal} {goal-marker} [{duration}]`) reconciled with the i18n output,
+verified for zero regression across all SOV/VSO languages — a genuine
+multi-session refactor, **not** the ~6-instance drive-by the metric implies.
+The June-2026 session deliberately **deferred** this (poor ROI vs. risk) after
+confirming the above, and instead shipped a tractable win elsewhere
+(qu `install` collision). The findings below (1–3) are the original, partly
+inaccurate analysis — kept for history; trust this block over them.
+
 ## Target failures
 
 | Pattern                | Langs  | raw_code                                                       |

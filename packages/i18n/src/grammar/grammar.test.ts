@@ -473,6 +473,22 @@ describe('GrammarTransformer', () => {
       expect(result).toContain('.menu');
     });
   });
+
+  describe('Quechua Transformation (SOV)', () => {
+    const transformer = new GrammarTransformer('en', 'qu');
+
+    it('should emit the install-specific verb (tarpuy), not the put/set verb (churay)', () => {
+      // Regression: the qu dictionary mapped `install` to `churay`, which is
+      // also `put`/`set`. The semantic qu profile expects `install` = `tarpuy`
+      // (churay = put), so `install Draggable` parsed as a malformed `put` and
+      // failed (`install-behavior` baseline failure). Align the emitted verb to
+      // the semantic profile's install keyword.
+      const result = transformer.transform('install Draggable');
+      expect(result).toContain('tarpuy');
+      expect(result).not.toContain('churay');
+      expect(result).toContain('Draggable');
+    });
+  });
 });
 
 // =============================================================================

@@ -54,7 +54,7 @@ export const qu: Dictionary = {
     settle: 'tiyay',
     append: 'qhipaman_yapay',
     exit: 'lluqsiy',
-    install: 'churay',
+    install: 'tarpuy',
     breakpoint: 'sayachinay',
     clear: 'pichay',
     close: 'wichqay',
