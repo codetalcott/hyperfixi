@@ -365,17 +365,23 @@ export class SemanticParserImpl implements ISemanticParser {
       // while/repeat/for) as the action but leave the block's condition and branch
       // body unconsumed — and, unlike a simple command, those trailing tokens are
       // *not* bridged by a then-marker (`on click if <cond> show … else … end`).
-      // Without this, the whole block body is dropped and the handler collapses to
-      // a bare `if` (a degenerate parse — see fidelity ratchet). Parse the remainder
-      // as body commands and append them as siblings (the condition tokens and
-      // `else` are skipped as non-commands), mirroring how the English event-body
-      // path flattens an if/else block. Gated to a trailing token that isn't the
-      // block's own `end`, so an empty block is left untouched.
       const isBlockBodyAction = BLOCK_BODY_ACTIONS.has(actionName);
       const hasBlockBody =
         isBlockBodyAction && !!nextToken && !this.isEndKeyword(nextToken.value, language);
 
-      if (hasContinuesMarker || hasTrailingThenChain || hasBlockBody) {
+      // General case: a fused event pattern captured the *first* body command as the
+      // action and left the rest unconsumed. The body's remaining commands may be
+      // then-chained (`… then …`), block bodies (if/else), OR simply *juxtaposed*
+      // (`halt the event call validateForm() if … end` — no `then` between them).
+      // Whenever any non-`end` token trails the captured action, re-parse it as body
+      // commands. This is safe and additive: `parseBodyWithGrammarPatterns` only
+      // appends tokens that match a command pattern and skips everything else, so an
+      // already-consumed simple handler (no remainder) is unchanged, and stray role
+      // words can never become spurious commands. Subsumes the then-chain and
+      // block-body cases above; both are kept named for documentation.
+      const hasTrailingBody = !!nextToken && !this.isEndKeyword(nextToken.value, language);
+
+      if (hasContinuesMarker || hasTrailingThenChain || hasBlockBody || hasTrailingBody) {
         // Parse remaining tokens as additional commands
         const commandPatterns = getPatternsForLanguage(language)
           .filter(p => p.command !== 'on')

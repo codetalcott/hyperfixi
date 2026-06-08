@@ -450,3 +450,47 @@ describe('then/end keyword recognition for profile-only languages — Track 5', 
     expect(a.has('remove')).toBe(true);
   });
 });
+
+describe('Juxtaposed multi-command event bodies — Track 5', () => {
+  // A fused event pattern captures the FIRST body command as the action; the rest
+  // of the body may be then-chained, a block, OR simply juxtaposed (no `then`
+  // between commands — `halt the event call validateForm() if … end`). The fused
+  // branch previously only continued on a then-chain/block, dropping juxtaposed
+  // commands. It now re-parses any trailing non-`end` tokens as body commands
+  // (additive: parseBodyWithGrammarPatterns only appends matched commands). Flips
+  // form-submit-prevent (de/it/ru/sw/th/uk/vi) + fetch-loading-state (bn/hi/it/ja/tr)
+  // + others degenerate→faithful. See docs-internal/MULTILINGUAL_ROADMAP.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // form-submit-prevent corpus transforms — the juxtaposed `halt … call … log …`
+  // body must survive instead of collapsing to the first command (`halt`).
+  const cases: Array<[string, string]> = [
+    ['de', 'bei absenden anhalten the ereignis aufrufen validateForm() wenn ergebnis ist falsch protokollieren "Invalid form" ende'],
+    ['sw', 'kwenye wasilisha simama the tukio ita validateForm() kama matokeo ni uongo andika "Invalid form" mwisho'],
+    ['vi', 'khi gửi dừng lại the sự kiện gọi validateForm() nếu kết quả là sai in ra "Invalid form" kết thúc'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers a juxtaposed multi-command body`, () => {
+      const a = actions(parse(input, lang));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('halt')).toBe(true);
+      expect(a.has('call')).toBe(true);
+      expect(a.has('log')).toBe(true);
+    });
+  }
+
+  it('does not over-generate on a simple single-command handler (en)', () => {
+    const a = actions(parse('on click toggle .active', 'en'));
+    expect([...a].sort()).toEqual(['on', 'toggle']);
+  });
+});
