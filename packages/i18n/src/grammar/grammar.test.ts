@@ -1450,3 +1450,38 @@ describe('Event-block body with `from <source>` (focus-trap)', () => {
     expect(t.transform(raw).length).toBeGreaterThan(0);
   });
 });
+
+describe('if/else block-body — else split + translation (Track 5 Tier 1)', () => {
+  // The if-block body was reordered as one stream, so `else` rode along glued to a
+  // selector-led clause (marked a selector → left UNTRANSLATED) with a spurious
+  // `then` inserted around it. The body is now split at a top-level `else` into a
+  // then-branch and an else-branch, each transformed independently, and `else` is
+  // translated. See docs-internal/MULTILINGUAL_ROADMAP.md (Track 5 Tier 1).
+  const raw = 'on click if #modal exists show #modal else make a <div#modal/> put it into body end';
+
+  it('[ar] translates else to وإلا (no English else leaks)', () => {
+    const result = new GrammarTransformer('en', 'ar').transform(raw);
+    expect(result).toContain('وإلا');
+    expect(result).not.toMatch(/\belse\b/);
+  });
+
+  it('[it] translates else to altrimenti (no English else leaks)', () => {
+    const result = new GrammarTransformer('en', 'it').transform(raw);
+    expect(result).toContain('altrimenti');
+    expect(result).not.toMatch(/\belse\b/);
+  });
+
+  it('[ja] translates else to そうでなければ (no English else leaks)', () => {
+    const result = new GrammarTransformer('en', 'ja').transform(raw);
+    expect(result).toContain('そうでなければ');
+    expect(result).not.toMatch(/\belse\b/);
+  });
+
+  it('leaves an else-less if-block body unchanged in shape', () => {
+    // No `else` → single body transform path, no spurious split.
+    const noElse = 'on click if #modal exists show #modal end';
+    const result = new GrammarTransformer('en', 'ar').transform(noElse);
+    expect(result).not.toMatch(/\belse\b/);
+    expect(result).toContain('اظهر'); // show translated
+  });
+});

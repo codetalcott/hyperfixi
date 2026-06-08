@@ -36,6 +36,14 @@ import { eventNameTranslations } from '../patterns/event-handler';
 import { render as renderExplicitFn } from '../explicit/renderer';
 import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 
+/**
+ * Block-introducing command actions: their tokens are a condition/clause plus a
+ * branch body, not a flat argument list. When a fused event pattern captures one
+ * of these as the handler action, the trailing body must be parsed separately
+ * (see `buildEventHandler`).
+ */
+const BLOCK_BODY_ACTIONS = new Set(['if', 'unless', 'while', 'repeat', 'for']);
+
 // =============================================================================
 // Parse Error with Diagnostics (Phase 3.4)
 // =============================================================================
@@ -340,7 +348,21 @@ export class SemanticParserImpl implements ISemanticParser {
       const nextToken = tokens.peek();
       const hasTrailingThenChain = !!nextToken && this.isThenKeyword(nextToken.value, language);
 
-      if (hasContinuesMarker || hasTrailingThenChain) {
+      // A fused VSO/SVO event pattern can capture a *block* command (if/unless/
+      // while/repeat/for) as the action but leave the block's condition and branch
+      // body unconsumed — and, unlike a simple command, those trailing tokens are
+      // *not* bridged by a then-marker (`on click if <cond> show … else … end`).
+      // Without this, the whole block body is dropped and the handler collapses to
+      // a bare `if` (a degenerate parse — see fidelity ratchet). Parse the remainder
+      // as body commands and append them as siblings (the condition tokens and
+      // `else` are skipped as non-commands), mirroring how the English event-body
+      // path flattens an if/else block. Gated to a trailing token that isn't the
+      // block's own `end`, so an empty block is left untouched.
+      const isBlockBodyAction = BLOCK_BODY_ACTIONS.has(actionName);
+      const hasBlockBody =
+        isBlockBodyAction && !!nextToken && !this.isEndKeyword(nextToken.value, language);
+
+      if (hasContinuesMarker || hasTrailingThenChain || hasBlockBody) {
         // Parse remaining tokens as additional commands
         const commandPatterns = getPatternsForLanguage(language)
           .filter(p => p.command !== 'on')
@@ -927,13 +949,19 @@ export class SemanticParserImpl implements ISemanticParser {
     commandPatterns: LanguagePattern[],
     language: string
   ): SemanticNode | null {
-    // Only try if the input contains then-keywords (otherwise single-command already tried)
+    // Only try if the input has a clause-joining keyword (otherwise single-command
+    // already tried). A then-keyword joins sequential commands; an else-keyword
+    // joins an `if … else …` block whose branches carry no `then` between them
+    // (the if/else block-mask transform emits `<thenBranch> else <elseBranch>`),
+    // which would otherwise leave the whole handler unparsed when the event itself
+    // isn't recognized.
     const allTokens = tokens.tokens;
     const hasThenKeyword = allTokens.some(
       t =>
         t.kind === 'conjunction' || (t.kind === 'keyword' && this.isThenKeyword(t.value, language))
     );
-    if (!hasThenKeyword) return null;
+    const hasElseKeyword = allTokens.some(t => this.isElseKeyword(t.value, language));
+    if (!hasThenKeyword && !hasElseKeyword) return null;
 
     // Reset token stream and parse using clause-based parsing
     const freshStream = new TokenStreamImpl(allTokens as LanguageToken[], language);
@@ -1339,6 +1367,22 @@ export class SemanticParserImpl implements ISemanticParser {
     };
     const keywords = thenKeywords[language] || thenKeywords.en;
     return keywords.has(value.toLowerCase());
+  }
+
+  /**
+   * Check if a token is an 'else' keyword in the given language. Derived from the
+   * language profile (primary + alternatives), with the English literal always
+   * accepted (the grammar transformer leaves `else` verbatim for profiles without
+   * an else form). Used to let the compound fallback recognize an `if … else …`
+   * block whose branches are joined by `else` rather than a then-keyword.
+   */
+  private isElseKeyword(value: string, language: string): boolean {
+    const v = value.toLowerCase();
+    if (v === 'else') return true;
+    const kw = tryGetProfile(language)?.keywords?.else;
+    if (!kw) return false;
+    if (kw.primary?.toLowerCase() === v) return true;
+    return !!kw.alternatives?.some(a => a.toLowerCase() === v);
   }
 
   /**

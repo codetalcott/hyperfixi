@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after German `fetch` keyword alignment (de fetch cluster, −4 degenerate→faithful, fidelity Track 5). Parse rate unchanged (all non-behavior failures already cleared). Caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after Track 5 **Tier 1 — if/else block-body in event handlers** (degenerate passes **219 → 181**, −38 degenerate→faithful, 0 fidelity regressions, parse rate unchanged 3672/3696). Cleared `if-exists` entirely (ar+it flipped, the named Tier 1 target) and lifted `if-empty`/`input-validation`/`unless-condition` across 13 languages — the parser fix generalizes the whole if-block cluster. Earlier: German `fetch` keyword alignment, caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, (parse-rate) Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -57,6 +57,50 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 Tier 1 — if/else block-body in event handlers (−38 degenerate)
+
+- **Fidelity, not parse rate**: degenerate passes **219 → 181** (−38 degenerate→faithful),
+  **0 fidelity regressions, parse rate unchanged** (3672/3696). Confirmed by a full
+  `browser-priority` regen + the `--regression` gate (every flip is degenerate→faithful;
+  zero faithful→degenerate; zero parse-success ↑/↓). avgFidelity rose for
+  ar/bn/he/hi/it/qu/ru/sw/th/tl/tr/uk/vi, none fell.
+- **Named target cleared.** `if-exists` (the Tier 1 target — ar+it fully shredded to
+  `[on, if]` at 0.40) is now **gone from the degenerate list entirely**: ar → 0.80,
+  it → 1.0. Because the fix is at the parser/transform layer (not per-pattern), it also
+  lifted the rest of the if-block cluster — **`if-empty`, `input-validation`,
+  `unless-condition`** — from degenerate to faithful across 13 languages.
+- **Root cause (two layers).**
+  1. **Parser (`buildEventHandler`).** A fused VSO/SVO event pattern (`if-event-ar-vso`,
+     `event-handler-it-full`, …) captures a **block** command (`if`/`unless`/…) as the
+     handler _action_, but — unlike a simple command — the block's condition + branch body
+     are **not** bridged by a then-marker (`on click if <cond> show … else … end`). The
+     handler body collapsed to a bare `if` and every branch command was dropped (degenerate).
+  2. **Transformer (`transformConditionalBody`).** The if-block body was reordered as one
+     stream, so `else` rode along glued to a selector-led clause (`#modal else` → marked a
+     selector → left **untranslated**) with a spurious `then` inserted around it.
+- **Fix (three parts, all additive).**
+  1. **Parser** — when the fused action is a block keyword (`if`/`unless`/`while`/`repeat`/
+     `for`) and trailing non-`end` tokens remain, parse them as body commands and append as
+     siblings (mirrors how the English event-body path flattens an if/else block; the
+     condition tokens and `else` are skipped as non-commands). Gated to block actions, so
+     simple-command handlers are byte-identical.
+  2. **Transformer** — split the if-block body at a **top-level** (depth-aware) `else` into
+     a then-branch and an else-branch, transform each independently, and translate `else`
+     (ar `وإلا`, it `altrimenti`, ja `そうでなければ`, ko `아니면`, de `sonst`, …).
+  3. **Compound-fallback gate** — the Stage-4 fallback fired only on a then-keyword. The
+     else-split removed the `then` that some handlers leaned on when their **event isn't
+     recognized** (sw `blur`=`poteza_macho`, so `input-validation` only ever parsed via the
+     fallback). The gate now also fires on an `else` keyword (profile-derived
+     `isElseKeyword`), preventing a faithful→null regression there.
+- **Honest scope.** ar `if-exists` is 0.80 not 1.0: `put it into body` (`ضع هو إلى جسم`)
+  is a separate ar `put` gap. ja/ko if-exists stay 0.80 (they drop the `if` wrapper — an
+  SOV conditional-parse gap, untouched here). The `is <pred>` conditional class (Tier 2)
+  is still the bigger, per-language effort.
+- Locked by `multilingual-roadmap-fixes.test.ts` ("if/else block-body in event handlers":
+  ar/it if-exists keep the if + branch body; sw else-joined block still parses) and
+  `grammar.test.ts` ("if/else block-body — else split + translation": ar/it/ja translate
+  `else`, no English `else` leaks, else-less body unchanged).
 
 ### German `fetch` keyword alignment — fidelity (de fetch cluster, +4 faithful)
 
@@ -591,8 +635,9 @@ the fraction of the English reference parse's command actions that survive (reca
 word-order agnostic). Passes below 50% fidelity are **degenerate passes**.
 
 **Current state (committed baseline carries `avgFidelity` / `degeneratePasses`):**
-~**219 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
-post-event then-chain fix, −4 from the de fetch keyword alignment — both below).
+~**181 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
+post-event then-chain fix, −4 from the de fetch keyword alignment, −38 from the
+Tier 1 if/else block-body fix — all below).
 Triage (`packages/testing-framework/tools/fidelity-triage.ts`)
 confirmed the signal is **real** — these are genuinely dropped commands, not a
 metric artifact — and isolated **two roots**: (A) the i18n **transformer** scrambles
@@ -619,14 +664,14 @@ alignment, below) but the bulk remains. The remaining clusters:
 
 The remaining clusters:
 
-| Cluster                     | Examples (langs)                                                                                |
-| --------------------------- | ----------------------------------------------------------------------------------------------- |
-| control-flow blocks         | `if-empty` (16), `if-exists` (13), `unless-condition` (4)                                       |
-| fetch lifecycle / state     | `fetch-loading-state` (9), `fetch-with-headers` (5), `fetch-json` (4), `fetch-do-not-throw` (3) |
-| async / streaming           | `async-block` (13), `socket-basic` (9), `eventsource`/`worker`                                  |
-| validation / forms          | `input-validation` (14), `form-submit-prevent` (9)                                              |
-| positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                           |
-| event modifiers / behaviors | `event-debounce`/`event-once`, `behavior-*` (degenerate in the langs where they parse)          |
+| Cluster                     | Examples (langs)                                                                                                |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| control-flow blocks         | `if-empty` (5), `unless-condition` (2) — `if-exists` (0) + most `if-empty`/`input-validation` cleared by Tier 1 |
+| fetch lifecycle / state     | `fetch-loading-state` (9), `fetch-with-headers` (5), `fetch-json` (4), `fetch-do-not-throw` (3)                 |
+| async / streaming           | `async-block` (13), `socket-basic` (9), `eventsource`/`worker`                                                  |
+| validation / forms          | `input-validation` (2 — was 14, cleared by Tier 1), `form-submit-prevent` (9)                                   |
+| positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                                           |
+| event modifiers / behaviors | `event-debounce`/`event-once`, `behavior-*` (degenerate in the langs where they parse)                          |
 
 **How it's tracked (ratchet, not crash-project).** The `--regression` CI gate fails
 when a **faithful** baseline pass becomes a **degenerate** pass (tolerance 3, mirroring
@@ -648,8 +693,10 @@ fail the gate. After an _intentional_ fidelity change, regenerate the baseline.
    at once. Validate with the fidelity signal + a full regen (watch for the usual
    stale-DB / flaky-harness traps — see Gotchas). **See the validated spike below —
    the hypothesis holds structurally but lands in tiers, not one PR.**
-3. **Prioritize by language-count × value.** `if-empty`/16, `input-validation`/14,
-   `async-block`/13, `if-exists`/13 are the biggest.
+3. **Prioritize by language-count × value.** After Tier 1, `async-block`/13 is now
+   the biggest remaining (a separate command-first root, not an if-block); the
+   if-block cluster (`if-empty`/16, `if-exists`/13, `input-validation`/14) is mostly
+   cleared — residue is the SOV `is <pred>` / ja-ko `if`-wrapper class (Tier 2).
 
 **Spike finding (validated, this session) — the if-block shred is one root but**
 **fragments by word order + condition shape; build it in tiers.** A controlled
@@ -664,18 +711,25 @@ so a single transform won't clear all conditional clusters cleanly:
   VSO/SVO (ar, it) fully shred** to `[on, if]`. Also `else` leaks **untranslated**
   here (`#modal else を 表示`) even though it _is_ translated in input-validation
   (`そうでなければ`) — a structure-dependent else-handling inconsistency.
-  → **Tier 1 (most tractable):** an `if/else` block-mask + reorder (event-first,
-  block-after — mirrors #283/#286) that keeps the `if` wrapper and translates `else`,
-  validated on `if-exists` first. ar/it are the main beneficiaries.
+  → **Tier 1 — SHIPPED** (see Shipped → "Track 5 Tier 1"). The real blocker turned
+  out to be the **parser**, not just the transform: a fused event pattern captured
+  `if` as the action and dropped the whole block body. Fixed in `buildEventHandler`
+  (parse the trailing block body) + the i18n `else`-split/translation + an `else`-aware
+  compound-fallback gate. `if-exists` cleared (ar 0.40→0.80, it 0.40→1.0) and the fix
+  generalized to `if-empty`/`input-validation`/`unless-condition` across 13 langs
+  (−38 degenerate total).
 - **`if <subj> is <pred>` (if-empty 16, input-validation 14).** Harder. SOV ja/ko
   **fully collapse** (only the event leaks as a bare command) because the transformer
   strands the **predicate** (`空`/empty) _after_ the verb and interleaves the body
   into the condition; ar/it keep only `[on, if]`; de keeps `[on, add]` (drops
   `if`+`empty`, plus `wenn`→if collides with `when`, asserted by tests).
-  → **Tier 2:** requires the masked-block transform _and_ keeping the SOV
-  `<subj> is <pred>` condition **contiguous** (predicate not pushed past the verb),
-  _and_ per-language keyword fixes (de `wenn`/`when`; the `is empty` adjective —
-  partially shipped). Genuinely multi-PR, per-language.
+  → **Tier 2 (partially overtaken by Tier 1):** the if-block parser fix already
+  cleared the **SVO/VSO** slice (ar/it/ru/uk/… `if-empty`+`input-validation` flipped
+  to faithful), so the residue is the **SOV ja/ko fully-collapse** case + **de**. It
+  still needs keeping the SOV `<subj> is <pred>` condition **contiguous** (predicate
+  not pushed past the verb), the ja/ko `if`-wrapper recovery, and per-language keyword
+  fixes (de `wenn`/`when`; the `is empty` adjective — partially shipped). Remaining
+  degenerate: `if-empty` (de,he,ja,ko,sw), `input-validation` (ja,ko).
 - **`async-block` (13) is a separate root** — command-first verb ordering, not an
   if-block (see the ja fetch note below). Don't fold it into the if-block transform.
 
