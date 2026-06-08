@@ -223,6 +223,28 @@ The four PR-only jobs already ran against the merged-as-PR code, so re-running t
 - Behavior tests: Draggable, Sortable, Resizable not fully implemented (continue-on-error)
 - SOV/VSO languages: Japanese, Korean, Turkish have lower pass rates than SVO languages (continue-on-error)
 
+### Multilingual parse rate ≠ fidelity
+
+The `multilingual-validation` parse rate counts a translation as passing when the
+semantic parser returns a **non-null** node — **not** when that node is a faithful
+translation. A complex pattern can parse non-null while dropping most of the
+source's commands (e.g. an `if/focus/halt` body collapsing to a bare `if`). So a
+"100% / 99%" parse rate means "parses", not "parses correctly".
+
+The harness computes a structural **fidelity** signal (`packages/testing-framework/src/multilingual/fidelity.ts`):
+the fraction of the English reference parse's command actions present in each
+translation. Passes below 50% fidelity are reported as **degenerate passes** (the
+console run prints a `⚠ Degenerate passes` section), and per-language
+`avgFidelity` / `degeneratePasses` are tracked in the committed baseline.
+
+The `--regression` gate ratchets on this: a **faithful** baseline pass that becomes
+a **degenerate** pass fails CI (tolerance 3, to absorb baseline noise — same spirit
+as the parse-rate ±2pt tolerance). This prevents fidelity backsliding without
+demanding the ~232 existing degenerate passes be fixed at once. After an
+_intentional_ fidelity change, regenerate the baseline (`--save-baseline`). The
+remaining degenerate passes (mostly block-body translation — `if-*`, `fetch-*`
+states, `async-block`) are tracked in `docs-internal/MULTILINGUAL_ROADMAP.md`.
+
 **Other Workflows:**
 
 - `.github/workflows/publish.yml` - Manual npm publishing (workflow_dispatch)

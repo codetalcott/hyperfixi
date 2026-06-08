@@ -492,6 +492,58 @@ own transformer/parser project (no shared lever remains):
 
 ## Remaining work
 
+### Track 5 — Parse fidelity (parse rate ≠ faithful) — NEW, tracked
+
+The non-behavior parse rate hit 100% (all 24 priority languages), but that metric
+counts a **non-null** parse, not a **faithful** one. A complex pattern can parse
+non-null while dropping most of the source's commands. The clearest example is
+`focus-trap`: nominally green in 24 languages, but the `if/focus/halt` body
+collapses to a bare `if` / stray `from` in most — faithfully parsed in ~1 (English).
+
+A structural **fidelity** signal now makes this visible
+(`packages/testing-framework/src/multilingual/fidelity.ts`): for each translation,
+the fraction of the English reference parse's command actions that survive (recall,
+word-order agnostic). Passes below 50% fidelity are **degenerate passes**.
+
+**Current state (committed baseline carries `avgFidelity` / `degeneratePasses`):**
+~**232 degenerate-pass instances across ~51 patterns**. The clusters are dominated
+by **block-body translation** — the i18n transformer mishandling the body of
+control-flow / async / fetch constructs:
+
+| Cluster                     | Examples (langs)                                                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| control-flow blocks         | `if-empty` (16), `if-exists` (13), `unless-condition` (4)                                 |
+| fetch lifecycle / state     | `fetch-loading-state` (14), `fetch-with-headers` (6), `fetch-json` (5), `fetch-basic` (4) |
+| async / streaming           | `async-block` (13), `socket-basic` (9), `eventsource`/`worker`                            |
+| validation / forms          | `input-validation` (14), `form-submit-prevent` (9)                                        |
+| positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                     |
+| event modifiers / behaviors | `event-debounce`/`event-once`, `behavior-*` (degenerate in the langs where they parse)    |
+
+**How it's tracked (ratchet, not crash-project).** The `--regression` CI gate fails
+when a **faithful** baseline pass becomes a **degenerate** pass (tolerance 3, mirroring
+the parse-rate ±2pt tolerance). This prevents backsliding without demanding the 232 be
+fixed at once. Improvements (fail → degenerate-pass, or degenerate → faithful) never
+fail the gate. After an _intentional_ fidelity change, regenerate the baseline.
+
+**How to resolve (gradually, after triage).**
+
+1. **Validate the signal first.** Fidelity is a heuristic (action-set recall). Before
+   "fixing" a cluster, confirm low scores mean genuinely lost commands, not a metric
+   artifact (a language that legitimately uses fewer command nodes, or an English
+   reference that itself parses oddly). Spot-check a sample per cluster.
+2. **Highest leverage = block-body transform.** Most degenerate clusters share one
+   root: the i18n transformer shreds/mistranslates a block body (the same class of bug
+   the trailing-event wrapper #283, caret-mask #285, and focus-trap from-source #286
+   each chipped at). A general "faithful block-body transform" (mask block → reorder
+   head → transform body as a unit → translate inner keywords) would lift many clusters
+   at once. Validate with the fidelity signal + a full regen (watch for the usual
+   stale-DB / flaky-harness traps — see Gotchas).
+3. **Prioritize by language-count × value.** `if-empty`/16, `fetch-loading-state`/14,
+   `input-validation`/14, `async-block`/13 are the biggest.
+
+Definition of done for this track: degenerate-pass count trends toward 0 with avg
+fidelity → 1.0, gated by the ratchet so it never grows.
+
 ### Track 2 — Bucket B behaviors (24)
 
 `behavior-removable` (11), `behavior-sortable` (5), `behavior-draggable` (4),

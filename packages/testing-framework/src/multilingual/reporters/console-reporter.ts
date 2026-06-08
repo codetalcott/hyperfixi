@@ -251,6 +251,14 @@ export class ConsoleReporter implements Reporter {
         this.log(`  ${this.green('New Successes:')} ${result.newSuccesses.length}`);
       }
 
+      // Fidelity regressions (faithful pass → degenerate pass)
+      if (result.newDegeneratePasses.length > 0) {
+        this.log(
+          `  ${this.yellow('Fidelity Regressions:')} ${result.newDegeneratePasses.length}` +
+            ` ${this.dim(`(${result.newDegeneratePasses.join(', ')})`)}`
+        );
+      }
+
       this.log('');
     }
   }

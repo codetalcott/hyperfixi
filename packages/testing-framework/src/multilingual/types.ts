@@ -255,6 +255,12 @@ export interface RegressionResult {
   bundleSizeDelta: number | undefined; // % change
   newFailures: string[]; // pattern IDs
   newSuccesses: string[]; // pattern IDs
+  /**
+   * Patterns that were a *faithful* pass in the baseline but are now a
+   * *degenerate* pass (fidelity dropped below threshold) — a fidelity
+   * regression. Empty when the baseline has no fidelity data yet.
+   */
+  newDegeneratePasses: string[];
   status: 'improved' | 'regressed' | 'unchanged';
 }
 

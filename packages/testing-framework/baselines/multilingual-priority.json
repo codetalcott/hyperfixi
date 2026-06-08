@@ -624,7 +624,31 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8009803921568631,
+      "degeneratePasses": [
+        "accordion-exclusive",
+        "async-block",
+        "behavior-draggable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "copy-to-clipboard",
+        "event-debounce",
+        "fetch-loading-state",
+        "focus-trap",
+        "form-submit-prevent",
+        "halt-propagation",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "modal-close-escape",
+        "repeat-for-each",
+        "repeat-while",
+        "socket-basic",
+        "tabs-basic",
+        "tabs-content",
+        "window-keydown"
+      ]
     },
     "bn": {
       "parseSuccess": 154,
@@ -1249,7 +1273,18 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8792207792207795,
+      "degeneratePasses": [
+        "async-block",
+        "event-once",
+        "fetch-loading-state",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "repeat-while",
+        "socket-basic"
+      ]
     },
     "de": {
       "parseSuccess": 153,
@@ -1873,7 +1908,24 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8157952069716776,
+      "degeneratePasses": [
+        "async-block",
+        "behavior-draggable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "fetch-basic",
+        "fetch-do-not-throw",
+        "fetch-error-handling",
+        "fetch-json",
+        "fetch-loading-state",
+        "fetch-with-headers",
+        "first-in-parent",
+        "form-submit-prevent",
+        "if-empty",
+        "its-value-possessive-dot"
+      ]
     },
     "en": {
       "parseSuccess": 154,
@@ -3122,7 +3174,9 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.9089324618736385,
+      "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"]
     },
     "fr": {
       "parseSuccess": 153,
@@ -3746,7 +3800,16 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8775599128540305,
+      "degeneratePasses": [
+        "async-block",
+        "behavior-draggable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "fetch-with-headers",
+        "first-in-parent"
+      ]
     },
     "he": {
       "parseSuccess": 150,
@@ -4367,7 +4430,17 @@
         "behavior-resizable": {
           "success": false
         }
-      }
+      },
+      "avgFidelity": 0.7901111111111112,
+      "degeneratePasses": [
+        "fetch-do-not-throw",
+        "fetch-json",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "template-literal-list-build",
+        "unless-condition"
+      ]
     },
     "hi": {
       "parseSuccess": 154,
@@ -4992,7 +5065,25 @@
           "success": true,
           "confidence": 1
         }
-      }
+      },
+      "avgFidelity": 0.8169913419913423,
+      "degeneratePasses": [
+        "bind-auto-detect",
+        "bind-explicit-property",
+        "bind-non-form-display",
+        "bind-two-way",
+        "eventsource-basic",
+        "fetch-loading-state",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "install-behavior",
+        "intercept-cache-strategies",
+        "live-derived-value",
+        "live-multiple-deps",
+        "socket-basic",
+        "worker-basic"
+      ]
     },
     "id": {
       "parseSuccess": 153,
@@ -5616,7 +5707,14 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8149237472766885,
+      "degeneratePasses": [
+        "behavior-draggable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "unless-condition"
+      ]
     },
     "it": {
       "parseSuccess": 150,
@@ -6237,7 +6335,16 @@
         "behavior-resizable": {
           "success": false
         }
-      }
+      },
+      "avgFidelity": 0.8700000000000003,
+      "degeneratePasses": [
+        "async-block",
+        "fetch-loading-state",
+        "form-submit-prevent",
+        "if-empty",
+        "if-exists",
+        "input-validation"
+      ]
     },
     "ja": {
       "parseSuccess": 154,
@@ -6862,7 +6969,26 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8062770562770563,
+      "degeneratePasses": [
+        "announce-screen-reader",
+        "behavior-draggable",
+        "behavior-removable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "event-once",
+        "fetch-basic",
+        "fetch-do-not-throw",
+        "fetch-error-handling",
+        "fetch-json",
+        "fetch-loading-state",
+        "fetch-with-headers",
+        "if-empty",
+        "input-validation",
+        "its-value-possessive-dot",
+        "socket-basic"
+      ]
     },
     "ko": {
       "parseSuccess": 154,
@@ -7487,7 +7613,24 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8799783549783553,
+      "degeneratePasses": [
+        "async-block",
+        "behavior-draggable",
+        "behavior-removable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "event-once",
+        "if-empty",
+        "input-validation",
+        "repeat-for-each",
+        "repeat-forever",
+        "repeat-while",
+        "socket-basic",
+        "stagger-animation",
+        "window-scroll"
+      ]
     },
     "ms": {
       "parseSuccess": 154,
@@ -8112,7 +8255,18 @@
           "success": true,
           "confidence": 0.8222222222222222
         }
-      }
+      },
+      "avgFidelity": 0.7876623376623375,
+      "degeneratePasses": [
+        "announce-screen-reader",
+        "async-block",
+        "event-debounce",
+        "fetch-basic",
+        "fetch-json",
+        "fetch-with-headers",
+        "its-value-possessive-dot",
+        "template-literal-list-build"
+      ]
     },
     "pl": {
       "parseSuccess": 150,
@@ -8733,7 +8887,9 @@
         "behavior-resizable": {
           "success": false
         }
-      }
+      },
+      "avgFidelity": 0.905,
+      "degeneratePasses": ["first-in-parent"]
     },
     "pt": {
       "parseSuccess": 153,
@@ -9357,7 +9513,18 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8631808278867102,
+      "degeneratePasses": [
+        "async-block",
+        "behavior-draggable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "fetch-with-headers",
+        "first-in-parent",
+        "focus-trap",
+        "socket-basic"
+      ]
     },
     "qu": {
       "parseSuccess": 154,
@@ -9982,7 +10149,29 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.7296536796536797,
+      "degeneratePasses": [
+        "async-block",
+        "behavior-draggable",
+        "behavior-removable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "event-once",
+        "fetch-loading-state",
+        "get-value",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "modal-close-escape",
+        "render-template-with-data",
+        "repeat-for-each",
+        "repeat-forever",
+        "repeat-while",
+        "socket-basic",
+        "stagger-animation",
+        "template-literal-list-build"
+      ]
     },
     "ru": {
       "parseSuccess": 154,
@@ -10607,7 +10796,17 @@
           "success": true,
           "confidence": 0.5555555555555556
         }
-      }
+      },
+      "avgFidelity": 0.8733766233766237,
+      "degeneratePasses": [
+        "fetch-loading-state",
+        "form-submit-prevent",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "install-behavior",
+        "unless-condition"
+      ]
     },
     "sw": {
       "parseSuccess": 152,
@@ -11230,7 +11429,22 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.7716008771929828,
+      "degeneratePasses": [
+        "behavior-draggable",
+        "behavior-resizable",
+        "event-debounce",
+        "fetch-loading-state",
+        "first-in-parent",
+        "focus-trap",
+        "form-submit-prevent",
+        "if-empty",
+        "if-exists",
+        "repeat-until-event",
+        "socket-basic",
+        "template-literal-list-build"
+      ]
     },
     "th": {
       "parseSuccess": 154,
@@ -11855,7 +12069,17 @@
           "success": true,
           "confidence": 0.8222222222222222
         }
-      }
+      },
+      "avgFidelity": 0.8750000000000006,
+      "degeneratePasses": [
+        "async-block",
+        "fetch-loading-state",
+        "form-submit-prevent",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "window-scroll"
+      ]
     },
     "tl": {
       "parseSuccess": 154,
@@ -12480,7 +12704,30 @@
           "success": true,
           "confidence": 1
         }
-      }
+      },
+      "avgFidelity": 0.8195887445887448,
+      "degeneratePasses": [
+        "accordion-exclusive",
+        "async-block",
+        "copy-to-clipboard",
+        "event-debounce",
+        "eventsource-basic",
+        "fetch-loading-state",
+        "form-submit-prevent",
+        "get-value",
+        "halt-propagation",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "modal-close-escape",
+        "render-template-with-data",
+        "repeat-for-each",
+        "repeat-while",
+        "tabs-basic",
+        "tabs-content",
+        "take-class-from-siblings",
+        "worker-basic"
+      ]
     },
     "tr": {
       "parseSuccess": 154,
@@ -13105,7 +13352,23 @@
           "success": true,
           "confidence": 0.5
         }
-      }
+      },
+      "avgFidelity": 0.8532467532467535,
+      "degeneratePasses": [
+        "async-block",
+        "behavior-draggable",
+        "behavior-removable",
+        "behavior-resizable",
+        "behavior-sortable",
+        "default-value",
+        "event-once",
+        "fetch-loading-state",
+        "focus-trap",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "socket-basic"
+      ]
     },
     "uk": {
       "parseSuccess": 154,
@@ -13730,7 +13993,17 @@
           "success": true,
           "confidence": 0.5555555555555556
         }
-      }
+      },
+      "avgFidelity": 0.8733766233766237,
+      "degeneratePasses": [
+        "fetch-loading-state",
+        "form-submit-prevent",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "install-behavior",
+        "unless-condition"
+      ]
     },
     "vi": {
       "parseSuccess": 154,
@@ -14355,7 +14628,17 @@
           "success": true,
           "confidence": 0.8222222222222222
         }
-      }
+      },
+      "avgFidelity": 0.80952380952381,
+      "degeneratePasses": [
+        "fetch-loading-state",
+        "form-submit-prevent",
+        "if-empty",
+        "if-exists",
+        "input-validation",
+        "render-template-with-data",
+        "template-literal-list-build"
+      ]
     },
     "zh": {
       "parseSuccess": 150,
@@ -14976,7 +15259,19 @@
         "behavior-resizable": {
           "success": false
         }
-      }
+      },
+      "avgFidelity": 0.7818888888888886,
+      "degeneratePasses": [
+        "async-block",
+        "event-debounce",
+        "fetch-basic",
+        "fetch-do-not-throw",
+        "fetch-json",
+        "fetch-with-headers",
+        "its-value-possessive-dot",
+        "repeat-forever",
+        "template-literal-list-build"
+      ]
     }
   },
   "bundles": {
