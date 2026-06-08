@@ -12483,10 +12483,10 @@
       }
     },
     "tr": {
-      "parseSuccess": 153,
-      "parseFailure": 1,
-      "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8648511256354393,
+      "parseSuccess": 154,
+      "parseFailure": 0,
+      "parseRate": 1,
+      "avgConfidence": 0.8624819624819625,
       "bundleSize": 399599,
       "patterns": {
         "toggle-class-basic": {
@@ -13042,7 +13042,8 @@
           "confidence": 0.5
         },
         "focus-trap": {
-          "success": false
+          "success": true,
+          "confidence": 0.5
         },
         "optional-chaining-possessive": {
           "success": true,
