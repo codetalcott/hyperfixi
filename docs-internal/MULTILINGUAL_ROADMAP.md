@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after event-block `from`-source routing (`focus-trap` tr) — **all non-behavior failures cleared**. Caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after German `fetch` keyword alignment (de fetch cluster, −4 degenerate→faithful, fidelity Track 5). Parse rate unchanged (all non-behavior failures already cleared). Caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -57,6 +57,42 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### German `fetch` keyword alignment — fidelity (de fetch cluster, +4 faithful)
+
+- **Fidelity, not parse rate**: de degenerate passes **11 → 7** (−4 degenerate→faithful),
+  de avgFidelity **0.8424 → 0.8707**, cross-lang degenerate total **223 → 219**.
+  **0 new failures, 0 fidelity regressions, parse rate unchanged** (3672/3696). The
+  4: `fetch-do-not-throw`, `fetch-error-handling`, `fetch-json`, `fetch-with-headers`
+  (all de). Confirmed by a full `browser-priority` regen + `--regression` gate
+  (only de's degenerate set shrinks; every other language byte-identical on
+  rate/degen/avgFidelity).
+- **Root cause (passthrough-alignment).** The i18n de dictionary mapped
+  `fetch` → `holen`, but `holen` is the semantic de profile's **`get`** primary
+  (semantic `fetch` = `abrufen`). So `fetch /api/data` transformed to `holen …`,
+  which the semantic parser read as a `get` command — the `fetch` action was
+  **dropped** from every de fetch handler, collapsing the body to a degenerate
+  parse. (`get`/`fetch` are distinct hyperscript commands, so this is a genuine
+  lost-command drop, not a metric artifact.)
+- **Fix.** One-line i18n de dict edit: `fetch: 'holen'` → `fetch: 'abrufen'` (the
+  semantic fetch primary). Collision-free: `holen` stays the `get` word, `abrufen`
+  was unused. Adding `holen` as a semantic fetch _alternative_ was rejected — it
+  would collide with `get`. Mirrors the qu `install` collision fix (change the
+  emitting dict, not the semantic side, when the verbatim token is already taken).
+- **Honest scope — de only.** A systematic scan of all 24 langs (i18n `fetch`
+  emission vs semantic `fetch` primary/alternatives) found the same collision in
+  **ja** (`取得`, also its `get` word; semantic fetch = `フェッチ`) and **zh**
+  (`获取`, its `get` word; semantic fetch = `抓取`), plus an inert mismatch in **id**
+  (`ambil` vs semantic `muat`). de was shippable cleanly; ja and zh were **not**
+  and are deferred (see Track 5 → "fetch keyword alignment — ja/zh deferred"):
+  correcting ja's dict exposes the **`async-block` command-first transform-ordering**
+  bug (with `フェッチ` leading the SOV body, the trailing event + `put` drop —
+  `async-block`/ja regresses 0.67→0.33), and zh's `抓取` still fails to parse as
+  `fetch` inside the event-handler block body (a deeper block-body gap), so the
+  zh keyword fix is inert for the metric.
+- Locked by `grammar.test.ts` (de emits `abrufen`, not `holen`) and
+  `multilingual-roadmap-fixes.test.ts` (the transformed de fetch handler keeps a
+  real `fetch` in its body; `holen` still reads as `get`).
 
 ### `is empty` predicate alignment — fidelity Root A partial (avgFidelity, 5 langs)
 
@@ -555,8 +591,9 @@ the fraction of the English reference parse's command actions that survive (reca
 word-order agnostic). Passes below 50% fidelity are **degenerate passes**.
 
 **Current state (committed baseline carries `avgFidelity` / `degeneratePasses`):**
-~**223 degenerate-pass instances across ~51 patterns** (was 232; −9 from the
-post-event then-chain fix below). Triage (`packages/testing-framework/tools/fidelity-triage.ts`)
+~**219 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
+post-event then-chain fix, −4 from the de fetch keyword alignment — both below).
+Triage (`packages/testing-framework/tools/fidelity-triage.ts`)
 confirmed the signal is **real** — these are genuinely dropped commands, not a
 metric artifact — and isolated **two roots**: (A) the i18n **transformer** scrambles
 SOV `if <subj> is <pred>` conditions, interleaving the following command into the
@@ -582,14 +619,14 @@ alignment, below) but the bulk remains. The remaining clusters:
 
 The remaining clusters:
 
-| Cluster                     | Examples (langs)                                                                          |
-| --------------------------- | ----------------------------------------------------------------------------------------- |
-| control-flow blocks         | `if-empty` (16), `if-exists` (13), `unless-condition` (4)                                 |
-| fetch lifecycle / state     | `fetch-loading-state` (14), `fetch-with-headers` (6), `fetch-json` (5), `fetch-basic` (4) |
-| async / streaming           | `async-block` (13), `socket-basic` (9), `eventsource`/`worker`                            |
-| validation / forms          | `input-validation` (14), `form-submit-prevent` (9)                                        |
-| positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                     |
-| event modifiers / behaviors | `event-debounce`/`event-once`, `behavior-*` (degenerate in the langs where they parse)    |
+| Cluster                     | Examples (langs)                                                                                |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| control-flow blocks         | `if-empty` (16), `if-exists` (13), `unless-condition` (4)                                       |
+| fetch lifecycle / state     | `fetch-loading-state` (9), `fetch-with-headers` (5), `fetch-json` (4), `fetch-do-not-throw` (3) |
+| async / streaming           | `async-block` (13), `socket-basic` (9), `eventsource`/`worker`                                  |
+| validation / forms          | `input-validation` (14), `form-submit-prevent` (9)                                              |
+| positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                           |
+| event modifiers / behaviors | `event-debounce`/`event-once`, `behavior-*` (degenerate in the langs where they parse)          |
 
 **How it's tracked (ratchet, not crash-project).** The `--regression` CI gate fails
 when a **faithful** baseline pass becomes a **degenerate** pass (tolerance 3, mirroring
@@ -610,8 +647,31 @@ fail the gate. After an _intentional_ fidelity change, regenerate the baseline.
    head → transform body as a unit → translate inner keywords) would lift many clusters
    at once. Validate with the fidelity signal + a full regen (watch for the usual
    stale-DB / flaky-harness traps — see Gotchas).
-3. **Prioritize by language-count × value.** `if-empty`/16, `fetch-loading-state`/14,
-   `input-validation`/14, `async-block`/13 are the biggest.
+3. **Prioritize by language-count × value.** `if-empty`/16, `input-validation`/14,
+   `async-block`/13, `if-exists`/13 are the biggest.
+
+**fetch keyword alignment — ja/zh deferred (next session).** The de fetch fix
+(Shipped, above) found the same i18n-emits-the-get-word collision in **ja**
+(`取得`) and **zh** (`获取`). Both are blocked behind a deeper issue and were **not**
+shipped to keep the de win regression-free:
+
+- **ja** — correcting the dict to `フェッチ` flips the 4 ja fetch-\* patterns
+  (`fetch-do-not-throw`/`-error-handling`/`-json`/`-with-headers`) **but regresses
+  `async-block`/ja 0.67→0.33**: the i18n transform puts the verb _first_ in an
+  async body (`フェッチ /api/data を クリック で 非同期 …`), and `フェッチ`
+  command-first drops the trailing event + `put` (where `取得`=get happened to
+  parse them). This is the **`async-block` command-first transform-ordering**
+  cluster — fix that first, then ja's fetch dict edit is a clean +4.
+- **zh** — `抓取` is the correct semantic fetch primary, but it still fails to parse
+  as `fetch` _inside the event-handler block body_ (zh fetch patterns drop `fetch`
+  even with the aligned keyword), so the dict edit is inert for the metric until the
+  zh block-body parse gap is closed. (`id` has an inert `ambil`/`muat` mismatch with
+  no corpus fetch patterns — latent, lowest priority.)
+
+Diagnostic for the next session: a 24-lang scan comparing each i18n `fetch`
+emission against the semantic profile's fetch primary/alternatives isolates these
+in seconds (the de PR's investigation). Cross-reference the live degenerate list
+before investing — most keyword mismatches are inert.
 
 Definition of done for this track: degenerate-pass count trends toward 0 with avg
 fidelity → 1.0, gated by the ratchet so it never grows.

@@ -263,3 +263,37 @@ describe('`is empty` predicate alignment (verb vs adjective)', () => {
     });
   }
 });
+
+describe('German fetch keyword alignment (abrufen vs holen)', () => {
+  // Regression: the i18n de dictionary emitted `holen` for `fetch`, but `holen`
+  // is the semantic de profile's `get` primary (fetch = `abrufen`). So a German
+  // fetch handler transformed to `… holen …` parsed as a `get` command and the
+  // `fetch` action was dropped — degenerate parses across the de fetch cluster
+  // (fetch-do-not-throw, fetch-error-handling, fetch-json, fetch-with-headers).
+  // The dict now emits `abrufen`, so the handler body keeps a real `fetch`.
+  // See docs-internal/MULTILINGUAL_ROADMAP.md ("German fetch keyword alignment").
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('parses the transformed de fetch handler with a real fetch in the body', () => {
+    // i18n GrammarTransformer output for `on click fetch /api/data then put it into #result`
+    const input = 'bei klick abrufen /api/data dann setzen es zu #result';
+    const node = parse(input, 'de');
+    expect(node.action).toBe('on');
+    const a = actions(node);
+    expect(a.has('fetch')).toBe(true);
+  });
+
+  it('still reads holen as get (disambiguation preserved)', () => {
+    expect(parse('holen #x', 'de').action).toBe('get');
+  });
+});
