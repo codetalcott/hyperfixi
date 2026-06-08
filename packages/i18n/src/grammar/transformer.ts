@@ -1607,11 +1607,21 @@ export class GrammarTransformer {
     const eventHead = tokens.slice(0, blockIdx);
     const blockTokens = tokens.slice(blockIdx);
 
-    // Event heads carrying a `from <source>` modifier reorder the source relative
-    // to the event differently per word order; forcing event-first there breaks
-    // verb-first languages. Leave those on the existing path (they already parse)
-    // and only handle the plain `on <event> [guard]` head here.
-    if (eventHead.some(t => t.toLowerCase() === 'from')) return null;
+    // Event heads carrying a `from <source>` modifier (`on keydown[...] from
+    // .modal if … end`): for SVO/SOV targets, route them through this block-body
+    // path too — masking the block and emitting the event clause (incl. the
+    // translated `from <source>`, which `transformSingle` → `parseEventHandler`
+    // already reorders) first, then the transformed block. This keeps the if-block
+    // body from being shredded across the event handler's roles and properly
+    // translates its inner keywords (`in`/`focus`/`first`/positional); the old
+    // exclusion left them English and mangled the order (this is what cleared
+    // `focus-trap` in tr). VSO targets (ar, tl) are kept on the existing path:
+    // there the event-first emission with a `from`-source reorders incorrectly and
+    // regresses `focus-trap`/`window-keydown`, while the existing path already
+    // parses them. So the `from`-source exclusion is scoped to VSO only.
+    if (this.targetProfile.wordOrder === 'VSO' && eventHead.some(t => t.toLowerCase() === 'from')) {
+      return null;
+    }
 
     const placeholder = 'EVENTBLOCKPLACEHOLDER';
     const headOut = this.transformSingle([...eventHead, placeholder].join(' '));

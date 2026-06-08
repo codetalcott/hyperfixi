@@ -5,7 +5,7 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after caret-scope masking (`caret-var-on-target` ar+tl). @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after event-block `from`-source routing (`focus-trap` tr) — **all non-behavior failures cleared**. Caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -15,23 +15,30 @@ Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 (generated with `--bundle browser-priority`). Cross-language average **99.05%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
 batch + Tier 1 + property-path patient + custom-event SOV + trailing-event
-block-wrap + @attr-in-selector-role + caret-scope masking: +68 instances).
-**25 failing pattern-instances** remain (24 are Bucket B behaviors).
+block-wrap + @attr-in-selector-role + caret-scope masking + event-block from-source:
++69 instances). **24 failing pattern-instances remain — all of them Bucket B
+behaviors. Every non-behavior pattern now parses in all 24 priority languages.**
 
-| Rate   | Languages                                              |
-| ------ | ------------------------------------------------------ |
-| 100%   | en, bn, hi, ja, ko, ms, qu, ru, th, tl, uk, vi         |
-| 99%    | de/es/fr/id/pt (99.4), sw (98.7), tr (99.4), ar (99.4) |
-| 96–98% | it/pl/zh (97.4), he (97.4)                             |
+| Rate | Languages                                          |
+| ---- | -------------------------------------------------- |
+| 100% | en, bn, hi, ja, ko, ms, qu, ru, th, tl, tr, uk, vi |
+| 99%  | de/es/fr/id/pt (99.4), ar (99.4), sw (98.7)        |
+| 97%  | it/pl/zh (97.4), he (97.4)                         |
 
-**1 non-behavior failing pattern-instance** remains (plus 24 Bucket B behaviors):
+The sub-100% languages now fail **only** Bucket B behaviors (below); their
+non-behavior parse rate is 100%.
+
+**0 non-behavior failing pattern-instances remain** (plus 24 Bucket B behaviors):
 
 | Track                         | Instances | Nature                                                                           |
 | ----------------------------- | --------- | -------------------------------------------------------------------------------- |
 | **Bucket B — behaviors**      | 24        | Draggable/Sortable/Resizable/Removable defs don't parse (CI `continue-on-error`) |
-| **Deep per-language grammar** | 1         | `focus-trap` (tr) — event-modifier guard + `from <source>` + VSO if-block        |
+| **Deep per-language grammar** | 0         | — cleared —                                                                      |
 
-The sole non-behavior remainder: `focus-trap` (tr).
+The remaining 24 are all `behavior-removable` (11: ar,de,es,fr,he,id,it,pl,pt,sw,zh),
+`behavior-sortable` (5: he,it,pl,sw,zh), `behavior-draggable` (4: he,it,pl,zh),
+`behavior-resizable` (4: he,it,pl,zh) — a **runtime** track (unimplemented
+behaviors), not a parsing/i18n track. See Track 2.
 
 > **Custom-event SOV cleared `on-custom-event-receive` (ko+qu) and, as a side
 > effect, `window-resize` (qu+tr).** The SOV event extractor now accepts a bare
@@ -50,6 +57,35 @@ The sole non-behavior remainder: `focus-trap` (tr).
 ---
 
 ## Shipped
+
+### Event-block `from`-source routing — `focus-trap` tr (+1, completes the non-behavior track)
+
+- **1 instance, 0 regressions, avg 99.05% (fix run vs committed baseline: exactly
+  tr `focus-trap` flips `↑`, zero `↓`).** tr 99.4→100. **This was the last
+  non-behavior failure** — every non-behavior pattern now parses in all 24
+  priority languages.
+- **Root cause.** `on keydown[key=="Tab"] from .modal if … end` is an event handler
+  with a guard, a `from <source>`, and an `if…end` block body. `tryTransformEventWithBlockBody`
+  explicitly **excluded** event heads carrying `from`, so focus-trap fell to the
+  generic path, which shredded the if-block across the handler's roles and left its
+  inner keywords (`in`/`focus`/`first`/positional) **untranslated**. 23 languages
+  still scraped a (degenerate) non-null parse from that garbage; tr's specific
+  scramble didn't, so it failed.
+- **Fix.** Route `from`-source heads through the block-body path **for SVO/SOV
+  targets** — mask the block, emit the event clause (incl. the translated
+  `from <source>`, which `parseEventHandler` reorders) first, then the transformed
+  block. The block body's keywords now translate properly. **VSO targets (ar, tl)
+  stay on the existing path**: there the event-first emission with a `from`-source
+  reorders incorrectly and regressed `focus-trap`/`window-keydown` (confirmed by a
+  full regen of the un-gated version: −4 in ar/tl), while the existing path already
+  parses them. So the `from`-exclusion is now scoped to `wordOrder === 'VSO'`.
+- **Honest caveat.** focus-trap parses **degenerately in all 24 languages** (the
+  if-block body still isn't a clean focus/halt parse everywhere); this fix lifts tr
+  to the same non-null parity the other 23 already had, rather than inventing a new
+  hollow pass. A fully clean focus-trap (no leaked keywords, real block body across
+  all langs) is a separate, larger transformer project.
+- Locked by `grammar.test.ts` (tr routes through the block path — `odak` translated,
+  event leads; ar stays on the existing path without throwing).
 
 ### Caret-scope masking — `caret-var-on-target` ar+tl (+2)
 
@@ -168,26 +204,18 @@ The sole non-behavior remainder: `focus-trap` (tr).
   the 클릭 control, and a guard that a plain command body never becomes a phantom
   event handler).
 
-### Investigated, deferred — `focus-trap` (tr)
+### Investigated, then shipped — the full non-behavior track
 
-> `unless-condition`, `form-disable-on-submit`, and `caret-var-on-target` (all
-> ar+tl) graduated from this section — see Shipped → "Trailing-event block-wrap",
-> "@attr in selector roles", and "Caret-scope masking". The `<selector> in <scope>`
-> matcher once scoped here turned out **not** to be the form-disable blocker (`in
-me` was already tolerated; the real gate was `@attr` patient classification), and
-> `focus-trap`'s positional `<sel> in <scope>` already parses in command context
-> (`focus first <button/> in .modal` → OK). The reusable trailing-event wrapper and
-> caret-scope masking are levers `focus-trap` can draw on.
-
-Probed faithfully (DB-stored translation → `parseSemantic`); the sole remaining
-non-behavior failure needs deep transformer work — the achievable semantic-side
-result is a mangled parse, so it is **not** landed:
-
-- **`focus-trap` (tr).** The i18n transformer mangles the event-block-with-source
-  `on keydown[key=="Tab"] from .modal if … end` into a scrambled token stream
-  (mixed untranslated `in`/`focus`/`first`, Turkish `içinde`/`eğer`/`durdur`, wrong
-  order). Needs the trailing-event wrapper (shipped) extended with a `from <source>`
-  clause plus transformer support for the SOV reorder of an event-block-with-source.
+> Every item once tracked in this section has now graduated to **Shipped**:
+> `unless-condition`, `form-disable-on-submit`, `caret-var-on-target` (all ar+tl),
+> and `focus-trap` (tr). With them, **all non-behavior pattern-instances parse in
+> all 24 priority languages.** The remaining failures are exclusively Bucket B
+> behaviors (Track 2 — a runtime track, not parsing/i18n). One enduring lesson
+> recorded along the way: the `<selector> in <scope>` matcher once scoped here was
+> **not** the form-disable blocker (`in me` was already tolerated; the real gate
+> was `@attr` patient classification), and `focus-trap`'s positional
+> `<sel> in <scope>` already parsed in command context — a reminder to verify the
+> true blocker with a probe before building.
 
 ### Property-path patient — fused-dot member access (+2)
 
