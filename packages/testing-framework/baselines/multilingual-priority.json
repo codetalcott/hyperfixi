@@ -625,7 +625,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8009803921568631,
+      "avgFidelity": 0.8297385620915034,
       "degeneratePasses": [
         "accordion-exclusive",
         "async-block",
@@ -634,7 +634,6 @@
         "behavior-sortable",
         "copy-to-clipboard",
         "event-debounce",
-        "fetch-loading-state",
         "focus-trap",
         "form-submit-prevent",
         "halt-propagation",
@@ -1274,7 +1273,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8792207792207795,
+      "avgFidelity": 0.8922077922077924,
       "degeneratePasses": [
         "async-block",
         "event-once",
@@ -1909,22 +1908,19 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8157952069716776,
+      "avgFidelity": 0.8423747276688455,
       "degeneratePasses": [
         "async-block",
         "behavior-draggable",
         "behavior-resizable",
         "behavior-sortable",
-        "fetch-basic",
         "fetch-do-not-throw",
         "fetch-error-handling",
         "fetch-json",
-        "fetch-loading-state",
         "fetch-with-headers",
         "first-in-parent",
         "form-submit-prevent",
-        "if-empty",
-        "its-value-possessive-dot"
+        "if-empty"
       ]
     },
     "en": {
@@ -6970,7 +6966,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8062770562770563,
+      "avgFidelity": 0.8279220779220781,
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
@@ -6978,7 +6974,6 @@
         "behavior-resizable",
         "behavior-sortable",
         "event-once",
-        "fetch-basic",
         "fetch-do-not-throw",
         "fetch-error-handling",
         "fetch-json",
@@ -6986,7 +6981,6 @@
         "fetch-with-headers",
         "if-empty",
         "input-validation",
-        "its-value-possessive-dot",
         "socket-basic"
       ]
     },
@@ -10150,7 +10144,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.7296536796536797,
+      "avgFidelity": 0.7492424242424243,
       "degeneratePasses": [
         "async-block",
         "behavior-draggable",
@@ -10158,7 +10152,6 @@
         "behavior-resizable",
         "behavior-sortable",
         "event-once",
-        "fetch-loading-state",
         "get-value",
         "if-empty",
         "if-exists",
@@ -11430,12 +11423,11 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.7716008771929828,
+      "avgFidelity": 0.791776315789474,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
         "event-debounce",
-        "fetch-loading-state",
         "first-in-parent",
         "focus-trap",
         "form-submit-prevent",
@@ -12705,14 +12697,13 @@
           "confidence": 1
         }
       },
-      "avgFidelity": 0.8195887445887448,
+      "avgFidelity": 0.8443722943722946,
       "degeneratePasses": [
         "accordion-exclusive",
         "async-block",
         "copy-to-clipboard",
         "event-debounce",
         "eventsource-basic",
-        "fetch-loading-state",
         "form-submit-prevent",
         "get-value",
         "halt-propagation",
@@ -13353,7 +13344,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8532467532467535,
+      "avgFidelity": 0.8662337662337665,
       "degeneratePasses": [
         "async-block",
         "behavior-draggable",

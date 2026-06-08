@@ -58,6 +58,32 @@ behaviors), not a parsing/i18n track. See Track 2.
 
 ## Shipped
 
+### Post-event then-chain capture — fidelity Root B (+9 faithful, first Track-5 fix)
+
+- **Fidelity, not parse rate**: degenerate passes **232 → 223** (−9 degenerate→faithful),
+  **0 new failures, 0 fidelity regressions, parse rate unchanged** (3672/3696). Locked
+  by the fidelity ratchet (`--regression`). The 9: `fetch-loading-state` (ar, de, qu,
+  sw, tl), `fetch-basic` (de, ja), `its-value-possessive-dot` (de, ja).
+- **Root cause (semantic parser).** A fused VSO/SOV event pattern matches a
+  command-first handler (`<cmd> on <event> then <cmd>…` — e.g. ar `أضف .loading …
+عند نقر ثم احذف … ثم ضع …`) and captures the _first_ command, but the trailing
+  `then`-chain is left unconsumed _without_ a `continues` marker. `buildEventHandler`
+  only parsed the remainder when `continues:'then'` was captured, so the body
+  collapsed to that first command and **every post-event command was silently dropped**
+  — a non-null but degenerate parse.
+- **Fix.** In `buildEventHandler`'s grammar-transformed branch, also parse the
+  remainder when the next unconsumed token is a then-keyword (`hasTrailingThenChain`),
+  not only when `continues` was captured. Additive and tightly gated: a lone
+  command-first event (no trailing `then`) is unchanged, and only successfully-parsed
+  commands are appended, so it can lift fidelity but never break an existing parse
+  (confirmed: 0 regressions across the full 24-language corpus + 5313 semantic tests).
+- **Honest caveat.** This is Root B only. Root A (the i18n transformer scrambling SOV
+  `if … is …` conditions — `if-empty`/`input-validation`, the largest cluster) is
+  untouched and is the next Track-5 target. `fetch-loading-state`/ar is now 0.80 not
+  1.0 (its inner `fetch` body command is a separate AR-pattern gap).
+- Locked by `multilingual-roadmap-fixes.test.ts` ("Post-event then-chain capture":
+  ar body keeps remove/put; a lone command-first event keeps just its command).
+
 ### Event-block `from`-source routing — `focus-trap` tr (+1, completes the non-behavior track)
 
 - **1 instance, 0 regressions, avg 99.05% (fix run vs committed baseline: exactly
@@ -506,9 +532,16 @@ the fraction of the English reference parse's command actions that survive (reca
 word-order agnostic). Passes below 50% fidelity are **degenerate passes**.
 
 **Current state (committed baseline carries `avgFidelity` / `degeneratePasses`):**
-~**232 degenerate-pass instances across ~51 patterns**. The clusters are dominated
-by **block-body translation** — the i18n transformer mishandling the body of
-control-flow / async / fetch constructs:
+~**223 degenerate-pass instances across ~51 patterns** (was 232; −9 from the
+post-event then-chain fix below). Triage (`packages/testing-framework/tools/fidelity-triage.ts`)
+confirmed the signal is **real** — these are genuinely dropped commands, not a
+metric artifact — and isolated **two roots**: (A) the i18n **transformer** scrambles
+SOV `if <subj> is <pred>` conditions, interleaving the following command into the
+condition so the translated _text_ is broken (`if-empty`/ja, `input-validation`/ko
+→ 0.00); (B) the semantic **parser** drops the post-event `then`-chain in
+command-first (VSO/SOV) event bodies (`fetch-loading-state`/ar → 0.40). Root B is
+**fixed** (below); Root A (the biggest cluster) is the next target. The remaining
+clusters:
 
 | Cluster                     | Examples (langs)                                                                          |
 | --------------------------- | ----------------------------------------------------------------------------------------- |

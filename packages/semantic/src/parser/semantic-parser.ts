@@ -327,9 +327,20 @@ export class SemanticParserImpl implements ISemanticParser {
         confidence: match.confidence,
       });
 
-      // Check if pattern has continuation marker (then-chains)
+      // Check if pattern has continuation marker (then-chains).
       const continuesValue = match.captured.get('continues');
-      if (continuesValue && continuesValue.type === 'literal' && continuesValue.value === 'then') {
+      const hasContinuesMarker =
+        continuesValue?.type === 'literal' && continuesValue.value === 'then';
+      // Some fused VSO/SOV event patterns capture only the *first* command and
+      // leave a trailing then-chain (`<cmd> on <event> then <cmd>…`) unconsumed
+      // *without* emitting a `continues` marker. Without this, the handler body
+      // silently collapses to that first command and every post-event command is
+      // dropped (a degenerate parse — see fidelity ratchet). Gate the extra parse
+      // on a leading then-keyword so we never sweep up unrelated trailing tokens.
+      const nextToken = tokens.peek();
+      const hasTrailingThenChain = !!nextToken && this.isThenKeyword(nextToken.value, language);
+
+      if (hasContinuesMarker || hasTrailingThenChain) {
         // Parse remaining tokens as additional commands
         const commandPatterns = getPatternsForLanguage(language)
           .filter(p => p.command !== 'on')
