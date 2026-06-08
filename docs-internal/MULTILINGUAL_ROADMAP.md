@@ -5,7 +5,8 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **Tier 1 — if/else block-body in event handlers** (degenerate passes **219 → 181**, −38 degenerate→faithful, 0 fidelity regressions, parse rate unchanged 3672/3696). Cleared `if-exists` entirely (ar+it flipped, the named Tier 1 target) and lifted `if-empty`/`input-validation`/`unless-condition` across 13 languages — the parser fix generalizes the whole if-block cluster. Earlier: German `fetch` keyword alignment, caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, (parse-rate) Tier 1, Track 4, Track 1 (reactive) complete._
+_Last updated: after Track 5 **Async Tier 1 — `async` modifier transparency** (degenerate passes **181 → 176**, −5 degenerate→faithful: `async-block` ar/de/it/th/tl, 0 regressions, parse rate unchanged 3672/3696). The parser now strips the transparent `async` command-prefix before parsing (mirroring English), so the real command anchors instead of `async` being captured as the handler action. SOV (ja/ko/bn/qu/tr), zh, fr/pt (separate fetch-in-event gap), ms remain — Async Tier 2._
+_Earlier: after Track 5 **Tier 1 — if/else block-body in event handlers** (degenerate passes **219 → 181**, −38 degenerate→faithful, 0 fidelity regressions). Cleared `if-exists` entirely (ar+it flipped, the named Tier 1 target) and lifted `if-empty`/`input-validation`/`unless-condition` across 13 languages. Before that: German `fetch` keyword alignment, caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, (parse-rate) Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
 
@@ -57,6 +58,39 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 Async Tier 1 — `async` modifier transparency (−5 degenerate)
+
+- **Fidelity, not parse rate**: degenerate passes **181 → 176** (−5 degenerate→faithful:
+  `async-block` **ar, de, it, th, tl**), **0 regressions, parse rate unchanged** (3672/3696).
+  Confirmed by a full `browser-priority` regen + `--regression` gate (every flip is
+  degenerate→faithful; zero parse-success ↑/↓; zero faithful→degenerate).
+- **Root cause.** `async` is a command **modifier** (`async fetch … then …` runs the
+  following command asynchronously), not a verb — English never surfaces it as an action.
+  But the i18n transformer treats it as a verb and reorders it by word order (leading in
+  VSO, after the event in SVO, verb-final in SOV). A fused event pattern then captured
+  `async` as the handler **action**, and the real command + the `then`-chain collapsed to
+  a degenerate parse (`async-block` was degenerate in 13 langs).
+- **Fix (parser, additive).** `parse()` strips the transparent `async` keyword before
+  tokenizing (a new `stripAsyncModifier`, mirroring the existing `extractStandaloneModifiers`
+  for once/debounce/throttle), so the following command anchors as the action. Matched
+  against the profile's `async` form (primary + alternatives) + the English literal the
+  transformer passes through; gated to the async token, so non-async inputs are
+  byte-identical. tl needed a one-line passthrough-alignment (`sabay` added as a tl semantic
+  `async` alternative — the i18n tl dict emits `sabay`).
+- **Honest scope — fragments by word order, like the if-block arc.** This clears the
+  **VSO/SVO/V2** slice only. Still degenerate (Async Tier 2): **SOV** (ja*, ko, bn, qu, tr)
+  — the event sits mid-stream and the then-chain isn't recovered even with `async` gone;
+  **zh** (deeper block-body gap, same one blocking the deferred zh fetch fix); **fr/pt**
+  (a separate fetch-in-event gap — `récupérer`/`buscar` drop even *without* `async`, despite
+  being registered fetch keywords); **ms** (no grammar profile, English passthrough doesn't
+  parse). `async` execution semantics are **not yet preserved** (stripped, English-parity) —
+  re-surfacing them is Tier 2. (*ja `async-block` was already faithful at 0.67.)
+- **Unblocks** the deferred **ja/zh `fetch` keyword alignment** (correcting ja's dict
+  regressed `async-block`/ja before this) — now a clean follow-up once the SOV then-chain
+  is handled.
+- Locked by `multilingual-roadmap-fixes.test.ts` ("async modifier transparency": ar/tl keep
+  fetch+put, it recovers the real command, `async` never an action, non-async unaffected).
 
 ### Track 5 Tier 1 — if/else block-body in event handlers (−38 degenerate)
 
@@ -635,9 +669,9 @@ the fraction of the English reference parse's command actions that survive (reca
 word-order agnostic). Passes below 50% fidelity are **degenerate passes**.
 
 **Current state (committed baseline carries `avgFidelity` / `degeneratePasses`):**
-~**181 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
+~**176 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
 post-event then-chain fix, −4 from the de fetch keyword alignment, −38 from the
-Tier 1 if/else block-body fix — all below).
+Tier 1 if/else block-body fix, −5 from the Async Tier 1 `async`-modifier fix — all below).
 Triage (`packages/testing-framework/tools/fidelity-triage.ts`)
 confirmed the signal is **real** — these are genuinely dropped commands, not a
 metric artifact — and isolated **two roots**: (A) the i18n **transformer** scrambles
@@ -664,14 +698,14 @@ alignment, below) but the bulk remains. The remaining clusters:
 
 The remaining clusters:
 
-| Cluster                     | Examples (langs)                                                                                                |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| control-flow blocks         | `if-empty` (5), `unless-condition` (2) — `if-exists` (0) + most `if-empty`/`input-validation` cleared by Tier 1 |
-| fetch lifecycle / state     | `fetch-loading-state` (9), `fetch-with-headers` (5), `fetch-json` (4), `fetch-do-not-throw` (3)                 |
-| async / streaming           | `async-block` (13), `socket-basic` (9), `eventsource`/`worker`                                                  |
-| validation / forms          | `input-validation` (2 — was 14, cleared by Tier 1), `form-submit-prevent` (9)                                   |
-| positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                                           |
-| event modifiers / behaviors | `event-debounce`/`event-once`, `behavior-*` (degenerate in the langs where they parse)                          |
+| Cluster                     | Examples (langs)                                                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| control-flow blocks         | `if-empty` (5), `unless-condition` (2) — `if-exists` (0) + most `if-empty`/`input-validation` cleared by Tier 1                        |
+| fetch lifecycle / state     | `fetch-loading-state` (9), `fetch-with-headers` (5), `fetch-json` (4), `fetch-do-not-throw` (3)                                        |
+| async / streaming           | `async-block` (8 — was 13, ar/de/it/th/tl cleared by Async Tier 1; SOV+zh+fr/pt+ms remain), `socket-basic` (9), `eventsource`/`worker` |
+| validation / forms          | `input-validation` (2 — was 14, cleared by Tier 1), `form-submit-prevent` (9)                                                          |
+| positional / possessive-dot | `first-in-parent` (5), `its-value-possessive-dot` (4)                                                                                  |
+| event modifiers / behaviors | `event-debounce`/`event-once`, `behavior-*` (degenerate in the langs where they parse)                                                 |
 
 **How it's tracked (ratchet, not crash-project).** The `--regression` CI gate fails
 when a **faithful** baseline pass becomes a **degenerate** pass (tolerance 3, mirroring
@@ -693,10 +727,11 @@ fail the gate. After an _intentional_ fidelity change, regenerate the baseline.
    at once. Validate with the fidelity signal + a full regen (watch for the usual
    stale-DB / flaky-harness traps — see Gotchas). **See the validated spike below —
    the hypothesis holds structurally but lands in tiers, not one PR.**
-3. **Prioritize by language-count × value.** After Tier 1, `async-block`/13 is now
-   the biggest remaining (a separate command-first root, not an if-block); the
-   if-block cluster (`if-empty`/16, `if-exists`/13, `input-validation`/14) is mostly
-   cleared — residue is the SOV `is <pred>` / ja-ko `if`-wrapper class (Tier 2).
+3. **Prioritize by language-count × value.** After Tier 1 + Async Tier 1, the biggest
+   remaining are `socket-basic`/9, `form-submit-prevent`/9, and `fetch-loading-state`/9.
+   `async-block` is down to 8 (Async Tier 1 cleared the VSO/SVO/V2 slice; SOV+zh+fr/pt
+   are Async Tier 2). The if-block cluster is mostly cleared — residue is the SOV
+   `is <pred>` / ja-ko `if`-wrapper class (Tier 2).
 
 **Spike finding (validated, this session) — the if-block shred is one root but**
 **fragments by word order + condition shape; build it in tiers.** A controlled
@@ -730,8 +765,11 @@ so a single transform won't clear all conditional clusters cleanly:
   not pushed past the verb), the ja/ko `if`-wrapper recovery, and per-language keyword
   fixes (de `wenn`/`when`; the `is empty` adjective — partially shipped). Remaining
   degenerate: `if-empty` (de,he,ja,ko,sw), `input-validation` (ja,ko).
-- **`async-block` (13) is a separate root** — command-first verb ordering, not an
-  if-block (see the ja fetch note below). Don't fold it into the if-block transform.
+- **`async-block` (13) is a separate root** — `async` is a command _modifier_ the
+  transformer mis-reorders as a verb, not an if-block. **Async Tier 1 SHIPPED**
+  (see Shipped): the parser now strips the transparent `async` keyword, clearing the
+  VSO/SVO/V2 slice (ar/de/it/th/tl, −5). SOV (ja/ko/bn/qu/tr) + zh + fr/pt remain
+  (Async Tier 2). Don't fold it into the if-block transform.
 
 Net: the block-body transform is worth building, but as an **if/else conditional
 masking transform** delivered in two tiers (if-exists-class, then is-pred-class),
@@ -745,11 +783,12 @@ shipped to keep the de win regression-free:
 
 - **ja** — correcting the dict to `フェッチ` flips the 4 ja fetch-\* patterns
   (`fetch-do-not-throw`/`-error-handling`/`-json`/`-with-headers`) **but regresses
-  `async-block`/ja 0.67→0.33**: the i18n transform puts the verb _first_ in an
-  async body (`フェッチ /api/data を クリック で 非同期 …`), and `フェッチ`
-  command-first drops the trailing event + `put` (where `取得`=get happened to
-  parse them). This is the **`async-block` command-first transform-ordering**
-  cluster — fix that first, then ja's fetch dict edit is a clean +4.
+  `async-block`/ja 0.67→0.33**. Async Tier 1 (shipped) ruled out the `async` modifier
+  as the cause — the keyword is now stripped before parsing. The residual blocker is
+  the **SOV event-mid then-chain**: `フェッチ /api/data を クリック で … それから …`
+  parses to `{fetch}` only (the mid-stream event + `then`-chain are dropped), whereas
+  `取得`=get happens to anchor SOV verb-anchoring and recover on+put. So ja's fetch dict
+  edit is clean **only after Async Tier 2** (SOV event-mid then-chain recovery).
 - **zh** — `抓取` is the correct semantic fetch primary, but it still fails to parse
   as `fetch` _inside the event-handler block body_ (zh fetch patterns drop `fetch`
   even with the aligned keyword), so the dict edit is inert for the metric until the

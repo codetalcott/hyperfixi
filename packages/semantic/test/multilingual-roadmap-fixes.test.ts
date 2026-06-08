@@ -356,3 +356,53 @@ describe('if/else block-body in event handlers — Track 5 Tier 1', () => {
     expect(a.has('remove')).toBe(true);
   });
 });
+
+describe('async modifier transparency — Track 5 Async Tier 1', () => {
+  // `async` marks the *following* command for async execution — it is a modifier,
+  // not a command verb. The grammar transformer reorders it as a verb, so a fused
+  // event pattern captured `async` as the handler action and the real command +
+  // then-chain collapsed (degenerate). The parser now strips the async keyword
+  // before parsing (mirroring English, whose body parser already skips it), so the
+  // following command anchors. Flips async-block ar/de/it/th/tl degenerate→faithful.
+  // See docs-internal/MULTILINGUAL_ROADMAP.md (Track 5 Async Tier 1).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ar] async-block keeps fetch + put (async not taken as the action)', () => {
+    // i18n transform of `on click async fetch /api/data then put it into me`.
+    const input = 'متزامن احضر /api/data عند نقر ثم ضع هو إلى أنا';
+    const a = actions(parse(input, 'ar'));
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    expect(a.has('async')).toBe(false); // stripped, never an action
+  });
+
+  it('[tl] async-block keeps fetch + put (sabay recognized as async)', () => {
+    const input = 'sabay kuhanin_mula /api/data kapag click pagkatapos ilagay ito sa ako';
+    const a = actions(parse(input, 'tl'));
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('put')).toBe(true);
+    expect(a.has('async')).toBe(false);
+  });
+
+  it('[it] async-block recovers the real command (was bare async)', () => {
+    const input = 'su clic asincrono recuperare /api/data allora mettere esso in io';
+    const a = actions(parse(input, 'it'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('async')).toBe(false);
+  });
+
+  it('does not disturb a non-async command', () => {
+    expect(parse('toggle .active', 'en').action).toBe('toggle');
+  });
+});
