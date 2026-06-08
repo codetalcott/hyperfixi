@@ -186,3 +186,45 @@ describe('Caret-scoped variable read `^name on <element>` (caret-var-on-target)'
     });
   }
 });
+
+describe('Post-event then-chain capture (command-first VSO/SOV event bodies)', () => {
+  // Distinct command actions anywhere in the parsed node tree (body/statements/
+  // branches), mirroring the harness fidelity signature — lets us assert that no
+  // body command was silently dropped.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // A fused VSO/SOV event pattern captures the first command (`add`) but left the
+  // post-event `then`-chain (`then fetch … then remove … then put …`) unconsumed
+  // without a `continues` marker — collapsing the body to just `add` (a degenerate
+  // parse). The body must now retain every then-chained command.
+  it('[ar] keeps remove/put after the event clause (fetch-loading-state shape)', () => {
+    const node = parse(
+      'أضف .loading إلى أنا عند نقر ثم احذف .loading من أنا ثم ضع هو إلى #result',
+      'ar'
+    );
+    expect(node.action).toBe('on');
+    const a = actions(node);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+
+  // No trailing then-chain → body is exactly the one captured command (unchanged
+  // behavior; guards against the gate over-reaching).
+  it('[ar] a lone command-first event keeps just its command', () => {
+    const node = parse('بدل .active عند نقر', 'ar');
+    expect(node.action).toBe('on');
+    // `on` is the handler's own action; `toggle` is the lone body command.
+    expect([...actions(node)].sort()).toEqual(['on', 'toggle']);
+  });
+});
