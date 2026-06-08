@@ -5,7 +5,8 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **then/end keyword recognition for 9 profile-only languages** (it, ru, th, vi, he, hi, ms, pl, uk). `isThenKeyword`/`isEndKeyword` were hardcoded maps covering only 15 langs; the other 9 fell back to the English literal, so their native then/end (`allora`, `затем`, …) weren't recognized — multi-command then-chains collapsed to the first command and `end`-blocks didn't close. Both now fall back to the profile's form. **Parse rate +7** (he/it/pl behaviors now parse — `end` recognized; he/it/pl jump toward 100%), **+4 fidelity** (`fetch-loading-state` ru/th/vi/uk degenerate→faithful), **0 regressions** (gate green). Degenerate nets 176 → 179 (−4 fetch-loading-state, +7 newly-parsing Bucket B behaviors)._
+_Last updated: after Track 5 **juxtaposed multi-command event bodies** — a fused event pattern captured only the FIRST body command as the action; a then-chain/block continued, but a **juxtaposed** body (`halt the event call validateForm() if … end` — no `then` between commands) was dropped. `buildEventHandler` now re-parses any trailing non-`end` tokens as body commands (additive; `parseBodyWithGrammarPatterns` only appends matched commands). **Degenerate passes 179 → 159 (−20), 0 regressions, parse rate unchanged** (3679/3696). Cleared `form-submit-prevent` (de/it/ru/sw/th/uk/vi), `fetch-loading-state` (bn/hi/it/ja/tr), plus `fetch-error-handling`/`fetch-with-headers` (ja), `render-template-with-data` (qu/tl/vi), `repeat-forever`/`stagger-animation` (qu), `window-scroll` (th)._
+_Earlier: Track 5 **then/end keyword recognition for 9 profile-only languages** (it, ru, th, vi, he, hi, ms, pl, uk). `isThenKeyword`/`isEndKeyword` were hardcoded maps covering only 15 langs; the other 9 fell back to the English literal, so their native then/end (`allora`, `затем`, …) weren't recognized — multi-command then-chains collapsed to the first command and `end`-blocks didn't close. Both now fall back to the profile's form. **Parse rate +7** (he/it/pl behaviors now parse — `end` recognized; he/it/pl jump toward 100%), **+4 fidelity** (`fetch-loading-state` ru/th/vi/uk degenerate→faithful), **0 regressions** (gate green). Degenerate nets 176 → 179 (−4 fetch-loading-state, +7 newly-parsing Bucket B behaviors)._
 _Earlier: Track 5 **Async Tier 1 — `async` modifier transparency** (degenerate **181 → 176**, −5: `async-block` ar/de/it/th/tl)._
 _Earlier: after Track 5 **Tier 1 — if/else block-body in event handlers** (degenerate passes **219 → 181**, −38 degenerate→faithful, 0 fidelity regressions). Cleared `if-exists` entirely (ar+it flipped, the named Tier 1 target) and lifted `if-empty`/`input-validation`/`unless-condition` across 13 languages. Before that: German `fetch` keyword alignment, caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, (parse-rate) Tier 1, Track 4, Track 1 (reactive) complete._
 
@@ -59,6 +60,32 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 — juxtaposed multi-command event bodies (−20 degenerate)
+
+- **Degenerate passes 179 → 159 (−20), 0 regressions, parse rate unchanged** (3679/3696).
+  Full `browser-priority` regen + `--regression` gate green; 20 degenerate→faithful, 0
+  faithful→degenerate, 0 parse-down. The semantic role-extraction suite passes (fidelity is
+  recall-based and wouldn't catch _over_-generation; the suite confirms none).
+- **Root cause.** When a fused event pattern captures the first body command as the action,
+  the remaining body commands may be then-chained (`… then …` — Root B, shipped), a block
+  (if/else — Tier 1, shipped), or simply **juxtaposed** (`on submit halt the event call
+validateForm() if … end` — no `then` between `halt`/`call`/`if`). The action-branch only
+  continued on a then-chain or block, so juxtaposed commands were dropped and the handler
+  collapsed to `{halt, on}` (degenerate). English handles juxtaposed bodies because it goes
+  through `parseBodyWithClauses` (a matchBest loop), not the fused action-branch.
+- **Fix (one line, generalizing).** The three prior special cases (`hasContinuesMarker`,
+  `hasTrailingThenChain`, `hasBlockBody`) are subsumed by `hasTrailingBody` = any non-`end`
+  token trails the captured action. `parseBodyWithGrammarPatterns` then appends every command
+  it matches and skips the rest, so an already-consumed simple handler is unchanged and stray
+  role words never become spurious commands (verified: a single-command handler still yields
+  exactly `{on, toggle}`).
+- **Impact.** Cleared `form-submit-prevent` (de/it/ru/sw/th/uk/vi — ar/tl stay 0.20, VSO
+  event-mid), `fetch-loading-state` (bn/hi/it/ja/tr), `fetch-error-handling`/`fetch-with-headers`
+  (ja), `render-template-with-data` (qu/tl/vi), `repeat-forever`/`stagger-animation` (qu),
+  `window-scroll` (th).
+- Locked by `multilingual-roadmap-fixes.test.ts` ("Juxtaposed multi-command event bodies":
+  de/sw/vi recover halt+call+log; a simple handler doesn't over-generate).
 
 ### Track 5 — then/end keyword recognition for 9 profile-only languages
 
@@ -696,11 +723,12 @@ the fraction of the English reference parse's command actions that survive (reca
 word-order agnostic). Passes below 50% fidelity are **degenerate passes**.
 
 **Current state (committed baseline carries `avgFidelity` / `degeneratePasses`):**
-~**179 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
+~**159 degenerate-pass instances across ~47 patterns** (was 232; −9 from the
 post-event then-chain fix, −4 from the de fetch keyword alignment, −38 from the
-Tier 1 if/else block-body fix, −5 from the Async Tier 1 `async`-modifier fix, then
-−4/+7 from the then/end keyword fix — −4 `fetch-loading-state` faithful, +7
-Bucket B behaviors that now _parse_ (degenerate by nature, a parse-rate win) — all below).
+Tier 1 if/else block-body fix, −5 from the Async Tier 1 `async`-modifier fix,
+−4/+7 from the then/end keyword fix (−4 `fetch-loading-state` faithful, +7 Bucket B
+behaviors that now _parse_ — a parse-rate win), −20 from the juxtaposed
+multi-command body fix — all below).
 Triage (`packages/testing-framework/tools/fidelity-triage.ts`)
 confirmed the signal is **real** — these are genuinely dropped commands, not a
 metric artifact — and isolated **two roots**: (A) the i18n **transformer** scrambles
