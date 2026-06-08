@@ -238,6 +238,10 @@ export class RegressionReporter implements Reporter {
         parseFailure: langResult.parseFailure,
         parseRate: langResult.parseRate,
         avgConfidence: langResult.avgConfidence,
+        // Structural fidelity vs the English reference parse — tracks degenerate
+        // (non-null but shallow) passes that the parse rate alone can't surface.
+        avgFidelity: langResult.avgFidelity ?? undefined,
+        degeneratePasses: langResult.degeneratePasses ?? undefined,
         bundleSize: langResult.bundleSize ?? undefined,
         patterns,
       };

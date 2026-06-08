@@ -114,6 +114,24 @@ export interface ParseResult {
   parser?: 'semantic' | 'traditional';
   error?: string;
   duration: number; // ms
+
+  /**
+   * Distinct command actions present anywhere in the parsed node tree
+   * (event-handler + nested body/statements), excluding the structural
+   * `compound` wrapper. Used to compute structural `fidelity` against the
+   * English reference parse. Set by the validator.
+   */
+  actionSignature?: string[];
+
+  /**
+   * Structural fidelity vs the English reference parse, in [0, 1]: the fraction
+   * of the English parse's distinct actions also present in this language's
+   * parse (recall). `1` = same command structure; low values flag a *degenerate*
+   * pass (parses non-null, but lost most of the source's commands). Computed
+   * cross-language after all parses complete; `undefined` when there is no
+   * usable English reference or this parse failed.
+   */
+  fidelity?: number;
 }
 
 /**
@@ -141,6 +159,19 @@ export interface LanguageResults {
   parseFailure: number;
   parseRate: number;
   avgConfidence: number;
+
+  /**
+   * Mean structural `fidelity` over successful parses that have an English
+   * reference (see ParseResult.fidelity). `undefined` for English itself.
+   */
+  avgFidelity?: number | undefined;
+
+  /**
+   * Pattern IDs that pass (non-null) but parse *degenerately* — fidelity below
+   * the harness threshold (lost most of the English command structure). These
+   * are real-but-shallow passes the parse-rate metric alone can't surface.
+   */
+  degeneratePasses?: string[] | undefined;
 
   /** Duration in ms */
   duration: number;
@@ -194,6 +225,10 @@ export interface Baseline {
         parseFailure: number;
         parseRate: number;
         avgConfidence: number;
+        /** Mean structural fidelity vs the English reference parse (see ParseResult.fidelity). */
+        avgFidelity?: number | undefined;
+        /** Pattern IDs that pass but parse degenerately (fidelity below threshold). */
+        degeneratePasses?: string[] | undefined;
         bundleSize: number | undefined;
         /** Pattern-level results for detailed tracking */
         patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;

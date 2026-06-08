@@ -12,6 +12,7 @@ import { ConsoleReporter } from './reporters/console-reporter';
 import { JSONReporter } from './reporters/json-reporter';
 import { RegressionReporter } from './reporters/regression-reporter';
 import type { TestConfig, TestResults, LanguageResults, LanguageCode, Reporter } from './types';
+import { computeFidelity, FIDELITY_THRESHOLD } from './fidelity';
 
 const execAsync = promisify(exec);
 
@@ -90,6 +91,11 @@ export class TestOrchestrator {
         const result = await this.testLanguage(language as LanguageCode, langPatterns);
         languageResults.push(result);
       }
+
+      // Score structural fidelity against the English reference parse. This
+      // surfaces *degenerate* passes — patterns that parse non-null but drop most
+      // of the source's commands — which the parse-rate metric alone can't see.
+      this.scoreFidelity(languageResults);
 
       // Collect bundle information
       const bundles: TestResults['bundles'] = {};
@@ -210,6 +216,49 @@ export class TestOrchestrator {
     }
 
     return result;
+  }
+
+  /**
+   * Score structural fidelity of every parse against the English reference parse
+   * of the same pattern, in-place. Fills `ParseResult.fidelity` plus per-language
+   * `avgFidelity` / `degeneratePasses`. English is the reference, so its own
+   * results are left unscored. No-op when English wasn't part of the run.
+   */
+  private scoreFidelity(languageResults: LanguageResults[]): void {
+    const en = languageResults.find(r => r.language === 'en');
+    if (!en) return;
+
+    // codeExampleId -> English action signature (only successful en parses).
+    const reference = new Map<string, string[]>();
+    for (const r of en.parseResults) {
+      if (r.success && r.actionSignature && r.actionSignature.length > 0) {
+        reference.set(r.pattern.codeExampleId, r.actionSignature);
+      }
+    }
+
+    for (const lang of languageResults) {
+      if (lang.language === 'en') continue;
+
+      const degenerate: string[] = [];
+      const scores: number[] = [];
+
+      for (const result of lang.parseResults) {
+        if (!result.success || !result.actionSignature) continue;
+        const ref = reference.get(result.pattern.codeExampleId);
+        if (!ref) continue;
+
+        const fidelity = computeFidelity(ref, result.actionSignature);
+        if (fidelity === undefined) continue;
+
+        result.fidelity = fidelity;
+        scores.push(fidelity);
+        if (fidelity < FIDELITY_THRESHOLD) degenerate.push(result.pattern.codeExampleId);
+      }
+
+      lang.avgFidelity =
+        scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
+      lang.degeneratePasses = degenerate.sort();
+    }
   }
 
   /**

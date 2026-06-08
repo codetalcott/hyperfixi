@@ -157,7 +157,47 @@ export class ConsoleReporter implements Reporter {
       }
     }
 
+    this.reportDegeneratePasses(results);
+
     this.log('');
+  }
+
+  /**
+   * Surface *degenerate* passes — patterns that parse non-null but drop most of
+   * the English reference's command structure (structural fidelity below the
+   * threshold). These pass the parse-rate gate yet aren't faithful translations,
+   * so they're reported separately rather than silently counted as green.
+   */
+  private reportDegeneratePasses(results: TestResults): void {
+    // pattern id -> languages where it's a degenerate pass
+    const byPattern = new Map<string, string[]>();
+    for (const lang of results.languageResults) {
+      for (const id of lang.degeneratePasses ?? []) {
+        let langs = byPattern.get(id);
+        if (!langs) {
+          langs = [];
+          byPattern.set(id, langs);
+        }
+        langs.push(lang.language);
+      }
+    }
+    if (byPattern.size === 0) return;
+
+    const totalInstances = [...byPattern.values()].reduce((n, langs) => n + langs.length, 0);
+    this.log('');
+    this.log(
+      this.yellow(
+        `⚠ Degenerate passes: ${totalInstances} instance(s) across ${byPattern.size} pattern(s)`
+      )
+    );
+    this.log(
+      this.dim('  (parse non-null but lost >50% of the English command structure — not failures)')
+    );
+    for (const [id, langs] of [...byPattern.entries()].sort((a, b) => b[1].length - a[1].length)) {
+      this.log(
+        `  ${this.dim('-')} ${id} ${this.dim(`(${langs.length}: ${langs.sort().join(',')})`)}`
+      );
+    }
   }
 
   /**
