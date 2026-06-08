@@ -127,7 +127,9 @@ export const tagalogProfile: LanguageProfile = {
     end: { primary: 'wakas', alternatives: ['tapos'], normalized: 'end' },
     // Advanced
     js: { primary: 'js', normalized: 'js' },
-    async: { primary: 'async', normalized: 'async' },
+    // `sabay` is the form the i18n tl dictionary emits for async; register it so
+    // the async-modifier strip recognizes it (passthrough-alignment).
+    async: { primary: 'async', alternatives: ['sabay'], normalized: 'async' },
     tell: { primary: 'sabihin', alternatives: ['magsabi'], normalized: 'tell' },
     default: {
       primary: 'pamantayan',

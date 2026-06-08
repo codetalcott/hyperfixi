@@ -98,7 +98,20 @@ export class SemanticParserImpl implements ISemanticParser {
   parse(input: string, language: string): SemanticNode {
     // Extract standalone event modifiers (once, debounced, throttled) from input
     const { modifiers, remainingInput } = this.extractStandaloneModifiers(input, language);
-    const parseInput = remainingInput || input;
+    const modInput = remainingInput || input;
+
+    // Strip a transparent `async` command prefix (`async fetch … then …`). `async`
+    // marks the *following* command for asynchronous execution — it's a modifier,
+    // not a command verb. The grammar transformer, treating it as a verb, reorders
+    // it (often verb-final SOV / event-mid VSO), so a fused event pattern captures
+    // `async` as the handler action and the real command + then-chain collapse to a
+    // degenerate parse. Removing the keyword and re-parsing the remainder mirrors
+    // English — whose body parser already skips `async`, so the action set is
+    // identical with or without it (async is not yet surfaced as a node; preserving
+    // its execution semantics across languages is Track 5 Tier 2). Gated to the
+    // async keyword token, so non-async inputs are byte-identical.
+    const asyncStrip = this.stripAsyncModifier(modInput, language);
+    const parseInput = asyncStrip.remainingInput ?? modInput;
 
     // Diagnostics accumulator (Phase 3.4)
     const diagnostics: Diagnostic[] = [];
@@ -1522,6 +1535,34 @@ export class SemanticParserImpl implements ISemanticParser {
     const remainingInput = input.slice(startPos);
 
     return { modifiers, remainingInput };
+  }
+
+  /**
+   * Remove a transparent `async` command-modifier keyword from the input so the
+   * following command (not `async`) is parsed as the action. The async keyword is
+   * found anywhere in the stream (the grammar transformer relocates it by word
+   * order — leading in VSO, after the event in SVO, verb-final in SOV) and matched
+   * against the language profile's `async` form (primary + alternatives) plus the
+   * English literal the transformer passes through for profiles without a native
+   * form. Returns `remainingInput: null` when there's no async keyword, so the
+   * normal path is byte-identical.
+   */
+  private stripAsyncModifier(input: string, language: string): { remainingInput: string | null } {
+    const kw = tryGetProfile(language)?.keywords?.async;
+    const forms = new Set<string>(['async']);
+    if (kw?.primary) forms.add(kw.primary.toLowerCase());
+    kw?.alternatives?.forEach(a => forms.add(a.toLowerCase()));
+
+    const allTokens = tokenizeInternal(input, language).tokens;
+    const idx = allTokens.findIndex(t => forms.has(t.value.toLowerCase()));
+    if (idx === -1) return { remainingInput: null };
+
+    const tok = allTokens[idx];
+    const stripped = (input.slice(0, tok.position.start) + input.slice(tok.position.end))
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (stripped.length === 0) return { remainingInput: null };
+    return { remainingInput: stripped };
   }
 
   /**
