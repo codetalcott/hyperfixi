@@ -1908,16 +1908,12 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8423747276688455,
+      "avgFidelity": 0.8706971677559915,
       "degeneratePasses": [
         "async-block",
         "behavior-draggable",
         "behavior-resizable",
         "behavior-sortable",
-        "fetch-do-not-throw",
-        "fetch-error-handling",
-        "fetch-json",
-        "fetch-with-headers",
         "first-in-parent",
         "form-submit-prevent",
         "if-empty"

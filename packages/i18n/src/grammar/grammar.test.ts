@@ -489,6 +489,23 @@ describe('GrammarTransformer', () => {
       expect(result).toContain('Draggable');
     });
   });
+
+  describe('German Transformation (fetch/get disambiguation)', () => {
+    const transformer = new GrammarTransformer('en', 'de');
+
+    it('should emit the fetch-specific verb (abrufen), not the get verb (holen)', () => {
+      // Regression: the de dictionary mapped `fetch` to `holen`, which is the
+      // semantic profile's `get` primary (fetch = abrufen there). So
+      // `fetch /api/data` transformed to `holen …` and the semantic parser read
+      // it as `get`, dropping the `fetch` action — degenerate parses for the de
+      // fetch cluster (fetch-do-not-throw, fetch-error-handling, fetch-json,
+      // fetch-with-headers). Align the emitted verb to the semantic fetch keyword.
+      const result = transformer.transform('on click fetch /api/data then put it into #result');
+      expect(result).toContain('abrufen');
+      expect(result).not.toContain('holen');
+      expect(result).toContain('/api/data');
+    });
+  });
 });
 
 // =============================================================================

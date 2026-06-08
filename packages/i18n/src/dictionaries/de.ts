@@ -28,7 +28,7 @@ export const de: Dictionary = {
     break: 'unterbrechen',
     halt: 'anhalten',
     wait: 'warten',
-    fetch: 'holen',
+    fetch: 'abrufen',
     call: 'aufrufen',
     return: 'zurückgeben',
     make: 'erstellen',
