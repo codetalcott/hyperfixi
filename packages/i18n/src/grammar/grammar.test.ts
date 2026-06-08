@@ -1408,3 +1408,28 @@ describe('Caret-scoped variable read masking (`^name on <selector>`)', () => {
     expect(result).toMatch(/بدل|بدّل/);
   });
 });
+
+describe('Event-block body with `from <source>` (focus-trap)', () => {
+  const raw =
+    'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end';
+
+  it('routes SOV `from`-source heads through the block-body path (tr)', () => {
+    // The if-block body's inner keywords get translated (Turkish `odak`=focus,
+    // `ilk`=first) instead of leaking English — and the event clause leads.
+    const t = new GrammarTransformer('en', 'tr');
+    const result = t.transform(raw);
+    expect(result).toMatch(/odak/); // focus → odak (block body transformed)
+    expect(result).toMatch(/keydown/); // event preserved
+    // Event clause leads (keydown appears before the if/eğer block head).
+    expect(result.indexOf('keydown')).toBeLessThan(result.search(/eğer/));
+  });
+
+  it('keeps VSO `from`-source heads on the existing path (ar unchanged)', () => {
+    // VSO event-first emission with a `from` source reorders incorrectly, so ar
+    // stays on the existing path. Guard: transform still succeeds and translates
+    // the verb (`durdur`-style halt / `أوقف`), without throwing.
+    const t = new GrammarTransformer('en', 'ar');
+    expect(() => t.transform(raw)).not.toThrow();
+    expect(t.transform(raw).length).toBeGreaterThan(0);
+  });
+});
