@@ -5,6 +5,7 @@
 import { MultilingualHyperscript } from '@hyperfixi/core/multilingual';
 import type { SemanticNode } from '@lokascript/semantic';
 import type { PatternTranslation, ParseResult, Validator } from '../types';
+import { collectActions } from '../fidelity';
 
 /**
  * Parse Validator
@@ -84,6 +85,8 @@ export class ParseValidator implements Validator<ParseResult[]> {
         roles,
         confidence: pattern.confidence, // Use pattern confidence
         parser: 'semantic',
+        // Structural signature for cross-language fidelity scoring (see fidelity.ts).
+        actionSignature: collectActions(semanticNode),
         duration: performance.now() - startTime,
       };
     } catch (error) {

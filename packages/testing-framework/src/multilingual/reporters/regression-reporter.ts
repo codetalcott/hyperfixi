@@ -116,10 +116,12 @@ export class RegressionReporter implements Reporter {
       // Identify new failures and successes
       const newFailures = this.findNewFailures(langResult, baselineLang);
       const newSuccesses = this.findNewSuccesses(langResult, baselineLang);
+      // Fidelity ratchet: faithful pass in baseline → degenerate pass now.
+      const newDegeneratePasses = this.findNewDegeneratePasses(langResult, baselineLang);
 
       // Determine status
       let status: 'improved' | 'regressed' | 'unchanged' = 'unchanged';
-      if (parseRateDelta < -5 || newFailures.length > 0) {
+      if (parseRateDelta < -5 || newFailures.length > 0 || newDegeneratePasses.length > 0) {
         status = 'regressed';
       } else if (parseRateDelta > 5 || newSuccesses.length > 0) {
         status = 'improved';
@@ -132,6 +134,7 @@ export class RegressionReporter implements Reporter {
         bundleSizeDelta: bundleSizeDelta !== undefined ? bundleSizeDelta : undefined,
         newFailures,
         newSuccesses,
+        newDegeneratePasses,
         status,
       });
     }
@@ -201,6 +204,36 @@ export class RegressionReporter implements Reporter {
   }
 
   /**
+   * Find patterns that *regressed in fidelity*: a faithful (non-degenerate) pass
+   * in the baseline that is now a degenerate pass (still parses, but lost most of
+   * the English command structure). This is the fidelity ratchet's signal.
+   *
+   * Returns [] when the baseline carries no fidelity data yet (`degeneratePasses`
+   * undefined) so adopting the signal never retro-flags the whole corpus. A
+   * pattern that went FAIL → degenerate-pass is an improvement (it now parses),
+   * not a regression, and is excluded because it wasn't a baseline pass.
+   */
+  private findNewDegeneratePasses(
+    current: LanguageResults,
+    baseline: {
+      patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
+      degeneratePasses?: string[] | undefined;
+    }
+  ): string[] {
+    if (!baseline.degeneratePasses || !baseline.patterns) return [];
+    const baselineDegenerate = new Set(baseline.degeneratePasses);
+    const currentDegenerate = new Set(current.degeneratePasses ?? []);
+
+    const regressed: string[] = [];
+    for (const id of currentDegenerate) {
+      const wasPass = baseline.patterns[id]?.success === true;
+      // Faithful baseline pass (passed, not already degenerate) that is now degenerate.
+      if (wasPass && !baselineDegenerate.has(id)) regressed.push(id);
+    }
+    return regressed.sort();
+  }
+
+  /**
    * Save current results as new baseline
    */
   saveAsBaseline(results: TestResults): void {
@@ -238,6 +271,10 @@ export class RegressionReporter implements Reporter {
         parseFailure: langResult.parseFailure,
         parseRate: langResult.parseRate,
         avgConfidence: langResult.avgConfidence,
+        // Structural fidelity vs the English reference parse — tracks degenerate
+        // (non-null but shallow) passes that the parse rate alone can't surface.
+        avgFidelity: langResult.avgFidelity ?? undefined,
+        degeneratePasses: langResult.degeneratePasses ?? undefined,
         bundleSize: langResult.bundleSize ?? undefined,
         patterns,
       };

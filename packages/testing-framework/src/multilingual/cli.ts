@@ -217,9 +217,20 @@ async function main(): Promise<void> {
         );
         exitCode = 1;
       } else {
-        const regressed = reporter
-          .getRegressionResults()
-          .filter(r => r.parseRateDelta < -REGRESSION_TOLERANCE_PTS);
+        const allResults = reporter.getRegressionResults();
+        const regressed = allResults.filter(r => r.parseRateDelta < -REGRESSION_TOLERANCE_PTS);
+
+        // Fidelity ratchet: faithful baseline passes that became degenerate
+        // (parse non-null but lost most of the English command structure). A
+        // small tolerance absorbs residual baseline/DB noise — consistent with
+        // the parse-rate tolerance above — while catching real backsliding (a
+        // transformer change that degrades a whole cluster). Regenerate the
+        // baseline (with --save-baseline) after an intentional fidelity change.
+        const FIDELITY_REGRESSION_TOLERANCE = 3;
+        const fidelityRegressions = allResults.flatMap(r =>
+          r.newDegeneratePasses.map(id => `${r.language}/${id}`)
+        );
+
         if (regressed.length > 0) {
           console.error(
             `\n✗ Regression vs baseline in ${regressed.length} language(s) ` +
@@ -232,7 +243,24 @@ async function main(): Promise<void> {
             console.error(`   ${r.language}: ΔparseRate ${r.parseRateDelta.toFixed(1)}pts${fails}`);
           }
           exitCode = 1;
+        } else if (fidelityRegressions.length > FIDELITY_REGRESSION_TOLERANCE) {
+          console.error(
+            `\n✗ Fidelity regression vs baseline: ${fidelityRegressions.length} faithful pass(es) ` +
+              `became degenerate (tolerance ${FIDELITY_REGRESSION_TOLERANCE}):`
+          );
+          for (const id of fidelityRegressions) console.error(`   ${id}`);
+          console.error(
+            `   (parse non-null but lost >50% of the English command structure — ` +
+              `if intentional, regenerate the baseline with --save-baseline)`
+          );
+          exitCode = 1;
         } else {
+          if (fidelityRegressions.length > 0) {
+            console.warn(
+              `\n⚠ ${fidelityRegressions.length} fidelity regression(s) within tolerance ` +
+                `(${FIDELITY_REGRESSION_TOLERANCE}): ${fidelityRegressions.join(', ')}`
+            );
+          }
           console.log(`\n✓ No regression vs baseline (tolerance ${REGRESSION_TOLERANCE_PTS}pts).`);
           exitCode = 0;
         }
