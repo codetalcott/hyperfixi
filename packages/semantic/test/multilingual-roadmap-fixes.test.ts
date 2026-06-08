@@ -228,3 +228,38 @@ describe('Post-event then-chain capture (command-first VSO/SOV event bodies)', (
     expect([...actions(node)].sort()).toEqual(['on', 'toggle']);
   });
 });
+
+describe('`is empty` predicate alignment (verb vs adjective)', () => {
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // The semantic profile's `empty` primary is the *verb* (vider/esvaziar/清空/…),
+  // but the i18n transformer emits the *adjective* for the `is empty` emptiness
+  // check (vide/vazio/空的/…). Without the adjective registered, the condition
+  // predicate was silently dropped. These corpus-shaped `if … is empty …` handlers
+  // must now retain the `empty` action (alongside if + body).
+  const cases: Array<[string, string]> = [
+    ['fr', 'sur flou si mon valeur est vide ajouter .error à moi fin'],
+    ['pt', 'em desfoque se meu valor é vazio adicionar .error para eu fim'],
+    ['id', 'pada blur jika saya punya nilai adalah kosong tambah .error ke saya akhir'],
+    ['zh', '当 失焦 时 如果 我的 值 是 空的 把 添加 .error 到 我 结束'],
+    ['pl', 'gdy rozmycie jeśli mój wartość jest pusty dodaj .error do ja koniec'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recognizes the empty predicate in a conditional`, () => {
+      const a = actions(parse(input, lang));
+      expect(a.has('empty')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      expect(a.has('add')).toBe(true);
+    });
+  }
+});

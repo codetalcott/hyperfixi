@@ -81,7 +81,7 @@ export const chineseProfile: LanguageProfile = {
     focus: { primary: '聚焦', normalized: 'focus' },
     blur: { primary: '失焦', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: '清空', normalized: 'empty' },
+    empty: { primary: '清空', alternatives: ['空的'], normalized: 'empty' },
     open: { primary: '打开', normalized: 'open' },
     close: { primary: '关闭', normalized: 'close' },
     select: { primary: '选择', normalized: 'select' },

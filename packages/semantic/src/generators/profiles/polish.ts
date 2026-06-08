@@ -173,7 +173,7 @@ export const polishProfile: LanguageProfile = {
     },
     blur: { primary: 'rozmyj', alternatives: ['odskup'], normalized: 'blur', form: 'imperative' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'opróżnij', alternatives: ['oproznij'], normalized: 'empty' },
+    empty: { primary: 'opróżnij', alternatives: ['oproznij', 'pusty'], normalized: 'empty' },
     open: { primary: 'otwórz', alternatives: ['otworz'], normalized: 'open' },
     close: { primary: 'zamknij', normalized: 'close' },
     select: { primary: 'zaznacz', normalized: 'select' },

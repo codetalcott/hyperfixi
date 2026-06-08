@@ -85,7 +85,10 @@ export const frenchProfile: LanguageProfile = {
     focus: { primary: 'focaliser', alternatives: ['concentrer'], normalized: 'focus' },
     blur: { primary: 'défocaliser', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'vider', normalized: 'empty' },
+    // `vide` (adjective, "empty") is the i18n transformer's `is empty` predicate
+    // form; `vider` is the verb ("to empty"). Accept both so the emptiness check
+    // in conditions is recognized, not just the clear-element command.
+    empty: { primary: 'vider', alternatives: ['vide'], normalized: 'empty' },
     open: { primary: 'ouvrir', normalized: 'open' },
     close: { primary: 'fermer', normalized: 'close' },
     select: { primary: 'sélectionner', alternatives: ['selectionner'], normalized: 'select' },

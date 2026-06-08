@@ -85,7 +85,7 @@ export const indonesianProfile: LanguageProfile = {
     focus: { primary: 'fokus', alternatives: ['fokuskan'], normalized: 'focus' },
     blur: { primary: 'blur', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'kosongkan', normalized: 'empty' },
+    empty: { primary: 'kosongkan', alternatives: ['kosong'], normalized: 'empty' },
     open: { primary: 'buka', normalized: 'open' },
     close: { primary: 'tutupkan', normalized: 'close' },
     select: { primary: 'tandai', normalized: 'select' },

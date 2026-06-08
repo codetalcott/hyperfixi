@@ -80,7 +80,7 @@ export const portugueseProfile: LanguageProfile = {
     focus: { primary: 'focar', normalized: 'focus' },
     blur: { primary: 'desfocar', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'esvaziar', normalized: 'empty' },
+    empty: { primary: 'esvaziar', alternatives: ['vazio'], normalized: 'empty' },
     open: { primary: 'abrir', normalized: 'open' },
     close: { primary: 'fechar', normalized: 'close' },
     select: { primary: 'selecionar', normalized: 'select' },
