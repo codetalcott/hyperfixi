@@ -1387,3 +1387,24 @@ describe('Possessive Dot Notation Translation', () => {
     });
   });
 });
+
+describe('Caret-scoped variable read masking (`^name on <selector>`)', () => {
+  // `put ^count on #host into me` carries a second, overloaded `on` (the caret
+  // scope). The transformer masks ` on <selector>` so the splitter/event parser
+  // doesn't mistake it for an event/command boundary: the event clause survives
+  // and `^count on #host` stays adjacent. See caret-var-on-target in the roadmap.
+  it('keeps `^count on #host` together and preserves the event (ar)', () => {
+    const t = new GrammarTransformer('en', 'ar');
+    const result = t.transform('on click put ^count on #host into me');
+    expect(result).toContain('^count on #host'); // scope kept adjacent
+    expect(result).toContain('نقر'); // event (click) preserved
+    expect(result).not.toContain(''); // no leftover mask sentinel
+  });
+
+  it('does not disturb a normal command without a caret scope (ar)', () => {
+    const t = new GrammarTransformer('en', 'ar');
+    const result = t.transform('on click toggle .active on #button');
+    expect(result).not.toContain('');
+    expect(result).toMatch(/بدل|بدّل/);
+  });
+});

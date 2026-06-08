@@ -278,6 +278,23 @@ export class PatternMatcher {
       return true;
     }
 
+    // Check for a caret-scoped variable read (e.g. `^count on #host` — a
+    // DOM-scoped `^name` variable read from a specific element). The `^` prefix
+    // disambiguates this `on` from the event/destination `on`, so a normal
+    // `toggle .active on #button` (selector patient) is never affected. Folds
+    // `^name on <element>` into one expression value so a following destination
+    // (`into me`) still matches.
+    const caretScopeValue = this.tryMatchCaretScopeExpression(tokens);
+    if (caretScopeValue) {
+      if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
+        if (!isTypeCompatible(caretScopeValue.type, patternToken.expectedTypes)) {
+          return patternToken.optional || false;
+        }
+      }
+      captured.set(patternToken.role, caretScopeValue);
+      return true;
+    }
+
     // Check for an "of"-possessive expression (e.g. "*--primary-color of #theme",
     // AR "*--primary-color من #theme", TL "*--primary-color ng #theme"). Gated to
     // roles that opt into property-path (currently `set`'s destination), so the
@@ -506,6 +523,45 @@ export class PatternMatcher {
     }
 
     return { type: 'expression', raw: parts.join(' ') } as SemanticValue;
+  }
+
+  /**
+   * Match a caret-scoped variable read: `^name on <element>`.
+   *
+   * `^name` is a DOM-scoped variable; `^name on #host` reads it from a specific
+   * element rather than walking up from `me`. Gated to `^`-prefixed identifier
+   * tokens followed by an `on`-marker and a selector — so the overloaded `on`
+   * (event marker / destination marker) is never misread on ordinary commands
+   * like `toggle .active on #button` (whose patient is a class selector, not a
+   * caret variable). Works across languages: the `on` marker is matched by its
+   * normalized form (ar `عند`, tl `kapag`, …) and selectors aren't translated.
+   */
+  private tryMatchCaretScopeExpression(tokens: TokenStream): SemanticValue | null {
+    const token = tokens.peek();
+    if (!token || token.kind !== 'identifier' || !token.value.startsWith('^')) {
+      return null;
+    }
+
+    const onMarker = tokens.peek(1);
+    const scope = tokens.peek(2);
+    // The `on` marker is normalized to the `destination` role by the tokenizers
+    // (it is the destination marker for toggle/add), so accept it by raw value
+    // (`on`) or normalized role (`destination`/`on`). `into` normalizes
+    // elsewhere, so a `put ^x into #y` is never misread as a scoped read.
+    const markerForm = (onMarker?.normalized ?? '').toLowerCase();
+    const isOnMarker =
+      !!onMarker &&
+      (onMarker.value.toLowerCase() === 'on' ||
+        markerForm === 'destination' ||
+        markerForm === 'on');
+    if (!onMarker || !scope || scope.kind !== 'selector' || !isOnMarker) {
+      return null;
+    }
+
+    tokens.advance(); // ^name
+    tokens.advance(); // on-marker
+    tokens.advance(); // scope selector
+    return { type: 'expression', raw: `${token.value} on ${scope.value}` } as SemanticValue;
   }
 
   /**

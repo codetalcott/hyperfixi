@@ -146,3 +146,43 @@ describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)
     });
   }
 });
+
+describe('Caret-scoped variable read `^name on <element>` (caret-var-on-target)', () => {
+  // `^name on #host` reads a DOM-scoped `^name` variable from a specific element.
+  // The overloaded `on` made `put ^count on #host into me` fail even in English;
+  // a caret-gated matcher now folds `^name on <selector>` into one expression so
+  // the trailing `into me` destination still matches. The i18n transformer masks
+  // the scope so the same `on` isn't mistaken for an event/command boundary.
+  // See docs-internal/MULTILINGUAL_ROADMAP.md (caret-var-on-target).
+  it('parses `put ^count on #host into me` (clean order, en)', () => {
+    expect(canParse('put ^count on #host into me', 'en')).toBe(true);
+    expect(parse('put ^count on #host into me', 'en').action).toBe('put');
+  });
+
+  it('gives the en event handler a real (non-empty) body', () => {
+    const node = parse('on click put ^count on #host into me', 'en');
+    expect(node.action).toBe('on');
+    expect(((node as { body?: unknown[] }).body ?? []).length).toBeGreaterThan(0);
+  });
+
+  it('does not affect a selector patient with `on` destination (toggle)', () => {
+    // `.active` is not a caret variable, so `on #button` stays the destination.
+    expect(parse('toggle .active on #button', 'en').action).toBe('toggle');
+  });
+
+  it('still parses a caret var without a scope (`put ^count into me`)', () => {
+    expect(parse('put ^count into me', 'en').action).toBe('put');
+  });
+
+  // Transformed (DB-shaped) ar/tl forms keep `^count on #host` adjacent and the
+  // event clause intact, so the handler parses (the body keeps the put).
+  const transformed: Array<[string, string]> = [
+    ['ar', 'ضع ^count on #host إلى أنا عند نقر'],
+    ['tl', 'ilagay ^count on #host sa ako kapag click'],
+  ];
+  for (const [lang, input] of transformed) {
+    it(`[${lang}] parses the transformed caret-scope handler`, () => {
+      expect(parse(input, lang).action).toBe('on');
+    });
+  }
+});
