@@ -1358,9 +1358,28 @@ export class SemanticParserImpl implements ISemanticParser {
   }
 
   /**
+   * Match a token value against a language profile's keyword (primary +
+   * alternatives) for the given key. Used by the then/end/else recognizers to
+   * cover languages absent from their curated keyword maps — every profile
+   * carries `then`/`end`/`else`, so this generalizes recognition to all 24
+   * languages without hand-maintaining each map.
+   */
+  private profileKeywordMatches(language: string, key: string, value: string): boolean {
+    const kw = (
+      tryGetProfile(language)?.keywords as
+        | Record<string, { primary?: string; alternatives?: string[] }>
+        | undefined
+    )?.[key];
+    if (!kw) return false;
+    if (kw.primary?.toLowerCase() === value) return true;
+    return !!kw.alternatives?.some(a => a.toLowerCase() === value);
+  }
+
+  /**
    * Check if a token is a 'then' keyword in the given language.
    */
   private isThenKeyword(value: string, language: string): boolean {
+    const v = value.toLowerCase();
     const thenKeywords: Record<string, Set<string>> = {
       en: new Set(['then']),
       ja: new Set(['それから', '次に', 'そして']),
@@ -1378,8 +1397,13 @@ export class SemanticParserImpl implements ISemanticParser {
       qu: new Set(['chaymantataq', 'hinaspa', 'chaymanta', 'chayqa']),
       sw: new Set(['kisha', 'halafu', 'baadaye']),
     };
-    const keywords = thenKeywords[language] || thenKeywords.en;
-    return keywords.has(value.toLowerCase());
+    // Languages with a curated map keep their exact (colloquial-rich) behavior.
+    // Languages absent from it (it/ru/th/vi/he/hi/ms/pl/uk) fall back to the
+    // profile's `then` form + the English literal the transformer passes through —
+    // without this their multi-command then-chains collapsed to the first command.
+    const curated = thenKeywords[language];
+    if (curated) return curated.has(v);
+    return v === 'then' || this.profileKeywordMatches(language, 'then', v);
   }
 
   /**
@@ -1392,16 +1416,14 @@ export class SemanticParserImpl implements ISemanticParser {
   private isElseKeyword(value: string, language: string): boolean {
     const v = value.toLowerCase();
     if (v === 'else') return true;
-    const kw = tryGetProfile(language)?.keywords?.else;
-    if (!kw) return false;
-    if (kw.primary?.toLowerCase() === v) return true;
-    return !!kw.alternatives?.some(a => a.toLowerCase() === v);
+    return this.profileKeywordMatches(language, 'else', v);
   }
 
   /**
    * Check if a token is an 'end' keyword in the given language.
    */
   private isEndKeyword(value: string, language: string): boolean {
+    const v = value.toLowerCase();
     const endKeywords: Record<string, Set<string>> = {
       en: new Set(['end']),
       ja: new Set(['終わり', '終了', 'おわり']),
@@ -1419,8 +1441,11 @@ export class SemanticParserImpl implements ISemanticParser {
       qu: new Set(['tukukuy', 'tukuy', 'puchukay']),
       sw: new Set(['mwisho', 'maliza', 'tamati']),
     };
-    const keywords = endKeywords[language] || endKeywords.en;
-    return keywords.has(value.toLowerCase());
+    // See isThenKeyword: curated langs unchanged; the rest fall back to the
+    // profile's `end` form + the English literal.
+    const curated = endKeywords[language];
+    if (curated) return curated.has(v);
+    return v === 'end' || this.profileKeywordMatches(language, 'end', v);
   }
 
   /**

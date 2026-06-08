@@ -5,7 +5,8 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **Async Tier 1 — `async` modifier transparency** (degenerate passes **181 → 176**, −5 degenerate→faithful: `async-block` ar/de/it/th/tl, 0 regressions, parse rate unchanged 3672/3696). The parser now strips the transparent `async` command-prefix before parsing (mirroring English), so the real command anchors instead of `async` being captured as the handler action. SOV (ja/ko/bn/qu/tr), zh, fr/pt (separate fetch-in-event gap), ms remain — Async Tier 2._
+_Last updated: after Track 5 **then/end keyword recognition for 9 profile-only languages** (it, ru, th, vi, he, hi, ms, pl, uk). `isThenKeyword`/`isEndKeyword` were hardcoded maps covering only 15 langs; the other 9 fell back to the English literal, so their native then/end (`allora`, `затем`, …) weren't recognized — multi-command then-chains collapsed to the first command and `end`-blocks didn't close. Both now fall back to the profile's form. **Parse rate +7** (he/it/pl behaviors now parse — `end` recognized; he/it/pl jump toward 100%), **+4 fidelity** (`fetch-loading-state` ru/th/vi/uk degenerate→faithful), **0 regressions** (gate green). Degenerate nets 176 → 179 (−4 fetch-loading-state, +7 newly-parsing Bucket B behaviors)._
+_Earlier: Track 5 **Async Tier 1 — `async` modifier transparency** (degenerate **181 → 176**, −5: `async-block` ar/de/it/th/tl)._
 _Earlier: after Track 5 **Tier 1 — if/else block-body in event handlers** (degenerate passes **219 → 181**, −38 degenerate→faithful, 0 fidelity regressions). Cleared `if-exists` entirely (ar+it flipped, the named Tier 1 target) and lifted `if-empty`/`input-validation`/`unless-condition` across 13 languages. Before that: German `fetch` keyword alignment, caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, (parse-rate) Tier 1, Track 4, Track 1 (reactive) complete._
 
 ---
@@ -58,6 +59,32 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 — then/end keyword recognition for 9 profile-only languages
+
+- **Parse rate +7, fidelity +4, 0 regressions** (full `browser-priority` regen + `--regression`
+  gate green). `isThenKeyword`/`isEndKeyword` were hardcoded `Record<lang, Set>` maps covering
+  only **15** languages (en, ja, ar, es, ko, zh, tr, pt, fr, de, id, tl, bn, qu, sw); the other
+  **9** (it, ru, th, vi, he, hi, ms, pl, uk) hit the `|| en` fallback, so their native then/end
+  (`allora`/`затем`/`แล้ว`/`rồi`/`fine`/`koniec`/…) were never recognized.
+- **Two consequences, both fixed.** (1) Multi-command **then-chains collapsed to the first
+  command** (`fetch-loading-state` parsed as `{add, on}` in it/ru/th/vi/…). (2) `end`-terminated
+  **blocks didn't close** in those langs, so e.g. behavior definitions failed to parse outright.
+- **Fix (parser, additive, conservative).** A shared `profileKeywordMatches(lang, key, value)`
+  helper checks the language profile's keyword (primary + alternatives). `isThenKeyword`/
+  `isEndKeyword` now: keep the curated map verbatim for the 15 mapped langs (**byte-identical**),
+  and for the rest fall back to the profile's `then`/`end` form + the English literal. `isElseKeyword`
+  refactored onto the same helper. Every profile carries `then`/`end`/`else`, so this generalizes
+  to all 24 langs without hand-maintaining each map.
+- **Impact.** Fidelity: `fetch-loading-state` **ru/th/vi/uk** degenerate→faithful (+4). Parse rate:
+  **he/it/pl** behaviors (`behavior-draggable`/`-sortable`/`-resizable`) now parse — he +0.6%,
+  it +1.9%, pl +1.9% (it/pl cross ~99%). Those 7 are Bucket B (degenerate by nature — a separate
+  runtime track), so they're fail→degenerate **parse-rate wins**, not fidelity regressions; the
+  degenerate count nets 176 → 179. **Zero faithful→degenerate, zero parse-down.**
+- **Honest scope.** `fetch-loading-state` it/ja/bn/hi/tr stay degenerate for _other_ reasons (it's
+  fused `event-handler-it-full` quirk; SOV event-mid then-chain for ja/bn/hi/tr) — separate work.
+- Locked by `multilingual-roadmap-fixes.test.ts` ("then/end keyword recognition": ru/th/uk recover
+  the multi-command chain; ja curated chain unchanged).
 
 ### Track 5 Async Tier 1 — `async` modifier transparency (−5 degenerate)
 
@@ -669,9 +696,11 @@ the fraction of the English reference parse's command actions that survive (reca
 word-order agnostic). Passes below 50% fidelity are **degenerate passes**.
 
 **Current state (committed baseline carries `avgFidelity` / `degeneratePasses`):**
-~**176 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
+~**179 degenerate-pass instances across ~50 patterns** (was 232; −9 from the
 post-event then-chain fix, −4 from the de fetch keyword alignment, −38 from the
-Tier 1 if/else block-body fix, −5 from the Async Tier 1 `async`-modifier fix — all below).
+Tier 1 if/else block-body fix, −5 from the Async Tier 1 `async`-modifier fix, then
+−4/+7 from the then/end keyword fix — −4 `fetch-loading-state` faithful, +7
+Bucket B behaviors that now _parse_ (degenerate by nature, a parse-rate win) — all below).
 Triage (`packages/testing-framework/tools/fidelity-triage.ts`)
 confirmed the signal is **real** — these are genuinely dropped commands, not a
 metric artifact — and isolated **two roots**: (A) the i18n **transformer** scrambles

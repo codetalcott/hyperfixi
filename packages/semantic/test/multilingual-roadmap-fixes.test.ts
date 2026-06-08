@@ -406,3 +406,47 @@ describe('async modifier transparency — Track 5 Async Tier 1', () => {
     expect(parse('toggle .active', 'en').action).toBe('toggle');
   });
 });
+
+describe('then/end keyword recognition for profile-only languages — Track 5', () => {
+  // isThenKeyword/isEndKeyword were hardcoded maps covering 15 languages; 9 others
+  // (it, ru, th, vi, he, hi, ms, pl, uk) fell back to the English literal, so their
+  // native then/end (`allora`, `затем`, `แล้ว`, `rồi`, …) weren't recognized — every
+  // multi-command then-chain collapsed to the first command and `end`-terminated
+  // blocks didn't close. Both recognizers now fall back to the language profile's
+  // then/end form for languages absent from the curated maps (curated langs stay
+  // byte-identical). See docs-internal/MULTILINGUAL_ROADMAP.md (then/end recognition).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // fetch-loading-state corpus transforms — the then-chain (add → … → remove → put)
+  // must survive instead of collapsing to the first command (`add`).
+  const cases: Array<[string, string]> = [
+    ['ru', 'при клик добавить .loading в я затем загрузить /api/data затем удалить .loading из я затем положить это в #result'],
+    ['th', 'เมื่อ คลิก เพิ่ม .loading ใน ฉัน แล้ว ดึงข้อมูล /api/data แล้ว ลบ .loading จาก ฉัน แล้ว ใส่ มัน ใน #result'],
+    ['uk', 'при клік додати .loading в я тоді завантажити /api/data тоді видалити .loading з я тоді покласти це в #result'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers a multi-command then-chain (was first-command-only)`, () => {
+      const a = actions(parse(input, lang));
+      expect(a.has('add')).toBe(true);
+      expect(a.has('remove')).toBe(true);
+      expect(a.has('put')).toBe(true);
+    });
+  }
+
+  it('leaves a curated-map language (ja) then-chain unchanged', () => {
+    // ja is in the curated map; its then (それから) keeps working.
+    const a = actions(parse('.a を クリック で 追加 それから .b を 削除', 'ja'));
+    expect(a.has('add')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+});
