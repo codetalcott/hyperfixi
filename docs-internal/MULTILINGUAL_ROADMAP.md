@@ -646,9 +646,43 @@ fail the gate. After an _intentional_ fidelity change, regenerate the baseline.
    each chipped at). A general "faithful block-body transform" (mask block → reorder
    head → transform body as a unit → translate inner keywords) would lift many clusters
    at once. Validate with the fidelity signal + a full regen (watch for the usual
-   stale-DB / flaky-harness traps — see Gotchas).
+   stale-DB / flaky-harness traps — see Gotchas). **See the validated spike below —
+   the hypothesis holds structurally but lands in tiers, not one PR.**
 3. **Prioritize by language-count × value.** `if-empty`/16, `input-validation`/14,
    `async-block`/13, `if-exists`/13 are the biggest.
+
+**Spike finding (validated, this session) — the if-block shred is one root but**
+**fragments by word order + condition shape; build it in tiers.** A controlled
+spike (replicating the harness `maskSpans → GrammarTransformer → parse` pipeline on
+`if-empty`/`if-exists`/`input-validation` across ja/ko (SOV), ar (VSO), de (V2),
+it (SVO)) confirmed the transformer flattens the whole `if … end` into one token
+stream and reorders the body **into** the condition. But the damage is _not_ uniform,
+so a single transform won't clear all conditional clusters cleanly:
+
+- **`if <subj> exists` (if-exists, 13).** SOV ja/ko/de are already near-faithful
+  (~0.83 — only the `if` wrapper is lost; body `show/make/put` survives). **Only
+  VSO/SVO (ar, it) fully shred** to `[on, if]`. Also `else` leaks **untranslated**
+  here (`#modal else を 表示`) even though it _is_ translated in input-validation
+  (`そうでなければ`) — a structure-dependent else-handling inconsistency.
+  → **Tier 1 (most tractable):** an `if/else` block-mask + reorder (event-first,
+  block-after — mirrors #283/#286) that keeps the `if` wrapper and translates `else`,
+  validated on `if-exists` first. ar/it are the main beneficiaries.
+- **`if <subj> is <pred>` (if-empty 16, input-validation 14).** Harder. SOV ja/ko
+  **fully collapse** (only the event leaks as a bare command) because the transformer
+  strands the **predicate** (`空`/empty) _after_ the verb and interleaves the body
+  into the condition; ar/it keep only `[on, if]`; de keeps `[on, add]` (drops
+  `if`+`empty`, plus `wenn`→if collides with `when`, asserted by tests).
+  → **Tier 2:** requires the masked-block transform _and_ keeping the SOV
+  `<subj> is <pred>` condition **contiguous** (predicate not pushed past the verb),
+  _and_ per-language keyword fixes (de `wenn`/`when`; the `is empty` adjective —
+  partially shipped). Genuinely multi-PR, per-language.
+- **`async-block` (13) is a separate root** — command-first verb ordering, not an
+  if-block (see the ja fetch note below). Don't fold it into the if-block transform.
+
+Net: the block-body transform is worth building, but as an **if/else conditional
+masking transform** delivered in two tiers (if-exists-class, then is-pred-class),
+not one sweep. Tier 1 (`if-exists` ar/it via if/else mask + `else` translation) is
+the recommended first PR of the arc.
 
 **fetch keyword alignment — ja/zh deferred (next session).** The de fetch fix
 (Shipped, above) found the same i18n-emits-the-get-word collision in **ja**
