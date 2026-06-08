@@ -3797,7 +3797,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8775599128540305,
+      "avgFidelity": 0.880174291938998,
       "degeneratePasses": [
         "async-block",
         "behavior-draggable",
@@ -5704,7 +5704,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8149237472766885,
+      "avgFidelity": 0.8175381263616558,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -8882,7 +8882,7 @@
           "success": false
         }
       },
-      "avgFidelity": 0.905,
+      "avgFidelity": 0.9076666666666667,
       "degeneratePasses": ["first-in-parent"]
     },
     "pt": {
@@ -9508,7 +9508,7 @@
           "confidence": 0.5
         }
       },
-      "avgFidelity": 0.8631808278867102,
+      "avgFidelity": 0.8657952069716778,
       "degeneratePasses": [
         "async-block",
         "behavior-draggable",
@@ -15251,7 +15251,7 @@
           "success": false
         }
       },
-      "avgFidelity": 0.7818888888888886,
+      "avgFidelity": 0.7845555555555555,
       "degeneratePasses": [
         "async-block",
         "event-debounce",

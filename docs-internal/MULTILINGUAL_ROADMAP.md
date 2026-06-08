@@ -58,6 +58,29 @@ behaviors), not a parsing/i18n track. See Track 2.
 
 ## Shipped
 
+### `is empty` predicate alignment — fidelity Root A partial (avgFidelity, 5 langs)
+
+- **avgFidelity up for fr/id/pl/pt/zh (~+0.0026 each, +0.0006 cross-lang), 0 new
+  failures, 0 fidelity regressions, degenerate count unchanged (223).** Each `if …
+is empty …` handler in these languages now parses faithfully (`add,empty,if,on`)
+  instead of dropping the condition predicate (`add,if,on`).
+- **Root cause (recurring, per-language).** The semantic profile's `empty` keyword
+  primary is the **verb** ("to empty/clear" — `vider`/`esvaziar`/`清空`/…), but the
+  i18n transformer emits the **adjective** for the `is empty` emptiness check
+  (`vide`/`vazio`/`空的`/…). The adjective was unregistered, so the predicate was
+  dropped from the condition. Only `es` (`vacío`) was already aligned.
+- **Fix.** Add the adjective as an `alternatives` entry on each profile's `empty`
+  mapping (additive — the verb/clear-command still works; no collisions). 5 one-line
+  profile edits.
+- **Honest scope.** This is a **partial Root A** win and deliberately does **not**
+  move the degenerate-pass count: these patterns were already ≥0.5 fidelity (above
+  the degenerate threshold), so the fix lifts them 0.75→1.0 (avgFidelity) without
+  clearing a degenerate pass. See the Track-5 note below — the tracked degenerate
+  cases are the _fully-collapsed_ (<0.5) ones, which need deeper per-language work.
+  Languages it/ru/uk/vi/th/sw also drop `empty` but additionally lose the body
+  command, so the predicate alignment alone doesn't make them faithful (separate gap).
+- Locked by `multilingual-roadmap-fixes.test.ts` ("`is empty` predicate alignment").
+
 ### Post-event then-chain capture — fidelity Root B (+9 faithful, first Track-5 fix)
 
 - **Fidelity, not parse rate**: degenerate passes **232 → 223** (−9 degenerate→faithful),
@@ -540,8 +563,24 @@ SOV `if <subj> is <pred>` conditions, interleaving the following command into th
 condition so the translated _text_ is broken (`if-empty`/ja, `input-validation`/ko
 → 0.00); (B) the semantic **parser** drops the post-event `then`-chain in
 command-first (VSO/SOV) event bodies (`fetch-loading-state`/ar → 0.40). Root B is
-**fixed** (below); Root A (the biggest cluster) is the next target. The remaining
-clusters:
+**fixed** (below); Root A is partially addressed (the `is empty` predicate
+alignment, below) but the bulk remains. The remaining clusters:
+
+> **Key triage insight (don't expect quick degenerate-count wins from Root A).**
+> Root A is **not one fix** — conditional parsing breaks _differently per language_
+> and across three layers (i18n transformer / semantic profile keywords / parser
+> condition-boundary), e.g. **de** `wenn`→`if` collides with `when` (and tests assert
+> `wenn`); **fr/pt/id/zh/pl** drop the `empty` adjective predicate (fixed); **ar/ja/ko**
+> fully collapse (transformer scrambles SOV `if <subj> is <pred>` _and_ the parser
+> doesn't parse SOV conditional bodies). Crucially, the **degenerate-pass count only
+> moves on the fully-collapsed (<0.5) cases** (ar/ja/ko/de) — the "close" cases
+> (fr/pt/… at 0.75) lift avgFidelity but stay above the 0.5 threshold. And part of
+> the `if-*` signal is **metric-entangled**: even the English reference shallow-parses
+> `is empty` as the `empty` _command_, so the predicate match is convention, not deep
+> fidelity. Net: Root A is a sustained, multi-PR, per-language effort; the big
+> degenerate-count wins require the hard SOV transformer + parser conditional work.
+
+The remaining clusters:
 
 | Cluster                     | Examples (langs)                                                                          |
 | --------------------------- | ----------------------------------------------------------------------------------------- |
