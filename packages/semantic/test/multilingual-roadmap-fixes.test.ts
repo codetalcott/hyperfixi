@@ -297,3 +297,62 @@ describe('German fetch keyword alignment (abrufen vs holen)', () => {
     expect(parse('holen #x', 'de').action).toBe('get');
   });
 });
+
+describe('if/else block-body in event handlers — Track 5 Tier 1', () => {
+  // A fused VSO/SVO event pattern captures a *block* command (if/unless/…) as the
+  // handler action but leaves the block's condition + branch body unconsumed — and
+  // those tokens are not bridged by a then-marker. Before the fix `buildEventHandler`
+  // dropped them, collapsing the handler to a bare `if` (degenerate parse). It now
+  // parses the remainder as body commands. Combined with the i18n `else`-split
+  // transform (`<thenBranch> else <elseBranch>`), this flips `if-exists` ar/it from
+  // degenerate to faithful. See docs-internal/MULTILINGUAL_ROADMAP.md (Track 5 Tier 1).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const n = node as Record<string, unknown>;
+    if (typeof n.action === 'string') acc.add(n.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = n[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ar] if-exists keeps the if + branch body (was bare if)', () => {
+    // i18n transform of `on click if #modal exists show #modal else make a
+    // <div#modal/> put it into body end` — `else` translated to وإلا, branches split.
+    const input =
+      'عند نقر إذا #modal موجود اظهر #modal وإلا اصنع a <div#modal/> ثم ضع هو إلى جسم النهاية';
+    const node = parse(input, 'ar');
+    expect(node.action).toBe('on');
+    const a = actions(node);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('show')).toBe(true);
+    expect(a.has('make')).toBe(true);
+  });
+
+  it('[it] if-exists keeps the if + full branch body (was bare if)', () => {
+    const input =
+      'su clic se #modal esiste mostrare #modal altrimenti fare a <div#modal/> allora mettere esso in corpo fine';
+    const node = parse(input, 'it');
+    expect(node.action).toBe('on');
+    const a = actions(node);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('show')).toBe(true);
+    expect(a.has('make')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[sw] an else-joined block still parses when the event is unrecognized', () => {
+    // sw `blur` (poteza_macho) isn't a recognized event, so input-validation only
+    // parses via the Stage-4 compound fallback. The else-split removed the `then`
+    // that used to trigger it, so the fallback now also fires on an `else` keyword —
+    // this guards against that regression (faithful → null).
+    const input =
+      'kwenye poteza_macho kama yangu thamani ni tupu ongeza .error kwa mimi sivyo ondoa .error kutoka mimi mwisho';
+    const a = actions(parse(input, 'sw'));
+    expect(a.has('if')).toBe(true);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+});

@@ -410,6 +410,14 @@ function getBoundaryModifiersForLocale(locale: string): Set<string> {
  */
 const BLOCK_HEAD_KEYWORDS = new Set(['live', 'when', 'unless']);
 
+/**
+ * Source-language block-introducing command keywords whose body is a clause plus a
+ * branch/loop body (harness source is English, so these are English-keyed). Used to
+ * locate a block body inside an event handler and to track block depth when finding
+ * a top-level `else`.
+ */
+const BLOCK_BODY_KEYWORDS = new Set(['if', 'repeat', 'unless', 'while', 'for']);
+
 function splitOnCommandBoundaries(input: string, sourceLocale: string): string[] {
   const commandKeywords = getCommandKeywordsForLocale(sourceLocale);
   const boundaryModifiers = getBoundaryModifiersForLocale(sourceLocale);
@@ -1589,9 +1597,6 @@ export class GrammarTransformer {
     if (tokens.length === 0) return null;
     if (!EVENT_KEYWORDS.has(tokens[0]?.toLowerCase())) return null;
 
-    // Source-language block-head keywords (harness source is English; the
-    // existing BLOCK_HEAD_KEYWORDS set is likewise English-keyed).
-    const BLOCK_BODY_KEYWORDS = new Set(['if', 'repeat', 'unless', 'while', 'for']);
     let blockIdx = -1;
     for (let i = 1; i < tokens.length; i++) {
       if (BLOCK_BODY_KEYWORDS.has(tokens[i].toLowerCase())) {
@@ -1661,14 +1666,60 @@ export class GrammarTransformer {
     if (bodyStart < 0) bodyStart = inner.length;
 
     const clause = inner.slice(0, bodyStart).join(' ');
-    const body = inner.slice(bodyStart).join(' ');
+    const bodyTokens = inner.slice(bodyStart);
 
     const headT = translateWord(head, src, dst);
     const tailT = tail ? translateWord(tail, src, dst) : '';
     const clauseT = clause ? translateMultiWordValue(clause, src, dst) : '';
-    const bodyT = body ? this.transform(body) : '';
+    const bodyT = this.transformConditionalBody(bodyTokens);
 
     return [headT, clauseT, bodyT, tailT].filter(s => s.length > 0).join(' ');
+  }
+
+  /**
+   * Transform an `if`/`unless` block body, splitting it at a top-level `else` into
+   * a then-branch and an else-branch so each is reordered as a self-contained unit
+   * and the `else` keyword itself is translated. Without this, the body is reordered
+   * as one stream: `else` rides along glued to the preceding clause (and, when that
+   * clause begins with a selector, is marked a selector and left *untranslated*),
+   * and a spurious `then` is inserted around it — both of which break the target
+   * text and the downstream parse. The split is depth-aware so an `else` belonging
+   * to a nested block is not mistaken for this block's separator. Bodies without an
+   * `else` transform exactly as before.
+   */
+  private transformConditionalBody(bodyTokens: string[]): string {
+    const src = this.sourceProfile.code;
+    const dst = this.targetProfile.code;
+
+    const sourceElse = translateWord('else', 'en', src).toLowerCase();
+    let depth = 0;
+    let elseIdx = -1;
+    for (let i = 0; i < bodyTokens.length; i++) {
+      const t = bodyTokens[i].toLowerCase();
+      if (BLOCK_BODY_KEYWORDS.has(t)) depth++;
+      else if (t === 'end' && depth > 0) depth--;
+      else if (t === sourceElse && depth === 0) {
+        elseIdx = i;
+        break;
+      }
+    }
+
+    if (elseIdx === -1) {
+      const body = bodyTokens.join(' ');
+      return body ? this.transform(body) : '';
+    }
+
+    const thenBranch = bodyTokens.slice(0, elseIdx).join(' ');
+    const elseBranch = bodyTokens.slice(elseIdx + 1).join(' ');
+    const elseT = translateWord(bodyTokens[elseIdx], src, dst);
+
+    return [
+      thenBranch ? this.transform(thenBranch) : '',
+      elseT,
+      elseBranch ? this.transform(elseBranch) : '',
+    ]
+      .filter(s => s.length > 0)
+      .join(' ');
   }
 
   /**
