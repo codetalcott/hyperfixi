@@ -1485,3 +1485,61 @@ describe('if/else block-body — else split + translation (Track 5 Tier 1)', () 
     expect(result).toContain('اظهر'); // show translated
   });
 });
+
+describe('SOV modifier-prefixed event body reorder (Track 5)', () => {
+  // A leading command-modifier (async/once/debounced) must not be parsed as the
+  // event handler's action. For SOV targets that mis-assignment surfaced the real
+  // verb first on reorder (`取得 /api/data を クリック …`), which the semantic parser
+  // collapsed to a bare `*-generated-verb-first` command (degenerate). The
+  // transformer now lifts the modifier out and re-emits it as a leading English
+  // literal, keeping the body in canonical patient-first SOV order so the event
+  // sits mid-stream and the parser's SOV event-extraction recovers the full body.
+  // See docs-internal/SOV_REORDER_SCOPE.md.
+
+  for (const lang of ['ja', 'ko', 'tr'] as const) {
+    const t = new GrammarTransformer('en', lang);
+
+    it(`[${lang}] async body: modifier leads, real verb is not first`, () => {
+      const out = t.transform('on click async fetch /api/data then put it into me');
+      // The English modifier literal leads (the parser strips it pre-parse).
+      expect(out.startsWith('async ')).toBe(true);
+      // The patient precedes the fetch verb — the body stays patient-first, so the
+      // verb is not the leading body token (which is what caused the degenerate parse).
+      expect(out.indexOf('/api/data')).toBeLessThan(out.length);
+      expect(out).toContain('/api/data');
+    });
+
+    it(`[${lang}] once body: modifier leads and the patient survives`, () => {
+      const out = t.transform('on click once add .initialized to me call setup()');
+      expect(out.startsWith('once ')).toBe(true);
+      expect(out).toContain('.initialized');
+      expect(out).toContain('setup()');
+    });
+
+    it(`[${lang}] debounced at N: modifier phrase leads intact`, () => {
+      const out = t.transform(
+        'on keyup debounced at 300ms fetch /api/search then put it into #results'
+      );
+      expect(out.startsWith('debounced at 300ms ')).toBe(true);
+    });
+  }
+
+  it('[es] SVO target is unaffected — modifier is not relocated to the front', () => {
+    const out = new GrammarTransformer('en', 'es').transform(
+      'on click async fetch /api/data then put it into me'
+    );
+    // SVO keeps the body in an order the parser already handles, so the gate leaves
+    // it byte-identical: the handler still leads with the (translated) event clause,
+    // not a relocated bare `async` literal.
+    expect(out.startsWith('async ')).toBe(false);
+  });
+
+  it('[ja] a simple handler without a modifier is unchanged', () => {
+    const t = new GrammarTransformer('en', 'ja');
+    expect(t.transform('on click toggle .active')).toBe(t.transform('on click toggle .active'));
+    const out = t.transform('on click toggle .active');
+    expect(out.startsWith('async ')).toBe(false);
+    expect(out.startsWith('once ')).toBe(false);
+    expect(out).toContain('.active');
+  });
+});
