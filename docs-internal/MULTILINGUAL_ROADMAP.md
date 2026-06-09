@@ -5,7 +5,8 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **VSO/Austronesian `repeat-*` mid-stream event reorder** — the non-SOV sibling of the SOV repeat-\* fix. For VSO/Austronesian the i18n transformer surfaces the loop keyword first and places the event clause mid-stream, marked by an `on`-marker (`كرر عند نقر …` / `ulitin kapag click …` = `repeat on click …`). The trailing-event extractor (Stage 1.5) can't see it (the event isn't last), so the bare loop keyword won Stage 2 and the event + body dropped (degenerate). `tryMidStreamEventExtraction` strips the `<on-marker> <event>` pair and re-parses the rest as the loop body; the block/loop gate now tries it after SOV extraction. **Degenerate passes 141 → 135 (−6), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-for-each`/`repeat-while` (ar+tl) + bonus `focus-trap`/`window-keydown` (ar — same mid-stream-event shape). avgFidelity ar 0.866→0.883, tl 0.884→0.894. Remaining repeat residue (zh circumfix block-body, the `for`-binding `repeat`-keyword drop, the `wait`-after-`end` tail) scoped in [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md)._
+_Last updated: after Track 5 **Non-SOV `repeat-*` loop-body + tail residue** — two parser-side fixes closed the structural remainder scoped in [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md). (1) The **`end`-mid-stream tail merge** (`parseBodyWithClauses`): the verb-final SOV reorder strands a trailing command's argument before `end` and its verb after (`… 200ms 終わり を 待つ`), so the `end`-break dropped the trailing `wait`; `end` now tolerates a single trailing clause (collect to the next then/end boundary, merge with the stranded pre-`end` argument). (2) The **`for`-binding `repeat`-keyword recovery** (`parseClause`): the transformer drops the `for` binder (`repeat for x in y` → `repeat x in y`) so the bare `repeat` has no matchable variant; when matchBest fails on a `repeat`-normalized token the clause now emits the `repeat` action directly. **Degenerate passes 135 → 132 (−3), parse rate 3678 → 3679 (+1 he), 0 regressions** (gate green; zero faithful→degenerate flips). Cleared the last degenerate `repeat-*` (zh `repeat-forever`, deg→0.67 faithful) + sw `repeat-until-event` + bonus `focus-trap` (sw/tr); for-each ar/tl/zh 0.67→1.0; while ja/ko/tr 0.75→1.0, qu 0.50→0.75; sw while 0.50→0.75. Deferred residue (separate keyword tracks): zh `wait` SVO pattern gap (`等待 1s`), qu/sw `add`-vs-`increment` overlap. See [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md)._
+_Earlier: Track 5 **VSO/Austronesian `repeat-*` mid-stream event reorder** — the non-SOV sibling of the SOV repeat-\* fix. For VSO/Austronesian the i18n transformer surfaces the loop keyword first and places the event clause mid-stream, marked by an `on`-marker (`كرر عند نقر …` / `ulitin kapag click …` = `repeat on click …`). The trailing-event extractor (Stage 1.5) can't see it (the event isn't last), so the bare loop keyword won Stage 2 and the event + body dropped (degenerate). `tryMidStreamEventExtraction` strips the `<on-marker> <event>` pair and re-parses the rest as the loop body; the block/loop gate now tries it after SOV extraction. **Degenerate passes 141 → 135 (−6), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-for-each`/`repeat-while` (ar+tl) + bonus `focus-trap`/`window-keydown` (ar — same mid-stream-event shape). avgFidelity ar 0.866→0.883, tl 0.884→0.894. Remaining repeat residue (zh circumfix block-body, the `for`-binding `repeat`-keyword drop, the `wait`-after-`end` tail) scoped in [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md)._
 _Earlier: Track 5 **SOV `repeat-*` loop-body reorder** — for SOV languages the i18n transformer surfaces a block loop's keyword (반복/পুনরাবৃত্তি/kutipay) — or a leading `while`/`for` clause — ahead of its body, so the parser matched the bare loop keyword as a standalone command (Stage 2) and dropped the event + variant + body (degenerate). Korean (no event-marker particle) was hit hardest. The Stage-2 gate now prefers SOV event extraction (Stage 3) when the matched action is a block/loop action, recovering the event + loop body; and the qu `repeat` dict keyword was realigned (`kutichiy`→`kutipay`; `kutichiy` is the profile's `return` primary). **Degenerate passes 148 → 141 (−7), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-forever`/`repeat-while`/`repeat-for-each` for ko (+ `stagger-animation` bonus), `repeat-while` for bn, `repeat-while`/`repeat-for-each` for qu. avgFidelity ko 0.889→0.903, bn 0.952→0.956, qu 0.782→0.794. See [SOV_REPEAT_SCOPE.md](SOV_REPEAT_SCOPE.md)._
 _Earlier: Track 5 **juxtaposed multi-command event bodies** — a fused event pattern captured only the FIRST body command as the action; a then-chain/block continued, but a **juxtaposed** body (`halt the event call validateForm() if … end` — no `then` between commands) was dropped. `buildEventHandler` now re-parses any trailing non-`end` tokens as body commands (additive; `parseBodyWithGrammarPatterns` only appends matched commands). **Degenerate passes 179 → 159 (−20), 0 regressions, parse rate unchanged** (3679/3696). Cleared `form-submit-prevent` (de/it/ru/sw/th/uk/vi), `fetch-loading-state` (bn/hi/it/ja/tr), plus `fetch-error-handling`/`fetch-with-headers` (ja), `render-template-with-data` (qu/tl/vi), `repeat-forever`/`stagger-animation` (qu), `window-scroll` (th)._
 _Earlier: Track 5 **then/end keyword recognition for 9 profile-only languages** (it, ru, th, vi, he, hi, ms, pl, uk). `isThenKeyword`/`isEndKeyword` were hardcoded maps covering only 15 langs; the other 9 fell back to the English literal, so their native then/end (`allora`, `затем`, …) weren't recognized — multi-command then-chains collapsed to the first command and `end`-blocks didn't close. Both now fall back to the profile's form. **Parse rate +7** (he/it/pl behaviors now parse — `end` recognized; he/it/pl jump toward 100%), **+4 fidelity** (`fetch-loading-state` ru/th/vi/uk degenerate→faithful), **0 regressions** (gate green). Degenerate nets 176 → 179 (−4 fetch-loading-state, +7 newly-parsing Bucket B behaviors)._
@@ -62,6 +63,41 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 — Non-SOV `repeat-*` loop-body + tail residue (zh/ar/tl/ja/ko/qu/sw, −3 degenerate)
+
+- **Degenerate passes 135 → 132 (−3), parse rate 3678 → 3679 (+1 he), 0 regressions.**
+  Full `browser-priority` regen + `--regression` gate green; zero faithful→degenerate
+  flips, every avgFidelity delta non-negative. Cleared the last degenerate `repeat-*`
+  (zh `repeat-forever`, 0.33→0.67 faithful) + sw `repeat-until-event` + bonus
+  `focus-trap` (sw/tr). avgFidelity up across the touched langs (e.g. ja 0.909→0.917,
+  ko 0.833→0.843, ar 0.883→0.888, tl 0.880→0.888, zh 0.785→0.794, sw 0.866→0.873).
+- **Two parser-side fixes** (`packages/semantic/src/parser/semantic-parser.ts`; no
+  transformer change — the transforms were already in a recoverable order):
+  1. **`end`-mid-stream tail merge** (`parseBodyWithClauses`). The verb-final SOV
+     reorder places the block-terminating `end` _between_ a trailing command's
+     argument and its verb (`… それから 200ms 終わり を 待つ` =
+     `… then 200ms end ‹patient› wait`); the naive `end`-break discarded the post-`end`
+     `を 待つ`, dropping the trailing `wait`. The break now tolerates a single trailing
+     clause: collect the post-`end` tokens up to the next then/end boundary and parse
+     them, merging with the pre-`end` tokens when those parsed to nothing on their own
+     (the stranded-argument case). Gated to one trailing clause so a genuine
+     nested-block close can't swallow arbitrary following content. Recovered the
+     trailing `wait` for ja/ko/tr (→1.0) and qu (→0.75); cleared `focus-trap` (tr).
+  2. **`for`-binding `repeat`-keyword recovery** (`parseClause`). The transformer drops
+     the `for` binder keyword (`repeat for x in y` → `repeat x in y`), leaving the bare
+     `repeat` with no matchable variant so matchBest can't anchor it (the `repeat`
+     action was silently dropped — ar/tl/zh `repeat-for-each`; ko escaped only because
+     SOV puts the keyword last). When matchBest fails on a token whose normalized form
+     is `repeat`, the clause parser now emits the `repeat` action directly. Lifted
+     for-each ar/tl/zh to 1.0, cleared the zh `repeat-forever` degenerate, and recovered
+     sw's leading `rudia`(repeat) clause (sw while 0.50→0.75).
+- **Deferred (separate keyword-alignment tracks):** the zh `wait` SVO pattern gap
+  (`等待 1s` parses to nothing — zh `repeat-forever` is faithful at 0.67 but not 1.0),
+  and the qu/sw `add`-vs-`increment` keyword overlap. Both are dictionary work, not
+  the structural reorder. Locked by `multilingual-roadmap-fixes.test.ts`
+  ("Non-SOV repeat-\* loop-body + tail residue — zh/ar/tl/ja/ko/sw"). See
+  [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md).
 
 ### Track 5 — VSO/Austronesian `repeat-*` mid-stream event reorder (ar/tl, −6 degenerate)
 

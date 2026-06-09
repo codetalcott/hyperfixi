@@ -1,14 +1,43 @@
 # Non-SOV `repeat-*` Loop-Body + Tail Residue — Project Scope
 
-> **Status:** Partially shipped. The VSO/Austronesian mid-stream-event slice (ar/tl)
-> is **DONE** (see below + `MULTILINGUAL_ROADMAP.md` → Shipped). This file scopes the
-> **remainder**: the zh circumfix block-body collapse, the shared `for`-binding
-> `repeat`-keyword drop, the then-chain tail drop, and sw `repeat-while`.
+> **Status:** ✅ SHIPPED (the structural slice). Two parser-side fixes —
+> the **`end`-mid-stream tail merge** (#3) and the **`for`-binding `repeat`-keyword
+> recovery** (#2) — together cleared the last degenerate `repeat-*` (zh
+> `repeat-forever`, #1) and lifted the `for`-binding (#2), `wait`-after-`end` (#3),
+> and sw leading-clause (#4) residues. **Degenerate passes 135 → 132 (−3), parse
+> rate 3678 → 3679 (+1, he), 0 regressions** (`--regression` gate green; zero
+> faithful→degenerate flips). Cleared zh `repeat-forever` (deg→faithful) + sw
+> `repeat-until-event` + bonus `focus-trap` (sw/tr); for-each ar/tl/zh 0.67→1.0;
+> while ja/ko/tr 0.75→1.0, qu 0.50→0.75; sw while 0.50→0.75. Locked by
+> `multilingual-roadmap-fixes.test.ts` ("Non-SOV repeat-\* loop-body + tail
+> residue"). **Deferred (separate keyword tracks, explicitly out of scope below):**
+> the zh `wait` SVO pattern gap (`等待 1s` parses to nothing — zh `repeat-forever`
+> sits at 0.67, faithful but not 1.0), and the qu/sw `add`-vs-`increment` keyword
+> overlap. Both are zh/qu/sw dictionary-alignment work, not the structural reorder.
 > **Prereq reading:** `SOV_REPEAT_SCOPE.md` (the SOV sibling, SHIPPED) and
 > `MULTILINGUAL_ROADMAP.md` → Shipped (SOV repeat-\* loop-body reorder; VSO
 > mid-stream event reorder).
 
-## Already shipped (this arc)
+## What shipped (this arc)
+
+Both fixes live in `packages/semantic/src/parser/semantic-parser.ts`, parser-side,
+no transformer change (as predicted below):
+
+1. **`end`-mid-stream tail merge** (`parseBodyWithClauses`). The verb-final SOV
+   reorder strands a trailing command's argument before `end` and its verb after
+   (`… 200ms 終わり を 待つ`). The `end`-break now tolerates a single trailing clause:
+   it collects the post-`end` tokens up to the next then/end boundary and parses
+   them — merging with the stranded pre-`end` argument when those tokens parsed to
+   nothing on their own. Recovered the trailing `wait` for ja/ko/tr (→1.0) and qu
+   (→0.75), and (bonus) cleared `focus-trap` for tr.
+2. **`for`-binding `repeat`-keyword recovery** (`parseClause`). The transformer
+   drops the `for` binder keyword (`repeat for x in y` → `repeat x in y`), so the
+   bare `repeat` carries no matchable variant and matchBest can't anchor it. When
+   matchBest fails on a token normalized to `repeat`, the clause parser now emits
+   the `repeat` action directly. Lifted for-each ar/tl/zh to 1.0, cleared the zh
+   `repeat-forever` degenerate, and recovered sw's leading `rudia`(repeat) clause.
+
+## Earlier in this arc (VSO/Austronesian slice)
 
 - **VSO/Austronesian mid-stream event (ar/tl).** For VSO the transformer surfaces the
   loop keyword first and the event clause mid-stream (`كرر عند نقر …` =
@@ -20,20 +49,24 @@
   148→135 cumulative with the SOV fix). Locked by `multilingual-roadmap-fixes.test.ts`
   ("VSO/Austronesian repeat-\* mid-stream event reorder — ar/tl").
 
-## TL;DR of what's left
+## TL;DR — what the four residues were (all now addressed)
 
-Four residues remain, in priority order:
+| #   | Issue                                         | Languages          | Was                             | Now                            |
+| --- | --------------------------------------------- | ------------------ | ------------------------------- | ------------------------------ |
+| 1   | **zh circumfix + block-body collapse**        | zh                 | `repeat-forever` 0.33 **DEGEN** | 0.67 faithful ✅ (deg cleared) |
+| 2   | **`for`-binding drops the `repeat` keyword**  | ar, tl, ko, zh     | `repeat-for-each` 0.67          | 1.0 ✅                         |
+| 3   | **then-chain tail drop (`wait` after `end`)** | ja, tr, ko, qu, zh | `repeat-while` 0.50–0.75        | ja/ko/tr 1.0, qu 0.75 ✅       |
+| 4   | **sw `repeat-while` leading clause drop**     | sw                 | `repeat-while` 0.50             | 0.75 ✅ (`rudia` recovered)    |
 
-| #   | Issue                                         | Languages          | Current                         | Target   |
-| --- | --------------------------------------------- | ------------------ | ------------------------------- | -------- |
-| 1   | **zh circumfix + block-body collapse**        | zh                 | `repeat-forever` 0.33 **DEGEN** | faithful |
-| 2   | **`for`-binding drops the `repeat` keyword**  | ar, tl, ko, zh     | `repeat-for-each` 0.67          | 1.0      |
-| 3   | **then-chain tail drop (`wait` after `end`)** | ja, tr, ko, qu, zh | `repeat-while` 0.50–0.75        | 1.0      |
-| 4   | **sw `repeat-while` leading clause drop**     | sw                 | `repeat-while` 0.50             | 1.0      |
+#1 was the only degenerate; recovering the bare `repeat` keyword (#2's fix) lifted it
+above the 0.5 threshold. The residual gaps to full 1.0 fidelity — zh `wait`
+(`等待 1s` doesn't parse, a zh SVO pattern gap), qu/sw `increment` (parsed as `add`,
+keyword overlap) — are **deferred keyword-alignment tracks**, called out below as
+out of scope for this structural arc.
 
-Only **#1 is degenerate** (the last degenerate `repeat-*` in the corpus); #2–#4 are
-faithful-but-lossy fidelity residues. Lower yield per unit effort than the shipped
-slices — multi-PR, per-issue.
+> The remainder of this file is the **original problem analysis** (probe evidence,
+> root causes, sequencing) kept for the record; the failure modes below describe the
+> pre-fix behavior.
 
 ## Failure modes (probe evidence)
 
