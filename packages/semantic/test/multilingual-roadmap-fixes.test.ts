@@ -1093,3 +1093,46 @@ describe('zh wait BA-marked duration (等待 把 {duration})', () => {
     expect(a.has('wait')).toBe(true);
   });
 });
+
+describe('zh then-connective 那么 recognized (aligns with i18n)', () => {
+  // The i18n package deliberately maps 那么 → `then` (parser-integration.test.ts
+  // asserts `zhKeywords.resolve('那么')` === 'then'), and the grammar transformer
+  // emits 那么 for `then`. The semantic zh profile previously listed only 然后/接着,
+  // so `isThenKeyword('那么','zh')` was false — the parser recognized 然后 but not
+  // 那么. Today the matchBest clause-loop recovers commands either way (so this was
+  // a latent consistency gap, not an observable parse bug), but 那么 is now a
+  // first-class then-alternative in the profile so the two packages agree and the
+  // recovery no longer leans on the fallback. See docs-internal/ZH_BLOCK_BODY_SCOPE.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // 那么 and 然后 must behave identically as then-connectives in an event body.
+  const body = (sep: string) =>
+    `当 点击 时 切换 把 .active ${sep} 添加 把 .b 到 我 ${sep} 移除 把 .c 从 我`;
+  it('[zh] 那么 joins a multi-command event body (toggle + add + remove)', () => {
+    const a = actions(parse(body('那么'), 'zh'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+  });
+  it('[zh] 那么 and 然后 recover the same commands', () => {
+    const na = [...actions(parse(body('那么'), 'zh'))].sort();
+    const ran = [...actions(parse(body('然后'), 'zh'))].sort();
+    expect(na).toEqual(ran);
+  });
+  // Guard: 那么 as an if/then consequence connective still parses (not swallowed).
+  it('[zh] if/then with 那么 still recovers the consequence command', () => {
+    const a = actions(parse('如果 真 那么 切换 把 .active', 'zh'));
+    expect(a.has('toggle')).toBe(true);
+  });
+});

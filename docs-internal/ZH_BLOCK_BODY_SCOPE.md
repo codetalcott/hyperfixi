@@ -1,11 +1,13 @@
 # Chinese (zh) Block-Body / BA-Marking Residue — Project Scope
 
-> **Status:** Partially shipped. The **zh `wait` BA-marked duration** slice is
-> **✅ DONE** (the last zh `repeat-*` residue — `repeat-forever` 0.67 → 1.0; see
-> below + `MULTILINGUAL_ROADMAP.md` → Shipped). This file scopes the **deeper
-> root cause** behind it (the i18n transformer's generic patient-marking) and the
-> related zh then-keyword mismatch, both of which the shipped slice worked around
-> at the parser rather than fixing at the source.
+> **Status:** Partially shipped. **✅ DONE:** the **zh `wait` BA-marked duration**
+> slice (the last zh `repeat-*` residue — `repeat-forever` 0.67 → 1.0) and the
+> **zh `那么` then-connective recognition** (#2 — profile now agrees with the i18n
+> package that `那么` is a `then` keyword; a consistency fix, no behavioral change).
+> **⏳ REMAINING:** the **deeper root cause** (#1 — the i18n transformer's generic
+> patient-marking emits ungrammatical `把` on non-patient args) and the zh
+> `fetch`-in-event-block gap (#3). #1 is architecturally significant (the i18n role
+> model) and is the main open item.
 > **Prereq reading:** `NON_SOV_REPEAT_SCOPE.md` (the arc this fell out of) and
 > `MULTILINGUAL_ROADMAP.md` → Shipped.
 
@@ -54,21 +56,37 @@ zh grammar test suite (`packages/i18n/src/grammar/grammar.test.ts`) and the
 multilingual `--regression` gate. Until then, the per-command handcrafted patterns
 (toggle/add/wait …) absorb the mismatch on the parse side.
 
-### #2 — zh then-keyword mismatch (`那么` vs `然后`)
+### #2 — zh then-keyword `那么` recognition — ✅ SHIPPED
 
-The i18n dictionary maps `then` → `那么` (`dictionaries/zh.ts`), but the semantic
-zh profile's `then` is `然后` / `接着`. The semantic tokenizer has a `那么`→then
-entry, but a particle extractor (`tokenizers/extractors/chinese-particle.ts` maps
-`那么` to role `consequence`) shadows it, so `那么` surfaces with an empty
-`normalized` and `isThenKeyword` doesn't recognize it. In the shipped slice this
-didn't block recovery (the clause parser's matchBest loop still found `等待` after
-the unrecognized `那么`), but it means **zh then-chains split on the wrong keyword
-wherever the transformer is the source** — a latent correctness gap for multi-clause
-zh bodies.
+The i18n package deliberately maps `then` → `那么` (`dictionaries/zh.ts`; and
+`parser-integration.test.ts` asserts `zhKeywords.resolve('那么') === 'then'`), and
+the grammar transformer emits `那么` for `then`. The semantic zh profile, however,
+listed only `然后` / `接着`, so `isThenKeyword('那么','zh')` was false — the parser
+recognized `然后` but not `那么`.
 
-**Fix:** reconcile the i18n dict (`那么`) and the semantic profile (`然后`) on one
-canonical `then`, and resolve the tokenizer's particle-vs-keyword precedence for
-`那么` so it normalizes to `then`. Smaller and more isolated than #1; do it first.
+**Finding (the gap was masked):** investigation showed this was a _latent
+consistency gap, not an observable parse bug_. `parseClause`'s matchBest loop
+recovers the commands on either side of an unrecognized `那么`, and event-handler
+bodies re-parse regardless — so action sets and compound structures were already
+identical for `那么` vs `然后`. (The "then-chains split on the wrong keyword" framing
+in the original scope was overstated; the standalone single-command-only behavior is
+a _general_ limitation affecting English too, not zh-specific.)
+
+**Fix shipped:** added `那么` to the zh profile's `then.alternatives`
+(`profiles/chinese.ts`), so the semantic parser and the i18n package now agree that
+`那么` is a zh then-connective — removing the fragile dependence on the matchBest
+fallback. Zero behavioral change (full `browser-priority` regen identical:
+3679/3696, degenerate 132, no regression), if/then-consequence parsing unaffected.
+Locked by `multilingual-roadmap-fixes.test.ts` ("zh then-connective 那么 recognized").
+The tokenizer particle-extractor (`chinese-particle.ts` → `consequence`) was left as
+is: `那么` still surfaces as a `keyword` token and `isThenKeyword` matches it by
+profile value, so no precedence change was needed.
+
+> **Original analysis (kept for the record):** The semantic tokenizer has a
+> `那么`→then entry, but a particle extractor maps `那么` to role `consequence`,
+> so `那么` surfaced with an empty `normalized`. This didn't block recovery (the
+> clause parser's matchBest loop still found the next command after the
+> unrecognized `那么`), but the keyword tables disagreed across packages.
 
 ### #3 — zh `fetch`-in-event-block (deferred elsewhere)
 
@@ -78,11 +96,11 @@ real #1 fix may unblock it. Cross-reference when picking #1 up.
 
 ## Suggested sequencing
 
-1. **#2 (then-keyword reconciliation)** — small, isolated, fixes a latent
-   multi-clause zh correctness gap. Probe `a 那么 b 那么 c` round-trips first.
-2. **#1 (transformer role model)** — the big one. Scope a controlled change to
-   honor `primaryRole` when marking, A/B against the gate + zh grammar suite, and
-   retire the per-command handcrafted `把` patterns it makes redundant.
+1. ~~**#2 (then-keyword reconciliation)**~~ — ✅ done (profile `那么` alias; consistency fix).
+2. **#1 (transformer role model)** — the big one, and the main open item. Scope a
+   controlled change to honor `primaryRole` when marking, A/B against the gate + zh
+   grammar suite, and retire the per-command handcrafted `把` patterns it makes
+   redundant.
 3. **#3 (zh fetch block-body)** — re-probe after #1; likely partially unblocked.
 
 ## Probe
@@ -93,9 +111,9 @@ way:** the probe transforms its input `en → lang`, so pass **English** source
 and produces false negatives. To test a raw zh string directly, call
 `parseSemantic('等待 把 1s', 'zh')` instead of going through the probe's transform.
 
-## Definition of done (for the remaining work)
+## Definition of done (for the remaining work, #1 + #3)
 
-`那么` recognized as `then` (zh multi-clause bodies split correctly); the transformer
-emits grammatical zh for duration/literal-primary commands (no spurious `把`); the
-per-command `把` workaround patterns retired where the transformer fix subsumes them;
-`--regression` gate green; zh grammar suite clean.
+The transformer emits grammatical zh for duration/literal-primary commands (no
+spurious `把`); the per-command `把` workaround patterns (wait, …) retired where the
+transformer fix subsumes them; `--regression` gate green; zh grammar suite clean.
+(`那么` then-recognition, #2, is already done.)
