@@ -37,7 +37,7 @@ export const qu: Dictionary = {
     catch: 'hapsiy',
     measure: 'tupuy',
     transition: 'tikray',
-    increment: 'yapay',
+    increment: 'yapachiy',
     decrement: 'pisiyachiy',
     default: 'ñawpaq_kaq',
     go: 'riy',
