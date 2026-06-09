@@ -1056,6 +1056,13 @@ deliberately:
    event-handler bodies.
 4. **Scattered per-language** (caret, possessive-dot, announce, unless, multiple-events)
    — one pattern at a time; expect tokenizer/transformer work per item.
+5. **SOV `repeat-*` loop bodies** (ko/bn/qu, ~6) — block loops
+   (`repeat forever/while/for … end`) collapse to a bare `repeat` command in SOV: the
+   loop keyword is matched standalone and the variant + body + event drop. ko is worst
+   (no event-marker particle); ja/tr mostly recover. The loop sibling of the (shipped)
+   verb-first event-body and if/else block-body work. **Scoped as its own project — see
+   [SOV_REPEAT_SCOPE.md](SOV_REPEAT_SCOPE.md).** Includes a separable quick win: qu's
+   `kutichiy` (repeat) keyword collision.
 
 **Structural finding — custom events in SOV (`on-custom-event-receive`, ko/qu).**
 `on hello put X into me` parses in SVO (en/es) but fails in ko: `on click …` passes
