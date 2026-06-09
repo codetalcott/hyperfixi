@@ -221,6 +221,28 @@ export class SemanticParserImpl implements ISemanticParser {
             : sovLoop;
           return withDiagnostics(result, diagnostics);
         }
+        // VSO/SVO sibling: the event sits *mid-stream*, marked by an `on`-marker
+        // right after the leading loop keyword (`كرر عند نقر …` / `ulitin kapag
+        // click …` = `repeat on click …`). The trailing-event extractor (Stage 1.5)
+        // can't see it (the event isn't last), so the bare loop keyword wins Stage 2
+        // and the event + body drop. Strip the `<on-marker> <event>` pair and parse
+        // the remainder (leading loop keyword + for/while clause + then-chain body)
+        // as the loop body. Same guard shape as the SOV path: gated to block/loop
+        // actions, fires only on a real on-marked event whose body parses.
+        const midLoop = this.tryMidStreamEventExtraction(parseInput, language, sortedPatterns);
+        if (midLoop) {
+          diagnostics.push(
+            parseDiagnostic(
+              `mid-stream event extraction preferred over bare ${commandMatch.pattern.command} command`,
+              'info',
+              'stage-midstream-loop'
+            )
+          );
+          const result = modifiers
+            ? this.applyModifiers(midLoop as EventHandlerSemanticNode, modifiers)
+            : midLoop;
+          return withDiagnostics(result, diagnostics);
+        }
       }
       diagnostics.push(
         parseDiagnostic(
@@ -1163,6 +1185,75 @@ export class SemanticParserImpl implements ISemanticParser {
       sourceLanguage: language,
       confidence: 0.75,
     });
+  }
+
+  /**
+   * Try to extract a *mid-stream* `<on-marker> <event>` pair (VSO/SVO loops).
+   *
+   * For VSO/Austronesian the grammar transformer surfaces a block loop's keyword
+   * first and places the event clause right after it, marked by an `on`-marker:
+   *   AR: "كرر عند نقر item في .items ثم أضف …"   (repeat on click for … then add)
+   *   TL: "ulitin kapag click item sa_loob .items pagkatapos idagdag …"
+   *
+   * Because the event isn't the final token, `tryTrailingEventExtraction` (Stage
+   * 1.5) can't see it, so the bare loop keyword wins Stage 2 and the event + body
+   * drop (degenerate). This scans for an `on`-marker (`normalized === 'on'`)
+   * immediately followed by a known event keyword, strips that pair, and parses
+   * everything else (the leading loop keyword + for/while clause + then-chain body)
+   * as the handler body. Returns null when no on-marked event is found or the body
+   * doesn't parse, so the caller falls through to the bare command unchanged. The
+   * caller gates this to block/loop actions, so simple commands never reach it.
+   */
+  private tryMidStreamEventExtraction(
+    input: string,
+    language: string,
+    patterns: LanguagePattern[]
+  ): SemanticNode | null {
+    const tokens = tokenizeInternal(input, language).tokens;
+    if (tokens.length < 3) return null;
+
+    const langEvents = eventNameTranslations[language];
+    const nativeEventNames = new Set<string>();
+    if (langEvents) {
+      for (const native of Object.keys(langEvents)) nativeEventNames.add(native.toLowerCase());
+    }
+
+    // Find an `on`-marker whose next token is a known event keyword.
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const marker = tokens[i];
+      const isOnMarker = marker.kind === 'keyword' && marker.normalized?.toLowerCase() === 'on';
+      if (!isOnMarker) continue;
+
+      const evtToken = tokens[i + 1];
+      const evtVal = evtToken.value.toLowerCase();
+      const evtNorm = evtToken.normalized?.toLowerCase();
+      const isKnownEvent =
+        (!!evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)) ||
+        SemanticParserImpl.KNOWN_EVENTS.has(evtVal) ||
+        nativeEventNames.has(evtVal);
+      if (!isKnownEvent) continue;
+
+      const eventName =
+        evtNorm && SemanticParserImpl.KNOWN_EVENTS.has(evtNorm)
+          ? evtNorm
+          : (langEvents?.[evtVal] ?? evtVal);
+
+      // Body = every token except the on-marker + event pair, parsed as a block.
+      const bodyTokens = tokens.filter((_, idx) => idx !== i && idx !== i + 1);
+      if (bodyTokens.length === 0) return null;
+
+      const commandPatterns = patterns.filter(p => p.command !== 'on');
+      const bodyStream = new TokenStreamImpl(bodyTokens, language);
+      const body = this.parseBodyWithClauses(bodyStream, commandPatterns, language);
+      if (body.length === 0) return null;
+
+      return createEventHandler({ type: 'literal', value: eventName }, body, undefined, {
+        sourceLanguage: language,
+        confidence: 0.75,
+      });
+    }
+
+    return null;
   }
 
   /**
