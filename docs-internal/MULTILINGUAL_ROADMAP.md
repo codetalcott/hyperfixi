@@ -5,7 +5,8 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **qu/sw `increment` keyword alignment** — the i18n dictionaries collapsed `add` and `increment` onto one word (qu `yapay`, sw `ongeza`), so the transformer emitted the add-word for increment and the parser read it as `add` (capping qu/sw `repeat-while` at 0.75). The dicts now emit the profile's distinct increment primary (qu `yapachiy`, sw `ongezeko`); qu additionally needed a handcrafted SOV pattern (`{patient} ta yapachiy`) mirroring `add-qu-sov`, since the generated SOV pattern didn't anchor the verb-final order. **qu/sw `repeat-while` 0.75 → 1.0**, avgFidelity qu 0.796→0.809, sw 0.843→0.856, parse rate unchanged (3679/3696), 0 regressions (zero faithful→degenerate flips). Locked by `multilingual-roadmap-fixes.test.ts` ("qu/sw increment keyword alignment"). The other deferred residue (zh `wait` SVO pattern gap, `等待 1s`) remains — see [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md)._
+_Last updated: after Track 5 **zh `wait` BA-marked duration** — the last zh `repeat-*` residue. The i18n transformer emits `等待 把 1s` for `wait 1s`: its generic argument parser defaults the first argument to the `patient` role, and zh marks `patient` with the BA particle `把`. The generated `等待 {duration}` pattern has no `把`, so the marked form didn't parse and the trailing `wait` dropped (zh `repeat-forever` body `… 那么 等待 把 1s 结束`). A handcrafted `wait-zh-ba` pattern (`packages/semantic/src/patterns/wait.ts`) now tolerates the optional `把`, mirroring `toggle-zh-ba`. **zh `repeat-forever` 0.67 → 1.0** (full `{on,repeat,toggle,wait}` body); avgFidelity zh 0.794 → 0.808; parse rate unchanged (3679/3696), 0 regressions. (Earlier notes called this a "zh SVO pattern gap / `等待 1s`" — that was a probe artifact; bare `等待 1s` always parsed, the `把` was the real blocker.) The deeper root cause — the transformer marking a duration as a fronted patient — plus the `那么`/`然后` then-keyword mismatch are scoped in [ZH_BLOCK_BODY_SCOPE.md](ZH_BLOCK_BODY_SCOPE.md). Locked by `multilingual-roadmap-fixes.test.ts` ("zh wait BA-marked duration")._
+_Earlier: Track 5 **qu/sw `increment` keyword alignment** — the i18n dictionaries collapsed `add` and `increment` onto one word (qu `yapay`, sw `ongeza`), so the transformer emitted the add-word for increment and the parser read it as `add` (capping qu/sw `repeat-while` at 0.75). The dicts now emit the profile's distinct increment primary (qu `yapachiy`, sw `ongezeko`); qu additionally needed a handcrafted SOV pattern (`{patient} ta yapachiy`) mirroring `add-qu-sov`, since the generated SOV pattern didn't anchor the verb-final order. **qu/sw `repeat-while` 0.75 → 1.0**, avgFidelity qu 0.796→0.809, sw 0.843→0.856, parse rate unchanged (3679/3696), 0 regressions (zero faithful→degenerate flips). Locked by `multilingual-roadmap-fixes.test.ts` ("qu/sw increment keyword alignment")._
 _Earlier: Track 5 **Non-SOV `repeat-*` loop-body + tail residue** — two parser-side fixes closed the structural remainder scoped in [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md). (1) The **`end`-mid-stream tail merge** (`parseBodyWithClauses`): the verb-final SOV reorder strands a trailing command's argument before `end` and its verb after (`… 200ms 終わり を 待つ`), so the `end`-break dropped the trailing `wait`; `end` now tolerates a single trailing clause (collect to the next then/end boundary, merge with the stranded pre-`end` argument). (2) The **`for`-binding `repeat`-keyword recovery** (`parseClause`): the transformer drops the `for` binder (`repeat for x in y` → `repeat x in y`) so the bare `repeat` has no matchable variant; when matchBest fails on a `repeat`-normalized token the clause now emits the `repeat` action directly. **Degenerate passes 135 → 132 (−3), parse rate 3678 → 3679 (+1 he), 0 regressions** (gate green; zero faithful→degenerate flips). Cleared the last degenerate `repeat-*` (zh `repeat-forever`, deg→0.67 faithful) + sw `repeat-until-event` + bonus `focus-trap` (sw/tr); for-each ar/tl/zh 0.67→1.0; while ja/ko/tr 0.75→1.0, qu 0.50→0.75; sw while 0.50→0.75. Deferred residue (separate keyword tracks): zh `wait` SVO pattern gap (`等待 1s`), qu/sw `add`-vs-`increment` overlap. See [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md)._
 _Earlier: Track 5 **VSO/Austronesian `repeat-*` mid-stream event reorder** — the non-SOV sibling of the SOV repeat-\* fix. For VSO/Austronesian the i18n transformer surfaces the loop keyword first and places the event clause mid-stream, marked by an `on`-marker (`كرر عند نقر …` / `ulitin kapag click …` = `repeat on click …`). The trailing-event extractor (Stage 1.5) can't see it (the event isn't last), so the bare loop keyword won Stage 2 and the event + body dropped (degenerate). `tryMidStreamEventExtraction` strips the `<on-marker> <event>` pair and re-parses the rest as the loop body; the block/loop gate now tries it after SOV extraction. **Degenerate passes 141 → 135 (−6), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-for-each`/`repeat-while` (ar+tl) + bonus `focus-trap`/`window-keydown` (ar — same mid-stream-event shape). avgFidelity ar 0.866→0.883, tl 0.884→0.894. Remaining repeat residue (zh circumfix block-body, the `for`-binding `repeat`-keyword drop, the `wait`-after-`end` tail) scoped in [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md)._
 _Earlier: Track 5 **SOV `repeat-*` loop-body reorder** — for SOV languages the i18n transformer surfaces a block loop's keyword (반복/পুনরাবৃত্তি/kutipay) — or a leading `while`/`for` clause — ahead of its body, so the parser matched the bare loop keyword as a standalone command (Stage 2) and dropped the event + variant + body (degenerate). Korean (no event-marker particle) was hit hardest. The Stage-2 gate now prefers SOV event extraction (Stage 3) when the matched action is a block/loop action, recovering the event + loop body; and the qu `repeat` dict keyword was realigned (`kutichiy`→`kutipay`; `kutichiy` is the profile's `return` primary). **Degenerate passes 148 → 141 (−7), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-forever`/`repeat-while`/`repeat-for-each` for ko (+ `stagger-animation` bonus), `repeat-while` for bn, `repeat-while`/`repeat-for-each` for qu. avgFidelity ko 0.889→0.903, bn 0.952→0.956, qu 0.782→0.794. See [SOV_REPEAT_SCOPE.md](SOV_REPEAT_SCOPE.md)._
@@ -65,6 +66,29 @@ behaviors), not a parsing/i18n track. See Track 2.
 
 ## Shipped
 
+### Track 5 — zh `wait` BA-marked duration (zh repeat-forever → 1.0)
+
+- **zh `repeat-forever` 0.67 → 1.0** (now recovers the full `{on, repeat, toggle, wait}`
+  body); avgFidelity zh 0.794 → 0.808; parse rate unchanged (3679/3696), 0 regressions
+  (full `browser-priority` regen + `--regression` gate green; zh the only language moved).
+- **Root cause.** The i18n transformer emits `等待 把 1s` for `wait 1s`: its generic
+  argument parser (`transformer.ts` ~L910/973) defaults the first argument to the
+  `patient` role, and zh marks `patient` with the BA particle `把`
+  (`profiles/index.ts`). The generated semantic pattern is `等待 {duration}` (no `把`),
+  so the marked form didn't match — the trailing `wait` in
+  `… 那么 等待 把 1s 结束` was dropped.
+- **Fix.** Handcrafted `wait-zh-ba` pattern (`packages/semantic/src/patterns/wait.ts`,
+  registered in `builders.ts`) tolerating the optional `把` before the duration —
+  mirrors the existing `toggle-zh-ba` convention and the qu increment handcrafted fix.
+  Contained and low-risk; the unmarked `等待 1s` keeps using the generated pattern.
+- **Deeper follow-up (deferred).** The transformer over-applies `把` to non-patient
+  arguments (a duration is not a BA object — `等待 把 1s` is ungrammatical zh; the
+  transformer's own example table lists `等待 2秒`). Teaching it to honor the schema
+  `primaryRole` is an architecturally significant change to the i18n role model;
+  plus the `那么`/`然后` then-keyword mismatch. Both scoped in
+  [ZH_BLOCK_BODY_SCOPE.md](ZH_BLOCK_BODY_SCOPE.md). Locked by
+  `multilingual-roadmap-fixes.test.ts` ("zh wait BA-marked duration").
+
 ### Track 5 — qu/sw `increment` keyword alignment (yapachiy / ongezeko, qu/sw repeat-while → 1.0)
 
 - **qu/sw `repeat-while` 0.75 → 1.0**; avgFidelity qu 0.796 → 0.809, sw 0.843 → 0.856;
@@ -85,8 +109,6 @@ behaviors), not a parsing/i18n track. See Track 2.
   — the generated SOV pattern didn't anchor the `{patient} ta <verb>` order (which is
   why `add` already carried a handcrafted SOV pattern). Locked by
   `multilingual-roadmap-fixes.test.ts` ("qu/sw increment keyword alignment").
-- **Still deferred:** the zh `wait` SVO pattern gap (`等待 1s` parses to nothing — zh
-  `repeat-forever` stays faithful at 0.67 but not 1.0). See [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md).
 
 ### Track 5 — Non-SOV `repeat-*` loop-body + tail residue (zh/ar/tl/ja/ko/qu/sw, −3 degenerate)
 

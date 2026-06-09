@@ -1054,3 +1054,42 @@ describe('qu/sw increment keyword alignment (yapachiy / ongezeko)', () => {
     expect(a.has('wait')).toBe(true);
   });
 });
+
+describe('zh wait BA-marked duration (等待 把 {duration})', () => {
+  // The i18n transformer runs `wait 1s` through its generic argument parser,
+  // which defaults the first argument to the `patient` role and so marks it with
+  // the BA particle `把` — emitting `等待 把 1s`. The generated `等待 {duration}`
+  // pattern has no `把`, so the marked form didn't parse and the trailing `wait`
+  // dropped (the last zh `repeat-forever` residue: 0.67 → 1.0). A handcrafted
+  // `wait-zh-ba` pattern now tolerates the `把`. The deeper transformer fix (don't
+  // mark a duration as a fronted patient) is scoped in docs-internal/ZH_BLOCK_BODY_SCOPE.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[zh] parses the BA-marked duration `等待 把 1s` as wait', () => {
+    const a = actions(parse('等待 把 1s', 'zh'));
+    expect(a.has('wait')).toBe(true);
+  });
+  it('[zh] still parses the unmarked `等待 1s` as wait (generated pattern)', () => {
+    const a = actions(parse('等待 1s', 'zh'));
+    expect(a.has('wait')).toBe(true);
+  });
+  // repeat-forever: `on load repeat forever toggle .pulse wait 1s end` — the last
+  // zh repeat-* residue. Now recovers the full {on, repeat, toggle, wait} body.
+  it('[zh] repeat-forever recovers the trailing wait (was dropped)', () => {
+    const a = actions(parse('当 加载 时 重复 forever 切换 把 .pulse 那么 等待 把 1s 结束', 'zh'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+    expect(a.has('wait')).toBe(true);
+  });
+});

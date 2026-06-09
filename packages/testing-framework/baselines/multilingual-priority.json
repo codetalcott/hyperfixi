@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-09T10:14:40.669Z",
-  "commit": "ba9c0b8",
+  "timestamp": "2026-06-09T10:42:13.471Z",
+  "commit": "0931188",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -14542,7 +14542,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9988148148148148,
-      "avgFidelity": 0.7939999999999998,
+      "avgFidelity": 0.8078888888888888,
       "degeneratePasses": [
         "async-block",
         "event-debounce",
