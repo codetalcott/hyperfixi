@@ -598,3 +598,65 @@ describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 
     expect([...a].sort()).toEqual(['on', 'toggle']);
   });
 });
+
+describe('SOV put-into verb-final reorder — ko/tr/bn (Track 5)', () => {
+  // ja had a `put-into` grammar rule (roleOrder patient,destination,action =
+  // verb-final); ko/tr/bn did not, so `put X into Y` fell through to the generic
+  // reorder that appends `destination` AFTER the verb (verb-middle), which the
+  // semantic parser can't match. As a then-chain clause this silently dropped the
+  // `put`. Mirroring ja's rule (gated to standalone put via a no-event predicate)
+  // emits verb-final order so the clause parses. See
+  // docs-internal/MULTILINGUAL_ROADMAP.md (SOV put-into reorder).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Standalone verb-final `put it into me` (transformer output) now parses.
+  const standalone: Array<[string, string]> = [
+    ['tr', 'o i ben e koy'],
+    ['ko', '그것 를 나 에 넣다'],
+    ['bn', 'এটি কে আমি তে রাখুন'],
+  ];
+  for (const [lang, input] of standalone) {
+    it(`[${lang}] parses verb-final "put it into me"`, () => {
+      expect(parse(input, lang).action).toBe('put');
+    });
+  }
+
+  // Then-chain clause recovers `put` instead of dropping it.
+  const thenChain: Array<[string, string]> = [
+    ['tr', 'async /api/data i tıklama de getir sonra o i ben e koy'],
+    ['ko', 'async /api/data 를 클릭 가져오기 그러면 그것 를 나 에 넣다'],
+    ['bn', 'async /api/data কে ক্লিক এ আনুন তারপর এটি কে আমি তে রাখুন'],
+  ];
+  for (const [lang, input] of thenChain) {
+    it(`[${lang}] recovers fetch + put across the then-chain`, () => {
+      const a = actions(parse(input, lang));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('fetch')).toBe(true);
+      expect(a.has('put')).toBe(true);
+    });
+  }
+
+  // Regression guard: an event handler whose action is `put` must keep the event
+  // mid-stream (the no-event predicate excludes it from the verb-final rule), so
+  // the event + body survive rather than collapsing to a bare `put`.
+  it('[tr] event handler `on success put …` keeps the event (not bare put)', () => {
+    const a = actions(
+      parse(
+        'event.detail.message i success de koy #sr-announce e sonra @role i ayarla "alert" e sonra #sr-announce de',
+        'tr'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+});

@@ -174,6 +174,23 @@ export const koreanProfile: LanguageProfile = {
       },
     },
     {
+      name: 'put-into',
+      description: 'Transform put X into Y to Korean verb-final order',
+      priority: 90,
+      match: {
+        commands: ['put', '넣다'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Standalone put only (e.g. a then-chain clause): an event handler whose
+        // action is `put` must keep the event mid-stream, so don't verb-final it.
+        predicate: parsed => !parsed.roles.has('event'),
+      },
+      transform: {
+        // X 를 Y 에 넣다 (patient, destination, verb-last)
+        roleOrder: ['patient', 'destination', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
       name: 'bind-to',
       description: 'Transform bind $var to #el to Korean verb-final order',
       priority: 90,
@@ -402,6 +419,23 @@ export const turkishProfile: LanguageProfile = {
       },
       transform: {
         roleOrder: ['patient', 'event', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'put-into',
+      description: 'Transform put X into Y to Turkish verb-final order',
+      priority: 90,
+      match: {
+        commands: ['put', 'koy'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Standalone put only (e.g. a then-chain clause): an event handler whose
+        // action is `put` must keep the event mid-stream, so don't verb-final it.
+        predicate: parsed => !parsed.roles.has('event'),
+      },
+      transform: {
+        // X i Y e koy (patient, destination, verb-last)
+        roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
     },
@@ -645,6 +679,23 @@ export const bengaliProfile: LanguageProfile = {
       transform: {
         // #count কে ক্লিক এ বৃদ্ধি
         roleOrder: ['patient', 'event', 'action'],
+        insertMarkers: true,
+      },
+    },
+    {
+      name: 'put-into',
+      description: 'Transform put X into Y to Bengali verb-final order',
+      priority: 90,
+      match: {
+        commands: ['put', 'রাখুন'],
+        requiredRoles: ['action', 'patient', 'destination'],
+        // Standalone put only (e.g. a then-chain clause): an event handler whose
+        // action is `put` must keep the event mid-stream, so don't verb-final it.
+        predicate: parsed => !parsed.roles.has('event'),
+      },
+      transform: {
+        // X কে Y তে রাখুন (patient, destination, verb-last)
+        roleOrder: ['patient', 'destination', 'action'],
         insertMarkers: true,
       },
     },

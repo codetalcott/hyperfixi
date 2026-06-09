@@ -1543,3 +1543,32 @@ describe('SOV modifier-prefixed event body reorder (Track 5)', () => {
     expect(out).toContain('.active');
   });
 });
+
+describe('SOV put-into verb-final reorder (Track 5)', () => {
+  // ko/tr/bn lacked ja's `put-into` rule, so `put X into Y` reordered to
+  // verb-middle (`X i koy Y e`) which the semantic parser can't match. The rule
+  // (gated to standalone put via a no-event predicate) emits verb-final order.
+  const verbFinal: Array<[string, string]> = [
+    ['tr', 'koy'],
+    ['ko', '넣다'],
+    ['bn', 'রাখুন'],
+  ];
+  for (const [lang, verb] of verbFinal) {
+    it(`[${lang}] standalone put is verb-final`, () => {
+      const out = new GrammarTransformer('en', lang).transform('put it into me');
+      // The verb is the last token (patient, destination, then verb).
+      expect(out.trim().endsWith(verb)).toBe(true);
+    });
+  }
+
+  it('[tr] event-handler `put` keeps the event before the verb (predicate gate)', () => {
+    // The no-event predicate excludes event handlers, so the event clause is not
+    // pushed past the verb (which would strand it from the parser).
+    const out = new GrammarTransformer('en', 'tr').transform(
+      'on success put event.detail.message into #sr-announce'
+    );
+    // `koy` (put) must not be verb-final here — the event (`success`) follows it.
+    expect(out.trim().endsWith('koy')).toBe(false);
+    expect(out).toMatch(/koy.*success|success.*koy/);
+  });
+});
