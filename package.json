@@ -22,6 +22,7 @@
     "test:multilingual:quick": "npm run test:multilingual:quick --workspace=@hyperfixi/testing-framework",
     "test:multilingual:full": "npm run test:multilingual:full --workspace=@hyperfixi/testing-framework",
     "test:multilingual:regression": "npm run test:multilingual:regression --workspace=@hyperfixi/testing-framework",
+    "test:multilingual:build-deps": "npm run build --prefix packages/intent && npm run build --prefix packages/framework && npm run build --prefix packages/semantic && npm run build --prefix packages/i18n && npm run build --prefix packages/patterns-reference && npm run build:multilingual-dist --prefix packages/core",
     "test:watch": "npm run test:watch --workspaces",
     "test:coverage": "npm run test:coverage --workspaces",
     "lint": "npm run lint --workspaces",

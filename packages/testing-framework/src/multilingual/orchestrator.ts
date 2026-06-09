@@ -11,7 +11,14 @@ import { SizeValidator } from './validators/size-validator';
 import { ConsoleReporter } from './reporters/console-reporter';
 import { JSONReporter } from './reporters/json-reporter';
 import { RegressionReporter } from './reporters/regression-reporter';
-import type { TestConfig, TestResults, LanguageResults, LanguageCode, Reporter } from './types';
+import type {
+  TestConfig,
+  TestResults,
+  LanguageResults,
+  LanguageCode,
+  Reporter,
+  BundleInfo,
+} from './types';
 import { computeFidelity, FIDELITY_THRESHOLD } from './fidelity';
 
 const execAsync = promisify(exec);
@@ -167,13 +174,25 @@ export class TestOrchestrator {
   private async testLanguage(language: LanguageCode, patterns: any[]): Promise<LanguageResults> {
     const startTime = performance.now();
 
-    // Select bundle for this language
-    const bundle = this.config.bundle
+    // Select bundle for this language. The bundle is consumed only for size
+    // reporting — parse validation below runs in-process via parseSemantic — so a
+    // missing display bundle is a warning, not a fatal error that aborts the sweep.
+    const selected = this.config.bundle
       ? await getBundleInfo(this.config.bundle)
       : await selectBundle([language], this.config.build || false);
 
-    if (!bundle || !bundle.exists) {
-      throw new Error(`Bundle not found for language: ${language}`);
+    const bundle: BundleInfo = selected ?? {
+      name: `browser-${language}`,
+      path: '',
+      languages: [language],
+      size: 0,
+      exists: false,
+    };
+
+    if (!bundle.exists) {
+      console.warn(
+        `⚠ No display bundle for '${language}' (${bundle.name}); reporting size 0 and continuing with in-process parse.`
+      );
     }
 
     // Notify reporters
