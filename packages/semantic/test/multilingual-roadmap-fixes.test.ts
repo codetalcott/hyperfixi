@@ -766,3 +766,65 @@ describe('SOV repeat-* loop-body reorder — ko/bn/qu (Track 5)', () => {
     expect(a.has('repeat')).toBe(true);
   });
 });
+
+describe('VSO/Austronesian repeat-* mid-stream event reorder — ar/tl (Track 5)', () => {
+  // The non-SOV sibling of the SOV repeat-* fix. For VSO/Austronesian the i18n
+  // transformer surfaces a block loop's keyword first and places the event clause
+  // right after it, marked by an `on`-marker (`كرر عند نقر …` / `ulitin kapag click
+  // …` = `repeat on click …`). The trailing-event extractor (Stage 1.5) can't see
+  // the event (it isn't last), so the bare loop keyword won Stage 2 and the event +
+  // body dropped (degenerate). `tryMidStreamEventExtraction` strips the `<on-marker>
+  // <event>` pair and parses the rest as the loop body. Strings below are
+  // post-transform output (en → lang). See docs-internal/NON_SOV_REPEAT_SCOPE.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // repeat-while: `on click repeat while #x.innerText < 10 increment #x wait 200ms end`
+  it('[ar] repeat-while recovers the event + repeat + increment + wait body', () => {
+    const a = actions(
+      parse('كرر بينما #counter.innerText < 10 عند نقر ثم زِد #counter ثم انتظر 200ms النهاية', 'ar')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+  it('[tl] repeat-while recovers the event + repeat + increment body', () => {
+    const a = actions(
+      parse(
+        'ulitin habang #counter.innerText < 10 kapag click pagkatapos dagdagan #counter pagkatapos maghintay 200ms wakas',
+        'tl'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+
+  // repeat-for-each: `on click repeat for item in .items add .processed to item`
+  it('[ar] repeat-for-each recovers the event + add body (not bare repeat)', () => {
+    const a = actions(parse('كرر عند نقر item في .items ثم أضف .processed إلى item', 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+  it('[tl] repeat-for-each recovers the event + add body (not bare repeat)', () => {
+    const a = actions(parse('ulitin kapag click item sa_loob .items pagkatapos idagdag .processed sa item', 'tl'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+
+  // Regression guard: a simple VSO command (no leading block/loop keyword) doesn't
+  // reach the gate, so it parses normally and is not over-wrapped.
+  it('[ar] a simple toggle command is unaffected', () => {
+    const a = actions(parse('بدل .active عند نقر', 'ar'));
+    expect(a.has('toggle')).toBe(true);
+  });
+});

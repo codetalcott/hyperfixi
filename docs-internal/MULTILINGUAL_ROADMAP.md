@@ -5,7 +5,8 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **SOV `repeat-*` loop-body reorder** — for SOV languages the i18n transformer surfaces a block loop's keyword (반복/পুনরাবৃত্তি/kutipay) — or a leading `while`/`for` clause — ahead of its body, so the parser matched the bare loop keyword as a standalone command (Stage 2) and dropped the event + variant + body (degenerate). Korean (no event-marker particle) was hit hardest. The Stage-2 gate now prefers SOV event extraction (Stage 3) when the matched action is a block/loop action, recovering the event + loop body; and the qu `repeat` dict keyword was realigned (`kutichiy`→`kutipay`; `kutichiy` is the profile's `return` primary). **Degenerate passes 148 → 141 (−7), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-forever`/`repeat-while`/`repeat-for-each` for ko (+ `stagger-animation` bonus), `repeat-while` for bn, `repeat-while`/`repeat-for-each` for qu. avgFidelity ko 0.889→0.903, bn 0.952→0.956, qu 0.782→0.794. See [SOV_REPEAT_SCOPE.md](SOV_REPEAT_SCOPE.md)._
+_Last updated: after Track 5 **VSO/Austronesian `repeat-*` mid-stream event reorder** — the non-SOV sibling of the SOV repeat-\* fix. For VSO/Austronesian the i18n transformer surfaces the loop keyword first and places the event clause mid-stream, marked by an `on`-marker (`كرر عند نقر …` / `ulitin kapag click …` = `repeat on click …`). The trailing-event extractor (Stage 1.5) can't see it (the event isn't last), so the bare loop keyword won Stage 2 and the event + body dropped (degenerate). `tryMidStreamEventExtraction` strips the `<on-marker> <event>` pair and re-parses the rest as the loop body; the block/loop gate now tries it after SOV extraction. **Degenerate passes 141 → 135 (−6), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-for-each`/`repeat-while` (ar+tl) + bonus `focus-trap`/`window-keydown` (ar — same mid-stream-event shape). avgFidelity ar 0.866→0.883, tl 0.884→0.894. Remaining repeat residue (zh circumfix block-body, the `for`-binding `repeat`-keyword drop, the `wait`-after-`end` tail) scoped in [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md)._
+_Earlier: Track 5 **SOV `repeat-*` loop-body reorder** — for SOV languages the i18n transformer surfaces a block loop's keyword (반복/পুনরাবৃত্তি/kutipay) — or a leading `while`/`for` clause — ahead of its body, so the parser matched the bare loop keyword as a standalone command (Stage 2) and dropped the event + variant + body (degenerate). Korean (no event-marker particle) was hit hardest. The Stage-2 gate now prefers SOV event extraction (Stage 3) when the matched action is a block/loop action, recovering the event + loop body; and the qu `repeat` dict keyword was realigned (`kutichiy`→`kutipay`; `kutichiy` is the profile's `return` primary). **Degenerate passes 148 → 141 (−7), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-forever`/`repeat-while`/`repeat-for-each` for ko (+ `stagger-animation` bonus), `repeat-while` for bn, `repeat-while`/`repeat-for-each` for qu. avgFidelity ko 0.889→0.903, bn 0.952→0.956, qu 0.782→0.794. See [SOV_REPEAT_SCOPE.md](SOV_REPEAT_SCOPE.md)._
 _Earlier: Track 5 **juxtaposed multi-command event bodies** — a fused event pattern captured only the FIRST body command as the action; a then-chain/block continued, but a **juxtaposed** body (`halt the event call validateForm() if … end` — no `then` between commands) was dropped. `buildEventHandler` now re-parses any trailing non-`end` tokens as body commands (additive; `parseBodyWithGrammarPatterns` only appends matched commands). **Degenerate passes 179 → 159 (−20), 0 regressions, parse rate unchanged** (3679/3696). Cleared `form-submit-prevent` (de/it/ru/sw/th/uk/vi), `fetch-loading-state` (bn/hi/it/ja/tr), plus `fetch-error-handling`/`fetch-with-headers` (ja), `render-template-with-data` (qu/tl/vi), `repeat-forever`/`stagger-animation` (qu), `window-scroll` (th)._
 _Earlier: Track 5 **then/end keyword recognition for 9 profile-only languages** (it, ru, th, vi, he, hi, ms, pl, uk). `isThenKeyword`/`isEndKeyword` were hardcoded maps covering only 15 langs; the other 9 fell back to the English literal, so their native then/end (`allora`, `затем`, …) weren't recognized — multi-command then-chains collapsed to the first command and `end`-blocks didn't close. Both now fall back to the profile's form. **Parse rate +7** (he/it/pl behaviors now parse — `end` recognized; he/it/pl jump toward 100%), **+4 fidelity** (`fetch-loading-state` ru/th/vi/uk degenerate→faithful), **0 regressions** (gate green). Degenerate nets 176 → 179 (−4 fetch-loading-state, +7 newly-parsing Bucket B behaviors)._
 _Earlier: Track 5 **Async Tier 1 — `async` modifier transparency** (degenerate **181 → 176**, −5: `async-block` ar/de/it/th/tl)._
@@ -61,6 +62,39 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 — VSO/Austronesian `repeat-*` mid-stream event reorder (ar/tl, −6 degenerate)
+
+- **Degenerate passes 141 → 135 (−6), 0 regressions, parse rate unchanged**
+  (3678/3696). Full `browser-priority` regen + `--regression` gate green; every flip
+  is degenerate→faithful, zero faithful→degenerate. Cleared `repeat-for-each` and
+  `repeat-while` (ar+tl) **plus bonus `focus-trap` and `window-keydown` (ar)** — same
+  mid-stream-event shape. avgFidelity ar 0.866→0.883, tl 0.884→0.894; all other
+  languages byte-identical.
+- **Root cause (the non-SOV sibling of the SOV repeat-\* fix).** For VSO/Austronesian
+  the i18n transformer surfaces a block loop's keyword first and places the event
+  clause **mid-stream**, marked by an `on`-marker (`كرر عند نقر …` /
+  `ulitin kapag click …` = `repeat on click …`). Unlike SOV (no marker / event-marker
+  particle) and unlike the trailing-event SVO/VSO case (event last), the event sits
+  right after the leading loop keyword. `tryTrailingEventExtraction` (Stage 1.5)
+  requires the event to be the final token, so it missed it; the bare loop keyword won
+  Stage 2 and the event + variant + body dropped (degenerate). `repeat-forever` already
+  worked for ar/tl because _its_ event reorders to the **end** (caught by Stage 1.5).
+- **Fix (parser, additive).** New `tryMidStreamEventExtraction` scans for an
+  `on`-marker (`normalized === 'on'`) immediately followed by a known event keyword,
+  strips that pair, and parses everything else (leading loop keyword + for/while clause
+  - then-chain body) as the handler body. Wired into the same block/loop Stage-2 gate
+    added for the SOV fix, _after_ SOV extraction returns null — so it's reached only when
+    Stage 2 matched a bare block/loop action (already a degenerate parse) and only fires
+    on a real on-marked event whose body parses. Simple commands never reach it.
+- **Honest scope.** ar/tl `repeat-for-each` land at 0.67 (the `for <var> in <coll>`
+  binder doesn't re-yield a `repeat` action — a shared gap with ko, tracked as #2 in the
+  follow-up). The remaining degenerate `repeat-*` is **zh `repeat-forever`** (circumfix
+  `当…时` event + a zh block-body collapse — a different layer), plus the `wait`-after-`end`
+  tail residue across SOV. All scoped in [NON_SOV_REPEAT_SCOPE.md](NON_SOV_REPEAT_SCOPE.md).
+- Locked by `multilingual-roadmap-fixes.test.ts` ("VSO/Austronesian repeat-\* mid-stream
+  event reorder — ar/tl": ar/tl recover the event + loop body; a simple VSO command is
+  unaffected).
 
 ### Track 5 — SOV `repeat-*` loop-body reorder (ko/bn/qu, −7 degenerate)
 
