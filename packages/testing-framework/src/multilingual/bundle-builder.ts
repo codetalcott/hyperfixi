@@ -121,6 +121,16 @@ export async function findBundleForLanguages(
   }
 
   if (!bestBundle) {
+    // Fallback: a per-language bundle `browser-{lang}.{lang}.global.js` may exist
+    // even when no predefined group covers the language (these are emitted by the
+    // semantic build for every individual language).
+    if (languages.length === 1) {
+      const name = `browser-${languages[0]}`;
+      const p = getBundlePath(name);
+      if (existsSync(p)) {
+        return { name, path: p, languages, size: statSync(p).size, exists: true };
+      }
+    }
     return null;
   }
 
@@ -163,8 +173,13 @@ export async function getBundleInfo(bundleName: string): Promise<BundleInfo | nu
 export async function buildBundle(options: BundleBuildOptions): Promise<BundleInfo> {
   const { languages, groupName } = options;
 
-  // Generate bundle using the generate-bundle.mjs script
-  const semanticRoot = join(process.cwd(), 'packages/semantic');
+  // Generate bundle using the generate-bundle.mjs script.
+  // Anchor to this file's location (not process.cwd()): when the gate runs via
+  // `npm run … --workspace=@hyperfixi/testing-framework`, cwd is the workspace
+  // package dir, so `cwd()/packages/semantic` resolves to a non-existent path and
+  // exec() fails with `spawn /bin/sh ENOENT`. getBundlePath() already resolves the
+  // semantic root this way — mirror it here.
+  const semanticRoot = join(__dirname, '../../..', 'semantic');
   const scriptPath = join(semanticRoot, 'scripts/generate-bundle.mjs');
 
   let bundleName: string;
@@ -210,32 +225,35 @@ export async function selectBundle(
   languages: LanguageCode[],
   build: boolean = false
 ): Promise<BundleInfo> {
-  // First, try to find existing bundle
-  let bundle = await findBundleForLanguages(languages);
+  // First, try to find an existing bundle
+  const bundle = await findBundleForLanguages(languages);
 
-  // If bundle exists and we don't need to build, use it
-  if (bundle && bundle.exists && !build) {
+  if (bundle && bundle.exists) {
     return bundle;
   }
 
-  // If build is requested or no bundle exists, build it
-  if (build || !bundle || !bundle.exists) {
-    // Determine if we can use a predefined group
+  // Build only on explicit request. The regression gate parses in-process (via
+  // parseSemantic), so the bundle is consumed only for size/existence reporting —
+  // a missing display bundle must NOT silently trigger a heavy on-demand semantic
+  // rebuild as a side effect of running tests.
+  if (build) {
     const groupName = findGroupForLanguages(languages);
-
-    bundle = await buildBundle({
+    const built = await buildBundle({
       languages,
       groupName: groupName !== null ? groupName : undefined,
       outputPath: undefined,
       updateConfig: false, // Don't modify configs during testing
     });
+    if (!built.exists) {
+      throw new Error(`Bundle not found: ${built.path}`);
+    }
+    return built;
   }
 
-  if (!bundle.exists) {
-    throw new Error(`Bundle not found: ${bundle.path}`);
-  }
-
-  return bundle;
+  // Not building: return what we know (possibly non-existent). The caller reports
+  // it as unavailable and continues with the in-process parse.
+  const name = `browser-${languages.join('-')}`;
+  return bundle ?? { name, path: getBundlePath(name), languages, size: 0, exists: false };
 }
 
 /**
