@@ -526,12 +526,59 @@ export class SemanticParserImpl implements ISemanticParser {
       }
 
       if (isEnd) {
-        // End of block - parse final clause if any
-        if (currentClauseTokens.length > 0) {
+        tokens.advance(); // Consume 'end' token
+
+        // The verb-final SOV reorder can place the block-terminating `end`
+        // *between* a trailing command's argument and its verb:
+        //   ja: `… それから 200ms 終わり を 待つ`  (`… then 200ms end ‹patient› wait`)
+        //   ko: `… 그러면 200ms 끝 를 대기`         (`… then 200ms end ‹patient› wait`)
+        //   qu: `… chayqa 200ms tukuy ta suyay`     (`… then 200ms end ‹patient› wait`)
+        // A naive `end`-break discards the `を 待つ` / `를 대기` / `ta suyay` that
+        // follows, dropping the trailing `wait` (fidelity residue). Tolerate a
+        // single trailing command clause after `end`: collect the tokens up to the
+        // next then/end boundary (so a genuine nested-block close can't swallow
+        // arbitrary following content), then parse — merging with the pre-`end`
+        // tokens only when those tokens are a stranded fragment (the SOV
+        // verb-final split above), otherwise parsing the two as separate clauses.
+        const trailingTokens: LanguageToken[] = [];
+        while (!tokens.isAtEnd()) {
+          const t = tokens.peek();
+          if (!t) break;
+          const tIsBoundary =
+            t.kind === 'conjunction' ||
+            (t.kind === 'keyword' &&
+              (this.isThenKeyword(t.value, language) || this.isEndKeyword(t.value, language)));
+          if (tIsBoundary) break;
+          trailingTokens.push(t);
+          tokens.advance();
+        }
+
+        if (trailingTokens.length > 0) {
+          const preNodes =
+            currentClauseTokens.length > 0
+              ? this.parseClause(currentClauseTokens, commandPatterns, language)
+              : [];
+          if (preNodes.length === 0 && currentClauseTokens.length > 0) {
+            // Pre-`end` tokens parsed to nothing — a stranded argument (e.g. `200ms`)
+            // whose verb sits after `end`. Merge so the verb reclaims its argument.
+            clauses.push(
+              ...this.parseClause(
+                [...currentClauseTokens, ...trailingTokens],
+                commandPatterns,
+                language
+              )
+            );
+          } else {
+            // Pre-`end` tokens were already a complete clause (or empty); the
+            // trailing tokens are a distinct sibling command — parse separately.
+            clauses.push(...preNodes);
+            clauses.push(...this.parseClause(trailingTokens, commandPatterns, language));
+          }
+        } else if (currentClauseTokens.length > 0) {
           const clauseNodes = this.parseClause(currentClauseTokens, commandPatterns, language);
           clauses.push(...clauseNodes);
         }
-        tokens.advance(); // Consume 'end' token
+        currentClauseTokens.length = 0;
         break;
       }
 
@@ -577,6 +624,24 @@ export class SemanticParserImpl implements ISemanticParser {
       if (commandMatch) {
         commands.push(this.buildCommand(commandMatch, language));
       } else {
+        // A `for`-binding loop (`repeat for <var> in <coll>`) loses its `for`
+        // binder keyword in transit (the i18n transformer emits `repeat <var> in
+        // <coll>`), so the bare `repeat` keyword carries no matchable variant
+        // (`forever`/`while`/`N times`/`for`) and matchBest can't anchor it — the
+        // `repeat` action is silently dropped (ar/tl/zh `repeat-for-each` residue;
+        // ko escapes only because its SOV order puts the keyword last where it
+        // matches). When matchBest fails on a token whose normalized form is the
+        // `repeat` loop keyword, emit the loop action directly so it survives.
+        const tok = clauseStream.peek();
+        if (tok && tok.normalized?.toLowerCase() === 'repeat') {
+          commands.push(
+            createCommandNode(
+              'repeat' as ActionType,
+              {},
+              { sourceLanguage: language, confidence: 0.6 }
+            )
+          );
+        }
         // Skip unrecognized token
         clauseStream.advance();
       }

@@ -177,7 +177,10 @@ describe('Attribute selectors (@attr) in selector-expecting roles (form-disable)
 
   const formDisable: Array<[string, string]> = [
     ['ar', 'أضف @disabled إلى <button/> in me put "Submitting..." into <button/> in me عند إرسال'],
-    ['tl', 'idagdag @disabled sa <button/> in me put "Submitting..." into <button/> in me kapag submit'],
+    [
+      'tl',
+      'idagdag @disabled sa <button/> in me put "Submitting..." into <button/> in me kapag submit',
+    ],
   ];
   for (const [lang, input] of formDisable) {
     it(`[${lang}] parses the form-disable-on-submit body`, () => {
@@ -469,9 +472,18 @@ describe('then/end keyword recognition for profile-only languages — Track 5', 
   // fetch-loading-state corpus transforms — the then-chain (add → … → remove → put)
   // must survive instead of collapsing to the first command (`add`).
   const cases: Array<[string, string]> = [
-    ['ru', 'при клик добавить .loading в я затем загрузить /api/data затем удалить .loading из я затем положить это в #result'],
-    ['th', 'เมื่อ คลิก เพิ่ม .loading ใน ฉัน แล้ว ดึงข้อมูล /api/data แล้ว ลบ .loading จาก ฉัน แล้ว ใส่ มัน ใน #result'],
-    ['uk', 'при клік додати .loading в я тоді завантажити /api/data тоді видалити .loading з я тоді покласти це в #result'],
+    [
+      'ru',
+      'при клик добавить .loading в я затем загрузить /api/data затем удалить .loading из я затем положить это в #result',
+    ],
+    [
+      'th',
+      'เมื่อ คลิก เพิ่ม .loading ใน ฉัน แล้ว ดึงข้อมูล /api/data แล้ว ลบ .loading จาก ฉัน แล้ว ใส่ มัน ใน #result',
+    ],
+    [
+      'uk',
+      'при клік додати .loading в я тоді завантажити /api/data тоді видалити .loading з я тоді покласти це в #result',
+    ],
   ];
   for (const [lang, input] of cases) {
     it(`[${lang}] recovers a multi-command then-chain (was first-command-only)`, () => {
@@ -514,9 +526,18 @@ describe('Juxtaposed multi-command event bodies — Track 5', () => {
   // form-submit-prevent corpus transforms — the juxtaposed `halt … call … log …`
   // body must survive instead of collapsing to the first command (`halt`).
   const cases: Array<[string, string]> = [
-    ['de', 'bei absenden anhalten the ereignis aufrufen validateForm() wenn ergebnis ist falsch protokollieren "Invalid form" ende'],
-    ['sw', 'kwenye wasilisha simama the tukio ita validateForm() kama matokeo ni uongo andika "Invalid form" mwisho'],
-    ['vi', 'khi gửi dừng lại the sự kiện gọi validateForm() nếu kết quả là sai in ra "Invalid form" kết thúc'],
+    [
+      'de',
+      'bei absenden anhalten the ereignis aufrufen validateForm() wenn ergebnis ist falsch protokollieren "Invalid form" ende',
+    ],
+    [
+      'sw',
+      'kwenye wasilisha simama the tukio ita validateForm() kama matokeo ni uongo andika "Invalid form" mwisho',
+    ],
+    [
+      'vi',
+      'khi gửi dừng lại the sự kiện gọi validateForm() nếu kết quả là sai in ra "Invalid form" kết thúc',
+    ],
   ];
   for (const [lang, input] of cases) {
     it(`[${lang}] recovers a juxtaposed multi-command body`, () => {
@@ -695,7 +716,10 @@ describe('SOV repeat-* loop-body reorder — ko/bn/qu (Track 5)', () => {
   // repeat-while: `on click repeat while #x.innerText < 10 increment #x wait 200ms end`
   it('[ko] repeat-while recovers the event + repeat + increment body', () => {
     const a = actions(
-      parse('동안 #counter.innerText < 10 를 클릭 반복 그러면 #counter 를 증가 그러면 200ms 끝 를 대기', 'ko')
+      parse(
+        '동안 #counter.innerText < 10 를 클릭 반복 그러면 #counter 를 증가 그러면 200ms 끝 를 대기',
+        'ko'
+      )
     );
     expect(a.has('on')).toBe(true);
     expect(a.has('repeat')).toBe(true);
@@ -727,7 +751,9 @@ describe('SOV repeat-* loop-body reorder — ko/bn/qu (Track 5)', () => {
   // reads `kutichiy` as `return` (repeat primary is `kutipay`) — a keyword
   // collision that mis-parsed every qu repeat-*. The dict now emits `kutipay`.
   it('[qu] repeat-forever parses kutipay as repeat (not return)', () => {
-    const a = actions(parse('apakuy pi kutipay forever .pulse ta tikray chayqa 1s ta suyay tukuy', 'qu'));
+    const a = actions(
+      parse('apakuy pi kutipay forever .pulse ta tikray chayqa 1s ta suyay tukuy', 'qu')
+    );
     expect(a.has('on')).toBe(true);
     expect(a.has('repeat')).toBe(true);
     expect(a.has('return')).toBe(false);
@@ -743,7 +769,9 @@ describe('SOV repeat-* loop-body reorder — ko/bn/qu (Track 5)', () => {
     expect(a.has('repeat')).toBe(true);
   });
   it('[qu] repeat-for-each recovers the event + repeat', () => {
-    const a = actions(parse('ñitiy pi kutipay item ukupi .items chayqa .processed ta item man yapay', 'qu'));
+    const a = actions(
+      parse('ñitiy pi kutipay item ukupi .items chayqa .processed ta item man yapay', 'qu')
+    );
     expect(a.has('on')).toBe(true);
     expect(a.has('repeat')).toBe(true);
   });
@@ -791,7 +819,10 @@ describe('VSO/Austronesian repeat-* mid-stream event reorder — ar/tl (Track 5)
   // repeat-while: `on click repeat while #x.innerText < 10 increment #x wait 200ms end`
   it('[ar] repeat-while recovers the event + repeat + increment + wait body', () => {
     const a = actions(
-      parse('كرر بينما #counter.innerText < 10 عند نقر ثم زِد #counter ثم انتظر 200ms النهاية', 'ar')
+      parse(
+        'كرر بينما #counter.innerText < 10 عند نقر ثم زِد #counter ثم انتظر 200ms النهاية',
+        'ar'
+      )
     );
     expect(a.has('on')).toBe(true);
     expect(a.has('repeat')).toBe(true);
@@ -816,7 +847,9 @@ describe('VSO/Austronesian repeat-* mid-stream event reorder — ar/tl (Track 5)
     expect(a.has('add')).toBe(true);
   });
   it('[tl] repeat-for-each recovers the event + add body (not bare repeat)', () => {
-    const a = actions(parse('ulitin kapag click item sa_loob .items pagkatapos idagdag .processed sa item', 'tl'));
+    const a = actions(
+      parse('ulitin kapag click item sa_loob .items pagkatapos idagdag .processed sa item', 'tl')
+    );
     expect(a.has('on')).toBe(true);
     expect(a.has('add')).toBe(true);
   });
@@ -826,5 +859,123 @@ describe('VSO/Austronesian repeat-* mid-stream event reorder — ar/tl (Track 5)
   it('[ar] a simple toggle command is unaffected', () => {
     const a = actions(parse('بدل .active عند نقر', 'ar'));
     expect(a.has('toggle')).toBe(true);
+  });
+});
+
+describe('Non-SOV repeat-* loop-body + tail residue — zh/ar/tl/ja/ko/sw (Track 5)', () => {
+  // Two parser-side fixes that close the residues scoped in
+  // docs-internal/NON_SOV_REPEAT_SCOPE.md. Strings below are post-transform output
+  // (en → lang) from the harness pipeline (maskSpans → GrammarTransformer →
+  // unmaskSpans). Both fixes are additive — they only recover commands the parser
+  // previously dropped, never re-shape an already-faithful parse.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // ── Fix 1: `end`-mid-stream tail drop ────────────────────────────────────
+  // The verb-final SOV reorder puts the block-terminating `end` *between* a
+  // trailing command's argument and its verb (`… 200ms 終わり を 待つ` =
+  // `… 200ms end ‹patient› wait`). `parseBodyWithClauses` used to treat `end` as
+  // a hard terminator and discard the post-`end` `を 待つ` / `를 대기`, dropping
+  // the trailing `wait`. It now tolerates a single trailing clause after `end`,
+  // merging it with the stranded pre-`end` argument.
+  // repeat-while: `on click repeat while #x.innerText < 10 increment #x wait 200ms end`
+  it('[ja] repeat-while recovers the trailing wait after end', () => {
+    const a = actions(
+      parse(
+        'の間 #counter.innerText < 10 を クリック で 繰り返し それから #counter を 増加 それから 200ms 終わり を 待つ',
+        'ja'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+    expect(a.has('wait')).toBe(true); // was dropped by the `end`-break
+  });
+  it('[ko] repeat-while recovers the trailing wait after end', () => {
+    const a = actions(
+      parse(
+        '동안 #counter.innerText < 10 를 클릭 반복 그러면 #counter 를 증가 그러면 200ms 끝 를 대기',
+        'ko'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+    expect(a.has('wait')).toBe(true); // was dropped by the `end`-break
+  });
+
+  // ── Fix 2: `for`-binding drops the `repeat` keyword ──────────────────────
+  // `repeat for <var> in <coll>` loses its `for` binder keyword in transit, so
+  // the bare `repeat` keyword carries no matchable variant and matchBest can't
+  // anchor it. `parseClause` now emits the `repeat` action directly when matchBest
+  // fails on a token whose normalized form is the repeat loop keyword.
+  // repeat-for-each: `on click repeat for item in .items add .processed to item`
+  it('[ar] repeat-for-each recovers the repeat keyword (was dropped)', () => {
+    const a = actions(parse('كرر عند نقر item في .items ثم أضف .processed إلى item', 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true); // the `for`-binding repeat keyword
+    expect(a.has('add')).toBe(true);
+  });
+  it('[tl] repeat-for-each recovers the repeat keyword (was dropped)', () => {
+    const a = actions(
+      parse('ulitin kapag click item sa_loob .items pagkatapos idagdag .processed sa item', 'tl')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+  it('[zh] repeat-for-each recovers the repeat keyword (was dropped)', () => {
+    const a = actions(
+      parse('当 点击 时 重复 item 在 .items 那么 添加 把 .processed 到 item', 'zh')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+
+  // zh repeat-forever: the last degenerate repeat-* in the corpus. Recovering the
+  // leading `重复`(repeat) keyword lifts it above the 0.5 fidelity threshold
+  // (deg → faithful). `on load repeat forever toggle .pulse wait 1s end`
+  it('[zh] repeat-forever recovers repeat + toggle (no longer degenerate)', () => {
+    const a = actions(parse('当 加载 时 重复 forever 切换 把 .pulse 那么 等待 把 1s 结束', 'zh'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true); // cleared the last degenerate repeat-*
+    expect(a.has('toggle')).toBe(true);
+  });
+
+  // sw repeat-while: SVO event leads, then `rudia wakati <cond> kisha <body>`. The
+  // leading `rudia`(repeat) clause between the event and the first `kisha`(then)
+  // was dropped; the repeat-keyword recovery now keeps it.
+  it('[sw] repeat-while recovers the leading repeat keyword', () => {
+    const a = actions(
+      parse(
+        'kwenye bonyeza rudia wakati #counter.innerText < 10 kisha ongeza #counter kisha ngoja 200ms mwisho',
+        'sw'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true); // `rudia` was dropped before
+    expect(a.has('wait')).toBe(true);
+  });
+
+  // Regression guards: neither fix should over-generate on inputs that already
+  // parsed faithfully.
+  it('[en] a counted `repeat N times` body is unaffected (still parses as repeat)', () => {
+    const a = actions(parse('on click repeat 3 times add "<p>Line</p>" to me', 'en'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+  });
+  it('[en] a plain then-chain with a trailing end is unaffected', () => {
+    const a = actions(parse('on click toggle .active then add .b to me', 'en'));
+    expect([...a].sort()).toEqual(['add', 'on', 'toggle']);
   });
 });
