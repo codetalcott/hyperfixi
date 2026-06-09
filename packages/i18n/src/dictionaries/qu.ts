@@ -20,7 +20,7 @@ export const qu: Dictionary = {
     show: 'rikuchiy',
     if: 'sichus',
     unless: 'mana_sichus',
-    repeat: 'kutichiy',
+    repeat: 'kutipay',
     for: 'rayku',
     while: 'kay_kaq',
     until: 'hayk_akama',

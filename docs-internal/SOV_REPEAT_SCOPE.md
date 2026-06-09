@@ -1,6 +1,10 @@
 # SOV `repeat-*` Loop-Body Reorder — Project Scope
 
-> **Status:** Scoped, not started. Handoff-ready for a fresh session.
+> **Status:** ✅ SHIPPED. Parser Stage-2 gate (prefer SOV event extraction over a
+> bare block/loop keyword) + qu `repeat` dict realignment (`kutichiy`→`kutipay`).
+> Degenerate passes **148 → 141 (−7)**, 0 regressions. Cleared ko
+> (repeat-forever/while/for-each + stagger-animation), bn (repeat-while), qu
+> (repeat-while/for-each). See `MULTILINGUAL_ROADMAP.md` → Shipped for the writeup.
 > **Track:** Multilingual parse-fidelity (Track 5 in `MULTILINGUAL_ROADMAP.md`).
 > **Prereq reading:** `SOV_REORDER_SCOPE.md` (the verb-first event-body reorder
 > project — SHIPPED in #298) and `MULTILINGUAL_ROADMAP.md` → Shipped (the if/else

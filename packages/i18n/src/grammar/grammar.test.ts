@@ -488,6 +488,20 @@ describe('GrammarTransformer', () => {
       expect(result).not.toContain('churay');
       expect(result).toContain('Draggable');
     });
+
+    it('should emit the repeat verb (kutipay), not the return verb (kutichiy)', () => {
+      // Regression: the qu dictionary mapped `repeat` to `kutichiy`, which is the
+      // semantic qu profile's `return` primary (repeat = kutipay there). So every
+      // qu `repeat …` transformed to `kutichiy …` and the semantic parser read it
+      // as `return`, dropping the loop — degenerate parses for the qu repeat-*
+      // cluster (repeat-while, repeat-for-each). Align the emitted verb to the
+      // semantic repeat keyword. See docs-internal/SOV_REPEAT_SCOPE.md.
+      const result = transformer.transform(
+        'on click repeat for item in .items add .processed to item'
+      );
+      expect(result).toContain('kutipay');
+      expect(result).not.toContain('kutichiy');
+    });
   });
 
   describe('German Transformation (fetch/get disambiguation)', () => {

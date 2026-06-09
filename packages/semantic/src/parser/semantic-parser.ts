@@ -191,6 +191,37 @@ export class SemanticParserImpl implements ISemanticParser {
     const commandMatch = patternMatcher.matchBest(tokens, commandPatterns);
 
     if (commandMatch) {
+      // A bare block/loop keyword (if/unless/while/repeat/for) can shadow the SOV
+      // event + loop-body path. For SOV languages the grammar transformer surfaces
+      // the loop keyword (反復/반복/পুনরাবৃত্তি) — or a leading `while`/`for` clause —
+      // ahead of its body, so Stage 2 matches it as a *standalone* command and the
+      // event + loop variant + body are all dropped (a degenerate parse). Korean is
+      // hit hardest: with no event-marker particle, the Stage-1 fused event pattern
+      // can't anchor, so the bare loop keyword always wins here. When the matched
+      // action is a block/loop action, prefer the SOV event extraction (Stage 3),
+      // which finds the (possibly mid-stream) event, strips it, and re-parses the
+      // loop body — recovering the loop keyword + body commands. Gated to block/loop
+      // actions and only taken when SOV extraction actually finds an event whose
+      // body parses (it returns null otherwise — e.g. a genuine standalone loop with
+      // no event), so it can only add parses, never break the counted/standalone
+      // variants. Mirrors the if/else block-body fix (the parser was the real
+      // blocker, capturing the block keyword as the action and dropping the body).
+      if (BLOCK_BODY_ACTIONS.has(commandMatch.pattern.command)) {
+        const sovLoop = this.trySOVEventExtraction(parseInput, language, sortedPatterns);
+        if (sovLoop) {
+          diagnostics.push(
+            parseDiagnostic(
+              `SOV event extraction preferred over bare ${commandMatch.pattern.command} command`,
+              'info',
+              'stage-sov-loop'
+            )
+          );
+          const result = modifiers
+            ? this.applyModifiers(sovLoop as EventHandlerSemanticNode, modifiers)
+            : sovLoop;
+          return withDiagnostics(result, diagnostics);
+        }
+      }
       diagnostics.push(
         parseDiagnostic(
           `command pattern matched: ${commandMatch.pattern.id} (confidence: ${commandMatch.confidence.toFixed(2)})`,
