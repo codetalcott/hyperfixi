@@ -10,12 +10,14 @@
 > `repeat-until-event` + bonus `focus-trap` (sw/tr); for-each ar/tl/zh 0.67→1.0;
 > while ja/ko/tr 0.75→1.0, qu 0.50→0.75; sw while 0.50→0.75. Locked by
 > `multilingual-roadmap-fixes.test.ts` ("Non-SOV repeat-\* loop-body + tail
-> residue"). **Follow-up keyword tracks:** the qu/sw `add`-vs-`increment` overlap is
-> now **✅ SHIPPED** (qu `yapachiy` / sw `ongezeko` dict alignment + a handcrafted
-> qu SOV increment pattern; qu/sw `repeat-while` 0.75→1.0 — see
-> `MULTILINGUAL_ROADMAP.md` → Shipped). **Still deferred:** the zh `wait` SVO pattern
-> gap (`等待 1s` parses to nothing — zh `repeat-forever` sits at 0.67, faithful but
-> not 1.0), a zh block-body parser track, not a dictionary fix.
+> residue"). **Follow-up keyword tracks (both now ✅ SHIPPED):** the qu/sw
+> `add`-vs-`increment` overlap (qu `yapachiy` / sw `ongezeko` dict alignment + a
+> handcrafted qu SOV increment pattern; qu/sw `repeat-while` → 1.0), and the zh
+> `wait` BA-marked duration (`等待 把 1s` — a handcrafted `wait-zh-ba` pattern;
+> zh `repeat-forever` 0.67 → 1.0). The "zh `wait` SVO gap / `等待 1s`" framing was a
+> probe artifact — bare `等待 1s` always parsed; the `把` object-marker on the
+> duration was the real blocker. The deeper transformer root cause is scoped in
+> [ZH_BLOCK_BODY_SCOPE.md](ZH_BLOCK_BODY_SCOPE.md). See `MULTILINGUAL_ROADMAP.md` → Shipped.
 > **Prereq reading:** `SOV_REPEAT_SCOPE.md` (the SOV sibling, SHIPPED) and
 > `MULTILINGUAL_ROADMAP.md` → Shipped (SOV repeat-\* loop-body reorder; VSO
 > mid-stream event reorder).
