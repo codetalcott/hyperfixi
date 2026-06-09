@@ -1,13 +1,12 @@
 # Chinese (zh) Block-Body / BA-Marking Residue — Project Scope
 
-> **Status:** Partially shipped. **✅ DONE:** the **zh `wait` BA-marked duration**
-> slice (the last zh `repeat-*` residue — `repeat-forever` 0.67 → 1.0) and the
-> **zh `那么` then-connective recognition** (#2 — profile now agrees with the i18n
-> package that `那么` is a `then` keyword; a consistency fix, no behavioral change).
-> **⏳ REMAINING:** the **deeper root cause** (#1 — the i18n transformer's generic
-> patient-marking emits ungrammatical `把` on non-patient args) and the zh
-> `fetch`-in-event-block gap (#3). #1 is architecturally significant (the i18n role
-> model) and is the main open item.
+> **Status:** Mostly shipped. **✅ DONE:** the **zh `wait` BA-marked duration**
+> slice (the last zh `repeat-*` residue — `repeat-forever` 0.67 → 1.0); the
+> **zh `那么` then-connective recognition** (#2); and now the **deeper root cause**
+> (**#1 — the transformer role model**: it no longer emits ungrammatical object
+> markers on a command's literal/measure primary argument). **⏳ REMAINING:** the
+> zh `fetch`-in-event-block gap (#3), re-probed after #1 and found **not**
+> unblocked — it's a distinct keyword-misalignment + source-marking track (see #3).
 > **Prereq reading:** `NON_SOV_REPEAT_SCOPE.md` (the arc this fell out of) and
 > `MULTILINGUAL_ROADMAP.md` → Shipped.
 
@@ -33,7 +32,43 @@ handcrafted pattern that absorbs a transformer/parser keyword-or-marker mismatch
 
 ## What's left (the root causes the slice worked around)
 
-### #1 — Transformer over-applies `把` to non-patient arguments
+### #1 — Transformer over-applies `把` to non-patient arguments — ✅ SHIPPED
+
+> **Fix shipped.** The transformer now honours a command's **primary role** when
+> assigning the default role to its leading argument, so a literal/measure primary
+> is no longer mis-marked as a fronted object. Concretely: a new
+> `applyPrimaryRole` step (`transformer.ts`, run between `parseStatement` and
+> `translateElements`) re-assigns the mis-defaulted `patient` value to the
+> command's true primary role when that role is a **literal/measure** role
+> (`LITERAL_PRIMARY_ROLES = {duration, quantity}`) **and** the target profile has
+> no marker for it — so it can only ever _remove_ a spurious marker, never
+> introduce a different one. The primary-role data lives in a local
+> `COMMAND_PRIMARY_ROLES` map (`constants.ts`), kept in lock-step with the semantic
+> command schemas by `command-primary-roles.test.ts` (so the i18n browser bundle
+> needn't pull in the whole semantic graph).
+>
+> **Scope decisions (validated empirically, all to avoid regressions):**
+>
+> - **Only literal/measure primaries** (`duration`, `quantity`). Marker-bearing
+>   primaries (`set`→destination `到`, `fetch`→source `从`, `send`/`trigger`→event)
+>   are left on the `patient` default. Re-marking `event`-primary commands in a
+>   language with _no_ event particle (Korean) made the semantic parser emit a
+>   phantom `on` action — an over-generation that recall-based fidelity misses.
+> - **Command statements only, not event handlers.** In `on click wait 2s …`, a
+>   verb-final SOV language without an event particle (Korean) uses the leading
+>   argument's object marker as the structural cue that anchors the handler;
+>   un-marking it loses the `on`. The block-body / then-chain `wait` clauses this
+>   fix targets are each parsed as their own command statement, so still covered.
+>
+> **Result:** standalone & block-body `wait` now emit grammatical `等待 1s` (zh),
+> `待つ 1s` (ja), `대기 1s` (ko) — no spurious `把`/`を`/`를`. `--regression` gate
+> green (parse 3679/3696, degenerate 132, **0 regressions**); per-language
+> avgFidelity **he ↑ / hi ↑**, all others neutral. The `wait-zh-ba` workaround
+> pattern is retained as a now-inert **defensive fallback** (the transformer no
+> longer feeds it). Locked by the grammar suite's "Duration / literal-primary
+> marking" block and `command-primary-roles.test.ts`.
+>
+> _Original analysis (kept for the record):_
 
 `等待 把 1s` is **ungrammatical zh** (a duration is not a BA-construction object;
 natural zh is `等待 1s` / `等待 2秒` — which the transformer's own example table at
@@ -88,20 +123,38 @@ profile value, so no precedence change was needed.
 > clause parser's matchBest loop still found the next command after the
 > unrecognized `那么`), but the keyword tables disagreed across packages.
 
-### #3 — zh `fetch`-in-event-block (deferred elsewhere)
+### #3 — zh `fetch`-in-event-block (still deferred — re-probed after #1)
 
-The roadmap notes a deferred zh `fetch` keyword/block-body gap in event handlers.
-It is the same family as #1 (zh block-body parsing through the BA/marker layer); a
-real #1 fix may unblock it. Cross-reference when picking #1 up.
+**Re-probed after #1 shipped: not unblocked.** `on click fetch /api/data then put it
+into #result` still parses zh-degenerate (`当 点击 时 获取 把 /api/data 那么 …` → `{on}`,
+fid 0.33). #1 does **not** touch it because `fetch`'s primary role is `source`
+(marker-bearing), which #1 deliberately excludes — re-marking marker-bearing
+primaries caused over-generation regressions in marker-lacking languages (see #1's
+scope decisions). So #3 is a **distinct track**, not a corollary of #1. Concrete
+findings from the re-probe:
+
+- **Keyword misalignment (the German/ja-fetch pattern).** The i18n zh dict emits
+  `fetch: '获取'` (`dictionaries/zh.ts`), but the semantic zh profile reads `获取` as
+  **`get`** (`generators/profiles/chinese.ts:68`) — its `fetch` primary is `抓取`
+  (`chinese.ts:105`). So `获取 …` never parses as `fetch`. Realigning the dict to
+  `fetch: '抓取'` is necessary but **not sufficient**.
+- **Source marking.** Only the `从`-marked form parses: `parseSemantic('抓取 从 /api/data','zh')`
+  → `{fetch}`; `抓取 /api/data` and `抓取 把 /api/data` both → `{}`. The transformer
+  emits neither `抓取` nor `从` (it emits the patient `把`). A real fix needs the zh
+  `fetch` source argument marked `从` (or a `fetch-zh` pattern that tolerates `把`/no
+  marker), plus the `as json` (`responseType`) form, plus the block-body/then-chain
+  collapse so the trailing `put` also recovers.
+
+This is a multi-part keyword + marker + block-body change (its own focused PR), not
+the contained one-liner the German fix was. Tracked here and in `MULTILINGUAL_ROADMAP.md`.
 
 ## Suggested sequencing
 
 1. ~~**#2 (then-keyword reconciliation)**~~ — ✅ done (profile `那么` alias; consistency fix).
-2. **#1 (transformer role model)** — the big one, and the main open item. Scope a
-   controlled change to honor `primaryRole` when marking, A/B against the gate + zh
-   grammar suite, and retire the per-command handcrafted `把` patterns it makes
-   redundant.
-3. **#3 (zh fetch block-body)** — re-probe after #1; likely partially unblocked.
+2. ~~**#1 (transformer role model)**~~ — ✅ done (`applyPrimaryRole`; honors literal/measure
+   primaries; gate green, 0 regressions, he/hi avgFidelity ↑).
+3. **#3 (zh fetch block-body)** — re-probed after #1, **not** unblocked. Its own track:
+   dict realign (`获取`→`抓取`) + zh `fetch` source-marking/pattern + `as json` + block body.
 
 ## Probe
 
@@ -111,9 +164,15 @@ way:** the probe transforms its input `en → lang`, so pass **English** source
 and produces false negatives. To test a raw zh string directly, call
 `parseSemantic('等待 把 1s', 'zh')` instead of going through the probe's transform.
 
-## Definition of done (for the remaining work, #1 + #3)
+## Definition of done
 
-The transformer emits grammatical zh for duration/literal-primary commands (no
-spurious `把`); the per-command `把` workaround patterns (wait, …) retired where the
-transformer fix subsumes them; `--regression` gate green; zh grammar suite clean.
-(`那么` then-recognition, #2, is already done.)
+- **#1 ✅** — The transformer emits grammatical zh/ja/ko for duration/literal-primary
+  commands (no spurious `把`/`を`/`를`); `--regression` gate green (3679/3696,
+  degenerate 132, 0 regressions); zh grammar suite clean; locked by the grammar
+  suite's "Duration / literal-primary marking" block + `command-primary-roles.test.ts`.
+  The `wait-zh-ba` pattern is kept as an inert defensive fallback (the transformer no
+  longer feeds it) rather than retired — harmless, and removing it would drop a
+  safety net for legacy/hand-written `等待 把 1s` for no gate benefit.
+- **#2 ✅** — `那么` then-recognition.
+- **#3 ⏳** — still deferred; a distinct fetch keyword + source-marking + block-body
+  track (see #3 for the concrete next steps surfaced by the post-#1 re-probe).

@@ -22,6 +22,7 @@ import { findInDictionary, translateFromEnglish } from '../types';
 import {
   ENGLISH_MODIFIER_ROLES,
   ENGLISH_COMMANDS,
+  COMMAND_PRIMARY_ROLES,
   CONDITIONAL_KEYWORDS,
   THEN_KEYWORDS,
 } from '../constants';
@@ -1012,6 +1013,74 @@ function parseCommand(tokens: string[], profile: LanguageProfile): ParsedStateme
 }
 
 /**
+ * Re-assign a command's mis-marked primary argument from the default `patient`
+ * role to its true primary role (e.g. `wait`'s leading argument is a `duration`,
+ * not a fronted object).
+ *
+ * The generic argument parser in `parseCommand` / `parseEventHandler` defaults the
+ * first unmarked argument to `patient`. For most commands that is correct, but for a
+ * command whose primary role is a non-patient *and which the target language does not
+ * give a marker* (a duration, a measure — never a BA/object construction), the
+ * `patient` assignment makes `insertMarkers` emit a spurious object-marker (Chinese
+ * `把`, Japanese `を`, Korean `를`). The marked form is ungrammatical and the semantic
+ * parser fails to match it, dropping the command.
+ *
+ * The fix is deliberately scoped to **literal/measure** primary roles
+ * ({@link LITERAL_PRIMARY_ROLES}: `duration`, `quantity`) — values that are *never*
+ * the object of an object-marking construction in any supported language, so moving
+ * them off `patient` can only ever *remove* a spurious marker. Marker-bearing
+ * primaries are intentionally left alone:
+ *  - `set`→destination `到`, `fetch`→source `从` carry a *correct* marker; touching
+ *    them risks no benefit.
+ *  - `send`/`trigger`→event: in a language without an event marker (e.g. Korean has
+ *    no event particle) un-marking the leading argument makes the semantic parser
+ *    mis-read it as a bare event handler and emit a phantom `on` action — an
+ *    over-generation that recall-based fidelity would not catch. So `event`-primary
+ *    commands stay on the `patient` default.
+ *
+ * Roles are still reordered by the safety-net in `reorderRoles`, so no value is lost.
+ * A belt-and-suspenders target-marker guard keeps the change inert should a profile
+ * ever add a marker for one of these literal roles.
+ *
+ * Must run *before* `translateElements`, while the `action` value is still the
+ * source-language (English) keyword, so the schema lookup resolves.
+ *
+ * @see docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
+ */
+const LITERAL_PRIMARY_ROLES: ReadonlySet<SemanticRole> = new Set<SemanticRole>([
+  'duration',
+  'quantity',
+]);
+
+function applyPrimaryRole(parsed: ParsedStatement, targetProfile: LanguageProfile): void {
+  // Only re-mark standalone command statements. In an event handler (`on click
+  // wait 2s …`) a verb-final SOV language without an event particle (e.g. Korean)
+  // relies on the leading argument's patient marker as the structural cue that
+  // anchors the handler; un-marking it makes the semantic parser lose the event.
+  // The block-body / then-chain `wait` clauses this fix targets are each parsed as
+  // their own command statement, so they are still covered.
+  if (parsed.type !== 'command') return;
+
+  const action = parsed.roles.get('action')?.value;
+  if (!action) return;
+
+  const primaryRole = COMMAND_PRIMARY_ROLES[action.toLowerCase()];
+  if (!primaryRole || !LITERAL_PRIMARY_ROLES.has(primaryRole)) return;
+
+  // Only act on a leading argument the generic parser defaulted to `patient`,
+  // and only when the primary slot isn't already filled by an explicit marker.
+  const patientEl = parsed.roles.get('patient');
+  if (!patientEl || parsed.roles.has(primaryRole)) return;
+
+  // Guard: never introduce a marker that wasn't there. If the target language
+  // marks the primary role, leave the command as-is.
+  if (targetProfile.markers.some(m => m.role === primaryRole)) return;
+
+  parsed.roles.delete('patient');
+  parsed.roles.set(primaryRole, { ...patientEl, role: primaryRole });
+}
+
+/**
  * Parse a conditional statement
  */
 function parseConditional(tokens: string[], _profile: LanguageProfile): ParsedStatement {
@@ -1509,6 +1578,11 @@ export class GrammarTransformer {
     if (!parsed) {
       return input; // Return unchanged if parsing fails
     }
+
+    // 1b. Re-assign a mis-marked primary argument (e.g. `wait`'s duration) off the
+    //     default `patient` role so the target doesn't emit a spurious object-marker.
+    //     Runs before translation while `action` is still the English keyword.
+    applyPrimaryRole(parsed, this.targetProfile);
 
     // 2. Translate individual words
     translateElements(parsed, this.sourceProfile.code, this.targetProfile.code);
