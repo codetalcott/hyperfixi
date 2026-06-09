@@ -28,7 +28,10 @@ export const zh: Dictionary = {
     break: '中断',
     halt: '停止',
     wait: '等待',
-    fetch: '获取',
+    // 抓取 (zhuāqǔ, "grab/scrape") is the semantic zh profile's `fetch` primary;
+    // 获取 (huòqǔ) is its `get` primary, so emitting 获取 here made the semantic
+    // parser read a transformed `fetch` as `get`. See ZH_BLOCK_BODY_SCOPE.md #3.
+    fetch: '抓取',
     call: '调用',
     return: '返回',
     make: '制作',

@@ -704,12 +704,17 @@ function getPutPatternsZh(): LanguagePattern[] {
       },
     },
     {
+      // BA-fronted put. The i18n grammar transformer emits the *split* verb form
+      // `把 {patient} 放置 到 {destination}` for `put X into Y` (verb 放置 + a
+      // separate destination marker 到), so the destination marker is matched as
+      // an optional group — when absent, the merged verb forms (放到/放在) carry
+      // the "to" themselves. See ZH_BLOCK_BODY_SCOPE.md #3.
       id: 'put-zh-ba',
       language: 'zh',
       command: 'put',
       priority: 95,
       template: {
-        format: '把 {patient} 放到 {destination}',
+        format: '把 {patient} 放置 到 {destination}',
         tokens: [
           { type: 'literal', value: '把' },
           {
@@ -717,13 +722,18 @@ function getPutPatternsZh(): LanguagePattern[] {
             role: 'patient',
             expectedTypes: ['literal', 'selector', 'reference', 'expression'],
           },
-          { type: 'literal', value: '放到', alternatives: ['放在', '放入'] },
+          { type: 'literal', value: '放置', alternatives: ['放到', '放在', '放入', '放', '置入'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: '到', alternatives: ['在', '于', '入'] }],
+          },
           { type: 'role', role: 'destination', expectedTypes: ['selector', 'reference'] },
         ],
       },
       extraction: {
         patient: { position: 1 },
-        destination: { position: 3 },
+        destination: { marker: '到', markerAlternatives: ['在', '于', '入'] },
       },
     },
   ];

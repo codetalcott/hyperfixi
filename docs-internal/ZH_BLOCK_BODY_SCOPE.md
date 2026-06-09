@@ -1,12 +1,16 @@
 # Chinese (zh) Block-Body / BA-Marking Residue — Project Scope
 
-> **Status:** Mostly shipped. **✅ DONE:** the **zh `wait` BA-marked duration**
+> **Status:** Shipped. **✅ DONE:** the **zh `wait` BA-marked duration**
 > slice (the last zh `repeat-*` residue — `repeat-forever` 0.67 → 1.0); the
-> **zh `那么` then-connective recognition** (#2); and now the **deeper root cause**
+> **zh `那么` then-connective recognition** (#2); the **deeper root cause**
 > (**#1 — the transformer role model**: it no longer emits ungrammatical object
-> markers on a command's literal/measure primary argument). **⏳ REMAINING:** the
-> zh `fetch`-in-event-block gap (#3), re-probed after #1 and found **not**
-> unblocked — it's a distinct keyword-misalignment + source-marking track (see #3).
+> markers on a command's literal/measure primary argument); and now the **zh
+> `fetch`-in-event-block gap (#3)** — dict realign (`获取`→`抓取`) + `fetch-zh-ba`
+> source/`responseType` pattern + `put-zh-ba` realign for the trailing `put`
+> (`{on}` 0.33 → `{on,fetch,put}` 1.0). The same BA-split realign was applied to
+> `set-zh-ba` (#2 sweep), which cleared zh's last degenerate pass
+> (`template-literal-list-build`). **zh now has zero degenerate passes**;
+> `--regression` gate green (degenerate 132 → 124, 0 regressions).
 > **Prereq reading:** `NON_SOV_REPEAT_SCOPE.md` (the arc this fell out of) and
 > `MULTILINGUAL_ROADMAP.md` → Shipped.
 
@@ -123,38 +127,81 @@ profile value, so no precedence change was needed.
 > clause parser's matchBest loop still found the next command after the
 > unrecognized `那么`), but the keyword tables disagreed across packages.
 
-### #3 — zh `fetch`-in-event-block (still deferred — re-probed after #1)
+### #3 — zh `fetch`-in-event-block — ✅ SHIPPED
 
-**Re-probed after #1 shipped: not unblocked.** `on click fetch /api/data then put it
-into #result` still parses zh-degenerate (`当 点击 时 获取 把 /api/data 那么 …` → `{on}`,
-fid 0.33). #1 does **not** touch it because `fetch`'s primary role is `source`
-(marker-bearing), which #1 deliberately excludes — re-marking marker-bearing
-primaries caused over-generation regressions in marker-lacking languages (see #1's
-scope decisions). So #3 is a **distinct track**, not a corollary of #1. Concrete
-findings from the re-probe:
+> **Fix shipped (pattern/dict side, per #1's caution against re-marking
+> marker-bearing primaries).** `on click fetch /api/data then put it into #result`
+> → `当 点击 时 抓取 把 /api/data 那么 把 它 放置 到 #result` now parses
+> `{on, fetch, put}` (fid 1.0; was degenerate `{on}` 0.33). Four coordinated pieces,
+> all on the pattern/dict side (the transformer role model is untouched — re-marking
+> `fetch`'s `source` primary caused phantom-`on` over-generation in marker-lacking
+> languages, see #1):
+>
+> 1. **Keyword realign.** `dictionaries/zh.ts` now emits `fetch: '抓取'` (was `获取`,
+>    which the semantic zh profile reads as `get`).
+> 2. **Source marking.** A handcrafted `fetch-zh-ba` pattern
+>    (`packages/semantic/src/patterns/fetch.ts`) tolerates the transformer's BA
+>    marker (`把`, optional) before the `source` URL — mirroring `wait-zh-ba` /
+>    `toggle-zh-ba`. The `从`-marked form is still covered by the generated pattern.
+> 3. **`as json` form.** The same pattern's optional `的 {responseType}` group
+>    handles `抓取 把 /api/data 的 json` (transformer emits `的` for `as`; `作为`
+>    tolerated too).
+> 4. **Block-body collapse.** The trailing `put` (`把 X 放置 到 Y` — verb 放置 +
+>    separate 到 marker) was _also_ dropping; `put-zh-ba` was expecting the merged
+>    verb `放到`. Realigned to the split form (marker as an optional group), so the
+>    merged form still matches too.
+>
+> Locked by `multilingual-roadmap-fixes.test.ts` ("zh fetch in event block").
+> `--regression` gate green (degenerate 132 → 125, 0 regressions; zh parse rate ↑).
+>
+> _Original analysis (kept for the record):_
 
-- **Keyword misalignment (the German/ja-fetch pattern).** The i18n zh dict emits
+`on click fetch /api/data then put it into #result` parsed zh-degenerate
+(`当 点击 时 获取 把 /api/data 那么 …` → `{on}`, fid 0.33). #1 did **not** touch it
+because `fetch`'s primary role is `source` (marker-bearing), which #1 deliberately
+excludes — re-marking marker-bearing primaries caused over-generation regressions in
+marker-lacking languages (see #1's scope decisions). So #3 was a **distinct track**,
+not a corollary of #1.
+
+- **Keyword misalignment (the German/ja-fetch pattern).** The i18n zh dict emitted
   `fetch: '获取'` (`dictionaries/zh.ts`), but the semantic zh profile reads `获取` as
   **`get`** (`generators/profiles/chinese.ts:68`) — its `fetch` primary is `抓取`
-  (`chinese.ts:105`). So `获取 …` never parses as `fetch`. Realigning the dict to
-  `fetch: '抓取'` is necessary but **not sufficient**.
-- **Source marking.** Only the `从`-marked form parses: `parseSemantic('抓取 从 /api/data','zh')`
+  (`chinese.ts:105`). So `获取 …` never parsed as `fetch`. Realigning the dict to
+  `fetch: '抓取'` was necessary but not sufficient.
+- **Source marking.** Only the `从`-marked form parsed: `parseSemantic('抓取 从 /api/data','zh')`
   → `{fetch}`; `抓取 /api/data` and `抓取 把 /api/data` both → `{}`. The transformer
-  emits neither `抓取` nor `从` (it emits the patient `把`). A real fix needs the zh
-  `fetch` source argument marked `从` (or a `fetch-zh` pattern that tolerates `把`/no
-  marker), plus the `as json` (`responseType`) form, plus the block-body/then-chain
+  emits the patient `把`, not `从` — so the `fetch-zh-ba` pattern tolerates `把`/no
+  marker, plus the `as json` (`responseType`) form, plus the block-body/then-chain
   collapse so the trailing `put` also recovers.
-
-This is a multi-part keyword + marker + block-body change (its own focused PR), not
-the contained one-liner the German fix was. Tracked here and in `MULTILINGUAL_ROADMAP.md`.
 
 ## Suggested sequencing
 
 1. ~~**#2 (then-keyword reconciliation)**~~ — ✅ done (profile `那么` alias; consistency fix).
 2. ~~**#1 (transformer role model)**~~ — ✅ done (`applyPrimaryRole`; honors literal/measure
    primaries; gate green, 0 regressions, he/hi avgFidelity ↑).
-3. **#3 (zh fetch block-body)** — re-probed after #1, **not** unblocked. Its own track:
-   dict realign (`获取`→`抓取`) + zh `fetch` source-marking/pattern + `as json` + block body.
+3. ~~**#3 (zh fetch block-body)**~~ — ✅ done. Dict realign (`获取`→`抓取`) +
+   `fetch-zh-ba` source/`responseType` pattern + `put-zh-ba` realign for the
+   trailing put. Plus a #2-sweep `set-zh-ba` realign (same BA-split shape) that
+   cleared zh's last degenerate pass (`template-literal-list-build`).
+
+## #2 sweep — zh degenerate residue (probe-driven triage)
+
+After #3, a full-sweep probe found zh's remaining degenerate passes were **not**
+independent root causes but the **same BA-split verb shape** as put/fetch: the
+transformer emits `把 {arg} <verb> <marker> {value}` (verb + a _separate_
+destination/"to" marker), while the handcrafted `*-zh-ba` patterns expected the
+_merged_ verb (`放到` / `设置为`). Realigning `set-zh-ba` to the split form
+(`把 X 设置 到 Y`, marker optional so the merged form still matches) recovered the
+two `set`s in `template-literal-list-build`, lifting it above the 0.5 fidelity
+threshold — **zh now has zero degenerate passes**.
+
+The one residue left in that pattern (the `for item in $items … end` loop) is
+**structural, not zh-specific**: the transformer emits a mangled header
+(`为 把 item 在 $items 那么 …` — BA-marked loop variable + a spurious `那么` before
+the body), and zh `for`-loops don't parse at all (no handcrafted/generated zh
+loop-header pattern). It degrades `template-literal-list-build` for 5 other
+languages too (he, ms, qu, sw, vi), so it belongs in the block-body roadmap arc,
+not this zh slice.
 
 ## Probe
 
@@ -174,5 +221,10 @@ and produces false negatives. To test a raw zh string directly, call
   longer feeds it) rather than retired — harmless, and removing it would drop a
   safety net for legacy/hand-written `等待 把 1s` for no gate benefit.
 - **#2 ✅** — `那么` then-recognition.
-- **#3 ⏳** — still deferred; a distinct fetch keyword + source-marking + block-body
-  track (see #3 for the concrete next steps surfaced by the post-#1 re-probe).
+- **#3 ✅** — zh `fetch`-in-event-block recovers `{on, fetch, put}` (was `{on}`).
+  Dict realign (`获取`→`抓取`) + `fetch-zh-ba` (source `把`/no-marker + `的`/`作为`
+  `responseType`) + `put-zh-ba` split-verb realign. Locked by
+  `multilingual-roadmap-fixes.test.ts` ("zh fetch in event block"); `--regression`
+  gate green; **zh degenerate passes → 0** (the #2-sweep `set-zh-ba` realign cleared
+  the last one). The remaining `for`-loop residue in `template-literal-list-build`
+  is structural and cross-language (not zh) — tracked in the block-body roadmap.
