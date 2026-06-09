@@ -61,6 +61,37 @@ behaviors), not a parsing/i18n track. See Track 2.
 
 ## Shipped
 
+### Track 5 — SOV verb-first event-body reorder (−9 degenerate)
+
+- **Degenerate passes 159 → 150 (−9), 0 regressions, parse rate unchanged.** Full
+  `browser-priority` regen + `--regression` gate green; the `event-once`,
+  `async-block`, and `event-debounce` SOV instances (ja/ko/tr/bn/qu) recover their
+  body commands instead of collapsing to a bare `*-generated-verb-first` command.
+- The i18n transformer (`tryTransformEventWithModifierBody`) lifts a leading body
+  modifier (`async`/`once`/`debounced`/`throttled`) out of the event handler so the
+  real verb isn't mis-rooted, keeps the body patient-first (recoverable by the
+  parser's SOV event-extraction), and re-emits the modifier as a leading literal the
+  parser strips pre-parse. **Gated to SOV** — SVO/VSO/V2/other are byte-identical.
+- See [SOV_REORDER_SCOPE.md](SOV_REORDER_SCOPE.md). Locked by
+  `multilingual-roadmap-fixes.test.ts` ("SOV verb-first event-body reorder") +
+  i18n `grammar.test.ts` ("SOV modifier-prefixed event body reorder").
+
+### Track 5 — fetch keyword alignment: ja (−2 degenerate, +fidelity)
+
+- **ja `取得`→`フェッチ` shipped.** Degenerate passes 150 → 148 (−2:
+  `fetch-do-not-throw`, `fetch-json`), ja `avgFidelity` 0.859 → 0.893, parse rate
+  unchanged, `--regression` gate green. The i18n dict emitted `取得` for both `get`
+  and `fetch`; the semantic ja profile reads `取得` as `get` (fetch primary is
+  `フェッチ`), so ja fetch-\* patterns parsed the wrong verb. The edit was blocked
+  until the SOV verb-first reorder fix (above): with `フェッチ` leading a verb-first
+  SOV body the event + then-chain used to drop; the body is now patient-first, so
+  `フェッチ` parses as `fetch` without losing the rest. Locked by
+  `multilingual-roadmap-fixes.test.ts` ("Japanese fetch keyword alignment").
+- **zh `获取`→`抓取` still deferred (inert).** Confirmed post-fix: `抓取` still drops
+  `fetch` inside the event-handler block body (`fetch-basic` stays degenerate
+  `{on}`), blocked behind the separate zh block-body parse gap. The dict edit is
+  inert for the metric until that gap is closed, so it was **not** shipped.
+
 ### Track 5 — juxtaposed multi-command event bodies (−20 degenerate)
 
 - **Degenerate passes 179 → 159 (−20), 0 regressions, parse rate unchanged** (3679/3696).
@@ -835,24 +866,19 @@ masking transform** delivered in two tiers (if-exists-class, then is-pred-class)
 not one sweep. Tier 1 (`if-exists` ar/it via if/else mask + `else` translation) is
 the recommended first PR of the arc.
 
-**fetch keyword alignment — ja/zh deferred (next session).** The de fetch fix
-(Shipped, above) found the same i18n-emits-the-get-word collision in **ja**
-(`取得`) and **zh** (`获取`). Both are blocked behind a deeper issue and were **not**
-shipped to keep the de win regression-free:
+**fetch keyword alignment — ja shipped, zh still deferred.** The de fetch fix
+found the same i18n-emits-the-get-word collision in **ja** (`取得`) and **zh**
+(`获取`).
 
-- **ja** — correcting the dict to `フェッチ` flips the 4 ja fetch-\* patterns
-  (`fetch-do-not-throw`/`-error-handling`/`-json`/`-with-headers`) **but regresses
-  `async-block`/ja 0.67→0.33**. Async Tier 1 (shipped) ruled out the `async` modifier
-  as the cause — the keyword is now stripped before parsing. The residual blocker is
-  the **SOV event-mid then-chain**: `フェッチ /api/data を クリック で … それから …`
-  parses to `{fetch}` only (the mid-stream event + `then`-chain are dropped), whereas
-  `取得`=get happens to anchor SOV verb-anchoring and recover on+put. So ja's fetch dict
-  edit is clean **only after Async Tier 2** (SOV event-mid then-chain recovery).
-- **zh** — `抓取` is the correct semantic fetch primary, but it still fails to parse
-  as `fetch` _inside the event-handler block body_ (zh fetch patterns drop `fetch`
-  even with the aligned keyword), so the dict edit is inert for the metric until the
-  zh block-body parse gap is closed. (`id` has an inert `ambil`/`muat` mismatch with
-  no corpus fetch patterns — latent, lowest priority.)
+- **ja — SHIPPED** (see Shipped → "fetch keyword alignment: ja"). The SOV
+  verb-first reorder fix removed the `async-block`/ja blocker (`フェッチ` now leads a
+  **patient-first** SOV body, not a verb-first one), so the `取得`→`フェッチ` dict edit
+  landed clean: −2 degenerate, ja `avgFidelity` 0.859→0.893, 0 regressions.
+- **zh — still deferred (inert).** `抓取` is the correct semantic fetch primary, but
+  it still fails to parse as `fetch` _inside the event-handler block body_ (confirmed
+  post-fix: `fetch-basic` stays degenerate `{on}`), so the dict edit is inert for the
+  metric until the zh block-body parse gap is closed. (`id` has an inert `ambil`/`muat`
+  mismatch with no corpus fetch patterns — latent, lowest priority.)
 
 Diagnostic for the next session: a 24-lang scan comparing each i18n `fetch`
 emission against the semantic profile's fetch primary/alternatives isolates these

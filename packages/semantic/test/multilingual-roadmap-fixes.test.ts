@@ -31,6 +31,45 @@ describe('Korean fetch keyword alignment (가져오기)', () => {
   }
 });
 
+describe('Japanese fetch keyword alignment (フェッチ)', () => {
+  // The i18n dict previously emitted 取得 for both `get` and `fetch`; the semantic
+  // ja profile reads 取得 as `get` (fetch primary is フェッチ). Aligning the dict to
+  // フェッチ lets ja fetch-* corpus patterns parse the real `fetch` verb. This was
+  // blocked until the SOV verb-first reorder fix (PR #298): with フェッチ leading a
+  // verb-first SOV body, the event + then-chain used to drop; the body is now kept
+  // patient-first so フェッチ parses as fetch without losing the rest. See
+  // docs-internal/MULTILINGUAL_ROADMAP.md ("fetch keyword alignment — ja").
+  function bodyActions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => bodyActions(x, acc));
+      else if (c && typeof c === 'object') bodyActions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → ja).
+  const cases: Array<[string, string[]]> = [
+    // fetch-basic: `on click fetch /api/data then put it into #result`
+    ['/api/data を クリック で フェッチ それから それ を #result に 置く', ['fetch', 'put']],
+    // fetch-with-method: `on submit fetch /api/form with method:"POST" body:form`
+    ['/api/form を 送信 で フェッチ method:"POST" body:form で', ['fetch']],
+  ];
+
+  for (const [input, expected] of cases) {
+    it(`parses フェッチ as fetch (not get): "${input}"`, () => {
+      const a = bodyActions(parse(input, 'ja'));
+      expect(a.has('on')).toBe(true);
+      for (const action of expected) expect(a.has(action)).toBe(true);
+      // The collision is resolved: フェッチ must not be read as `get`.
+      expect(a.has('get')).toBe(false);
+    });
+  }
+});
+
 describe('Korean transition keyword alignment (전환)', () => {
   const cases = [
     'transform 를 클릭 전환 "scale(1.2)" 에 300ms',

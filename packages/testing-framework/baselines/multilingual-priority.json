@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-09T02:03:31.181Z",
-  "commit": "41b9c6f",
+  "timestamp": "2026-06-09T03:54:00.189Z",
+  "commit": "e1ca5df",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -6320,15 +6320,13 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8410533910533909,
-      "avgFidelity": 0.8591991341991345,
+      "avgFidelity": 0.8929653679653682,
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "fetch-do-not-throw",
-        "fetch-json",
         "if-empty",
         "input-validation",
         "socket-basic"

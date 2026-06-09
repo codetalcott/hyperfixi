@@ -28,7 +28,7 @@ export const ja: Dictionary = {
     break: '中断',
     halt: '停止',
     wait: '待つ',
-    fetch: '取得',
+    fetch: 'フェッチ',
     call: '呼び出し',
     return: '戻る',
     make: '作る',
