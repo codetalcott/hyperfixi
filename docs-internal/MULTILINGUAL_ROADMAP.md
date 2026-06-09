@@ -61,6 +61,28 @@ behaviors), not a parsing/i18n track. See Track 2.
 
 ## Shipped
 
+### Track 5 — SOV put-into verb-final reorder (ko/tr/bn, +fidelity)
+
+- **tr `avgFidelity` 0.908 → 0.928, bn 0.935 → 0.952, 0 regressions, degenerate
+  count unchanged (148).** `--regression` gate green. ja had a `put-into` grammar
+  rule (`roleOrder: patient, destination, action` = verb-final); ko/tr/bn did not,
+  so `put X into Y` fell through to the generic reorder, which appends `destination`
+  **after** the verb (verb-middle `X i koy Y e`). The semantic parser only matches
+  verb-final put, so as a then-chain clause (`… then put it into me`) the `put`
+  silently dropped. Mirrored ja's rule into ko/tr/bn, **gated to standalone put via
+  a `predicate: parsed => !parsed.roles.has('event')`** so an event handler whose
+  action is `put` (`on success put …`) keeps the event mid-stream instead of being
+  verb-finalized (which would strand the event — caught as an
+  `announce-screen-reader` regression mid-implementation and fixed by the predicate).
+- The degenerate count is unchanged because the affected then-chain patterns were
+  already above the 50% threshold after the SOV reorder fix; this recovers the
+  dropped `put` (higher fidelity), it doesn't cross the degenerate line. ko is inert
+  for the current corpus (its body-clause parser already tolerated verb-middle put)
+  but the rule is kept for correctness/consistency. **qu** is excluded: it emits
+  verb-final already yet still fails to parse (a separate qu pattern/marker issue).
+- Locked by `multilingual-roadmap-fixes.test.ts` ("SOV put-into verb-final reorder")
+  - i18n `grammar.test.ts` ("SOV put-into verb-final reorder").
+
 ### Track 5 — SOV verb-first event-body reorder (−9 degenerate)
 
 - **Degenerate passes 159 → 150 (−9), 0 regressions, parse rate unchanged.** Full

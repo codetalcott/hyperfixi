@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-09T03:54:00.189Z",
-  "commit": "e1ca5df",
+  "timestamp": "2026-06-09T04:23:52.917Z",
+  "commit": "b20eba5",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -650,7 +650,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8657287157287157,
-      "avgFidelity": 0.9351731601731602,
+      "avgFidelity": 0.9515151515151513,
       "degeneratePasses": ["repeat-while", "socket-basic"],
       "bundleSize": 402829,
       "patterns": {
@@ -12667,7 +12667,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8648511256354393,
-      "avgFidelity": 0.9082788671023967,
+      "avgFidelity": 0.9277777777777777,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
