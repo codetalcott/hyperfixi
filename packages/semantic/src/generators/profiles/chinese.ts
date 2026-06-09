@@ -117,7 +117,7 @@ export const chineseProfile: LanguageProfile = {
     throw: { primary: '抛出', normalized: 'throw' },
     call: { primary: '调用', normalized: 'call' },
     return: { primary: '返回', normalized: 'return' },
-    then: { primary: '然后', alternatives: ['接着'], normalized: 'then' },
+    then: { primary: '然后', alternatives: ['接着', '那么'], normalized: 'then' },
     and: { primary: '并且', alternatives: ['和', '而且'], normalized: 'and' },
     end: { primary: '结束', alternatives: ['终止', '完'], normalized: 'end' },
     // Advanced
