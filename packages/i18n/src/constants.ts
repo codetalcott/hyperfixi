@@ -30,6 +30,48 @@ export const ENGLISH_MODIFIER_ROLES: Readonly<Record<string, SemanticRole>> = {
 } as const;
 
 /**
+ * Maps a command verb to its **primary** semantic role — the role of the
+ * command's first/leading argument when no explicit modifier keyword marks it.
+ *
+ * The generic argument parser in the transformer defaults the first unmarked
+ * argument to `patient`, which is correct for the majority of commands
+ * (`toggle .x`, `add .x`, …) but wrong for commands whose leading argument is a
+ * non-patient — e.g. `wait <duration>`. Marking a duration as a patient emits a
+ * spurious object-marker in the target language (Chinese `等待 把 1s`, ungrammatical;
+ * Japanese `1s を 待つ`; Korean `1s 를 대기`), which the semantic parser then fails to
+ * match — dropping the command.
+ *
+ * Only commands whose primary role is **not** `patient` are listed here (the
+ * `patient` default already covers the rest). Mirrors the `primaryRole` field of
+ * the semantic package's command schemas (`@lokascript/semantic`); kept in sync by
+ * `schema-alignment.test.ts` so this local copy can't drift without the bundle
+ * having to pull in the whole semantic graph.
+ *
+ * @see packages/i18n/src/schema-alignment.test.ts
+ * @see docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model)
+ */
+export const COMMAND_PRIMARY_ROLES: Readonly<Record<string, SemanticRole>> = {
+  set: 'destination',
+  on: 'event',
+  trigger: 'event',
+  send: 'event',
+  wait: 'duration',
+  fetch: 'source',
+  get: 'source',
+  if: 'condition',
+  unless: 'condition',
+  while: 'condition',
+  repeat: 'loopType',
+  go: 'destination',
+  scroll: 'destination',
+  tell: 'destination',
+  default: 'destination',
+  swap: 'destination',
+  morph: 'destination',
+  bind: 'destination',
+} as const;
+
+/**
  * English modifier keywords (derived from ENGLISH_MODIFIER_ROLES)
  */
 export const ENGLISH_MODIFIERS: Set<string> = new Set([

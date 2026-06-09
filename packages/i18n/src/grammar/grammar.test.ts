@@ -520,6 +520,59 @@ describe('GrammarTransformer', () => {
       expect(result).toContain('/api/data');
     });
   });
+
+  describe('Duration / literal-primary marking (no spurious object particle)', () => {
+    // A command whose primary argument is a literal/measure (e.g. `wait <duration>`)
+    // must NOT have that argument marked as a fronted object: the generic argument
+    // parser used to default the leading arg to the `patient` role, so the target
+    // emitted an object particle on the duration — Chinese `等待 把 1s` (ungrammatical;
+    // a duration is never a BA-construction object), Japanese `1s を 待つ`, Korean
+    // `1s 를 대기`. The marked forms failed the semantic parser's `等待 {duration}`
+    // pattern and the trailing `wait` dropped. The transformer now honours the
+    // command's true primary role (`wait` → `duration`, which carries no marker).
+    // See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#1 — transformer role model).
+
+    it('zh: wait emits a grammatical duration (no 把 object marker)', () => {
+      const result = new GrammarTransformer('en', 'zh').transform('wait 1s');
+      expect(result).toContain('等待');
+      expect(result).toContain('1s');
+      expect(result).not.toContain('把');
+    });
+
+    it('ja: wait emits a duration with no を object particle', () => {
+      const result = new GrammarTransformer('en', 'ja').transform('wait 1s');
+      expect(result).toContain('待つ');
+      expect(result).toContain('1s');
+      expect(result).not.toContain('を');
+    });
+
+    it('ko: wait emits a duration with no 를/을 object particle', () => {
+      const result = new GrammarTransformer('en', 'ko').transform('wait 1s');
+      expect(result).toContain('대기');
+      expect(result).toContain('1s');
+      expect(result).not.toContain('를');
+      expect(result).not.toContain('을');
+    });
+
+    it('does not disturb marker-bearing primaries: zh fetch keeps its 把 (out of scope)', () => {
+      // `fetch`'s primary role is `source` (which IS marked in zh), so the fix must
+      // leave it untouched — only markerless literal/measure primaries are re-marked.
+      const result = new GrammarTransformer('en', 'zh').transform('fetch /api/data');
+      expect(result).toContain('/api/data');
+      expect(result).toContain('把');
+    });
+
+    it('does not disturb the SOV event-handler cue: ko `on click wait 2s` keeps its patient marker', () => {
+      // In an event handler, a verb-final SOV language without an event particle
+      // (Korean) relies on the leading argument's object marker to anchor the
+      // handler. The fix is scoped to standalone command statements, so this stays
+      // patient-marked and the `on` handler is still recognised downstream.
+      const result = new GrammarTransformer('en', 'ko').transform(
+        'on click wait 2s then remove me'
+      );
+      expect(result).toContain('를');
+    });
+  });
 });
 
 // =============================================================================
