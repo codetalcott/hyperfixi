@@ -826,7 +826,9 @@ so a single transform won't clear all conditional clusters cleanly:
   transformer mis-reorders as a verb, not an if-block. **Async Tier 1 SHIPPED**
   (see Shipped): the parser now strips the transparent `async` keyword, clearing the
   VSO/SVO/V2 slice (ar/de/it/th/tl, −5). SOV (ja/ko/bn/qu/tr) + zh + fr/pt remain
-  (Async Tier 2). Don't fold it into the if-block transform.
+  (Async Tier 2). Don't fold it into the if-block transform. **The SOV remainder
+  (verb-first event body) is scoped as its own project — see
+  [SOV_REORDER_SCOPE.md](SOV_REORDER_SCOPE.md).**
 
 Net: the block-body transform is worth building, but as an **if/else conditional
 masking transform** delivered in two tiers (if-exists-class, then is-pred-class),
