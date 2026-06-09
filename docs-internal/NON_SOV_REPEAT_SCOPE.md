@@ -10,10 +10,12 @@
 > `repeat-until-event` + bonus `focus-trap` (sw/tr); for-each ar/tl/zh 0.67→1.0;
 > while ja/ko/tr 0.75→1.0, qu 0.50→0.75; sw while 0.50→0.75. Locked by
 > `multilingual-roadmap-fixes.test.ts` ("Non-SOV repeat-\* loop-body + tail
-> residue"). **Deferred (separate keyword tracks, explicitly out of scope below):**
-> the zh `wait` SVO pattern gap (`等待 1s` parses to nothing — zh `repeat-forever`
-> sits at 0.67, faithful but not 1.0), and the qu/sw `add`-vs-`increment` keyword
-> overlap. Both are zh/qu/sw dictionary-alignment work, not the structural reorder.
+> residue"). **Follow-up keyword tracks:** the qu/sw `add`-vs-`increment` overlap is
+> now **✅ SHIPPED** (qu `yapachiy` / sw `ongezeko` dict alignment + a handcrafted
+> qu SOV increment pattern; qu/sw `repeat-while` 0.75→1.0 — see
+> `MULTILINGUAL_ROADMAP.md` → Shipped). **Still deferred:** the zh `wait` SVO pattern
+> gap (`等待 1s` parses to nothing — zh `repeat-forever` sits at 0.67, faithful but
+> not 1.0), a zh block-body parser track, not a dictionary fix.
 > **Prereq reading:** `SOV_REPEAT_SCOPE.md` (the SOV sibling, SHIPPED) and
 > `MULTILINGUAL_ROADMAP.md` → Shipped (SOV repeat-\* loop-body reorder; VSO
 > mid-stream event reorder).

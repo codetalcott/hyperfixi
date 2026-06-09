@@ -37,7 +37,7 @@ export const sw: Dictionary = {
     catch: 'shika',
     measure: 'pima',
     transition: 'mpito',
-    increment: 'ongeza',
+    increment: 'ongezeko',
     decrement: 'punguza',
     default: 'msingi',
     go: 'nenda',

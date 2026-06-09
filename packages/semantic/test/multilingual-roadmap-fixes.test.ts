@@ -979,3 +979,78 @@ describe('Non-SOV repeat-* loop-body + tail residue — zh/ar/tl/ja/ko/sw (Track
     expect([...a].sort()).toEqual(['add', 'on', 'toggle']);
   });
 });
+
+describe('qu/sw increment keyword alignment (yapachiy / ongezeko)', () => {
+  // The i18n dictionaries collapsed `add` and `increment` onto the same word
+  // (qu yapay, sw ongeza), so the transformer emitted the add-word for increment
+  // and the semantic parser read it as `add` — capping qu/sw repeat-while at 0.75
+  // (increment counted as the wrong action). The dicts now emit the profile's
+  // distinct increment primary (qu yapachiy, sw ongezeko). qu additionally needed
+  // a handcrafted SOV pattern (`{patient} ta yapachiy`) mirroring add-qu-sov — the
+  // generated SOV pattern didn't anchor the verb-final order. See the recommended
+  // follow-up to docs-internal/NON_SOV_REPEAT_SCOPE.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // qu is SOV: `increment #counter` → `#counter ta yapachiy`.
+  it('[qu] reads yapachiy as increment in verb-final SOV order (not add)', () => {
+    const a = actions(parse('#counter ta yapachiy', 'qu'));
+    expect(a.has('increment')).toBe(true);
+    expect(a.has('add')).toBe(false);
+  });
+  it('[qu] reads yapachiy as increment in verb-first order', () => {
+    const a = actions(parse('yapachiy #counter', 'qu'));
+    expect(a.has('increment')).toBe(true);
+  });
+  // qu add must still read as add (no collision introduced).
+  it('[qu] yapay still reads as add', () => {
+    const a = actions(parse('#counter ta yapay', 'qu'));
+    expect(a.has('add')).toBe(true);
+    expect(a.has('increment')).toBe(false);
+  });
+
+  // sw is SVO: `increment #counter` → `ongezeko #counter`.
+  it('[sw] reads ongezeko as increment (not add)', () => {
+    const a = actions(parse('ongezeko #counter', 'sw'));
+    expect(a.has('increment')).toBe(true);
+    expect(a.has('add')).toBe(false);
+  });
+  it('[sw] ongeza still reads as add', () => {
+    const a = actions(parse('ongeza #counter', 'sw'));
+    expect(a.has('add')).toBe(true);
+    expect(a.has('increment')).toBe(false);
+  });
+
+  // End-to-end: qu/sw repeat-while now recovers increment (was add), reaching 1.0.
+  it('[qu] repeat-while recovers increment via yapachiy', () => {
+    const a = actions(
+      parse(
+        'kay_kaq #counter.innerText < 10 ta ñitiy pi kutipay chayqa #counter ta yapachiy chayqa 200ms tukuy ta suyay',
+        'qu'
+      )
+    );
+    expect(a.has('increment')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('wait')).toBe(true);
+  });
+  it('[sw] repeat-while recovers increment via ongezeko', () => {
+    const a = actions(
+      parse(
+        'kwenye bonyeza rudia wakati #counter.innerText < 10 kisha ongezeko #counter kisha ngoja 200ms mwisho',
+        'sw'
+      )
+    );
+    expect(a.has('increment')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('wait')).toBe(true);
+  });
+});

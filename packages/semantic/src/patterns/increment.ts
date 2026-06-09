@@ -451,6 +451,54 @@ function getIncrementPatternsVi(): LanguagePattern[] {
   ];
 }
 
+function getIncrementPatternsQu(): LanguagePattern[] {
+  // Quechua is SOV: the i18n transformer emits `#counter ta yapachiy`
+  // (patient + accusative marker + verb). The generated SOV pattern doesn't
+  // anchor this order (the `add` command relies on a handcrafted `add-qu-sov`
+  // pattern for the same `{patient} ta <verb>` shape), so increment needs the
+  // equivalent handcrafted pair. `yapachiy` is the profile's increment primary
+  // (distinct from `yapay` = add). Mirrors getAddPatternsQu().
+  return [
+    // SOV pattern: #counter ta yapachiy (patient + verb)
+    {
+      id: 'increment-qu-sov',
+      language: 'qu',
+      command: 'increment',
+      priority: 100,
+      template: {
+        format: '{patient} ta yapachiy',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'ta' },
+          { type: 'literal', value: 'yapachiy' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        quantity: { default: { type: 'literal', value: 1 } },
+      },
+    },
+    // Verb-first (more casual): yapachiy #counter
+    {
+      id: 'increment-qu-simple',
+      language: 'qu',
+      command: 'increment',
+      priority: 90,
+      template: {
+        format: 'yapachiy {patient}',
+        tokens: [
+          { type: 'literal', value: 'yapachiy' },
+          { type: 'role', role: 'patient' },
+        ],
+      },
+      extraction: {
+        patient: { position: 1 },
+        quantity: { default: { type: 'literal', value: 1 } },
+      },
+    },
+  ];
+}
+
 function getIncrementPatternsZh(): LanguagePattern[] {
   return [
     {
@@ -493,6 +541,8 @@ export function getIncrementPatternsForLanguage(language: string): LanguagePatte
       return getIncrementPatternsTh();
     case 'uk':
       return getIncrementPatternsUk();
+    case 'qu':
+      return getIncrementPatternsQu();
     case 'vi':
       return getIncrementPatternsVi();
     case 'zh':
