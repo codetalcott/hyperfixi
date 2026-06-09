@@ -5,7 +5,8 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **juxtaposed multi-command event bodies** — a fused event pattern captured only the FIRST body command as the action; a then-chain/block continued, but a **juxtaposed** body (`halt the event call validateForm() if … end` — no `then` between commands) was dropped. `buildEventHandler` now re-parses any trailing non-`end` tokens as body commands (additive; `parseBodyWithGrammarPatterns` only appends matched commands). **Degenerate passes 179 → 159 (−20), 0 regressions, parse rate unchanged** (3679/3696). Cleared `form-submit-prevent` (de/it/ru/sw/th/uk/vi), `fetch-loading-state` (bn/hi/it/ja/tr), plus `fetch-error-handling`/`fetch-with-headers` (ja), `render-template-with-data` (qu/tl/vi), `repeat-forever`/`stagger-animation` (qu), `window-scroll` (th)._
+_Last updated: after Track 5 **SOV `repeat-*` loop-body reorder** — for SOV languages the i18n transformer surfaces a block loop's keyword (반복/পুনরাবৃত্তি/kutipay) — or a leading `while`/`for` clause — ahead of its body, so the parser matched the bare loop keyword as a standalone command (Stage 2) and dropped the event + variant + body (degenerate). Korean (no event-marker particle) was hit hardest. The Stage-2 gate now prefers SOV event extraction (Stage 3) when the matched action is a block/loop action, recovering the event + loop body; and the qu `repeat` dict keyword was realigned (`kutichiy`→`kutipay`; `kutichiy` is the profile's `return` primary). **Degenerate passes 148 → 141 (−7), 0 regressions, parse rate unchanged** (3678/3696). Cleared `repeat-forever`/`repeat-while`/`repeat-for-each` for ko (+ `stagger-animation` bonus), `repeat-while` for bn, `repeat-while`/`repeat-for-each` for qu. avgFidelity ko 0.889→0.903, bn 0.952→0.956, qu 0.782→0.794. See [SOV_REPEAT_SCOPE.md](SOV_REPEAT_SCOPE.md)._
+_Earlier: Track 5 **juxtaposed multi-command event bodies** — a fused event pattern captured only the FIRST body command as the action; a then-chain/block continued, but a **juxtaposed** body (`halt the event call validateForm() if … end` — no `then` between commands) was dropped. `buildEventHandler` now re-parses any trailing non-`end` tokens as body commands (additive; `parseBodyWithGrammarPatterns` only appends matched commands). **Degenerate passes 179 → 159 (−20), 0 regressions, parse rate unchanged** (3679/3696). Cleared `form-submit-prevent` (de/it/ru/sw/th/uk/vi), `fetch-loading-state` (bn/hi/it/ja/tr), plus `fetch-error-handling`/`fetch-with-headers` (ja), `render-template-with-data` (qu/tl/vi), `repeat-forever`/`stagger-animation` (qu), `window-scroll` (th)._
 _Earlier: Track 5 **then/end keyword recognition for 9 profile-only languages** (it, ru, th, vi, he, hi, ms, pl, uk). `isThenKeyword`/`isEndKeyword` were hardcoded maps covering only 15 langs; the other 9 fell back to the English literal, so their native then/end (`allora`, `затем`, …) weren't recognized — multi-command then-chains collapsed to the first command and `end`-blocks didn't close. Both now fall back to the profile's form. **Parse rate +7** (he/it/pl behaviors now parse — `end` recognized; he/it/pl jump toward 100%), **+4 fidelity** (`fetch-loading-state` ru/th/vi/uk degenerate→faithful), **0 regressions** (gate green). Degenerate nets 176 → 179 (−4 fetch-loading-state, +7 newly-parsing Bucket B behaviors)._
 _Earlier: Track 5 **Async Tier 1 — `async` modifier transparency** (degenerate **181 → 176**, −5: `async-block` ar/de/it/th/tl)._
 _Earlier: after Track 5 **Tier 1 — if/else block-body in event handlers** (degenerate passes **219 → 181**, −38 degenerate→faithful, 0 fidelity regressions). Cleared `if-exists` entirely (ar+it flipped, the named Tier 1 target) and lifted `if-empty`/`input-validation`/`unless-condition` across 13 languages. Before that: German `fetch` keyword alignment, caret-scope masking, @attr-in-selector-role, trailing-event block-wrap, custom-event SOV, property-path patient, (parse-rate) Tier 1, Track 4, Track 1 (reactive) complete._
@@ -60,6 +61,53 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 — SOV `repeat-*` loop-body reorder (ko/bn/qu, −7 degenerate)
+
+- **Degenerate passes 148 → 141 (−7), 0 regressions, parse rate unchanged**
+  (3678/3696). Full `browser-priority` regen + `--regression` gate green; every
+  flip is degenerate→faithful, zero faithful→degenerate, zero parse-success ↑/↓.
+  Cleared `repeat-forever`/`repeat-while`/`repeat-for-each` (ko) + the
+  `stagger-animation` repeat body (ko bonus), `repeat-while` (bn),
+  `repeat-while`/`repeat-for-each` (qu). avgFidelity ko 0.889→0.903, bn
+  0.952→0.956, qu 0.782→0.794; all other languages byte-identical.
+- **Root cause (two layers — parser was the real blocker, mirroring the if/else
+  fix).** (1) For SOV the i18n transformer surfaces a block loop's keyword
+  (`반복`/`পুনরাবৃত্তি`/`kutipay` = repeat) — or a leading `while <cond>` / `for <x> in
+<y>` clause — ahead of its body. The semantic parser matched the bare loop
+  keyword as a **standalone command** at Stage 2 (`{ action: 'repeat'/'while',
+roles: {} }`) and returned before the SOV event-extraction (Stage 3) could run,
+  dropping the event + variant + body. **Korean is hit hardest:** with no
+  event-marker particle the Stage-1 fused event pattern can't anchor, so the bare
+  loop keyword always won. bn/qu fail only on the `while`/`for` variants, where the
+  leading condition clause pushes the event mid-stream and breaks the Stage-1
+  match. (2) The qu i18n dict emitted `kutichiy` for `repeat`, but `kutichiy` is the
+  semantic qu profile's **`return`** primary (repeat = `kutipay`) — a keyword
+  collision that mis-parsed every qu `repeat-*` independent of the reorder.
+- **Fix (two parts, both additive).**
+  1. **Parser (`semantic-parser.ts`, Stage 2 gate).** When the Stage-2 command
+     match's action is a block/loop action (`BLOCK_BODY_ACTIONS` = if/unless/while/
+     repeat/for), try `trySOVEventExtraction` (Stage 3) first; use its event-handler
+     result when it finds a real event whose body parses, else fall back to the bare
+     command. Gated to block/loop actions and only taken when SOV extraction finds an
+     event, so the counted variant (`repeat N times`) and genuine standalone loops
+     (no event → SOV extraction returns null) are unaffected — no phantom event
+     handler is synthesized. ja/tr already recovered these via Stage-1 (their event
+     marker anchors the fused pattern) and are untouched.
+  2. **qu keyword alignment (passthrough).** i18n qu dict `repeat: 'kutichiy'` →
+     `'kutipay'` (the semantic repeat primary). Collision-free: `kutichiy` stays
+     `return`'s word. Mirrors the qu `install` and de `fetch` dict realignments.
+- **Honest scope.** ko `repeat-forever` lands at 0.67 (the `반복` keyword + English
+  `forever` don't re-assemble into a `repeat` node, but the event + body recover) and
+  qu `repeat-while` at 0.50 (the body `yapay`=add vs `increment`, and a `tukuy`=end
+  landing mid-stream drops the trailing `wait` — the same then-chain-tail residue
+  ja/tr show at 0.75). All are ≥0.5 (faithful). Non-SOV `repeat-*` degenerates
+  (`ar`/`tl` VSO, `zh` SVO, `sw`) are separate word-order issues, out of scope.
+- Locked by `multilingual-roadmap-fixes.test.ts` ("SOV repeat-\* loop-body reorder":
+  ko/bn/qu recover the event + loop body; counted variant unaffected; a no-event loop
+  never becomes an event handler; qu `kutipay` parses as `repeat` not `return`) and
+  `grammar.test.ts` (qu emits `kutipay`, not `kutichiy`). See
+  [SOV_REPEAT_SCOPE.md](SOV_REPEAT_SCOPE.md).
 
 ### Track 5 — SOV put-into verb-final reorder (ko/tr/bn, +fidelity)
 

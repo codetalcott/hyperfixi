@@ -660,3 +660,109 @@ describe('SOV put-into verb-final reorder — ko/tr/bn (Track 5)', () => {
     expect(a.has('put')).toBe(true);
   });
 });
+
+describe('SOV repeat-* loop-body reorder — ko/bn/qu (Track 5)', () => {
+  // For SOV languages the i18n transformer surfaces a block loop's keyword
+  // (반복/পুনরাবৃত্তি/kutipay = repeat) — or a leading `while`/`for` clause — ahead of
+  // its body, so the semantic parser used to match the bare loop keyword as a
+  // *standalone* command (Stage 2) and drop the event + loop variant + body
+  // (degenerate). Korean is hit hardest: with no event-marker particle the
+  // Stage-1 fused event pattern can't anchor. The Stage-2 gate now prefers the
+  // SOV event extraction when the matched action is a block/loop action, so the
+  // event is found, stripped, and the loop body re-parsed. See
+  // docs-internal/SOV_REPEAT_SCOPE.md. Strings below are post-transform output
+  // (en → lang); the parser must recover the event + body.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // repeat-forever: `on load repeat forever toggle .pulse wait 1s end`
+  it('[ko] repeat-forever recovers the event + loop body (not bare repeat)', () => {
+    const a = actions(parse('로드 반복 forever .pulse 를 토글 그러면 1s 를 대기 끝', 'ko'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+    expect(a.has('wait')).toBe(true);
+  });
+
+  // repeat-while: `on click repeat while #x.innerText < 10 increment #x wait 200ms end`
+  it('[ko] repeat-while recovers the event + repeat + increment body', () => {
+    const a = actions(
+      parse('동안 #counter.innerText < 10 를 클릭 반복 그러면 #counter 를 증가 그러면 200ms 끝 를 대기', 'ko')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+
+  // repeat-for-each: `on click repeat for item in .items add .processed to item`
+  it('[ko] repeat-for-each recovers the event + repeat + add body', () => {
+    const a = actions(parse('클릭 반복 item 안에 .items 그러면 .processed 를 추가 item 에', 'ko'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+
+  // bn repeat-while: the leading `while`-condition broke the Stage-1 fused event
+  // match (the event sits after the condition), so the bare `while` won Stage 2.
+  it('[bn] repeat-while recovers the event + increment body (not bare while)', () => {
+    const a = actions(
+      parse(
+        'যতক্ষণ #counter.innerText < 10 কে ক্লিক এ পুনরাবৃত্তি তারপর #counter কে বৃদ্ধি তারপর 200ms শেষ কে অপেক্ষা',
+        'bn'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('increment')).toBe(true);
+  });
+
+  // qu: the i18n dict emitted `kutichiy` for `repeat`, but the semantic qu profile
+  // reads `kutichiy` as `return` (repeat primary is `kutipay`) — a keyword
+  // collision that mis-parsed every qu repeat-*. The dict now emits `kutipay`.
+  it('[qu] repeat-forever parses kutipay as repeat (not return)', () => {
+    const a = actions(parse('apakuy pi kutipay forever .pulse ta tikray chayqa 1s ta suyay tukuy', 'qu'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('return')).toBe(false);
+  });
+  it('[qu] repeat-while recovers the event + repeat', () => {
+    const a = actions(
+      parse(
+        'kay_kaq #counter.innerText < 10 ta ñitiy pi kutipay chayqa #counter ta yapay chayqa 200ms tukuy ta suyay',
+        'qu'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+  });
+  it('[qu] repeat-for-each recovers the event + repeat', () => {
+    const a = actions(parse('ñitiy pi kutipay item ukupi .items chayqa .processed ta item man yapay', 'qu'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+  });
+
+  // Regression guards. The gate is scoped to block/loop actions AND only taken
+  // when SOV extraction finds a real event, so the counted variant and genuine
+  // standalone loops are unaffected — no phantom event handler is synthesized.
+  it('[ko] counted `repeat N times` inside an event still parses faithfully', () => {
+    const a = actions(parse('3 times 를 클릭 반복 그러면 "<p>Line</p>" 를 추가 나 에', 'ko'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('repeat')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+  it('[ko] a standalone loop (no event) is not turned into an event handler', () => {
+    // Transformer output for `repeat 3 times toggle .x end` (no `on …`). With no
+    // event keyword the gate's SOV extraction returns null, so the parse stays a
+    // bare repeat command — no phantom `on` is synthesized.
+    const a = actions(parse('3 times 를 반복 그러면 .x end 를 토글', 'ko'));
+    expect(a.has('on')).toBe(false);
+    expect(a.has('repeat')).toBe(true);
+  });
+});
