@@ -22,6 +22,7 @@ import { getGetPatternsForLanguage } from './get';
 import { getIncrementPatternsForLanguage } from './increment';
 import { getDecrementPatternsForLanguage } from './decrement';
 import { getWaitPatternsForLanguage } from './wait';
+import { getFetchPatternsForLanguage } from './fetch';
 import { getAppendPatternsForLanguage } from './append';
 import { getPrependPatternsForLanguage } from './prepend';
 import { getTriggerPatternsForLanguage } from './trigger';
@@ -67,6 +68,7 @@ const PATTERN_LOADERS: PatternLoader[] = [
   getIncrementPatternsForLanguage,
   getDecrementPatternsForLanguage,
   getWaitPatternsForLanguage,
+  getFetchPatternsForLanguage,
   getAppendPatternsForLanguage,
   getPrependPatternsForLanguage,
   getTriggerPatternsForLanguage,

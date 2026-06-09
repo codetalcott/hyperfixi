@@ -758,12 +758,17 @@ function getSetPatternsZh(): LanguagePattern[] {
       },
     },
     {
+      // BA-fronted set. The i18n grammar transformer emits the *split* verb form
+      // `把 {destination} 设置 到 {patient}` for `set X to Y` (verb 设置 + a
+      // separate "to"-marker 到), so the marker is matched as an optional group —
+      // when absent, the merged verb forms (设置为/设定为) carry the "as"
+      // themselves. Mirrors the put-zh-ba fix. See ZH_BLOCK_BODY_SCOPE.md (#3/#2).
       id: 'set-zh-ba',
       language: 'zh',
       command: 'set',
       priority: 95,
       template: {
-        format: '把 {destination} 设置为 {patient}',
+        format: '把 {destination} 设置 到 {patient}',
         tokens: [
           { type: 'literal', value: '把' },
           {
@@ -771,13 +776,22 @@ function getSetPatternsZh(): LanguagePattern[] {
             role: 'destination',
             expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
           },
-          { type: 'literal', value: '设置为', alternatives: ['設置為', '设定为', '設定為'] },
+          {
+            type: 'literal',
+            value: '设置',
+            alternatives: ['設置', '设定', '設定', '设置为', '設置為', '设定为', '設定為'],
+          },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: '到', alternatives: ['为', '為', '成'] }],
+          },
           { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
         ],
       },
       extraction: {
         destination: { position: 1 },
-        patient: { marker: '设置为', markerAlternatives: ['設置為', '设定为', '設定為'] },
+        patient: { marker: '到', markerAlternatives: ['为', '為', '成'] },
       },
     },
     {

@@ -1136,3 +1136,69 @@ describe('zh then-connective 那么 recognized (aligns with i18n)', () => {
     expect(a.has('toggle')).toBe(true);
   });
 });
+
+describe('zh fetch in event block (抓取 把 {source} [的 {responseType}])', () => {
+  // The i18n zh dict emitted `获取` for `fetch`, but the semantic zh profile reads
+  // 获取 as `get` (its `fetch` primary is 抓取), so a transformed `fetch` parsed as
+  // `get` / didn't anchor. The dict now emits 抓取. The transformer also runs the
+  // URL through its generic argument parser, marking it with the BA particle `把`
+  // (and emitting `的` for `as`), so a handcrafted `fetch-zh-ba` pattern tolerates
+  // the `把`/no-marker source and the `的`/作为 responseType. The trailing `put`
+  // (emitted `把 X 放置 到 Y`) recovers via the realigned `put-zh-ba` pattern (its
+  // verb 放置 + separate 到 marker). See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#3).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+  function roles(node: unknown): Record<string, unknown> {
+    const rec = (node as Record<string, unknown>) ?? {};
+    const r = rec.roles;
+    if (r instanceof Map) return Object.fromEntries(r);
+    return (r as Record<string, unknown>) ?? {};
+  }
+
+  it('[zh] parses BA-marked `抓取 把 /api/data` as fetch with source', () => {
+    const node = parse('抓取 把 /api/data', 'zh');
+    expect(actions(node).has('fetch')).toBe(true);
+    expect((roles(node).source as { value?: string })?.value).toBe('/api/data');
+  });
+  it('[zh] still parses 从-marked `抓取 从 /api/data` as fetch', () => {
+    expect(actions(parse('抓取 从 /api/data', 'zh')).has('fetch')).toBe(true);
+  });
+  it('[zh] parses the `as json` form `抓取 把 /api/data 的 json` (responseType)', () => {
+    const node = parse('抓取 把 /api/data 的 json', 'zh');
+    expect(actions(node).has('fetch')).toBe(true);
+    expect((roles(node).responseType as { raw?: string })?.raw).toBe('json');
+  });
+  // The trailing put in the BA-split form `把 它 放置 到 #result` must recover.
+  it('[zh] parses BA-split put `把 它 放置 到 #result` as put', () => {
+    expect(actions(parse('把 它 放置 到 #result', 'zh')).has('put')).toBe(true);
+  });
+  // Full event block: `on click fetch /api/data then put it into #result` →
+  // `当 点击 时 抓取 把 /api/data 那么 把 它 放置 到 #result`. Recovers {on, fetch, put}.
+  it('[zh] event block recovers {on, fetch, put} (was degenerate {on})', () => {
+    const a = actions(parse('当 点击 时 抓取 把 /api/data 那么 把 它 放置 到 #result', 'zh'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+
+  // Same BA-split shape for `set X to Y` → `把 X 设置 到 Y` (verb 设置 + separate
+  // 到 marker). This was the residual zh degenerate in `template-literal-list-build`;
+  // realigning set-zh-ba to the split form lifts that pattern above the 0.5
+  // fidelity threshold (zh cleared from the degenerate list). See #2 in the scope doc.
+  it('[zh] parses BA-split set `把 $html 设置 到 ""` as set', () => {
+    expect(actions(parse('把 $html 设置 到 ""', 'zh')).has('set')).toBe(true);
+  });
+  it('[zh] still parses merged `把 x 设置为 5` and bare `设置 x 为 5` as set', () => {
+    expect(actions(parse('把 x 设置为 5', 'zh')).has('set')).toBe(true);
+    expect(actions(parse('设置 x 为 5', 'zh')).has('set')).toBe(true);
+  });
+});
