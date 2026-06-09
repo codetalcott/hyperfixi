@@ -587,6 +587,23 @@ const EVENT_KEYWORDS = deriveEventKeywordsFromProfiles();
  */
 const EVENT_CONJUNCTIONS = new Set(['or']);
 
+/**
+ * Command-modifier keywords that may lead an event handler body
+ * (`on click async fetch …`, `on click once add …`). They modify the handler /
+ * following command rather than acting as the verb, so the transformer must lift
+ * them out before role assignment instead of treating them as the action.
+ * Source hyperscript is English, so these are the canonical English forms — the
+ * semantic parser recognizes the same literals when stripping them pre-parse.
+ */
+const BODY_MODIFIER_KEYWORDS = new Set([
+  'async',
+  'once',
+  'debounced',
+  'debounce',
+  'throttled',
+  'throttle',
+]);
+
 // =============================================================================
 // Helper: Dynamic Modifier Map
 // =============================================================================
@@ -1428,6 +1445,13 @@ export class GrammarTransformer {
       const jsBlock = this.tryTransformJsBlock(input);
       if (jsBlock !== null) return jsBlock;
 
+      // Event handler whose body leads with a command-modifier
+      // (`on click async fetch …`, `on click once add …`): lift the modifier out
+      // so the real verb isn't mistaken for the action and the SOV reorder keeps
+      // the body patient-first (recoverable by the parser's SOV event extraction).
+      const eventModifier = this.tryTransformEventWithModifierBody(input);
+      if (eventModifier !== null) return eventModifier;
+
       // Event handler whose body is a block (`on <event> if/repeat/unless … end`):
       // the block body must be reordered as a self-contained unit, not shredded
       // across the event handler's role soup.
@@ -1642,6 +1666,86 @@ export class GrammarTransformer {
     // rather than substituting in place.
     const eventClause = headOut.replace(placeholder, '').replace(/\s+/g, ' ').trim();
     return [eventClause, blockOut].filter(s => s.length > 0).join(' ');
+  }
+
+  /**
+   * Transform an event handler whose body leads with a command-modifier
+   * (`on <event> [from <src>] {async|once|debounced [at N]|throttled [at N]} <body>`).
+   *
+   * `parseEventHandler` reads the first token after the event as the **action**, so
+   * a leading modifier is mistaken for the verb and the real verb (`fetch`/`add`) is
+   * swept into the patient. For SOV targets the reorder then surfaces that verb
+   * **first** (`取得 /api/data を クリック …`), and the semantic parser matches the
+   * leading `<verb> <patient>` with the low-priority `*-generated-verb-first`
+   * command pattern — returning a bare command and discarding the event + the rest
+   * of the body (degenerate parse).
+   *
+   * Instead, lift the modifier out, transform the modifier-free handler through the
+   * normal path (which keeps the body in canonical patient-first SOV order so the
+   * event sits mid-stream and the existing SOV event-extraction recovers it), then
+   * re-emit the modifier as a **leading English literal**. The semantic parser
+   * strips a leading `once`/`debounced`/`throttled` (`extractStandaloneModifiers`)
+   * and an `async` anywhere (`stripAsyncModifier`) before parsing, so the modifier
+   * is consumed as handler metadata rather than shadowing the body.
+   *
+   * Returns `null` (fall through) when the input isn't an event handler or the body
+   * doesn't lead with a modifier — leaving simple/Mode-B handlers byte-identical.
+   */
+  private tryTransformEventWithModifierBody(input: string): string | null {
+    // The verb-first degenerate parse this works around is specific to SOV
+    // reorder: only there does a leading modifier displace the patient-first
+    // order and surface the verb first. SVO/VSO/V2/other targets keep the body
+    // in an order the parser already handles, so leave them byte-identical.
+    if (this.targetProfile.wordOrder !== 'SOV') return null;
+
+    const tokens = tokenize(input, this.sourceProfile);
+    if (tokens.length === 0) return null;
+    if (!EVENT_KEYWORDS.has(tokens[0]?.toLowerCase())) return null;
+
+    // Walk past the event clause head: event keyword, event token, any
+    // `or`-conjoined events, and an optional `from <source>` modifier — mirroring
+    // parseEventHandler's head parsing — to find where the body begins.
+    let i = 1; // past the event keyword
+    if (!tokens[i]) return null;
+    i++; // past the event token
+    while (tokens[i] && EVENT_CONJUNCTIONS.has(tokens[i].toLowerCase()) && tokens[i + 1]) {
+      i += 2;
+    }
+    if (tokens[i]?.toLowerCase() === 'from' && tokens[i + 1]) {
+      i++; // skip 'from'
+      // Collect source tokens until a command verb or a body modifier.
+      while (
+        tokens[i] &&
+        !ENGLISH_COMMANDS.has(tokens[i].toLowerCase()) &&
+        !BODY_MODIFIER_KEYWORDS.has(tokens[i].toLowerCase())
+      ) {
+        i++;
+      }
+    }
+
+    const modWord = tokens[i]?.toLowerCase();
+    if (!modWord || !BODY_MODIFIER_KEYWORDS.has(modWord)) return null;
+
+    // Consume the modifier phrase. `debounced`/`throttled` may carry an optional
+    // `at <duration>` (or a bare duration). `async`/`once` are single tokens.
+    const modStart = i;
+    let modEnd = i + 1;
+    if (modWord !== 'async' && modWord !== 'once') {
+      if (tokens[modEnd]?.toLowerCase() === 'at') modEnd++;
+      if (tokens[modEnd] && /^\d+(ms|s|m)?$/.test(tokens[modEnd])) modEnd++;
+    }
+
+    const modifierPhrase = tokens.slice(modStart, modEnd).join(' ');
+    const rebuilt = [...tokens.slice(0, modStart), ...tokens.slice(modEnd)].join(' ');
+
+    // A handler with only a modifier and no body has nothing to keep patient-first.
+    if (tokens.length - (modEnd - modStart) <= 2) return null;
+
+    // Re-run the full transform on the modifier-free handler so then-chains and
+    // juxtaposed bodies route through the existing (working) paths. The rebuilt
+    // input no longer leads with a modifier, so this never re-enters here.
+    const bodyOut = this.transform(rebuilt);
+    return [modifierPhrase, bodyOut].filter(s => s.length > 0).join(' ');
   }
 
   /**

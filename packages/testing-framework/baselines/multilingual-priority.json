@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-08T19:42:11.255Z",
-  "commit": "fe49e10",
+  "timestamp": "2026-06-09T02:03:31.181Z",
+  "commit": "41b9c6f",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -649,9 +649,9 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8754689754689755,
-      "avgFidelity": 0.9286796536796538,
-      "degeneratePasses": ["async-block", "event-once", "repeat-while", "socket-basic"],
+      "avgConfidence": 0.8657287157287157,
+      "avgFidelity": 0.9351731601731602,
+      "degeneratePasses": ["repeat-while", "socket-basic"],
       "bundleSize": 402829,
       "patterns": {
         "toggle-class-basic": {
@@ -814,10 +814,6 @@
           "success": true,
           "confidence": 1
         },
-        "async-block": {
-          "success": true,
-          "confidence": 1
-        },
         "js-inline": {
           "success": true,
           "confidence": 1
@@ -923,14 +919,6 @@
           "confidence": 1
         },
         "event-once": {
-          "success": true,
-          "confidence": 1
-        },
-        "event-debounce": {
-          "success": true,
-          "confidence": 1
-        },
-        "event-throttle": {
           "success": true,
           "confidence": 1
         },
@@ -1158,6 +1146,10 @@
           "success": true,
           "confidence": 0.5
         },
+        "async-block": {
+          "success": true,
+          "confidence": 0.5
+        },
         "modal-close-button": {
           "success": true,
           "confidence": 0.5
@@ -1187,6 +1179,14 @@
           "confidence": 0.5
         },
         "first-in-parent": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "event-debounce": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "event-throttle": {
           "success": true,
           "confidence": 0.5
         },
@@ -4424,7 +4424,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "avgFidelity": 0.8830086580086581,
+      "avgFidelity": 0.8840909090909093,
       "degeneratePasses": [
         "bind-auto-detect",
         "bind-explicit-property",
@@ -6319,15 +6319,14 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8475468975468975,
-      "avgFidelity": 0.8548701298701301,
+      "avgConfidence": 0.8410533910533909,
+      "avgFidelity": 0.8591991341991345,
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "event-once",
         "fetch-do-not-throw",
         "fetch-json",
         "if-empty",
@@ -6581,14 +6580,6 @@
           "confidence": 1
         },
         "event-once": {
-          "success": true,
-          "confidence": 1
-        },
-        "event-debounce": {
-          "success": true,
-          "confidence": 1
-        },
-        "event-throttle": {
           "success": true,
           "confidence": 1
         },
@@ -6864,6 +6855,14 @@
           "success": true,
           "confidence": 0.5
         },
+        "event-debounce": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "event-throttle": {
+          "success": true,
+          "confidence": 0.5
+        },
         "event-key-combo": {
           "success": true,
           "confidence": 0.5
@@ -6958,15 +6957,13 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.5683261183261183,
-      "avgFidelity": 0.8799783549783553,
+      "avgConfidence": 0.5553391053391054,
+      "avgFidelity": 0.8886363636363638,
       "degeneratePasses": [
-        "async-block",
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "event-once",
         "if-empty",
         "input-validation",
         "repeat-for-each",
@@ -6998,10 +6995,6 @@
           "success": true,
           "confidence": 1
         },
-        "async-block": {
-          "success": true,
-          "confidence": 1
-        },
         "window-scroll": {
           "success": true,
           "confidence": 1
@@ -7011,18 +7004,6 @@
           "confidence": 1
         },
         "repeat-while": {
-          "success": true,
-          "confidence": 1
-        },
-        "event-once": {
-          "success": true,
-          "confidence": 1
-        },
-        "event-debounce": {
-          "success": true,
-          "confidence": 1
-        },
-        "event-throttle": {
           "success": true,
           "confidence": 1
         },
@@ -7250,6 +7231,10 @@
           "success": true,
           "confidence": 0.5
         },
+        "async-block": {
+          "success": true,
+          "confidence": 0.5
+        },
         "js-inline": {
           "success": true,
           "confidence": 0.5
@@ -7367,6 +7352,18 @@
           "confidence": 0.5
         },
         "repeat-until-event": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "event-once": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "event-debounce": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "event-throttle": {
           "success": true,
           "confidence": 0.5
         },
@@ -9502,15 +9499,13 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.7326118326118326,
-      "avgFidelity": 0.7752164502164502,
+      "avgConfidence": 0.7293650793650793,
+      "avgFidelity": 0.7817099567099568,
       "degeneratePasses": [
-        "async-block",
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "event-once",
         "get-value",
         "modal-close-escape",
         "repeat-for-each",
@@ -9633,10 +9628,6 @@
           "confidence": 1
         },
         "tell-command": {
-          "success": true,
-          "confidence": 1
-        },
-        "async-block": {
           "success": true,
           "confidence": 1
         },
@@ -9889,6 +9880,10 @@
           "confidence": 0.5
         },
         "call-function": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "async-block": {
           "success": true,
           "confidence": 0.5
         },
@@ -12670,19 +12665,17 @@
       }
     },
     "tr": {
-      "parseSuccess": 154,
-      "parseFailure": 0,
-      "parseRate": 1,
-      "avgConfidence": 0.8657287157287157,
-      "avgFidelity": 0.9023809523809526,
+      "parseSuccess": 153,
+      "parseFailure": 1,
+      "parseRate": 0.9935064935064936,
+      "avgConfidence": 0.8648511256354393,
+      "avgFidelity": 0.9082788671023967,
       "degeneratePasses": [
-        "async-block",
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
         "default-value",
-        "event-once",
         "focus-trap",
         "socket-basic"
       ],
@@ -12849,10 +12842,6 @@
           "confidence": 1
         },
         "tell-command": {
-          "success": true,
-          "confidence": 1
-        },
-        "async-block": {
           "success": true,
           "confidence": 1
         },
@@ -13176,6 +13165,10 @@
           "success": true,
           "confidence": 0.5
         },
+        "async-block": {
+          "success": true,
+          "confidence": 0.5
+        },
         "modal-close-button": {
           "success": true,
           "confidence": 0.5
@@ -13197,8 +13190,7 @@
           "confidence": 0.5
         },
         "window-resize": {
-          "success": true,
-          "confidence": 0.5
+          "success": false
         },
         "document-ready": {
           "success": true,

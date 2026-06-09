@@ -494,3 +494,68 @@ describe('Juxtaposed multi-command event bodies — Track 5', () => {
     expect([...a].sort()).toEqual(['on', 'toggle']);
   });
 });
+
+describe('SOV verb-first event-body reorder — modifier-prefixed bodies (Track 5)', () => {
+  // A leading command-modifier (async/once/debounced) used to displace the verb in
+  // the i18n SOV reorder, surfacing it first (`取得 /api/data を クリック …`). The
+  // semantic parser then matched the leading `<verb> <patient>` with the
+  // low-priority `*-generated-verb-first` command pattern and returned a bare
+  // command, dropping the event + the rest of the body (degenerate, fid 0.25).
+  //
+  // The transformer now lifts the modifier out and re-emits it as a leading
+  // literal, keeping the body patient-first so these transform outputs parse as a
+  // full event handler again. These strings are the post-fix transformer output;
+  // the parser must recover every body command. See docs-internal/SOV_REORDER_SCOPE.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // async-block: `on click async fetch /api/data then put it into me`.
+  // ko recovers the full then-chain (fetch + put); tr recovers the real verb
+  // (fetch) — the trailing `put` is dropped by a separate tr then-chain (`sonra`)
+  // gap, but the handler is no longer a degenerate bare-command parse. The core
+  // fix is that the event + the real verb survive instead of collapsing to one
+  // `*-generated-verb-first` command.
+  it('[ko] async-block keeps the full fetch + put body', () => {
+    const a = actions(parse('async /api/data 를 클릭 가져오기 그러면 그것 를 넣다 나 에', 'ko'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+  it('[tr] async-block recovers the event + fetch verb (no longer degenerate)', () => {
+    const a = actions(parse('async /api/data i tıklama de getir sonra o i koy ben e', 'tr'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+  });
+
+  // event-once: `on click once add .initialized to me call setup()`
+  const onceCases: Array<[string, string]> = [
+    ['ja', 'once .initialized を クリック で 追加 私 に それから setup() を 呼び出し'],
+    ['ko', 'once .initialized 를 클릭 추가 나 에 그러면 setup() 를 호출'],
+    ['tr', 'once .initialized i tıklama de ekle ben e sonra setup() i çağır'],
+  ];
+  for (const [lang, input] of onceCases) {
+    it(`[${lang}] event-once keeps add + call and records the once modifier`, () => {
+      const node = parse(input, lang) as Record<string, unknown>;
+      const a = actions(node);
+      expect(a.has('on')).toBe(true);
+      expect(a.has('add')).toBe(true);
+      expect(a.has('call')).toBe(true);
+      const mods = node.eventModifiers as { once?: boolean } | undefined;
+      expect(mods?.once).toBe(true);
+    });
+  }
+
+  it('does not over-generate on a simple SOV handler (ko)', () => {
+    const a = actions(parse('.active 를 클릭 토글', 'ko'));
+    expect([...a].sort()).toEqual(['on', 'toggle']);
+  });
+});
