@@ -82,6 +82,36 @@ examples/
 
 ## Essential Commands
 
+### Cold start (fresh checkout / web session)
+
+A freshly-cloned container has no workspace symlinks or local bins yet, and the
+package `dist/` trees are unbuilt. Before anything else:
+
+```bash
+npm install          # alias: npm run bootstrap — links workspaces + installs bins (tsx, vitest…)
+```
+
+> **`npm run build` is NOT dependency-ordered.** It maps to
+> `build --workspaces --if-present`, which builds in `package.json` declaration
+> order, not topological order. So building a single deep package on a cold tree
+> (e.g. `npm run build --prefix packages/core`) fails with
+> `Cannot find module .../framework/dist/index.js` until its upstream deps are
+> built first. (`npm run rebuild:full` uses the same unordered command and only
+> _looks_ like it succeeds — it pipes through `grep … || true` and swallows the
+> errors.)
+>
+> The authoritative topological build order lives in the **`build` job of
+> `.github/workflows/ci.yml`** (guarded against drift by
+> `npm run check:ci-order` → `scripts/check-ci-build-order.cjs`). For the
+> multilingual stack specifically, the ready-made ordered chain is
+> `npm run test:multilingual:build-deps` (intent → framework → semantic → i18n →
+> patterns-reference → core's `build:multilingual-dist`).
+>
+> Some package builds print `DTS Build error` / `tsc --emitDeclarationOnly`
+> failures but **still emit usable JS** — the `.js` bundle is produced before the
+> declaration step. A DTS error alone does not mean the build you need failed;
+> check whether the `dist/` artifact you actually consume exists.
+
 ### Core Package (Primary Development)
 
 ```bash
@@ -244,6 +274,28 @@ demanding the ~232 existing degenerate passes be fixed at once. After an
 _intentional_ fidelity change, regenerate the baseline (`--save-baseline`). The
 remaining degenerate passes (mostly block-body translation — `if-*`, `fetch-*`
 states, `async-block`) are tracked in `docs-internal/MULTILINGUAL_ROADMAP.md`.
+
+#### Running the multilingual `--regression` gate locally
+
+The CI `multilingual-validation` job is reproducible locally, but it needs the
+ordered build + a freshly synced patterns DB (the gate **refuses to run** against
+a stale/unstamped `patterns.db` — see the provenance-stamp note in
+`packages/patterns-reference/CLAUDE.md`). From a cold tree:
+
+```bash
+npm install                                              # if not already done
+npm run test:multilingual:build-deps                     # ordered build of the multilingual stack
+npm run populate --prefix packages/patterns-reference    # rebuild patterns.db + write its provenance stamp
+cd packages/testing-framework
+npx tsx src/multilingual/cli.ts --full --bundle browser-priority --regression
+```
+
+The gate exits non-zero on a parse-rate drop >2pts or >3 faithful→degenerate
+flips vs the committed baseline. After an _intentional_ fidelity change, re-run
+with `--save-baseline` (instead of `--regression`) to regenerate
+`packages/testing-framework/baselines/multilingual-priority.json`, and commit the
+new baseline. Per repo convention the regenerated `patterns.db` is **not**
+committed — CI re-populates it; only the dicts/profiles + baseline are tracked.
 
 **Other Workflows:**
 
