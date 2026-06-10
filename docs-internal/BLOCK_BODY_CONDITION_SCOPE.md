@@ -2,8 +2,9 @@
 
 > **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), Phase 1a
 > (`is empty` vocab for de/sw, −2), and Phase 1b (id toggle alignment, −1) **SHIPPED**
-> — degenerate **92 → 76**. Remaining: the genuinely-hard he/ja/ko condition work
-> (§3.3) and B3 then-chain.
+> — degenerate **92 → 76**. **Every** remaining degenerate instance now has a
+> diagnosis: §3.3 (he/ja/ko conditions, B3 then-chain) and §3.4 (full inventory of the
+> previously-undescribed 17 — masked-keyword quick wins vs deep block/SOV work).
 >
 > **Prereq reading:** `MULTILINGUAL_ROADMAP.md` → Shipped; `FOR_LOOP_BLOCK_BODY_DESIGN.md`
 > (the proven measure-first / decompose / phase playbook this reuses);
@@ -174,6 +175,46 @@ keyword wins left — verified):
   generalize the existing `BLOCK_BODY_ACTIONS` event-body recovery to then-chain
   positions (guarded "can only add parses, never break"). Independent of the condition
   work; shared with the deferred for-loop §2c.
+
+## 3.4 Remaining-work inventory (every degenerate instance has a diagnosis)
+
+The 76 still-degenerate instances break down as: **46 behaviors** (§0, separate Track 2
+runtime work), **13 already-scoped** (B1 conditions §3.3, B3 then-chain §3.3,
+install-behavior §2c), and **17 that were previously only lumped or undescribed** —
+inventoried here from a measure-first probe so none is a black box. All EN references in
+this group are shallow (1–4 actions), so recovering the dropped command(s) is usually
+enough to clear the 0.50 floor.
+
+### Likely-quick (masked keyword gap/mismatch — the focus/socket/id-toggle family)
+
+| Pattern       | Lang(s) | Diagnosis (one-line)                                                                               |
+| ------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `bind-*` (×4) | hi      | `bind` has **no hi dict/profile entry** → transformer emits English `bind`, unrecognized. Add it.  |
+| `get-value`   | qu      | dict `get: chaskiy` vs profile primary `taripay` — **mismatch** (chaskiy parses as `copy`). Align. |
+| `get-value`   | tl      | `kuhanin` (get) dropped — same keyword-recognition shape; verify dict↔profile then align.          |
+
+### Lexical collision (hard — same shape as ru/uk install §2c)
+
+| Pattern         | Lang | Diagnosis                                                                                                                                                                                  |
+| --------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `default-value` | tr   | `yükle` means **both** `load` (event) and `install` (command); `on load …` resolves to the install command. Needs disambiguation/tokenizer work, not a dict edit. (EN ref is just `{on}`.) |
+
+### Block/structural parsing (genuinely hard — the deep parser track)
+
+| Pattern                      | Lang(s)  | Diagnosis                                                                                                                                               |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `live-derived-value`         | hi       | `live` keyword **is** aligned (`लाइव`) but the `live … end` block still drops it — block-body parse.                                                    |
+| `live-multiple-deps`         | hi       | Same `live … end` block parse.                                                                                                                          |
+| `intercept-cache-strategies` | hi       | `intercept` unrecognized **and** a very large multi-clause `intercept … end` block — keyword + block.                                                   |
+| `event-debounce`             | ar,sw,tl | the `debounced at 300ms` **event modifier** mangles the event head → `fetch`/`on` drop.                                                                 |
+| `focus-trap`                 | pt       | nested conditional + `last`/`first <button/>` positionals + `matches` predicate; `focus` stays English inside the condition (B1-adjacent + positional). |
+| `modal-close-escape`         | qu       | SOV/VSO `on keydown[…] from window` event head reorder + multi-command body (`hide`/`remove`) drop.                                                     |
+| `window-scroll`              | ko       | SOV reorder collapses the `on scroll … if … else … end` handler to a bare `scroll` (same class as ja/ko if-empty, §3.3).                                |
+| `announce-screen-reader`     | ja       | SOV event head (`on success`) reorder + `@role` attr + trailing `set` drop.                                                                             |
+
+**Net:** ~6 instances (bind ×4, get-value qu/tl) are plausible quick keyword wins worth a
+measure-first probe next; the rest are the deep condition/block/SOV-reorder track (§3.3)
+or a collision (§2c). Behaviors (46) remain out of scope (Track 2).
 
 ## 4. Risks & validation (every phase)
 
