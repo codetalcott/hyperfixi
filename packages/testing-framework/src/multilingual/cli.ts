@@ -18,6 +18,11 @@ function parseArgs(): TestConfig {
     quickModeLimit: 10,
   };
 
+  // Track whether quick mode was explicitly requested, so --regression can safely
+  // upgrade the default-quick run to full (where the fidelity/degenerate ratchet
+  // actually runs) without overriding an explicit --quick.
+  let explicitQuick = false;
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
@@ -47,12 +52,16 @@ function parseArgs(): TestConfig {
         break;
 
       case '--mode':
-      case '-m':
-        config.mode = args[++i] as 'quick' | 'full';
+      case '-m': {
+        const mode = args[++i] as 'quick' | 'full';
+        config.mode = mode;
+        if (mode === 'quick') explicitQuick = true;
         break;
+      }
 
       case '--quick':
         config.mode = 'quick';
+        explicitQuick = true;
         break;
 
       case '--full':
@@ -119,6 +128,20 @@ function parseArgs(): TestConfig {
     }
   }
 
+  // The regression gate ratchets on degenerate/fidelity passes, which are only
+  // computed in full mode. A default-quick --regression run silently checks just
+  // parse rate — a much weaker gate. Upgrade to full unless the caller explicitly
+  // asked for quick (in which case warn that the fidelity ratchet is skipped).
+  if (config.regression && config.mode === 'quick') {
+    if (explicitQuick) {
+      console.warn(
+        '⚠ --regression in --quick mode only checks parse rate; the degenerate/fidelity ratchet requires --full.'
+      );
+    } else {
+      config.mode = 'full';
+    }
+  }
+
   return config;
 }
 
@@ -141,7 +164,10 @@ OPTIONS:
       --quick                  Quick mode (10 patterns per language)
       --full                   Full mode (all patterns)
   -v, --verbose                Enable verbose output
-  -r, --regression             Gate on regressions vs baseline (exit 1 if any)
+  -r, --regression             Gate on regressions vs baseline (exit 1 if any).
+                               Implies --full (the degenerate/fidelity ratchet
+                               needs full mode); pass --quick to force parse-rate-
+                               only and skip it.
       --baseline <path>        Baseline file (default: ./baselines/multilingual-priority.json)
   -c, --confidence <n>         Minimum confidence threshold (0-1)
       --verified-only          Only test verified translations
