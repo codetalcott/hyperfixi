@@ -1202,3 +1202,49 @@ describe('zh fetch in event block (抓取 把 {source} [的 {responseType}])', (
     expect(actions(parse('设置 x 为 5', 'zh')).has('set')).toBe(true);
   });
 });
+
+describe('he set: accusative-fronted form (קבע את {destination} על {patient})', () => {
+  // The i18n grammar transformer emits `קבע את {destination} על {patient}` for
+  // `set X to Y` — `את` is the direct-object marker on the variable being set, and
+  // `על` ("on"/"to") introduces the value. The generated pattern used the bare
+  // profile markers in the opposite arrangement, so the transformed `set` dropped
+  // (degenerate he in template-literal-list-build / fetch-json / fetch-do-not-throw).
+  // A handcrafted set-he-full pattern maps the accusative form to the correct set
+  // roles (destination = the var, patient = the value). See ZH_BLOCK_BODY_SCOPE.md (#2).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+  function roles(node: unknown): Record<string, unknown> {
+    const rec = (node as Record<string, unknown>) ?? {};
+    const r = rec.roles;
+    if (r instanceof Map) return Object.fromEntries(r);
+    return (r as Record<string, unknown>) ?? {};
+  }
+
+  it('[he] parses `קבע את $html על ""` as set with correct destination/patient', () => {
+    const node = parse('קבע את $html על ""', 'he');
+    expect(actions(node).has('set')).toBe(true);
+    const r = roles(node);
+    expect((r.destination as { value?: string })?.value).toBe('$html');
+    expect((r.patient as { value?: string })?.value).toBe('');
+  });
+  it('[he] parses a property-path target `קבע את #list.innerHTML על $html`', () => {
+    const node = parse('קבע את #list.innerHTML על $html', 'he');
+    expect(actions(node).has('set')).toBe(true);
+    expect((roles(node).destination as { type?: string })?.type).toBe('property-path');
+  });
+  it('[he] event-block `set` recovers (was the degenerate template-literal residue)', () => {
+    // on click set $x to "" → כ-לחיצה ... קבע את $x על ""
+    const a = actions(parse('ב לחיצה קבע את $x על "" אז קבע את #out על $x', 'he'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+});

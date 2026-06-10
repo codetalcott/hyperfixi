@@ -689,6 +689,49 @@ function getSetPatternsUk(): LanguagePattern[] {
   ];
 }
 
+function getSetPatternsHe(): LanguagePattern[] {
+  return [
+    {
+      // Hebrew set. The i18n grammar transformer emits the accusative-fronted form
+      // `קבע את {destination} על {patient}` for `set X to Y` — `את` is the direct-
+      // object marker on the variable being set, and `על` ("on"/"to") introduces
+      // the value. The generated pattern used the bare profile markers (destination
+      // → על, patient → את) in the opposite arrangement, so the transformed form
+      // didn't match and the `set` dropped (degenerate `template-literal-list-build`
+      // in he). `את` is required: the transformer always fronts the accusative for
+      // set, and keeping it required (rather than an optional group) avoids the
+      // matcher producing an empty partial match on unrelated `…את…` inputs.
+      // See docs-internal/ZH_BLOCK_BODY_SCOPE.md (#2 sweep — per-language set marking).
+      id: 'set-he-full',
+      language: 'he',
+      command: 'set',
+      priority: 100,
+      template: {
+        format: 'קבע את {destination} על {patient}',
+        tokens: [
+          { type: 'literal', value: 'קבע', alternatives: ['הגדר'] },
+          { type: 'literal', value: 'את' },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
+          { type: 'literal', value: 'על', alternatives: ['ב', 'אל', 'ל', 'כ'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'expression', 'reference', 'selector'],
+          },
+        ],
+      },
+      extraction: {
+        destination: { marker: 'את' },
+        patient: { marker: 'על', markerAlternatives: ['ב', 'אל', 'ל', 'כ'] },
+      },
+    },
+  ];
+}
+
 function getSetPatternsVi(): LanguagePattern[] {
   return [
     {
@@ -832,6 +875,8 @@ export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
       return getSetPatternsEs();
     case 'fr':
       return getSetPatternsFr();
+    case 'he':
+      return getSetPatternsHe();
     case 'hi':
       return getSetPatternsHi();
     case 'id':
