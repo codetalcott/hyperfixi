@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-10T14:19:35.899Z",
-  "commit": "c8eb15e",
+  "timestamp": "2026-06-10T16:40:18.531Z",
+  "commit": "b5b4ec1",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -4411,18 +4411,16 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "avgFidelity": 0.8954545454545457,
+      "avgFidelity": 0.9084415584415587,
       "degeneratePasses": [
         "bind-auto-detect",
         "bind-explicit-property",
         "bind-non-form-display",
         "bind-two-way",
-        "eventsource-basic",
         "install-behavior",
         "intercept-cache-strategies",
         "live-derived-value",
-        "live-multiple-deps",
-        "worker-basic"
+        "live-multiple-deps"
       ],
       "bundleSize": 404980,
       "patterns": {
@@ -11973,9 +11971,9 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8985472977069613,
-      "avgFidelity": 0.9370129870129869,
-      "degeneratePasses": ["event-debounce", "eventsource-basic", "get-value", "worker-basic"],
+      "avgConfidence": 0.9050408042004678,
+      "avgFidelity": 0.9499999999999998,
+      "degeneratePasses": ["event-debounce", "get-value"],
       "bundleSize": 404980,
       "patterns": {
         "add-class-basic": {
@@ -12186,11 +12184,19 @@
           "success": true,
           "confidence": 1
         },
+        "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-basic": {
           "success": true,
           "confidence": 1
         },
         "socket-send": {
+          "success": true,
+          "confidence": 1
+        },
+        "worker-basic": {
           "success": true,
           "confidence": 1
         },
@@ -12579,14 +12585,6 @@
           "confidence": 0.5
         },
         "event-throttle": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "eventsource-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "worker-basic": {
           "success": true,
           "confidence": 0.5
         },

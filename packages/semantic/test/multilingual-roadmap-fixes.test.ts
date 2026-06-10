@@ -1514,3 +1514,49 @@ describe('socket command keyword alignment (9 native-primary languages)', () => 
     });
   }
 });
+
+describe('eventsource / worker profile entries (hi, tl) — Phase 0b', () => {
+  // eventsource-basic and worker-basic were degenerate passes in hi and tl. Root
+  // cause: unlike socket (a missing i18n DICT entry), these languages' semantic
+  // PROFILES had no `eventsource`/`worker` entry at all (the other 22 carry an
+  // English-literal primary that matches the transformer's English emission, since
+  // no language has an i18n dict entry for these streaming commands). So the
+  // generated pattern didn't exist and the command dropped. Fix: add the profile
+  // entries (English primary — the transformer emits the English literal — with a
+  // native transliteration as alternative for hi). Clears all 4 (degenerate →
+  // faithful 1.0; the EN reference for each is just {eventsource}/{worker}). See
+  // docs-internal/BLOCK_BODY_CONDITION_SCOPE.md (Phase 0b).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang).
+  const cases: Array<[string, string, string]> = [
+    [
+      'hi',
+      'eventsource',
+      'ChatStream को eventsource /events से फिर message पर फिर यह को रखें #messages end में',
+    ],
+    [
+      'tl',
+      'eventsource',
+      'eventsource ChatStream mula sa /events pagkatapos kapag message pagkatapos ilagay ito sa #messages end',
+    ],
+    ['hi', 'worker', 'Calculator def add(a, b) को worker फिर a + b समाप्त समाप्त को लौटाएं'],
+    ['tl', 'worker', 'worker Calculator def add(a, b) pagkatapos ibalik a + b wakas wakas'],
+  ];
+
+  for (const [lang, command, input] of cases) {
+    it(`[${lang}] recovers the ${command} command`, () => {
+      expect(actions(parse(input, lang as 'hi')).has(command)).toBe(true);
+    });
+  }
+});

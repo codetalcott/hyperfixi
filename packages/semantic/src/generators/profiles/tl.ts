@@ -162,6 +162,10 @@ export const tagalogProfile: LanguageProfile = {
     stream: { primary: 'i-stream', alternatives: ['stream', 'agos'], normalized: 'stream' },
     live: { primary: 'live', alternatives: ['tuwiran', 'direkta'], normalized: 'live' },
     socket: { primary: 'socket', alternatives: ['websocket'], normalized: 'socket' },
+    // Streaming/concurrency: transformer emits the English literal (no i18n dict
+    // entry yet); Filipino code-switches English heavily, so English primary.
+    worker: { primary: 'worker', alternatives: ['manggagawa'], normalized: 'worker' },
+    eventsource: { primary: 'eventsource', normalized: 'eventsource' },
     // Service-worker keyword (Filipino code-switches English heavily; English
     // primary + native alternative, matching the socket/live entries above)
     intercept: {
