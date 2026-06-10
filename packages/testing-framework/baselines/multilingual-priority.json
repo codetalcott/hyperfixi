@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-10T18:23:20.806Z",
-  "commit": "5386c82",
+  "timestamp": "2026-06-10T20:03:14.681Z",
+  "commit": "b963578",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -9444,14 +9444,13 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.7293650793650793,
-      "avgFidelity": 0.8796536796536798,
+      "avgConfidence": 0.7326118326118326,
+      "avgFidelity": 0.881818181818182,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "get-value",
         "modal-close-escape"
       ],
       "bundleSize": 405037,
@@ -9565,6 +9564,10 @@
           "confidence": 1
         },
         "log-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "get-value": {
           "success": true,
           "confidence": 1
         },
@@ -9809,10 +9812,6 @@
           "confidence": 0.5
         },
         "blur-element": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "get-value": {
           "success": true,
           "confidence": 0.5
         },
@@ -11960,9 +11959,9 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9050408042004678,
-      "avgFidelity": 0.9499999999999998,
-      "degeneratePasses": ["event-debounce", "get-value"],
+      "avgConfidence": 0.9075454424193916,
+      "avgFidelity": 0.9543290043290041,
+      "degeneratePasses": ["event-debounce"],
       "bundleSize": 405037,
       "patterns": {
         "add-class-basic": {
@@ -12369,6 +12368,10 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "get-value": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "modal-open": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -12548,10 +12551,6 @@
         "repeat-while": {
           "success": true,
           "confidence": 0.5294117647058824
-        },
-        "get-value": {
-          "success": true,
-          "confidence": 0.5
         },
         "async-block": {
           "success": true,

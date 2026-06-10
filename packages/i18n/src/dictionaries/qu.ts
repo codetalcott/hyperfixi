@@ -15,7 +15,10 @@ export const qu: Dictionary = {
     // churay for set made the semantic parser read a transformed `set` as `put`.
     // See ZH_BLOCK_BODY_SCOPE.md (#2 sweep — keyword realignment, cf. zh fetch).
     set: 'churanay',
-    get: 'chaskiy',
+    // Align with the semantic quechua profile's `get` primary (`taripay`); the
+    // previous `chaskiy` had no profile entry, so the transformed `get` dropped
+    // (get-value parsed degenerate). Same dict↔profile alignment as id `toggle`.
+    get: 'taripay',
     add: 'yapay',
     remove: 'qichuy',
     toggle: 'tikray',

@@ -1635,3 +1635,40 @@ describe('id toggle keyword alignment (unless-condition) — block-body Phase 1b
     expect(a.has('toggle')).toBe(true);
   });
 });
+
+describe('qu/tl get keyword alignment (get-value) — block-body quick win', () => {
+  // get-value (`on click get #input.value then log it`) was degenerate in qu and
+  // tl — a masked dict↔profile mismatch (same family as id toggle / focus / socket),
+  // NOT a structural bug. The i18n dicts emitted a word the semantic profile's `get`
+  // primary doesn't claim:
+  //   qu: dict `get: 'chaskiy'` had no profile entry at all (the transformed `get`
+  //       dropped; only {on, copy} survived — fid 0.33).
+  //   tl: dict `get: 'kuhanin'` is the base of fetch's `kuhanin_mula`, so `get`
+  //       dropped (only {log} survived — fid 0.33).
+  // Aligning each dict to its profile `get` primary (qu `taripay`, tl `kunin`) lets
+  // the body recover: qu {on, get, copy} (0.33 → 0.67), tl {on, get, log} (0.33 → 1.0)
+  // — both degenerate → faithful. Degenerate total 76 → 74 (−2), gate green.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[qu] recovers get with the profile primary (taripay)', () => {
+    // Corpus-shaped transformer output (en → qu), get-value.
+    const a = actions(parse('#input.value ta ñitiy pi taripay chayqa chay ta qillqay', 'qu'));
+    expect(a.has('get')).toBe(true);
+  });
+
+  it('[tl] recovers get with the profile primary (kunin)', () => {
+    // Corpus-shaped transformer output (en → tl, VSO), get-value.
+    const a = actions(parse('kunin #input.value kapag click pagkatapos itala ito', 'tl'));
+    expect(a.has('get')).toBe(true);
+  });
+});
