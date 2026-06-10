@@ -243,6 +243,33 @@ export class SemanticParserImpl implements ISemanticParser {
             : midLoop;
           return withDiagnostics(result, diagnostics);
         }
+      } else if (tryGetProfile(language)?.wordOrder === 'VSO') {
+        // VSO (verb-initial: ar, tl): a *plain* leading command (not a block/loop)
+        // can be followed by a mid-stream event clause — `احذف .x من .y عند نقر ثم …`
+        // / `alisin .x mula sa .y kapag click pagkatapos …` (= `remove .x from .y on
+        // click then …`). The transformer fronts the verb and places the event after
+        // the first command, so the bare command wins Stage 2 and the event + the
+        // then-chain body drop (ar/tl `tabs-*`, `accordion-exclusive`, `halt-*`,
+        // `copy-to-clipboard`, `form-submit-prevent`). Restricted to VSO: in
+        // event-first SVO/SOV languages a plain command is never an event-mid-stream
+        // form, and running the extractor there mis-fires on incidental `on`+event
+        // token pairs. Same extractor as the loop path; it fires only on a real
+        // on-marked event whose body parses (null otherwise), so within VSO it can
+        // only add parses, never break the counted standalone-command variant.
+        const midCmd = this.tryMidStreamEventExtraction(parseInput, language, sortedPatterns);
+        if (midCmd) {
+          diagnostics.push(
+            parseDiagnostic(
+              `mid-stream event extraction preferred over bare ${commandMatch.pattern.command} command`,
+              'info',
+              'stage-midstream-cmd'
+            )
+          );
+          const result = modifiers
+            ? this.applyModifiers(midCmd as EventHandlerSemanticNode, modifiers)
+            : midCmd;
+          return withDiagnostics(result, diagnostics);
+        }
       }
       diagnostics.push(
         parseDiagnostic(

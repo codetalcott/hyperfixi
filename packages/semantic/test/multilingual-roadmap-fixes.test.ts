@@ -1379,3 +1379,46 @@ describe('ms (Malay) profile: event handler + set + fetch', () => {
     expect(a.has('fetch')).toBe(true);
   });
 });
+
+describe('VSO (ar/tl) mid-stream event after a plain leading command', () => {
+  // VSO (verb-initial) languages front the verb, so the i18n transformer renders an
+  // `on click` handler as `<command> … on click then <body>` — the event clause
+  // sits mid-stream after the first command. The parser matched the leading command
+  // as a bare standalone (dropping the event + then-chain body): ar/tl `tabs-*`,
+  // `accordion-exclusive`, `halt-*`, `copy-to-clipboard`, `form-submit-prevent`,
+  // `take-class-from-siblings`. The mid-stream event extractor (already used for the
+  // VSO loop path) now also fires on a plain leading command, gated to wordOrder
+  // VSO. See ZH_BLOCK_BODY_SCOPE.md / FOR_LOOP_BLOCK_BODY_DESIGN.md context.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ar] recovers {on, remove, add} from a mid-stream event (tabs-basic)', () => {
+    const a = actions(parse('احذف .active من .tab عند نقر ثم أضف .active إلى أنا', 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+  it('[tl] recovers {on, remove, add} from a mid-stream event (tabs-basic)', () => {
+    const a = actions(
+      parse('alisin .active mula sa .tab kapag click pagkatapos idagdag .active sa ako', 'tl')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('remove')).toBe(true);
+    expect(a.has('add')).toBe(true);
+  });
+  it('[ar] recovers {on, halt, toggle} (halt-propagation)', () => {
+    const a = actions(parse('أوقف the حدث عند نقر ثم بدل .active', 'ar'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+});
