@@ -1,12 +1,13 @@
 # Block-body cluster — scope, decomposition & phased plan
 
 > **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), Phase 1a
-> (`is empty` vocab for de/sw, −2), Phase 1b (id toggle alignment, −1), and
-> `get-value` qu/tl keyword alignment (−2) **SHIPPED** — degenerate **92 → 74**.
-> **Every** remaining degenerate instance now has a diagnosis: §3.3 (he/ja/ko
-> conditions, B3 then-chain) and §3.4 (full inventory of the previously-undescribed 17
-> — masked-keyword quick wins vs deep block/SOV work). **`hi bind` was reclassified
-> from "likely-quick" to structural after a measure-first probe (see §3.4).**
+> (`is empty` vocab for de/sw, −2), Phase 1b (id toggle alignment, −1),
+> `get-value` qu/tl keyword alignment (−2), and B3 fr/pt marker-less `fetch` (−4)
+> **SHIPPED** — degenerate **92 → 70**. **Every** remaining degenerate instance now has
+> a diagnosis: §3.3 (he/ja/ko conditions) and §3.4 (full inventory of the
+> previously-undescribed 17 — masked-keyword quick wins vs deep block/SOV work).
+> **`hi bind` was reclassified from "likely-quick" to structural after a measure-first
+> probe (see §3.4).**
 >
 > **Prereq reading:** `MULTILINGUAL_ROADMAP.md` → Shipped; `FOR_LOOP_BLOCK_BODY_DESIGN.md`
 > (the proven measure-first / decompose / phase playbook this reuses);
@@ -41,10 +42,18 @@ isolates a **stack** of mechanisms, with one dominant shared root cause:
 - **B2 — the transformer injects a spurious `then`/marker into the block header.**
   de `if-empty` renders `wenn mein wert ist **dann** leer` — a `dann` ("then")
   inside the predicate. Same bug family as the for-loop §2a loop-variable marking.
-- **B3 — then-chain body after `fetch`/`async` drops.** `async fetch X then put Y`
-  and `fetch X … then put Y` lose the trailing `put` (fr/pt emit a phantom `set`).
-  The fetch/put keywords are already aligned (verified) — this is the for-loop §2c
-  "then-chain body attachment," not a keyword bug.
+- **B3 — `fetch`/`put` body after `then`/`async` drops. SHIPPED (fr/pt, −4).** The
+  earlier note ("keywords aligned, just then-chain attachment") was **disproved by a
+  measure-first probe**: the real blocker is a **marker-less `fetch` pattern gap**. For
+  `fetch <url>` (no `from`) the transformer emits a marker-less `récupérer /api/data` /
+  `buscar /api/data`, but the generated pattern requires a `de` source marker
+  (`chercher de …`), so `fetch` dropped and the body collapsed to a phantom `set`
+  (degenerate `{on, set}`, fid 0.33). A handcrafted fr/pt fetch pattern tolerating the
+  optional `de` + responseType (mirrors `fetch-ms` / `fetch-zh-ba`) recovers `fetch`:
+  `{on, fetch, set}` — fid 0.67, degenerate → faithful (recovering `fetch` clears the
+  0.50 floor; the phantom `set` from `put it into me`'s `à`/`para` marker and the
+  `then`-chain attachment are **not** needed for the flip). Locked by
+  `multilingual-roadmap-fixes.test.ts` ("fr/pt marker-less fetch").
 - **B4 (secondary) — `put X into <positional>` destination drop and SOV reorder
   edges.** Low count; absorbed once B1–B3 land.
 
@@ -173,10 +182,13 @@ keyword wins left — verified):
   conditional event-handler + SOV-reordered body needs dedicated parser work — the
   highest-risk item, and the one place the original "transformer/reorder" framing still
   holds.
-- **Phase 3 (B3 then-chain body)** — `async-block` / `fetch-with-headers` (fr/pt):
-  generalize the existing `BLOCK_BODY_ACTIONS` event-body recovery to then-chain
-  positions (guarded "can only add parses, never break"). Independent of the condition
-  work; shared with the deferred for-loop §2c.
+- **Phase 3 (B3 fetch/put body) — SHIPPED (fr/pt, −4).** Probed and found it was **not**
+  a then-chain-attachment problem but a **marker-less `fetch` pattern gap** (see B3 in
+  §1). Adding handcrafted fr/pt fetch patterns (optional `de` marker + responseType,
+  mirroring `fetch-ms`) recovered `fetch` in `async-block` and `fetch-with-headers`,
+  flipping all 4 instances 0.33 → 0.67 (degenerate → faithful). The phantom `set` (from
+  `put`'s `into`→`à`/`para` transformer marker, which matches `set` not `put`) and the
+  then-chain attachment remain, but are not needed for the flip and are not pursued.
 
 ## 3.4 Remaining-work inventory (every degenerate instance has a diagnosis)
 
@@ -258,4 +270,4 @@ track (§3.3), the tr `default-value` collision (§2c family), or behaviors (46,
    gated arc rather than a quick win.
 
 **Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b) → 77 (Phase 1a) → 76 (Phase 1b)
-→ 74 (get-value qu/tl).**
+→ 74 (get-value qu/tl) → 70 (B3 fr/pt marker-less fetch).**
