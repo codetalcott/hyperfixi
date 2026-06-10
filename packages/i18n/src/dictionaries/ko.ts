@@ -62,6 +62,7 @@ export const ko: Dictionary = {
     select: '선택',
     clone: '복제',
     prepend: '앞에추가',
+    socket: '소켓',
   },
 
   modifiers: {

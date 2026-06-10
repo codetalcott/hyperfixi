@@ -62,6 +62,7 @@ export const ja: Dictionary = {
     select: '選択',
     clone: '複製',
     prepend: '先頭追加',
+    socket: 'ソケット',
   },
 
   modifiers: {

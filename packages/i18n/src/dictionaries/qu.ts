@@ -65,6 +65,7 @@ export const qu: Dictionary = {
     select: 'akllay',
     clone: 'kikinchay',
     prepend: 'ñawpachiy',
+    socket: 'tinkina',
   },
 
   modifiers: {

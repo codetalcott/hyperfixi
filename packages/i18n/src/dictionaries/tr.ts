@@ -62,6 +62,7 @@ export const tr: Dictionary = {
     select: 'seç',
     clone: 'klonla',
     prepend: 'başınaekle',
+    socket: 'soket',
   },
 
   modifiers: {

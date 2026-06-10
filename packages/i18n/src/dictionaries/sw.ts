@@ -66,6 +66,7 @@ export const sw: Dictionary = {
     clone: 'nakili',
     prepend: 'tanguliza',
     focus: 'lenga',
+    socket: 'soketi',
   },
 
   modifiers: {

@@ -1,19 +1,18 @@
 {
-  "timestamp": "2026-06-10T06:00:27.968Z",
-  "commit": "dced86c",
+  "timestamp": "2026-06-10T14:19:35.899Z",
+  "commit": "c8eb15e",
   "languages": {
     "ar": {
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9268083704069859,
-      "avgFidelity": 0.9335511982570804,
+      "avgConfidence": 0.9300763442631951,
+      "avgFidelity": 0.9400871459694988,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
         "behavior-sortable",
-        "event-debounce",
-        "socket-basic"
+        "event-debounce"
       ],
       "bundleSize": 404980,
       "patterns": {
@@ -361,6 +360,10 @@
           "success": true,
           "confidence": 1
         },
+        "socket-basic": {
+          "success": true,
+          "confidence": 1
+        },
         "socket-send": {
           "success": true,
           "confidence": 1
@@ -609,10 +612,6 @@
           "success": true,
           "confidence": 0.5
         },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "breakpoint-command": {
           "success": true,
           "confidence": 0.5
@@ -639,8 +638,8 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8657287157287157,
-      "avgFidelity": 0.9580086580086579,
-      "degeneratePasses": ["socket-basic"],
+      "avgFidelity": 0.9645021645021643,
+      "degeneratePasses": [],
       "bundleSize": 404980,
       "patterns": {
         "toggle-class-basic": {
@@ -4412,7 +4411,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "avgFidelity": 0.8889610389610392,
+      "avgFidelity": 0.8954545454545457,
       "degeneratePasses": [
         "bind-auto-detect",
         "bind-explicit-property",
@@ -4423,7 +4422,6 @@
         "intercept-cache-strategies",
         "live-derived-value",
         "live-multiple-deps",
-        "socket-basic",
         "worker-basic"
       ],
       "bundleSize": 404980,
@@ -6308,7 +6306,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8410533910533909,
-      "avgFidelity": 0.8945887445887448,
+      "avgFidelity": 0.9010822510822514,
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
@@ -6316,8 +6314,7 @@
         "behavior-resizable",
         "behavior-sortable",
         "if-empty",
-        "input-validation",
-        "socket-basic"
+        "input-validation"
       ],
       "bundleSize": 404980,
       "patterns": {
@@ -6944,7 +6941,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.5553391053391054,
-      "avgFidelity": 0.9086580086580087,
+      "avgFidelity": 0.9151515151515152,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -6952,7 +6949,6 @@
         "behavior-sortable",
         "if-empty",
         "input-validation",
-        "socket-basic",
         "window-scroll"
       ],
       "bundleSize": 404980,
@@ -8827,16 +8823,15 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8312273057371102,
-      "avgFidelity": 0.8788671023965143,
+      "avgConfidence": 0.8344952795933194,
+      "avgFidelity": 0.8854030501089326,
       "degeneratePasses": [
         "async-block",
         "behavior-draggable",
         "behavior-resizable",
         "behavior-sortable",
         "fetch-with-headers",
-        "focus-trap",
-        "socket-basic"
+        "focus-trap"
       ],
       "bundleSize": 404980,
       "patterns": {
@@ -8853,6 +8848,10 @@
           "confidence": 1
         },
         "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
           "success": true,
           "confidence": 1
         },
@@ -9436,10 +9435,6 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
-        },
         "behavior-removable": {
           "success": false
         },
@@ -9462,15 +9457,14 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.7293650793650793,
-      "avgFidelity": 0.8731601731601734,
+      "avgFidelity": 0.8796536796536798,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
         "get-value",
-        "modal-close-escape",
-        "socket-basic"
+        "modal-close-escape"
       ],
       "bundleSize": 404980,
       "patterns": {
@@ -10723,15 +10717,14 @@
       "parseSuccess": 150,
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
-      "avgConfidence": 0.8674285714285717,
-      "avgFidelity": 0.9143333333333333,
+      "avgConfidence": 0.8707619047619051,
+      "avgFidelity": 0.921,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
         "behavior-sortable",
         "event-debounce",
-        "if-empty",
-        "socket-basic"
+        "if-empty"
       ],
       "bundleSize": 404980,
       "patterns": {
@@ -10788,6 +10781,10 @@
           "confidence": 1
         },
         "eventsource-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "socket-basic": {
           "success": true,
           "confidence": 1
         },
@@ -11327,10 +11324,6 @@
         },
         "computed-value": {
           "success": false
-        },
-        "socket-basic": {
-          "success": true,
-          "confidence": 0.5
         },
         "behavior-removable": {
           "success": false
@@ -12608,14 +12601,13 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8648511256354393,
-      "avgFidelity": 0.9310457516339868,
+      "avgFidelity": 0.9375816993464051,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
         "behavior-resizable",
         "behavior-sortable",
-        "default-value",
-        "socket-basic"
+        "default-value"
       ],
       "bundleSize": 404980,
       "patterns": {

@@ -67,6 +67,7 @@ export const hindiDictionary: Dictionary = {
     close: 'बंद-करें',
     open: 'खोलें',
     select: 'चुनें',
+    socket: 'सॉकेट',
   },
 
   modifiers: {

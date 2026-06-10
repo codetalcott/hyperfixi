@@ -1465,3 +1465,52 @@ describe('focus command keyword alignment (de/fr/pl/pt/sw)', () => {
     });
   }
 });
+
+describe('socket command keyword alignment (9 native-primary languages)', () => {
+  // socket-basic (`socket ChatSocket ws://localhost:8080 on message put it into
+  // #chat end`) was a degenerate pass in ar/bn/hi/ja/ko/pt/qu/sw/tr. Root cause:
+  // `socket` (a newer streaming command) had NO entry in the i18n `commands`
+  // dictionaries — only en — so the transformer emitted the English literal
+  // `socket`. These 9 languages use a NATIVE socket primary in their semantic
+  // profile (ja ソケット, ko 소켓, pt soquete, …) that doesn't list the English word,
+  // so the `socket` command dropped (fid 0.00). fr/de/es/tl were unaffected because
+  // their profile primary already IS `socket`. Fix: add `socket` = the profile
+  // native primary to each of the 9 `commands` dicts (and the streaming commands to
+  // the derive.ts COMMAND_KEYWORDS allowlist so a regen stays in sync). Clears all 9
+  // (degenerate → faithful 1.0; the EN reference for this pattern is just {socket}).
+  // Same root-cause family as the focus keyword alignment. See
+  // docs-internal/MULTILINGUAL_ROADMAP.md ("socket keyword alignment") and
+  // docs-internal/BLOCK_BODY_CONDITION_SCOPE.md (Phase 0).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang) for socket-basic, now carrying the
+  // native socket primary instead of the English literal. SOV languages front the
+  // name/url and put the verb mid-stream; the recovery is order-independent.
+  const cases: Array<[string, string]> = [
+    ['ar', 'مقبس ChatSocket ws://localhost:8080 ثم عند message ثم ضع هو إلى #chat end'],
+    ['bn', 'ChatSocket ws://localhost:8080 কে সকেট তারপর message এ তারপর এটি কে #chat end তে রাখুন'],
+    ['hi', 'ChatSocket ws://localhost:8080 को सॉकेट फिर message पर फिर यह को रखें #chat end में'],
+    ['ja', 'ChatSocket ws://localhost:8080 を ソケット それから message で それから それ を #chat end に 置く'],
+    ['ko', 'ChatSocket ws://localhost:8080 를 소켓 그러면 message 그러면 그것 를 #chat end 에 넣다'],
+    ['pt', 'soquete ChatSocket ws://localhost:8080 então em message então colocar isso para #chat end'],
+    ['qu', 'ChatSocket ws://localhost:8080 ta tinkina chayqa message pi chayqa chay ta #chat end man churay'],
+    ['sw', 'soketi ChatSocket ws://localhost:8080 kisha kwenye message kisha weka hiyo kwa #chat end'],
+    ['tr', 'ChatSocket ws://localhost:8080 i soket sonra message de sonra o i #chat end e koy'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers the socket command`, () => {
+      expect(actions(parse(input, lang as 'ja')).has('socket')).toBe(true);
+    });
+  }
+});
