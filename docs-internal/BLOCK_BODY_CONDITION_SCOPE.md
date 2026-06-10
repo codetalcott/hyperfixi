@@ -1,7 +1,9 @@
 # Block-body cluster — scope, decomposition & phased plan
 
-> **Status:** Phase 0 (`socket` keyword alignment, −9 degenerate) **SHIPPED**. The
-> rest is the recommended approach, not yet implemented.
+> **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), and
+> Phase 1a (`is empty` predicate vocab for de/sw, −2) **SHIPPED** — degenerate
+> **92 → 77**. Remaining phases (1b/1c condition work, B3 then-chain) are the
+> recommended approach, not yet implemented.
 >
 > **Prereq reading:** `MULTILINGUAL_ROADMAP.md` → Shipped; `FOR_LOOP_BLOCK_BODY_DESIGN.md`
 > (the proven measure-first / decompose / phase playbook this reuses);
