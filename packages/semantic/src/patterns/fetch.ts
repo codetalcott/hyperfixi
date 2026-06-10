@@ -181,6 +181,65 @@ function getFetchPatternsPt(): LanguagePattern[] {
   ];
 }
 
+// Shared shape for the marker-less `fetch <url>` recovery (see fetch-fr / fetch-pt):
+// `<verb> [<from-marker>] {source} [<as-marker> {responseType}]`. For `fetch <url>`
+// (no `from`) the i18n transformer emits a marker-less `<verb> /api/data`, but the
+// generated pattern requires the source marker — so `fetch` dropped (the body kept
+// {on, put}, fid ~0.67: a faithful-but-incomplete pass that silently lost `fetch`).
+function markerlessFetch(
+  id: string,
+  language: string,
+  verb: string,
+  fromMarker: string,
+  asMarker: string,
+  verbAlternatives?: string[],
+  fromMarkerAlternatives?: string[]
+): LanguagePattern {
+  return {
+    id,
+    language,
+    command: 'fetch',
+    priority: 105,
+    template: {
+      format: `${verb} ${fromMarker} {source} ${asMarker} {responseType}`,
+      tokens: [
+        {
+          type: 'literal',
+          value: verb,
+          ...(verbAlternatives ? { alternatives: verbAlternatives } : {}),
+        },
+        {
+          type: 'group',
+          optional: true,
+          tokens: [
+            {
+              type: 'literal',
+              value: fromMarker,
+              ...(fromMarkerAlternatives ? { alternatives: fromMarkerAlternatives } : {}),
+            },
+          ],
+        },
+        { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+        {
+          type: 'group',
+          optional: true,
+          tokens: [
+            { type: 'literal', value: asMarker },
+            { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+          ],
+        },
+      ],
+    },
+    extraction: {
+      source: {
+        marker: fromMarker,
+        ...(fromMarkerAlternatives ? { markerAlternatives: fromMarkerAlternatives } : {}),
+      },
+      responseType: { marker: asMarker },
+    },
+  };
+}
+
 /**
  * Get fetch patterns for a specific language.
  */
@@ -194,6 +253,21 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
       return getFetchPatternsFr();
     case 'pt':
       return getFetchPatternsPt();
+    // Marker-less fetch recovery for languages whose generated pattern requires a
+    // source marker the transformer doesn't emit for `fetch <url>` (no `from`).
+    case 'es':
+      return [markerlessFetch('fetch-es', 'es', 'buscar', 'de', 'como')];
+    case 'pl':
+      return [markerlessFetch('fetch-pl', 'pl', 'pobierz', 'z', 'jako')];
+    case 'id':
+      // dict emits `ambil`, profile primary is `muat` — accept both.
+      return [markerlessFetch('fetch-id', 'id', 'muat', 'dari', 'sebagai', ['ambil'])];
+    case 'sw':
+      return [markerlessFetch('fetch-sw', 'sw', 'leta', 'kutoka', 'kama')];
+    case 'he':
+      // transformer inserts the `את` accusative particle (`הבא את /url`) where the
+      // generated pattern expects `מ` (from); accept either. Verb alt `טען`.
+      return [markerlessFetch('fetch-he', 'he', 'הבא', 'מ', 'כ', ['טען'], ['את'])];
     default:
       return [];
   }

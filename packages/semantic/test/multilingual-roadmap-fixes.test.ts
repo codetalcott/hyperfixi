@@ -1718,3 +1718,40 @@ describe('fr/pt marker-less fetch (async-block / fetch-with-headers) — block-b
     expect(a.has('fetch')).toBe(true);
   });
 });
+
+describe('marker-less fetch fidelity (es/pl/id/sw/he) — recover dropped fetch', () => {
+  // Extends the fr/pt marker-less fetch fix to more languages whose generated fetch
+  // pattern requires a source marker (`buscar de …`, `pobierz z …`, …) the transformer
+  // doesn't emit for `fetch <url>`. Before the fix these dropped `fetch` and parsed
+  // {on, put} (~0.67 — a faithful-but-incomplete pass, not degenerate, so invisible to
+  // the degenerate metric). The handcrafted pattern (optional source marker +
+  // responseType) recovers `fetch`. avgFidelity ↑ es/he/id/pl +3.4pt, sw +0.6pt
+  // (sw event-debounce also flips degenerate → faithful, −1). id additionally accepts
+  // the dict verb `ambil` (profile primary `muat`); he accepts the `את` accusative
+  // particle (`הבא את /url`) the transformer inserts where the pattern expects `מ`.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), fetch-basic.
+  const cases: Array<[string, string]> = [
+    ['es', 'en clic buscar /api/data entonces poner ello a #result'],
+    ['pl', 'gdy kliknięcie pobierz /api/data wtedy umieść to do #result'],
+    ['id', 'pada klik ambil /api/data lalu taruh itu ke #result'],
+    ['sw', 'kwenye bonyeza leta /api/data kisha weka hiyo kwa #result'],
+    ['he', 'ב לחיצה הבא את /api/data אז שים את זה על #result'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers fetch in fetch-basic`, () => {
+      expect(actions(parse(input, lang as 'es')).has('fetch')).toBe(true);
+    });
+  }
+});
