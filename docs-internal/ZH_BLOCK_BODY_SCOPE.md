@@ -199,9 +199,33 @@ The one residue left in that pattern (the `for item in $items … end` loop) is
 **structural, not zh-specific**: the transformer emits a mangled header
 (`为 把 item 在 $items 那么 …` — BA-marked loop variable + a spurious `那么` before
 the body), and zh `for`-loops don't parse at all (no handcrafted/generated zh
-loop-header pattern). It degrades `template-literal-list-build` for 5 other
-languages too (he, ms, qu, sw, vi), so it belongs in the block-body roadmap arc,
+loop-header pattern). It degrades `template-literal-list-build` for the other
+languages too (ms, qu, sw, vi), so it belongs in the block-body roadmap arc,
 not this zh slice.
+
+### #2 sweep — per-language follow-on: `he` set (shipped)
+
+The same constellation continues in other languages. **Hebrew** lost its `set`
+because the transformer fronts the accusative — `set X to Y` → `קבע את {destination}
+על {patient}` (`את` = direct-object marker on the variable being set, `על` = "on"/
+"to" before the value). The generated pattern arranged the bare profile markers the
+other way, so the transformed `set` didn't match. A handcrafted `set-he-full`
+pattern maps the accusative form to the correct set roles (destination = the var,
+patient = the value), `את` kept **required** (the transformer always fronts it;
+required avoids the matcher emitting an empty partial match on unrelated `…את…`
+inputs). This recovered `set` in **three** he patterns — `template-literal-list-build`,
+`fetch-json`, `fetch-do-not-throw` (all degenerate → faithful) — netting he degenerate
+−2 (124 → 122 total, gate green, 0 regressions). `he` `behavior-sortable` flips
+null-parse → empty-node (it newly appears in the degenerate list) but `he` never
+recovered the EN-only `behavior` keyword for it (0 fidelity either way — failure→
+degenerate, not a faithful→degenerate regression; it also makes he consistent with
+the already-degenerate `behavior-draggable`/`-resizable`). Locked by
+`multilingual-roadmap-fixes.test.ts` ("he set: accusative-fronted form").
+
+The remaining `template-literal-list-build` languages (ms, qu, sw, vi) and the
+`for`-loop structural gap stay in the block-body roadmap arc. `ms` additionally has
+**no i18n grammar profile** (`Unknown target locale: ms`), so its translations can't
+be generated at all — a separate transformer-coverage gap.
 
 ## Probe
 
