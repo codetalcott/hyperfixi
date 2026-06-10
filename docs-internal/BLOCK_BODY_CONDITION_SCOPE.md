@@ -1,10 +1,12 @@
 # Block-body cluster — scope, decomposition & phased plan
 
 > **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), Phase 1a
-> (`is empty` vocab for de/sw, −2), and Phase 1b (id toggle alignment, −1) **SHIPPED**
-> — degenerate **92 → 76**. **Every** remaining degenerate instance now has a
-> diagnosis: §3.3 (he/ja/ko conditions, B3 then-chain) and §3.4 (full inventory of the
-> previously-undescribed 17 — masked-keyword quick wins vs deep block/SOV work).
+> (`is empty` vocab for de/sw, −2), Phase 1b (id toggle alignment, −1), and
+> `get-value` qu/tl keyword alignment (−2) **SHIPPED** — degenerate **92 → 74**.
+> **Every** remaining degenerate instance now has a diagnosis: §3.3 (he/ja/ko
+> conditions, B3 then-chain) and §3.4 (full inventory of the previously-undescribed 17
+> — masked-keyword quick wins vs deep block/SOV work). **`hi bind` was reclassified
+> from "likely-quick" to structural after a measure-first probe (see §3.4).**
 >
 > **Prereq reading:** `MULTILINGUAL_ROADMAP.md` → Shipped; `FOR_LOOP_BLOCK_BODY_DESIGN.md`
 > (the proven measure-first / decompose / phase playbook this reuses);
@@ -187,11 +189,26 @@ enough to clear the 0.50 floor.
 
 ### Likely-quick (masked keyword gap/mismatch — the focus/socket/id-toggle family)
 
-| Pattern       | Lang(s) | Diagnosis (one-line)                                                                               |
-| ------------- | ------- | -------------------------------------------------------------------------------------------------- |
-| `bind-*` (×4) | hi      | `bind` has **no hi dict/profile entry** → transformer emits English `bind`, unrecognized. Add it.  |
-| `get-value`   | qu      | dict `get: chaskiy` vs profile primary `taripay` — **mismatch** (chaskiy parses as `copy`). Align. |
-| `get-value`   | tl      | `kuhanin` (get) dropped — same keyword-recognition shape; verify dict↔profile then align.          |
+| Pattern     | Lang(s) | Diagnosis (one-line)                                                                               |
+| ----------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `get-value` | qu      | **SHIPPED (−1).** dict `get: chaskiy` had no profile entry → `get` dropped. Aligned to `taripay`.  |
+| `get-value` | tl      | **SHIPPED (−1).** dict `get: kuhanin` = base of fetch's `kuhanin_mula` → `get` dropped. → `kunin`. |
+
+`get-value` qu/tl were a clean dict↔profile alignment (id-toggle family): qu {on, copy}
+→ {on, get, copy} (0.33 → 0.67), tl {log} → {on, get, log} (0.33 → 1.0), both degenerate
+→ faithful. **Degenerate 76 → 74 (−2)**, `--regression` gate green, **0 regressions**
+(baseline diff = qu/tl get-value removals only, 0 additions, no parse-rate drops). Locked
+by `multilingual-roadmap-fixes.test.ts` ("qu/tl get keyword alignment").
+
+### Structural — `hi bind` (×4): NOT a keyword win (reclassified after probing)
+
+§3.4 originally listed `hi bind` as "add the dict/profile entry." A measure-first probe
+proved the keyword add is **necessary but not sufficient** — hi bind is a multi-layer
+SOV/transformer structural case, the same track as he/ja/ko §3.3:
+
+| Pattern       | Lang | Diagnosis (probed)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bind-*` (×4) | hi   | Needs **all** of: i18n dict `bind` + an i18n hi `bind-to` SOV-reorder rule (hi profile has none, unlike bn/ja/ko) + a semantic profile entry + a `bind` source-marker in the schema + a constraint on the greedy hi-unique `event-hi-bare` pattern (it grabs a leading `$var` as a phantom event, shadowing the SOV-final verb) + **possessive `'s` translation** (hi leaves `#picker's` English where bn/ja/ko emit র/の/의, so 2 of the 4 fail on the possessive source). Without the possessive layer, those 2 flip degenerate-pass → **parse failure** (parse-rate regression). The deep, coupled work belongs to the §3.3 SOV-reorder track, not a quick win. |
 
 ### Lexical collision (hard — same shape as ru/uk install §2c)
 
@@ -212,9 +229,11 @@ enough to clear the 0.50 floor.
 | `window-scroll`              | ko       | SOV reorder collapses the `on scroll … if … else … end` handler to a bare `scroll` (same class as ja/ko if-empty, §3.3).                                |
 | `announce-screen-reader`     | ja       | SOV event head (`on success`) reorder + `@role` attr + trailing `set` drop.                                                                             |
 
-**Net:** ~6 instances (bind ×4, get-value qu/tl) are plausible quick keyword wins worth a
-measure-first probe next; the rest are the deep condition/block/SOV-reorder track (§3.3)
-or a collision (§2c). Behaviors (46) remain out of scope (Track 2).
+**Net (updated after probing):** the get-value qu/tl pair (−2) **shipped** as a clean
+keyword alignment. `hi bind` (×4) was probed and **reclassified as structural** (above) —
+it joins the deep condition/block/SOV-reorder track (§3.3), not the quick-win set. So no
+masked-keyword quick wins remain in this group; everything left is the SOV-reorder/block
+track (§3.3), the tr `default-value` collision (§2c family), or behaviors (46, Track 2).
 
 ## 4. Risks & validation (every phase)
 
@@ -238,4 +257,5 @@ or a collision (§2c). Behaviors (46) remain out of scope (Track 2).
    reason to treat Phase 0/0b as the priority and the condition work as a deliberate,
    gated arc rather than a quick win.
 
-**Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b) → 77 (Phase 1a) → 76 (Phase 1b).**
+**Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b) → 77 (Phase 1a) → 76 (Phase 1b)
+→ 74 (get-value qu/tl).**

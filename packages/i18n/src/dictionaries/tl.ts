@@ -12,7 +12,10 @@ export const tagalogDictionary: Dictionary = {
     take: 'kunin',
     put: 'ilagay',
     set: 'itakda',
-    get: 'kuhanin',
+    // Align with the semantic tl profile's `get` primary (`kunin`); the previous
+    // `kuhanin` is the base of fetch's `kuhanin_mula`, so the transformed `get`
+    // dropped (get-value parsed degenerate). Same dict↔profile alignment as id `toggle`.
+    get: 'kunin',
     add: 'idagdag',
     remove: 'alisin',
     toggle: 'palitan',
