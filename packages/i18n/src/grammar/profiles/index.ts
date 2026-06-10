@@ -588,6 +588,35 @@ export const indonesianProfile: LanguageProfile = {
 };
 
 // =============================================================================
+// Malay (SVO, Austronesian) — grammar mirrors Indonesian (shared function words:
+// pada / ke / dari / dengan / sebagai). Without this profile the transformer threw
+// "Unknown target locale: ms", so no ms translation could be generated at all.
+// =============================================================================
+
+export const malayProfile: LanguageProfile = {
+  code: 'ms',
+  name: 'Bahasa Melayu',
+
+  wordOrder: 'SVO',
+  adpositionType: 'preposition',
+  morphology: 'agglutinative',
+  direction: 'ltr',
+
+  canonicalOrder: ['event', 'action', 'patient', 'destination'],
+
+  markers: [
+    // ms marks the event clause with `apabila` ("when/on") — matching the semantic
+    // ms event-handler pattern (`apabila {event} {body}`) and the ms dict's
+    // `on: apabila`. (Indonesian uses `pada` here; the two diverge on the event head.)
+    { form: 'apabila', role: 'event', position: 'preposition', required: true },
+    { form: 'ke', role: 'destination', position: 'preposition', required: false },
+    { form: 'dari', role: 'source', position: 'preposition', required: false },
+    { form: 'dengan', role: 'style', position: 'preposition', required: false },
+    { form: 'sebagai', role: 'method', position: 'preposition', required: false },
+  ],
+};
+
+// =============================================================================
 // Quechua (SOV, Quechuan)
 // =============================================================================
 
@@ -1044,6 +1073,7 @@ export const profiles: Record<string, LanguageProfile> = {
   fr: frenchProfile,
   pt: portugueseProfile,
   id: indonesianProfile,
+  ms: malayProfile,
   qu: quechuaProfile,
   sw: swahiliProfile,
   bn: bengaliProfile,

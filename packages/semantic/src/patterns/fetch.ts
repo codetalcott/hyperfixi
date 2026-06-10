@@ -58,6 +58,47 @@ function getFetchPatternsZh(): LanguagePattern[] {
   ];
 }
 
+function getFetchPatternsMs(): LanguagePattern[] {
+  return [
+    {
+      // Malay fetch. The transformer emits `ambil_dari {source}` for `fetch <url>`
+      // (the verb `ambil_dari` already carries "from"), and `… sebagai {responseType}`
+      // for `as json`. The generated pattern expected a separate `dari` source marker
+      // (`ambil_dari dari …`), so the marker-less transform output dropped. This
+      // tolerates the optional `dari` and the `sebagai` responseType. See
+      // ZH_BLOCK_BODY_SCOPE.md (#2 sweep / ms profile; same shape as fetch-zh-ba).
+      id: 'fetch-ms',
+      language: 'ms',
+      command: 'fetch',
+      priority: 105,
+      template: {
+        format: 'ambil_dari dari {source} sebagai {responseType}',
+        tokens: [
+          { type: 'literal', value: 'ambil_dari', alternatives: ['muat', 'ambil'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: 'dari' }],
+          },
+          { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'sebagai', alternatives: ['sbg'] },
+              { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+            ],
+          },
+        ],
+      },
+      extraction: {
+        source: { marker: 'dari' },
+        responseType: { marker: 'sebagai', markerAlternatives: ['sbg'] },
+      },
+    },
+  ];
+}
+
 /**
  * Get fetch patterns for a specific language.
  */
@@ -65,6 +106,8 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
   switch (language) {
     case 'zh':
       return getFetchPatternsZh();
+    case 'ms':
+      return getFetchPatternsMs();
     default:
       return [];
   }

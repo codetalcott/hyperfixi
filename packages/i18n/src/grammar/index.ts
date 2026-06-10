@@ -35,6 +35,7 @@ export {
   frenchProfile,
   portugueseProfile,
   indonesianProfile,
+  malayProfile,
   quechuaProfile,
   swahiliProfile,
   bengaliProfile,

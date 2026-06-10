@@ -254,10 +254,28 @@ definitions, so recall-based fidelity scores it 0 — a metric artifact, not ove
 generation.) Locked by `multilingual-roadmap-fixes.test.ts` ("qu / sw set: keyword
 realignment").
 
-After vi + qu + sw, the remaining `template-literal-list-build` language is `ms`, plus
-the `for`-loop structural gap — both stay in the block-body roadmap arc. `ms` has
-**no i18n grammar profile** (`Unknown target locale: ms`), so its translations can't
-be generated at all — a separate transformer-coverage gap (the next planned item).
+### #2 sweep — `ms` (Malay) grammar profile + event/set/fetch (shipped)
+
+`ms` had **no i18n grammar profile**, so the transformer threw `Unknown target locale:
+ms` and could generate no Malay at all — the baseline's `ms` 100% parse rate was an
+**English-fallback artifact**. Added `malayProfile` (mirrors Indonesian: SVO,
+prepositions; shared markers `ke`/`dari`/`dengan`/`sebagai`) — but the event head is
+`apabila` ("when/on"), not Indonesian's `pada`, to match the semantic ms
+event-handler pattern (`apabila {event} {body}`). Adding the profile dropped the real
+ms parse rate from the fake 100% to a true **37%**, dominated by event-handler
+failures; the `apabila` event-marker alignment alone lifted it to **97%**. Handcrafted
+ms `set` (`tetapkan {destination} ke {patient}`, mirrors id) and `fetch`
+(`ambil_dari {source}`, marker-less, mirrors fetch-zh) patterns then cleared ms's
+event-body residue — **ms now parses 97% (149/154) with 0 degenerate passes**; the 5
+remaining failures are `bind` (reactivity) / `socket` (websocket), which fail broadly
+across languages. The committed multilingual baseline was **regenerated once** to
+replace the fake-100% ms row with the real numbers (and to catch up the avgFidelity
+gains from the already-merged he/vi/qu/sw fixes); `--regression --full` gate green.
+Locked by `multilingual-roadmap-fixes.test.ts` ("ms (Malay) profile…").
+
+After vi + qu + sw + ms, `template-literal-list-build` is cleared of every language it
+once held except the `for`-loop structural gap (cross-language), which stays in the
+block-body roadmap arc.
 
 ## Probe
 

@@ -54,6 +54,7 @@ describe('Language Profiles', () => {
       'fr',
       'pt',
       'id',
+      'ms',
       'qu',
       'sw',
       'bn',
