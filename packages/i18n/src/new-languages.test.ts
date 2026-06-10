@@ -80,7 +80,7 @@ describe('New Language Support', () => {
       // TODO: Once grammar transformation is implemented, test for native word order
       expect(result).toContain('klik'); // click → klik
       expect(result).toContain('pada'); // on → pada
-      expect(result).toContain('ganti'); // toggle → ganti
+      expect(result).toContain('alihkan'); // toggle → alihkan (aligned to the semantic profile primary; `ganti` is swap's alternative)
     });
 
     it('should handle form interactions', () => {

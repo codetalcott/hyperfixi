@@ -15,7 +15,7 @@ export const id: Dictionary = {
     get: 'dapatkan',
     add: 'tambah',
     remove: 'hapus',
-    toggle: 'ganti',
+    toggle: 'alihkan',
     hide: 'sembunyikan',
     show: 'tampilkan',
     if: 'jika',

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-10T17:20:32.364Z",
-  "commit": "028634d",
+  "timestamp": "2026-06-10T18:23:20.806Z",
+  "commit": "5386c82",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -5042,13 +5042,8 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.826797385620915,
-      "degeneratePasses": [
-        "behavior-draggable",
-        "behavior-resizable",
-        "behavior-sortable",
-        "unless-condition"
-      ],
+      "avgFidelity": 0.8611111111111112,
+      "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "bundleSize": 405037,
       "patterns": {
         "toggle-class-basic": {

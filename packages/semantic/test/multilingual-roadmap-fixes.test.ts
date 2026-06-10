@@ -1604,3 +1604,34 @@ describe('`is empty` predicate keywords (de/sw) — block-body Phase 1a', () => 
     });
   }
 });
+
+describe('id toggle keyword alignment (unless-condition) — block-body Phase 1b', () => {
+  // unless-condition (`on click unless I match .disabled toggle .selected`) was
+  // degenerate in id. Probing the "condition" cluster revealed this one is NOT a
+  // predicate/conditional issue at all but a hidden `toggle` keyword mismatch: the
+  // i18n id dict emitted `ganti` while the semantic indonesian profile's toggle
+  // primary is `alihkan` (`ganti` is already swap's alternative there, so it can't
+  // be re-used for toggle). So `alihkan`/`ganti` … `toggle` dropped and only `{on}`
+  // survived (fid 0.33). Aligning the dict `toggle: 'ganti' → 'alihkan'` lets the
+  // body recover past the (still-English) `I match .disabled` predicate: on,toggle
+  // (0.33 → 0.67, degenerate → faithful). Same keyword-gap family as focus/socket.
+  // The genuinely-hard remaining unless/if cases — he (English predicate) and ja/ko
+  // (SOV reorder collapse) — are deeper parser work, see BLOCK_BODY_CONDITION_SCOPE.md.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[id] recovers toggle in unless-condition (alihkan)', () => {
+    // Corpus-shaped transformer output (en → id).
+    const a = actions(parse('pada klik kecuali I match .disabled alihkan .selected', 'id'));
+    expect(a.has('toggle')).toBe(true);
+  });
+});
