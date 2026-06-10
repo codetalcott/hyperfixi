@@ -166,6 +166,14 @@ export const hindiProfile: LanguageProfile = {
     stream: { primary: 'स्ट्रीम', alternatives: ['धारा', 'प्रवाह'], normalized: 'stream' },
     live: { primary: 'लाइव', alternatives: ['सजीव', 'प्रत्यक्ष'], normalized: 'live' },
     socket: { primary: 'सॉकेट', alternatives: ['वेबसॉकेट'], normalized: 'socket' },
+    // Streaming/concurrency: transformer emits the English literal (no i18n dict
+    // entry yet), so English primary; native transliterations as alternatives.
+    worker: { primary: 'worker', alternatives: ['वर्कर'], normalized: 'worker' },
+    eventsource: {
+      primary: 'eventsource',
+      alternatives: ['इवेंटसोर्स'],
+      normalized: 'eventsource',
+    },
   },
   tokenization: {
     particles: ['को', 'में', 'पर', 'से', 'का', 'की', 'के', 'तक', 'ने'],

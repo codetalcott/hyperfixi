@@ -71,19 +71,38 @@ them). **−9 degenerate (92 → 83), gate green, 0 regressions** (baseline diff
 removals, 0 additions, no parse-rate drops); all 9 reach fid 1.0. Locked by
 `multilingual-roadmap-fixes.test.ts` ("socket command keyword alignment").
 
-### 2b `eventsource` / `worker` (hi, tl — profile gap, deferred)
+### 2b `eventsource` / `worker` (hi, tl) — SHIPPED (Phase 0b, −4)
 
-Different mechanism: hi/tl semantic profiles have **no `eventsource`/`worker` entry at
-all** (the other 22 languages carry an English-literal primary that matches the
-transformer's English emission, so they parse). Fix is **semantic-side** — add the
-profile entries for hi/tl (English primary is sufficient; native optional) — not a
-dict change. 4 instances. Small, clean, separate PR.
+Different mechanism from socket: hi/tl semantic **profiles** had **no
+`eventsource`/`worker` entry at all** (the other 22 languages carry an English-literal
+primary that matches the transformer's English emission — no language has an i18n dict
+entry for these streaming commands — so they parse). The generated pattern didn't
+exist, so the command dropped. **Fix (semantic-side):** add the profile entries for
+hi/tl (English primary, since the transformer emits the English literal; native
+transliteration as alternative for hi). **−4 degenerate (83 → 79), gate green, 0
+regressions** (baseline diff = 4 removals, 0 additions, no parse-rate drops); all 4
+reach fid 1.0 (EN reference is just `{eventsource}`/`{worker}`). Locked by
+`multilingual-roadmap-fixes.test.ts` ("eventsource / worker profile entries").
 
-### 2c `install-behavior` (hi, ru, uk — undiagnosed)
+### 2c `install-behavior` (hi, ru, uk — deferred, NOT a clean keyword gap)
 
-`install Draggable`. install primaries are native and compound for ru/uk
-(`установить_пакет`). Needs its own probe before claiming a fix; likely a dict↔profile
-`install` mismatch + the behavior-name handling. 3 instances.
+Probed and found harder than a keyword gap — left for a dedicated fix:
+
+- **ru/uk — genuine lexical collision.** `установить`/`встановити` mean both **"set"
+  and "install"**; the semantic `set` profile claims the bare word as its primary, so
+  `install` was deliberately disambiguated to the compound `установить_пакет` /
+  `встановити_пакет`. The i18n dict maps `install`→the bare word, so the transformer
+  emits `установить`, which the parser resolves to **`set`**. Aligning the dict to the
+  compound (`установить_пакет`) was tried and **still resolves to `set`** — the
+  underscore-compound isn't tokenized/normalized as a unit (the Russian normalizer
+  likely reduces it back to `установить`). Needs tokenizer/morphology work or a
+  handcrafted `install` pattern, not a dict edit. Reverted.
+- **hi — SOV pattern gap.** `इंस्टॉल` already matches the profile primary, yet
+  `Draggable को इंस्टॉल` parses to `{into, on}` — the SOV `{patient} को {verb}` install
+  form isn't anchored (no generated/handcrafted SOV install pattern). Distinct from the
+  ru/uk collision.
+
+3 instances; tracked here, not bundled with the clean Phase 0b win.
 
 ## 3. Phases 1–3 — the B1 condition campaign (the hard part)
 
@@ -119,10 +138,12 @@ at a time behind `--regression`, per-language A/B for over-generation, locked by
 ## 5. Sequencing recommendation
 
 1. **Phase 0** — done (`socket`, −9). Cheapest, largest single win.
-2. **Phase 0b** — `eventsource`/`worker` profile entries (hi/tl, −4) and
-   `install-behavior` diagnosis (−3): small, contained, knock out the rest of the
-   newer-feature bucket.
+2. **Phase 0b** — done (`eventsource`/`worker` hi/tl profile entries, −4).
+   `install-behavior` (−3) was probed and **deferred** (§2c) — a lexical
+   set/install collision (ru/uk) + an SOV pattern gap (hi), not a clean keyword fix.
 3. **Phases 1–3** — the B1 condition campaign (~13 instances), multi-PR, transformer-
    first. Expect modest headline-metric movement due to EN-reference shallowness — a
    reason to treat Phase 0/0b as the priority and the condition work as a deliberate,
    gated arc rather than a quick win.
+
+**Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b).**
