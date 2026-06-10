@@ -222,6 +222,20 @@ degenerate, not a faithful→degenerate regression; it also makes he consistent 
 the already-degenerate `behavior-draggable`/`-resizable`). Locked by
 `multilingual-roadmap-fixes.test.ts` ("he set: accusative-fronted form").
 
+### #2 sweep — per-language follow-on: `vi` set (shipped)
+
+Same family in **Vietnamese**: the transformer emits `gán {destination} vào {patient}`
+for `set X to Y` (`vào` = vi's destination/"into" marker; the variable being set leads,
+unmarked). The existing `set-vi-full` used a different marker (`thành`) and
+non-canonical roles (var → `patient`), so it never matched the transform output and
+the `set` dropped (degenerate vi in `template-literal-list-build`). A `set-vi-vao`
+pattern (priority 101, above `set-vi-full`) matches the transform and assigns the
+canonical set roles (destination = the var, patient = the value). **vi degenerate → 0**
+(cleared `template-literal-list-build`; degenerate total 122 → 121, gate green, 0
+regressions, **no side-effect additions** — cleaner than the he fix, which flipped a
+behavior pattern null→empty). Locked by `multilingual-roadmap-fixes.test.ts`
+("vi set: vào-marked form").
+
 ### #2 sweep — per-language follow-on: `qu` / `sw` set keyword realign (shipped)
 
 A different flavour of the same family: the **i18n dicts mapped `set` to the _put_
@@ -233,17 +247,17 @@ then parses via its generated SOV pattern (`{destination} ta {patient} man chura
 **sw** also needed a handcrafted `set-sw-kwa` pattern (`seti {destination} kwa
 {patient}`, canonical roles), since the generated arrangement didn't match the
 transform. Cleared `template-literal-list-build` for both (faithful `{on,set}`);
-degenerate total 122 → 121, gate green, 0 regressions. (`sw` joins `behavior-sortable`
+degenerate total 121 → 120, gate green, 0 regressions. (`sw` joins `behavior-sortable`
 in the list — but that pattern's body holds a real `seti … kwa …` that sw now
 correctly parses as `set`; the EN reference only recovers `{behavior}` for behavior
 definitions, so recall-based fidelity scores it 0 — a metric artifact, not over-
 generation.) Locked by `multilingual-roadmap-fixes.test.ts` ("qu / sw set: keyword
 realignment").
 
-The remaining `template-literal-list-build` language is `ms`, plus the `for`-loop
-structural gap — both stay in the block-body roadmap arc. `ms` has **no i18n grammar
-profile** (`Unknown target locale: ms`), so its translations can't be generated at
-all — a separate transformer-coverage gap (the next planned item).
+After vi + qu + sw, the remaining `template-literal-list-build` language is `ms`, plus
+the `for`-loop structural gap — both stay in the block-body roadmap arc. `ms` has
+**no i18n grammar profile** (`Unknown target locale: ms`), so its translations can't
+be generated at all — a separate transformer-coverage gap (the next planned item).
 
 ## Probe
 
