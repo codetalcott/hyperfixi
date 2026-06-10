@@ -1,14 +1,45 @@
 # `for`-loop block-body — Design Spike (Item C)
 
-> **Status:** Design proposal for review. **No code yet** — this documents the
-> problem, root-cause decomposition, options, and a recommended phased plan, per the
-> multilingual sweep's agreement that the `for`-loop fix is structural and gated on a
-> design review before implementation.
+> **Status: DEFERRED — superseded by measurement (see § 0).** The design below is
+> retained as the record of the investigation, but the recommendation in § 5 is
+> **not** the conclusion. A "2c first, measure" probe showed the `for`-loop gap has
+> **no impact on the gate / corpus**, so implementation was deferred.
 >
 > **Prereq reading:** `ZH_BLOCK_BODY_SCOPE.md` (the #2 per-language `set` sweep this
 > fell out of) and `MULTILINGUAL_ROADMAP.md` → Shipped.
 
-## 1. Problem
+## 0. Measurement update (the actual conclusion)
+
+Before building anything, we ran the cheap language-agnostic probe (the agreed
+"2c first, then decide"). It settled the question: **don't build C.**
+
+- **No loop pattern is degenerate.** After the #2 `set` sweep,
+  `template-literal-list-build`, `repeat-for-each`, `stagger-animation`, `repeat-*`
+  are all **faithful** across languages — `repeat-for-each` and `stagger-animation`
+  recover at **1.0** (full `{on,repeat,add[,wait]}`), `template-literal-list-build` at
+  0.67.
+- **Loop bodies already recover in-event.** Every loop pattern in the corpus is
+  event-handler-wrapped, and the event-handler body path attaches the loop body. The
+  `{on,set,for}` reference dedupes the loop's inner `set`, but it _is_ recovered.
+- **Zero standalone loops in the corpus.** So the one genuine remaining gap
+  (§ 2c — standalone/then-chain loop bodies don't attach, even in EN) has **nothing to
+  act on**; 2c is a no-op against the metric.
+- The non-English header mangling (§ 2a) and missing `for`-header patterns (§ 2b) are
+  therefore **display-quality only** — parsing already succeeds via in-event body
+  recovery, which does not depend on the `for`-header parsing cleanly.
+
+**Net:** implementing C (any sub-part) would be effort + broad blast radius for a
+**display-only** nicety, with **no fidelity/parse-rate gain**. Deferred. The effort
+budgeted here was redirected to the `ar`/`tl` VSO mid-stream-event cluster (a real
+**−15 degenerate** win) — see `MULTILINGUAL_ROADMAP.md`.
+
+If the for-loop is ever revisited, it should be **display-quality-driven** (rendering
+`为 item 在 $items` instead of `为 把 item 在 $items 那么 …`), not metric-driven; the
+original analysis below is the starting point.
+
+---
+
+## 1. Problem (original analysis — kept for the record)
 
 `template-literal-list-build` is the last non-behavior, non-streaming pattern still
 degenerate across languages. Its EN source:
