@@ -86,7 +86,7 @@ export const germanProfile: LanguageProfile = {
     focus: { primary: 'fokussieren', normalized: 'focus' },
     blur: { primary: 'defokussieren', alternatives: ['entfokussieren'], normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'leeren', normalized: 'empty' },
+    empty: { primary: 'leeren', alternatives: ['leer'], normalized: 'empty' },
     open: { primary: 'öffnen', alternatives: ['oeffnen'], normalized: 'open' },
     close: { primary: 'schließen', alternatives: ['schliessen'], normalized: 'close' },
     select: { primary: 'markieren', normalized: 'select' },
@@ -115,6 +115,9 @@ export const germanProfile: LanguageProfile = {
     return: { primary: 'zurückgeben', normalized: 'return' },
     then: { primary: 'dann', alternatives: ['danach', 'anschließend'], normalized: 'then' },
     and: { primary: 'und', alternatives: ['sowie', 'auch'], normalized: 'and' },
+    // Predicate keywords (conditionals) — mirrors the Spanish profile, the only
+    // language that previously parsed `is empty`-style predicates.
+    is: { primary: 'ist', normalized: 'is' },
     end: { primary: 'ende', alternatives: ['fertig'], normalized: 'end' },
     js: { primary: 'js', alternatives: ['javascript'], normalized: 'js' },
     async: { primary: 'asynchron', normalized: 'async' },
