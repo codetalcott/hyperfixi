@@ -127,6 +127,7 @@ export {
   frenchProfile,
   portugueseProfile,
   indonesianProfile,
+  malayProfile,
   quechuaProfile,
   swahiliProfile,
   hebrewProfile,

@@ -1338,3 +1338,44 @@ describe('vi set: vào-marked form (gán {destination} vào {patient})', () => {
     expect(a.has('set')).toBe(true);
   });
 });
+
+describe('ms (Malay) profile: event handler + set + fetch', () => {
+  // ms had no i18n grammar profile, so the transformer threw "Unknown target locale:
+  // ms" and no Malay could be generated (the baseline's 100% was English fallbacks).
+  // Adding malayProfile (mirrors Indonesian) with the `apabila` event head — matching
+  // the semantic ms event-handler pattern — plus handcrafted ms set (`tetapkan … ke`)
+  // and fetch (`ambil_dari …`) patterns lifts ms to ~97% real parsing with 0
+  // degenerate passes. See ZH_BLOCK_BODY_SCOPE.md (#2 sweep / ms profile).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[ms] parses an `apabila`-headed event handler with a body command', () => {
+    const a = actions(parse('apabila click togol .active', 'ms'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+  it('[ms] parses `tetapkan $x ke 5` as set with canonical roles', () => {
+    const node = parse('tetapkan $x ke 5', 'ms');
+    expect(actions(node).has('set')).toBe(true);
+    const r = node && (node as { roles?: unknown }).roles;
+    const roles = r instanceof Map ? Object.fromEntries(r) : (r as Record<string, unknown>);
+    expect((roles.destination as { value?: string })?.value).toBe('$x');
+  });
+  it('[ms] parses `ambil_dari /api/data` as fetch (marker-less source)', () => {
+    expect(actions(parse('ambil_dari /api/data', 'ms')).has('fetch')).toBe(true);
+  });
+  it('[ms] event block recovers {on, fetch}', () => {
+    const a = actions(parse('apabila submit ambil_dari /api/data', 'ms'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('fetch')).toBe(true);
+  });
+});

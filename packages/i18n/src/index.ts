@@ -220,6 +220,7 @@ export {
   turkishProfile,
   spanishProfile,
   indonesianProfile,
+  malayProfile,
   quechuaProfile,
   swahiliProfile,
   // Transformer

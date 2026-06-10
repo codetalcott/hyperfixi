@@ -408,6 +408,39 @@ function getSetPatternsId(): LanguagePattern[] {
   ];
 }
 
+function getSetPatternsMs(): LanguagePattern[] {
+  return [
+    {
+      // Malay set mirrors Indonesian: the transformer emits `tetapkan {destination}
+      // ke {patient}` for `set X to Y` (`ke` = "to"; the variable being set leads).
+      // ms had no set pattern of its own, so the transformed `set` dropped inside
+      // event bodies. Canonical roles (destination = the var, patient = the value).
+      // See ZH_BLOCK_BODY_SCOPE.md (#2 sweep / ms profile).
+      id: 'set-ms-full',
+      language: 'ms',
+      command: 'set',
+      priority: 100,
+      template: {
+        format: 'tetapkan {destination} ke {patient}',
+        tokens: [
+          { type: 'literal', value: 'tetapkan', alternatives: ['setkan', 'set'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
+          { type: 'literal', value: 'ke', alternatives: ['kepada', 'menjadi', 'jadi'] },
+          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+        ],
+      },
+      extraction: {
+        destination: { position: 1 },
+        patient: { position: 3 },
+      },
+    },
+  ];
+}
+
 function getSetPatternsIt(): LanguagePattern[] {
   return [
     {
@@ -954,6 +987,8 @@ export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
       return getSetPatternsHi();
     case 'id':
       return getSetPatternsId();
+    case 'ms':
+      return getSetPatternsMs();
     case 'it':
       return getSetPatternsIt();
     case 'pl':
