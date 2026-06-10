@@ -63,6 +63,7 @@ export const bengaliDictionary: Dictionary = {
     close: 'বন্ধ',
     open: 'খুলুন',
     select: 'নির্বাচন',
+    socket: 'সকেট',
   },
 
   modifiers: {

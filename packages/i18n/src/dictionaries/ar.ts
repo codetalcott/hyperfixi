@@ -65,6 +65,7 @@ export const ar: Dictionary = {
     select: 'اختر',
     clone: 'استنسخ',
     prepend: 'سبق',
+    socket: 'مقبس',
   },
 
   modifiers: {

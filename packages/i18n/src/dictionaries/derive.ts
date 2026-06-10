@@ -106,6 +106,10 @@ const COMMAND_KEYWORDS = [
   // Focus
   'focus',
   'blur',
+  // Streaming / concurrency (postdated the original list — keep in sync with profiles)
+  'socket',
+  'eventsource',
+  'worker',
 ] as const;
 
 /**

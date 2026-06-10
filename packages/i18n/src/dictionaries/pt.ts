@@ -63,6 +63,7 @@ export const pt: Dictionary = {
     clone: 'clonar',
     prepend: 'preceder',
     focus: 'focar',
+    socket: 'soquete',
   },
 
   modifiers: {
