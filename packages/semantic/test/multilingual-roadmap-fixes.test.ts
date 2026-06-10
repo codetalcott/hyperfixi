@@ -1422,3 +1422,46 @@ describe('VSO (ar/tl) mid-stream event after a plain leading command', () => {
     expect(a.has('toggle')).toBe(true);
   });
 });
+
+describe('focus command keyword alignment (de/fr/pl/pt/sw)', () => {
+  // first-in-parent (`on click focus first <input/> in closest <form/>`) was a
+  // degenerate pass in de/fr/pl/pt/sw. Root cause: the i18n `commands` dictionaries
+  // were MISSING a `focus` entry, so the transformer fell back to the event-noun
+  // form (de `fokus`, fr `focus`, pt `foco`, sw `zingatia`, pl `fokus`) — which the
+  // semantic command parser does not recognize (the profile primaries are verbs:
+  // fokussieren / focaliser / focar / lenga / skup). The whole `focus …` body
+  // dropped, leaving only `{on}` (fidelity 0.33). Spanish was unaffected only
+  // because its event-focus word (enfocar) happens to equal its profile primary.
+  // Fix: add `focus` to each `commands` dict = the profile primary verb, so the
+  // transformer emits a word the parser parses. Clears all 5 (degenerate→faithful,
+  // 0.33 → 0.67), un-masks focus in focus-element, and lifts avgFidelity in each.
+  // See docs-internal/MULTILINGUAL_ROADMAP.md ("focus keyword alignment").
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang) for first-in-parent.
+  const cases: Array<[string, string]> = [
+    ['de', 'bei klick fokussieren erste <input/> in nächste <form/>'],
+    ['fr', 'sur clic focaliser premier <input/> en plusproche <form/>'],
+    ['pl', 'gdy kliknięcie skup pierwszy <input/> w najbliższy <form/>'],
+    ['pt', 'em clique focar primeiro <input/> dentro mais_próximo <form/>'],
+    ['sw', 'kwenye bonyeza lenga kwanza <input/> ndani karibu_zaidi <form/>'],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers {on, focus} (first-in-parent)`, () => {
+      const a = actions(parse(input, lang as 'de'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('focus')).toBe(true);
+    });
+  }
+});

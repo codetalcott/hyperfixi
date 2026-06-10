@@ -62,6 +62,7 @@ export const pt: Dictionary = {
     select: 'selecionar',
     clone: 'clonar',
     prepend: 'preceder',
+    focus: 'focar',
   },
 
   modifiers: {

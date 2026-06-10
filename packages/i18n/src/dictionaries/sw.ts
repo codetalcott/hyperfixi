@@ -65,6 +65,7 @@ export const sw: Dictionary = {
     select: 'chagua',
     clone: 'nakili',
     prepend: 'tanguliza',
+    focus: 'lenga',
   },
 
   modifiers: {

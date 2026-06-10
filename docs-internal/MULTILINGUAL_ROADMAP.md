@@ -5,7 +5,9 @@
 > breakdown predates the 8 PRs below and no longer matches the baseline).
 > Source of truth for "what's left" is the regenerated baseline, not #259.
 
-_Last updated: after Track 5 **VSO (ar/tl) mid-stream event after a plain leading command** — a single language-agnostic-but-VSO-gated parser fix clearing a whole cluster. Verb-initial languages front the verb, so the i18n transformer renders an `on click` handler as `<command> … on click then <body>` — the event clause sits **mid-stream after the first command**, e.g. ar `احذف .active من .tab عند نقر ثم أضف …` / tl `alisin .active mula sa .tab kapag click pagkatapos …` (= `remove .active from .tab on click then add …`). The parser matched the leading command as a bare standalone and dropped the event + then-chain body (only `{remove}`). The existing `tryMidStreamEventExtraction` (already used for the VSO **loop** path) now also fires on a **plain leading command**, gated to `wordOrder === 'VSO'` (ar, tl) — in event-first SVO/SOV languages a plain command is never an event-mid-stream form, and running the extractor there mis-fires on incidental `on`+event token pairs (an un-gated first cut regressed ja/bn/he/de). Cleared the ar/tl cluster: `accordion-exclusive`, `tabs-basic`, `tabs-content`, `copy-to-clipboard`, `form-submit-prevent`, `halt-propagation`, `take-class-from-siblings`, + ar/tl from `modal-close-escape`. **Degenerate total 112 → 97 (−15), 0 regressions, no over-generation** (the with/without diff is all deletions); ar/tl avgFidelity 0.888 → 0.934 / 0.896 → 0.937; baseline regenerated. Locked by `multilingual-roadmap-fixes.test.ts` ("VSO (ar/tl) mid-stream event after a plain leading command")._
+_Last updated: Track 5 **`focus` command keyword alignment (de/fr/pl/pt/sw)** — the shared root cause behind the `first-in-parent` degenerate cluster. `on click focus first <input/> in closest <form/>` parsed degenerate `{on}` (fid 0.33) in all 5. Root cause: the i18n **`commands` dictionaries were missing a `focus` entry**, so the transformer fell back to the event-noun form (de `fokus`, fr `focus`, pt `foco`, sw `zingatia`, pl `fokus`) — which the semantic command parser does not recognize (the profile primaries are verbs: `fokussieren` / `focaliser` / `focar` / `lenga` / `skup`). The whole `focus …` body dropped. Spanish was unaffected only because its event-focus word (`enfocar`) coincidentally equals its profile primary; `focus-element` (`on click focus #input`, 2-action EN reference) hid the same drop under the 0.50 fidelity floor. Fix: add `focus` = the profile-primary verb to each of the 5 `commands` dicts, so the transformer emits a word the parser parses. **Degenerate total 97 → 92 (−5), `--regression` gate green, 0 regressions** (the baseline degenerate diff is 5 removals + 0 additions); `first-in-parent` degenerate→faithful (0.33 → 0.67) in all 5, focus un-masked in `focus-element`, avgFidelity ↑ de 0.911→0.917 / fr 0.888→0.893 / pl 0.896→0.901 / pt 0.873→0.879 / sw 0.909→0.914; baseline regenerated. The paired probe target **`if-empty` is a DIFFERENT root cause** — not a keyword gap (its `on/if/add/put` verbs are all present in the dicts) but the documented hard block-body cluster (`put`+positional-destination drop after a non-`into` marker, the `is empty` predicate, SOV `on blur` collapse in ja/ko) — left tracked, not force-unified. Locked by `multilingual-roadmap-fixes.test.ts` ("focus command keyword alignment")._
+
+_Earlier: Track 5 **VSO (ar/tl) mid-stream event after a plain leading command** — a single language-agnostic-but-VSO-gated parser fix clearing a whole cluster. Verb-initial languages front the verb, so the i18n transformer renders an `on click` handler as `<command> … on click then <body>` — the event clause sits **mid-stream after the first command**, e.g. ar `احذف .active من .tab عند نقر ثم أضف …` / tl `alisin .active mula sa .tab kapag click pagkatapos …` (= `remove .active from .tab on click then add …`). The parser matched the leading command as a bare standalone and dropped the event + then-chain body (only `{remove}`). The existing `tryMidStreamEventExtraction` (already used for the VSO **loop** path) now also fires on a **plain leading command**, gated to `wordOrder === 'VSO'` (ar, tl) — in event-first SVO/SOV languages a plain command is never an event-mid-stream form, and running the extractor there mis-fires on incidental `on`+event token pairs (an un-gated first cut regressed ja/bn/he/de). Cleared the ar/tl cluster: `accordion-exclusive`, `tabs-basic`, `tabs-content`, `copy-to-clipboard`, `form-submit-prevent`, `halt-propagation`, `take-class-from-siblings`, + ar/tl from `modal-close-escape`. **Degenerate total 112 → 97 (−15), 0 regressions, no over-generation** (the with/without diff is all deletions); ar/tl avgFidelity 0.888 → 0.934 / 0.896 → 0.937; baseline regenerated. Locked by `multilingual-roadmap-fixes.test.ts` ("VSO (ar/tl) mid-stream event after a plain leading command")._
 
 _Earlier: Track 5 **`ms` (Malay) grammar profile** — ms had no i18n grammar profile (`Unknown target locale: ms`), so its baseline 100% parse rate was an English-fallback artifact. Added `malayProfile` (mirrors Indonesian, but the event head is `apabila` not `pada`) + handcrafted ms `set`/`fetch`; real ms 37% → 97% (149/154), 0 degenerate; baseline regenerated. See [ZH_BLOCK_BODY_SCOPE.md](ZH_BLOCK_BODY_SCOPE.md)._
 
@@ -73,6 +75,40 @@ behaviors), not a parsing/i18n track. See Track 2.
 ---
 
 ## Shipped
+
+### Track 5 — `focus` command keyword alignment (first-in-parent → faithful, de/fr/pl/pt/sw)
+
+- **`first-in-parent` 0.33 → 0.67** (degenerate → faithful) in de, fr, pl, pt, sw;
+  **degenerate total 97 → 92 (−5)**; `--regression` gate green, **0 regressions**
+  (baseline degenerate diff = 5 removals, 0 additions); avgFidelity ↑ in all 5
+  (de 0.911→0.917, fr 0.888→0.893, pl 0.896→0.901, pt 0.873→0.879, sw 0.909→0.914);
+  baseline regenerated.
+- **Root cause.** The i18n `commands` dictionaries
+  (`packages/i18n/src/dictionaries/{de,fr,pl,pt,sw}.ts`) had **no `focus` entry**.
+  The grammar transformer therefore fell back to the event-noun form (de `fokus`,
+  fr `focus`, pt `foco`, sw `zingatia`, pl `fokus`) for the `focus` _command_ —
+  none of which the semantic command parser recognizes, since the profile primaries
+  are verbs (`fokussieren` / `focaliser` / `focar` / `lenga` / `skup`). So
+  `on click focus first <input/> in closest <form/>` dropped its entire `focus …`
+  body, parsing degenerate `{on}`. Spanish was unaffected only because its
+  event-focus word `enfocar` coincidentally equals its profile primary; the same
+  drop was present-but-masked in `focus-element` (2-action EN reference → 0.50,
+  exactly at the fidelity floor).
+- **Fix.** Add `focus` = the profile-primary verb to each of the 5 `commands`
+  dicts. The transformer now emits a verb the parser parses; the trailing
+  `first … in closest …` positional/scope is gracefully ignored (the EN reference
+  itself only yields `{focus, on, wait}`, so `{on, focus}` clears the 0.50 floor).
+  Same root-cause family as the qu/sw `increment` and zh `fetch` keyword
+  alignments. Locked by `multilingual-roadmap-fixes.test.ts`
+  ("focus command keyword alignment").
+- **Paired probe — `if-empty` is NOT the same root cause.** `if-empty`
+  (`on blur if my value is empty add .error to me put "Required" into next
+.error-message end`) is degenerate in de/he/ja/ko/sw, but its command verbs
+  (`on/if/add/put`) are all present in the dicts — it is the documented hard
+  block-body cluster, not a keyword gap: `put`+positional-destination drops after
+  the non-`into` marker (de `setzen … zu nächste …`), the `is empty` predicate, and
+  the SOV `on blur` collapse to a bare `blur` in ja/ko. Left tracked under the
+  block-body arc; deliberately not force-unified with the focus fix.
 
 ### Track 5 — zh `wait` BA-marked duration (zh repeat-forever → 1.0)
 
