@@ -83,6 +83,7 @@ export {
   resetConnection,
   isConnected,
   getCurrentDbPath,
+  getDefaultDbPath,
 } from './database/connection';
 
 // =============================================================================
@@ -166,6 +167,11 @@ export {
   validateAllTranslations,
   discoverPatterns,
   seedLLMExamples,
+  computeDbInputHash,
+  dbStampPath,
+  writeDbStamp,
+  checkDbStamp,
+  type DbStampStatus,
 } from './sync';
 
 // =============================================================================

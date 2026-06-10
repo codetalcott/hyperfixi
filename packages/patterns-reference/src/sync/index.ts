@@ -68,3 +68,12 @@ export async function seedLLMExamples(_dryRun: boolean = false): Promise<{ count
     'seedLLMExamples should be run via: bun run packages/semantic/scripts/seed-llm-examples.ts'
   );
 }
+
+// DB provenance stamp — freshness guard for the multilingual gate.
+export {
+  computeDbInputHash,
+  dbStampPath,
+  writeDbStamp,
+  checkDbStamp,
+  type DbStampStatus,
+} from './db-stamp';
