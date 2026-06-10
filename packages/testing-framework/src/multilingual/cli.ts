@@ -5,6 +5,7 @@
  * Command-line interface for running multilingual tests.
  */
 
+import { checkDbStamp, getDefaultDbPath } from '@hyperfixi/patterns-reference';
 import { TestOrchestrator } from './orchestrator';
 import type { TestConfig, LanguageCode } from './types';
 
@@ -203,6 +204,32 @@ async function main(): Promise<void> {
 
     // --save-baseline needs the regression reporter wired so it can persist.
     if (config.saveBaseline) config.regression = true;
+
+    // DB freshness guard: refuse to run a regression/baseline compare against a
+    // patterns.db generated from *different* source than is currently checked out
+    // (the cross-branch "phantom regression" footgun). The committed baseline only
+    // pairs with a DB synced from the matching source. CI re-syncs before the gate,
+    // so it always passes; locally this catches a stale DB after a branch switch or
+    // an un-re-synced source edit.
+    if (config.regression) {
+      const dbPath = getDefaultDbPath();
+      const stamp = checkDbStamp(dbPath);
+      if (stamp.status === 'stale') {
+        console.error(
+          '\n✗ patterns.db is STALE — it was generated from different source than is currently\n' +
+            '  checked out, so a comparison against the committed baseline would report phantom\n' +
+            '  regressions. Re-sync it before running the gate:\n\n' +
+            '    npm run db:init:force --prefix packages/patterns-reference\n' +
+            '    npm run sync:translations --prefix packages/patterns-reference\n'
+        );
+        process.exit(1);
+      } else if (stamp.status === 'unstamped') {
+        console.warn(
+          '⚠ patterns.db has no provenance stamp (generated before the freshness guard); ' +
+            'cannot verify it is fresh. Re-sync if results look surprising.'
+        );
+      }
+    }
 
     const orchestrator = new TestOrchestrator(config);
     const results = await orchestrator.run();

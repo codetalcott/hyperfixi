@@ -26,6 +26,7 @@ import {
   getProfile as getGrammarProfile,
 } from '@lokascript/i18n';
 import { maskSpans, unmaskSpans } from '../src/sync/span-mask';
+import { writeDbStamp } from '../src/sync/db-stamp';
 
 // =============================================================================
 // Configuration
@@ -390,6 +391,11 @@ async function syncTranslations() {
     // Calculate overall average
     const overallAvg = stats.reduce((sum, row) => sum + row.avg_confidence, 0) / stats.length;
     console.log(`\nOverall average confidence: ${overallAvg.toFixed(2)}`);
+
+    // Stamp the DB with the provenance of its source inputs, so the multilingual
+    // gate can detect a stale (cross-branch) DB before trusting a baseline compare.
+    writeDbStamp(dbPath);
+    console.log(`Wrote DB provenance stamp: ${dbPath}.stamp`);
   } finally {
     db.close();
   }

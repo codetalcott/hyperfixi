@@ -179,6 +179,24 @@ src/api/llm.test.ts           # 16 tests
 src/database/connection.test.ts # 11 tests
 ```
 
+## DB freshness guard (provenance stamp)
+
+`sync:translations` writes a `data/patterns.db.stamp` sidecar — a SHA-256 of the
+**source** that determines the DB's content (the i18n + semantic `src` trees, the
+seed `init-db.ts`, and `sync-translations.ts`). The multilingual `--regression` gate
+checks it before comparing against the committed baseline:
+
+- **stale** (source changed since the last sync) → the gate **refuses to run** and
+  tells you to re-sync. This prevents the cross-branch "phantom regression" footgun:
+  a `patterns.db` synced on one branch, then used on another, silently mis-compares
+  against that branch's baseline.
+- **unstamped** (DB predates the guard, e.g. a fresh checkout of the committed DB) →
+  the gate warns once; re-sync to get a stamp.
+
+The stamp is **local** (gitignored) — it records "what source produced _my_ DB". CI
+re-syncs (`npm run populate`) before gating, so it always sees a fresh stamp.
+Util: `src/sync/db-stamp.ts` (`writeDbStamp` / `checkDbStamp`).
+
 ## Common Issues
 
 ### Database not found

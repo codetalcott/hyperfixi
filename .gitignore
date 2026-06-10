@@ -122,6 +122,9 @@ lerna-debug.log*
 *.sqlite
 *.sqlite3
 !packages/patterns-reference/data/patterns.db
+# Local DB provenance stamp (freshness guard) — records what source produced the
+# local patterns.db; not committed (it's machine/working-tree local).
+packages/patterns-reference/data/patterns.db.stamp
 
 # Generated files
 /src/generated/

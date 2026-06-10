@@ -25,6 +25,15 @@ let dbInstance: InstanceType<typeof Database> | null = null;
 let currentDbPath: string | null = null;
 
 /**
+ * The resolved default DB path (honouring `LSP_DB_PATH` / `HYPERSCRIPT_LSP_DB`).
+ * Exposed so callers (e.g. the multilingual gate's freshness check) can target the
+ * exact DB that `getDatabase()` opens.
+ */
+export function getDefaultDbPath(): string {
+  return DEFAULT_DB_PATH;
+}
+
+/**
  * Get database connection (lazy singleton).
  */
 export function getDatabase(options: ConnectionOptions = {}): InstanceType<typeof Database> {
