@@ -236,10 +236,28 @@ regressions, **no side-effect additions** — cleaner than the he fix, which fli
 behavior pattern null→empty). Locked by `multilingual-roadmap-fixes.test.ts`
 ("vi set: vào-marked form").
 
-The remaining `template-literal-list-build` languages (ms, qu, sw) and the
-`for`-loop structural gap stay in the block-body roadmap arc. `ms` additionally has
+### #2 sweep — per-language follow-on: `qu` / `sw` set keyword realign (shipped)
+
+A different flavour of the same family: the **i18n dicts mapped `set` to the _put_
+verb** (qu `churay`, sw `weka`) — both of which the semantic profiles read as `put`
+(set is qu `churanay` / sw `seti`). So a transformed `set` parsed as `put` (with a
+selector arg) or dropped (with a literal). Realigning the dicts (`set` → `churanay` /
+`seti`, same shape as the zh `fetch` 获取→抓取 realign) fixed **qu** outright — it
+then parses via its generated SOV pattern (`{destination} ta {patient} man churanay`).
+**sw** also needed a handcrafted `set-sw-kwa` pattern (`seti {destination} kwa
+{patient}`, canonical roles), since the generated arrangement didn't match the
+transform. Cleared `template-literal-list-build` for both (faithful `{on,set}`);
+degenerate total 121 → 120, gate green, 0 regressions. (`sw` joins `behavior-sortable`
+in the list — but that pattern's body holds a real `seti … kwa …` that sw now
+correctly parses as `set`; the EN reference only recovers `{behavior}` for behavior
+definitions, so recall-based fidelity scores it 0 — a metric artifact, not over-
+generation.) Locked by `multilingual-roadmap-fixes.test.ts` ("qu / sw set: keyword
+realignment").
+
+After vi + qu + sw, the remaining `template-literal-list-build` language is `ms`, plus
+the `for`-loop structural gap — both stay in the block-body roadmap arc. `ms` has
 **no i18n grammar profile** (`Unknown target locale: ms`), so its translations can't
-be generated at all — a separate transformer-coverage gap.
+be generated at all — a separate transformer-coverage gap (the next planned item).
 
 ## Probe
 
