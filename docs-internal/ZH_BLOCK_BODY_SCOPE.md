@@ -222,7 +222,21 @@ degenerate, not a faithful→degenerate regression; it also makes he consistent 
 the already-degenerate `behavior-draggable`/`-resizable`). Locked by
 `multilingual-roadmap-fixes.test.ts` ("he set: accusative-fronted form").
 
-The remaining `template-literal-list-build` languages (ms, qu, sw, vi) and the
+### #2 sweep — per-language follow-on: `vi` set (shipped)
+
+Same family in **Vietnamese**: the transformer emits `gán {destination} vào {patient}`
+for `set X to Y` (`vào` = vi's destination/"into" marker; the variable being set leads,
+unmarked). The existing `set-vi-full` used a different marker (`thành`) and
+non-canonical roles (var → `patient`), so it never matched the transform output and
+the `set` dropped (degenerate vi in `template-literal-list-build`). A `set-vi-vao`
+pattern (priority 101, above `set-vi-full`) matches the transform and assigns the
+canonical set roles (destination = the var, patient = the value). **vi degenerate → 0**
+(cleared `template-literal-list-build`; degenerate total 122 → 121, gate green, 0
+regressions, **no side-effect additions** — cleaner than the he fix, which flipped a
+behavior pattern null→empty). Locked by `multilingual-roadmap-fixes.test.ts`
+("vi set: vào-marked form").
+
+The remaining `template-literal-list-build` languages (ms, qu, sw) and the
 `for`-loop structural gap stay in the block-body roadmap arc. `ms` additionally has
 **no i18n grammar profile** (`Unknown target locale: ms`), so its translations can't
 be generated at all — a separate transformer-coverage gap.

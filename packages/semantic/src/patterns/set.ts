@@ -735,6 +735,41 @@ function getSetPatternsHe(): LanguagePattern[] {
 function getSetPatternsVi(): LanguagePattern[] {
   return [
     {
+      // The i18n grammar transformer emits `gán {destination} vào {patient}` for
+      // `set X to Y` — `vào` is vi's destination/"into" marker, and the variable
+      // being set leads (unmarked). The existing `set-vi-full` below uses a
+      // different marker (`thành`) and non-canonical roles (var → `patient`), so it
+      // never matched the transform output and the `set` dropped (degenerate vi in
+      // template-literal-list-build etc.). This pattern matches the transform and
+      // assigns the canonical set roles (destination = the var, patient = the value)
+      // that the AST mapper reads. See ZH_BLOCK_BODY_SCOPE.md (#2 sweep).
+      id: 'set-vi-vao',
+      language: 'vi',
+      command: 'set',
+      priority: 101,
+      template: {
+        format: 'gán {destination} vào {patient}',
+        tokens: [
+          { type: 'literal', value: 'gán', alternatives: ['thiết lập', 'đặt giá trị'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
+          { type: 'literal', value: 'vào', alternatives: ['cho', 'đến'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'expression', 'reference', 'selector'],
+          },
+        ],
+      },
+      extraction: {
+        destination: { position: 1 },
+        patient: { marker: 'vào', markerAlternatives: ['cho', 'đến'] },
+      },
+    },
+    {
       id: 'set-vi-full',
       language: 'vi',
       command: 'set',

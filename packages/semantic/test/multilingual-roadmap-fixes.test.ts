@@ -1248,3 +1248,47 @@ describe('he set: accusative-fronted form (קבע את {destination} על {patie
     expect(a.has('set')).toBe(true);
   });
 });
+
+describe('vi set: vào-marked form (gán {destination} vào {patient})', () => {
+  // The i18n transformer emits `gán {destination} vào {patient}` for `set X to Y`
+  // (`vào` is vi's destination/"into" marker; the variable being set leads). The
+  // existing set-vi-full used a different marker (`thành`) and non-canonical roles
+  // (var → `patient`), so the transformed `set` dropped (degenerate vi in
+  // template-literal-list-build). A set-vi-vao pattern matches the transform and
+  // assigns the canonical roles. See ZH_BLOCK_BODY_SCOPE.md (#2 sweep).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+  function roles(node: unknown): Record<string, unknown> {
+    const rec = (node as Record<string, unknown>) ?? {};
+    const r = rec.roles;
+    if (r instanceof Map) return Object.fromEntries(r);
+    return (r as Record<string, unknown>) ?? {};
+  }
+
+  it('[vi] parses `gán $html vào ""` as set with correct destination/patient', () => {
+    const node = parse('gán $html vào ""', 'vi');
+    expect(actions(node).has('set')).toBe(true);
+    const r = roles(node);
+    expect((r.destination as { value?: string })?.value).toBe('$html');
+    expect((r.patient as { value?: string })?.value).toBe('');
+  });
+  it('[vi] parses a property-path target `gán #list.innerHTML vào $html`', () => {
+    const node = parse('gán #list.innerHTML vào $html', 'vi');
+    expect(actions(node).has('set')).toBe(true);
+    expect((roles(node).destination as { type?: string })?.type).toBe('property-path');
+  });
+  it('[vi] event-block `set` recovers (was the degenerate template-literal residue)', () => {
+    const a = actions(parse('khi nhấp gán $x vào "" rồi gán #out vào $x', 'vi'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('set')).toBe(true);
+  });
+});
