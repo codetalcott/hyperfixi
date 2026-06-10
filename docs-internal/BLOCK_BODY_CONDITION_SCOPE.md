@@ -1,9 +1,9 @@
 # Block-body cluster — scope, decomposition & phased plan
 
-> **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), and
-> Phase 1a (`is empty` predicate vocab for de/sw, −2) **SHIPPED** — degenerate
-> **92 → 77**. Remaining phases (1b/1c condition work, B3 then-chain) are the
-> recommended approach, not yet implemented.
+> **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), Phase 1a
+> (`is empty` vocab for de/sw, −2), and Phase 1b (id toggle alignment, −1) **SHIPPED**
+> — degenerate **92 → 76**. Remaining: the genuinely-hard he/ja/ko condition work
+> (§3.3) and B3 then-chain.
 >
 > **Prereq reading:** `MULTILINGUAL_ROADMAP.md` → Shipped; `FOR_LOOP_BLOCK_BODY_DESIGN.md`
 > (the proven measure-first / decompose / phase playbook this reuses);
@@ -142,17 +142,38 @@ transformer/dict fix first) and **ja/ko** (SOV reorder **splits** `is`…`empty`
 with keywords the predicate isn't adjacent — needs the reorder to keep predicates
 intact). These are the next Phase 1b/1c increments.
 
-### 3.2 Remaining
+### 3.2 Phase 1b — `unless-condition` was a hidden toggle keyword mismatch (id) — SHIPPED (−1)
 
-- **Phase 1b** — extend predicate vocabulary to the other clean languages; add
-  `matches`/`exists` (for `unless I match …`, `if #x exists …`).
-- **Phase 1c (transformer + ja/ko/he)** — keep predicates adjacent through the SOV
-  reorder (ja/ko) and translate the `value is empty` predicate for he. This is where
-  the original "transformer" work actually belongs — scoped, not the whole condition.
-- **Phase 3 (B3 then-chain body)** — generalize the existing `BLOCK_BODY_ACTIONS`
-  event-body recovery to then-chain/standalone positions (guarded "can only add
-  parses, never break"). Shared with the deferred for-loop §2c; clears
-  `async-block` / `fetch-with-headers`.
+Probing the remaining "condition" cluster turned up a surprise: **id `unless-condition`
+isn't a predicate/conditional bug at all.** Even `pada klik ganti .selected` (a _plain_
+`on click toggle` with no conditional) recovered only `{on}` — the i18n id dict emitted
+`ganti` for toggle while the semantic indonesian profile's toggle primary is `alihkan`
+(`ganti` is already `swap`'s alternative there, so it can't double as toggle). With
+toggle unrecognized, the body dropped and only `{on}` survived (fid 0.33). Aligning the
+dict `toggle: 'ganti' → 'alihkan'` lets the body recover **past** the still-English
+`I match .disabled` predicate: `{on, toggle}` (0.33 → 0.67, degenerate → faithful).
+**−1 (77 → 76)**, gate green, 0 regressions. Same keyword-gap family as focus/socket —
+a reminder to **check for a masked keyword mismatch before assuming a hard parser bug**.
+Locked by `multilingual-roadmap-fixes.test.ts` ("id toggle keyword alignment").
+
+### 3.3 Remaining — the genuinely-hard cases
+
+The 6 still-degenerate B1 instances all need deeper parser/transformer work (no masked
+keyword wins left — verified):
+
+- **he `unless-condition` / `if-empty`** — the transformer leaves the predicate in
+  **English** (`I match .disabled`, `value is empty`); needs predicate-operator/reference
+  translation (`I`→me-word, `match`→matches-word, `value is empty`) plus profile
+  `matches` vocabulary.
+- **ja/ko `if-empty` / `input-validation`** — the SOV reorder doesn't just split the
+  predicate, it **collapses the whole event handler to a bare `blur`** (fid 0.00). The
+  conditional event-handler + SOV-reordered body needs dedicated parser work — the
+  highest-risk item, and the one place the original "transformer/reorder" framing still
+  holds.
+- **Phase 3 (B3 then-chain body)** — `async-block` / `fetch-with-headers` (fr/pt):
+  generalize the existing `BLOCK_BODY_ACTIONS` event-body recovery to then-chain
+  positions (guarded "can only add parses, never break"). Independent of the condition
+  work; shared with the deferred for-loop §2c.
 
 ## 4. Risks & validation (every phase)
 
@@ -176,4 +197,4 @@ intact). These are the next Phase 1b/1c increments.
    reason to treat Phase 0/0b as the priority and the condition work as a deliberate,
    gated arc rather than a quick win.
 
-**Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b) → 77 (Phase 1a).**
+**Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b) → 77 (Phase 1a) → 76 (Phase 1b).**
