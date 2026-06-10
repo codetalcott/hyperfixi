@@ -1,7 +1,9 @@
 # Block-body cluster — scope, decomposition & phased plan
 
-> **Status:** Phase 0 (`socket` keyword alignment, −9 degenerate) **SHIPPED**. The
-> rest is the recommended approach, not yet implemented.
+> **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), and
+> Phase 1a (`is empty` predicate vocab for de/sw, −2) **SHIPPED** — degenerate
+> **92 → 77**. Remaining phases (1b/1c condition work, B3 then-chain) are the
+> recommended approach, not yet implemented.
 >
 > **Prereq reading:** `MULTILINGUAL_ROADMAP.md` → Shipped; `FOR_LOOP_BLOCK_BODY_DESIGN.md`
 > (the proven measure-first / decompose / phase playbook this reuses);
@@ -104,25 +106,53 @@ Probed and found harder than a keyword gap — left for a dedicated fix:
 
 3 instances; tracked here, not bundled with the clean Phase 0b win.
 
-## 3. Phases 1–3 — the B1 condition campaign (the hard part)
+## 3. Phases 1–3 — the B1 condition campaign
 
-Reuse the for-loop playbook exactly: **measure-first, transformer-first, one language
-at a time behind `--regression`, per-language A/B for over-generation, locked by tests.**
+> **Plan revised after the Phase 1 measure-first probe (see §3.0).** The original
+> hypothesis was "transformer-first." Probing showed the transformer is **necessary
+> but not sufficient** — the real blocker is the **semantic profile's predicate
+> vocabulary**, and the fix is replicating the Spanish profile (the only one that
+> ever parsed predicates), not rewriting the transformer.
 
-1. **Phase 1 (B1 transformer):** teach `GrammarTransformer` to treat predicates
-   (`is empty`, `matches`, comparisons) as conditions, not object-marked command args,
-   and stop injecting the spurious `then`/markers inside `if`/`unless` headers (B2).
-   Same family as the shipped `applyPrimaryRole` fix, extended to the predicate role.
-   **Highest leverage, highest risk** — it changes condition rendering for every
-   language, so it must clear the gate _alone_ with the per-language A/B that caught
-   the he/sw `behavior-sortable` phantom flips.
-2. **Phase 2 (B1 semantic):** ensure the parser recognizes the cleaned translated
-   predicates (`ist leer` → "is empty", …), mirroring `for-en-basic` → `for-{lang}`
-   but for conditions. Only for languages Phase 1 leaves unmatched.
-3. **Phase 3 (B3 then-chain body):** generalize the existing `BLOCK_BODY_ACTIONS`
-   event-body recovery to then-chain/standalone positions (guarded "can only add
-   parses, never break"). Shared with the deferred for-loop §2c; clears
-   `async-block` / `fetch-with-headers`.
+### 3.0 What the probe found (the actual mechanism)
+
+`if my value is empty …` / `unless I match .disabled …` parse fully in **Spanish**
+(`si mi valor está vacío …` → `{add, empty, if, on}`) but in **no other language**.
+Why: `spanish.ts` is the **only** profile carrying the **predicate vocabulary** —
+`is: 'es'`, `empty: 'vacío'` (the _adjective_), `exists: 'existe'`. Every other profile
+has `empty` only as the **command** ("empty the element") and **no `is` keyword**, so
+the predicate never forms and the `if`/`unless` wrapper is lost (the body still
+recovers via event-extraction, which is why most languages stay _faithful_ — only
+de/he/ja/ko/sw fall below 0.50). Critically, **even a hand-cleaned, correctly-ordered
+translated predicate doesn't parse** without these keywords — so this is a
+**profile-vocabulary** fix, not a transformer fix. (B2's spurious-`then` is real but
+secondary; B3 is independent.)
+
+### 3.1 Phase 1a — `is empty` predicate vocabulary (de/sw) — SHIPPED (−2)
+
+Mirror the Spanish predicate vocabulary into the profiles where the translated
+predicate is **adjacent and recognizable**: **de** (`ist leer`) and **sw** (`ni tupu`)
+— add `is` and the empty **adjective** as an alternative of the `empty` keyword.
+`empty` is now recovered, lifting **de/sw `if-empty` 0.40 → 0.60 (degenerate →
+faithful)**; **degenerate total 79 → 77 (−2)**, gate green, 0 regressions (incl. the
+common Swahili copula `ni`, recognized only in predicate position). Locked by
+`multilingual-roadmap-fixes.test.ts` ("`is empty` predicate keywords"). **Deferred
+within B1:** **he** (the transformer leaves `value is empty` in **English** — needs a
+transformer/dict fix first) and **ja/ko** (SOV reorder **splits** `is`…`empty`, so even
+with keywords the predicate isn't adjacent — needs the reorder to keep predicates
+intact). These are the next Phase 1b/1c increments.
+
+### 3.2 Remaining
+
+- **Phase 1b** — extend predicate vocabulary to the other clean languages; add
+  `matches`/`exists` (for `unless I match …`, `if #x exists …`).
+- **Phase 1c (transformer + ja/ko/he)** — keep predicates adjacent through the SOV
+  reorder (ja/ko) and translate the `value is empty` predicate for he. This is where
+  the original "transformer" work actually belongs — scoped, not the whole condition.
+- **Phase 3 (B3 then-chain body)** — generalize the existing `BLOCK_BODY_ACTIONS`
+  event-body recovery to then-chain/standalone positions (guarded "can only add
+  parses, never break"). Shared with the deferred for-loop §2c; clears
+  `async-block` / `fetch-with-headers`.
 
 ## 4. Risks & validation (every phase)
 
@@ -146,4 +176,4 @@ at a time behind `--regression`, per-language A/B for over-generation, locked by
    reason to treat Phase 0/0b as the priority and the condition work as a deliberate,
    gated arc rather than a quick win.
 
-**Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b).**
+**Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b) → 77 (Phase 1a).**

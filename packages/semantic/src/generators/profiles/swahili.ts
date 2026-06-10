@@ -88,7 +88,7 @@ export const swahiliProfile: LanguageProfile = {
     focus: { primary: 'lenga', alternatives: ['angazia'], normalized: 'focus' },
     blur: { primary: 'blur', normalized: 'blur' },
     // Phase 1 (v0.9.90): DOM / form state / debug
-    empty: { primary: 'toa-kila-kitu', alternatives: ['mwaga'], normalized: 'empty' },
+    empty: { primary: 'toa-kila-kitu', alternatives: ['mwaga', 'tupu'], normalized: 'empty' },
     open: { primary: 'fungua', normalized: 'open' },
     close: { primary: 'funga', normalized: 'close' },
     select: { primary: 'alama', normalized: 'select' },
@@ -117,6 +117,10 @@ export const swahiliProfile: LanguageProfile = {
     return: { primary: 'rudisha', alternatives: ['rejea'], normalized: 'return' },
     then: { primary: 'kisha', alternatives: ['halafu', 'baadaye'], normalized: 'then' },
     and: { primary: 'na', alternatives: ['pia', 'vilevile'], normalized: 'and' },
+    // Predicate keyword (conditionals) — mirrors the Spanish profile. `ni` is the
+    // Swahili copula ("is"); only recognized in predicate position (after a value,
+    // before an adjective like `tupu`), so it doesn't disturb command parsing.
+    is: { primary: 'ni', normalized: 'is' },
     end: { primary: 'mwisho', alternatives: ['maliza', 'tamati'], normalized: 'end' },
     js: { primary: 'js', alternatives: ['javascript'], normalized: 'js' },
     async: { primary: 'isiyo sawia', normalized: 'async' },

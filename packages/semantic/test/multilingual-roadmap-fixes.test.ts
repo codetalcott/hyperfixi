@@ -1560,3 +1560,47 @@ describe('eventsource / worker profile entries (hi, tl) — Phase 0b', () => {
     });
   }
 });
+
+describe('`is empty` predicate keywords (de/sw) — block-body Phase 1a', () => {
+  // if-empty (`on blur if my value is empty …`) was degenerate in de,he,ja,ko,sw.
+  // Root cause (B1 in BLOCK_BODY_CONDITION_SCOPE.md): control-flow PREDICATES weren't
+  // recognized in non-English — only the Spanish profile carried the predicate
+  // vocabulary (`is`/`empty`-adjective/`exists`), so only es parsed `is empty`
+  // conditionals. The other profiles had `empty` only as the *command* ("empty the
+  // element") and no `is` keyword. Fix (Phase 1a): mirror the Spanish predicate
+  // vocabulary into the profiles where the translated predicate is adjacent and
+  // recognizable — de (`ist leer`) and sw (`ni tupu`): add `is` and the empty
+  // ADJECTIVE as an alternative of the empty keyword. The `empty` predicate is now
+  // recovered, lifting de/sw if-empty 0.40 → 0.60 (degenerate → faithful). he (the
+  // transformer leaves `value is empty` in English) and ja/ko (SOV reorder splits
+  // `is`…`empty`) are harder and deferred — see §3 of the scope doc.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang) for if-empty.
+  const cases: Array<[string, string]> = [
+    [
+      'de',
+      'bei unscharf wenn mein wert ist leer hinzufügen .error zu ich dann setzen "Required" zu nächste .error-message ende',
+    ],
+    [
+      'sw',
+      'kwenye poteza_macho kama yangu thamani ni tupu ongeza .error kwa mimi kisha weka "Required" kwa ijayo .error-message mwisho',
+    ],
+  ];
+
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers the empty predicate`, () => {
+      expect(actions(parse(input, lang as 'de')).has('empty')).toBe(true);
+    });
+  }
+});
