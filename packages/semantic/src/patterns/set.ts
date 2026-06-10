@@ -619,6 +619,44 @@ function getSetPatternsRu(): LanguagePattern[] {
   ];
 }
 
+function getSetPatternsSw(): LanguagePattern[] {
+  return [
+    {
+      // After the i18n dict realign (set → `seti`, was the put verb `weka`), the
+      // transformer emits `seti {destination} kwa {patient}` for `set X to Y` — the
+      // variable being set leads (unmarked), and `kwa` ("to"/"with") introduces the
+      // value. The generated pattern arranged the markers differently, so the
+      // transformed `set` dropped. This maps the transform to the canonical set roles
+      // (destination = the var, patient = the value). See ZH_BLOCK_BODY_SCOPE.md (#2).
+      id: 'set-sw-kwa',
+      language: 'sw',
+      command: 'set',
+      priority: 100,
+      template: {
+        format: 'seti {destination} kwa {patient}',
+        tokens: [
+          { type: 'literal', value: 'seti', alternatives: ['weka thamani'] },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
+          { type: 'literal', value: 'kwa', alternatives: ['kwenye'] },
+          {
+            type: 'role',
+            role: 'patient',
+            expectedTypes: ['literal', 'expression', 'reference', 'selector'],
+          },
+        ],
+      },
+      extraction: {
+        destination: { position: 1 },
+        patient: { marker: 'kwa', markerAlternatives: ['kwenye'] },
+      },
+    },
+  ];
+}
+
 function getSetPatternsTh(): LanguagePattern[] {
   return [
     // Simple pattern: ตั้ง :x 5
@@ -889,6 +927,8 @@ export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
       return getSetPatternsPt();
     case 'ru':
       return getSetPatternsRu();
+    case 'sw':
+      return getSetPatternsSw();
     case 'th':
       return getSetPatternsTh();
     case 'uk':

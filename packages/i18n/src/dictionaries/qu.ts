@@ -11,7 +11,10 @@ export const qu: Dictionary = {
     send: 'kachay',
     take: 'hurquy',
     put: 'churay',
-    set: 'churay',
+    // churay is the semantic qu profile's `put` primary; `set` is churanay. Emitting
+    // churay for set made the semantic parser read a transformed `set` as `put`.
+    // See ZH_BLOCK_BODY_SCOPE.md (#2 sweep — keyword realignment, cf. zh fetch).
+    set: 'churanay',
     get: 'chaskiy',
     add: 'yapay',
     remove: 'qichuy',

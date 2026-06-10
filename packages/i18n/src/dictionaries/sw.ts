@@ -11,7 +11,10 @@ export const sw: Dictionary = {
     send: 'tuma',
     take: 'chukua',
     put: 'weka',
-    set: 'weka',
+    // weka is the semantic sw profile's `put` primary; `set` is seti. Emitting weka
+    // for set made the semantic parser read a transformed `set` as `put`.
+    // See ZH_BLOCK_BODY_SCOPE.md (#2 sweep — keyword realignment, cf. zh fetch).
+    set: 'seti',
     get: 'pata',
     add: 'ongeza',
     remove: 'ondoa',

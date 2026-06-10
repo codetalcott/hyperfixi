@@ -1248,3 +1248,49 @@ describe('he set: accusative-fronted form (קבע את {destination} על {patie
     expect(a.has('set')).toBe(true);
   });
 });
+
+describe('qu / sw set: keyword realignment (set verb ≠ put verb)', () => {
+  // The i18n dicts mapped `set` to the *put* verb (qu churay, sw weka), which the
+  // semantic profiles read as `put` — so a transformed `set` parsed as `put` (or
+  // dropped). Realigned to the real set verbs (qu churanay, sw seti). qu then parses
+  // via its generated SOV pattern (`{dest} ta {patient} man churanay`); sw needs a
+  // handcrafted `seti {dest} kwa {patient}` (canonical roles). Same family as the zh
+  // fetch keyword realign. See ZH_BLOCK_BODY_SCOPE.md (#2 sweep).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+  function roles(node: unknown): Record<string, unknown> {
+    const rec = (node as Record<string, unknown>) ?? {};
+    const r = rec.roles;
+    if (r instanceof Map) return Object.fromEntries(r);
+    return (r as Record<string, unknown>) ?? {};
+  }
+
+  it('[qu] parses `$html ta "" man churanay` as set (not put) with canonical roles', () => {
+    const node = parse('$html ta "" man churanay', 'qu');
+    expect(actions(node).has('set')).toBe(true);
+    const r = roles(node);
+    expect((r.destination as { value?: string })?.value).toBe('$html');
+    expect((r.patient as { value?: string })?.value).toBe('');
+  });
+  it('[sw] parses `seti $html kwa ""` as set (not put) with canonical roles', () => {
+    const node = parse('seti $html kwa ""', 'sw');
+    expect(actions(node).has('set')).toBe(true);
+    const r = roles(node);
+    expect((r.destination as { value?: string })?.value).toBe('$html');
+    expect((r.patient as { value?: string })?.value).toBe('');
+  });
+  it('[sw] handles a property-path target `seti #list.innerHTML kwa $html`', () => {
+    const node = parse('seti #list.innerHTML kwa $html', 'sw');
+    expect(actions(node).has('set')).toBe(true);
+    expect((roles(node).destination as { type?: string })?.type).toBe('property-path');
+  });
+});
