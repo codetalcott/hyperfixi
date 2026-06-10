@@ -1672,3 +1672,49 @@ describe('qu/tl get keyword alignment (get-value) — block-body quick win', () 
     expect(a.has('get')).toBe(true);
   });
 });
+
+describe('fr/pt marker-less fetch (async-block / fetch-with-headers) — block-body B3', () => {
+  // async-block (`on click async fetch /api/data then put it into me`) and
+  // fetch-with-headers were degenerate in fr/pt. The keywords ARE aligned, but for
+  // `fetch <url>` (no `from`) the transformer emits a marker-less `récupérer
+  // /api/data` / `buscar /api/data`, while the generated pattern requires a `de`
+  // source marker (`chercher de …` / `buscar de …`) — so `fetch` dropped and the
+  // body collapsed to a phantom `set` (degenerate {on, set}, fid 0.33). A handcrafted
+  // fr/pt fetch pattern tolerating the optional `de` + responseType (mirrors fetch-ms /
+  // fetch-zh-ba) recovers `fetch`: {on, fetch, set} — fid 0.67, degenerate → faithful
+  // (the phantom `set` from `put it into me`'s `à`/`para` marker is harmless to the
+  // 0.50 floor). Degenerate total 74 → 70 (−4), gate green.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[fr] bare marker-less fetch parses (récupérer /url)', () => {
+    expect(actions(parse('récupérer /api/data', 'fr')).has('fetch')).toBe(true);
+  });
+
+  it('[pt] bare marker-less fetch parses (buscar /url)', () => {
+    expect(actions(parse('buscar /api/data', 'pt')).has('fetch')).toBe(true);
+  });
+
+  it('[fr] recovers fetch in async-block', () => {
+    // Corpus-shaped transformer output (en → fr), async-block.
+    const a = actions(parse('sur clic asynchrone récupérer /api/data alors mettre ça à moi', 'fr'));
+    expect(a.has('fetch')).toBe(true);
+  });
+
+  it('[pt] recovers fetch in async-block', () => {
+    // Corpus-shaped transformer output (en → pt), async-block.
+    const a = actions(
+      parse('em clique assíncrono buscar /api/data então colocar isso para eu', 'pt')
+    );
+    expect(a.has('fetch')).toBe(true);
+  });
+});

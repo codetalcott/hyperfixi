@@ -99,6 +99,88 @@ function getFetchPatternsMs(): LanguagePattern[] {
   ];
 }
 
+function getFetchPatternsFr(): LanguagePattern[] {
+  return [
+    {
+      // French fetch. For `fetch <url>` (no `from`) the i18n transformer emits a
+      // marker-less `récupérer /api/data` (dict `fetch: récupérer`; profile primary
+      // `chercher`), but the generated pattern requires a `de` source marker
+      // (`chercher de …`), so the marker-less form dropped — collapsing an
+      // `async fetch … then put …` / `fetch … as JSON then put …` body to a phantom
+      // `set` (degenerate `{on, set}`). Tolerates the optional `de` and the `comme`
+      // responseType. Same shape as fetch-ms / fetch-zh-ba; the `de`-marked form is
+      // still covered by the generated pattern.
+      id: 'fetch-fr',
+      language: 'fr',
+      command: 'fetch',
+      priority: 105,
+      template: {
+        format: 'chercher de {source} comme {responseType}',
+        tokens: [
+          { type: 'literal', value: 'chercher', alternatives: ['récupérer'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: 'de' }],
+          },
+          { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'comme' },
+              { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+            ],
+          },
+        ],
+      },
+      extraction: {
+        source: { marker: 'de' },
+        responseType: { marker: 'comme' },
+      },
+    },
+  ];
+}
+
+function getFetchPatternsPt(): LanguagePattern[] {
+  return [
+    {
+      // Portuguese fetch — same marker-less-transform shape as French (above).
+      // `fetch <url>` emits `buscar /api/data` (dict + profile `buscar`), but the
+      // generated pattern requires a `de` source marker, so the marker-less form
+      // dropped. Tolerates the optional `de` and the `como` responseType.
+      id: 'fetch-pt',
+      language: 'pt',
+      command: 'fetch',
+      priority: 105,
+      template: {
+        format: 'buscar de {source} como {responseType}',
+        tokens: [
+          { type: 'literal', value: 'buscar' },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: 'de' }],
+          },
+          { type: 'role', role: 'source', expectedTypes: ['literal', 'expression'] },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [
+              { type: 'literal', value: 'como' },
+              { type: 'role', role: 'responseType', expectedTypes: ['literal', 'expression'] },
+            ],
+          },
+        ],
+      },
+      extraction: {
+        source: { marker: 'de' },
+        responseType: { marker: 'como' },
+      },
+    },
+  ];
+}
+
 /**
  * Get fetch patterns for a specific language.
  */
@@ -108,6 +190,10 @@ export function getFetchPatternsForLanguage(language: string): LanguagePattern[]
       return getFetchPatternsZh();
     case 'ms':
       return getFetchPatternsMs();
+    case 'fr':
+      return getFetchPatternsFr();
+    case 'pt':
+      return getFetchPatternsPt();
     default:
       return [];
   }
