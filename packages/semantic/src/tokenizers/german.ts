@@ -50,10 +50,14 @@ const GERMAN_EXTRAS: KeywordEntry[] = [
   { native: 'letzte', normalized: 'last' },
   { native: 'letzter', normalized: 'last' },
   { native: 'letztes', normalized: 'last' },
+  // 'nächste' means both "next" and "closest"; keyword-map insertion is last-wins,
+  // so a second 'closest' entry here would shadow 'next' and break positional
+  // expressions (`put X into next .y` — `next` is positional-capable, `closest`
+  // is not). The locative `in nächste <form/>` scope guard accepts 'next' too
+  // (POSITIONAL_OR_SCOPE_KEYWORDS), so normalizing to 'next' serves both readings.
   { native: 'nächste', normalized: 'next' },
   { native: 'nachste', normalized: 'next' },
   { native: 'vorherige', normalized: 'previous' },
-  { native: 'nächste', normalized: 'closest' },
   { native: 'eltern', normalized: 'parent' },
 
   // Events
