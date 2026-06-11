@@ -195,7 +195,11 @@ function getAddPatternsPl(): LanguagePattern[] {
       template: {
         format: 'dodaj {patient} do {destination}',
         tokens: [
-          { type: 'literal', value: 'dodaj', alternatives: ['dołącz', 'dolacz'] },
+          // 'dołącz'/'dolacz' removed: the pl profile claims dołącz as APPEND's
+          // primary, but listing it here made the higher-priority handcrafted
+          // add pattern shadow the generated append pattern — append-content
+          // parsed as add. The tokenizer already normalizes dołącz → append.
+          { type: 'literal', value: 'dodaj' },
           { type: 'role', role: 'patient' },
           {
             type: 'group',
@@ -224,7 +228,8 @@ function getAddPatternsPl(): LanguagePattern[] {
       template: {
         format: 'dodaj {patient}',
         tokens: [
-          { type: 'literal', value: 'dodaj', alternatives: ['dołącz', 'dolacz'] },
+          // dołącz/dolacz removed — they are append's words (see add-pl-full).
+          { type: 'literal', value: 'dodaj' },
           { type: 'role', role: 'patient' },
         ],
       },
