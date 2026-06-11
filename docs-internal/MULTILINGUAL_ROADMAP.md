@@ -45,6 +45,19 @@ _Earlier: after Track 5 **Tier 1 — if/else block-body in event handlers** (deg
 
 ## Current state
 
+> **Focus shift (2026-06-11): from parse rate to _fidelity_.** Parse rate (~99.4%
+> non-null) is effectively maxed, but it overstates health: a full fidelity sweep
+> (24 langs × 154 patterns = 3696 instances) shows **84.8% faithful, 12.7% lossy,
+> 1.9% degenerate, 0.6% failed** — cross-language **avgFidelity 0.928**. The **lossy
+> band (471 instances that parse and pass CI while silently dropping ≥1 command) is
+> ~7× the tracked degenerate band (69)**. The next arc is **correctness & reliability
+> before behaviors**, organized around avgFidelity rather than the degenerate count.
+> Full assessment, leverage analysis (dominant gap: control-flow body parsing —
+> `if`/`unless` + then-chain `put`/`set`), and the prioritized tracks (R0 gate
+> avgFidelity ratchet → Track A conditions/bodies → Track B positional/content →
+> Track C low-fidelity audits → then behaviors) live in
+> [CORRECTNESS_RELIABILITY_PLAN.md](CORRECTNESS_RELIABILITY_PLAN.md).
+
 Baseline: `packages/testing-framework/baselines/multilingual-priority.json`
 (generated with `--bundle browser-priority`). Cross-language average **99.05%**
 (up from 97.5% before Phase 1; Phases 1–4 + Track 4 + qu `install` + passthrough
