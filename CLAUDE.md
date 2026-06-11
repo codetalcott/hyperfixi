@@ -263,17 +263,36 @@ source's commands (e.g. an `if/focus/halt` body collapsing to a bare `if`). So a
 
 The harness computes a structural **fidelity** signal (`packages/testing-framework/src/multilingual/fidelity.ts`):
 the fraction of the English reference parse's command actions present in each
-translation. Passes below 50% fidelity are reported as **degenerate passes** (the
-console run prints a `⚠ Degenerate passes` section), and per-language
-`avgFidelity` / `degeneratePasses` are tracked in the committed baseline.
+translation. By fidelity, passes fall into three bands, each tracked per-language in
+the committed baseline:
 
-The `--regression` gate ratchets on this: a **faithful** baseline pass that becomes
-a **degenerate** pass fails CI (tolerance 3, to absorb baseline noise — same spirit
-as the parse-rate ±2pt tolerance). This prevents fidelity backsliding without
-demanding the ~232 existing degenerate passes be fixed at once. After an
-_intentional_ fidelity change, regenerate the baseline (`--save-baseline`). The
-remaining degenerate passes (mostly block-body translation — `if-*`, `fetch-*`
-states, `async-block`) are tracked in `docs-internal/MULTILINGUAL_ROADMAP.md`.
+- **degenerate** (fid < 0.5 — lost most of the structure): `degeneratePasses`. ~69.
+- **lossy** (0.5 ≤ fid < 1.0 — parses, clears the floor, but silently drops ≥1
+  command): `lossyPasses`. **~471 — the larger, previously-untracked correctness
+  band.** See `docs-internal/CORRECTNESS_RELIABILITY_PLAN.md`.
+- **faithful** (fid = 1.0). ~3133. Cross-language `avgFidelity` ≈ 0.93.
+
+The `--regression` gate ratchets on **three** signals (each fails CI; each guarded so
+an un-regenerated baseline never retro-flags):
+
+1. **parse-rate** drop > 2pts.
+2. **degenerate ratchet** — a faithful baseline pass that became _degenerate_
+   (tolerance 3).
+3. **correctness ratchet (R0)** — a faithful baseline pass that became _lossy_
+   (tolerance 3), **plus** a per-language **avgFidelity** drop > 0.01. This catches
+   the silent command-drops the degenerate ratchet misses (a 1.0 → 0.8 pass).
+
+After an _intentional_ fidelity change, regenerate the baseline (`--save-baseline`).
+**The baseline must be regenerated against a freshly `populate`d patterns.db** — a
+baseline generated against a stale/transitional DB will read as drifted.
+`sync:translations` (the transformer) is deterministic, but the full `populate` has
+**minor residual jitter** on a few boundary patterns (e.g. a qu `remove-class-*` parse
+that lands exactly at fidelity 0.5); the ratchet tolerances (3 lossy / 3 degenerate
+flips, avgFidelity 0.02) absorb it as a within-tolerance **warning**, the same way the
+parse-rate ±2pt tolerance absorbs DB noise. Making the populate fully deterministic is
+a tracked reliability follow-up. Remaining degenerate/lossy passes (dominant cluster:
+control-flow body parsing — `if`/`unless` + then-chain `put`/`set`) are tracked in
+`docs-internal/CORRECTNESS_RELIABILITY_PLAN.md` and `MULTILINGUAL_ROADMAP.md`.
 
 #### Running the multilingual `--regression` gate locally
 
