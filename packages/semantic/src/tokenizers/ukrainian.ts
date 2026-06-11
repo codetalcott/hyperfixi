@@ -99,6 +99,18 @@ const UKRAINIAN_EXTRAS: KeywordEntry[] = [
   { native: 'години', normalized: 'h' },
   { native: 'годин', normalized: 'h' },
 
+  // Positional (masculine nominative — the forms the i18n dict emits; the
+  // gendered variants below predate these but the base forms were never
+  // listed, so `останній <.message/> в #chat` never formed a positional
+  // query — see positional-keyword-drift.test.ts)
+  { native: 'перший', normalized: 'first' },
+  { native: 'останній', normalized: 'last' },
+  { native: 'наступний', normalized: 'next' },
+  { native: 'попередній', normalized: 'previous' },
+  { native: 'найближчий', normalized: 'closest' },
+  { native: 'батьківський', normalized: 'parent' },
+  { native: 'випадковий', normalized: 'random' },
+
   // Gendered forms (additional variants)
   { native: 'перша', normalized: 'first' }, // feminine
   { native: 'перше', normalized: 'first' }, // neuter
