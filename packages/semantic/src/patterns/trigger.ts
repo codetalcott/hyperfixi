@@ -59,6 +59,33 @@ function getTriggerPatternsEn(): LanguagePattern[] {
   ];
 }
 
+function getTriggerPatternsZh(): LanguagePattern[] {
+  return [
+    {
+      // Verb-first BA: 触发 把 {event}. The i18n transformer marks trigger's
+      // leading argument with 把 (`当 加载 时 触发 把 init`); the generated
+      // `触发 {event}` has no 把, so the trailing trigger dropped. Same
+      // BA-tolerance family as wait-zh-ba / set-zh-vba.
+      id: 'trigger-zh-ba',
+      language: 'zh',
+      command: 'trigger',
+      priority: 105,
+      template: {
+        format: '触发 把 {event}',
+        tokens: [
+          { type: 'literal', value: '触发', alternatives: ['觸發'] },
+          { type: 'literal', value: '把' },
+          { type: 'role', role: 'event', expectedTypes: ['literal', 'expression'] },
+        ],
+      },
+      extraction: {
+        event: { position: 2 },
+        destination: { default: { type: 'reference', value: 'me' } },
+      },
+    },
+  ];
+}
+
 /**
  * Get trigger patterns for a specific language.
  */
@@ -66,6 +93,8 @@ export function getTriggerPatternsForLanguage(language: string): LanguagePattern
   switch (language) {
     case 'en':
       return getTriggerPatternsEn();
+    case 'zh':
+      return getTriggerPatternsZh();
     default:
       return [];
   }

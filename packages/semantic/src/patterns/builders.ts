@@ -26,6 +26,7 @@ import { getFetchPatternsForLanguage } from './fetch';
 import { getAppendPatternsForLanguage } from './append';
 import { getPrependPatternsForLanguage } from './prepend';
 import { getTriggerPatternsForLanguage } from './trigger';
+import { getSendPatternsForLanguage } from './send';
 
 // Import English-only patterns
 import { getEnglishOnlyPatterns } from './languages/en';
@@ -72,6 +73,7 @@ const PATTERN_LOADERS: PatternLoader[] = [
   getAppendPatternsForLanguage,
   getPrependPatternsForLanguage,
   getTriggerPatternsForLanguage,
+  getSendPatternsForLanguage,
 
   // Grammar-transformed patterns (for SOV/VSO grammar output)
   getGrammarTransformedPatternsForLanguage,
