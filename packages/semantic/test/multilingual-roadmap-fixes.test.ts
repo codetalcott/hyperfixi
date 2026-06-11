@@ -2087,3 +2087,43 @@ describe('append/swap dict keyword alignment (B2a)', () => {
     });
   }
 });
+
+describe('ru/uk scroll command verb + positional query (last-in-collection)', () => {
+  // Two stacked gaps kept ru/uk last-in-collection lossy:
+  // 1. The dicts had `scroll` only in the EVENTS section (прокрутка — the noun,
+  //    correct for `on scroll`), no commands entry — so the transformer fell
+  //    back to the noun for the scroll COMMAND, which the parser doesn't read
+  //    as a verb (#321 focus family). Fixed by adding commands
+  //    scroll: прокрутить (ru) / прокрутити (uk).
+  // 2. The tokenizers carried only the feminine/neuter gendered positional
+  //    variants — the masculine nominative forms the dict emits (последний /
+  //    останній) were never listed, so `last <sel> in <scope>` couldn't form
+  //    (fixed in the ru/uk positional-extras PR; enforced by
+  //    positional-keyword-drift.test.ts).
+  // With both in place last-in-collection parses the full {on, scroll}
+  // reference in ru and uk (lossy → faithful, avgFidelity 0.9650 → 0.9683 each).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer emissions with the realigned command verb.
+  it('[ru] last-in-collection recovers scroll', () => {
+    const a = actions(parse('при клик прокрутить в последний <.message/> в #chat', 'ru'));
+    expect(a.has('scroll')).toBe(true);
+    expect(a.has('on')).toBe(true);
+  });
+
+  it('[uk] last-in-collection recovers scroll', () => {
+    const a = actions(parse('при клік прокрутити в останній <.message/> у #chat', 'uk'));
+    expect(a.has('scroll')).toBe(true);
+    expect(a.has('on')).toBe(true);
+  });
+});

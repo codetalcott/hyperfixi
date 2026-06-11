@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-11T22:11:36.266Z",
-  "commit": "051c7154",
+  "timestamp": "2026-06-11T22:24:00.750Z",
+  "commit": "7db54611",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -10386,7 +10386,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8947021232735521,
-      "avgFidelity": 0.9650432900432899,
+      "avgFidelity": 0.9682900432900432,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
         "append-content",
@@ -10398,7 +10398,6 @@
         "form-submit-prevent",
         "if-empty",
         "input-validation",
-        "last-in-collection",
         "template-literal-list-build",
         "trigger-event",
         "unless-condition"
@@ -13600,7 +13599,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8939600082457227,
-      "avgFidelity": 0.9650432900432899,
+      "avgFidelity": 0.9682900432900432,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
         "append-content",
@@ -13612,7 +13611,6 @@
         "form-submit-prevent",
         "if-empty",
         "input-validation",
-        "last-in-collection",
         "template-literal-list-build",
         "trigger-event",
         "unless-condition"
