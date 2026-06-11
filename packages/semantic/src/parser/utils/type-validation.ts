@@ -46,6 +46,16 @@ export function isTypeCompatible(
     return expectedTypes.some(t => ['selector', 'reference', 'expression'].includes(t));
   }
 
+  // A captured 'expression' (positional query like `next <.x/> in <form/>`, method
+  // call, possessive) is a complex value that resolves to an element/value — treat it
+  // like 'property-path': compatible with selector/reference/expression-typed roles.
+  // This lets `put X into next .y` fill a destination restricted to selector/reference
+  // (the positional was previously rejected and the command dropped). Scoped to those
+  // three target types so literal/quantity/duration roles are unaffected.
+  if (actualType === 'expression') {
+    return expectedTypes.some(t => ['selector', 'reference', 'expression'].includes(t));
+  }
+
   return false;
 }
 
