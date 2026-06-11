@@ -18,6 +18,10 @@ export const ukrainianDictionary: Dictionary = {
     toggle: 'перемкнути',
     hide: 'сховати',
     show: 'показати',
+    // command verb; the events section keeps the noun прокрутка for `on scroll`.
+    // Without this entry the transformer fell back to the event noun, which the
+    // parser doesn't read as the scroll command (#321 focus family).
+    scroll: 'прокрутити',
     if: 'якщо',
     unless: 'якщо_не',
     repeat: 'повторити',

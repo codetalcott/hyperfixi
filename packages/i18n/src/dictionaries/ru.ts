@@ -18,6 +18,10 @@ export const russianDictionary: Dictionary = {
     toggle: 'переключить',
     hide: 'скрыть',
     show: 'показать',
+    // command verb; the events section keeps the noun прокрутка for `on scroll`.
+    // Without this entry the transformer fell back to the event noun, which the
+    // parser doesn't read as the scroll command (#321 focus family).
+    scroll: 'прокрутить',
     if: 'если',
     unless: 'если_не',
     repeat: 'повторить',
