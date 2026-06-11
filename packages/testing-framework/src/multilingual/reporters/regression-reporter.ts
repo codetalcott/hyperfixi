@@ -111,6 +111,7 @@ export class RegressionReporter implements Reporter {
 
       const parseRateDelta = (langResult.parseRate - baselineLang.parseRate) * 100;
       const avgConfidenceDelta = langResult.avgConfidence - baselineLang.avgConfidence;
+      const avgFidelityDelta = (langResult.avgFidelity ?? 0) - (baselineLang.avgFidelity ?? 0);
       const bundleSizeDelta = this.getBundleSizeDelta(langResult, baselineLang);
 
       // Identify new failures and successes
@@ -118,10 +119,17 @@ export class RegressionReporter implements Reporter {
       const newSuccesses = this.findNewSuccesses(langResult, baselineLang);
       // Fidelity ratchet: faithful pass in baseline → degenerate pass now.
       const newDegeneratePasses = this.findNewDegeneratePasses(langResult, baselineLang);
+      // Correctness ratchet (R0): faithful pass in baseline → lossy pass now.
+      const newLossyPasses = this.findNewLossyPasses(langResult, baselineLang);
 
       // Determine status
       let status: 'improved' | 'regressed' | 'unchanged' = 'unchanged';
-      if (parseRateDelta < -5 || newFailures.length > 0 || newDegeneratePasses.length > 0) {
+      if (
+        parseRateDelta < -5 ||
+        newFailures.length > 0 ||
+        newDegeneratePasses.length > 0 ||
+        newLossyPasses.length > 0
+      ) {
         status = 'regressed';
       } else if (parseRateDelta > 5 || newSuccesses.length > 0) {
         status = 'improved';
@@ -131,10 +139,12 @@ export class RegressionReporter implements Reporter {
         language: langResult.language,
         parseRateDelta,
         avgConfidenceDelta,
+        avgFidelityDelta,
         bundleSizeDelta: bundleSizeDelta !== undefined ? bundleSizeDelta : undefined,
         newFailures,
         newSuccesses,
         newDegeneratePasses,
+        newLossyPasses,
         status,
       });
     }
@@ -234,6 +244,39 @@ export class RegressionReporter implements Reporter {
   }
 
   /**
+   * Correctness ratchet (R0): patterns that were a *faithful* pass (fidelity 1.0) in
+   * the baseline but are now a *lossy* pass (0.5 ≤ fid < 1.0 — still parses, clears the
+   * degenerate floor, but silently drops ≥1 command). This is the band the degenerate
+   * ratchet misses (it only catches drops below 0.5). "Faithful in baseline" = a pass
+   * that was neither degenerate nor lossy.
+   *
+   * Returns [] when the baseline carries no lossy data yet (`lossyPasses` undefined) so
+   * adopting the signal never retro-flags the whole corpus — same guard as the
+   * degenerate ratchet. A pattern already lossy in the baseline is not re-flagged.
+   */
+  private findNewLossyPasses(
+    current: LanguageResults,
+    baseline: {
+      patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
+      degeneratePasses?: string[] | undefined;
+      lossyPasses?: string[] | undefined;
+    }
+  ): string[] {
+    if (!baseline.lossyPasses || !baseline.patterns) return [];
+    const baselineDegenerate = new Set(baseline.degeneratePasses ?? []);
+    const baselineLossy = new Set(baseline.lossyPasses);
+    const currentLossy = new Set(current.lossyPasses ?? []);
+
+    const regressed: string[] = [];
+    for (const id of currentLossy) {
+      const wasPass = baseline.patterns[id]?.success === true;
+      // Faithful baseline pass = passed AND not degenerate AND not already lossy.
+      if (wasPass && !baselineDegenerate.has(id) && !baselineLossy.has(id)) regressed.push(id);
+    }
+    return regressed.sort();
+  }
+
+  /**
    * Save current results as new baseline
    */
   saveAsBaseline(results: TestResults): void {
@@ -275,6 +318,7 @@ export class RegressionReporter implements Reporter {
         // (non-null but shallow) passes that the parse rate alone can't surface.
         avgFidelity: langResult.avgFidelity ?? undefined,
         degeneratePasses: langResult.degeneratePasses ?? undefined,
+        lossyPasses: langResult.lossyPasses ?? undefined,
         bundleSize: langResult.bundleSize ?? undefined,
         patterns,
       };

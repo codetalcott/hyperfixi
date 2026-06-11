@@ -173,6 +173,14 @@ export interface LanguageResults {
    */
   degeneratePasses?: string[] | undefined;
 
+  /**
+   * Pattern IDs that pass with fidelity in [0.5, 1.0) — *lossy* passes that parse
+   * non-null and clear the degenerate floor but still silently drop ≥1 command vs
+   * the English reference. ~7× more common than degenerate passes; the avgFidelity
+   * / faithful→lossy ratchet (R0) makes these visible and non-regressable.
+   */
+  lossyPasses?: string[] | undefined;
+
   /** Duration in ms */
   duration: number;
 
@@ -229,6 +237,8 @@ export interface Baseline {
         avgFidelity?: number | undefined;
         /** Pattern IDs that pass but parse degenerately (fidelity below threshold). */
         degeneratePasses?: string[] | undefined;
+        /** Pattern IDs that pass *lossily* (fidelity in [0.5, 1.0) — drop ≥1 command). */
+        lossyPasses?: string[] | undefined;
         bundleSize: number | undefined;
         /** Pattern-level results for detailed tracking */
         patterns: Record<string, { success: boolean; confidence: number | undefined }> | undefined;
@@ -252,6 +262,8 @@ export interface RegressionResult {
   language: LanguageCode;
   parseRateDelta: number; // % change
   avgConfidenceDelta: number; // absolute change
+  /** Absolute change in avgFidelity (current − baseline). Negative = correctness drop. */
+  avgFidelityDelta: number;
   bundleSizeDelta: number | undefined; // % change
   newFailures: string[]; // pattern IDs
   newSuccesses: string[]; // pattern IDs
@@ -261,6 +273,12 @@ export interface RegressionResult {
    * regression. Empty when the baseline has no fidelity data yet.
    */
   newDegeneratePasses: string[];
+  /**
+   * Patterns that were a *faithful* (fidelity 1.0) pass in the baseline but are now
+   * a *lossy* pass (0.5 ≤ fid < 1.0) — a silent command-drop the degenerate ratchet
+   * misses. Empty when the baseline has no lossy data yet (never retro-flags).
+   */
+  newLossyPasses: string[];
   status: 'improved' | 'regressed' | 'unchanged';
 }
 

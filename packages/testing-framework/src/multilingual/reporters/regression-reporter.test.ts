@@ -22,7 +22,12 @@ function pass(id: string): ParseResult {
   };
 }
 
-function lang(parseResults: ParseResult[], degeneratePasses: string[]): LanguageResults {
+function lang(
+  parseResults: ParseResult[],
+  degeneratePasses: string[],
+  lossyPasses: string[] = [],
+  avgFidelity = 1
+): LanguageResults {
   const parseSuccess = parseResults.filter(r => r.success).length;
   return {
     language: 'ja',
@@ -32,7 +37,9 @@ function lang(parseResults: ParseResult[], degeneratePasses: string[]): Language
     parseFailure: parseResults.length - parseSuccess,
     parseRate: parseSuccess / parseResults.length,
     avgConfidence: 1,
+    avgFidelity,
     degeneratePasses,
+    lossyPasses,
     duration: 0,
     status: 'pass',
   };
@@ -81,10 +88,12 @@ describe('RegressionReporter fidelity ratchet', () => {
         // `was-degenerate` already degenerate; `was-faithful` is a clean pass;
         // `was-fail` failed in baseline.
         degeneratePasses: ['was-degenerate'],
+        lossyPasses: ['was-lossy'],
         bundleSize: undefined,
         patterns: {
           'was-faithful': { success: true, confidence: 1 },
           'was-degenerate': { success: true, confidence: 1 },
+          'was-lossy': { success: true, confidence: 1 },
           stable: { success: true, confidence: 1 },
           'was-fail': { success: false, confidence: undefined },
         },
@@ -133,5 +142,97 @@ describe('RegressionReporter fidelity ratchet', () => {
     );
     const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
     expect(r.newDegeneratePasses).toEqual([]);
+  });
+});
+
+describe('RegressionReporter correctness (lossy) ratchet — R0', () => {
+  let dir: string;
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  function reporterWith(baseline: Baseline): RegressionReporter {
+    dir = mkdtempSync(join(tmpdir(), 'lossy-'));
+    const path = join(dir, 'baseline.json');
+    writeFileSync(path, JSON.stringify(baseline));
+    return new RegressionReporter(path);
+  }
+
+  const baseline: Baseline = {
+    timestamp: '',
+    commit: 'base',
+    languages: {
+      ja: {
+        parseSuccess: 4,
+        parseFailure: 0,
+        parseRate: 1,
+        avgConfidence: 1,
+        avgFidelity: 0.9,
+        degeneratePasses: ['was-degenerate'],
+        lossyPasses: ['was-lossy'],
+        bundleSize: undefined,
+        patterns: {
+          'was-faithful': { success: true, confidence: 1 },
+          'was-lossy': { success: true, confidence: 1 },
+          'was-degenerate': { success: true, confidence: 1 },
+          stable: { success: true, confidence: 1 },
+        },
+      },
+    },
+    bundles: {},
+  };
+
+  it('flags a faithful baseline pass that became lossy (silent command-drop)', () => {
+    const reporter = reporterWith(baseline);
+    // `was-faithful` is now lossy; `was-lossy` stays lossy (not re-flagged).
+    reporter.reportComplete(
+      results(
+        lang(
+          [pass('was-faithful'), pass('was-lossy'), pass('stable')],
+          [],
+          ['was-faithful', 'was-lossy'],
+          0.85
+        )
+      )
+    );
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newLossyPasses).toEqual(['was-faithful']);
+    expect(r.newLossyPasses).not.toContain('was-lossy'); // already lossy in baseline
+    expect(r.avgFidelityDelta).toBeCloseTo(-0.05, 5);
+    expect(r.status).toBe('regressed');
+  });
+
+  it('does not flag when lossy set is unchanged', () => {
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(
+      results(
+        lang([pass('was-faithful'), pass('was-lossy'), pass('stable')], [], ['was-lossy'], 0.9)
+      )
+    );
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newLossyPasses).toEqual([]);
+    expect(r.avgFidelityDelta).toBeCloseTo(0, 5);
+  });
+
+  it('treats faithful→lossy as improvement-neutral for an already-lossy or failing pattern', () => {
+    // A pattern lossy in baseline that becomes faithful is not a regression (and not
+    // listed); only faithful→lossy is flagged.
+    const reporter = reporterWith(baseline);
+    reporter.reportComplete(
+      results(lang([pass('was-faithful'), pass('was-lossy'), pass('stable')], [], [], 0.95))
+    );
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newLossyPasses).toEqual([]);
+  });
+
+  it('never retro-flags when the baseline has no lossy data', () => {
+    const noLossy: Baseline = structuredClone(baseline);
+    delete noLossy.languages.ja!.lossyPasses;
+    const reporter = reporterWith(noLossy);
+    reporter.reportComplete(
+      results(lang([pass('was-faithful'), pass('stable')], [], ['was-faithful', 'stable'], 0.5))
+    );
+    const r = reporter.getRegressionResults().find(x => x.language === 'ja')!;
+    expect(r.newLossyPasses).toEqual([]);
   });
 });

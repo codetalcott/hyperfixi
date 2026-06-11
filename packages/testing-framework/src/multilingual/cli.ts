@@ -284,6 +284,30 @@ async function main(): Promise<void> {
           r.newDegeneratePasses.map(id => `${r.language}/${id}`)
         );
 
+        // R0 — correctness ratchet: catch *silent command-drops* the degenerate
+        // ratchet misses (a faithful 1.0 pass that becomes lossy, 0.5 ≤ fid < 1.0).
+        // Two complementary signals: (1) per-pattern faithful→lossy flips (precise),
+        // and (2) a per-language avgFidelity drop (coarse backstop — also catches
+        // lossy→more-lossy that the per-pattern flip can't see). Both are guarded by
+        // the baseline carrying the new `lossyPasses`/`avgFidelity` data, so an
+        // un-regenerated baseline never retro-flags. avgFidelity is deterministic
+        // (parse-derived, independent of the patterns.db confidence column), so the
+        // tolerance can be tight.
+        const LOSSY_REGRESSION_TOLERANCE = 3;
+        // 0.02 ≈ six single-pattern drops in a ~154-pattern language — absorbs any
+        // rare populate jitter while still catching real per-language cluster
+        // regressions (typically ≥0.03). The per-pattern lossy ratchet above is the
+        // precise primary signal; this is the coarse lossy→more-lossy backstop.
+        const AVG_FIDELITY_DROP_TOLERANCE = 0.02;
+        const lossyRegressions = allResults.flatMap(r =>
+          r.newLossyPasses.map(id => `${r.language}/${id}`)
+        );
+        const fidelityDrops = allResults.filter(
+          r => r.avgFidelityDelta < -AVG_FIDELITY_DROP_TOLERANCE
+        );
+
+        let failed = false;
+
         if (regressed.length > 0) {
           console.error(
             `\n✗ Regression vs baseline in ${regressed.length} language(s) ` +
@@ -295,8 +319,10 @@ async function main(): Promise<void> {
               : '';
             console.error(`   ${r.language}: ΔparseRate ${r.parseRateDelta.toFixed(1)}pts${fails}`);
           }
-          exitCode = 1;
-        } else if (fidelityRegressions.length > FIDELITY_REGRESSION_TOLERANCE) {
+          failed = true;
+        }
+
+        if (fidelityRegressions.length > FIDELITY_REGRESSION_TOLERANCE) {
           console.error(
             `\n✗ Fidelity regression vs baseline: ${fidelityRegressions.length} faithful pass(es) ` +
               `became degenerate (tolerance ${FIDELITY_REGRESSION_TOLERANCE}):`
@@ -306,15 +332,51 @@ async function main(): Promise<void> {
             `   (parse non-null but lost >50% of the English command structure — ` +
               `if intentional, regenerate the baseline with --save-baseline)`
           );
+          failed = true;
+        } else if (fidelityRegressions.length > 0) {
+          console.warn(
+            `\n⚠ ${fidelityRegressions.length} fidelity regression(s) within tolerance ` +
+              `(${FIDELITY_REGRESSION_TOLERANCE}): ${fidelityRegressions.join(', ')}`
+          );
+        }
+
+        if (lossyRegressions.length > LOSSY_REGRESSION_TOLERANCE) {
+          console.error(
+            `\n✗ Correctness regression vs baseline: ${lossyRegressions.length} faithful pass(es) ` +
+              `became lossy (silently dropped a command; tolerance ${LOSSY_REGRESSION_TOLERANCE}):`
+          );
+          for (const id of lossyRegressions) console.error(`   ${id}`);
+          console.error(
+            `   (still parses but lost ≥1 command vs the English reference — ` +
+              `if intentional, regenerate the baseline with --save-baseline)`
+          );
+          failed = true;
+        } else if (lossyRegressions.length > 0) {
+          console.warn(
+            `\n⚠ ${lossyRegressions.length} correctness regression(s) within tolerance ` +
+              `(${LOSSY_REGRESSION_TOLERANCE}): ${lossyRegressions.join(', ')}`
+          );
+        }
+
+        if (fidelityDrops.length > 0) {
+          console.error(
+            `\n✗ avgFidelity dropped > ${AVG_FIDELITY_DROP_TOLERANCE} in ` +
+              `${fidelityDrops.length} language(s):`
+          );
+          for (const r of fidelityDrops) {
+            console.error(`   ${r.language}: ΔavgFidelity ${r.avgFidelityDelta.toFixed(4)}`);
+          }
+          console.error(`   (if intentional, regenerate the baseline with --save-baseline)`);
+          failed = true;
+        }
+
+        if (failed) {
           exitCode = 1;
         } else {
-          if (fidelityRegressions.length > 0) {
-            console.warn(
-              `\n⚠ ${fidelityRegressions.length} fidelity regression(s) within tolerance ` +
-                `(${FIDELITY_REGRESSION_TOLERANCE}): ${fidelityRegressions.join(', ')}`
-            );
-          }
-          console.log(`\n✓ No regression vs baseline (tolerance ${REGRESSION_TOLERANCE_PTS}pts).`);
+          console.log(
+            `\n✓ No regression vs baseline ` +
+              `(parse-rate ${REGRESSION_TOLERANCE_PTS}pts, fidelity + correctness ratchets).`
+          );
           exitCode = 0;
         }
       }

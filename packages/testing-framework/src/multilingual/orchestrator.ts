@@ -259,6 +259,7 @@ export class TestOrchestrator {
       if (lang.language === 'en') continue;
 
       const degenerate: string[] = [];
+      const lossy: string[] = [];
       const scores: number[] = [];
 
       for (const result of lang.parseResults) {
@@ -272,11 +273,13 @@ export class TestOrchestrator {
         result.fidelity = fidelity;
         scores.push(fidelity);
         if (fidelity < FIDELITY_THRESHOLD) degenerate.push(result.pattern.codeExampleId);
+        else if (fidelity < 1) lossy.push(result.pattern.codeExampleId);
       }
 
       lang.avgFidelity =
         scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined;
       lang.degeneratePasses = degenerate.sort();
+      lang.lossyPasses = lossy.sort();
     }
   }
 
