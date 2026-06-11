@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-11T00:38:08.268Z",
-  "commit": "7b6eef2",
+  "timestamp": "2026-06-11T00:54:43.833Z",
+  "commit": "876a1a7",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -1299,16 +1299,14 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9359995850191917,
-      "avgFidelity": 0.9194989106753811,
+      "avgConfidence": 0.9315177923021051,
+      "avgFidelity": 0.9364923747276689,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
         "blur-element",
         "event-debounce",
-        "event-key-combo",
         "fetch-do-not-throw",
-        "fetch-error-handling",
         "fetch-loading-state",
         "fetch-with-headers",
         "first-in-parent",
@@ -1316,20 +1314,14 @@
         "form-disable-on-submit",
         "form-submit-prevent",
         "get-value",
-        "if-condition",
         "if-empty",
         "if-exists",
-        "if-matches",
-        "input-validation",
         "keydown-key-is-syntax",
-        "modal-close-backdrop",
         "put-after",
         "put-before",
         "template-literal-list-build",
         "unless-condition",
-        "when-value-changes",
-        "window-keydown",
-        "window-scroll"
+        "when-value-changes"
       ],
       "bundleSize": 405037,
       "patterns": {
@@ -1385,10 +1377,6 @@
           "success": true,
           "confidence": 1
         },
-        "if-condition": {
-          "success": true,
-          "confidence": 1
-        },
         "repeat-for-each": {
           "success": true,
           "confidence": 1
@@ -1421,19 +1409,11 @@
           "success": true,
           "confidence": 1
         },
-        "modal-close-backdrop": {
-          "success": true,
-          "confidence": 1
-        },
         "input-mirror": {
           "success": true,
           "confidence": 1
         },
         "input-char-count": {
-          "success": true,
-          "confidence": 1
-        },
-        "input-validation": {
           "success": true,
           "confidence": 1
         },
@@ -1494,18 +1474,6 @@
           "confidence": 1
         },
         "fetch-loading-state": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-matches": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-exists": {
-          "success": true,
-          "confidence": 1
-        },
-        "if-empty": {
           "success": true,
           "confidence": 1
         },
@@ -1737,6 +1705,10 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "if-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "repeat-times": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -1789,6 +1761,10 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "modal-close-backdrop": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "accordion-toggle": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -1802,6 +1778,10 @@
           "confidence": 0.8857142857142858
         },
         "dropdown-close-outside": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "input-validation": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -1846,6 +1826,18 @@
           "confidence": 0.8857142857142858
         },
         "fetch-error-handling": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-matches": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-exists": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
+        "if-empty": {
           "success": true,
           "confidence": 0.8857142857142858
         },
