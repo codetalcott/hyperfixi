@@ -1970,6 +1970,64 @@ describe('de/sw positional keywords — nächste→next, ijayo (B1)', () => {
   });
 });
 
+describe('zh verb-first 把 tolerance — set/send/trigger (Track C)', () => {
+  // For `on click set X to Y` handlers the i18n transformer fronts the verb and
+  // marks the LEADING argument with the BA particle (`当 点击 时 设置 把 X 到 Y`):
+  // its generic argument parser defaults the leading argument to the patient
+  // role and zh marks patient with 把 — even when the leading argument is
+  // semantically the destination (set) or event (send/trigger). The generated
+  // patterns place no 把 there, and the existing -zh-ba handcrafted patterns
+  // cover only the BA-FIRST shape (`把 X 设置 到 Y`), so the verb-first emission
+  // failed to parse and the body dropped across ~20 zh corpus patterns (the
+  // set-*/send-*/trigger slice of zh's lossy band). New handcrafted patterns
+  // (set-zh-vba, send-zh-ba, trigger-zh-ba) tolerate the verb-first 把:
+  // zh avgFidelity 0.8916 → 0.9582 (+6.7pt), 20 patterns lossy → faithful,
+  // 0 regressions. add/toggle were never affected (their leading argument IS
+  // the patient). zh `tell` fails even unmarked — a separate pattern gap, not
+  // BA tolerance; left tracked.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer emissions (en → zh).
+  const cases: Array<[string, string, string]> = [
+    ['set-attribute', 'set', '当 点击 时 设置 把 @disabled 到 真'],
+    ['set-text-basic', 'set', '当 点击 时 设置 把 #output.innerText 到 "Hello World"'],
+    ['set-style', 'set', '当 点击 时 设置 把 我的 *background 到 "red"'],
+    ['send-event', 'send', '当 点击 时 发送 把 refresh 到 #widget'],
+    ['socket-send', 'send', '当 点击 时 发送 把 "hello" 到 ChatSocket'],
+    ['trigger-event', 'trigger', '当 加载 时 触发 把 init'],
+  ];
+  for (const [pattern, action, input] of cases) {
+    it(`[zh] ${pattern} recovers ${action} (verb-first 把)`, () => {
+      const a = actions(parse(input, 'zh'));
+      expect(a.has(action)).toBe(true);
+      expect(a.has('on')).toBe(true);
+    });
+  }
+
+  it('[zh] unmarked set still parses (regression guard)', () => {
+    expect(actions(parse('设置 @disabled 到 真', 'zh')).has('set')).toBe(true);
+  });
+
+  it('[zh] BA-first set still parses via set-zh-ba (regression guard)', () => {
+    expect(actions(parse('把 @disabled 设置 到 真', 'zh')).has('set')).toBe(true);
+  });
+
+  it('[zh] unmarked send/trigger still parse (regression guard)', () => {
+    expect(actions(parse('发送 refresh 到 #widget', 'zh')).has('send')).toBe(true);
+    expect(actions(parse('触发 init', 'zh')).has('trigger')).toBe(true);
+  });
+});
+
 describe('append/swap dict keyword alignment (B2a)', () => {
   // The B2 content cluster's keyword-mismatch tail (same family as focus/socket/
   // get/toggle): the i18n dicts emitted a word the semantic profile reads as a

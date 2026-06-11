@@ -944,6 +944,46 @@ function getSetPatternsZh(): LanguagePattern[] {
       },
     },
     {
+      // Verb-first BA: 设置 把 {destination} 到 {patient}. For an `on click set
+      // X to Y` handler the i18n transformer fronts the verb and marks the
+      // leading argument with 把 (its generic argument parser defaults the
+      // leading argument to the patient role; zh marks patient with 把) —
+      // `当 点击 时 设置 把 @disabled 到 真`. Neither set-zh-full (no 把) nor
+      // set-zh-ba (把 BEFORE the verb) matches, so the whole set body dropped
+      // across the set-* corpus patterns. Same BA-tolerance family as
+      // wait-zh-ba / put-zh-ba. See ZH_BLOCK_BODY_SCOPE.md.
+      id: 'set-zh-vba',
+      language: 'zh',
+      command: 'set',
+      priority: 96,
+      template: {
+        format: '设置 把 {destination} 到 {patient}',
+        tokens: [
+          {
+            type: 'literal',
+            value: '设置',
+            alternatives: ['設置', '设定', '設定'],
+          },
+          { type: 'literal', value: '把' },
+          {
+            type: 'role',
+            role: 'destination',
+            expectedTypes: ['property-path', 'selector', 'reference', 'expression'],
+          },
+          {
+            type: 'group',
+            optional: true,
+            tokens: [{ type: 'literal', value: '到', alternatives: ['为', '為', '成'] }],
+          },
+          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+        ],
+      },
+      extraction: {
+        destination: { position: 2 },
+        patient: { marker: '到', markerAlternatives: ['为', '為', '成'] },
+      },
+    },
+    {
       id: 'set-zh-simple',
       language: 'zh',
       command: 'set',
