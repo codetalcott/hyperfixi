@@ -103,6 +103,18 @@ const RUSSIAN_EXTRAS: KeywordEntry[] = [
   { native: 'часа', normalized: 'h' },
   { native: 'часов', normalized: 'h' },
 
+  // Positional (masculine nominative — the forms the i18n dict emits; the
+  // gendered variants below predate these but the base forms were never
+  // listed, so `последний <.message/> в #chat` never formed a positional
+  // query — see positional-keyword-drift.test.ts)
+  { native: 'первый', normalized: 'first' },
+  { native: 'последний', normalized: 'last' },
+  { native: 'следующий', normalized: 'next' },
+  { native: 'предыдущий', normalized: 'previous' },
+  { native: 'ближайший', normalized: 'closest' },
+  { native: 'родитель', normalized: 'parent' },
+  { native: 'случайный', normalized: 'random' },
+
   // Gendered forms (additional variants)
   { native: 'первая', normalized: 'first' }, // feminine
   { native: 'первое', normalized: 'first' }, // neuter

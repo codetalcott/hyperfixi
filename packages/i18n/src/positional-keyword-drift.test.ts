@@ -43,7 +43,8 @@ const POSITIONAL_CONCEPTS = [
  * - The `closest` superlatives/compounds (es máscercano, fr plusproche,
  *   it piùvicino, pt mais_próximo, tr en_yakın, qu aswan_kaylla) split or
  *   miss entirely.
- * - ru/uk tokenizers carry no positional extras at all (all 7 concepts).
+ * - ru/uk tokenizers carried only the feminine/neuter gendered variants — the
+ *   masculine nominative forms the dict emits were never listed; fixed.
  * - qu next/previous were CROSS-MAPPED (qhipantin→last, ñawpaqnin→first —
  *   morphology bound the prefixes); fixed with exact tokenizer entries.
  * - de closest→nächste normalizes to `next` by design (one word covers both
@@ -77,13 +78,6 @@ const KNOWN_DRIFT = new Set<string>([
   'qu:closest',
   'qu:parent',
   'qu:random',
-  'ru:first',
-  'ru:last',
-  'ru:next',
-  'ru:previous',
-  'ru:closest',
-  'ru:parent',
-  'ru:random',
   'sw:first',
   'sw:last',
   'sw:previous',
@@ -91,13 +85,6 @@ const KNOWN_DRIFT = new Set<string>([
   'th:random',
   'tr:closest',
   'tr:random',
-  'uk:first',
-  'uk:last',
-  'uk:next',
-  'uk:previous',
-  'uk:closest',
-  'uk:parent',
-  'uk:random',
   'zh:random',
 ]);
 
