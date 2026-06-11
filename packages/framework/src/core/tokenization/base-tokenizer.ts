@@ -118,6 +118,21 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   protected profileKeywordMap: Map<string, KeywordEntry> = new Map();
 
   /**
+   * The raw EXTRAS list passed to initializeKeywordsFromProfile, kept pre-dedup.
+   * The keyword map is keyed by native word with last-wins insertion, so a
+   * duplicate native word inside the extras silently shadows the earlier entry
+   * (e.g. a `nächste→closest` entry shadowing `nächste→next` broke German
+   * positional expressions). Exposed so consistency tests can detect such
+   * intra-extras collisions, which are invisible in the deduplicated map.
+   */
+  private rawExtraEntries: KeywordEntry[] = [];
+
+  /** Raw extras as passed in, pre-dedup — for consistency tests. */
+  getExtraKeywordEntries(): readonly KeywordEntry[] {
+    return this.rawExtraEntries;
+  }
+
+  /**
    * Pluggable value extractors for domain-specific syntax.
    * When registered, BaseTokenizer will use extractor-based tokenization instead of legacy methods.
    */
@@ -330,6 +345,7 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   ): void {
     // Use a Map to deduplicate, with extras taking precedence
     const keywordMap = new Map<string, KeywordEntry>();
+    this.rawExtraEntries = extras;
 
     // Extract from keywords (command translations)
     if (profile.keywords) {
