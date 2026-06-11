@@ -1969,3 +1969,63 @@ describe('de/sw positional keywords — nächste→next, ijayo (B1)', () => {
     expect(a.has('put')).toBe(true);
   });
 });
+
+describe('append/swap dict keyword alignment (B2a)', () => {
+  // The B2 content cluster's keyword-mismatch tail (same family as focus/socket/
+  // get/toggle): the i18n dicts emitted a word the semantic profile reads as a
+  // DIFFERENT action — or doesn't know at all — so `append`/`swap` dropped:
+  // - append parsed as `add` (the dict word IS the add-verb): es añadir,
+  //   fr ajouter, it aggiungere, ko 추가, tr ekle
+  // - append unrecognized (whole command dropped): id tambah_akhir (splits),
+  //   sw ongezaMwisho
+  // - swap parsed as `toggle`: ar بدّل; qu rantin_tikray (splits; tikray is
+  //   toggle's word)
+  // Realigning each dict to the profile primary recovers the true action; all 9
+  // flip append-/swap-content lossy → faithful (cross-lang avgFidelity
+  // 0.9347 → 0.9360), 0 regressions. Deferred (different mechanisms): the
+  // compound-split append group (bn/hi/ms/pl/ru/uk — underscore/space compounds
+  // tokenize apart and the embedded add-verb wins), the missing standalone
+  // `swap X with Y` pattern (event-body recovery is what parses it today),
+  // he `swap` (את particle), zh `swap` (把/用 markers).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer emissions with the realigned dict words.
+  const appendCases: Array<[string, string]> = [
+    ['es', 'en clic anexar "<li>Item</li>" a #list'],
+    ['fr', 'sur clic annexer "<li>Item</li>" à #list'],
+    ['it', 'su clic accodare "<li>Item</li>" in #list'],
+    ['ko', '"<li>Item</li>" 를 클릭 덧붙이다 #list 에'],
+    ['tr', '"<li>Item</li>" i tıklama de iliştir #list e'],
+    ['id', 'pada klik sisipkan "<li>Item</li>" ke #list'],
+    ['sw', 'kwenye bonyeza ambatanisha "<li>Item</li>" kwa #list'],
+  ];
+  for (const [lang, input] of appendCases) {
+    it(`[${lang}] append-content parses the real append action`, () => {
+      const a = actions(parse(input, lang as 'es'));
+      expect(a.has('append')).toBe(true);
+      expect(a.has('add')).toBe(false);
+    });
+  }
+
+  const swapCases: Array<[string, string]> = [
+    ['ar', 'استبدل #a عند نقر بـ#b'],
+    ['qu', "#a ta ñitiy pi t'inkuy #b wan"],
+  ];
+  for (const [lang, input] of swapCases) {
+    it(`[${lang}] swap-content parses the real swap action`, () => {
+      const a = actions(parse(input, lang as 'ar'));
+      expect(a.has('swap')).toBe(true);
+      expect(a.has('toggle')).toBe(false);
+    });
+  }
+});

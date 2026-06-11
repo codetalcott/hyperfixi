@@ -55,7 +55,7 @@ export const qu: Dictionary = {
     js: 'js',
     async: 'mana_suyaspa',
     render: 'rikuchiy',
-    swap: 'rantin_tikray',
+    swap: "t'inkuy", // profile primary; 'rantin_tikray' splits, 'tikray' is toggle's word
     morph: 'tikrachiy',
     settle: 'tiyay',
     append: 'qhipaman_yapay',

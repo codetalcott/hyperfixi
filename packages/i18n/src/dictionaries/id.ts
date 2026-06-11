@@ -52,7 +52,7 @@ export const id: Dictionary = {
     swap: 'tukar',
     morph: 'ubah_bentuk',
     settle: 'stabil',
-    append: 'tambah_akhir',
+    append: 'sisipkan', // profile primary; 'tambah_akhir' splits and is unrecognized
     exit: 'keluar',
     install: 'pasang',
     breakpoint: 'titik-henti',

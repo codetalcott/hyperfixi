@@ -55,7 +55,7 @@ export const sw: Dictionary = {
     swap: 'badilishana',
     morph: 'badilishaUmbo',
     settle: 'tulia',
-    append: 'ongezaMwisho',
+    append: 'ambatanisha', // profile primary; 'ongezaMwisho' is unrecognized
     exit: 'toka',
     install: 'sakinisha',
     breakpoint: 'nukta-simama',

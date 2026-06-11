@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-11T18:56:40.822Z",
-  "commit": "f671ba69",
+  "timestamp": "2026-06-11T19:53:54.222Z",
+  "commit": "8ab00ddb",
   "languages": {
     "ar": {
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9315287770881767,
-      "avgFidelity": 0.9435729847494552,
+      "avgConfidence": 0.930781811635329,
+      "avgFidelity": 0.9468409586056645,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -26,7 +26,6 @@
         "keydown-key-is-syntax",
         "modal-close-button",
         "repeat-until-event",
-        "swap-content",
         "template-literal-list-build",
         "window-scroll"
       ],
@@ -89,10 +88,6 @@
           "confidence": 1
         },
         "make-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "swap-content": {
           "success": true,
           "confidence": 1
         },
@@ -471,6 +466,10 @@
         "closest-ancestor": {
           "success": true,
           "confidence": 0.9722222222222222
+        },
+        "swap-content": {
+          "success": true,
+          "confidence": 0.8857142857142858
         },
         "trigger-event": {
           "success": true,
@@ -2567,10 +2566,9 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9549019607843137,
+      "avgFidelity": 0.9581699346405228,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
-        "append-content",
         "fetch-do-not-throw",
         "focus-trap",
         "form-disable-on-submit",
@@ -3206,10 +3204,9 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9328976034858388,
+      "avgFidelity": 0.9361655773420481,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
-        "append-content",
         "async-block",
         "blur-element",
         "caret-var-on-target",
@@ -5160,10 +5157,9 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9007625272331155,
+      "avgFidelity": 0.9040305010893246,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
-        "append-content",
         "caret-var-increment",
         "fetch-do-not-throw",
         "focus-trap",
@@ -5817,10 +5813,9 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9878721859114016,
-      "avgFidelity": 0.9571895424836601,
+      "avgFidelity": 0.9604575163398692,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
-        "append-content",
         "blur-element",
         "event-debounce",
         "fetch-do-not-throw",
@@ -7115,7 +7110,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.5553391053391054,
-      "avgFidelity": 0.9173160173160174,
+      "avgFidelity": 0.9205627705627707,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -7126,7 +7121,6 @@
         "window-scroll"
       ],
       "lossyPasses": [
-        "append-content",
         "caret-var-increment",
         "decrement-counter",
         "fetch-do-not-throw",
@@ -9722,8 +9716,8 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.7196248196248196,
-      "avgFidelity": 0.883982683982684,
+      "avgConfidence": 0.7228715728715729,
+      "avgFidelity": 0.8872294372294371,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -9760,7 +9754,6 @@
         "set-attribute",
         "set-text-basic",
         "settle-animations",
-        "swap-content",
         "tabs-basic",
         "tabs-content",
         "take-class-from-siblings",
@@ -9791,6 +9784,10 @@
           "confidence": 1
         },
         "make-element": {
+          "success": true,
+          "confidence": 1
+        },
+        "swap-content": {
           "success": true,
           "confidence": 1
         },
@@ -10075,10 +10072,6 @@
           "confidence": 0.5
         },
         "append-content": {
-          "success": true,
-          "confidence": 0.5
-        },
-        "swap-content": {
           "success": true,
           "confidence": 0.5
         },
@@ -11034,11 +11027,10 @@
       "parseSuccess": 150,
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
-      "avgConfidence": 0.8749947089947094,
-      "avgFidelity": 0.9352222222222222,
+      "avgConfidence": 0.8761798941798944,
+      "avgFidelity": 0.9385555555555556,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
-        "append-content",
         "blur-element",
         "event-debounce",
         "focus-trap",
@@ -11072,6 +11064,10 @@
           "confidence": 1
         },
         "put-content-basic": {
+          "success": true,
+          "confidence": 1
+        },
+        "append-content": {
           "success": true,
           "confidence": 1
         },
@@ -11472,10 +11468,6 @@
           "confidence": 0.8222222222222222
         },
         "put-after": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "append-content": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -12962,8 +12954,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.8648511256354393,
-      "avgFidelity": 0.9410675381263616,
+      "avgConfidence": 0.8615831517792302,
+      "avgFidelity": 0.9443355119825707,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -12973,7 +12965,6 @@
       ],
       "lossyPasses": [
         "announce-screen-reader",
-        "append-content",
         "fetch-do-not-throw",
         "fetch-json",
         "focus-trap",
@@ -13020,10 +13011,6 @@
           "confidence": 1
         },
         "put-content-basic": {
-          "success": true,
-          "confidence": 1
-        },
-        "append-content": {
           "success": true,
           "confidence": 1
         },
@@ -13444,6 +13431,10 @@
           "confidence": 0.5
         },
         "put-after": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "append-content": {
           "success": true,
           "confidence": 0.5
         },
