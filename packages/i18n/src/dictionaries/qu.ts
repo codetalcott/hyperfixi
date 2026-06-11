@@ -199,7 +199,7 @@ export const qu: Dictionary = {
     prev: 'ñawpaq',
     at: 'pi',
     random: 'imaymanata',
-    closest: 'aswan_kaylla',
+    closest: 'kaylla',
     parent: 'mama_tayta',
     children: 'wawakuna',
     within: 'ukupi',

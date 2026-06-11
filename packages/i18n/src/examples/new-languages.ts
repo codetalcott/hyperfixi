@@ -100,7 +100,7 @@ export const quechuaExamples = {
 
   elements: {
     original: 'on mouseenter tell closest .card to add .highlight',
-    translated: 'rat_yaykuy kaqpi niy aswan_kaylla .card man yapay .highlight',
+    translated: 'rat_yaykuy kaqpi niy kaylla .card man yapay .highlight',
     description: 'Element communication',
   },
 

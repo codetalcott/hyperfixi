@@ -110,8 +110,10 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   { native: 'sonraki', normalized: 'next' },
   { native: 'önceki', normalized: 'previous' },
   { native: 'onceki', normalized: 'previous' },
-  { native: 'en_yakın', normalized: 'closest' },
-  { native: 'en_yakin', normalized: 'closest' },
+  // Fused single token — the tokenizer splits on '_', so the old 'en_yakın'
+  // entries were dead. The i18n dict emits the fused superlative.
+  { native: 'enyakın', normalized: 'closest' },
+  { native: 'enyakin', normalized: 'closest' },
   { native: 'ebeveyn', normalized: 'parent' },
 
   // Complex event names (multi-word events not in profile)

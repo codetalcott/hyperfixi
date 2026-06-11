@@ -193,7 +193,7 @@ export const tr: Dictionary = {
     prev: 'önc',
     at: 'de',
     random: 'rastgele',
-    closest: 'en_yakın',
+    closest: 'enyakın',
     parent: 'ebeveyn',
     children: 'çocuklar',
     within: 'içinde',
