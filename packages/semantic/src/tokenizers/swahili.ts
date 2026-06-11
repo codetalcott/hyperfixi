@@ -69,7 +69,10 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   { native: 'kweli', normalized: 'true' },
   { native: 'uongo', normalized: 'false' },
   { native: 'null', normalized: 'null' },
-  { native: 'tupu', normalized: 'null' },
+  // 'tupu' also means the null literal, but it is claimed by 'empty' below
+  // (the `ni tupu` is-empty predicate, #325). Keyword-map insertion is
+  // last-wins, so a second entry here would be dead code — see
+  // tokenizer-keyword-injectivity.test.ts.
   { native: 'haijafafanuliwa', normalized: 'undefined' },
 
   // Positional

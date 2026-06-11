@@ -1,0 +1,155 @@
+/**
+ * Dict positional emissions ↔ tokenizer recognition.
+ *
+ * The i18n dictionaries' `expressions` section declares what the transformer
+ * EMITS for positional/scope concepts (first/last/next/previous/closest/
+ * parent/random); the semantic tokenizers declare what the parser RECOGNIZES.
+ * Nothing else keeps the two in sync — Swahili's dict emitted `ijayo` for
+ * `next` while the tokenizer only knew `ifuatayo`, so `put X into next <sel>`
+ * failed to parse outright (fixed in #338).
+ *
+ * For every language and concept this test tokenizes the dict emission and
+ * requires it to normalize back to that concept. Same convention as
+ * command-primary-roles.test.ts: the test imports @lokascript/semantic, but
+ * tests don't ship in the bundle.
+ *
+ * KNOWN_DRIFT below is a burn-down list of the misalignments that existed when
+ * the test was introduced (mostly `random`, the `closest` compounds, and the
+ * ru/uk positional sets — see the table in the PR that added this). Each entry
+ * suppresses the exact-match requirement for one lang:concept pair. The test
+ * also fails when an entry STARTS passing, so fixes must remove their entry —
+ * the list can only shrink. Do NOT add new entries to silence a regression;
+ * new drift means a dict emission and a tokenizer disagree and one of them is
+ * wrong.
+ */
+
+import { describe, it, expect } from 'vitest';
+import { getTokenizer } from '@lokascript/semantic';
+import { dictionaries } from './dictionaries';
+
+const POSITIONAL_CONCEPTS = [
+  'first',
+  'last',
+  'next',
+  'previous',
+  'closest',
+  'parent',
+  'random',
+] as const;
+
+/**
+ * Burn-down list (lang:concept). State as of introduction:
+ * - `random` is unrecognized by most tokenizers (no extras entry).
+ * - The `closest` superlatives/compounds (es máscercano, fr plusproche,
+ *   it piùvicino, pt mais_próximo, tr en_yakın, qu aswan_kaylla) split or
+ *   miss entirely.
+ * - ru/uk tokenizers carry no positional extras at all (all 7 concepts).
+ * - qu next/previous are CROSS-MAPPED (qhipantin→last, ñawpaqnin→first) —
+ *   likely a real dict or tokenizer bug worth its own fix.
+ * - de closest→nächste normalizes to `next` by design (one word covers both
+ *   readings; POSITIONAL_OR_SCOPE_KEYWORDS accepts either) — expected to stay.
+ * - bn/sw last (শেষ / mwisho) normalize to `end` (the block terminator) —
+ *   polysemous words claimed by the structural keyword.
+ */
+const KNOWN_DRIFT = new Set<string>([
+  'ar:parent',
+  'ar:random',
+  'bn:last',
+  'bn:random',
+  'de:closest',
+  'de:parent',
+  'de:random',
+  'es:closest',
+  'es:random',
+  'fr:closest',
+  'fr:random',
+  'hi:random',
+  'id:random',
+  'it:closest',
+  'it:parent',
+  'it:random',
+  'ja:random',
+  'ko:random',
+  'ms:random',
+  'pl:random',
+  'pt:closest',
+  'pt:random',
+  'qu:next',
+  'qu:previous',
+  'qu:closest',
+  'qu:parent',
+  'qu:random',
+  'ru:first',
+  'ru:last',
+  'ru:next',
+  'ru:previous',
+  'ru:closest',
+  'ru:parent',
+  'ru:random',
+  'sw:first',
+  'sw:last',
+  'sw:previous',
+  'sw:random',
+  'th:random',
+  'tr:closest',
+  'tr:random',
+  'uk:first',
+  'uk:last',
+  'uk:next',
+  'uk:previous',
+  'uk:closest',
+  'uk:parent',
+  'uk:random',
+  'zh:random',
+]);
+
+function normalizeEmission(lang: string, emission: string): string | null {
+  let tokenizer: ReturnType<typeof getTokenizer>;
+  try {
+    tokenizer = getTokenizer(lang);
+  } catch {
+    return null; // no tokenizer for this language — out of scope
+  }
+  try {
+    const stream = tokenizer.tokenize(emission);
+    const token = stream.peek() as { normalized?: string; value: string } | undefined | null;
+    if (!token) return '(no-token)';
+    return token.normalized ?? token.value;
+  } catch {
+    return '(tokenize-error)';
+  }
+}
+
+describe('dict positional emissions are recognized by the tokenizer', () => {
+  for (const [lang, dict] of Object.entries(dictionaries)) {
+    if (lang === 'en') continue;
+    const expressions = dict.expressions ?? {};
+    for (const concept of POSITIONAL_CONCEPTS) {
+      const emission = expressions[concept];
+      if (!emission) continue;
+      const key = `${lang}:${concept}`;
+      const expectedDrift = KNOWN_DRIFT.has(key);
+
+      it(`[${key}] '${emission}' ${expectedDrift ? 'is on the burn-down list' : `normalizes to '${concept}'`}`, () => {
+        const normalized = normalizeEmission(lang, emission);
+        if (normalized === null) return; // no tokenizer registered
+        const aligned = normalized === concept;
+        if (expectedDrift) {
+          expect(
+            aligned,
+            `[${key}] '${emission}' now normalizes to '${concept}' — the drift is fixed; ` +
+              `remove '${key}' from KNOWN_DRIFT in positional-keyword-drift.test.ts (the list only shrinks).`
+          ).toBe(false);
+        } else {
+          expect(
+            aligned,
+            `[${key}] dict emits '${emission}' but the ${lang} tokenizer normalizes it to ` +
+              `'${normalized}', not '${concept}'. The transformer emits words the parser can't ` +
+              `read as positionals (the sw 'ijayo' bug class, #338). Align the dict emission to ` +
+              `a word the tokenizer recognizes, or teach the tokenizer the dict's word.`
+          ).toBe(true);
+        }
+      });
+    }
+  }
+});
