@@ -264,6 +264,20 @@ export class PatternMatcher {
       return patternToken.optional || false;
     }
 
+    // A `duration` slot is never a positional/scope keyword. The temporal
+    // `in {duration}` idiom (`in 2s`) otherwise greedily swallows a *locative*
+    // `in closest <form/>` (the scope of `focus first <input/> in closest <form/>`)
+    // and spuriously emits a `wait` — which corrupted the English *reference* parse
+    // (`focus first … in closest …` → {focus, wait}) and made first-in-parent /
+    // focus-trap read as lossy in every other language. `closest` tokenizes as a
+    // `literal` (same type as `2s`), so this keyword guard is the disambiguator.
+    if (patternToken.role === 'duration') {
+      const norm = (token.normalized ?? token.value).toLowerCase();
+      if (PatternMatcher.POSITIONAL_OR_SCOPE_KEYWORDS.has(norm)) {
+        return patternToken.optional || false;
+      }
+    }
+
     // Check for a positional query expression (e.g., 'last <.message/> in #chat',
     // 'first <button/> in .modal'). Triggered only when the role starts with a
     // positional keyword, so non-positional roles are unaffected.
@@ -425,6 +439,21 @@ export class PatternMatcher {
     'next',
     'previous',
     'random',
+  ]);
+
+  /**
+   * Positional + DOM-scope keywords that must never fill a `duration` slot (see the
+   * guard in matchRoleToken). Superset of POSITIONAL_KEYWORDS plus the scope words
+   * (`closest`, `parent`) that lead a locative `in <scope>`.
+   */
+  private static readonly POSITIONAL_OR_SCOPE_KEYWORDS = new Set([
+    'first',
+    'last',
+    'next',
+    'previous',
+    'random',
+    'closest',
+    'parent',
   ]);
 
   /**
