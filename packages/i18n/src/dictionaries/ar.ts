@@ -52,7 +52,7 @@ export const ar: Dictionary = {
     js: 'جافاسكربت',
     async: 'متزامن',
     render: 'ارسم',
-    swap: 'بدّل',
+    swap: 'استبدل', // profile primary; 'بدّل' is toggle's word (parsed as toggle)
     morph: 'حوّل',
     settle: 'استقر',
     append: 'ألحق',

@@ -52,7 +52,7 @@ export const ko: Dictionary = {
     swap: '교환',
     morph: '변형',
     settle: '안정',
-    append: '추가',
+    append: '덧붙이다', // profile primary; '추가' is add's word (parsed as add)
     exit: '종료',
     install: '설치',
     breakpoint: '중단점',

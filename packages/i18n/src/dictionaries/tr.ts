@@ -52,7 +52,7 @@ export const tr: Dictionary = {
     swap: 'takas',
     morph: 'dönüştür',
     settle: 'sabitlen',
-    append: 'ekle',
+    append: 'iliştir', // profile primary; 'ekle' is add's word (parsed as add)
     exit: 'çık',
     install: 'kur',
     breakpoint: 'kesme-noktası',

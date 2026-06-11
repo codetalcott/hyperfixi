@@ -52,7 +52,7 @@ export const it: Dictionary = {
     swap: 'scambiare',
     morph: 'trasformare',
     settle: 'stabilizzare',
-    append: 'aggiungere',
+    append: 'accodare', // profile primary; 'aggiungere' is add's word (parsed as add)
     exit: 'uscire',
     install: 'installare',
     breakpoint: 'punto-interruzione',
