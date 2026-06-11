@@ -1950,7 +1950,30 @@ export const swapSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference'],
       svoPosition: 2,
       sovPosition: 1,
-      markerOverride: { en: 'of' }, // "swap innerHTML of #target"
+      // The i18n transformer emits the element-swap shape `swap X with Y` with
+      // an UNMARKED destination right after the verb (`intercambiar #a con #b`),
+      // not the profile's destination preposition (`intercambiar en #a`), so the
+      // generated patterns never matched any transformer output. SVO languages
+      // override to the emission shape: bare destination (he marks it with the
+      // direct-object particle את, zh with 把).
+      markerOverride: {
+        en: 'of', // "swap innerHTML of #target"
+        es: '',
+        fr: '',
+        pt: '',
+        it: '',
+        de: '',
+        pl: '',
+        ru: '',
+        uk: '',
+        id: '',
+        ms: '',
+        sw: '',
+        th: '',
+        vi: '',
+        he: 'את', // "החלף את #a עם #b" — direct-object particle
+        zh: '把', // "交换 把 #a 用 #b" — BA object marker
+      },
     },
     {
       role: 'patient',
@@ -1959,7 +1982,26 @@ export const swapSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression', 'selector'],
       svoPosition: 3,
       sovPosition: 2,
-      markerOverride: { en: 'with' }, // "swap innerHTML of #target with <html>"
+      // Patient takes each language's with-word (matching the i18n dicts'
+      // `with` emission), so `swap {destination} with {patient}` parses.
+      markerOverride: {
+        en: 'with', // "swap innerHTML of #target with <html>"
+        es: 'con',
+        fr: 'avec',
+        pt: 'com',
+        it: 'con',
+        de: 'mit',
+        pl: 'z',
+        ru: 'с',
+        uk: 'з',
+        id: 'dengan',
+        ms: 'dengan',
+        sw: 'na',
+        th: 'ด้วย',
+        vi: 'với',
+        he: 'עם',
+        zh: '用',
+      },
     },
   ],
 };
