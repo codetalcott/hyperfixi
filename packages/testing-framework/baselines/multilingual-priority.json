@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-11T22:24:00.750Z",
-  "commit": "7db54611",
+  "timestamp": "2026-06-11T22:52:57.504Z",
+  "commit": "b086e388",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -8417,10 +8417,9 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.828685548293392,
-      "avgFidelity": 0.9374727668845316,
+      "avgFidelity": 0.9407407407407408,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
-        "append-content",
         "blur-element",
         "fetch-do-not-throw",
         "focus-trap",
@@ -10386,10 +10385,9 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8947021232735521,
-      "avgFidelity": 0.9682900432900432,
+      "avgFidelity": 0.9715367965367964,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
-        "append-content",
         "event-debounce",
         "fetch-do-not-throw",
         "fetch-loading-state",
@@ -13599,10 +13597,9 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8939600082457227,
-      "avgFidelity": 0.9682900432900432,
+      "avgFidelity": 0.9715367965367964,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
-        "append-content",
         "event-debounce",
         "fetch-do-not-throw",
         "fetch-loading-state",

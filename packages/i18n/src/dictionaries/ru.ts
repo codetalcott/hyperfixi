@@ -56,7 +56,7 @@ export const russianDictionary: Dictionary = {
     swap: 'поменять',
     morph: 'трансформировать',
     settle: 'стабилизировать',
-    append: 'добавить_в_конец',
+    append: 'дописать', // profile alternative; the compound splits and добавить parses as add
     exit: 'выйти',
     else: 'иначе',
     install: 'установить',

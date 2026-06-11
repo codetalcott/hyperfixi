@@ -56,7 +56,7 @@ export const ukrainianDictionary: Dictionary = {
     swap: 'поміняти',
     morph: 'трансформувати',
     settle: 'стабілізувати',
-    append: 'додати_в_кінець',
+    append: 'дописати', // profile alternative; the compound splits and додати parses as add
     exit: 'вийти',
     else: 'інакше',
     install: 'встановити',

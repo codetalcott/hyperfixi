@@ -2127,3 +2127,50 @@ describe('ru/uk scroll command verb + positional query (last-in-collection)', ()
     expect(a.has('on')).toBe(true);
   });
 });
+
+describe('compound-split append — ru/uk dict realign + pl handcrafted collision (B2b)', () => {
+  // The compound-split tail of the B2a append cluster. Three languages where
+  // append-content stayed lossy AFTER the B2a realigns, for two reasons:
+  // - ru/uk: dict and profile AGREED on an underscore compound
+  //   (добавить_в_конец / додати_в_кінець), but the tokenizer splits it and the
+  //   embedded add-verb wins — the same splitting that broke ms tambah_hujung.
+  //   Realigned the dicts to the profiles' single-word ALTERNATIVE
+  //   (дописать / дописати), which parses as append directly.
+  // - pl: dict, profile, and tokenizer all agree dołącz = append — but the
+  //   HANDCRAFTED add-pl-full/add-pl-simple patterns listed dołącz/dolacz as
+  //   add-verb alternatives (predating the profile's append entry), and the
+  //   higher-priority handcrafted match shadowed the generated append pattern.
+  //   Removed the stale alternatives.
+  // pl/ru/uk append-content lossy → faithful; cross-lang avgFidelity
+  // 0.9392 → 0.9397; 0 regressions. Remaining compound-split append languages
+  // (bn শেষে যোগ, hi जोड़ें_अंत, ms tambah_hujung) need NEW single-word native
+  // vocabulary in both profile and dict — deferred.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  const cases: Array<[string, string]> = [
+    ['ru', 'при клик дописать "<li>Item</li>" в #list'],
+    ['uk', 'при клік дописати "<li>Item</li>" в #list'],
+    ['pl', 'gdy kliknięcie dołącz "<li>Item</li>" do #list'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] append-content parses the real append action`, () => {
+      const a = actions(parse(input, lang as 'ru'));
+      expect(a.has('append')).toBe(true);
+      expect(a.has('add')).toBe(false);
+    });
+  }
+
+  it('[pl] plain add still parses (regression guard)', () => {
+    expect(actions(parse('dodaj .highlight do #item', 'pl')).has('add')).toBe(true);
+  });
+});
