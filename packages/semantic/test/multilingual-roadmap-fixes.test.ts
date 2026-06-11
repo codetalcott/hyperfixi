@@ -1755,3 +1755,50 @@ describe('marker-less fetch fidelity (es/pl/id/sw/he) — recover dropped fetch'
     });
   }
 });
+
+describe('de `if` keyword alignment (wenn→falls) — conditional wrapper (A1)', () => {
+  // The biggest correctness gap is control-flow body parsing; the first tractable
+  // slice is a dict↔profile mismatch (id-toggle family). The i18n de dict emitted
+  // `wenn` for `if`, but German `wenn` is the profile's `when` keyword (German `wenn`
+  // = both "if" and "when"), so a transformed `if` resolved to `when` and the `if`
+  // wrapper never formed (`if` + the conditional body dropped). Aligning the dict to
+  // the profile's `if` primary (`falls`) forms the conditional: 8 de patterns moved
+  // lossy → faithful (input-validation, if-condition, if-matches, event-key-combo,
+  // window-keydown, window-scroll, modal-close-backdrop, fetch-error-handling),
+  // avgFidelity +0.017, 0 regressions. The other if-dropping languages (reorder-split
+  // predicate, he English predicate) remain the deep structural track.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[de] forms the if wrapper with `falls` (input-validation → faithful)', () => {
+    // Corpus-shaped transformer output (en → de), input-validation.
+    const a = actions(
+      parse(
+        'bei unscharf falls mein wert ist leer hinzufügen .error zu ich sonst entfernen .error von ich ende',
+        'de'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+  });
+
+  it('[de] the colliding `wenn` resolves to `when`, not `if` (root-cause guard)', () => {
+    // `wenn` is the profile's `when` keyword, so the conditional does not form — this
+    // is why the dict had to emit `falls`.
+    const a = actions(
+      parse(
+        'bei unscharf wenn mein wert ist leer hinzufügen .error zu ich sonst entfernen .error von ich ende',
+        'de'
+      )
+    );
+    expect(a.has('if')).toBe(false);
+  });
+});

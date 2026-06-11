@@ -18,7 +18,12 @@ export const de: Dictionary = {
     toggle: 'umschalten',
     hide: 'verstecken',
     show: 'zeigen',
-    if: 'wenn',
+    // Align with the semantic German profile's `if` primary (`falls`). The previous
+    // `wenn` collides with the profile's `when` keyword (German `wenn` = both
+    // "if" and "when"), so a transformed `if` resolved to `when` and the conditional
+    // wrapper never formed (`if`/`put` dropped). Same dict↔profile alignment as id
+    // `toggle` / get-value. `when` is unaffected (separate dict entry).
+    if: 'falls',
     unless: 'wennnicht',
     repeat: 'wiederholen',
     for: 'für',
