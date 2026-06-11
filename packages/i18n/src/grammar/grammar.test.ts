@@ -1456,7 +1456,10 @@ describe('Possessive Dot Notation Translation', () => {
       // parseConditional already handle it. Verify we didn't regress.
       const t = new GrammarTransformer('en', 'de');
       const result = t.transform('if $x then increment $count end');
-      expect(result).toMatch(/wenn|if/i);
+      // de `if` emits `falls` (the profile's `if` primary). `wenn` was the old dict
+      // value but collides with the profile's `when` keyword, so the conditional
+      // never formed — aligned to `falls` (see de dict if-keyword alignment, A1).
+      expect(result).toMatch(/falls|wenn|if/i);
       expect(result).toMatch(/dann|then/i);
       expect(result).toMatch(/erhöh|increment/i);
     });
