@@ -76,6 +76,7 @@ const SWAHILI_EXTRAS: KeywordEntry[] = [
   { native: 'wa kwanza', normalized: 'first' },
   { native: 'wa mwisho', normalized: 'last' },
   { native: 'ifuatayo', normalized: 'next' },
+  { native: 'ijayo', normalized: 'next' }, // i18n dict emits 'ijayo' for next
   { native: 'iliyotangulia', normalized: 'previous' },
   { native: 'karibu', normalized: 'closest' },
   { native: 'mzazi', normalized: 'parent' },

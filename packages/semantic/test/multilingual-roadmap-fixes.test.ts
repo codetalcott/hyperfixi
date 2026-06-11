@@ -1874,8 +1874,8 @@ describe('positional destination — `put X into next <sel>` (B1)', () => {
   // and handcrafted put patterns) rejected it, so `put X into next .y` dropped the
   // command. Making `expression` type-compatible with selector/reference (like
   // `property-path`) recovers it — fr/pt/id flip if-empty lossy→faithful; +9 langs
-  // avgFidelity, 0 regressions. (de `nächste`→`closest` and sw `ijayo` need separate
-  // positional-keyword fixes.)
+  // avgFidelity, 0 regressions. (de `nächste`→`closest` and sw `ijayo` were separate
+  // positional-keyword bugs — fixed and locked in the next describe block.)
   function actions(node: unknown, acc = new Set<string>()): Set<string> {
     if (!node || typeof node !== 'object') return acc;
     const rec = node as Record<string, unknown>;
@@ -1902,5 +1902,70 @@ describe('positional destination — `put X into next <sel>` (B1)', () => {
 
   it('[en] a positional destination still works (regression guard)', () => {
     expect(actions(parse('put "X" into next .y', 'en')).has('put')).toBe(true);
+  });
+});
+
+describe('de/sw positional keywords — nächste→next, ijayo (B1)', () => {
+  // The de/sw tail of the put-positional cluster (#337). Two tokenizer bugs made
+  // `put X into next <sel>` fail to parse at all (not just drop the command):
+  // - de: GERMAN_EXTRAS listed `nächste` twice (next, then closest). The keyword
+  //   map is keyed by native word and insertion is last-wins, so `closest`
+  //   shadowed `next` — and `closest` is not in POSITIONAL_KEYWORDS, so
+  //   tryMatchPositionalExpression never fired. Removing the duplicate restores
+  //   `nächste`→`next`; the locative `in nächste <form/>` scope guard accepts
+  //   `next` too (POSITIONAL_OR_SCOPE_KEYWORDS), so first-in-parent is unaffected.
+  // - sw: the i18n dict emits `ijayo` for `next` but the tokenizer only knew
+  //   `ifuatayo` — `ijayo` is now an additional native variant.
+  // de if-empty flips lossy→faithful (avgFid 0.9408→0.9422); sw if-empty recovers
+  // `put` (avgFid 0.9339→0.9352); all other languages byte-identical, gate green.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[de] put with a nächste (next) destination keeps put', () => {
+    expect(actions(parse('setzen "X" zu nächste .y', 'de')).has('put')).toBe(true);
+  });
+
+  it('[sw] put with an ijayo (next) destination keeps put', () => {
+    expect(actions(parse('weka "X" kwa ijayo .y', 'sw')).has('put')).toBe(true);
+  });
+
+  it('[sw] the previously-known ifuatayo variant still works', () => {
+    expect(actions(parse('weka "X" kwa ifuatayo .y', 'sw')).has('put')).toBe(true);
+  });
+
+  it('[de] locative scope `in nächste <form/>` still parses (first-in-parent guard)', () => {
+    const a = actions(parse('bei klick fokussieren erste <input/> in nächste <form/>', 'de'));
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('on')).toBe(true);
+    expect(a.has('wait')).toBe(false);
+  });
+
+  it('[de] if-empty then-chain recovers put (corpus-shaped)', () => {
+    const a = actions(
+      parse(
+        'bei unscharf wenn mein wert ist leer hinzufügen .error zu ich dann setzen "Required" zu nächste .error-message ende',
+        'de'
+      )
+    );
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[sw] if-empty then-chain recovers put (corpus-shaped)', () => {
+    const a = actions(
+      parse(
+        'kwenye poteza_macho kama yangu thamani ni tupu ongeza .error kwa mimi kisha weka "Required" kwa ijayo .error-message mwisho',
+        'sw'
+      )
+    );
+    expect(a.has('put')).toBe(true);
   });
 });
