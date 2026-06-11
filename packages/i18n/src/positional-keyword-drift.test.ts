@@ -44,8 +44,8 @@ const POSITIONAL_CONCEPTS = [
  *   it piùvicino, pt mais_próximo, tr en_yakın, qu aswan_kaylla) split or
  *   miss entirely.
  * - ru/uk tokenizers carry no positional extras at all (all 7 concepts).
- * - qu next/previous are CROSS-MAPPED (qhipantin→last, ñawpaqnin→first) —
- *   likely a real dict or tokenizer bug worth its own fix.
+ * - qu next/previous were CROSS-MAPPED (qhipantin→last, ñawpaqnin→first —
+ *   morphology bound the prefixes); fixed with exact tokenizer entries.
  * - de closest→nächste normalizes to `next` by design (one word covers both
  *   readings; POSITIONAL_OR_SCOPE_KEYWORDS accepts either) — expected to stay.
  * - bn/sw last (শেষ / mwisho) normalize to `end` (the block terminator) —
@@ -74,8 +74,6 @@ const KNOWN_DRIFT = new Set<string>([
   'pl:random',
   'pt:closest',
   'pt:random',
-  'qu:next',
-  'qu:previous',
   'qu:closest',
   'qu:parent',
   'qu:random',

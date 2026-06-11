@@ -112,6 +112,12 @@ const QUECHUA_EXTRAS: KeywordEntry[] = [
   { native: 'nawpaq', normalized: 'first' },
   { native: 'qhipa', normalized: 'last' },
   { native: 'hamuq', normalized: 'next' },
+  // The i18n dict emits the -ntin/-nin derived forms ("the one after/before").
+  // Without exact entries the morphology binds their PREFIXES — qhipa(ntin)
+  // read as `last`, ñawpaq(nin) as `first` — cross-mapping next/previous.
+  // Longest-first matching makes the exact forms win.
+  { native: 'qhipantin', normalized: 'next' },
+  { native: 'ñawpaqnin', normalized: 'previous' },
   { native: 'ñawpaq kaq', normalized: 'previous' },
   { native: 'ñawpaq_kaq', normalized: 'previous' },
   { native: 'aswan qayllaqa', normalized: 'closest' },
