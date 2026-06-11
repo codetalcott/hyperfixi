@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-10T20:40:40.785Z",
-  "commit": "311e932",
+  "timestamp": "2026-06-10T23:49:45.094Z",
+  "commit": "9433ad3",
   "languages": {
     "ar": {
       "parseSuccess": 153,
@@ -2516,7 +2516,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9165577342047931,
+      "avgFidelity": 0.9505446623093682,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "bundleSize": 405037,
       "patterns": {
@@ -3768,7 +3768,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8452847805788988,
-      "avgFidelity": 0.876252723311547,
+      "avgFidelity": 0.9102396514161221,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -5036,7 +5036,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.8611111111111112,
+      "avgFidelity": 0.8950980392156862,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "bundleSize": 405037,
       "patterns": {
@@ -8180,7 +8180,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.828685548293392,
-      "avgFidelity": 0.9013071895424839,
+      "avgFidelity": 0.9352941176470589,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "bundleSize": 405037,
       "patterns": {
@@ -10697,13 +10697,8 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.8707619047619051,
-      "avgFidelity": 0.9236666666666667,
-      "degeneratePasses": [
-        "behavior-draggable",
-        "behavior-resizable",
-        "behavior-sortable",
-        "event-debounce"
-      ],
+      "avgFidelity": 0.9294444444444444,
+      "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "bundleSize": 405037,
       "patterns": {
         "add-class-basic": {

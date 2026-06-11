@@ -2,8 +2,9 @@
 
 > **Status:** Phase 0 (`socket`, −9), Phase 0b (`eventsource`/`worker`, −4), Phase 1a
 > (`is empty` vocab for de/sw, −2), Phase 1b (id toggle alignment, −1),
-> `get-value` qu/tl keyword alignment (−2), and B3 fr/pt marker-less `fetch` (−4)
-> **SHIPPED** — degenerate **92 → 70**. **Every** remaining degenerate instance now has
+> `get-value` qu/tl keyword alignment (−2), B3 fr/pt marker-less `fetch` (−4), and the
+> es/pl/id/sw/he marker-less-`fetch` fidelity sweep (sw `event-debounce` −1, +avgFidelity)
+> **SHIPPED** — degenerate **92 → 69**. **Every** remaining degenerate instance now has
 > a diagnosis: §3.3 (he/ja/ko conditions) and §3.4 (full inventory of the
 > previously-undescribed 17 — masked-keyword quick wins vs deep block/SOV work).
 > **`hi bind` was reclassified from "likely-quick" to structural after a measure-first
@@ -230,16 +231,16 @@ SOV/transformer structural case, the same track as he/ja/ko §3.3:
 
 ### Block/structural parsing (genuinely hard — the deep parser track)
 
-| Pattern                      | Lang(s)  | Diagnosis                                                                                                                                               |
-| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `live-derived-value`         | hi       | `live` keyword **is** aligned (`लाइव`) but the `live … end` block still drops it — block-body parse.                                                    |
-| `live-multiple-deps`         | hi       | Same `live … end` block parse.                                                                                                                          |
-| `intercept-cache-strategies` | hi       | `intercept` unrecognized **and** a very large multi-clause `intercept … end` block — keyword + block.                                                   |
-| `event-debounce`             | ar,sw,tl | the `debounced at 300ms` **event modifier** mangles the event head → `fetch`/`on` drop.                                                                 |
-| `focus-trap`                 | pt       | nested conditional + `last`/`first <button/>` positionals + `matches` predicate; `focus` stays English inside the condition (B1-adjacent + positional). |
-| `modal-close-escape`         | qu       | SOV/VSO `on keydown[…] from window` event head reorder + multi-command body (`hide`/`remove`) drop.                                                     |
-| `window-scroll`              | ko       | SOV reorder collapses the `on scroll … if … else … end` handler to a bare `scroll` (same class as ja/ko if-empty, §3.3).                                |
-| `announce-screen-reader`     | ja       | SOV event head (`on success`) reorder + `@role` attr + trailing `set` drop.                                                                             |
+| Pattern                      | Lang(s) | Diagnosis                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `live-derived-value`         | hi      | `live` keyword **is** aligned (`लाइव`) but the `live … end` block still drops it — block-body parse.                                                                                                                                                                                                                                    |
+| `live-multiple-deps`         | hi      | Same `live … end` block parse.                                                                                                                                                                                                                                                                                                          |
+| `intercept-cache-strategies` | hi      | `intercept` unrecognized **and** a very large multi-clause `intercept … end` block — keyword + block.                                                                                                                                                                                                                                   |
+| `event-debounce`             | ar,tl   | **sw SHIPPED** (the marker-less-`fetch` sweep recovered `fetch`, clearing the floor). ar/tl remain: a bare/unquoted URL with `${…}` interpolation (`/api/search?q=${my value}`) fails to tokenize in ar/tl, so the VSO-mid-stream `fetch` drops. (The `debounced` modifier is fronted but not the blocker — the clean-URL body parses.) |
+| `focus-trap`                 | pt      | nested conditional + `last`/`first <button/>` positionals + `matches` predicate; `focus` stays English inside the condition (B1-adjacent + positional).                                                                                                                                                                                 |
+| `modal-close-escape`         | qu      | SOV/VSO `on keydown[…] from window` event head reorder + multi-command body (`hide`/`remove`) drop.                                                                                                                                                                                                                                     |
+| `window-scroll`              | ko      | SOV reorder collapses the `on scroll … if … else … end` handler to a bare `scroll` (same class as ja/ko if-empty, §3.3).                                                                                                                                                                                                                |
+| `announce-screen-reader`     | ja      | SOV event head (`on success`) reorder + `@role` attr + trailing `set` drop.                                                                                                                                                                                                                                                             |
 
 **Net (updated after probing):** the get-value qu/tl pair (−2) **shipped** as a clean
 keyword alignment. `hi bind` (×4) was probed and **reclassified as structural** (above) —
@@ -270,4 +271,5 @@ track (§3.3), the tr `default-value` collision (§2c family), or behaviors (46,
    gated arc rather than a quick win.
 
 **Degenerate total: 92 → 83 (Phase 0) → 79 (Phase 0b) → 77 (Phase 1a) → 76 (Phase 1b)
-→ 74 (get-value qu/tl) → 70 (B3 fr/pt marker-less fetch).**
+→ 74 (get-value qu/tl) → 70 (B3 fr/pt marker-less fetch) → 69 (es/pl/id/sw/he
+marker-less-fetch fidelity sweep; sw event-debounce).**
