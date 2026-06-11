@@ -104,6 +104,7 @@ export const swahiliProfile: LanguageProfile = {
     fetch: { primary: 'leta', alternatives: ['pakia'], normalized: 'fetch' },
     settle: { primary: 'tulia', alternatives: ['imarika'], normalized: 'settle' },
     if: { primary: 'kama', alternatives: ['ikiwa'], normalized: 'if' },
+    unless: { primary: 'isipokuwa', normalized: 'unless' },
     when: { primary: 'wakati', normalized: 'when' },
     where: { primary: 'wapi', normalized: 'where' },
     else: { primary: 'vinginevyo', alternatives: ['sivyo'], normalized: 'else' },

@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-06-11T00:54:43.833Z",
-  "commit": "876a1a7",
+  "timestamp": "2026-06-11T05:47:41.381Z",
+  "commit": "e1344c1",
   "languages": {
     "ar": {
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9300763442631951,
+      "avgConfidence": 0.9297132360569497,
       "avgFidelity": 0.9400871459694988,
       "degeneratePasses": [
         "behavior-draggable",
@@ -31,7 +31,7 @@
         "template-literal-list-build",
         "window-scroll"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -213,10 +213,6 @@
           "success": true,
           "confidence": 1
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 1
-        },
         "accordion-exclusive": {
           "success": true,
           "confidence": 1
@@ -278,10 +274,6 @@
           "confidence": 1
         },
         "next-element": {
-          "success": true,
-          "confidence": 1
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 1
         },
@@ -465,7 +457,15 @@
           "success": true,
           "confidence": 0.9722222222222222
         },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 0.9722222222222222
+        },
         "previous-element": {
+          "success": true,
+          "confidence": 0.9722222222222222
+        },
+        "closest-ancestor": {
           "success": true,
           "confidence": 0.9722222222222222
         },
@@ -675,7 +675,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1299,8 +1299,8 @@
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
-      "avgConfidence": 0.9315177923021051,
-      "avgFidelity": 0.9364923747276689,
+      "avgConfidence": 0.9359995850191917,
+      "avgFidelity": 0.9386710239651415,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
@@ -1320,11 +1320,14 @@
         "put-after",
         "put-before",
         "template-literal-list-build",
-        "unless-condition",
         "when-value-changes"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
         "add-class-basic": {
           "success": true,
           "confidence": 1
@@ -1358,6 +1361,10 @@
           "confidence": 1
         },
         "append-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-visibility": {
           "success": true,
           "confidence": 1
         },
@@ -1409,6 +1416,14 @@
           "success": true,
           "confidence": 1
         },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
+          "success": true,
+          "confidence": 1
+        },
         "input-mirror": {
           "success": true,
           "confidence": 1
@@ -1453,6 +1468,10 @@
           "success": true,
           "confidence": 1
         },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 1
+        },
         "first-in-parent": {
           "success": true,
           "confidence": 1
@@ -1477,11 +1496,11 @@
           "success": true,
           "confidence": 1
         },
-        "unless-condition": {
+        "fade-out-remove": {
           "success": true,
           "confidence": 1
         },
-        "fade-out-remove": {
+        "slide-toggle": {
           "success": true,
           "confidence": 1
         },
@@ -1490,6 +1509,10 @@
           "confidence": 1
         },
         "computed-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
         },
@@ -1617,10 +1640,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "remove-class-basic": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -1654,10 +1673,6 @@
           "confidence": 0.8857142857142858
         },
         "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-visibility": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -1765,15 +1780,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "dropdown-toggle": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -1798,10 +1805,6 @@
           "confidence": 0.8857142857142858
         },
         "previous-element": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -1841,19 +1844,15 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "unless-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "copy-to-clipboard": {
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "stagger-animation": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -1947,7 +1946,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2572,7 +2571,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9505446623093682,
+      "avgFidelity": 0.9527233115468409,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
@@ -2586,10 +2585,9 @@
         "swap-content",
         "tell-command",
         "tell-other-element",
-        "template-literal-list-build",
-        "unless-condition"
+        "template-literal-list-build"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3213,7 +3211,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9272331154684096,
+      "avgFidelity": 0.9294117647058823,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
@@ -3235,10 +3233,9 @@
         "tell-command",
         "tell-other-element",
         "template-literal-list-build",
-        "unless-condition",
         "when-value-changes"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3894,7 +3891,7 @@
         "trigger-event",
         "wait-then"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4547,7 +4544,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5172,7 +5169,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.8950980392156862,
+      "avgFidelity": 0.897276688453159,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
@@ -5205,10 +5202,9 @@
         "tell-command",
         "tell-other-element",
         "template-literal-interpolation",
-        "template-literal-list-build",
-        "unless-condition"
+        "template-literal-list-build"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5848,7 +5844,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6507,7 +6503,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -7160,7 +7156,7 @@
         "unless-condition",
         "wait-for-event"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7785,7 +7781,7 @@
       "parseFailure": 5,
       "parseRate": 0.9675324675324676,
       "avgConfidence": 0.998806860551827,
-      "avgFidelity": 0.9089485458612976,
+      "avgFidelity": 0.9111856823266218,
       "degeneratePasses": [],
       "lossyPasses": [
         "async-block",
@@ -7820,10 +7816,9 @@
         "tell-command",
         "tell-other-element",
         "template-literal-interpolation",
-        "template-literal-list-build",
-        "unless-condition"
+        "template-literal-list-build"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -8466,7 +8461,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -9122,7 +9117,7 @@
         "when-value-changes",
         "window-keydown"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "window-resize": {
           "success": true,
@@ -9745,7 +9740,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.7326118326118326,
+      "avgConfidence": 0.7196248196248196,
       "avgFidelity": 0.881818181818182,
       "degeneratePasses": [
         "behavior-draggable",
@@ -9792,7 +9787,7 @@
         "unless-condition",
         "window-scroll"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -9926,23 +9921,11 @@
           "success": true,
           "confidence": 1
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 1
-        },
-        "dropdown-toggle": {
-          "success": true,
-          "confidence": 1
-        },
         "input-validation": {
           "success": true,
           "confidence": 1
         },
         "transition-color": {
-          "success": true,
-          "confidence": 1
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 1
         },
@@ -9971,10 +9954,6 @@
           "confidence": 1
         },
         "if-empty": {
-          "success": true,
-          "confidence": 1
-        },
-        "slide-toggle": {
           "success": true,
           "confidence": 1
         },
@@ -10186,7 +10165,15 @@
           "success": true,
           "confidence": 0.5
         },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 0.5
+        },
         "accordion-exclusive": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "dropdown-toggle": {
           "success": true,
           "confidence": 0.5
         },
@@ -10250,6 +10237,10 @@
           "success": true,
           "confidence": 0.5
         },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 0.5
+        },
         "first-in-parent": {
           "success": true,
           "confidence": 0.5
@@ -10291,6 +10282,10 @@
           "confidence": 0.5
         },
         "fade-out-remove": {
+          "success": true,
+          "confidence": 0.5
+        },
+        "slide-toggle": {
           "success": true,
           "confidence": 0.5
         },
@@ -10416,7 +10411,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8895073180787468,
+      "avgConfidence": 0.8947021232735521,
       "avgFidelity": 0.9628787878787877,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
@@ -10435,8 +10430,12 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
         "add-class-basic": {
           "success": true,
           "confidence": 1
@@ -10453,6 +10452,10 @@
           "success": true,
           "confidence": 1
         },
+        "toggle-visibility": {
+          "success": true,
+          "confidence": 1
+        },
         "send-event": {
           "success": true,
           "confidence": 1
@@ -10462,6 +10465,14 @@
           "confidence": 1
         },
         "tell-command": {
+          "success": true,
+          "confidence": 1
+        },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
           "success": true,
           "confidence": 1
         },
@@ -10477,7 +10488,19 @@
           "success": true,
           "confidence": 1
         },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 1
+        },
         "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
         },
@@ -10573,10 +10596,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "remove-class-basic": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -10610,10 +10629,6 @@
           "confidence": 0.8857142857142858
         },
         "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-visibility": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -10721,15 +10736,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "dropdown-toggle": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -10750,10 +10757,6 @@
           "confidence": 0.8857142857142858
         },
         "previous-element": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -10794,14 +10797,6 @@
           "confidence": 0.8857142857142858
         },
         "copy-to-clipboard": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -11059,8 +11054,8 @@
       "parseSuccess": 150,
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
-      "avgConfidence": 0.8707619047619051,
-      "avgFidelity": 0.9294444444444444,
+      "avgConfidence": 0.8749947089947094,
+      "avgFidelity": 0.9316666666666665,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
@@ -11081,11 +11076,14 @@
         "put-before",
         "repeat-until-event",
         "set-color-variable",
-        "template-literal-list-build",
-        "unless-condition"
+        "template-literal-list-build"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
         "add-class-basic": {
           "success": true,
           "confidence": 1
@@ -11098,11 +11096,19 @@
           "success": true,
           "confidence": 1
         },
+        "toggle-visibility": {
+          "success": true,
+          "confidence": 1
+        },
         "send-event": {
           "success": true,
           "confidence": 1
         },
         "tell-command": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
           "success": true,
           "confidence": 1
         },
@@ -11119,6 +11125,14 @@
           "confidence": 1
         },
         "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
         },
@@ -11206,10 +11220,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "remove-class-basic": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -11239,10 +11249,6 @@
           "confidence": 0.8857142857142858
         },
         "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-visibility": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -11358,10 +11364,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "dropdown-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "dropdown-close-outside": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -11406,15 +11408,11 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
+        "unless-condition": {
+          "success": true,
+          "confidence": 0.8857142857142858
+        },
         "copy-to-clipboard": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -11599,10 +11597,6 @@
           "confidence": 0.8222222222222222
         },
         "event-key-combo": {
-          "success": true,
-          "confidence": 0.8222222222222222
-        },
-        "unless-condition": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -11704,7 +11698,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9402185116470816,
+      "avgConfidence": 0.9454133168418868,
       "avgFidelity": 0.9791125541125543,
       "degeneratePasses": [],
       "lossyPasses": [
@@ -11720,8 +11714,12 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
         "add-class-basic": {
           "success": true,
           "confidence": 1
@@ -11755,6 +11753,10 @@
           "confidence": 1
         },
         "append-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-visibility": {
           "success": true,
           "confidence": 1
         },
@@ -11802,6 +11804,14 @@
           "success": true,
           "confidence": 1
         },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
+          "success": true,
+          "confidence": 1
+        },
         "input-mirror": {
           "success": true,
           "confidence": 1
@@ -11846,6 +11856,10 @@
           "success": true,
           "confidence": 1
         },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 1
+        },
         "event-once": {
           "success": true,
           "confidence": 1
@@ -11874,11 +11888,19 @@
           "success": true,
           "confidence": 1
         },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
         "two-way-binding": {
           "success": true,
           "confidence": 1
         },
         "computed-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
         },
@@ -12022,10 +12044,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "remove-class-basic": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -12059,10 +12077,6 @@
           "confidence": 0.8857142857142858
         },
         "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-visibility": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -12174,15 +12188,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "dropdown-toggle": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -12207,10 +12213,6 @@
           "confidence": 0.8857142857142858
         },
         "previous-element": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -12258,15 +12260,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "stagger-animation": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -12344,7 +12338,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.9075454424193916,
+      "avgConfidence": 0.9104314453053947,
       "avgFidelity": 0.9543290043290041,
       "degeneratePasses": ["event-debounce"],
       "lossyPasses": [
@@ -12367,8 +12361,12 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
         "add-class-basic": {
           "success": true,
           "confidence": 1
@@ -12402,6 +12400,10 @@
           "confidence": 1
         },
         "append-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-visibility": {
           "success": true,
           "confidence": 1
         },
@@ -12446,6 +12448,10 @@
           "confidence": 1
         },
         "tabs-aria": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
           "success": true,
           "confidence": 1
         },
@@ -12525,11 +12531,19 @@
           "success": true,
           "confidence": 1
         },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
         "two-way-binding": {
           "success": true,
           "confidence": 1
         },
         "computed-value": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
         },
@@ -12673,10 +12687,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "remove-element": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -12702,10 +12712,6 @@
           "confidence": 0.8857142857142858
         },
         "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-visibility": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -12785,19 +12791,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "dropdown-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "input-validation": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -12825,15 +12819,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "stagger-animation": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -12913,6 +12899,10 @@
           "success": true,
           "confidence": 0.8222222222222222
         },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
         "accordion-exclusive": {
           "success": true,
           "confidence": 0.8222222222222222
@@ -12922,6 +12912,10 @@
           "confidence": 0.8222222222222222
         },
         "previous-element": {
+          "success": true,
+          "confidence": 0.8222222222222222
+        },
+        "closest-ancestor": {
           "success": true,
           "confidence": 0.8222222222222222
         },
@@ -13015,7 +13009,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13638,7 +13632,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.8887652030509177,
+      "avgConfidence": 0.8939600082457227,
       "avgFidelity": 0.9628787878787877,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
@@ -13657,8 +13651,12 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
         "add-class-basic": {
           "success": true,
           "confidence": 1
@@ -13679,11 +13677,23 @@
           "success": true,
           "confidence": 1
         },
+        "toggle-visibility": {
+          "success": true,
+          "confidence": 1
+        },
         "send-event": {
           "success": true,
           "confidence": 1
         },
         "tell-command": {
+          "success": true,
+          "confidence": 1
+        },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
           "success": true,
           "confidence": 1
         },
@@ -13699,7 +13709,19 @@
           "success": true,
           "confidence": 1
         },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 1
+        },
         "fetch-loading-state": {
+          "success": true,
+          "confidence": 1
+        },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
         },
@@ -13791,10 +13813,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "remove-class-basic": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -13828,10 +13846,6 @@
           "confidence": 0.8857142857142858
         },
         "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-visibility": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -13943,15 +13957,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "dropdown-toggle": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -13972,10 +13978,6 @@
           "confidence": 0.8857142857142858
         },
         "previous-element": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -14016,14 +14018,6 @@
           "confidence": 0.8857142857142858
         },
         "copy-to-clipboard": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -14281,7 +14275,7 @@
       "parseSuccess": 154,
       "parseFailure": 0,
       "parseRate": 1,
-      "avgConfidence": 0.892888064316636,
+      "avgConfidence": 0.8980828695114413,
       "avgFidelity": 0.9574675324675322,
       "degeneratePasses": [],
       "lossyPasses": [
@@ -14304,8 +14298,12 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
+        "toggle-class-on-other": {
+          "success": true,
+          "confidence": 1
+        },
         "add-class-basic": {
           "success": true,
           "confidence": 1
@@ -14319,6 +14317,10 @@
           "confidence": 1
         },
         "append-content": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-visibility": {
           "success": true,
           "confidence": 1
         },
@@ -14338,6 +14340,14 @@
           "success": true,
           "confidence": 1
         },
+        "accordion-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "dropdown-toggle": {
+          "success": true,
+          "confidence": 1
+        },
         "form-disable-on-submit": {
           "success": true,
           "confidence": 1
@@ -14350,11 +14360,23 @@
           "success": true,
           "confidence": 1
         },
+        "closest-ancestor": {
+          "success": true,
+          "confidence": 1
+        },
         "fetch-loading-state": {
           "success": true,
           "confidence": 1
         },
         "fade-out-remove": {
+          "success": true,
+          "confidence": 1
+        },
+        "slide-toggle": {
+          "success": true,
+          "confidence": 1
+        },
+        "toggle-aria-expanded": {
           "success": true,
           "confidence": 1
         },
@@ -14442,10 +14464,6 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "toggle-class-on-other": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "remove-class-basic": {
           "success": true,
           "confidence": 0.8857142857142858
@@ -14479,10 +14497,6 @@
           "confidence": 0.8857142857142858
         },
         "hide-with-transition": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-visibility": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -14598,15 +14612,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "accordion-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "accordion-exclusive": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "dropdown-toggle": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -14627,10 +14633,6 @@
           "confidence": 0.8857142857142858
         },
         "previous-element": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "closest-ancestor": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -14678,15 +14680,7 @@
           "success": true,
           "confidence": 0.8857142857142858
         },
-        "slide-toggle": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
         "stagger-animation": {
-          "success": true,
-          "confidence": 0.8857142857142858
-        },
-        "toggle-aria-expanded": {
           "success": true,
           "confidence": 0.8857142857142858
         },
@@ -14971,7 +14965,7 @@
         "two-way-binding",
         "unless-condition"
       ],
-      "bundleSize": 405037,
+      "bundleSize": 405261,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15590,7 +15584,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 405037,
+      "size": 405261,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }

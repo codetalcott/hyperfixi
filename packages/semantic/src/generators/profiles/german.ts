@@ -102,6 +102,7 @@ export const germanProfile: LanguageProfile = {
     fetch: { primary: 'abrufen', alternatives: ['laden'], normalized: 'fetch' },
     settle: { primary: 'stabilisieren', normalized: 'settle' },
     if: { primary: 'falls', alternatives: ['sofern'], normalized: 'if' },
+    unless: { primary: 'wennnicht', normalized: 'unless' },
     when: { primary: 'wenn', normalized: 'when' },
     where: { primary: 'wo', normalized: 'where' },
     else: { primary: 'sonst', alternatives: ['ansonsten'], normalized: 'else' },
