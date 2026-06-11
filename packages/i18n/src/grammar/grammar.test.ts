@@ -1643,3 +1643,127 @@ describe('SOV put-into verb-final reorder (Track 5)', () => {
     expect(out).toMatch(/koy.*success|success.*koy/);
   });
 });
+
+// =============================================================================
+// Destination `on` vs event `on` (bucket 1 — dual-`on`)
+// =============================================================================
+//
+// `toggle X on Y` / `set @attr on Y` reuses the word `on` as a *locative
+// target* preposition. But `on` is also the event-handler head keyword
+// (`commands.on = 'on'` in the EN dictionary). Two bugs resulted:
+//
+//   1. SPLIT bug — `splitOnCommandBoundaries` treated the destination `on`
+//      as a command boundary (it's in `commandKeywords`) and split there,
+//      so the join re-inserted a spurious `then` (ثم / pagkatapos / entonces)
+//      and a dangling `on Y` clause.
+//   2. ROLE bug — once kept whole, the argument parser mapped the locative
+//      `on` to the `event` role (EN profile marks `on → event`), overwriting
+//      the already-captured head event — dropping the trigger entirely.
+//
+// The combined effect was garbage like
+//   `on click toggle .open on #menu` → (ar) `بدل .open عند نقر ثم عند #menu`
+// which silently dropped `#menu` on a round-trip back to English
+// (`on click toggle .open`). The fix keeps the statement whole and routes
+// the locative `on` to `destination`, matching how the semantic parser
+// itself models `toggle .open on #menu` (patient `.open` + destination
+// `#menu`).
+describe('destination `on` is not confused with the event head `on`', () => {
+  describe('parse: role assignment', () => {
+    it('assigns the locative `on` target to destination, keeps the head event', () => {
+      const parsed = parseStatement('on click toggle @hidden on #panel', 'en');
+      expect(parsed).not.toBeNull();
+      expect(parsed!.roles.get('event')?.value).toBe('click');
+      expect(parsed!.roles.get('action')?.value).toBe('toggle');
+      expect(parsed!.roles.get('patient')?.value).toBe('@hidden');
+      // The destination `on #panel` must land in `destination`, NOT clobber `event`.
+      expect(parsed!.roles.get('destination')?.value).toBe('#panel');
+    });
+
+    it('handles a bare command (no event handler): `toggle .active on me`', () => {
+      const parsed = parseStatement('toggle .active on me', 'en');
+      expect(parsed).not.toBeNull();
+      expect(parsed!.roles.get('action')?.value).toBe('toggle');
+      expect(parsed!.roles.get('patient')?.value).toBe('.active');
+      expect(parsed!.roles.get('destination')?.value).toBe('me');
+      // No bogus event role from the locative `on`.
+      expect(parsed!.roles.has('event')).toBe(false);
+    });
+  });
+
+  describe('transform: no spurious "then" injected', () => {
+    // [target lang, banned "then" keyword]
+    const cases: Array<[string, RegExp]> = [
+      ['ar', /\bثم\b/],
+      ['tl', /\bpagkatapos\b/i],
+      ['es', /\bentonces\b/i],
+      ['ja', /それから/],
+      ['ko', /그러면/],
+      ['zh', /那么/],
+      ['he', /\bאז\b/],
+    ];
+    for (const [lang, banned] of cases) {
+      it(`(${lang}) keeps "toggle X on Y" as one statement`, () => {
+        const t = new GrammarTransformer('en', lang);
+        const result = t.transform('on click toggle .open on #menu');
+        expect(result, `unexpected then in: ${result}`).not.toMatch(banned);
+        // Both selectors must still be present at the surface — the
+        // destination is no longer split off into a dropped clause.
+        expect(result).toContain('.open');
+        expect(result).toContain('#menu');
+      });
+    }
+  });
+
+  describe('round-trip: destination + event survive (semantic correctness)', () => {
+    // SVO / VSO / RTL languages place the destination before the verb (or
+    // after the verb but pre-event, for VSO), which the round-trip recovers
+    // losslessly. SOV destination-after-verb placement is a separate,
+    // pre-existing limitation (it also drops `#bar` for `add .foo to #bar`)
+    // and is intentionally out of scope here.
+    //
+    // `zh` is excluded from the *keyword* round-trip: its i18n→en reverse path
+    // has a pre-existing quirk where `切换`/`把` (BA construction) mangles the
+    // verb (`on click toggle .active` → `on click h .active`), independent of
+    // the locative `on`. zh destination preservation is still asserted by the
+    // "no spurious then" case above, and verified semantically via the parser's
+    // own round-trip (render) outside this unit suite.
+    const losslessLangs = ['ar', 'tl', 'es', 'he', 'fr', 'de', 'pt', 'it'];
+    for (const lang of losslessLangs) {
+      it(`(${lang}) en→${lang}→en preserves event, action, patient, destination`, () => {
+        const out = toLocale('on click toggle .open on #menu', lang);
+        const back = toEnglish(out, lang);
+        expect(back).toContain('click');
+        expect(back).toContain('toggle');
+        expect(back).toContain('.open');
+        expect(back).toContain('#menu'); // the destination must NOT be dropped
+      });
+    }
+
+    it('regression: the OLD garbage form would have dropped the destination', () => {
+      // Sanity anchor — the corrected output keeps `#menu`.
+      const out = toLocale('on click toggle .open on #menu', 'ar');
+      expect(out).toContain('#menu');
+      expect(out).not.toMatch(/\bثم\b/); // no spurious "then"
+    });
+  });
+
+  describe('does not disturb non-locative-`on` patterns', () => {
+    // The remap only touches the `on` token in argument position; other
+    // prepositions (to/into/from/by) and plain event handlers are unchanged.
+    const unchanged = [
+      'on click increment #count',
+      'add .foo to #bar',
+      'remove .x from #y',
+      'on click toggle .active',
+    ];
+    for (const input of unchanged) {
+      it(`(${input}) round-trips through Spanish unchanged in structure`, () => {
+        const back = toEnglish(toLocale(input, 'es'), 'es');
+        // First word (command/head) preserved
+        expect(back.split(/\s+/)[0]).toBe(input.split(/\s+/)[0]);
+        // No spurious "then"/"on" artifacts
+        expect(back).not.toMatch(/\bthen\b/);
+      });
+    }
+  });
+});

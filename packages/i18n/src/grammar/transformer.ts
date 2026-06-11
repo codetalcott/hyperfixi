@@ -399,6 +399,48 @@ function getBoundaryModifiersForLocale(locale: string): Set<string> {
 }
 
 /**
+ * Commands for which a trailing `on <element>` is the TARGET the command acts
+ * on (a destination), not a new event-handler clause. For these, the locative
+ * `on` must neither split the statement (`splitOnCommandBoundaries`) nor be read
+ * as a fresh `event` role (`buildArgumentModifierMap`) — see those call sites.
+ *
+ * Deliberately narrow. `on` is overloaded (event-handler head vs. locative
+ * target), and the change has cross-language blast radius, so we only enable
+ * the locative reading for the DOM class/attribute mutators where it's the
+ * documented idiom (`toggle .open on #menu`, `toggle @hidden on #panel`).
+ *
+ * Excluded on purpose:
+ *  - `trigger`/`send` — `on Y` is a valid target, but the cleaner output
+ *    (`trigger X → #y` instead of split garbage) destabilises the semantic
+ *    parser's multi-line behaviour/compound fallback (e.g. behavior-sortable's
+ *    `trigger sortable:start on me`), a separate, out-of-scope concern.
+ *  - `set` — `set @attr to V on Y` carries BOTH `to` (value) and `on` (target);
+ *    English marks both as `destination`, so remapping `on` would collide with
+ *    and clobber the value. Needs distinct value/target roles first (deferred).
+ *  - `put` — `put X on Y into Z` has the same dual-destination collision.
+ *
+ * `add`/`remove` use `to`/`from` for their target in practice (not `on`), so
+ * their inclusion is a harmless no-op that documents intent.
+ */
+const ON_TARGET_COMMANDS = new Set(['toggle', 'add', 'remove']);
+
+/**
+ * Find the command verb of a partially-collected statement: the first command
+ * keyword that is neither the event-handler head (`on`/その他 event markers) nor
+ * an argument-introducing preposition. For `on click toggle .open` → `toggle`;
+ * for `trigger sortable:start` → `trigger`.
+ */
+function commandVerbOf(tokens: string[], commandKeywords: Set<string>): string | null {
+  for (const token of tokens) {
+    const lt = token.toLowerCase();
+    if (commandKeywords.has(lt) && !BOUNDARY_MODIFIERS.has(lt) && !EVENT_KEYWORDS.has(lt)) {
+      return lt;
+    }
+  }
+  return null;
+}
+
+/**
  * Block-introducing keywords whose body should not be split at command
  * boundaries by `splitOnCommandBoundaries`. Inputs starting with one of
  * these are also routed around `parseStatement` entirely by
@@ -474,6 +516,22 @@ function splitOnCommandBoundaries(input: string, sourceLocale: string): string[]
       if (blockDepth > 0) {
         currentPart.push(token);
         continue;
+      }
+
+      // Locative `on` for a DOM-target command (`toggle X on Y`) is the target
+      // element, NOT a new command. `on` lands in `commandKeywords` only
+      // incidentally — the EN dictionary registers `commands.on = 'on'` for the
+      // event-handler head — so without this guard the destination `on` split
+      // the statement, the join re-inserted a spurious `then` (ثم/pagkatapos/…),
+      // and the dangling `on Y` was misread as a second event handler. Keep it
+      // attached so the role parser can assign it to `destination`. Restricted
+      // to ON_TARGET_COMMANDS so `trigger X on me` etc. keep their prior split.
+      if (BOUNDARY_MODIFIERS.has(lowerToken)) {
+        const verb = commandVerbOf(currentPart, commandKeywords);
+        if (verb && ON_TARGET_COMMANDS.has(verb)) {
+          currentPart.push(token);
+          continue;
+        }
       }
 
       if (!boundaryModifiers.has(prevLower) && !commandKeywords.has(prevLower)) {
@@ -642,6 +700,53 @@ function generateModifierMap(profile: LanguageProfile): Record<string, SemanticR
   }
 
   return map;
+}
+
+/**
+ * Modifier map for parsing the ARGUMENTS of a statement (everything after the
+ * command verb), as opposed to the statement head.
+ *
+ * Why a separate map: a few languages reuse one word for both the event-handler
+ * head marker and a locative/target preposition. English is the prime case —
+ * `on` is the event head (`on click …`) AND the toggle/set target preposition
+ * (`toggle .x on #y`). `generateModifierMap` maps `on → event` (from the EN
+ * profile's event marker), so when the destination `on` was read in argument
+ * position it overwrote the already-captured head event (the `click` got
+ * dropped, e.g. `toggle @hidden on #panel` → `… عند #panel` with نقر/click gone).
+ *
+ * The fix: in argument position, remap the event role to `destination`. This is
+ * safe because a trigger event only ever appears at the statement head (which is
+ * consumed before argument parsing begins). Any "event marker" reached while
+ * scanning arguments is therefore being used as a locative — i.e. the element
+ * the command acts ON — which is exactly the `destination` role (the semantic
+ * parser also models `toggle .x on #y` as patient `.x` + destination `#y`).
+ *
+ * Restricted to (a) SVO source profiles and (b) ON_TARGET_COMMANDS:
+ *  - SVO: in VSO/SOV languages the event marker can legitimately appear
+ *    mid-statement (Arabic VSO renders an event handler as `بدل X عند نقر`,
+ *    classified as a command), so remapping there would mis-read a real event
+ *    as a destination. English — and the en→lang gate path — is SVO.
+ *  - command: only the DOM class/attr mutators use a locative `on` target.
+ *    For other commands (`trigger X on me`, `set X to V on Y`) the remap is
+ *    either destabilising or collides with `to`/`into` — see ON_TARGET_COMMANDS.
+ *
+ * When neither applies the unmodified map is returned (event stays event).
+ */
+function buildArgumentModifierMap(
+  profile: LanguageProfile,
+  actionVerb: string | undefined
+): Record<string, SemanticRole> {
+  const map = generateModifierMap(profile);
+  const verb = actionVerb?.toLowerCase();
+  if (profile.wordOrder !== 'SVO' || !verb || !ON_TARGET_COMMANDS.has(verb)) {
+    return map;
+  }
+
+  const remapped: Record<string, SemanticRole> = {};
+  for (const [form, role] of Object.entries(map)) {
+    remapped[form] = role === 'event' ? 'destination' : role;
+  }
+  return remapped;
 }
 
 // =============================================================================
@@ -905,9 +1010,12 @@ function parseEventHandler(tokens: string[], profile: LanguageProfile): ParsedSt
   }
 
   // Parse remaining tokens with modifier awareness (like parseCommand does)
-  // This handles "by 3" in "on click increment #count by 3"
+  // This handles "by 3" in "on click increment #count by 3".
+  // Argument map: for DOM-target commands the head event is already captured, so
+  // a locative `on` (`toggle @hidden on #panel`) maps to `destination` rather
+  // than overwriting the head `event`.
   if (tokens[startIndex]) {
-    const modifierMap = generateModifierMap(profile);
+    const modifierMap = buildArgumentModifierMap(profile, roles.get('action')?.value);
     let currentRole: SemanticRole = 'patient';
     let currentValue: string[] = [];
 
@@ -967,9 +1075,11 @@ function parseCommand(tokens: string[], profile: LanguageProfile): ParsedStateme
     value: tokens[0],
   });
 
-  // Generate dynamic modifier map from language profile
-  // This enables parsing non-English input (e.g., Japanese に, Korean 에, Arabic إلى)
-  const modifierMap = generateModifierMap(profile);
+  // Generate dynamic modifier map from language profile (argument position).
+  // This enables parsing non-English input (e.g., Japanese に, Korean 에, Arabic إلى).
+  // For a DOM-target command a locative `on` (`toggle .active on me`) maps to
+  // `destination` (SVO sources) rather than spawning a bogus `event` role.
+  const modifierMap = buildArgumentModifierMap(profile, tokens[0]);
 
   let currentRole: SemanticRole = 'patient';
   let currentValue: string[] = [];
