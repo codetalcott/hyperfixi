@@ -1836,3 +1836,34 @@ describe('`unless` keyword profile completion (de/es/fr/id/ms/sw) — conditiona
     });
   }
 });
+
+describe('temporal `in` must not swallow a locative `in <scope>` (first-in-parent / B1)', () => {
+  // `focus first <input/> in closest <form/>`: the `in closest <form/>` scope was
+  // greedily matched by the temporal `in {duration}` idiom (used for `in 2s toggle …`),
+  // emitting a phantom `wait`. This corrupted the *English reference* parse
+  // ({focus, on, wait}) and made first-in-parent / focus-trap read as lossy in every
+  // other language (they correctly parse {focus, on}). A `duration` slot now rejects
+  // positional/scope keywords (closest/first/…). +23 languages first-in-parent
+  // lossy → faithful, 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[en] focus first … in closest … parses {focus, on} (no phantom wait)', () => {
+    const a = actions(parse('on click focus first <input/> in closest <form/>', 'en'));
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('wait')).toBe(false);
+  });
+
+  it('[en] the real temporal `in <duration>` idiom still emits wait', () => {
+    expect(actions(parse('in 2s toggle .active', 'en')).has('wait')).toBe(true);
+  });
+});

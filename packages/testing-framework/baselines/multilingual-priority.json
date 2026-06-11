@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-06-11T05:47:41.381Z",
-  "commit": "e1344c1",
+  "timestamp": "2026-06-11T14:45:57.064Z",
+  "commit": "280192f",
   "languages": {
     "ar": {
       "parseSuccess": 153,
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9297132360569497,
-      "avgFidelity": 0.9400871459694988,
+      "avgFidelity": 0.9422657952069716,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -18,7 +18,6 @@
         "breakpoint-command",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "if-empty",
@@ -31,7 +30,7 @@
         "template-literal-list-build",
         "window-scroll"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -655,7 +654,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8657287157287157,
-      "avgFidelity": 0.9645021645021643,
+      "avgFidelity": 0.9666666666666666,
       "degeneratePasses": [],
       "lossyPasses": [
         "announce-screen-reader",
@@ -663,7 +662,6 @@
         "breakpoint-command",
         "fetch-do-not-throw",
         "fetch-json",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -675,7 +673,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -1300,7 +1298,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9359995850191917,
-      "avgFidelity": 0.9386710239651415,
+      "avgFidelity": 0.9408496732026141,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "async-block",
@@ -1309,7 +1307,6 @@
         "fetch-do-not-throw",
         "fetch-loading-state",
         "fetch-with-headers",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -1322,7 +1319,7 @@
         "template-literal-list-build",
         "when-value-changes"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -1946,7 +1943,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -2571,12 +2568,11 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9527233115468409,
+      "avgFidelity": 0.9549019607843137,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
         "fetch-do-not-throw",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -2587,7 +2583,7 @@
         "tell-other-element",
         "template-literal-list-build"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3211,7 +3207,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.9294117647058823,
+      "avgFidelity": 0.9315904139433551,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
@@ -3220,7 +3216,6 @@
         "caret-var-on-target",
         "fetch-do-not-throw",
         "fetch-with-headers",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -3235,7 +3230,7 @@
         "template-literal-list-build",
         "when-value-changes"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -3859,7 +3854,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8452847805788988,
-      "avgFidelity": 0.9102396514161221,
+      "avgFidelity": 0.912418300653595,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -3870,7 +3865,6 @@
       "lossyPasses": [
         "event-once",
         "fetch-do-not-throw",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -3891,7 +3885,7 @@
         "trigger-event",
         "wait-then"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "put-content-basic": {
           "success": true,
@@ -4515,7 +4509,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 1,
-      "avgFidelity": 0.9084415584415587,
+      "avgFidelity": 0.9106060606060608,
       "degeneratePasses": [
         "bind-auto-detect",
         "bind-explicit-property",
@@ -4533,7 +4527,6 @@
         "event-throttle",
         "fetch-do-not-throw",
         "fetch-json",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -4544,7 +4537,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5169,13 +5162,12 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.989034132171387,
-      "avgFidelity": 0.897276688453159,
+      "avgFidelity": 0.8994553376906319,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
         "caret-var-increment",
         "fetch-do-not-throw",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -5204,7 +5196,7 @@
         "template-literal-interpolation",
         "template-literal-list-build"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -5828,7 +5820,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.9878721859114016,
-      "avgFidelity": 0.9550108932461874,
+      "avgFidelity": 0.9571895424836601,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
@@ -5836,7 +5828,6 @@
         "event-debounce",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-submit-prevent",
         "if-empty",
@@ -5844,7 +5835,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -6468,7 +6459,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8410533910533909,
-      "avgFidelity": 0.9010822510822514,
+      "avgFidelity": 0.9032467532467534,
       "degeneratePasses": [
         "announce-screen-reader",
         "behavior-draggable",
@@ -6484,7 +6475,6 @@
         "fetch-do-not-throw",
         "fetch-error-handling",
         "fetch-json",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -6503,7 +6493,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -7128,7 +7118,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.5553391053391054,
-      "avgFidelity": 0.9151515151515152,
+      "avgFidelity": 0.9173160173160174,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -7144,7 +7134,6 @@
         "decrement-counter",
         "fetch-do-not-throw",
         "fetch-error-handling",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -7156,7 +7145,7 @@
         "unless-condition",
         "wait-for-event"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "wait-for-event": {
           "success": true,
@@ -7781,7 +7770,7 @@
       "parseFailure": 5,
       "parseRate": 0.9675324675324676,
       "avgConfidence": 0.998806860551827,
-      "avgFidelity": 0.9111856823266218,
+      "avgFidelity": 0.9134228187919461,
       "degeneratePasses": [],
       "lossyPasses": [
         "async-block",
@@ -7789,7 +7778,6 @@
         "fetch-basic",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -7818,7 +7806,7 @@
         "template-literal-interpolation",
         "template-literal-list-build"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -8438,13 +8426,12 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.828685548293392,
-      "avgFidelity": 0.9352941176470589,
+      "avgFidelity": 0.9374727668845316,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
         "blur-element",
         "fetch-do-not-throw",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -8461,7 +8448,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "window-scroll": {
           "success": true,
@@ -9085,7 +9072,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8344952795933194,
-      "avgFidelity": 0.9193899782135078,
+      "avgFidelity": 0.9215686274509803,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-resizable",
@@ -9099,7 +9086,6 @@
         "dropdown-toggle",
         "fetch-do-not-throw",
         "fetch-with-headers",
-        "first-in-parent",
         "form-disable-on-submit",
         "form-submit-prevent",
         "halt-propagation",
@@ -9117,7 +9103,7 @@
         "when-value-changes",
         "window-keydown"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "window-resize": {
           "success": true,
@@ -9741,7 +9727,7 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.7196248196248196,
-      "avgFidelity": 0.881818181818182,
+      "avgFidelity": 0.883982683982684,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -9759,7 +9745,6 @@
         "fetch-error-handling",
         "fetch-json",
         "fetch-with-headers",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -9787,7 +9772,7 @@
         "unless-condition",
         "window-scroll"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -10412,14 +10397,13 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8947021232735521,
-      "avgFidelity": 0.9628787878787877,
+      "avgFidelity": 0.9650432900432899,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
         "append-content",
         "event-debounce",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -10430,7 +10414,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11055,13 +11039,12 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.8749947089947094,
-      "avgFidelity": 0.9316666666666665,
+      "avgFidelity": 0.9338888888888888,
       "degeneratePasses": ["behavior-draggable", "behavior-resizable", "behavior-sortable"],
       "lossyPasses": [
         "append-content",
         "blur-element",
         "event-debounce",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -11078,7 +11061,7 @@
         "set-color-variable",
         "template-literal-list-build"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -11699,13 +11682,12 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9454133168418868,
-      "avgFidelity": 0.9791125541125543,
+      "avgFidelity": 0.9812770562770563,
       "degeneratePasses": [],
       "lossyPasses": [
         "event-debounce",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -11714,7 +11696,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12339,13 +12321,12 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.9104314453053947,
-      "avgFidelity": 0.9543290043290041,
+      "avgFidelity": 0.9564935064935064,
       "degeneratePasses": ["event-debounce"],
       "lossyPasses": [
         "breakpoint-command",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -12361,7 +12342,7 @@
         "window-keydown",
         "window-scroll"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -12986,7 +12967,7 @@
       "parseFailure": 1,
       "parseRate": 0.9935064935064936,
       "avgConfidence": 0.8648511256354393,
-      "avgFidelity": 0.9375816993464051,
+      "avgFidelity": 0.939760348583878,
       "degeneratePasses": [
         "behavior-draggable",
         "behavior-removable",
@@ -12999,7 +12980,6 @@
         "append-content",
         "fetch-do-not-throw",
         "fetch-json",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -13009,7 +12989,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -13633,14 +13613,13 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8939600082457227,
-      "avgFidelity": 0.9628787878787877,
+      "avgFidelity": 0.9650432900432899,
       "degeneratePasses": ["install-behavior"],
       "lossyPasses": [
         "append-content",
         "event-debounce",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -13651,7 +13630,7 @@
         "trigger-event",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14276,13 +14255,12 @@
       "parseFailure": 0,
       "parseRate": 1,
       "avgConfidence": 0.8980828695114413,
-      "avgFidelity": 0.9574675324675322,
+      "avgFidelity": 0.9596320346320344,
       "degeneratePasses": [],
       "lossyPasses": [
         "event-debounce",
         "fetch-do-not-throw",
         "fetch-loading-state",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -14298,7 +14276,7 @@
         "template-literal-list-build",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-on-other": {
           "success": true,
@@ -14923,7 +14901,7 @@
       "parseFailure": 4,
       "parseRate": 0.974025974025974,
       "avgConfidence": 0.9988148148148148,
-      "avgFidelity": 0.8879999999999999,
+      "avgFidelity": 0.8902222222222222,
       "degeneratePasses": [],
       "lossyPasses": [
         "beep-debug-expression",
@@ -14931,7 +14909,6 @@
         "chained-access-possessive-dot",
         "computed-value",
         "fetch-do-not-throw",
-        "first-in-parent",
         "focus-trap",
         "form-disable-on-submit",
         "form-submit-prevent",
@@ -14965,7 +14942,7 @@
         "two-way-binding",
         "unless-condition"
       ],
-      "bundleSize": 405261,
+      "bundleSize": 405495,
       "patterns": {
         "toggle-class-basic": {
           "success": true,
@@ -15584,7 +15561,7 @@
   },
   "bundles": {
     "browser-priority": {
-      "size": 405261,
+      "size": 405495,
       "languages": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"]
     }
   }
