@@ -1867,3 +1867,40 @@ describe('temporal `in` must not swallow a locative `in <scope>` (first-in-paren
     expect(actions(parse('in 2s toggle .active', 'en')).has('wait')).toBe(true);
   });
 });
+
+describe('positional destination — `put X into next <sel>` (B1)', () => {
+  // A positional query (`next .y` = `next <selector>`) is captured as an `expression`
+  // value. Destination roles restricted to `['selector','reference']` (the generated
+  // and handcrafted put patterns) rejected it, so `put X into next .y` dropped the
+  // command. Making `expression` type-compatible with selector/reference (like
+  // `property-path`) recovers it — fr/pt/id flip if-empty lossy→faithful; +9 langs
+  // avgFidelity, 0 regressions. (de `nächste`→`closest` and sw `ijayo` need separate
+  // positional-keyword fixes.)
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  const cases: Array<[string, string]> = [
+    ['es', 'poner "X" a siguiente .y'],
+    ['fr', 'mettre "X" à suivant .y'],
+    ['pt', 'colocar "X" para próximo .y'],
+    ['id', 'taruh "X" ke berikutnya .y'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] put with a positional destination keeps put`, () => {
+      expect(actions(parse(input, lang as 'es')).has('put')).toBe(true);
+    });
+  }
+
+  it('[en] a positional destination still works (regression guard)', () => {
+    expect(actions(parse('put "X" into next .y', 'en')).has('put')).toBe(true);
+  });
+});
