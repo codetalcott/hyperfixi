@@ -104,6 +104,7 @@ export const malayProfile: LanguageProfile = {
     settle: { primary: 'selesai', normalized: 'settle' },
     // Control flow
     if: { primary: 'jika', alternatives: ['kalau'], normalized: 'if' },
+    unless: { primary: 'kecuali', normalized: 'unless' },
     when: { primary: 'bila', normalized: 'when' },
     where: { primary: 'di_mana', normalized: 'where' },
     else: { primary: 'kalau_tidak', alternatives: ['jika_tidak'], normalized: 'else' },

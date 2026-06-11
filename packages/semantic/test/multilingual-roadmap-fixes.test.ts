@@ -1802,3 +1802,37 @@ describe('de `if` keyword alignment (wenn→falls) — conditional wrapper (A1)'
     expect(a.has('if')).toBe(false);
   });
 });
+
+describe('`unless` keyword profile completion (de/es/fr/id/ms/sw) — conditional (A1)', () => {
+  // The conditional-keyword sweep found `unless` MISSING from 18 semantic profiles —
+  // the i18n dict emits a native unless word (`wennnicht`, `menos`, `saufsi`, …) the
+  // profile didn't recognize, so the `unless` wrapper never formed (`unless` dropped,
+  // unless-condition lossy). Adding `unless` to the profile (normalized 'unless')
+  // recovers it. 6 languages where the predicate is adjacent enough flip
+  // unless-condition lossy → faithful (de/es/fr/id/ms/sw), +avgFidelity, 0 regressions.
+  // The SOV/VSO + multi-word-keyword languages need deeper reorder/tokenizer work.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), unless-condition.
+  const cases: Array<[string, string]> = [
+    ['de', 'bei klick wennnicht I match .disabled umschalten .selected'],
+    ['es', 'en clic menos I match .disabled alternar .selected'],
+    ['fr', 'sur clic saufsi I match .disabled basculer .selected'],
+    ['sw', 'kwenye bonyeza isipokuwa I match .disabled badilisha .selected'],
+  ];
+  for (const [lang, input] of cases) {
+    it(`[${lang}] recovers unless in unless-condition`, () => {
+      expect(actions(parse(input, lang as 'es')).has('unless')).toBe(true);
+    });
+  }
+});

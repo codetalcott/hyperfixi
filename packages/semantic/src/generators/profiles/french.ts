@@ -104,6 +104,7 @@ export const frenchProfile: LanguageProfile = {
     fetch: { primary: 'chercher', alternatives: ['récupérer'], normalized: 'fetch' },
     settle: { primary: 'stabiliser', normalized: 'settle' },
     if: { primary: 'si', normalized: 'if' },
+    unless: { primary: 'saufsi', normalized: 'unless' },
     when: { primary: 'quand', normalized: 'when' },
     where: { primary: 'où', normalized: 'where' },
     else: { primary: 'sinon', normalized: 'else' },

@@ -123,6 +123,7 @@ export const spanishProfile: LanguageProfile = {
     settle: { primary: 'estabilizar', normalized: 'settle' },
     // Control flow
     if: { primary: 'si', normalized: 'if' },
+    unless: { primary: 'menos', alternatives: ['a menos que', 'salvo'], normalized: 'unless' },
     when: { primary: 'cuando', normalized: 'when' },
     where: { primary: 'donde', normalized: 'where' },
     else: { primary: 'sino', alternatives: ['de lo contrario'], normalized: 'else' },
