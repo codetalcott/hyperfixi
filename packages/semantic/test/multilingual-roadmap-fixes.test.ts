@@ -2174,3 +2174,100 @@ describe('compound-split append — ru/uk dict realign + pl handcrafted collisio
     expect(actions(parse('dodaj .highlight do #item', 'pl')).has('add')).toBe(true);
   });
 });
+
+describe('Generated swap patterns match the transformer emission shape (swap pattern gap)', () => {
+  // The swap-content mystery: NO generated swap pattern matched any transformer
+  // output, in any language. swapSchema's destination carried the profile's
+  // destination preposition (es `intercambiar en #a`), but the i18n transformer
+  // emits the element-swap shape with an UNMARKED destination and a with-marked
+  // patient (`intercambiar #a con #b` — en source `swap #a with #b`). The
+  // faithful languages only survived via side paths: de/ru/sw/th/uk/vi through
+  // the fused `swap-event-*-vso` pattern (their event-marker emission happens to
+  // match the pattern's primary), it through event-handler-it-full's {action}
+  // role (the captured verb becomes the command node directly). Languages whose
+  // handcrafted event pattern captures only {event} (es/fr/pl/id/ms/zh) or whose
+  // generic on-pattern wins (pt/he) re-parse the body with command patterns —
+  // where the dead generated swap pattern failed, silently dropping `swap`.
+  //
+  // Fix: swapSchema destination/patient markerOverride now mirror the emission
+  // shape for SVO languages — bare destination after the verb (he marks it את,
+  // zh 把) and the language's with-word before the patient. Flips swap-content
+  // lossy → faithful in es/fr/he/id/ms/pl/pt/zh (8 instances, avgFidelity
+  // +0.0033 each); 0 regressions. Deferred (separate mechanisms): hi (dict emits
+  // बदलें, which parses as toggle — keyword-collision family), SOV/VSO languages
+  // (already faithful via fused event patterns; sovPosition order unchanged).
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Standalone bodies (then-chain / event-body re-parse shape). These parsed as
+  // NOTHING before the fix — the generated pattern could never match.
+  const standalone: Array<[string, string]> = [
+    ['es', 'intercambiar #a con #b'],
+    ['fr', 'échanger #a avec #b'],
+    ['pt', 'trocar #a com #b'],
+    ['pl', 'zamień #a z #b'],
+    ['id', 'tukar #a dengan #b'],
+    ['ms', 'tukar_tempat #a dengan #b'],
+    ['he', 'החלף את #a עם #b'],
+    ['zh', '交换 把 #a 用 #b'],
+  ];
+  for (const [lang, input] of standalone) {
+    it(`[${lang}] standalone "swap X with Y" parses as swap`, () => {
+      expect(parse(input, lang as 'es').action).toBe('swap');
+    });
+  }
+
+  // Full corpus emissions (en: `on click swap #a with #b`) — the handler body
+  // must keep the swap action (this is the lossy→faithful flip).
+  const fullHandlers: Array<[string, string]> = [
+    ['es', 'en clic intercambiar #a con #b'],
+    ['fr', 'sur clic échanger #a avec #b'],
+    ['pt', 'em clique trocar #a com #b'],
+    ['pl', 'gdy kliknięcie zamień #a z #b'],
+    ['id', 'pada klik tukar #a dengan #b'],
+    ['ms', 'apabila click tukar_tempat #a dengan #b'],
+    ['he', 'ב לחיצה החלף את #a עם #b'],
+    ['zh', '当 点击 时 交换 把 #a 用 #b'],
+  ];
+  for (const [lang, input] of fullHandlers) {
+    it(`[${lang}] swap-content handler keeps the swap action`, () => {
+      const a = actions(parse(input, lang as 'es'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('swap')).toBe(true);
+    });
+  }
+
+  // Regression guards.
+  it('[pt] alternar still parses as toggle (trocar belongs to swap now)', () => {
+    expect(parse('alternar .active', 'pt').action).toBe('toggle');
+    // trocar is the pt profile/dict swap primary — the stale toggle reading is gone.
+    expect(parse('trocar .visible', 'pt').action).toBe('swap');
+  });
+
+  it('[en] the en swap forms are unchanged', () => {
+    expect(parse('swap #a with #b', 'en').action).toBe('swap');
+    const a = actions(parse('on click swap #a with #b', 'en'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('swap')).toBe(true);
+  });
+
+  it('[de/ru] previously-faithful fused-event languages stay faithful', () => {
+    for (const [lang, input] of [
+      ['de', 'bei klick tauschen #a mit #b'],
+      ['ru', 'при клик поменять #a с #b'],
+    ] as Array<[string, string]>) {
+      const a = actions(parse(input, lang as 'de'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('swap')).toBe(true);
+    }
+  });
+});

@@ -296,11 +296,14 @@ describe('Portuguese Command Patterns', () => {
       }
     });
 
-    it('should parse "trocar .visible"', () => {
+    it('should parse "trocar .visible" as swap (trocar is the pt swap primary)', () => {
+      // The pt profile and i18n dict both assign trocar = swap (toggle is
+      // alternar, no alternatives). The old toggle expectation predated the
+      // emission-shaped generated swap patterns, which now claim the verb.
       const result = canParse('trocar .visible', 'pt');
       if (result) {
         const node = parse('trocar .visible', 'pt');
-        expect(node.action).toBe('toggle');
+        expect(node.action).toBe('swap');
       } else {
         const tokens = getTokens('trocar .visible', 'pt');
         expect(tokens.length).toBeGreaterThan(0);
