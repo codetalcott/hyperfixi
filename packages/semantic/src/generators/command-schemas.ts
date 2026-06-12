@@ -490,7 +490,7 @@ export const setSchema: CommandSchema = {
       markerOverride: {
         en: '', // No marker before destination in English: "set :x to 5"
         ja: 'を', // "x を 10 に 設定" - variable gets object marker
-        ko: '를', // "x 를 10 으로 설정" - variable gets object marker
+        ko: '를', // "x 를 10 에 설정" - variable gets object marker
         tr: 'i', // "x i 10 e ayarla" - variable gets accusative marker
         ar: '', // "عيّن x إلى 10" - no marker before variable
         sw: '', // "seti x kwenye 10" - no marker before variable

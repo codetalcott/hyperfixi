@@ -501,7 +501,7 @@ export function generateSOVTemporalEventHandlerPattern(
  * Patterns:
  * - Japanese put: 入力 で "test" を #output に 入れる
  *   [event] [eventMarker] [patient] [patientMarker] [destination] [destMarker] [verb]
- * - Korean set: 변경 할 때 x 를 10 으로 설정
+ * - Korean set: 변경 할 때 x 를 10 에 설정
  *   [event] [eventMarker] [role1] [role1Marker] [role2] [role2Marker] [verb]
  * - Turkish put: giriş de "test" i #output a koy
  *   [event] [eventMarker] [patient] [patientMarker] [destination] [destMarker] [verb]

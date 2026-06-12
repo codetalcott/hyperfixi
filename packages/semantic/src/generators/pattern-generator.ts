@@ -362,7 +362,7 @@ export function generateEventHandlerPatterns(
     if (hasTwoRequiredRoles) {
       // Two-role SOV pattern for put/set commands (event-first)
       // Japanese put: 入力 で "test" を #output に 入れる
-      // Korean set: 변경 할 때 x 를 10 으로 설정
+      // Korean set: 변경 할 때 x 를 10 에 설정
       patterns.push(
         generateSOVTwoRoleEventHandlerPattern(commandSchema, profile, keyword, eventMarker, config)
       );
