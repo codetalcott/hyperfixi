@@ -121,7 +121,7 @@
     "@lokascript/domain-voice": "^2.5.1",
     "@lokascript/framework": "^2.5.1",
     "@lokascript/semantic": "^2.5.1",
-    "@types/node": "^20.0.0",
+    "@types/node": "^25.9.3",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
