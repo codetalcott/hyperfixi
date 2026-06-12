@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ExecutionValidator, EXECUTION_SUBSET, loadExecutionSubset } from './execution-validator';
 
 describe('R2 execution subset (lock)', () => {
-  it('contains exactly the 17 curated patterns', () => {
+  it('contains exactly the 19 curated patterns', () => {
     // Changing this list recalibrates avgExecutionFidelity for every language.
     // If you expand the subset, regenerate the baseline (--save-baseline) in
     // the SAME PR and update this lock.
@@ -42,6 +42,11 @@ describe('R2 execution subset (lock)', () => {
         'set-inner-html-possessive-dot',
         'set-style',
         'closest-ancestor',
+        // Session-8 expansion wave 1 (multi-command): see the eligibility
+        // probe notes in execution-validator.ts for the nine candidates
+        // excluded because their en reference doesn't execute.
+        'tabs-content',
+        'accordion-exclusive',
       ].sort()
     );
   });
