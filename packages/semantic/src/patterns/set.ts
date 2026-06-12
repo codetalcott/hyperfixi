@@ -65,7 +65,10 @@ function getSetPatternsDe(): LanguagePattern[] {
       template: {
         format: 'setze {destination} auf {patient}',
         tokens: [
-          { type: 'literal', value: 'setze', alternatives: ['setzen', 'stelle', 'stellen', 'set'] },
+          // setzen/stellen are deliberately ABSENT: they are de's PUT verbs (dict
+          // put: setzen; profile put: setzen/stellen) — listing them here made
+          // every transformed put (`setzen es zu körper`) parse as set.
+          { type: 'literal', value: 'setze', alternatives: ['set'] },
           {
             type: 'role',
             role: 'destination',
@@ -88,7 +91,8 @@ function getSetPatternsDe(): LanguagePattern[] {
       template: {
         format: 'festlegen auf {destination} {patient}',
         tokens: [
-          { type: 'literal', value: 'festlegen', alternatives: ['einstellen', 'setzen'] },
+          // setzen deliberately absent — see set-de-full above.
+          { type: 'literal', value: 'festlegen', alternatives: ['einstellen'] },
           { type: 'literal', value: 'auf', alternatives: ['an'] },
           {
             type: 'role',
@@ -222,7 +226,9 @@ function getSetPatternsFr(): LanguagePattern[] {
           {
             type: 'literal',
             value: 'définir',
-            alternatives: ['definir', 'mettre', 'fixer', 'set'],
+            // mettre is deliberately ABSENT: it is fr's PUT verb — listing it here
+            // made every transformed put (`mettre ça à corps`) parse as set.
+            alternatives: ['definir', 'fixer', 'set'],
           },
           {
             type: 'role',
@@ -543,7 +549,9 @@ function getSetPatternsPt(): LanguagePattern[] {
       template: {
         format: 'definir {destination} para {patient}',
         tokens: [
-          { type: 'literal', value: 'definir', alternatives: ['estabelecer', 'colocar', 'set'] },
+          // colocar is deliberately ABSENT: it is pt's PUT verb — listing it here
+          // made every transformed put (`colocar isso para corpo`) parse as set.
+          { type: 'literal', value: 'definir', alternatives: ['estabelecer', 'set'] },
           {
             type: 'role',
             role: 'destination',
@@ -566,7 +574,8 @@ function getSetPatternsPt(): LanguagePattern[] {
       template: {
         format: 'definir em {destination} {patient}',
         tokens: [
-          { type: 'literal', value: 'definir', alternatives: ['estabelecer', 'colocar'] },
+          // colocar deliberately absent — see above.
+          { type: 'literal', value: 'definir', alternatives: ['estabelecer'] },
           { type: 'literal', value: 'em', alternatives: ['para', 'a'] },
           {
             type: 'role',

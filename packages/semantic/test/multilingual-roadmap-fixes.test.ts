@@ -3864,3 +3864,78 @@ describe('marker-less fetch recovery for the fetch-loading-state/event-debounce 
     expect([...a].sort()).toEqual(['add', 'fetch', 'on', 'put', 'remove']);
   });
 });
+
+describe('set patterns must not claim put verbs (de setzen / fr mettre / pt colocar)', () => {
+  // The handcrafted set-de/fr/pt patterns listed the language's PUT verb as a
+  // set-verb alternative (de setze + ['setzen','stellen'], fr définir +
+  // ['mettre'], pt definir + ['colocar']). The dicts emit DISTINCT verbs
+  // (set: festlegen/définir/definir; put: setzen/mettre/colocar), so every
+  // transformed put parsed as set — with roles swapped — across four whole
+  // clusters: if-exists, async-block, fetch-with-headers, when-value-changes
+  // (12 instances, all three languages each). Removing the put verbs from the
+  // set alternatives restores the split; genuine set forms (setze/définir/
+  // definir heads) are untouched. Same mis-listed-keyword class as tl kung
+  // (#368) and ko 아니면 (#361). avgFidelity → +12 instances, 0 regressions.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped then-tail clauses (en `put it into body`).
+  it('[de] setzen parses as put, not set', () => {
+    const a = actions(parse('setzen es zu körper', 'de'));
+    expect(a.has('put')).toBe(true);
+    expect(a.has('set')).toBe(false);
+  });
+
+  it('[fr] mettre parses as put, not set', () => {
+    const a = actions(parse('mettre ça à corps', 'fr'));
+    expect(a.has('put')).toBe(true);
+    expect(a.has('set')).toBe(false);
+  });
+
+  it('[pt] colocar parses as put, not set', () => {
+    const a = actions(parse('colocar isso para corpo', 'pt'));
+    expect(a.has('put')).toBe(true);
+    expect(a.has('set')).toBe(false);
+  });
+
+  // Genuine set forms keep parsing as set.
+  const setForms: Array<[string, string]> = [
+    ['de', 'setze $x auf 5'],
+    ['fr', 'définir $x à 5'],
+    ['pt', 'definir $x para 5'],
+  ];
+  for (const [lang, input] of setForms) {
+    it(`[${lang}] the genuine set head still parses as set`, () => {
+      const a = actions(parse(input, lang as 'de'));
+      expect(a.has('set')).toBe(true);
+    });
+  }
+
+  it('[de] if-exists keeps the else-branch put (was {if,make,on,set,show})', () => {
+    const a = actions(
+      parse(
+        'bei klick falls #modal existiert zeigen #modal sonst erstellen a <div#modal/> dann setzen es zu körper ende',
+        'de'
+      )
+    );
+    expect(a.has('if')).toBe(true);
+    expect(a.has('make')).toBe(true);
+    expect(a.has('put')).toBe(true);
+  });
+
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse('on click if #modal exists show #modal else make a <div#modal/> put it into body end', 'en')
+    );
+    expect([...a].sort()).toEqual(['if', 'make', 'on', 'put', 'show']);
+  });
+});
