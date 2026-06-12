@@ -107,6 +107,7 @@ const TURKISH_EXTRAS: KeywordEntry[] = [
   // Positional (not in profile)
   { native: 'ilk', normalized: 'first' },
   { native: 'son', normalized: 'last' },
+  { native: 'sonuncu', normalized: 'last' }, // i18n dict emission ('son' doubles as end)
   { native: 'sonraki', normalized: 'next' },
   { native: 'önceki', normalized: 'previous' },
   { native: 'onceki', normalized: 'previous' },
