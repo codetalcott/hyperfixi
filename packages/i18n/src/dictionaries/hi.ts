@@ -21,7 +21,7 @@ export const hindiDictionary: Dictionary = {
     if: 'अगर',
     unless: 'जब_तक_नहीं',
     repeat: 'दोहराएं',
-    for: 'के_लिए',
+    for: 'हेतु', // single token — के_लिए splits at _ in the hi extractor
     while: 'जब_तक',
     until: 'तक',
     continue: 'जारी',

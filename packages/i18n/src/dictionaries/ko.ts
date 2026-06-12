@@ -21,7 +21,7 @@ export const ko: Dictionary = {
     if: '만약',
     unless: '아니면',
     repeat: '반복',
-    for: '동안',
+    for: '각각', // profile's for word — 동안 is while (collision)
     while: '동안',
     until: '까지',
     continue: '계속',

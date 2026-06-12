@@ -729,10 +729,14 @@ export class SemanticParserImpl implements ISemanticParser {
   }): Map<string, string> {
     const lookup = new Map<string, string>();
     for (const [action, kw] of Object.entries(profile.keywords)) {
-      // Skip non-command keywords (on, if, else, etc.)
-      if (
-        ['on', 'if', 'else', 'when', 'where', 'while', 'for', 'end', 'then', 'and'].includes(action)
-      ) {
+      // Skip non-command keywords (on, if, else, etc.). `for` is deliberately
+      // NOT skipped: the SOV grammar transforms put the for-loop keyword
+      // clause-FINAL (`item の中 $items を ために` / `item içinde $items i için`)
+      // — an order no generated pattern covers — so the verb-anchoring fallback
+      // is exactly where it must anchor. This path only runs when nothing else
+      // in the clause matched, so a `for` in an otherwise-parseable clause is
+      // untouched.
+      if (['on', 'if', 'else', 'when', 'where', 'while', 'end', 'then', 'and'].includes(action)) {
         continue;
       }
       lookup.set(kw.primary.toLowerCase(), action);
