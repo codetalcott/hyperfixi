@@ -279,6 +279,31 @@ function getRemovePatternsQu(): LanguagePattern[] {
         patient: { position: 1 },
       },
     },
+    // Patient-first with source: .active ta #button manta qichuy — the i18n
+    // transformer emits PATIENT-first SOV for qu (`.highlight ta noqa manta
+    // qichuy`), but the source-first pattern below never matches that order,
+    // so every remove-with-source dropped (9 lossy patterns: tabs-basic,
+    // modal-close-button, dropdown-close-outside, window-scroll, …).
+    {
+      id: 'remove-qu-patient-first',
+      language: 'qu',
+      command: 'remove',
+      priority: 96,
+      template: {
+        format: '{patient} ta {source} manta qichuy',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'ta' },
+          { type: 'role', role: 'source' },
+          { type: 'literal', value: 'manta' },
+          { type: 'literal', value: 'qichuy', alternatives: ['hurquy', 'anchuchiy'] },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        source: { position: 2 },
+      },
+    },
     // With source: #button manta .active ta qichuy
     {
       id: 'remove-qu-with-source',
