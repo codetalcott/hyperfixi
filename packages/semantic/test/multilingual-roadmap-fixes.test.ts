@@ -2769,3 +2769,65 @@ describe('event-head source clause — profile markers, both orders (focus-trap 
     expect([...a].sort()).toEqual(['focus', 'halt', 'if', 'on']);
   });
 });
+
+describe('tr positional last — sonuncu (son doubles as the end keyword)', () => {
+  // The tr twin of the sw wamwisho fix. The tr dict emitted 'son' for BOTH the
+  // END keyword and positional `last`; the parser's end-recognizers match by
+  // value, so a positional condition (`eşleşir son <button/>`) terminated the
+  // enclosing block mid-condition and the branch body dropped (focus-trap
+  // stuck at {if,on} after #354 anchored the SOV head). The dict now emits
+  // 'sonuncu' ("the last one") for positional last; 'son' stays the block
+  // terminator. tr focus-trap flips lossy → faithful (0.9443 → 0.9476); every
+  // other language byte-identical.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  it('[tr] focus-trap keeps the full body (was {if,on} — son killed the branch)', () => {
+    // Corpus-shaped transformer output (en → tr) with the realigned emission.
+    const a = actions(
+      parse(
+        'keydown[key=="Tab"] de .modal den eğer hedef eşleşir sonuncu <button/> içinde .modal ilk <button/> içinde .modal i odak sonra durdur son',
+        'tr'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  it('[tr] the root cause stays locked: son in the condition kills the branch', () => {
+    // 'son' is matched by the end-recognizers by value — this is WHY the dict
+    // had to emit sonuncu for positional last.
+    const a = actions(
+      parse(
+        'keydown[key=="Tab"] de .modal den eğer hedef eşleşir son <button/> içinde .modal ilk <button/> içinde .modal i odak sonra durdur son',
+        'tr'
+      )
+    );
+    expect(a.has('focus')).toBe(false);
+  });
+
+  it('[tr] trailing then-chains with body verbs still parse (end reading unchanged)', () => {
+    // event-once shape from the SOV reorder lock tests — unchanged behavior.
+    const a = actions(
+      parse('once .initialized i tıklama de ekle ben e sonra setup() i çağır', 'tr')
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('add')).toBe(true);
+    expect(a.has('call')).toBe(true);
+  });
+
+  it('[tr] put into a sonuncu (last) destination keeps put', () => {
+    expect(actions(parse('o i sonuncu .y e koy', 'tr')).has('put')).toBe(true);
+  });
+});

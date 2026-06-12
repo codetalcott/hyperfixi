@@ -187,7 +187,12 @@ export const tr: Dictionary = {
 
   expressions: {
     first: 'ilk',
-    last: 'son',
+    // 'son' is also the END keyword emission (block terminator), and the
+    // parser's end-recognizers match it by value — so a positional `last`
+    // emission of 'son' terminated the enclosing block mid-condition
+    // (focus-trap's `eşleşir son <button/>` dropped the branch body; the sw
+    // mwisho class). 'sonuncu' ("the last one") is unambiguous.
+    last: 'sonuncu',
     next: 'sonraki',
     previous: 'önceki',
     prev: 'önc',
