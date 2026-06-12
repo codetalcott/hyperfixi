@@ -167,9 +167,29 @@ export class PatternMatcher {
       }
     }
 
+    // Source-clause window: after the event role matches, the next 1–2 pattern
+    // tokens may be preceded in the stream by a source clause the fused
+    // patterns have no slot for — `gdy keydown[…] z .modal jeśli …` (marker
+    // BEFORE: pl z / uk з / zh 从) or `keydown[…] de .modal den eğer …`
+    // (marker AFTER: ja から / ko 에서 / bn থেকে / hi से / tr den). The window
+    // spans 2 pattern tokens because SOV emissions put the clause after the
+    // event-marker literal, not directly after the event. See
+    // tryConsumeEventSourceClause for the guards.
+    let sourceWindow = 0;
+
     for (let i = 0; i < patternTokens.length; i++) {
       const patternToken = patternTokens[i];
+
+      if (sourceWindow > 0 && patternToken.type === 'literal') {
+        this.tryConsumeEventSourceClause(tokens, captured, patternToken);
+      }
+
       const matched = this.matchPatternToken(tokens, patternToken, captured, patternTokens[i + 1]);
+
+      sourceWindow =
+        patternToken.type === 'role' && patternToken.role === 'event'
+          ? 2
+          : Math.max(0, sourceWindow - 1);
 
       if (!matched) {
         // If token is optional, continue
@@ -181,6 +201,54 @@ export class PatternMatcher {
     }
 
     return true;
+  }
+
+  /**
+   * Consume a source clause (`<marker> <selector>` or `<selector> <marker>`,
+   * per the profile's source-marker position) sitting between the event head
+   * and the next pattern literal. Fired only inside the post-event window and
+   * only when the upcoming literal does NOT match the stream position — a
+   * pattern that explicitly handles the marker (`bei {event} von {source}`)
+   * is left alone, and a failing consumption is harmless because matchPattern
+   * resets the stream on failure.
+   */
+  private tryConsumeEventSourceClause(
+    tokens: TokenStream,
+    captured: Map<SemanticRole, SemanticValue>,
+    upcoming: PatternToken & { type: 'literal' }
+  ): void {
+    if (captured.has('source')) return;
+    const tok0 = tokens.peek();
+    const tok1 = tokens.peek(1);
+    if (!tok0 || !tok1) return;
+    // The pattern explicitly expects this token next — leave it alone.
+    if (this.patternTokenWouldMatch(upcoming, tok0)) return;
+
+    const src = this.currentProfile?.roleMarkers?.source;
+    const isMarker = (t: LanguageToken): boolean => {
+      if (t.kind !== 'particle' && t.kind !== 'keyword') return false;
+      if ((t.normalized ?? '').toLowerCase() === 'source') return true;
+      if (!src) return false;
+      const v = t.value.toLowerCase();
+      if (src.primary?.toLowerCase() === v) return true;
+      return !!src.alternatives?.some(a => a.toLowerCase() === v);
+    };
+    const position = src?.position;
+
+    // Prepositional `from .modal` (pl z, uk з, zh 从, de von, sw kutoka).
+    if (position !== 'after' && isMarker(tok0) && tok1.kind === 'selector') {
+      tokens.advance();
+      const v = this.tokenToSemanticValue(tokens.advance());
+      if (v) captured.set('source', v);
+      return;
+    }
+    // Postpositional `.modal から` (ja から, ko 에서, bn থেকে, hi से, tr den).
+    if (position === 'after' && tok0.kind === 'selector' && isMarker(tok1)) {
+      const v = this.tokenToSemanticValue(tok0);
+      tokens.advance();
+      tokens.advance();
+      if (v) captured.set('source', v);
+    }
   }
 
   /**

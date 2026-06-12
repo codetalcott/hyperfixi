@@ -2666,3 +2666,106 @@ describe('sw positional keywords — wamwisho (last) / kwanza / iliyopita', () =
     expect(a.has('focus')).toBe(true);
   });
 });
+
+describe('event-head source clause — profile markers, both orders (focus-trap pl/uk/zh/bn/hi)', () => {
+  // The #352 event-head tolerance recognized a source clause only by token
+  // normalization (`normalized === 'source'`) and only in the prepositional
+  // order directly after the event role. But the source markers normalize
+  // inconsistently across tokenizers (pl z / uk з → 'style'!; ja から, ko 에서,
+  // bn থেকে, hi से, zh 从 carry no normalization), and SOV emissions are
+  // postpositional AND put the clause after the event-marker literal
+  // (`keydown[…] de .modal den eğer …`), out of the event role's reach.
+  //
+  // matchTokenSequence now opens a 2-pattern-token window after the event role
+  // in which a source clause — recognized via the profile's roleMarkers.source
+  // (primary + alternatives, honoring its position) — is consumed before a
+  // literal the clause would otherwise block. Gated: only when the upcoming
+  // literal does NOT match the stream position (a pattern with an explicit
+  // `von {source}` slot is untouched), and a failed match still resets the
+  // stream. focus-trap flips lossy → faithful in pl/uk/zh/bn/hi (lossy
+  // 323 → 318, 0 regressions). tr's head now matches too (its remaining drop
+  // is the son/end polysemy — next PR); ja/ko have no fused if pattern to
+  // anchor (the A3 SOV slice); tl is the trailing-event path; ar is the VSO
+  // reorder. All tracked.
+  function actions(node: unknown, acc = new Set<string>()): Set<string> {
+    if (!node || typeof node !== 'object') return acc;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.action === 'string' && rec.action !== 'compound') acc.add(rec.action);
+    for (const f of ['body', 'statements', 'thenBranch', 'elseBranch', 'branches']) {
+      const c = rec[f];
+      if (Array.isArray(c)) c.forEach(x => actions(x, acc));
+      else if (c && typeof c === 'object') actions(c, acc);
+    }
+    return acc;
+  }
+
+  // Corpus-shaped transformer output (en → lang), focus-trap.
+  const corpus: Array<[string, string]> = [
+    [
+      'pl',
+      'gdy keydown[key=="Tab"] z .modal jeśli cel pasuje ostatni <button/> w .modal skup pierwszy <button/> w .modal wtedy zatrzymaj koniec',
+    ],
+    [
+      'uk',
+      'при keydown[key=="Tab"] з .modal якщо ціль відповідає останній <button/> у .modal сфокусувати перший <button/> у .modal тоді зупинити кінець',
+    ],
+    [
+      'zh',
+      '当 keydown[key=="Tab"] 从 .modal 如果 目标 匹配 最后一个 <button/> 在 .modal 聚焦 把 第一个 <button/> 在 .modal 那么 停止 结束',
+    ],
+    [
+      'bn',
+      'keydown[key=="Tab"] এ .modal থেকে যদি লক্ষ্য matches শেষ <button/> এ .modal প্রথম <button/> এ .modal কে ফোকাস তারপর থামুন শেষ',
+    ],
+    [
+      'hi',
+      'keydown[key=="Tab"] पर .modal से अगर लक्ष्य मेल_खाता अंतिम <button/> में .modal पहला <button/> में .modal को फोकस फिर रोकें समाप्त',
+    ],
+  ];
+  for (const [lang, input] of corpus) {
+    it(`[${lang}] focus-trap keeps the if wrapper (source clause consumed)`, () => {
+      const a = actions(parse(input, lang as 'pl'));
+      expect(a.has('on')).toBe(true);
+      expect(a.has('if')).toBe(true);
+      expect(a.has('focus')).toBe(true);
+      expect(a.has('halt')).toBe(true);
+    });
+  }
+
+  // tr: the postpositional clause after the event-marker literal now parses —
+  // the fused if pattern anchors (the body's son/end drop is a separate
+  // mechanism, locked when the dict realign lands).
+  it('[tr] the SOV head with postpositional source anchors the fused if pattern', () => {
+    const a = actions(
+      parse(
+        'keydown[key=="Tab"] de .modal den eğer hedef eşleşir ilk <button/> içinde .modal ilk <button/> içinde .modal i odak sonra durdur son',
+        'tr'
+      )
+    );
+    expect(a.has('on')).toBe(true);
+    expect(a.has('if')).toBe(true);
+    expect(a.has('focus')).toBe(true);
+    expect(a.has('halt')).toBe(true);
+  });
+
+  // Regression guards.
+  it('[pl] a handler without a source clause is unchanged', () => {
+    const a = actions(parse('gdy kliknięcie przełącz .active', 'pl'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+  it('[de] the explicit-source handcrafted pattern still parses', () => {
+    const a = actions(parse('bei klick von .modal umschalten .active', 'de'));
+    expect(a.has('on')).toBe(true);
+    expect(a.has('toggle')).toBe(true);
+  });
+  it('[en] the en reference parse is unchanged', () => {
+    const a = actions(
+      parse(
+        'on keydown[key=="Tab"] from .modal if target matches last <button/> in .modal focus first <button/> in .modal halt end',
+        'en'
+      )
+    );
+    expect([...a].sort()).toEqual(['focus', 'halt', 'if', 'on']);
+  });
+});
